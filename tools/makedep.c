@@ -3326,6 +3326,7 @@ static void output_subdirs( struct makefile *make )
 {
     struct strarray build_deps = empty_strarray;
     struct strarray makefile_deps = empty_strarray;
+    struct strarray clean_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = get_expanded_make_var_array( make, "CONFIGURE_TARGETS" );
     unsigned int i, j;
@@ -3340,6 +3341,8 @@ static void output_subdirs( struct makefile *make )
                                                         strmake ( "%s.in", output_makefile_name ))));
         strarray_add( &distclean_files, base_dir_path( submake, output_makefile_name ));
         if (!make->src_dir) strarray_add( &distclean_files, base_dir_path( submake, ".gitignore" ));
+        for (j = 0; j < submake->clean_files.count; j++)
+            strarray_add( &clean_files, base_dir_path( submake, submake->clean_files.str[j] ));
         if (submake->testdll)
         {
             for (j = 0; j < submake->ok_files.count; j++)
@@ -3353,6 +3356,8 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     output_filenames( makefile_deps );
     output( ":\n" );
+    output( "clean::\n");
+    output_rm_filenames( clean_files );
     output( "testclean::\n");
     output_rm_filenames( testclean_files );
     output( "distclean::\n");

@@ -116,9 +116,6 @@ include/stamp-h: $(srcdir)/include/config.h.in config.status
 
 # Rules for cleaning
 
-.PHONY: clean distclean __clean__
-
-clean:: __clean__
 distclean:: clean
 	$(RM) -r autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man$(api_manext)
 

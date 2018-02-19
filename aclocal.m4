@@ -277,36 +277,10 @@ install-dev:: $ac_dir/install-dev"
     fi
 }
 
-wine_fn_clean_rules ()
-{
-    ac_clean=$[@]
-
-    if wine_fn_has_flag clean
-    then
-        wine_fn_append_rule \
-"$ac_dir/clean: dummy
-	@cd $ac_dir && \$(MAKE) clean"
-    else
-        wine_fn_append_rule \
-"$ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean"
-    fi
-        wine_fn_append_rule \
-"__clean__: $ac_dir/clean
-.PHONY: $ac_dir/clean"
-}
-
 wine_fn_disabled_rules ()
 {
-    ac_clean=$[@]
-
     wine_fn_append_file SUBDIRS $ac_dir
     wine_fn_append_file DISABLED_SUBDIRS $ac_dir
-    wine_fn_append_rule \
-"__clean__: $ac_dir/clean
-.PHONY: $ac_dir/clean
-$ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean"
 }
 
 wine_fn_config_makefile ()
@@ -322,7 +296,6 @@ wine_fn_config_makefile ()
     AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
     wine_fn_all_rules
     wine_fn_install_rules
-    wine_fn_clean_rules
 }
 
 wine_fn_config_lib ()
@@ -334,7 +307,6 @@ wine_fn_config_lib ()
 
     AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
     wine_fn_all_rules
-    wine_fn_clean_rules
 
     wine_fn_append_rule \
 ".PHONY: $ac_dir/install $ac_dir/uninstall
@@ -367,24 +339,18 @@ wine_fn_config_dll ()
       *)   ac_dll=$ac_dll.dll ;;
     esac
 
-    ac_clean=
-    wine_fn_has_flag implib && ac_clean="$ac_clean $ac_file.$IMPLIBEXT"
-    test -n "$DLLEXT" || ac_clean="$ac_clean $ac_dir/$ac_dll"
-
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
               [if test "$ac_enable" != enable_win16
                then
-                   wine_fn_clean_rules $ac_clean
                    wine_fn_append_file SUBDIRS $ac_dir
                    wine_fn_append_file DISABLED_SUBDIRS $ac_dir
                else
-                   wine_fn_disabled_rules $ac_clean
+                   wine_fn_disabled_rules
                    return
                fi],
 
               [wine_fn_all_rules
-               wine_fn_clean_rules $ac_clean
                wine_fn_append_rule \
 "$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages::
@@ -469,14 +435,9 @@ wine_fn_config_program ()
       *)   ac_program=$ac_program.exe ;;
     esac
 
-    ac_clean=
-    wine_fn_has_flag manpage && ac_clean="$ac_clean $ac_dir/$ac_name.man"
-    test -n "$DLLEXT" || ac_clean="$ac_clean $ac_dir/$ac_program"
-
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules $ac_clean; return])
+    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
 
     wine_fn_all_rules
-    wine_fn_clean_rules $ac_clean
     wine_fn_append_rule "$ac_dir: __builddeps__"
 
     wine_fn_has_flag install || return
@@ -526,15 +487,10 @@ wine_fn_config_test ()
     ac_name=$[2]
     ac_flags=$[3]
 
-    ac_clean=
-    test -n "$CROSSTARGET" && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
-    test -n "$DLLEXT" || ac_clean="$ac_dir/${ac_name}.exe $ac_dir/${ac_name}-stripped.exe"
-
-    AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules $ac_clean; return])
+    AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules; return])
 
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
     wine_fn_all_rules
-    wine_fn_clean_rules $ac_clean
 
     wine_fn_append_rule \
 "$ac_dir: __builddeps__
@@ -562,7 +518,6 @@ wine_fn_config_tool ()
 
     wine_fn_all_rules
     wine_fn_install_rules
-    wine_fn_clean_rules
 
     wine_fn_append_rule "__tooldeps__: $ac_dir"
     wine_fn_append_rule "$ac_dir: libs/port"

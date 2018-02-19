@@ -245,11 +245,6 @@ sub parse_makefile($)
             $make{$var} = \@list;
             next;
         }
-        if (/(install-lib|install-dev|clean)\s*:/)
-        {
-            ${$make{"=flags"}}{$1} = 1;
-            next;
-        }
         if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
         {
             die "Variable $1 in $file.in is obsolete";
@@ -275,7 +270,6 @@ sub parse_makefile($)
         ${$make{"=flags"}}{"install-lib"} = 1 if defined $make{"INSTALL_LIB"};
         ${$make{"=flags"}}{"install-dev"} = 1 if defined $make{"INSTALL_DEV"};
     }
-    ${$make{"=flags"}}{"clean"} = 1 if defined $make{"PROGRAMS"} || defined $make{"EXTRA_TARGETS"} || defined $make{"EXTRA_OBJS"};
 
     if (defined $make{"=flags"} && defined $make{"MODULE"})
     {
@@ -379,15 +373,12 @@ sub assign_sources_to_makefiles(@)
 
         next if $file =~ /^include\/wine\// && !%flags && !$exported_wine_headers{$name};
 
-        ${$make}{"=flags"}{"clean"} = 1 if $subdir;
-
         if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
         elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
         elsif ($name =~ /\.sfd$/)
         {
-            ${${$make}{"=flags"}}{"clean"} = 1 if defined $flags{"font"};
             ${${$make}{"=flags"}}{"install-lib"} = 1 if defined $flags{"install"};
             push @{${$make}{"=FONT_SRCS"}}, $name;
         }
@@ -403,29 +394,25 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.rc$/)
         {
-            ${${$make}{"=flags"}}{"clean"} = 1 if defined $flags{"po"};
             push @{${$make}{"=RC_SRCS"}}, $name;
         }
         elsif ($name =~ /\.mc$/)
         {
             push @{${$make}{"=MC_SRCS"}}, $name;
-            ${${$make}{"=flags"}}{"clean"} = 1;
         }
         elsif ($name =~ /\.po$/)
         {
             push @{${$make}{"=PO_SRCS"}}, $name;
-            ${${$make}{"=flags"}}{"clean"} = 1;
         }
         elsif ($name =~ /\.idl$/)
         {
             die "no makedep flags specified in $file" unless %flags || $dir eq "include";
             push @{${$make}{"=IDL_SRCS"}}, $name;
-            ${${$make}{"=flags"}}{"clean"} = 1;
         }
         elsif ($name =~ /\.man\.in$/)
         {
             push @{${$make}{"=MANPAGES"}}, $name;
-            ${${$make}{"=flags"}}{($file =~ /^programs\//) ? "manpage" : "clean"} = 1;
+            ${${$make}{"=flags"}}{"manpage"} = 1 if ($file =~ /^programs\//);
         }
         elsif ($name =~ /\.in$/)
         {
@@ -452,7 +439,6 @@ sub assign_sources_to_makefiles(@)
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "IDL_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "LEX_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "BISON_SRCS" );
-        ${${$make}{"=flags"}}{"clean"} = 1 if defined ${$make}{"=IDL_SRCS"} && @{${$make}{"=IDL_SRCS"}};
     }
 }
 
