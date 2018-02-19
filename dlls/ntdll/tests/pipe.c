@@ -1209,6 +1209,218 @@ static void test_file_info(void)
     CloseHandle( client );
 }
 
+static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle)
+{
+    SECURITY_DESCRIPTOR *sec_desc;
+    ULONG length = 0;
+    NTSTATUS status;
+
+    status = NtQuerySecurityObject(handle, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                                   NULL, 0, &length);
+    ok(status == STATUS_BUFFER_TOO_SMALL,
+       "Failed to query object security descriptor length: %08x\n", status);
+    ok(length != 0, "length = 0\n");
+
+    sec_desc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, length);
+    status = NtQuerySecurityObject(handle, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                                   sec_desc, length, &length);
+    ok(status == STATUS_SUCCESS, "Failed to query object security descriptor: %08x\n", status);
+
+    return sec_desc;
+}
+
+static TOKEN_OWNER *get_current_owner(void)
+{
+    TOKEN_OWNER *owner;
+    ULONG length = 0;
+    HANDLE token;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token);
+    ok(ret, "Failed to get process token: %u\n", GetLastError());
+
+    ret = GetTokenInformation(token, TokenOwner, NULL, 0, &length);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "GetTokenInformation failed: %u\n", GetLastError());
+    ok(length != 0, "Failed to get token owner information length: %u\n", GetLastError());
+
+    owner = HeapAlloc(GetProcessHeap(), 0, length);
+    ret = GetTokenInformation(token, TokenOwner, owner, length, &length);
+    ok(ret, "Failed to get token owner information: %u)\n", GetLastError());
+
+    CloseHandle(token);
+    return owner;
+}
+
+static TOKEN_PRIMARY_GROUP *get_current_group(void)
+{
+    TOKEN_PRIMARY_GROUP *group;
+    ULONG length = 0;
+    HANDLE token;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token);
+    ok(ret, "Failed to get process token: %u\n", GetLastError());
+
+    ret = GetTokenInformation(token, TokenPrimaryGroup, NULL, 0, &length);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "GetTokenInformation failed: %u\n", GetLastError());
+    ok(length != 0, "Failed to get primary group token information length: %u\n", GetLastError());
+
+    group = HeapAlloc(GetProcessHeap(), 0, length);
+    ret = GetTokenInformation(token, TokenPrimaryGroup, group, length, &length);
+    ok(ret, "Failed to get primary group token information: %u\n", GetLastError());
+
+    CloseHandle(token);
+    return group;
+}
+
+static SID *well_known_sid(WELL_KNOWN_SID_TYPE sid_type)
+{
+    DWORD size = SECURITY_MAX_SID_SIZE;
+    SID *sid;
+    BOOL ret;
+
+    sid = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CreateWellKnownSid(sid_type, NULL, sid, &size);
+    ok(ret, "CreateWellKnownSid failed: %u\n", GetLastError());
+    return sid;
+}
+
+#define test_group(a,b,c) _test_group(__LINE__,a,b,c)
+static void _test_group(unsigned line, HANDLE handle, SID *expected_sid, BOOL todo)
+{
+    SECURITY_DESCRIPTOR *sec_desc;
+    BOOLEAN defaulted;
+    PSID group_sid;
+    NTSTATUS status;
+
+    sec_desc = get_security_descriptor(handle);
+
+    status = RtlGetGroupSecurityDescriptor(sec_desc, &group_sid, &defaulted);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS,
+                       "Failed to query group from security descriptor: %08x\n", status);
+    todo_wine_if(todo)
+    ok_(__FILE__,line)(EqualSid(group_sid, expected_sid), "SIDs are not equal\n");
+
+    HeapFree(GetProcessHeap(), 0, sec_desc);
+}
+
+static void test_security_info(void)
+{
+    char sec_desc[SECURITY_DESCRIPTOR_MIN_LENGTH];
+    TOKEN_PRIMARY_GROUP *process_group;
+    SECURITY_ATTRIBUTES sec_attr;
+    TOKEN_OWNER *process_owner;
+    HANDLE server, client, server2;
+    SID *world_sid, *local_sid;
+    ULONG length;
+    NTSTATUS status;
+    BOOL ret;
+
+    trace("security tests...\n");
+
+    process_owner = get_current_owner();
+    process_group = get_current_group();
+    world_sid = well_known_sid(WinWorldSid);
+    local_sid = well_known_sid(WinLocalSid);
+
+    ret = InitializeSecurityDescriptor(sec_desc, SECURITY_DESCRIPTOR_REVISION);
+    ok(ret, "InitializeSecurityDescriptor failed\n");
+
+    ret = SetSecurityDescriptorOwner(sec_desc, process_owner->Owner, FALSE);
+    ok(ret, "SetSecurityDescriptorOwner failed\n");
+
+    ret = SetSecurityDescriptorGroup(sec_desc, process_group->PrimaryGroup, FALSE);
+    ok(ret, "SetSecurityDescriptorGroup failed\n");
+
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | WRITE_OWNER, PIPE_TYPE_BYTE, 10,
+                              0x20000, 0x20000, 0, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+
+    client = CreateFileA(PIPENAME, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    test_group(server, process_group->PrimaryGroup, TRUE);
+    test_group(client, process_group->PrimaryGroup, TRUE);
+
+    /* set server group, client changes as well */
+    ret = SetSecurityDescriptorGroup(sec_desc, world_sid, FALSE);
+    ok(ret, "SetSecurityDescriptorGroup failed\n");
+    status = NtSetSecurityObject(server, GROUP_SECURITY_INFORMATION, sec_desc);
+    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
+
+    test_group(server, world_sid, FALSE);
+    test_group(client, world_sid, TRUE);
+
+    /* new instance of pipe server has the same security descriptor */
+    server2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE, 10,
+                               0x20000, 0x20000, 0, NULL);
+    ok(server2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    test_group(server2, world_sid, TRUE);
+
+    /* set client group, server changes as well */
+    ret = SetSecurityDescriptorGroup(sec_desc, local_sid, FALSE);
+    ok(ret, "SetSecurityDescriptorGroup failed\n");
+    status = NtSetSecurityObject(server, GROUP_SECURITY_INFORMATION, sec_desc);
+    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
+
+    test_group(server, local_sid, FALSE);
+    test_group(client, local_sid, TRUE);
+    test_group(server2, local_sid, TRUE);
+
+    CloseHandle(server);
+    /* SD is preserved after closing server object */
+    test_group(client, local_sid, TRUE);
+    CloseHandle(client);
+
+    server = server2;
+    client = CreateFileA(PIPENAME, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    test_group(client, local_sid, TRUE);
+
+    ret = DisconnectNamedPipe(server);
+    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+
+    /* disconnected server may be queried for security info, but client does not */
+    test_group(server, local_sid, TRUE);
+    status = NtQuerySecurityObject(client, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                                   NULL, 0, &length);
+    todo_wine
+    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
+    status = NtSetSecurityObject(client, GROUP_SECURITY_INFORMATION, sec_desc);
+    todo_wine
+    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
+
+    /* attempting to create another pipe instance with specified sd fails */
+    sec_attr.nLength = sizeof(sec_attr);
+    sec_attr.lpSecurityDescriptor = sec_desc;
+    sec_attr.bInheritHandle = FALSE;
+    ret = SetSecurityDescriptorGroup(sec_desc, local_sid, FALSE);
+    ok(ret, "SetSecurityDescriptorGroup failed\n");
+    server2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | WRITE_OWNER, PIPE_TYPE_BYTE, 10,
+                               0x20000, 0x20000, 0, &sec_attr);
+    todo_wine
+    ok(server2 == INVALID_HANDLE_VALUE && GetLastError() == ERROR_ACCESS_DENIED,
+       "CreateNamedPipe failed: %u\n", GetLastError());
+    if (server2 != INVALID_HANDLE_VALUE) CloseHandle(server2);
+
+    CloseHandle(server);
+    CloseHandle(client);
+
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | WRITE_OWNER, PIPE_TYPE_BYTE, 10,
+                              0x20000, 0x20000, 0, &sec_attr);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    test_group(server, local_sid, FALSE);
+    CloseHandle(server);
+
+    HeapFree(GetProcessHeap(), 0, process_owner);
+    HeapFree(GetProcessHeap(), 0, process_group);
+    HeapFree(GetProcessHeap(), 0, world_sid);
+    HeapFree(GetProcessHeap(), 0, local_sid);
+}
+
 START_TEST(pipe)
 {
     if (!init_func_ptrs())
@@ -1253,4 +1465,5 @@ START_TEST(pipe)
 
     test_volume_info();
     test_file_info();
+    test_security_info();
 }
