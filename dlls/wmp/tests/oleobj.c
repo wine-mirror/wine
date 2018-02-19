@@ -859,10 +859,23 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPSettings *settings, *settings_qi;
     IWMPPlayer4 *player4;
     IWMPPlayer *player;
+    IWMPControls *controls;
     HRESULT hres;
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
     ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08x\n", hres);
+
+    controls = NULL;
+    hres = IWMPPlayer4_get_controls(player4, &controls);
+    ok(hres == S_OK, "get_controls failed: %08x\n", hres);
+    ok(controls != NULL, "controls = NULL\n");
+
+    player = NULL;
+    hres = IWMPControls_QueryInterface(controls, &IID_IWMPPlayer, (void**)&player);
+    ok(hres != S_OK, "Getting IWMPPlayer from IWMPControls SUCCEEDED\n");
+    ok(player == NULL, "player != NULL\n");
+
+    IWMPControls_Release(controls);
 
     settings = NULL;
     hres = IWMPPlayer4_get_settings(player4, &settings);
