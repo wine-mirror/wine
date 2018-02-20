@@ -282,6 +282,10 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
             gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
             gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_WIDTH, &width);
             gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_HEIGHT, &height);
+            if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+                gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_SAMPLES, &samples);
+            else
+                samples = 1;
 
             tex_target = GL_TEXTURE_CUBE_MAP;
             tex_type_str = "cube";
