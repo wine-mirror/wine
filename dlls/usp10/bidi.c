@@ -692,8 +692,8 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     WCHAR *open_stack;
     int *stack_index;
     int stack_top = iso_run->length;
+    unsigned int pair_count = 0;
     BracketPair *out = NULL;
-    int pair_count = 0;
     int i;
 
     open_stack = heap_alloc(iso_run->length * sizeof(*open_stack));
@@ -745,13 +745,13 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     heap_free(open_stack);
     heap_free(stack_index);
 
-    if (pair_count == 0)
+    if (!pair_count)
     {
         heap_free(out);
-        out = NULL;
+        return NULL;
     }
-    else if (pair_count > 1)
-        qsort(out, pair_count, sizeof(BracketPair), compr);
+
+    qsort(out, pair_count, sizeof(*out), compr);
 
     return out;
 }
