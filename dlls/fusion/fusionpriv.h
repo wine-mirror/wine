@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winver.h"
+#include "wine/heap.h"
 
 #include <pshpack1.h>
 
@@ -448,8 +449,7 @@ static inline LPWSTR strdupW(LPCWSTR src)
     if (!src)
         return NULL;
 
-    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(WCHAR));
-    if (dest)
+    if ((dest = heap_alloc((lstrlenW(src) + 1) * sizeof(WCHAR))))
         lstrcpyW(dest, src);
 
     return dest;
