@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -617,17 +618,6 @@ static inline WCHAR *strdupAtoW(const char *src)
     return dst;
 }
 
-static DWORD get_sysattr_dword(struct udev_device *dev, const char *sysattr, int base)
-{
-    const char *attr = udev_device_get_sysattr_value(dev, sysattr);
-    if (!attr)
-    {
-        WARN("Could not get %s from device\n", sysattr);
-        return 0;
-    }
-    return strtol(attr, NULL, base);
-}
-
 static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
 {
     const char *attr = udev_device_get_sysattr_value(dev, sysattr);
@@ -680,23 +670,23 @@ static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer,
 
 static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct udev_device *usbdev;
+    struct udev_device *hiddev;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
     WCHAR *str = NULL;
 
-    usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
-    if (usbdev)
+    hiddev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "hid", NULL);
+    if (hiddev)
     {
         switch (index)
         {
             case HID_STRING_ID_IPRODUCT:
-                str = get_sysattr_string(usbdev, "product");
+                str = get_sysattr_string(hiddev, "product");
                 break;
             case HID_STRING_ID_IMANUFACTURER:
-                str = get_sysattr_string(usbdev, "manufacturer");
+                str = get_sysattr_string(hiddev, "manufacturer");
                 break;
             case HID_STRING_ID_ISERIALNUMBER:
-                str = get_sysattr_string(usbdev, "serial");
+                str = get_sysattr_string(hiddev, "serial");
                 break;
             default:
                 ERR("Unhandled string index %08x\n", index);
@@ -1049,16 +1039,71 @@ static int check_same_device(DEVICE_OBJECT *device, void* context)
     return !compare_platform_device(device, context);
 }
 
+static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
+                             DWORD *product_id, WCHAR **serial_number)
+{
+    DWORD bus_type;
+    char *tmp = strdup(uevent);
+    char *saveptr = NULL;
+    char *line;
+    char *key;
+    char *value;
+
+    int found_id = 0;
+    int found_serial = 0;
+
+    line = strtok_r(tmp, "\n", &saveptr);
+    while (line != NULL)
+    {
+        /* line: "KEY=value" */
+        key = line;
+        value = strchr(line, '=');
+        if (!value)
+        {
+            goto next_line;
+        }
+        *value = '\0';
+        value++;
+
+        if (strcmp(key, "HID_ID") == 0)
+        {
+            /**
+             *        type vendor   product
+             * HID_ID=0003:000005AC:00008242
+             **/
+            int ret = sscanf(value, "%x:%x:%x", &bus_type, vendor_id, product_id);
+            if (ret == 3)
+                found_id = 1;
+        }
+        else if (strcmp(key, "HID_UNIQ") == 0)
+        {
+            /* The caller has to free the serial number */
+            if (strlen(value))
+            {
+                *serial_number = (WCHAR*)strdupAtoW(value);
+                found_serial = 1;
+            }
+        }
+
+next_line:
+        line = strtok_r(NULL, "\n", &saveptr);
+    }
+
+    free(tmp);
+    return (found_id && found_serial);
+}
+
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0;
-    struct udev_device *usbdev = NULL;
+    struct udev_device *hiddev = NULL;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
     WCHAR *serial = NULL;
     BOOL is_gamepad = FALSE;
     int fd;
+    static const CHAR *base_serial = "0000";
 
     if (!(devnode = udev_device_get_devnode(dev)))
         return;
@@ -1070,8 +1115,8 @@ static void try_add_device(struct udev_device *dev)
     }
 
     subsystem = udev_device_get_subsystem(dev);
-    usbdev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
-    if (usbdev)
+    hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
+    if (hiddev)
     {
 #ifdef HAS_PROPER_INPUT_HEADER
         const platform_vtbl *other_vtbl = NULL;
@@ -1090,10 +1135,10 @@ static void try_add_device(struct udev_device *dev)
             return;
         }
 #endif
-        vid     = get_sysattr_dword(usbdev, "idVendor", 16);
-        pid     = get_sysattr_dword(usbdev, "idProduct", 16);
-        version = get_sysattr_dword(usbdev, "version", 10);
-        serial  = get_sysattr_string(usbdev, "serial");
+        parse_uevent_info(udev_device_get_sysattr_value(hiddev, "uevent"),
+                          &vid, &pid, &serial);
+        if (serial == NULL)
+            serial = strdupAtoW(base_serial);
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else
