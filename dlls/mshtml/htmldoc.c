@@ -1993,7 +1993,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 {
     HTMLDocument *This = impl_from_IHTMLDocument3(iface);
     nsIDOMElement *nselem = NULL;
-    HTMLDOMNode *node;
+    HTMLElement *element;
     nsresult nsres;
     HRESULT hres;
 
@@ -2020,13 +2020,12 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
         return S_OK;
     }
 
-    hres = get_node((nsIDOMNode *)nselem, TRUE, &node);
+    hres = get_element(nselem, &element);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
-    node_release(node);
+    *p = &element->IHTMLElement_iface;
     return hres;
 }
 
