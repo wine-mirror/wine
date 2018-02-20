@@ -4150,7 +4150,7 @@ const char *debug_d3ddevicetype(enum wined3d_device_type device_type)
 
 const char *wined3d_debug_resource_access(DWORD access)
 {
-    char buf[91];
+    char buf[125];
 
     buf[0] = '\0';
 #define ACCESS_TO_STR(x) if (access & x) { strcat(buf, " | "#x); access &= ~x; }
