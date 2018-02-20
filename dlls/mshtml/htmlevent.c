@@ -293,6 +293,8 @@ static void remove_event_listener(EventTarget *event_target, const WCHAR *type_n
     }
 }
 
+static HRESULT get_gecko_target(IEventTarget*,nsIDOMEventTarget**);
+
 typedef struct {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
@@ -1459,8 +1461,37 @@ static HRESULT WINAPI DOMMouseEvent_get_button(IDOMMouseEvent *iface, USHORT *p)
 static HRESULT WINAPI DOMMouseEvent_get_relatedTarget(IDOMMouseEvent *iface, IEventTarget **p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMEventTarget *related_target;
+    nsIDOMNode *target_node;
+    HTMLDOMNode *node;
+    HRESULT hres;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetRelatedTarget(This->mouse_event, &related_target);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    if(!related_target) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsres = nsIDOMEventTarget_QueryInterface(related_target, &IID_nsIDOMNode, (void**)&target_node);
+    nsIDOMEventTarget_Release(related_target);
+    if(NS_FAILED(nsres)) {
+        FIXME("Only node targets supported\n");
+        return E_NOTIMPL;
+    }
+
+    hres = get_node(target_node, TRUE, &node);
+    nsIDOMNode_Release(target_node);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &node->event_target.IEventTarget_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_initMouseEvent(IDOMMouseEvent *iface, BSTR type,
@@ -1470,6 +1501,7 @@ static HRESULT WINAPI DOMMouseEvent_initMouseEvent(IDOMMouseEvent *iface, BSTR t
         IEventTarget *related_target)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
+    nsIDOMEventTarget *nstarget = NULL;
     nsAString type_str;
     nsresult nsres;
     HRESULT hres;
@@ -1486,21 +1518,28 @@ static HRESULT WINAPI DOMMouseEvent_initMouseEvent(IDOMMouseEvent *iface, BSTR t
     if(view)
         FIXME("view argument is not supported\n");
 
-    hres = IDOMEvent_initEvent(&This->IDOMEvent_iface, type, can_bubble, cancelable);
-    if(FAILED(hres))
-        return hres;
-
-    nsAString_InitDepend(&type_str, type);
-    nsres = nsIDOMMouseEvent_InitMouseEvent(This->mouse_event, &type_str, can_bubble, cancelable,
-                                            NULL /* FIXME */, detail, screen_x, screen_y,
-                                            client_x, client_y, ctrl_key, alt_key, shift_key,
-                                            meta_key, button, NULL /* FIXME */);
-    nsAString_Finish(&type_str);
-    if(NS_FAILED(nsres)) {
-        FIXME("InitMouseEvent failed: %08x\n", nsres);
-        return E_FAIL;
+    if(related_target) {
+        hres = get_gecko_target(related_target, &nstarget);
+        if(FAILED(hres))
+            return hres;
     }
 
+    hres = IDOMEvent_initEvent(&This->IDOMEvent_iface, type, can_bubble, cancelable);
+    if(SUCCEEDED(hres)) {
+        nsAString_InitDepend(&type_str, type);
+        nsres = nsIDOMMouseEvent_InitMouseEvent(This->mouse_event, &type_str, can_bubble, cancelable,
+                                                NULL /* FIXME */, detail, screen_x, screen_y,
+                                                client_x, client_y, ctrl_key, alt_key, shift_key,
+                                                meta_key, button, nstarget);
+        nsAString_Finish(&type_str);
+        if(NS_FAILED(nsres)) {
+            FIXME("InitMouseEvent failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+    }
+
+    if(nstarget)
+        nsIDOMEventTarget_Release(nstarget);
     return S_OK;
 }
 
@@ -3119,6 +3158,29 @@ static const IEventTargetVtbl EventTargetVtbl = {
     EventTarget_removeEventListener,
     EventTarget_dispatchEvent
 };
+
+static EventTarget *unsafe_impl_from_IEventTarget(IEventTarget *iface)
+{
+    return iface && iface->lpVtbl == &EventTargetVtbl ? impl_from_IEventTarget(iface) : NULL;
+}
+
+static HRESULT get_gecko_target(IEventTarget *target, nsIDOMEventTarget **ret)
+{
+    EventTarget *event_target = unsafe_impl_from_IEventTarget(target);
+    const event_target_vtbl_t *vtbl;
+    nsresult nsres;
+
+    if(!event_target) {
+        WARN("Not our IEventTarget implementation\n");
+        return E_INVALIDARG;
+    }
+
+    vtbl = (const event_target_vtbl_t*)dispex_get_vtbl(&event_target->dispex);
+    nsres = nsISupports_QueryInterface(vtbl->get_gecko_target(&event_target->dispex),
+                                       &IID_nsIDOMEventTarget, (void**)ret);
+    assert(nsres == NS_OK);
+    return S_OK;
+}
 
 HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
 {

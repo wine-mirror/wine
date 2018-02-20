@@ -738,6 +738,12 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
 }
 
+static nsISupports *HTMLXMLHttpRequest_get_gecko_target(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+    return (nsISupports*)This->nsxhr;
+}
+
 static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
@@ -775,6 +781,7 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 
 static event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     {NULL},
+    HTMLXMLHttpRequest_get_gecko_target,
     HTMLXMLHttpRequest_bind_event
 };
 

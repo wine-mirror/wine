@@ -5430,6 +5430,12 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     return S_OK;
 }
 
+static nsISupports *HTMLElement_get_gecko_target(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    return (nsISupports*)This->node.nsnode;
+}
+
 static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
@@ -5521,6 +5527,7 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
         NULL,
         HTMLElement_populate_props
     },
+    HTMLElement_get_gecko_target,
     HTMLElement_bind_event,
     HTMLElement_get_parent_event_target,
     HTMLElement_handle_event_default,

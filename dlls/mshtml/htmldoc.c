@@ -5039,6 +5039,12 @@ static compat_mode_t HTMLDocumentNode_get_compat_mode(DispatchEx *dispex)
     return This->document_mode;
 }
 
+static nsISupports *HTMLDocumentNode_get_gecko_target(DispatchEx *dispex)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    return (nsISupports*)This->node.nsnode;
+}
+
 static void HTMLDocumentNode_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
@@ -5077,6 +5083,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         HTMLDocumentNode_get_compat_mode,
         NULL
     },
+    HTMLDocumentNode_get_gecko_target,
     HTMLDocumentNode_bind_event,
     HTMLDocumentNode_get_parent_event_target,
     NULL,

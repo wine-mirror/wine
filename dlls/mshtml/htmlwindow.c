@@ -3024,6 +3024,12 @@ static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex)
     return This->doc->document_mode;
 }
 
+static nsISupports *HTMLWindow_get_gecko_target(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    return (nsISupports*)This->base.outer_window->nswindow;
+}
+
 static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -3050,6 +3056,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         HTMLWindow_get_compat_mode,
         NULL
     },
+    HTMLWindow_get_gecko_target,
     HTMLWindow_bind_event,
     NULL,
     NULL,
