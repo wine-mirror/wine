@@ -1300,7 +1300,7 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
     for (i = 0, addr = servers; addr < (servers + num) && i < _res.nscount; i++)
     {
 #ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
-        if (_res._u._ext.nsaddrs[i])
+        if (_res._u._ext.nsaddrs[i] && _res._u._ext.nsaddrs[i]->sin6_family == AF_INET6)
         {
             if (ip4_only) continue;
             sockaddr_in6_to_WS_storage( addr, _res._u._ext.nsaddrs[i] );
