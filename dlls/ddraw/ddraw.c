@@ -1738,7 +1738,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     outsize = NumCodes && Codes ? *NumCodes : 0;
 
-    for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
                 mode.format_id, 0, WINED3D_RTYPE_TEXTURE_2D, formats[i])))
@@ -2395,7 +2395,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     wined3d_mutex_lock();
 
     pixelformat.dwSize = sizeof(pixelformat);
-    for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
+    for(fmt = 0; fmt < ARRAY_SIZE(checkFormatList); fmt++)
     {
         modenum = 0;
         while (wined3d_enum_adapter_modes(ddraw->wined3d, WINED3DADAPTER_DEFAULT, checkFormatList[fmt],
@@ -3111,7 +3111,7 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
     if ((requested->dwFlags & provided->dwFlags) != requested->dwFlags)
         return FALSE;
 
-    for (i=0; i < sizeof(compare)/sizeof(compare[0]); i++)
+    for (i=0; i < ARRAY_SIZE(compare); i++)
     {
         if (requested->dwFlags & compare[i].flag
             && memcmp((const char *)provided + compare[i].offset,
@@ -3643,7 +3643,7 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
         return hr;
     }
 
-    for (i = 0; i < sizeof(device_list7)/sizeof(device_list7[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(device_list7); i++)
     {
         HRESULT ret;
 
@@ -4357,7 +4357,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
         return hr;
     }
 
-    for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
                 WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_TEXTURE_2D, formats[i])))
