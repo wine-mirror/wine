@@ -2340,7 +2340,7 @@ UINT WINAPI D3DXGetDeclVertexSize(const D3DVERTEXELEMENT9 *decl, DWORD stream_id
 
         if (element->Stream != stream_idx) continue;
 
-        if (element->Type >= sizeof(d3dx_decltype_size) / sizeof(*d3dx_decltype_size))
+        if (element->Type >= ARRAY_SIZE(d3dx_decltype_size))
         {
             FIXME("Unhandled element type %#x, size will be incorrect.\n", element->Type);
             continue;

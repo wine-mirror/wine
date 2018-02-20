@@ -200,7 +200,7 @@ static D3DFORMAT get_luminance_replacement_format(D3DFORMAT format)
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(luminance_replacements) / sizeof(luminance_replacements[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(luminance_replacements); ++i)
         if (format == luminance_replacements[i].luminance_format)
             return luminance_replacements[i].replacement_format;
     return format;
@@ -557,7 +557,7 @@ static D3DFORMAT get_alpha_replacement_format(D3DFORMAT format)
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(replacement_formats) / sizeof(replacement_formats[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(replacement_formats); ++i)
         if (replacement_formats[i].orig_format == format)
             return replacement_formats[i].replacement_format;
     return format;

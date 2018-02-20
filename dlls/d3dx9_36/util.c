@@ -220,7 +220,7 @@ const struct pixel_format_desc *get_format_info(D3DFORMAT format)
 
 const struct pixel_format_desc *get_format_info_idx(int idx)
 {
-    if(idx >= sizeof(formats) / sizeof(formats[0]))
+    if(idx >= ARRAY_SIZE(formats))
         return NULL;
     if(formats[idx].format == D3DFMT_UNKNOWN)
         return NULL;
