@@ -25,6 +25,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #ifndef ARRAY_SIZE
@@ -8198,7 +8199,7 @@ static void test_render_target_views(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, texture_desc.Width * texture_desc.Height * 4);
+    data = heap_alloc_zero(texture_desc.Width * texture_desc.Height * 4);
     ok(!!data, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -8282,7 +8283,7 @@ static void test_render_target_views(void)
         ID3D11Resource_Release(resource);
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
     release_test_context(&test_context);
 }
 
@@ -11154,7 +11155,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
 
     data.SysMemPitch = 0;
     data.SysMemSlicePitch = 0;
-    data.pSysMem = HeapAlloc(GetProcessHeap(), 0, 10240);
+    data.pSysMem = heap_alloc(10240);
     ok(!!data.pSysMem, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -11339,7 +11340,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, (void *)data.pSysMem);
+    heap_free((void *)data.pSysMem);
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
@@ -19221,7 +19222,7 @@ static void test_buffer_srv(void)
                 resource_data.SysMemSlicePitch = 0;
                 if (current_buffer->data_offset)
                 {
-                    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, current_buffer->byte_count);
+                    data = heap_alloc_zero(current_buffer->byte_count);
                     ok(!!data, "Failed to allocate memory.\n");
                     memcpy(data + current_buffer->data_offset, current_buffer->data,
                             current_buffer->byte_count - current_buffer->data_offset);
@@ -19233,7 +19234,7 @@ static void test_buffer_srv(void)
                 }
                 hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
                 ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#x.\n", i, hr);
-                HeapFree(GetProcessHeap(), 0, data);
+                heap_free(data);
             }
             else
             {
@@ -22786,7 +22787,7 @@ static void test_depth_bias(void)
     rasterizer_desc.SlopeScaledDepthBias = 0.0f;
     rasterizer_desc.DepthClipEnable = TRUE;
 
-    depth_values = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*depth_values) * swapchain_desc.height);
+    depth_values = heap_calloc(swapchain_desc.height, sizeof(*depth_values));
     ok(!!depth_values, "Failed to allocate memory.\n");
 
     for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
@@ -22988,7 +22989,7 @@ static void test_depth_bias(void)
         ID3D11DepthStencilView_Release(dsv);
     }
 
-    HeapFree(GetProcessHeap(), 0, depth_values);
+    heap_free(depth_values);
     release_test_context(&test_context);
 }
 
@@ -24514,7 +24515,7 @@ static void test_generate_mips(void)
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * 32 * 32 * 32);
+    data = heap_alloc(sizeof(*data) * 32 * 32 * 32);
 
     for (z = 0; z < 32; ++z)
     {
@@ -24541,7 +24542,7 @@ static void test_generate_mips(void)
         }
     }
 
-    zero_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*zero_data) * 16 * 16 * 16);
+    zero_data = heap_alloc_zero(sizeof(*zero_data) * 16 * 16 * 16);
 
     for (i = 0; i < ARRAY_SIZE(resource_types); ++i)
     {
@@ -24791,8 +24792,8 @@ static void test_generate_mips(void)
 
     ID3D11Resource_Release(resource);
 
-    HeapFree(GetProcessHeap(), 0, zero_data);
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(zero_data);
+    heap_free(data);
 
     ID3D11SamplerState_Release(sampler_state);
     ID3D11PixelShader_Release(ps_3d);
