@@ -38,6 +38,7 @@
 
 #include "initguid.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "msg.h"
@@ -149,7 +150,7 @@ static IDataObject* IDataObjectImpl_Construct(void)
 {
     IDataObjectImpl *obj;
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj = heap_alloc(sizeof(*obj));
     obj->IDataObject_iface.lpVtbl = &IDataObjectImpl_Vtbl;
     obj->ref = 1;
 
@@ -163,7 +164,7 @@ static HRESULT WINAPI IDataObjectImpl_QueryInterface(IDataObject *iface, REFIID 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IDataObject))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IDataObject_iface;
     }
 
     if(*ppvObj)
@@ -187,10 +188,8 @@ static ULONG WINAPI IDataObjectImpl_Release(IDataObject * iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-        return 0;
-    }
+        heap_free(This);
+
     return ref;
 }
 
@@ -276,7 +275,7 @@ static IShellBrowser* IShellBrowserImpl_Construct(void)
 {
     IShellBrowserImpl *browser;
 
-    browser = HeapAlloc(GetProcessHeap(), 0, sizeof(*browser));
+    browser = heap_alloc(sizeof(*browser));
     browser->IShellBrowser_iface.lpVtbl = &IShellBrowserImpl_Vtbl;
     browser->ref = 1;
 
@@ -295,7 +294,7 @@ static HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
        IsEqualIID(riid, &IID_IOleWindow) ||
        IsEqualIID(riid, &IID_IShellBrowser))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IShellBrowser_iface;
     }
 
     if(*ppvObj)
@@ -319,10 +318,8 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-        return 0;
-    }
+        heap_free(This);
+
     return ref;
 }
 

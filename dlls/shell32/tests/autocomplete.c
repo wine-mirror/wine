@@ -20,7 +20,6 @@
 
 #define COBJMACROS
 
-#include <wine/test.h>
 #include <stdarg.h>
 
 #include "windows.h"
@@ -28,6 +27,9 @@
 #include "shlguid.h"
 #include "initguid.h"
 #include "shldisp.h"
+
+#include "wine/heap.h"
+#include "wine/test.h"
 
 static HWND hMainWnd, hEdit;
 static HINSTANCE hinst;
@@ -268,7 +270,7 @@ static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
     ULONG ref = InterlockedDecrement(&this->ref);
 
     if (!ref)
-        HeapFree(GetProcessHeap(), 0, this);
+        heap_free(this);
 
     return ref;
 }
@@ -335,7 +337,7 @@ static HRESULT string_enumerator_create(void **ppv, WCHAR **suggestions, int cou
 {
     struct string_enumerator *object;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = heap_alloc_zero(sizeof(*object));
     object->IEnumString_iface.lpVtbl = &string_enumerator_vtlb;
     object->ref = 1;
     object->data = suggestions;

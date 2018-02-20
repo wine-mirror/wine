@@ -37,6 +37,7 @@
 #include "ocidl.h"
 #include "oleauto.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #include <initguid.h>
@@ -75,7 +76,7 @@ static WCHAR *make_wstr(const char *str)
     if(!len || len < 0)
         return NULL;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    ret = heap_alloc(len * sizeof(WCHAR));
     if(!ret)
         return NULL;
 
@@ -3049,7 +3050,7 @@ static void test_SHGetIDListFromObject(void)
     hres = pSHGetIDListFromObject(NULL, &pidl);
     ok(hres == E_NOINTERFACE, "Got %x\n", hres);
 
-    punkimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IUnknownImpl));
+    punkimpl = heap_alloc(sizeof(*punkimpl));
     punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
@@ -3066,7 +3067,7 @@ static void test_SHGetIDListFromObject(void)
        "interface not requested.\n");
 
     ok(!punkimpl->unknown, "Got %d unknown.\n", punkimpl->unknown);
-    HeapFree(GetProcessHeap(), 0, punkimpl);
+    heap_free(punkimpl);
 
     pidl_desktop = NULL;
     SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
@@ -3220,7 +3221,7 @@ static void test_SHGetItemFromObject(void)
     hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)&punk);
     ok(hres == E_NOINTERFACE, "Got 0x%08x\n", hres);
 
-    punkimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IUnknownImpl));
+    punkimpl = heap_alloc(sizeof(*punkimpl));
     punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
@@ -3238,7 +3239,7 @@ static void test_SHGetItemFromObject(void)
        "interface not requested.\n");
 
     ok(!punkimpl->unknown, "Got %d unknown.\n", punkimpl->unknown);
-    HeapFree(GetProcessHeap(), 0, punkimpl);
+    heap_free(punkimpl);
 
     /* Test IShellItem */
     hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IShellItem, (void**)&psi);
@@ -4858,8 +4859,8 @@ static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
             path2 = make_wstr(exp_data->path_2);
             verify_pidl(pidls[0], path1);
             verify_pidl(pidls[1], path2);
-            HeapFree(GetProcessHeap(), 0, path1);
-            HeapFree(GetProcessHeap(), 0, path2);
+            heap_free(path1);
+            heap_free(path2);
 
             exp_data->missing_events--;
 
@@ -4966,8 +4967,8 @@ static void test_SHChangeNotify(BOOL test_new_delivery)
             do_events();
             ok(exp_data->missing_events == 0, "%s: Expected wndproc to be called\n", exp_data->id);
 
-            HeapFree(GetProcessHeap(), 0, path1);
-            HeapFree(GetProcessHeap(), 0, path2);
+            heap_free(path1);
+            heap_free(path2);
         }
     }
 

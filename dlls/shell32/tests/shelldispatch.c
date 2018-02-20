@@ -26,6 +26,8 @@
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "winsvc.h"
+
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "initguid.h"
@@ -276,7 +278,7 @@ static void test_namespace(void)
     GetFullPathNameW(winetestW, MAX_PATH, tempW, NULL);
 
     len = GetLongPathNameW(tempW, NULL, 0);
-    long_pathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    long_pathW = heap_alloc(len * sizeof(WCHAR));
     GetLongPathNameW(tempW, long_pathW, len);
 
     V_VT(&var) = VT_BSTR;
@@ -348,7 +350,7 @@ static void test_namespace(void)
         SysFreeString(V_BSTR(&var));
     }
 
-    HeapFree(GetProcessHeap(), 0, long_pathW);
+    heap_free(long_pathW);
     RemoveDirectoryW(winetestW);
     SetCurrentDirectoryW(curW);
     IShellDispatch_Release(sd);
