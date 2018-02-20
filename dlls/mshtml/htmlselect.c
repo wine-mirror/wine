@@ -372,9 +372,6 @@ static HRESULT WINAPI HTMLSelectElement_get_form(IHTMLSelectElement *iface, IHTM
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
     nsIDOMHTMLFormElement *nsform;
-    nsIDOMNode *form_node;
-    HTMLDOMNode *node;
-    HRESULT hres;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -383,30 +380,7 @@ static HRESULT WINAPI HTMLSelectElement_get_form(IHTMLSelectElement *iface, IHTM
         return E_POINTER;
 
     nsres = nsIDOMHTMLSelectElement_GetForm(This->nsselect, &nsform);
-    if (NS_FAILED(nsres)) {
-        ERR("GetForm failed: %08x, nsform: %p\n", nsres, nsform);
-        *p = NULL;
-        return E_FAIL;
-    }
-    if (nsform == NULL) {
-        TRACE("nsform not found\n");
-        *p = NULL;
-        return S_OK;
-    }
-
-    nsres = nsIDOMHTMLFormElement_QueryInterface(nsform, &IID_nsIDOMNode, (void**)&form_node);
-    nsIDOMHTMLFormElement_Release(nsform);
-    assert(nsres == NS_OK);
-
-    hres = get_node(form_node, TRUE, &node);
-    nsIDOMNode_Release(form_node);
-    if (FAILED(hres))
-        return hres;
-
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
-
-    node_release(node);
-    return hres;
+    return return_nsform(nsres, nsform, p);
 }
 
 static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElement *element,

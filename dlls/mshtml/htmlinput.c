@@ -46,32 +46,6 @@ struct HTMLInputElement {
 
 static const WCHAR forW[] = {'f','o','r',0};
 
-static HRESULT return_nsform(HTMLElement *elem, nsIDOMHTMLFormElement *nsform, IHTMLFormElement **p)
-{
-    nsIDOMNode *form_node;
-    HTMLDOMNode *node;
-    nsresult nsres;
-    HRESULT hres;
-
-    if(!nsform) {
-        *p = NULL;
-        return S_OK;
-    }
-
-    nsres = nsIDOMHTMLFormElement_QueryInterface(nsform, &IID_nsIDOMNode, (void**)&form_node);
-    nsIDOMHTMLFormElement_Release(nsform);
-    assert(nsres == NS_OK);
-
-    hres = get_node(form_node, TRUE, &node);
-    nsIDOMNode_Release(form_node);
-    if (FAILED(hres))
-        return hres;
-
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
-    node_release(node);
-    return hres;
-}
-
 static inline HTMLInputElement *impl_from_IHTMLInputElement(IHTMLInputElement *iface)
 {
     return CONTAINING_RECORD(iface, HTMLInputElement, IHTMLInputElement_iface);
@@ -288,12 +262,7 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
     TRACE("(%p)->(%p)\n", This, p);
 
     nsres = nsIDOMHTMLInputElement_GetForm(This->nsinput, &nsform);
-    if (NS_FAILED(nsres)) {
-        ERR("GetForm failed: %08x, nsform: %p\n", nsres, nsform);
-        return E_FAIL;
-    }
-
-    return return_nsform(&This->element, nsform, p);
+    return return_nsform(nsres, nsform, p);
 }
 
 static HRESULT WINAPI HTMLInputElement_put_size(IHTMLInputElement *iface, LONG v)
@@ -1905,12 +1874,7 @@ static HRESULT WINAPI HTMLButtonElement_get_form(IHTMLButtonElement *iface, IHTM
     TRACE("(%p)->(%p)\n", This, p);
 
     nsres = nsIDOMHTMLButtonElement_GetForm(This->nsbutton, &nsform);
-    if (NS_FAILED(nsres)) {
-        ERR("GetForm failed: %08x, nsform: %p\n", nsres, nsform);
-        return E_FAIL;
-    }
-
-    return return_nsform(&This->element, nsform, p);
+    return return_nsform(nsres, nsform, p);
 }
 
 static HRESULT WINAPI HTMLButtonElement_createTextRange(IHTMLButtonElement *iface, IHTMLTxtRange **range)

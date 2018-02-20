@@ -197,33 +197,12 @@ static HRESULT WINAPI HTMLTextAreaElement_get_form(IHTMLTextAreaElement *iface, 
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
     nsIDOMHTMLFormElement *nsform;
-    nsIDOMNode *nsnode;
-    HTMLDOMNode *node;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsres = nsIDOMHTMLTextAreaElement_GetForm(This->nstextarea, &nsform);
-    assert(nsres == NS_OK);
-
-    if(!nsform) {
-        *p = NULL;
-        return S_OK;
-    }
-
-    nsres = nsIDOMHTMLFormElement_QueryInterface(nsform, &IID_nsIDOMNode, (void**)&nsnode);
-    nsIDOMHTMLFormElement_Release(nsform);
-    assert(nsres == NS_OK);
-
-    hres = get_node(nsnode, TRUE, &node);
-    nsIDOMNode_Release(nsnode);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLFormElement, (void**)p);
-    IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
-    return hres;
+    return return_nsform(nsres, nsform, p);
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_put_defaultValue(IHTMLTextAreaElement *iface, BSTR v)

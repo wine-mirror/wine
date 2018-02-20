@@ -42,6 +42,38 @@ struct HTMLFormElement {
     nsIDOMHTMLFormElement *nsform;
 };
 
+HRESULT return_nsform(nsresult nsres, nsIDOMHTMLFormElement *form, IHTMLFormElement **p)
+{
+    nsIDOMNode *form_node;
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    if (NS_FAILED(nsres)) {
+        ERR("GetForm failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(!form) {
+        *p = NULL;
+        TRACE("NULL\n");
+        return S_OK;
+    }
+
+    nsres = nsIDOMHTMLFormElement_QueryInterface(form, &IID_nsIDOMNode, (void**)&form_node);
+    nsIDOMHTMLFormElement_Release(form);
+    assert(nsres == NS_OK);
+
+    hres = get_node(form_node, TRUE, &node);
+    nsIDOMNode_Release(form_node);
+    if (FAILED(hres))
+        return hres;
+
+    TRACE("node %p\n", node);
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLFormElement, (void**)p);
+    node_release(node);
+    return hres;
+}
+
 static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
 {
     nsIDOMHTMLCollection *elements;
