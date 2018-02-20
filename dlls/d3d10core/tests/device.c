@@ -20,6 +20,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
+#include "wine/heap.h"
 #include "wine/test.h"
 #include <limits.h>
 
@@ -2567,7 +2568,7 @@ static void test_render_target_views(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, texture_desc.Width * texture_desc.Height * 4);
+    data = heap_alloc_zero(texture_desc.Width * texture_desc.Height * 4);
     ok(!!data, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -2608,7 +2609,7 @@ static void test_render_target_views(void)
         ID3D10Texture2D_Release(texture);
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
     release_test_context(&test_context);
 }
 
@@ -8421,7 +8422,7 @@ static void test_resource_access(void)
 
     data.SysMemPitch = 0;
     data.SysMemSlicePitch = 0;
-    data.pSysMem = HeapAlloc(GetProcessHeap(), 0, 10240);
+    data.pSysMem = heap_alloc(10240);
     ok(!!data.pSysMem, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -8568,7 +8569,7 @@ static void test_resource_access(void)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, (void *)data.pSysMem);
+    heap_free((void *)data.pSysMem);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -12760,7 +12761,7 @@ static void test_buffer_srv(void)
                 resource_data.SysMemSlicePitch = 0;
                 if (current_buffer->data_offset)
                 {
-                    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, current_buffer->byte_count);
+                    data = heap_alloc_zero(current_buffer->byte_count);
                     ok(!!data, "Failed to allocate memory.\n");
                     memcpy(data + current_buffer->data_offset, current_buffer->data,
                             current_buffer->byte_count - current_buffer->data_offset);
@@ -12772,7 +12773,7 @@ static void test_buffer_srv(void)
                 }
                 hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
                 ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#x.\n", i, hr);
-                HeapFree(GetProcessHeap(), 0, data);
+                heap_free(data);
             }
             else
             {
@@ -14401,7 +14402,7 @@ static void test_generate_mips(void)
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     ID3D10Device_PSSetSamplers(device, 0, 1, &sampler_state);
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * 32 * 32 * 32);
+    data = heap_alloc(sizeof(*data) * 32 * 32 * 32);
 
     for (z = 0; z < 32; ++z)
     {
@@ -14428,7 +14429,7 @@ static void test_generate_mips(void)
         }
     }
 
-    zero_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*zero_data) * 16 * 16 * 16);
+    zero_data = heap_alloc_zero(sizeof(*zero_data) * 16 * 16 * 16);
 
     for (i = 0; i < ARRAY_SIZE(resource_types); ++i)
     {
@@ -14590,8 +14591,8 @@ static void test_generate_mips(void)
     if (is_warp_device(device))
     {
         win_skip("Creating the next texture crashes WARP on some testbot boxes.\n");
-        HeapFree(GetProcessHeap(), 0, zero_data);
-        HeapFree(GetProcessHeap(), 0, data);
+        heap_free(zero_data);
+        heap_free(data);
         ID3D10SamplerState_Release(sampler_state);
         ID3D10PixelShader_Release(ps_3d);
         ID3D10PixelShader_Release(ps);
@@ -14689,8 +14690,8 @@ static void test_generate_mips(void)
 
     ID3D10Resource_Release(resource);
 
-    HeapFree(GetProcessHeap(), 0, zero_data);
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(zero_data);
+    heap_free(data);
 
     ID3D10SamplerState_Release(sampler_state);
     ID3D10PixelShader_Release(ps_3d);
