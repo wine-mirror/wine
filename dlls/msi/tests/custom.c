@@ -104,6 +104,10 @@ UINT WINAPI da_immediate(MSIHANDLE hinst)
 
     append_file(hinst, prop, "one");
 
+    ok(hinst, !MsiGetMode(hinst, MSIRUNMODE_SCHEDULED), "shouldn't be scheduled\n");
+    ok(hinst, !MsiGetMode(hinst, MSIRUNMODE_ROLLBACK), "shouldn't be rollback\n");
+    ok(hinst, !MsiGetMode(hinst, MSIRUNMODE_COMMIT), "shouldn't be commit\n");
+
     return ERROR_SUCCESS;
 }
 
@@ -111,10 +115,39 @@ UINT WINAPI da_deferred(MSIHANDLE hinst)
 {
     char prop[300];
     DWORD len = sizeof(prop);
+    LANGID lang;
+    UINT r;
 
-    MsiGetPropertyA(hinst, "CustomActionData", prop, &len);
+    /* Test that we were in fact deferred */
+    r = MsiGetPropertyA(hinst, "CustomActionData", prop, &len);
+    ok(hinst, r == ERROR_SUCCESS, "got %u\n", r);
+    ok(hinst, prop[0], "CustomActionData was empty\n");
 
     append_file(hinst, prop, "two");
+
+    /* Test available properties */
+    len = sizeof(prop);
+    r = MsiGetPropertyA(hinst, "ProductCode", prop, &len);
+    ok(hinst, r == ERROR_SUCCESS, "got %u\n", r);
+    ok(hinst, prop[0], "got %s\n", prop);
+
+    len = sizeof(prop);
+    r = MsiGetPropertyA(hinst, "UserSID", prop, &len);
+    ok(hinst, r == ERROR_SUCCESS, "got %u\n", r);
+    ok(hinst, prop[0], "got %s\n", prop);
+
+    len = sizeof(prop);
+    r = MsiGetPropertyA(hinst, "TESTPATH", prop, &len);
+    ok(hinst, r == ERROR_SUCCESS, "got %u\n", r);
+    todo_wine_ok(hinst, !prop[0], "got %s\n", prop);
+
+    /* Test modes */
+    ok(hinst, MsiGetMode(hinst, MSIRUNMODE_SCHEDULED), "should be scheduled\n");
+    ok(hinst, !MsiGetMode(hinst, MSIRUNMODE_ROLLBACK), "shouldn't be rollback\n");
+    ok(hinst, !MsiGetMode(hinst, MSIRUNMODE_COMMIT), "shouldn't be commit\n");
+
+    lang = MsiGetLanguage(hinst);
+    ok(hinst, lang != ERROR_INVALID_HANDLE, "MsiGetLanguage failed\n");
 
     return ERROR_SUCCESS;
 }
