@@ -70,7 +70,7 @@ sub get_bugs($)
 {
     my %bugs;
 
-    open QUERY, "-|" or exec "git", "log", "--notes=stable-notes", "--format=%N", "wine-" . get_current_version() . "..stable"
+    open QUERY, "-|" or exec "git", "log", "--notes=stable-notes", "--format=%N", "wine-" . get_current_version() . ".."
         or die "cannot query bug list";
     while (<QUERY>)
     {
