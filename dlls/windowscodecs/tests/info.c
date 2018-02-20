@@ -109,8 +109,8 @@ static void test_decoder_info(void)
             1
         },
     };
+    IWICBitmapDecoderInfo *decoder_info, *decoder_info2;
     IWICComponentInfo *info;
-    IWICBitmapDecoderInfo *decoder_info;
     HRESULT hr;
     ULONG len;
     WCHAR value[256];
@@ -122,8 +122,33 @@ static void test_decoder_info(void)
     for (i = 0; i < sizeof(decoder_info_tests)/sizeof(decoder_info_tests[0]); i++)
     {
         struct decoder_info_test *test = &decoder_info_tests[i];
+        IWICBitmapDecoder *decoder, *decoder2;
         WCHAR extensionsW[64];
         WCHAR mimetypeW[64];
+
+        hr = CoCreateInstance(test->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IWICBitmapDecoder, (void **)&decoder);
+        ok(SUCCEEDED(hr), "Failed to create decoder, hr %#x.\n", hr);
+
+        decoder_info = NULL;
+        hr = IWICBitmapDecoder_GetDecoderInfo(decoder, &decoder_info);
+        ok(hr == S_OK || broken(IsEqualCLSID(&CLSID_WICBmpDecoder, test->clsid) && FAILED(hr)) /* Fails on Windows */,
+            "%u: failed to get decoder info, hr %#x.\n", i, hr);
+
+        if (hr == S_OK)
+        {
+            decoder_info2 = NULL;
+            hr = IWICBitmapDecoder_GetDecoderInfo(decoder, &decoder_info2);
+            ok(hr == S_OK, "Failed to get decoder info, hr %#x.\n", hr);
+        todo_wine
+            ok(decoder_info == decoder_info2, "Unexpected decoder info instance.\n");
+
+            hr = IWICBitmapDecoderInfo_QueryInterface(decoder_info, &IID_IWICBitmapDecoder, (void **)&decoder2);
+            ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+            IWICBitmapDecoderInfo_Release(decoder_info);
+            IWICBitmapDecoderInfo_Release(decoder_info2);
+        }
+        IWICBitmapDecoder_Release(decoder);
 
         MultiByteToWideChar(CP_ACP, 0, test->mimetype, -1, mimetypeW, sizeof(mimetypeW)/sizeof(mimetypeW[0]));
         MultiByteToWideChar(CP_ACP, 0, test->extensions, -1, extensionsW, sizeof(extensionsW)/sizeof(extensionsW[0]));
