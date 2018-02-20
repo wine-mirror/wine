@@ -1594,11 +1594,11 @@ static HRESULT WINAPI HTMLDocument_get_onselectstart(IHTMLDocument2 *iface, VARI
 }
 
 static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG x, LONG y,
-                                                        IHTMLElement **elementHit)
+                                                    IHTMLElement **elementHit)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
     nsIDOMElement *nselem;
-    HTMLDOMNode *node;
+    HTMLElement *element;
     nsresult nsres;
     HRESULT hres;
 
@@ -1615,14 +1615,13 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
         return S_OK;
     }
 
-    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_element(nselem, &element);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)elementHit);
-    node_release(node);
-    return hres;
+    *elementHit = &element->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)
