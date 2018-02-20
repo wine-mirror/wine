@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -292,10 +291,10 @@ static void test_ownerdraw(void)
     RECT rc;
 
     parent = create_parent();
-    assert(parent);
+    ok(parent != NULL, "Failed to create parent window.\n");
 
     hLB = create_listbox(LBS_OWNERDRAWFIXED | WS_CHILD | WS_VISIBLE, parent);
-    assert(hLB);
+    ok(hLB != NULL, "Failed to create listbox window.\n");
 
     SetForegroundWindow(hLB);
     UpdateWindow(hLB);
@@ -334,7 +333,7 @@ static void test_LB_SELITEMRANGE(void)
     INT ret;
 
     hLB = create_listbox(LBS_EXTENDEDSEL, 0);
-    assert(hLB);
+    ok(hLB != NULL, "Failed to create listbox window.\n");
 
     listbox_query(hLB, &answer);
     listbox_test_query(test_nosel, answer);
@@ -594,7 +593,7 @@ static void test_listbox_LB_DIR(void)
      */
     hList = CreateWindowA( WC_LISTBOXA, "list test", WS_VISIBLE|WS_POPUP,
                           1, 1, 600, 100, NULL, NULL, NULL, NULL );
-    assert(hList);
+    ok(hList != NULL, "Failed to create listbox window.\n");
 
     /* Test for standard usage */
 
@@ -1076,6 +1075,7 @@ static void test_listbox_dlgdir(void)
     char * p;
     char driveletter;
     HANDLE file;
+    BOOL ret;
 
     file = CreateFileA( "wtest1.tmp.c", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d\n", GetLastError());
@@ -1088,7 +1088,8 @@ static void test_listbox_dlgdir(void)
      */
 
     hInst = GetModuleHandleA(0);
-    if (!RegisterListboxWindowClass(hInst)) assert(0);
+    ret = RegisterListboxWindowClass(hInst);
+    ok(ret, "Failed to register test class.\n");
 
     hWnd = CreateWindowA("ListboxContainerClass", "ListboxContainerClass",
                     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
