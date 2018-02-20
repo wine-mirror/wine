@@ -12143,34 +12143,148 @@ static void test_put_data(void)
        type++;
     }
 
-    /* \r\n sequence is never escaped */
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_newline_normalization(void)
+{
+    const struct msxmlsupported_data_t *table = domdoc_support_data;
+    IXMLDOMDocument *doc;
+    IXMLDOMText *text;
+    IXMLDOMNode *node;
+    VARIANT v;
+    VARIANT_BOOL b;
+    BSTR s;
+    HRESULT hr;
+    LONG length;
+
     V_VT(&v) = VT_I2;
     V_I2(&v) = NODE_TEXT;
 
-    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), NULL, &node);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    while (table->clsid)
+    {
+        if (!is_clsid_supported(table->clsid, &IID_IXMLDOMDocument))
+        {
+            table++;
+            continue;
+        }
 
-    IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXMLDOMText_put_data(text, _bstr_("\r\n"));
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), NULL, &node);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXMLDOMText_get_data(text, &get_data);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+
+        /* \r\n is normalized to \n and back to \r\n */
+
+        hr = IXMLDOMText_put_data(text, _bstr_("\r\n"));
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMText_get_data(text, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("\n")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        hr = IXMLDOMText_get_length(text, &length);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(length == 1, "got %d, expected 1\n", length);
+
+        hr = IXMLDOMText_get_xml(text, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("\r\n")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        /* \r\r\n is normalized to \n\n and back to \r\n\r\n */
+
+        hr = IXMLDOMText_put_data(text, _bstr_("\r\r\n"));
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMText_get_data(text, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("\n\n")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        hr = IXMLDOMText_get_length(text, &length);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(length == 2, "got %d, expected 2\n", length);
+
+        hr = IXMLDOMText_get_xml(text, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("\r\n\r\n")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        /* the same normalizations are applied when loading a document as a whole */
+
+        hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\"?><root>foo\n\r\n\r\r\nbar</root>"), &b);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMDocument_get_text(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        hr = IXMLDOMDocument_get_xml(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n")),
+           "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        /* even if xml:space="preserve" */
+
+        hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\"?>"
+                                                 "<root xml:space=\"preserve\">foo\n\r\n\r\r\nbar</root>"), &b);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMDocument_get_text(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        hr = IXMLDOMDocument_get_xml(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?>\r\n"
+                               "<root xml:space=\"preserve\">foo\r\n\r\n\r\n\r\nbar</root>\r\n")),
+           "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        /* or preserveWhiteSpace is set */
+
+        hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\"?><root>foo\n\r\n\r\r\nbar</root>"), &b);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IXMLDOMDocument_get_text(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+
+        hr = IXMLDOMDocument_get_xml(doc, &s);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (IsEqualGUID(table->clsid, &CLSID_DOMDocument60))
+        {
+            /* DOMDocument60 does the newline normalization but does not insert line breaks around the root node */
 todo_wine
-    ok(!lstrcmpW(get_data, _bstr_("\n")), "got %s\n", wine_dbgstr_w(get_data));
-    SysFreeString(get_data);
+            ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?><root>foo\r\n\r\n\r\n\r\nbar</root>")),
+               "got %s\n", wine_dbgstr_w(s));
+        }
+        else
+        {
+            ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n")),
+               "got %s\n", wine_dbgstr_w(s));
+        }
+        SysFreeString(s);
 
-    hr = IXMLDOMText_get_xml(text, &get_data);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(get_data, _bstr_("\r\n")), "got %s\n", wine_dbgstr_w(get_data));
-    SysFreeString(get_data);
-
-    IXMLDOMText_Release(text);
-    IXMLDOMNode_Release(node);
-
-    IXMLDOMDocument_Release(doc);
-    free_bstrs();
+        IXMLDOMText_Release(text);
+        IXMLDOMNode_Release(node);
+        IXMLDOMDocument_Release(doc);
+        free_bstrs();
+        table++;
+    }
 }
 
 static void test_putref_schemas(void)
@@ -12754,6 +12868,7 @@ START_TEST(domdoc)
     test_nodeValue();
     test_get_namespaces();
     test_put_data();
+    test_newline_normalization();
     test_putref_schemas();
     test_namedmap_newenum();
     test_xmlns_attribute();
