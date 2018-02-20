@@ -683,7 +683,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
                                         dispex_compat_mode(&node->event_target.dispex));
 }
 
-IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, nsIDOMNodeList *nslist)
+IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList *nslist, compat_mode_t compat_mode)
 {
     UINT32 length = 0, i;
     HTMLDOMNode *node;
@@ -715,10 +715,10 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, n
         buf.buf = NULL;
     }
 
-    return HTMLElementCollection_Create(buf.buf, buf.len, doc->document_mode);
+    return HTMLElementCollection_Create(buf.buf, buf.len, compat_mode);
 }
 
-IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, nsIDOMHTMLCollection *nscol)
+IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection *nscol, compat_mode_t compat_mode)
 {
     UINT32 length = 0, i;
     elem_vector_t buf;
@@ -751,7 +751,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, ns
         return NULL;
     }
 
-    return HTMLElementCollection_Create(buf.buf, buf.len, doc->document_mode);
+    return HTMLElementCollection_Create(buf.buf, buf.len, compat_mode);
 }
 
 HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)

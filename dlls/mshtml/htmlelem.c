@@ -1998,7 +1998,7 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
         return E_FAIL;
     }
 
-    *p = (IDispatch*)create_collection_from_nodelist(This->node.doc, nsnode_list);
+    *p = (IDispatch*)create_collection_from_nodelist(nsnode_list, This->node.doc->document_mode);
 
     nsIDOMNodeList_Release(nsnode_list);
     return S_OK;
@@ -3185,7 +3185,7 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
 
     if(!This->dom_element) {
-        *pelColl = create_collection_from_htmlcol(This->node.doc, NULL);
+        *pelColl = create_collection_from_htmlcol(NULL, This->node.doc->document_mode);
         return S_OK;
     }
 
@@ -3197,7 +3197,7 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
         return E_FAIL;
     }
 
-    *pelColl = create_collection_from_htmlcol(This->node.doc, nscol);
+    *pelColl = create_collection_from_htmlcol(nscol, dispex_compat_mode(&This->node.event_target.dispex));
     nsIDOMHTMLCollection_Release(nscol);
     return S_OK;
 }
@@ -4263,7 +4263,7 @@ static HRESULT WINAPI HTMLElement6_getElementsByClassName(IHTMLElement6 *iface, 
         }
     }
 
-    *pel = create_collection_from_htmlcol(This->node.doc, nscol);
+    *pel = create_collection_from_htmlcol(nscol, dispex_compat_mode(&This->node.event_target.dispex));
     nsIDOMHTMLCollection_Release(nscol);
     return S_OK;
 }

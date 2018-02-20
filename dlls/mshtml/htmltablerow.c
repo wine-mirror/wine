@@ -299,7 +299,7 @@ static HRESULT WINAPI HTMLTableRow_get_cells(IHTMLTableRow *iface, IHTMLElementC
         return E_FAIL;
     }
 
-    *p = create_collection_from_htmlcol(This->element.node.doc, nscol);
+    *p = create_collection_from_htmlcol(nscol, dispex_compat_mode(&This->element.node.event_target.dispex));
 
     nsIDOMHTMLCollection_Release(nscol);
     return S_OK;

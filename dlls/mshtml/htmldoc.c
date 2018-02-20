@@ -354,7 +354,7 @@ static HRESULT WINAPI HTMLDocument_get_images(IHTMLDocument2 *iface, IHTMLElemen
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -386,7 +386,7 @@ static HRESULT WINAPI HTMLDocument_get_applets(IHTMLDocument2 *iface, IHTMLEleme
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -418,7 +418,7 @@ static HRESULT WINAPI HTMLDocument_get_links(IHTMLDocument2 *iface, IHTMLElement
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -450,7 +450,7 @@ static HRESULT WINAPI HTMLDocument_get_forms(IHTMLDocument2 *iface, IHTMLElement
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -482,7 +482,7 @@ static HRESULT WINAPI HTMLDocument_get_anchors(IHTMLDocument2 *iface, IHTMLEleme
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -567,7 +567,7 @@ static HRESULT WINAPI HTMLDocument_get_scripts(IHTMLDocument2 *iface, IHTMLEleme
     }
 
     if(nscoll) {
-        *p = create_collection_from_htmlcol(This->doc_node, nscoll);
+        *p = create_collection_from_htmlcol(nscoll, This->doc_node->document_mode);
         nsIDOMHTMLCollection_Release(nscoll);
     }
 
@@ -2377,7 +2377,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
         return E_FAIL;
     }
 
-    *ppelColl = create_collection_from_nodelist(This->doc_node, node_list);
+    *ppelColl = create_collection_from_nodelist(node_list, This->doc_node->document_mode);
     nsIDOMNodeList_Release(node_list);
     return S_OK;
 }
@@ -2452,7 +2452,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
     }
 
 
-    *pelColl = create_collection_from_nodelist(This->doc_node, nslist);
+    *pelColl = create_collection_from_nodelist(nslist, This->doc_node->document_mode);
     nsIDOMNodeList_Release(nslist);
 
     return S_OK;
@@ -3368,7 +3368,7 @@ static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface
     }
 
 
-    *pel = create_collection_from_nodelist(This->doc_node, nslist);
+    *pel = create_collection_from_nodelist(nslist, This->doc_node->document_mode);
     nsIDOMNodeList_Release(nslist);
     return S_OK;
 }
