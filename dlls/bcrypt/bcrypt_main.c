@@ -39,6 +39,7 @@
 #include "bcrypt_internal.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 
@@ -294,7 +295,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(alg = HeapAlloc( GetProcessHeap(), 0, sizeof(*alg) ))) return STATUS_NO_MEMORY;
+    if (!(alg = heap_alloc( sizeof(*alg) ))) return STATUS_NO_MEMORY;
     alg->hdr.magic = MAGIC_ALG;
     alg->id        = alg_id;
     alg->hmac      = flags & BCRYPT_ALG_HANDLE_HMAC_FLAG;
@@ -310,7 +311,7 @@ NTSTATUS WINAPI BCryptCloseAlgorithmProvider( BCRYPT_ALG_HANDLE handle, DWORD fl
     TRACE( "%p, %08x\n", handle, flags );
 
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
-    HeapFree( GetProcessHeap(), 0, alg );
+    heap_free( alg );
     return STATUS_SUCCESS;
 }
 
@@ -630,7 +631,7 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDL
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     if (object) FIXME( "ignoring object buffer\n" );
 
-    if (!(hash = HeapAlloc( GetProcessHeap(), 0, sizeof(*hash) ))) return STATUS_NO_MEMORY;
+    if (!(hash = heap_alloc( sizeof(*hash) ))) return STATUS_NO_MEMORY;
     hash->hdr.magic = MAGIC_HASH;
     hash->alg_id    = alg->id;
     hash->hmac      = alg->hmac;
@@ -662,7 +663,7 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDL
 end:
     if (status != STATUS_SUCCESS)
     {
-        HeapFree( GetProcessHeap(), 0, hash );
+        heap_free( hash );
         return status;
     }
 
@@ -682,7 +683,7 @@ NTSTATUS WINAPI BCryptDuplicateHash( BCRYPT_HASH_HANDLE handle, BCRYPT_HASH_HAND
     if (!handle_copy) return STATUS_INVALID_PARAMETER;
     if (object) FIXME( "ignoring object buffer\n" );
 
-    if (!(hash_copy = HeapAlloc( GetProcessHeap(), 0, sizeof(*hash_copy) )))
+    if (!(hash_copy = heap_alloc( sizeof(*hash_copy) )))
         return STATUS_NO_MEMORY;
 
     memcpy( hash_copy, hash_orig, sizeof(*hash_orig) );
@@ -698,7 +699,7 @@ NTSTATUS WINAPI BCryptDestroyHash( BCRYPT_HASH_HANDLE handle )
     TRACE( "%p\n", handle );
 
     if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
-    HeapFree( GetProcessHeap(), 0, hash );
+    heap_free( hash );
     return STATUS_SUCCESS;
 }
 
@@ -804,7 +805,7 @@ static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, 
     }
 
     if (!(key->block_size = get_block_size( id ))) return STATUS_INVALID_PARAMETER;
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, secret_len ))) return STATUS_NO_MEMORY;
+    if (!(buffer = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
     memcpy( buffer, secret, secret_len );
 
     key->alg_id     = id;
@@ -892,8 +893,8 @@ static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_le
 static NTSTATUS key_destroy( struct key *key )
 {
     if (key->handle) pgnutls_cipher_deinit( key->handle );
-    HeapFree( GetProcessHeap(), 0, key->secret );
-    HeapFree( GetProcessHeap(), 0, key );
+    heap_free( key->secret );
+    heap_free( key );
     return STATUS_SUCCESS;
 }
 #elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
@@ -923,7 +924,7 @@ static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, 
     }
 
     if (!(key->block_size = get_block_size( id ))) return STATUS_INVALID_PARAMETER;
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, secret_len ))) return STATUS_NO_MEMORY;
+    if (!(buffer = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
     memcpy( buffer, secret, secret_len );
 
     key->alg_id      = id;
@@ -1000,8 +1001,8 @@ static NTSTATUS key_destroy( struct key *key )
 {
     if (key->ref_encrypt) CCCryptorRelease( key->ref_encrypt );
     if (key->ref_decrypt) CCCryptorRelease( key->ref_decrypt );
-    HeapFree( GetProcessHeap(), 0, key->secret );
-    HeapFree( GetProcessHeap(), 0, key );
+    heap_free( key->secret );
+    heap_free( key );
     return STATUS_SUCCESS;
 }
 #else
@@ -1057,12 +1058,12 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     if (object) FIXME( "ignoring object buffer\n" );
 
-    if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) ))) return STATUS_NO_MEMORY;
+    if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic = MAGIC_KEY;
 
     if ((status = key_init( key, alg->id, secret, secret_len )))
     {
-        HeapFree( GetProcessHeap(), 0, key );
+        heap_free( key );
         return status;
     }
 
@@ -1128,11 +1129,11 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
 
     if (flags & BCRYPT_BLOCK_PADDING)
     {
-        if (!(buf = HeapAlloc( GetProcessHeap(), 0, key->block_size ))) return STATUS_NO_MEMORY;
+        if (!(buf = heap_alloc( key->block_size ))) return STATUS_NO_MEMORY;
         memcpy( buf, src, bytes_left );
         memset( buf + bytes_left, key->block_size - bytes_left, key->block_size - bytes_left );
         status = key_encrypt( key, buf, key->block_size, dst, key->block_size );
-        HeapFree( GetProcessHeap(), 0, buf );
+        heap_free( buf );
     }
 
     return status;
@@ -1189,7 +1190,7 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
 
     if (flags & BCRYPT_BLOCK_PADDING)
     {
-        if (!(buf = HeapAlloc( GetProcessHeap(), 0, key->block_size ))) return STATUS_NO_MEMORY;
+        if (!(buf = heap_alloc( key->block_size ))) return STATUS_NO_MEMORY;
         status = key_decrypt( key, src, key->block_size, buf, key->block_size );
         if (!status && buf[ key->block_size - 1 ] <= key->block_size)
         {
@@ -1199,7 +1200,7 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         }
         else
             status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
-        HeapFree( GetProcessHeap(), 0, buf );
+        heap_free( buf );
     }
 
     return status;
