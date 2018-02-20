@@ -1300,12 +1300,12 @@ static const char ft_install_exec_seq_dat[] =
     "InstallFinalize\t\t1500\n";
 
 static const char da_custom_action_dat[] =
-    "Action\tType\tSource\tTarget\tISComments\n"
-    "s72\ti2\tS64\tS0\tS255\n"
+    "Action\tType\tSource\tTarget\n"
+    "s72\ti2\tS64\tS0\n"
     "CustomAction\tAction\n"
-    "deferred\t1074\tCMDEXE\t/c if exist msitest (exit 0) else (exit 1)\t\n"
-    "immediate\t50\tCMDEXE\t/c mkdir msitest\t\n"
-    "cleanup\t50\tCMDEXE\t/c rmdir msitest\t\n";
+    "setprop\t51\tdeferred\t[TESTPATH]\n"
+    "immediate\t1\tcustom.dll\tda_immediate\n"
+    "deferred\t1025\tcustom.dll\tda_deferred\n";
 
 static const char da_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
@@ -1315,10 +1315,10 @@ static const char da_install_exec_seq_dat[] =
     "FileCost\t\t300\n"
     "CostFinalize\t\t400\n"
     "InstallInitialize\t\t500\n"
-    "deferred\t\t600\n"
-    "immediate\t\t700\n"
-    "InstallFinalize\t\t1100\n"
-    "cleanup\t\t1200\n";
+    "setprop\t\t600\n"
+    "deferred\t\t700\n"
+    "immediate\t\t800\n"
+    "InstallFinalize\t\t1100\n";
 
 typedef struct _msi_table
 {
@@ -6042,22 +6042,44 @@ static void test_feature_tree(void)
     DeleteFileA( msifile );
 }
 
+static void check_file_matches(const char *filename, const char *text)
+{
+    char buffer[200];
+    HANDLE file;
+    DWORD size;
+
+    file = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ReadFile(file, buffer, sizeof(buffer), &size, NULL);
+    ok(size == strlen(text) && !memcmp(buffer, text, size), "got %.*s\n", size, buffer);
+    CloseHandle(file);
+}
+
 static void test_deferred_action(void)
 {
+    char path[200], file[200], buffer[200];
     UINT r;
 
+    GetTempPathA(sizeof(path), path);
+    GetTempFileNameA(path, "da", 0, file);
+    sprintf(buffer, "TESTPATH=\"%s\"", file);
+
     create_database(msifile, da_tables, sizeof(da_tables) / sizeof(da_tables[0]));
+    add_custom_dll();
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    r = MsiInstallProductA(msifile, "CMDEXE=\"cmd.exe\"");
+    r = MsiInstallProductA(msifile, buffer);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
         goto error;
     }
-todo_wine
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+todo_wine
+    check_file_matches(file, "onetwo");
+
+    ok(DeleteFileA(file), "Directory not created\n");
 
 error:
     DeleteFileA(msifile);

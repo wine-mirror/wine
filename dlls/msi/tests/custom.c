@@ -83,3 +83,38 @@ UINT WINAPI test_retval(MSIHANDLE hinst)
     sscanf(prop, "%u", &retval);
     return retval;
 }
+
+static void append_file(MSIHANDLE hinst, const char *filename, const char *text)
+{
+    DWORD size;
+    HANDLE file = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(hinst, file != INVALID_HANDLE_VALUE, "CreateFile failed, error %u\n", GetLastError());
+
+    SetFilePointer(file, 0, NULL, FILE_END);
+    WriteFile(file, text, strlen(text), &size, NULL);
+    CloseHandle(file);
+}
+
+UINT WINAPI da_immediate(MSIHANDLE hinst)
+{
+    char prop[300];
+    DWORD len = sizeof(prop);
+
+    MsiGetPropertyA(hinst, "TESTPATH", prop, &len);
+
+    append_file(hinst, prop, "one");
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI da_deferred(MSIHANDLE hinst)
+{
+    char prop[300];
+    DWORD len = sizeof(prop);
+
+    MsiGetPropertyA(hinst, "CustomActionData", prop, &len);
+
+    append_file(hinst, prop, "two");
+
+    return ERROR_SUCCESS;
+}
