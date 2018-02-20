@@ -14590,6 +14590,8 @@ static void test_generate_mips(void)
     if (is_warp_device(device))
     {
         win_skip("Creating the next texture crashes WARP on some testbot boxes.\n");
+        HeapFree(GetProcessHeap(), 0, zero_data);
+        HeapFree(GetProcessHeap(), 0, data);
         ID3D10SamplerState_Release(sampler_state);
         ID3D10PixelShader_Release(ps_3d);
         ID3D10PixelShader_Release(ps);
@@ -14687,6 +14689,7 @@ static void test_generate_mips(void)
 
     ID3D10Resource_Release(resource);
 
+    HeapFree(GetProcessHeap(), 0, zero_data);
     HeapFree(GetProcessHeap(), 0, data);
 
     ID3D10SamplerState_Release(sampler_state);
