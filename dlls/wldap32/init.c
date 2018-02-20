@@ -62,10 +62,9 @@ static char **split_hostnames( const char *hostnames )
         p++;
     }
 
-    res = HeapAlloc( GetProcessHeap(), 0, (i + 1) * sizeof(char *) );
-    if (!res)
+    if (!(res = heap_alloc( (i + 1) * sizeof(char *) )))
     {
-        HeapFree( GetProcessHeap(), 0, str );
+        heap_free( str );
         return NULL;
     }
 
@@ -74,7 +73,7 @@ static char **split_hostnames( const char *hostnames )
 
     q = p;
     i = 0;
-    
+
     while (*p)
     {
         if (p[1] != '\0')
@@ -85,7 +84,7 @@ static char **split_hostnames( const char *hostnames )
                 res[i] = strdupU( q );
                 if (!res[i]) goto oom;
                 i++;
-            
+
                 while (isspace( *p )) p++;
                 q = p;
             }
@@ -100,14 +99,14 @@ static char **split_hostnames( const char *hostnames )
     }
     res[i] = NULL;
 
-    HeapFree( GetProcessHeap(), 0, str );
+    heap_free( str );
     return res;
 
 oom:
     while (i > 0) strfreeU( res[--i] );
 
-    HeapFree( GetProcessHeap(), 0, res );
-    HeapFree( GetProcessHeap(), 0, str );
+    heap_free( res );
+    heap_free( str );
 
     return NULL;
 }
@@ -154,9 +153,7 @@ static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnum
     }
 
     size += (i - 1) * strlen( sep );
- 
-    res = HeapAlloc( GetProcessHeap(), 0, size + 1 );
-    if (!res) return NULL;
+    if (!(res = heap_alloc( size + 1 ))) return NULL;
 
     p = res;
     for (v = hostnames; *v; v++)

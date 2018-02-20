@@ -156,8 +156,7 @@ static char *bv2str( struct berval *bv )
     char *str = NULL;
     unsigned int len = bv->bv_len;
 
-    str = HeapAlloc( GetProcessHeap(), 0, len + 1 );
-    if (str)
+    if ((str = heap_alloc( len + 1 )))
     {
         memcpy( str, bv->bv_val, len );
         str[len] = '\0';
@@ -176,8 +175,7 @@ static char **bv2str_array( struct berval **bv )
         len++;
         p++;
     }
-    str = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(char *) );
-    if (!str) return NULL;
+    if (!(str = heap_alloc( (len + 1) * sizeof(char *) ))) return NULL;
 
     p = bv;
     while (*p)
@@ -185,8 +183,8 @@ static char **bv2str_array( struct berval **bv )
         str[i] = bv2str( *p );
         if (!str[i])
         {
-            while (i > 0) HeapFree( GetProcessHeap(), 0, str[--i] );
-            HeapFree( GetProcessHeap(), 0, str );
+            while (i > 0) heap_free( str[--i] );
+            heap_free( str );
             return NULL;
         } 
         i++;
