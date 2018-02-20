@@ -892,6 +892,20 @@ static void get_device_adapter_desc(ID3D10Device *device, DXGI_ADAPTER_DESC *ada
     IDXGIAdapter_Release(adapter);
 }
 
+static void print_adapter_info(void)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    ID3D10Device *device;
+
+    if (!(device = create_device()))
+        return;
+
+    get_device_adapter_desc(device, &adapter_desc);
+    trace("Adapter: %s, %04x:%04x.\n", wine_dbgstr_w(adapter_desc.Description),
+            adapter_desc.VendorId, adapter_desc.DeviceId);
+    ID3D10Device_Release(device);
+}
+
 static BOOL is_warp_device(ID3D10Device *device)
 {
     DXGI_ADAPTER_DESC adapter_desc;
@@ -14852,6 +14866,8 @@ done:
 
 START_TEST(device)
 {
+    print_adapter_info();
+
     test_feature_level();
     test_device_interfaces();
     test_create_texture2d();
