@@ -19,7 +19,7 @@
 #include <assert.h>
 #define COBJMACROS
 #include "initguid.h"
-#include "d3d11.h"
+#include "d3d11_4.h"
 #include "wine/test.h"
 #include <limits.h>
 
@@ -862,12 +862,61 @@ static void check_texture_uvec4_(unsigned int line, ID3D10Texture2D *texture,
         check_texture_sub_resource_uvec4_(line, texture, sub_resource_idx, NULL, expected_value);
 }
 
+static BOOL use_warp_adapter;
+static unsigned int use_adapter_idx;
+
+static IDXGIAdapter *create_adapter(void)
+{
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    if (!use_warp_adapter && !use_adapter_idx)
+        return NULL;
+
+    if (FAILED(hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory)))
+    {
+        trace("Failed to create IDXGIFactory, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    adapter = NULL;
+    if (use_warp_adapter)
+    {
+        if (SUCCEEDED(hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4)))
+        {
+            hr = IDXGIFactory4_EnumWarpAdapter(factory4, &IID_IDXGIAdapter, (void **)&adapter);
+            IDXGIFactory4_Release(factory4);
+        }
+        else
+        {
+            trace("Failed to get IDXGIFactory4, hr %#x.\n", hr);
+        }
+    }
+    else
+    {
+        hr = IDXGIFactory_EnumAdapters(factory, use_adapter_idx, &adapter);
+    }
+    IDXGIFactory_Release(factory);
+    if (FAILED(hr))
+        trace("Failed to get adapter, hr %#x.\n", hr);
+    return adapter;
+}
+
 static ID3D10Device *create_device(void)
 {
+    IDXGIAdapter *adapter;
     ID3D10Device *device;
+    HRESULT hr;
 
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+    adapter = create_adapter();
+    hr = D3D10CreateDevice(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device);
+    if (adapter)
+        IDXGIAdapter_Release(adapter);
+    if (SUCCEEDED(hr))
         return device;
+
     if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
         return device;
     if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
@@ -14866,6 +14915,18 @@ done:
 
 START_TEST(device)
 {
+    unsigned int argc, i;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
+    for (i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--warp"))
+            use_warp_adapter = TRUE;
+        else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
+            use_adapter_idx = atoi(argv[++i]);
+    }
+
     print_adapter_info();
 
     test_feature_level();
