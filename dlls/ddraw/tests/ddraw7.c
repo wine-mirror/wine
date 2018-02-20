@@ -13640,7 +13640,7 @@ static void test_map_synchronisation(void)
     tri_count = ((tri_count + 2 + 3) & ~3) - 2;
     vb_desc.dwNumVertices = tri_count + 2;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &buffer, 0);
         ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
