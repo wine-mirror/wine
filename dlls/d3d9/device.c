@@ -2401,7 +2401,7 @@ static HRESULT WINAPI d3d9_device_GetTextureStageState(IDirect3DDevice9Ex *iface
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, state, value);
 
-    if (state >= sizeof(tss_lookup) / sizeof(*tss_lookup))
+    if (state >= ARRAY_SIZE(tss_lookup))
     {
         WARN("Invalid state %#x passed.\n", state);
         return D3D_OK;
@@ -2421,7 +2421,7 @@ static HRESULT WINAPI d3d9_device_SetTextureStageState(IDirect3DDevice9Ex *iface
 
     TRACE("iface %p, stage %u, state %#x, value %#x.\n", iface, stage, state, value);
 
-    if (state >= sizeof(tss_lookup) / sizeof(*tss_lookup))
+    if (state >= ARRAY_SIZE(tss_lookup))
     {
         WARN("Invalid state %#x passed.\n", state);
         return D3D_OK;

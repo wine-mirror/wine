@@ -344,7 +344,7 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9 *d3d9_elem
 
     for (i = 0; i < count; ++i)
     {
-        if (d3d9_elements[i].Type >= (sizeof(d3d_dtype_lookup) / sizeof(*d3d_dtype_lookup)))
+        if (d3d9_elements[i].Type >= ARRAY_SIZE(d3d_dtype_lookup))
         {
             WARN("Invalid element type %#x.\n", d3d9_elements[i].Type);
             heap_free(*wined3d_elements);
