@@ -2638,14 +2638,11 @@ static void test_ScriptTextOut(HDC hdc)
     HRESULT         hr;
 
     int             cInChars;
-    int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
 
     SCRIPT_CACHE    psc;
-    int             cChars;
-    int             cMaxGlyphs;
     unsigned short  pwOutGlyphs1[256];
     WORD            pwLogClust[256];
     SCRIPT_VISATTR  psva[256];
@@ -2655,93 +2652,69 @@ static void test_ScriptTextOut(HDC hdc)
     ABC             pABC[256];
     RECT            rect;
     int             piX;
-    int             iCP = 1;
-    BOOL            fTrailing = FALSE;
-    SCRIPT_LOGATTR  *psla;
     SCRIPT_LOGATTR  sla[256];
 
-    /* This is a valid test that will cause parsing to take place                             */
+    /* This is a valid test that will cause parsing to take place. */
+    cInChars = lstrlenW(TestItem1);
+    hr = ScriptItemize(TestItem1, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* This test is for the interim operation of ScriptItemize() where only
+     * one SCRIPT_ITEM is returned. */
+    ok(pcItems == 1, "Got unexpected item count %d.\n", pcItems);
+    ok(pItem[0].iCharPos == 0, "Got unexpected character position %d.\n", pItem[0].iCharPos);
+    ok(pItem[1].iCharPos == cInChars, "Got unexpected character position %d, expected %d.\n",
+            pItem[1].iCharPos, cInChars);
+
+    psc = NULL;
     cInChars = 5;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
-    /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
-     *  returned.                                                                             */
-    ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
-    if (pcItems > 0)
-        ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
-            "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
-            pItem[0].iCharPos, cInChars, pItem[1].iCharPos);
+    hr = ScriptShape(hdc, &psc, TestItem1, cInChars, ARRAY_SIZE(pwOutGlyphs1),
+            &pItem[0].a, pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!psc, "Got unexpected psc %p.\n", psc);
+    ok(pcGlyphs == cInChars, "Got unexpected glyph count %d, expected %d.\n", pcGlyphs, cInChars);
 
-    /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
-     * ie. ScriptItemize has succeeded and that pItem has been set                            */
-    cInChars = 5;
-    if (hr == S_OK) {
-        psc = NULL;                                   /* must be null on first call           */
-        cChars = cInChars;
-        cMaxGlyphs = 256;
-        hr = ScriptShape(hdc, &psc, TestItem1, cChars,
-                         cMaxGlyphs, &pItem[0].a,
-                         pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
-        ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-        ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
-        if (hr == S_OK) {
-            /* Note hdc is needed as glyph info is not yet in psc                  */
-            hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
-                             pGoffset, pABC);
-            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
-            ScriptFreeCache(&psc);              /* Get rid of psc for next test set */
-            ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+    /* Note hdc is needed as glyph info is not yet in psc. */
+    hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs,
+            psva, &pItem[0].a, piAdvance, pGoffset, pABC);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* Get rid of psc for next test set. */
+    ScriptFreeCache(&psc);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
 
-            hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
-            ok (hr == E_INVALIDARG, "Should return 0 not (%08x)\n", hr);
+    hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-            hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok( hr == E_INVALIDARG, "(NULL,NULL,TestItem1, cInChars, dwFlags, pwOutGlyphs3), "
-                                    "expected E_INVALIDARG, got %08x\n", hr);
+    hr = ScriptTextOut(NULL, NULL, 0, 0, 0, NULL, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-            /* Set psc to NULL, to be able to check if a pointer is returned in psc */
-            psc = NULL;
-            hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0,
-                               NULL, NULL, NULL);
-            ok( hr == E_INVALIDARG, "(NULL,&psc,NULL,0,0,0,NULL,), expected E_INVALIDARG, "
-                                    "got %08x\n", hr);
-            ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+    hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
 
-            /* hdc is required for this one rather than the usual optional          */
-            psc = NULL;
-            hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok( hr == E_INVALIDARG, "(NULL,&psc,), expected E_INVALIDARG, got %08x\n", hr);
-            ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+    /* hdc is required. */
+    hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
+    hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-            /* Set that it returns 0 status */
-            hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
+    /* Test Rect Rgn is acceptable. */
+    SetRect(&rect, 10, 10, 40, 20);
+    hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-            /* Test Rect Rgn is acceptable */
-            SetRect(&rect, 10, 10, 40, 20);
-            hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
+    hr = ScriptCPtoX(1, FALSE, cInChars, pcGlyphs, pwLogClust, psva, piAdvance, &pItem[0].a, &piX);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-            iCP = 1;
-            hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
-                            (const SCRIPT_VISATTR *) &psva, (const int *)&piAdvance, &pItem[0].a, &piX);
-            ok(hr == S_OK, "ScriptCPtoX Stub should return S_OK not %08x\n", hr);
+    hr = ScriptBreak(TestItem1, cInChars, &pItem[0].a, sla);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-            psla = (SCRIPT_LOGATTR *)&sla;
-            hr = ScriptBreak(TestItem1, cChars, &pItem[0].a, psla);
-            ok(hr == S_OK, "ScriptBreak Stub should return S_OK not %08x\n", hr);
-
-            /* Clean up and go   */
-            ScriptFreeCache(&psc);
-            ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
-        }
-    }
+    ScriptFreeCache(&psc);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
 }
 
 static void test_ScriptTextOut2(HDC hdc)
