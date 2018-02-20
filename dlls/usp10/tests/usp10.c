@@ -31,6 +31,10 @@
 #include <windows.h>
 #include <usp10.h>
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 typedef struct _itemTest {
     char todo_flag[6];
     int iCharPos;
@@ -2019,7 +2023,7 @@ static void test_ScriptShape(HDC hdc)
 
         chars[0] = 'A';
         chars[2] = 'A';
-        for (j = 0; j < sizeof(test_data) / sizeof(*test_data); ++j)
+        for (j = 0; j < ARRAY_SIZE(test_data); ++j)
         {
             WCHAR c = test_data[j].c;
             SCRIPT_ITEM *item;
@@ -2073,15 +2077,15 @@ static void test_ScriptShape(HDC hdc)
     /* Text does not support this range. */
     memset(items, 0, sizeof(items));
     nb = 0;
-    hr = ScriptItemize(test3, sizeof(test3)/sizeof(test3[0]), sizeof(items)/sizeof(items[0]), NULL, NULL, items, &nb);
+    hr = ScriptItemize(test3, ARRAY_SIZE(test3), ARRAY_SIZE(items), NULL, NULL, items, &nb);
     ok(hr == S_OK, "ScriptItemize failed, hr %#x.\n", hr);
     ok(items[0].a.eScript > 0, "Expected script id.\n");
     ok(nb == 1, "Unexpected number of items.\n");
 
     memset(glyphs, 0xff, sizeof(glyphs));
     nb = 0;
-    hr = ScriptShape(hdc, &sc, test3, sizeof(test3)/sizeof(test3[0]), sizeof(glyphs)/sizeof(glyphs[0]), &items[0].a,
-        glyphs, logclust, attrs, &nb);
+    hr = ScriptShape(hdc, &sc, test3, ARRAY_SIZE(test3), ARRAY_SIZE(glyphs),
+            &items[0].a, glyphs, logclust, attrs, &nb);
     ok(hr == S_OK, "ScriptShape failed, hr %#x.\n", hr);
     ok(nb == 1, "Unexpected glyph count %u\n", nb);
     ok(glyphs[0] == 0, "Unexpected glyph id\n");
@@ -2163,7 +2167,6 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     const SCRIPT_PROPERTIES **ppSp;
 
     int             cInChars;
-    int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
@@ -2197,10 +2200,9 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
          ok( ppSp[0]->langid == 0, "Langid[0] not = to 0\n"); /* Check a known value to ensure   */
                                                               /* ptrs work                       */
 
-    /* This is a valid test that will cause parsing to take place                             */
+    /* This is a valid test that will cause parsing to take place. */
     cInChars = 5;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    hr = ScriptItemize(TestItem1, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
     ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
@@ -2246,12 +2248,10 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
                 pwOutGlyphs[cnt] = pwOutGlyphs1[cnt];                 /* Send to next function */
         }
 
-        /* This test will check to make sure that SCRIPT_CACHE is reused and that not translation   *
-         * takes place if fNoGlyphIndex is set.                                                     */
-
+        /* This test verifies that SCRIPT_CACHE is reused and that no
+         * translation takes place if fNoGlyphIndex is set. */
         cInChars = 5;
-        cMaxItems = 255;
-        hr = ScriptItemize(TestItem2, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+        hr = ScriptItemize(TestItem2, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
         ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
         /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is   *
          *  returned.                                                                               */
@@ -2284,13 +2284,13 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
 
     }
 
-    /* This is a valid test that will cause parsing to take place and create 3 script_items   */
-    cInChars = (sizeof(TestItem3)/2)-1;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem3, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    /* This is a valid test that will cause parsing to take place and create
+     * 3 script_items. */
+    cInChars = ARRAY_SIZE(TestItem3) - 1;
+    hr = ScriptItemize(TestItem3, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
     ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     if  (hr == S_OK)
-	{
+    {
         ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
         if (pcItems > 2)
         {
@@ -2306,13 +2306,13 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         }
     }
 
-    /* This is a valid test that will cause parsing to take place and create 5 script_items   */
-    cInChars = (sizeof(TestItem4)/2)-1;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem4, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    /* This is a valid test that will cause parsing to take place and create
+     * 5 script_items. */
+    cInChars = ARRAY_SIZE(TestItem4) - 1;
+    hr = ScriptItemize(TestItem4, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
     ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     if  (hr == S_OK)
-	{
+    {
         ok (pcItems == 5, "The number of SCRIPT_ITEMS should be 5 not %d\n", pcItems);
         if (pcItems > 4)
         {
@@ -2342,22 +2342,18 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         }
     }
 
-    /*
-     * This test is for when the first unicode character requires bidi support
-     */
-    cInChars = (sizeof(TestItem5)-1)/sizeof(WCHAR);
-    hr = ScriptItemize(TestItem5, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    /* This test is for when the first Unicode character requires BiDi support. */
+    hr = ScriptItemize(TestItem5, ARRAY_SIZE(TestItem5) - 1, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
     ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     ok (pcItems == 4, "There should have been 4 items, found %d\n", pcItems);
     ok (pItem[0].a.s.uBidiLevel == 1, "The first character should have been bidi=1 not %d\n",
                                        pItem[0].a.s.uBidiLevel);
 
-    /* This test checks to make sure that the test to see if there are sufficient buffers to store  *
-     * the pointer to the last char works.  Note that windows often needs a greater number of       *
-     * SCRIPT_ITEMS to process a string than is returned in pcItems.                                */
-    cInChars = (sizeof(TestItem6)/2)-1;
-    cMaxItems = 4;
-    hr = ScriptItemize(TestItem6, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    /* This test verifies that the test to see if there are sufficient buffers
+     * to store the pointer to the last character works. Note that Windows
+     * often needs a greater number of SCRIPT_ITEMS to process a string than
+     * is returned in pcItems. */
+    hr = ScriptItemize(TestItem6, ARRAY_SIZE(TestItem6) - 1, 4, NULL, NULL, pItem, &pcItems);
     ok (hr == E_OUTOFMEMORY, "ScriptItemize should return E_OUTOFMEMORY, returned %08x\n", hr);
 
 }
@@ -3223,13 +3219,13 @@ static void test_ScriptString(HDC hdc)
 
     HRESULT         hr;
     WCHAR           teststr[] = {'T','e','s','t','1',' ','a','2','b','3', '\0'};
-    int             len = (sizeof(teststr) / sizeof(WCHAR)) - 1;
+    int             len = ARRAY_SIZE(teststr) - 1;
     int             Glyphs = len * 2 + 16;
     int             Charset;
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    static const int Dx[(sizeof(teststr) / sizeof(WCHAR)) - 1];
-    static const BYTE InClass[(sizeof(teststr) / sizeof(WCHAR)) - 1];
+    static const int Dx[ARRAY_SIZE(teststr) - 1];
+    static const BYTE InClass[ARRAY_SIZE(teststr) - 1];
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
     int             X = 10; 
@@ -3305,13 +3301,12 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     HRESULT         hr;
     static const WCHAR teststr1[]  = {0x05e9, 'i', 0x05dc, 'n', 0x05d5, 'e', 0x05dd, '.',0};
     static const BOOL rtl[] = {1, 0, 1, 0, 1, 0, 1, 0};
-    void            *String = (WCHAR *) &teststr1;      /* ScriptStringAnalysis needs void */
-    int             String_len = (sizeof(teststr1)/sizeof(WCHAR))-1;
+    unsigned int String_len = ARRAY_SIZE(teststr1) - 1;
     int             Glyphs = String_len * 2 + 16;       /* size of buffer as recommended  */
     int             Charset = -1;                       /* unicode                        */
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    static const BYTE InClass[(sizeof(teststr1)/sizeof(WCHAR))-1];
+    static const BYTE InClass[ARRAY_SIZE(teststr1) - 1];
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
     int             Ch;                                  /* Character position in string */
@@ -3321,17 +3316,13 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     int             trail,lead;
     BOOL            fTrailing;
 
-    /* Test with hdc, this should be a valid test
-     * Here we generate an SCRIPT_STRING_ANALYSIS that will be used as input to the
-     * following character positions to X and X to character position functions.
-     */
-
-    hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
-                              ReqWidth, NULL, NULL, NULL, NULL,
-                              InClass, &ssa);
-    ok(hr == S_OK ||
-       hr == E_INVALIDARG, /* NT */
-       "ScriptStringAnalyse should return S_OK or E_INVALIDARG not %08x\n", hr);
+    /* Test with hdc, this should be a valid test. Here we generate a
+     * SCRIPT_STRING_ANALYSIS that will be used as input to the following
+     * character-positions-to-X and X-to-character-position functions. */
+    hr = ScriptStringAnalyse(hdc, &teststr1, String_len, Glyphs, Charset,
+            Flags, ReqWidth, NULL, NULL, NULL, NULL, InClass, &ssa);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* NT */,
+            "Got unexpected hr %08x.\n", hr);
 
     if  (hr == S_OK)
     {
@@ -3462,13 +3453,10 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         hr = ScriptStringFree(&ssa);
         ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
 
-        /*
-         * Test to see that exceeding the number of chars returns E_INVALIDARG.  First
-         * generate an SSA for the subsequent tests.
-         */
-        hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
-                                  ReqWidth, NULL, NULL, NULL, NULL,
-                                  InClass, &ssa);
+        /* Test to see that exceeding the number of characters returns
+         * E_INVALIDARG. First generate an SSA for the subsequent tests. */
+        hr = ScriptStringAnalyse(hdc, &teststr1, String_len, Glyphs, Charset,
+                Flags, ReqWidth, NULL, NULL, NULL, NULL, InClass, &ssa);
         ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
 
         /*
@@ -3671,7 +3659,7 @@ static void test_ScriptLayout(void)
     hr = ScriptLayout(sizeof(levels[0]), levels[0], NULL, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
-    for (i = 0; i < sizeof(levels)/sizeof(levels[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(levels); ++i)
     {
         hr = ScriptLayout(sizeof(levels[0]), levels[i], vistolog, logtovis);
         ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
@@ -3744,7 +3732,7 @@ static void test_digit_substitution(void)
         LGRPID_ARMENIAN
     };
 
-    for (i = 0; i < sizeof(groups)/sizeof(groups[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(groups); ++i)
     {
         ret = EnumLanguageGroupLocalesA(enum_proc, groups[i], 0, 0);
         ok(ret, "EnumLanguageGroupLocalesA failed unexpectedly: %u\n", GetLastError());
@@ -4007,7 +3995,7 @@ static void test_ScriptGetLogicalWidths(void)
     SCRIPT_ANALYSIS sa = { 0 };
     unsigned int i, j;
 
-    for (i = 0; i < sizeof(logical_width_tests)/sizeof(logical_width_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(logical_width_tests); ++i)
     {
         const struct logical_width_test *ptr = logical_width_tests + i;
         SCRIPT_VISATTR attrs[3];
@@ -4068,7 +4056,7 @@ static void test_ScriptIsComplex(void)
     hr = ScriptIsComplex(test2W, 0, SIC_ASCIIDIGIT);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
-    for (i = 0; i < sizeof(complex_tests)/sizeof(complex_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(complex_tests); ++i)
     {
         hr = ScriptIsComplex(complex_tests[i].text, lstrlenW(complex_tests[i].text), complex_tests[i].flags);
     todo_wine_if(complex_tests[i].todo)
