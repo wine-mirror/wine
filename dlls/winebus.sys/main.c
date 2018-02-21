@@ -17,7 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
+#include "config.h"
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -708,9 +708,18 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static UNICODE_STRING udev = {sizeof(udevW) - sizeof(WCHAR), sizeof(udevW), (WCHAR *)udevW};
     static const WCHAR iohidW[] = {'\\','D','r','i','v','e','r','\\','I','O','H','I','D',0};
     static UNICODE_STRING iohid = {sizeof(iohidW) - sizeof(WCHAR), sizeof(iohidW), (WCHAR *)iohidW};
+    static const WCHAR sdlW[] = {'\\','D','r','i','v','e','r','\\','S','D','L','J','O','Y',0};
+    static UNICODE_STRING sdl = {sizeof(sdlW) - sizeof(WCHAR), sizeof(sdlW), (WCHAR *)sdlW};
+    static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
+    static const UNICODE_STRING SDL_enabled = {sizeof(SDL_enabledW) - sizeof(WCHAR), sizeof(SDL_enabledW), (WCHAR*)SDL_enabledW};
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
 
+    if (check_bus_option(path, &SDL_enabled, 1))
+    {
+        if (IoCreateDriver(&sdl, sdl_driver_init) == STATUS_SUCCESS)
+            return STATUS_SUCCESS;
+    }
     IoCreateDriver(&udev, udev_driver_init);
     IoCreateDriver(&iohid, iohid_driver_init);
 
