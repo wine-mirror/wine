@@ -75,6 +75,7 @@
 #define LE_DWORD(x) (x)
 #endif
 
+#include "controller.h"
 #include "bus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
@@ -110,50 +111,6 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
 }
 
 #ifdef HAS_PROPER_INPUT_HEADER
-static const BYTE REPORT_HEADER[] = {
-    0x05, 0x01, /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x00, /* USAGE (??) */
-    0xa1, 0x01, /* COLLECTION (Application) */
-    0x09, 0x01, /*   USAGE () */
-    0xa1, 0x00, /*   COLLECTION (Physical) */
-};
-
-#define IDX_HEADER_PAGE 1
-#define IDX_HEADER_USAGE 3
-
-static const BYTE REPORT_BUTTONS[] = {
-    0x05, 0x09, /* USAGE_PAGE (Button) */
-    0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
-    0x29, 0x03, /* USAGE_MAXIMUM (Button 3) */
-    0x15, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x95, 0x03, /* REPORT_COUNT (3) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x02, /* INPUT (Data,Var,Abs) */
-};
-#define IDX_BUTTON_MIN_USAGE 3
-#define IDX_BUTTON_MAX_USAGE 5
-#define IDX_BUTTON_COUNT 11
-
-static const BYTE REPORT_PADDING[] = {
-    0x95, 0x03, /* REPORT_COUNT (3) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
-};
-#define IDX_PADDING_BIT_COUNT 1
-
-static const BYTE REPORT_AXIS_HEADER[] = {
-    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
-};
-#define IDX_AXIS_PAGE 1
-
-
-static const BYTE REPORT_AXIS_USAGE[] = {
-    0x09, 0x30,  /* USAGE (X) */
-};
-#define IDX_AXIS_USAGE 1
 
 static const BYTE REPORT_ABS_AXIS_TAIL[] = {
     0x17, 0x00, 0x00, 0x00, 0x00,  /* LOGICAL_MINIMUM (0) */
@@ -169,33 +126,6 @@ static const BYTE REPORT_ABS_AXIS_TAIL[] = {
 #define IDX_ABS_PHY_MINIMUM 11
 #define IDX_ABS_PHY_MAXIMUM 16
 #define IDX_ABS_AXIS_COUNT 23
-
-static const BYTE REPORT_REL_AXIS_TAIL[] = {
-    0x15, 0x81,    /* LOGICAL_MINIMUM (0) */
-    0x25, 0x7f,    /* LOGICAL_MAXIMUM (0xffff) */
-    0x75, 0x08,    /* REPORT_SIZE (16) */
-    0x95, 0x02,    /* REPORT_COUNT (2) */
-    0x81, 0x06,    /* INPUT (Data,Var,Rel) */
-};
-#define IDX_REL_AXIS_COUNT 7
-
-static const BYTE REPORT_HATSWITCH[] = {
-    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x39,  /* USAGE (Hatswitch) */
-    0x15, 0x00,  /* LOGICAL_MINIMUM (0) */
-    0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
-    0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
-    0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */
-    0x75, 0x08,  /* REPORT_SIZE (8) */
-    0x95, 0x01,  /* REPORT_COUNT (1) */
-    0x81, 0x02,  /* INPUT (Data,Var,Abs) */
-};
-#define IDX_HATSWITCH_COUNT 15
-
-static const BYTE REPORT_TAIL[] = {
-    0xc0, /*   END_COLLECTION */
-    0xc0  /* END_COLLECTION */
-};
 
 static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/
@@ -271,15 +201,6 @@ struct wine_input_private {
 
 #define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
 
-static BYTE *add_button_block(BYTE* report_ptr, BYTE usage_min, BYTE usage_max)
-{
-    memcpy(report_ptr, REPORT_BUTTONS, sizeof(REPORT_BUTTONS));
-    report_ptr[IDX_BUTTON_MIN_USAGE] = usage_min;
-    report_ptr[IDX_BUTTON_MAX_USAGE] = usage_max;
-    report_ptr[IDX_BUTTON_COUNT] = (usage_max - usage_min) + 1;
-    return report_ptr + sizeof(REPORT_BUTTONS);
-}
-
 static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, BYTE *usages, BOOL absolute, const struct wine_input_absinfo *absinfo)
 {
     int i;
@@ -312,20 +233,6 @@ static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, BYTE *usage
         report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
     }
     return report_ptr;
-}
-
-static BYTE *add_padding_block(BYTE *report_ptr, BYTE bitcount)
-{
-    memcpy(report_ptr, REPORT_PADDING, sizeof(REPORT_PADDING));
-    report_ptr[IDX_PADDING_BIT_COUNT] = bitcount;
-    return report_ptr + sizeof(REPORT_PADDING);
-}
-
-static BYTE *add_hatswitch(BYTE *report_ptr, INT count)
-{
-    memcpy(report_ptr, REPORT_HATSWITCH, sizeof(REPORT_HATSWITCH));
-    report_ptr[IDX_HATSWITCH_COUNT] = count;
-    return report_ptr + sizeof(REPORT_HATSWITCH);
 }
 
 static const BYTE* what_am_I(struct udev_device *dev)

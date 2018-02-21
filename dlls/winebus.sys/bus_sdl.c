@@ -45,6 +45,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hidusage.h"
+#include "controller.h"
 
 #ifdef WORDS_BIGENDIAN
 # define LE_WORD(x) RtlUshortByteSwap(x)
@@ -81,6 +82,9 @@ MAKE_FUNCPTR(SDL_JoystickName);
 MAKE_FUNCPTR(SDL_JoystickNumAxes);
 MAKE_FUNCPTR(SDL_JoystickOpen);
 MAKE_FUNCPTR(SDL_WaitEvent);
+MAKE_FUNCPTR(SDL_JoystickNumButtons);
+MAKE_FUNCPTR(SDL_JoystickNumBalls);
+MAKE_FUNCPTR(SDL_JoystickNumHats);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -90,11 +94,183 @@ struct platform_private
 {
     SDL_Joystick *sdl_joystick;
     SDL_JoystickID id;
+
+    int axis_start;
+    int ball_start;
+    int hat_start;
+
+    int report_descriptor_size;
+    BYTE *report_descriptor;
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
     return (struct platform_private *)get_platform_private(device);
+}
+
+static const BYTE REPORT_AXIS_TAIL[] = {
+    0x16, 0x00, 0x80,   /* LOGICAL_MINIMUM (-32768) */
+    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
+    0x36, 0x00, 0x80,   /* PHYSICAL_MINIMUM (-32768) */
+    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
+    0x75, 0x10,         /* REPORT_SIZE (16) */
+    0x95, 0x00,         /* REPORT_COUNT (?) */
+    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+};
+#define IDX_ABS_AXIS_COUNT 15
+
+static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE *usages, BOOL absolute)
+{
+    int i;
+    memcpy(report_ptr, REPORT_AXIS_HEADER, sizeof(REPORT_AXIS_HEADER));
+    report_ptr[IDX_AXIS_PAGE] = page;
+    report_ptr += sizeof(REPORT_AXIS_HEADER);
+    for (i = 0; i < count; i++)
+    {
+        memcpy(report_ptr, REPORT_AXIS_USAGE, sizeof(REPORT_AXIS_USAGE));
+        report_ptr[IDX_AXIS_USAGE] = usages[i];
+        report_ptr += sizeof(REPORT_AXIS_USAGE);
+    }
+    if (absolute)
+    {
+        memcpy(report_ptr, REPORT_AXIS_TAIL, sizeof(REPORT_AXIS_TAIL));
+        report_ptr[IDX_ABS_AXIS_COUNT] = count;
+        report_ptr += sizeof(REPORT_AXIS_TAIL);
+    }
+    else
+    {
+        memcpy(report_ptr, REPORT_REL_AXIS_TAIL, sizeof(REPORT_REL_AXIS_TAIL));
+        report_ptr[IDX_REL_AXIS_COUNT] = count;
+        report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
+    }
+    return report_ptr;
+}
+
+static BOOL build_report_descriptor(struct platform_private *ext)
+{
+    BYTE *report_ptr;
+    INT i, descript_size;
+    INT report_size;
+    INT button_count, axis_count, ball_count, hat_count;
+    static const BYTE device_usage[2] = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
+    static const BYTE controller_usages[] = {
+        HID_USAGE_GENERIC_X,
+        HID_USAGE_GENERIC_Y,
+        HID_USAGE_GENERIC_Z,
+        HID_USAGE_GENERIC_RX,
+        HID_USAGE_GENERIC_RY,
+        HID_USAGE_GENERIC_RZ,
+        HID_USAGE_GENERIC_SLIDER,
+        HID_USAGE_GENERIC_DIAL,
+        HID_USAGE_GENERIC_WHEEL};
+    static const BYTE joystick_usages[] = {
+        HID_USAGE_GENERIC_X,
+        HID_USAGE_GENERIC_Y,
+        HID_USAGE_GENERIC_Z,
+        HID_USAGE_GENERIC_RZ,
+        HID_USAGE_GENERIC_RX,
+        HID_USAGE_GENERIC_RY,
+        HID_USAGE_GENERIC_SLIDER,
+        HID_USAGE_GENERIC_DIAL,
+        HID_USAGE_GENERIC_WHEEL};
+
+    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    report_size = 0;
+
+    /* For now lump all buttons just into incremental usages, Ignore Keys */
+    button_count = pSDL_JoystickNumButtons(ext->sdl_joystick);
+    if (button_count)
+    {
+        descript_size += sizeof(REPORT_BUTTONS);
+        if (button_count % 8)
+            descript_size += sizeof(REPORT_PADDING);
+        report_size = (button_count + 7) / 8;
+    }
+
+    axis_count = pSDL_JoystickNumAxes(ext->sdl_joystick);
+    if (axis_count > 6)
+    {
+        FIXME("Clamping joystick to 6 axis\n");
+        axis_count = 6;
+    }
+
+    ext->axis_start = report_size;
+    if (axis_count)
+    {
+        descript_size += sizeof(REPORT_AXIS_HEADER);
+        descript_size += (sizeof(REPORT_AXIS_USAGE) * axis_count);
+        descript_size += sizeof(REPORT_AXIS_TAIL);
+        report_size += (2 * axis_count);
+    }
+
+    ball_count = pSDL_JoystickNumBalls(ext->sdl_joystick);
+    ext->ball_start = report_size;
+    if (ball_count)
+    {
+        if ((ball_count*2) + axis_count > 9)
+        {
+            FIXME("Capping ball + axis at 9\n");
+            ball_count = (9-axis_count)/2;
+        }
+        descript_size += sizeof(REPORT_AXIS_HEADER);
+        descript_size += (sizeof(REPORT_AXIS_USAGE) * ball_count * 2);
+        descript_size += sizeof(REPORT_REL_AXIS_TAIL);
+        report_size += (2*ball_count);
+    }
+
+    hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
+    ext->hat_start = report_size;
+    if (hat_count)
+    {
+        descript_size += sizeof(REPORT_HATSWITCH);
+        for (i = 0; i < hat_count; i++)
+            report_size++;
+    }
+
+    TRACE("Report Descriptor will be %i bytes\n", descript_size);
+    TRACE("Report will be %i bytes\n", report_size);
+
+    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
+    if (!ext->report_descriptor)
+    {
+        ERR("Failed to alloc report descriptor\n");
+        return FALSE;
+    }
+    report_ptr = ext->report_descriptor;
+
+    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
+    report_ptr[IDX_HEADER_PAGE] = device_usage[0];
+    report_ptr[IDX_HEADER_USAGE] = device_usage[1];
+    report_ptr += sizeof(REPORT_HEADER);
+    if (button_count)
+    {
+        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (button_count % 8)
+        {
+            BYTE padding = 8 - (button_count % 8);
+            report_ptr = add_padding_block(report_ptr, padding);
+        }
+    }
+    if (axis_count)
+    {
+        if (axis_count == 6 && button_count >= 14)
+            report_ptr = add_axis_block(report_ptr, axis_count, HID_USAGE_PAGE_GENERIC, controller_usages, TRUE);
+        else
+            report_ptr = add_axis_block(report_ptr, axis_count, HID_USAGE_PAGE_GENERIC, joystick_usages, TRUE);
+
+    }
+    if (ball_count)
+    {
+        report_ptr = add_axis_block(report_ptr, ball_count * 2, HID_USAGE_PAGE_GENERIC, &joystick_usages[axis_count], FALSE);
+    }
+    if (hat_count)
+        report_ptr = add_hatswitch(report_ptr, hat_count);
+
+    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
+
+    ext->report_descriptor_size = descript_size;
+
+    return TRUE;
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
@@ -106,7 +282,16 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 
 static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+
+    *out_length = ext->report_descriptor_size;
+
+    if (length < ext->report_descriptor_size)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, ext->report_descriptor, ext->report_descriptor_size);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
@@ -233,6 +418,13 @@ static void try_add_device(SDL_JoystickID index)
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->sdl_joystick = joystick;
         private->id = id;
+        if (!build_report_descriptor(private))
+        {
+            ERR("Building report descriptor failed, removing device\n");
+            bus_remove_hid_device(device);
+            HeapFree(GetProcessHeap(), 0, serial);
+            return;
+        }
         IoInvalidateDeviceRelations(device, BusRelations);
     }
     else
@@ -299,6 +491,9 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_JoystickNumAxes);
         LOAD_FUNCPTR(SDL_JoystickOpen);
         LOAD_FUNCPTR(SDL_WaitEvent);
+        LOAD_FUNCPTR(SDL_JoystickNumButtons);
+        LOAD_FUNCPTR(SDL_JoystickNumBalls);
+        LOAD_FUNCPTR(SDL_JoystickNumHats);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
