@@ -24,9 +24,11 @@
 
 #include "wine/test.h"
 
+#include "v6util.h"
+
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
-static void test_create_tooltip(void)
+static void test_create_tooltip(BOOL is_v6)
 {
     HWND parent, hwnd;
     DWORD style, exp_style;
@@ -56,9 +58,12 @@ static void test_create_tooltip(void)
     ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    trace("style = %08x\n", style);
-    ok(style == (WS_POPUP | WS_CLIPSIBLINGS | WS_BORDER),
-       "wrong style %08x\n", style);
+    exp_style = WS_POPUP | WS_CLIPSIBLINGS;
+    if (!is_v6)
+        exp_style |= WS_BORDER;
+todo_wine_if(is_v6)
+    ok(style == exp_style || broken(style == (exp_style | WS_BORDER)) /* XP */,
+        "Unexpected window style %#x.\n", style);
 
     DestroyWindow(hwnd);
 
@@ -273,9 +278,10 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
-static BOOL register_parent_wnd_class(void)
+static void register_parent_wnd_class(void)
 {
     WNDCLASSA cls;
+    BOOL ret;
 
     cls.style = 0;
     cls.lpfnWndProc = parent_wnd_proc;
@@ -287,14 +293,12 @@ static BOOL register_parent_wnd_class(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "Tooltips test parent class";
-    return RegisterClassA(&cls);
+    ret = RegisterClassA(&cls);
+    ok(ret, "Failed to register test parent class.\n");
 }
 
 static HWND create_parent_window(void)
 {
-    if (!register_parent_wnd_class())
-        return NULL;
-
     return CreateWindowExA(0, "Tooltips test parent class",
                           "Tooltips test parent window",
                           WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -884,7 +888,7 @@ static LRESULT CALLBACK info_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
     return 0;
 }
 
-static void test_setinfo(void)
+static void test_setinfo(BOOL is_v6)
 {
    WNDCLASSA wc;
    LRESULT   lResult;
@@ -976,7 +980,8 @@ static void test_setinfo(void)
    toolInfo2.uId = 0x1234ABCD;
    lResult = SendMessageA(hwndTip, TTM_GETTOOLINFOA, 0, (LPARAM)&toolInfo2);
    ok(lResult, "GetToolInfo failed\n");
-   ok(toolInfo2.uFlags & TTF_SUBCLASS, "uFlags does not have subclass\n");
+   ok(toolInfo2.uFlags & TTF_SUBCLASS || broken(is_v6 && !(toolInfo2.uFlags & TTF_SUBCLASS)) /* XP */,
+       "uFlags does not have subclass\n");
    wndProc = (WNDPROC)GetWindowLongPtrA(parent, GWLP_WNDPROC);
    ok (wndProc != info_wnd_proc, "Window Proc is wrong\n");
 
@@ -1057,15 +1062,32 @@ static void test_margin(void)
 
 START_TEST(tooltips)
 {
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
+
     LoadLibraryA("comctl32.dll");
 
-    test_create_tooltip();
+    register_parent_wnd_class();
+
+    test_create_tooltip(FALSE);
     test_customdraw();
     test_gettext();
     test_ttm_gettoolinfo();
     test_longtextA();
     test_longtextW();
     test_track();
-    test_setinfo();
+    test_setinfo(FALSE);
     test_margin();
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+        return;
+
+    test_create_tooltip(TRUE);
+    test_customdraw();
+    test_longtextW();
+    test_track();
+    test_setinfo(TRUE);
+    test_margin();
+
+    unload_v6_module(ctx_cookie, hCtx);
 }
