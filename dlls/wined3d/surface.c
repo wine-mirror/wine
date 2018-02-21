@@ -775,6 +775,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     struct wined3d_texture *texture = surface->container;
     UINT update_w = src_rect->right - src_rect->left;
     UINT update_h = src_rect->bottom - src_rect->top;
+    GLenum target;
 
     TRACE("surface %p, gl_info %p, format %s, src_rect %s, src_pitch %u, dst_point %s, srgb %#x, data {%#x:%p}.\n",
             surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_pitch,
@@ -798,6 +799,8 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         checkGLcall("glBindBuffer");
     }
 
+    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
+
     if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
     {
         unsigned int dst_row_pitch, dst_slice_pitch;
@@ -819,22 +822,20 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
         TRACE("Uploading compressed data, target %#x, level %u, layer %u, x %d, y %d, w %u, h %u, "
                 "format %#x, image_size %#x, addr %p.\n",
-                surface->texture_target, surface->texture_level, surface->texture_layer,
-                dst_point->x, dst_point->y, update_w, update_h, internal, dst_slice_pitch, addr);
+                target, surface->texture_level, surface->texture_layer, dst_point->x, dst_point->y,
+                update_w, update_h, internal, dst_slice_pitch, addr);
 
         if (dst_row_pitch == src_pitch)
         {
-            if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
+            if (target == GL_TEXTURE_2D_ARRAY)
             {
-                GL_EXTCALL(glCompressedTexSubImage3D(surface->texture_target, surface->texture_level,
-                            dst_point->x, dst_point->y, surface->texture_layer, update_w, update_h, 1,
-                            internal, dst_slice_pitch, addr));
+                GL_EXTCALL(glCompressedTexSubImage3D(target, surface->texture_level, dst_point->x, dst_point->y,
+                        surface->texture_layer, update_w, update_h, 1, internal, dst_slice_pitch, addr));
             }
             else
             {
-                GL_EXTCALL(glCompressedTexSubImage2D(surface->texture_target, surface->texture_level,
-                            dst_point->x, dst_point->y, update_w, update_h,
-                            internal, dst_slice_pitch, addr));
+                GL_EXTCALL(glCompressedTexSubImage2D(target, surface->texture_level, dst_point->x, dst_point->y,
+                        update_w, update_h, internal, dst_slice_pitch, addr));
             }
         }
         else
@@ -846,16 +847,15 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
              * can't use the unpack row length like for glTexSubImage2D. */
             for (row = 0, y = dst_point->y; row < row_count; ++row)
             {
-                if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
+                if (target == GL_TEXTURE_2D_ARRAY)
                 {
-                    GL_EXTCALL(glCompressedTexSubImage3D(surface->texture_target, surface->texture_level,
-                            dst_point->x, y, surface->texture_layer, update_w, format->block_height, 1,
-                            internal, dst_row_pitch, addr));
+                    GL_EXTCALL(glCompressedTexSubImage3D(target, surface->texture_level, dst_point->x, y,
+                            surface->texture_layer, update_w, format->block_height, 1, internal, dst_row_pitch, addr));
                 }
                 else
                 {
-                    GL_EXTCALL(glCompressedTexSubImage2D(surface->texture_target, surface->texture_level,
-                            dst_point->x, y, update_w, format->block_height, internal, dst_row_pitch, addr));
+                    GL_EXTCALL(glCompressedTexSubImage2D(target, surface->texture_level, dst_point->x, y,
+                            update_w, format->block_height, internal, dst_row_pitch, addr));
                 }
 
                 y += format->block_height;
@@ -873,20 +873,19 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
         TRACE("Uploading data, target %#x, level %u, layer %u, x %d, y %d, w %u, h %u, "
                 "format %#x, type %#x, addr %p.\n",
-                surface->texture_target, surface->texture_level, surface->texture_layer,
+                target, surface->texture_level, surface->texture_layer,
                 dst_point->x, dst_point->y, update_w, update_h, format->glFormat, format->glType, addr);
 
         gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, src_pitch / format->byte_count);
-        if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
+        if (target == GL_TEXTURE_2D_ARRAY)
         {
-            GL_EXTCALL(glTexSubImage3D(surface->texture_target, surface->texture_level,
-                    dst_point->x, dst_point->y, surface->texture_layer, update_w, update_h, 1,
-                    format->glFormat, format->glType, addr));
+            GL_EXTCALL(glTexSubImage3D(target, surface->texture_level, dst_point->x, dst_point->y,
+                    surface->texture_layer, update_w, update_h, 1, format->glFormat, format->glType, addr));
         }
         else
         {
-            gl_info->gl_ops.gl.p_glTexSubImage2D(surface->texture_target, surface->texture_level,
-                    dst_point->x, dst_point->y, update_w, update_h, format->glFormat, format->glType, addr);
+            gl_info->gl_ops.gl.p_glTexSubImage2D(target, surface->texture_level, dst_point->x, dst_point->y,
+                    update_w, update_h, format->glFormat, format->glType, addr);
         }
         gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         checkGLcall("Upload surface data");
