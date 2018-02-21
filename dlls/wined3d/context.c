@@ -454,17 +454,11 @@ static inline void context_set_fbo_key_for_render_target(const struct wined3d_co
             key->rb_namespace |= 1 << idx;
             return;
         }
+    }
+    key->objects[idx].target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
+    key->objects[idx].level = sub_resource_idx % texture->level_count;
+    key->objects[idx].layer = sub_resource_idx / texture->level_count;
 
-        key->objects[idx].target = surface->texture_target;
-        key->objects[idx].level = surface->texture_level;
-        key->objects[idx].layer = surface->texture_layer;
-    }
-    else
-    {
-        key->objects[idx].target = texture->target;
-        key->objects[idx].level = sub_resource_idx % texture->level_count;
-        key->objects[idx].layer = sub_resource_idx / texture->level_count;
-    }
     if (render_target->layer_count != 1)
         key->objects[idx].layer = WINED3D_ALL_LAYERS;
 

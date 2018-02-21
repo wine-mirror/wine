@@ -3179,6 +3179,23 @@ static inline struct wined3d_texture *texture_from_resource(struct wined3d_resou
     return CONTAINING_RECORD(resource, struct wined3d_texture, resource);
 }
 
+static inline GLenum wined3d_texture_get_sub_resource_target(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx)
+{
+    static const GLenum cube_targets[] =
+    {
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
+    };
+
+    return texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP
+            ? cube_targets[sub_resource_idx / texture->level_count] : texture->target;
+}
+
 static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_texture *texture,
         BOOL srgb)
 {
