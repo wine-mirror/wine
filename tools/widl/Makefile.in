@@ -19,7 +19,7 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-widl_EXTRADEFS = -DDEFAULT_INCLUDE_DIR=\"${includedir}/windows/\"
+widl_EXTRADEFS = -DDEFAULT_INCLUDE_DIR=\"${includedir}/wine/windows/\"
 
 EXTRALIBS = -lwpp
 

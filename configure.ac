@@ -699,7 +699,6 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 
 dnl **** Check for working dll ****
 
-AC_SUBST(dlldir,"\${libdir}/wine")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")

@@ -363,9 +363,9 @@ __uninstall__: $ac_dir/uninstall"
                     wine_fn_append_rule \
 "$ac_dir/install-lib:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(fakedlldir)/$ac_dll
+	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll
 $ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_dll"
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll"
                 else
                     wine_fn_append_rule \
 "$ac_dir/install-lib:: $ac_dir
@@ -451,9 +451,9 @@ __uninstall__: $ac_dir/uninstall"
         wine_fn_append_rule \
 "$ac_dir/install:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(fakedlldir)/$ac_program
+	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program
 $ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_program"
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program"
 
         if test -z "$with_wine64" && wine_fn_has_flag installbin
         then

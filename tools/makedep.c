@@ -2412,7 +2412,7 @@ static void output_source_h( struct makefile *make, struct incl_file *source, co
     {
         strarray_add( &make->install_rules[INSTALL_DEV], source->name );
         strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/%s", get_include_install_path( source->name ) ));
+                      strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
     }
 }
 
@@ -2540,12 +2540,12 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     {
         strarray_add( &make->install_rules[INSTALL_DEV], xstrdup( source->name ));
         strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/%s.idl", get_include_install_path( obj ) ));
+                      strmake( "D$(includedir)/wine/%s.idl", get_include_install_path( obj ) ));
         if (source->file->flags & FLAG_IDL_HEADER)
         {
             strarray_add( &make->install_rules[INSTALL_DEV], strmake( "%s.h", obj ));
             strarray_add( &make->install_rules[INSTALL_DEV],
-                          strmake( "d$(includedir)/%s.h", get_include_install_path( obj ) ));
+                          strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
         }
     }
     if (!targets.count) return;
@@ -2589,10 +2589,10 @@ static void output_source_x( struct makefile *make, struct incl_file *source, co
     {
         strarray_add( &make->install_rules[INSTALL_DEV], source->name );
         strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/%s", get_include_install_path( source->name ) ));
+                      strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
         strarray_add( &make->install_rules[INSTALL_DEV], strmake( "%s.h", obj ));
         strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "d$(includedir)/%s.h", get_include_install_path( obj ) ));
+                      strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
     }
 }
 
@@ -2975,7 +2975,7 @@ static void output_module( struct makefile *make )
         add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
                           strmake( "p$(dlldir)/%s%s", make->module, dll_ext ));
         add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
-                          strmake( "d$(fakedlldir)/%s", make->module ));
+                          strmake( "d$(dlldir)/fakedlls/%s", make->module ));
         output( "%s%s %s.fake:", module_path, dll_ext, module_path );
     }
     else

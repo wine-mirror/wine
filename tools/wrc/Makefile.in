@@ -15,7 +15,7 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
+wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}/wine\""
 
 EXTRALIBS = $(GETTEXTPO_LIBS) -lwpp
 
