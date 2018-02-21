@@ -2158,7 +2158,8 @@ typedef struct _LDR_MODULE
 #define LDR_UNLOAD_IN_PROGRESS          0x00002000
 #define LDR_NO_DLL_CALLS                0x00040000
 #define LDR_PROCESS_ATTACHED            0x00080000
-#define LDR_MODULE_REBASED              0x00200000
+#define LDR_COR_IMAGE                   0x00400000
+#define LDR_COR_ILONLY                  0x01000000
 
 /* these ones is Wine specific */
 #define LDR_DONT_RESOLVE_REFS           0x40000000

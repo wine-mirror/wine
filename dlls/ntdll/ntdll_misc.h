@@ -106,7 +106,7 @@ extern NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
-extern NTSTATUS attach_dlls( CONTEXT *context ) DECLSPEC_HIDDEN;
+extern NTSTATUS attach_dlls( CONTEXT *context, void **entry ) DECLSPEC_HIDDEN;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,

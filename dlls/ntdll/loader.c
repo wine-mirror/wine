@@ -887,6 +887,44 @@ static void free_tls_slot( LDR_MODULE *mod )
 
 
 /****************************************************************
+ *       fixup_imports_ilonly
+ *
+ * Fixup imports for an IL-only module. All we do is import mscoree.
+ * The loader_section must be locked while calling this function.
+ */
+static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void **entry )
+{
+    static const WCHAR mscoreeW[] = {'m','s','c','o','r','e','e','.','d','l','l',0};
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+    NTSTATUS status;
+    void *proc = NULL;
+    WINE_MODREF *prev, *imp;
+
+    if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
+    wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+
+    wm->nDeps = 1;
+    wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(WINE_MODREF *) );
+
+    prev = current_modref;
+    current_modref = wm;
+    if (!(status = load_dll( load_path, mscoreeW, 0, &imp ))) wm->deps[0] = imp;
+    current_modref = prev;
+    if (status) return status;
+
+    TRACE( "loaded mscoree for %s\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+
+    if ((exports = RtlImageDirectoryEntryToData( imp->ldr.BaseAddress, TRUE,
+                                                 IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+        proc = find_named_export( imp->ldr.BaseAddress, exports, exp_size, "_CorExeMain", -1, load_path );
+    if (!proc) return STATUS_PROCEDURE_NOT_FOUND;
+    *entry = proc;
+    return STATUS_SUCCESS;
+}
+
+
+/****************************************************************
  *       fixup_imports
  *
  * Fixup all imports of a given module.
@@ -1836,6 +1874,9 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
         if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
         return STATUS_NO_MEMORY;
     }
+
+    if (image_info.loader_flags) wm->ldr.Flags |= LDR_COR_IMAGE;
+    if (image_info.image_flags & IMAGE_FLAGS_ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
 
     set_security_cookie( module, len );
 
@@ -2991,7 +3032,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
  * Attach to all the loaded dlls.
  * If this is the first time, perform the full process initialization.
  */
-NTSTATUS attach_dlls( CONTEXT *context )
+NTSTATUS attach_dlls( CONTEXT *context, void **entry )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -3009,7 +3050,12 @@ NTSTATUS attach_dlls( CONTEXT *context )
     if (!imports_fixup_done)
     {
         actctx_init();
-        if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS)
+        if (wm->ldr.Flags & LDR_COR_ILONLY)
+            status = fixup_imports_ilonly( wm, load_path, entry );
+        else
+            status = fixup_imports( wm, load_path );
+
+        if (status)
         {
             ERR( "Importing dlls for %s failed, status %x\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
