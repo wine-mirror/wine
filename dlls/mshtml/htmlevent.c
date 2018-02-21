@@ -511,7 +511,10 @@ static HRESULT WINAPI HTMLEventObj_get_fromElement(IHTMLEventObj *iface, IHTMLEl
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_fromElement(&This->event->IDOMMouseEvent_iface, p);
 
     *p = NULL;
     return S_OK;
@@ -521,7 +524,10 @@ static HRESULT WINAPI HTMLEventObj_get_toElement(IHTMLEventObj *iface, IHTMLElem
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_toElement(&This->event->IDOMMouseEvent_iface, p);
 
     *p = NULL;
     return S_OK;
