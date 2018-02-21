@@ -91,21 +91,30 @@ static LSA_DISPATCH_TABLE lsa_dispatch;
 static void *libkrb5_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p_##f
-MAKE_FUNCPTR(krb5_init_context);
-MAKE_FUNCPTR(krb5_free_context);
-MAKE_FUNCPTR(krb5_free_ticket);
+MAKE_FUNCPTR(krb5_cc_close);
+MAKE_FUNCPTR(krb5_cc_default);
+MAKE_FUNCPTR(krb5_cc_end_seq_get);
+MAKE_FUNCPTR(krb5_cc_initialize);
+MAKE_FUNCPTR(krb5_cc_next_cred);
+MAKE_FUNCPTR(krb5_cc_start_seq_get);
+MAKE_FUNCPTR(krb5_cc_store_cred);
+MAKE_FUNCPTR(krb5_cccol_cursor_free);
 MAKE_FUNCPTR(krb5_cccol_cursor_new);
 MAKE_FUNCPTR(krb5_cccol_cursor_next);
-MAKE_FUNCPTR(krb5_cccol_cursor_free);
-MAKE_FUNCPTR(krb5_cc_close);
-MAKE_FUNCPTR(krb5_cc_start_seq_get);
-MAKE_FUNCPTR(krb5_cc_end_seq_get);
-MAKE_FUNCPTR(krb5_cc_next_cred);
-MAKE_FUNCPTR(krb5_is_config_principal);
 MAKE_FUNCPTR(krb5_decode_ticket);
-MAKE_FUNCPTR(krb5_unparse_name_flags);
-MAKE_FUNCPTR(krb5_free_unparsed_name);
+MAKE_FUNCPTR(krb5_free_context);
 MAKE_FUNCPTR(krb5_free_cred_contents);
+MAKE_FUNCPTR(krb5_free_principal);
+MAKE_FUNCPTR(krb5_free_ticket);
+MAKE_FUNCPTR(krb5_free_unparsed_name);
+MAKE_FUNCPTR(krb5_get_init_creds_opt_alloc);
+MAKE_FUNCPTR(krb5_get_init_creds_opt_free);
+MAKE_FUNCPTR(krb5_get_init_creds_opt_set_out_ccache);
+MAKE_FUNCPTR(krb5_get_init_creds_password);
+MAKE_FUNCPTR(krb5_init_context);
+MAKE_FUNCPTR(krb5_is_config_principal);
+MAKE_FUNCPTR(krb5_parse_name_flags);
+MAKE_FUNCPTR(krb5_unparse_name_flags);
 #undef MAKE_FUNCPTR
 
 static void load_krb5(void)
@@ -123,21 +132,30 @@ static void load_krb5(void)
         goto fail; \
     }
 
-    LOAD_FUNCPTR(krb5_init_context)
-    LOAD_FUNCPTR(krb5_free_context)
-    LOAD_FUNCPTR(krb5_free_ticket)
+    LOAD_FUNCPTR(krb5_cc_close)
+    LOAD_FUNCPTR(krb5_cc_default)
+    LOAD_FUNCPTR(krb5_cc_end_seq_get)
+    LOAD_FUNCPTR(krb5_cc_initialize)
+    LOAD_FUNCPTR(krb5_cc_next_cred)
+    LOAD_FUNCPTR(krb5_cc_start_seq_get)
+    LOAD_FUNCPTR(krb5_cc_store_cred)
+    LOAD_FUNCPTR(krb5_cccol_cursor_free)
     LOAD_FUNCPTR(krb5_cccol_cursor_new)
     LOAD_FUNCPTR(krb5_cccol_cursor_next)
-    LOAD_FUNCPTR(krb5_cccol_cursor_free)
-    LOAD_FUNCPTR(krb5_cc_close)
-    LOAD_FUNCPTR(krb5_cc_start_seq_get)
-    LOAD_FUNCPTR(krb5_cc_end_seq_get)
-    LOAD_FUNCPTR(krb5_cc_next_cred)
-    LOAD_FUNCPTR(krb5_is_config_principal)
     LOAD_FUNCPTR(krb5_decode_ticket)
-    LOAD_FUNCPTR(krb5_unparse_name_flags)
-    LOAD_FUNCPTR(krb5_free_unparsed_name)
+    LOAD_FUNCPTR(krb5_free_context)
     LOAD_FUNCPTR(krb5_free_cred_contents)
+    LOAD_FUNCPTR(krb5_free_principal)
+    LOAD_FUNCPTR(krb5_free_ticket)
+    LOAD_FUNCPTR(krb5_free_unparsed_name)
+    LOAD_FUNCPTR(krb5_get_init_creds_opt_alloc)
+    LOAD_FUNCPTR(krb5_get_init_creds_opt_free)
+    LOAD_FUNCPTR(krb5_get_init_creds_opt_set_out_ccache)
+    LOAD_FUNCPTR(krb5_get_init_creds_password)
+    LOAD_FUNCPTR(krb5_init_context)
+    LOAD_FUNCPTR(krb5_is_config_principal)
+    LOAD_FUNCPTR(krb5_parse_name_flags)
+    LOAD_FUNCPTR(krb5_unparse_name_flags)
 #undef LOAD_FUNCPTR
 
     return;
@@ -818,37 +836,95 @@ static int get_buffer_index( SecBufferDesc *desc, DWORD type )
     }
     return -1;
 }
-#endif /* SONAME_LIBGSSAPI_KRB5 */
 
-static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
-    UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
-    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
+static char *get_user_at_domain( const WCHAR *user, ULONG user_len, const WCHAR *domain, ULONG domain_len )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
+    int len_user, len_domain;
+    char *ret;
+
+    len_user = WideCharToMultiByte( CP_UNIXCP, 0, user, user_len, NULL, 0, NULL, NULL );
+    len_domain = WideCharToMultiByte( CP_UNIXCP, 0, domain, domain_len, NULL, 0, NULL, NULL );
+    if (!(ret = heap_alloc( len_user + len_domain + 2 ))) return NULL;
+
+    WideCharToMultiByte( CP_UNIXCP, 0, user, user_len, ret, len_user, NULL, NULL );
+    ret[len_user] = '@';
+    WideCharToMultiByte( CP_UNIXCP, 0, domain, domain_len, ret + len_user + 1, len_domain, NULL, NULL );
+    ret[len_user + len_domain + 1] = 0;
+    return ret;
+}
+
+static char *get_password( const WCHAR *passwd, ULONG passwd_len )
+{
+    int len;
+    char *ret;
+
+    len = WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, passwd, passwd_len, NULL, 0, NULL, NULL );
+    if (!(ret = heap_alloc( len + 1 ))) return NULL;
+    WideCharToMultiByte( CP_UNIXCP, 0, passwd, passwd_len, ret, len, NULL, NULL );
+    ret[len] = 0;
+    return ret;
+}
+
+static NTSTATUS init_creds( const SEC_WINNT_AUTH_IDENTITY_W *id )
+{
+    char *user_at_domain, *password;
+    krb5_context ctx;
+    krb5_principal principal = NULL;
+    krb5_get_init_creds_opt *options = NULL;
+    krb5_ccache cache = NULL;
+    krb5_creds creds;
+    krb5_error_code err;
+
+    if (!id) return STATUS_SUCCESS;
+    if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+    {
+        FIXME( "ANSI identity not supported\n" );
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    if (!(user_at_domain = get_user_at_domain( id->User, id->UserLength, id->Domain, id->DomainLength )))
+    {
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
+    if (!(password = get_password( id->Password, id->PasswordLength )))
+    {
+        heap_free( user_at_domain );
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
+
+    if ((err = p_krb5_init_context( &ctx )))
+    {
+        heap_free( password );
+        heap_free( user_at_domain );
+        return krb5_error_to_status( err );
+    }
+    if ((err = p_krb5_parse_name_flags( ctx, user_at_domain, 0, &principal ))) goto done;
+    if ((err = p_krb5_cc_default( ctx, &cache ))) goto done;
+    if ((err = p_krb5_get_init_creds_opt_alloc( ctx, &options ))) goto done;
+    if ((err = p_krb5_get_init_creds_opt_set_out_ccache( ctx, options, cache ))) goto done;
+    if ((err = p_krb5_get_init_creds_password( ctx, &creds, principal, password, 0, NULL, 0, NULL, 0 ))) goto done;
+    if ((err = p_krb5_cc_initialize( ctx, cache, principal ))) goto done;
+    if ((err = p_krb5_cc_store_cred( ctx, cache, &creds ))) goto done;
+
+    TRACE( "success\n" );
+    p_krb5_free_cred_contents( ctx, &creds );
+
+done:
+    if (cache) p_krb5_cc_close( ctx, cache );
+    if (principal) p_krb5_free_principal( ctx, principal );
+    if (options) p_krb5_get_init_creds_opt_free( ctx, options );
+    p_krb5_free_context( ctx );
+    heap_free( user_at_domain );
+    heap_free( password );
+
+    return krb5_error_to_status( err );
+}
+
+static NTSTATUS acquire_credentials_handle( UNICODE_STRING *principal_us, gss_cred_usage_t cred_usage,
+    LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
+{
     OM_uint32 ret, minor_status, expiry_time;
     gss_name_t principal = GSS_C_NO_NAME;
-    gss_cred_usage_t cred_usage;
     gss_cred_id_t cred_handle;
-
-    TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
-           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
-
-    if (auth_data) FIXME( "specific credentials not supported\n" );
-
-    switch (credential_use)
-    {
-        case SECPKG_CRED_INBOUND:
-            cred_usage = GSS_C_ACCEPT;
-            break;
-        case SECPKG_CRED_OUTBOUND:
-            cred_usage = GSS_C_INITIATE;
-            break;
-        case SECPKG_CRED_BOTH:
-            cred_usage = GSS_C_BOTH;
-            break;
-        default:
-            return SEC_E_UNKNOWN_CREDENTIALS;
-    }
 
     if (principal_us && ((ret = name_sspi_to_gss( principal_us, &principal )) != SEC_E_OK)) return ret;
 
@@ -865,6 +941,40 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     if (principal != GSS_C_NO_NAME) pgss_release_name( &minor_status, &principal );
 
     return status_gss_to_sspi( ret );
+}
+#endif /* SONAME_LIBGSSAPI_KRB5 */
+
+static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
+    UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
+    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    gss_cred_usage_t cred_usage;
+    NTSTATUS status;
+
+    TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
+           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
+
+    switch (credential_use)
+    {
+    case SECPKG_CRED_INBOUND:
+        cred_usage = GSS_C_ACCEPT;
+        break;
+
+    case SECPKG_CRED_OUTBOUND:
+        if ((status = init_creds( auth_data )) != STATUS_SUCCESS) return status;
+        cred_usage = GSS_C_INITIATE;
+        break;
+
+    case SECPKG_CRED_BOTH:
+        cred_usage = GSS_C_BOTH;
+        break;
+
+    default:
+        return SEC_E_UNKNOWN_CREDENTIALS;
+    }
+
+    return acquire_credentials_handle( principal_us, cred_usage, credential, ts_expiry );
 #else
     FIXME( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
