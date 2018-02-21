@@ -492,7 +492,7 @@ static void wined3d_texture_allocate_gl_mutable_storage(struct wined3d_texture *
         GLenum gl_internal_format, const struct wined3d_format *format,
         const struct wined3d_gl_info *gl_info)
 {
-    unsigned int i, sub_call_count;
+    unsigned int i, level, sub_call_count;
 
     sub_call_count = texture->level_count;
     if (texture->target != GL_TEXTURE_2D_ARRAY)
@@ -502,29 +502,31 @@ static void wined3d_texture_allocate_gl_mutable_storage(struct wined3d_texture *
     {
         struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
         GLsizei width, height;
+        GLenum target;
 
-        width = wined3d_texture_get_level_pow2_width(texture, surface->texture_level);
-        height = wined3d_texture_get_level_pow2_height(texture, surface->texture_level);
+        level = surface->texture_level;
+        width = wined3d_texture_get_level_pow2_width(texture, level);
+        height = wined3d_texture_get_level_pow2_height(texture, level);
         if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
         {
             height *= format->height_scale.numerator;
             height /= format->height_scale.denominator;
         }
+        target = wined3d_texture_get_sub_resource_target(texture, i);
 
         TRACE("surface %p, target %#x, level %u, width %u, height %u.\n",
-                surface, surface->texture_target, surface->texture_level, width, height);
+                surface, target, level, width, height);
 
         if (texture->target == GL_TEXTURE_2D_ARRAY)
         {
-            GL_EXTCALL(glTexImage3D(surface->texture_target, surface->texture_level,
-                    gl_internal_format, width, height, texture->layer_count, 0,
-                    format->glFormat, format->glType, NULL));
+            GL_EXTCALL(glTexImage3D(target, level, gl_internal_format, width, height,
+                    texture->layer_count, 0, format->glFormat, format->glType, NULL));
             checkGLcall("glTexImage3D");
         }
         else
         {
-            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                    gl_internal_format, width, height, 0, format->glFormat, format->glType, NULL);
+            gl_info->gl_ops.gl.p_glTexImage2D(target, level, gl_internal_format,
+                    width, height, 0, format->glFormat, format->glType, NULL);
             checkGLcall("glTexImage2D");
         }
     }
