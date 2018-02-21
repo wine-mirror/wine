@@ -620,6 +620,8 @@ function test_mouse_event() {
     ok(e.screenY === 0, "screenY = " + e.screenY);
     ok(e.clientX === 0, "clientX = " + e.clientX);
     ok(e.clientY === 0, "clientY = " + e.clientY);
+    ok(e.offsetX === 0, "offsetX = " + e.offsetX);
+    ok(e.offsetY === 0, "offsetY = " + e.offsetY);
     ok(e.ctrlKey === false, "ctrlKey = " + e.ctrlKey);
     ok(e.altKey === false, "altKey = " + e.altKey);
     ok(e.shiftKey === false, "shiftKey = " + e.shiftKey);

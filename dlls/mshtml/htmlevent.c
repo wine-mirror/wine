@@ -663,7 +663,10 @@ static HRESULT WINAPI HTMLEventObj_get_offsetX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_offsetX(&This->event->IDOMMouseEvent_iface, p);
 
     *p = 0;
     return S_OK;
@@ -673,7 +676,10 @@ static HRESULT WINAPI HTMLEventObj_get_offsetY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_offsetY(&This->event->IDOMMouseEvent_iface, p);
 
     *p = 0;
     return S_OK;
@@ -1598,15 +1604,21 @@ static HRESULT WINAPI DOMMouseEvent_get_y(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_offsetX(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p) returning 0\n", This, p);
+
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_offsetY(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p) returning 0\n", This, p);
+
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_pageX(IDOMMouseEvent *iface, LONG *p)
