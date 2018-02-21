@@ -138,6 +138,10 @@ typedef struct {
 #define EVENT_HASDEFAULTHANDLERS 0x0020
 #define EVENT_FIXME              0x0040
 
+/* mouse event flags for fromElement and toElement implementation */
+#define EVENT_MOUSE_TO_RELATED   0x0100
+#define EVENT_MOUSE_FROM_RELATED 0x0200
+
 static const event_info_t event_info[] = {
     {abortW,             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_BODY},
@@ -186,11 +190,11 @@ static const event_info_t event_info[] = {
     {mousedownW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEDOWN,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {mousemoveW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEMOVE,
-        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE | EVENT_MOUSE_FROM_RELATED},
     {mouseoutW,          EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEOUT,
-        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE | EVENT_MOUSE_TO_RELATED},
     {mouseoverW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEOVER,
-        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE | EVENT_MOUSE_FROM_RELATED},
     {mouseupW,           EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEUP,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {mousewheelW,        EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEWHEEL,
@@ -1583,8 +1587,27 @@ static HRESULT WINAPI DOMMouseEvent_get_fromElement(IDOMMouseEvent *iface, IHTML
 static HRESULT WINAPI DOMMouseEvent_get_toElement(IDOMMouseEvent *iface, IHTMLElement **p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IEventTarget  *related_target = NULL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event_id != EVENTID_LAST) {
+        HRESULT hres = S_OK;
+        if(event_info[This->event_id].flags & EVENT_MOUSE_TO_RELATED)
+            hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
+        else if(event_info[This->event_id].flags & EVENT_MOUSE_FROM_RELATED)
+            hres = IDOMEvent_get_target(&This->IDOMEvent_iface, &related_target);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!related_target) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    IEventTarget_QueryInterface(related_target, &IID_IHTMLElement, (void**)p);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_x(IDOMMouseEvent *iface, LONG *p)
