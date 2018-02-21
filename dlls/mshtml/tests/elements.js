@@ -199,7 +199,7 @@ function test_document_owner() {
     node = document.createElement("test");
     ok(node.ownerDocument === document, "element.ownerDocument = " + node.ownerDocument);
 
-    node = document.createDocumentFragment("test");
+    node = document.createDocumentFragment();
     ok(node.ownerDocument === document, "fragment.ownerDocument = " + node.ownerDocument);
 
     node = document.createTextNode("test");
