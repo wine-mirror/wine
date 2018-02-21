@@ -217,8 +217,8 @@ struct fallback_mapping {
 
 static const struct fallback_mapping fontfallback_neutral_data[] = {
 #define MAPPING_RANGE(ranges, families) \
-        { (DWRITE_UNICODE_RANGE *)ranges, sizeof(ranges)/sizeof(ranges[0]), \
-          (WCHAR **)families, sizeof(families)/sizeof(families[0]) }
+        { (DWRITE_UNICODE_RANGE *)ranges, ARRAY_SIZE(ranges), \
+          (WCHAR **)families, ARRAY_SIZE(families) }
 
     MAPPING_RANGE(cjk_ranges, cjk_families),
 
@@ -1056,7 +1056,7 @@ static UINT32 get_opentype_language(const WCHAR *locale)
 
     if (locale) {
         WCHAR tag[5];
-        if (GetLocaleInfoEx(locale, LOCALE_SOPENTYPELANGUAGETAG, tag, sizeof(tag)/sizeof(WCHAR)))
+        if (GetLocaleInfoEx(locale, LOCALE_SOPENTYPELANGUAGETAG, tag, ARRAY_SIZE(tag)))
             language = DWRITE_MAKE_OPENTYPE_TAG(tag[0],tag[1],tag[2],tag[3]);
     }
 
@@ -1108,7 +1108,7 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
         break;
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL:
-        if (GetLocaleInfoEx(numbersubst->locale, LOCALE_SISO639LANGNAME, isolang, sizeof(isolang)/sizeof(isolang[0]))) {
+        if (GetLocaleInfoEx(numbersubst->locale, LOCALE_SISO639LANGNAME, isolang, ARRAY_SIZE(isolang))) {
              static const WCHAR arW[] = {'a','r',0};
              static const WCHAR arabicW[] = {0x640,0x641,0x642,0x643,0x644,0x645,0x646,0x647,0x648,0x649,0};
 
@@ -2199,7 +2199,7 @@ HRESULT create_system_fontfallback(IDWriteFactory5 *factory, IDWriteFontFallback
     fallback->IDWriteFontFallback_iface.lpVtbl = &fontfallbackvtbl;
     fallback->factory = factory;
     fallback->mappings = (struct fallback_mapping *)fontfallback_neutral_data;
-    fallback->mappings_count = sizeof(fontfallback_neutral_data) / sizeof(*fontfallback_neutral_data);
+    fallback->mappings_count = ARRAY_SIZE(fontfallback_neutral_data);
     IDWriteFactory5_GetSystemFontCollection(fallback->factory, FALSE, &fallback->systemcollection, FALSE);
 
     *ret = &fallback->IDWriteFontFallback_iface;

@@ -419,7 +419,7 @@ static void release_font_data(struct dwrite_font_data *data)
     if (InterlockedDecrement(&data->ref) > 0)
         return;
 
-    for (i = DWRITE_INFORMATIONAL_STRING_NONE; i < sizeof(data->info_strings)/sizeof(data->info_strings[0]); i++) {
+    for (i = DWRITE_INFORMATIONAL_STRING_NONE; i < ARRAY_SIZE(data->info_strings); i++) {
         if (data->info_strings[i])
             IDWriteLocalizedStrings_Release(data->info_strings[i]);
     }
@@ -522,7 +522,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace4 *iface)
             IDWriteFontFileStream_Release(This->stream);
         heap_free(This->files);
 
-        for (i = 0; i < sizeof(This->glyphs)/sizeof(This->glyphs[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(This->glyphs); i++)
             heap_free(This->glyphs[i]);
 
         freetype_notify_cacheremove(iface);
@@ -3060,7 +3060,7 @@ static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
         { extrablackW, DWRITE_FONT_WEIGHT_EXTRA_BLACK }
     };
 
-    ptr = bsearch(&weight, knownweights, sizeof(knownweights)/sizeof(knownweights[0]), sizeof(knownweights[0]),
+    ptr = bsearch(&weight, knownweights, ARRAY_SIZE(knownweights), sizeof(knownweights[0]),
         compare_knownweights);
     if (!ptr) {
         nameW[0] = 0;
@@ -3373,8 +3373,8 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     data->fontsig = props.fontsig;
     data->lf = props.lf;
 
-    fontstrings_get_en_string(*family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
-    fontstrings_get_en_string(data->names, faceW, sizeof(faceW)/sizeof(WCHAR));
+    fontstrings_get_en_string(*family_name, familyW, ARRAY_SIZE(familyW));
+    fontstrings_get_en_string(data->names, faceW, ARRAY_SIZE(faceW));
     if (font_apply_differentiation_rules(data, familyW, faceW)) {
         set_en_localizedstring(*family_name, familyW);
         set_en_localizedstring(data->names, faceW);
@@ -3495,7 +3495,7 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
 
             /* Simulated face name should only contain Bold as weight term,
                so remove existing regular and weight terms. */
-            fontstrings_get_en_string(family->fonts[heaviest]->names, initialW, sizeof(initialW)/sizeof(WCHAR));
+            fontstrings_get_en_string(family->fonts[heaviest]->names, initialW, ARRAY_SIZE(initialW));
             facename_remove_regular_term(initialW, -1);
 
             /* remove current weight pattern */
@@ -3566,7 +3566,7 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
         /* add oblique simulation based on this regular face */
 
         /* remove regular term if any, append 'Oblique' */
-        fontstrings_get_en_string(family->fonts[regular]->names, facenameW, sizeof(facenameW)/sizeof(WCHAR));
+        fontstrings_get_en_string(family->fonts[regular]->names, facenameW, ARRAY_SIZE(facenameW));
         facename_remove_regular_term(facenameW, -1);
 
         if (*facenameW)
@@ -3610,7 +3610,7 @@ static BOOL fontcollection_add_replacement(struct dwrite_fontcollection *collect
         }
 
         fontcollection_add_family(collection, target);
-        fontstrings_get_en_string(replacement->familyname, nameW, sizeof(nameW)/sizeof(WCHAR));
+        fontstrings_get_en_string(replacement->familyname, nameW, ARRAY_SIZE(nameW));
         TRACE("replacement %s -> %s\n", debugstr_w(target_name), debugstr_w(nameW));
     }
     IDWriteLocalizedStrings_Release(strings);
@@ -3767,7 +3767,7 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
                 continue;
             }
 
-            fontstrings_get_en_string(family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
+            fontstrings_get_en_string(family_name, familyW, ARRAY_SIZE(familyW));
 
             /* ignore dot named faces */
             if (familyW[0] == '.') {
@@ -3886,7 +3886,7 @@ static HRESULT create_local_file_reference(IDWriteFactory5 *factory, const WCHAR
         static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
         WCHAR fullpathW[MAX_PATH];
 
-        GetWindowsDirectoryW(fullpathW, sizeof(fullpathW)/sizeof(WCHAR));
+        GetWindowsDirectoryW(fullpathW, ARRAY_SIZE(fullpathW));
         strcatW(fullpathW, fontsW);
         strcatW(fullpathW, filename);
 
@@ -3914,7 +3914,7 @@ static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerato
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
     WCHAR name_buf[256], *name = name_buf;
-    DWORD name_count, max_name_count = sizeof(name_buf) / sizeof(*name_buf), type, data_size;
+    DWORD name_count, max_name_count = ARRAY_SIZE(name_buf), type, data_size;
     HRESULT hr = S_OK;
     LONG r;
 
@@ -4162,8 +4162,8 @@ HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection1
         WCHAR keynameW[64], pathW[MAX_PATH];
         DWORD type, path_len, name_len;
 
-        path_len = sizeof(pathW)/sizeof(*pathW);
-        name_len = sizeof(keynameW)/sizeof(*keynameW);
+        path_len = ARRAY_SIZE(pathW);
+        name_len = ARRAY_SIZE(keynameW);
         retval = RegEnumValueW(eudckey, index++, keynameW, &name_len, NULL, &type, (BYTE*)pathW, &path_len);
         if (retval || type != REG_SZ)
             continue;
