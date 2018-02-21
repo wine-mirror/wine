@@ -110,6 +110,18 @@ MAKE_FUNCPTR(SDL_GameControllerGetAxis);
 MAKE_FUNCPTR(SDL_GameControllerName);
 MAKE_FUNCPTR(SDL_GameControllerOpen);
 MAKE_FUNCPTR(SDL_GameControllerEventState);
+MAKE_FUNCPTR(SDL_HapticClose);
+MAKE_FUNCPTR(SDL_HapticDestroyEffect);
+MAKE_FUNCPTR(SDL_HapticNewEffect);
+MAKE_FUNCPTR(SDL_HapticOpenFromJoystick);
+MAKE_FUNCPTR(SDL_HapticQuery);
+MAKE_FUNCPTR(SDL_HapticRumbleInit);
+MAKE_FUNCPTR(SDL_HapticRumblePlay);
+MAKE_FUNCPTR(SDL_HapticRumbleSupported);
+MAKE_FUNCPTR(SDL_HapticRunEffect);
+MAKE_FUNCPTR(SDL_HapticStopAll);
+MAKE_FUNCPTR(SDL_JoystickIsHaptic);
+MAKE_FUNCPTR(SDL_memset);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -130,6 +142,9 @@ struct platform_private
 
     int buffer_length;
     BYTE *report_buffer;
+
+    SDL_Haptic *sdl_haptic;
+    int haptic_effect_id;
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -191,6 +206,28 @@ static const BYTE CONTROLLER_TRIGGERS [] = {
     0x75, 0x10,         /* REPORT_SIZE (16) */
     0x95, 0x02,         /* REPORT_COUNT (2) */
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+};
+
+static const BYTE HAPTIC_RUMBLE[] = {
+    0x06, 0x00, 0xff,   /* USAGE PAGE (vendor-defined) */
+    0x09, 0x01,         /* USAGE (1) */
+    0x85, 0x00,         /* REPORT_ID (0) */
+    /* padding */
+    0x95, 0x02,         /* REPORT_COUNT (2) */
+    0x75, 0x08,         /* REPORT_SIZE (8) */
+    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
+    /* actuators */
+    0x15, 0x00,         /* LOGICAL MINIMUM (0) */
+    0x25, 0xff,         /* LOGICAL MAXIMUM (255) */
+    0x35, 0x00,         /* PHYSICAL MINIMUM (0) */
+    0x45, 0xff,         /* PHYSICAL MAXIMUM (255) */
+    0x75, 0x08,         /* REPORT_SIZE (8) */
+    0x95, 0x02,         /* REPORT_COUNT (2) */
+    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
+    /* padding */
+    0x95, 0x02,         /* REPORT_COUNT (3) */
+    0x75, 0x08,         /* REPORT_SIZE (8) */
+    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
 };
 
 static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE *usages, BOOL absolute)
@@ -255,6 +292,40 @@ static void set_hat_value(struct platform_private *ext, int index, int value)
         case SDL_HAT_LEFT: ext->report_buffer[offset] = 6; break;
         case SDL_HAT_LEFTUP: ext->report_buffer[offset] = 7; break;
     }
+}
+
+static int test_haptic(struct platform_private *ext)
+{
+    int rc = 0;
+    if (pSDL_JoystickIsHaptic(ext->sdl_joystick))
+    {
+        ext->sdl_haptic = pSDL_HapticOpenFromJoystick(ext->sdl_joystick);
+        if (ext->sdl_haptic &&
+            ((pSDL_HapticQuery(ext->sdl_haptic) & SDL_HAPTIC_LEFTRIGHT) != 0 ||
+             pSDL_HapticRumbleSupported(ext->sdl_haptic)))
+        {
+            pSDL_HapticStopAll(ext->sdl_haptic);
+            pSDL_HapticRumbleInit(ext->sdl_haptic);
+            rc = sizeof(HAPTIC_RUMBLE);
+            ext->haptic_effect_id = -1;
+        }
+        else
+        {
+            pSDL_HapticClose(ext->sdl_haptic);
+            ext->sdl_haptic = NULL;
+        }
+    }
+    return rc;
+}
+
+static int build_haptic(struct platform_private *ext, BYTE *report_ptr)
+{
+    if (ext->sdl_haptic)
+    {
+        memcpy(report_ptr, HAPTIC_RUMBLE, sizeof(HAPTIC_RUMBLE));
+        return (sizeof(HAPTIC_RUMBLE));
+    }
+    return 0;
 }
 
 static BOOL build_report_descriptor(struct platform_private *ext)
@@ -338,6 +409,8 @@ static BOOL build_report_descriptor(struct platform_private *ext)
             report_size++;
     }
 
+    descript_size += test_haptic(ext);
+
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", report_size);
 
@@ -377,6 +450,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     if (hat_count)
         report_ptr = add_hatswitch(report_ptr, hat_count);
 
+    report_ptr += build_haptic(ext, report_ptr);
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
     ext->report_descriptor_size = descript_size;
@@ -407,6 +481,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     descript_size += sizeof(CONTROLLER_BUTTONS);
     descript_size += sizeof(CONTROLLER_AXIS);
     descript_size += sizeof(CONTROLLER_TRIGGERS);
+    descript_size += test_haptic(ext);
 
     ext->axis_start = 2;
     ext->buffer_length = 14;
@@ -432,6 +507,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     report_ptr += sizeof(CONTROLLER_AXIS);
     memcpy(report_ptr, CONTROLLER_TRIGGERS, sizeof(CONTROLLER_TRIGGERS));
     report_ptr += sizeof(CONTROLLER_TRIGGERS);
+    report_ptr += build_haptic(ext, report_ptr);
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
     ext->report_descriptor_size = descript_size;
@@ -509,8 +585,48 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 
 static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+
+    if (ext->sdl_haptic && id == 0)
+    {
+        WORD left = report[2] * 128;
+        WORD right = report[3] * 128;
+
+        if (ext->haptic_effect_id >= 0)
+        {
+            pSDL_HapticDestroyEffect(ext->sdl_haptic, ext->haptic_effect_id);
+            ext->haptic_effect_id = -1;
+        }
+        pSDL_HapticStopAll(ext->sdl_haptic);
+        if (left != 0 || right != 0)
+        {
+            SDL_HapticEffect effect;
+
+            pSDL_memset( &effect, 0, sizeof(SDL_HapticEffect) );
+            effect.type = SDL_HAPTIC_LEFTRIGHT;
+            effect.leftright.length = -1;
+            effect.leftright.large_magnitude = left;
+            effect.leftright.small_magnitude = right;
+
+            ext->haptic_effect_id = pSDL_HapticNewEffect(ext->sdl_haptic, &effect);
+            if (ext->haptic_effect_id >= 0)
+            {
+                pSDL_HapticRunEffect(ext->sdl_haptic, ext->haptic_effect_id, 1);
+            }
+            else
+            {
+                float i = (float)((left + right)/2.0) / 32767.0;
+                pSDL_HapticRumblePlay(ext->sdl_haptic, i, -1);
+            }
+        }
+        *written = length;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *written = 0;
+        return STATUS_NOT_IMPLEMENTED;
+    }
 }
 
 static NTSTATUS get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
@@ -790,7 +906,7 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     HANDLE init_done = args;
     SDL_Event event;
 
-    if (pSDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
+    if (pSDL_Init(SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC) < 0)
     {
         ERR("Can't Init SDL\n");
         return STATUS_UNSUCCESSFUL;
@@ -847,6 +963,18 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_GameControllerName);
         LOAD_FUNCPTR(SDL_GameControllerOpen);
         LOAD_FUNCPTR(SDL_GameControllerEventState);
+        LOAD_FUNCPTR(SDL_HapticClose);
+        LOAD_FUNCPTR(SDL_HapticDestroyEffect);
+        LOAD_FUNCPTR(SDL_HapticNewEffect);
+        LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
+        LOAD_FUNCPTR(SDL_HapticQuery);
+        LOAD_FUNCPTR(SDL_HapticRumbleInit);
+        LOAD_FUNCPTR(SDL_HapticRumblePlay);
+        LOAD_FUNCPTR(SDL_HapticRumbleSupported);
+        LOAD_FUNCPTR(SDL_HapticRunEffect);
+        LOAD_FUNCPTR(SDL_HapticStopAll);
+        LOAD_FUNCPTR(SDL_JoystickIsHaptic);
+        LOAD_FUNCPTR(SDL_memset);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
