@@ -271,23 +271,6 @@ static const BYTE* what_am_I(struct udev_device *dev)
     return Unknown;
 }
 
-static void set_button_value(struct wine_input_private *ext, int code, int value)
-{
-    int index = ext->button_map[code];
-    int bindex = index / 8;
-    int b = index % 8;
-    BYTE mask;
-
-    mask = 1<<b;
-    if (value)
-        ext->current_report_buffer[bindex] = ext->current_report_buffer[bindex] | mask;
-    else
-    {
-        mask = ~mask;
-        ext->current_report_buffer[bindex] = ext->current_report_buffer[bindex] & mask;
-    }
-}
-
 static void set_abs_axis_value(struct wine_input_private *ext, int code, int value)
 {
     int index;
@@ -608,7 +591,7 @@ static BOOL set_report_from_event(struct wine_input_private *ext, struct input_e
             return FALSE;
 #endif
         case EV_KEY:
-            set_button_value(ext, ie->code, ie->value);
+            set_button_value(ext->button_map[ie->code], ie->value, ext->current_report_buffer);
             return FALSE;
         case EV_ABS:
             set_abs_axis_value(ext, ie->code, ie->value);

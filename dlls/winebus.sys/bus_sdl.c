@@ -85,6 +85,8 @@ MAKE_FUNCPTR(SDL_WaitEvent);
 MAKE_FUNCPTR(SDL_JoystickNumButtons);
 MAKE_FUNCPTR(SDL_JoystickNumBalls);
 MAKE_FUNCPTR(SDL_JoystickNumHats);
+MAKE_FUNCPTR(SDL_JoystickGetAxis);
+MAKE_FUNCPTR(SDL_JoystickGetHat);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -101,6 +103,9 @@ struct platform_private
 
     int report_descriptor_size;
     BYTE *report_descriptor;
+
+    int buffer_length;
+    BYTE *report_buffer;
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -144,6 +149,43 @@ static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE 
         report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
     }
     return report_ptr;
+}
+
+static void set_axis_value(struct platform_private *ext, int index, short value)
+{
+    int offset;
+    offset = ext->axis_start + index * 2;
+    *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value);
+}
+
+static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
+{
+    int offset;
+    offset = ext->ball_start + (index * 2);
+    if (value1 > 127) value1 = 127;
+    if (value1 < -127) value1 = -127;
+    if (value2 > 127) value2 = 127;
+    if (value2 < -127) value2 = -127;
+    ext->report_buffer[offset] = value1;
+    ext->report_buffer[offset + 1] = value2;
+}
+
+static void set_hat_value(struct platform_private *ext, int index, int value)
+{
+    int offset;
+    offset = ext->hat_start + index;
+    switch (value)
+    {
+        case SDL_HAT_CENTERED: ext->report_buffer[offset] = 8; break;
+        case SDL_HAT_UP: ext->report_buffer[offset] = 0; break;
+        case SDL_HAT_RIGHTUP: ext->report_buffer[offset] = 1; break;
+        case SDL_HAT_RIGHT: ext->report_buffer[offset] = 2; break;
+        case SDL_HAT_RIGHTDOWN: ext->report_buffer[offset] = 3; break;
+        case SDL_HAT_DOWN: ext->report_buffer[offset] = 4; break;
+        case SDL_HAT_LEFTDOWN: ext->report_buffer[offset] = 5; break;
+        case SDL_HAT_LEFT: ext->report_buffer[offset] = 6; break;
+        case SDL_HAT_LEFTUP: ext->report_buffer[offset] = 7; break;
+    }
 }
 
 static BOOL build_report_descriptor(struct platform_private *ext)
@@ -269,6 +311,20 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
     ext->report_descriptor_size = descript_size;
+    ext->buffer_length = report_size;
+    ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
+    if (ext->report_buffer == NULL)
+    {
+        ERR("Failed to alloc report buffer\n");
+        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+        return FALSE;
+    }
+
+    /* Initialize axis in the report */
+    for (i = 0; i < axis_count; i++)
+        set_axis_value(ext, i, pSDL_JoystickGetAxis(ext->sdl_joystick, i));
+    for (i = 0; i < hat_count; i++)
+        set_hat_value(ext, i, pSDL_JoystickGetHat(ext->sdl_joystick, i));
 
     return TRUE;
 }
@@ -356,6 +412,66 @@ static const platform_vtbl sdl_vtbl =
     set_feature_report,
 };
 
+static BOOL set_report_from_event(SDL_Event *event)
+{
+    DEVICE_OBJECT *device;
+    struct platform_private *private;
+    /* All the events coming in will have 'which' as a 3rd field */
+    SDL_JoystickID index = ((SDL_JoyButtonEvent*)event)->which;
+
+    device = bus_find_hid_device(&sdl_vtbl, ULongToPtr(index));
+    if (!device)
+    {
+        ERR("Failed to find device at index %i\n",index);
+        return FALSE;
+    }
+    private = impl_from_DEVICE_OBJECT(device);
+
+    switch(event->type)
+    {
+        case SDL_JOYBUTTONDOWN:
+        case SDL_JOYBUTTONUP:
+        {
+            SDL_JoyButtonEvent *ie = &event->jbutton;
+
+            set_button_value(ie->button, ie->state, private->report_buffer);
+
+            process_hid_report(device, private->report_buffer, private->buffer_length);
+            break;
+        }
+        case SDL_JOYAXISMOTION:
+        {
+            SDL_JoyAxisEvent *ie = &event->jaxis;
+
+            if (ie->axis < 6)
+            {
+                set_axis_value(private, ie->axis, ie->value);
+                process_hid_report(device, private->report_buffer, private->buffer_length);
+            }
+            break;
+        }
+        case SDL_JOYBALLMOTION:
+        {
+            SDL_JoyBallEvent *ie = &event->jball;
+
+            set_ball_value(private, ie->ball, ie->xrel, ie->yrel);
+            process_hid_report(device, private->report_buffer, private->buffer_length);
+            break;
+        }
+        case SDL_JOYHATMOTION:
+        {
+            SDL_JoyHatEvent *ie = &event->jhat;
+
+            set_hat_value(private, ie->hat, ie->value);
+            process_hid_report(device, private->report_buffer, private->buffer_length);
+            break;
+        }
+        default:
+            ERR("TODO: Process Report (%x)\n",event->type);
+    }
+    return FALSE;
+}
+
 static void try_remove_device(SDL_JoystickID index)
 {
     DEVICE_OBJECT *device = NULL;
@@ -441,6 +557,8 @@ static void process_device_event(SDL_Event *event)
         try_add_device(((SDL_JoyDeviceEvent*)event)->which);
     else if (event->type == SDL_JOYDEVICEREMOVED)
         try_remove_device(((SDL_JoyDeviceEvent*)event)->which);
+    else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
+        set_report_from_event(event);
 }
 
 static DWORD CALLBACK deviceloop_thread(void *args)
@@ -494,6 +612,8 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_JoystickNumButtons);
         LOAD_FUNCPTR(SDL_JoystickNumBalls);
         LOAD_FUNCPTR(SDL_JoystickNumHats);
+        LOAD_FUNCPTR(SDL_JoystickGetAxis);
+        LOAD_FUNCPTR(SDL_JoystickGetHat);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
