@@ -633,6 +633,7 @@ function test_mouse_event() {
     ok(e.which === 1, "which = " + e.which);
     ok(e.relatedTarget === null, "relatedTarget = " + e.relatedTarget);
     ok(e.toElement === null, "toElement = " + e.toElement);
+    ok(e.fromElement === null, "fromElement = " + e.fromElement);
 
     e.initMouseEvent("test", true, true, window, 1, 2, 3, 4, 5, false, false, false, false, 1, document);
     ok(e.type === "test", "type = " + e.type);

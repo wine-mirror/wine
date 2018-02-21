@@ -1580,8 +1580,27 @@ static HRESULT WINAPI DOMMouseEvent_get_buttons(IDOMMouseEvent *iface, USHORT *p
 static HRESULT WINAPI DOMMouseEvent_get_fromElement(IDOMMouseEvent *iface, IHTMLElement **p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IEventTarget  *related_target = NULL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->event_id != EVENTID_LAST) {
+        HRESULT hres = S_OK;
+        if(event_info[This->event_id].flags & EVENT_MOUSE_FROM_RELATED)
+            hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
+        else if(event_info[This->event_id].flags & EVENT_MOUSE_TO_RELATED)
+            hres = IDOMEvent_get_target(&This->IDOMEvent_iface, &related_target);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!related_target) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    IEventTarget_QueryInterface(related_target, &IID_IHTMLElement, (void**)p);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_toElement(IDOMMouseEvent *iface, IHTMLElement **p)
