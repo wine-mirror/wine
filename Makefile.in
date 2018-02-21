@@ -118,13 +118,6 @@ include/stamp-h: $(srcdir)/include/config.h.in config.status
 distclean:: clean
 	$(RM) -r autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man$(api_manext)
 
-# Rules for uninstalling
-
-.PHONY: install install-lib install-dev uninstall __uninstall__
-uninstall:: __uninstall__
-	-rmdir $(DESTDIR)$(fontdir) $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir) $(DESTDIR)$(includedir)/windows/ddk \
-	       $(DESTDIR)$(includedir)/windows $(DESTDIR)$(includedir)/msvcrt/sys $(DESTDIR)$(includedir)/msvcrt $(DESTDIR)$(includedir)
-
 # Rules for API documentation
 
 install-manpages:: manpages
@@ -137,7 +130,7 @@ install-manpages:: manpages
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wpp
 __builddeps__: __tooldeps__ libs/wine include po
-.PHONY: depend dummy check test testclean crosstest __tooldeps__ __builddeps__
+.PHONY: depend dummy check test crosstest __tooldeps__ __builddeps__ install install-lib install-dev
 
 dummy:
 loader: libs/port libs/wine tools

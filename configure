@@ -7729,13 +7729,10 @@ wine_fn_install_rules ()
     wine_fn_has_flag install-lib || wine_fn_has_flag install-dev || return
 
     wine_fn_append_rule \
-".PHONY: $ac_dir/install $ac_dir/uninstall
+".PHONY: $ac_dir/install
 $ac_dir/install:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
-$ac_dir/uninstall::
-	@cd $ac_dir && \$(MAKE) uninstall
-install:: $ac_dir/install
-__uninstall__: $ac_dir/uninstall"
+install:: $ac_dir/install"
 
     if wine_fn_has_flag install-lib
     then
@@ -7793,13 +7790,10 @@ fi
     wine_fn_all_rules
 
     wine_fn_append_rule \
-".PHONY: $ac_dir/install $ac_dir/uninstall
+".PHONY: $ac_dir/install
 $ac_dir/install:: $ac_dir
 	\$(INSTALL_DATA) $ac_dir/lib$ac_name.a \$(DESTDIR)\$(dlldir)/lib$ac_name.a
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_name.a
 install install-dev:: $ac_dir/install
-__uninstall__: $ac_dir/uninstall
 __builddeps__: $ac_dir
 $ac_dir: $ac_deps"
 }
@@ -7842,23 +7836,18 @@ else
 "$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages::
 	@cd $ac_dir && \$(MAKE) \$@
-.PHONY: $ac_dir/install-lib $ac_dir/uninstall
-install install-lib:: $ac_dir/install-lib
-__uninstall__: $ac_dir/uninstall"
+.PHONY: $ac_dir/install-lib
+install install-lib:: $ac_dir/install-lib"
                 if test -n "$DLLEXT"
                 then
                     wine_fn_append_rule \
 "$ac_dir/install-lib:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll"
+	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll"
                 else
                     wine_fn_append_rule \
 "$ac_dir/install-lib:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll \$(DESTDIR)\$(dlldir)/$ac_dll
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll"
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll \$(DESTDIR)\$(dlldir)/$ac_dll"
                 fi
 fi
 
@@ -7869,13 +7858,10 @@ fi
 $ac_file.a $ac_file.cross.a: $ac_deps
 $ac_file.a: dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.a
-.PHONY: $ac_dir/install-dev $ac_dir/uninstall
+.PHONY: $ac_dir/install-dev
 $ac_dir/install-dev:: $ac_file.a
 	\$(INSTALL_DATA) $ac_file.a \$(DESTDIR)\$(dlldir)/lib$ac_implib.a
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.a
-install install-dev:: $ac_dir/install-dev
-__uninstall__: $ac_dir/uninstall"
+install install-dev:: $ac_dir/install-dev"
 
         if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
@@ -7893,13 +7879,10 @@ $ac_file.def: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
 $ac_file.a: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
-.PHONY: $ac_dir/install-dev $ac_dir/uninstall
+.PHONY: $ac_dir/install-dev
 $ac_dir/install-dev:: $ac_file.$IMPLIBEXT
 	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
-install install-dev:: $ac_dir/install-dev
-__uninstall__: $ac_dir/uninstall"
+install install-dev:: $ac_dir/install-dev"
         if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
             wine_fn_append_rule \
@@ -7932,42 +7915,33 @@ fi
 
     wine_fn_has_flag install || return
     wine_fn_append_rule \
-".PHONY: $ac_dir/install $ac_dir/uninstall
-install install-lib:: $ac_dir/install
-__uninstall__: $ac_dir/uninstall"
+".PHONY: $ac_dir/install
+install install-lib:: $ac_dir/install"
 
     if test -n "$DLLEXT"
     then
         wine_fn_append_rule \
 "$ac_dir/install:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program"
+	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program"
 
         if test -z "$with_wine64" && wine_fn_has_flag installbin
         then
             wine_fn_append_rule \
 "$ac_dir/install:: __tooldeps__
-	\$(INSTALL_SCRIPT) \$(TOOLSDIR)/tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(bindir)/$ac_name"
+	\$(INSTALL_SCRIPT) \$(TOOLSDIR)/tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name"
         fi
     else
         wine_fn_append_rule \
 "$ac_dir/install:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(bindir)/$ac_program
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(bindir)/$ac_program"
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(bindir)/$ac_program"
     fi
 
     if test -z "$with_wine64" && wine_fn_has_flag manpage
     then
         wine_fn_append_rule \
 "$ac_dir/install:: $ac_dir
-	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
+	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
     fi
 }
 

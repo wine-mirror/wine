@@ -190,6 +190,8 @@ struct makefile
     struct strarray in_files;
     struct strarray ok_files;
     struct strarray clean_files;
+    struct strarray distclean_files;
+    struct strarray uninstall_files;
     struct strarray object_files;
     struct strarray crossobj_files;
     struct strarray c2man_files;
@@ -468,6 +470,15 @@ static void strarray_set_value( struct strarray *array, const char *name, const 
     for (i = array->count - 1; i > min * 2 + 1; i--) array->str[i] = array->str[i - 2];
     array->str[min * 2] = name;
     array->str[min * 2 + 1] = value;
+}
+
+
+/*******************************************************************
+ *         strarray_set_qsort
+ */
+static void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) )
+{
+    if (array->count) qsort( array->str, array->count, sizeof(*array->str), (void *)func );
 }
 
 
@@ -2196,16 +2207,14 @@ static void output_symlink_rule( const char *src_name, const char *link_name )
  * Rules are stored as a (file,dest) pair of values.
  * The first char of dest indicates the type of install.
  */
-static struct strarray output_install_rules( struct makefile *make, enum install_rules rules,
-                                             const char *target )
+static void output_install_rules( struct makefile *make, enum install_rules rules, const char *target )
 {
     unsigned int i;
     char *install_sh;
     struct strarray files = make->install_rules[rules];
-    struct strarray uninstall = empty_strarray;
     struct strarray targets = empty_strarray;
 
-    if (!files.count) return uninstall;
+    if (!files.count) return;
 
     for (i = 0; i < files.count; i += 2)
     {
@@ -2265,12 +2274,67 @@ static struct strarray output_install_rules( struct makefile *make, enum install
         default:
             assert(0);
         }
-        strarray_add( &uninstall, dest );
+        strarray_add( &make->uninstall_files, dest );
     }
 
     strarray_add_uniq( &make->phony_targets, "install" );
     strarray_add_uniq( &make->phony_targets, target );
-    return uninstall;
+}
+
+
+static int cmp_string_length( const char **a, const char **b )
+{
+    int paths_a = 0, paths_b = 0;
+    const char *p;
+
+    for (p = *a; *p; p++) if (*p == '/') paths_a++;
+    for (p = *b; *p; p++) if (*p == '/') paths_b++;
+    if (paths_b != paths_a) return paths_b - paths_a;
+    return strcmp( *a, *b );
+}
+
+/*******************************************************************
+ *         output_uninstall_rules
+ */
+static void output_uninstall_rules( struct makefile *make )
+{
+    static const char *dirs_order[] =
+        { "$(includedir)", "$(mandir)", "$(fontdir)", "$(datadir)", "$(dlldir)" };
+
+    struct strarray subdirs = empty_strarray;
+    unsigned int i, j;
+
+    if (!make->uninstall_files.count) return;
+    output( "uninstall::\n" );
+    output_rm_filenames( make->uninstall_files );
+    strarray_add_uniq( &make->phony_targets, "uninstall" );
+
+    if (!make->subdirs.count) return;
+    for (i = 0; i < make->uninstall_files.count; i++)
+    {
+        char *dir = xstrdup( make->uninstall_files.str[i] );
+        while (strchr( dir, '/' ))
+        {
+            *strrchr( dir, '/' ) = 0;
+            strarray_add_uniq( &subdirs, xstrdup(dir) );
+        }
+    }
+    strarray_qsort( &subdirs, cmp_string_length );
+    output( "\t-rmdir" );
+    for (i = 0; i < sizeof(dirs_order)/sizeof(dirs_order[0]); i++)
+    {
+        for (j = 0; j < subdirs.count; j++)
+        {
+            if (!subdirs.str[j]) continue;
+            if (strncmp( subdirs.str[j] + strlen("$(DESTDIR)"), dirs_order[i], strlen(dirs_order[i]) ))
+                continue;
+            output_filename( subdirs.str[j] );
+            subdirs.str[j] = NULL;
+        }
+    }
+    for (j = 0; j < subdirs.count; j++)
+        if (subdirs.str[j]) output_filename( subdirs.str[j] );
+    output( "\n" );
 }
 
 
@@ -3328,27 +3392,23 @@ static void output_subdirs( struct makefile *make )
     struct strarray makefile_deps = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
-    struct strarray distclean_files = get_expanded_make_var_array( make, "CONFIGURE_TARGETS" );
+    struct strarray distclean_files = empty_strarray;
     unsigned int i, j;
 
-    strarray_add( &distclean_files, obj_dir_path( make, output_makefile_name ));
-    if (!make->src_dir) strarray_add( &distclean_files, obj_dir_path( make, ".gitignore" ));
+    strarray_addall( &distclean_files, make->distclean_files );
     for (i = 0; i < make->subdirs.count; i++)
     {
         const struct makefile *submake = make->submakes[i];
 
         strarray_add( &makefile_deps, top_src_dir_path( make, base_dir_path( submake,
                                                         strmake ( "%s.in", output_makefile_name ))));
-        strarray_add( &distclean_files, base_dir_path( submake, output_makefile_name ));
-        if (!make->src_dir) strarray_add( &distclean_files, base_dir_path( submake, ".gitignore" ));
         for (j = 0; j < submake->clean_files.count; j++)
             strarray_add( &clean_files, base_dir_path( submake, submake->clean_files.str[j] ));
-        if (submake->testdll)
-        {
-            for (j = 0; j < submake->ok_files.count; j++)
-                strarray_add( &testclean_files, base_dir_path( submake, submake->ok_files.str[j] ));
-            strarray_add( &distclean_files, base_dir_path( submake, "testlist.c" ));
-        }
+        for (j = 0; j < submake->distclean_files.count; j++)
+            strarray_add( &distclean_files, base_dir_path( submake, submake->distclean_files.str[j] ));
+        for (j = 0; j < submake->ok_files.count; j++)
+            strarray_add( &testclean_files, base_dir_path( submake, submake->ok_files.str[j] ));
+        strarray_addall( &make->uninstall_files, submake->uninstall_files );
         strarray_addall( &build_deps, output_importlib_symlinks( make, submake ));
     }
     output( "Makefile:" );
@@ -3379,11 +3439,10 @@ static void output_subdirs( struct makefile *make )
 /*******************************************************************
  *         output_sources
  */
-static struct strarray output_sources( struct makefile *make )
+static void output_sources( struct makefile *make )
 {
     struct incl_file *source;
     unsigned int i, j;
-    struct strarray uninstall_files = empty_strarray;
 
     strarray_add( &make->phony_targets, "all" );
 
@@ -3423,6 +3482,15 @@ static struct strarray output_sources( struct makefile *make )
         add_install_rule( make, make->scripts.str[i], make->scripts.str[i],
                           strmake( "S$(bindir)/%s", make->scripts.str[i] ));
 
+    if (!make->src_dir) strarray_add( &make->distclean_files, ".gitignore" );
+    strarray_add( &make->distclean_files, "Makefile" );
+    if (make->testdll) strarray_add( &make->distclean_files, "testlist.c" );
+
+    if (!make->base_dir)
+        strarray_addall( &make->distclean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
+    else if (!strcmp( make->base_dir, "po" ))
+        strarray_add( &make->distclean_files, "LINGUAS" );
+
     if (make->subdirs.count) output_subdirs( make );
 
     if (!make->disabled)
@@ -3433,16 +3501,9 @@ static struct strarray output_sources( struct makefile *make )
             output_filenames_obj_dir( make, make->all_targets );
             output( "\n" );
         }
-        strarray_addall( &uninstall_files, output_install_rules( make, INSTALL_LIB, "install-lib" ));
-        strarray_addall( &uninstall_files, output_install_rules( make, INSTALL_DEV, "install-dev" ));
-        if (uninstall_files.count)
-        {
-            output( "uninstall::\n" );
-            output( "\trm -f" );
-            output_filenames( uninstall_files );
-            output( "\n" );
-            strarray_add_uniq( &make->phony_targets, "uninstall" );
-        }
+        output_install_rules( make, INSTALL_LIB, "install-lib" );
+        output_install_rules( make, INSTALL_DEV, "install-dev" );
+        output_uninstall_rules( make );
     }
 
     strarray_addall( &make->clean_files, make->object_files );
@@ -3467,10 +3528,6 @@ static struct strarray output_sources( struct makefile *make )
         output_filenames( make->phony_targets );
         output( "\n" );
     }
-
-    if (!make->base_dir)
-        strarray_addall( &make->clean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
-    return make->clean_files;
 }
 
 
@@ -3664,7 +3721,7 @@ static void output_top_variables( const struct makefile *make )
  */
 static void output_dependencies( struct makefile *make )
 {
-    struct strarray targets, ignore_files = empty_strarray;
+    struct strarray ignore_files = empty_strarray;
     char buffer[1024];
     FILE *src_file;
     int found = 0;
@@ -3686,28 +3743,19 @@ static void output_dependencies( struct makefile *make )
     input_file_name = NULL;
 
     if (!found) output( "\n%s (everything below this line is auto-generated; DO NOT EDIT!!)\n", separator );
-    targets = output_sources( make );
+    output_sources( make );
 
     fclose( output_file );
     output_file = NULL;
     rename_temp_file( output_file_name );
 
-    strarray_add( &ignore_files, ".gitignore" );
-    strarray_add( &ignore_files, "Makefile" );
-    if (make->testdll)
-    {
-        output_testlist( make );
-        strarray_add( &ignore_files, "testlist.c" );
-    }
-    if (make->base_dir && !strcmp( make->base_dir, "po" ))
-    {
-        output_linguas( make );
-        strarray_add( &ignore_files, "LINGUAS" );
-    }
-    strarray_addall( &ignore_files, targets );
+    strarray_addall( &ignore_files, make->distclean_files );
+    strarray_addall( &ignore_files, make->clean_files );
+    if (make->testdll) output_testlist( make );
+    if (make->base_dir && !strcmp( make->base_dir, "po" )) output_linguas( make );
     if (!make->src_dir) output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
 
-    create_file_directories( make, targets );
+    create_file_directories( make, ignore_files );
 
     output_file_name = NULL;
 }
