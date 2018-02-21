@@ -3147,6 +3147,15 @@ struct wined3d_texture
         DWORD color_key_flags;
     } async;
 
+    struct wined3d_overlay_info
+    {
+        struct list entry;
+        struct list overlays;
+        struct wined3d_surface *dst;
+        RECT src_rect;
+        RECT dst_rect;
+    } *overlay_info;
+
     struct wined3d_texture_sub_resource
     {
         void *parent;
@@ -3294,13 +3303,6 @@ struct wined3d_surface
 
     struct list               renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;
-
-    /* DirectDraw Overlay handling */
-    RECT                      overlay_srcrect;
-    RECT                      overlay_destrect;
-    struct wined3d_surface *overlay_dest;
-    struct list               overlays;
-    struct list               overlay_entry;
 };
 
 static inline unsigned int surface_get_sub_resource_idx(const struct wined3d_surface *surface)
