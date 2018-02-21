@@ -59,11 +59,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 #ifdef SONAME_LIBSDL2
 
+#define VID_MICROSOFT 0x045e
+
+static const WORD PID_XBOX_CONTROLLERS[] =  {
+    0x0202, /* Xbox Controller */
+    0x0285, /* Xbox Controller S */
+    0x0289, /* Xbox Controller S */
+    0x028e, /* Xbox360 Controller */
+    0x028f, /* Xbox360 Wireless Controller */
+    0x02d1, /* Xbox One Controller */
+    0x02dd, /* Xbox One Controller (Covert Forces/Firmware 2015) */
+    0x02e3, /* Xbox One Elite Controller */
+    0x02e6, /* Wireless XBox Controller Dongle */
+    0x02ea, /* Xbox One S Controller */
+    0x0719, /* Xbox 360 Wireless Adapter */
+};
+
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static DRIVER_OBJECT *sdl_driver_obj = NULL;
 
 static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
+
+static DWORD map_controllers = 0;
 
 #include "initguid.h"
 DEFINE_GUID(GUID_DEVCLASS_SDL, 0x463d60b5,0x802b,0x4bb2,0x8f,0xdb,0x7d,0xa9,0xb9,0x96,0x04,0xd8);
@@ -87,6 +105,11 @@ MAKE_FUNCPTR(SDL_JoystickNumBalls);
 MAKE_FUNCPTR(SDL_JoystickNumHats);
 MAKE_FUNCPTR(SDL_JoystickGetAxis);
 MAKE_FUNCPTR(SDL_JoystickGetHat);
+MAKE_FUNCPTR(SDL_IsGameController);
+MAKE_FUNCPTR(SDL_GameControllerGetAxis);
+MAKE_FUNCPTR(SDL_GameControllerName);
+MAKE_FUNCPTR(SDL_GameControllerOpen);
+MAKE_FUNCPTR(SDL_GameControllerEventState);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -95,6 +118,7 @@ static Uint16 (*pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
 struct platform_private
 {
     SDL_Joystick *sdl_joystick;
+    SDL_GameController *sdl_controller;
     SDL_JoystickID id;
 
     int axis_start;
@@ -123,6 +147,51 @@ static const BYTE REPORT_AXIS_TAIL[] = {
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
 };
 #define IDX_ABS_AXIS_COUNT 15
+
+static const BYTE CONTROLLER_BUTTONS[] = {
+    0x05, 0x09, /* USAGE_PAGE (Button) */
+    0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
+    0x29, 0x0f, /* USAGE_MAXIMUM (Button 15) */
+    0x15, 0x00, /* LOGICAL_MINIMUM (0) */
+    0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
+    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x95, 0x0f, /* REPORT_COUNT (15) */
+    0x75, 0x01, /* REPORT_SIZE (1) */
+    0x81, 0x02, /* INPUT (Data,Var,Abs) */
+    /* padding */
+    0x95, 0x01, /* REPORT_COUNT (1) */
+    0x75, 0x01, /* REPORT_SIZE (1) */
+    0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
+};
+
+static const BYTE CONTROLLER_AXIS [] = {
+    0x05, 0x01,         /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x30,         /* USAGE (X) */
+    0x09, 0x31,         /* USAGE (Y) */
+    0x09, 0x33,         /* USAGE (RX) */
+    0x09, 0x34,         /* USAGE (RY) */
+    0x16, 0x00, 0x80,   /* LOGICAL_MINIMUM (-32768) */
+    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
+    0x36, 0x00, 0x80,   /* PHYSICAL_MINIMUM (-32768) */
+    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
+    0x75, 0x10,         /* REPORT_SIZE (16) */
+    0x95, 0x04,         /* REPORT_COUNT (4) */
+    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+};
+
+static const BYTE CONTROLLER_TRIGGERS [] = {
+    0x05, 0x01,         /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x32,         /* USAGE (Z) */
+    0x09, 0x35,         /* USAGE (RZ) */
+    0x16, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
+    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
+    0x36, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
+    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
+    0x75, 0x10,         /* REPORT_SIZE (16) */
+    0x95, 0x02,         /* REPORT_COUNT (2) */
+    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+};
 
 static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE *usages, BOOL absolute)
 {
@@ -329,6 +398,58 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     return TRUE;
 }
 
+static BOOL build_mapped_report_descriptor(struct platform_private *ext)
+{
+    BYTE *report_ptr;
+    INT i, descript_size;
+
+    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    descript_size += sizeof(CONTROLLER_BUTTONS);
+    descript_size += sizeof(CONTROLLER_AXIS);
+    descript_size += sizeof(CONTROLLER_TRIGGERS);
+
+    ext->axis_start = 2;
+    ext->buffer_length = 14;
+
+    TRACE("Report Descriptor will be %i bytes\n", descript_size);
+    TRACE("Report will be %i bytes\n", ext->buffer_length);
+
+    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
+    if (!ext->report_descriptor)
+    {
+        ERR("Failed to alloc report descriptor\n");
+        return FALSE;
+    }
+    report_ptr = ext->report_descriptor;
+
+    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
+    report_ptr[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
+    report_ptr[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_GAMEPAD;
+    report_ptr += sizeof(REPORT_HEADER);
+    memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
+    report_ptr += sizeof(CONTROLLER_BUTTONS);
+    memcpy(report_ptr, CONTROLLER_AXIS, sizeof(CONTROLLER_AXIS));
+    report_ptr += sizeof(CONTROLLER_AXIS);
+    memcpy(report_ptr, CONTROLLER_TRIGGERS, sizeof(CONTROLLER_TRIGGERS));
+    report_ptr += sizeof(CONTROLLER_TRIGGERS);
+    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
+
+    ext->report_descriptor_size = descript_size;
+    ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ext->buffer_length);
+    if (ext->report_buffer == NULL)
+    {
+        ERR("Failed to alloc report buffer\n");
+        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+        return FALSE;
+    }
+
+    /* Initialize axis in the report */
+    for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
+        set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i));
+
+    return TRUE;
+}
+
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 {
     SDL_JoystickID id1 = impl_from_DEVICE_OBJECT(device)->id;
@@ -358,7 +479,10 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     switch (index)
     {
         case HID_STRING_ID_IPRODUCT:
-            str = pSDL_JoystickName(ext->sdl_joystick);
+            if (ext->sdl_controller)
+                str = pSDL_GameControllerName(ext->sdl_controller);
+            else
+                str = pSDL_JoystickName(ext->sdl_joystick);
             break;
         case HID_STRING_ID_IMANUFACTURER:
             str = "SDL";
@@ -426,6 +550,11 @@ static BOOL set_report_from_event(SDL_Event *event)
         return FALSE;
     }
     private = impl_from_DEVICE_OBJECT(device);
+    if (private->sdl_controller)
+    {
+        /* We want mapped events */
+        return TRUE;
+    }
 
     switch(event->type)
     {
@@ -467,6 +596,70 @@ static BOOL set_report_from_event(SDL_Event *event)
             break;
         }
         default:
+            ERR("TODO: Process Report (0x%x)\n",event->type);
+    }
+    return FALSE;
+}
+
+static BOOL set_mapped_report_from_event(SDL_Event *event)
+{
+    DEVICE_OBJECT *device;
+    struct platform_private *private;
+    /* All the events coming in will have 'which' as a 3rd field */
+    int index = ((SDL_ControllerButtonEvent*)event)->which;
+    device = bus_find_hid_device(&sdl_vtbl, ULongToPtr(index));
+    if (!device)
+    {
+        ERR("Failed to find device at index %i\n",index);
+        return FALSE;
+    }
+    private = impl_from_DEVICE_OBJECT(device);
+
+    switch(event->type)
+    {
+        case SDL_CONTROLLERBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONUP:
+        {
+            int usage = -1;
+            SDL_ControllerButtonEvent *ie = &event->cbutton;
+
+            switch (ie->button)
+            {
+                case SDL_CONTROLLER_BUTTON_A: usage = 0; break;
+                case SDL_CONTROLLER_BUTTON_B: usage = 1; break;
+                case SDL_CONTROLLER_BUTTON_X: usage = 2; break;
+                case SDL_CONTROLLER_BUTTON_Y: usage = 3; break;
+                case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: usage = 4; break;
+                case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: usage = 5; break;
+                case SDL_CONTROLLER_BUTTON_LEFTSTICK: usage = 6; break;
+                case SDL_CONTROLLER_BUTTON_RIGHTSTICK: usage = 7; break;
+                case SDL_CONTROLLER_BUTTON_START: usage = 8; break;
+                case SDL_CONTROLLER_BUTTON_BACK: usage = 9; break;
+                case SDL_CONTROLLER_BUTTON_GUIDE: usage = 10; break;
+                case SDL_CONTROLLER_BUTTON_DPAD_UP: usage = 11; break;
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN: usage = 12; break;
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT: usage = 13; break;
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: usage = 14; break;
+                default:
+                    ERR("Unknown Button %i\n",ie->button);
+            }
+
+            if (usage >= 0)
+            {
+                set_button_value(usage, ie->state, private->report_buffer);
+                process_hid_report(device, private->report_buffer, private->buffer_length);
+            }
+            break;
+        }
+        case SDL_CONTROLLERAXISMOTION:
+        {
+            SDL_ControllerAxisEvent *ie = &event->caxis;
+
+            set_axis_value(private, ie->axis, ie->value);
+            process_hid_report(device, private->report_buffer, private->buffer_length);
+            break;
+        }
+        default:
             ERR("TODO: Process Report (%x)\n",event->type);
     }
     return FALSE;
@@ -491,11 +684,11 @@ static void try_add_device(SDL_JoystickID index)
     WCHAR serial[34] = {0};
     char guid_str[34];
     BOOL is_xbox_gamepad;
-    int button_count, axis_count;
 
     SDL_Joystick* joystick;
     SDL_JoystickID id;
     SDL_JoystickGUID guid;
+    SDL_GameController *controller = NULL;
 
     if ((joystick = pSDL_JoystickOpen(index)) == NULL)
     {
@@ -503,38 +696,67 @@ static void try_add_device(SDL_JoystickID index)
         return;
     }
 
+    if (map_controllers && pSDL_IsGameController(index))
+        controller = pSDL_GameControllerOpen(index);
+
     id = index;
-    if (pSDL_JoystickGetProductVersion != NULL) {
-        vid = pSDL_JoystickGetVendor(joystick);
-        pid = pSDL_JoystickGetProduct(joystick);
-        version = pSDL_JoystickGetProductVersion(joystick);
+    if (controller)
+    {
+        vid = VID_MICROSOFT;
+        pid = PID_XBOX_CONTROLLERS[3];
+        version = 0x01;
     }
     else
     {
-        vid = 0x01;
-        pid = pSDL_JoystickInstanceID(joystick) + 1;
-        version = 0;
+        if (pSDL_JoystickGetProductVersion != NULL) {
+            vid = pSDL_JoystickGetVendor(joystick);
+            pid = pSDL_JoystickGetProduct(joystick);
+            version = pSDL_JoystickGetProductVersion(joystick);
+        }
+        else
+        {
+            vid = 0x01;
+            pid = pSDL_JoystickInstanceID(joystick) + 1;
+            version = 0;
+        }
     }
 
     guid = pSDL_JoystickGetGUID(joystick);
     pSDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
     MultiByteToWideChar(CP_ACP, 0, guid_str, -1, serial, sizeof(guid_str));
 
-    TRACE("Found sdl device %i (vid %04x, pid %04x, version %u, serial %s)\n",
-          index, vid, pid, version, debugstr_w(serial));
+    if (controller)
+    {
+        TRACE("Found sdl game controller %i (vid %04x, pid %04x, version %u, serial %s)\n",
+              index, vid, pid, version, debugstr_w(serial));
+        is_xbox_gamepad = TRUE;
+    }
+    else
+    {
+        int button_count, axis_count;
 
-    axis_count = pSDL_JoystickNumAxes(joystick);
-    button_count = pSDL_JoystickNumAxes(joystick);
-    is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
+        TRACE("Found sdl device %i (vid %04x, pid %04x, version %u, serial %s)\n",
+              index, vid, pid, version, debugstr_w(serial));
+
+        axis_count = pSDL_JoystickNumAxes(joystick);
+        button_count = pSDL_JoystickNumAxes(joystick);
+        is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
+    }
 
     device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid, version, 0, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL, &sdl_vtbl, sizeof(struct platform_private));
 
     if (device)
     {
+        BOOL rc;
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->sdl_joystick = joystick;
+        private->sdl_controller = controller;
         private->id = id;
-        if (!build_report_descriptor(private))
+        if (controller)
+            rc = build_mapped_report_descriptor(private);
+        else
+            rc = build_report_descriptor(private);
+        if (!rc)
         {
             ERR("Building report descriptor failed, removing device\n");
             bus_remove_hid_device(device);
@@ -559,6 +781,8 @@ static void process_device_event(SDL_Event *event)
         try_remove_device(((SDL_JoyDeviceEvent*)event)->which);
     else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
         set_report_from_event(event);
+    else if (event->type >= SDL_CONTROLLERAXISMOTION && event->type <= SDL_CONTROLLERBUTTONUP)
+        set_mapped_report_from_event(event);
 }
 
 static DWORD CALLBACK deviceloop_thread(void *args)
@@ -566,13 +790,14 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     HANDLE init_done = args;
     SDL_Event event;
 
-    if (pSDL_Init(SDL_INIT_JOYSTICK) < 0)
+    if (pSDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
     {
         ERR("Can't Init SDL\n");
         return STATUS_UNSUCCESSFUL;
     }
 
     pSDL_JoystickEventState(SDL_ENABLE);
+    pSDL_GameControllerEventState(SDL_ENABLE);
 
     SetEvent(init_done);
 
@@ -586,6 +811,9 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 
 NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
 {
+    static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
+    static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
+
     HANDLE events[2];
     DWORD result;
 
@@ -614,6 +842,11 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_JoystickNumHats);
         LOAD_FUNCPTR(SDL_JoystickGetAxis);
         LOAD_FUNCPTR(SDL_JoystickGetHat);
+        LOAD_FUNCPTR(SDL_IsGameController);
+        LOAD_FUNCPTR(SDL_GameControllerGetAxis);
+        LOAD_FUNCPTR(SDL_GameControllerName);
+        LOAD_FUNCPTR(SDL_GameControllerOpen);
+        LOAD_FUNCPTR(SDL_GameControllerEventState);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
@@ -623,6 +856,8 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
     sdl_driver_obj = driver;
     driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
+
+    map_controllers = check_bus_option(registry_path, &controller_mode, 1);
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
         goto error;
