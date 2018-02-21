@@ -555,6 +555,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     unsigned int src_row_pitch, src_slice_pitch;
     struct wined3d_bo_address data;
     BYTE *temporary_mem = NULL;
+    GLenum target;
     void *mem;
 
     /* Only support read back of converted P8 surfaces. */
@@ -565,8 +566,9 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     }
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
+    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
 
-    if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
+    if (target == GL_TEXTURE_2D_ARRAY)
     {
         if (format->download)
         {
@@ -658,7 +660,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         TRACE("Downloading compressed surface %p, level %u, format %#x, type %#x, data %p.\n",
                 surface, surface->texture_level, format->glFormat, format->glType, mem);
 
-        GL_EXTCALL(glGetCompressedTexImage(surface->texture_target, surface->texture_level, mem));
+        GL_EXTCALL(glGetCompressedTexImage(target, surface->texture_level, mem));
         checkGLcall("glGetCompressedTexImage");
     }
     else
@@ -666,8 +668,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         TRACE("Downloading surface %p, level %u, format %#x, type %#x, data %p.\n",
                 surface, surface->texture_level, format->glFormat, format->glType, mem);
 
-        gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
-                format->glFormat, format->glType, mem);
+        gl_info->gl_ops.gl.p_glGetTexImage(target, surface->texture_level, format->glFormat, format->glType, mem);
         checkGLcall("glGetTexImage");
     }
 
