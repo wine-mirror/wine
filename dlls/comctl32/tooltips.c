@@ -1059,7 +1059,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     TRACE("add tool (%p) %p %ld%s\n", infoPtr->hwndSelf, ti->hwnd, ti->uId,
         (ti->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
-    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE && !ti->lpszText && isW)
+    if (ti->cbSize > TTTOOLINFOW_V3_SIZE && isW)
         return FALSE;
 
     if (infoPtr->uNumTools == 0) {

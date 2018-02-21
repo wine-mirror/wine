@@ -44,7 +44,6 @@ static void test_create_tooltip(BOOL is_v6)
     ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    trace("style = %08x\n", style);
     exp_style = 0x7fffffff | WS_POPUP;
     exp_style &= ~(WS_CHILD | WS_MAXIMIZE | WS_BORDER | WS_DLGFRAME);
     ok(style == exp_style || broken(style == (exp_style | WS_BORDER)), /* nt4 */
@@ -448,7 +447,7 @@ todo_wine
                            NULL, NULL, NULL, 0);
     ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
-    toolinfoW.cbSize = sizeof(TTTOOLINFOW);
+    toolinfoW.cbSize = TTTOOLINFOW_V2_SIZE + 1;
     toolinfoW.hwnd = NULL;
     toolinfoW.hinst = GetModuleHandleA(NULL);
     toolinfoW.uFlags = 0;
@@ -457,6 +456,9 @@ todo_wine
     toolinfoW.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoW.rect);
     r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&toolinfoW);
+    /* Wine currently checks for V3 structure size, which matches what V6 control does.
+       Older implementation was never updated to support lpReserved field. */
+todo_wine
     ok(!r, "Adding the tool to the tooltip succeeded!\n");
 
     if (0)  /* crashes on NT4 */
@@ -1060,6 +1062,78 @@ static void test_margin(void)
     DestroyWindow(hwnd);
 }
 
+static void test_TTM_ADDTOOL(BOOL is_v6)
+{
+    static const WCHAR testW[] = {'T','e','s','t',0};
+    TTTOOLINFOW tiW;
+    TTTOOLINFOA ti;
+    int ret, size;
+    HWND hwnd, parent;
+    UINT max_size;
+
+    parent = CreateWindowExA(0, "Static", NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, NULL, 0);
+    ok(parent != NULL, "failed to create parent wnd\n");
+
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, TOOLTIPS_CLASSA, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
+        0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
+    ok(hwnd != NULL, "Failed to create tooltip window.\n");
+
+    for (size = 0; size <= TTTOOLINFOW_V3_SIZE + 1; size++)
+    {
+        ti.cbSize = size;
+        ti.hwnd = NULL;
+        ti.hinst = GetModuleHandleA(NULL);
+        ti.uFlags = 0;
+        ti.uId = 0x1234abce;
+        ti.lpszText = (LPSTR)"Test";
+        ti.lParam = 0xdeadbeef;
+        GetClientRect(hwnd, &ti.rect);
+
+        ret = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+        ok(ret, "Failed to add a tool, size %d.\n", size);
+
+        ret = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+        ok(ret == 1, "Unexpected tool count %d, size %d.\n", ret, size);
+
+        ret = SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&ti);
+        ok(!ret, "Unexpected ret value %d.\n", ret);
+
+        ret = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+        ok(ret == 0, "Unexpected tool count %d, size %d.\n", ret, size);
+    }
+
+    /* W variant checks cbSize. */
+    max_size = is_v6 ? TTTOOLINFOW_V3_SIZE : TTTOOLINFOW_V2_SIZE;
+    for (size = 0; size <= max_size + 1; size++)
+    {
+        tiW.cbSize = size;
+        tiW.hwnd = NULL;
+        tiW.hinst = GetModuleHandleA(NULL);
+        tiW.uFlags = 0;
+        tiW.uId = 0x1234abce;
+        tiW.lpszText = (LPWSTR)testW;
+        tiW.lParam = 0xdeadbeef;
+        GetClientRect(hwnd, &tiW.rect);
+
+        ret = SendMessageA(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&tiW);
+    todo_wine_if(!is_v6 && size > max_size)
+        ok(size <= max_size ? ret : !ret, "%d: Unexpected ret value %d, size %d, max size %d.\n", is_v6, ret, size, max_size);
+        if (ret)
+        {
+            ret = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+            ok(ret == 1, "Unexpected tool count %d.\n", ret);
+
+            ret = SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&tiW);
+            ok(!ret, "Unexpected ret value %d.\n", ret);
+
+            ret = SendMessageA(hwnd, TTM_GETTOOLCOUNT, 0, 0);
+            ok(ret == 0, "Unexpected tool count %d.\n", ret);
+        }
+    }
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(tooltips)
 {
     ULONG_PTR ctx_cookie;
@@ -1078,6 +1152,7 @@ START_TEST(tooltips)
     test_track();
     test_setinfo(FALSE);
     test_margin();
+    test_TTM_ADDTOOL(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
@@ -1088,6 +1163,7 @@ START_TEST(tooltips)
     test_track();
     test_setinfo(TRUE);
     test_margin();
+    test_TTM_ADDTOOL(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
 }
