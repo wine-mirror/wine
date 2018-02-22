@@ -7741,35 +7741,6 @@ $ac_dir: dummy
 	@cd $ac_dir && \$(MAKE)"
 }
 
-wine_fn_install_rules ()
-{
-    wine_fn_has_flag install-lib || wine_fn_has_flag install-dev || return
-
-    wine_fn_append_rule \
-".PHONY: $ac_dir/install
-$ac_dir/install:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install
-install:: $ac_dir/install"
-
-    if wine_fn_has_flag install-lib
-    then
-        wine_fn_append_rule \
-".PHONY: $ac_dir/install-lib
-$ac_dir/install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib
-install-lib:: $ac_dir/install-lib"
-    fi
-
-    if wine_fn_has_flag install-dev
-    then
-        wine_fn_append_rule \
-".PHONY: $ac_dir/install-dev
-$ac_dir/install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev
-install-dev:: $ac_dir/install-dev"
-    fi
-}
-
 wine_fn_disabled_rules ()
 {
     wine_fn_append_file SUBDIRS $ac_dir
@@ -7780,7 +7751,6 @@ wine_fn_config_makefile ()
 {
     ac_dir=$1
     ac_enable=$2
-    ac_flags=$3
 
     case $ac_dir in
         fonts|server) test -z "$with_wine64" || return ;;
@@ -7789,13 +7759,11 @@ wine_fn_config_makefile ()
   wine_fn_disabled_rules; return
 fi
     wine_fn_all_rules
-    wine_fn_install_rules
 }
 
 wine_fn_config_lib ()
 {
     ac_name=$1
-    ac_flags=$2
     ac_dir=dlls/$ac_name
     ac_deps="include"
 
@@ -7807,11 +7775,7 @@ fi
     wine_fn_all_rules
 
     wine_fn_append_rule \
-".PHONY: $ac_dir/install
-$ac_dir/install:: $ac_dir
-	\$(INSTALL_DATA) $ac_dir/lib$ac_name.a \$(DESTDIR)\$(dlldir)/lib$ac_name.a
-install install-dev:: $ac_dir/install
-__builddeps__: $ac_dir
+"__builddeps__: $ac_dir
 $ac_dir: $ac_deps"
 }
 
@@ -7852,20 +7816,7 @@ else
                wine_fn_append_rule \
 "$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages::
-	@cd $ac_dir && \$(MAKE) \$@
-.PHONY: $ac_dir/install-lib
-install install-lib:: $ac_dir/install-lib"
-                if test -n "$DLLEXT"
-                then
-                    wine_fn_append_rule \
-"$ac_dir/install-lib:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_dll"
-                else
-                    wine_fn_append_rule \
-"$ac_dir/install-lib:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll \$(DESTDIR)\$(dlldir)/$ac_dll"
-                fi
+	@cd $ac_dir && \$(MAKE) \$@"
 fi
 
     if wine_fn_has_flag staticimplib
@@ -7874,11 +7825,7 @@ fi
 "__builddeps__: $ac_file.a
 $ac_file.a $ac_file.cross.a: $ac_deps
 $ac_file.a: dummy
-	@cd $ac_dir && \$(MAKE) lib$ac_implib.a
-.PHONY: $ac_dir/install-dev
-$ac_dir/install-dev:: $ac_file.a
-	\$(INSTALL_DATA) $ac_file.a \$(DESTDIR)\$(dlldir)/lib$ac_implib.a
-install install-dev:: $ac_dir/install-dev"
+	@cd $ac_dir && \$(MAKE) lib$ac_implib.a"
 
         if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
@@ -7895,11 +7842,7 @@ $ac_file.cross.a: dummy
 $ac_file.def: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
 $ac_file.a: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export $srcdir/$ac_dir/$ac_name.spec
-.PHONY: $ac_dir/install-dev
-$ac_dir/install-dev:: $ac_file.$IMPLIBEXT
-	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
-install install-dev:: $ac_dir/install-dev"
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export $srcdir/$ac_dir/$ac_name.spec"
         if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
             wine_fn_append_rule \
@@ -7915,13 +7858,6 @@ wine_fn_config_program ()
     ac_name=$1
     ac_dir=programs/$ac_name
     ac_enable=$2
-    ac_flags=$3
-    ac_program=$ac_name
-
-    case $ac_name in
-      *.*) ;;
-      *)   ac_program=$ac_program.exe ;;
-    esac
 
     if eval test \"x\$"$ac_enable"\" = x"no"; then :
   wine_fn_disabled_rules; return
@@ -7929,44 +7865,12 @@ fi
 
     wine_fn_all_rules
     wine_fn_append_rule "$ac_dir: __builddeps__"
-
-    wine_fn_has_flag install || return
-    wine_fn_append_rule \
-".PHONY: $ac_dir/install
-install install-lib:: $ac_dir/install"
-
-    if test -n "$DLLEXT"
-    then
-        wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT
-	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(dlldir)/fakedlls/$ac_program"
-
-        if test -z "$with_wine64" && wine_fn_has_flag installbin
-        then
-            wine_fn_append_rule \
-"$ac_dir/install:: __tooldeps__
-	\$(INSTALL_SCRIPT) \$(TOOLSDIR)/tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name"
-        fi
-    else
-        wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir
-	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(bindir)/$ac_program"
-    fi
-
-    if test -z "$with_wine64" && wine_fn_has_flag manpage
-    then
-        wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir
-	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
-    fi
 }
 
 wine_fn_config_test ()
 {
     ac_dir=$1
     ac_name=$2
-    ac_flags=$3
 
     if test "x$enable_tests" = xno; then :
   wine_fn_disabled_rules; return
@@ -7996,13 +7900,11 @@ $ac_dir/crosstest: __builddeps__ dummy
 wine_fn_config_tool ()
 {
     ac_dir=$1
-    ac_flags=$2
     if test "x$enable_tools" = xno; then :
   wine_fn_append_file DISABLED_SUBDIRS $ac_dir; return
 fi
 
     wine_fn_all_rules
-    wine_fn_install_rules
 
     wine_fn_append_rule "__tooldeps__: $ac_dir"
     wine_fn_append_rule "$ac_dir: libs/port"
@@ -19330,122 +19232,122 @@ wine_fn_config_test dlls/xmllite/tests xmllite_test
 wine_fn_config_dll xolehlp enable_xolehlp
 wine_fn_config_dll xpsprint enable_xpsprint
 wine_fn_config_dll xpssvcs enable_xpssvcs
-wine_fn_config_makefile fonts enable_fonts install-lib
-wine_fn_config_makefile include enable_include install-dev
+wine_fn_config_makefile fonts enable_fonts
+wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine implib,install-dev,install-lib
+wine_fn_config_makefile libs/wine enable_libs_wine
 wine_fn_config_makefile libs/wpp enable_libs_wpp
-wine_fn_config_makefile loader enable_loader install-lib
+wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile po enable_po
-wine_fn_config_program arp enable_arp install
-wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
-wine_fn_config_program attrib enable_attrib install
-wine_fn_config_program cabarc enable_cabarc install
-wine_fn_config_program cacls enable_cacls install
-wine_fn_config_program clock enable_clock install
-wine_fn_config_program cmd enable_cmd install
+wine_fn_config_program arp enable_arp
+wine_fn_config_program aspnet_regiis enable_aspnet_regiis
+wine_fn_config_program attrib enable_attrib
+wine_fn_config_program cabarc enable_cabarc
+wine_fn_config_program cacls enable_cacls
+wine_fn_config_program clock enable_clock
+wine_fn_config_program cmd enable_cmd
 wine_fn_config_test programs/cmd/tests cmd.exe_test
-wine_fn_config_program conhost enable_conhost install
-wine_fn_config_program control enable_control install
-wine_fn_config_program cscript enable_cscript install
-wine_fn_config_program dpnsvr enable_dpnsvr install
-wine_fn_config_program dxdiag enable_dxdiag install
-wine_fn_config_program eject enable_eject install
-wine_fn_config_program expand enable_expand install
-wine_fn_config_program explorer enable_explorer install
-wine_fn_config_program extrac32 enable_extrac32 install
-wine_fn_config_program findstr enable_findstr install
-wine_fn_config_program fsutil enable_fsutil install
-wine_fn_config_program hh enable_hh install
-wine_fn_config_program hostname enable_hostname install
-wine_fn_config_program icacls enable_icacls install
-wine_fn_config_program icinfo enable_icinfo install
-wine_fn_config_program iexplore enable_iexplore install
-wine_fn_config_program ipconfig enable_ipconfig install
-wine_fn_config_program lodctr enable_lodctr install
-wine_fn_config_program mofcomp enable_mofcomp install
-wine_fn_config_program mshta enable_mshta install
-wine_fn_config_program msiexec enable_msiexec install,installbin,manpage
-wine_fn_config_program msinfo32 enable_msinfo32 install
-wine_fn_config_program net enable_net install
-wine_fn_config_program netsh enable_netsh install
-wine_fn_config_program netstat enable_netstat install
-wine_fn_config_program ngen enable_ngen install
-wine_fn_config_program notepad enable_notepad install,installbin,manpage
-wine_fn_config_program oleview enable_oleview install
-wine_fn_config_program ping enable_ping install
-wine_fn_config_program plugplay enable_plugplay install
-wine_fn_config_program powershell enable_powershell install
-wine_fn_config_program presentationfontcache enable_presentationfontcache install
-wine_fn_config_program progman enable_progman install
-wine_fn_config_program reg enable_reg install
+wine_fn_config_program conhost enable_conhost
+wine_fn_config_program control enable_control
+wine_fn_config_program cscript enable_cscript
+wine_fn_config_program dpnsvr enable_dpnsvr
+wine_fn_config_program dxdiag enable_dxdiag
+wine_fn_config_program eject enable_eject
+wine_fn_config_program expand enable_expand
+wine_fn_config_program explorer enable_explorer
+wine_fn_config_program extrac32 enable_extrac32
+wine_fn_config_program findstr enable_findstr
+wine_fn_config_program fsutil enable_fsutil
+wine_fn_config_program hh enable_hh
+wine_fn_config_program hostname enable_hostname
+wine_fn_config_program icacls enable_icacls
+wine_fn_config_program icinfo enable_icinfo
+wine_fn_config_program iexplore enable_iexplore
+wine_fn_config_program ipconfig enable_ipconfig
+wine_fn_config_program lodctr enable_lodctr
+wine_fn_config_program mofcomp enable_mofcomp
+wine_fn_config_program mshta enable_mshta
+wine_fn_config_program msiexec enable_msiexec
+wine_fn_config_program msinfo32 enable_msinfo32
+wine_fn_config_program net enable_net
+wine_fn_config_program netsh enable_netsh
+wine_fn_config_program netstat enable_netstat
+wine_fn_config_program ngen enable_ngen
+wine_fn_config_program notepad enable_notepad
+wine_fn_config_program oleview enable_oleview
+wine_fn_config_program ping enable_ping
+wine_fn_config_program plugplay enable_plugplay
+wine_fn_config_program powershell enable_powershell
+wine_fn_config_program presentationfontcache enable_presentationfontcache
+wine_fn_config_program progman enable_progman
+wine_fn_config_program reg enable_reg
 wine_fn_config_test programs/reg/tests reg.exe_test
-wine_fn_config_program regasm enable_regasm install
-wine_fn_config_program regedit enable_regedit install,installbin,manpage
+wine_fn_config_program regasm enable_regasm
+wine_fn_config_program regedit enable_regedit
 wine_fn_config_test programs/regedit/tests regedit.exe_test
-wine_fn_config_program regsvcs enable_regsvcs install
-wine_fn_config_program regsvr32 enable_regsvr32 install,installbin,manpage
-wine_fn_config_program rpcss enable_rpcss install
-wine_fn_config_program rundll.exe16 enable_win16 install
-wine_fn_config_program rundll32 enable_rundll32 install
-wine_fn_config_program sc enable_sc install
-wine_fn_config_program schtasks enable_schtasks install
+wine_fn_config_program regsvcs enable_regsvcs
+wine_fn_config_program regsvr32 enable_regsvr32
+wine_fn_config_program rpcss enable_rpcss
+wine_fn_config_program rundll.exe16 enable_win16
+wine_fn_config_program rundll32 enable_rundll32
+wine_fn_config_program sc enable_sc
+wine_fn_config_program schtasks enable_schtasks
 wine_fn_config_test programs/schtasks/tests schtasks.exe_test
-wine_fn_config_program sdbinst enable_sdbinst install
-wine_fn_config_program secedit enable_secedit install
-wine_fn_config_program servicemodelreg enable_servicemodelreg install
-wine_fn_config_program services enable_services install
+wine_fn_config_program sdbinst enable_sdbinst
+wine_fn_config_program secedit enable_secedit
+wine_fn_config_program servicemodelreg enable_servicemodelreg
+wine_fn_config_program services enable_services
 wine_fn_config_test programs/services/tests services.exe_test
-wine_fn_config_program shutdown enable_shutdown install
-wine_fn_config_program spoolsv enable_spoolsv install
-wine_fn_config_program start enable_start install
-wine_fn_config_program subst enable_subst install
-wine_fn_config_program svchost enable_svchost install
-wine_fn_config_program systeminfo enable_systeminfo install
-wine_fn_config_program taskkill enable_taskkill install
-wine_fn_config_program tasklist enable_tasklist install
-wine_fn_config_program taskmgr enable_taskmgr install
-wine_fn_config_program termsv enable_termsv install
-wine_fn_config_program uninstaller enable_uninstaller install
-wine_fn_config_program unlodctr enable_unlodctr install
-wine_fn_config_program view enable_view install
-wine_fn_config_program wevtutil enable_wevtutil install
-wine_fn_config_program wineboot enable_wineboot install,installbin,manpage
-wine_fn_config_program winebrowser enable_winebrowser install
-wine_fn_config_program winecfg enable_winecfg install,installbin,manpage
-wine_fn_config_program wineconsole enable_wineconsole install,installbin,manpage
-wine_fn_config_program winedbg enable_winedbg install,installbin,manpage
-wine_fn_config_program winedevice enable_winedevice install
-wine_fn_config_program winefile enable_winefile install,installbin,manpage
-wine_fn_config_program winemenubuilder enable_winemenubuilder install
-wine_fn_config_program winemine enable_winemine install,installbin,manpage
-wine_fn_config_program winemsibuilder enable_winemsibuilder install
-wine_fn_config_program winepath enable_winepath install,installbin,manpage
+wine_fn_config_program shutdown enable_shutdown
+wine_fn_config_program spoolsv enable_spoolsv
+wine_fn_config_program start enable_start
+wine_fn_config_program subst enable_subst
+wine_fn_config_program svchost enable_svchost
+wine_fn_config_program systeminfo enable_systeminfo
+wine_fn_config_program taskkill enable_taskkill
+wine_fn_config_program tasklist enable_tasklist
+wine_fn_config_program taskmgr enable_taskmgr
+wine_fn_config_program termsv enable_termsv
+wine_fn_config_program uninstaller enable_uninstaller
+wine_fn_config_program unlodctr enable_unlodctr
+wine_fn_config_program view enable_view
+wine_fn_config_program wevtutil enable_wevtutil
+wine_fn_config_program wineboot enable_wineboot
+wine_fn_config_program winebrowser enable_winebrowser
+wine_fn_config_program winecfg enable_winecfg
+wine_fn_config_program wineconsole enable_wineconsole
+wine_fn_config_program winedbg enable_winedbg
+wine_fn_config_program winedevice enable_winedevice
+wine_fn_config_program winefile enable_winefile
+wine_fn_config_program winemenubuilder enable_winemenubuilder
+wine_fn_config_program winemine enable_winemine
+wine_fn_config_program winemsibuilder enable_winemsibuilder
+wine_fn_config_program winepath enable_winepath
 wine_fn_config_program winetest enable_winetest
-wine_fn_config_program winevdm enable_win16 install
-wine_fn_config_program winhelp.exe16 enable_win16 install
-wine_fn_config_program winhlp32 enable_winhlp32 install
-wine_fn_config_program winoldap.mod16 enable_win16 install
-wine_fn_config_program winver enable_winver install
-wine_fn_config_program wmic enable_wmic install
-wine_fn_config_program wmplayer enable_wmplayer install
-wine_fn_config_program wordpad enable_wordpad install
-wine_fn_config_program write enable_write install
-wine_fn_config_program wscript enable_wscript install
+wine_fn_config_program winevdm enable_win16
+wine_fn_config_program winhelp.exe16 enable_win16
+wine_fn_config_program winhlp32 enable_winhlp32
+wine_fn_config_program winoldap.mod16 enable_win16
+wine_fn_config_program winver enable_winver
+wine_fn_config_program wmic enable_wmic
+wine_fn_config_program wmplayer enable_wmplayer
+wine_fn_config_program wordpad enable_wordpad
+wine_fn_config_program write enable_write
+wine_fn_config_program wscript enable_wscript
 wine_fn_config_test programs/wscript/tests wscript.exe_test
-wine_fn_config_program wusa enable_wusa install
-wine_fn_config_program xcopy enable_xcopy install
+wine_fn_config_program wusa enable_wusa
+wine_fn_config_program xcopy enable_xcopy
 wine_fn_config_test programs/xcopy/tests xcopy.exe_test
-wine_fn_config_makefile server enable_server install-lib
+wine_fn_config_makefile server enable_server
 wine_fn_config_tool tools
 wine_fn_config_tool tools/sfnt2fon
-wine_fn_config_tool tools/widl install-dev
-wine_fn_config_tool tools/winebuild install-dev
-wine_fn_config_tool tools/winedump install-dev
-wine_fn_config_tool tools/winegcc install-dev
-wine_fn_config_tool tools/winemaker install-dev
-wine_fn_config_tool tools/wmc install-dev
-wine_fn_config_tool tools/wrc install-dev
+wine_fn_config_tool tools/widl
+wine_fn_config_tool tools/winebuild
+wine_fn_config_tool tools/winedump
+wine_fn_config_tool tools/winegcc
+wine_fn_config_tool tools/winemaker
+wine_fn_config_tool tools/wmc
+wine_fn_config_tool tools/wrc
 
 
 wine_fn_append_file CONFIGURE_TARGETS "TAGS"

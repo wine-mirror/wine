@@ -251,32 +251,6 @@ sub parse_makefile($)
         }
     }
 
-    if ($file =~ /^programs\/([^\/]+)\/Makefile/)
-    {
-        my $prog = $1;
-        if (defined $make{"INSTALL_LIB"})
-        {
-            ${$make{"=flags"}}{"install"} = 1 if grep { "$prog.exe" eq $_; } @{$make{"INSTALL_LIB"}};
-            ${$make{"=flags"}}{"installbin"} = 1 if grep { $prog eq $_; } @{$make{"INSTALL_LIB"}};
-        }
-        else
-        {
-            ${$make{"=flags"}}{"install"} = 1;
-        }
-    }
-
-    unless (defined $make{"MODULE"})
-    {
-        ${$make{"=flags"}}{"install-lib"} = 1 if defined $make{"INSTALL_LIB"};
-        ${$make{"=flags"}}{"install-dev"} = 1 if defined $make{"INSTALL_DEV"};
-    }
-
-    if (defined $make{"=flags"} && defined $make{"MODULE"})
-    {
-        die "Custom install-lib rule not allowed in $file" if defined ${$make{"=flags"}}{"install-lib"};
-        die "Custom install-dev rule not allowed in $file" if defined ${$make{"=flags"}}{"install-dev"};
-    }
-
     return %make;
 }
 
@@ -379,7 +353,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
         elsif ($name =~ /\.sfd$/)
         {
-            ${${$make}{"=flags"}}{"install-lib"} = 1 if defined $flags{"install"};
             push @{${$make}{"=FONT_SRCS"}}, $name;
         }
         elsif ($name =~ /\.c$/)
@@ -390,7 +363,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.h$/ || $name =~ /\.rh$/ || $name =~ /\.inl$/ || $name =~ /\.x$/)
         {
             next if $dir ne "include";
-            ${${$make}{"=flags"}}{"install-dev"} = 1;
         }
         elsif ($name =~ /\.rc$/)
         {
@@ -412,7 +384,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.man\.in$/)
         {
             push @{${$make}{"=MANPAGES"}}, $name;
-            ${${$make}{"=flags"}}{"manpage"} = 1 if ($file =~ /^programs\//);
         }
         elsif ($name =~ /\.in$/)
         {

@@ -2202,46 +2202,20 @@ static void output_symlink_rule( const char *src_name, const char *link_name )
 
 
 /*******************************************************************
- *         output_install_rules
- *
- * Rules are stored as a (file,dest) pair of values.
- * The first char of dest indicates the type of install.
+ *         output_install_commands
  */
-static void output_install_rules( struct makefile *make, enum install_rules rules, const char *target )
+static void output_install_commands( struct makefile *make, const struct makefile *submake,
+                                     struct strarray files )
 {
     unsigned int i;
-    char *install_sh;
-    struct strarray files = make->install_rules[rules];
-    struct strarray targets = empty_strarray;
+    char *install_sh = top_src_dir_path( make, "tools/install-sh" );
 
-    if (!files.count) return;
-
-    for (i = 0; i < files.count; i += 2)
-    {
-        const char *file = files.str[i];
-        switch (*files.str[i + 1])
-        {
-        case 'd':  /* data file */
-        case 'p':  /* program file */
-        case 's':  /* script */
-            strarray_add_uniq( &targets, obj_dir_path( make, file ));
-            break;
-        case 't':  /* script in tools dir */
-            strarray_add_uniq( &targets, tools_dir_path( make, file ));
-            break;
-        }
-    }
-
-    output( "install %s::", target );
-    output_filenames( targets );
-    output( "\n" );
-
-    install_sh = top_src_dir_path( make, "tools/install-sh" );
     for (i = 0; i < files.count; i += 2)
     {
         const char *file = files.str[i];
         const char *dest = strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 );
 
+        if (submake) file = base_dir_path( submake, file );
         switch (*files.str[i + 1])
         {
         case 'd':  /* data file */
@@ -2266,16 +2240,53 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
             break;
         case 't':  /* script in tools dir */
             output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
-                    install_sh, tools_dir_path( make, file ), dest );
+                    install_sh, tools_dir_path( make, files.str[i] ), dest );
             break;
         case 'y':  /* symlink */
-            output_symlink_rule( file, dest );
+            output_symlink_rule( files.str[i], dest );
             break;
         default:
             assert(0);
         }
         strarray_add( &make->uninstall_files, dest );
     }
+}
+
+
+/*******************************************************************
+ *         output_install_rules
+ *
+ * Rules are stored as a (file,dest) pair of values.
+ * The first char of dest indicates the type of install.
+ */
+static void output_install_rules( struct makefile *make, enum install_rules rules, const char *target )
+{
+    unsigned int i;
+    struct strarray files = make->install_rules[rules];
+    struct strarray targets = empty_strarray;
+
+    if (!files.count) return;
+
+    for (i = 0; i < files.count; i += 2)
+    {
+        const char *file = files.str[i];
+        switch (*files.str[i + 1])
+        {
+        case 'd':  /* data file */
+        case 'p':  /* program file */
+        case 's':  /* script */
+            strarray_add_uniq( &targets, obj_dir_path( make, file ));
+            break;
+        case 't':  /* script in tools dir */
+            strarray_add_uniq( &targets, tools_dir_path( make, file ));
+            break;
+        }
+    }
+
+    output( "install %s::", target );
+    output_filenames( targets );
+    output( "\n" );
+    output_install_commands( make, NULL, files );
 
     strarray_add_uniq( &make->phony_targets, "install" );
     strarray_add_uniq( &make->phony_targets, target );
@@ -3117,7 +3128,7 @@ static void output_module( struct makefile *make )
 
     if (spec_file)
         output_man_pages( make );
-    else if (*dll_ext)
+    else if (*dll_ext && !make->is_win16)
     {
         char *binary = replace_extension( make->module, ".exe", "" );
         add_install_rule( make, binary, "wineapploader", strmake( "t$(bindir)/%s", binary ));
@@ -3408,8 +3419,18 @@ static void output_subdirs( struct makefile *make )
             strarray_add( &distclean_files, base_dir_path( submake, submake->distclean_files.str[j] ));
         for (j = 0; j < submake->ok_files.count; j++)
             strarray_add( &testclean_files, base_dir_path( submake, submake->ok_files.str[j] ));
-        strarray_addall( &make->uninstall_files, submake->uninstall_files );
         strarray_addall( &build_deps, output_importlib_symlinks( make, submake ));
+        if (submake->disabled) continue;
+        if (submake->install_rules[INSTALL_LIB].count)
+        {
+            output( "install install-lib:: %s\n", submake->base_dir );
+            output_install_commands( make, submake, submake->install_rules[INSTALL_LIB] );
+        }
+        if (submake->install_rules[INSTALL_DEV].count)
+        {
+            output( "install install-dev:: %s\n", submake->base_dir );
+            output_install_commands( make, submake, submake->install_rules[INSTALL_DEV] );
+        }
     }
     output( "Makefile:" );
     output_filenames( makefile_deps );
@@ -3818,7 +3839,7 @@ static void load_sources( struct makefile *make )
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
     make->disabled   = make->base_dir && strarray_exists( &disabled_dirs, make->base_dir );
-    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
+    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" ) || strarray_exists( &make->appmode, "-m16" );
     make->use_msvcrt = strarray_exists( &make->appmode, "-mno-cygwin" );
 
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
