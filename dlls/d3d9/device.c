@@ -1612,6 +1612,17 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
         src_rect = &s;
     }
 
+    if (dst_desc.access & WINED3D_RESOURCE_ACCESS_CPU)
+    {
+        WARN("Destination resource is not in DEFAULT pool.\n");
+        goto done;
+    }
+    if (src_desc.access & WINED3D_RESOURCE_ACCESS_CPU)
+    {
+        WARN("Source resource is not in DEFAULT pool.\n");
+        goto done;
+    }
+
     if (src_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
         if (device->in_scene)

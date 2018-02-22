@@ -12342,7 +12342,7 @@ static void test_stretch_rect(void)
                     IDirect3DTexture9_Release(dst_texture);
 
                     hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine
+                    todo_wine_if(src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
 
@@ -12352,11 +12352,10 @@ static void test_stretch_rect(void)
                     else
                         expected_hr = D3DERR_INVALIDCALL;
                     hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst_rt, NULL, D3DTEXF_NONE);
-                    todo_wine_if(expected_hr != D3D_OK)
                     ok(hr == expected_hr, "Got hr %#x, expected hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, expected_hr, src_format, dst_format, src_pool);
                     hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine
+                    todo_wine_if(dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, src_format, dst_format, dst_pool);
 
@@ -12380,28 +12379,26 @@ static void test_stretch_rect(void)
                     ok(hr == D3D_OK, "Failed to create surface, hr %#x.\n", hr);
 
                     hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst_surface, NULL, D3DTEXF_NONE);
-                    todo_wine_if(expected_hr != D3D_OK)
                     ok(hr == expected_hr, "Got hr %#x, expected %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, expected_hr, src_format, dst_format, src_pool, dst_pool);
 
                     /* offscreen plain <-> texture */
                     hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst_surface, NULL, D3DTEXF_NONE);
-                    todo_wine
+                    todo_wine_if(src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
                     hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine
+                    todo_wine_if(src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
 
                     /* offscreen plain <-> render target */
                     expected_hr = src_pool == D3DPOOL_DEFAULT ? D3D_OK : D3DERR_INVALIDCALL;
                     hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst_rt, NULL, D3DTEXF_NONE);
-                    todo_wine_if(expected_hr != D3D_OK)
                     ok(hr == expected_hr, "Got hr %#x, expected hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, expected_hr, src_format, dst_format, src_pool);
                     hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst_surface, NULL, D3DTEXF_NONE);
-                    todo_wine
+                    todo_wine_if(dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, src_format, dst_format, dst_pool);
 
