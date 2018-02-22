@@ -111,7 +111,7 @@ static const char *Gstreamer_FindMatch(const char *strcaps)
     g_list_free(copy);
 
     if (!bestfactory) {
-        FIXME("Could not find plugin for %s\n", strcaps);
+        ERR("Could not find plugin for %s\n", strcaps);
         return NULL;
     }
     return gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(bestfactory));
@@ -312,7 +312,7 @@ static HRESULT Gstreamer_transform_ConnectInput(GstTfImpl *This, const AM_MEDIA_
 
     This->filter = gst_element_factory_make(This->gstreamer_name, NULL);
     if (!This->filter) {
-        FIXME("Could not make %s filter\n", This->gstreamer_name);
+        ERR("Could not make %s filter\n", This->gstreamer_name);
         return E_FAIL;
     }
     This->my_src = gst_pad_new("yuvsrc", GST_PAD_SRC);

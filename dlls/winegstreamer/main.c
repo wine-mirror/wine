@@ -276,7 +276,7 @@ DWORD Gstreamer_init(void)
         inited = gst_init_check(&argc, &argv, &err);
         HeapFree(GetProcessHeap(), 0, argv);
         if (err) {
-            FIXME("Failed to initialize gstreamer: %s\n", err->message);
+            ERR("Failed to initialize gstreamer: %s\n", err->message);
             g_error_free(err);
         }
         if (inited) {

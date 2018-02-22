@@ -1079,8 +1079,8 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 
     if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ERROR) {
         gst_message_parse_error(msg, &err, &dbg_info);
-        FIXME("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-        WARN("%s\n", dbg_info);
+        ERR("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+        ERR("%s\n", dbg_info);
     } else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_WARNING) {
         gst_message_parse_warning(msg, &err, &dbg_info);
         WARN("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
@@ -1095,7 +1095,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user)
 {
     gchar *strcaps = gst_caps_to_string(caps);
-    FIXME("Could not find a filter for caps: %s\n", strcaps);
+    ERR("Could not find a filter for caps: %s\n", strcaps);
     g_free(strcaps);
 }
 
@@ -1126,7 +1126,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     gstfilter = gst_element_factory_make("decodebin", NULL);
     if (!gstfilter) {
-        FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
+        ERR("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
               8 * (int)sizeof(void*));
         return E_FAIL;
     }
