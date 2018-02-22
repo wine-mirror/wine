@@ -743,6 +743,44 @@ function test_keyboard_event() {
     next_test();
 }
 
+function test_error_event() {
+    document.body.innerHTML = '<div><img></img></div>';
+    var div = document.body.firstChild;
+    var img = div.firstChild;
+    var calls = "";
+
+    function record_call(msg) {
+        return function() { calls += msg + "," };
+    }
+    var win_onerror = record_call("window.onerror");
+    var doc_onerror = record_call("doc.onerror");
+    var body_onerror = record_call("body.onerror");
+
+    window.addEventListener("error", win_onerror, true);
+    document.addEventListener("error", doc_onerror, true);
+    document.body.addEventListener("error", body_onerror, true);
+    div.addEventListener("error", record_call("div.onerror"), true);
+
+    div.addEventListener("error", function() {
+        ok(calls === "window.onerror,doc.onerror,body.onerror,div.onerror,", "calls = " + calls);
+
+        window.removeEventListener("error", win_onerror, true);
+        document.removeEventListener("error", doc_onerror, true);
+        document.body.removeEventListener("error", body_onerror, true);
+        next_test();
+    }, true);
+
+    img.src = "about:blank";
+}
+
+function test_detached_img_error_event() {
+    var img = new Image();
+    img.onerror = function() {
+        next_test();
+    }
+    img.src = "about:blank";
+}
+
 var tests = [
     test_content_loaded,
     test_add_remove_listener,
@@ -758,6 +796,8 @@ var tests = [
     test_ui_event,
     test_mouse_event,
     test_keyboard_event,
+    test_error_event,
+    test_detached_img_error_event,
     test_time_stamp,
     test_listener_order
 ];

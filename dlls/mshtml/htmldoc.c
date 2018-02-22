@@ -5048,7 +5048,7 @@ static nsISupports *HTMLDocumentNode_get_gecko_target(DispatchEx *dispex)
 static void HTMLDocumentNode_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
-    ensure_doc_nsevent_handler(This, eid);
+    ensure_doc_nsevent_handler(This, This->node.nsnode, eid);
 }
 
 static EventTarget *HTMLDocumentNode_get_parent_event_target(DispatchEx *dispex)

@@ -131,11 +131,17 @@ typedef struct {
     DWORD flags;
 } event_info_t;
 
+/* Use Gecko default listener (it's registered on window object for DOM nodes). */
 #define EVENT_DEFAULTLISTENER    0x0001
-#define EVENT_BUBBLES            0x0002
-#define EVENT_BIND_TO_BODY       0x0008
-#define EVENT_CANCELABLE         0x0010
+/* Register Gecko listener on target itself (unlike EVENT_DEFAULTLISTENER). */
+#define EVENT_BIND_TO_TARGET     0x0002
+/* Event bubbles by default (unless explicitly specified otherwise). */
+#define EVENT_BUBBLES            0x0004
+/* Event is cancelable by default (unless explicitly specified otherwise). */
+#define EVENT_CANCELABLE         0x0008
+/* Event may have default handler (so we always have to register Gecko listener). */
 #define EVENT_HASDEFAULTHANDLERS 0x0020
+/* Ecent is not supported properly, print FIXME message when it's used. */
 #define EVENT_FIXME              0x0040
 
 /* mouse event flags for fromElement and toElement implementation */
@@ -144,7 +150,7 @@ typedef struct {
 
 static const event_info_t event_info[] = {
     {abortW,             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
-        EVENT_BIND_TO_BODY},
+        EVENT_BIND_TO_TARGET},
     {beforeactivateW,    EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREACTIVATE,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
     {beforeunloadW,      EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREUNLOAD,
@@ -168,7 +174,7 @@ static const event_info_t event_info[] = {
     {dragstartW,         EVENT_TYPE_DRAG,      DISPID_EVMETH_ONDRAGSTART,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
     {errorW,             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONERROR,
-        EVENT_BIND_TO_BODY},
+        EVENT_BIND_TO_TARGET},
     {focusW,             EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
     {focusinW,           EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONFOCUSIN,
@@ -184,7 +190,7 @@ static const event_info_t event_info[] = {
     {keyupW,             EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYUP,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {loadW,              EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONLOAD,
-        EVENT_BIND_TO_BODY},
+        EVENT_BIND_TO_TARGET},
     {messageW,           EVENT_TYPE_MESSAGE,   DISPID_EVMETH_ONMESSAGE,
         0},
     {mousedownW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEDOWN,
@@ -2618,6 +2624,14 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
 void dispatch_event(EventTarget *event_target, DOMEvent *event)
 {
     dispatch_event_object(event_target, event, DISPATCH_BOTH, NULL);
+
+    /*
+     * We may have registered multiple Gecko listeners for the same event type,
+     * but we already dispatched event to all relevant targets. Stop event
+     * propagation here to avoid events being dispatched multiple times.
+     */
+    if(event->event_id != EVENTID_LAST && (event_info[event->event_id].flags & EVENT_BIND_TO_TARGET))
+        nsIDOMEvent_StopPropagation(event->nsevent);
 }
 
 HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
@@ -2679,10 +2693,8 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
     return S_OK;
 }
 
-HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
+HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, nsIDOMNode *nsnode, eventid_t eid)
 {
-    nsIDOMNode *nsnode = NULL;
-
     TRACE("%s\n", debugstr_w(event_info[eid].name));
 
     if(!doc->nsdoc)
@@ -2701,19 +2713,22 @@ HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
         break;
     }
 
-    if(doc->event_vector[eid] || !(event_info[eid].flags & (EVENT_DEFAULTLISTENER|EVENT_BIND_TO_BODY)))
+    if(event_info[eid].flags & EVENT_DEFAULTLISTENER) {
+        nsnode = NULL;
+    }else if(event_info[eid].flags & EVENT_BIND_TO_TARGET) {
+        if(!nsnode)
+            nsnode = doc->node.nsnode;
+    }else {
         return S_OK;
-
-    if(event_info[eid].flags & EVENT_BIND_TO_BODY) {
-        nsnode = doc->node.nsnode;
-        nsIDOMNode_AddRef(nsnode);
     }
 
-    doc->event_vector[eid] = TRUE;
-    add_nsevent_listener(doc, nsnode, event_info[eid].name);
+    if(!nsnode || nsnode == doc->node.nsnode) {
+        if(doc->event_vector[eid])
+            return S_OK;
+        doc->event_vector[eid] = TRUE;
+    }
 
-    if(nsnode)
-        nsIDOMNode_Release(nsnode);
+    add_nsevent_listener(doc, nsnode, event_info[eid].name);
     return S_OK;
 }
 
@@ -2949,7 +2964,7 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
 
     for(i=0; i < EVENTID_LAST; i++) {
         if((event_info[i].flags & EVENT_DEFAULTLISTENER) && is_cp_event(cp, event_info[i].dispid))
-            ensure_doc_nsevent_handler(doc, i);
+            ensure_doc_nsevent_handler(doc, NULL, i);
     }
 }
 
@@ -3046,7 +3061,7 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
 
     for(i=0; i < EVENTID_LAST; i++) {
         if(event_info[i].flags & EVENT_HASDEFAULTHANDLERS) {
-            hres = ensure_doc_nsevent_handler(doc, i);
+            hres = ensure_doc_nsevent_handler(doc, NULL, i);
             if(FAILED(hres))
                 return hres;
         }

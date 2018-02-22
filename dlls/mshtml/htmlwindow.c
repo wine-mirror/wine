@@ -3033,7 +3033,7 @@ static nsISupports *HTMLWindow_get_gecko_target(DispatchEx *dispex)
 static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    ensure_doc_nsevent_handler(This->doc, eid);
+    ensure_doc_nsevent_handler(This->doc, NULL, eid);
 }
 
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)

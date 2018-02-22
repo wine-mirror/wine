@@ -5439,16 +5439,7 @@ static nsISupports *HTMLElement_get_gecko_target(DispatchEx *dispex)
 static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
-
-    static const WCHAR loadW[] = {'l','o','a','d',0};
-
-    switch(eid) {
-    case EVENTID_LOAD:
-        add_nsevent_listener(This->node.doc, This->node.nsnode, loadW);
-        return;
-    default:
-        ensure_doc_nsevent_handler(This->node.doc, eid);
-    }
+    ensure_doc_nsevent_handler(This->node.doc, This->node.nsnode, eid);
 }
 
 static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
