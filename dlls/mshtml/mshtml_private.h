@@ -898,6 +898,8 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN
 HRESULT create_nscontainer(HTMLDocumentObj*,NSContainer**) DECLSPEC_HIDDEN;
 void NSContainer_Release(NSContainer*) DECLSPEC_HIDDEN;
 
+compat_mode_t lock_document_mode(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+
 void init_mutation(nsIComponentManager*) DECLSPEC_HIDDEN;
 void init_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;

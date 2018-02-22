@@ -3019,9 +3019,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-
-    This->doc->document_mode_locked = TRUE;
-    return This->doc->document_mode;
+    return lock_document_mode(This->doc);
 }
 
 static nsISupports *HTMLWindow_get_gecko_target(DispatchEx *dispex)

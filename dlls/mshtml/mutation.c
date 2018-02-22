@@ -362,6 +362,18 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     return NS_OK;
 }
 
+/*
+ * We may change document mode only in early stage of document lifetime.
+ * Later attempts will not have an effect.
+ */
+compat_mode_t lock_document_mode(HTMLDocumentNode *doc)
+{
+    TRACE("%p: %d\n", doc, doc->document_mode);
+
+    doc->document_mode_locked = TRUE;
+    return doc->document_mode;
+}
+
 static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL lock)
 {
     if(doc->document_mode_locked) {
@@ -371,9 +383,9 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
 
     TRACE("%p: %d\n", doc, document_mode);
 
-    if(lock)
-        doc->document_mode_locked = TRUE;
     doc->document_mode = document_mode;
+    if(lock)
+        lock_document_mode(doc);
 }
 
 static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
@@ -816,8 +828,7 @@ static void NSAPI nsDocumentObserver_AttemptToExecuteScript(nsIDocumentObserver 
     if(NS_SUCCEEDED(nsres)) {
         TRACE("script node\n");
 
-        This->document_mode_locked = TRUE;
-
+        lock_document_mode(This);
         add_script_runner(This, run_insert_script, (nsISupports*)nsscript, (nsISupports*)aParser);
         nsIDOMHTMLScriptElement_Release(nsscript);
     }
