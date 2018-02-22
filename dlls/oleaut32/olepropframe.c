@@ -186,7 +186,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
             lpParams->lplpUnk, lpParams->cPages, lpParams->lpPages,
             lpParams->lcid, lpParams->dispidInitialProperty);
 
-    if(!lpParams->lplpUnk || !lpParams->lpPages)
+    if(!lpParams->lpPages)
         return E_POINTER;
 
     if(lpParams->cbStructSize != sizeof(OCPFIPARAMS)) {
