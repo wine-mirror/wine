@@ -122,7 +122,7 @@ static char *ntlm_GetDomainArg(LPCWSTR domainW, INT domainW_length)
 /***********************************************************************
  *              AcquireCredentialsHandleW
  */
-SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
+static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
  SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
@@ -414,7 +414,7 @@ static BOOL ntlm_GetCachedCredential(const SEC_WCHAR *pszTargetName, PCREDENTIAL
 /***********************************************************************
  *              InitializeSecurityContextW
  */
-SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
+static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR *pszTargetName, 
  ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep, 
  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext, 
@@ -951,7 +951,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 /***********************************************************************
  *              AcceptSecurityContext
  */
-SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
+static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
  PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
  ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext, 
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
@@ -1317,7 +1317,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext,
 /***********************************************************************
  *              DeleteSecurityContext
  */
-SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
+static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
     PNegoHelper helper;
 
@@ -1427,7 +1427,7 @@ static SecPkgInfoA *build_package_infoA( const SecPkgInfoA *info )
 /***********************************************************************
  *              QueryContextAttributesW
  */
-SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
  ULONG ulAttribute, void *pBuffer)
 {
     TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
@@ -1488,7 +1488,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
 /***********************************************************************
  *              QueryContextAttributesA
  */
-SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
  ULONG ulAttribute, void *pBuffer)
 {
     switch(ulAttribute)
@@ -1679,7 +1679,7 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 /***********************************************************************
  *              MakeSignature
  */
-SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
     ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
@@ -1714,7 +1714,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 /***********************************************************************
  *              VerifySignature
  */
-SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     PNegoHelper helper;
@@ -1783,7 +1783,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 /***********************************************************************
  *             FreeCredentialsHandle
  */
-SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
+static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 {
     if (phCredential)
     {
@@ -1803,7 +1803,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 /***********************************************************************
  *             EncryptMessage
  */
-SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
     ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
@@ -1874,7 +1874,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 /***********************************************************************
  *             DecryptMessage
  */
-SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     SECURITY_STATUS ret;
