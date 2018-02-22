@@ -32,6 +32,8 @@
 #include "wine/test.h"
 #include "wine/heap.h"
 
+#define ARRAY_SIZE(array) (sizeof(array)/sizeof((array)[0]))
+
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
 static WCHAR *a2w(const char *str)
@@ -1643,7 +1645,7 @@ static void test_readvaluechunk(void)
 
     c = 0xdeadbeef;
     memset(buf, 0xcc, sizeof(buf));
-    hr = IXmlReader_ReadValueChunk(reader, buf, sizeof(buf)/sizeof(WCHAR), &c);
+    hr = IXmlReader_ReadValueChunk(reader, buf, ARRAY_SIZE(buf), &c);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(c == 10, "got %u\n", c);
     ok(buf[c] == 0xcccc, "buffer overflow\n");
@@ -1652,7 +1654,7 @@ static void test_readvaluechunk(void)
 
     c = 0xdeadbeef;
     memset(buf, 0xcc, sizeof(buf));
-    hr = IXmlReader_ReadValueChunk(reader, buf, sizeof(buf)/sizeof(WCHAR), &c);
+    hr = IXmlReader_ReadValueChunk(reader, buf, ARRAY_SIZE(buf), &c);
     ok(hr == S_FALSE, "got %08x\n", hr);
     ok(!c, "got %u\n", c);
 
@@ -1985,7 +1987,7 @@ static void test_prefix(void)
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
-    for (i = 0; i < sizeof(prefix_tests)/sizeof(prefix_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(prefix_tests); i++) {
         XmlNodeType type;
 
         set_input_string(reader, prefix_tests[i].xml);
@@ -2060,7 +2062,7 @@ static void test_namespaceuri(void)
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
-    for (i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(uri_tests); i++) {
         unsigned int j = 0;
 
         set_input_string(reader, uri_tests[i].xml);
@@ -2181,7 +2183,7 @@ static void test_encoding_detection(void)
 
     /* there's no way to query detected encoding back, so just verify that document is browsable */
 
-    for (i = 0; i < sizeof(encoding_testsA)/sizeof(encoding_testsA[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(encoding_testsA); i++)
     {
         set_input_string(reader, encoding_testsA[i]);
 
@@ -2191,7 +2193,7 @@ static void test_encoding_detection(void)
         ok(type != XmlNodeType_None, "Unexpected node type %d\n", type);
     }
 
-    for (i = 0; i < sizeof(encoding_testsW)/sizeof(encoding_testsW[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(encoding_testsW); i++)
     {
         stream = create_stream_on_data(encoding_testsW[i].text, lstrlenW(encoding_testsW[i].text) * sizeof(WCHAR));
 
