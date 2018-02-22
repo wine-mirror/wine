@@ -1623,6 +1623,12 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
         goto done;
     }
 
+    if (dst->texture && !(dst_desc.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+    {
+        WARN("Destination is a texture.\n");
+        goto done;
+    }
+
     if (src_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
         if (device->in_scene)

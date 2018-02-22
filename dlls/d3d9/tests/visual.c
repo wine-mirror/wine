@@ -3743,7 +3743,7 @@ static void stretchrect_test(void)
 
     /* offscreenplain ==> texture, same size (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the smaller offscreen surface with red. */
     fill_surface(surf_offscreen32, 0xffff0000, 0);
@@ -3769,7 +3769,7 @@ static void stretchrect_test(void)
 
     /* offscreenplain ==> texture, scaling (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /*************************************************************
      * Tests for when the source parameter is a regular texture. *
@@ -3826,7 +3826,7 @@ static void stretchrect_test(void)
 
     /* texture ==> texture, same size (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller regular texture with red. */
     /* Can't fill the surf_tex directly because it's created in D3DPOOL_DEFAULT. */
@@ -3855,7 +3855,7 @@ static void stretchrect_test(void)
 
     /* texture ==> texture, scaling (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /******************************************************************
      * Tests for when the source parameter is a rendertarget texture. *
@@ -3912,7 +3912,7 @@ static void stretchrect_test(void)
 
     /* rendertarget texture ==> texture, same size (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller rendertarget texture with red. */
     /* Can't fill the surf_tex_rt directly because it's created in D3DPOOL_DEFAULT. */
@@ -3941,7 +3941,7 @@ static void stretchrect_test(void)
 
     /* rendertarget texture ==> texture, scaling (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /******************************************************************
      * Tests for when the source parameter is a rendertarget surface. *
@@ -3995,7 +3995,7 @@ static void stretchrect_test(void)
 
     /* rendertarget surface ==> texture, same size (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller rendertarget texture with red. */
     fill_surface(surf_rt32, 0xffff0000, 0);
@@ -4021,7 +4021,7 @@ static void stretchrect_test(void)
 
     /* rendertarget surface ==> texture, scaling (should fail). */
     hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* backbuffer ==> surface tests (no scaling). */
     /* Blit with NULL rectangles. */

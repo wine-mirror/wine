@@ -12342,7 +12342,6 @@ static void test_stretch_rect(void)
                     IDirect3DTexture9_Release(dst_texture);
 
                     hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine_if(src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
 
@@ -12355,7 +12354,6 @@ static void test_stretch_rect(void)
                     ok(hr == expected_hr, "Got hr %#x, expected hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, expected_hr, src_format, dst_format, src_pool);
                     hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine_if(dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pool %#x).\n",
                             hr, src_format, dst_format, dst_pool);
 
@@ -12388,7 +12386,6 @@ static void test_stretch_rect(void)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
                     hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst, NULL, D3DTEXF_NONE);
-                    todo_wine_if(src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
                     ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
                             hr, src_format, dst_format, src_pool, dst_pool);
 
