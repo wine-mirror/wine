@@ -1350,7 +1350,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
         }
     }
 
-    lpGroups = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    lpGroups = heap_alloc(dwSize);
     if (lpGroups == NULL)
     {
         CloseHandle(hToken);
@@ -1359,7 +1359,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
 
     if (!GetTokenInformation(hToken, TokenGroups, lpGroups, dwSize, &dwSize))
     {
-        HeapFree(GetProcessHeap(), 0, lpGroups);
+        heap_free(lpGroups);
         CloseHandle(hToken);
         return FALSE;
     }
@@ -1369,7 +1369,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
                                   DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
                                   &lpSid))
     {
-        HeapFree(GetProcessHeap(), 0, lpGroups);
+        heap_free(lpGroups);
         return FALSE;
     }
 
@@ -1383,7 +1383,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
     }
 
     FreeSid(lpSid);
-    HeapFree(GetProcessHeap(), 0, lpGroups);
+    heap_free(lpGroups);
     return bResult;
 }
 
@@ -1553,7 +1553,7 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
 
     TRACE("(%s, %d)\n", debugstr_a(pszString), cchString);
 
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(CHAR))))
+    if ((dst = heap_alloc(cchString * sizeof(CHAR))))
     {
         len = ExpandEnvironmentStringsA(pszString, dst, cchString);
         /* len includes the terminating 0 */
@@ -1565,7 +1565,7 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
         else
             len = cchString;
 
-        HeapFree(GetProcessHeap(), 0, dst);
+        heap_free(dst);
     }
     return MAKELONG(len, res);
 }
@@ -1597,7 +1597,7 @@ DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
 
     TRACE("(%s, %d)\n", debugstr_w(pszString), cchString);
 
-    if ((cchString < MAXLONG) && (dst = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(WCHAR))))
+    if ((cchString < MAXLONG) && (dst = heap_alloc(cchString * sizeof(WCHAR))))
     {
         len = ExpandEnvironmentStringsW(pszString, dst, cchString);
         /* len includes the terminating 0 */
@@ -1609,7 +1609,7 @@ DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
         else
             len = cchString;
 
-        HeapFree(GetProcessHeap(), 0, dst);
+        heap_free(dst);
     }
     return MAKELONG(len, res);
 }

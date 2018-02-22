@@ -253,7 +253,7 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
                             0,
                             KEY_READ,
                             &This->hkeyProgID);
-        HeapFree(GetProcessHeap(), 0, progId);
+        heap_free(progId);
 
         return S_OK;
     }
@@ -278,13 +278,13 @@ static HRESULT ASSOC_GetValue(HKEY hkey, const WCHAR *name, void **data, DWORD *
     return HRESULT_FROM_WIN32(ret);
   if (!size)
     return E_FAIL;
-  *data = HeapAlloc(GetProcessHeap(), 0, size);
+  *data = heap_alloc(size);
   if (!*data)
     return E_OUTOFMEMORY;
   ret = RegQueryValueExW(hkey, name, 0, NULL, (LPBYTE)*data, &size);
   if (ret != ERROR_SUCCESS)
   {
-    HeapFree(GetProcessHeap(), 0, *data);
+    heap_free(*data);
     return HRESULT_FROM_WIN32(ret);
   }
   if(data_size)
@@ -312,7 +312,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra
       HKEY hkeyFile;
 
       ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, KEY_READ, &hkeyFile);
-      HeapFree(GetProcessHeap(), 0, filetype);
+      heap_free(filetype);
 
       if (ret == ERROR_SUCCESS)
       {
@@ -344,7 +344,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra
           }
 
           max_subkey_len++;
-          extra_from_reg = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+          extra_from_reg = heap_alloc(max_subkey_len * sizeof(WCHAR));
           if (!extra_from_reg)
           {
               RegCloseKey(hkeyShell);
@@ -354,7 +354,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra
           ret = RegEnumKeyExW(hkeyShell, 0, extra_from_reg, &max_subkey_len, NULL, NULL, NULL, NULL);
           if (ret)
           {
-              HeapFree(GetProcessHeap(), 0, extra_from_reg);
+              heap_free(extra_from_reg);
               RegCloseKey(hkeyShell);
               return HRESULT_FROM_WIN32(ret);
           }
@@ -364,7 +364,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This, const WCHAR *extra
 
   /* open verb subkey */
   ret = RegOpenKeyExW(hkeyShell, extra, 0, KEY_READ, &hkeyVerb);
-  HeapFree(GetProcessHeap(), 0, extra_from_reg);
+  heap_free(extra_from_reg);
   RegCloseKey(hkeyShell);
   if (ret) return HRESULT_FROM_WIN32(ret);
 
@@ -415,7 +415,7 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
       *len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL);
   }
 
-  HeapFree(GetProcessHeap(), 0, pszCommand);
+  heap_free(pszCommand);
   if (!*len)
     return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
   return S_OK;
@@ -530,7 +530,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       if (SUCCEEDED(hr))
       {
         hr = ASSOC_ReturnString(flags, pszOut, pcchOut, command, strlenW(command) + 1);
-        HeapFree(GetProcessHeap(), 0, command);
+        heap_free(command);
       }
       return hr;
     }
@@ -554,7 +554,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
           return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
       }
       hr = ASSOC_ReturnString(flags, pszOut, pcchOut, docName, strlenW(docName) + 1);
-      HeapFree(GetProcessHeap(), 0, docName);
+      heap_free(docName);
       return hr;
     }
 
@@ -582,7 +582,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       retval = GetFileVersionInfoSizeW(path, &size);
       if (!retval)
         goto get_friendly_name_fail;
-      verinfoW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
+      verinfoW = heap_alloc_zero(retval);
       if (!verinfoW)
         return E_OUTOFMEMORY;
       if (!GetFileVersionInfoW(path, 0, retval, verinfoW))
@@ -601,7 +601,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
             len = strlenW(bufW) + 1;
             TRACE("found FileDescription: %s\n", debugstr_w(bufW));
             hr = ASSOC_ReturnString(flags, pszOut, pcchOut, bufW, len);
-            HeapFree(GetProcessHeap(), 0, verinfoW);
+            heap_free(verinfoW);
             return hr;
           }
         }
@@ -611,7 +611,7 @@ get_friendly_name_fail:
       PathStripPathW(path);
       TRACE("using filename: %s\n", debugstr_w(path));
       hr = ASSOC_ReturnString(flags, pszOut, pcchOut, path, strlenW(path) + 1);
-      HeapFree(GetProcessHeap(), 0, verinfoW);
+      heap_free(verinfoW);
       return hr;
     }
 
@@ -626,7 +626,7 @@ get_friendly_name_fail:
       ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, NULL, &size);
       if (ret != ERROR_SUCCESS)
         return HRESULT_FROM_WIN32(ret);
-      contentType = HeapAlloc(GetProcessHeap(), 0, size);
+      contentType = heap_alloc(size);
       if (contentType != NULL)
       {
         ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, contentType, &size);
@@ -634,7 +634,7 @@ get_friendly_name_fail:
           hr = ASSOC_ReturnString(flags, pszOut, pcchOut, contentType, strlenW(contentType) + 1);
         else
           hr = HRESULT_FROM_WIN32(ret);
-        HeapFree(GetProcessHeap(), 0, contentType);
+        heap_free(contentType);
       }
       else
         hr = E_OUTOFMEMORY;
@@ -652,7 +652,7 @@ get_friendly_name_fail:
       ret = RegGetValueW(This->hkeyProgID, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, NULL, &size);
       if (ret == ERROR_SUCCESS)
       {
-        WCHAR *icon = HeapAlloc(GetProcessHeap(), 0, size);
+        WCHAR *icon = heap_alloc(size);
         if (icon)
         {
           ret = RegGetValueW(This->hkeyProgID, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, icon, &size);
@@ -660,7 +660,7 @@ get_friendly_name_fail:
             hr = ASSOC_ReturnString(flags, pszOut, pcchOut, icon, strlenW(icon) + 1);
           else
             hr = HRESULT_FROM_WIN32(ret);
-          HeapFree(GetProcessHeap(), 0, icon);
+          heap_free(icon);
         }
         else
           hr = E_OUTOFMEMORY;
@@ -776,7 +776,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
         hres = ASSOC_GetValue(This->hkeyProgID, edit_flags, &data, &size);
         if(SUCCEEDED(hres) && pcbOut)
             hres = ASSOC_ReturnData(pvOut, pcbOut, data, size);
-        HeapFree(GetProcessHeap(), 0, data);
+        heap_free(data);
         return hres;
     default:
         FIXME("Unsupported ASSOCDATA value: %d\n", assocdata);

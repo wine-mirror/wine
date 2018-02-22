@@ -32,6 +32,7 @@
 #include "shellapi.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
@@ -180,7 +181,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         if (iconinfo.hbmColor)
             cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
         cds.cbData = sizeof(*data) + cbMaskBits + cbColourBits;
-        buffer = HeapAlloc(GetProcessHeap(), 0, cds.cbData);
+        buffer = heap_alloc(cds.cbData);
         if (!buffer)
         {
             DeleteObject(iconinfo.hbmMask);
@@ -240,7 +241,7 @@ noicon:
 
     cds.lpData = data;
     ret = SendMessageW(tray, WM_COPYDATA, (WPARAM)nid->hWnd, (LPARAM)&cds);
-    if (data != &data_buffer) HeapFree( GetProcessHeap(), 0, data );
+    if (data != &data_buffer) heap_free( data );
     return ret;
 }
 

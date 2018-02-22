@@ -756,7 +756,7 @@ static HRESULT get_xdg_config_file(char * home_dir, char ** config_file)
     config_home = getenv("XDG_CONFIG_HOME");
     if (!config_home || !config_home[0])
     {
-        *config_file = HeapAlloc(GetProcessHeap(), 0, strlen(home_dir) + strlen("/.config/user-dirs.dirs") + 1);
+        *config_file = heap_alloc(strlen(home_dir) + strlen("/.config/user-dirs.dirs") + 1);
         if (!*config_file)
             return E_OUTOFMEMORY;
 
@@ -765,7 +765,7 @@ static HRESULT get_xdg_config_file(char * home_dir, char ** config_file)
     }
     else
     {
-        *config_file = HeapAlloc(GetProcessHeap(), 0, strlen(config_home) + strlen("/user-dirs.dirs") + 1);
+        *config_file = heap_alloc(strlen(config_home) + strlen("/user-dirs.dirs") + 1);
         if (!*config_file)
             return E_OUTOFMEMORY;
 
@@ -849,7 +849,7 @@ static HRESULT parse_config2(char * p, const char * home_dir, char ** out_ptr)
 
     if (relative)
     {
-        out = HeapAlloc(GetProcessHeap(), 0, strlen(home_dir) + strlen(p) + 2);
+        out = heap_alloc(strlen(home_dir) + strlen(p) + 2);
         if (!out)
             return E_OUTOFMEMORY;
 
@@ -858,7 +858,7 @@ static HRESULT parse_config2(char * p, const char * home_dir, char ** out_ptr)
     }
     else
     {
-        out = HeapAlloc(GetProcessHeap(), 0, strlen(p) + 1);
+        out = heap_alloc(strlen(p) + 1);
         if (!out)
             return E_OUTOFMEMORY;
         *out = 0;
@@ -897,7 +897,7 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
     unsigned int i;
     HRESULT hr;
 
-    *out_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_dirs * sizeof(char *));
+    *out_ptr = heap_alloc_zero(num_dirs * sizeof(char *));
     out = *out_ptr;
     if (!out)
         return E_OUTOFMEMORY;
@@ -914,7 +914,7 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
         goto xdg_user_dir_lookup_error;
 
     file = fopen(config_file, "r");
-    HeapFree(GetProcessHeap(), 0, config_file);
+    heap_free(config_file);
     if (!file)
     {
         hr = E_HANDLE;
@@ -963,15 +963,16 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
             continue;
         if (!stat(out[i], &statFolder) && S_ISDIR(statFolder.st_mode))
             continue;
-        HeapFree(GetProcessHeap(), 0, out[i]);
+        heap_free(out[i]);
         out[i] = NULL;
     }
 
 xdg_user_dir_lookup_error:
     if (FAILED(hr))
     {
-        for (i = 0; i < num_dirs; i++) HeapFree(GetProcessHeap(), 0, out[i]);
-        HeapFree(GetProcessHeap(), 0, *out_ptr);
+        for (i = 0; i < num_dirs; i++)
+            heap_free(out[i]);
+        heap_free(*out_ptr);
     }
     return hr;
 }

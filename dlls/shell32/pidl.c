@@ -1063,13 +1063,13 @@ LPITEMIDLIST SHSimpleIDListFromPathA(LPCSTR lpszPath)
     if (lpszPath)
     {
         len = MultiByteToWideChar(CP_ACP, 0, lpszPath, -1, NULL, 0);
-        wPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        wPath = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpszPath, -1, wPath, len);
     }
 
     _ILParsePathW(wPath, NULL, TRUE, &pidl, NULL);
 
-    HeapFree(GetProcessHeap(), 0, wPath);
+    heap_free(wPath);
     TRACE("%s %p\n", debugstr_a(lpszPath), pidl);
     return pidl;
 }

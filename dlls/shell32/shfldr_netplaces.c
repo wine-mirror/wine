@@ -95,7 +95,7 @@ HRESULT WINAPI ISF_NetworkPlaces_Constructor (IUnknown * pUnkOuter, REFIID riid,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    sf = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (IGenericSFImpl));
+    sf = heap_alloc_zero (sizeof (*sf));
     if (!sf)
         return E_OUTOFMEMORY;
 
@@ -171,7 +171,7 @@ static ULONG WINAPI ISF_NetworkPlaces_fnRelease (IShellFolder2 * iface)
     if (!refCount) {
         TRACE ("-- destroying IShellFolder(%p)\n", This);
         SHFree (This->pidlRoot);
-        HeapFree (GetProcessHeap(), 0, This);
+        heap_free (This);
     }
     return refCount;
 }

@@ -89,7 +89,7 @@ static WCHAR *get_programs_path(const WCHAR *name)
     SHGetKnownFolderPath(&FOLDERID_Programs, 0, NULL, &programs);
 
     len = lstrlenW(programs) + 1 + lstrlenW(name);
-    path = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*path));
+    path = heap_alloc((len + 1) * sizeof(*path));
     lstrcpyW(path, programs);
     lstrcatW(path, slashW);
     lstrcatW(path, name);
@@ -112,7 +112,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         WIN32_FIND_DATAW finddata;
         HANDLE hfind;
         int len = 1;
-        WCHAR *groups_data = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
+        WCHAR *groups_data = heap_alloc(sizeof(WCHAR));
         char *groups_dataA;
         HDDEDATA ret;
 
@@ -127,7 +127,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
                     lstrcmpW(finddata.cFileName, dotW) && lstrcmpW(finddata.cFileName, dotdotW))
                 {
                     len += lstrlenW(finddata.cFileName) + 2;
-                    groups_data = HeapReAlloc(GetProcessHeap(), 0, groups_data, len * sizeof(WCHAR));
+                    groups_data = heap_realloc(groups_data, len * sizeof(WCHAR));
                     lstrcatW(groups_data, finddata.cFileName);
                     lstrcatW(groups_data, newlineW);
                 }
@@ -136,13 +136,13 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         }
 
         len = WideCharToMultiByte(CP_ACP, 0, groups_data, -1, NULL, 0, NULL, NULL);
-        groups_dataA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        groups_dataA = heap_alloc(len * sizeof(WCHAR));
         WideCharToMultiByte(CP_ACP, 0, groups_data, -1, groups_dataA, len, NULL, NULL);
         ret = DdeCreateDataHandle(dwDDEInst, (BYTE *)groups_dataA, len, 0, hszGroups, uFmt, 0);
 
-        HeapFree(GetProcessHeap(), 0, groups_dataA);
-        HeapFree(GetProcessHeap(), 0, groups_data);
-        HeapFree(GetProcessHeap(), 0, programs);
+        heap_free(groups_dataA);
+        heap_free(groups_data);
+        heap_free(programs);
         return ret;
     }
     else if (hszTopic == hszProgmanTopic && hszItem == hszProgmanService && uFmt == CF_TEXT)
@@ -184,7 +184,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         CreateDirectoryW(path, NULL);
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
-        if (last_group) HeapFree(GetProcessHeap(), 0, last_group);
+        if (last_group) heap_free(last_group);
         last_group = path;
     }
     else if (!strcmpiW(command, delete_groupW))
@@ -197,7 +197,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         path = get_programs_path(argv[0]);
 
-        path2 = HeapAlloc(GetProcessHeap(), 0, (strlenW(path) + 2) * sizeof(*path));
+        path2 = heap_alloc((strlenW(path) + 2) * sizeof(*path));
         strcpyW(path2, path);
         path2[strlenW(path) + 1] = 0;
 
@@ -207,8 +207,8 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         ret = SHFileOperationW(&shfos);
 
-        HeapFree(GetProcessHeap(), 0, path2);
-        HeapFree(GetProcessHeap(), 0, path);
+        heap_free(path2);
+        heap_free(path);
 
         if (ret || shfos.fAnyOperationsAborted) return DDE_FNOTPROCESSED;
     }
@@ -224,7 +224,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
-        if (last_group) HeapFree(GetProcessHeap(), 0, last_group);
+        if (last_group) heap_free(last_group);
         last_group = path;
     }
     else if (!strcmpiW(command, add_itemW))
@@ -247,10 +247,10 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
             IShellLinkW_Release(link);
             return DDE_FNOTPROCESSED;
         }
-        path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        path = heap_alloc(len * sizeof(WCHAR));
         SearchPathW(NULL, argv[0], dotexeW, len, path, NULL);
         IShellLinkW_SetPath(link, path);
-        HeapFree(GetProcessHeap(), 0, path);
+        heap_free(path);
 
         if (argc >= 2) IShellLinkW_SetDescription(link, argv[1]);
         if (argc >= 4) IShellLinkW_SetIconLocation(link, argv[2], atoiW(argv[3]));
@@ -270,7 +270,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         if (argc >= 2)
         {
-            name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + strlenW(argv[1]) + 5) * sizeof(*name));
+            name = heap_alloc((strlenW(last_group) + 1 + strlenW(argv[1]) + 5) * sizeof(*name));
             lstrcpyW(name, last_group);
             lstrcatW(name, slashW);
             lstrcatW(name, argv[1]);
@@ -280,7 +280,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         {
             const WCHAR *filename = PathFindFileNameW(argv[0]);
             int len = PathFindExtensionW(filename) - filename;
-            name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + len + 5) * sizeof(*name));
+            name = heap_alloc((strlenW(last_group) + 1 + len + 5) * sizeof(*name));
             lstrcpyW(name, last_group);
             lstrcatW(name, slashW);
             lstrcpynW(name+strlenW(name), filename, len + 1);
@@ -288,7 +288,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         hres = IPersistFile_Save(file, name, TRUE);
 
-        HeapFree(GetProcessHeap(), 0, name);
+        heap_free(name);
         IPersistFile_Release(file);
         IShellLinkW_Release(link);
 
@@ -301,7 +301,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + strlenW(argv[0]) + 5) * sizeof(*name));
+        name = heap_alloc((strlenW(last_group) + 1 + strlenW(argv[0]) + 5) * sizeof(*name));
         lstrcpyW(name, last_group);
         lstrcatW(name, slashW);
         lstrcatW(name, argv[0]);
@@ -309,7 +309,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         ret = DeleteFileW(name);
 
-        HeapFree(GetProcessHeap(), 0, name);
+        heap_free(name);
 
         if (!ret) return DDE_FNOTPROCESSED;
     }
@@ -341,7 +341,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
     while (*command == '[')
     {
         argc = 0;
-        argv = HeapAlloc(GetProcessHeap(), 0, sizeof(*argv));
+        argv = heap_alloc(sizeof(*argv));
 
         command++;
         while (*command == ' ') command++;
@@ -370,7 +370,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
                 }
 
                 argc++;
-                argv = HeapReAlloc(GetProcessHeap(), 0, argv, argc * sizeof(*argv));
+                argv = heap_realloc(argv, argc * sizeof(*argv));
                 argv[argc-1] = strndupW(command, p - command);
 
                 command = p;
@@ -396,9 +396,9 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
             ret = DDE_FNOTPROCESSED;
         }
 
-        HeapFree(GetProcessHeap(), 0, opcode);
-        for (i = 0; i < argc; i++) HeapFree(GetProcessHeap(), 0, argv[i]);
-        HeapFree(GetProcessHeap(), 0, argv);
+        heap_free(opcode);
+        for (i = 0; i < argc; i++) heap_free(argv[i]);
+        heap_free(argv);
 
         if (ret == DDE_FNOTPROCESSED) break;
     }
@@ -407,9 +407,9 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
 
 error:
     ERR("failed to parse command %s\n", debugstr_w(original));
-    HeapFree(GetProcessHeap(), 0, opcode);
-    for (i = 0; i < argc; i++) HeapFree(GetProcessHeap(), 0, argv[i]);
-    HeapFree(GetProcessHeap(), 0, argv);
+    heap_free(opcode);
+    for (i = 0; i < argc; i++) heap_free(argv[i]);
+    heap_free(argv);
     return DDE_FNOTPROCESSED;
 }
 
@@ -421,14 +421,14 @@ static DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
 
     len = DdeGetData(hdata, NULL, 0, 0);
     if (!len) return DDE_FNOTPROCESSED;
-    command = HeapAlloc(GetProcessHeap(), 0, len);
+    command = heap_alloc(len);
     DdeGetData(hdata, (BYTE *)command, len, 0);
 
     TRACE("conv=%p topic=%s data=%s\n", hconv, debugstr_hsz(hszTopic), debugstr_w(command));
 
     ret = parse_dde_command(hszTopic, command);
 
-    HeapFree(GetProcessHeap(), 0, command);
+    heap_free(command);
     return ret;
 }
 

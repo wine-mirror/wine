@@ -316,7 +316,7 @@ static INT SIC_IconAppend (LPCWSTR sSourceFile, INT dwSourceIndex, HICON hSmallI
 	lpsice = SHAlloc(sizeof(SIC_ENTRY));
 
 	GetFullPathNameW(sSourceFile, MAX_PATH, path, NULL);
-	lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, (strlenW(path)+1)*sizeof(WCHAR) );
+	lpsice->sSourceFile = heap_alloc( (strlenW(path)+1)*sizeof(WCHAR) );
 	strcpyW( lpsice->sSourceFile, path );
 
 	lpsice->dwSourceIndex = dwSourceIndex;
@@ -327,7 +327,7 @@ static INT SIC_IconAppend (LPCWSTR sSourceFile, INT dwSourceIndex, HICON hSmallI
 	index = DPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
 	{
-	  HeapFree(GetProcessHeap(), 0, lpsice->sSourceFile);
+	  heap_free(lpsice->sSourceFile);
 	  SHFree(lpsice);
 	  ret = INVALID_INDEX;
 	}
@@ -492,7 +492,7 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
  */
 static INT CALLBACK sic_free( LPVOID ptr, LPVOID lparam )
 {
-	HeapFree(GetProcessHeap(), 0, ((LPSIC_ENTRY)ptr)->sSourceFile);
+	heap_free(((LPSIC_ENTRY)ptr)->sSourceFile);
 	SHFree(ptr);
 	return TRUE;
 }
@@ -746,12 +746,12 @@ static INT Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateD
 	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_a(szPath), nIndex, bSimulateDoc);
 
 	len = MultiByteToWideChar( CP_ACP, 0, szPath, -1, NULL, 0 );
-	szTemp = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+	szTemp = heap_alloc( len * sizeof(WCHAR) );
 	MultiByteToWideChar( CP_ACP, 0, szPath, -1, szTemp, len );
 
 	ret = SIC_GetIconIndex( szTemp, nIndex, 0 );
 
-	HeapFree( GetProcessHeap(), 0, szTemp );
+	heap_free( szTemp );
 
 	return ret;
 }
@@ -790,7 +790,7 @@ UINT WINAPI ExtractIconExA(LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge,
 {
     UINT ret = 0;
     INT len = MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, NULL, 0);
-    LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    LPWSTR lpwstrFile = heap_alloc( len * sizeof(WCHAR));
 
     TRACE("%s %i %p %p %i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 
@@ -798,7 +798,7 @@ UINT WINAPI ExtractIconExA(LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge,
     {
         MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, lpwstrFile, len);
         ret = ExtractIconExW(lpwstrFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
-        HeapFree(GetProcessHeap(), 0, lpwstrFile);
+        heap_free(lpwstrFile);
     }
     return ret;
 }
@@ -818,7 +818,7 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
      * lpIconPath itself is supposed to be large enough, so make sure lpIconPathW
      * is large enough too. Yes, I am puking too.
      */
-    LPWSTR lpIconPathW = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+    LPWSTR lpIconPathW = heap_alloc(MAX_PATH * sizeof(WCHAR));
 
     TRACE("%p %s %p\n", hInst, debugstr_a(lpIconPath), lpiIcon);
 
@@ -827,7 +827,7 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
         MultiByteToWideChar(CP_ACP, 0, lpIconPath, -1, lpIconPathW, len);
         hIcon = ExtractAssociatedIconW(hInst, lpIconPathW, lpiIcon);
         WideCharToMultiByte(CP_ACP, 0, lpIconPathW, -1, lpIconPath, MAX_PATH , NULL, NULL);
-        HeapFree(GetProcessHeap(), 0, lpIconPathW);
+        heap_free(lpIconPathW);
     }
     return hIcon;
 }
@@ -896,13 +896,13 @@ HICON WINAPI ExtractAssociatedIconExA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD 
 {
   HICON ret;
   INT len = MultiByteToWideChar( CP_ACP, 0, lpIconPath, -1, NULL, 0 );
-  LPWSTR lpwstrFile = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+  LPWSTR lpwstrFile = heap_alloc( len * sizeof(WCHAR) );
 
   TRACE("%p %s %p %p)\n", hInst, lpIconPath, lpiIconIdx, lpiIconId);
 
   MultiByteToWideChar( CP_ACP, 0, lpIconPath, -1, lpwstrFile, len );
   ret = ExtractAssociatedIconExW(hInst, lpwstrFile, lpiIconIdx, lpiIconId);
-  HeapFree(GetProcessHeap(), 0, lpwstrFile);
+  heap_free(lpwstrFile);
   return ret;
 }
 
@@ -943,13 +943,13 @@ HRESULT WINAPI SHDefExtractIconA(LPCSTR pszIconFile, int iIndex, UINT uFlags,
 {
   HRESULT ret;
   INT len = MultiByteToWideChar(CP_ACP, 0, pszIconFile, -1, NULL, 0);
-  LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+  LPWSTR lpwstrFile = heap_alloc(len * sizeof(WCHAR));
 
   TRACE("%s %d 0x%08x %p %p %d\n", pszIconFile, iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
 
   MultiByteToWideChar(CP_ACP, 0, pszIconFile, -1, lpwstrFile, len);
   ret = SHDefExtractIconW(lpwstrFile, iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
-  HeapFree(GetProcessHeap(), 0, lpwstrFile);
+  heap_free(lpwstrFile);
   return ret;
 }
 

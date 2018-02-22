@@ -121,7 +121,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     WCHAR *dest, *result, *result_end=NULL;
     static const WCHAR dotexeW[] = {'.','e','x','e',0};
 
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(strlenW(cmdline)+5));
+    result = heap_alloc(sizeof(WCHAR)*(strlenW(cmdline)+5));
 
     src = cmdline;
     dest = result;
@@ -161,7 +161,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, result);
+        heap_free(result);
         return NULL;
     }
 }
@@ -216,7 +216,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         ZeroMemory (&sei, sizeof(sei)) ;
                         sei.cbSize = sizeof(sei) ;
-                        psz = HeapAlloc( GetProcessHeap(), 0, (ic + 1)*sizeof(WCHAR) );
+                        psz = heap_alloc( (ic + 1)*sizeof(WCHAR) );
                         GetWindowTextW (htxt, psz, ic + 1) ;
 
                         /* according to http://www.codeproject.com/KB/shell/runfiledlg.aspx we should send a
@@ -233,8 +233,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         if (!ShellExecuteExW( &sei ))
                         {
-                            HeapFree(GetProcessHeap(), 0, psz);
-                            HeapFree(GetProcessHeap(), 0, parent);
+                            heap_free(psz);
+                            heap_free(parent);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
                         }
@@ -243,8 +243,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         GetWindowTextA (htxt, (LPSTR)psz, ic + 1) ;
                         FillList (htxt, (LPSTR)psz, FALSE) ;
 
-                        HeapFree(GetProcessHeap(), 0, psz);
-                        HeapFree(GetProcessHeap(), 0, parent);
+                        heap_free(psz);
+                        heap_free(parent);
                         EndDialog (hwnd, 0);
                         }
                     }
@@ -326,14 +326,14 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
     if (icList > 0)
         {
-        pszList = HeapAlloc( GetProcessHeap(), 0, icList) ;
+        pszList = heap_alloc(icList) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, "MRUList", NULL, NULL, (LPBYTE)pszList, &icList))
             MessageBoxA (hCb, "Unable to grab MRUList !", "Nix", MB_OK) ;
         }
     else
         {
         icList = 1 ;
-        pszList = HeapAlloc( GetProcessHeap(), 0, icList) ;
+        pszList = heap_alloc(icList) ;
         pszList[0] = 0 ;
         }
 
@@ -347,9 +347,9 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, NULL, &icCmd))
             MessageBoxA (hCb, "Unable to grab size of index", "Nix", MB_OK) ;
         if( pszCmd )
-            pszCmd = HeapReAlloc(GetProcessHeap(), 0, pszCmd, icCmd) ;
+            pszCmd = heap_realloc(pszCmd, icCmd) ;
         else
-            pszCmd = HeapAlloc(GetProcessHeap(), 0, icCmd) ;
+            pszCmd = heap_alloc(icCmd) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, (LPBYTE)pszCmd, &icCmd))
             MessageBoxA (hCb, "Unable to grab index", "Nix", MB_OK) ;
 
@@ -416,9 +416,9 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
         cMatch = ++cMax ;
         if( pszList )
-            pszList = HeapReAlloc(GetProcessHeap(), 0, pszList, ++icList) ;
+            pszList = heap_realloc(pszList, ++icList) ;
         else
-            pszList = HeapAlloc(GetProcessHeap(), 0, ++icList) ;
+            pszList = heap_alloc(++icList) ;
         memmove (&pszList[1], pszList, icList - 1) ;
         pszList[0] = cMatch ;
         szIndex[0] = cMatch ;
@@ -427,9 +427,9 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
     RegSetValueExA (hkey, "MRUList", 0, REG_SZ, (LPBYTE)pszList, strlen (pszList) + 1) ;
 
-    HeapFree( GetProcessHeap(), 0, pszCmd) ;
-    HeapFree( GetProcessHeap(), 0, pszList) ;
-    }
+    heap_free(pszCmd) ;
+    heap_free(pszList) ;
+}
 
 /*************************************************************************
  * RunFileDlgA					[internal]

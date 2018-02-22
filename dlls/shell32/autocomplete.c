@@ -130,12 +130,11 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                     /* If quickComplete is set and control is pressed, replace the string */
                     control = GetKeyState(VK_CONTROL) & 0x8000;
                     if (control && This->quickComplete) {
-                        hwndQCText = HeapAlloc(GetProcessHeap(), 0,
-                                              (lstrlenW(This->quickComplete)+lstrlenW(hwndText))*sizeof(WCHAR));
+                        hwndQCText = heap_alloc((lstrlenW(This->quickComplete)+lstrlenW(hwndText))*sizeof(WCHAR));
                         sel = sprintfW(hwndQCText, This->quickComplete, hwndText);
                         SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)hwndQCText);
                         SendMessageW(hwnd, EM_SETSEL, 0, sel);
-                        HeapFree(GetProcessHeap(), 0, hwndQCText);
+                        heap_free(hwndQCText);
                     }
 
                     ShowWindow(This->hwndListBox, SW_HIDE);
@@ -173,11 +172,11 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                 int len;
 
                                 len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-                                msg = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+                                msg = heap_alloc((len + 1)*sizeof(WCHAR));
                                 SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
                                 SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
                                 SendMessageW(hwnd, EM_SETSEL, lstrlenW(msg), lstrlenW(msg));
-                                HeapFree(GetProcessHeap(), 0, msg);
+                                heap_free(msg);
                             } else {
                                 SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)This->txtbackup);
                                 SendMessageW(hwnd, EM_SETSEL, lstrlenW(This->txtbackup), lstrlenW(This->txtbackup));
@@ -209,9 +208,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
             SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 
-            HeapFree(GetProcessHeap(), 0, This->txtbackup);
+            heap_free(This->txtbackup);
             len = strlenW(hwndText);
-            This->txtbackup = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+            This->txtbackup = heap_alloc((len + 1)*sizeof(WCHAR));
             lstrcpyW(This->txtbackup, hwndText);
 
             /* Returns if there is no text to search and we doesn't want to display all the entries */
@@ -307,12 +306,12 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             if (sel < 0)
                 break;
             len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-            msg = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            msg = heap_alloc((len + 1)*sizeof(WCHAR));
             SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
             SendMessageW(This->hwndEdit, WM_SETTEXT, 0, (LPARAM)msg);
             SendMessageW(This->hwndEdit, EM_SETSEL, 0, lstrlenW(msg));
             ShowWindow(hwnd, SW_HIDE);
-            HeapFree(GetProcessHeap(), 0, msg);
+            heap_free(msg);
             break;
         default:
             return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
@@ -399,11 +398,11 @@ static ULONG WINAPI IAutoComplete2_fnRelease(
 
     if (!refCount) {
         TRACE("destroying IAutoComplete(%p)\n", This);
-        HeapFree(GetProcessHeap(), 0, This->quickComplete);
-        HeapFree(GetProcessHeap(), 0, This->txtbackup);
+        heap_free(This->quickComplete);
+        heap_free(This->txtbackup);
         if (This->enumstr)
             IEnumString_Release(This->enumstr);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
     return refCount;
 }
@@ -479,7 +478,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 	LONG len;
 
 	/* pwszRegKeyPath contains the key as well as the value, so we split */
-	key = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwzsRegKeyPath)+1)*sizeof(WCHAR));
+	key = heap_alloc((lstrlenW(pwzsRegKeyPath)+1)*sizeof(WCHAR));
 	strcpyW(key, pwzsRegKeyPath);
 	value = strrchrW(key, '\\');
 	*value = 0;
@@ -493,16 +492,16 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 	if (res == ERROR_SUCCESS) {
 	    res = RegQueryValueW(hKey, value, result, &len);
 	    if (res == ERROR_SUCCESS) {
-		This->quickComplete = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+		This->quickComplete = heap_alloc(len*sizeof(WCHAR));
 		strcpyW(This->quickComplete, result);
 	    }
 	    RegCloseKey(hKey);
 	}
-	HeapFree(GetProcessHeap(), 0, key);
+	heap_free(key);
     }
 
     if ((pwszQuickComplete) && (!This->quickComplete)) {
-	This->quickComplete = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwszQuickComplete)+1)*sizeof(WCHAR));
+	This->quickComplete = heap_alloc((lstrlenW(pwszQuickComplete)+1)*sizeof(WCHAR));
 	lstrcpyW(This->quickComplete, pwszQuickComplete);
     }
 
@@ -658,7 +657,7 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
 
-    lpac = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAutoCompleteImpl));
+    lpac = heap_alloc_zero(sizeof(*lpac));
     if (!lpac)
         return E_OUTOFMEMORY;
 

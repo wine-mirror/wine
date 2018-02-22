@@ -35,6 +35,7 @@
 #include "undocshell.h"
 #include "shlobj.h"
 #include "shellapi.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
 
@@ -232,7 +233,7 @@ static inline WCHAR *strdupW(const WCHAR *src)
 {
     WCHAR *dest;
     if (!src) return NULL;
-    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(*dest));
+    dest = heap_alloc((lstrlenW(src) + 1) * sizeof(*dest));
     if (dest)
         lstrcpyW(dest, src);
     return dest;
@@ -242,7 +243,7 @@ static inline WCHAR *strndupW(const WCHAR *src, DWORD len)
 {
     WCHAR *dest;
     if (!src) return NULL;
-    dest = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*dest));
+    dest = heap_alloc((len + 1) * sizeof(*dest));
     if (dest)
     {
         memcpy(dest, src, len * sizeof(WCHAR));
@@ -259,7 +260,7 @@ static inline WCHAR *strdupAtoW(const char *str)
     if (!str) return NULL;
 
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    ret = heap_alloc(len * sizeof(WCHAR));
     if (ret)
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 

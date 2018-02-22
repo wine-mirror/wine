@@ -1205,7 +1205,7 @@ static WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, const LPCITEMIDLIS
     int i;
     
     iPathLen = lstrlenW(wszBasePath);
-    wszPathsList = HeapAlloc(GetProcessHeap(), 0, MAX_PATH*sizeof(WCHAR)*cidl+1);
+    wszPathsList = heap_alloc(MAX_PATH*sizeof(WCHAR)*cidl+1);
     wszListPos = wszPathsList;
     
     for (i = 0; i < cidl; i++) {
@@ -1283,7 +1283,7 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 
         wszCurrentPath += lstrlenW(wszCurrentPath)+1;
     }
-    HeapFree(GetProcessHeap(), 0, wszPathsList);
+    heap_free(wszPathsList);
     return ret;
 }
 
@@ -1333,8 +1333,7 @@ ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl,
                 WARN("Copy failed\n");
                 ret = E_FAIL;
             }
-            HeapFree(GetProcessHeap(), 0, wszSrcPathsList);
-
+            heap_free(wszSrcPathsList);
         }
         SHFree(pidl);
         IPersistFolder2_Release(ppf2);

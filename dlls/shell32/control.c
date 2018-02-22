@@ -55,8 +55,8 @@ void Control_UnloadApplet(CPlApplet* applet)
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
     list_remove( &applet->entry );
-    HeapFree(GetProcessHeap(), 0, applet->cmd);
-    HeapFree(GetProcessHeap(), 0, applet);
+    heap_free(applet->cmd);
+    heap_free(applet);
 }
 
 CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
@@ -67,13 +67,13 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     CPLINFO	info;
     NEWCPLINFOW newinfo;
 
-    if (!(applet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*applet))))
+    if (!(applet = heap_alloc_zero(sizeof(*applet))))
        return applet;
 
     len = ExpandEnvironmentStringsW(cmd, NULL, 0);
     if (len > 0)
     {
-        if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (len+1) * sizeof(WCHAR))))
+        if (!(applet->cmd = heap_alloc((len+1) * sizeof(WCHAR))))
         {
             WARN("Cannot allocate memory for applet path\n");
             goto theError;
@@ -180,8 +180,8 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 
  theError:
     FreeLibrary(applet->hModule);
-    HeapFree(GetProcessHeap(), 0, applet->cmd);
-    HeapFree(GetProcessHeap(), 0, applet);
+    heap_free(applet->cmd);
+    heap_free(applet);
     return NULL;
 }
 
@@ -289,7 +289,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    {
       for (i = 0; i < applet->count; i++) {
          /* set up a CPlItem for this particular subprogram */
-         item = HeapAlloc(GetProcessHeap(), 0, sizeof(CPlItem));
+         item = heap_alloc(sizeof(CPlItem));
 
          if (!item)
             continue;
@@ -366,7 +366,7 @@ static void Control_FreeCPlItems(HWND hWnd, CPanel *panel)
         if (!GetMenuItemInfoW(hSubMenu, i, FALSE, &mii))
             continue;
 
-        HeapFree(GetProcessHeap(), 0, (LPVOID) mii.dwItemData);
+        heap_free((void *)mii.dwItemData);
     }
 }
 
@@ -724,7 +724,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     BOOL        quoted = FALSE;
     CPlApplet *applet;
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(wszCmd) + 1) * sizeof(*wszCmd));
+    buffer = heap_alloc((lstrlenW(wszCmd) + 1) * sizeof(*wszCmd));
     if (!buffer) return;
 
     end = lstrcpyW(buffer, wszCmd);
@@ -813,7 +813,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
         Control_UnloadApplet(applet);
     }
 
-    HeapFree(GetProcessHeap(), 0, buffer);
+    heap_free(buffer);
 }
 
 /*************************************************************************
@@ -844,12 +844,12 @@ void WINAPI Control_RunDLLW(HWND hWnd, HINSTANCE hInst, LPCWSTR cmd, DWORD nCmdS
 void WINAPI Control_RunDLLA(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdShow)
 {
     DWORD len = MultiByteToWideChar(CP_ACP, 0, cmd, -1, NULL, 0 );
-    LPWSTR wszCmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    LPWSTR wszCmd = heap_alloc(len * sizeof(WCHAR));
     if (wszCmd && MultiByteToWideChar(CP_ACP, 0, cmd, -1, wszCmd, len ))
     {
         Control_RunDLLW(hWnd, hInst, wszCmd, nCmdShow);
     }
-    HeapFree(GetProcessHeap(), 0, wszCmd);
+    heap_free(wszCmd);
 }
 
 /*************************************************************************

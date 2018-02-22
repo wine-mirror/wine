@@ -405,7 +405,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     if (!pszUnixPath) return FALSE;
     cDriveSymlinkLen = strlen(pszUnixPath);
     pElement = realpath(pszUnixPath, szPath);
-    HeapFree(GetProcessHeap(), 0, pszUnixPath);
+    heap_free(pszUnixPath);
     if (!pElement) return FALSE;
     if (szPath[strlen(szPath)-1] != '/') strcat(szPath, "/");
 
@@ -432,7 +432,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     if(dospath_end < dospath)
         return FALSE;
     strcat(szPath, pszUnixPath + cDriveSymlinkLen);
-    HeapFree(GetProcessHeap(), 0, pszUnixPath);
+    heap_free(pszUnixPath);
 
     if(has_failed && WideCharToMultiByte(CP_UNIXCP, 0, dospath_end + 1, -1,
                 mb_path, FILENAME_MAX, NULL, NULL) > 0){
@@ -800,7 +800,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
         ((dos_name = wine_get_dos_file_name(This->m_pszPath))))
     {
         This->m_dwAttributes |= SFGAO_FILESYSTEM;
-        HeapFree( GetProcessHeap(), 0, dos_name );
+        heap_free( dos_name );
     }
 
     return S_OK;
@@ -831,8 +831,8 @@ static HRESULT UNIXFS_copy(LPCWSTR pwszDosSrc, LPCWSTR pwszDosDst)
 
     iSrcLen = lstrlenW(pwszDosSrc);
     iDstLen = lstrlenW(pwszDosDst);
-    pwszSrc = HeapAlloc(GetProcessHeap(), 0, (iSrcLen + 2) * sizeof(WCHAR));
-    pwszDst = HeapAlloc(GetProcessHeap(), 0, (iDstLen + 2) * sizeof(WCHAR));
+    pwszSrc = heap_alloc((iSrcLen + 2) * sizeof(WCHAR));
+    pwszDst = heap_alloc((iDstLen + 2) * sizeof(WCHAR));
 
     if (pwszSrc && pwszDst) {
         lstrcpyW(pwszSrc, pwszDosSrc);
@@ -856,8 +856,8 @@ static HRESULT UNIXFS_copy(LPCWSTR pwszDosSrc, LPCWSTR pwszDosDst)
             res = S_OK;
     }
 
-    HeapFree(GetProcessHeap(), 0, pwszSrc);
-    HeapFree(GetProcessHeap(), 0, pwszDst);
+    heap_free(pwszSrc);
+    heap_free(pwszDst);
     return res;
 }
 
@@ -1151,7 +1151,7 @@ static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT ci
                 if (!(dos_name = wine_get_dos_file_name( szAbsolutePath )))
                     *attrs &= ~SFGAO_FILESYSTEM;
                 else
-                    HeapFree( GetProcessHeap(), 0, dos_name );
+                    heap_free( dos_name );
             }
             if (_ILIsFolder(apidl[i])) 
                 *attrs |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR |
@@ -1254,7 +1254,7 @@ static HRESULT WINAPI ShellFolder2_GetDisplayNameOf(IShellFolder2* iface,
                 if (!lpName->u.pOleStr) return HRESULT_FROM_WIN32(GetLastError());
                 lstrcpyW(lpName->u.pOleStr, pwszDosFileName);
                 PathRemoveBackslashW(lpName->u.pOleStr);
-                HeapFree(GetProcessHeap(), 0, pwszDosFileName);
+                heap_free(pwszDosFileName);
             }
         } else if (_ILIsValue(pidl)) {
             STRRET str;
@@ -1953,7 +1953,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LP
     lstrcpyA(szAbsolute, This->m_pszPath);
     pszRelative = szAbsolute + lstrlenA(szAbsolute);
     
-    wszListPos = wszPathsList = HeapAlloc(GetProcessHeap(), 0, cidl*MAX_PATH*sizeof(WCHAR)+1);
+    wszListPos = wszPathsList = heap_alloc(cidl*MAX_PATH*sizeof(WCHAR)+1);
     if (wszPathsList == NULL)
         return E_OUTOFMEMORY;
     for (i=0; i<cidl; i++) {
@@ -1963,19 +1963,19 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LP
             continue;
         if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelative))
         {
-            HeapFree(GetProcessHeap(), 0, wszPathsList);
+            heap_free(wszPathsList);
             return E_INVALIDARG;
         }
         wszDosPath = wine_get_dos_file_name(szAbsolute);
         if (wszDosPath == NULL || lstrlenW(wszDosPath) >= MAX_PATH)
         {
-            HeapFree(GetProcessHeap(), 0, wszPathsList);
-            HeapFree(GetProcessHeap(), 0, wszDosPath);
+            heap_free(wszPathsList);
+            heap_free(wszDosPath);
             return S_FALSE;
         }
         lstrcpyW(wszListPos, wszDosPath);
         wszListPos += lstrlenW(wszListPos)+1;
-        HeapFree(GetProcessHeap(), 0, wszDosPath);
+        heap_free(wszDosPath);
     }
     *wszListPos = 0;
     
@@ -1992,7 +1992,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LP
     else
         ret = S_OK;
 
-    HeapFree(GetProcessHeap(), 0, wszPathsList);
+    heap_free(wszPathsList);
     return ret;
 }
 
@@ -2108,8 +2108,8 @@ static HRESULT WINAPI SFHelper_CopyItems(ISFHelper* iface, IShellFolder *psfFrom
         else
             res = E_OUTOFMEMORY;
 
-        HeapFree(GetProcessHeap(), 0, pwszDosSrc);
-        HeapFree(GetProcessHeap(), 0, pwszDosDst);
+        heap_free(pwszDosSrc);
+        heap_free(pwszDosDst);
 
         if (res != S_OK)
             return res;

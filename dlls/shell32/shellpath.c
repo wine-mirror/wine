@@ -1079,7 +1079,7 @@ static ULONG WINAPI ApplicationDestinations_Release(IApplicationDestinations *if
     TRACE("(%p), new refcount=%i\n", This, ref);
 
     if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
 
     return ref;
 }
@@ -3575,13 +3575,13 @@ static LPWSTR _GetUserSidStringFromToken(HANDLE Token)
     {
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             return NULL;
-        UserInfo = HeapAlloc(GetProcessHeap(), 0, InfoSize);
+        UserInfo = heap_alloc(InfoSize);
         if (UserInfo == NULL)
             return NULL;
         if (! GetTokenInformation(Token, TokenUser, UserInfo, InfoSize,
                                   &InfoSize))
         {
-            HeapFree(GetProcessHeap(), 0, UserInfo);
+            heap_free(UserInfo);
             return NULL;
         }
     }
@@ -3590,7 +3590,7 @@ static LPWSTR _GetUserSidStringFromToken(HANDLE Token)
         SidStr = NULL;
 
     if (UserInfo != (PTOKEN_USER) InfoBuffer)
-        HeapFree(GetProcessHeap(), 0, UserInfo);
+        heap_free(UserInfo);
 
     return SidStr;
 }
@@ -3939,7 +3939,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
     TRACE("%p,%#x,%p,%#x,%s,%p\n", hwndOwner, nFolder, hToken, dwFlags, debugstr_a(pszSubPath), pszPath);
 
     if(pszPath) {
-        pszPathW = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+        pszPathW = heap_alloc(MAX_PATH * sizeof(WCHAR));
         if(!pszPathW) {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
             goto cleanup;
@@ -3953,7 +3953,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
      */
     if (pszSubPath && pszSubPath[0]) {
         length = MultiByteToWideChar(CP_ACP, 0, pszSubPath, -1, NULL, 0);
-        pszSubPathW = HeapAlloc(GetProcessHeap(), 0, length * sizeof(WCHAR));
+        pszSubPathW = heap_alloc(length * sizeof(WCHAR));
         if(!pszSubPathW) {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
             goto cleanup;
@@ -3967,8 +3967,8 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
         WideCharToMultiByte(CP_ACP, 0, pszPathW, -1, pszPath, MAX_PATH, NULL, NULL);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, pszPathW);
-    HeapFree(GetProcessHeap(), 0, pszSubPathW);
+    heap_free(pszPathW);
+    heap_free(pszSubPathW);
     return hr;
 }
 
@@ -4535,7 +4535,7 @@ static void _SHCreateSymbolicLinks(void)
         }
         remove(pszMyStuff);
         symlink(szMyStuffTarget, pszMyStuff);
-        HeapFree(GetProcessHeap(), 0, pszMyStuff);
+        heap_free(pszMyStuff);
     }
 
     /* Last but not least, the Desktop folder */
@@ -4543,7 +4543,7 @@ static void _SHCreateSymbolicLinks(void)
         strcpy(szDesktopTarget, pszHome);
     else
         strcpy(szDesktopTarget, pszPersonal);
-    HeapFree(GetProcessHeap(), 0, pszPersonal);
+    heap_free(pszPersonal);
 
     xdg_desktop_dir = xdg_results ? xdg_results[num - 1] : NULL;
     if (xdg_desktop_dir ||
@@ -4559,7 +4559,7 @@ static void _SHCreateSymbolicLinks(void)
                 symlink(xdg_desktop_dir, pszDesktop);
             else
                 symlink(szDesktopTarget, pszDesktop);
-            HeapFree(GetProcessHeap(), 0, pszDesktop);
+            heap_free(pszDesktop);
         }
     }
 
@@ -4567,8 +4567,8 @@ static void _SHCreateSymbolicLinks(void)
     if (xdg_results)
     {
         for (i = 0; i < num; i++)
-            HeapFree(GetProcessHeap(), 0, xdg_results[i]);
-        HeapFree(GetProcessHeap(), 0, xdg_results);
+            heap_free(xdg_results[i]);
+        heap_free(xdg_results);
     }
 }
 
@@ -5054,7 +5054,7 @@ static HRESULT get_known_folder_registry_path(
         lstrcpyW(sGuid, lpStringGuid);
 
     length = lstrlenW(szKnownFolderDescriptions)+51;
-    *lpPath = HeapAlloc(GetProcessHeap(), 0, length*sizeof(WCHAR));
+    *lpPath = heap_alloc(length*sizeof(WCHAR));
     if(!(*lpPath))
         hr = E_OUTOFMEMORY;
 
@@ -5138,7 +5138,7 @@ static HRESULT get_known_folder_redirection_place(
             hr = E_FAIL;
     }
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    heap_free(lpRegistryPath);
     return hr;
 }
 
@@ -5166,7 +5166,7 @@ static HRESULT redirect_known_folder(
     if(SUCCEEDED(hr))
         hr = get_known_folder_path_by_id(rfid, lpRegistryPath, 0, &lpSrcPath);
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    heap_free(lpRegistryPath);
 
     /* get path to redirection storage */
     if(SUCCEEDED(hr))
@@ -5263,8 +5263,8 @@ static ULONG WINAPI knownfolder_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", knownfolder);
-        HeapFree( GetProcessHeap(), 0, knownfolder->registryPath);
-        HeapFree( GetProcessHeap(), 0, knownfolder );
+        heap_free( knownfolder->registryPath );
+        heap_free( knownfolder );
     }
     return refs;
 }
@@ -5322,7 +5322,7 @@ static HRESULT knownfolder_set_id(
     else
     {
         /* This known folder is not registered. To mark it, we set registryPath to NULL */
-        HeapFree(GetProcessHeap(), 0, knownfolder->registryPath);
+        heap_free(knownfolder->registryPath);
         knownfolder->registryPath = NULL;
         hr = S_OK;
     }
@@ -5402,15 +5402,15 @@ static HRESULT get_known_folder_path(
 
         hr = get_known_folder_path(parentGuid, parentRegistryPath, &parentPath);
         if(FAILED(hr)) {
-            HeapFree(GetProcessHeap(), 0, parentRegistryPath);
+            heap_free(parentRegistryPath);
             return hr;
         }
 
         lstrcatW(path, parentPath);
         lstrcatW(path, sBackslash);
 
-        HeapFree(GetProcessHeap(), 0, parentRegistryPath);
-        HeapFree(GetProcessHeap(), 0, parentPath);
+        heap_free(parentRegistryPath);
+        heap_free(parentPath);
     }
 
     /* check, if folder was redirected */
@@ -5625,7 +5625,7 @@ static HRESULT knownfolder_create( struct knownfolder **knownfolder )
 {
     struct knownfolder *kf;
 
-    kf = HeapAlloc( GetProcessHeap(), 0, sizeof(*kf) );
+    kf = heap_alloc( sizeof(*kf) );
     if (!kf) return E_OUTOFMEMORY;
 
     kf->IKnownFolder_iface.lpVtbl = &knownfolder_vtbl;
@@ -5667,8 +5667,8 @@ static ULONG WINAPI foldermanager_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", foldermanager);
-        HeapFree( GetProcessHeap(), 0, foldermanager->ids );
-        HeapFree( GetProcessHeap(), 0, foldermanager );
+        heap_free( foldermanager->ids );
+        heap_free( foldermanager );
     }
     return refs;
 }
@@ -5760,7 +5760,7 @@ static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
     if(SUCCEEDED(hr))
     {
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
-        HeapFree(GetProcessHeap(), 0, registryPath);
+        heap_free(registryPath);
     }
 
     if(SUCCEEDED(hr))
@@ -5820,7 +5820,7 @@ static HRESULT WINAPI foldermanager_GetFolderByName(
         if (FAILED( hr )) return hr;
 
         hr = get_known_folder_wstr( path, szName, &name );
-        HeapFree( GetProcessHeap(), 0, path );
+        heap_free( path );
         if (FAILED( hr )) return hr;
 
         found = !strcmpiW( pszCanonicalName, name );
@@ -5894,7 +5894,7 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
             SHDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath);
     }
 
-    HeapFree(GetProcessHeap(), 0, registryPath);
+    heap_free(registryPath);
     return hr;
 }
 
@@ -5920,7 +5920,7 @@ static HRESULT WINAPI foldermanager_UnregisterFolder(
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(SHDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath));
 
-    HeapFree(GetProcessHeap(), 0, registryPath);
+    heap_free(registryPath);
     return hr;
 }
 
@@ -5978,7 +5978,7 @@ static HRESULT foldermanager_create( void **ppv )
     UINT i, j;
     struct foldermanager *fm;
 
-    fm = HeapAlloc( GetProcessHeap(), 0, sizeof(*fm) );
+    fm = heap_alloc( sizeof(*fm) );
     if (!fm) return E_OUTOFMEMORY;
 
     fm->IKnownFolderManager_iface.lpVtbl = &foldermanager_vtbl;
@@ -5989,10 +5989,10 @@ static HRESULT foldermanager_create( void **ppv )
     {
         if (!IsEqualGUID( CSIDL_Data[i].id, &GUID_NULL )) fm->num_ids++;
     }
-    fm->ids = HeapAlloc( GetProcessHeap(), 0, fm->num_ids * sizeof(KNOWNFOLDERID) );
+    fm->ids = heap_alloc( fm->num_ids * sizeof(KNOWNFOLDERID) );
     if (!fm->ids)
     {
-        HeapFree( GetProcessHeap(), 0, fm );
+        heap_free( fm );
         return E_OUTOFMEMORY;
     }
     for (i = j = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)

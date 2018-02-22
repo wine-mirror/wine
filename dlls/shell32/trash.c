@@ -123,7 +123,7 @@ BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
         return FALSE;
 
     status = FSPathMakeRef((UInt8*)unix_path, &ref, NULL);
-    HeapFree(GetProcessHeap(), 0, unix_path);
+    heap_free(unix_path);
     if (status == noErr)
         status = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, NULL,
                                   NULL, NULL);
@@ -145,7 +145,7 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
 
     status = FSPathMoveObjectToTrashSync(unix_path, NULL, kFSFileOperationSkipPreflight);
 
-    HeapFree(GetProcessHeap(), 0, unix_path);
+    heap_free(unix_path);
     return (status == noErr);
 }
 
@@ -171,7 +171,7 @@ HRESULT TRASH_GetDetails(const char *trash_path, const char *name, WIN32_FIND_DA
     memcpy(path+trash_path_length+1, name, name_length+1);
 
     ret = lstat(path, &stats);
-    HeapFree(GetProcessHeap(), 0, path);
+    heap_free(path);
     if(ret == -1) return S_FALSE;
     memset(data, 0, sizeof(*data));
     data->nFileSizeHigh = stats.st_size>>32;
@@ -212,7 +212,7 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
         return E_OUTOFMEMORY;
 
     status = FSPathMakeRef((UInt8*)unix_path, &ref, NULL);
-    HeapFree(GetProcessHeap(), 0, unix_path);
+    heap_free(unix_path);
     if(status != noErr) return E_FAIL;
     status = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalog_info, NULL, NULL, NULL);
     if(status != noErr) return E_FAIL;
@@ -222,7 +222,7 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
     if(status != noErr) return E_FAIL;
 
     if(!(dir = opendir(trash_path))) return E_FAIL;
-    ret = HeapAlloc(GetProcessHeap(), 0, ret_size * sizeof(*ret));
+    ret = heap_alloc(ret_size * sizeof(*ret));
     if(!ret) {
         closedir(dir);
         return E_OUTOFMEMORY;
@@ -237,7 +237,7 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
         if(i == ret_size) {
             LPITEMIDLIST *resized;
             ret_size *= 2;
-            resized = HeapReAlloc(GetProcessHeap(), 0, ret, ret_size * sizeof(*ret));
+            resized = heap_realloc(ret, ret_size * sizeof(*ret));
             if(!resized) hr = E_OUTOFMEMORY;
             else ret = resized;
         }
@@ -250,7 +250,7 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
             hr = TRASH_CreateSimplePIDL(entry->d_name, &data, ret+i);
         if(FAILED(hr)) {
             while(i>0) SHFree(ret+(--i));
-            HeapFree(GetProcessHeap(), 0, ret);
+            heap_free(ret);
             closedir(dir);
             return hr;
         }
@@ -261,12 +261,12 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
     *pidls = SHAlloc(sizeof(**pidls) * i);
     if(!*pidls) {
         while(i>0) SHFree(ret+(--i));
-        HeapFree(GetProcessHeap(), 0, ret);
+        heap_free(ret);
         return E_OUTOFMEMORY;
     }
     *count = i;
     for(i--; i>=0; i--) (*pidls)[i] = ret[i];
-    HeapFree(GetProcessHeap(), 0, ret);
+    heap_free(ret);
     return S_OK;
 }
 
@@ -384,17 +384,16 @@ BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
 {
     struct stat file_stat;
     char *unix_path;
-    
+    int ret;
+
     TRACE("(%s)\n", debugstr_w(wszPath));
     if (!TRASH_EnsureInitialized()) return FALSE;
     if (!(unix_path = wine_get_unix_file_name(wszPath)))
         return FALSE;
-    if (lstat(unix_path, &file_stat)==-1)
-    {
-        HeapFree(GetProcessHeap(), 0, unix_path);
+    ret = lstat(unix_path, &file_stat);
+    heap_free(unix_path);
+    if (ret == -1)
         return FALSE;
-    }
-    HeapFree(GetProcessHeap(), 0, unix_path);
     return file_good_for_bucket(home_trash, &file_stat);
 }
 
@@ -542,7 +541,7 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
     if (!(unix_path = wine_get_unix_file_name(wszPath)))
         return FALSE;
     result = TRASH_MoveFileToBucket(home_trash, unix_path);
-    HeapFree(GetProcessHeap(), 0, unix_path);
+    heap_free(unix_path);
     return result;
 }
 
@@ -760,7 +759,7 @@ HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl){
     else
         WARN("could not erase %s from the trash (errno=%i)\n",filename,errno);
     SHFree(file_path);
-    HeapFree(GetProcessHeap(), 0, restore_path);
+    heap_free(restore_path);
     return S_OK;
 }
 

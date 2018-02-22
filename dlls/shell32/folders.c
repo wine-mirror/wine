@@ -125,8 +125,7 @@ static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 	{
 	  TRACE(" destroying IExtractIcon(%p)\n",This);
 	  SHFree(This->pidl);
-	  HeapFree(GetProcessHeap(),0,This);
-	  return 0;
+	  heap_free(This);
 	}
 	return refCount;
 }
@@ -419,14 +418,14 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(IExtractIconA * iface, UIN
 {
         IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 	HRESULT ret;
-	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, cchMax * sizeof(WCHAR));
+	LPWSTR lpwstrFile = heap_alloc(cchMax * sizeof(WCHAR));
 
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
         ret = IExtractIconW_GetIconLocation(&This->IExtractIconW_iface, uFlags, lpwstrFile, cchMax,
                 piIndex, pwFlags);
 	WideCharToMultiByte(CP_ACP, 0, lpwstrFile, -1, szIconFile, cchMax, NULL, NULL);
-	HeapFree(GetProcessHeap(), 0, lpwstrFile);
+	heap_free(lpwstrFile);
 
 	TRACE("-- %s %x\n", szIconFile, *piIndex);
 	return ret;
@@ -440,14 +439,14 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
         IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 	HRESULT ret;
 	INT len = MultiByteToWideChar(CP_ACP, 0, pszFile, -1, NULL, 0);
-	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+	LPWSTR lpwstrFile = heap_alloc(len * sizeof(WCHAR));
 
 	TRACE("(%p) (file=%p index=%u %p %p size=%u)\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
 	MultiByteToWideChar(CP_ACP, 0, pszFile, -1, lpwstrFile, len);
         ret = IExtractIconW_Extract(&This->IExtractIconW_iface, lpwstrFile, nIconIndex, phiconLarge,
                 phiconSmall, nIconSize);
-	HeapFree(GetProcessHeap(), 0, lpwstrFile);
+	heap_free(lpwstrFile);
 	return ret;
 }
 
@@ -537,7 +536,7 @@ static IExtractIconWImpl *extracticon_create(LPCITEMIDLIST pidl)
 
     TRACE("%p\n", pidl);
 
-    ei = HeapAlloc(GetProcessHeap(), 0, sizeof(*ei));
+    ei = heap_alloc(sizeof(*ei));
     ei->ref=1;
     ei->IExtractIconW_iface.lpVtbl = &eivt;
     ei->IExtractIconA_iface.lpVtbl = &eiavt;

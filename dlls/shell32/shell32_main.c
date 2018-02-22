@@ -723,8 +723,8 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 
                     while ((hr = SIC_get_location( psfi->iIcon, file, &size, &icon_idx )) == E_NOT_SUFFICIENT_BUFFER)
                     {
-                        if (file == buf) file = HeapAlloc( GetProcessHeap(), 0, size );
-                        else file = HeapReAlloc( GetProcessHeap(), 0, file, size );
+                        if (file == buf) file = heap_alloc( size );
+                        else file = heap_realloc( file, size );
                         if (!file) break;
                     }
                     if (SUCCEEDED(hr))
@@ -732,7 +732,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                         ret = PrivateExtractIconsW( file, icon_idx, width, height, &psfi->hIcon, 0, 1, 0);
                         if (ret == 0 || ret == (UINT)-1) hr = E_FAIL;
                     }
-                    if (file != buf) HeapFree( GetProcessHeap(), 0, file );
+                    if (file != buf) heap_free( file );
                 }
             }
         }
@@ -783,7 +783,7 @@ DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
     else
     {
         len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
-        temppath = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        temppath = heap_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, path, -1, temppath, len);
         pathW = temppath;
     }
@@ -816,7 +816,7 @@ DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, temppath);
+    heap_free(temppath);
 
     return ret;
 }
@@ -855,7 +855,7 @@ HICON WINAPI ExtractIconA(HINSTANCE hInstance, const char *file, UINT nIconIndex
 
     fileW = strdupAtoW(file);
     ret = ExtractIconW(hInstance, fileW, nIconIndex);
-    HeapFree(GetProcessHeap(), 0, fileW);
+    heap_free(fileW);
 
     return ret;
 }
@@ -1037,7 +1037,7 @@ static void add_authors( HWND list )
 
     if (!strA) return;
     sizeW = MultiByteToWideChar( CP_UTF8, 0, strA, sizeA, NULL, 0 ) + 1;
-    if (!(strW = HeapAlloc( GetProcessHeap(), 0, sizeW * sizeof(WCHAR) ))) return;
+    if (!(strW = heap_alloc( sizeW * sizeof(WCHAR) ))) return;
     MultiByteToWideChar( CP_UTF8, 0, strA, sizeA, strW, sizeW );
     strW[sizeW - 1] = 0;
 
@@ -1051,7 +1051,7 @@ static void add_authors( HWND list )
         SendMessageW( list, LB_ADDSTRING, -1, (LPARAM)start );
         start = end;
     }
-    HeapFree( GetProcessHeap(), 0, strW );
+    heap_free( strW );
 }
 
 /*************************************************************************
@@ -1148,20 +1148,20 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIc
     if (szApp)
     {
         len = MultiByteToWideChar(CP_ACP, 0, szApp, -1, NULL, 0);
-        appW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        appW = heap_alloc( len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, szApp, -1, appW, len);
     }
     if (szOtherStuff)
     {
         len = MultiByteToWideChar(CP_ACP, 0, szOtherStuff, -1, NULL, 0);
-        otherW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        otherW = heap_alloc( len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, szOtherStuff, -1, otherW, len);
     }
 
     ret = ShellAboutW(hWnd, appW, otherW, hIcon);
 
-    HeapFree(GetProcessHeap(), 0, otherW);
-    HeapFree(GetProcessHeap(), 0, appW);
+    heap_free(otherW);
+    heap_free(appW);
     return ret;
 }
 
