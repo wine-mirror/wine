@@ -321,6 +321,7 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
         return FALSE;
     FreeMediaType(pin->pmt);
     *pin->pmt = amt;
+    SetEvent(pin->caps_event);
     return TRUE;
 }
 
@@ -617,8 +618,6 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     if (This->initial) {
         gst_buffer_unref(buf);
-        TRACE("Triggering %p %p\n", pad, pin->caps_event);
-        SetEvent(pin->caps_event);
         return GST_FLOW_OK;
     }
 
