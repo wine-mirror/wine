@@ -308,10 +308,8 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
     PropertySheetW(&property_sheet);
 
     for(i=0; i<lpParams->cPages; i++) {
-        if(property_page[i]) {
-            IPropertyPage_SetPageSite(property_page[i], NULL);
+        if(property_page[i])
             IPropertyPage_Release(property_page[i]);
-        }
     }
 
     HeapFree(GetProcessHeap(), 0, dialogs);
