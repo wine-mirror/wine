@@ -940,7 +940,7 @@ static const IWMPSettingsVtbl WMPSettingsVtbl = {
     WMPSettings_put_enableErrorDialogs
 };
 
-HRESULT WINAPI WMPControls_QueryInterface(IWMPControls *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI WMPControls_QueryInterface(IWMPControls *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = iface;
@@ -1008,105 +1008,105 @@ static HRESULT WINAPI WMPControls_get_isAvailable(IWMPControls *iface, BSTR bstr
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_play(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_pause(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_pause(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_fastForward(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_fastForward(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_fastReverse(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_fastReverse(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_get_currentPosition(IWMPControls *iface, DOUBLE *pdCurrentPosition)
+static HRESULT WINAPI WMPControls_get_currentPosition(IWMPControls *iface, DOUBLE *pdCurrentPosition)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, pdCurrentPosition);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_put_currentPosition(IWMPControls *iface, DOUBLE dCurrentPosition)
+static HRESULT WINAPI WMPControls_put_currentPosition(IWMPControls *iface, DOUBLE dCurrentPosition)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%f)\n", This, dCurrentPosition);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_get_currentPositionString(IWMPControls *iface, BSTR *pbstrCurrentPosition)
+static HRESULT WINAPI WMPControls_get_currentPositionString(IWMPControls *iface, BSTR *pbstrCurrentPosition)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, pbstrCurrentPosition);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_next(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_next(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_previous(IWMPControls *iface)
+static HRESULT WINAPI WMPControls_previous(IWMPControls *iface)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_get_currentItem(IWMPControls *iface, IWMPMedia **ppIWMPMedia)
+static HRESULT WINAPI WMPControls_get_currentItem(IWMPControls *iface, IWMPMedia **ppIWMPMedia)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, ppIWMPMedia);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_put_currentItem(IWMPControls *iface, IWMPMedia *pIWMPMedia)
+static HRESULT WINAPI WMPControls_put_currentItem(IWMPControls *iface, IWMPMedia *pIWMPMedia)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, pIWMPMedia);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_get_currentMarker(IWMPControls *iface, LONG *plMarker)
+static HRESULT WINAPI WMPControls_get_currentMarker(IWMPControls *iface, LONG *plMarker)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, plMarker);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_put_currentMarker(IWMPControls *iface, LONG lMarker)
+static HRESULT WINAPI WMPControls_put_currentMarker(IWMPControls *iface, LONG lMarker)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%d)\n", This, lMarker);
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMPControls_playItem(IWMPControls *iface, IWMPMedia *pIWMPMedia)
+static HRESULT WINAPI WMPControls_playItem(IWMPControls *iface, IWMPMedia *pIWMPMedia)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
     FIXME("(%p)->(%p)\n", This, pIWMPMedia);
