@@ -23,4 +23,4 @@ SVG_SRCS = \
 	logo.svg \
 	winecfg.svg
 
-INSTALL_LIB = winecfg.exe winecfg
+INSTALL_LIB = winecfg.exe $(wine64_disable)winecfg

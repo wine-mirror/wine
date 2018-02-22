@@ -757,6 +757,7 @@ AR
 BISON
 FLEX
 TOOLSDIR
+wine64_disable
 TARGETFLAGS
 LD
 CPPBIN
@@ -5371,6 +5372,8 @@ then
 You should create a separate build directory and run configure from there." "$LINENO" 5
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
+    wine64_disable=\#
+
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"

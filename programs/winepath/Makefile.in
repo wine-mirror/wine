@@ -5,4 +5,4 @@ C_SRCS = winepath.c
 
 MANPAGES = winepath.man.in
 
-INSTALL_LIB = winepath.exe winepath
+INSTALL_LIB = winepath.exe $(wine64_disable)winepath

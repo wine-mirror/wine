@@ -13,4 +13,4 @@ MANPAGES = winemine.man.in
 
 SVG_SRCS = winemine.svg
 
-INSTALL_LIB = winemine.exe winemine
+INSTALL_LIB = winemine.exe $(wine64_disable)winemine

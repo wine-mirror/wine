@@ -33,6 +33,7 @@ dlldir          = ${libdir}/wine
 top_srcdir      = @top_srcdir@
 top_builddir    = @top_builddir@
 srcdir          = @srcdir@
+wine64_disable  = @wine64_disable@
 SHELL           = /bin/sh
 RM              = rm -f
 MV              = mv

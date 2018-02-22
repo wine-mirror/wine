@@ -228,6 +228,7 @@ then
 You should create a separate build directory and run configure from there.])
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
+    AC_SUBST(wine64_disable,[\#])
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"

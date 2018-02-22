@@ -35,4 +35,4 @@ BISON_SRCS = dbg.y
 
 MANPAGES = winedbg.man.in
 
-INSTALL_LIB = winedbg.exe winedbg
+INSTALL_LIB = winedbg.exe $(wine64_disable)winedbg
