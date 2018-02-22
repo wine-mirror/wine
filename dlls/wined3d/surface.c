@@ -1412,21 +1412,21 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
 }
 
 static void read_from_framebuffer(struct wined3d_surface *surface,
-        struct wined3d_context *old_ctx, DWORD dst_location)
+        struct wined3d_context *old_ctx, DWORD src_location, DWORD dst_location)
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
+    const struct wined3d_gl_info *gl_info;
     unsigned int row_pitch, slice_pitch;
-    unsigned int width, height;
-    BYTE *mem;
-    BYTE *row, *top, *bottom;
-    int i;
-    BOOL srcIsUpsideDown;
     struct wined3d_bo_address data;
+    unsigned int width, height;
+    BYTE *row, *top, *bottom;
+    BOOL src_is_upside_down;
+    unsigned int i;
+    BYTE *mem;
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, dst_location);
 
@@ -1435,21 +1435,30 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
         context = context_acquire(device, texture, sub_resource_idx);
     else
         restore_rt = NULL;
-
-    context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
+    if (src_location != texture->resource.draw_binding)
+    {
+        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, surface, NULL, src_location);
+        context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
+    }
+    else
+    {
+        context_apply_blit_state(context, device);
+    }
+
     /* Select the correct read buffer, and give some debug output.
-     * There is no need to keep track of the current read buffer or reset it, every part of the code
-     * that reads sets the read buffer as desired.
+     * There is no need to keep track of the current read buffer or reset it,
+     * every part of the code that reads sets the read buffer as desired.
      */
-    if (wined3d_resource_is_offscreen(&texture->resource))
+    if (src_location != WINED3D_LOCATION_DRAWABLE || wined3d_resource_is_offscreen(&texture->resource))
     {
         /* Mapping the primary render target which is not on a swapchain.
          * Read from the back buffer. */
         TRACE("Mapping offscreen render target.\n");
         gl_info->gl_ops.gl.p_glReadBuffer(context_get_offscreen_gl_buffer(context));
-        srcIsUpsideDown = TRUE;
+        src_is_upside_down = TRUE;
     }
     else
     {
@@ -1457,9 +1466,9 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
         GLenum buffer = wined3d_texture_get_gl_buffer(texture);
         TRACE("Mapping %#x buffer.\n", buffer);
         gl_info->gl_ops.gl.p_glReadBuffer(buffer);
-        checkGLcall("glReadBuffer");
-        srcIsUpsideDown = FALSE;
+        src_is_upside_down = FALSE;
     }
+    checkGLcall("glReadBuffer");
 
     if (data.buffer_object)
     {
@@ -1484,7 +1493,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, 0);
     checkGLcall("glPixelStorei");
 
-    if (!srcIsUpsideDown)
+    if (!src_is_upside_down)
     {
         /* glReadPixels returns the image upside down, and there is no way to
          * prevent this. Flip the lines in software. */
@@ -2153,24 +2162,34 @@ static BOOL surface_load_sysmem(struct wined3d_surface *surface,
     sub_resource = &texture->sub_resources[sub_resource_idx];
     wined3d_texture_prepare_location(texture, sub_resource_idx, context, dst_location);
 
-    if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
-        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
-
-    /* Download the surface to system memory. */
-    if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
+    /* We cannot download data from multisample textures directly. */
+    if (is_multisample_location(texture, WINED3D_LOCATION_TEXTURE_RGB))
     {
-        wined3d_texture_bind_and_dirtify(texture, context,
-                !(sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB));
-        surface_download_data(surface, gl_info, dst_location);
-        ++texture->download_count;
-
+        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_RB_RESOLVED);
+        read_from_framebuffer(surface, context, WINED3D_LOCATION_RB_RESOLVED, dst_location);
         return TRUE;
+    }
+    else
+    {
+        if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
+            wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
+
+        /* Download the surface to system memory. */
+        if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
+        {
+            wined3d_texture_bind_and_dirtify(texture, context,
+                    !(sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB));
+            surface_download_data(surface, gl_info, dst_location);
+            ++texture->download_count;
+
+            return TRUE;
+        }
     }
 
     if (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
             && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
     {
-        read_from_framebuffer(surface, context, dst_location);
+        read_from_framebuffer(surface, context, texture->resource.draw_binding, dst_location);
         return TRUE;
     }
 
