@@ -1529,15 +1529,17 @@ error:
  * switch to a different context and restore the original one before return. */
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct wined3d_context *old_ctx)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
+    GLenum target;
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != surface)
-        context = context_acquire(device, texture, surface_get_sub_resource_idx(surface));
+        context = context_acquire(device, texture, sub_resource_idx);
     else
         restore_rt = NULL;
 
@@ -1555,7 +1557,8 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
         gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(texture));
     checkGLcall("glReadBuffer");
 
-    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(surface->texture_target, surface->texture_level,
+    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
+    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(target, surface->texture_level,
             0, 0, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
             wined3d_texture_get_level_height(texture, surface->texture_level));
     checkGLcall("glCopyTexSubImage2D");

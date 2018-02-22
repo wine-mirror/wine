@@ -3310,7 +3310,6 @@ struct wined3d_surface
 {
     struct wined3d_texture *container;
 
-    GLenum texture_target;
     unsigned int texture_level;
     unsigned int texture_layer;
 

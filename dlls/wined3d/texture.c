@@ -1394,7 +1394,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         texture->target = GL_TEXTURE_2D_MULTISAMPLE;
     else
         texture->target = GL_TEXTURE_2D;
-    texture->sub_resources[0].u.surface->texture_target = texture->target;
 
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
@@ -2213,22 +2212,12 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     {
         for (j = 0; j < texture->layer_count; ++j)
         {
-            static const GLenum cube_targets[6] =
-            {
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
-                GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
-                GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
-            };
             struct wined3d_texture_sub_resource *sub_resource;
             unsigned int idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
             surface = &surfaces[idx];
             surface->container = texture;
-            surface->texture_target = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? cube_targets[j] : texture->target;
             surface->texture_level = i;
             surface->texture_layer = j;
             list_init(&surface->renderbuffers);
