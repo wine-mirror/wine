@@ -7797,6 +7797,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         const RECT *src_rect, struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
@@ -7877,7 +7878,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
     arbfp_blit_set(arbfp_blitter, context, src_surface, color_key);
 
     /* Draw a textured quad */
-    draw_textured_quad(src_surface, context, src_rect, dst_rect, filter);
+    draw_textured_quad(src_texture, src_sub_resource_idx, context, src_rect, dst_rect, filter);
 
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset(context->gl_info);

@@ -176,16 +176,20 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
 }
 
 /* Context activation is done by the caller. */
-void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
-        const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter)
+void draw_textured_quad(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect,
+        enum wined3d_texture_filter_type filter)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_texture *texture = src_surface->container;
     struct blt_info info;
+    unsigned int level;
+    GLenum target;
 
-    surface_get_blt_info(src_surface->texture_target, src_rect,
-            wined3d_texture_get_level_pow2_width(texture, src_surface->texture_level),
-            wined3d_texture_get_level_pow2_height(texture, src_surface->texture_level), &info);
+    level = sub_resource_idx % texture->level_count;
+    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
+    surface_get_blt_info(target, src_rect,
+            wined3d_texture_get_level_pow2_width(texture, level),
+            wined3d_texture_get_level_pow2_height(texture, level), &info);
 
     gl_info->gl_ops.gl.p_glEnable(info.bind_target);
     checkGLcall("glEnable(bind_target)");
@@ -2819,6 +2823,7 @@ static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         const RECT *src_rect, struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -2903,7 +2908,7 @@ static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         checkGLcall("glAlphaFunc");
     }
 
-    draw_textured_quad(src_surface, context, src_rect, dst_rect, filter);
+    draw_textured_quad(src_texture, src_sub_resource_idx, context, src_rect, dst_rect, filter);
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || color_key)
     {

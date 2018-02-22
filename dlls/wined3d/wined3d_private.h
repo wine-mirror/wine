@@ -3346,8 +3346,9 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
 
-void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
-        const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
+void draw_textured_quad(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect,
+        enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 
 struct wined3d_sampler
 {
