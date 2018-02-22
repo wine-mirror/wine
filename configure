@@ -7816,23 +7816,7 @@ fi
 
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
     wine_fn_all_rules
-
-    wine_fn_append_rule \
-"$ac_dir: __builddeps__
-programs/winetest: $ac_dir
-check test: $ac_dir/test
-.PHONY: $ac_dir/test
-$ac_dir/test: dummy
-	@cd $ac_dir && \$(MAKE) test"
-
-        if test -n "$CROSSTARGET"
-        then
-            wine_fn_append_rule \
-"crosstest: $ac_dir/crosstest
-.PHONY: $ac_dir/crosstest
-$ac_dir/crosstest: __builddeps__ dummy
-	@cd $ac_dir && \$(MAKE) crosstest"
-        fi
+    wine_fn_append_rule "$ac_dir: __builddeps__"
 }
 
 wine_fn_config_tool ()

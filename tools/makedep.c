@@ -3406,6 +3406,8 @@ static void output_subdirs( struct makefile *make )
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
     struct strarray tools_deps = empty_strarray;
+    struct strarray winetest_deps = empty_strarray;
+    struct strarray crosstest_deps = empty_strarray;
     unsigned int i, j;
 
     strarray_add( &tools_deps, tools_dir_path( make, "widl" ));
@@ -3483,6 +3485,20 @@ static void output_subdirs( struct makefile *make )
         }
 
         if (submake->disabled) continue;
+        if (submake->testdll)
+        {
+            output( "check test::\n" );
+            output( "\t@cd %s && $(MAKE) test\n", subdir );
+            strarray_add( &winetest_deps, subdir );
+            if (crosstarget)
+            {
+                char *target = base_dir_path( submake, "crosstest" );
+                output( "crosstest: %s\n", target );
+                output( "%s: __builddeps__ dummy\n", target );
+                output( "\t@cd %s && $(MAKE) crosstest\n", subdir );
+                strarray_add( &crosstest_deps, target );
+            }
+        }
         if (submake->install_rules[INSTALL_LIB].count)
         {
             output( "install install-lib:: %s\n", submake->base_dir );
@@ -3499,14 +3515,23 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     output_filenames( makefile_deps );
     output( ":\n" );
+    output( "programs/winetest:" );
+    output_filenames( winetest_deps );
+    output( "\n" );
+    output( "crosstest:" );
+    output_filenames( crosstest_deps );
+    output( "\n" );
     output( "clean::\n");
     output_rm_filenames( clean_files );
     output( "testclean::\n");
     output_rm_filenames( testclean_files );
     output( "distclean::\n");
     output_rm_filenames( distclean_files );
+    strarray_add( &make->phony_targets, "check" );
+    strarray_add( &make->phony_targets, "test" );
     strarray_add( &make->phony_targets, "distclean" );
     strarray_add( &make->phony_targets, "testclean" );
+    strarray_addall( &make->phony_targets, crosstest_deps );
 
     strarray_addall( &make->clean_files, symlinks );
     strarray_addall( &build_deps, symlinks );
