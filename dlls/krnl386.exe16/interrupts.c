@@ -185,7 +185,7 @@ static void DOSVM_PushFlags( CONTEXT *context, BOOL islong, BOOL isstub )
  * Pushes interrupt frame to stack and changes instruction
  * pointer to interrupt handler.
  */
-void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
+static void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
 {
     FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
 
@@ -386,7 +386,7 @@ void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler )
  *
  * Execute Wine interrupt handler procedure.
  */
-void DOSVM_CallBuiltinHandler( CONTEXT *context, BYTE intnum )
+static void DOSVM_CallBuiltinHandler( CONTEXT *context, BYTE intnum )
 {
     /*
      * FIXME: Make all builtin interrupt calls go via this routine.
