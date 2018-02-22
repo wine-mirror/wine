@@ -1252,6 +1252,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
         *phr = E_OUTOFMEMORY;
         return NULL;
     }
+    memset(This, 0, sizeof(*This));
 
     obj = (IUnknown*)&This->filter.IBaseFilter_iface;
     BaseFilter_Init(&This->filter, &GST_Vtbl, &CLSID_Gstreamer_Splitter, (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
