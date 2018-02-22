@@ -230,11 +230,6 @@ wine_fn_append_rule ()
     AS_ECHO("$[1]") >>$wine_rules_file
 }
 
-wine_fn_has_flag ()
-{
-    expr ",$ac_flags," : ".*,$[1],.*" >/dev/null
-}
-
 wine_fn_all_rules ()
 {
     wine_fn_append_file SUBDIRS $ac_dir
@@ -283,69 +278,14 @@ wine_fn_config_dll ()
     ac_name=$[1]
     ac_dir=dlls/$ac_name
     ac_enable=$[2]
-    ac_flags=$[3]
-    ac_implib=${4:-$ac_name}
-    ac_file=$ac_dir/lib$ac_implib
-    ac_dll=$ac_name
-    ac_deps="include"
-    ac_implibflags=""
 
-    AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
-    case $ac_name in
-      *.*16) ac_implibflags=" -m16" ;;
-      *.*) ;;
-      *)   ac_dll=$ac_dll.dll ;;
-    esac
+    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
 
-    AS_VAR_IF([$ac_enable],[no],
-              dnl enable_win16 is special in that it disables import libs too
-              [if test "$ac_enable" != enable_win16
-               then
-                   wine_fn_append_file SUBDIRS $ac_dir
-                   wine_fn_append_file DISABLED_SUBDIRS $ac_dir
-               else
-                   wine_fn_disabled_rules
-                   return
-               fi],
-
-              [wine_fn_all_rules
-               wine_fn_append_rule \
+    wine_fn_all_rules
+    wine_fn_append_rule \
 "$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages::
-	@cd $ac_dir && \$(MAKE) \$[@]"])
-
-    if wine_fn_has_flag staticimplib
-    then
-        wine_fn_append_rule \
-"__builddeps__: $ac_file.a
-$ac_file.a $ac_file.cross.a: $ac_deps
-$ac_file.a: dummy
-	@cd $ac_dir && \$(MAKE) lib$ac_implib.a"
-
-        if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
-        then
-            wine_fn_append_rule \
-"__builddeps__: $ac_file.cross.a
-$ac_file.cross.a: dummy
-	@cd $ac_dir && \$(MAKE) lib$ac_implib.cross.a"
-        fi
-
-    elif wine_fn_has_flag implib
-    then
-        wine_fn_append_rule \
-"__builddeps__: $ac_file.$IMPLIBEXT
-$ac_file.def: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec
-$ac_file.a: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec"
-        if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
-        then
-            wine_fn_append_rule \
-"__builddeps__: $ac_file.cross.a
-$ac_file.cross.a: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
-	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec"
-        fi
-    fi
+	@cd $ac_dir && \$(MAKE) \$[@]"
 }
 
 wine_fn_config_program ()
@@ -457,13 +397,13 @@ AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a dll makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_DLL(name,enable,flags,implib)
+dnl Usage: WINE_CONFIG_DLL(name,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
-wine_fn_config_dll [$1] ac_enable [$3] [$4]dnl
+wine_fn_config_dll [$1] ac_enable[]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a program makefile from config.status ****

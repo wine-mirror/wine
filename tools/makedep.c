@@ -3399,17 +3399,26 @@ static void output_programs( struct makefile *make )
  */
 static void output_subdirs( struct makefile *make )
 {
+    struct strarray symlinks = empty_strarray;
     struct strarray build_deps = empty_strarray;
     struct strarray makefile_deps = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
+    struct strarray tools_deps = empty_strarray;
     unsigned int i, j;
+
+    strarray_add( &tools_deps, tools_dir_path( make, "widl" ));
+    strarray_add( &tools_deps, tools_dir_path( make, "winebuild" ));
+    strarray_add( &tools_deps, tools_dir_path( make, "winegcc" ));
+    strarray_add( &tools_deps, obj_dir_path( make, "include" ));
+    strarray_add( &tools_deps, "dummy" );
 
     strarray_addall( &distclean_files, make->distclean_files );
     for (i = 0; i < make->subdirs.count; i++)
     {
         const struct makefile *submake = make->submakes[i];
+        char *subdir = base_dir_path( submake, "" );
 
         strarray_add( &makefile_deps, top_src_dir_path( make, base_dir_path( submake,
                                                         strmake ( "%s.in", output_makefile_name ))));
@@ -3419,7 +3428,60 @@ static void output_subdirs( struct makefile *make )
             strarray_add( &distclean_files, base_dir_path( submake, submake->distclean_files.str[j] ));
         for (j = 0; j < submake->ok_files.count; j++)
             strarray_add( &testclean_files, base_dir_path( submake, submake->ok_files.str[j] ));
-        strarray_addall( &build_deps, output_importlib_symlinks( make, submake ));
+
+        /* import libs are still created for disabled dirs, except for win16 ones */
+        if (submake->module && submake->importlib && !(submake->disabled && submake->is_win16))
+        {
+            char *importlib_path = base_dir_path( submake, strmake( "lib%s", submake->importlib ));
+            if (submake->implib_objs.count)
+            {
+                output( "%s.a:", importlib_path );
+                output_filenames( tools_deps );
+                output( "\n" );
+                output( "\t@cd %s && $(MAKE) lib%s.a\n", subdir, submake->importlib );
+                strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
+                if (crosstarget)
+                {
+                    output( "%s.cross.a:", importlib_path );
+                    output_filenames( tools_deps );
+                    output( "\n" );
+                    output( "\t@cd %s && $(MAKE) lib%s.cross.a\n", subdir, submake->importlib );
+                    strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
+                }
+            }
+            else
+            {
+                const char *libext = *dll_ext ? ".def" : ".a";
+                char *spec_file = top_src_dir_path( make, base_dir_path( submake,
+                                                   replace_extension( submake->module, ".dll", ".spec" )));
+                output( "%s%s: %s", importlib_path, libext, spec_file );
+                output_filename( tools_path( make, "winebuild" ));
+                output( "\n" );
+                output( "\t%s -w -o $@", tools_path( make, "winebuild" ));
+                output_filename( *dll_ext ? "--def" : "--implib" );
+                output_filenames( target_flags );
+                if (submake->is_win16) output_filename( "-m16" );
+                output_filename( "--export" );
+                output_filename( spec_file );
+                output( "\n" );
+                strarray_add( &build_deps, strmake( "%s%s", importlib_path, libext ));
+                if (crosstarget && !submake->is_win16)
+                {
+                    output( "%s.cross.a: %s", importlib_path, spec_file );
+                    output_filename( tools_path( make, "winebuild" ));
+                    output( "\n" );
+                    output( "\t%s -b %s -w -o $@", tools_path( make, "winebuild" ), crosstarget );
+                    output_filename( "--implib" );
+                    output_filenames( target_flags );
+                    output_filename( "--export" );
+                    output_filename( spec_file );
+                    output( "\n" );
+                    strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
+                }
+            }
+            strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
+        }
+
         if (submake->disabled) continue;
         if (submake->install_rules[INSTALL_LIB].count)
         {
@@ -3446,12 +3508,13 @@ static void output_subdirs( struct makefile *make )
     strarray_add( &make->phony_targets, "distclean" );
     strarray_add( &make->phony_targets, "testclean" );
 
+    strarray_addall( &make->clean_files, symlinks );
+    strarray_addall( &build_deps, symlinks );
     if (build_deps.count)
     {
         output( "__builddeps__:" );
         output_filenames( build_deps );
         output( "\n" );
-        strarray_addall( &make->clean_files, build_deps );
     }
     if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
 }

@@ -234,7 +234,6 @@ sub parse_makefile($)
         {
             my $var = $1;
             $make{$var} = $2;
-            ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
         my $source_vars_regexp = join "|", @source_vars;
@@ -357,7 +356,6 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.c$/)
         {
-            ${${$make}{"=flags"}}{"staticimplib"} = 1 if defined $flags{"implib"};
             push @{${$make}{"=C_SRCS"}}, $name;
         }
         elsif ($name =~ /\.h$/ || $name =~ /\.rh$/ || $name =~ /\.inl$/ || $name =~ /\.x$/)
@@ -425,14 +423,13 @@ sub update_makefiles(@)
         my %make = %{$makefiles{$file}};
         my $args = "";
         my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
-        my $flag_args = defined $make{"=flags"} ? ",[" . join(",",sort keys %{$make{"=flags"}}) ."]" : "";
         if (defined($make{"TESTDLL"}))  # test
         {
             die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile$/;
             die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_TEST($dir$flag_args)\n";
+            push @lines, "WINE_CONFIG_TEST($dir)\n";
         }
         elsif (defined($make{"MODULE"}) && $make{"MODULE"} =~ /\.a$/)  # import lib
         {
@@ -440,7 +437,7 @@ sub update_makefiles(@)
             die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_LIB($name$flag_args)\n";
+            push @lines, "WINE_CONFIG_LIB($name)\n";
         }
         elsif (defined($make{"MODULE"}) && defined($make{"APPMODE"}))  # program
         {
@@ -455,9 +452,8 @@ sub update_makefiles(@)
             {
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
             }
-            $args .= "," if $is_win16 || defined $make{"=flags"};
-            $args .= "enable_win16" if $is_win16;
-            push @lines, "WINE_CONFIG_PROGRAM($name$args$flag_args)\n";
+            $args .= ",enable_win16" if $is_win16;
+            push @lines, "WINE_CONFIG_PROGRAM($name$args)\n";
         }
         elsif (defined($make{"MODULE"}))  # dll
         {
@@ -475,10 +471,7 @@ sub update_makefiles(@)
             }
             my $implib = $make{"IMPORTLIB"} || "";
             die "Invalid IMPORTLIB name in $file" if $implib =~ /\./;
-            $args .= "," if $is_win16 || defined $make{"=flags"};
-            $args .= "enable_win16" if $is_win16;
-            $args .= $flag_args;
-            $args .= ",[$implib]" if $implib && $implib ne $name;
+            $args .= ",enable_win16" if $is_win16;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
         elsif ($file =~ /^tools.*\/Makefile$/)
@@ -486,14 +479,12 @@ sub update_makefiles(@)
             die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_TOOL($name$flag_args)\n";
+            push @lines, "WINE_CONFIG_TOOL($name)\n";
         }
         elsif ($file =~ /\/Makefile$/)
         {
             (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
-            $args = "[$name]";
-            $args .= "," if defined $make{"=flags"};
-            push @lines, "WINE_CONFIG_MAKEFILE($args$flag_args)\n";
+            push @lines, "WINE_CONFIG_MAKEFILE($name)\n";
         }
     }
 
