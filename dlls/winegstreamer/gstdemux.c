@@ -1103,7 +1103,6 @@ static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer u
 static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     GSTImpl *This = (GSTImpl*)pPin->pin.pinInfo.pFilter;
-    HRESULT hr;
     int ret, i;
     LONGLONG avail, duration;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
@@ -1163,19 +1162,20 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     WaitForSingleObject(This->event, -1);
     gst_element_get_state(This->container, NULL, NULL, -1);
 
-    if (!This->cStreams) {
+    if (!This->cStreams)
+    {
         FIXME("GStreamer could not find any streams\n");
-        hr = E_FAIL;
-    } else {
-        gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
-        for (i = 0; i < This->cStreams; ++i) {
-            This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
-            This->ppPins[i]->seek.llCurrent = 0;
-            if (!This->ppPins[i]->seek.llDuration)
-                This->ppPins[i]->seek.dwCapabilities = 0;
-            WaitForSingleObject(This->ppPins[i]->caps_event, -1);
-        }
-        hr = S_OK;
+        return E_FAIL;
+    }
+
+    gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
+    for (i = 0; i < This->cStreams; ++i)
+    {
+        This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
+        This->ppPins[i]->seek.llCurrent = 0;
+        if (!This->ppPins[i]->seek.llDuration)
+            This->ppPins[i]->seek.dwCapabilities = 0;
+        WaitForSingleObject(This->ppPins[i]->caps_event, INFINITE);
     }
     *props = This->props;
 
@@ -1191,7 +1191,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     gst_pad_set_active(This->my_src, 1);
 
     This->nextofs = This->nextpullofs = 0;
-    return hr;
+    return S_OK;
 }
 
 static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
