@@ -69,7 +69,7 @@ typedef struct GSTImpl {
     GstBus *bus;
     guint64 start, nextofs, nextpullofs, stop;
     ALLOCATOR_PROPERTIES props;
-    HANDLE event, changed_ofs;
+    HANDLE no_more_pads_event, push_event;
 
     HANDLE push_thread;
 } GSTImpl;
@@ -519,7 +519,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
     TRACE("Waiting..\n");
 
-    WaitForSingleObject(This->event, INFINITE);
+    WaitForSingleObject(This->push_event, INFINITE);
 
     TRACE("Starting..\n");
     for (;;) {
@@ -1050,7 +1050,7 @@ static void no_more_pads(GstElement *decodebin, gpointer user)
 {
     GSTImpl *This = (GSTImpl*)user;
     TRACE("%p %p\n", This, decodebin);
-    SetEvent(This->event);
+    SetEvent(This->no_more_pads_event);
 }
 
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
@@ -1156,7 +1156,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     /* Add initial pins */
     This->initial = This->discont = TRUE;
-    ResetEvent(This->event);
+    ResetEvent(This->no_more_pads_event);
     gst_element_set_state(This->container, GST_STATE_PLAYING);
     ret = gst_element_get_state(This->container, NULL, NULL, -1);
 
@@ -1166,7 +1166,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         return E_FAIL;
     }
 
-    WaitForSingleObject(This->event, INFINITE);
+    WaitForSingleObject(This->no_more_pads_event, INFINITE);
 
     gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
     for (i = 0; i < This->cStreams; ++i)
@@ -1259,7 +1259,8 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     This->cStreams = 0;
     This->ppPins = NULL;
     This->push_thread = NULL;
-    This->event = CreateEventW(NULL, 0, 0, NULL);
+    This->no_more_pads_event = CreateEventW(NULL, 0, 0, NULL);
+    This->push_event = CreateEventW(NULL, 0, 0, NULL);
     This->bus = NULL;
 
     piInput = &This->pInputPin.pin.pinInfo;
@@ -1286,7 +1287,8 @@ static void GST_Destroy(GSTImpl *This)
 
     TRACE("Destroying %p\n", This);
 
-    CloseHandle(This->event);
+    CloseHandle(This->no_more_pads_event);
+    CloseHandle(This->push_event);
 
     /* Don't need to clean up output pins, disconnecting input pin will do that */
     IPin_ConnectedTo((IPin *)&This->pInputPin, &connected);
@@ -1994,6 +1996,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
         This->pReader = NULL;
         This->pAlloc = NULL;
+        ResetEvent(((GSTImpl *)This->pin.pinInfo.pFilter)->push_event);
         if (SUCCEEDED(hr))
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
         if (SUCCEEDED(hr))
@@ -2016,7 +2019,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
             hr = IMemAllocator_Commit(This->pAlloc);
-            SetEvent(((GSTImpl*)This->pin.pinInfo.pFilter)->event);
+            SetEvent(((GSTImpl*)This->pin.pinInfo.pFilter)->push_event);
         } else {
             GST_RemoveOutputPins((GSTImpl *)This->pin.pinInfo.pFilter);
             if (This->pReader)
