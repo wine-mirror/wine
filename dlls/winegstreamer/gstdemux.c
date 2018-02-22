@@ -1160,11 +1160,11 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     ResetEvent(This->event);
     gst_element_set_state(This->container, GST_STATE_PLAYING);
     WaitForSingleObject(This->event, -1);
-    gst_element_get_state(This->container, NULL, NULL, -1);
+    ret = gst_element_get_state(This->container, NULL, NULL, -1);
 
-    if (!This->cStreams)
+    if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        FIXME("GStreamer could not find any streams\n");
+        ERR("GStreamer failed to play stream\n");
         return E_FAIL;
     }
 
