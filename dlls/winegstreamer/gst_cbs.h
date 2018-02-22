@@ -38,8 +38,6 @@ enum CB_TYPE {
     REQUEST_BUFFER_SRC,
     EVENT_SRC,
     EVENT_SINK,
-    ACCEPT_CAPS_SINK,
-    SETCAPS_SINK,
     GOT_DATA_SINK,
     GOT_DATA,
     REMOVED_DECODED_PAD,
@@ -101,16 +99,6 @@ struct cb_data {
             GstEvent *event;
             gboolean ret;
         } event_sink_data;
-        struct accept_caps_sink_data {
-            GstPad *pad;
-            GstCaps *caps;
-            gboolean ret;
-        } accept_caps_sink_data;
-        struct setcaps_sink_data {
-            GstPad *pad;
-            GstCaps *caps;
-            gboolean ret;
-        } setcaps_sink_data;
         struct got_data_sink_data {
             GstPad *pad;
             GstObject *parent;
@@ -179,8 +167,6 @@ void no_more_pads_wrapper(GstElement *decodebin, gpointer user) DECLSPEC_HIDDEN;
 GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
 gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
 gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
-gboolean accept_caps_sink_wrapper(GstPad *pad, GstCaps *caps) DECLSPEC_HIDDEN;
-gboolean setcaps_sink_wrapper(GstPad *pad, GstCaps *caps) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;

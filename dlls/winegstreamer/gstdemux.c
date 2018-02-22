@@ -2233,18 +2233,6 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
             cbdata->u.event_sink_data.ret = event_sink(data->pad, data->parent, data->event);
             break;
         }
-    case ACCEPT_CAPS_SINK:
-        {
-            struct accept_caps_sink_data *data = &cbdata->u.accept_caps_sink_data;
-            cbdata->u.accept_caps_sink_data.ret = accept_caps_sink(data->pad, data->caps);
-            break;
-        }
-    case SETCAPS_SINK:
-        {
-            struct setcaps_sink_data *data = &cbdata->u.setcaps_sink_data;
-            cbdata->u.setcaps_sink_data.ret = setcaps_sink(data->pad, data->caps);
-            break;
-        }
     case GOT_DATA_SINK:
         {
             struct got_data_sink_data *data = &cbdata->u.got_data_sink_data;

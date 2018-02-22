@@ -175,30 +175,6 @@ gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
     return cbdata.u.event_sink_data.ret;
 }
 
-gboolean accept_caps_sink_wrapper(GstPad *pad, GstCaps *caps)
-{
-    struct cb_data cbdata = { ACCEPT_CAPS_SINK };
-
-    cbdata.u.accept_caps_sink_data.pad = pad;
-    cbdata.u.accept_caps_sink_data.caps = caps;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.accept_caps_sink_data.ret;
-}
-
-gboolean setcaps_sink_wrapper(GstPad *pad, GstCaps *caps)
-{
-    struct cb_data cbdata = { SETCAPS_SINK };
-
-    cbdata.u.setcaps_sink_data.pad = pad;
-    cbdata.u.setcaps_sink_data.caps = caps;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.setcaps_sink_data.ret;
-}
-
 GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     struct cb_data cbdata = { GOT_DATA_SINK };
