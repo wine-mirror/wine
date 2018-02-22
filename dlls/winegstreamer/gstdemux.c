@@ -1081,7 +1081,6 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
         gst_message_parse_error(msg, &err, &dbg_info);
         FIXME("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
         WARN("%s\n", dbg_info);
-        SetEvent(This->event);
     } else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_WARNING) {
         gst_message_parse_warning(msg, &err, &dbg_info);
         WARN("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
@@ -1159,7 +1158,6 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     This->initial = This->discont = TRUE;
     ResetEvent(This->event);
     gst_element_set_state(This->container, GST_STATE_PLAYING);
-    WaitForSingleObject(This->event, -1);
     ret = gst_element_get_state(This->container, NULL, NULL, -1);
 
     if (ret == GST_STATE_CHANGE_FAILURE)
@@ -1167,6 +1165,8 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         ERR("GStreamer failed to play stream\n");
         return E_FAIL;
     }
+
+    WaitForSingleObject(This->event, INFINITE);
 
     gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
     for (i = 0; i < This->cStreams; ++i)
