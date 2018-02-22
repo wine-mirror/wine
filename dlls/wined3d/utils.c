@@ -4148,12 +4148,44 @@ const char *debug_d3ddevicetype(enum wined3d_device_type device_type)
     }
 }
 
+struct debug_buffer
+{
+    char str[200]; /* wine_dbg_sprintf() limits string size to 200 */
+    char *ptr;
+    int size;
+};
+
+static void init_debug_buffer(struct debug_buffer *buffer, const char *default_string)
+{
+    strcpy(buffer->str, default_string);
+    buffer->ptr = buffer->str;
+    buffer->size = ARRAY_SIZE(buffer->str);
+}
+
+static BOOL debug_append(struct debug_buffer *buffer, const char *str, const char *separator)
+{
+    int size;
+
+    if (!separator || buffer->ptr == buffer->str)
+        separator = "";
+    size = snprintf(buffer->ptr, buffer->size, "%s%s", separator, str);
+    if (size == -1 || size >= buffer->size)
+    {
+        buffer->size = 0;
+        return FALSE;
+    }
+
+    buffer->ptr += size;
+    buffer->size -= size;
+    return TRUE;
+}
+
 const char *wined3d_debug_resource_access(DWORD access)
 {
-    char buf[125];
+    struct debug_buffer buffer;
 
-    buf[0] = '\0';
-#define ACCESS_TO_STR(x) if (access & x) { strcat(buf, " | "#x); access &= ~x; }
+    init_debug_buffer(&buffer, "0");
+#define ACCESS_TO_STR(x) if (access & x) { debug_append(&buffer, #x, " | "); access &= ~x; }
     ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_GPU);
     ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_CPU);
     ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_MAP_R);
@@ -4162,15 +4194,15 @@ const char *wined3d_debug_resource_access(DWORD access)
     if (access)
         FIXME("Unrecognised access flag(s) %#x.\n", access);
 
-    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
+    return wine_dbg_sprintf("%s", buffer.str);
 }
 
 const char *debug_d3dusage(DWORD usage)
 {
-    char buf[552];
+    struct debug_buffer buffer;
 
-    buf[0] = '\0';
-#define WINED3DUSAGE_TO_STR(u) if (usage & u) { strcat(buf, " | "#u); usage &= ~u; }
+    init_debug_buffer(&buffer, "0");
+#define WINED3DUSAGE_TO_STR(x) if (usage & x) { debug_append(&buffer, #x, " | "); usage &= ~x; }
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_RENDERTARGET);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_DEPTHSTENCIL);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_WRITEONLY);
@@ -4191,17 +4223,18 @@ const char *debug_d3dusage(DWORD usage)
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_STATICDECL);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_OVERLAY);
 #undef WINED3DUSAGE_TO_STR
-    if (usage) FIXME("Unrecognized usage flag(s) %#x\n", usage);
+    if (usage)
+        FIXME("Unrecognized usage flag(s) %#x.\n", usage);
 
-    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
+    return wine_dbg_sprintf("%s", buffer.str);
 }
 
-const char *debug_d3dusagequery(DWORD usagequery)
+const char *debug_d3dusagequery(DWORD usage)
 {
-    char buf[238];
+    struct debug_buffer buffer;
 
-    buf[0] = '\0';
-#define WINED3DUSAGEQUERY_TO_STR(u) if (usagequery & u) { strcat(buf, " | "#u); usagequery &= ~u; }
+    init_debug_buffer(&buffer, "0");
+#define WINED3DUSAGEQUERY_TO_STR(x) if (usage & x) { debug_append(&buffer, #x, " | "); usage &= ~x; }
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_FILTER);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_GENMIPMAP);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_LEGACYBUMPMAP);
@@ -4211,9 +4244,10 @@ const char *debug_d3dusagequery(DWORD usagequery)
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_VERTEXTEXTURE);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_WRAPANDMIP);
 #undef WINED3DUSAGEQUERY_TO_STR
-    if (usagequery) FIXME("Unrecognized usage query flag(s) %#x\n", usagequery);
+    if (usage)
+        FIXME("Unrecognized usage query flag(s) %#x.\n", usage);
 
-    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
+    return wine_dbg_sprintf("%s", buffer.str);
 }
 
 const char *debug_d3ddeclmethod(enum wined3d_decl_method method)
@@ -6014,9 +6048,9 @@ int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb
 
 const char *wined3d_debug_location(DWORD location)
 {
+    struct debug_buffer buffer;
     const char *prefix = "";
     const char *suffix = "";
-    char buf[294];
 
     if (wined3d_popcount(location) > 16)
     {
@@ -6025,8 +6059,8 @@ const char *wined3d_debug_location(DWORD location)
         suffix = ")";
     }
 
-    buf[0] = '\0';
-#define LOCATION_TO_STR(u) if (location & u) { strcat(buf, " | "#u); location &= ~u; }
+    init_debug_buffer(&buffer, "0");
+#define LOCATION_TO_STR(x) if (location & x) { debug_append(&buffer, #x, " | "); location &= ~x; }
     LOCATION_TO_STR(WINED3D_LOCATION_DISCARDED);
     LOCATION_TO_STR(WINED3D_LOCATION_SYSMEM);
     LOCATION_TO_STR(WINED3D_LOCATION_USER_MEMORY);
@@ -6037,9 +6071,10 @@ const char *wined3d_debug_location(DWORD location)
     LOCATION_TO_STR(WINED3D_LOCATION_RB_MULTISAMPLE);
     LOCATION_TO_STR(WINED3D_LOCATION_RB_RESOLVED);
 #undef LOCATION_TO_STR
-    if (location) FIXME("Unrecognized location flag(s) %#x.\n", location);
+    if (location)
+        FIXME("Unrecognized location flag(s) %#x.\n", location);
 
-    return wine_dbg_sprintf("%s%s%s", prefix, buf[0] ? &buf[3] : "0", suffix);
+    return wine_dbg_sprintf("%s%s%s", prefix, buffer.str, suffix);
 }
 
 /* Print a floating point value with the %.8e format specifier, always using
