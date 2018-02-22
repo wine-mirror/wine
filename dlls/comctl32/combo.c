@@ -1714,7 +1714,7 @@ static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
     return TRUE;
 }
 
-LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     HEADCOMBO *lphc = (HEADCOMBO *)GetWindowLongPtrW( hwnd, 0 );
     HTHEME theme;
