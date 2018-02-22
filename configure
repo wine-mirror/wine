@@ -13227,7 +13227,7 @@ test -z "$SDL2_CFLAGS" || SDL2_CFLAGS=`echo " $SDL2_CFLAGS" | sed 's/ -I\([^/]\)
 test -z "$SDL2_LIBS" || SDL2_LIBS=`echo " $SDL2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
-if test "x$SDL_LIBS" = "x"; then :
+if test "x$ac_cv_lib_soname_SDL2" = "x"; then :
   case "x$with_sdl" in
   x)   as_fn_append wine_notices "|libSDL2 ${notice_platform}development files not found, SDL2 won't be supported." ;;
   xno) ;;

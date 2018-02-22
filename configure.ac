@@ -1601,7 +1601,7 @@ then
         [AC_CHECK_HEADERS([SDL2/SDL.h],
             [WINE_CHECK_SONAME(SDL2,SDL_Init,,,,[[libSDL2-2.0*]])])])
 fi
-WINE_NOTICE_WITH(sdl,[test "x$SDL_LIBS" = "x"],
+WINE_NOTICE_WITH(sdl,[test "x$ac_cv_lib_soname_SDL2" = "x"],
                  [libSDL2 ${notice_platform}development files not found, SDL2 won't be supported.])
 
 dnl **** Check for capi4linux ****
