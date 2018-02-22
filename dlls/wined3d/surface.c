@@ -1692,19 +1692,23 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
+    GLenum src_target, dst_target, texture_target;
     GLuint src, backup = 0;
     float left, right, top, bottom; /* Texture coordinates */
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     GLenum drawBuffer = GL_BACK;
     GLenum offscreen_buffer;
-    GLenum texture_target;
     BOOL noBackBufferBackup;
     BOOL src_offscreen;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
 
     TRACE("Using hwstretch blit\n");
+
+    src_target = wined3d_texture_get_sub_resource_target(src_texture, src_sub_resource_idx);
+    dst_target = wined3d_texture_get_sub_resource_target(dst_texture, dst_sub_resource_idx);
+
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     context = context_acquire(device, src_texture, src_sub_resource_idx);
     gl_info = context->gl_info;
@@ -1751,7 +1755,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
          */
-        texture_target = src_surface->texture_target;
+        texture_target = src_target;
         context_bind_texture(context, texture_target, src_texture->texture_rgb.name);
         gl_info->gl_ops.gl.p_glEnable(texture_target);
         checkGLcall("glEnable(texture_target)");
@@ -1879,11 +1883,11 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     gl_info->gl_ops.gl.p_glEnd();
     checkGLcall("glEnd and previous");
 
-    if (texture_target != dst_surface->texture_target)
+    if (texture_target != dst_target)
     {
         gl_info->gl_ops.gl.p_glDisable(texture_target);
-        gl_info->gl_ops.gl.p_glEnable(dst_surface->texture_target);
-        texture_target = dst_surface->texture_target;
+        gl_info->gl_ops.gl.p_glEnable(dst_target);
+        texture_target = dst_target;
     }
 
     /* Now read the stretched and upside down image into the destination texture */
@@ -1910,13 +1914,13 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         }
         else
         {
-            if (texture_target != src_surface->texture_target)
+            if (texture_target != src_target)
             {
                 gl_info->gl_ops.gl.p_glDisable(texture_target);
-                gl_info->gl_ops.gl.p_glEnable(src_surface->texture_target);
-                texture_target = src_surface->texture_target;
+                gl_info->gl_ops.gl.p_glEnable(src_target);
+                texture_target = src_target;
             }
-            context_bind_texture(context, src_surface->texture_target, src_texture->texture_rgb.name);
+            context_bind_texture(context, src_target, src_texture->texture_rgb.name);
         }
 
         gl_info->gl_ops.gl.p_glBegin(GL_QUADS);
