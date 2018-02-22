@@ -178,6 +178,49 @@ static void DOSVM_PushFlags( CONTEXT *context, BOOL islong, BOOL isstub )
 
 
 /**********************************************************************
+ *         DOSVM_HardwareInterruptPM
+ *
+ * Emulate call to interrupt handler in 16-bit or 32-bit protected mode.
+ *
+ * Pushes interrupt frame to stack and changes instruction
+ * pointer to interrupt handler.
+ */
+void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
+{
+    FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
+
+    if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
+    {
+        TRACE( "builtin interrupt %02x has been invoked "
+               "(through vector %02x)\n",
+               OFFSETOF(addr)/DOSVM_STUB_PM16, intnum );
+
+        if (intnum == 0x25 || intnum == 0x26)
+            DOSVM_PushFlags( context, FALSE, FALSE );
+
+        DOSVM_BuildCallFrame( context,
+                              DOSVM_IntProcRelay,
+                              DOSVM_GetBuiltinHandler(
+                                  OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
+    }
+    else
+    {
+        TRACE( "invoking hooked interrupt %02x at %04x:%04x\n",
+               intnum, SELECTOROF(addr), OFFSETOF(addr) );
+
+        /* Push the flags and return address on the stack */
+        PUSH_WORD16( context, LOWORD(context->EFlags) );
+        PUSH_WORD16( context, context->SegCs );
+        PUSH_WORD16( context, LOWORD(context->Eip) );
+
+        /* Jump to the interrupt handler */
+        context->SegCs =  HIWORD(addr);
+        context->Eip = LOWORD(addr);
+    }
+}
+
+
+/**********************************************************************
  *         DOSVM_EmulateInterruptPM
  *
  * Emulate software interrupt in 16-bit or 32-bit protected mode.
@@ -240,49 +283,6 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
         DOSVM_HardwareInterruptPM( context, intnum );
     }
     return TRUE;
-}
-
-
-/**********************************************************************
- *         DOSVM_HardwareInterruptPM
- *
- * Emulate call to interrupt handler in 16-bit or 32-bit protected mode.
- *
- * Pushes interrupt frame to stack and changes instruction 
- * pointer to interrupt handler.
- */
-void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
-{
-    FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
-
-    if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
-    {
-        TRACE( "builtin interrupt %02x has been invoked "
-               "(through vector %02x)\n",
-               OFFSETOF(addr)/DOSVM_STUB_PM16, intnum );
-
-        if (intnum == 0x25 || intnum == 0x26)
-            DOSVM_PushFlags( context, FALSE, FALSE );
-
-        DOSVM_BuildCallFrame( context,
-                              DOSVM_IntProcRelay,
-                              DOSVM_GetBuiltinHandler(
-                                  OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
-    }
-    else
-    {
-        TRACE( "invoking hooked interrupt %02x at %04x:%04x\n",
-               intnum, SELECTOROF(addr), OFFSETOF(addr) );
-
-        /* Push the flags and return address on the stack */
-        PUSH_WORD16( context, LOWORD(context->EFlags) );
-        PUSH_WORD16( context, context->SegCs );
-        PUSH_WORD16( context, LOWORD(context->Eip) );
-
-        /* Jump to the interrupt handler */
-        context->SegCs =  HIWORD(addr);
-        context->Eip = LOWORD(addr);
-    }
 }
 
 

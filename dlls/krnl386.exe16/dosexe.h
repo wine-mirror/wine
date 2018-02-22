@@ -275,7 +275,6 @@ extern void        __wine_call_int_handler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern void        DOSVM_CallBuiltinHandler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC16   DOSVM_GetPMHandler16( BYTE ) DECLSPEC_HIDDEN;
-extern void        DOSVM_HardwareInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern void        DOSVM_SetPMHandler16( BYTE, FARPROC16 ) DECLSPEC_HIDDEN;
 
 /* ioports.c */
