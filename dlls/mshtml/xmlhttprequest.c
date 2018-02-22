@@ -755,9 +755,7 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 
     TRACE("(%p)\n", This);
 
-    assert(eid == EVENTID_READYSTATECHANGE);
-
-    if(This->event_listener)
+    if(eid != EVENTID_READYSTATECHANGE || This->event_listener)
         return;
 
     This->event_listener = heap_alloc(sizeof(*This->event_listener));

@@ -538,6 +538,18 @@ function test_dispatch_event() {
     ok(calls === "parent.testing(capture),child.testing(capture),"
        + "child.testing(bubble),parent.testing(bubble),", "calls = " + calls);
 
+    var xhr = new XMLHttpRequest();
+    xhr.addEventListener("testing", function(event) {
+        ok(event === e, "event != e");
+        ok(event.target === xhr, "target != child");
+        ok(event.srcElement === null, "srcElement != child");
+        calls += "xhr.testing";
+    }, true);
+
+    calls = "";
+    xhr.dispatchEvent(e);
+    ok(calls === "xhr.testing", "calls = " + calls);
+
     next_test();
 }
 
