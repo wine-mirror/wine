@@ -138,14 +138,6 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
         return NULL;
 
     compat_version = compat_mode_info[doc->document_mode].ie_version;
-    if(compat_version > 8) {
-        /*
-         * Ideally we should handle higher versions, but right now it would cause more problems than it's worth.
-         * We should revisit that once more IE9 features are implemented, most notably new events APIs.
-         */
-        WARN("Using compat version 8\n");
-        compat_version = 8;
-    }
 
     switch(cmpt) {
     case CMP_EQ:
@@ -748,13 +740,15 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     TRACE("(%p)->(%p %p)\n", This, aDocument, aContent);
 
-    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMComment, (void**)&nscomment);
-    if(NS_SUCCEEDED(nsres)) {
-        TRACE("comment node\n");
+    if(This->document_mode < COMPAT_MODE_IE10) {
+        nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMComment, (void**)&nscomment);
+        if(NS_SUCCEEDED(nsres)) {
+            TRACE("comment node\n");
 
-        add_script_runner(This, run_insert_comment, (nsISupports*)nscomment, NULL);
-        nsIDOMComment_Release(nscomment);
-        return;
+            add_script_runner(This, run_insert_comment, (nsISupports*)nscomment, NULL);
+            nsIDOMComment_Release(nscomment);
+            return;
+        }
     }
 
     if(This->document_mode == COMPAT_MODE_QUIRKS) {

@@ -165,10 +165,6 @@ function test_conditional_comments() {
     function test_version(v) {
         var version = compat_version ? compat_version : 7;
 
-        /* Uncomment and fix tests below once we support that. */
-        if(version >= 9)
-            return;
-
         div.innerHTML = "<!--[if lte IE " + v + "]>true<![endif]-->";
         ok(div.innerText === (version <= v ? "true" : ""),
            "div.innerText = " + div.innerText + " for version (<=) " + v);
@@ -178,11 +174,11 @@ function test_conditional_comments() {
            "div.innerText = " + div.innerText + " for version (<) " + v);
 
         div.innerHTML = "<!--[if gte IE " + v + "]>true<![endif]-->";
-        ok(div.innerText === (version >= v ? "true" : ""),
+        ok(div.innerText === (version >= v && version < 10 ? "true" : ""),
            "div.innerText = " + div.innerText + " for version (>=) " + v);
 
         div.innerHTML = "<!--[if gt IE " + v + "]>true<![endif]-->";
-        ok(div.innerText === (version > v ? "true" : ""),
+        ok(div.innerText === (version > v && version < 10 ? "true" : ""),
            "div.innerText = " + div.innerText + " for version (>) " + v);
     }
 
