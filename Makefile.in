@@ -131,7 +131,7 @@ install-manpages:: manpages
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wpp
 __builddeps__: __tooldeps__ libs/wine include po
-.PHONY: depend dummy check test crosstest __tooldeps__ __builddeps__ install install-lib install-dev
+.PHONY: depend dummy __tooldeps__ install install-lib install-dev
 
 dummy:
 loader: libs/port libs/wine tools

@@ -233,11 +233,6 @@ wine_fn_append_rule ()
 wine_fn_all_rules ()
 {
     wine_fn_append_file SUBDIRS $ac_dir
-    wine_fn_append_rule \
-"all: $ac_dir
-.PHONY: $ac_dir
-$ac_dir: dummy
-	@cd $ac_dir && \$(MAKE)"
 }
 
 wine_fn_disabled_rules ()
@@ -255,22 +250,15 @@ wine_fn_config_makefile ()
     dnl These are created as symlinks for wow64 builds
     fonts|server) test -z "$with_wine64" || return ;;
     esac
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
-    wine_fn_all_rules
+    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
 }
 
 wine_fn_config_lib ()
 {
     ac_name=$[1]
     ac_dir=dlls/$ac_name
-    ac_deps="include"
 
-    AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
     wine_fn_all_rules
-
-    wine_fn_append_rule \
-"__builddeps__: $ac_dir
-$ac_dir: $ac_deps"
 }
 
 wine_fn_config_dll ()
@@ -278,14 +266,7 @@ wine_fn_config_dll ()
     ac_name=$[1]
     ac_dir=dlls/$ac_name
     ac_enable=$[2]
-
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
-
-    wine_fn_all_rules
-    wine_fn_append_rule \
-"$ac_dir: __builddeps__
-manpages htmlpages sgmlpages xmlpages::
-	@cd $ac_dir && \$(MAKE) \$[@]"
+    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
 }
 
 wine_fn_config_program ()
@@ -293,11 +274,7 @@ wine_fn_config_program ()
     ac_name=$[1]
     ac_dir=programs/$ac_name
     ac_enable=$[2]
-
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
-
-    wine_fn_all_rules
-    wine_fn_append_rule "$ac_dir: __builddeps__"
+    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
 }
 
 wine_fn_config_test ()
@@ -309,7 +286,6 @@ wine_fn_config_test ()
 
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
     wine_fn_all_rules
-    wine_fn_append_rule "$ac_dir: __builddeps__"
 }
 
 wine_fn_config_tool ()
@@ -328,19 +304,11 @@ wine_fn_config_tool ()
 
 wine_fn_config_symlink ()
 {
-    ac_linkdir=
-    if test "x$[1]" = "x-d"
-    then
-        ac_linkdir=$[2]
-        shift; shift
-    fi
     ac_links=$[@]
     wine_fn_append_rule \
 "$ac_links:
 	@./config.status \$[@]"
     for f in $ac_links; do wine_fn_append_file CONFIGURE_TARGETS $f; done
-    test -n "$ac_linkdir" || return
-    wine_fn_append_rule "$ac_linkdir/depend: $ac_links"
 }])
 
 dnl **** Define helper function to append a file to a makefile file list ****
@@ -364,7 +332,7 @@ m4_ifval([$4],[if test "x$[$4]" != xno; then
 ])m4_foreach([f],[$3],
 [AC_CONFIG_LINKS(m4_ifval([$1],[$1/])f[:]m4_ifval([$2],[$2/])m4_ifval([$5],[$5],f))])dnl
 m4_if([$1],[$2],[test "$srcdir" = "." || ])dnl
-wine_fn_config_symlink[]m4_if([$1],[$2],,m4_ifval([$1],[ -d $1]))[]m4_foreach([f],[$3],[ ]m4_ifval([$1],[$1/])f)m4_ifval([$4],[
+wine_fn_config_symlink[]m4_foreach([f],[$3],[ ]m4_ifval([$1],[$1/])f)m4_ifval([$4],[
 fi])[]dnl
 ])])
 

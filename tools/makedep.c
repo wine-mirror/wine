@@ -3400,7 +3400,9 @@ static void output_programs( struct makefile *make )
 static void output_subdirs( struct makefile *make )
 {
     struct strarray symlinks = empty_strarray;
+    struct strarray all_deps = empty_strarray;
     struct strarray build_deps = empty_strarray;
+    struct strarray builddeps_deps = empty_strarray;
     struct strarray makefile_deps = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
@@ -3409,12 +3411,6 @@ static void output_subdirs( struct makefile *make )
     struct strarray winetest_deps = empty_strarray;
     struct strarray crosstest_deps = empty_strarray;
     unsigned int i, j;
-
-    strarray_add( &tools_deps, tools_dir_path( make, "widl" ));
-    strarray_add( &tools_deps, tools_dir_path( make, "winebuild" ));
-    strarray_add( &tools_deps, tools_dir_path( make, "winegcc" ));
-    strarray_add( &tools_deps, obj_dir_path( make, "include" ));
-    strarray_add( &tools_deps, "dummy" );
 
     strarray_addall( &distclean_files, make->distclean_files );
     for (i = 0; i < make->subdirs.count; i++)
@@ -3437,18 +3433,14 @@ static void output_subdirs( struct makefile *make )
             char *importlib_path = base_dir_path( submake, strmake( "lib%s", submake->importlib ));
             if (submake->implib_objs.count)
             {
-                output( "%s.a:", importlib_path );
-                output_filenames( tools_deps );
-                output( "\n" );
+                output( "%s.a: dummy\n", importlib_path );
                 output( "\t@cd %s && $(MAKE) lib%s.a\n", subdir, submake->importlib );
-                strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
+                strarray_add( &tools_deps, strmake( "%s.a", importlib_path ));
                 if (crosstarget)
                 {
-                    output( "%s.cross.a:", importlib_path );
-                    output_filenames( tools_deps );
-                    output( "\n" );
+                    output( "%s.cross.a: dummy\n", importlib_path );
                     output( "\t@cd %s && $(MAKE) lib%s.cross.a\n", subdir, submake->importlib );
-                    strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
+                    strarray_add( &tools_deps, strmake( "%s.cross.a", importlib_path ));
                 }
             }
             else
@@ -3485,20 +3477,38 @@ static void output_subdirs( struct makefile *make )
         }
 
         if (submake->disabled) continue;
-        if (submake->testdll)
+        strarray_add( &all_deps, subdir );
+
+        if (submake->module)
+        {
+            if (!submake->staticlib)
+            {
+                strarray_add( &builddeps_deps, subdir );
+                if (!make->appmode.count)
+                {
+                    output( "manpages htmlpages sgmlpages xmlpages::\n" );
+                    output( "\t@cd %s && $(MAKE) $@\n", subdir );
+                }
+            }
+            else strarray_add( &tools_deps, subdir );
+        }
+        else if (submake->testdll)
         {
             output( "check test::\n" );
             output( "\t@cd %s && $(MAKE) test\n", subdir );
             strarray_add( &winetest_deps, subdir );
+            strarray_add( &builddeps_deps, subdir );
             if (crosstarget)
             {
                 char *target = base_dir_path( submake, "crosstest" );
                 output( "crosstest: %s\n", target );
-                output( "%s: __builddeps__ dummy\n", target );
+                output( "%s: dummy\n", target );
                 output( "\t@cd %s && $(MAKE) crosstest\n", subdir );
                 strarray_add( &crosstest_deps, target );
+                strarray_add( &builddeps_deps, target );
             }
         }
+
         if (submake->install_rules[INSTALL_LIB].count)
         {
             output( "install install-lib:: %s\n", submake->base_dir );
@@ -3510,36 +3520,61 @@ static void output_subdirs( struct makefile *make )
             output_install_commands( make, submake, submake->install_rules[INSTALL_DEV] );
         }
     }
+    output( "all:" );
+    output_filenames( all_deps );
+    output( "\n" );
+    output_filenames( all_deps );
+    output( ": dummy\n" );
+    output( "\t@cd $@ && $(MAKE)\n" );
     output( "Makefile:" );
     output_filenames( makefile_deps );
     output( "\n" );
     output_filenames( makefile_deps );
     output( ":\n" );
-    output( "programs/winetest:" );
-    output_filenames( winetest_deps );
-    output( "\n" );
-    output( "crosstest:" );
-    output_filenames( crosstest_deps );
-    output( "\n" );
+    if (winetest_deps.count)
+    {
+        output( "programs/winetest:" );
+        output_filenames( winetest_deps );
+        output( "\n" );
+        strarray_add( &make->phony_targets, "check" );
+        strarray_add( &make->phony_targets, "test" );
+    }
+    if (crosstest_deps.count)
+    {
+        output( "crosstest:" );
+        output_filenames( crosstest_deps );
+        output( "\n" );
+        strarray_add( &make->phony_targets, "crosstest" );
+    }
     output( "clean::\n");
     output_rm_filenames( clean_files );
     output( "testclean::\n");
     output_rm_filenames( testclean_files );
     output( "distclean::\n");
     output_rm_filenames( distclean_files );
-    strarray_add( &make->phony_targets, "check" );
-    strarray_add( &make->phony_targets, "test" );
+    output_filenames( tools_deps );
+    output( ":" );
+    output_filename( tools_dir_path( make, "widl" ));
+    output_filename( tools_dir_path( make, "winebuild" ));
+    output_filename( tools_dir_path( make, "winegcc" ));
+    output_filename( obj_dir_path( make, "include" ));
+    output( "\n" );
+    output_filenames( builddeps_deps );
+    output( ": __builddeps__\n" );
     strarray_add( &make->phony_targets, "distclean" );
     strarray_add( &make->phony_targets, "testclean" );
+    strarray_addall( &make->phony_targets, all_deps );
     strarray_addall( &make->phony_targets, crosstest_deps );
 
     strarray_addall( &make->clean_files, symlinks );
+    strarray_addall( &build_deps, tools_deps );
     strarray_addall( &build_deps, symlinks );
     if (build_deps.count)
     {
         output( "__builddeps__:" );
         output_filenames( build_deps );
         output( "\n" );
+        strarray_add( &make->phony_targets, "__builddeps__" );
     }
     if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
 }
