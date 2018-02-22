@@ -12246,6 +12246,184 @@ static void test_swapchain_multisample_reset(void)
     DestroyWindow(window);
 }
 
+static void test_stretch_rect(void)
+{
+    IDirect3DTexture9 *src_texture, *dst_texture;
+    IDirect3DSurface9 *src_surface, *dst_surface;
+    IDirect3DSurface9 *src_rt, *dst_rt;
+    D3DFORMAT src_format, dst_format;
+    IDirect3DSurface9 *src, *dst;
+    D3DPOOL src_pool, dst_pool;
+    BOOL can_stretch_textures;
+    IDirect3DDevice9 *device;
+    HRESULT expected_hr;
+    unsigned int i, j;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DFORMAT formats[] =
+    {
+        D3DFMT_A8R8G8B8,
+        D3DFMT_X8R8G8B8,
+        D3DFMT_R5G6B5,
+    };
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Failed to get caps, hr %#x.\n", hr);
+    can_stretch_textures = caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES;
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    {
+        src_format = formats[i];
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, src_format))
+                || FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, src_format)))
+        {
+            skip("Format %#x not supported.\n", src_format);
+            continue;
+        }
+
+        for (j = 0; j < sizeof(formats) / sizeof(*formats); ++j)
+        {
+            dst_format = formats[j];
+            if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                    D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, dst_format))
+                    || FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                    D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, dst_format)))
+            {
+                skip("Format %#x not supported.\n", dst_format);
+                continue;
+            }
+
+            hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, src_format,
+                    D3DMULTISAMPLE_NONE, 0, FALSE, &src_rt, NULL);
+            ok(hr == D3D_OK, "Failed to create render target, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, dst_format,
+                    D3DMULTISAMPLE_NONE, 0, FALSE, &dst_rt, NULL);
+            ok(hr == D3D_OK, "Failed to create render target, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst_rt, NULL, D3DTEXF_NONE);
+            ok(hr == D3D_OK, "Got hr %#x (formats %#x/%#x).\n", hr, src_format, dst_format);
+
+            for (src_pool = D3DPOOL_DEFAULT; src_pool <= D3DPOOL_SCRATCH; ++src_pool)
+            {
+                for (dst_pool = D3DPOOL_DEFAULT; dst_pool <= D3DPOOL_SCRATCH; ++dst_pool)
+                {
+                    hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, 0,
+                            src_format, src_pool, &src_texture, NULL);
+                    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+                    hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, 0,
+                            dst_format, dst_pool, &dst_texture, NULL);
+                    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+                    hr = IDirect3DTexture9_GetSurfaceLevel(src_texture, 0, &src);
+                    ok(hr == D3D_OK, "Failed to get surface, hr %#x.\n", hr);
+                    hr = IDirect3DTexture9_GetSurfaceLevel(dst_texture, 0, &dst);
+                    ok(hr == D3D_OK, "Failed to get surface, hr %#x.\n", hr);
+                    IDirect3DTexture9_Release(src_texture);
+                    IDirect3DTexture9_Release(dst_texture);
+
+                    hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst, NULL, D3DTEXF_NONE);
+                    todo_wine
+                    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
+                            hr, src_format, dst_format, src_pool, dst_pool);
+
+                    /* render target <-> texture */
+                    if (src_pool == D3DPOOL_DEFAULT && can_stretch_textures)
+                        expected_hr = D3D_OK;
+                    else
+                        expected_hr = D3DERR_INVALIDCALL;
+                    hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst_rt, NULL, D3DTEXF_NONE);
+                    todo_wine_if(expected_hr != D3D_OK)
+                    ok(hr == expected_hr, "Got hr %#x, expected hr %#x (formats %#x/%#x, pool %#x).\n",
+                            hr, expected_hr, src_format, dst_format, src_pool);
+                    hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst, NULL, D3DTEXF_NONE);
+                    todo_wine
+                    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pool %#x).\n",
+                            hr, src_format, dst_format, dst_pool);
+
+                    if (src_pool == D3DPOOL_MANAGED || dst_pool == D3DPOOL_MANAGED)
+                    {
+                        IDirect3DSurface9_Release(src);
+                        IDirect3DSurface9_Release(dst);
+                        continue;
+                    }
+
+                    if (src_pool == D3DPOOL_DEFAULT && dst_pool == D3DPOOL_DEFAULT)
+                        expected_hr = D3D_OK;
+                    else
+                        expected_hr = D3DERR_INVALIDCALL;
+
+                    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+                            src_format, src_pool, &src_surface, NULL);
+                    ok(hr == D3D_OK, "Failed to create surface, hr %#x.\n", hr);
+                    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+                            dst_format, dst_pool, &dst_surface, NULL);
+                    ok(hr == D3D_OK, "Failed to create surface, hr %#x.\n", hr);
+
+                    hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst_surface, NULL, D3DTEXF_NONE);
+                    todo_wine_if(expected_hr != D3D_OK)
+                    ok(hr == expected_hr, "Got hr %#x, expected %#x (formats %#x/%#x, pools %#x/%#x).\n",
+                            hr, expected_hr, src_format, dst_format, src_pool, dst_pool);
+
+                    /* offscreen plain <-> texture */
+                    hr = IDirect3DDevice9_StretchRect(device, src, NULL, dst_surface, NULL, D3DTEXF_NONE);
+                    todo_wine
+                    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
+                            hr, src_format, dst_format, src_pool, dst_pool);
+                    hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst, NULL, D3DTEXF_NONE);
+                    todo_wine
+                    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pools %#x/%#x).\n",
+                            hr, src_format, dst_format, src_pool, dst_pool);
+
+                    /* offscreen plain <-> render target */
+                    expected_hr = src_pool == D3DPOOL_DEFAULT ? D3D_OK : D3DERR_INVALIDCALL;
+                    hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst_rt, NULL, D3DTEXF_NONE);
+                    todo_wine_if(expected_hr != D3D_OK)
+                    ok(hr == expected_hr, "Got hr %#x, expected hr %#x (formats %#x/%#x, pool %#x).\n",
+                            hr, expected_hr, src_format, dst_format, src_pool);
+                    hr = IDirect3DDevice9_StretchRect(device, src_rt, NULL, dst_surface, NULL, D3DTEXF_NONE);
+                    todo_wine
+                    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x (formats %#x/%#x, pool %#x).\n",
+                            hr, src_format, dst_format, dst_pool);
+
+                    IDirect3DSurface9_Release(src_surface);
+                    IDirect3DSurface9_Release(dst_surface);
+
+                    IDirect3DSurface9_Release(src);
+                    IDirect3DSurface9_Release(dst);
+                }
+            }
+
+            IDirect3DSurface9_Release(src_rt);
+            IDirect3DSurface9_Release(dst_rt);
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -12368,6 +12546,7 @@ START_TEST(device)
     test_lockable_backbuffer();
     test_clip_planes_limits();
     test_swapchain_multisample_reset();
+    test_stretch_rect();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
