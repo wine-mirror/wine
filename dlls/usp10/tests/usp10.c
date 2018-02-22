@@ -2717,23 +2717,19 @@ static void test_ScriptTextOut(HDC hdc)
     ok(!psc, "Got unexpected psc %p.\n", psc);
 }
 
+/* The intent is to validate that the DC passed into ScriptTextOut() is used
+ * instead of the (possibly) invalid cached one. */
 static void test_ScriptTextOut2(HDC hdc)
 {
-/*  Intent is to validate that the HDC passed into ScriptTextOut is
- *  used instead of the (possibly) invalid cached one
- */
     HRESULT         hr;
 
     HDC             hdc1, hdc2;
     int             cInChars;
-    int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0};
 
     SCRIPT_CACHE    psc;
-    int             cChars;
-    int             cMaxGlyphs;
     unsigned short  pwOutGlyphs1[256];
     WORD            pwLogClust[256];
     SCRIPT_VISATTR  psva[256];
@@ -2741,67 +2737,53 @@ static void test_ScriptTextOut2(HDC hdc)
     int             piAdvance[256];
     GOFFSET         pGoffset[256];
     ABC             pABC[256];
+    BOOL ret;
 
-    /* Create an extra DC that will be used until the ScriptTextOut */
+    /* Create an extra DC that will be used until the ScriptTextOut() call. */
     hdc1 = CreateCompatibleDC(hdc);
-    ok (hdc1 != 0, "CreateCompatibleDC failed to create a DC\n");
+    ok(!!hdc1, "Failed to create a DC.\n");
     hdc2 = CreateCompatibleDC(hdc);
-    ok (hdc2 != 0, "CreateCompatibleDC failed to create a DC\n");
+    ok(!!hdc2, "Failed to create a DC.\n");
 
-    /* This is a valid test that will cause parsing to take place                             */
-    cInChars = 5;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
-    /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
-     *  returned.                                                                             */
-    ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
-    if (pcItems > 0)
-        ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
-            "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
-            pItem[0].iCharPos, cInChars, pItem[1].iCharPos);
+    /* This is a valid test that will cause parsing to take place. */
+    cInChars = lstrlenW(TestItem1);
+    hr = ScriptItemize(TestItem1, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* This test is for the interim operation of ScriptItemize() where only
+     * one SCRIPT_ITEM is returned. */
+    ok(pcItems == 1, "Got unexpected item count %d.\n", pcItems);
+    ok(pItem[0].iCharPos == 0, "Got unexpected character position %d.\n", pItem[0].iCharPos);
+    ok(pItem[1].iCharPos == cInChars, "Got unexpected character position %d, expected %d.\n",
+            pItem[1].iCharPos, cInChars);
 
-    /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
-     * ie. ScriptItemize has succeeded and that pItem has been set                            */
-    cInChars = 5;
-    if (hr == S_OK) {
-        psc = NULL;                                   /* must be null on first call           */
-        cChars = cInChars;
-        cMaxGlyphs = 256;
-        hr = ScriptShape(hdc2, &psc, TestItem1, cChars,
-                         cMaxGlyphs, &pItem[0].a,
-                         pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
-        ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-        ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
-        if (hr == S_OK) {
-            BOOL ret;
+    psc = NULL;
+    hr = ScriptShape(hdc2, &psc, TestItem1, cInChars, ARRAY_SIZE(pwOutGlyphs1),
+            &pItem[0].a, pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!psc, "Got unexpected psc %p.\n", psc);
+    ok(pcGlyphs == cInChars, "Got unexpected glyph count %d, expected %d.\n", pcGlyphs, cInChars);
 
-            /* Note hdc is needed as glyph info is not yet in psc                  */
-            hr = ScriptPlace(hdc2, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
-                             pGoffset, pABC);
-            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
+    /* Note hdc is needed as glyph info is not yet in psc. */
+    hr = ScriptPlace(hdc2, &psc, pwOutGlyphs1, pcGlyphs,
+            psva, &pItem[0].a, piAdvance, pGoffset, pABC);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-            /*   key part!!!   cached dc is being deleted  */
-            ret = DeleteDC(hdc2);
-            ok(ret, "DeleteDC should return 1 not %d\n", ret);
+    /* Key part! Cached DC is being deleted. */
+    ret = DeleteDC(hdc2);
+    ok(ret, "Got unexpected ret %#x.\n", ret);
 
-            /* At this point the cached hdc (hdc2) has been destroyed,
-             * however, we are passing in a *real* hdc (the original hdc).
-             * The text should be written to that DC
-             */
-            hr = ScriptTextOut(hdc1, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
-            ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+    /* At this point the cached DC (hdc2) has been destroyed. However, we are
+     * passing in a *real* DC (the original DC). The text should be written to
+     * that DC. */
+    hr = ScriptTextOut(hdc1, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!psc, "Got unexpected psc %p.\n", psc);
 
-            DeleteDC(hdc1);
+    DeleteDC(hdc1);
 
-            /* Clean up and go   */
-            ScriptFreeCache(&psc);
-            ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
-        }
-    }
+    ScriptFreeCache(&psc);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
 }
 
 static void test_ScriptTextOut3(HDC hdc)
