@@ -1913,7 +1913,6 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
 {
     HRESULT hr;
     ULONG i;
-    GSTOutPin **ppOldPins = This->ppPins;
 
     TRACE("(%p)\n", This);
     mark_wine_thread();
@@ -1927,17 +1926,17 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     This->my_src = This->their_sink = NULL;
 
     for (i = 0; i < This->cStreams; i++) {
-        hr = BaseOutputPinImpl_BreakConnect(&ppOldPins[i]->pin);
+        hr = BaseOutputPinImpl_BreakConnect(&This->ppPins[i]->pin);
         TRACE("Disconnect: %08x\n", hr);
-        IPin_Release(&ppOldPins[i]->pin.pin.IPin_iface);
+        IPin_Release(&This->ppPins[i]->pin.pin.IPin_iface);
     }
     This->cStreams = 0;
+    CoTaskMemFree(This->ppPins);
     This->ppPins = NULL;
     gst_element_set_bus(This->container, NULL);
     gst_object_unref(This->container);
     This->container = NULL;
     BaseFilterImpl_IncrementPinVersion(&This->filter);
-    CoTaskMemFree(ppOldPins);
     return S_OK;
 }
 
