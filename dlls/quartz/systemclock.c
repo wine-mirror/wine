@@ -229,7 +229,7 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
   ULONG ref = InterlockedDecrement(&This->ref);
   TRACE("(%p): ReleaseRef to %d\n", This, ref);
   if (ref == 0) {
-    if (SystemClockPostMessageToAdviseThread(This, ADVISE_EXIT)) {
+    if (This->adviseThreadActive && SystemClockPostMessageToAdviseThread(This, ADVISE_EXIT)) {
       WaitForSingleObject(This->adviseThread, INFINITE);
       CloseHandle(This->adviseThread);
     }
