@@ -748,7 +748,8 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     }
     else if (temporary_mem)
     {
-        void *src_data = temporary_mem + surface->texture_layer * sub_resource->size;
+        unsigned int layer = sub_resource_idx / texture->level_count;
+        void *src_data = temporary_mem + layer * sub_resource->size;
         if (data.buffer_object)
         {
             GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
