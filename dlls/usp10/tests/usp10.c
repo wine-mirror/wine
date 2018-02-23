@@ -2791,14 +2791,11 @@ static void test_ScriptTextOut3(HDC hdc)
     HRESULT         hr;
 
     int             cInChars;
-    int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
     WCHAR           TestItem1[] = {' ','\r', 0};
 
     SCRIPT_CACHE    psc;
-    int             cChars;
-    int             cMaxGlyphs;
     unsigned short  pwOutGlyphs1[256];
     WORD            pwLogClust[256];
     SCRIPT_VISATTR  psva[256];
@@ -2808,48 +2805,39 @@ static void test_ScriptTextOut3(HDC hdc)
     ABC             pABC[256];
     RECT            rect;
 
-    /* This is to ensure that nonexistent glyphs are translated into a valid glyph number */
-    cInChars = 2;
-    cMaxItems = 255;
-    hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
-    /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
-     *  returned.                                                                             */
-    ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
-    if (pcItems > 0)
-        ok (pItem[0].iCharPos == 0 && pItem[2].iCharPos == cInChars,
-            "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
-            pItem[0].iCharPos, cInChars, pItem[2].iCharPos);
+    /* This is to ensure that non-existent glyphs are translated into a valid
+     * glyph number. */
+    cInChars = lstrlenW(TestItem1);
+    hr = ScriptItemize(TestItem1, cInChars, ARRAY_SIZE(pItem), NULL, NULL, pItem, &pcItems);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* This test is for the interim operation of ScriptItemize() where only
+     * one SCRIPT_ITEM is returned. */
+    ok(pcItems == 2, "Got unexpected item count %d.\n", pcItems);
+    ok(pItem[0].iCharPos == 0, "Got unexpected character position %d.\n", pItem[0].iCharPos);
+    ok(pItem[1].iCharPos == 1, "Got unexpected character position %d.\n", pItem[0].iCharPos);
+    ok(pItem[2].iCharPos == cInChars, "Got unexpected character position %d, expected %d.\n",
+            pItem[2].iCharPos, cInChars);
 
-    /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
-     * ie. ScriptItemize has succeeded and that pItem has been set                            */
-    cInChars = 2;
-    if (hr == S_OK) {
-        psc = NULL;                                   /* must be null on first call           */
-        cChars = cInChars;
-        cMaxGlyphs = 256;
-        hr = ScriptShape(hdc, &psc, TestItem1, cChars,
-                         cMaxGlyphs, &pItem[0].a,
-                         pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
-        ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-        ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
-        if (hr ==0) {
-            /* Note hdc is needed as glyph info is not yet in psc                  */
-            hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
-                             pGoffset, pABC);
-            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
+    psc = NULL;
+    hr = ScriptShape(hdc, &psc, TestItem1, cInChars, ARRAY_SIZE(pwOutGlyphs1),
+            &pItem[0].a, pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!psc, "Got unexpected psc %p.\n", psc);
+    ok(pcGlyphs == cInChars, "Got unexpected glyph count %d, expected %d.\n", pcGlyphs, cInChars);
 
-            /* Test Rect Rgn is acceptable */
-            SetRect(&rect, 10, 10, 40, 20);
-            hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
-                               piAdvance, NULL, pGoffset);
-            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
-        }
-        /* Clean up and go   */
-        ScriptFreeCache(&psc);
-        ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
-    }
+    /* Note hdc is needed as glyph info is not yet in psc. */
+    hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs,
+            psva, &pItem[0].a, piAdvance, pGoffset, pABC);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test Rect Rgn is acceptable. */
+    SetRect(&rect, 10, 10, 40, 20);
+    hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0,
+            pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ScriptFreeCache(&psc);
+    ok(!psc, "Got unexpected psc %p.\n", psc);
 }
 
 #define test_item_ScriptXtoX(a,b,c,d,e,f) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_item_ScriptXtoX(a,b,c,d,e,f)
