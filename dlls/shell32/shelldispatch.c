@@ -1674,7 +1674,7 @@ static HRESULT Folder_Constructor(IShellFolder2 *folder, LPITEMIDLIST pidl, Fold
     This->Folder3_iface.lpVtbl = &FolderImpl_Vtbl;
     This->ref = 1;
     This->folder = folder;
-    This->pidl = pidl;
+    This->pidl = ILClone(pidl);
 
     hr = SHBindToParent(pidl, &IID_IShellFolder2, (void **)&parent, &last_part);
     IShellFolder2_GetDisplayNameOf(parent, last_part, SHGDN_FORPARSING, &strret);
@@ -1820,11 +1820,33 @@ static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch6 *iface, IDispatch
     return S_OK;
 }
 
-static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
-        VARIANT dir, Folder **ret)
+static HRESULT create_folder_for_pidl(LPITEMIDLIST pidl, Folder **ret)
 {
     IShellFolder2 *folder;
     IShellFolder *desktop;
+    HRESULT hr;
+
+    *ret = NULL;
+
+    if (FAILED(hr = SHGetDesktopFolder(&desktop)))
+        return hr;
+
+    if (_ILIsDesktop(pidl))
+        hr = IShellFolder_QueryInterface(desktop, &IID_IShellFolder2, (void **)&folder);
+    else
+        hr = IShellFolder_BindToObject(desktop, pidl, NULL, &IID_IShellFolder2, (void **)&folder);
+
+    IShellFolder_Release(desktop);
+
+    if (FAILED(hr))
+        return S_FALSE;
+
+    return Folder_Constructor(folder, pidl, ret);
+}
+
+static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
+        VARIANT dir, Folder **ret)
+{
     LPITEMIDLIST pidl;
     HRESULT hr;
 
@@ -1854,29 +1876,45 @@ static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
             return S_FALSE;
     }
 
-    if (FAILED(hr = SHGetDesktopFolder(&desktop)))
-        return hr;
+    hr = create_folder_for_pidl(pidl, ret);
+    ILFree(pidl);
 
-    if (_ILIsDesktop(pidl))
-        hr = IShellFolder_QueryInterface(desktop, &IID_IShellFolder2, (void **)&folder);
-    else
-        hr = IShellFolder_BindToObject(desktop, pidl, NULL, &IID_IShellFolder2, (void **)&folder);
+    return hr;
+}
 
-    IShellFolder_Release(desktop);
-
-    if (FAILED(hr))
-        return S_FALSE;
-
-    return Folder_Constructor(folder, pidl, ret);
+static BOOL is_optional_argument(const VARIANT *arg)
+{
+    return V_VT(arg) == VT_ERROR && V_ERROR(arg) == DISP_E_PARAMNOTFOUND;
 }
 
 static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch6 *iface,
-        LONG Hwnd, BSTR Title, LONG Options, VARIANT RootFolder, Folder **ppsdf)
+        LONG hwnd, BSTR title, LONG options, VARIANT rootfolder, Folder **folder)
 {
-    FIXME("(%p,%x,%s,%x,%s,%p)\n", iface, Hwnd, debugstr_w(Title), Options, debugstr_variant(&RootFolder), ppsdf);
+    PIDLIST_ABSOLUTE selection;
+    BROWSEINFOW bi = { 0 };
+    HRESULT hr;
 
-    *ppsdf = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%x,%s,%x,%s,%p)\n", iface, hwnd, debugstr_w(title), options, debugstr_variant(&rootfolder), folder);
+
+    *folder = NULL;
+
+    if (!is_optional_argument(&rootfolder))
+        FIXME("root folder is ignored\n");
+
+    bi.hwndOwner = LongToHandle(hwnd);
+    bi.lpszTitle = title;
+    bi.ulFlags = options;
+
+    selection = SHBrowseForFolderW(&bi);
+    if (selection)
+    {
+        hr = create_folder_for_pidl(selection, folder);
+        ILFree(selection);
+    }
+    else
+        hr = S_FALSE;
+
+    return hr;
 }
 
 static HRESULT WINAPI ShellDispatch_Windows(IShellDispatch6 *iface,
