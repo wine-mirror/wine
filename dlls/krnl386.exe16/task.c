@@ -984,14 +984,14 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
 /**********************************************************************
  *	    GetCodeHandle    (KERNEL.93)
  */
-HANDLE16 WINAPI GetCodeHandle16( FARPROC16 proc )
+DWORD WINAPI GetCodeHandle16( FARPROC16 proc )
 {
     SEGTABLEENTRY *pSeg;
 
     if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
         return 0;
 
-    return pSeg->hSeg;
+    return MAKELONG( pSeg->hSeg, GlobalHandleToSel16(pSeg->hSeg) );
 }
 
 /**********************************************************************

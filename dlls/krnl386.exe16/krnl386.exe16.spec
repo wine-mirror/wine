@@ -94,7 +94,7 @@
 90  pascal -ret16 lstrlen(str) lstrlen16
 91  pascal -register InitTask() InitTask16
 92  pascal   GetTempDrive(word) GetTempDrive
-93  pascal -ret16 GetCodeHandle(segptr) GetCodeHandle16
+93  pascal GetCodeHandle(segptr) GetCodeHandle16
 94  pascal -ret16 DefineHandleTable(word) DefineHandleTable16
 95  pascal -ret16 LoadLibrary(str) LoadLibrary16
 96  pascal -ret16 FreeLibrary(word) FreeLibrary16
