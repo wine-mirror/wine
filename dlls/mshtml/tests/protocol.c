@@ -603,7 +603,7 @@ static void test_res_protocol(void)
     test_res_url("/Test/res.html");
     test_res_url("/test/dir/dir2/res.html");
 
-    if(GetProcAddress(LoadLibraryA("urlmon.dll"), "CreateUri")) {
+    if(GetProcAddress(GetModuleHandleA("urlmon.dll"), "CreateUri")) {
         test_res_url("/test/dir/dir2/res.html?query_part");
         test_res_url("/test/dir/dir2/res.html#hash_part");
         test_res_url("/#123");
