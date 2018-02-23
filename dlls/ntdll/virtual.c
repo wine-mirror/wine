@@ -3164,7 +3164,11 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
             if (!status) delete_view( view );
             else FIXME( "failed to unmap %p %x\n", view->base, status );
         }
-        else delete_view( view );
+        else
+        {
+            delete_view( view );
+            status = STATUS_SUCCESS;
+        }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
