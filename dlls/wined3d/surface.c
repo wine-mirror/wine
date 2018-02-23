@@ -60,10 +60,19 @@ static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float
     f->b = ((r->bottom * 2.0f) / h) - 1.0f;
 }
 
-static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLsizei h, struct blt_info *info)
+static void texture2d_get_blt_info(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, const RECT *rect, struct blt_info *info)
 {
     struct wined3d_vec3 *coords = info->texcoords;
     struct float_rect f;
+    unsigned int level;
+    GLenum target;
+    GLsizei w, h;
+
+    level = sub_resource_idx % texture->level_count;
+    w = wined3d_texture_get_level_pow2_width(texture, level);
+    h = wined3d_texture_get_level_pow2_height(texture, level);
+    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
 
     switch (target)
     {
@@ -182,14 +191,8 @@ void draw_textured_quad(struct wined3d_texture *texture, unsigned int sub_resour
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct blt_info info;
-    unsigned int level;
-    GLenum target;
 
-    level = sub_resource_idx % texture->level_count;
-    target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
-    surface_get_blt_info(target, src_rect,
-            wined3d_texture_get_level_pow2_width(texture, level),
-            wined3d_texture_get_level_pow2_height(texture, level), &info);
+    texture2d_get_blt_info(texture, sub_resource_idx, src_rect, &info);
 
     gl_info->gl_ops.gl.p_glEnable(info.bind_target);
     checkGLcall("glEnable(bind_target)");
