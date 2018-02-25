@@ -5120,6 +5120,7 @@ static void test_ioctlsocket(void)
 {
     SOCKET sock, src, dst;
     struct tcp_keepalive kalive;
+    struct sockaddr_in address;
     int ret, optval;
     static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
     UINT i, bytes_rec;
@@ -5202,6 +5203,38 @@ static void test_ioctlsocket(void)
     make_keepalive(kalive, 0, 100, 100);
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
+
+    closesocket(sock);
+
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
+    if(sock == INVALID_SOCKET)
+    {
+        skip("Can't continue without a socket.\n");
+        return;
+    }
+
+    /* test FIONREAD with a fresh and non-connected socket */
+    arg = 0xdeadbeef;
+    ret = ioctlsocket(sock, FIONREAD, &arg);
+    ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
+    ok(arg == 0, "expected 0, got %u\n", arg);
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = inet_addr( SERVERIP );
+    address.sin_port = htons( SERVERPORT );
+    ret = bind(sock, (struct sockaddr *)&address, sizeof(address));
+    ok(ret == 0, "bind failed unexpectedly with error %d\n", WSAGetLastError());
+
+    ret = listen(sock, SOMAXCONN);
+    ok(ret == 0, "listen failed unexpectedly with error %d\n", WSAGetLastError());
+
+    /* test FIONREAD with listening socket */
+    arg = 0xdeadbeef;
+    ret = ioctlsocket(sock, FIONREAD, &arg);
+    todo_wine ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
+    todo_wine ok(arg == 0, "expected 0, got %u\n", arg);
 
     closesocket(sock);
 
