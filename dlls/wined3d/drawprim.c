@@ -44,27 +44,29 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
     unsigned int instanced_elements[ARRAY_SIZE(si->elements)];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int instanced_element_count = 0;
+    GLenum mode = state->gl_primitive_type;
+    const void *indices;
     unsigned int i, j;
+
+    indices = (const char *)idx_data + idx_size * start_idx;
 
     if (!instance_count)
     {
         if (!idx_size)
         {
-            gl_info->gl_ops.gl.p_glDrawArrays(state->gl_primitive_type, start_idx, count);
+            gl_info->gl_ops.gl.p_glDrawArrays(mode, start_idx, count);
             checkGLcall("glDrawArrays");
             return;
         }
 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
-            GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
-                    (const char *)idx_data + (idx_size * start_idx), base_vertex_idx));
+            GL_EXTCALL(glDrawElementsBaseVertex(mode, count, idx_type, indices, base_vertex_idx));
             checkGLcall("glDrawElementsBaseVertex");
             return;
         }
 
-        gl_info->gl_ops.gl.p_glDrawElements(state->gl_primitive_type, count,
-                idx_type, (const char *)idx_data + (idx_size * start_idx));
+        gl_info->gl_ops.gl.p_glDrawElements(mode, count, idx_type, indices);
         checkGLcall("glDrawElements");
         return;
     }
@@ -78,33 +80,32 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
         {
             if (gl_info->supported[ARB_BASE_INSTANCE])
             {
-                GL_EXTCALL(glDrawArraysInstancedBaseInstance(state->gl_primitive_type, start_idx, count, instance_count, start_instance));
+                GL_EXTCALL(glDrawArraysInstancedBaseInstance(mode, start_idx, count, instance_count, start_instance));
                 checkGLcall("glDrawArraysInstancedBaseInstance");
                 return;
             }
 
-            GL_EXTCALL(glDrawArraysInstanced(state->gl_primitive_type, start_idx, count, instance_count));
+            GL_EXTCALL(glDrawArraysInstanced(mode, start_idx, count, instance_count));
             checkGLcall("glDrawArraysInstanced");
             return;
         }
 
         if (gl_info->supported[ARB_BASE_INSTANCE])
         {
-            GL_EXTCALL(glDrawElementsInstancedBaseVertexBaseInstance(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_idx, start_instance));
+            GL_EXTCALL(glDrawElementsInstancedBaseVertexBaseInstance(mode, count, idx_type,
+                    indices, instance_count, base_vertex_idx, start_instance));
             checkGLcall("glDrawElementsInstancedBaseVertexBaseInstance");
             return;
         }
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
-            GL_EXTCALL(glDrawElementsInstancedBaseVertex(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_idx));
+            GL_EXTCALL(glDrawElementsInstancedBaseVertex(mode, count, idx_type,
+                    indices, instance_count, base_vertex_idx));
             checkGLcall("glDrawElementsInstancedBaseVertex");
             return;
         }
 
-        GL_EXTCALL(glDrawElementsInstanced(state->gl_primitive_type, count, idx_type,
-                    (const char *)idx_data + (idx_size * start_idx), instance_count));
+        GL_EXTCALL(glDrawElementsInstanced(mode, count, idx_type, indices, instance_count));
         checkGLcall("glDrawElementsInstanced");
         return;
     }
@@ -120,7 +121,7 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
      * has a different meaning in that situation. */
     if (!idx_size)
     {
-        FIXME("Non-indexed instanced drawing is not supported\n");
+        FIXME("Non-indexed instanced drawing is not supported.\n");
         return;
     }
 
@@ -152,14 +153,12 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
-            GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx), base_vertex_idx));
+            GL_EXTCALL(glDrawElementsBaseVertex(mode, count, idx_type, indices, base_vertex_idx));
             checkGLcall("glDrawElementsBaseVertex");
         }
         else
         {
-            gl_info->gl_ops.gl.p_glDrawElements(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx));
+            gl_info->gl_ops.gl.p_glDrawElements(mode, count, idx_type, indices);
             checkGLcall("glDrawElements");
         }
     }
