@@ -33,6 +33,7 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "explorerframe_main.h"
 
@@ -861,9 +862,8 @@ static ULONG WINAPI NSTC2_fnRelease(INameSpaceTreeControl2* iface)
     if(!ref)
     {
         TRACE("Freeing.\n");
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
         EFRAME_UnlockModule();
-        return 0;
     }
 
     return ref;
@@ -1001,7 +1001,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
 
     TRACE("%p, %d, %p, %x, %x, %p\n", This, iIndex, psiRoot, grfEnumFlags, grfRootStyle, pif);
 
-    new_root = HeapAlloc(GetProcessHeap(), 0, sizeof(nstc_root));
+    new_root = heap_alloc(sizeof(*new_root));
     if(!new_root)
         return E_OUTOFMEMORY;
 
@@ -1025,7 +1025,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
     if(!new_root->htreeitem)
     {
         WARN("Failed to add the root.\n");
-        HeapFree(GetProcessHeap(), 0, new_root);
+        heap_free(new_root);
         return E_FAIL;
     }
 
@@ -1093,7 +1093,7 @@ static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
         events_OnItemDeleted(This, root->psi, TRUE);
         SendMessageW(This->hwnd_tv, TVM_DELETEITEM, 0, (LPARAM)root->htreeitem);
         list_remove(&root->entry);
-        HeapFree(GetProcessHeap(), 0, root);
+        heap_free(root);
         return S_OK;
     }
     else
@@ -1135,7 +1135,7 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
     if(!count)
         return E_INVALIDARG;
 
-    array = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST)*count);
+    array = heap_alloc(sizeof(LPITEMIDLIST)*count);
 
     i = 0;
     LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
@@ -1149,7 +1149,7 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
     for(i = 0; i < count; i++)
         ILFree(array[i]);
 
-    HeapFree(GetProcessHeap(), 0, array);
+    heap_free(array);
 
     return hr;
 }
@@ -1610,7 +1610,7 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
 
     EFRAME_LockModule();
 
-    nstc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NSTC2Impl));
+    nstc = heap_alloc_zero(sizeof(*nstc));
     if (!nstc)
         return E_OUTOFMEMORY;
 
