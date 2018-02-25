@@ -42,7 +42,6 @@
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D9_MAX_TEXTURE_UNITS 20
-#define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4
 
 #define D3DPRESENTFLAGS_MASK 0x00000fffu
 
@@ -103,7 +102,7 @@ struct d3d9_device
     UINT index_buffer_pos;
 
     struct d3d9_texture *textures[D3D9_MAX_TEXTURE_UNITS];
-    struct d3d9_surface *render_targets[D3D9_MAX_SIMULTANEOUS_RENDERTARGETS];
+    struct d3d9_surface *render_targets[D3D_MAX_SIMULTANEOUS_RENDERTARGETS];
 
     LONG device_state;
     BOOL in_destruction;

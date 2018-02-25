@@ -453,7 +453,7 @@ void d3dcaps_from_wined3dcaps(D3DCAPS9 *caps, const WINED3DCAPS *wined3d_caps)
         D3DPTEXTURECAPS_CUBEMAP_POW2   | D3DPTEXTURECAPS_VOLUMEMAP_POW2| D3DPTEXTURECAPS_NOPROJECTEDBUMPENV;
 
     caps->MaxVertexShaderConst = min(D3D9_MAX_VERTEX_SHADER_CONSTANTF, caps->MaxVertexShaderConst);
-    caps->NumSimultaneousRTs = min(D3D9_MAX_SIMULTANEOUS_RENDERTARGETS, caps->NumSimultaneousRTs);
+    caps->NumSimultaneousRTs = min(D3D_MAX_SIMULTANEOUS_RENDERTARGETS, caps->NumSimultaneousRTs);
 
     if (caps->PixelShaderVersion > 3)
     {
@@ -1784,7 +1784,7 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 
     TRACE("iface %p, idx %u, surface %p.\n", iface, idx, surface);
 
-    if (idx >= D3D9_MAX_SIMULTANEOUS_RENDERTARGETS)
+    if (idx >= D3D_MAX_SIMULTANEOUS_RENDERTARGETS)
     {
         WARN("Invalid index %u specified.\n", idx);
         return D3DERR_INVALIDCALL;
@@ -1825,7 +1825,7 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     if (!surface)
         return D3DERR_INVALIDCALL;
 
-    if (idx >= D3D9_MAX_SIMULTANEOUS_RENDERTARGETS)
+    if (idx >= D3D_MAX_SIMULTANEOUS_RENDERTARGETS)
     {
         WARN("Invalid index %u specified.\n", idx);
         return D3DERR_INVALIDCALL;
