@@ -363,7 +363,8 @@ static const INameSpaceTreeControlEventsVtbl vt_NSTCEvents = {
 static INameSpaceTreeControlEventsImpl *create_nstc_events(void)
 {
     INameSpaceTreeControlEventsImpl *This;
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(INameSpaceTreeControlEventsImpl));
+
+    This = heap_alloc(sizeof(*This));
     This->INameSpaceTreeControlEvents_iface.lpVtbl = &vt_NSTCEvents;
     This->ref = 1;
 
@@ -2377,8 +2378,8 @@ static void test_events(void)
     if(!res)
     {
         /* Freeing these prematurely causes a crash. */
-        HeapFree(GetProcessHeap(), 0, pnstceimpl);
-        HeapFree(GetProcessHeap(), 0, pnstceimpl2);
+        heap_free(pnstceimpl);
+        heap_free(pnstceimpl2);
     }
 
     IShellItem_Release(psi);
