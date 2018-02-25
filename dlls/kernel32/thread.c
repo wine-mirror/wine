@@ -55,9 +55,18 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T st
                                 sa, stack, start, param, flags, id );
 }
 
-
 /***************************************************************************
  *                  CreateRemoteThread   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
+                                  LPTHREAD_START_ROUTINE start, LPVOID param,
+                                  DWORD flags, DWORD *id )
+{
+    return CreateRemoteThreadEx( hProcess, sa, stack, start, param, flags, NULL, id );
+}
+
+/***************************************************************************
+ *                  CreateRemoteThreadEx   (KERNEL32.@)
  *
  * Creates a thread that runs in the address space of another process
  *
@@ -73,14 +82,17 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T st
  *   Bad start address for RtlCreateUserThread because the library
  *   may be loaded at different address in other process.
  */
-HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
-                                  LPTHREAD_START_ROUTINE start, LPVOID param,
-                                  DWORD flags, LPDWORD id )
+HANDLE WINAPI CreateRemoteThreadEx( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
+                                    LPTHREAD_START_ROUTINE start, LPVOID param, DWORD flags,
+                                    LPPROC_THREAD_ATTRIBUTE_LIST attributes, DWORD *id )
 {
     HANDLE handle;
     CLIENT_ID client_id;
     NTSTATUS status;
     SIZE_T stack_reserve = 0, stack_commit = 0;
+
+    if (attributes)
+        FIXME("thread attributes ignored\n");
 
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;

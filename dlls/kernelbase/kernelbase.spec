@@ -212,7 +212,7 @@
 # @ stub CreateProcessInternalW
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
-@ stub CreateRemoteThreadEx
+@ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr) kernel32.CreateRemoteThreadEx
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr) advapi32.CreateRestrictedToken
 @ stdcall CreateSemaphoreExW(ptr long long wstr long long) kernel32.CreateSemaphoreExW
 @ stdcall CreateSemaphoreW(ptr long long wstr) kernel32.CreateSemaphoreW
