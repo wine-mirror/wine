@@ -5233,8 +5233,8 @@ static void test_ioctlsocket(void)
     /* test FIONREAD with listening socket */
     arg = 0xdeadbeef;
     ret = ioctlsocket(sock, FIONREAD, &arg);
-    todo_wine ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
-    todo_wine ok(arg == 0, "expected 0, got %u\n", arg);
+    ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
+    ok(arg == 0, "expected 0, got %u\n", arg);
 
     closesocket(sock);
 
