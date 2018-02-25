@@ -282,7 +282,6 @@ static ULONG   WINAPI IAVIEditStream_fnRelease(IAVIEditStream*iface)
     }
 
     HeapFree(GetProcessHeap(), 0, This);
-    return 0;
   }
   return ref;
 }

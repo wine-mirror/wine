@@ -94,7 +94,6 @@ static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
     }
 
     HeapFree(GetProcessHeap(), 0, This);
-    return 0;
   }
 
   return ref;

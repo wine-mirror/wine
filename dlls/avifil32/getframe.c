@@ -134,7 +134,6 @@ static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
     }
 
     HeapFree(GetProcessHeap(), 0, iface);
-    return 0;
   }
 
   return ref;
