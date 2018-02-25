@@ -1050,7 +1050,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         struct wined3d_swapchain_desc *swapchain_desc)
 {
     static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *swapchain = NULL;
     DWORD clear_flags = 0;
     HRESULT hr;
@@ -1062,16 +1061,14 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (device->wined3d->flags & WINED3D_NO3D)
         return WINED3DERR_INVALIDCALL;
 
-    if (!(device->fb.render_targets = heap_calloc(gl_info->limits.buffers, sizeof(*device->fb.render_targets))))
-        return E_OUTOFMEMORY;
+    memset(device->fb.render_targets, 0, sizeof(device->fb.render_targets));
 
     /* Setup the implicit swapchain. This also initializes a context. */
-    TRACE("Creating implicit swapchain\n");
-    hr = device->device_parent->ops->create_swapchain(device->device_parent,
-            swapchain_desc, &swapchain);
-    if (FAILED(hr))
+    TRACE("Creating implicit swapchain.\n");
+    if (FAILED(hr = device->device_parent->ops->create_swapchain(device->device_parent,
+            swapchain_desc, &swapchain)))
     {
-        WARN("Failed to create implicit swapchain\n");
+        WARN("Failed to create implicit swapchain.\n");
         goto err_out;
     }
 
@@ -1108,7 +1105,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     device->contexts[0]->last_was_rhw = 0;
 
-    TRACE("All defaults now set up, leaving 3D init.\n");
+    TRACE("All defaults now set up.\n");
 
     /* Clear the screen */
     if (swapchain->back_buffers && swapchain->back_buffers[0])
@@ -1131,7 +1128,6 @@ err_out:
         wined3d_rendertarget_view_decref(device->back_buffer_view);
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
-    heap_free(device->fb.render_targets);
 
     return hr;
 }
@@ -1186,7 +1182,7 @@ static void device_free_sampler(struct wine_rb_entry *entry, void *context)
 
 HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 {
-    UINT i;
+    unsigned int i;
 
     TRACE("device %p.\n", device);
 
@@ -1245,9 +1241,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     heap_free(device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
-
-    heap_free(device->fb.render_targets);
-    device->fb.render_targets = NULL;
 
     device->d3d_initialized = FALSE;
 
@@ -4758,12 +4751,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state_unbind_resources(&device->state);
     }
 
-    if (device->fb.render_targets)
+    for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
     {
-        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
-        {
-            wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
-        }
+        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
     }
     wined3d_device_set_depth_stencil_view(device, NULL);
 

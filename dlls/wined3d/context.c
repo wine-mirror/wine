@@ -3039,7 +3039,7 @@ static BOOL context_validate_rt_config(UINT rt_count, struct wined3d_rendertarge
 BOOL context_apply_clear_state(struct wined3d_context *context, const struct wined3d_state *state,
         UINT rt_count, const struct wined3d_fb_state *fb)
 {
-    struct wined3d_rendertarget_view **rts = fb->render_targets;
+    struct wined3d_rendertarget_view * const *rts = fb->render_targets;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD rt_mask = 0, *cur_mask;
@@ -3148,7 +3148,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
 
 static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_state *state)
 {
-    struct wined3d_rendertarget_view **rts = state->fb->render_targets;
+    struct wined3d_rendertarget_view * const *rts = state->fb->render_targets;
     struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     DWORD rt_mask, rt_mask_bits;
     unsigned int i;

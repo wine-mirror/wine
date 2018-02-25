@@ -271,6 +271,7 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_CONSTANT_BUFFERS        15
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
+#define MAX_RENDER_TARGET_VIEWS     8
 #define MAX_UNORDERED_ACCESS_VIEWS  8
 #define MAX_TGSM_REGISTERS          8192
 #define MAX_VERTEX_BLENDS           4
@@ -1993,7 +1994,7 @@ struct wined3d_context
 
 struct wined3d_fb_state
 {
-    struct wined3d_rendertarget_view **render_targets;
+    struct wined3d_rendertarget_view *render_targets[MAX_RENDER_TARGET_VIEWS];
     struct wined3d_rendertarget_view *depth_stencil;
 };
 

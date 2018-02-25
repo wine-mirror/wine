@@ -563,17 +563,11 @@ void wined3d_cs_emit_clear_rendertarget_view(struct wined3d_cs *cs, struct wined
         const RECT *rect, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
     struct wined3d_cs_clear *op;
-    struct
-    {
-        struct wined3d_rendertarget_view *rt;
-        struct wined3d_fb_state fb;
-    } *extra;
+    size_t size;
 
-    op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_clear, rects[1]) + sizeof(*extra),
-            WINED3D_CS_QUEUE_DEFAULT);
-    extra = (void *)&op->rects[1];
-    extra->fb.render_targets = &extra->rt;
-    op->fb = &extra->fb;
+    size = FIELD_OFFSET(struct wined3d_cs_clear, rects[1]) + sizeof(struct wined3d_fb_state);
+    op = cs->ops->require_space(cs, size, WINED3D_CS_QUEUE_DEFAULT);
+    op->fb = (void *)&op->rects[1];
 
     op->opcode = WINED3D_CS_OP_CLEAR;
     op->flags = flags;
@@ -994,7 +988,7 @@ static void wined3d_cs_exec_set_rendertarget_view(struct wined3d_cs *cs, const v
 {
     const struct wined3d_cs_set_rendertarget_view *op = data;
 
-    cs->state.fb->render_targets[op->view_idx] = op->view;
+    cs->fb.render_targets[op->view_idx] = op->view;
     device_invalidate_state(cs->device, STATE_FRAMEBUFFER);
 }
 
@@ -2734,12 +2728,6 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;
 
-    if (!(cs->fb.render_targets = heap_calloc(gl_info->limits.buffers, sizeof(*cs->fb.render_targets))))
-    {
-        heap_free(cs);
-        return NULL;
-    }
-
     state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
             WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
@@ -2782,7 +2770,6 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 
 fail:
     state_cleanup(&cs->state);
-    heap_free(cs->fb.render_targets);
     heap_free(cs);
     return NULL;
 }
@@ -2798,7 +2785,6 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     }
 
     state_cleanup(&cs->state);
-    heap_free(cs->fb.render_targets);
     heap_free(cs->data);
     heap_free(cs);
 }
