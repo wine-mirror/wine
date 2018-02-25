@@ -10,7 +10,6 @@ C_SRCS = \
 	cs.c \
 	device.c \
 	directx.c \
-	drawprim.c \
 	gl_compat.c \
 	glsl_shader.c \
 	nvidia_texture_shader.c \
