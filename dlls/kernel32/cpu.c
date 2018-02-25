@@ -327,3 +327,12 @@ DWORD WINAPI GetActiveProcessorCount(WORD group)
     FIXME("semi-stub, returning %u\n", cpus);
     return cpus;
 }
+
+/***********************************************************************
+ *           GetEnabledXStateFeatures (KERNEL32.@)
+ */
+DWORD64 WINAPI GetEnabledXStateFeatures(void)
+{
+    FIXME("\n");
+    return 0;
+}

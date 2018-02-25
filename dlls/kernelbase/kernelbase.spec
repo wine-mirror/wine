@@ -491,7 +491,7 @@
 # @ stub GetEffectivePackageStatusForUser
 # @ stub GetEightBitStringToUnicodeSizeRoutine
 # @ stub GetEightBitStringToUnicodeStringRoutine
-# @ stub GetEnabledXStateFeatures
+@ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures() kernel32.GetEnabledXStateFeatures
 @ stdcall GetEnvironmentStrings() kernel32.GetEnvironmentStrings
 @ stdcall GetEnvironmentStringsA() kernel32.GetEnvironmentStringsA
 @ stdcall GetEnvironmentStringsW() kernel32.GetEnvironmentStringsW
