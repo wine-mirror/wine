@@ -29,9 +29,8 @@
 
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
-WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 /* Context activation is done by the caller. */
 static void draw_primitive_arrays(struct wined3d_context *context, const struct wined3d_state *state,
@@ -391,7 +390,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
     }
 
     gl_info->gl_ops.gl.p_glEnd();
-    checkGLcall("glEnd and previous calls");
+    checkGLcall("draw immediate mode");
 }
 
 static void draw_indirect(struct wined3d_context *context, const struct wined3d_state *state,
@@ -399,6 +398,7 @@ static void draw_indirect(struct wined3d_context *context, const struct wined3d_
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_buffer *buffer = parameters->buffer;
+    const void *offset;
 
     if (!gl_info->supported[ARB_DRAW_INDIRECT])
     {
@@ -408,18 +408,17 @@ static void draw_indirect(struct wined3d_context *context, const struct wined3d_
 
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
 
+    offset = (void *)(GLintptr)parameters->offset;
     if (idx_size)
     {
         GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
         if (state->index_offset)
             FIXME("Ignoring index offset %u.\n", state->index_offset);
-        GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type,
-                (void *)(GLintptr)parameters->offset));
+        GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type, offset));
     }
     else
     {
-        GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type,
-                (void *)(GLintptr)parameters->offset));
+        GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type, offset));
     }
 
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
@@ -723,6 +722,4 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
-
-    TRACE("Done all gl drawing.\n");
 }
