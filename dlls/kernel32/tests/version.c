@@ -26,8 +26,6 @@
 #include "winternl.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
-static BOOL (WINAPI * pVerifyVersionInfoA)(LPOSVERSIONINFOEXA, DWORD, DWORDLONG);
-static ULONGLONG (WINAPI * pVerSetConditionMask)(ULONGLONG, DWORD, BYTE);
 static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
 #define GET_PROC(func)                                     \
@@ -40,8 +38,6 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("kernel32.dll");
 
     GET_PROC(GetProductInfo);
-    GET_PROC(VerifyVersionInfoA);
-    GET_PROC(VerSetConditionMask);
 
     hmod = GetModuleHandleA("ntdll.dll");
 
@@ -153,9 +149,7 @@ static void test_GetVersionEx(void)
     SetLastError(0xdeadbeef);
     infoExA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
     ret = GetVersionExA((OSVERSIONINFOA *)&infoExA);
-    ok(ret ||
-       broken(ret == 0), /* win95 */
-       "Expected GetVersionExA to succeed\n");
+    ok(ret, "GetVersionExA failed.\n");
 
     if (!infoExA.wServicePackMajor && !infoExA.wServicePackMinor)
         ok(!infoExA.szCSDVersion[0], "got '%s'\n", infoExA.szCSDVersion);
@@ -689,22 +683,22 @@ static void test_VerifyVersionInfo(void)
      * if the minor version is tested */
     info.dwMajorVersion = 3;
     info.dwMinorVersion = 10;
-    ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
+    ret = VerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        VerSetConditionMask(VerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
             VER_MAJORVERSION, VER_GREATER_EQUAL));
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
     info.dwMinorVersion = 0;
     info.wServicePackMajor = 10;
-    ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
+    ret = VerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        VerSetConditionMask(VerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
             VER_MAJORVERSION, VER_GREATER_EQUAL));
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
     info.wServicePackMajor = 0;
     info.wServicePackMinor = 10;
-    ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
+    ret = VerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        VerSetConditionMask(VerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
             VER_MAJORVERSION, VER_GREATER_EQUAL));
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
@@ -712,8 +706,8 @@ static void test_VerifyVersionInfo(void)
     info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
     GetVersionExA((OSVERSIONINFOA *)&info);
     info.dwOSVersionInfoSize = 0;
-    ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
+    ret = VerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 }
 
