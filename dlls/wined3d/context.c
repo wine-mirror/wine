@@ -4023,7 +4023,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     return TRUE;
 }
 
-void context_apply_compute_state(struct wined3d_context *context,
+static void context_apply_compute_state(struct wined3d_context *context,
         const struct wined3d_device *device, const struct wined3d_state *state)
 {
     const struct StateEntry *state_table = context->state_table;
@@ -4246,4 +4246,63 @@ struct wined3d_context *context_reacquire(const struct wined3d_device *device,
     if (current_context != context)
         ERR("Acquired context %p instead of %p.\n", current_context, context);
     return current_context;
+}
+
+void dispatch_compute(struct wined3d_device *device, const struct wined3d_state *state,
+        const struct wined3d_dispatch_parameters *parameters)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    context = context_acquire(device, NULL, 0);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping dispatch.\n");
+        return;
+    }
+    gl_info = context->gl_info;
+
+    if (!gl_info->supported[ARB_COMPUTE_SHADER])
+    {
+        context_release(context);
+        FIXME("OpenGL implementation does not support compute shaders.\n");
+        return;
+    }
+
+    if (parameters->indirect)
+        wined3d_buffer_load(parameters->u.indirect.buffer, context, state);
+
+    context_apply_compute_state(context, device, state);
+
+    if (!state->shader[WINED3D_SHADER_TYPE_COMPUTE])
+    {
+        context_release(context);
+        WARN("No compute shader bound, skipping dispatch.\n");
+        return;
+    }
+
+    if (parameters->indirect)
+    {
+        const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;
+        struct wined3d_buffer *buffer = indirect->buffer;
+
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer->buffer_object));
+        GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
+    }
+    else
+    {
+        const struct wined3d_direct_dispatch_parameters *direct = &parameters->u.direct;
+        GL_EXTCALL(glDispatchCompute(direct->group_count_x, direct->group_count_y, direct->group_count_z));
+    }
+    checkGLcall("dispatch compute");
+
+    GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+    checkGLcall("glMemoryBarrier");
+
+    if (wined3d_settings.strict_draw_ordering)
+        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
 }
