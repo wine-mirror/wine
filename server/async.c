@@ -192,10 +192,12 @@ void free_async_queue( struct async_queue *queue )
 
     LIST_FOR_EACH_ENTRY_SAFE( async, next, &queue->queue, struct async, queue_entry )
     {
+        grab_object( &async->obj );
         if (!async->completion) async->completion = fd_get_completion( async->fd, &async->comp_key );
         async->fd = NULL;
         async_terminate( async, STATUS_HANDLES_CLOSED );
         async->queue = NULL;
+        release_object( &async->obj );
     }
 }
 
