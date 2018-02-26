@@ -104,6 +104,10 @@ static const WCHAR ExhaustiveErrorsW[] = {
     'e','x','h','a','u','s','t','i','v','e','-','e','r','r','o','r','s',0
 };
 
+static const WCHAR SchemaValidationW[] = {
+    's','c','h','e','m','a','-','v','a','l','i','d','a','t','i','o','n',0
+};
+
 struct saxreader_feature_pair
 {
     saxreader_feature feature;
@@ -117,7 +121,8 @@ static const struct saxreader_feature_pair saxreader_feature_map[] = {
     { LexicalHandlerParEntities, FeatureLexicalHandlerParEntitiesW },
     { NamespacePrefixes, FeatureNamespacePrefixesW },
     { Namespaces, FeatureNamespacesW },
-    { ProhibitDTD, FeatureProhibitDTDW }
+    { ProhibitDTD, FeatureProhibitDTDW },
+    { SchemaValidation, SchemaValidationW },
 };
 
 static saxreader_feature get_saxreader_feature(const WCHAR *name)
@@ -3222,12 +3227,13 @@ static HRESULT WINAPI isaxxmlreader_getFeature(
 
     feature = get_saxreader_feature(feature_name);
 
-    if (This->version < MSXML4 && feature == ExhaustiveErrors)
+    if (This->version < MSXML4 && (feature == ExhaustiveErrors || feature == SchemaValidation))
         return E_INVALIDARG;
 
     if (feature == Namespaces ||
             feature == NamespacePrefixes ||
-            feature == ExhaustiveErrors)
+            feature == ExhaustiveErrors ||
+            feature == SchemaValidation)
         return get_feature_value(This, feature, value);
 
     FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(feature_name), value);
@@ -3248,6 +3254,7 @@ static HRESULT WINAPI isaxxmlreader_putFeature(
 
     /* accepted cases */
     if ((feature == ExhaustiveErrors && value == VARIANT_FALSE) ||
+        (feature == SchemaValidation && value == VARIANT_FALSE) ||
          feature == Namespaces ||
          feature == NamespacePrefixes)
     {
