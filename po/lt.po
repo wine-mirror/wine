@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015, 2016, 2017.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-05 08:41+0300\n"
+"PO-Revision-Date: 2018-02-26 22:09+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -6674,10 +6674,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Sujungimas nutrauktas kito serverio.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "Pranešimas 0x%1 nerastas faile %2.\n"
+msgstr "Joks parašas nerastas faile.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
