@@ -1209,7 +1209,7 @@ static void test_file_info(void)
     CloseHandle( client );
 }
 
-static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle)
+static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle, BOOL todo)
 {
     SECURITY_DESCRIPTOR *sec_desc;
     ULONG length = 0;
@@ -1217,8 +1217,10 @@ static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle)
 
     status = NtQuerySecurityObject(handle, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
                                    NULL, 0, &length);
+    todo_wine_if(todo && status == STATUS_PIPE_DISCONNECTED)
     ok(status == STATUS_BUFFER_TOO_SMALL,
        "Failed to query object security descriptor length: %08x\n", status);
+    if(status != STATUS_BUFFER_TOO_SMALL) return NULL;
     ok(length != 0, "length = 0\n");
 
     sec_desc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, length);
@@ -1295,7 +1297,8 @@ static void _test_group(unsigned line, HANDLE handle, SID *expected_sid, BOOL to
     PSID group_sid;
     NTSTATUS status;
 
-    sec_desc = get_security_descriptor(handle);
+    sec_desc = get_security_descriptor(handle, todo);
+    if (!sec_desc) return;
 
     status = RtlGetGroupSecurityDescriptor(sec_desc, &group_sid, &defaulted);
     ok_(__FILE__,line)(status == STATUS_SUCCESS,
@@ -1351,13 +1354,13 @@ static void test_security_info(void)
     ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
 
     test_group(server, world_sid, FALSE);
-    test_group(client, world_sid, TRUE);
+    test_group(client, world_sid, FALSE);
 
     /* new instance of pipe server has the same security descriptor */
     server2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE, 10,
                                0x20000, 0x20000, 0, NULL);
     ok(server2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
-    test_group(server2, world_sid, TRUE);
+    test_group(server2, world_sid, FALSE);
 
     /* set client group, server changes as well */
     ret = SetSecurityDescriptorGroup(sec_desc, local_sid, FALSE);
@@ -1366,8 +1369,8 @@ static void test_security_info(void)
     ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
 
     test_group(server, local_sid, FALSE);
-    test_group(client, local_sid, TRUE);
-    test_group(server2, local_sid, TRUE);
+    test_group(client, local_sid, FALSE);
+    test_group(server2, local_sid, FALSE);
 
     CloseHandle(server);
     /* SD is preserved after closing server object */
@@ -1378,19 +1381,17 @@ static void test_security_info(void)
     client = CreateFileA(PIPENAME, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
-    test_group(client, local_sid, TRUE);
+    test_group(client, local_sid, FALSE);
 
     ret = DisconnectNamedPipe(server);
     ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
 
     /* disconnected server may be queried for security info, but client does not */
-    test_group(server, local_sid, TRUE);
+    test_group(server, local_sid, FALSE);
     status = NtQuerySecurityObject(client, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
                                    NULL, 0, &length);
-    todo_wine
     ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
     status = NtSetSecurityObject(client, GROUP_SECURITY_INFORMATION, sec_desc);
-    todo_wine
     ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
 
     /* attempting to create another pipe instance with specified sd fails */
