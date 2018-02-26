@@ -3494,7 +3494,7 @@ static void output_subdirs( struct makefile *make )
         }
         else if (submake->testdll)
         {
-            output( "check test::\n" );
+            output( "%s/test: dummy\n", subdir );
             output( "\t@cd %s && $(MAKE) test\n", subdir );
             strarray_add( &winetest_deps, subdir );
             strarray_add( &builddeps_deps, subdir );
@@ -3535,6 +3535,14 @@ static void output_subdirs( struct makefile *make )
     {
         output( "programs/winetest:" );
         output_filenames( winetest_deps );
+        output( "\n" );
+        output( "check test:" );
+        for (i = 0; i < winetest_deps.count; i++)
+        {
+            char *target = strmake( "%s/test", winetest_deps.str[i] );
+            output_filename( target );
+            strarray_add( &make->phony_targets, target );
+        }
         output( "\n" );
         strarray_add( &make->phony_targets, "check" );
         strarray_add( &make->phony_targets, "test" );
