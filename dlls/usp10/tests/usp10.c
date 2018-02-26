@@ -3099,22 +3099,19 @@ static void test_ScriptXtoX(void)
         win_skip("Uniscribe version too old to test Hebrew clusters\n");
 }
 
+/* This set of tests is for the string functions of Uniscribe. The
+ * ScriptStringAnalyse() function allocates memory pointed to by the
+ * SCRIPT_STRING_ANALYSIS ssa pointer. This memory is freed by
+ * ScriptStringFree(). There needs to be a valid hdc for this as
+ * ScriptStringAnalyse() calls ScriptItemize(), ScriptShape() and
+ * ScriptPlace() which require it. */
 static void test_ScriptString(HDC hdc)
 {
-/*******************************************************************************************
- *
- * This set of tests are for the string functions of uniscribe.  The ScriptStringAnalyse
- * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This
- * memory is freed by ScriptStringFree.  There needs to be a valid hdc for this as
- * ScriptStringAnalyse calls ScriptItemize, ScriptShape and ScriptPlace which require it.
- *
- */
 
     HRESULT         hr;
     WCHAR           teststr[] = {'T','e','s','t','1',' ','a','2','b','3', '\0'};
     int             len = ARRAY_SIZE(teststr) - 1;
     int             Glyphs = len * 2 + 16;
-    int             Charset;
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
     static const int Dx[ARRAY_SIZE(teststr) - 1];
@@ -3129,55 +3126,49 @@ static void test_ScriptString(HDC hdc)
     int             MaxSel = 0;
     BOOL            Disabled = FALSE;
     const int      *clip_len;
-    int            i;
     UINT           *order;
+    unsigned int i;
 
+    /* Test without hdc to get E_PENDING. */
+    hr = ScriptStringAnalyse(NULL, teststr, len, Glyphs, -1,
+            Flags, ReqWidth, NULL, NULL, Dx, NULL, InClass, &ssa);
+    ok(hr == E_PENDING, "Got unexpected hr %#x.\n", hr);
 
-    Charset = -1;     /* this flag indicates unicode input */
-    /* Test without hdc to get E_PENDING */
-    hr = ScriptStringAnalyse( NULL, teststr, len, Glyphs, Charset, Flags,
-                              ReqWidth, NULL, NULL, Dx, NULL,
-                              InClass, &ssa);
-    ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
+    /* Test that 0 length string returns E_INVALIDARG. */
+    hr = ScriptStringAnalyse(hdc, teststr, 0, Glyphs, -1,
+            Flags, ReqWidth, NULL, NULL, Dx, NULL, InClass, &ssa);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    /* Test that 0 length string returns E_INVALIDARG  */
-    hr = ScriptStringAnalyse( hdc, teststr, 0, Glyphs, Charset, Flags,
-                              ReqWidth, NULL, NULL, Dx, NULL,
-                              InClass, &ssa);
-    ok(hr == E_INVALIDARG, "ScriptStringAnalyse should return E_INVALIDARG not %08x\n", hr);
-
-    /* test with hdc, this should be a valid test  */
-    hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
-                              ReqWidth, NULL, NULL, Dx, NULL,
-                              InClass, &ssa);
-    ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+    /* Test with hdc, this should be a valid test. */
+    hr = ScriptStringAnalyse(hdc, teststr, len, Glyphs, -1,
+            Flags, ReqWidth, NULL, NULL, Dx, NULL, InClass, &ssa);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ScriptStringFree(&ssa);
 
-    /* test makes sure that a call with a valid pssa still works */
-    hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
-                              ReqWidth, NULL, NULL, Dx, NULL,
-                              InClass, &ssa);
-    ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
-    ok(ssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");
+    /* Test makes sure that a call with a valid pssa still works. */
+    hr = ScriptStringAnalyse(hdc, teststr, len, Glyphs, -1,
+            Flags, ReqWidth, NULL, NULL, Dx, NULL, InClass, &ssa);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!ssa, "Got unexpected ssa %p.\n", ssa);
 
-    if (hr == S_OK)
+    hr = ScriptStringOut(ssa, X, Y, Options, &rc, MinSel, MaxSel, Disabled);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    clip_len = ScriptString_pcOutChars(ssa);
+    ok(*clip_len == len, "Got unexpected *clip_len %d, expected %d.\n", *clip_len, len);
+
+    order = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *clip_len * sizeof(*order));
+    hr = ScriptStringGetOrder(ssa, order);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < *clip_len; ++i)
     {
-        hr = ScriptStringOut(ssa, X, Y, Options, &rc, MinSel, MaxSel, Disabled);
-        ok(hr == S_OK, "ScriptStringOut should return S_OK not %08x\n", hr);
+        ok(order[i] == i, "Got unexpected order[%u] %u.\n", i, order[i]);
     }
+    HeapFree(GetProcessHeap(), 0, order);
 
-     clip_len = ScriptString_pcOutChars(ssa);
-     ok(*clip_len == len, "ScriptString_pcOutChars failed, got %d, expected %d\n", *clip_len, len);
-
-     order = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *clip_len * sizeof(UINT));
-     hr = ScriptStringGetOrder(ssa, order);
-     ok(hr == S_OK, "ScriptStringGetOrder failed, got %08x, expected S_OK\n", hr);
-
-     for (i = 0; i < *clip_len; i++) ok(order[i] == i, "%d: got %d expected %d\n", i, order[i], i);
-     HeapFree(GetProcessHeap(), 0, order);
-
-     hr = ScriptStringFree(&ssa);
-     ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
+    hr = ScriptStringFree(&ssa);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 }
 
 static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
