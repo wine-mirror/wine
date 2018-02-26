@@ -69,15 +69,15 @@ static BOOL wine_vk_init(void)
 static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
-    FIXME("stub: %p %p %p\n", create_info, allocator, instance);
-    return VK_ERROR_INCOMPATIBLE_DRIVER;
+    TRACE("%p %p %p\n", create_info, allocator, instance);
+    return vk_funcs->p_vkCreateInstance(create_info, allocator, instance);
 }
 
 static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
-    FIXME("stub: %p %p %p\n", layer_name, count, properties);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("%p %p %p\n", layer_name, count, properties);
+    return vk_funcs->p_vkEnumerateInstanceExtensionProperties(layer_name, count, properties);
 }
 
 static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)

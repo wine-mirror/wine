@@ -20,6 +20,7 @@ C_SRCS = \
 	pen.c \
 	settings.c \
 	systray.c \
+	vulkan.c \
 	window.c \
 	wintab.c \
 	x11drv_main.c \

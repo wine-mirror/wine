@@ -345,6 +345,21 @@ static struct opengl_funcs * X11DRV_wine_get_wgl_driver( PHYSDEV dev, UINT versi
     return ret;
 }
 
+/**********************************************************************
+ *           X11DRV_wine_get_vulkan_driver
+ */
+static const struct vulkan_funcs * X11DRV_wine_get_vulkan_driver( PHYSDEV dev, UINT version )
+{
+    const struct vulkan_funcs *ret;
+
+    if (!(ret = get_vulkan_driver( version )))
+    {
+        dev = GET_NEXT_PHYSDEV( dev, wine_get_vulkan_driver );
+        ret = dev->funcs->wine_get_vulkan_driver( dev, version );
+    }
+    return ret;
+}
+
 
 static const struct gdi_dc_funcs x11drv_funcs =
 {
@@ -475,7 +490,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_UnrealizePalette,            /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     X11DRV_wine_get_wgl_driver,         /* wine_get_wgl_driver */
-    NULL,                               /* wine_get_vulkan_driver */
+    X11DRV_wine_get_vulkan_driver,      /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };
 
