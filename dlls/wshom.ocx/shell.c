@@ -859,7 +859,7 @@ static HRESULT WINAPI WshShortcut_get_Arguments(IWshShortcut *iface, BSTR *Argum
 
     *Arguments = NULL;
 
-    hr = IShellLinkW_GetArguments(This->link, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IShellLinkW_GetArguments(This->link, buffW, ARRAY_SIZE(buffW));
     if (FAILED(hr))
         return hr;
 
@@ -917,7 +917,7 @@ static HRESULT WINAPI WshShortcut_get_IconLocation(IWshShortcut *iface, BSTR *Ic
     if (!IconPath)
         return E_POINTER;
 
-    hr = IShellLinkW_GetIconLocation(This->link, buffW, sizeof(buffW)/sizeof(WCHAR), &icon);
+    hr = IShellLinkW_GetIconLocation(This->link, buffW, ARRAY_SIZE(buffW), &icon);
     if (FAILED(hr)) return hr;
 
     sprintfW(pathW, fmtW, buffW, icon);
@@ -1006,7 +1006,7 @@ static HRESULT WINAPI WshShortcut_get_WorkingDirectory(IWshShortcut *iface, BSTR
         return E_POINTER;
 
     *WorkingDirectory = NULL;
-    hr = IShellLinkW_GetWorkingDirectory(This->link, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IShellLinkW_GetWorkingDirectory(This->link, buffW, ARRAY_SIZE(buffW));
     if (FAILED(hr)) return hr;
 
     *WorkingDirectory = SysAllocString(buffW);
@@ -1395,7 +1395,7 @@ static HKEY get_root_key(const WCHAR *path)
     };
     int i;
 
-    for (i = 0; i < sizeof(rootkeys)/sizeof(rootkeys[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(rootkeys); i++) {
         if (!strncmpW(path, rootkeys[i].full, strlenW(rootkeys[i].full)))
             return rootkeys[i].hkey;
         if (rootkeys[i].abbrev[0] && !strncmpW(path, rootkeys[i].abbrev, strlenW(rootkeys[i].abbrev)))
