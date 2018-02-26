@@ -8909,6 +8909,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     NULL,                               /* wine_get_wgl_driver */
+    NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_FONT_DRV               /* priority */
 };
 

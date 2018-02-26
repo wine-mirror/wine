@@ -64,6 +64,28 @@ LOGGER.addHandler(logging.StreamHandler())
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
+WINE_VULKAN_DRIVER_H = "../../include/wine/vulkan_driver.h"
+
+
+# Functions part of our winevulkan graphics driver interface.
+# DRIVER_VERSION should be bumped on any change to driver interface
+# in FUNCTION_OVERRIDES
+DRIVER_VERSION = 1
+
+# Table of functions for which we have a special implementation.
+# This are regular device / instance functions for which we need
+# to more work compared to a regular thunk  or because they are
+# part of the driver interface.
+# - driver sets whether the api is part of the driver interface.
+FUNCTION_OVERRIDES = {
+    # Global functions
+    "vkCreateInstance" : {"driver" : True},
+    "vkEnumerateInstanceExtensionProperties" : {"driver" : True},
+    "vkGetInstanceProcAddr": {"driver" : True},
+
+    # Instance functions
+    "vkDestroyInstance" : {"driver" : True},
+}
 
 
 class VkBaseType(object):
@@ -232,6 +254,10 @@ class VkFunction(object):
         self.type = _type
         self.params = params
 
+        # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
+        func_info = FUNCTION_OVERRIDES.get(self.name, None)
+        self.driver = func_info["driver"] if func_info is not None else False
+
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
         self.required = False
@@ -253,6 +279,10 @@ class VkFunction(object):
     def is_device_func(self):
         # If none of the other, it must be a device function
         return not self.is_global_func() and not self.is_instance_func()
+
+    def is_driver_func(self):
+        """ Returns if function is part of Wine driver interface. """
+        return self.driver
 
     def is_global_func(self):
         # Treat vkGetInstanceProcAddr as a global function as it
@@ -901,6 +931,34 @@ class VkGenerator(object):
 
         f.write("#endif /* __WINE_VULKAN_H */\n")
 
+    def generate_vulkan_driver_h(self, f):
+        f.write("/* Automatically generated from Vulkan vk.xml; DO NOT EDIT! */\n\n")
+        f.write("#ifndef __WINE_VULKAN_DRIVER_H\n")
+        f.write("#define __WINE_VULKAN_DRIVER_H\n\n")
+
+        f.write("/* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */\n")
+        f.write("#define WINE_VULKAN_DRIVER_VERSION {0}\n\n".format(DRIVER_VERSION))
+
+        f.write("struct vulkan_funcs\n{\n")
+        f.write("    /* Vulkan global functions. These are the only calls at this point a graphics driver\n")
+        f.write("     * needs to provide. Other function calls will be provided indirectly by dispatch\n")
+        f.write("     * tables part of dispatchable Vulkan objects such as VkInstance or vkDevice.\n")
+        f.write("     */\n")
+
+        for vk_func in self.registry.funcs.values():
+            if not vk_func.is_required() or not vk_func.is_driver_func():
+                continue
+
+            pfn = vk_func.pfn()
+            # Avoid PFN_vkVoidFunction in driver interface as Vulkan likes to put calling convention
+            # stuff in there. For simplicity substitute with "void *".
+            pfn = pfn.replace("PFN_vkVoidFunction", "void *")
+            f.write("    {0};\n".format(pfn))
+        f.write("};\n\n")
+
+        f.write("extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version);\n\n")
+        f.write("#endif /* __WINE_VULKAN_DRIVER_H */\n")
+
 
 class VkRegistry(object):
     def __init__(self, reg_filename):
@@ -1183,6 +1241,9 @@ def main():
 
     with open(WINE_VULKAN_H, "w") as f:
         generator.generate_vulkan_h(f)
+
+    with open(WINE_VULKAN_DRIVER_H, "w") as f:
+        generator.generate_vulkan_driver_h(f)
 
 if __name__ == "__main__":
     main()

@@ -520,6 +520,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
+    NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };
 
@@ -1146,5 +1147,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     windrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
+    NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_DIB_DRV + 10           /* priority */
 };

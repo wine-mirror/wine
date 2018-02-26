@@ -524,3 +524,6 @@
 
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)
+
+# Vulkan
+@ cdecl __wine_get_vulkan_driver(long long)

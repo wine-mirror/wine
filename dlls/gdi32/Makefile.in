@@ -46,7 +46,8 @@ C_SRCS = \
 	pen.c \
 	printdrv.c \
 	region.c \
-	vertical.c
+	vertical.c \
+	vulkan.c
 
 RC_SRCS = gdi32.rc
 

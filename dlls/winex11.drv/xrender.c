@@ -2284,6 +2284,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     NULL,                               /* wine_get_wgl_driver */
+    NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 10      /* priority */
 };
 

@@ -226,6 +226,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pUnrealizePalette */
     MFDRV_WidenPath,                 /* pWidenPath */
     NULL,                            /* wine_get_wgl_driver */
+    NULL,                            /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV        /* priority */
 };
 
