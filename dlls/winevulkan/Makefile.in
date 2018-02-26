@@ -1,0 +1,6 @@
+MODULE    = winevulkan.dll
+
+C_SRCS = \
+	vulkan.c
+
+RC_SRCS = version.rc

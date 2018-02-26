@@ -1,0 +1,2 @@
+@ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr
+@ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion

@@ -1537,6 +1537,7 @@ enable_wineoss_drv
 enable_wineps_drv
 enable_winepulse_drv
 enable_wineqtdecoder
+enable_winevulkan
 enable_winex11_drv
 enable_wing32
 enable_winhttp
@@ -19036,6 +19037,7 @@ wine_fn_config_dll wineps.drv enable_wineps_drv
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll winepulse.drv enable_winepulse_drv
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
+wine_fn_config_dll winevulkan enable_winevulkan
 wine_fn_config_dll winex11.drv enable_winex11_drv
 wine_fn_config_dll wing.dll16 enable_win16
 wine_fn_config_dll wing32 enable_wing32
