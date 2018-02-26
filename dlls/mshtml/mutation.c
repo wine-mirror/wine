@@ -29,6 +29,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "wininet.h"
 
 #include "mshtml_private.h"
 #include "htmlscript.h"
@@ -394,6 +395,8 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 
     static const WCHAR edgeW[] = {'e','d','g','e',0};
 
+    TRACE("%s\n", debugstr_w(p));
+
     if(p[0] != 'I' || p[1] != 'E' || p[2] != '=')
         return FALSE;
     p += 3;
@@ -430,6 +433,39 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
     }
 
     return TRUE;
+}
+
+void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
+{
+    IWinInetHttpInfo *http_info;
+    char buf[1024];
+    DWORD size;
+    HRESULT hres;
+
+    hres = IBinding_QueryInterface(binding, &IID_IWinInetHttpInfo, (void**)&http_info);
+    if(FAILED(hres)) {
+        TRACE("No IWinInetHttpInfo\n");
+        return;
+    }
+
+    size = sizeof(buf);
+    strcpy(buf, "X-UA-Compatible");
+    hres = IWinInetHttpInfo_QueryInfo(http_info, HTTP_QUERY_CUSTOM, buf, &size, NULL, NULL);
+    if(hres == S_OK && size) {
+        compat_mode_t document_mode;
+        WCHAR *header;
+
+        TRACE("size %u\n", size);
+
+        header = heap_strdupAtoW(buf);
+        if(header && parse_ua_compatible(header, &document_mode)) {
+            TRACE("setting document mode %d\n", document_mode);
+            doc->document_mode = document_mode;
+        }
+        heap_free(header);
+    }
+
+    IWinInetHttpInfo_Release(http_info);
 }
 
 static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *meta_element)

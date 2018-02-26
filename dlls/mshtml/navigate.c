@@ -1003,9 +1003,16 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
     }
 
     if(This->is_doc_channel) {
+        HRESULT hres;
+
         if(!This->bsc.window)
             return E_ABORT; /* Binding aborted in OnStartRequest call. */
-        update_window_doc(This->bsc.window);
+        hres = update_window_doc(This->bsc.window);
+        if(FAILED(hres))
+            return hres;
+
+        if(This->bsc.binding)
+            process_document_response_headers(This->bsc.window->doc, This->bsc.binding);
         if(This->bsc.window->base.outer_window->readystate != READYSTATE_LOADING)
             set_ready_state(This->bsc.window->base.outer_window, READYSTATE_LOADING);
     }
