@@ -5886,6 +5886,22 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             break;
 #endif
 
+        case WS_SO_RANDOMIZE_PORT:
+            FIXME("Ignoring WS_SO_RANDOMIZE_PORT\n");
+            return 0;
+
+        case WS_SO_PORT_SCALABILITY:
+            FIXME("Ignoring WS_SO_PORT_SCALABILITY\n");
+            return 0;
+
+        case WS_SO_REUSE_UNICASTPORT:
+            FIXME("Ignoring WS_SO_REUSE_UNICASTPORT\n");
+            return 0;
+
+        case WS_SO_REUSE_MULTICASTPORT:
+            FIXME("Ignoring WS_SO_REUSE_MULTICASTPORT\n");
+            return 0;
+
         default:
             TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
             SetLastError(WSAENOPROTOOPT);
