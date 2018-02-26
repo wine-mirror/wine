@@ -41,8 +41,32 @@ static void X11DRV_vkDestroyInstance(VkInstance instance, const VkAllocationCall
 static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties* properties)
 {
-    FIXME("stub: %s %p %p\n", debugstr_a(layer_name), count, properties);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("layer_name %s, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
+
+    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
+    if (layer_name)
+    {
+        ERR("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    if (!properties)
+    {
+        /* When properties is NULL, we need to return the number of extensions
+         * supported. For now report 0 until we add some e.g.
+         * VK_KHR_win32_surface. Long-term this needs to be an intersection
+         * between what the native library supports and what thunks we have.
+         */
+        *count = 0;
+        return VK_SUCCESS;
+    }
+
+    /* When properties is not NULL, we copy the extensions over and set count
+     * to the number of copied extensions. For now we don't have much to do as
+     * we don't support any extensions yet.
+     */
+    *count = 0;
+    return VK_SUCCESS;
 }
 
 static void * X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
