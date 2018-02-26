@@ -1559,6 +1559,10 @@ static void test_message_from_hmodule(void)
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
     ok(ret != 0, "FormatMessageA returned 0\n");
 
+    ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, TRUST_E_NOSIGNATURE,
+                         MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
+    ok(ret != 0, "FormatMessageA returned 0\n");
+
     /* Test a message string with an insertion without passing any variadic arguments. */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 193 /* ERROR_BAD_EXE_FORMAT */,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
