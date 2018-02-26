@@ -114,8 +114,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
                 WCHAR controlClass[32];
                 RECT rc;
 
-                GetClassNameW (controlWnd, controlClass, 
-                    sizeof(controlClass) / sizeof(controlClass[0]));
+                GetClassNameW (controlWnd, controlClass, ARRAY_SIZE(controlClass));
                 if (lstrcmpiW (controlClass, WC_STATICW) == 0)
                 {
                     /* Static control - draw parent background and set text to 

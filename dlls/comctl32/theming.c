@@ -51,7 +51,7 @@ static const struct ThemingSubclass
     {WC_SCROLLBARW,        THEMING_ScrollbarSubclassProc}
 };
 
-#define NUM_SUBCLASSES        (sizeof(subclasses)/sizeof(subclasses[0]))
+#define NUM_SUBCLASSES        (ARRAY_SIZE(subclasses))
 
 static WNDPROC originalProcs[NUM_SUBCLASSES];
 static ATOM atRefDataProp;

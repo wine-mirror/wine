@@ -439,11 +439,11 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 
     /* Window title */
     if (!taskconfig->pszWindowTitle)
-        titleW = taskdialog_get_exe_name(taskconfig, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        titleW = taskdialog_get_exe_name(taskconfig, pathW, ARRAY_SIZE(pathW));
     else if (IS_INTRESOURCE(taskconfig->pszWindowTitle))
     {
         if (!LoadStringW(taskconfig->hInstance, LOWORD(taskconfig->pszWindowTitle), (WCHAR *)&titleW, 0))
-            titleW = taskdialog_get_exe_name(taskconfig, pathW, sizeof(pathW)/sizeof(pathW[0]));
+            titleW = taskdialog_get_exe_name(taskconfig, pathW, ARRAY_SIZE(pathW));
     }
     else
         titleW = taskconfig->pszWindowTitle;

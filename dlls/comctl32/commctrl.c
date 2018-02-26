@@ -107,7 +107,7 @@ static void unregister_versioned_classes(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(classes)/sizeof(classes[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(classes); i++)
         UnregisterClassA(classes[i], NULL);
 
 #undef VERSION
@@ -287,7 +287,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 		if (uMenuID) {
 		    WCHAR szText[256];
 
-		    if (!LoadStringW (hInst, uMenuID, szText, sizeof(szText)/sizeof(szText[0])))
+		    if (!LoadStringW (hInst, uMenuID, szText, ARRAY_SIZE(szText)))
 			szText[0] = '\0';
 
 		    SendMessageW (hwndStatus, SB_SETTEXTW,

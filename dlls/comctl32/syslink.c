@@ -183,7 +183,7 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
     {
         if(*current == '<')
         {
-            if(!strncmpiW(current, SL_LINKOPEN, sizeof(SL_LINKOPEN)/sizeof(SL_LINKOPEN[0])) && (CurrentType == slText))
+            if(!strncmpiW(current, SL_LINKOPEN, ARRAY_SIZE(SL_LINKOPEN)) && (CurrentType == slText))
             {
                 BOOL ValidParam = FALSE, ValidLink = FALSE;
 
@@ -211,14 +211,14 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
                     
 CheckParameter:
                     /* compare the current position with all known parameters */
-                    if(!strncmpiW(tmp, SL_HREF, sizeof(SL_HREF)/sizeof(SL_HREF[0])))
+                    if(!strncmpiW(tmp, SL_HREF, ARRAY_SIZE(SL_HREF)))
                     {
                         taglen += 6;
                         ValidParam = TRUE;
                         CurrentParameter = &lpUrl;
                         CurrentParameterLen = &lenUrl;
                     }
-                    else if(!strncmpiW(tmp, SL_ID, sizeof(SL_ID)/sizeof(SL_ID[0])))
+                    else if(!strncmpiW(tmp, SL_ID, ARRAY_SIZE(SL_ID)))
                     {
                         taglen += 4;
                         ValidParam = TRUE;
@@ -292,7 +292,7 @@ CheckParameter:
                     }
                 }
             }
-            else if(!strncmpiW(current, SL_LINKCLOSE, sizeof(SL_LINKCLOSE)/sizeof(SL_LINKCLOSE[0])) && (CurrentType == slLink) && firsttag)
+            else if(!strncmpiW(current, SL_LINKCLOSE, ARRAY_SIZE(SL_LINKCLOSE)) && (CurrentType == slLink) && firsttag)
             {
                 /* there's a <a...> tag opened, first add the previous text, if present */
                 if(textstart != NULL && textlen > 0 && firsttag > textstart)

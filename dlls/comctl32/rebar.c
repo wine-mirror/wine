@@ -1042,7 +1042,7 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		lpBand->rcChild = rbcz.rcChild;  /* *** ??? */
             }
 
-	    GetClassNameW (lpBand->hwndChild, szClassName, sizeof(szClassName)/sizeof(szClassName[0]));
+	    GetClassNameW (lpBand->hwndChild, szClassName, ARRAY_SIZE(szClassName));
 	    if (!lstrcmpW (szClassName, strComboBox) ||
 		!lstrcmpW (szClassName, WC_COMBOBOXEXW)) {
 		INT nEditHeight, yPos;

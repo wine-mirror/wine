@@ -684,7 +684,7 @@ TRACKBAR_FillThumb (const TRACKBAR_INFO *infoPtr, HDC hdc, HBRUSH hbrush)
 
     oldbr = SelectObject(hdc, hbrush);
     SetPolyFillMode(hdc, WINDING);
-    Polygon(hdc, points, sizeof(points) / sizeof(points[0]));
+    Polygon(hdc, points, ARRAY_SIZE(points));
     SelectObject(hdc, oldbr);
 
     return PointDepth;

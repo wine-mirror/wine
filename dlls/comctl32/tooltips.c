@@ -808,7 +808,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
           }
         }
 
-        hrStem = CreatePolygonRgn(pts, sizeof(pts) / sizeof(pts[0]), ALTERNATE);
+        hrStem = CreatePolygonRgn(pts, ARRAY_SIZE(pts), ALTERNATE);
         
         hRgn = CreateRoundRectRgn(0,
                                   (infoPtr->bToolBelow ? BALLOON_STEMHEIGHT : 0),

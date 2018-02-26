@@ -551,7 +551,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
 
     if (IS_INTRESOURCE( lppsp->pszTitle ))
     {
-      if (LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle, szTitle, sizeof(szTitle)/sizeof(szTitle[0]) ))
+      if (LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle, szTitle, ARRAY_SIZE(szTitle)))
         pTitle = szTitle;
       else if (*p)
         pTitle = p;
@@ -2115,8 +2115,7 @@ static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText)
   if(!IS_INTRESOURCE(lpszText))
   {
      WCHAR szTitle[256];
-     MultiByteToWideChar(CP_ACP, 0, lpszText, -1,
-                         szTitle, sizeof(szTitle)/sizeof(WCHAR));
+     MultiByteToWideChar(CP_ACP, 0, lpszText, -1, szTitle, ARRAY_SIZE(szTitle));
      PROPSHEET_SetTitleW(hwndDlg, dwStyle, szTitle);
   }
   else
@@ -2135,8 +2134,7 @@ static void PROPSHEET_SetTitleW(HWND hwndDlg, DWORD dwStyle, LPCWSTR lpszText)
 
   TRACE("%s (style %08x)\n", debugstr_w(lpszText), dwStyle);
   if (IS_INTRESOURCE(lpszText)) {
-    if (!LoadStringW(psInfo->ppshheader.hInstance,
-                     LOWORD(lpszText), szTitle, sizeof(szTitle)/sizeof(szTitle[0])))
+    if (!LoadStringW(psInfo->ppshheader.hInstance, LOWORD(lpszText), szTitle, ARRAY_SIZE(szTitle)))
       return;
     lpszText = szTitle;
   }
@@ -3684,7 +3682,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       HWND hwndCancel = GetDlgItem(hwnd, IDCANCEL);
 
       EnableWindow(hwndCancel, FALSE);
-      if (LoadStringW(COMCTL32_hModule, IDS_CLOSE, buf, sizeof(buf)/sizeof(buf[0])))
+      if (LoadStringW(COMCTL32_hModule, IDS_CLOSE, buf, ARRAY_SIZE(buf)))
          SetWindowTextW(hwndOK, buf);
 
       return FALSE;

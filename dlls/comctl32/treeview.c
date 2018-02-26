@@ -3829,7 +3829,7 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 	    infoPtr->bLabelChanged = TRUE;
 
-	    GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
+	    GetWindowTextW(infoPtr->hwndEdit, buffer, ARRAY_SIZE(buffer));
 
 	    /* Select font to get the right dimension of the string */
 	    hFont = (HFONT)SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
@@ -4639,7 +4639,7 @@ static INT TREEVIEW_ProcessLetterKeys(TREEVIEW_INFO *infoPtr, WPARAM charCode, L
     /* update the search parameters */
     infoPtr->lastKeyPressTimestamp=timestamp;
     if (elapsed < KEY_DELAY) {
-        if (infoPtr->nSearchParamLength < sizeof(infoPtr->szSearchParam) / sizeof(WCHAR)) {
+        if (infoPtr->nSearchParamLength < ARRAY_SIZE(infoPtr->szSearchParam)) {
             infoPtr->szSearchParam[infoPtr->nSearchParamLength++]=charCode;
         }
         if (infoPtr->charCode != charCode) {

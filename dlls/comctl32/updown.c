@@ -89,7 +89,6 @@ typedef struct
 #define TIMER_AUTOPRESS    3
 
 #define UPDOWN_GetInfoPtr(hwnd) ((UPDOWN_INFO *)GetWindowLongPtrW (hwnd,0))
-#define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
 
 /* id used for SetWindowSubclass */
 #define BUDDY_SUBCLASSID   1
@@ -275,7 +274,7 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
         /* we have a regular window, so will get the text */
         /* note that a zero-length string is a legitimate value for 'txt',
          * and ought to result in a successful conversion to '0'. */
-        if (GetWindowTextW(infoPtr->Buddy, txt, COUNT_OF(txt)) < 0)
+        if (GetWindowTextW(infoPtr->Buddy, txt, ARRAY_SIZE(txt)) < 0)
             return FALSE;
 
         sep = UPDOWN_GetThousandSep();
@@ -328,7 +327,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 
     /* Do thousands separation if necessary */
     if ((infoPtr->Base == 10) && !(infoPtr->dwStyle & UDS_NOTHOUSANDS) && (len > 3)) {
-        WCHAR tmp[COUNT_OF(txt)], *src = tmp, *dst = txt;
+        WCHAR tmp[ARRAY_SIZE(txt)], *src = tmp, *dst = txt;
         WCHAR sep = UPDOWN_GetThousandSep();
 	int start = len % 3;
 
@@ -344,7 +343,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
     }
 
     /* if nothing changed exit earlier */
-    GetWindowTextW(infoPtr->Buddy, txt_old, sizeof(txt_old)/sizeof(WCHAR));
+    GetWindowTextW(infoPtr->Buddy, txt_old, ARRAY_SIZE(txt_old));
     if (lstrcmpiW(txt_old, txt) == 0) return FALSE;
 
     return SetWindowTextW(infoPtr->Buddy, txt);
@@ -642,7 +641,7 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
     if(bud) {
         /* Store buddy window class type */
         infoPtr->BuddyType = BUDDY_TYPE_UNKNOWN;
-        if (GetClassNameW(bud, buddyClass, COUNT_OF(buddyClass))) {
+        if (GetClassNameW(bud, buddyClass, ARRAY_SIZE(buddyClass))) {
             if (lstrcmpiW(buddyClass, WC_EDITW) == 0)
                 infoPtr->BuddyType = BUDDY_TYPE_EDIT;
             else if (lstrcmpiW(buddyClass, WC_LISTBOXW) == 0)

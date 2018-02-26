@@ -4239,7 +4239,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
 
                 memset( &tb, 0, sizeof(tb) );
                 tb.iItem = i;
-                tb.cchText = sizeof(buf) / sizeof(buf[0]);
+                tb.cchText = ARRAY_SIZE(buf);
                 tb.pszText = buf;
 
                 /* Use the same struct for both A and W versions since the layout is the same. */
@@ -6146,7 +6146,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
         TRACE("TBN_GETINFOTIPW - got string %s\n", debugstr_w(tbgit.pszText));
 
         len = strlenW(tbgit.pszText);
-        if (len > sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0])-1)
+        if (len > ARRAY_SIZE(lpnmtdi->szText) - 1)
         {
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
@@ -6184,7 +6184,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
         TRACE("TBN_GETINFOTIPA - got string %s\n", debugstr_a(tbgit.pszText));
 
         len = MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1, NULL, 0);
-        if (len > sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0]))
+        if (len > ARRAY_SIZE(lpnmtdi->szText))
         {
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
@@ -6199,8 +6199,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
         }
         else if (tbgit.pszText && tbgit.pszText[0])
         {
-            MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1,
-                                lpnmtdi->lpszText, sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0]));
+            MultiByteToWideChar(CP_ACP, 0, tbgit.pszText, -1, lpnmtdi->lpszText, ARRAY_SIZE(lpnmtdi->szText));
             return 0;
         }
     }
@@ -6215,7 +6214,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
         TRACE("using button hidden text %s\n", debugstr_w(pszText));
 
-        if (len > sizeof(lpnmtdi->szText)/sizeof(lpnmtdi->szText[0])-1)
+        if (len > ARRAY_SIZE(lpnmtdi->szText) - 1)
         {
             /* need to allocate temporary buffer in infoPtr as there
              * isn't enough space in buffer passed to us by the
