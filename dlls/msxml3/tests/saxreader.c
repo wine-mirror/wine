@@ -2789,6 +2789,20 @@ static void test_saxreader_features(void)
             continue;
         }
 
+        value = VARIANT_TRUE;
+        hr = ISAXXMLReader_getFeature(reader, _bstr_("exhaustive-errors"), &value);
+        if (IsEqualGUID(entry->guid, &CLSID_SAXXMLReader40) ||
+                IsEqualGUID(entry->guid, &CLSID_SAXXMLReader60))
+        {
+            ok(hr == S_OK, "Failed to get feature value, hr %#x.\n", hr);
+            ok(value == VARIANT_FALSE, "Unexpected default feature value.\n");
+
+            hr = ISAXXMLReader_putFeature(reader, _bstr_("exhaustive-errors"), VARIANT_FALSE);
+            ok(hr == S_OK, "Failed to put feature value, hr %#x.\n", hr);
+        }
+        else
+            ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+
         name = feature_names;
         while (*name)
         {
