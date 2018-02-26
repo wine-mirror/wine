@@ -49,6 +49,9 @@
 # if defined(EVIOCGBIT) && defined(EV_ABS) && defined(BTN_PINKIE)
 #  define HAS_PROPER_INPUT_HEADER
 # endif
+# ifndef SYN_DROPPED
+#  define SYN_DROPPED 3
+# endif
 #endif
 
 #define NONAMELESSUNION
