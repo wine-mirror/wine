@@ -413,7 +413,7 @@ static inline DWORD context_generate_rt_mask_from_resource(struct wined3d_resour
 }
 
 static inline void context_set_fbo_key_for_render_target(const struct wined3d_context *context,
-        struct wined3d_fbo_entry_key *key, unsigned int idx, struct wined3d_rendertarget_info *render_target,
+        struct wined3d_fbo_entry_key *key, unsigned int idx, const struct wined3d_rendertarget_info *render_target,
         DWORD location)
 {
     unsigned int sub_resource_idx = render_target->sub_resource_idx;
@@ -487,28 +487,21 @@ static inline void context_set_fbo_key_for_render_target(const struct wined3d_co
 }
 
 static void context_generate_fbo_key(const struct wined3d_context *context,
-        struct wined3d_fbo_entry_key *key, struct wined3d_rendertarget_info *render_targets,
-        struct wined3d_surface *depth_stencil_surface, DWORD color_location,
+        struct wined3d_fbo_entry_key *key, const struct wined3d_rendertarget_info *render_targets,
+        const struct wined3d_rendertarget_info *depth_stencil, DWORD color_location,
         DWORD ds_location)
 {
-    struct wined3d_rendertarget_info depth_stencil = {{0}};
     unsigned int i;
 
     key->rb_namespace = 0;
-    if (depth_stencil_surface)
-    {
-        depth_stencil.resource = &depth_stencil_surface->container->resource;
-        depth_stencil.sub_resource_idx = surface_get_sub_resource_idx(depth_stencil_surface);
-        depth_stencil.layer_count = 1;
-    }
-    context_set_fbo_key_for_render_target(context, key, 0, &depth_stencil, ds_location);
+    context_set_fbo_key_for_render_target(context, key, 0, depth_stencil, ds_location);
 
     for (i = 0; i < context->gl_info->limits.buffers; ++i)
         context_set_fbo_key_for_render_target(context, key, i + 1, &render_targets[i], color_location);
 }
 
 static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,
-        struct wined3d_rendertarget_info *render_targets, struct wined3d_surface *depth_stencil,
+        const struct wined3d_rendertarget_info *render_targets, const struct wined3d_rendertarget_info *depth_stencil,
         DWORD color_location, DWORD ds_location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -519,11 +512,11 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
     memset(&entry->key, 0, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count]));
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
     entry->flags = 0;
-    if (depth_stencil)
+    if (depth_stencil->resource)
     {
-        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_DEPTH)
+        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_DEPTH)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
-        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_STENCIL)
+        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_STENCIL)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
     }
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
@@ -536,7 +529,7 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
 
 /* Context activation is done by the caller. */
 static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum target,
-        struct wined3d_rendertarget_info *render_targets, struct wined3d_surface *depth_stencil,
+        const struct wined3d_rendertarget_info *render_targets, const struct wined3d_rendertarget_info *depth_stencil,
         DWORD color_location, DWORD ds_location, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -546,11 +539,11 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
 
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
     entry->flags = 0;
-    if (depth_stencil)
+    if (depth_stencil->resource)
     {
-        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_DEPTH)
+        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_DEPTH)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
-        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_STENCIL)
+        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_STENCIL)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
     }
 }
@@ -570,28 +563,31 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
 
 /* Context activation is done by the caller. */
 static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context, GLenum target,
-        struct wined3d_rendertarget_info *render_targets, struct wined3d_surface *depth_stencil,
+        const struct wined3d_rendertarget_info *render_targets, const struct wined3d_rendertarget_info *depth_stencil,
         DWORD color_location, DWORD ds_location)
 {
+    static const struct wined3d_rendertarget_info ds_null = {{0}};
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int object_count = gl_info->limits.buffers + 1;
     struct wined3d_texture *rt_texture, *ds_texture;
+    unsigned int i, ds_level, rt_level;
     struct fbo_entry *entry;
-    unsigned int i, level;
 
-    if (depth_stencil && render_targets[0].resource && render_targets[0].resource->type != WINED3D_RTYPE_BUFFER)
+    if (depth_stencil->resource && depth_stencil->resource->type != WINED3D_RTYPE_BUFFER
+            && render_targets[0].resource && render_targets[0].resource->type != WINED3D_RTYPE_BUFFER)
     {
         rt_texture = wined3d_texture_from_resource(render_targets[0].resource);
-        level = render_targets[0].sub_resource_idx % rt_texture->level_count;
-        ds_texture = depth_stencil->container;
+        rt_level = render_targets[0].sub_resource_idx % rt_texture->level_count;
+        ds_texture = wined3d_texture_from_resource(depth_stencil->resource);
+        ds_level = depth_stencil->sub_resource_idx % ds_texture->level_count;
 
-        if (wined3d_texture_get_level_width(ds_texture, depth_stencil->texture_level)
-                < wined3d_texture_get_level_width(rt_texture, level)
-                || wined3d_texture_get_level_height(ds_texture, depth_stencil->texture_level)
-                < wined3d_texture_get_level_height(rt_texture, level))
+        if (wined3d_texture_get_level_width(ds_texture, ds_level)
+                < wined3d_texture_get_level_width(rt_texture, rt_level)
+                || wined3d_texture_get_level_height(ds_texture, ds_level)
+                < wined3d_texture_get_level_height(rt_texture, rt_level))
         {
             WARN("Depth stencil is smaller than the primary color buffer, disabling.\n");
-            depth_stencil = NULL;
+            depth_stencil = &ds_null;
         }
         else if (ds_texture->resource.multisample_type != rt_texture->resource.multisample_type
                 || ds_texture->resource.multisample_quality != rt_texture->resource.multisample_quality)
@@ -599,10 +595,15 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
             WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
                     rt_texture->resource.multisample_type, rt_texture->resource.multisample_quality,
                     ds_texture->resource.multisample_type, ds_texture->resource.multisample_quality);
-            depth_stencil = NULL;
+            depth_stencil = &ds_null;
         }
-        else
-            surface_set_compatible_renderbuffer(depth_stencil, &render_targets[0]);
+        else if (depth_stencil->resource->type == WINED3D_RTYPE_TEXTURE_2D)
+        {
+            struct wined3d_surface *surface;
+
+            surface = ds_texture->sub_resources[depth_stencil->sub_resource_idx].u.surface;
+            surface_set_compatible_renderbuffer(surface, &render_targets[0]);
+        }
     }
 
     context_generate_fbo_key(context, context->fbo_key, render_targets, depth_stencil, color_location,
@@ -610,15 +611,15 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
 
     if (TRACE_ON(d3d))
     {
+        struct wined3d_resource *resource;
+        unsigned int width, height;
+        const char *resource_type;
+
         TRACE("Dumping FBO attachments:\n");
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
-            struct wined3d_resource *resource;
             if ((resource = render_targets[i].resource))
             {
-                unsigned int width, height;
-                const char *resource_type;
-
                 if (resource->type == WINED3D_RTYPE_BUFFER)
                 {
                     width = resource->size;
@@ -628,9 +629,9 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
                 else
                 {
                     rt_texture = wined3d_texture_from_resource(resource);
-                    level = render_targets[i].sub_resource_idx % rt_texture->level_count;
-                    width = wined3d_texture_get_level_pow2_width(rt_texture, level);
-                    height = wined3d_texture_get_level_pow2_height(rt_texture, level);
+                    rt_level = render_targets[i].sub_resource_idx % rt_texture->level_count;
+                    width = wined3d_texture_get_level_pow2_width(rt_texture, rt_level);
+                    height = wined3d_texture_get_level_pow2_height(rt_texture, rt_level);
                     resource_type = "texture";
                 }
 
@@ -640,16 +641,27 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
                         context->fbo_key->objects[i + 1].object, width, height, resource->multisample_type);
             }
         }
-        if (depth_stencil)
+        if ((resource = depth_stencil->resource))
         {
-            ds_texture = depth_stencil->container;
-            TRACE("    Depth attachment: %p format %s, %s %u, %ux%u, %u samples.\n",
-                    depth_stencil, debug_d3dformat(ds_texture->resource.format->id),
-                    context->fbo_key->rb_namespace & (1 << 0) ? "renderbuffer" : "texture",
-                    context->fbo_key->objects[0].object,
-                    wined3d_texture_get_level_pow2_width(ds_texture, depth_stencil->texture_level),
-                    wined3d_texture_get_level_pow2_height(ds_texture, depth_stencil->texture_level),
-                    ds_texture->resource.multisample_type);
+            if (resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                width = resource->size;
+                height = 1;
+                resource_type = "buffer";
+            }
+            else
+            {
+                ds_texture = wined3d_texture_from_resource(resource);
+                ds_level = depth_stencil->sub_resource_idx % ds_texture->level_count;
+                width = wined3d_texture_get_level_pow2_width(ds_texture, ds_level);
+                height = wined3d_texture_get_level_pow2_height(ds_texture, ds_level);
+                resource_type = "texture";
+            }
+
+            TRACE("    Depth attachment: %p, %u format %s, %s %u, %ux%u, %u samples.\n",
+                    resource, depth_stencil->sub_resource_idx, debug_d3dformat(resource->format->id),
+                    context->fbo_key->rb_namespace & (1 << 0) ? "renderbuffer" : resource_type,
+                    context->fbo_key->objects[0].object, width, height, resource->multisample_type);
         }
     }
 
@@ -747,8 +759,16 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
     }
     else
     {
-        context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil,
-                color_location, ds_location);
+        struct wined3d_rendertarget_info ds = {{0}};
+
+        if (depth_stencil)
+        {
+            ds.resource = &depth_stencil->container->resource;
+            ds.sub_resource_idx = surface_get_sub_resource_idx(depth_stencil);
+            ds.layer_count = 1;
+        }
+        context->current_fbo = context_find_fbo_entry(context, target,
+                render_targets, &ds, color_location, ds_location);
         context_apply_fbo_entry(context, target, context->current_fbo);
     }
 }
