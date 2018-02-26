@@ -912,11 +912,9 @@ static HRESULT WINAPI HttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption
     if(!This->base.request)
         return E_FAIL;
 
-    if(!HttpQueryInfoW(This->base.request, dwOption, pBuffer, pcbBuffer, pdwFlags)) {
-        if(pBuffer)
-            memset(pBuffer, 0, *pcbBuffer);
-        return S_OK;
-    }
+    if(!HttpQueryInfoA(This->base.request, dwOption, pBuffer, pcbBuffer, pdwFlags))
+        return S_FALSE;
+
     return S_OK;
 }
 
