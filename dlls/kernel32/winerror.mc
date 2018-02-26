@@ -17,6 +17,8 @@
 ;
 
 LanguageNames=(ENU=0x409:winerr)
+SeverityNames=(CoError=0x2:STATUS_SEVERITY_COERROR)
+FacilityNames=(Trust=0xb:FACILITY_CERT)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
@@ -3747,4 +3749,11 @@ MessageId=10061
 SymbolicName=WSAECONNREFUSED
 Language=ENU
 Connection refused.
+.
+MessageId=0x100
+Severity=CoError
+Facility=Trust
+SymbolicName=TRUST_E_NOSIGNATURE
+Language=ENU
+No Signature found in file.
 .

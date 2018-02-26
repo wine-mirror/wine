@@ -3774,2972 +3774,2978 @@ msgstr ""
 msgid "Wine"
 msgstr "Wine"
 
-#: winerror.mc:26
+#: winerror.mc:28
 msgid "Success.\n"
 msgstr "Successo.\n"
 
-#: winerror.mc:31
+#: winerror.mc:33
 msgid "Invalid function.\n"
 msgstr "Funzione non valida.\n"
 
-#: winerror.mc:36
+#: winerror.mc:38
 msgid "File not found.\n"
 msgstr "File non trovato.\n"
 
-#: winerror.mc:41
+#: winerror.mc:43
 msgid "Path not found.\n"
 msgstr "Percorso non trovato.\n"
 
-#: winerror.mc:46
+#: winerror.mc:48
 msgid "Too many open files.\n"
 msgstr "Troppi file aperti.\n"
 
-#: winerror.mc:51
+#: winerror.mc:53
 msgid "Access denied.\n"
 msgstr "Accesso negato.\n"
 
-#: winerror.mc:56
+#: winerror.mc:58
 msgid "Invalid handle.\n"
 msgstr "Handle non valido.\n"
 
-#: winerror.mc:61
+#: winerror.mc:63
 msgid "Memory trashed.\n"
 msgstr "Memoria buttata.\n"
 
-#: winerror.mc:66
+#: winerror.mc:68
 msgid "Not enough memory.\n"
 msgstr "Non abbastanza memoria.\n"
 
-#: winerror.mc:71
+#: winerror.mc:73
 msgid "Invalid block.\n"
 msgstr "Blocco non valido.\n"
 
-#: winerror.mc:76
+#: winerror.mc:78
 msgid "Bad environment.\n"
 msgstr "Ambiente non corretto.\n"
 
-#: winerror.mc:81
+#: winerror.mc:83
 msgid "Bad format.\n"
 msgstr "Formato non corretto.\n"
 
-#: winerror.mc:86
+#: winerror.mc:88
 msgid "Invalid access.\n"
 msgstr "Accesso non valido.\n"
 
-#: winerror.mc:91
+#: winerror.mc:93
 msgid "Invalid data.\n"
 msgstr "Dati non validi.\n"
 
-#: winerror.mc:96
+#: winerror.mc:98
 msgid "Out of memory.\n"
 msgstr "Finita memoria disponibile.\n"
 
-#: winerror.mc:101
+#: winerror.mc:103
 msgid "Invalid drive.\n"
 msgstr "Unità non valida.\n"
 
-#: winerror.mc:106
+#: winerror.mc:108
 msgid "Can't delete current directory.\n"
 msgstr "Impossibile eliminare la cartella corrente.\n"
 
-#: winerror.mc:111
+#: winerror.mc:113
 msgid "Not same device.\n"
 msgstr "Non la stessa unità.\n"
 
-#: winerror.mc:116
+#: winerror.mc:118
 msgid "No more files.\n"
 msgstr "Nessun file più.\n"
 
-#: winerror.mc:121
+#: winerror.mc:123
 msgid "Write protected.\n"
 msgstr "Protetto da scrittura.\n"
 
-#: winerror.mc:126
+#: winerror.mc:128
 msgid "Bad unit.\n"
 msgstr "Unità non corretta.\n"
 
-#: winerror.mc:131
+#: winerror.mc:133
 msgid "Not ready.\n"
 msgstr "Non pronto.\n"
 
-#: winerror.mc:136
+#: winerror.mc:138
 msgid "Bad command.\n"
 msgstr "Comando non corretto.\n"
 
-#: winerror.mc:141
+#: winerror.mc:143
 msgid "CRC error.\n"
 msgstr "Errore CRC.\n"
 
-#: winerror.mc:146
+#: winerror.mc:148
 msgid "Bad length.\n"
 msgstr "Lunghezza non corretta.\n"
 
-#: winerror.mc:151 winerror.mc:526
+#: winerror.mc:153 winerror.mc:528
 msgid "Seek error.\n"
 msgstr "Errore di seek.\n"
 
-#: winerror.mc:156
+#: winerror.mc:158
 msgid "Not DOS disk.\n"
 msgstr "Non un disco DOS.\n"
 
-#: winerror.mc:161
+#: winerror.mc:163
 msgid "Sector not found.\n"
 msgstr "Settore non trovato.\n"
 
-#: winerror.mc:166
+#: winerror.mc:168
 msgid "Out of paper.\n"
 msgstr "Carta finita.\n"
 
-#: winerror.mc:171
+#: winerror.mc:173
 msgid "Write fault.\n"
 msgstr "Errore in scrittura.\n"
 
-#: winerror.mc:176
+#: winerror.mc:178
 msgid "Read fault.\n"
 msgstr "Errore in lettura.\n"
 
-#: winerror.mc:181
+#: winerror.mc:183
 msgid "General failure.\n"
 msgstr "Errore generico.\n"
 
-#: winerror.mc:186
+#: winerror.mc:188
 msgid "Sharing violation.\n"
 msgstr "Violazione di condivisione.\n"
 
-#: winerror.mc:191
+#: winerror.mc:193
 msgid "Lock violation.\n"
 msgstr "Violazione di lock.\n"
 
-#: winerror.mc:196
+#: winerror.mc:198
 msgid "Wrong disk.\n"
 msgstr "Disco sbagliato.\n"
 
-#: winerror.mc:201
+#: winerror.mc:203
 msgid "Sharing buffer exceeded.\n"
 msgstr "Superato buffer di condivisione.\n"
 
-#: winerror.mc:206
+#: winerror.mc:208
 msgid "End of file.\n"
 msgstr "Fine del file.\n"
 
-#: winerror.mc:211 winerror.mc:436
+#: winerror.mc:213 winerror.mc:438
 msgid "Disk full.\n"
 msgstr "Disco pieno.\n"
 
-#: winerror.mc:216
+#: winerror.mc:218
 msgid "Request not supported.\n"
 msgstr "Richiesta non supportata.\n"
 
-#: winerror.mc:221
+#: winerror.mc:223
 msgid "Remote machine not listening.\n"
 msgstr "Macchina remota irraggiungibile.\n"
 
-#: winerror.mc:226
+#: winerror.mc:228
 msgid "Duplicate network name.\n"
 msgstr "Nome network duplicato.\n"
 
-#: winerror.mc:231
+#: winerror.mc:233
 msgid "Bad network path.\n"
 msgstr "Percorso network non corretto.\n"
 
-#: winerror.mc:236
+#: winerror.mc:238
 msgid "Network busy.\n"
 msgstr "Network occupato.\n"
 
-#: winerror.mc:241
+#: winerror.mc:243
 msgid "Device does not exist.\n"
 msgstr "Unità non esiste.\n"
 
-#: winerror.mc:246
+#: winerror.mc:248
 msgid "Too many commands.\n"
 msgstr "Troppi comandi.\n"
 
-#: winerror.mc:251
+#: winerror.mc:253
 msgid "Adapter hardware error.\n"
 msgstr "Errore dell'adattatore hardware.\n"
 
-#: winerror.mc:256
+#: winerror.mc:258
 msgid "Bad network response.\n"
 msgstr "Risposta del network non corretta.\n"
 
-#: winerror.mc:261
+#: winerror.mc:263
 msgid "Unexpected network error.\n"
 msgstr "Errore del network inaspettato.\n"
 
-#: winerror.mc:266
+#: winerror.mc:268
 msgid "Bad remote adapter.\n"
 msgstr "Adattatore remoto non corretto.\n"
 
-#: winerror.mc:271
+#: winerror.mc:273
 msgid "Print queue full.\n"
 msgstr "Coda di stampa piena.\n"
 
-#: winerror.mc:276
+#: winerror.mc:278
 msgid "No spool space.\n"
 msgstr "Finito spazio di spool.\n"
 
-#: winerror.mc:281
+#: winerror.mc:283
 msgid "Print canceled.\n"
 msgstr "Stampa annullata.\n"
 
-#: winerror.mc:286
+#: winerror.mc:288
 msgid "Network name deleted.\n"
 msgstr "Nome network eliminato.\n"
 
-#: winerror.mc:291
+#: winerror.mc:293
 msgid "Network access denied.\n"
 msgstr "Accesso al network negato.\n"
 
-#: winerror.mc:296
+#: winerror.mc:298
 msgid "Bad device type.\n"
 msgstr "Tipo di unità errato.\n"
 
-#: winerror.mc:301
+#: winerror.mc:303
 msgid "Bad network name.\n"
 msgstr "Nome network non corretto.\n"
 
-#: winerror.mc:306
+#: winerror.mc:308
 msgid "Too many network names.\n"
 msgstr "Troppi nomi network.\n"
 
-#: winerror.mc:311
+#: winerror.mc:313
 msgid "Too many network sessions.\n"
 msgstr "Troppe sessioni network.\n"
 
-#: winerror.mc:316
+#: winerror.mc:318
 msgid "Sharing paused.\n"
 msgstr "Condivisione in pausa.\n"
 
-#: winerror.mc:321
+#: winerror.mc:323
 msgid "Request not accepted.\n"
 msgstr "Richiesta non accettata.\n"
 
-#: winerror.mc:326
+#: winerror.mc:328
 msgid "Redirector paused.\n"
 msgstr "Redirector in pausa.\n"
 
-#: winerror.mc:331
+#: winerror.mc:333
 msgid "File exists.\n"
 msgstr "File esistente.\n"
 
-#: winerror.mc:336
+#: winerror.mc:338
 msgid "Cannot create.\n"
 msgstr "Impossibile creare.\n"
 
-#: winerror.mc:341
+#: winerror.mc:343
 msgid "Int24 failure.\n"
 msgstr "Int24 fallito.\n"
 
-#: winerror.mc:346
+#: winerror.mc:348
 msgid "Out of structures.\n"
 msgstr "Strutture finite.\n"
 
-#: winerror.mc:351
+#: winerror.mc:353
 msgid "Already assigned.\n"
 msgstr "Già assegnato.\n"
 
-#: winerror.mc:356 winerror.mc:1711
+#: winerror.mc:358 winerror.mc:1713
 msgid "Invalid password.\n"
 msgstr "Password non valida.\n"
 
-#: winerror.mc:361
+#: winerror.mc:363
 msgid "Invalid parameter.\n"
 msgstr "Parametro non valido.\n"
 
-#: winerror.mc:366
+#: winerror.mc:368
 msgid "Net write fault.\n"
 msgstr "Fallimento di scrittura in rete.\n"
 
-#: winerror.mc:371
+#: winerror.mc:373
 msgid "No process slots.\n"
 msgstr "Nessun slot di processo.\n"
 
-#: winerror.mc:376
+#: winerror.mc:378
 msgid "Too many semaphores.\n"
 msgstr "Troppi semafori.\n"
 
-#: winerror.mc:381
+#: winerror.mc:383
 msgid "Exclusive semaphore already owned.\n"
 msgstr "Semaforo esclusivo già posseduto.\n"
 
-#: winerror.mc:386
+#: winerror.mc:388
 msgid "Semaphore is set.\n"
 msgstr "Il semaforo è impostato.\n"
 
-#: winerror.mc:391
+#: winerror.mc:393
 msgid "Too many semaphore requests.\n"
 msgstr "Troppe richieste di semafori.\n"
 
-#: winerror.mc:396
+#: winerror.mc:398
 msgid "Invalid at interrupt time.\n"
 msgstr "Non valido al momento dell'interrupt.\n"
 
-#: winerror.mc:401
+#: winerror.mc:403
 msgid "Semaphore owner died.\n"
 msgstr "Il proprietario del semaforo è morto.\n"
 
-#: winerror.mc:406
+#: winerror.mc:408
 msgid "Semaphore user limit.\n"
 msgstr "Limite dell'utente del semaforo.\n"
 
-#: winerror.mc:411
+#: winerror.mc:413
 msgid "Insert disk for drive %1.\n"
 msgstr "Inserisci disco per l'unità %1.\n"
 
-#: winerror.mc:416
+#: winerror.mc:418
 msgid "Drive locked.\n"
 msgstr "Unità bloccata.\n"
 
-#: winerror.mc:421
+#: winerror.mc:423
 msgid "Broken pipe.\n"
 msgstr "Pipe rotta.\n"
 
-#: winerror.mc:426
+#: winerror.mc:428
 msgid "Open failed.\n"
 msgstr "Apertura fallita.\n"
 
-#: winerror.mc:431
+#: winerror.mc:433
 msgid "Buffer overflow.\n"
 msgstr "Overflow del buffer.\n"
 
-#: winerror.mc:441
+#: winerror.mc:443
 msgid "No more search handles.\n"
 msgstr "Finiti gli handle di ricerca.\n"
 
-#: winerror.mc:446
+#: winerror.mc:448
 msgid "Invalid target handle.\n"
 msgstr "Handle dell'oggetto non valido.\n"
 
-#: winerror.mc:451
+#: winerror.mc:453
 msgid "Invalid IOCTL.\n"
 msgstr "IOCTL non valido.\n"
 
-#: winerror.mc:456
+#: winerror.mc:458
 msgid "Invalid verify switch.\n"
 msgstr "Interruttore di verifica non valido.\n"
 
-#: winerror.mc:461
+#: winerror.mc:463
 msgid "Bad driver level.\n"
 msgstr "Livello driver non corretto.\n"
 
-#: winerror.mc:466
+#: winerror.mc:468
 msgid "Call not implemented.\n"
 msgstr "Chiamata non implementata.\n"
 
-#: winerror.mc:471
+#: winerror.mc:473
 msgid "Semaphore timeout.\n"
 msgstr "Timeout del semaforo.\n"
 
-#: winerror.mc:476
+#: winerror.mc:478
 msgid "Insufficient buffer.\n"
 msgstr "Buffer insufficiente.\n"
 
-#: winerror.mc:481
+#: winerror.mc:483
 msgid "Invalid name.\n"
 msgstr "Nome non valido.\n"
 
-#: winerror.mc:486
+#: winerror.mc:488
 msgid "Invalid level.\n"
 msgstr "Livello non valido.\n"
 
-#: winerror.mc:491
+#: winerror.mc:493
 msgid "No volume label.\n"
 msgstr "Nessuna etichetta di volume.\n"
 
-#: winerror.mc:496
+#: winerror.mc:498
 msgid "Module not found.\n"
 msgstr "Modulo non trovato.\n"
 
-#: winerror.mc:501
+#: winerror.mc:503
 msgid "Procedure not found.\n"
 msgstr "Procedura non trovata.\n"
 
-#: winerror.mc:506
+#: winerror.mc:508
 msgid "No children to wait for.\n"
 msgstr "Nessun figlio da aspettare.\n"
 
-#: winerror.mc:511
+#: winerror.mc:513
 msgid "Child process has not completed.\n"
 msgstr "Il processo figlio non ha finito.\n"
 
-#: winerror.mc:516
+#: winerror.mc:518
 msgid "Invalid use of direct access handle.\n"
 msgstr "Uso non valido dell'handle per l'accesso diretto.\n"
 
-#: winerror.mc:521
+#: winerror.mc:523
 msgid "Negative seek.\n"
 msgstr "Seek negativo.\n"
 
-#: winerror.mc:531
+#: winerror.mc:533
 msgid "Drive is a JOIN target.\n"
 msgstr "L'unità è oggetto di JOIN.\n"
 
-#: winerror.mc:536
+#: winerror.mc:538
 msgid "Drive is already JOINed.\n"
 msgstr "L'unità è già in JOIN.\n"
 
-#: winerror.mc:541
+#: winerror.mc:543
 msgid "Drive is already SUBSTed.\n"
 msgstr "L'unità è già in SUBST.\n"
 
-#: winerror.mc:546
+#: winerror.mc:548
 msgid "Drive is not JOINed.\n"
 msgstr "L'unità non è in JOIN.\n"
 
-#: winerror.mc:551
+#: winerror.mc:553
 msgid "Drive is not SUBSTed.\n"
 msgstr "L'unità non è in SUBST.\n"
 
-#: winerror.mc:556
+#: winerror.mc:558
 msgid "Attempt to JOIN onto a JOINed drive.\n"
 msgstr "Tentativo di JOIN su un'unità già in JOIN.\n"
 
-#: winerror.mc:561
+#: winerror.mc:563
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
 msgstr "Tentativo di SUBST su un'unità già in SUBST.\n"
 
-#: winerror.mc:566
+#: winerror.mc:568
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
 msgstr "Tentativo di JOIN su un'unità già in SUBST.\n"
 
-#: winerror.mc:571
+#: winerror.mc:573
 msgid "Attempt to SUBST to a JOINed drive.\n"
 msgstr "Tentativo di SUBST su un'unità già in JOIN.\n"
 
-#: winerror.mc:576
+#: winerror.mc:578
 msgid "Drive is busy.\n"
 msgstr "Unità occupata.\n"
 
-#: winerror.mc:581
+#: winerror.mc:583
 msgid "Same drive.\n"
 msgstr "Stessa unità.\n"
 
-#: winerror.mc:586
+#: winerror.mc:588
 msgid "Not top-level directory.\n"
 msgstr "Cartella non top-level.\n"
 
-#: winerror.mc:591
+#: winerror.mc:593
 msgid "Directory is not empty.\n"
 msgstr "Cartella non vuota.\n"
 
-#: winerror.mc:596
+#: winerror.mc:598
 msgid "Path is in use as a SUBST.\n"
 msgstr "Il percorso è in uso come SUBST.\n"
 
-#: winerror.mc:601
+#: winerror.mc:603
 msgid "Path is in use as a JOIN.\n"
 msgstr "Il percorso è in uso come JOIN.\n"
 
-#: winerror.mc:606
+#: winerror.mc:608
 msgid "Path is busy.\n"
 msgstr "Percorso occupato.\n"
 
-#: winerror.mc:611
+#: winerror.mc:613
 msgid "Already a SUBST target.\n"
 msgstr "Già in SUBST.\n"
 
-#: winerror.mc:616
+#: winerror.mc:618
 msgid "System trace not specified or disallowed.\n"
 msgstr "Trace di sistema non specificata o disabilitata.\n"
 
-#: winerror.mc:621
+#: winerror.mc:623
 msgid "Event count for DosMuxSemWait incorrect.\n"
 msgstr "Conto degli eventi per DosMuxSemWait incorretto.\n"
 
-#: winerror.mc:626
+#: winerror.mc:628
 msgid "Too many waiters for DosMuxSemWait.\n"
 msgstr "Troppi waiters per DosMuxSemWait.\n"
 
-#: winerror.mc:631
+#: winerror.mc:633
 msgid "DosSemMuxWait list invalid.\n"
 msgstr "Lista di DosSemMuxWait non valida.\n"
 
-#: winerror.mc:636
+#: winerror.mc:638
 msgid "Volume label too long.\n"
 msgstr "Etichetta di volume troppo lunga.\n"
 
-#: winerror.mc:641
+#: winerror.mc:643
 msgid "Too many TCBs.\n"
 msgstr "Troppi TCB.\n"
 
-#: winerror.mc:646
+#: winerror.mc:648
 msgid "Signal refused.\n"
 msgstr "Segnale rifiutato.\n"
 
-#: winerror.mc:651
+#: winerror.mc:653
 msgid "Segment discarded.\n"
 msgstr "Segmento scartato.\n"
 
-#: winerror.mc:656
+#: winerror.mc:658
 msgid "Segment not locked.\n"
 msgstr "Segmento non bloccato.\n"
 
-#: winerror.mc:661
+#: winerror.mc:663
 msgid "Bad thread ID address.\n"
 msgstr "Indirizzo ID thread non corretto.\n"
 
-#: winerror.mc:666
+#: winerror.mc:668
 msgid "Bad arguments to DosExecPgm.\n"
 msgstr "Argomenti di DosExecPgm non corretti.\n"
 
-#: winerror.mc:671
+#: winerror.mc:673
 msgid "Path is invalid.\n"
 msgstr "Percorso non valido.\n"
 
-#: winerror.mc:676
+#: winerror.mc:678
 msgid "Signal pending.\n"
 msgstr "Segnale in attesa.\n"
 
-#: winerror.mc:681
+#: winerror.mc:683
 msgid "Max system-wide thread count reached.\n"
 msgstr "Raggiunto il massimo numero di thread per l'intero sistema.\n"
 
-#: winerror.mc:686
+#: winerror.mc:688
 msgid "Lock failed.\n"
 msgstr "Lock fallito.\n"
 
-#: winerror.mc:691
+#: winerror.mc:693
 msgid "Resource in use.\n"
 msgstr "Risorsa in uso.\n"
 
-#: winerror.mc:696
+#: winerror.mc:698
 msgid "Cancel violation.\n"
 msgstr "Annulla violazione.\n"
 
-#: winerror.mc:701
+#: winerror.mc:703
 msgid "Atomic locks not supported.\n"
 msgstr "Lock atomici non supportati.\n"
 
-#: winerror.mc:706
+#: winerror.mc:708
 msgid "Invalid segment number.\n"
 msgstr "Numero del segmento non valido.\n"
 
-#: winerror.mc:711
+#: winerror.mc:713
 msgid "Invalid ordinal for %1.\n"
 msgstr "Ordinale non valido per %1.\n"
 
-#: winerror.mc:716
+#: winerror.mc:718
 msgid "File already exists.\n"
 msgstr "File esistente.\n"
 
-#: winerror.mc:721
+#: winerror.mc:723
 msgid "Invalid flag number.\n"
 msgstr "Numero di flag non valido.\n"
 
-#: winerror.mc:726
+#: winerror.mc:728
 msgid "Semaphore name not found.\n"
 msgstr "Nome del semaforo non trovato.\n"
 
-#: winerror.mc:731
+#: winerror.mc:733
 msgid "Invalid starting code segment for %1.\n"
 msgstr "Segmento iniziale di codice non valido per %1.\n"
 
-#: winerror.mc:736
+#: winerror.mc:738
 msgid "Invalid starting stack segment for %1.\n"
 msgstr "Segmento iniziale di pila non valido per %1.\n"
 
-#: winerror.mc:741
+#: winerror.mc:743
 msgid "Invalid module type for %1.\n"
 msgstr "Tipo del modulo non valido per %1.\n"
 
-#: winerror.mc:746
+#: winerror.mc:748
 msgid "Invalid EXE signature in %1.\n"
 msgstr "Firma EXE non valida in %1.\n"
 
-#: winerror.mc:751
+#: winerror.mc:753
 msgid "EXE %1 is marked invalid.\n"
 msgstr "EXE %1 è marcato non valido.\n"
 
-#: winerror.mc:756
+#: winerror.mc:758
 msgid "Bad EXE format for %1.\n"
 msgstr "Formato EXE non corretto per %1.\n"
 
-#: winerror.mc:761
+#: winerror.mc:763
 msgid "Iterated data exceeds 64k in %1.\n"
 msgstr "I dati ripetuti superano 64k in %1.\n"
 
-#: winerror.mc:766
+#: winerror.mc:768
 msgid "Invalid MinAllocSize in %1.\n"
 msgstr "MinAllocSize non valido in %1.\n"
 
-#: winerror.mc:771
+#: winerror.mc:773
 msgid "Dynlink from invalid ring.\n"
 msgstr "Dynlink da un ring non valido.\n"
 
-#: winerror.mc:776
+#: winerror.mc:778
 msgid "IOPL not enabled.\n"
 msgstr "IOPL non abilitato.\n"
 
-#: winerror.mc:781
+#: winerror.mc:783
 msgid "Invalid SEGDPL in %1.\n"
 msgstr "SEGDPL non valido in %1.\n"
 
-#: winerror.mc:786
+#: winerror.mc:788
 msgid "Auto data segment exceeds 64k.\n"
 msgstr "Segmento di dati Auto supera 64k.\n"
 
-#: winerror.mc:791
+#: winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
 msgstr "Segmento ring 2 deve essere spostabile.\n"
 
-#: winerror.mc:796
+#: winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
 msgstr "Catena di rilocazioni supera il limite del segmento in %1.\n"
 
-#: winerror.mc:801
+#: winerror.mc:803
 msgid "Infinite loop in relocation chain in %1.\n"
 msgstr "Loop infinito nella catena di rilocazioni in %1.\n"
 
-#: winerror.mc:806
+#: winerror.mc:808
 msgid "Environment variable not found.\n"
 msgstr "Variabile d'ambiente non trovata.\n"
 
-#: winerror.mc:811
+#: winerror.mc:813
 msgid "No signal sent.\n"
 msgstr "Nessun segnale mandato.\n"
 
-#: winerror.mc:816
+#: winerror.mc:818
 msgid "File name is too long.\n"
 msgstr "Nome del file troppo lungo.\n"
 
-#: winerror.mc:821
+#: winerror.mc:823
 msgid "Ring 2 stack in use.\n"
 msgstr "Pila ring 2 in uso.\n"
 
-#: winerror.mc:826
+#: winerror.mc:828
 msgid "Error in use of filename wildcards.\n"
 msgstr "Errore nell'uso di wildcard nel nome del file.\n"
 
-#: winerror.mc:831
+#: winerror.mc:833
 msgid "Invalid signal number.\n"
 msgstr "Numero del segnale non valido.\n"
 
-#: winerror.mc:836
+#: winerror.mc:838
 msgid "Error setting signal handler.\n"
 msgstr "Errore nell'impostazione del gestore di segnali.\n"
 
-#: winerror.mc:841
+#: winerror.mc:843
 msgid "Segment locked.\n"
 msgstr "Segmento bloccato.\n"
 
-#: winerror.mc:846
+#: winerror.mc:848
 msgid "Too many modules.\n"
 msgstr "Troppi moduli.\n"
 
-#: winerror.mc:851
+#: winerror.mc:853
 msgid "Nesting LoadModule calls not allowed.\n"
 msgstr "Chiamate annidate LoadModule non permesse.\n"
 
-#: winerror.mc:856
+#: winerror.mc:858
 msgid "Machine type mismatch.\n"
 msgstr "Discordanza di tipo di macchina.\n"
 
-#: winerror.mc:861
+#: winerror.mc:863
 msgid "Bad pipe.\n"
 msgstr "Pipe non corretta.\n"
 
-#: winerror.mc:866
+#: winerror.mc:868
 msgid "Pipe busy.\n"
 msgstr "Pipe occupata.\n"
 
-#: winerror.mc:871
+#: winerror.mc:873
 msgid "Pipe closed.\n"
 msgstr "Pipe chiusa.\n"
 
-#: winerror.mc:876
+#: winerror.mc:878
 msgid "Pipe not connected.\n"
 msgstr "Pipe non connessa.\n"
 
-#: winerror.mc:881
+#: winerror.mc:883
 msgid "More data available.\n"
 msgstr "Più dati disponibili.\n"
 
-#: winerror.mc:886
+#: winerror.mc:888
 msgid "Session canceled.\n"
 msgstr "Sessione annullata.\n"
 
-#: winerror.mc:891
+#: winerror.mc:893
 msgid "Invalid extended attribute name.\n"
 msgstr "Nome dell'attributo esteso non valido.\n"
 
-#: winerror.mc:896
+#: winerror.mc:898
 msgid "Extended attribute list inconsistent.\n"
 msgstr "Lista dell'attributo esteso non consistente.\n"
 
-#: winerror.mc:901
+#: winerror.mc:903
 msgid "No more data available.\n"
 msgstr "Finiti i dati disponibili.\n"
 
-#: winerror.mc:906
+#: winerror.mc:908
 msgid "Cannot use Copy API.\n"
 msgstr "Impossibile usare l'API Copia.\n"
 
-#: winerror.mc:911
+#: winerror.mc:913
 msgid "Directory name invalid.\n"
 msgstr "Nome della cartella non valido.\n"
 
-#: winerror.mc:916
+#: winerror.mc:918
 msgid "Extended attributes didn't fit.\n"
 msgstr "Gli attributi estesi troppo grandi.\n"
 
-#: winerror.mc:921
+#: winerror.mc:923
 msgid "Extended attribute file corrupt.\n"
 msgstr "File dell'attributo esteso corrotto.\n"
 
-#: winerror.mc:926
+#: winerror.mc:928
 msgid "Extended attribute table full.\n"
 msgstr "Tabella dell'attributo esteso piena.\n"
 
-#: winerror.mc:931
+#: winerror.mc:933
 msgid "Invalid extended attribute handle.\n"
 msgstr "Handle dell'attributo esteso non valido.\n"
 
-#: winerror.mc:936
+#: winerror.mc:938
 msgid "Extended attributes not supported.\n"
 msgstr "Attributi estesi non supportati.\n"
 
-#: winerror.mc:941
+#: winerror.mc:943
 msgid "Mutex not owned by caller.\n"
 msgstr "Mutex non posseduta dal chiamante.\n"
 
-#: winerror.mc:946
+#: winerror.mc:948
 msgid "Too many posts to semaphore.\n"
 msgstr "Troppi post al semaforo.\n"
 
-#: winerror.mc:951
+#: winerror.mc:953
 msgid "Read/WriteProcessMemory partially completed.\n"
 msgstr "Read/WriteProcessMemory parzialmente completata.\n"
 
-#: winerror.mc:956
+#: winerror.mc:958
 msgid "The oplock wasn't granted.\n"
 msgstr "L'oplock non è stato concesso.\n"
 
-#: winerror.mc:961
+#: winerror.mc:963
 msgid "Invalid oplock message received.\n"
 msgstr "Messaggio dell'oplock ricevuto non valido.\n"
 
-#: winerror.mc:966
+#: winerror.mc:968
 msgid "Message 0x%1 not found in file %2.\n"
 msgstr "Messaggio 0x%1 non trovato nel file %2.\n"
 
-#: winerror.mc:971
+#: winerror.mc:973
 msgid "Invalid address.\n"
 msgstr "Indirizzo non valido.\n"
 
-#: winerror.mc:976
+#: winerror.mc:978
 msgid "Arithmetic overflow.\n"
 msgstr "Overflow aritmetico.\n"
 
-#: winerror.mc:981
+#: winerror.mc:983
 msgid "Pipe connected.\n"
 msgstr "Pipe connessa.\n"
 
-#: winerror.mc:986
+#: winerror.mc:988
 msgid "Pipe listening.\n"
 msgstr "Pipe in ascolto.\n"
 
-#: winerror.mc:991
+#: winerror.mc:993
 msgid "Extended attribute access denied.\n"
 msgstr "Negato l'accesso all'attributo esteso.\n"
 
-#: winerror.mc:996
+#: winerror.mc:998
 msgid "I/O operation aborted.\n"
 msgstr "Operazione di I/O interrotta.\n"
 
-#: winerror.mc:1001
+#: winerror.mc:1003
 msgid "Overlapped I/O incomplete.\n"
 msgstr "I/O sovrapposto incompleto.\n"
 
-#: winerror.mc:1006
+#: winerror.mc:1008
 msgid "Overlapped I/O pending.\n"
 msgstr "I/O sovrapposto in attesa.\n"
 
-#: winerror.mc:1011
+#: winerror.mc:1013
 msgid "No access to memory location.\n"
 msgstr "Negato l'accesso alla locazione di memoria.\n"
 
-#: winerror.mc:1016
+#: winerror.mc:1018
 msgid "Swap error.\n"
 msgstr "Errore di swap.\n"
 
-#: winerror.mc:1021
+#: winerror.mc:1023
 msgid "Stack overflow.\n"
 msgstr "Overflow della pila.\n"
 
-#: winerror.mc:1026
+#: winerror.mc:1028
 msgid "Invalid message.\n"
 msgstr "Messaggio non valido.\n"
 
-#: winerror.mc:1031
+#: winerror.mc:1033
 msgid "Cannot complete.\n"
 msgstr "Impossibile completare.\n"
 
-#: winerror.mc:1036
+#: winerror.mc:1038
 msgid "Invalid flags.\n"
 msgstr "Flag non valide.\n"
 
-#: winerror.mc:1041
+#: winerror.mc:1043
 msgid "Unrecognized volume.\n"
 msgstr "Volume non riconosciuto.\n"
 
-#: winerror.mc:1046
+#: winerror.mc:1048
 msgid "File invalid.\n"
 msgstr "File non valido.\n"
 
-#: winerror.mc:1051
+#: winerror.mc:1053
 msgid "Cannot run full-screen.\n"
 msgstr "Impossibile eseguire a schermo intero.\n"
 
-#: winerror.mc:1056
+#: winerror.mc:1058
 msgid "Nonexistent token.\n"
 msgstr "Token non esistente.\n"
 
-#: winerror.mc:1061
+#: winerror.mc:1063
 msgid "Registry corrupt.\n"
 msgstr "Registro corrotto.\n"
 
-#: winerror.mc:1066
+#: winerror.mc:1068
 msgid "Invalid key.\n"
 msgstr "Chiave non valida.\n"
 
-#: winerror.mc:1071
+#: winerror.mc:1073
 msgid "Can't open registry key.\n"
 msgstr "Impossibile aprire la chiave di registro.\n"
 
-#: winerror.mc:1076
+#: winerror.mc:1078
 msgid "Can't read registry key.\n"
 msgstr "Impossibile leggere chiave di registro.\n"
 
-#: winerror.mc:1081
+#: winerror.mc:1083
 msgid "Can't write registry key.\n"
 msgstr "Impossibile scrivere chiave di registro.\n"
 
-#: winerror.mc:1086
+#: winerror.mc:1088
 msgid "Registry has been recovered.\n"
 msgstr "Il registro è stato recuperato.\n"
 
-#: winerror.mc:1091
+#: winerror.mc:1093
 msgid "Registry is corrupt.\n"
 msgstr "Il registro è corrotto.\n"
 
-#: winerror.mc:1096
+#: winerror.mc:1098
 msgid "I/O to registry failed.\n"
 msgstr "I/O verso il registro fallito.\n"
 
-#: winerror.mc:1101
+#: winerror.mc:1103
 msgid "Not registry file.\n"
 msgstr "Non un file di registro.\n"
 
-#: winerror.mc:1106
+#: winerror.mc:1108
 msgid "Key deleted.\n"
 msgstr "Chiave eliminata.\n"
 
-#: winerror.mc:1111
+#: winerror.mc:1113
 msgid "No registry log space.\n"
 msgstr "Nessuno spazio di log del registro.\n"
 
-#: winerror.mc:1116
+#: winerror.mc:1118
 msgid "Registry key has subkeys.\n"
 msgstr "La chiave di registro ha sottochiavi.\n"
 
-#: winerror.mc:1121
+#: winerror.mc:1123
 msgid "Subkey must be volatile.\n"
 msgstr "La sottochiave deve essere volatile.\n"
 
-#: winerror.mc:1126
+#: winerror.mc:1128
 msgid "Notify change request in progress.\n"
 msgstr "Notifica richiesta di cambiamento in corso.\n"
 
-#: winerror.mc:1131
+#: winerror.mc:1133
 msgid "Dependent services are running.\n"
 msgstr "Servizi dipendenti sono in esecuzione.\n"
 
-#: winerror.mc:1136
+#: winerror.mc:1138
 msgid "Invalid service control.\n"
 msgstr "Controllo del servizio non valido.\n"
 
-#: winerror.mc:1141
+#: winerror.mc:1143
 msgid "Service request timeout.\n"
 msgstr "Timeout della richiesta del servizio.\n"
 
-#: winerror.mc:1146
+#: winerror.mc:1148
 msgid "Cannot create service thread.\n"
 msgstr "Impossibile creare thread del servizio.\n"
 
-#: winerror.mc:1151
+#: winerror.mc:1153
 msgid "Service database locked.\n"
 msgstr "Database dei servizi bloccato.\n"
 
-#: winerror.mc:1156
+#: winerror.mc:1158
 msgid "Service already running.\n"
 msgstr "Servizio già in esecuzione.\n"
 
-#: winerror.mc:1161
+#: winerror.mc:1163
 msgid "Invalid service account.\n"
 msgstr "Account servizio non valido.\n"
 
-#: winerror.mc:1166
+#: winerror.mc:1168
 msgid "Service is disabled.\n"
 msgstr "Servizio disabilitato.\n"
 
-#: winerror.mc:1171
+#: winerror.mc:1173
 msgid "Circular dependency.\n"
 msgstr "Dipendenza circolare.\n"
 
-#: winerror.mc:1176
+#: winerror.mc:1178
 msgid "Service does not exist.\n"
 msgstr "Servizio inesistente.\n"
 
-#: winerror.mc:1181
+#: winerror.mc:1183
 msgid "Service cannot accept control message.\n"
 msgstr "Il servizio non accetta messaggi di controllo.\n"
 
-#: winerror.mc:1186
+#: winerror.mc:1188
 msgid "Service not active.\n"
 msgstr "Servizio non attivo.\n"
 
-#: winerror.mc:1191
+#: winerror.mc:1193
 msgid "Service controller connect failed.\n"
 msgstr "Connessione al controller del servizio fallita.\n"
 
-#: winerror.mc:1196
+#: winerror.mc:1198
 msgid "Exception in service.\n"
 msgstr "Eccezione nel servizio.\n"
 
-#: winerror.mc:1201
+#: winerror.mc:1203
 msgid "Database does not exist.\n"
 msgstr "Database inesistente.\n"
 
-#: winerror.mc:1206
+#: winerror.mc:1208
 msgid "Service-specific error.\n"
 msgstr "Errore specifico del servizio.\n"
 
-#: winerror.mc:1211
+#: winerror.mc:1213
 msgid "Process aborted.\n"
 msgstr "Processo interrotto.\n"
 
-#: winerror.mc:1216
+#: winerror.mc:1218
 msgid "Service dependency failed.\n"
 msgstr "Fallita dipendenza del servizio.\n"
 
-#: winerror.mc:1221
+#: winerror.mc:1223
 msgid "Service login failed.\n"
 msgstr "Fallito login del servizio.\n"
 
-#: winerror.mc:1226
+#: winerror.mc:1228
 msgid "Service start-hang.\n"
 msgstr "Hang alla partenza del servizio.\n"
 
-#: winerror.mc:1231
+#: winerror.mc:1233
 msgid "Invalid service lock.\n"
 msgstr "Lock del servizio non valido.\n"
 
-#: winerror.mc:1236
+#: winerror.mc:1238
 msgid "Service marked for delete.\n"
 msgstr "Servizio marcato per l'eliminazione.\n"
 
-#: winerror.mc:1241
+#: winerror.mc:1243
 msgid "Service exists.\n"
 msgstr "Servizio esistente.\n"
 
-#: winerror.mc:1246
+#: winerror.mc:1248
 msgid "System running last-known-good config.\n"
 msgstr ""
 "Sistema già in esecuzione con l'ultima configurazione conosciuta buona.\n"
 
-#: winerror.mc:1251
+#: winerror.mc:1253
 msgid "Service dependency deleted.\n"
 msgstr "Eliminata dipendenza del servizio.\n"
 
-#: winerror.mc:1256
+#: winerror.mc:1258
 msgid "Boot already accepted as last-good config.\n"
 msgstr "Boot già accettato come ultima configurazione buona.\n"
 
-#: winerror.mc:1261
+#: winerror.mc:1263
 msgid "Service not started since last boot.\n"
 msgstr "Servizio non avviato a partire dall'ultimo boot.\n"
 
-#: winerror.mc:1266
+#: winerror.mc:1268
 msgid "Duplicate service name.\n"
 msgstr "Nome del servizio duplicato.\n"
 
-#: winerror.mc:1271
+#: winerror.mc:1273
 msgid "Different service account.\n"
 msgstr "Account del servizio differente.\n"
 
-#: winerror.mc:1276
+#: winerror.mc:1278
 msgid "Driver failure cannot be detected.\n"
 msgstr "Il fallimento del driver non può essere rilevato.\n"
 
-#: winerror.mc:1281
+#: winerror.mc:1283
 msgid "Process abort cannot be detected.\n"
 msgstr "L'interruzione del processo non può essere rilevata.\n"
 
-#: winerror.mc:1286
+#: winerror.mc:1288
 msgid "No recovery program for service.\n"
 msgstr "Nessun programma di recupero per il servizio.\n"
 
-#: winerror.mc:1291
+#: winerror.mc:1293
 msgid "Service not implemented by exe.\n"
 msgstr "Servizio non implementato dall'exe.\n"
 
-#: winerror.mc:1296
+#: winerror.mc:1298
 msgid "End of media.\n"
 msgstr "Fine del supporto.\n"
 
-#: winerror.mc:1301
+#: winerror.mc:1303
 msgid "Filemark detected.\n"
 msgstr "Rilevato contrassegno del file.\n"
 
-#: winerror.mc:1306
+#: winerror.mc:1308
 msgid "Beginning of media.\n"
 msgstr "Inizio del supporto.\n"
 
-#: winerror.mc:1311
+#: winerror.mc:1313
 msgid "Setmark detected.\n"
 msgstr "Rilevato setmark.\n"
 
-#: winerror.mc:1316
+#: winerror.mc:1318
 msgid "No data detected.\n"
 msgstr "Nessun dato rilevato.\n"
 
-#: winerror.mc:1321
+#: winerror.mc:1323
 msgid "Partition failure.\n"
 msgstr "Fallimento della partizione.\n"
 
-#: winerror.mc:1326
+#: winerror.mc:1328
 msgid "Invalid block length.\n"
 msgstr "Lunghezza del blocco non valida.\n"
 
-#: winerror.mc:1331
+#: winerror.mc:1333
 msgid "Device not partitioned.\n"
 msgstr "Unità non partizionata.\n"
 
-#: winerror.mc:1336
+#: winerror.mc:1338
 msgid "Unable to lock media.\n"
 msgstr "Impossibile bloccare il supporto.\n"
 
-#: winerror.mc:1341
+#: winerror.mc:1343
 msgid "Unable to unload media.\n"
 msgstr "Impossibile scaricare il supporto.\n"
 
-#: winerror.mc:1346
+#: winerror.mc:1348
 msgid "Media changed.\n"
 msgstr "Supporto cambiato.\n"
 
-#: winerror.mc:1351
+#: winerror.mc:1353
 msgid "I/O bus reset.\n"
 msgstr "Reset del bus I/O.\n"
 
-#: winerror.mc:1356
+#: winerror.mc:1358
 msgid "No media in drive.\n"
 msgstr "Nessun supporto nell'unità.\n"
 
-#: winerror.mc:1361
+#: winerror.mc:1363
 msgid "No Unicode translation.\n"
 msgstr "Nessuna traduzione Unicode.\n"
 
-#: winerror.mc:1366
+#: winerror.mc:1368
 #, fuzzy
 #| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "Inizializzazione DLL fallita.\n"
 
-#: winerror.mc:1371
+#: winerror.mc:1373
 msgid "Shutdown in progress.\n"
 msgstr "Spegnimento in corso.\n"
 
-#: winerror.mc:1376
+#: winerror.mc:1378
 msgid "No shutdown in progress.\n"
 msgstr "Nessuno spegnimento in corso.\n"
 
-#: winerror.mc:1381
+#: winerror.mc:1383
 msgid "I/O device error.\n"
 msgstr "Errore I/O dell'unità.\n"
 
-#: winerror.mc:1386
+#: winerror.mc:1388
 msgid "No serial devices found.\n"
 msgstr "Nessuna unità seriale trovata.\n"
 
-#: winerror.mc:1391
+#: winerror.mc:1393
 msgid "Shared IRQ busy.\n"
 msgstr "IRQ condiviso occupato.\n"
 
-#: winerror.mc:1396
+#: winerror.mc:1398
 msgid "Serial I/O completed.\n"
 msgstr "I/O seriale completato.\n"
 
-#: winerror.mc:1401
+#: winerror.mc:1403
 msgid "Serial I/O counter timeout.\n"
 msgstr "Timeout del contatore I/O seriale.\n"
 
-#: winerror.mc:1406
+#: winerror.mc:1408
 msgid "Floppy ID address mark not found.\n"
 msgstr "Marchio d'accesso all'ID del floppy non trovato.\n"
 
-#: winerror.mc:1411
+#: winerror.mc:1413
 msgid "Floppy reports wrong cylinder.\n"
 msgstr "Il floppy riporta cilindro sbagliato.\n"
 
-#: winerror.mc:1416
+#: winerror.mc:1418
 msgid "Unknown floppy error.\n"
 msgstr "Errore sconosciuto del floppy.\n"
 
-#: winerror.mc:1421
+#: winerror.mc:1423
 msgid "Floppy registers inconsistent.\n"
 msgstr "Registri del floppy inconsistenti.\n"
 
-#: winerror.mc:1426
+#: winerror.mc:1428
 msgid "Hard disk recalibrate failed.\n"
 msgstr "Ricalibrazione del disco rigido fallita.\n"
 
-#: winerror.mc:1431
+#: winerror.mc:1433
 msgid "Hard disk operation failed.\n"
 msgstr "Operazione del disco rigido fallita.\n"
 
-#: winerror.mc:1436
+#: winerror.mc:1438
 msgid "Hard disk reset failed.\n"
 msgstr "Reset del disco rigido fallito.\n"
 
-#: winerror.mc:1441
+#: winerror.mc:1443
 msgid "End of tape media.\n"
 msgstr "Fine del supporto a nastro.\n"
 
-#: winerror.mc:1446
+#: winerror.mc:1448
 msgid "Not enough server memory.\n"
 msgstr "Finita la memoria del server.\n"
 
-#: winerror.mc:1451
+#: winerror.mc:1453
 msgid "Possible deadlock.\n"
 msgstr "Possibile punto morto.\n"
 
-#: winerror.mc:1456
+#: winerror.mc:1458
 msgid "Incorrect alignment.\n"
 msgstr "Allineamento incorretto.\n"
 
-#: winerror.mc:1461
+#: winerror.mc:1463
 msgid "Set-power-state vetoed.\n"
 msgstr "Posto il veto su Set-power-state.\n"
 
-#: winerror.mc:1466
+#: winerror.mc:1468
 msgid "Set-power-state failed.\n"
 msgstr "Set-power-state fallito.\n"
 
-#: winerror.mc:1471
+#: winerror.mc:1473
 msgid "Too many links.\n"
 msgstr "Troppi collegamenti.\n"
 
-#: winerror.mc:1476
+#: winerror.mc:1478
 msgid "Newer windows version needed.\n"
 msgstr "Necessaria una versione di Windows più nuova.\n"
 
-#: winerror.mc:1481
+#: winerror.mc:1483
 msgid "Wrong operating system.\n"
 msgstr "Sistema operativo sbagliato.\n"
 
-#: winerror.mc:1486
+#: winerror.mc:1488
 msgid "Single-instance application.\n"
 msgstr "Applicazione a istanza singola.\n"
 
-#: winerror.mc:1491
+#: winerror.mc:1493
 msgid "Real-mode application.\n"
 msgstr "Applicazione a modalità reale.\n"
 
-#: winerror.mc:1496
+#: winerror.mc:1498
 msgid "Invalid DLL.\n"
 msgstr "DLL non valida.\n"
 
-#: winerror.mc:1501
+#: winerror.mc:1503
 msgid "No associated application.\n"
 msgstr "Nessuna applicazione associata.\n"
 
-#: winerror.mc:1506
+#: winerror.mc:1508
 msgid "DDE failure.\n"
 msgstr "Fallimento DDE.\n"
 
-#: winerror.mc:1511
+#: winerror.mc:1513
 msgid "DLL not found.\n"
 msgstr "DLL non trovata.\n"
 
-#: winerror.mc:1516
+#: winerror.mc:1518
 msgid "Out of user handles.\n"
 msgstr "Finiti gli handle dell'utente.\n"
 
-#: winerror.mc:1521
+#: winerror.mc:1523
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "Il messaggio può essere usato solo in chiamate sincronizzate.\n"
 
-#: winerror.mc:1526
+#: winerror.mc:1528
 msgid "The source element is empty.\n"
 msgstr "L'elemento sorgente è vuoto.\n"
 
-#: winerror.mc:1531
+#: winerror.mc:1533
 msgid "The destination element is full.\n"
 msgstr "L'elemento di destinazione è pieno.\n"
 
-#: winerror.mc:1536
+#: winerror.mc:1538
 msgid "The element address is invalid.\n"
 msgstr "L'indirizzo dell'elemento non è valido.\n"
 
-#: winerror.mc:1541
+#: winerror.mc:1543
 msgid "The magazine is not present.\n"
 msgstr "Il magazzino non è presente.\n"
 
-#: winerror.mc:1546
+#: winerror.mc:1548
 msgid "The device needs reinitialization.\n"
 msgstr "L'unità deve essere reinizializzata.\n"
 
-#: winerror.mc:1551
+#: winerror.mc:1553
 msgid "The device requires cleaning.\n"
 msgstr "L'unità necessita pulizia.\n"
 
-#: winerror.mc:1556
+#: winerror.mc:1558
 msgid "The device door is open.\n"
 msgstr "Lo sportello dell'unità è aperto.\n"
 
-#: winerror.mc:1561
+#: winerror.mc:1563
 msgid "The device is not connected.\n"
 msgstr "Unità non connessa.\n"
 
-#: winerror.mc:1566
+#: winerror.mc:1568
 msgid "Element not found.\n"
 msgstr "Elemento non trovato.\n"
 
-#: winerror.mc:1571
+#: winerror.mc:1573
 msgid "No match found.\n"
 msgstr "Nessuna corrispondenza trovata.\n"
 
-#: winerror.mc:1576
+#: winerror.mc:1578
 msgid "Property set not found.\n"
 msgstr "Insieme di proprietà non trovato.\n"
 
-#: winerror.mc:1581
+#: winerror.mc:1583
 msgid "Point not found.\n"
 msgstr "Punto non trovato.\n"
 
-#: winerror.mc:1586
+#: winerror.mc:1588
 msgid "No running tracking service.\n"
 msgstr "Nessun servizio di tracciamento in esecuzione.\n"
 
-#: winerror.mc:1591
+#: winerror.mc:1593
 msgid "No such volume ID.\n"
 msgstr "ID del volume inesistente.\n"
 
-#: winerror.mc:1596
+#: winerror.mc:1598
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "Impossibile rimuovere il file da sostituire.\n"
 
-#: winerror.mc:1601
+#: winerror.mc:1603
 msgid "Unable to move the replacement file into place.\n"
 msgstr "Impossibile spostare il file di sostituzione nella posizione.\n"
 
-#: winerror.mc:1606
+#: winerror.mc:1608
 msgid "Moving the replacement file failed.\n"
 msgstr "Spostamento del file di sostituzione fallito.\n"
 
-#: winerror.mc:1611
+#: winerror.mc:1613
 msgid "The journal is being deleted.\n"
 msgstr "Journal in corso di eliminazione.\n"
 
-#: winerror.mc:1616
+#: winerror.mc:1618
 msgid "The journal is not active.\n"
 msgstr "Journal non attivo.\n"
 
-#: winerror.mc:1621
+#: winerror.mc:1623
 msgid "Potential matching file found.\n"
 msgstr "Probabile file corrispondente trovato.\n"
 
-#: winerror.mc:1626
+#: winerror.mc:1628
 msgid "The journal entry was deleted.\n"
 msgstr "Voce del journal eliminata.\n"
 
-#: winerror.mc:1631
+#: winerror.mc:1633
 msgid "Invalid device name.\n"
 msgstr "Nome dell'unità non valido.\n"
 
-#: winerror.mc:1636
+#: winerror.mc:1638
 msgid "Connection unavailable.\n"
 msgstr "Connessione non disponibile.\n"
 
-#: winerror.mc:1641
+#: winerror.mc:1643
 msgid "Device already remembered.\n"
 msgstr "Unità già ricordata.\n"
 
-#: winerror.mc:1646
+#: winerror.mc:1648
 msgid "No network or bad path.\n"
 msgstr "Percorso non di rete o non corretto.\n"
 
-#: winerror.mc:1651
+#: winerror.mc:1653
 msgid "Invalid network provider name.\n"
 msgstr "Nome del provider network non valido.\n"
 
-#: winerror.mc:1656
+#: winerror.mc:1658
 msgid "Cannot open network connection profile.\n"
 msgstr "Impossibile aprire il profilo di connessione al network.\n"
 
-#: winerror.mc:1661
+#: winerror.mc:1663
 msgid "Corrupt network connection profile.\n"
 msgstr "Profilo di connessione al network corrotto.\n"
 
-#: winerror.mc:1666
+#: winerror.mc:1668
 msgid "Not a container.\n"
 msgstr "Non un contenitore.\n"
 
-#: winerror.mc:1671
+#: winerror.mc:1673
 msgid "Extended error.\n"
 msgstr "Errore esteso.\n"
 
-#: winerror.mc:1676
+#: winerror.mc:1678
 msgid "Invalid group name.\n"
 msgstr "Nome del gruppo non valido.\n"
 
-#: winerror.mc:1681
+#: winerror.mc:1683
 msgid "Invalid computer name.\n"
 msgstr "Nome del computer non valido.\n"
 
-#: winerror.mc:1686
+#: winerror.mc:1688
 msgid "Invalid event name.\n"
 msgstr "Nome dell'evento non valido.\n"
 
-#: winerror.mc:1691
+#: winerror.mc:1693
 msgid "Invalid domain name.\n"
 msgstr "Nome del dominio non valido.\n"
 
-#: winerror.mc:1696
+#: winerror.mc:1698
 msgid "Invalid service name.\n"
 msgstr "Nome del servizio non valido.\n"
 
-#: winerror.mc:1701
+#: winerror.mc:1703
 msgid "Invalid network name.\n"
 msgstr "Nome del network non valido.\n"
 
-#: winerror.mc:1706
+#: winerror.mc:1708
 msgid "Invalid share name.\n"
 msgstr "Nome dello share non valido.\n"
 
-#: winerror.mc:1716
+#: winerror.mc:1718
 msgid "Invalid message name.\n"
 msgstr "Nome del messaggio non valido.\n"
 
-#: winerror.mc:1721
+#: winerror.mc:1723
 msgid "Invalid message destination.\n"
 msgstr "Destinazione del messaggio non valida.\n"
 
-#: winerror.mc:1726
+#: winerror.mc:1728
 msgid "Session credential conflict.\n"
 msgstr "Conflitto delle credenziali di sessione.\n"
 
-#: winerror.mc:1731
+#: winerror.mc:1733
 msgid "Remote session limit exceeded.\n"
 msgstr "Superato il limite delle sessioni remote.\n"
 
-#: winerror.mc:1736
+#: winerror.mc:1738
 msgid "Duplicate domain or workgroup name.\n"
 msgstr "Nome del dominio o del workgroup duplicato.\n"
 
-#: winerror.mc:1741
+#: winerror.mc:1743
 msgid "No network.\n"
 msgstr "Nessun network.\n"
 
-#: winerror.mc:1746
+#: winerror.mc:1748
 msgid "Operation canceled by user.\n"
 msgstr "Operazione annullata dall'utente.\n"
 
-#: winerror.mc:1751
+#: winerror.mc:1753
 msgid "File has a user-mapped section.\n"
 msgstr "Il file ha una sezione mappata ad utente.\n"
 
-#: winerror.mc:1756 winerror.mc:3751
+#: winerror.mc:1758 winerror.mc:3753
 msgid "Connection refused.\n"
 msgstr "Connessione rifiutata.\n"
 
-#: winerror.mc:1761
+#: winerror.mc:1763
 msgid "Connection gracefully closed.\n"
 msgstr "Connessione ben chiusa.\n"
 
-#: winerror.mc:1766
+#: winerror.mc:1768
 msgid "Address already associated with transport endpoint.\n"
 msgstr "Indirizzo già associato con un endpoint di trasporto.\n"
 
-#: winerror.mc:1771
+#: winerror.mc:1773
 msgid "Address not associated with transport endpoint.\n"
 msgstr "Indirizzo non associato con un endpoint di trasporto.\n"
 
-#: winerror.mc:1776
+#: winerror.mc:1778
 msgid "Connection invalid.\n"
 msgstr "Connessione non valida.\n"
 
-#: winerror.mc:1781
+#: winerror.mc:1783
 msgid "Connection is active.\n"
 msgstr "Connessione attiva.\n"
 
-#: winerror.mc:1786
+#: winerror.mc:1788
 msgid "Network unreachable.\n"
 msgstr "Network non raggiungibile.\n"
 
-#: winerror.mc:1791
+#: winerror.mc:1793
 msgid "Host unreachable.\n"
 msgstr "Host non raggiungibile.\n"
 
-#: winerror.mc:1796
+#: winerror.mc:1798
 msgid "Protocol unreachable.\n"
 msgstr "Protocollo non raggiungibile.\n"
 
-#: winerror.mc:1801
+#: winerror.mc:1803
 msgid "Port unreachable.\n"
 msgstr "Porta non raggiungibile.\n"
 
-#: winerror.mc:1806
+#: winerror.mc:1808
 msgid "Request aborted.\n"
 msgstr "Richiesta interrotta.\n"
 
-#: winerror.mc:1811
+#: winerror.mc:1813
 msgid "Connection aborted.\n"
 msgstr "Connessione interrotta.\n"
 
-#: winerror.mc:1816
+#: winerror.mc:1818
 msgid "Please retry operation.\n"
 msgstr "Riprovare l'operazione.\n"
 
-#: winerror.mc:1821
+#: winerror.mc:1823
 msgid "Connection count limit reached.\n"
 msgstr "Raggiunto il limite di connessioni.\n"
 
-#: winerror.mc:1826
+#: winerror.mc:1828
 msgid "Login time restriction.\n"
 msgstr "Restrizione del tempo di login.\n"
 
-#: winerror.mc:1831
+#: winerror.mc:1833
 msgid "Login workstation restriction.\n"
 msgstr "Restrizione del login in workstation.\n"
 
-#: winerror.mc:1836
+#: winerror.mc:1838
 msgid "Incorrect network address.\n"
 msgstr "Indirizzo network non corretto.\n"
 
-#: winerror.mc:1841
+#: winerror.mc:1843
 msgid "Service already registered.\n"
 msgstr "Servizio già registrato.\n"
 
-#: winerror.mc:1846
+#: winerror.mc:1848
 msgid "Service not found.\n"
 msgstr "Servizio non trovato.\n"
 
-#: winerror.mc:1851
+#: winerror.mc:1853
 msgid "User not authenticated.\n"
 msgstr "Utente non autenticato.\n"
 
-#: winerror.mc:1856
+#: winerror.mc:1858
 msgid "User not logged on.\n"
 msgstr "Utente non logged in.\n"
 
-#: winerror.mc:1861
+#: winerror.mc:1863
 msgid "Continue work in progress.\n"
 msgstr "Continua il lavoro in corso.\n"
 
-#: winerror.mc:1866
+#: winerror.mc:1868
 msgid "Already initialized.\n"
 msgstr "Già inizializzato.\n"
 
-#: winerror.mc:1871
+#: winerror.mc:1873
 msgid "No more local devices.\n"
 msgstr "Nessuna unità locale in più.\n"
 
-#: winerror.mc:1876
+#: winerror.mc:1878
 msgid "The site does not exist.\n"
 msgstr "Sito inesistente.\n"
 
-#: winerror.mc:1881
+#: winerror.mc:1883
 msgid "The domain controller already exists.\n"
 msgstr "Il controllore del dominio già esiste.\n"
 
-#: winerror.mc:1886
+#: winerror.mc:1888
 msgid "Supported only when connected.\n"
 msgstr "Supportata solo quando connessa.\n"
 
-#: winerror.mc:1891
+#: winerror.mc:1893
 msgid "Perform operation even when nothing changed.\n"
 msgstr "Esegui operazione anche quando non ci sono modifiche.\n"
 
-#: winerror.mc:1896
+#: winerror.mc:1898
 msgid "The user profile is invalid.\n"
 msgstr "Profilo utente non valido.\n"
 
-#: winerror.mc:1901
+#: winerror.mc:1903
 msgid "Not supported on Small Business Server.\n"
 msgstr "Non supportato su Small Business Server.\n"
 
-#: winerror.mc:1906
+#: winerror.mc:1908
 msgid "Not all privileges assigned.\n"
 msgstr "Non tutti i privilegi assegnati.\n"
 
-#: winerror.mc:1911
+#: winerror.mc:1913
 msgid "Some security IDs not mapped.\n"
 msgstr "Alcuni ID di sicurezza non assegnati.\n"
 
-#: winerror.mc:1916
+#: winerror.mc:1918
 msgid "No quotas for account.\n"
 msgstr "Nessuna quota per account.\n"
 
-#: winerror.mc:1921
+#: winerror.mc:1923
 msgid "Local user session key.\n"
 msgstr "Chiave di sessione dell'utente locale.\n"
 
-#: winerror.mc:1926
+#: winerror.mc:1928
 msgid "Password too complex for LM.\n"
 msgstr "Password troppo complessa per LM.\n"
 
-#: winerror.mc:1931
+#: winerror.mc:1933
 msgid "Unknown revision.\n"
 msgstr "Revisione sconosciuta.\n"
 
-#: winerror.mc:1936
+#: winerror.mc:1938
 msgid "Incompatible revision levels.\n"
 msgstr "Livelli di revisione incompatibili.\n"
 
-#: winerror.mc:1941
+#: winerror.mc:1943
 msgid "Invalid owner.\n"
 msgstr "Proprietario non valido.\n"
 
-#: winerror.mc:1946
+#: winerror.mc:1948
 msgid "Invalid primary group.\n"
 msgstr "Gruppo primario non valido.\n"
 
-#: winerror.mc:1951
+#: winerror.mc:1953
 msgid "No impersonation token.\n"
 msgstr "Nessun token di rappresentazione.\n"
 
-#: winerror.mc:1956
+#: winerror.mc:1958
 msgid "Can't disable mandatory group.\n"
 msgstr "Impossibile disabilitare gruppo obbligatorio.\n"
 
-#: winerror.mc:1961
+#: winerror.mc:1963
 msgid "No logon servers available.\n"
 msgstr "Nessun server di logon disponibile.\n"
 
-#: winerror.mc:1966
+#: winerror.mc:1968
 msgid "No such logon session.\n"
 msgstr "Nessuna sessione logon del genere.\n"
 
-#: winerror.mc:1971
+#: winerror.mc:1973
 msgid "No such privilege.\n"
 msgstr "Nessun privilegio del genere.\n"
 
-#: winerror.mc:1976
+#: winerror.mc:1978
 msgid "Privilege not held.\n"
 msgstr "Privilegio non posseduto.\n"
 
-#: winerror.mc:1981
+#: winerror.mc:1983
 msgid "Invalid account name.\n"
 msgstr "Nome dell'account non valido.\n"
 
-#: winerror.mc:1986
+#: winerror.mc:1988
 msgid "User already exists.\n"
 msgstr "Utente già esistente.\n"
 
-#: winerror.mc:1991
+#: winerror.mc:1993
 msgid "No such user.\n"
 msgstr "Nessun utente del genere.\n"
 
-#: winerror.mc:1996
+#: winerror.mc:1998
 msgid "Group already exists.\n"
 msgstr "Gruppo già esistente.\n"
 
-#: winerror.mc:2001
+#: winerror.mc:2003
 msgid "No such group.\n"
 msgstr "Nessun gruppo del genere.\n"
 
-#: winerror.mc:2006
+#: winerror.mc:2008
 msgid "User already in group.\n"
 msgstr "Utente già nel gruppo.\n"
 
-#: winerror.mc:2011
+#: winerror.mc:2013
 msgid "User not in group.\n"
 msgstr "Utente non nel gruppo.\n"
 
-#: winerror.mc:2016
+#: winerror.mc:2018
 msgid "Can't delete last admin user.\n"
 msgstr "Impossibile eliminare l'ultimo utente amministratore.\n"
 
-#: winerror.mc:2021
+#: winerror.mc:2023
 msgid "Wrong password.\n"
 msgstr "Password sbagliata.\n"
 
-#: winerror.mc:2026
+#: winerror.mc:2028
 msgid "Ill-formed password.\n"
 msgstr "Password malformata.\n"
 
-#: winerror.mc:2031
+#: winerror.mc:2033
 msgid "Password restriction.\n"
 msgstr "Restrizione sulla password.\n"
 
-#: winerror.mc:2036
+#: winerror.mc:2038
 msgid "Logon failure.\n"
 msgstr "Logon fallito.\n"
 
-#: winerror.mc:2041
+#: winerror.mc:2043
 msgid "Account restriction.\n"
 msgstr "Restrizione sull'account.\n"
 
-#: winerror.mc:2046
+#: winerror.mc:2048
 msgid "Invalid logon hours.\n"
 msgstr "Ore di logon non valide.\n"
 
-#: winerror.mc:2051
+#: winerror.mc:2053
 msgid "Invalid workstation.\n"
 msgstr "Workstation non valida.\n"
 
-#: winerror.mc:2056
+#: winerror.mc:2058
 msgid "Password expired.\n"
 msgstr "Password scaduta.\n"
 
-#: winerror.mc:2061
+#: winerror.mc:2063
 msgid "Account disabled.\n"
 msgstr "Account disabilitato.\n"
 
-#: winerror.mc:2066
+#: winerror.mc:2068
 msgid "No security ID mapped.\n"
 msgstr "Nessun ID di sicurezza mappato.\n"
 
-#: winerror.mc:2071
+#: winerror.mc:2073
 msgid "Too many LUIDs requested.\n"
 msgstr "Troppi LUID richiesti.\n"
 
-#: winerror.mc:2076
+#: winerror.mc:2078
 msgid "LUIDs exhausted.\n"
 msgstr "LUID finiti.\n"
 
-#: winerror.mc:2081
+#: winerror.mc:2083
 msgid "Invalid sub authority.\n"
 msgstr "Sotto autorità non valida.\n"
 
-#: winerror.mc:2086
+#: winerror.mc:2088
 msgid "Invalid ACL.\n"
 msgstr "ACL non valido.\n"
 
-#: winerror.mc:2091
+#: winerror.mc:2093
 msgid "Invalid SID.\n"
 msgstr "SID non valido.\n"
 
-#: winerror.mc:2096
+#: winerror.mc:2098
 msgid "Invalid security descriptor.\n"
 msgstr "Descrittore di sicurezza non valido.\n"
 
-#: winerror.mc:2101
+#: winerror.mc:2103
 msgid "Bad inherited ACL.\n"
 msgstr "ACL ereditato non corretto.\n"
 
-#: winerror.mc:2106
+#: winerror.mc:2108
 msgid "Server disabled.\n"
 msgstr "Server disabilitato.\n"
 
-#: winerror.mc:2111
+#: winerror.mc:2113
 msgid "Server not disabled.\n"
 msgstr "Server non disabilitato.\n"
 
-#: winerror.mc:2116
+#: winerror.mc:2118
 msgid "Invalid ID authority.\n"
 msgstr "ID autorità non valido.\n"
 
-#: winerror.mc:2121
+#: winerror.mc:2123
 msgid "Allotted space exceeded.\n"
 msgstr "Superato lo spazio assegnato.\n"
 
-#: winerror.mc:2126
+#: winerror.mc:2128
 msgid "Invalid group attributes.\n"
 msgstr "Attributi del gruppo non validi.\n"
 
-#: winerror.mc:2131
+#: winerror.mc:2133
 msgid "Bad impersonation level.\n"
 msgstr "Livello di rappresentazione non valido.\n"
 
-#: winerror.mc:2136
+#: winerror.mc:2138
 msgid "Can't open anonymous security token.\n"
 msgstr "Impossibile aprire il token di sicurezza anonimo.\n"
 
-#: winerror.mc:2141
+#: winerror.mc:2143
 msgid "Bad validation class.\n"
 msgstr "Classe di convalida non corretta.\n"
 
-#: winerror.mc:2146
+#: winerror.mc:2148
 msgid "Bad token type.\n"
 msgstr "Tipo del token non corretto.\n"
 
-#: winerror.mc:2151
+#: winerror.mc:2153
 msgid "No security on object.\n"
 msgstr "Nessuna sicurezza sull'oggetto.\n"
 
-#: winerror.mc:2156
+#: winerror.mc:2158
 msgid "Can't access domain information.\n"
 msgstr "Impossibile accedere alle informazioni sul dominio.\n"
 
-#: winerror.mc:2161
+#: winerror.mc:2163
 msgid "Invalid server state.\n"
 msgstr "Stato del server non valido.\n"
 
-#: winerror.mc:2166
+#: winerror.mc:2168
 msgid "Invalid domain state.\n"
 msgstr "Stato del dominio non valido.\n"
 
-#: winerror.mc:2171
+#: winerror.mc:2173
 msgid "Invalid domain role.\n"
 msgstr "Ruolo del dominio non valido.\n"
 
-#: winerror.mc:2176
+#: winerror.mc:2178
 msgid "No such domain.\n"
 msgstr "Nessun dominio del genere.\n"
 
-#: winerror.mc:2181
+#: winerror.mc:2183
 msgid "Domain already exists.\n"
 msgstr "Dominio esistente.\n"
 
-#: winerror.mc:2186
+#: winerror.mc:2188
 msgid "Domain limit exceeded.\n"
 msgstr "Superato il limite di domini.\n"
 
-#: winerror.mc:2191
+#: winerror.mc:2193
 msgid "Internal database corruption.\n"
 msgstr "Corruzione del database interno.\n"
 
-#: winerror.mc:2196
+#: winerror.mc:2198
 msgid "Internal error.\n"
 msgstr "Errore interno.\n"
 
-#: winerror.mc:2201
+#: winerror.mc:2203
 msgid "Generic access types not mapped.\n"
 msgstr "Tipi di accesso generico non mappati.\n"
 
-#: winerror.mc:2206
+#: winerror.mc:2208
 msgid "Bad descriptor format.\n"
 msgstr "Formato del descrittore non corretto.\n"
 
-#: winerror.mc:2211
+#: winerror.mc:2213
 msgid "Not a logon process.\n"
 msgstr "Non un processo di logon.\n"
 
-#: winerror.mc:2216
+#: winerror.mc:2218
 msgid "Logon session ID exists.\n"
 msgstr "L'ID della sessione di logon esiste.\n"
 
-#: winerror.mc:2221
+#: winerror.mc:2223
 msgid "Unknown authentication package.\n"
 msgstr "Pacchetto di autenticazione sconosciuto.\n"
 
-#: winerror.mc:2226
+#: winerror.mc:2228
 msgid "Bad logon session state.\n"
 msgstr "Stato della sessione di logon non corretto.\n"
 
-#: winerror.mc:2231
+#: winerror.mc:2233
 msgid "Logon session ID collision.\n"
 msgstr "Collisione ID sessione di logon.\n"
 
-#: winerror.mc:2236
+#: winerror.mc:2238
 msgid "Invalid logon type.\n"
 msgstr "Tipo di logon non valido.\n"
 
-#: winerror.mc:2241
+#: winerror.mc:2243
 msgid "Cannot impersonate.\n"
 msgstr "Impossibile rappresentare.\n"
 
-#: winerror.mc:2246
+#: winerror.mc:2248
 msgid "Invalid transaction state.\n"
 msgstr "Stato della transazione non valido.\n"
 
-#: winerror.mc:2251
+#: winerror.mc:2253
 msgid "Security DB commit failure.\n"
 msgstr "Fallimento del commit al DB della sicurezza.\n"
 
-#: winerror.mc:2256
+#: winerror.mc:2258
 msgid "Account is built-in.\n"
 msgstr "Account predefinito.\n"
 
-#: winerror.mc:2261
+#: winerror.mc:2263
 msgid "Group is built-in.\n"
 msgstr "Gruppo predefinito.\n"
 
-#: winerror.mc:2266
+#: winerror.mc:2268
 msgid "User is built-in.\n"
 msgstr "Utente predefinito.\n"
 
-#: winerror.mc:2271
+#: winerror.mc:2273
 msgid "Group is primary for user.\n"
 msgstr "Gruppo primario per l'utente.\n"
 
-#: winerror.mc:2276
+#: winerror.mc:2278
 msgid "Token already in use.\n"
 msgstr "Token già in uso.\n"
 
-#: winerror.mc:2281
+#: winerror.mc:2283
 msgid "No such local group.\n"
 msgstr "Nessun gruppo locale del genere.\n"
 
-#: winerror.mc:2286
+#: winerror.mc:2288
 msgid "User not in local group.\n"
 msgstr "Utente non nel gruppo locale.\n"
 
-#: winerror.mc:2291
+#: winerror.mc:2293
 msgid "User already in local group.\n"
 msgstr "Utente già nel gruppo locale.\n"
 
-#: winerror.mc:2296
+#: winerror.mc:2298
 msgid "Local group already exists.\n"
 msgstr "Gruppo locale esistente.\n"
 
-#: winerror.mc:2301 winerror.mc:2326
+#: winerror.mc:2303 winerror.mc:2328
 msgid "Logon type not granted.\n"
 msgstr "Tipo di logon non garantito.\n"
 
-#: winerror.mc:2306
+#: winerror.mc:2308
 msgid "Too many secrets.\n"
 msgstr "Troppi segreti.\n"
 
-#: winerror.mc:2311
+#: winerror.mc:2313
 msgid "Secret too long.\n"
 msgstr "Segreto troppo lungo.\n"
 
-#: winerror.mc:2316
+#: winerror.mc:2318
 msgid "Internal security DB error.\n"
 msgstr "Errore interno del DB della sicurezza.\n"
 
-#: winerror.mc:2321
+#: winerror.mc:2323
 msgid "Too many context IDs.\n"
 msgstr "Troppi ID di contesto.\n"
 
-#: winerror.mc:2331
+#: winerror.mc:2333
 msgid "Cross-encrypted NT password required.\n"
 msgstr "Richiesta password NT cross-criptata.\n"
 
-#: winerror.mc:2336
+#: winerror.mc:2338
 msgid "No such member.\n"
 msgstr "Nessun membro del genere.\n"
 
-#: winerror.mc:2341
+#: winerror.mc:2343
 msgid "Invalid member.\n"
 msgstr "Membro non valido.\n"
 
-#: winerror.mc:2346
+#: winerror.mc:2348
 msgid "Too many SIDs.\n"
 msgstr "Troppi SID.\n"
 
-#: winerror.mc:2351
+#: winerror.mc:2353
 msgid "Cross-encrypted LM password required.\n"
 msgstr "Richiesta password LM cross-criptata.\n"
 
-#: winerror.mc:2356
+#: winerror.mc:2358
 msgid "No inheritable components.\n"
 msgstr "Nessun componente ereditabile.\n"
 
-#: winerror.mc:2361
+#: winerror.mc:2363
 msgid "File or directory corrupt.\n"
 msgstr "File o cartella corrotti.\n"
 
-#: winerror.mc:2366
+#: winerror.mc:2368
 msgid "Disk is corrupt.\n"
 msgstr "Disco corrotto.\n"
 
-#: winerror.mc:2371
+#: winerror.mc:2373
 msgid "No user session key.\n"
 msgstr "Nessuna chiave di sessione utente.\n"
 
-#: winerror.mc:2376
+#: winerror.mc:2378
 msgid "License quota exceeded.\n"
 msgstr "Superata la quota di licenze.\n"
 
-#: winerror.mc:2381
+#: winerror.mc:2383
 msgid "Wrong target name.\n"
 msgstr "Nome dell'obiettivo non corretto.\n"
 
-#: winerror.mc:2386
+#: winerror.mc:2388
 msgid "Mutual authentication failed.\n"
 msgstr "Autenticazione mutuale fallita.\n"
 
-#: winerror.mc:2391
+#: winerror.mc:2393
 msgid "Time skew between client and server.\n"
 msgstr "Scostamento temporale tra client e server.\n"
 
-#: winerror.mc:2396
+#: winerror.mc:2398
 msgid "Invalid window handle.\n"
 msgstr "Handle della finestra non valido.\n"
 
-#: winerror.mc:2401
+#: winerror.mc:2403
 msgid "Invalid menu handle.\n"
 msgstr "Handle del menù non valido.\n"
 
-#: winerror.mc:2406
+#: winerror.mc:2408
 msgid "Invalid cursor handle.\n"
 msgstr "Handle del cursore non valido.\n"
 
-#: winerror.mc:2411
+#: winerror.mc:2413
 msgid "Invalid accelerator table handle.\n"
 msgstr "Handle della tabella dell'acceleratore non valido.\n"
 
-#: winerror.mc:2416
+#: winerror.mc:2418
 msgid "Invalid hook handle.\n"
 msgstr "Handle dell'hook non valido.\n"
 
-#: winerror.mc:2421
+#: winerror.mc:2423
 msgid "Invalid DWP handle.\n"
 msgstr "Handle DWP non valido.\n"
 
-#: winerror.mc:2426
+#: winerror.mc:2428
 msgid "Can't create top-level child window.\n"
 msgstr "Impossibile creare finestra figlia top-level.\n"
 
-#: winerror.mc:2431
+#: winerror.mc:2433
 msgid "Can't find window class.\n"
 msgstr "Impossibile trovare la class finestra.\n"
 
-#: winerror.mc:2436
+#: winerror.mc:2438
 msgid "Window owned by another thread.\n"
 msgstr "Finestra posseduta da un altro thread.\n"
 
-#: winerror.mc:2441
+#: winerror.mc:2443
 msgid "Hotkey already registered.\n"
 msgstr "Scorciatoia da tastiera già registrata.\n"
 
-#: winerror.mc:2446
+#: winerror.mc:2448
 msgid "Class already exists.\n"
 msgstr "Class esistente.\n"
 
-#: winerror.mc:2451
+#: winerror.mc:2453
 msgid "Class does not exist.\n"
 msgstr "Class non esiste.\n"
 
-#: winerror.mc:2456
+#: winerror.mc:2458
 msgid "Class has open windows.\n"
 msgstr "Class con finestre aperte.\n"
 
-#: winerror.mc:2461
+#: winerror.mc:2463
 msgid "Invalid index.\n"
 msgstr "Indice non valido.\n"
 
-#: winerror.mc:2466
+#: winerror.mc:2468
 msgid "Invalid icon handle.\n"
 msgstr "Handle dell'icona non valido.\n"
 
-#: winerror.mc:2471
+#: winerror.mc:2473
 msgid "Private dialog index.\n"
 msgstr "Indice di un dialog privato.\n"
 
-#: winerror.mc:2476
+#: winerror.mc:2478
 msgid "List box ID not found.\n"
 msgstr "ID List Box non trovato.\n"
 
-#: winerror.mc:2481
+#: winerror.mc:2483
 msgid "No wildcard characters.\n"
 msgstr "Nessun carattere jolly.\n"
 
-#: winerror.mc:2486
+#: winerror.mc:2488
 msgid "Clipboard not open.\n"
 msgstr "Appunti non aperti.\n"
 
-#: winerror.mc:2491
+#: winerror.mc:2493
 msgid "Hotkey not registered.\n"
 msgstr "Scorciatoia da tastiere non registrata.\n"
 
-#: winerror.mc:2496
+#: winerror.mc:2498
 msgid "Not a dialog window.\n"
 msgstr "Non una finestra dialog.\n"
 
-#: winerror.mc:2501
+#: winerror.mc:2503
 msgid "Control ID not found.\n"
 msgstr "ID del controllo non trovato.\n"
 
-#: winerror.mc:2506
+#: winerror.mc:2508
 msgid "Invalid combo box message.\n"
 msgstr "Messaggio della combo box non valido.\n"
 
-#: winerror.mc:2511
+#: winerror.mc:2513
 msgid "Not a combo box window.\n"
 msgstr "Non una finestra combo box.\n"
 
-#: winerror.mc:2516
+#: winerror.mc:2518
 msgid "Invalid edit height.\n"
 msgstr "Modifica dell'altezza non valida.\n"
 
-#: winerror.mc:2521
+#: winerror.mc:2523
 msgid "DC not found.\n"
 msgstr "DC non trovata.\n"
 
-#: winerror.mc:2526
+#: winerror.mc:2528
 msgid "Invalid hook filter.\n"
 msgstr "Filtro dell'hook non valido.\n"
 
-#: winerror.mc:2531
+#: winerror.mc:2533
 msgid "Invalid filter procedure.\n"
 msgstr "Procedura del filtro non valida.\n"
 
-#: winerror.mc:2536
+#: winerror.mc:2538
 msgid "Hook procedure needs module handle.\n"
 msgstr "La procedura dell'hook necessita dell'handle del modulo.\n"
 
-#: winerror.mc:2541
+#: winerror.mc:2543
 msgid "Global-only hook procedure.\n"
 msgstr "Procedura hook solo globale.\n"
 
-#: winerror.mc:2546
+#: winerror.mc:2548
 msgid "Journal hook already set.\n"
 msgstr "Hook del giornale già impostato.\n"
 
-#: winerror.mc:2551
+#: winerror.mc:2553
 msgid "Hook procedure not installed.\n"
 msgstr "Procedura hook non installata.\n"
 
-#: winerror.mc:2556
+#: winerror.mc:2558
 msgid "Invalid list box message.\n"
 msgstr "Messaggio della list box non valido.\n"
 
-#: winerror.mc:2561
+#: winerror.mc:2563
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr "LB_SETCOUNT inviato non valido.\n"
 
-#: winerror.mc:2566
+#: winerror.mc:2568
 msgid "No tab stops on this list box.\n"
 msgstr "Nessun tab stop in questa list box.\n"
 
-#: winerror.mc:2571
+#: winerror.mc:2573
 msgid "Can't destroy object owned by another thread.\n"
 msgstr "Impossibile distruggere oggetto posseduto da un altro thread.\n"
 
-#: winerror.mc:2576
+#: winerror.mc:2578
 msgid "Child window menus not allowed.\n"
 msgstr "Menù nella finestra figlia non permessi.\n"
 
-#: winerror.mc:2581
+#: winerror.mc:2583
 msgid "Window has no system menu.\n"
 msgstr "La finestra non ha un menù di sistema.\n"
 
-#: winerror.mc:2586
+#: winerror.mc:2588
 msgid "Invalid message box style.\n"
 msgstr "Stile del messagebox non valido.\n"
 
-#: winerror.mc:2591
+#: winerror.mc:2593
 msgid "Invalid SPI parameter.\n"
 msgstr "Parametro SPI non valido.\n"
 
-#: winerror.mc:2596
+#: winerror.mc:2598
 msgid "Screen already locked.\n"
 msgstr "Schermo già bloccato.\n"
 
-#: winerror.mc:2601
+#: winerror.mc:2603
 msgid "Window handles have different parents.\n"
 msgstr "Gli handle della finestra hanno genitori differenti.\n"
 
-#: winerror.mc:2606
+#: winerror.mc:2608
 msgid "Not a child window.\n"
 msgstr "Non una finestra figlia.\n"
 
-#: winerror.mc:2611
+#: winerror.mc:2613
 msgid "Invalid GW command.\n"
 msgstr "Comando GW non valido.\n"
 
-#: winerror.mc:2616
+#: winerror.mc:2618
 msgid "Invalid thread ID.\n"
 msgstr "ID thread non valido.\n"
 
-#: winerror.mc:2621
+#: winerror.mc:2623
 msgid "Not an MDI child window.\n"
 msgstr "Non una finestra figlia MDI.\n"
 
-#: winerror.mc:2626
+#: winerror.mc:2628
 msgid "Popup menu already active.\n"
 msgstr "Menù a comparsa già attivo.\n"
 
-#: winerror.mc:2631
+#: winerror.mc:2633
 msgid "No scrollbars.\n"
 msgstr "Nessuna barra dello scorrimento.\n"
 
-#: winerror.mc:2636
+#: winerror.mc:2638
 msgid "Invalid scrollbar range.\n"
 msgstr "Range della barra dello scorrimento non valido.\n"
 
-#: winerror.mc:2641
+#: winerror.mc:2643
 msgid "Invalid ShowWin command.\n"
 msgstr "Comando ShowWin non valido.\n"
 
-#: winerror.mc:2646
+#: winerror.mc:2648
 msgid "No system resources.\n"
 msgstr "Nessuna risorsa di sistema.\n"
 
-#: winerror.mc:2651
+#: winerror.mc:2653
 msgid "No non-paged system resources.\n"
 msgstr "Nessuna risorsa di sistema non paginata.\n"
 
-#: winerror.mc:2656
+#: winerror.mc:2658
 msgid "No paged system resources.\n"
 msgstr "Nessuna risorsa di sistema paginata.\n"
 
-#: winerror.mc:2661
+#: winerror.mc:2663
 msgid "No working set quota.\n"
 msgstr "Nessuna quota impostata funzionante.\n"
 
-#: winerror.mc:2666
+#: winerror.mc:2668
 msgid "No page file quota.\n"
 msgstr "Nessuna quota del file di paginazione.\n"
 
-#: winerror.mc:2671
+#: winerror.mc:2673
 msgid "Exceeded commitment limit.\n"
 msgstr "Superato il limite di commitment.\n"
 
-#: winerror.mc:2676
+#: winerror.mc:2678
 msgid "Menu item not found.\n"
 msgstr "Elemento del menù non trovato.\n"
 
-#: winerror.mc:2681
+#: winerror.mc:2683
 msgid "Invalid keyboard handle.\n"
 msgstr "Handle della tastiera non valido.\n"
 
-#: winerror.mc:2686
+#: winerror.mc:2688
 msgid "Hook type not allowed.\n"
 msgstr "Tipo di aggancio non permesso.\n"
 
-#: winerror.mc:2691
+#: winerror.mc:2693
 msgid "Interactive window station required.\n"
 msgstr "Stazione interattiva di finestre richiesta.\n"
 
-#: winerror.mc:2696
+#: winerror.mc:2698
 msgid "Timeout.\n"
 msgstr "Tempo scaduto.\n"
 
-#: winerror.mc:2701
+#: winerror.mc:2703
 msgid "Invalid monitor handle.\n"
 msgstr "Handle del monitor non valido.\n"
 
-#: winerror.mc:2706
+#: winerror.mc:2708
 msgid "Event log file corrupt.\n"
 msgstr "File di log degli eventi corrotto.\n"
 
-#: winerror.mc:2711
+#: winerror.mc:2713
 msgid "Event log can't start.\n"
 msgstr "Impossibile avviare il log degli eventi.\n"
 
-#: winerror.mc:2716
+#: winerror.mc:2718
 msgid "Event log file full.\n"
 msgstr "File di log degli eventi pieno.\n"
 
-#: winerror.mc:2721
+#: winerror.mc:2723
 msgid "Event log file changed.\n"
 msgstr "Cambiato il file di log degli eventi.\n"
 
-#: winerror.mc:2726
+#: winerror.mc:2728
 msgid "Installer service failed.\n"
 msgstr "Fallimento del servizio di installazione.\n"
 
-#: winerror.mc:2731
+#: winerror.mc:2733
 msgid "Installation aborted by user.\n"
 msgstr "Installazione interrotta dall'utente.\n"
 
-#: winerror.mc:2736
+#: winerror.mc:2738
 msgid "Installation failure.\n"
 msgstr "Installazione fallita.\n"
 
-#: winerror.mc:2741
+#: winerror.mc:2743
 msgid "Installation suspended.\n"
 msgstr "Installazione sospesa.\n"
 
-#: winerror.mc:2746
+#: winerror.mc:2748
 msgid "Unknown product.\n"
 msgstr "Prodotto sconosciuto.\n"
 
-#: winerror.mc:2751
+#: winerror.mc:2753
 msgid "Unknown feature.\n"
 msgstr "Funzionalità sconosciuta.\n"
 
-#: winerror.mc:2756
+#: winerror.mc:2758
 msgid "Unknown component.\n"
 msgstr "Componente sconosciuto.\n"
 
-#: winerror.mc:2761
+#: winerror.mc:2763
 msgid "Unknown property.\n"
 msgstr "Proprietà sconosciuta.\n"
 
-#: winerror.mc:2766
+#: winerror.mc:2768
 msgid "Invalid handle state.\n"
 msgstr "Stato handle non valido.\n"
 
-#: winerror.mc:2771
+#: winerror.mc:2773
 msgid "Bad configuration.\n"
 msgstr "Configurazione non buona.\n"
 
-#: winerror.mc:2776
+#: winerror.mc:2778
 msgid "Index is missing.\n"
 msgstr "Indice mancante.\n"
 
-#: winerror.mc:2781
+#: winerror.mc:2783
 msgid "Installation source is missing.\n"
 msgstr "Sorgente di installazione mancante.\n"
 
-#: winerror.mc:2786
+#: winerror.mc:2788
 msgid "Wrong installation package version.\n"
 msgstr "Versione del pacchetto di installazione sbagliata.\n"
 
-#: winerror.mc:2791
+#: winerror.mc:2793
 msgid "Product uninstalled.\n"
 msgstr "Prodotto disinstallato.\n"
 
-#: winerror.mc:2796
+#: winerror.mc:2798
 msgid "Invalid query syntax.\n"
 msgstr "Sintassi della richiesta non valida.\n"
 
-#: winerror.mc:2801
+#: winerror.mc:2803
 msgid "Invalid field.\n"
 msgstr "Campo non valido.\n"
 
-#: winerror.mc:2806
+#: winerror.mc:2808
 msgid "Device removed.\n"
 msgstr "Unità rimossa.\n"
 
-#: winerror.mc:2811
+#: winerror.mc:2813
 msgid "Installation already running.\n"
 msgstr "Installazione già in esecuzione.\n"
 
-#: winerror.mc:2816
+#: winerror.mc:2818
 msgid "Installation package failed to open.\n"
 msgstr "Impossibile aprire il pacchetto di installazione.\n"
 
-#: winerror.mc:2821
+#: winerror.mc:2823
 msgid "Installation package is invalid.\n"
 msgstr "Pacchetto di installazione non valido.\n"
 
-#: winerror.mc:2826
+#: winerror.mc:2828
 msgid "Installer user interface failed.\n"
 msgstr "Fallimento dell'interfaccia utente dell'installer.\n"
 
-#: winerror.mc:2831
+#: winerror.mc:2833
 msgid "Failed to open installation log file.\n"
 msgstr "Impossibile aprire il file log di installazione.\n"
 
-#: winerror.mc:2836
+#: winerror.mc:2838
 msgid "Installation language not supported.\n"
 msgstr "Linguaggio di installazione non supportato.\n"
 
-#: winerror.mc:2841
+#: winerror.mc:2843
 msgid "Installation transform failed to apply.\n"
 msgstr "Impossibile applicare la trasformazione di installazione.\n"
 
-#: winerror.mc:2846
+#: winerror.mc:2848
 msgid "Installation package rejected.\n"
 msgstr "Pacchetto di installazione respinto.\n"
 
-#: winerror.mc:2851
+#: winerror.mc:2853
 msgid "Function could not be called.\n"
 msgstr "Impossibile chiamare funzione.\n"
 
-#: winerror.mc:2856
+#: winerror.mc:2858
 msgid "Function failed.\n"
 msgstr "Fallimento della funzione.\n"
 
-#: winerror.mc:2861
+#: winerror.mc:2863
 msgid "Invalid table.\n"
 msgstr "Tabella non valida.\n"
 
-#: winerror.mc:2866
+#: winerror.mc:2868
 msgid "Data type mismatch.\n"
 msgstr "Discordanza del tipo dei dati.\n"
 
-#: winerror.mc:2871 winerror.mc:3081
+#: winerror.mc:2873 winerror.mc:3083
 msgid "Unsupported type.\n"
 msgstr "Tipo non supportato.\n"
 
-#: winerror.mc:2876
+#: winerror.mc:2878
 msgid "Creation failed.\n"
 msgstr "Creazione fallita.\n"
 
-#: winerror.mc:2881
+#: winerror.mc:2883
 msgid "Temporary directory not writable.\n"
 msgstr "Cartella temporanea non scrivibile.\n"
 
-#: winerror.mc:2886
+#: winerror.mc:2888
 msgid "Installation platform not supported.\n"
 msgstr "Piattaforma di installazione non supportata.\n"
 
-#: winerror.mc:2891
+#: winerror.mc:2893
 msgid "Installer not used.\n"
 msgstr "Installer non usato.\n"
 
-#: winerror.mc:2896
+#: winerror.mc:2898
 msgid "Failed to open the patch package.\n"
 msgstr "Impossibile aprire il pacchetto patch.\n"
 
-#: winerror.mc:2901
+#: winerror.mc:2903
 msgid "Invalid patch package.\n"
 msgstr "Pacchetto patch non valido.\n"
 
-#: winerror.mc:2906
+#: winerror.mc:2908
 msgid "Unsupported patch package.\n"
 msgstr "Pacchetto patch non supportato.\n"
 
-#: winerror.mc:2911
+#: winerror.mc:2913
 msgid "Another version is installed.\n"
 msgstr "Un'altra versione è già installato.\n"
 
-#: winerror.mc:2916
+#: winerror.mc:2918
 msgid "Invalid command line.\n"
 msgstr "Linea di comando non valida.\n"
 
-#: winerror.mc:2921
+#: winerror.mc:2923
 msgid "Remote installation not allowed.\n"
 msgstr "Installazione da remoto non permessa.\n"
 
-#: winerror.mc:2926
+#: winerror.mc:2928
 msgid "Reboot initiated after successful install.\n"
 msgstr "Riavvio iniziato a seguito dell'installazione riuscita.\n"
 
-#: winerror.mc:2931
+#: winerror.mc:2933
 msgid "Invalid string binding.\n"
 msgstr "Legame di stringa non valido.\n"
 
-#: winerror.mc:2936
+#: winerror.mc:2938
 msgid "Wrong kind of binding.\n"
 msgstr "Tipo sbagliato di legame.\n"
 
-#: winerror.mc:2941
+#: winerror.mc:2943
 msgid "Invalid binding.\n"
 msgstr "Legame non valido.\n"
 
-#: winerror.mc:2946
+#: winerror.mc:2948
 msgid "RPC protocol sequence not supported.\n"
 msgstr "Sequenza del protocollo RPC non supportata.\n"
 
-#: winerror.mc:2951
+#: winerror.mc:2953
 msgid "Invalid RPC protocol sequence.\n"
 msgstr "Sequenza del protocollo RPC non valida.\n"
 
-#: winerror.mc:2956
+#: winerror.mc:2958
 msgid "Invalid string UUID.\n"
 msgstr "UUID della stringa non valido.\n"
 
-#: winerror.mc:2961
+#: winerror.mc:2963
 msgid "Invalid endpoint format.\n"
 msgstr "Formato endpoint non valido.\n"
 
-#: winerror.mc:2966
+#: winerror.mc:2968
 msgid "Invalid network address.\n"
 msgstr "Indirizzo network non valido.\n"
 
-#: winerror.mc:2971
+#: winerror.mc:2973
 msgid "No endpoint found.\n"
 msgstr "Nessun endpoint trovato.\n"
 
-#: winerror.mc:2976
+#: winerror.mc:2978
 msgid "Invalid timeout value.\n"
 msgstr "Valore di timeout non valido.\n"
 
-#: winerror.mc:2981
+#: winerror.mc:2983
 msgid "Object UUID not found.\n"
 msgstr "UUID dell'oggetto non trovato.\n"
 
-#: winerror.mc:2986
+#: winerror.mc:2988
 msgid "UUID already registered.\n"
 msgstr "UUID già registrato.\n"
 
-#: winerror.mc:2991
+#: winerror.mc:2993
 msgid "UUID type already registered.\n"
 msgstr "Tipo UUID già registrato.\n"
 
-#: winerror.mc:2996
+#: winerror.mc:2998
 msgid "Server already listening.\n"
 msgstr "Server in ascolto.\n"
 
-#: winerror.mc:3001
+#: winerror.mc:3003
 msgid "No protocol sequences registered.\n"
 msgstr "Nessuna sequenza di protocollo registrata.\n"
 
-#: winerror.mc:3006
+#: winerror.mc:3008
 msgid "RPC server not listening.\n"
 msgstr "Server RPC non in ascolto.\n"
 
-#: winerror.mc:3011
+#: winerror.mc:3013
 msgid "Unknown manager type.\n"
 msgstr "Tipo del gestore sconosciuto.\n"
 
-#: winerror.mc:3016
+#: winerror.mc:3018
 msgid "Unknown interface.\n"
 msgstr "Interfaccia sconosciuta.\n"
 
-#: winerror.mc:3021
+#: winerror.mc:3023
 msgid "No bindings.\n"
 msgstr "Nessun legame.\n"
 
-#: winerror.mc:3026
+#: winerror.mc:3028
 msgid "No protocol sequences.\n"
 msgstr "Nessuna sequenza di protocollo.\n"
 
-#: winerror.mc:3031
+#: winerror.mc:3033
 msgid "Can't create endpoint.\n"
 msgstr "Impossibile creare endpoint.\n"
 
-#: winerror.mc:3036
+#: winerror.mc:3038
 msgid "Out of resources.\n"
 msgstr "Risorse finite.\n"
 
-#: winerror.mc:3041
+#: winerror.mc:3043
 msgid "RPC server unavailable.\n"
 msgstr "Server RPC non disponibile.\n"
 
-#: winerror.mc:3046
+#: winerror.mc:3048
 msgid "RPC server too busy.\n"
 msgstr "Server RPC troppo occupato.\n"
 
-#: winerror.mc:3051
+#: winerror.mc:3053
 msgid "Invalid network options.\n"
 msgstr "Opzioni network non valide.\n"
 
-#: winerror.mc:3056
+#: winerror.mc:3058
 msgid "No RPC call active.\n"
 msgstr "Nessuna chiamata RPC attiva.\n"
 
-#: winerror.mc:3061
+#: winerror.mc:3063
 msgid "RPC call failed.\n"
 msgstr "Chiamata RPC fallita.\n"
 
-#: winerror.mc:3066
+#: winerror.mc:3068
 msgid "RPC call failed and didn't execute.\n"
 msgstr "Chiamata RPC fallita e non eseguita.\n"
 
-#: winerror.mc:3071
+#: winerror.mc:3073
 msgid "RPC protocol error.\n"
 msgstr "Errore protocollo RPC.\n"
 
-#: winerror.mc:3076
+#: winerror.mc:3078
 msgid "Unsupported transfer syntax.\n"
 msgstr "Sintassi di trasferimento non supportata.\n"
 
-#: winerror.mc:3086
+#: winerror.mc:3088
 msgid "Invalid tag.\n"
 msgstr "Etichetta non valida.\n"
 
-#: winerror.mc:3091
+#: winerror.mc:3093
 msgid "Invalid array bounds.\n"
 msgstr "Estremi dell'array non validi.\n"
 
-#: winerror.mc:3096
+#: winerror.mc:3098
 msgid "No entry name.\n"
 msgstr "Nessun nome di elementi.\n"
 
-#: winerror.mc:3101
+#: winerror.mc:3103
 msgid "Invalid name syntax.\n"
 msgstr "Sintassi del nome non valida.\n"
 
-#: winerror.mc:3106
+#: winerror.mc:3108
 msgid "Unsupported name syntax.\n"
 msgstr "Sintassi del nome non supportata.\n"
 
-#: winerror.mc:3111
+#: winerror.mc:3113
 msgid "No network address.\n"
 msgstr "Nessun indirizzo network.\n"
 
-#: winerror.mc:3116
+#: winerror.mc:3118
 msgid "Duplicate endpoint.\n"
 msgstr "Endpoint duplicato.\n"
 
-#: winerror.mc:3121
+#: winerror.mc:3123
 msgid "Unknown authentication type.\n"
 msgstr "Tipo di autenticazione sconosciuto.\n"
 
-#: winerror.mc:3126
+#: winerror.mc:3128
 msgid "Maximum calls too low.\n"
 msgstr "Numero massimo di chiamate troppo basso.\n"
 
-#: winerror.mc:3131
+#: winerror.mc:3133
 msgid "String too long.\n"
 msgstr "Stringa troppo lunga.\n"
 
-#: winerror.mc:3136
+#: winerror.mc:3138
 msgid "Protocol sequence not found.\n"
 msgstr "Sequenza di protocollo non trovata.\n"
 
-#: winerror.mc:3141
+#: winerror.mc:3143
 msgid "Procedure number out of range.\n"
 msgstr "Numero della procedura fuori portata.\n"
 
-#: winerror.mc:3146
+#: winerror.mc:3148
 msgid "Binding has no authentication data.\n"
 msgstr "Il legame non ha dati per l'autenticazione.\n"
 
-#: winerror.mc:3151
+#: winerror.mc:3153
 msgid "Unknown authentication service.\n"
 msgstr "Servizio di autenticazione sconosciuto.\n"
 
-#: winerror.mc:3156
+#: winerror.mc:3158
 msgid "Unknown authentication level.\n"
 msgstr "Livello di autenticazione sconosciuto.\n"
 
-#: winerror.mc:3161
+#: winerror.mc:3163
 msgid "Invalid authentication identity.\n"
 msgstr "Identità di autenticazione non valida.\n"
 
-#: winerror.mc:3166
+#: winerror.mc:3168
 msgid "Unknown authorization service.\n"
 msgstr "Servizio di autorizzazione sconosciuto.\n"
 
-#: winerror.mc:3171
+#: winerror.mc:3173
 msgid "Invalid entry.\n"
 msgstr "Elemento non valido.\n"
 
-#: winerror.mc:3176
+#: winerror.mc:3178
 msgid "Can't perform operation.\n"
 msgstr "Impossibile eseguire operazione.\n"
 
-#: winerror.mc:3181
+#: winerror.mc:3183
 msgid "Endpoints not registered.\n"
 msgstr "Endpoint non registrati.\n"
 
-#: winerror.mc:3186
+#: winerror.mc:3188
 msgid "Nothing to export.\n"
 msgstr "Niente da esportare.\n"
 
-#: winerror.mc:3191
+#: winerror.mc:3193
 msgid "Incomplete name.\n"
 msgstr "Nome incompleto.\n"
 
-#: winerror.mc:3196
+#: winerror.mc:3198
 msgid "Invalid version option.\n"
 msgstr "Opzione di versione non valida.\n"
 
-#: winerror.mc:3201
+#: winerror.mc:3203
 msgid "No more members.\n"
 msgstr "Nessun membro in più.\n"
 
-#: winerror.mc:3206
+#: winerror.mc:3208
 msgid "Not all objects unexported.\n"
 msgstr "Non tutti gli oggetti non esportati.\n"
 
-#: winerror.mc:3211
+#: winerror.mc:3213
 msgid "Interface not found.\n"
 msgstr "Interfaccia non trovata.\n"
 
-#: winerror.mc:3216
+#: winerror.mc:3218
 msgid "Entry already exists.\n"
 msgstr "Elemento esistente.\n"
 
-#: winerror.mc:3221
+#: winerror.mc:3223
 msgid "Entry not found.\n"
 msgstr "Elemento non trovato.\n"
 
-#: winerror.mc:3226
+#: winerror.mc:3228
 msgid "Name service unavailable.\n"
 msgstr "Servizio nomi non disponibile.\n"
 
-#: winerror.mc:3231
+#: winerror.mc:3233
 msgid "Invalid network address family.\n"
 msgstr "Famiglia di indirizzi network non valida.\n"
 
-#: winerror.mc:3236
+#: winerror.mc:3238
 msgid "Operation not supported.\n"
 msgstr "Operazione non supportata.\n"
 
-#: winerror.mc:3241
+#: winerror.mc:3243
 msgid "No security context available.\n"
 msgstr "Nessun contesto di sicurezza disponibile.\n"
 
-#: winerror.mc:3246
+#: winerror.mc:3248
 msgid "RPCInternal error.\n"
 msgstr "Errore interno RPC.\n"
 
-#: winerror.mc:3251
+#: winerror.mc:3253
 msgid "RPC divide-by-zero.\n"
 msgstr "Divisione per zero RPC.\n"
 
-#: winerror.mc:3256
+#: winerror.mc:3258
 msgid "Address error.\n"
 msgstr "Errore indirizzo.\n"
 
-#: winerror.mc:3261
+#: winerror.mc:3263
 msgid "Floating-point divide-by-zero.\n"
 msgstr "Divisione per zero in virgola mobile.\n"
 
-#: winerror.mc:3266
+#: winerror.mc:3268
 msgid "Floating-point underflow.\n"
 msgstr "Underflow in virgola mobile.\n"
 
-#: winerror.mc:3271
+#: winerror.mc:3273
 msgid "Floating-point overflow.\n"
 msgstr "Overflow in virgola mobile.\n"
 
-#: winerror.mc:3276
+#: winerror.mc:3278
 msgid "No more entries.\n"
 msgstr "Nessun elemento in più.\n"
 
-#: winerror.mc:3281
+#: winerror.mc:3283
 msgid "Character translation table open failed.\n"
 msgstr "Fallita apertura della tavole di traduzione caratteri.\n"
 
-#: winerror.mc:3286
+#: winerror.mc:3288
 msgid "Character translation table file too small.\n"
 msgstr "File della tavola di traduzione caratteri troppo piccolo.\n"
 
-#: winerror.mc:3291
+#: winerror.mc:3293
 msgid "Null context handle.\n"
 msgstr "Handle di contesto nullo.\n"
 
-#: winerror.mc:3296
+#: winerror.mc:3298
 msgid "Context handle damaged.\n"
 msgstr "Handle di contesto danneggiato.\n"
 
-#: winerror.mc:3301
+#: winerror.mc:3303
 msgid "Binding handle mismatch.\n"
 msgstr "Non corrispondenza dell'handle di legame.\n"
 
-#: winerror.mc:3306
+#: winerror.mc:3308
 msgid "Cannot get call handle.\n"
 msgstr "Impossibile ottenere l'handle di chiamata.\n"
 
-#: winerror.mc:3311
+#: winerror.mc:3313
 msgid "Null reference pointer.\n"
 msgstr "Puntatore di riferimento nullo.\n"
 
-#: winerror.mc:3316
+#: winerror.mc:3318
 msgid "Enumeration value out of range.\n"
 msgstr "Valore dell'enumerazione fuori portata.\n"
 
-#: winerror.mc:3321
+#: winerror.mc:3323
 msgid "Byte count too small.\n"
 msgstr "Conto dei byte troppo piccolo.\n"
 
-#: winerror.mc:3326
+#: winerror.mc:3328
 msgid "Bad stub data.\n"
 msgstr "Dati stub non corretti.\n"
 
-#: winerror.mc:3331
+#: winerror.mc:3333
 msgid "Invalid user buffer.\n"
 msgstr "Buffer utente non valido.\n"
 
-#: winerror.mc:3336
+#: winerror.mc:3338
 msgid "Unrecognized media.\n"
 msgstr "Supporto non riconosciuto.\n"
 
-#: winerror.mc:3341
+#: winerror.mc:3343
 msgid "No trust secret.\n"
 msgstr "Nessun segreto di fiducia.\n"
 
-#: winerror.mc:3346
+#: winerror.mc:3348
 msgid "No trust SAM account.\n"
 msgstr "Nessun account SAM di fiducia.\n"
 
-#: winerror.mc:3351
+#: winerror.mc:3353
 msgid "Trusted domain failure.\n"
 msgstr "Fallimento del dominio fidato.\n"
 
-#: winerror.mc:3356
+#: winerror.mc:3358
 msgid "Trusted relationship failure.\n"
 msgstr "Fallimento della relazione fidata.\n"
 
-#: winerror.mc:3361
+#: winerror.mc:3363
 msgid "Trust logon failure.\n"
 msgstr "Fallimento del logon di fiducia.\n"
 
-#: winerror.mc:3366
+#: winerror.mc:3368
 msgid "RPC call already in progress.\n"
 msgstr "Chiamata RPC in corso.\n"
 
-#: winerror.mc:3371
+#: winerror.mc:3373
 msgid "NETLOGON is not started.\n"
 msgstr "NETLOGON non è avviato.\n"
 
-#: winerror.mc:3376
+#: winerror.mc:3378
 msgid "Account expired.\n"
 msgstr "Account scaduto.\n"
 
-#: winerror.mc:3381
+#: winerror.mc:3383
 msgid "Redirector has open handles.\n"
 msgstr "Il redirector ha handle aperti.\n"
 
-#: winerror.mc:3386
+#: winerror.mc:3388
 msgid "Printer driver already installed.\n"
 msgstr "Driver stampante già installato.\n"
 
-#: winerror.mc:3391
+#: winerror.mc:3393
 msgid "Unknown port.\n"
 msgstr "Porta sconosciuta.\n"
 
-#: winerror.mc:3396
+#: winerror.mc:3398
 msgid "Unknown printer driver.\n"
 msgstr "Driver stampante sconosciuto.\n"
 
-#: winerror.mc:3401
+#: winerror.mc:3403
 msgid "Unknown print processor.\n"
 msgstr "Processore di stampa sconosciuto.\n"
 
-#: winerror.mc:3406
+#: winerror.mc:3408
 msgid "Invalid separator file.\n"
 msgstr "Separatore di file non valido.\n"
 
-#: winerror.mc:3411
+#: winerror.mc:3413
 msgid "Invalid priority.\n"
 msgstr "Priorità non valida.\n"
 
-#: winerror.mc:3416
+#: winerror.mc:3418
 msgid "Invalid printer name.\n"
 msgstr "Nome della stampante non valido.\n"
 
-#: winerror.mc:3421
+#: winerror.mc:3423
 msgid "Printer already exists.\n"
 msgstr "Stampante esistente.\n"
 
-#: winerror.mc:3426
+#: winerror.mc:3428
 msgid "Invalid printer command.\n"
 msgstr "Comando stampante non valido.\n"
 
-#: winerror.mc:3431
+#: winerror.mc:3433
 msgid "Invalid data type.\n"
 msgstr "Tipo di dati non valido.\n"
 
-#: winerror.mc:3436
+#: winerror.mc:3438
 msgid "Invalid environment.\n"
 msgstr "Ambiente non valido.\n"
 
-#: winerror.mc:3441
+#: winerror.mc:3443
 msgid "No more bindings.\n"
 msgstr "Nessun legame più.\n"
 
-#: winerror.mc:3446
+#: winerror.mc:3448
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr "Logon impossibile con account di fiducia interdominio.\n"
 
-#: winerror.mc:3451
+#: winerror.mc:3453
 msgid "Can't log on with workstation trust account.\n"
 msgstr "Logon impossibile con account di fiducia workstation.\n"
 
-#: winerror.mc:3456
+#: winerror.mc:3458
 msgid "Can't log on with server trust account.\n"
 msgstr "Logon impossibile con account di fiducia server.\n"
 
-#: winerror.mc:3461
+#: winerror.mc:3463
 msgid "Domain trust information inconsistent.\n"
 msgstr "Informazioni sulla fiducia del dominio inconsistenti.\n"
 
-#: winerror.mc:3466
+#: winerror.mc:3468
 msgid "Server has open handles.\n"
 msgstr "Il server ha handle aperti.\n"
 
-#: winerror.mc:3471
+#: winerror.mc:3473
 msgid "Resource data not found.\n"
 msgstr "Dati risorsa non trovati.\n"
 
-#: winerror.mc:3476
+#: winerror.mc:3478
 msgid "Resource type not found.\n"
 msgstr "Tipo risorsa non trovato.\n"
 
-#: winerror.mc:3481
+#: winerror.mc:3483
 msgid "Resource name not found.\n"
 msgstr "Nome risorsa non trovato.\n"
 
-#: winerror.mc:3486
+#: winerror.mc:3488
 msgid "Resource language not found.\n"
 msgstr "Linguaggio risorsa non trovato.\n"
 
-#: winerror.mc:3491
+#: winerror.mc:3493
 msgid "Not enough quota.\n"
 msgstr "Non abbastanza quota.\n"
 
-#: winerror.mc:3496
+#: winerror.mc:3498
 msgid "No interfaces.\n"
 msgstr "Nessuna interfaccia.\n"
 
-#: winerror.mc:3501
+#: winerror.mc:3503
 msgid "RPC call canceled.\n"
 msgstr "Chiamata RPC annullata.\n"
 
-#: winerror.mc:3506
+#: winerror.mc:3508
 msgid "Binding incomplete.\n"
 msgstr "Legame incompleto.\n"
 
-#: winerror.mc:3511
+#: winerror.mc:3513
 msgid "RPC comm failure.\n"
 msgstr "Fallimento comando RPC.\n"
 
-#: winerror.mc:3516
+#: winerror.mc:3518
 msgid "Unsupported authorization level.\n"
 msgstr "Livello autorizzazione non supportato.\n"
 
-#: winerror.mc:3521
+#: winerror.mc:3523
 msgid "No principal name registered.\n"
 msgstr "Nessun nome principale registrato.\n"
 
-#: winerror.mc:3526
+#: winerror.mc:3528
 msgid "Not an RPC error.\n"
 msgstr "Non un errore RPC.\n"
 
-#: winerror.mc:3531
+#: winerror.mc:3533
 msgid "UUID is local only.\n"
 msgstr "UUID solo locale.\n"
 
-#: winerror.mc:3536
+#: winerror.mc:3538
 msgid "Security package error.\n"
 msgstr "Errore del pacchetto sicurezza.\n"
 
-#: winerror.mc:3541
+#: winerror.mc:3543
 msgid "Thread not canceled.\n"
 msgstr "Thread non annullato.\n"
 
-#: winerror.mc:3546
+#: winerror.mc:3548
 msgid "Invalid handle operation.\n"
 msgstr "Handle operazione non valido.\n"
 
-#: winerror.mc:3551
+#: winerror.mc:3553
 msgid "Wrong serializing package version.\n"
 msgstr "Versione di serializzazione del pacchetto sbagliata.\n"
 
-#: winerror.mc:3556
+#: winerror.mc:3558
 msgid "Wrong stub version.\n"
 msgstr "Versione stub sbagliata.\n"
 
-#: winerror.mc:3561
+#: winerror.mc:3563
 msgid "Invalid pipe object.\n"
 msgstr "Oggetto pipe non valido.\n"
 
-#: winerror.mc:3566
+#: winerror.mc:3568
 msgid "Wrong pipe order.\n"
 msgstr "Ordine pipe sbagliato.\n"
 
-#: winerror.mc:3571
+#: winerror.mc:3573
 msgid "Wrong pipe version.\n"
 msgstr "Versione pipe sbagliata.\n"
 
-#: winerror.mc:3576
+#: winerror.mc:3578
 msgid "Group member not found.\n"
 msgstr "Membro del gruppo non trovato.\n"
 
-#: winerror.mc:3581
+#: winerror.mc:3583
 msgid "Can't create endpoint mapper DB.\n"
 msgstr "Impossibile creare DB del mapper di endpoint.\n"
 
-#: winerror.mc:3586
+#: winerror.mc:3588
 msgid "Invalid object.\n"
 msgstr "Oggetto non valido.\n"
 
-#: winerror.mc:3591
+#: winerror.mc:3593
 msgid "Invalid time.\n"
 msgstr "Ora non valida.\n"
 
-#: winerror.mc:3596
+#: winerror.mc:3598
 msgid "Invalid form name.\n"
 msgstr "Nome della scheda non valido.\n"
 
-#: winerror.mc:3601
+#: winerror.mc:3603
 msgid "Invalid form size.\n"
 msgstr "Dimensione della scheda non valido.\n"
 
-#: winerror.mc:3606
+#: winerror.mc:3608
 msgid "Already awaiting printer handle.\n"
 msgstr "Già in attesa dell'handle della stampante.\n"
 
-#: winerror.mc:3611
+#: winerror.mc:3613
 msgid "Printer deleted.\n"
 msgstr "Stampante eliminata.\n"
 
-#: winerror.mc:3616
+#: winerror.mc:3618
 msgid "Invalid printer state.\n"
 msgstr "Stato della stampante non valido.\n"
 
-#: winerror.mc:3621
+#: winerror.mc:3623
 msgid "User must change password.\n"
 msgstr "L'utente deve cambiare la password.\n"
 
-#: winerror.mc:3626
+#: winerror.mc:3628
 msgid "Domain controller not found.\n"
 msgstr "Controller del dominio non trovato.\n"
 
-#: winerror.mc:3631
+#: winerror.mc:3633
 msgid "Account locked out.\n"
 msgstr "Account bloccato.\n"
 
-#: winerror.mc:3636
+#: winerror.mc:3638
 msgid "Invalid pixel format.\n"
 msgstr "Formato pixel non valido.\n"
 
-#: winerror.mc:3641
+#: winerror.mc:3643
 msgid "Invalid driver.\n"
 msgstr "Driver non valido.\n"
 
-#: winerror.mc:3646
+#: winerror.mc:3648
 msgid "Invalid object resolver set.\n"
 msgstr "Insieme di risolutori di oggetto non valido.\n"
 
-#: winerror.mc:3651
+#: winerror.mc:3653
 msgid "Incomplete RPC send.\n"
 msgstr "Invio RPC incompleto.\n"
 
-#: winerror.mc:3656
+#: winerror.mc:3658
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "Handle RPC asincrono non valido.\n"
 
-#: winerror.mc:3661
+#: winerror.mc:3663
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "Chiamata RPC asincrona non valida.\n"
 
-#: winerror.mc:3666
+#: winerror.mc:3668
 msgid "RPC pipe closed.\n"
 msgstr "Pipe RPC chiusa.\n"
 
-#: winerror.mc:3671
+#: winerror.mc:3673
 msgid "Discipline error on RPC pipe.\n"
 msgstr "Errore di disciplina sulla pipe RPC.\n"
 
-#: winerror.mc:3676
+#: winerror.mc:3678
 msgid "No data on RPC pipe.\n"
 msgstr "Nessun dato sulla pipe RPC.\n"
 
-#: winerror.mc:3681
+#: winerror.mc:3683
 msgid "No site name available.\n"
 msgstr "Nessun nome del sito disponibile.\n"
 
-#: winerror.mc:3686
+#: winerror.mc:3688
 msgid "The file cannot be accessed.\n"
 msgstr "Impossibile accedere al file.\n"
 
-#: winerror.mc:3691
+#: winerror.mc:3693
 msgid "The filename cannot be resolved.\n"
 msgstr "Impossibile risolvere il nome del file.\n"
 
-#: winerror.mc:3696
+#: winerror.mc:3698
 msgid "RPC entry type mismatch.\n"
 msgstr "Discordanza del tipo di voce RPC.\n"
 
-#: winerror.mc:3701
+#: winerror.mc:3703
 msgid "Not all objects could be exported.\n"
 msgstr "Impossibile esportare tutti gli oggetti.\n"
 
-#: winerror.mc:3706
+#: winerror.mc:3708
 msgid "The interface could not be exported.\n"
 msgstr "Impossibile esportare l'interfaccia.\n"
 
-#: winerror.mc:3711
+#: winerror.mc:3713
 msgid "The profile could not be added.\n"
 msgstr "Impossibile aggiungere il profilo.\n"
 
-#: winerror.mc:3716
+#: winerror.mc:3718
 msgid "The profile element could not be added.\n"
 msgstr "Impossibile aggiungere l'elemento del profilo.\n"
 
-#: winerror.mc:3721
+#: winerror.mc:3723
 msgid "The profile element could not be removed.\n"
 msgstr "Impossibile rimuovere l'elemento del profilo.\n"
 
-#: winerror.mc:3726
+#: winerror.mc:3728
 msgid "The group element could not be added.\n"
 msgstr "Impossibile aggiungere l'elemento del gruppo.\n"
 
-#: winerror.mc:3731
+#: winerror.mc:3733
 msgid "The group element could not be removed.\n"
 msgstr "Impossibile rimuovere l'elemento del gruppo.\n"
 
-#: winerror.mc:3736
+#: winerror.mc:3738
 msgid "The username could not be found.\n"
 msgstr "Impossibile trovare il nome utente.\n"
 
-#: winerror.mc:3741
+#: winerror.mc:3743
 #, fuzzy
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "Sito inesistente.\n"
 
-#: winerror.mc:3746
+#: winerror.mc:3748
 #, fuzzy
 #| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Connessione rifiutata.\n"
+
+#: winerror.mc:3760
+#, fuzzy
+#| msgid "Message 0x%1 not found in file %2.\n"
+msgid "No Signature found in file.\n"
+msgstr "Messaggio 0x%1 non trovato nel file %2.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
