@@ -7825,6 +7825,8 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
             == WINED3D_LOCATION_DRAWABLE
             && !wined3d_resource_is_offscreen(&src_texture->resource))
     {
+        unsigned int src_level = src_sub_resource_idx % src_texture->level_count;
+
         /* Without FBO blits transferring from the drawable to the texture is
          * expensive, because we have to flip the data in sysmem. Since we can
          * flip in the blitter, we don't actually need that flip anyway. So we
@@ -7833,8 +7835,8 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         surface_load_fb_texture(src_surface, FALSE, context);
 
         s = *src_rect;
-        s.top = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - s.top;
-        s.bottom = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - s.bottom;
+        s.top = wined3d_texture_get_level_height(src_texture, src_level) - s.top;
+        s.bottom = wined3d_texture_get_level_height(src_texture, src_level) - s.bottom;
         src_rect = &s;
     }
     else
