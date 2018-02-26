@@ -251,9 +251,9 @@ HRESULT create_uri(const WCHAR *url, IUri **uri)
     if (!PathIsURLW(url))
     {
         WCHAR fullpath[MAX_PATH];
-        DWORD needed = sizeof(fileUrl)/sizeof(WCHAR);
+        DWORD needed = ARRAY_SIZE(fileUrl);
 
-        if (!PathSearchAndQualifyW(url, fullpath, sizeof(fullpath)/sizeof(WCHAR)))
+        if (!PathSearchAndQualifyW(url, fullpath, ARRAY_SIZE(fullpath)))
         {
             WARN("can't find path\n");
             return E_FAIL;

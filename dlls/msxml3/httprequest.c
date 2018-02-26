@@ -516,7 +516,7 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
     if (This->request->use_utf8_content)
     {
         lstrcpyW(ptr, content_type_utf8W);
-        ptr += sizeof(content_type_utf8W)/sizeof(WCHAR)-1;
+        ptr += ARRAY_SIZE(content_type_utf8W) - 1;
     }
 
     if (base_uri)
@@ -535,13 +535,13 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
         ptr += SysStringLen(entry->header);
 
         lstrcpyW(ptr, colspaceW);
-        ptr += sizeof(colspaceW)/sizeof(WCHAR)-1;
+        ptr += ARRAY_SIZE(colspaceW) - 1;
 
         lstrcpyW(ptr, entry->value);
         ptr += SysStringLen(entry->value);
 
         lstrcpyW(ptr, crlfW);
-        ptr += sizeof(crlfW)/sizeof(WCHAR)-1;
+        ptr += ARRAY_SIZE(crlfW) - 1;
     }
 
     *add_headers = buff;
@@ -1030,8 +1030,8 @@ static HRESULT httprequest_setRequestHeader(httprequest *This, BSTR header, BSTR
     entry->value  = SysAllocString(value);
 
     /* header length including null terminator */
-    This->reqheader_size += SysStringLen(entry->header) + sizeof(colspaceW)/sizeof(WCHAR) +
-                            SysStringLen(entry->value)  + sizeof(crlfW)/sizeof(WCHAR) - 1;
+    This->reqheader_size += SysStringLen(entry->header) + ARRAY_SIZE(colspaceW) +
+        SysStringLen(entry->value) + ARRAY_SIZE(crlfW) - 1;
 
     list_add_head(&This->reqheaders, &entry->entry);
 

@@ -69,7 +69,7 @@ void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, 
 {
     enum __wine_debug_class dbcl;
     char buff[200];
-    const int max_size = sizeof(buff) / sizeof(buff[0]);
+    const int max_size = ARRAY_SIZE(buff);
     int len;
 
     switch (lvl)

@@ -208,11 +208,11 @@ void release_typelib(void)
         heap_free(iter);
     }
 
-    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+    for(i=0; i < ARRAY_SIZE(typeinfos); i++)
         if(typeinfos[i])
             ITypeInfo_Release(typeinfos[i]);
 
-    for(i=0; i < sizeof(typelib)/sizeof(*typelib); i++)
+    for(i=0; i < ARRAY_SIZE(typelib); i++)
         if(typelib[i])
             ITypeLib_Release(typelib[i]);
 

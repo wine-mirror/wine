@@ -100,7 +100,7 @@ static MSXML_VERSION get_msxml_version(const GUID *clsid)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(clsid_versions_table)/sizeof(struct clsid_version_t); i++)
+    for (i = 0; i < ARRAY_SIZE(clsid_versions_table); i++)
         if (IsEqualGUID(clsid, clsid_versions_table[i].clsid))
             return clsid_versions_table[i].version;
 

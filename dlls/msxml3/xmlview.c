@@ -434,7 +434,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
 
     /* TODO: fix parsing processing instruction value */
     if((p = strstrW(V_BSTR(&var), hrefW))) {
-        p += sizeof(hrefW)/sizeof(WCHAR)-1;
+        p += ARRAY_SIZE(hrefW) - 1;
         if(*p!='\'' && *p!='\"') p = NULL;
         else {
             href = p+1;

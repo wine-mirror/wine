@@ -130,7 +130,7 @@ static saxreader_feature get_saxreader_feature(const WCHAR *name)
     int min, max, n, c;
 
     min = 0;
-    max = sizeof(saxreader_feature_map)/sizeof(struct saxreader_feature_pair) - 1;
+    max = ARRAY_SIZE(saxreader_feature_map) - 1;
 
     while (min <= max)
     {
@@ -678,7 +678,7 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
     {
         WCHAR msg[1024];
         if(!FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
-                    NULL, hr, 0, msg, sizeof(msg)/sizeof(msg[0]), NULL))
+                    NULL, hr, 0, msg, ARRAY_SIZE(msg), NULL))
         {
             FIXME("MSXML errors not yet supported.\n");
             msg[0] = '\0';
@@ -1420,7 +1420,7 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
         WCHAR *src;
 
         /* leave first '&' from a reference as a value */
-        src = dest + (sizeof(ampescW)/sizeof(WCHAR) - 1);
+        src = dest + ARRAY_SIZE(ampescW) - 1;
         dest++;
 
         /* move together with null terminator */
