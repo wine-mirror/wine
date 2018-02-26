@@ -3624,11 +3624,13 @@ static void output_sources( struct makefile *make )
 
     if (make->staticlib) output_static_lib( make );
     else if (make->module) output_module( make );
-    else if (make->importlib) output_import_lib( make );
-    else if (make->sharedlib) output_shared_lib( make );
     else if (make->testdll) output_test_module( make );
-
-    if (make->programs.count) output_programs( make );
+    else
+    {
+        if (make->importlib) output_import_lib( make );
+        if (make->sharedlib) output_shared_lib( make );
+        if (make->programs.count) output_programs( make );
+    }
 
     for (i = 0; i < make->scripts.count; i++)
         add_install_rule( make, make->scripts.str[i], make->scripts.str[i],
