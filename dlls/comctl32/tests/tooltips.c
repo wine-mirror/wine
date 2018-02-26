@@ -25,8 +25,17 @@
 #include "wine/test.h"
 
 #include "v6util.h"
+#include "msg.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+
+enum seq_index
+{
+    PARENT_SEQ_INDEX = 0,
+    NUM_MSG_SEQUENCES
+};
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static void test_create_tooltip(BOOL is_v6)
 {
@@ -264,17 +273,51 @@ static void test_customdraw(void) {
 
 static const CHAR testcallbackA[]  = "callback";
 
+static RECT g_ttip_rect;
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static LONG defwndproc_counter = 0;
+    struct message msg;
+    LRESULT ret;
+
     if (message == WM_NOTIFY && lParam)
     {
         NMTTDISPINFOA *ttnmdi = (NMTTDISPINFOA*)lParam;
+        NMHDR *hdr = (NMHDR *)lParam;
+        RECT rect;
 
-        if (ttnmdi->hdr.code == TTN_GETDISPINFOA)
+        if (hdr->code != NM_CUSTOMDRAW)
+        {
+            msg.message = message;
+            msg.flags = sent|wparam|lparam;
+            if (defwndproc_counter) msg.flags |= defwinproc;
+            msg.wParam = wParam;
+            msg.lParam = lParam;
+            msg.id = hdr->code;
+            add_message(sequences, PARENT_SEQ_INDEX, &msg);
+        }
+
+        switch (hdr->code)
+        {
+        case TTN_GETDISPINFOA:
             lstrcpyA(ttnmdi->lpszText, testcallbackA);
+            break;
+        case TTN_SHOW:
+            GetWindowRect(hdr->hwndFrom, &rect);
+        todo_wine
+            ok(!EqualRect(&g_ttip_rect, &rect), "Unexpected window rectangle.\n");
+            break;
+        }
     }
 
-    return DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter++;
+    if (IsWindowUnicode(hwnd))
+        ret = DefWindowProcW(hwnd, message, wParam, lParam);
+    else
+        ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static void register_parent_wnd_class(void)
@@ -1134,10 +1177,69 @@ static void test_TTM_ADDTOOL(BOOL is_v6)
     DestroyWindow(hwnd);
 }
 
+static const struct message ttn_show_parent_seq[] =
+{
+    { WM_NOTIFY, sent|id, 0, 0, TTN_SHOW },
+    { 0 }
+};
+
+static void test_TTN_SHOW(void)
+{
+    HWND hwndTip, hwnd;
+    TTTOOLINFOA ti;
+    RECT rect;
+    BOOL ret;
+
+    hwnd = create_parent_window();
+    ok(hwnd != NULL, "Failed to create parent window.\n");
+
+    /* Put cursor outside the window */
+    GetWindowRect(hwnd, &rect);
+    SetCursorPos(rect.right + 200, 0);
+
+    ShowWindow(hwnd, SW_SHOWNORMAL);
+    flush_events(100);
+
+    /* Create tooltip */
+    hwndTip = CreateWindowExA(WS_EX_TOPMOST, TOOLTIPS_CLASSA, NULL, TTS_ALWAYSTIP, 10, 10, 300, 300,
+        hwnd, NULL, NULL, 0);
+    ok(hwndTip != NULL, "Failed to create tooltip window.\n");
+
+    SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    ti.cbSize = sizeof(TTTOOLINFOA);
+    ti.hwnd = hwnd;
+    ti.hinst = GetModuleHandleA(NULL);
+    ti.uFlags = TTF_SUBCLASS;
+    ti.uId = 0x1234abcd;
+    ti.lpszText = (LPSTR)"This is a test tooltip";
+    ti.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &ti.rect);
+    ret = SendMessageA(hwndTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    ok(ret, "Failed to add a tool.\n");
+
+    /* Make tooltip appear quickly */
+    SendMessageA(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1, 0));
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* Put cursor inside window, tooltip will appear immediately */
+    GetWindowRect(hwnd, &rect);
+    SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+    flush_events(200);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ttn_show_parent_seq, "TTN_SHOW parent seq", FALSE);
+
+    DestroyWindow(hwndTip);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(tooltips)
 {
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     LoadLibraryA("comctl32.dll");
 
@@ -1153,6 +1255,7 @@ START_TEST(tooltips)
     test_setinfo(FALSE);
     test_margin();
     test_TTM_ADDTOOL(FALSE);
+    test_TTN_SHOW();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
@@ -1164,6 +1267,7 @@ START_TEST(tooltips)
     test_setinfo(TRUE);
     test_margin();
     test_TTM_ADDTOOL(TRUE);
+    test_TTN_SHOW();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
