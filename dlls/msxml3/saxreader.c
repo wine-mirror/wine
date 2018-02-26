@@ -3247,16 +3247,17 @@ static HRESULT WINAPI isaxxmlreader_putFeature(
     feature = get_saxreader_feature(feature_name);
 
     /* accepted cases */
-    if ((feature == ExternalGeneralEntities   && value == VARIANT_FALSE) ||
-        (feature == ExternalParameterEntities && value == VARIANT_FALSE) ||
-        (feature == ExhaustiveErrors && value == VARIANT_FALSE) ||
+    if ((feature == ExhaustiveErrors && value == VARIANT_FALSE) ||
          feature == Namespaces ||
          feature == NamespacePrefixes)
     {
         return set_feature_value(This, feature, value);
     }
 
-    if (feature == LexicalHandlerParEntities || feature == ProhibitDTD)
+    if (feature == LexicalHandlerParEntities ||
+            feature == ProhibitDTD ||
+            feature == ExternalGeneralEntities ||
+            feature == ExternalParameterEntities)
     {
         FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature_name), value);
         return set_feature_value(This, feature, value);
