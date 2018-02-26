@@ -911,7 +911,12 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
     current_modref = wm;
     if (!(status = load_dll( load_path, mscoreeW, 0, &imp ))) wm->deps[0] = imp;
     current_modref = prev;
-    if (status) return status;
+    if (status)
+    {
+        ERR( "mscoree.dll not found, IL-only binary %s cannot be loaded\n",
+             debugstr_w(wm->ldr.BaseDllName.Buffer) );
+        return status;
+    }
 
     TRACE( "loaded mscoree for %s\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
 
