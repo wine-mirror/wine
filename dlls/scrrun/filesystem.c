@@ -3441,13 +3441,13 @@ static HRESULT WINAPI filesys_GetSpecialFolder(IFileSystem3 *iface,
     switch (SpecialFolder)
     {
     case WindowsFolder:
-        ret = GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+        ret = GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
         break;
     case SystemFolder:
-        ret = GetSystemDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+        ret = GetSystemDirectoryW(pathW, ARRAY_SIZE(pathW));
         break;
     case TemporaryFolder:
-        ret = GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+        ret = GetTempPathW(ARRAY_SIZE(pathW), pathW);
         /* we don't want trailing backslash */
         if (ret && pathW[ret-1] == '\\')
             pathW[ret-1] = 0;
