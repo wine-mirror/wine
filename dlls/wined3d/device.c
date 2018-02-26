@@ -200,10 +200,14 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
     device->contexts = new_array;
 }
 
-static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
+static BOOL is_full_clear(const struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        const RECT *draw_rect, const RECT *clear_rect)
 {
-    unsigned int height = wined3d_texture_get_level_height(target->container, target->texture_level);
-    unsigned int width = wined3d_texture_get_level_width(target->container, target->texture_level);
+    unsigned int width, height, level;
+
+    level = sub_resource_idx % texture->level_count;
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
 
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top || draw_rect->right < width || draw_rect->bottom < height)
@@ -262,7 +266,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         {
             struct wined3d_texture *rt = wined3d_texture_from_resource(rtv->resource);
 
-            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, rect_count ? clear_rect : NULL))
+            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(rt, rtv->sub_resource_idx,
+                    draw_rect, rect_count ? clear_rect : NULL))
                 wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
             else
                 wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
@@ -289,7 +294,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         struct wined3d_texture *ds = wined3d_texture_from_resource(dsv->resource);
 
         if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)
-                && !is_full_clear(depth_stencil, draw_rect, rect_count ? clear_rect : NULL))
+                && !is_full_clear(ds, dsv->sub_resource_idx, draw_rect, rect_count ? clear_rect : NULL))
             wined3d_texture_load_location(ds, dsv->sub_resource_idx, context, ds_location);
         else
             wined3d_texture_prepare_location(ds, dsv->sub_resource_idx, context, ds_location);
