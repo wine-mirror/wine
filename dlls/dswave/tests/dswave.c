@@ -22,8 +22,11 @@
 #include <windef.h>
 #include <initguid.h>
 #include <wine/test.h>
+#include <ole2.h>
 #include <dmusici.h>
+#include <dmusicf.h>
 
+DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 DEFINE_GUID(IID_IDirectMusicWavePRIVATE, 0x69e934e4, 0x97f1, 0x4f1d, 0x88, 0xe8, 0xf2, 0xac, 0x88,
         0x67, 0x13, 0x27);
 
@@ -97,6 +100,193 @@ static void test_COM(void)
     while (IDirectMusicObject_Release(dmo));
 }
 
+struct chunk {
+    FOURCC id;
+    DWORD size;
+    FOURCC type;
+};
+
+#define CHUNK_HDR_SIZE (sizeof(FOURCC) + sizeof(DWORD))
+
+/* Generate a RIFF file format stream from an array of FOURCC ids.
+   RIFF and LIST need to be followed by the form type respectively list type,
+   followed by the chunks of the list and terminated with 0. */
+static IStream *gen_riff_stream(const FOURCC *ids)
+{
+    static const LARGE_INTEGER zero;
+    int level = -1;
+    DWORD *sizes[4];    /* Stack for the sizes of RIFF and LIST chunks */
+    char riff[1024];
+    char *p = riff;
+    struct chunk *ck;
+    IStream *stream;
+
+    do {
+        ck = (struct chunk *)p;
+        ck->id = *ids++;
+        switch (ck->id) {
+            case 0:
+                *sizes[level] = p - (char *)sizes[level] - sizeof(DWORD);
+                level--;
+                break;
+            case FOURCC_LIST:
+            case FOURCC_RIFF:
+                level++;
+                sizes[level] = &ck->size;
+                ck->type = *ids++;
+                p += sizeof(*ck);
+                break;
+            case DMUS_FOURCC_GUID_CHUNK:
+                ck->size = sizeof(GUID_NULL);
+                p += CHUNK_HDR_SIZE;
+                memcpy(p, &GUID_NULL, sizeof(GUID_NULL));
+                p += ck->size;
+                break;
+            case DMUS_FOURCC_VERSION_CHUNK:
+            {
+                DMUS_VERSION ver = {5, 8};
+
+                ck->size = sizeof(ver);
+                p += CHUNK_HDR_SIZE;
+                memcpy(p, &ver, sizeof(ver));
+                p += ck->size;
+                break;
+            }
+            case mmioFOURCC('I','N','A','M'):
+                ck->size = 5;
+                p += CHUNK_HDR_SIZE;
+                strcpy(p, "INAM");
+                p += ck->size;
+                break;
+            default:
+            {
+                /* Just convert the FOURCC id to a WCHAR string */
+                WCHAR *s;
+
+                ck->size = 5 * sizeof(WCHAR);
+                p += CHUNK_HDR_SIZE;
+                s = (WCHAR *)p;
+                s[0] = (char)(ck->id);
+                s[1] = (char)(ck->id >> 8);
+                s[2] = (char)(ck->id >> 16);
+                s[3] = (char)(ck->id >> 24);
+                s[4] = 0;
+                p += ck->size;
+            }
+        }
+    } while (level >= 0);
+
+    ck = (struct chunk *)riff;
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    IStream_Write(stream, riff, ck->size + CHUNK_HDR_SIZE, NULL);
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+    return stream;
+}
+
+static void test_parsedescriptor(void)
+{
+    IDirectMusicObject *dmo;
+    IStream *stream;
+    DMUS_OBJECTDESC desc = {0};
+    HRESULT hr;
+    const WCHAR s_inam[] = {'I','N','A','M','\0'};
+    const FOURCC alldesc[] =
+    {
+        FOURCC_RIFF, mmioFOURCC('W','A','V','E'), DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
+        DMUS_FOURCC_UNFO_LIST, DMUS_FOURCC_UNAM_CHUNK, DMUS_FOURCC_UCOP_CHUNK,
+        DMUS_FOURCC_UCMT_CHUNK, DMUS_FOURCC_USBJ_CHUNK, 0, DMUS_FOURCC_VERSION_CHUNK,
+        DMUS_FOURCC_GUID_CHUNK, 0
+    };
+    const FOURCC dupes[] =
+    {
+        FOURCC_RIFF, mmioFOURCC('W','A','V','E'), DMUS_FOURCC_CATEGORY_CHUNK,
+        DMUS_FOURCC_CATEGORY_CHUNK, DMUS_FOURCC_VERSION_CHUNK, DMUS_FOURCC_VERSION_CHUNK,
+        DMUS_FOURCC_GUID_CHUNK, DMUS_FOURCC_GUID_CHUNK, FOURCC_LIST, DMUS_FOURCC_INFO_LIST,
+        mmioFOURCC('I','N','A','M'), 0, FOURCC_LIST, DMUS_FOURCC_INFO_LIST,
+        mmioFOURCC('I','N','A','M'), 0, 0
+    };
+    FOURCC empty[] = {FOURCC_RIFF, mmioFOURCC('W','A','V','E'), 0};
+    FOURCC inam[] =
+    {
+        FOURCC_RIFF, mmioFOURCC('W','A','V','E'), FOURCC_LIST, DMUS_FOURCC_UNFO_LIST,
+        mmioFOURCC('I','N','A','M'), 0, 0
+    };
+
+    hr = CoCreateInstance(&CLSID_DirectSoundWave, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void **)&dmo);
+    ok(hr == S_OK, "DirectSoundWave create failed: %08x, expected S_OK\n", hr);
+
+    /* Nothing loaded */
+    hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+    todo_wine ok(hr == E_INVALIDARG, "GetDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+    todo_wine ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
+
+    /* Empty RIFF stream */
+    stream = gen_riff_stream(empty);
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    todo_wine ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
+    IStream_Release(stream);
+
+    /* Wrong form */
+    empty[1] = DMUS_FOURCC_CONTAINER_FORM;
+    stream = gen_riff_stream(empty);
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    todo_wine ok(hr == DMUS_E_CHUNKNOTFOUND,
+            "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
+
+    /* All desc chunks, only DMUS_OBJ_OBJECT and DMUS_OBJ_VERSION supported */
+    stream = gen_riff_stream(alldesc);
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    todo_wine ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_VERSION),
+            "Got valid data %#x, expected DMUS_OBJ_OBJECT | DMUS_OBJ_VERSION\n", desc.dwValidData);
+    ok(IsEqualGUID(&desc.guidObject, &GUID_NULL), "Got object guid %s, expected GUID_NULL\n",
+            wine_dbgstr_guid(&desc.guidClass));
+    ok(desc.vVersion.dwVersionMS == 5 && desc.vVersion.dwVersionLS == 8,
+            "Got version %u.%u, expected 5.8\n", desc.vVersion.dwVersionMS,
+            desc.vVersion.dwVersionLS);
+    IStream_Release(stream);
+
+    /* UNFO list with INAM */
+    inam[3] = DMUS_FOURCC_UNFO_LIST;
+    stream = gen_riff_stream(inam);
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    todo_wine ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
+    IStream_Release(stream);
+
+    /* INFO list with INAM */
+    inam[3] = DMUS_FOURCC_INFO_LIST;
+    stream = gen_riff_stream(inam);
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    todo_wine ok(desc.dwValidData == DMUS_OBJ_NAME, "Got valid data %#x, expected DMUS_OBJ_NAME\n",
+            desc.dwValidData);
+    todo_wine ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+            wine_dbgstr_w(desc.wszName));
+    IStream_Release(stream);
+
+    /* Duplicated chunks */
+    stream = gen_riff_stream(dupes);
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    todo_wine ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_NAME | DMUS_OBJ_VERSION),
+            "Got valid data %#x, expected DMUS_OBJ_OBJECT | DMUS_OBJ_NAME | DMUS_OBJ_VERSION\n",
+            desc.dwValidData);
+    todo_wine ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+            wine_dbgstr_w(desc.wszName));
+    IStream_Release(stream);
+
+    IDirectMusicObject_Release(dmo);
+}
+
 static void test_dswave(void)
 {
     IDirectMusicObject *dmo;
@@ -140,6 +330,7 @@ START_TEST(dswave)
     }
     test_COM();
     test_dswave();
+    test_parsedescriptor();
 
     CoUninitialize();
 }
