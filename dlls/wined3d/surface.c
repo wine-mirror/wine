@@ -934,6 +934,7 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
     struct wined3d_texture *dst_texture = dst_surface->container;
     unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_gl_info *gl_info;
+    unsigned int src_level, dst_level;
     struct wined3d_context *context;
     struct wined3d_bo_address data;
     UINT update_w, update_h;
@@ -950,16 +951,18 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
      * just to overwrite them again. */
     update_w = src_rect->right - src_rect->left;
     update_h = src_rect->bottom - src_rect->top;
-    if (update_w == wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level)
-            && update_h == wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level))
+    dst_level = dst_sub_resource_idx % dst_texture->level_count;
+    if (update_w == wined3d_texture_get_level_width(dst_texture, dst_level)
+            && update_h == wined3d_texture_get_level_height(dst_texture, dst_level))
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
     else
         wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
+    src_level = src_sub_resource_idx % src_texture->level_count;
     wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data,
             src_texture->sub_resources[src_sub_resource_idx].locations);
-    wined3d_texture_get_pitch(src_texture, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
+    wined3d_texture_get_pitch(src_texture, src_level, &src_row_pitch, &src_slice_pitch);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_texture->resource.format, src_rect,
             src_row_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
