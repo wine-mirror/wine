@@ -281,11 +281,11 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     }
     else
     {
+        unsigned int ds_level = dsv->sub_resource_idx % depth_stencil->container->level_count;
+
         render_offscreen = TRUE;
-        drawable_width = wined3d_texture_get_level_pow2_width(depth_stencil->container,
-                depth_stencil->texture_level);
-        drawable_height = wined3d_texture_get_level_pow2_height(depth_stencil->container,
-                depth_stencil->texture_level);
+        drawable_width = wined3d_texture_get_level_pow2_width(depth_stencil->container, ds_level);
+        drawable_height = wined3d_texture_get_level_pow2_height(depth_stencil->container, ds_level);
     }
 
     if (depth_stencil)
