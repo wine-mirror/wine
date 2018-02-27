@@ -562,6 +562,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     unsigned int src_row_pitch, src_slice_pitch;
     struct wined3d_bo_address data;
     BYTE *temporary_mem = NULL;
+    unsigned int level;
     GLenum target;
     void *mem;
 
@@ -574,6 +575,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
     target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
+    level = sub_resource_idx % texture->level_count;
 
     if (target == GL_TEXTURE_2D_ARRAY)
     {
@@ -606,10 +608,10 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             return;
         }
 
-        wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
+        wined3d_texture_get_pitch(texture, level, &dst_row_pitch, &dst_slice_pitch);
         wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
-                wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
-                wined3d_texture_get_level_pow2_height(texture, surface->texture_level),
+                wined3d_texture_get_level_pow2_width(texture, level),
+                wined3d_texture_get_level_pow2_height(texture, level),
                 &src_row_pitch, &src_slice_pitch);
         if (!(temporary_mem = heap_alloc(src_slice_pitch)))
         {
@@ -634,10 +636,10 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
         f = *format;
         f.byte_count = format->conv_byte_count;
-        wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
+        wined3d_texture_get_pitch(texture, level, &dst_row_pitch, &dst_slice_pitch);
         wined3d_format_calculate_pitch(&f, texture->resource.device->surface_alignment,
-                wined3d_texture_get_level_width(texture, surface->texture_level),
-                wined3d_texture_get_level_height(texture, surface->texture_level),
+                wined3d_texture_get_level_width(texture, level),
+                wined3d_texture_get_level_height(texture, level),
                 &src_row_pitch, &src_slice_pitch);
 
         if (!(temporary_mem = heap_alloc(src_slice_pitch)))
@@ -665,25 +667,25 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("Downloading compressed surface %p, level %u, format %#x, type %#x, data %p.\n",
-                surface, surface->texture_level, format->glFormat, format->glType, mem);
+                surface, level, format->glFormat, format->glType, mem);
 
-        GL_EXTCALL(glGetCompressedTexImage(target, surface->texture_level, mem));
+        GL_EXTCALL(glGetCompressedTexImage(target, level, mem));
         checkGLcall("glGetCompressedTexImage");
     }
     else
     {
         TRACE("Downloading surface %p, level %u, format %#x, type %#x, data %p.\n",
-                surface, surface->texture_level, format->glFormat, format->glType, mem);
+                surface, level, format->glFormat, format->glType, mem);
 
-        gl_info->gl_ops.gl.p_glGetTexImage(target, surface->texture_level, format->glFormat, format->glType, mem);
+        gl_info->gl_ops.gl.p_glGetTexImage(target, level, format->glFormat, format->glType, mem);
         checkGLcall("glGetTexImage");
     }
 
     if (format->download)
     {
         format->download(mem, data.addr, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
-                wined3d_texture_get_level_width(texture, surface->texture_level),
-                wined3d_texture_get_level_height(texture, surface->texture_level), 1);
+                wined3d_texture_get_level_width(texture, level),
+                wined3d_texture_get_level_height(texture, level), 1);
     }
     else if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
     {
@@ -738,7 +740,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         src_data = mem;
         dst_data = data.addr;
         TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
-        h = wined3d_texture_get_level_height(texture, surface->texture_level);
+        h = wined3d_texture_get_level_height(texture, level);
         for (y = 0; y < h; ++y)
         {
             memcpy(dst_data, src_data, dst_row_pitch);
