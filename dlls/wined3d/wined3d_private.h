@@ -1945,9 +1945,7 @@ struct wined3d_context
     struct fbo_entry        *current_fbo;
     GLuint                  fbo_read_binding;
     GLuint                  fbo_draw_binding;
-    struct wined3d_rendertarget_info *blit_targets;
-    struct wined3d_fbo_entry_key *fbo_key;
-    GLenum *draw_buffers;
+    struct wined3d_rendertarget_info blit_targets[MAX_RENDER_TARGET_VIEWS];
     DWORD draw_buffers_mask; /* Enabled draw buffers, 31 max. */
 
     /* Queries */
@@ -3299,7 +3297,7 @@ struct fbo_entry
     struct wined3d_fbo_entry_key
     {
         DWORD rb_namespace;
-        struct wined3d_fbo_resource objects[1];
+        struct wined3d_fbo_resource objects[MAX_RENDER_TARGET_VIEWS + 1];
     } key;
 };
 
