@@ -1049,6 +1049,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         if (IsEqualGUID(&clsid, &FilterCLSID)) {
             /* Skip filter (same as the one the output pin belongs to) */
             IBaseFilter_Release(pfilter);
+            pfilter = NULL;
             goto error;
         }
 
