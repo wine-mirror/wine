@@ -1055,7 +1055,6 @@ HRESULT HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMElement*,HTMLElement**
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
-void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 HRESULT EventTarget_QI(EventTarget*,REFIID,void**) DECLSPEC_HIDDEN;
@@ -1071,9 +1070,6 @@ HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDE
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode*,HTMLAttributeCollection**) DECLSPEC_HIDDEN;
 HRESULT HTMLElement_handle_event(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*) DECLSPEC_HIDDEN;
 void HTMLElement_init_dispex_info(dispex_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
-
-HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**) DECLSPEC_HIDDEN;
-void HTMLFrameBase_destructor(HTMLFrameBase*) DECLSPEC_HIDDEN;
 
 HRESULT get_node(nsIDOMNode*,BOOL,HTMLDOMNode**) DECLSPEC_HIDDEN;
 HRESULT get_element(nsIDOMElement*,HTMLElement**) DECLSPEC_HIDDEN;
