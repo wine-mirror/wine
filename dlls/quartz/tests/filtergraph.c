@@ -431,6 +431,49 @@ static void rungraph(IFilterGraph2 *graph)
     ok(hr==1, "Releasing mediacontrol returned: %x\n", hr);
 }
 
+static void test_graph_builder_connect(WCHAR *filename)
+{
+    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
+    static const WCHAR inW[] = {'I','n',0};
+    IBaseFilter *source_filter, *video_filter;
+    IPin *pin_in, *pin_out;
+    IFilterGraph2 *graph;
+    IVideoWindow *window;
+    HRESULT hr;
+
+    graph = create_graph();
+
+    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IVideoWindow, (void **)&window);
+    ok(hr == S_OK, "Failed to create VideoRenderer: %#x\n", hr);
+
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &source_filter);
+    ok(hr == S_OK, "AddSourceFilter failed: %#x\n", hr);
+
+    hr = IVideoWindow_QueryInterface(window, &IID_IBaseFilter, (void **)&video_filter);
+    ok(hr == S_OK, "QueryInterface(IBaseFilter) failed: %#x\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, video_filter, NULL);
+    ok(hr == S_OK, "AddFilter failed: %#x\n", hr);
+
+    hr = IBaseFilter_FindPin(source_filter, outputW, &pin_out);
+    ok(hr == S_OK, "FindPin failed: %#x\n", hr);
+    hr = IBaseFilter_FindPin(video_filter, inW, &pin_in);
+    ok(hr == S_OK, "FindPin failed: %#x\n", hr);
+    hr = IFilterGraph2_Connect(graph, pin_out, pin_in);
+
+    if (hr != VFW_E_NO_ACCEPTABLE_TYPES)
+    {
+        ok(SUCCEEDED(hr), "Connect failed: %#x\n", hr);
+        rungraph(graph);
+    }
+
+    IPin_Release(pin_in);
+    IPin_Release(pin_out);
+    IBaseFilter_Release(source_filter);
+    IBaseFilter_Release(video_filter);
+    IVideoWindow_Release(window);
+    IFilterGraph2_Release(graph);
+}
+
 static void test_render_run(const WCHAR *file)
 {
     IFilterGraph2 *graph;
@@ -462,6 +505,8 @@ static void test_render_run(const WCHAR *file)
 
     refs = IFilterGraph2_Release(graph);
     ok(!refs, "Graph has %u references\n", refs);
+
+    test_graph_builder_connect(filename);
 
     /* check reference leaks */
     h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
