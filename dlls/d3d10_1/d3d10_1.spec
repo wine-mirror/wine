@@ -1,24 +1,24 @@
 @ stub RevertToOldImplementation
-@ stub D3D10CompileEffectFromMemory
-@ stub D3D10CompileShader
-@ stub D3D10CreateBlob
+@ stdcall D3D10CompileEffectFromMemory(ptr long ptr ptr ptr long long ptr ptr) d3d10.D3D10CompileEffectFromMemory
+@ stdcall D3D10CompileShader(ptr long str ptr ptr str str long ptr ptr) d3d10.D3D10CompileShader
+@ stdcall D3D10CreateBlob(long ptr) d3d10.D3D10CreateBlob
 @ stdcall D3D10CreateDevice1(ptr long ptr long long long ptr)
 @ stdcall D3D10CreateDeviceAndSwapChain1(ptr long ptr long long long ptr ptr ptr)
 @ stdcall D3D10CreateEffectFromMemory(ptr long long ptr ptr ptr) d3d10.D3D10CreateEffectFromMemory
 @ stdcall D3D10CreateEffectPoolFromMemory(ptr long long ptr ptr) d3d10.D3D10CreateEffectPoolFromMemory
 @ stdcall D3D10CreateStateBlock(ptr ptr ptr) d3d10.D3D10CreateStateBlock
 @ stub D3D10DisassembleEffect
-@ stub D3D10DisassembleShader
-@ stub D3D10GetGeometryShaderProfile
-@ stub D3D10GetInputAndOutputSignatureBlob
-@ stub D3D10GetInputSignatureBlob
-@ stub D3D10GetOutputSignatureBlob
-@ stub D3D10GetPixelShaderProfile
-@ stub D3D10GetShaderDebugInfo
+@ stdcall D3D10DisassembleShader(ptr long long ptr ptr) d3d10.D3D10DisassembleShader
+@ stdcall D3D10GetGeometryShaderProfile(ptr) d3d10.D3D10GetGeometryShaderProfile
+@ stdcall D3D10GetInputAndOutputSignatureBlob(ptr long ptr) d3d10.D3D10GetInputAndOutputSignatureBlob
+@ stdcall D3D10GetInputSignatureBlob(ptr long ptr) d3d10.D3D10GetInputSignatureBlob
+@ stdcall D3D10GetOutputSignatureBlob(ptr long ptr) d3d10.D3D10GetOutputSignatureBlob
+@ stdcall D3D10GetPixelShaderProfile(ptr) d3d10.D3D10GetPixelShaderProfile
+@ stdcall D3D10GetShaderDebugInfo(ptr long ptr) d3d10.D3D10GetShaderDebugInfo
 @ stub D3D10GetVersion
-@ stub D3D10GetVertexShaderProfile
+@ stdcall D3D10GetVertexShaderProfile(ptr) d3d10.D3D10GetVertexShaderProfile
 @ stub D3D10PreprocessShader
-@ stub D3D10ReflectShader
+@ stdcall D3D10ReflectShader(ptr long ptr) d3d10.D3D10ReflectShader
 @ stub D3D10RegisterLayers
 @ stdcall D3D10StateBlockMaskDifference(ptr ptr ptr) d3d10.D3D10StateBlockMaskDifference
 @ stdcall D3D10StateBlockMaskDisableAll(ptr) d3d10.D3D10StateBlockMaskDisableAll
