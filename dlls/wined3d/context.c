@@ -4170,6 +4170,26 @@ static void context_setup_target(struct wined3d_context *context,
     context_set_render_offscreen(context, render_offscreen);
 }
 
+static void context_activate(struct wined3d_context *context,
+        struct wined3d_texture *texture, unsigned int sub_resource_idx)
+{
+    context_enter(context);
+    context_update_window(context);
+    context_setup_target(context, texture, sub_resource_idx);
+    if (!context->valid)
+        return;
+
+    if (context != context_get_current())
+    {
+        if (!context_set_current(context))
+            ERR("Failed to activate the new context.\n");
+    }
+    else if (context->needs_set)
+    {
+        context_set_gl_context(context);
+    }
+}
+
 struct wined3d_context *context_acquire(const struct wined3d_device *device,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
@@ -4228,21 +4248,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
             context = swapchain_get_context(device->swapchains[0]);
     }
 
-    context_enter(context);
-    context_update_window(context);
-    context_setup_target(context, texture, sub_resource_idx);
-    if (!context->valid)
-        return context;
-
-    if (context != current_context)
-    {
-        if (!context_set_current(context))
-            ERR("Failed to activate the new context.\n");
-    }
-    else if (context->needs_set)
-    {
-        context_set_gl_context(context);
-    }
+    context_activate(context, texture, sub_resource_idx);
 
     return context;
 }
@@ -4250,16 +4256,23 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
 struct wined3d_context *context_reacquire(const struct wined3d_device *device,
         struct wined3d_context *context)
 {
-    struct wined3d_context *current_context;
+    struct wined3d_context *acquired_context;
+
+    wined3d_from_cs(device->cs);
 
     if (!context || context->tid != GetCurrentThreadId())
         return NULL;
 
-    current_context = context_acquire(device, context->current_rt.texture,
-            context->current_rt.sub_resource_idx);
-    if (current_context != context)
-        ERR("Acquired context %p instead of %p.\n", current_context, context);
-    return current_context;
+    if (context->current_rt.texture)
+    {
+        context_activate(context, context->current_rt.texture, context->current_rt.sub_resource_idx);
+        return context;
+    }
+
+    acquired_context = context_acquire(device, NULL, 0);
+    if (acquired_context != context)
+        ERR("Acquired context %p instead of %p.\n", acquired_context, context);
+    return acquired_context;
 }
 
 void dispatch_compute(struct wined3d_device *device, const struct wined3d_state *state,
