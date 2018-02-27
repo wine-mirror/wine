@@ -67,22 +67,23 @@ static WCHAR *load_resource(const WCHAR *name)
     return pathW;
 }
 
-static IGraphBuilder *pgraph;
-
-static int createfiltergraph(void)
+static IFilterGraph2 *create_graph(void)
 {
-    return S_OK == CoCreateInstance(
-        &CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&pgraph);
+    IFilterGraph2 *ret;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&ret);
+    ok(hr == S_OK, "Failed to create FilterGraph: %#x\n", hr);
+    return ret;
 }
 
-static void test_basic_video(void)
+static void test_basic_video(IFilterGraph2 *graph)
 {
     IBasicVideo* pbv;
     LONG video_width, video_height, window_width;
     LONG left, top, width, height;
     HRESULT hr;
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IBasicVideo, (LPVOID*)&pbv);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo, (void **)&pbv);
     ok(hr==S_OK, "Cannot get IBasicVideo interface returned: %x\n", hr);
 
     /* test get video size */
@@ -283,7 +284,7 @@ static void test_basic_video(void)
     IBasicVideo_Release(pbv);
 }
 
-static void test_mediacontrol(void)
+static void test_mediacontrol(IFilterGraph2 *graph)
 {
     IMediaSeeking *seeking;
     IMediaFilter *filter;
@@ -292,14 +293,14 @@ static void test_mediacontrol(void)
     GUID format;
     HRESULT hr;
 
-    IGraphBuilder_SetDefaultSyncSource(pgraph);
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
+    IFilterGraph2_SetDefaultSyncSource(graph);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
     ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (void**) &filter);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %08x\n", hr);
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
 
     format = GUID_NULL;
@@ -345,7 +346,7 @@ static void test_mediacontrol(void)
     IMediaFilter_Release(filter);
 }
 
-static void rungraph(void)
+static void rungraph(IFilterGraph2 *graph)
 {
     HRESULT hr;
     IMediaControl* pmc;
@@ -353,10 +354,10 @@ static void rungraph(void)
     IMediaFilter* pmf;
     HANDLE hEvent;
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (LPVOID*)&pmc);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&pmc);
     ok(hr==S_OK, "Cannot get IMediaControl interface returned: %x\n", hr);
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (LPVOID*)&pmf);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&pmf);
     ok(hr==S_OK, "Cannot get IMediaFilter interface returned: %x\n", hr);
 
     IMediaControl_Stop(pmc);
@@ -365,8 +366,8 @@ static void rungraph(void)
 
     IMediaFilter_Release(pmf);
 
-    test_basic_video();
-    test_mediacontrol();
+    test_basic_video(graph);
+    test_mediacontrol(graph);
 
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
@@ -377,7 +378,7 @@ static void rungraph(void)
     hr = IMediaControl_Stop(pmc);
     ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
 
-    IGraphBuilder_SetDefaultSyncSource(pgraph);
+    IFilterGraph2_SetDefaultSyncSource(graph);
 
     Sleep(10);
     trace("stop -> pause\n");
@@ -412,7 +413,7 @@ static void rungraph(void)
     hr = IMediaControl_Run(pmc);
     ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
 
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaEvent, (LPVOID*)&pme);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (LPVOID*)&pme);
     ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %x\n", hr);
 
     hr = IMediaEvent_GetEventHandle(pme, (OAEVENT*)&hEvent);
@@ -430,19 +431,12 @@ static void rungraph(void)
     ok(hr==1, "Releasing mediacontrol returned: %x\n", hr);
 }
 
-static void releasefiltergraph(void)
-{
-    HRESULT hr;
-
-    hr = IGraphBuilder_Release(pgraph);
-    ok(hr==0, "Releasing filtergraph returned: %x\n", hr);
-}
-
 static void test_render_run(const WCHAR *file)
 {
+    IFilterGraph2 *graph;
     HANDLE h;
     HRESULT hr;
-
+    LONG refs;
     WCHAR *filename = load_resource(file);
 
     h = CreateFileW(filename, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -453,22 +447,21 @@ static void test_render_run(const WCHAR *file)
     }
     CloseHandle(h);
 
-    if (!createfiltergraph())
-    {
-        DeleteFileW(filename);
-        return;
-    }
+    trace("running %s\n", wine_dbgstr_w(file));
 
-    hr = IGraphBuilder_RenderFile(pgraph, filename, NULL);
+    graph = create_graph();
+
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
     if (hr == VFW_E_CANNOT_RENDER)
         skip("%s: codec not supported; skipping test\n", wine_dbgstr_w(file));
     else
     {
         ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "RenderFile failed: %x\n", hr);
-        rungraph();
+        rungraph(graph);
     }
 
-    releasefiltergraph();
+    refs = IFilterGraph2_Release(graph);
+    ok(!refs, "Graph has %u references\n", refs);
 
     /* check reference leaks */
     h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -557,6 +550,7 @@ static void test_render_with_multithread(void)
 static void test_graph_builder(void)
 {
     HRESULT hr;
+    IGraphBuilder *pgraph;
     IBaseFilter *pF = NULL;
     IBaseFilter *pF2 = NULL;
     IPin *pIn = NULL;
@@ -565,8 +559,7 @@ static void test_graph_builder(void)
     static const WCHAR testFilterW[] = {'t','e','s','t','F','i','l','t','e','r',0};
     static const WCHAR fooBarW[] = {'f','o','o','B','a','r',0};
 
-    if (!createfiltergraph())
-        return;
+    pgraph = (IGraphBuilder *)create_graph();
 
     /* create video filter */
     hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
@@ -614,22 +607,7 @@ static void test_graph_builder(void)
     if (pEnum) IEnumPins_Release(pEnum);
     if (pF) IBaseFilter_Release(pF);
     if (pF2) IBaseFilter_Release(pF2);
-
-    releasefiltergraph();
-}
-
-static void test_filter_graph2(void)
-{
-    HRESULT hr;
-    IFilterGraph2 *pF = NULL;
-
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IFilterGraph2, (LPVOID*)&pF);
-    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
-    ok(pF != NULL, "pF is NULL\n");
-
-    hr = IFilterGraph2_Release(pF);
-    ok(hr == 0, "IFilterGraph2_Release returned: %x\n", hr);
+    IGraphBuilder_Release(pgraph);
 }
 
 /* IEnumMediaTypes implementation (supporting code for Render() test.) */
@@ -1884,8 +1862,7 @@ static void test_render_filter_priority(void)
      * (one is "exact" match, other is "wildcard" match. Seems to depend
      * on the order in which filters are added to the graph, thus indicating
      * no preference given to exact match. */
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
+    pgraph2 = create_graph();
     if (!pgraph2) return;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
@@ -1930,8 +1907,7 @@ static void test_render_filter_priority(void)
         return;
     }
 
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
+    pgraph2 = create_graph();
     if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
@@ -1979,8 +1955,7 @@ static void test_render_filter_priority(void)
        an existing renderer which renders the pin indirectly, through an additional middle filter,
        again trying different orders of creation. Native appears not to give a preference. */
 
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
+    pgraph2 = create_graph();
     if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
@@ -2031,8 +2006,7 @@ static void test_render_filter_priority(void)
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
     ptestfilter2 = NULL;
 
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
+    pgraph2 = create_graph();
     if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
@@ -2086,8 +2060,7 @@ static void test_render_filter_priority(void)
     ptestfilter2 = NULL;
 
     /* Test if renderers are tried before non-renderers (intermediary filters). */
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
+    pgraph2 = create_graph();
     if (!pgraph2) goto out;
 
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
@@ -2292,19 +2265,11 @@ static void test_aggregate_filter_graph(void)
 
 START_TEST(filtergraph)
 {
-    HRESULT hr;
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IGraphBuilder, (LPVOID*)&pgraph);
-    if (FAILED(hr)) {
-        skip("Creating filtergraph returned %08x, skipping tests\n", hr);
-        return;
-    }
-    IGraphBuilder_Release(pgraph);
+
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_graph_builder();
-    test_filter_graph2();
     test_render_filter_priority();
     test_aggregate_filter_graph();
     CoUninitialize();
