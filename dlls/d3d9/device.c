@@ -1625,7 +1625,7 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
 
     if (dst->texture && !(dst_desc.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
     {
-        WARN("Destination is a texture.\n");
+        WARN("Destination is a regular texture.\n");
         goto done;
     }
 
