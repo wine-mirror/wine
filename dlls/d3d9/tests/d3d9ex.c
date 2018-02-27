@@ -26,6 +26,8 @@
 #include <initguid.h>
 #include <d3d9.h>
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 static HMODULE d3d9_handle = 0;
 static DEVMODEW registry_mode;
 
@@ -697,7 +699,7 @@ static void test_create_depth_stencil_surface_ex(void)
     warp = adapter_is_warp(&identifier);
     IDirect3D9_Release(d3d);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         surface = (IDirect3DSurface9 *)0xdeadbeef;
         hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx(device, 64, 64, D3DFMT_D24S8,
@@ -2809,7 +2811,7 @@ static void test_wndproc(void)
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
         devmode.dmPelsWidth = user32_width;
@@ -3424,7 +3426,7 @@ static void test_window_style(void)
 
     SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].style_flags,
                 0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
@@ -3668,7 +3670,7 @@ static void test_swapchain_parameters(void)
     mode.Format = D3DFMT_X8R8G8B8;
     mode.ScanLineOrdering = 0;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;

@@ -12290,7 +12290,7 @@ static void test_stretch_rect(void)
     ok(hr == D3D_OK, "Failed to get caps, hr %#x.\n", hr);
     can_stretch_textures = caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES;
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         src_format = formats[i];
         if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -12302,7 +12302,7 @@ static void test_stretch_rect(void)
             continue;
         }
 
-        for (j = 0; j < sizeof(formats) / sizeof(*formats); ++j)
+        for (j = 0; j < ARRAY_SIZE(formats); ++j)
         {
             dst_format = formats[j];
             if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
