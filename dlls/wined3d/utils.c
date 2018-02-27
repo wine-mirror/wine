@@ -4162,7 +4162,7 @@ static void init_debug_buffer(struct debug_buffer *buffer, const char *default_s
     buffer->size = ARRAY_SIZE(buffer->str);
 }
 
-static BOOL debug_append(struct debug_buffer *buffer, const char *str, const char *separator)
+static void debug_append(struct debug_buffer *buffer, const char *str, const char *separator)
 {
     int size;
 
@@ -4172,12 +4172,12 @@ static BOOL debug_append(struct debug_buffer *buffer, const char *str, const cha
     if (size == -1 || size >= buffer->size)
     {
         buffer->size = 0;
-        return FALSE;
+        strcpy(&buffer->str[ARRAY_SIZE(buffer->str) - 4], "...");
+        return;
     }
 
     buffer->ptr += size;
     buffer->size -= size;
-    return TRUE;
 }
 
 const char *wined3d_debug_resource_access(DWORD access)
