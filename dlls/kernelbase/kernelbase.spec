@@ -1223,7 +1223,7 @@
 @ stdcall QueueUserWorkItem(ptr ptr long) kernel32.QueueUserWorkItem
 # @ stub QuirkGetData
 # @ stub QuirkGetData2
-# @ stub QuirkIsEnabled
+@ stdcall QuirkIsEnabled(ptr)
 # @ stub QuirkIsEnabled2
 @ stdcall QuirkIsEnabled3(ptr ptr)
 # @ stub QuirkIsEnabledForPackage

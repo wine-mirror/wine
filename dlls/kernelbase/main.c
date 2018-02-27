@@ -1,4 +1,5 @@
 /*
+ * Copyright 2016 Michael Müller
  * Copyright 2017 Andrey Gusev
  *
  * This library is free software; you can redistribute it and/or
@@ -73,6 +74,15 @@ LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *po
         *policy = AppPolicyWindowingModel_ClassicDesktop;
 
     return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *           QuirkIsEnabled   (KERNELBASE.@)
+ */
+BOOL WINAPI QuirkIsEnabled(void *arg)
+{
+    FIXME("(%p): stub\n", arg);
+    return FALSE;
 }
 
 /***********************************************************************
