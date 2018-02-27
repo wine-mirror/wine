@@ -283,6 +283,68 @@ static void test_basic_video(void)
     IBasicVideo_Release(pbv);
 }
 
+static void test_mediacontrol(void)
+{
+    IMediaSeeking *seeking;
+    IMediaFilter *filter;
+    IMediaControl *control;
+    LONGLONG pos;
+    GUID format;
+    HRESULT hr;
+
+    IGraphBuilder_SetDefaultSyncSource(pgraph);
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
+
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (void**) &filter);
+    ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %08x\n", hr);
+
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
+
+    format = GUID_NULL;
+    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
+    ok(hr == S_OK, "GetTimeFormat failed: %#x\n", hr);
+    ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "got %s\n", wine_dbgstr_guid(&format));
+
+    pos = 0xdeadbeef;
+    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, NULL);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
+    ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
+
+    pos = 0xdeadbeef;
+    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
+    ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
+
+    pos = 0xdeadbeef;
+    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
+    ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
+    ok(hr == S_OK, "GetCurrentPosition failed: %#x\n", hr);
+    ok(pos == 0, "got %s\n", wine_dbgstr_longlong(pos));
+
+    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_ReturnTime, NULL, AM_SEEKING_NoPositioning);
+    ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
+    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_NoPositioning, NULL, AM_SEEKING_ReturnTime);
+    ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
+
+    IMediaFilter_SetSyncSource(filter, NULL);
+    pos = 0xdeadbeef;
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
+    ok(hr == S_OK, "GetCurrentPosition failed: %#x\n", hr);
+    ok(pos == 0, "got %s\n", wine_dbgstr_longlong(pos));
+
+    hr = IMediaControl_GetState(control, 1000, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    IMediaControl_Release(control);
+    IMediaSeeking_Release(seeking);
+    IMediaFilter_Release(filter);
+}
+
 static void rungraph(void)
 {
     HRESULT hr;
@@ -304,6 +366,7 @@ static void rungraph(void)
     IMediaFilter_Release(pmf);
 
     test_basic_video();
+    test_mediacontrol();
 
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
@@ -552,109 +615,6 @@ static void test_graph_builder(void)
     if (pF) IBaseFilter_Release(pF);
     if (pF2) IBaseFilter_Release(pF2);
 
-    releasefiltergraph();
-}
-
-static void test_graph_builder_addfilter(void)
-{
-    HRESULT hr;
-    IBaseFilter *pF = NULL;
-    static const WCHAR testFilterW[] = {'t','e','s','t','F','i','l','t','e','r',0};
-
-    if (!createfiltergraph())
-        return;
-
-    hr = IGraphBuilder_AddFilter(pgraph, NULL, testFilterW);
-    ok(hr == E_POINTER, "IGraphBuilder_AddFilter returned: %x\n", hr);
-
-    /* create video filter */
-    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IBaseFilter, (LPVOID*)&pF);
-    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
-    ok(pF != NULL, "pF is NULL\n");
-    if (!pF) {
-        skip("failed to created filter, skipping\n");
-        return;
-    }
-
-    hr = IGraphBuilder_AddFilter(pgraph, pF, NULL);
-    ok(hr == S_OK, "IGraphBuilder_AddFilter returned: %x\n", hr);
-    IBaseFilter_Release(pF);
-}
-
-static void test_mediacontrol(void)
-{
-    HRESULT hr;
-    LONGLONG pos = 0xdeadbeef;
-    GUID format = GUID_NULL;
-    IMediaSeeking *seeking = NULL;
-    IMediaFilter *filter = NULL;
-    IMediaControl *control = NULL;
-
-    IGraphBuilder_SetDefaultSyncSource(pgraph);
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
-    ok(hr == S_OK, "QueryInterface IMediaControl failed: %08x\n", hr);
-    if (FAILED(hr))
-        return;
-
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (void**) &filter);
-    ok(hr == S_OK, "QueryInterface IMediaFilter failed: %08x\n", hr);
-    if (FAILED(hr))
-    {
-        IMediaSeeking_Release(seeking);
-        return;
-    }
-
-    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
-    ok(hr == S_OK, "QueryInterface IMediaControl failed: %08x\n", hr);
-    if (FAILED(hr))
-    {
-        IMediaSeeking_Release(seeking);
-        IMediaFilter_Release(filter);
-        return;
-    }
-
-    format = GUID_NULL;
-    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "GetTimeFormat failed: %08x\n", hr);
-    ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "GetTimeFormat: unexpected format %s\n", wine_dbgstr_guid(&format));
-
-    pos = 0xdeadbeef;
-    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, NULL);
-    ok(hr == S_OK, "ConvertTimeFormat failed: %08x\n", hr);
-    ok(pos == 0x123456789a, "ConvertTimeFormat: expected 123456789a, got (%s)\n", wine_dbgstr_longlong(pos));
-
-    pos = 0xdeadbeef;
-    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
-    ok(hr == S_OK, "ConvertTimeFormat failed: %08x\n", hr);
-    ok(pos == 0x123456789a, "ConvertTimeFormat: expected 123456789a, got (%s)\n", wine_dbgstr_longlong(pos));
-
-    pos = 0xdeadbeef;
-    hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "ConvertTimeFormat failed: %08x\n", hr);
-    ok(pos == 0x123456789a, "ConvertTimeFormat: expected 123456789a, got (%s)\n", wine_dbgstr_longlong(pos));
-
-    hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
-    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
-    ok(pos == 0, "Position != 0 (%s)\n", wine_dbgstr_longlong(pos));
-
-    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_ReturnTime, NULL, AM_SEEKING_NoPositioning);
-    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
-    hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_NoPositioning, NULL, AM_SEEKING_ReturnTime);
-    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
-
-    IMediaFilter_SetSyncSource(filter, NULL);
-    pos = 0xdeadbeef;
-    hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
-    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
-    ok(pos == 0, "Position != 0 (%s)\n", wine_dbgstr_longlong(pos));
-
-    hr = IMediaControl_GetState(control, 1000, NULL);
-    ok(hr == E_POINTER, "GetState expected %08x, got %08x\n", E_POINTER, hr);
-
-    IMediaControl_Release(control);
-    IMediaSeeking_Release(seeking);
-    IMediaFilter_Release(filter);
     releasefiltergraph();
 }
 
@@ -2344,8 +2304,6 @@ START_TEST(filtergraph)
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_graph_builder();
-    test_graph_builder_addfilter();
-    test_mediacontrol();
     test_filter_graph2();
     test_render_filter_priority();
     test_aggregate_filter_graph();
