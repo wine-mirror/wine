@@ -40,7 +40,7 @@ static void test_dc_attributes(void)
 {
     HDC hdc, old_hdc;
     HDC hdcs[20];
-    INT i, rop, def_rop;
+    INT i, rop, def_rop, caps;
     BOOL found_dc;
 
     /* test cache DC */
@@ -118,7 +118,28 @@ static void test_dc_attributes(void)
     ok( rop == 0, "got %d\n", rop );
     rop = GetROP2( old_hdc );
     ok( rop == 0, "got %d\n", rop );
+    caps = GetDeviceCaps( old_hdc, HORZRES );
+    ok( caps == 0, "got %d\n", caps );
+    caps = GetDeviceCaps( old_hdc, VERTRES );
+    ok( caps == 0, "got %d\n", caps );
+    caps = GetDeviceCaps( old_hdc, NUMCOLORS );
+    ok( caps == 0, "got %d\n", caps );
     ok( WindowFromDC( old_hdc ) == 0, "wrong window\n" );
+
+    hdc = GetDC(0);
+    caps = GetDeviceCaps( hdc, HORZRES );
+    ok( caps != 0, "got %d\n", caps );
+    caps = GetDeviceCaps( hdc, VERTRES );
+    ok( caps != 0, "got %d\n", caps );
+    caps = GetDeviceCaps( hdc, NUMCOLORS );
+    ok( caps != 0, "got %d\n", caps );
+    ReleaseDC( 0, hdc );
+    caps = GetDeviceCaps( hdc, HORZRES );
+    ok( caps == 0, "got %d\n", caps );
+    caps = GetDeviceCaps( hdc, VERTRES );
+    ok( caps == 0, "got %d\n", caps );
+    caps = GetDeviceCaps( hdc, NUMCOLORS );
+    ok( caps == 0, "got %d\n", caps );
 
     /* test own DC */
 
