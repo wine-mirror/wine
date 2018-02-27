@@ -237,6 +237,56 @@ static void test_setcolors(void)
     DestroyWindow(progress);
 }
 
+static void test_PBM_STEPIT(void)
+{
+    struct stepit_test
+    {
+        int min;
+        int max;
+        int step;
+    } stepit_tests[] =
+    {
+        { 3, 15,  5 },
+        { 3, 15, -5 },
+        { 3, 15, 50 },
+    };
+    HWND progress;
+    int i, j;
+
+    for (i = 0; i < sizeof(stepit_tests)/sizeof(stepit_tests[0]); i++)
+    {
+        struct stepit_test *test = &stepit_tests[i];
+        LRESULT ret;
+
+        progress = create_progress(0);
+
+        ret = SendMessageA(progress, PBM_SETRANGE32, test->min, test->max);
+        ok(ret != 0, "Unexpected return value.\n");
+
+        SendMessageA(progress, PBM_SETPOS, test->min, 0);
+        SendMessageA(progress, PBM_SETSTEP, test->step, 0);
+
+        for (j = 0; j < test->max; j++)
+        {
+            int pos = SendMessageA(progress, PBM_GETPOS, 0, 0);
+            int current;
+
+            pos += test->step;
+            if (pos > test->max)
+                pos = (pos - test->min) % (test->max - test->min) + test->min;
+            if (pos < test->min)
+                pos = (pos - test->min) % (test->max - test->min) + test->max;
+
+            SendMessageA(progress, PBM_STEPIT, 0, 0);
+
+            current = SendMessageA(progress, PBM_GETPOS, 0, 0);
+            ok(current == pos, "Unexpected position %d, expected %d.\n", current, pos);
+        }
+
+        DestroyWindow(progress);
+    }
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -260,6 +310,7 @@ START_TEST(progress)
     
     test_redraw();
     test_setcolors();
+    test_PBM_STEPIT();
 
     cleanup();
 }
