@@ -195,9 +195,6 @@ static void test_VerifyVersionInfo(void)
 
             VER_MAJORVERSION, VER_EQUAL,
             VER_MINORVERSION, VER_LESS,
-            0, 0,
-            0, 0,
-            TRUE,
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -278,9 +275,6 @@ static void test_VerifyVersionInfo(void)
 
             VER_SERVICEPACKMAJOR, VER_EQUAL,
             VER_SERVICEPACKMINOR, VER_LESS,
-            0, 0,
-            0, 0,
-            TRUE,
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -298,8 +292,6 @@ static void test_VerifyVersionInfo(void)
             VER_MINORVERSION, VER_EQUAL,
             VER_SERVICEPACKMAJOR, VER_EQUAL,
             VER_SERVICEPACKMINOR, VER_LESS,
-            0, 0,
-            TRUE,
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -319,7 +311,6 @@ static void test_VerifyVersionInfo(void)
             VER_MINORVERSION, VER_EQUAL,
             VER_SERVICEPACKMAJOR, VER_EQUAL,
             VER_SERVICEPACKMINOR, VER_LESS,
-            TRUE,
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -362,9 +353,6 @@ static void test_VerifyVersionInfo(void)
 
             VER_MAJORVERSION, VER_EQUAL,
             VER_SERVICEPACKMAJOR, VER_LESS,
-            0, 0,
-            0, 0,
-            TRUE,
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
@@ -382,8 +370,6 @@ static void test_VerifyVersionInfo(void)
             VER_MAJORVERSION, VER_EQUAL,
             VER_MINORVERSION, VER_EQUAL,
             VER_SERVICEPACKMAJOR, VER_LESS,
-            0, 0,
-            TRUE
         },
         {
             VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
