@@ -1334,18 +1334,18 @@
 @ cdecl -private __iscsym(long) NTDLL___iscsym
 @ cdecl -private __iscsymf(long) NTDLL___iscsymf
 @ cdecl -private __toascii(long) NTDLL___toascii
-@ stdcall -private -arch=i386 -ret64 _alldiv(int64 int64)
+@ stdcall -arch=i386 -ret64 _alldiv(int64 int64)
 # @ stub _alldvrm
-@ stdcall -private -arch=i386 -ret64 _allmul(int64 int64)
-@ stdcall -private -arch=i386 -norelay _alloca_probe()
-@ stdcall -private -arch=i386 -ret64 _allrem(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _allshl(int64 long)
-@ stdcall -private -arch=i386 -ret64 _allshr(int64 long)
+@ stdcall -arch=i386 -ret64 _allmul(int64 int64)
+@ stdcall -arch=i386 -norelay _alloca_probe()
+@ stdcall -arch=i386 -ret64 _allrem(int64 int64)
+@ stdcall -arch=i386 -ret64 _allshl(int64 long)
+@ stdcall -arch=i386 -ret64 _allshr(int64 long)
 @ cdecl -private -ret64 _atoi64(str)
-@ stdcall -private -arch=i386 -ret64 _aulldiv(int64 int64)
+@ stdcall -arch=i386 -ret64 _aulldiv(int64 int64)
 # @ stub _aulldvrm
-@ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _aullshr(int64 long)
+@ stdcall -arch=i386 -ret64 _aullrem(int64 int64)
+@ stdcall -arch=i386 -ret64 _aullshr(int64 long)
 @ stdcall -private -arch=i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -private -arch=i386 -ret64 _ftol() NTDLL__ftol
