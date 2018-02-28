@@ -452,6 +452,12 @@ static void test_aes(void)
     ok(size == 64, "got %u\n", size);
 
     size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode) - 1, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 64, "got %u\n", size);
+
+    size = 0;
+    memset(mode, 0, sizeof(mode));
     ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", mode);

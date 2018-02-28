@@ -532,7 +532,7 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
         }
         if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
         {
-            if (size >= sizeof(BCRYPT_CHAIN_MODE_CBC))
+            if (size >= sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR))
             {
                 memcpy(buf, BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC));
                 *ret_size = sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR);
