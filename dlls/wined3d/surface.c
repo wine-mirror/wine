@@ -981,36 +981,42 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
 /* Context activation is done by the caller. */
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_rendertarget_info *rt)
 {
-    const struct wined3d_gl_info *gl_info = &surface->container->resource.device->adapter->gl_info;
+    unsigned int sub_resource_idx, width, height, level;
     struct wined3d_renderbuffer_entry *entry;
+    const struct wined3d_texture *texture;
+    const struct wined3d_gl_info *gl_info;
     unsigned int src_width, src_height;
-    unsigned int width, height;
     GLuint renderbuffer = 0;
+
+    texture = surface->container;
+    gl_info = &texture->resource.device->adapter->gl_info;
+    sub_resource_idx = surface_get_sub_resource_idx(surface);
+    level = sub_resource_idx % texture->level_count;
 
     if (rt && rt->resource->format->id != WINED3DFMT_NULL)
     {
-        struct wined3d_texture *texture;
-        unsigned int level;
+        struct wined3d_texture *rt_texture;
+        unsigned int rt_level;
 
         if (rt->resource->type == WINED3D_RTYPE_BUFFER)
         {
             FIXME("Unsupported resource type %s.\n", debug_d3dresourcetype(rt->resource->type));
             return;
         }
-        texture = wined3d_texture_from_resource(rt->resource);
-        level = rt->sub_resource_idx % texture->level_count;
+        rt_texture = wined3d_texture_from_resource(rt->resource);
+        rt_level = rt->sub_resource_idx % rt_texture->level_count;
 
-        width = wined3d_texture_get_level_pow2_width(texture, level);
-        height = wined3d_texture_get_level_pow2_height(texture, level);
+        width = wined3d_texture_get_level_pow2_width(rt_texture, rt_level);
+        height = wined3d_texture_get_level_pow2_height(rt_texture, rt_level);
     }
     else
     {
-        width = wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level);
-        height = wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level);
+        width = wined3d_texture_get_level_pow2_width(texture, level);
+        height = wined3d_texture_get_level_pow2_height(texture, level);
     }
 
-    src_width = wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level);
-    src_height = wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level);
+    src_width = wined3d_texture_get_level_pow2_width(texture, level);
+    src_height = wined3d_texture_get_level_pow2_height(texture, level);
 
     /* A depth stencil smaller than the render target is not valid */
     if (width > src_width || height > src_height) return;
@@ -1039,7 +1045,7 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
         gl_info->fbo_ops.glGenRenderbuffers(1, &renderbuffer);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
         gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER,
-                surface->container->resource.format->glInternal, width, height);
+                texture->resource.format->glInternal, width, height);
 
         entry = heap_alloc(sizeof(*entry));
         entry->width = width;
