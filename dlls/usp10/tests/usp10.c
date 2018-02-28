@@ -3701,116 +3701,117 @@ static void test_newlines(void)
 
 static void test_ScriptGetFontFunctions(HDC hdc)
 {
+    static const WCHAR test_phagspa[] = {0xa84f, 0xa861, 0xa843, 0x0020, 0xa863, 0xa861, 0xa859,
+            0x0020, 0xa850, 0xa85c, 0xa85e};
+    SCRIPT_CONTROL control;
+    SCRIPT_CACHE sc = NULL;
+    SCRIPT_ITEM items[15];
+    OPENTYPE_TAG tags[5];
+    SCRIPT_STATE state;
+    int count = 0;
     HRESULT hr;
+
     if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags || !pScriptGetFontFeatureTags)
     {
-        win_skip("ScriptGetFontScriptTags,ScriptGetFontLanguageTags or ScriptGetFontFeatureTags not available on this platform\n");
+        win_skip("ScriptGetFontScriptTags, ScriptGetFontLanguageTags or "
+                "ScriptGetFontFeatureTags not available on this platform.\n");
+        return;
     }
+
+    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, tags, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontScriptTags(NULL, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == E_PENDING, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontScriptTags(hdc, &sc, NULL, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == S_OK || hr == E_OUTOFMEMORY, "Got unexpected hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(count <= 5, "Got unexpected count %d.\n", count);
     else
-    {
-        SCRIPT_CACHE sc = NULL;
-        OPENTYPE_TAG tags[5];
-        int count = 0;
-        int outnItems=0;
-        SCRIPT_ITEM outpItems[15];
-        SCRIPT_CONTROL Control;
-        SCRIPT_STATE State;
-        static const WCHAR test_phagspa[] = {0xa84f, 0xa861, 0xa843, 0x0020, 0xa863, 0xa861, 0xa859, 0x0020, 0xa850, 0xa85c, 0xa85e};
+        ok(!count, "Got unexpected count %d.\n", count);
+    ok(!!sc, "Got unexpected script cache %p.\n", sc);
 
-        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 5, tags, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, tags, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontScriptTags(NULL, &sc, NULL, 5, tags, &count);
-        ok(hr == E_PENDING,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 5, tags, &count);
-        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
-        if (hr == S_OK)
-            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
-        else if (hr == E_OUTOFMEMORY)
-            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
-        ok(sc != NULL, "ScriptCache should be initialized\n");
+    ScriptFreeCache(&sc);
+    sc = NULL;
 
-        ScriptFreeCache(&sc);
-        sc = NULL;
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, tags, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontLanguageTags(NULL, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == E_PENDING, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == S_OK || hr == E_OUTOFMEMORY, "Got unexpected hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(count <= 5, "Got unexpected count %d.\n", count);
+    else
+        ok(!count, "Got unexpected count %d.\n", count);
 
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 5, tags, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, tags, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontLanguageTags(NULL, &sc, NULL, latn_tag, 5, tags, &count);
-        ok(hr == E_PENDING,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 5, tags, &count);
-        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
-        if (hr == S_OK)
-            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
-        else if (hr == E_OUTOFMEMORY)
-            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
+    ScriptFreeCache(&sc);
+    sc = NULL;
 
-        ScriptFreeCache(&sc);
-        sc = NULL;
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, tags, &count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontFeatureTags(NULL, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == E_PENDING, "Got unexpected hr %#x.\n", hr);
+    ok(!sc, "Got unexpected script cache %p.\n", sc);
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == S_OK || hr == E_OUTOFMEMORY, "Got unexpected hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(count <= 5, "Got unexpected count %d.\n", count);
+    else
+        ok(!count, "Got unexpected count %d.\n", count);
 
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 5, tags, NULL);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, tags, &count);
-        ok(hr == E_INVALIDARG,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontFeatureTags(NULL, &sc, NULL, latn_tag, 0x0, 5, tags, &count);
-        ok(hr == E_PENDING,"Incorrect return code\n");
-        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 5, tags, &count);
-        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
-        if (hr == S_OK)
-            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
-        else if (hr == E_OUTOFMEMORY)
-            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
+    memset(&control, 0, sizeof(control));
+    memset(&state, 0, sizeof(state));
 
-        memset(&Control, 0, sizeof(Control));
-        memset(&State, 0, sizeof(State));
+    hr = ScriptItemize(test_phagspa, ARRAY_SIZE(test_phagspa), ARRAY_SIZE(items),
+            &control, &state, items, &count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    memset(tags, 0, sizeof(tags));
+    hr = pScriptGetFontScriptTags(hdc, &sc, &items[0].a, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == USP_E_SCRIPT_NOT_IN_FONT || broken(hr == S_OK), "Got unexpected hr %#x.\n", hr);
 
-        hr = ScriptItemize(test_phagspa, 10, 15, &Control, &State, outpItems, &outnItems);
-        ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
-        memset(tags,0,sizeof(tags));
-        hr = pScriptGetFontScriptTags(hdc, &sc, &outpItems[0].a, 5, tags, &count);
-        ok( hr == USP_E_SCRIPT_NOT_IN_FONT || broken(hr == S_OK), "wrong return code\n");
+    hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = pScriptGetFontLanguageTags(hdc, &sc, &items[0].a, dsrt_tag, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK), "Got unexpected hr %#x.\n", hr);
 
-        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, 5, tags, &count);
-        ok( hr == S_OK, "wrong return code\n");
-        hr = pScriptGetFontLanguageTags(hdc, &sc, &outpItems[0].a, dsrt_tag, 5, tags, &count);
-        ok( hr == E_INVALIDARG || broken(hr == S_OK), "wrong return code\n");
+    hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = pScriptGetFontFeatureTags(hdc, &sc, &items[0].a, dsrt_tag, 0x0, ARRAY_SIZE(tags), tags, &count);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK), "Got unexpected hr %#x.\n", hr);
 
-        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, dsrt_tag, 0x0, 5, tags, &count);
-        ok( hr == S_OK, "wrong return code\n");
-        hr = pScriptGetFontFeatureTags(hdc, &sc, &outpItems[0].a, dsrt_tag, 0x0, 5, tags, &count);
-        ok( hr == E_INVALIDARG || broken(hr == S_OK), "wrong return code\n");
-
-        ScriptFreeCache(&sc);
-    }
+    ScriptFreeCache(&sc);
 }
 
 struct logical_width_test
