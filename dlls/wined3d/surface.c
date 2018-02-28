@@ -1607,12 +1607,12 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
+    unsigned int src_height, src_level, dst_level;
     const struct wined3d_gl_info *gl_info;
     float xrel, yrel;
     struct wined3d_context *context;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
-    unsigned int src_height;
     GLenum dst_target;
 
     /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
@@ -1660,14 +1660,17 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
         ERR("Texture filtering not supported in direct blit\n");
     }
 
-    src_height = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
+    src_level = src_sub_resource_idx % src_texture->level_count;
+    dst_level = dst_sub_resource_idx % dst_texture->level_count;
+
+    src_height = wined3d_texture_get_level_height(src_texture, src_level);
     dst_target = wined3d_texture_get_sub_resource_target(dst_texture, dst_sub_resource_idx);
     if (upsidedown
             && !((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
             && !((yrel - 1.0f < -eps) || (yrel - 1.0f > eps)))
     {
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do. */
-        gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_surface->texture_level,
+        gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_level,
                 dst_rect.left /*xoffset */, dst_rect.top /* y offset */,
                 src_rect->left, src_height - src_rect->bottom,
                 dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
@@ -1692,14 +1695,14 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 
                 for (col = dst_rect.left; col < dst_rect.right; ++col)
                 {
-                    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_surface->texture_level,
+                    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_level,
                             dst_rect.left + col /* x offset */, row /* y offset */,
                             src_rect->left + col * xrel, yoffset - (int) (row * yrel), 1, 1);
                 }
             }
             else
             {
-                gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_surface->texture_level,
+                gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_target, dst_level,
                         dst_rect.left /* x offset */, row /* y offset */,
                         src_rect->left, yoffset - (int) (row * yrel), dst_rect.right - dst_rect.left, 1);
             }
