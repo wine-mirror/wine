@@ -4314,6 +4314,11 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream *stream, GpImage **image)
     HRESULT hr;
     const struct image_codec *codec=NULL;
 
+    TRACE("%p %p\n", stream, image);
+
+    if (!stream || !image)
+        return InvalidParameter;
+
     /* choose an appropriate image decoder */
     stat = get_decoder_info(stream, &codec);
     if (stat != Ok) return stat;
