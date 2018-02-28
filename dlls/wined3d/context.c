@@ -3128,7 +3128,7 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 {
     struct wined3d_rendertarget_view * const *rts = state->fb->render_targets;
     struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
-    DWORD rt_mask, rt_mask_bits;
+    DWORD rt_mask, mask;
     unsigned int i;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
@@ -3138,15 +3138,13 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 
     rt_mask = ps ? ps->reg_maps.rt_mask : 1;
     rt_mask &= context->d3d_info->valid_rt_mask;
-    rt_mask_bits = rt_mask;
-    i = 0;
-    while (rt_mask_bits)
+
+    mask = rt_mask;
+    while (mask)
     {
-        rt_mask_bits &= ~(1u << i);
+        i = wined3d_bit_scan(&mask);
         if (!rts[i] || rts[i]->format->id == WINED3DFMT_NULL)
             rt_mask &= ~(1u << i);
-
-        i++;
     }
 
     return rt_mask;
