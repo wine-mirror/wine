@@ -27,8 +27,9 @@
 
 #include "wine/test.h"
 
+#include "v6util.h"
 
-static HWND hProgressParentWnd, hProgressWnd;
+static HWND hProgressParentWnd;
 static const char progressTestClass[] = "ProgressBarTestClass";
 static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 
@@ -119,16 +120,6 @@ static void init(void)
       CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, GetModuleHandleA(NULL), 0);
     ok(hProgressParentWnd != NULL, "failed to create parent wnd\n");
 
-    GetClientRect(hProgressParentWnd, &rect);
-    hProgressWnd = CreateWindowExA(0, PROGRESS_CLASSA, "", WS_CHILD | WS_VISIBLE,
-      0, 0, rect.right, rect.bottom, hProgressParentWnd, NULL, GetModuleHandleA(NULL), 0);
-    ok(hProgressWnd != NULL, "Failed to create progress bar.\n");
-    progress_wndproc = (WNDPROC)SetWindowLongPtrA(hProgressWnd, GWLP_WNDPROC, (LPARAM)progress_subclass_proc);
-    
-    ShowWindow(hProgressParentWnd, SW_SHOWNORMAL);
-    ok(GetUpdateRect(hProgressParentWnd, NULL, FALSE), "GetUpdateRect: There should be a region that needs to be updated\n");
-    flush_events();
-    update_window(hProgressParentWnd);    
 }
 
 static void cleanup(void)
@@ -151,8 +142,20 @@ static void cleanup(void)
  */
 static void test_redraw(void)
 {
-    RECT client_rect;
+    RECT client_rect, rect;
+    HWND hProgressWnd;
     LRESULT ret;
+
+    GetClientRect(hProgressParentWnd, &rect);
+    hProgressWnd = CreateWindowExA(0, PROGRESS_CLASSA, "", WS_CHILD | WS_VISIBLE,
+      0, 0, rect.right, rect.bottom, hProgressParentWnd, NULL, GetModuleHandleA(NULL), 0);
+    ok(hProgressWnd != NULL, "Failed to create progress bar.\n");
+    progress_wndproc = (WNDPROC)SetWindowLongPtrA(hProgressWnd, GWLP_WNDPROC, (LPARAM)progress_subclass_proc);
+
+    ShowWindow(hProgressParentWnd, SW_SHOWNORMAL);
+    ok(GetUpdateRect(hProgressParentWnd, NULL, FALSE), "GetUpdateRect: There should be a region that needs to be updated\n");
+    flush_events();
+    update_window(hProgressParentWnd);
 
     SendMessageA(hProgressWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     SendMessageA(hProgressWnd, PBM_SETPOS, 10, 0);
@@ -162,15 +165,15 @@ static void test_redraw(void)
     /* PBM_SETPOS */
     ok(SendMessageA(hProgressWnd, PBM_SETPOS, 50, 0) == 10, "PBM_SETPOS must return the previous position\n");
     ok(!GetUpdateRect(hProgressWnd, NULL, FALSE), "PBM_SETPOS: The progress bar should be redrawn immediately\n");
-    
+
     /* PBM_DELTAPOS */
     ok(SendMessageA(hProgressWnd, PBM_DELTAPOS, 15, 0) == 50, "PBM_DELTAPOS must return the previous position\n");
     ok(!GetUpdateRect(hProgressWnd, NULL, FALSE), "PBM_DELTAPOS: The progress bar should be redrawn immediately\n");
-    
+
     /* PBM_SETPOS */
     ok(SendMessageA(hProgressWnd, PBM_SETPOS, 80, 0) == 65, "PBM_SETPOS must return the previous position\n");
     ok(!GetUpdateRect(hProgressWnd, NULL, FALSE), "PBM_SETPOS: The progress bar should be redrawn immediately\n");
-    
+
     /* PBM_STEPIT */
     ok(SendMessageA(hProgressWnd, PBM_STEPIT, 0, 0) == 80, "PBM_STEPIT must return the previous position\n");
     ok(!GetUpdateRect(hProgressWnd, NULL, FALSE), "PBM_STEPIT: The progress bar should be redrawn immediately\n");
@@ -179,7 +182,7 @@ static void test_redraw(void)
         win_skip("PBM_GETPOS needs comctl32 > 4.70\n");
     else
         ok(ret == 100, "PBM_GETPOS returned a wrong position : %d\n", (UINT)ret);
-    
+
     /* PBM_SETRANGE and PBM_SETRANGE32:
     Usually the progress bar doesn't repaint itself immediately. If the
     position is not in the new range, it does.
@@ -207,6 +210,8 @@ static void test_redraw(void)
        wine_dbgstr_rect(&last_paint_rect), wine_dbgstr_rect(&client_rect));
     update_window(hProgressWnd);
     ok(erased, "Progress bar should have erased the background\n");
+
+    DestroyWindow(hProgressWnd);
 }
 
 static void test_setcolors(void)
@@ -299,6 +304,8 @@ static void init_functions(void)
 START_TEST(progress)
 {
     INITCOMMONCONTROLSEX iccex;
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
 
     init_functions();
 
@@ -307,10 +314,18 @@ START_TEST(progress)
     pInitCommonControlsEx(&iccex);
 
     init();
-    
+
     test_redraw();
     test_setcolors();
     test_PBM_STEPIT();
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+        return;
+
+    test_setcolors();
+    test_PBM_STEPIT();
+
+    unload_v6_module(ctx_cookie, hCtx);
 
     cleanup();
 }
