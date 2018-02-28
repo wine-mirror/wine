@@ -1563,6 +1563,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
+    unsigned int level;
     GLenum target;
 
     restore_rt = context_get_rt_surface(old_ctx);
@@ -1585,10 +1586,11 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
         gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(texture));
     checkGLcall("glReadBuffer");
 
+    level = sub_resource_idx % texture->level_count;
     target = wined3d_texture_get_sub_resource_target(texture, sub_resource_idx);
-    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(target, surface->texture_level,
-            0, 0, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
-            wined3d_texture_get_level_height(texture, surface->texture_level));
+    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(target, level, 0, 0, 0, 0,
+            wined3d_texture_get_level_width(texture, level),
+            wined3d_texture_get_level_height(texture, level));
     checkGLcall("glCopyTexSubImage2D");
 
     if (restore_rt)
