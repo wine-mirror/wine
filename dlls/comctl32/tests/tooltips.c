@@ -304,7 +304,6 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
             break;
         case TTN_SHOW:
             GetWindowRect(hdr->hwndFrom, &rect);
-        todo_wine
             ok(!EqualRect(&g_ttip_rect, &rect), "Unexpected window rectangle.\n");
             break;
         }

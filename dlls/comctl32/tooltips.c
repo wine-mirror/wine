@@ -624,18 +624,10 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     }
 
     toolPtr = &infoPtr->tools[nTool];
-
-    TRACE("Show tooltip %d\n", nTool);
-
-    hdr.hwndFrom = infoPtr->hwndSelf;
-    hdr.idFrom = toolPtr->uId;
-    hdr.code = TTN_SHOW;
-    SendMessageW (toolPtr->hwnd, WM_NOTIFY, toolPtr->uId, (LPARAM)&hdr);
-
-    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
-
     TOOLTIPS_CalcTipSize (infoPtr, &size);
-    TRACE("size %d x %d\n", size.cx, size.cy);
+
+    TRACE("Show tooltip %d, %s, size %d x %d\n", nTool, debugstr_w(infoPtr->szTipText),
+        size.cx, size.cy);
 
     if (track_activate && (toolPtr->uFlags & TTF_TRACK))
     {
@@ -824,9 +816,16 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
          * it is no longer needed */
     }
 
-    SetWindowPos (infoPtr->hwndSelf, HWND_TOPMOST, rect.left, rect.top,
-		    rect.right - rect.left, rect.bottom - rect.top,
-		    SWP_SHOWWINDOW | SWP_NOACTIVATE);
+    SetWindowPos (infoPtr->hwndSelf, NULL, rect.left, rect.top,
+        rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+
+    hdr.hwndFrom = infoPtr->hwndSelf;
+    hdr.idFrom = toolPtr->uId;
+    hdr.code = TTN_SHOW;
+    SendMessageW (toolPtr->hwnd, WM_NOTIFY, toolPtr->uId, (LPARAM)&hdr);
+
+    SetWindowPos (infoPtr->hwndSelf, HWND_TOPMOST, 0, 0, 0, 0,
+        SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
     /* repaint the tooltip */
     InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
