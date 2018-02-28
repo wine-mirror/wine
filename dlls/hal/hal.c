@@ -177,3 +177,13 @@ void WINAPI WRITE_PORT_ULONG(ULONG *port, ULONG value)
 {
     FIXME("(%p %d) stub!\n", port, value);
 }
+
+ULONGLONG WINAPI KeQueryPerformanceCounter(LARGE_INTEGER *frequency)
+{
+    LARGE_INTEGER counter;
+
+    TRACE("(%p)\n", frequency);
+
+    NtQueryPerformanceCounter(&counter, frequency);
+    return counter.QuadPart;
+}
