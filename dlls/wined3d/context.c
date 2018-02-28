@@ -2956,8 +2956,6 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        context_validate_onscreen_formats(context, NULL);
-
         if (context->render_offscreen)
         {
             wined3d_texture_load(rt, context, FALSE);
