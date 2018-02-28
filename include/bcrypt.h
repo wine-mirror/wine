@@ -58,6 +58,10 @@ typedef LONG NTSTATUS;
 #define BCRYPT_PROVIDER_HANDLE (const WCHAR []){'P','r','o','v','i','d','e','r','H','a','n','d','l','e',0}
 #define BCRYPT_SIGNATURE_LENGTH (const WCHAR []){'S','i','g','n','a','t','u','r','e','L','e','n','g','t','h',0}
 
+#define BCRYPT_OPAQUE_KEY_BLOB   (const WCHAR []){'O','p','a','q','u','e','K','e','y','B','l','o','b',0}
+#define BCRYPT_KEY_DATA_BLOB     (const WCHAR []){'K','e','y','D','a','t','a','B','l','o','b',0}
+#define BCRYPT_AES_WRAP_KEY_BLOB (const WCHAR []){'R','f','c','3','5','6','5','K','e','y','W','r','a','p','B','l','o','b',0}
+
 #define MS_PRIMITIVE_PROVIDER (const WCHAR [])\
     {'M','i','c','r','o','s','o','f','t',' ','P','r','i','m','i','t','i','v','e',' ','P','r','o','v','i','d','e','r',0}
 #define MS_PLATFORM_CRYPTO_PROVIDER (const WCHAR [])\
@@ -116,6 +120,16 @@ typedef struct _CRYPT_PROVIDER_REG
     PCRYPT_IMAGE_REG pUM;
     PCRYPT_IMAGE_REG pKM;
 } CRYPT_PROVIDER_REG, *PCRYPT_PROVIDER_REG;
+
+typedef struct _BCRYPT_KEY_DATA_BLOB_HEADER
+{
+    ULONG dwMagic;
+    ULONG dwVersion;
+    ULONG cbKeyData;
+} BCRYPT_KEY_DATA_BLOB_HEADER, *PBCRYPT_KEY_DATA_BLOB_HEADER;
+
+#define BCRYPT_KEY_DATA_BLOB_MAGIC    0x4d42444b
+#define BCRYPT_KEY_DATA_BLOB_VERSION1 1
 
 typedef PVOID BCRYPT_ALG_HANDLE;
 typedef PVOID BCRYPT_KEY_HANDLE;
