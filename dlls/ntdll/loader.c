@@ -1809,18 +1809,27 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
 
 /* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
 /* but it cannot necessarily be loaded as a dll, so we need some additional checks */
-static BOOL is_valid_binary( const pe_image_info_t *info )
+static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
 {
 #ifdef __i386__
     return info->machine == IMAGE_FILE_MACHINE_I386;
-#elif defined(__x86_64__)
-    return info->machine == IMAGE_FILE_MACHINE_AMD64 || !info->contains_code;
 #elif defined(__arm__)
     return info->machine == IMAGE_FILE_MACHINE_ARM ||
            info->machine == IMAGE_FILE_MACHINE_THUMB ||
            info->machine == IMAGE_FILE_MACHINE_ARMNT;
-#elif defined(__aarch64__)
-    return info->machine == IMAGE_FILE_MACHINE_ARM64 || !info->contains_code;
+#elif defined(__x86_64__) || defined(__aarch64__)  /* support 32-bit IL-only images on 64-bit */
+    const IMAGE_COR20_HEADER *cor_header;
+    DWORD size;
+
+#ifdef __x86_64__
+    if (info->machine == IMAGE_FILE_MACHINE_AMD64) return TRUE;
+#else
+    if (info->machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
+#endif
+    if (!info->contains_code) return TRUE;
+    cor_header = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size );
+    if (cor_header && (cor_header->Flags & COMIMAGE_FLAGS_ILONLY)) return TRUE;
+    return FALSE;
 #else
     return FALSE;  /* no wow64 support on other platforms */
 #endif
@@ -1855,7 +1864,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     NtClose( mapping );
 
     if ((status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE) &&
-        !is_valid_binary( &image_info ))
+        !is_valid_binary( module, &image_info ))
     {
         NtUnmapViewOfSection( NtCurrentProcess(), module );
         return STATUS_INVALID_IMAGE_FORMAT;
