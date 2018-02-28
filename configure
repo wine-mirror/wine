@@ -18729,6 +18729,7 @@ wine_fn_config_dll kerberos enable_kerberos
 wine_fn_config_dll kernel32 enable_kernel32
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll kernelbase enable_kernelbase
+wine_fn_config_test dlls/kernelbase/tests kernelbase_test
 wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16
 wine_fn_config_dll ksuser enable_ksuser
