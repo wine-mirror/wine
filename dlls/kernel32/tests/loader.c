@@ -1282,14 +1282,11 @@ static void test_filenames(void)
     mod2 = GetModuleHandleA( short_path );
     ok( mod == mod2, "wrong module %p for %s\n", mod2, short_path );
     mod2 = GetModuleHandleA( long_path );
-    todo_wine
     ok( mod == mod2, "wrong module %p for %s\n", mod2, long_path );
     mod2 = LoadLibraryA( long_path );
     ok( mod2 != NULL, "loading failed err %u\n", GetLastError() );
-    todo_wine
     ok( mod == mod2, "library loaded twice\n" );
     GetModuleFileNameA( mod2, buffer, MAX_PATH );
-    todo_wine
     ok( !lstrcmpiA( buffer, short_path ), "got wrong path %s / %s\n", buffer, short_path );
     FreeLibrary( mod2 );
     FreeLibrary( mod );
@@ -1299,16 +1296,13 @@ static void test_filenames(void)
     GetModuleFileNameA( mod, buffer, MAX_PATH );
     ok( !lstrcmpiA( buffer, long_path ), "got wrong path %s / %s\n", buffer, long_path );
     mod2 = GetModuleHandleA( short_path );
-    todo_wine
     ok( mod == mod2, "wrong module %p for %s\n", mod2, short_path );
     mod2 = GetModuleHandleA( long_path );
     ok( mod == mod2, "wrong module %p for %s\n", mod2, long_path );
     mod2 = LoadLibraryA( short_path );
     ok( mod2 != NULL, "loading failed err %u\n", GetLastError() );
-    todo_wine
     ok( mod == mod2, "library loaded twice\n" );
     GetModuleFileNameA( mod2, buffer, MAX_PATH );
-    todo_wine
     ok( !lstrcmpiA( buffer, long_path ), "got wrong path %s / %s\n", buffer, long_path );
     FreeLibrary( mod2 );
     FreeLibrary( mod );
@@ -1324,14 +1318,11 @@ static void test_filenames(void)
         GetModuleFileNameA( mod, buffer, MAX_PATH );
         ok( !lstrcmpiA( buffer, dll_name ), "got wrong path %s / %s\n", buffer, dll_name );
         mod2 = GetModuleHandleA( long_path );
-        todo_wine
         ok( mod == mod2, "wrong module %p for %s\n", mod2, long_path );
         mod2 = LoadLibraryA( long_path );
         ok( mod2 != NULL, "loading failed err %u\n", GetLastError() );
-        todo_wine
         ok( mod == mod2, "library loaded twice\n" );
         GetModuleFileNameA( mod2, buffer, MAX_PATH );
-        todo_wine
         ok( !lstrcmpiA( buffer, dll_name ), "got wrong path %s / %s\n", buffer, short_path );
         FreeLibrary( mod2 );
         FreeLibrary( mod );
