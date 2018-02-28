@@ -5161,6 +5161,37 @@ static void test_png_color_formats(void)
     }
 }
 
+static void test_GdipLoadImageFromStream(void)
+{
+    IStream *stream;
+    GpStatus status;
+    GpImage *image;
+    HGLOBAL hglob;
+    BYTE *data;
+    HRESULT hr;
+
+    status = GdipLoadImageFromStream(NULL, NULL);
+    ok(status == InvalidParameter, "Unexected return value %d.\n", status);
+
+    image = (void *)0xdeadbeef;
+    status = GdipLoadImageFromStream(NULL, &image);
+    ok(status == InvalidParameter, "Unexected return value %d.\n", status);
+    ok(image == (void *)0xdeadbeef, "Unexpected image pointer.\n");
+
+    hglob = GlobalAlloc(0, sizeof(pngimage));
+    data = GlobalLock (hglob);
+    memcpy(data, pngimage, sizeof(pngimage));
+    GlobalUnlock(hglob);
+
+    hr = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream.\n");
+
+    status = GdipLoadImageFromStream(stream, NULL);
+    ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
+
+    IStream_Release(stream);
+}
+
 START_TEST(image)
 {
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
@@ -5234,6 +5265,7 @@ START_TEST(image)
     test_getadjustedpalette();
     test_histogram();
     test_imageabort();
+    test_GdipLoadImageFromStream();
 
     GdiplusShutdown(gdiplusToken);
 }
