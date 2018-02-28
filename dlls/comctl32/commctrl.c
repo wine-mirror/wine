@@ -1430,7 +1430,7 @@ void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark
         {lCentre + 1, l2 - 3},
     };
     hOldPen = SelectObject(hDC, hPen);
-    PolyPolyline(hDC, aptInsertMark, adwPolyPoints, sizeof(adwPolyPoints)/sizeof(adwPolyPoints[0]));
+    PolyPolyline(hDC, aptInsertMark, adwPolyPoints, ARRAY_SIZE(adwPolyPoints));
     SelectObject(hDC, hOldPen);
     DeleteObject(hPen);
 }
