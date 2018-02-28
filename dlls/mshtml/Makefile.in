@@ -27,7 +27,6 @@ C_SRCS = \
 	htmllocation.c \
 	htmlnode.c \
 	htmlobject.c \
-	htmlscreen.c \
 	htmlscript.c \
 	htmlselect.c \
 	htmlstorage.c \
