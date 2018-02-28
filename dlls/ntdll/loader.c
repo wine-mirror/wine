@@ -2157,6 +2157,31 @@ done:
 
 
 /***********************************************************************
+ *	open_dll_file
+ *
+ * Open a file for a new dll. Helper for find_dll_file.
+ */
+static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm )
+{
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    HANDLE handle;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))
+        return 0;
+
+    return handle;
+}
+
+
+/***********************************************************************
  *	find_dll_file
  *
  * Find the file (or already loaded module) for a given dll name.
@@ -2164,8 +2189,6 @@ done:
 static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
                                WCHAR *filename, ULONG *size, WINE_MODREF **pwm, HANDLE *handle )
 {
-    OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
     UNICODE_STRING nt_name;
     WCHAR *file_part, *ext, *dllname;
     ULONG len;
@@ -2220,13 +2243,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
                 RtlFreeHeap( GetProcessHeap(), 0, dllname );
                 return STATUS_NO_MEMORY;
             }
-            attr.Length = sizeof(attr);
-            attr.RootDirectory = 0;
-            attr.Attributes = OBJ_CASE_INSENSITIVE;
-            attr.ObjectName = &nt_name;
-            attr.SecurityDescriptor = NULL;
-            attr.SecurityQualityOfService = NULL;
-            if (NtOpenFile( handle, GENERIC_READ|SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
+            *handle = open_dll_file( &nt_name, pwm );
             goto found;
         }
 
@@ -2254,15 +2271,8 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     if (len >= *size) goto overflow;
     memcpy( filename, nt_name.Buffer + 4, len + sizeof(WCHAR) );
     if (!(*pwm = find_fullname_module( filename )) && handle)
-    {
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = 0;
-        attr.Attributes = OBJ_CASE_INSENSITIVE;
-        attr.ObjectName = &nt_name;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
-        if (NtOpenFile( handle, GENERIC_READ|SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
-    }
+        *handle = open_dll_file( &nt_name, pwm );
+
 found:
     RtlFreeUnicodeString( &nt_name );
     RtlFreeHeap( GetProcessHeap(), 0, dllname );
