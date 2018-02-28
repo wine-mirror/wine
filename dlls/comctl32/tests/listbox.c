@@ -43,6 +43,15 @@ static const char * const strings[4] = {
 
 static const char BAD_EXTENSION[] = "*.badtxt";
 
+static int strcmp_aw(LPCWSTR strw, const char *stra)
+{
+    WCHAR buf[1024];
+
+    if (!stra) return 1;
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    return lstrcmpW(strw, buf);
+}
+
 static HWND create_listbox(DWORD add_style, HWND parent)
 {
     INT_PTR ctl_id = 0;
@@ -229,6 +238,31 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 {
     switch (msg)
     {
+    case WM_MEASUREITEM:
+    {
+        DWORD style = GetWindowLongA(GetWindow(hwnd, GW_CHILD), GWL_STYLE);
+        MEASUREITEMSTRUCT *mi = (void*)lparam;
+
+        ok(wparam == mi->CtlID, "got wParam=%08lx, expected %08x\n", wparam, mi->CtlID);
+        ok(mi->CtlType == ODT_LISTBOX, "mi->CtlType = %u\n", mi->CtlType);
+        ok(mi->CtlID == 1, "mi->CtlID = %u\n", mi->CtlID);
+        ok(mi->itemHeight, "mi->itemHeight = 0\n");
+
+        if (mi->itemID > 4 || style & LBS_OWNERDRAWFIXED)
+            break;
+
+        if (style & LBS_HASSTRINGS)
+        {
+            ok(!strcmp_aw((WCHAR*)mi->itemData, strings[mi->itemID]),
+                    "mi->itemData = %s (%d)\n", wine_dbgstr_w((WCHAR*)mi->itemData), mi->itemID);
+        }
+        else
+        {
+            ok((void*)mi->itemData == strings[mi->itemID],
+                    "mi->itemData = %08lx, expected %p\n", mi->itemData, strings[mi->itemID]);
+        }
+        break;
+    }
     case WM_DRAWITEM:
     {
         RECT rc_item, rc_client, rc_clip;
@@ -1837,6 +1871,26 @@ static void test_listbox(void)
     run_test(EMS_NS);
 }
 
+static void test_WM_MEASUREITEM(void)
+{
+    HWND parent, listbox;
+    LRESULT data;
+
+    parent = create_parent();
+    listbox = create_listbox(WS_CHILD | LBS_OWNERDRAWVARIABLE, parent);
+
+    data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
+    ok(data == (LRESULT)strings[0], "data = %08lx, expected %p\n", data, strings[0]);
+    DestroyWindow(parent);
+
+    parent = create_parent();
+    listbox = create_listbox(WS_CHILD | LBS_OWNERDRAWVARIABLE | LBS_HASSTRINGS, parent);
+
+    data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
+    ok(!data, "data = %08lx\n", data);
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
     ULONG_PTR ctx_cookie;
@@ -1859,6 +1913,7 @@ START_TEST(listbox)
     test_GetListBoxInfo();
     test_missing_lbuttonup();
     test_extents();
+    test_WM_MEASUREITEM();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
