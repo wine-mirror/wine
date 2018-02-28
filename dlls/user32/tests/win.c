@@ -2786,7 +2786,6 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
             UlongToHandle(GetWindowLongPtrA(test, GWLP_HINSTANCE)) != GetModuleHandleA(NULL) ||
             GetWindow(test, GW_OWNER) == next))
     {
-        /*trace("skipping next %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDNEXT);
     }
     ok_(file, line)(next == test, "%p: expected next %p, got %p\n", hwnd, next, test);
@@ -2798,7 +2797,6 @@ static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
             UlongToHandle(GetWindowLongPtrA(test, GWLP_HINSTANCE)) != GetModuleHandleA(NULL) ||
             GetWindow(test, GW_OWNER) == hwnd))
     {
-        /*trace("skipping prev %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
         test = GetWindow(test, GW_HWNDPREV);
     }
     ok_(file, line)(prev == test, "%p: expected prev %p, got %p\n", hwnd, prev, test);
@@ -3060,8 +3058,6 @@ static void test_SetActiveWindow(HWND hwnd)
     SetActiveWindow(0);
     check_wnd_state(0, 0, 0, 0);
 
-    /*trace("testing SetActiveWindow %p\n", hwnd);*/
-
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
@@ -3084,7 +3080,7 @@ static void test_SetActiveWindow(HWND hwnd)
     ShowWindow(hwnd, SW_HIDE);
     check_wnd_state(0, 0, 0, 0);
 
-    /*trace("testing SetActiveWindow on an invisible window %p\n", hwnd);*/
+    /* Invisible window. */
     SetActiveWindow(hwnd);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
     
@@ -3176,8 +3172,6 @@ static void test_SetForegroundWindow(HWND hwnd)
     SetActiveWindow(0);
     check_wnd_state(0, 0, 0, 0);
 
-    /*trace("testing SetForegroundWindow %p\n", hwnd);*/
-
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
@@ -3219,7 +3213,7 @@ static void test_SetForegroundWindow(HWND hwnd)
     ShowWindow(hwnd, SW_HIDE);
     check_wnd_state(0, 0, 0, 0);
 
-    /*trace("testing SetForegroundWindow on an invisible window %p\n", hwnd);*/
+    /* Invisible window. */
     ret = SetForegroundWindow(hwnd);
     ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
     check_wnd_state(hwnd, hwnd, hwnd, 0);
@@ -5206,10 +5200,8 @@ static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)
 			  0,
 			  menu ? hmenu : 0,
 			  0, 0);
-    if (!hwnd) {
-	trace("Failed to create window class=%s, style=0x%08x, exStyle=0x%08x\n", class, style, exStyle);
-        return;
-    }
+    ok(hwnd != NULL, "Failed to create window class=%s, style=0x%08x, exStyle=0x%08x\n", class, style, exStyle);
+
     ShowWindow(hwnd, SW_SHOW);
 
     test_nonclient_area(hwnd);
@@ -5354,6 +5346,7 @@ static void test_redrawnow(void)
 {
    WNDCLASSA cls;
    HWND hwndMain;
+   BOOL ret;
 
    cls.style = CS_DBLCLKS;
    cls.lpfnWndProc = redraw_window_procA;
@@ -5365,11 +5358,8 @@ static void test_redrawnow(void)
    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
    cls.lpszMenuName = NULL;
    cls.lpszClassName = "RedrawWindowClass";
-
-   if(!RegisterClassA(&cls)) {
-       trace("Register failed %d\n", GetLastError());
-       return;
-   }
+   ret = RegisterClassA(&cls);
+   ok(ret, "Failed to register a test class.\n");
 
    hwndMain = CreateWindowA("RedrawWindowClass", "Main Window", WS_OVERLAPPEDWINDOW,
                             CW_USEDEFAULT, 0, 100, 100, NULL, NULL, 0, NULL);
@@ -5471,6 +5461,7 @@ static void test_csparentdc(void)
 {
    WNDCLASSA clsMain, cls;
    HWND hwndMain, hwnd1, hwnd2;
+   BOOL ret;
    RECT rc;
 
    struct parentdc_test test_answer;
@@ -5536,11 +5527,8 @@ static void test_csparentdc(void)
    clsMain.hbrBackground = GetStockObject(WHITE_BRUSH);
    clsMain.lpszMenuName = NULL;
    clsMain.lpszClassName = "ParentDcMainWindowClass";
-
-   if(!RegisterClassA(&clsMain)) {
-       trace("Register failed %d\n", GetLastError());
-       return;
-   }
+   ret = RegisterClassA(&clsMain);
+   ok(ret, "Failed to register a test class.\n");
 
    cls.style = CS_DBLCLKS | CS_PARENTDC;
    cls.lpfnWndProc = parentdc_window_procA;
@@ -5552,11 +5540,8 @@ static void test_csparentdc(void)
    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
    cls.lpszMenuName = NULL;
    cls.lpszClassName = "ParentDcWindowClass";
-
-   if(!RegisterClassA(&cls)) {
-       trace("Register failed %d\n", GetLastError());
-       return;
-   }
+   ret = RegisterClassA(&cls);
+   ok(ret, "Failed to register a test class.\n");
 
    SetRect(&rc, 0, 0, 150, 150);
    AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, 0);
@@ -7041,11 +7026,8 @@ static void test_GetUpdateRect(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = classNameA;
-
-    if(!RegisterClassA(&cls)) {
-       trace("Register failed %d\n", GetLastError());
-       return;
-    }
+    ret = RegisterClassA(&cls);
+    ok(ret, "Failed to register a test class.\n");
 
     hgrandparent = CreateWindowA(classNameA, "grandparent", WS_OVERLAPPEDWINDOW,
                                  0, 0, 100, 100, NULL, NULL, 0, NULL);
