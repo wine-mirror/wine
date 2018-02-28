@@ -28,6 +28,8 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "iads.h"
+#define SECURITY_WIN32
+#include "security.h"
 
 #include "wine/debug.h"
 
@@ -120,8 +122,27 @@ static HRESULT WINAPI sysinfo_get_UserName(IADsADSystemInfo *iface, BSTR *retval
 
 static HRESULT WINAPI sysinfo_get_ComputerName(IADsADSystemInfo *iface, BSTR *retval)
 {
-    FIXME("%p,%p: stub\n", iface, retval);
-    return E_NOTIMPL;
+    UINT size;
+    WCHAR *name;
+
+    TRACE("%p,%p\n", iface, retval);
+
+    size = 0;
+    GetComputerObjectNameW(NameFullyQualifiedDN, NULL, &size);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    name = SysAllocStringLen(NULL, size);
+    if (!name) return E_OUTOFMEMORY;
+
+    if (!GetComputerObjectNameW(NameFullyQualifiedDN, name, &size))
+    {
+        SysFreeString(name);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    *retval = name;
+    return S_OK;
 }
 
 static HRESULT WINAPI sysinfo_get_SiteName(IADsADSystemInfo *iface, BSTR *retval)

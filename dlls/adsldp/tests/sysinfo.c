@@ -79,7 +79,6 @@ static void test_ComputerName(void)
     ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IADsADSystemInfo_get_ComputerName(sysinfo, &bstr);
-todo_wine
     ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_CANT_ACCESS_DOMAIN_INFO), "got %#x\n", hr);
     if (hr == S_OK)
     {
