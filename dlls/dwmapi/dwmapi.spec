@@ -81,7 +81,7 @@
 # @ stub DwmRenderGesture
 @ stub DwmSetDxFrameDuration
 @ stub DwmSetIconicLivePreviewBitmap
-@ stub DwmSetIconicThumbnail
+@ stdcall DwmSetIconicThumbnail(long long long)
 @ stdcall DwmSetPresentParameters(ptr ptr)
 @ stdcall DwmSetWindowAttribute(long long ptr long)
 # @ stub DwmShowContact
