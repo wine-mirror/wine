@@ -1155,7 +1155,7 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
 
     if (!props && !num) return E_INVALIDARG;
 
-    if (num) *num = sizeof(script_props)/sizeof(script_props[0]);
+    if (num) *num = ARRAY_SIZE(script_props);
     if (props) *props = script_props;
 
     return S_OK;
