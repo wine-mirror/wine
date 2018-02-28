@@ -36,7 +36,6 @@ C_SRCS = \
 	htmlstylesheet.c \
 	htmltable.c \
 	htmltextarea.c \
-	htmltextcont.c \
 	htmltextnode.c \
 	htmlwindow.c \
 	ifacewrap.c \

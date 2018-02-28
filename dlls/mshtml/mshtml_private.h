@@ -800,12 +800,6 @@ extern cp_static_data_t HTMLElementEvents2_data DECLSPEC_HIDDEN;
 #define HTMLELEMENT_CPC {&DIID_HTMLElementEvents2, &HTMLElementEvents2_data}
 extern const cpc_entry_t HTMLElement_cpc[] DECLSPEC_HIDDEN;
 
-typedef struct {
-    HTMLElement element;
-
-    IHTMLTextContainer IHTMLTextContainer_iface;
-} HTMLTextContainer;
-
 struct HTMLFrameBase {
     HTMLElement element;
 
@@ -1054,7 +1048,6 @@ HRESULT HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMElement*,HTMLElement**
 
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
-void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 HRESULT EventTarget_QI(EventTarget*,REFIID,void**) DECLSPEC_HIDDEN;
