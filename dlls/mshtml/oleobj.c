@@ -547,17 +547,17 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
         HTMLDocument_LockContainer(This->doc_obj, TRUE);
 
         /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
-        hres = IOleDocumentSite_ActivateMe(pDocSite, &This->IOleDocumentView_iface);
+        hres = IOleDocumentSite_ActivateMe(pDocSite, &This->doc_obj->IOleDocumentView_iface);
         IOleDocumentSite_Release(pDocSite);
     }else {
-        hres = IOleDocumentView_UIActivate(&This->IOleDocumentView_iface, TRUE);
+        hres = IOleDocumentView_UIActivate(&This->doc_obj->IOleDocumentView_iface, TRUE);
         if(SUCCEEDED(hres)) {
             if(lprcPosRect) {
                 RECT rect; /* We need to pass rect as not const pointer */
                 rect = *lprcPosRect;
-                IOleDocumentView_SetRect(&This->IOleDocumentView_iface, &rect);
+                IOleDocumentView_SetRect(&This->doc_obj->IOleDocumentView_iface, &rect);
             }
-            IOleDocumentView_Show(&This->IOleDocumentView_iface, TRUE);
+            IOleDocumentView_Show(&This->doc_obj->IOleDocumentView_iface, TRUE);
         }
     }
 
@@ -751,7 +751,7 @@ static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSit
      */
 
     if(pIPSite) {
-        hres = IOleDocumentView_SetInPlaceSite(&This->IOleDocumentView_iface, pIPSite);
+        hres = IOleDocumentView_SetInPlaceSite(&This->doc_obj->IOleDocumentView_iface, pIPSite);
         if(FAILED(hres))
             return hres;
     }
@@ -759,8 +759,8 @@ static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSit
     if(pstm)
         FIXME("pstm is not supported\n");
 
-    IOleDocumentView_AddRef(&This->IOleDocumentView_iface);
-    *ppView = &This->IOleDocumentView_iface;
+    IOleDocumentView_AddRef(&This->doc_obj->IOleDocumentView_iface);
+    *ppView = &This->doc_obj->IOleDocumentView_iface;
     return S_OK;
 }
 
@@ -1127,7 +1127,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     TRACE("(%p)\n", This);
 
     if(This->doc_obj->ui_active)
-        IOleDocumentView_UIActivate(&This->IOleDocumentView_iface, FALSE);
+        IOleDocumentView_UIActivate(&This->doc_obj->IOleDocumentView_iface, FALSE);
     This->doc_obj->window_active = FALSE;
 
     if(!This->doc_obj->in_place_active)

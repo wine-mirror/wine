@@ -595,9 +595,7 @@ struct HTMLDocument {
     IMonikerProp                IMonikerProp_iface;
     IOleObject                  IOleObject_iface;
     IOleDocument                IOleDocument_iface;
-    IOleDocumentView            IOleDocumentView_iface;
     IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
-    IViewObjectEx               IViewObjectEx_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IServiceProvider            IServiceProvider_iface;
     IOleCommandTarget           IOleCommandTarget_iface;
@@ -642,6 +640,8 @@ struct HTMLDocumentObj {
     DispatchEx dispex;
     IUnknown IUnknown_outer;
     ICustomDoc ICustomDoc_iface;
+    IOleDocumentView IOleDocumentView_iface;
+    IViewObjectEx IViewObjectEx_iface;
     ITargetContainer ITargetContainer_iface;
 
     IWindowForBindingUI IWindowForBindingUI_iface;
@@ -876,11 +876,10 @@ HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 void HTMLDocument_Persist_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleCmd_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
-void HTMLDocument_View_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Service_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 
+void HTMLDocument_View_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
-void init_binding_ui(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 

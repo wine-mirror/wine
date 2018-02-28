@@ -4761,16 +4761,8 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleObject_iface;
     else if(IsEqualGUID(&IID_IOleDocument, riid))
         *ppv = &This->IOleDocument_iface;
-    else if(IsEqualGUID(&IID_IOleDocumentView, riid))
-        *ppv = &This->IOleDocumentView_iface;
     else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid))
         *ppv = &This->IOleInPlaceActiveObject_iface;
-    else if(IsEqualGUID(&IID_IViewObject, riid))
-        *ppv = &This->IViewObjectEx_iface;
-    else if(IsEqualGUID(&IID_IViewObject2, riid))
-        *ppv = &This->IViewObjectEx_iface;
-    else if(IsEqualGUID(&IID_IViewObjectEx, riid))
-        *ppv = &This->IViewObjectEx_iface;
     else if(IsEqualGUID(&IID_IOleWindow, riid))
         *ppv = &This->IOleInPlaceActiveObject_iface;
     else if(IsEqualGUID(&IID_IOleInPlaceObject, riid))
@@ -4861,7 +4853,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     HTMLDocument_Persist_Init(doc);
     HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
-    HTMLDocument_View_Init(doc);
     HTMLDocument_Service_Init(doc);
 
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocument_cpc);
@@ -5247,6 +5238,14 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
+    }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
+        *ppv = &This->IOleDocumentView_iface;
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
         *ppv = &This->ITargetContainer_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
@@ -5304,7 +5303,7 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         if(This->in_place_active)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.IOleInPlaceObjectWindowless_iface);
         if(This->ipsite)
-            IOleDocumentView_SetInPlaceSite(&This->basedoc.IOleDocumentView_iface, NULL);
+            IOleDocumentView_SetInPlaceSite(&This->IOleDocumentView_iface, NULL);
         if(This->undomgr)
             IOleUndoManager_Release(This->undomgr);
         if(This->editsvcs)
@@ -5450,7 +5449,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->usermode = UNKNOWN_USERMODE;
     doc->task_magic = get_task_target_magic();
 
-    init_binding_ui(doc);
+    HTMLDocument_View_Init(doc);
 
     hres = create_nscontainer(doc, &doc->nscontainer);
     if(FAILED(hres)) {
