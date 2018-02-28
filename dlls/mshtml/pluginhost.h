@@ -66,8 +66,6 @@ HRESULT create_plugin_host(HTMLDocumentNode*,HTMLPluginContainer*) DECLSPEC_HIDD
 void update_plugin_window(PluginHost*,HWND,const RECT*) DECLSPEC_HIDDEN;
 void detach_plugin_host(PluginHost*) DECLSPEC_HIDDEN;
 
-HRESULT create_param_prop_bag(nsIDOMElement*,IPropertyBag**) DECLSPEC_HIDDEN;
-
 HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*) DECLSPEC_HIDDEN;
 HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*) DECLSPEC_HIDDEN;
