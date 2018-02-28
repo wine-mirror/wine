@@ -1433,8 +1433,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     struct wined3d_surface *restore_rt = NULL;
     const struct wined3d_gl_info *gl_info;
     unsigned int row_pitch, slice_pitch;
+    unsigned int width, height, level;
     struct wined3d_bo_address data;
-    unsigned int width, height;
     BYTE *row, *top, *bottom;
     BOOL src_is_upside_down;
     unsigned int i;
@@ -1488,14 +1488,15 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
         checkGLcall("glBindBuffer");
     }
 
-    wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
+    level = sub_resource_idx % texture->level_count;
+    wined3d_texture_get_pitch(texture, level, &row_pitch, &slice_pitch);
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, row_pitch / texture->resource.format->byte_count);
     checkGLcall("glPixelStorei");
 
-    width = wined3d_texture_get_level_width(texture, surface->texture_level);
-    height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
     gl_info->gl_ops.gl.p_glReadPixels(0, 0, width, height,
             texture->resource.format->glFormat,
             texture->resource.format->glType, data.addr);
