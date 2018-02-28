@@ -20,7 +20,7 @@
 @ stub BCryptEnumContexts
 @ stub BCryptEnumProviders
 @ stub BCryptEnumRegisteredProviders
-@ stub BCryptExportKey
+@ stdcall BCryptExportKey(ptr ptr wstr ptr long ptr long)
 @ stub BCryptFinalizeKeyPair
 @ stdcall BCryptFinishHash(ptr ptr long long)
 @ stub BCryptFreeBuffer
@@ -31,7 +31,7 @@
 @ stdcall BCryptGetProperty(ptr wstr ptr long ptr long)
 @ stdcall BCryptHash(ptr ptr long ptr long ptr long)
 @ stdcall BCryptHashData(ptr ptr long long)
-@ stub BCryptImportKey
+@ stdcall BCryptImportKey(ptr ptr wstr ptr ptr long ptr long long)
 @ stub BCryptImportKeyPair
 @ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long)
 @ stub BCryptQueryContextConfiguration
