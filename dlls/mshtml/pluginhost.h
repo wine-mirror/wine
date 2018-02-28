@@ -68,9 +68,6 @@ void detach_plugin_host(PluginHost*) DECLSPEC_HIDDEN;
 
 HRESULT create_param_prop_bag(nsIDOMElement*,IPropertyBag**) DECLSPEC_HIDDEN;
 
-HRESULT create_ip_window(IOleInPlaceUIWindow**) DECLSPEC_HIDDEN;
-HRESULT create_ip_frame(IOleInPlaceFrame**) DECLSPEC_HIDDEN;
-
 HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*) DECLSPEC_HIDDEN;
 HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*) DECLSPEC_HIDDEN;
