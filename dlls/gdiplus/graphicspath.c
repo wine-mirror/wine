@@ -2306,6 +2306,9 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
     if(!path)
         return InvalidParameter;
 
+    if (width <= 0.0 || height <= 0.0)
+        return Ok;
+
     /* make a backup copy of path data */
     if((retstat = GdipClonePath(path, &backup)) != Ok)
         return retstat;
