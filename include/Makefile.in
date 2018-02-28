@@ -494,6 +494,7 @@ SOURCES = \
 	opnrst.idl \
 	optary.idl \
 	patchapi.h \
+	pathcch.h \
 	pdh.h \
 	pdhmsg.h \
 	perflib.h \
