@@ -3755,8 +3755,7 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
     if (!level || (!vistolog && !logtovis))
         return E_INVALIDARG;
 
-    indexs = heap_alloc(sizeof(int) * runs);
-    if (!indexs)
+    if (!(indexs = heap_calloc(runs, sizeof(*indexs))))
         return E_OUTOFMEMORY;
 
     if (vistolog)
