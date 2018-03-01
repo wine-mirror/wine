@@ -6466,15 +6466,13 @@ static void test_button_messages(void)
         prevfont = SelectObject(hdc, hfont2);
         ok(prevfont == GetStockObject(SYSTEM_FONT), "Unexpected default font\n");
         SendMessageA(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, 0);
-    todo_wine
-        ok(GetStockObject(SYSTEM_FONT) == GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PRINTCLIENT\n", i);
+        ok(hfont2 != GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PRINTCLIENT\n", i);
         SelectObject(hdc, prevfont);
 
         prevfont = SelectObject(hdc, hfont2);
         ok(prevfont == GetStockObject(SYSTEM_FONT), "Unexpected default font\n");
         SendMessageA(hwnd, WM_PAINT, (WPARAM)hdc, 0);
-    todo_wine
-        ok(GetStockObject(SYSTEM_FONT) == GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PAINT\n", i);
+        ok(hfont2 != GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PAINT\n", i);
         SelectObject(hdc, prevfont);
 
         DeleteDC(hdc);
