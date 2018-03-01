@@ -205,7 +205,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     UNIMPLEMENTED_INFO_CLASS(ProcessWorkingSetWatch);
     UNIMPLEMENTED_INFO_CLASS(ProcessUserModeIOPL);
     UNIMPLEMENTED_INFO_CLASS(ProcessEnableAlignmentFaultFixup);
-    UNIMPLEMENTED_INFO_CLASS(ProcessPriorityClass);
     UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
     UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
     UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
@@ -542,6 +541,34 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         len = sizeof(ULONG);
         if (ProcessInformationLength == len)
             *(ULONG *)ProcessInformation = execute_flags;
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    case ProcessPriorityClass:
+        len = sizeof(PROCESS_PRIORITY_CLASS);
+        if (ProcessInformationLength == len)
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                PROCESS_PRIORITY_CLASS *priority = ProcessInformation;
+
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( ProcessHandle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        priority->PriorityClass = reply->priority;
+                        /* FIXME: Not yet supported by the wineserver */
+                        priority->Foreground = FALSE;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
