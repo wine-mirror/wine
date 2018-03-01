@@ -2,6 +2,7 @@ MODULE    = winevulkan.dll
 IMPORTS   = user32 gdi32
 
 C_SRCS = \
-	vulkan.c
+	vulkan.c \
+	vulkan_thunks.c
 
 RC_SRCS = version.rc

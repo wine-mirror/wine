@@ -38,16 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
  */
 #define WINE_VULKAN_ICD_VERSION 4
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
-struct vulkan_func
-{
-    const char *name;
-    void *func;
-};
-
 static void *wine_vk_get_global_proc_addr(const char *name);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
@@ -147,6 +137,9 @@ static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance,
         FIXME("Global function '%s' not found\n", debugstr_a(name));
         return NULL;
     }
+
+    func = wine_vk_get_instance_proc_addr(name);
+    if (func) return func;
 
     FIXME("Unsupported device or instance function: '%s'\n", debugstr_a(name));
     return NULL;

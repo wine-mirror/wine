@@ -20,8 +20,20 @@
 #ifndef __WINE_VULKAN_PRIVATE_H
 #define __WINE_VULKAN_PRIVATE_H
 
+#include "vulkan_thunks.h"
+
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
+struct vulkan_func
+{
+    const char *name;
+    void *func;
+};
 
 /* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
  * This structure MUST be the first element of a dispatchable object as the ICD
