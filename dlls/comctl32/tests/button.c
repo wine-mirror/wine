@@ -519,11 +519,12 @@ static void test_button_messages(void)
           setfocus_seq, killfocus_seq, setstyle_seq,
           setstate_seq, setstate_seq, setcheck_ignored_seq },
     };
+    LOGFONTA logfont = { 0 };
     const struct message *seq;
+    HFONT zfont, hfont2;
     unsigned int i;
     HWND hwnd, parent;
     DWORD dlg_code;
-    HFONT zfont;
     BOOL todo;
 
     /* selection with VK_SPACE should capture button window */
@@ -540,10 +541,19 @@ static void test_button_messages(void)
                              100, 100, 200, 200, 0, 0, 0, NULL);
     ok(parent != 0, "Failed to create parent window\n");
 
+    logfont.lfHeight = -12;
+    logfont.lfWeight = FW_NORMAL;
+    strcpy(logfont.lfFaceName, "Tahoma");
+
+    hfont2 = CreateFontIndirectA(&logfont);
+    ok(hfont2 != NULL, "Failed to create Tahoma font\n");
+
     for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
     {
+        HFONT prevfont, hfont;
         MSG msg;
         DWORD style, state;
+        HDC hdc;
 
         trace("%d: button test sequence\n", i);
         hwnd = create_button(button[i].style, parent);
@@ -686,9 +696,32 @@ static void test_button_messages(void)
         else
             ok(style == button[i].style, "expected style %04x got %04x\n", button[i].style, style);
 
+        /* Test that original font is not selected back after painting */
+        hfont = (HFONT)SendMessageA(hwnd, WM_GETFONT, 0, 0);
+        ok(hfont == NULL, "Unexpected control font.\n");
+
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
+
+        hdc = CreateCompatibleDC(0);
+
+        prevfont = SelectObject(hdc, hfont2);
+        SendMessageA(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, 0);
+        ok(hfont2 != GetCurrentObject(hdc, OBJ_FONT) || broken(hfont2 == GetCurrentObject(hdc, OBJ_FONT)) /* WinXP */,
+            "button[%u]: unexpected font selected after WM_PRINTCLIENT\n", i);
+        SelectObject(hdc, prevfont);
+
+        prevfont = SelectObject(hdc, hfont2);
+        SendMessageA(hwnd, WM_PAINT, (WPARAM)hdc, 0);
+        ok(hfont2 != GetCurrentObject(hdc, OBJ_FONT) || broken(hfont2 == GetCurrentObject(hdc, OBJ_FONT)) /* WinXP */,
+            "button[%u]: unexpected font selected after WM_PAINT\n", i);
+        SelectObject(hdc, prevfont);
+
+        DeleteDC(hdc);
+
         DestroyWindow(hwnd);
     }
 
+    DeleteObject(hfont2);
     DestroyWindow(parent);
 
     hwnd = create_button(BS_PUSHBUTTON, NULL);

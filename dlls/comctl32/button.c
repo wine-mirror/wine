@@ -1220,7 +1220,7 @@ static void OB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     DRAWITEMSTRUCT dis;
     LONG_PTR id = GetWindowLongPtrW( infoPtr->hwnd, GWLP_ID );
     HWND parent;
-    HFONT hFont, hPrevFont = 0;
+    HFONT hFont;
     HRGN hrgn;
 
     dis.CtlType    = ODT_BUTTON;
@@ -1235,7 +1235,7 @@ static void OB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     dis.itemData   = 0;
     GetClientRect( infoPtr->hwnd, &dis.rcItem );
 
-    if ((hFont = infoPtr->font)) hPrevFont = SelectObject( hDC, hFont );
+    if ((hFont = infoPtr->font)) SelectObject( hDC, hFont );
     parent = GetParent(infoPtr->hwnd);
     if (!parent) parent = infoPtr->hwnd;
     SendMessageW( parent, WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)infoPtr->hwnd );
@@ -1243,7 +1243,6 @@ static void OB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     hrgn = set_control_clipping( hDC, &dis.rcItem );
 
     SendMessageW( GetParent(infoPtr->hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
-    if (hPrevFont) SelectObject(hDC, hPrevFont);
     SelectClipRgn( hDC, hrgn );
     if (hrgn) DeleteObject( hrgn );
 }
