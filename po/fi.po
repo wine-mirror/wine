@@ -6663,10 +6663,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Vastapuoli nollasi yhteyden.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "Viestiä 0x%1 ei löytynyt tiedostosta %2.\n"
+msgstr "Tiedostosta ei löytynyt allekirjoitusta.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
