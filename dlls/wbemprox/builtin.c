@@ -243,6 +243,8 @@ static const WCHAR prop_indexW[] =
     {'I','n','d','e','x',0};
 static const WCHAR prop_installdateW[] =
     {'I','n','s','t','a','l','l','D','a','t','e',0};
+static const WCHAR prop_installeddisplaydriversW[]=
+    {'I','n','s','t','a','l','l','e','d','D','i','s','p','l','a','y','D','r','i','v','e','r','s',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
 static const WCHAR prop_interfacetypeW[] =
@@ -717,6 +719,7 @@ static const struct column col_videocontroller[] =
     { prop_descriptionW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,               CIM_STRING|COL_FLAG_KEY },
     { prop_driverversionW,          CIM_STRING },
+    { prop_installeddisplaydriversW,CIM_STRING },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pnpdeviceidW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_statusW,                 CIM_STRING },
@@ -1126,6 +1129,7 @@ struct record_videocontroller
     const WCHAR *description;
     const WCHAR *device_id;
     const WCHAR *driverversion;
+    const WCHAR *installeddriver;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
     const WCHAR *status;
@@ -3233,6 +3237,29 @@ static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
     return ret;
 }
 
+#define HW_VENDOR_AMD    0x1002
+#define HW_VENDOR_NVIDIA 0x10de
+#define HW_VENDOR_VMWARE 0x15ad
+#define HW_VENDOR_INTEL  0x8086
+
+static const WCHAR *get_installeddriver( UINT vendorid )
+{
+    static const WCHAR driver_amdW[] = {'a','t','i','c','f','x','3','2','.','d','l','l',0};
+    static const WCHAR driver_intelW[] = {'i','g','d','u','m','d','i','m','3','2','.','d','l','l',0};
+    static const WCHAR driver_nvidiaW[] = {'n','v','d','3','d','u','m','.','d','l','l',0};
+    static const WCHAR driver_wineW[] = {'w','i','n','e','.','d','l','l',0};
+
+    /* FIXME: wined3d has a better table, but we can not access this information through dxgi */
+
+    if (vendorid == HW_VENDOR_AMD)
+        return driver_amdW;
+    else if (vendorid == HW_VENDOR_NVIDIA)
+        return driver_nvidiaW;
+    else if (vendorid == HW_VENDOR_INTEL)
+        return driver_intelW;
+    return driver_wineW;
+}
+
 static enum fill_status fill_videocontroller( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'%','u',' ','x',' ','%','u',' ','x',' ','%','I','6','4','u',' ','c','o','l','o','r','s',0};
@@ -3277,6 +3304,7 @@ done:
     rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
     rec->driverversion         = videocontroller_driverversionW;
+    rec->installeddriver       = get_installeddriver( desc.VendorId );
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
     rec->status                = videocontroller_statusW;
