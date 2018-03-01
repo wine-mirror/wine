@@ -3168,6 +3168,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
 {
     DWORD rt_mask = find_draw_buffers_mask(context, state);
     const struct wined3d_fb_state *fb = state->fb;
+    DWORD color_location = 0;
     DWORD *cur_mask;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -3184,18 +3185,20 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
             memset(context->blit_targets, 0, sizeof(context->blit_targets));
             for (i = 0; i < context->gl_info->limits.buffers; ++i)
             {
-                if (fb->render_targets[i])
-                {
-                    context->blit_targets[i].gl_view = fb->render_targets[i]->gl_view;
-                    context->blit_targets[i].resource = fb->render_targets[i]->resource;
-                    context->blit_targets[i].sub_resource_idx = fb->render_targets[i]->sub_resource_idx;
-                    context->blit_targets[i].layer_count = fb->render_targets[i]->layer_count;
-                }
+                if (!fb->render_targets[i])
+                    continue;
+
+                context->blit_targets[i].gl_view = fb->render_targets[i]->gl_view;
+                context->blit_targets[i].resource = fb->render_targets[i]->resource;
+                context->blit_targets[i].sub_resource_idx = fb->render_targets[i]->sub_resource_idx;
+                context->blit_targets[i].layer_count = fb->render_targets[i]->layer_count;
+
+                if (!color_location)
+                    color_location = fb->render_targets[i]->resource->draw_binding;
             }
             context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
                     wined3d_rendertarget_view_get_surface(fb->depth_stencil),
-                    fb->render_targets[0] ? fb->render_targets[0]->resource->draw_binding : 0,
-                    fb->depth_stencil ? fb->depth_stencil->resource->draw_binding : 0);
+                    color_location, fb->depth_stencil ? fb->depth_stencil->resource->draw_binding : 0);
         }
     }
 
