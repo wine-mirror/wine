@@ -803,9 +803,27 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
         nsIDOMDocumentType *nsdoctype;
         nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMDocumentType, (void**)&nsdoctype);
         if(NS_SUCCEEDED(nsres)) {
+            compat_mode_t mode = COMPAT_MODE_IE7;
+
             TRACE("doctype node\n");
-            /* FIXME: We should set it to something higher for internet zone. */
-            set_document_mode(This, COMPAT_MODE_IE7, FALSE);
+
+            if(This->window && This->window->base.outer_window) {
+                HTMLOuterWindow *window = This->window->base.outer_window;
+                DWORD zone;
+                HRESULT hres;
+
+                /*
+                 * Internet URL zone is treated differently. Native defaults to latest supported
+                 * mode. We default to IE8. Ideally, we'd sync that with version used for IE=edge
+                 * X-UA-Compatible version, allow configuration and default to higher version
+                 * (once it's well supported).
+                 */
+                hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
+                if(SUCCEEDED(hres) && zone == URLZONE_INTERNET)
+                    mode = COMPAT_MODE_IE8;
+            }
+
+            set_document_mode(This, mode, FALSE);
             nsIDOMDocumentType_Release(nsdoctype);
         }
     }
