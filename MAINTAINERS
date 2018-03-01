@@ -90,6 +90,11 @@ DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput/
 
+DirectMusic
+M:	Michael Stefaniuc <mstefani@winehq.org>
+F:	dlls/dm*/
+F:	dlls/dswave/
+
 DirectPlay
 M:	Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
 F:	dlls/dplayx/
