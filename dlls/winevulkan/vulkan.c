@@ -108,6 +108,16 @@ err:
     return res;
 }
 
+void WINAPI wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *allocator)
+{
+    TRACE("%p, %p\n", instance, allocator);
+
+    if (allocator)
+        FIXME("Support allocation allocators\n");
+
+    wine_vk_instance_free(instance);
+}
+
 static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
