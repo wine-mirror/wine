@@ -520,7 +520,7 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 }
 
 /* ECMA-262 3rd Edition    11.9.6 */
-static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
+static HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
 {
     jsval_type_t type = jsval_type(lval);
 
@@ -849,7 +849,7 @@ static HRESULT interp_case(script_ctx_t *ctx)
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = equal2_values(stack_top(ctx), v, &b);
+    hres = jsval_strict_equal(stack_top(ctx), v, &b);
     jsval_release(v);
     if(FAILED(hres))
         return hres;
@@ -2103,7 +2103,7 @@ static HRESULT interp_preinc(script_ctx_t *ctx)
 static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL *ret)
 {
     if(jsval_type(lval) == jsval_type(rval) || (is_number(lval) && is_number(rval)))
-       return equal2_values(lval, rval, ret);
+       return jsval_strict_equal(lval, rval, ret);
 
     /* FIXME: NULL disps should be handled in more general way */
     if(is_object_instance(lval) && !get_object(lval))
@@ -2233,7 +2233,7 @@ static HRESULT interp_eq2(script_ctx_t *ctx)
 
     TRACE("%s === %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
-    hres = equal2_values(r, l, &b);
+    hres = jsval_strict_equal(r, l, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
@@ -2254,7 +2254,7 @@ static HRESULT interp_neq2(script_ctx_t *ctx)
     r = stack_pop(ctx);
     l = stack_pop(ctx);
 
-    hres = equal2_values(r, l, &b);
+    hres = jsval_strict_equal(r, l, &b);
     jsval_release(l);
     jsval_release(r);
     if(FAILED(hres))
