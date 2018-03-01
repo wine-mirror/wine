@@ -1316,7 +1316,7 @@ static void test_empty_rect(void)
 
     status = GdipIsVisiblePathPoint(path, -2.0, 2.0, NULL, &result);
     expect(Ok, status);
-    expect(FALSE, status);
+    expect(FALSE, result);
 
     status = GdipAddPathRectangle(path, 0.0, 0.0, 5.0, -5.0);
     expect(Ok, status);
