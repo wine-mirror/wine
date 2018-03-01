@@ -186,6 +186,24 @@ typedef struct _RTL_AVL_TABLE {
     void *TableContext;
 } RTL_AVL_TABLE, *PRTL_AVL_TABLE;
 
+typedef struct _PS_CREATE_NOTIFY_INFO {
+    SIZE_T Size;
+    union {
+        ULONG Flags;
+        struct {
+            ULONG FileOpenNameAvailable :1;
+            ULONG IsSubsystemProcess :1;
+            ULONG Reserved :30;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    HANDLE               ParentProcessId;
+    CLIENT_ID            CreatingThreadId;
+    struct _FILE_OBJECT *FileObject;
+    PCUNICODE_STRING     ImageFileName;
+    PCUNICODE_STRING     CommandLine;
+    NTSTATUS             CreationStatus;
+} PS_CREATE_NOTIFY_INFO, *PPS_CREATE_NOTIFY_INFO;
+
 typedef VOID (WINAPI *PDRIVER_NOTIFICATION_CALLBACK_ROUTINE)(PVOID,PVOID);
 typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
 typedef VOID (WINAPI *PLOAD_IMAGE_NOTIFY_ROUTINE)(PUNICODE_STRING,HANDLE,PIMAGE_INFO);
