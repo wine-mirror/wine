@@ -431,7 +431,7 @@ static void rungraph(IFilterGraph2 *graph)
     ok(hr==1, "Releasing mediacontrol returned: %x\n", hr);
 }
 
-static void test_graph_builder_connect(WCHAR *filename)
+static HRESULT test_graph_builder_connect(WCHAR *filename)
 {
     static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
     static const WCHAR inW[] = {'I','n',0};
@@ -460,11 +460,8 @@ static void test_graph_builder_connect(WCHAR *filename)
     ok(hr == S_OK, "FindPin failed: %#x\n", hr);
     hr = IFilterGraph2_Connect(graph, pin_out, pin_in);
 
-    if (hr != VFW_E_NO_ACCEPTABLE_TYPES)
-    {
-        ok(SUCCEEDED(hr), "Connect failed: %#x\n", hr);
+    if (SUCCEEDED(hr))
         rungraph(graph);
-    }
 
     IPin_Release(pin_in);
     IPin_Release(pin_out);
@@ -472,6 +469,8 @@ static void test_graph_builder_connect(WCHAR *filename)
     IBaseFilter_Release(video_filter);
     IVideoWindow_Release(window);
     IFilterGraph2_Release(graph);
+
+    return hr;
 }
 
 static void test_render_run(const WCHAR *file)
@@ -495,18 +494,28 @@ static void test_render_run(const WCHAR *file)
     graph = create_graph();
 
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
-    if (hr == VFW_E_CANNOT_RENDER)
+    if (FAILED(hr))
+    {
         skip("%s: codec not supported; skipping test\n", wine_dbgstr_w(file));
+
+        refs = IFilterGraph2_Release(graph);
+        ok(!refs, "Graph has %u references\n", refs);
+
+        hr = test_graph_builder_connect(filename);
+todo_wine
+        ok(hr == VFW_E_CANNOT_CONNECT, "got %#x\n", hr);
+    }
     else
     {
         ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "RenderFile failed: %x\n", hr);
         rungraph(graph);
+
+        refs = IFilterGraph2_Release(graph);
+        ok(!refs, "Graph has %u references\n", refs);
+
+        hr = test_graph_builder_connect(filename);
+        ok(hr == S_OK || hr == VFW_S_PARTIAL_RENDER, "got %#x\n", hr);
     }
-
-    refs = IFilterGraph2_Release(graph);
-    ok(!refs, "Graph has %u references\n", refs);
-
-    test_graph_builder_connect(filename);
 
     /* check reference leaks */
     h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
