@@ -4651,22 +4651,32 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     }
 }
 
-static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void get_viewport(struct wined3d_context *context, const struct wined3d_state *state,
+        struct wined3d_viewport *viewport)
 {
     const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
     const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_viewport vp = state->viewport;
     unsigned int width, height;
-    float y;
+
+    *viewport = state->viewport;
 
     if (target)
     {
-        if (vp.width > target->width)
-            vp.width = target->width;
-        if (vp.height > target->height)
-            vp.height = target->height;
+        if (viewport->width > target->width)
+            viewport->width = target->width;
+        if (viewport->height > target->height)
+            viewport->height = target->height;
+    }
 
+    /*
+     * Note: GL requires lower left, DirectX supplies upper left. This is
+     * reversed when using offscreen rendering.
+     */
+    if (context->render_offscreen)
+        return;
+
+    if (target)
+    {
         wined3d_rendertarget_view_get_drawable_size(target, context, &width, &height);
     }
     else if (depth_stencil)
@@ -4675,67 +4685,46 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     }
     else
     {
-        height = gl_info->limits.framebuffer_height;
+        FIXME("Could not get the height of render targets.\n");
+        return;
     }
+
+    viewport->y = height - (viewport->y + viewport->height);
+}
+
+static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_viewport vp;
+
+    get_viewport(context, state, &vp);
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
 
-    /* Note: GL requires lower left, DirectX supplies upper left. This is
-     * reversed when using offscreen rendering. */
-    y = context->render_offscreen ? vp.y : height - (vp.y + vp.height);
-
     if (gl_info->supported[ARB_VIEWPORT_ARRAY])
-        GL_EXTCALL(glViewportIndexedf(0, vp.x, y, vp.width, vp.height));
+        GL_EXTCALL(glViewportIndexedf(0, vp.x, vp.y, vp.width, vp.height));
     else
-        gl_info->gl_ops.gl.p_glViewport(vp.x, y, vp.width, vp.height);
+        gl_info->gl_ops.gl.p_glViewport(vp.x, vp.y, vp.width, vp.height);
     checkGLcall("setting clip space and viewport");
 }
 
 static void viewport_miscpart_cc(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
-    const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
-    /* See get_projection_matrix() in utils.c for a discussion about those
-     * values. */
+    /* See get_projection_matrix() in utils.c for a discussion about those values. */
     float pixel_center_offset = context->d3d_info->wined3d_creation_flags
             & WINED3D_PIXEL_CENTER_INTEGER ? 63.0f / 128.0f : -1.0f / 128.0f;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_viewport vp = state->viewport;
-    unsigned int width, height;
+    struct wined3d_viewport vp;
 
-    if (target)
-    {
-        if (vp.width > target->width)
-            vp.width = target->width;
-        if (vp.height > target->height)
-            vp.height = target->height;
-
-        wined3d_rendertarget_view_get_drawable_size(target, context, &width, &height);
-    }
-    else if (depth_stencil)
-    {
-        height = depth_stencil->height;
-    }
-    else
-    {
-        height = gl_info->limits.framebuffer_height;
-    }
+    get_viewport(context, state, &vp);
+    vp.x += pixel_center_offset;
+    vp.y += pixel_center_offset;
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
 
-    if (context->render_offscreen)
-    {
-        GL_EXTCALL(glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE));
-        GL_EXTCALL(glViewportIndexedf(0, vp.x + pixel_center_offset, vp.y + pixel_center_offset,
-                vp.width, vp.height));
-    }
-    else
-    {
-        GL_EXTCALL(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE));
-        GL_EXTCALL(glViewportIndexedf(0, vp.x + pixel_center_offset,
-                (height - (vp.y + vp.height)) + pixel_center_offset, vp.width, vp.height));
-    }
+    GL_EXTCALL(glClipControl(context->render_offscreen ? GL_UPPER_LEFT : GL_LOWER_LEFT, GL_ZERO_TO_ONE));
+    GL_EXTCALL(glViewportIndexedf(0, vp.x, vp.y, vp.width, vp.height));
     checkGLcall("setting clip space and viewport");
 }
 
