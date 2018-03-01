@@ -877,8 +877,13 @@ static void test_Loader(void)
 
                 SetLastError(0xdeadbeef);
                 h = CreateFileA( dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-                todo_wine ok( h == INVALID_HANDLE_VALUE, "open succeeded\n" );
-                todo_wine ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error %u\n", GetLastError() );
+                ok( h == INVALID_HANDLE_VALUE, "open succeeded\n" );
+                ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error %u\n", GetLastError() );
+                CloseHandle( h );
+
+                SetLastError(0xdeadbeef);
+                h = CreateFileA( dll_name, GENERIC_READ | DELETE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+                ok( h != INVALID_HANDLE_VALUE, "open failed err %u\n", GetLastError() );
                 CloseHandle( h );
 
                 SetLastError(0xdeadbeef);
