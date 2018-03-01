@@ -65,6 +65,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #endif
 
+/* See jscript.h in jscript.dll. */
+#define SCRIPTLANGUAGEVERSION_HTML 0x400
+#define SCRIPTLANGUAGEVERSION_ES5  0x102
+
 static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
 static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
 static const WCHAR script_endW[] = {'<','/','S','C','R','I','P','T','>',0};
@@ -94,7 +98,7 @@ struct ScriptHost {
 
 static ScriptHost *get_elem_script_host(HTMLInnerWindow*,HTMLScriptElement*);
 
-static void set_script_prop(ScriptHost *script_host, DWORD property, VARIANT *val)
+static BOOL set_script_prop(ScriptHost *script_host, DWORD property, VARIANT *val)
 {
     IActiveScriptProperty *script_prop;
     HRESULT hres;
@@ -103,13 +107,17 @@ static void set_script_prop(ScriptHost *script_host, DWORD property, VARIANT *va
             (void**)&script_prop);
     if(FAILED(hres)) {
         WARN("Could not get IActiveScriptProperty iface: %08x\n", hres);
-        return;
+        return FALSE;
     }
 
     hres = IActiveScriptProperty_SetProperty(script_prop, property, NULL, val);
     IActiveScriptProperty_Release(script_prop);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
         WARN("SetProperty(%x) failed: %08x\n", property, hres);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static BOOL init_script_engine(ScriptHost *script_host)
@@ -152,9 +160,19 @@ static BOOL init_script_engine(ScriptHost *script_host)
 
     compat_mode = lock_document_mode(script_host->window->doc);
     script_mode = compat_mode < COMPAT_MODE_IE8 ? SCRIPTLANGUAGEVERSION_5_7 : SCRIPTLANGUAGEVERSION_5_8;
+    if(IsEqualGUID(&script_host->guid, &CLSID_JScript)) {
+        if(compat_mode >= COMPAT_MODE_IE9)
+            script_mode = SCRIPTLANGUAGEVERSION_ES5;
+        script_mode |= SCRIPTLANGUAGEVERSION_HTML;
+    }
     V_VT(&var) = VT_I4;
     V_I4(&var) = script_mode;
-    set_script_prop(script_host, SCRIPTPROP_INVOKEVERSIONING, &var);
+    if(!set_script_prop(script_host, SCRIPTPROP_INVOKEVERSIONING, &var) && (script_mode & SCRIPTLANGUAGEVERSION_HTML)) {
+        /* If this failed, we're most likely using native jscript. */
+        WARN("Failed to set script mode to HTML version.\n");
+        V_I4(&var) = compat_mode < COMPAT_MODE_IE8 ? SCRIPTLANGUAGEVERSION_5_7 : SCRIPTLANGUAGEVERSION_5_8;
+        set_script_prop(script_host, SCRIPTPROP_INVOKEVERSIONING, &var);
+    }
 
     V_VT(&var) = VT_BOOL;
     V_BOOL(&var) = VARIANT_TRUE;
