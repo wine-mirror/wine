@@ -2269,7 +2269,7 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
 static BOOL surface_load_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
-    unsigned int width, height, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
+    unsigned int width, height, level, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture *texture = surface->container;
@@ -2295,8 +2295,9 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
         return TRUE;
     }
 
-    width = wined3d_texture_get_level_width(texture, surface->texture_level);
-    height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    level = sub_resource_idx % texture->level_count;
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
     SetRect(&src_rect, 0, 0, width, height);
 
     if (!depth && sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
@@ -2360,7 +2361,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
 
     wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
-    wined3d_texture_get_pitch(texture, surface->texture_level, &src_row_pitch, &src_slice_pitch);
+    wined3d_texture_get_pitch(texture, level, &src_row_pitch, &src_slice_pitch);
 
     format = *texture->resource.format;
     if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
