@@ -3779,6 +3779,19 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.samples = gl_max;
     }
 
+    if (gl_info->supported[ARB_FRAMEBUFFER_NO_ATTACHMENTS])
+    {
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_FRAMEBUFFER_WIDTH, &gl_max);
+        gl_info->limits.framebuffer_width = gl_max;
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_FRAMEBUFFER_HEIGHT, &gl_max);
+        gl_info->limits.framebuffer_height = gl_max;
+    }
+    else
+    {
+        gl_info->limits.framebuffer_width = gl_info->limits.texture_size;
+        gl_info->limits.framebuffer_height = gl_info->limits.texture_size;
+    }
+
     gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] =
             min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], MAX_GL_FRAGMENT_SAMPLERS);
     sampler_count = 0;

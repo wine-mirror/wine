@@ -4671,17 +4671,15 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     }
     else if (depth_stencil)
     {
-        width = depth_stencil->width;
         height = depth_stencil->height;
     }
     else
     {
-        FIXME("No attachments draw calls not supported.\n");
-        return;
+        height = gl_info->limits.framebuffer_height;
     }
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
-    checkGLcall("glDepthRange");
+
     /* Note: GL requires lower left, DirectX supplies upper left. This is
      * reversed when using offscreen rendering. */
     y = context->render_offscreen ? vp.y : height - (vp.y + vp.height);
@@ -4690,7 +4688,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
         GL_EXTCALL(glViewportIndexedf(0, vp.x, y, vp.width, vp.height));
     else
         gl_info->gl_ops.gl.p_glViewport(vp.x, y, vp.width, vp.height);
-    checkGLcall("glViewport");
+    checkGLcall("setting clip space and viewport");
 }
 
 static void viewport_miscpart_cc(struct wined3d_context *context,
@@ -4717,17 +4715,14 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
     }
     else if (depth_stencil)
     {
-        width = depth_stencil->width;
         height = depth_stencil->height;
     }
     else
     {
-        FIXME("No attachments draw calls not supported.\n");
-        return;
+        height = gl_info->limits.framebuffer_height;
     }
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
-    checkGLcall("glDepthRange");
 
     if (context->render_offscreen)
     {

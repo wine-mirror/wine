@@ -700,8 +700,8 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
 static void context_apply_fbo_entry(struct wined3d_context *context, GLenum target, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int i;
     GLuint read_binding, draw_binding;
+    unsigned int i;
 
     if (entry->flags & WINED3D_FBO_ENTRY_FLAG_ATTACHED)
     {
@@ -712,6 +712,16 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     read_binding = context->fbo_read_binding;
     draw_binding = context->fbo_draw_binding;
     context_bind_fbo(context, GL_FRAMEBUFFER, entry->id);
+
+    if (gl_info->supported[ARB_FRAMEBUFFER_NO_ATTACHMENTS])
+    {
+        GL_EXTCALL(glFramebufferParameteri(GL_FRAMEBUFFER,
+                GL_FRAMEBUFFER_DEFAULT_WIDTH, gl_info->limits.framebuffer_width));
+        GL_EXTCALL(glFramebufferParameteri(GL_FRAMEBUFFER,
+                GL_FRAMEBUFFER_DEFAULT_HEIGHT, gl_info->limits.framebuffer_height));
+        GL_EXTCALL(glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_LAYERS, 1));
+        GL_EXTCALL(glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_SAMPLES, 1));
+    }
 
     /* Apply render targets */
     for (i = 0; i < gl_info->limits.buffers; ++i)
@@ -2996,12 +3006,13 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
     context_invalidate_state(context, STATE_FRAMEBUFFER);
 }
 
-static BOOL context_validate_rt_config(UINT rt_count, struct wined3d_rendertarget_view * const *rts,
+static BOOL have_framebuffer_attachment(unsigned int rt_count, struct wined3d_rendertarget_view * const *rts,
         const struct wined3d_rendertarget_view *ds)
 {
     unsigned int i;
 
-    if (ds) return TRUE;
+    if (ds)
+        return TRUE;
 
     for (i = 0; i < rt_count; ++i)
     {
@@ -3009,7 +3020,6 @@ static BOOL context_validate_rt_config(UINT rt_count, struct wined3d_rendertarge
             return TRUE;
     }
 
-    WARN("Invalid render target config, need at least one attachment.\n");
     return FALSE;
 }
 
@@ -3026,8 +3036,11 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     if (isStateDirty(context, STATE_FRAMEBUFFER) || fb != state->fb
             || rt_count != gl_info->limits.buffers)
     {
-        if (!context_validate_rt_config(rt_count, rts, dsv))
+        if (!have_framebuffer_attachment(rt_count, rts, dsv))
+        {
+            WARN("Invalid render target config, need at least one attachment.\n");
             return FALSE;
+        }
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
@@ -3908,8 +3921,16 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     unsigned int i;
     WORD map;
 
-    if (!context_validate_rt_config(gl_info->limits.buffers, fb->render_targets, fb->depth_stencil))
-        return FALSE;
+    if (!have_framebuffer_attachment(gl_info->limits.buffers, fb->render_targets, fb->depth_stencil))
+    {
+        if (!gl_info->supported[ARB_FRAMEBUFFER_NO_ATTACHMENTS])
+        {
+            FIXME("OpenGL implementation does not support framebuffers with no attachments.\n");
+            return FALSE;
+        }
+
+        context_set_render_offscreen(context, TRUE);
+    }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && isStateDirty(context, STATE_FRAMEBUFFER))
     {
