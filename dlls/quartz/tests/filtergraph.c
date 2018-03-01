@@ -346,6 +346,58 @@ static void test_mediacontrol(IFilterGraph2 *graph)
     IMediaFilter_Release(filter);
 }
 
+static void test_state_change(IFilterGraph2 *graph)
+{
+    IMediaControl *control;
+    OAFilterState state;
+    HRESULT hr;
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %x\n", hr);
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(SUCCEEDED(hr), "Run() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, INFINITE, &state);
+    ok(SUCCEEDED(hr), "GetState() failed: %x\n", hr);
+    ok(state == State_Running, "wrong state %d\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(SUCCEEDED(hr), "Stop() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(SUCCEEDED(hr), "Pause() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Paused, "wrong state %d\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(SUCCEEDED(hr), "Run() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Running, "wrong state %d\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(SUCCEEDED(hr), "Pause() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Paused, "wrong state %d\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(SUCCEEDED(hr), "Stop() failed: %x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
+
+    IMediaControl_Release(control);
+}
+
 static void rungraph(IFilterGraph2 *graph)
 {
     HRESULT hr;
@@ -353,6 +405,10 @@ static void rungraph(IFilterGraph2 *graph)
     IMediaEvent* pme;
     IMediaFilter* pmf;
     HANDLE hEvent;
+
+    test_basic_video(graph);
+    test_mediacontrol(graph);
+    test_state_change(graph);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&pmc);
     ok(hr==S_OK, "Cannot get IMediaControl interface returned: %x\n", hr);
@@ -366,52 +422,8 @@ static void rungraph(IFilterGraph2 *graph)
 
     IMediaFilter_Release(pmf);
 
-    test_basic_video(graph);
-    test_mediacontrol(graph);
-
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
-
-    Sleep(10);
-    /* Crash fun */
-    trace("run -> stop\n");
-    hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
-
-    IFilterGraph2_SetDefaultSyncSource(graph);
-
-    Sleep(10);
-    trace("stop -> pause\n");
-    hr = IMediaControl_Pause(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
-
-    Sleep(10);
-    trace("pause -> run\n");
-    hr = IMediaControl_Run(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
-
-    Sleep(10);
-    trace("run -> pause\n");
-    hr = IMediaControl_Pause(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
-
-    Sleep(10);
-    trace("pause -> stop\n");
-    hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
-
-    Sleep(10);
-    trace("pause -> run\n");
-    hr = IMediaControl_Run(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
-
-    trace("run -> stop\n");
-    hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
-
-    trace("stop -> run\n");
-    hr = IMediaControl_Run(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (LPVOID*)&pme);
     ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %x\n", hr);
