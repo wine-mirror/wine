@@ -1399,8 +1399,6 @@ static HRESULT interp_carray(script_ctx_t *ctx)
 {
     const unsigned arg = get_op_uint(ctx, 0);
     jsdisp_t *array;
-    jsval_t val;
-    unsigned i;
     HRESULT hres;
 
     TRACE("%u\n", arg);
@@ -1409,18 +1407,25 @@ static HRESULT interp_carray(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    i = arg;
-    while(i--) {
-        val = stack_pop(ctx);
-        hres = jsdisp_propput_idx(array, i, val);
-        jsval_release(val);
-        if(FAILED(hres)) {
-            jsdisp_release(array);
-            return hres;
-        }
-    }
-
     return stack_push(ctx, jsval_obj(array));
+}
+
+static HRESULT interp_carray_set(script_ctx_t *ctx)
+{
+    const unsigned index = get_op_uint(ctx, 0);
+    jsval_t value, array;
+    HRESULT hres;
+
+    value = stack_pop(ctx);
+
+    TRACE("[%u] = %s\n", index, debugstr_jsval(value));
+
+    array = stack_top(ctx);
+    assert(is_object_instance(array));
+
+    hres = jsdisp_propput_idx(iface_to_jsdisp(get_object(array)), index, value);
+    jsval_release(value);
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */
