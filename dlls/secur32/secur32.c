@@ -996,29 +996,21 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                 if (GetComputerNameW(name, &size))
                 {
                     DWORD len = domainInfo->Name.Length + size + 3;
-                    if (lpNameBuffer)
+                    if (lpNameBuffer && *nSize >= len)
                     {
-                        if (*nSize < len)
-                        {
-                            *nSize = len;
-                            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                            status = FALSE;
-                        }
-                        else
-                        {
-                            WCHAR bs[] = { '\\', 0 };
-                            WCHAR ds[] = { '$', 0 };
-                            lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
-                            lstrcatW(lpNameBuffer, bs);
-                            lstrcatW(lpNameBuffer, name);
-                            lstrcatW(lpNameBuffer, ds);
-                            status = TRUE;
-                        }
+                        WCHAR bs[] = { '\\', 0 };
+                        WCHAR ds[] = { '$', 0 };
+                        lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
+                        lstrcatW(lpNameBuffer, bs);
+                        lstrcatW(lpNameBuffer, name);
+                        lstrcatW(lpNameBuffer, ds);
+                        status = TRUE;
                     }
                     else	/* just requesting length required */
                     {
                         *nSize = len;
-                        status = TRUE;
+                        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                        status = FALSE;
                     }
                 }
                 else
