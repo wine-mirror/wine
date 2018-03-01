@@ -1825,12 +1825,10 @@ static HRESULT get_connected_filter_name(TestFilterImpl *pFilter, char *FilterNa
 
     hr = IPin_ConnectedTo(pFilter->ppPins[0], &pin);
     ok(hr == S_OK, "IPin_ConnectedTo failed with %x\n", hr);
-    if (FAILED(hr)) return hr;
 
     hr = IPin_QueryPinInfo(pin, &pinInfo);
     ok(hr == S_OK, "IPin_QueryPinInfo failed with %x\n", hr);
     IPin_Release(pin);
-    if (FAILED(hr)) return hr;
 
     SetLastError(0xdeadbeef);
     hr = IBaseFilter_QueryFilterInfo(pinInfo.pFilter, &filterInfo);
@@ -1841,7 +1839,6 @@ static HRESULT get_connected_filter_name(TestFilterImpl *pFilter, char *FilterNa
     }
     ok(hr == S_OK, "IBaseFilter_QueryFilterInfo failed with %x\n", hr);
     IBaseFilter_Release(pinInfo.pFilter);
-    if (FAILED(hr)) return hr;
 
     IFilterGraph_Release(filterInfo.pGraph);
 
@@ -1941,28 +1938,23 @@ static void test_render_filter_priority(void)
      * on the order in which filters are added to the graph, thus indicating
      * no preference given to exact match. */
     pgraph2 = create_graph();
-    if (!pgraph2) return;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData3, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
@@ -1973,41 +1965,27 @@ static void test_render_filter_priority(void)
     hr = get_connected_filter_name(ptestfilter, ConnectedFilterName1);
 
     IFilterGraph2_Release(pgraph2);
-    pgraph2 = NULL;
     IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    ptestfilter = NULL;
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
-
-    if (hr == E_NOTIMPL)
-    {
-        win_skip("Needed functions are not implemented\n");
-        return;
-    }
 
     pgraph2 = create_graph();
-    if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     hr = createtestfilter(&GUID_NULL, PinData3, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
@@ -2023,49 +2001,39 @@ static void test_render_filter_priority(void)
         "expected connected filters to be different but got %s both times\n", ConnectedFilterName1);
 
     IFilterGraph2_Release(pgraph2);
-    pgraph2 = NULL;
     IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    ptestfilter = NULL;
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     /* Test if any preference is given to existing renderer which renders the pin directly vs
        an existing renderer which renders the pin indirectly, through an additional middle filter,
        again trying different orders of creation. Native appears not to give a preference. */
 
     pgraph2 = create_graph();
-    if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData4, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData5, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName4);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
@@ -2078,45 +2046,35 @@ static void test_render_filter_priority(void)
             "unexpected connected filter: %s\n", ConnectedFilterName1);
 
     IFilterGraph2_Release(pgraph2);
-    pgraph2 = NULL;
     IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    ptestfilter = NULL;
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     pgraph2 = create_graph();
-    if (!pgraph2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     hr = createtestfilter(&GUID_NULL, PinData4, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData5, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName4);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
@@ -2131,23 +2089,17 @@ static void test_render_filter_priority(void)
         "expected connected filters to be different but got %s both times\n", ConnectedFilterName1);
 
     IFilterGraph2_Release(pgraph2);
-    pgraph2 = NULL;
     IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    ptestfilter = NULL;
     IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    ptestfilter2 = NULL;
 
     /* Test if renderers are tried before non-renderers (intermediary filters). */
     pgraph2 = create_graph();
-    if (!pgraph2) goto out;
 
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
     ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pMapper2) goto out;
 
     hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
     ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
@@ -2157,17 +2109,14 @@ static void test_render_filter_priority(void)
             (IUnknown *)&Filter1ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
             REGCLS_MULTIPLEUSE, &cookie1);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
     hr = CoRegisterClassObject(Filter2ClassFactory.clsid,
             (IUnknown *)&Filter2ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
             REGCLS_MULTIPLEUSE, &cookie2);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
     hr = CoRegisterClassObject(Filter3ClassFactory.clsid,
             (IUnknown *)&Filter3ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
             REGCLS_MULTIPLEUSE, &cookie3);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-    if (FAILED(hr)) goto out;
 
     rgf2.dwVersion = 2;
     rgf2.dwMerit = MERIT_UNLIKELY;
@@ -2234,12 +2183,9 @@ static void test_render_filter_priority(void)
         ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
     }
 
-    out:
-
-    if (ptestfilter) IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    if (ptestfilter2) IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-    if (pgraph2) IFilterGraph2_Release(pgraph2);
-    if (pMapper2) IFilterMapper2_Release(pMapper2);
+    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
+    IFilterGraph2_Release(pgraph2);
+    IFilterMapper2_Release(pMapper2);
 
     hr = CoRevokeClassObject(cookie1);
     ok(hr == S_OK, "CoRevokeClassObject failed with %08x\n", hr);
