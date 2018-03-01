@@ -545,15 +545,18 @@ static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
         }
 
         hres = jsdisp_get_idx(obj, i, &val);
-        if(FAILED(hres))
+        if(SUCCEEDED(hres)) {
+            hres = stringify(ctx, val);
+            if(FAILED(hres))
+                return hres;
+            if(hres == S_FALSE && !append_string(ctx, nullW))
+                return E_OUTOFMEMORY;
+        }else if(hres == DISP_E_UNKNOWNNAME) {
+            if(!append_string(ctx, nullW))
+                return E_OUTOFMEMORY;
+        }else {
             return hres;
-
-        hres = stringify(ctx, val);
-        if(FAILED(hres))
-            return hres;
-
-        if(hres == S_FALSE && !append_string(ctx, nullW))
-            return E_OUTOFMEMORY;
+        }
     }
 
     if((length && *ctx->gap && !append_char(ctx, '\n')) || !append_char(ctx, ']'))
