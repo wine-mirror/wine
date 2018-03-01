@@ -849,7 +849,7 @@ static void test_Loader(void)
             SetLastError(0xdeadbeef);
             hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
             ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
-            ok((ULONG_PTR)hlib_as_data_file & 1, "hlib_as_data_file is even\n");
+            ok(((ULONG_PTR)hlib_as_data_file & 3) == 1, "hlib_as_data_file got %p\n", hlib_as_data_file);
 
             hlib = GetModuleHandleA(dll_name);
             ok(!hlib, "GetModuleHandle should fail\n");
@@ -865,7 +865,7 @@ static void test_Loader(void)
 
             SetLastError(0xdeadbeef);
             hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE);
-            if (!((ULONG_PTR)hlib_as_data_file & 1) ||  /* winxp */
+            if (!((ULONG_PTR)hlib_as_data_file & 3) ||  /* winxp */
                 (!hlib_as_data_file && GetLastError() == ERROR_INVALID_PARAMETER))  /* w2k3 */
             {
                 win_skip( "LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE not supported\n" );
@@ -880,6 +880,28 @@ static void test_Loader(void)
                 todo_wine ok( h == INVALID_HANDLE_VALUE, "open succeeded\n" );
                 todo_wine ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error %u\n", GetLastError() );
                 CloseHandle( h );
+
+                SetLastError(0xdeadbeef);
+                ret = FreeLibrary(hlib_as_data_file);
+                ok(ret, "FreeLibrary error %d\n", GetLastError());
+            }
+
+            SetLastError(0xdeadbeef);
+            hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+            if (!((ULONG_PTR)hlib_as_data_file & 3) ||  /* winxp */
+                (!hlib_as_data_file && GetLastError() == ERROR_INVALID_PARAMETER))  /* w2k3 */
+            {
+                win_skip( "LOAD_LIBRARY_AS_IMAGE_RESOURCE not supported\n" );
+                FreeLibrary(hlib_as_data_file);
+            }
+            else
+            {
+                ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
+                ok(((ULONG_PTR)hlib_as_data_file & 3) == 2, "hlib_as_data_file got %p\n",
+                   hlib_as_data_file);
+
+                hlib = GetModuleHandleA(dll_name);
+                ok(!hlib, "GetModuleHandle should fail\n");
 
                 SetLastError(0xdeadbeef);
                 ret = FreeLibrary(hlib_as_data_file);
