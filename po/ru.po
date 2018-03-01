@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-05 09:18+0300\n"
+"PO-Revision-Date: 2018-03-01 21:15+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -6678,10 +6678,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Соединение закрыто удалённым узлом.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "Сообщение 0x%1 не найдено в файле %2.\n"
+msgstr "Подпись файла не обнаружена.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
