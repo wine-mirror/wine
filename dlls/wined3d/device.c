@@ -949,15 +949,12 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     BOOL ds_enable = swapchain->desc.enable_auto_depth_stencil;
     unsigned int i;
 
-    if (device->fb.render_targets)
+    for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
     {
-        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
-        {
-            wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
-        }
-        if (device->back_buffer_view)
-            wined3d_device_set_rendertarget_view(device, 0, device->back_buffer_view, TRUE);
+        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
     }
+    if (device->back_buffer_view)
+        wined3d_device_set_rendertarget_view(device, 0, device->back_buffer_view, TRUE);
 
     wined3d_device_set_depth_stencil_view(device, ds_enable ? device->auto_depth_stencil_view : NULL);
 }
