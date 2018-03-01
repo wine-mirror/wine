@@ -114,9 +114,10 @@ static void set_script_prop(ScriptHost *script_host, DWORD property, VARIANT *va
 
 static BOOL init_script_engine(ScriptHost *script_host)
 {
+    compat_mode_t compat_mode;
     IObjectSafety *safety;
     SCRIPTSTATE state;
-    DWORD supported_opts=0, enabled_opts=0;
+    DWORD supported_opts=0, enabled_opts=0, script_mode;
     VARIANT var;
     HRESULT hres;
 
@@ -149,8 +150,10 @@ static BOOL init_script_engine(ScriptHost *script_host)
     if(FAILED(hres))
         return FALSE;
 
+    compat_mode = lock_document_mode(script_host->window->doc);
+    script_mode = compat_mode < COMPAT_MODE_IE8 ? SCRIPTLANGUAGEVERSION_5_7 : SCRIPTLANGUAGEVERSION_5_8;
     V_VT(&var) = VT_I4;
-    V_I4(&var) = lock_document_mode(script_host->window->doc) == COMPAT_MODE_QUIRKS ? 1 : 2;
+    V_I4(&var) = script_mode;
     set_script_prop(script_host, SCRIPTPROP_INVOKEVERSIONING, &var);
 
     V_VT(&var) = VT_BOOL;

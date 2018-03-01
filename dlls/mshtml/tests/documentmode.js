@@ -106,6 +106,25 @@ function test_xhr_props() {
     next_test();
 }
 
+function test_javascript() {
+    var g = window;
+
+    function test_exposed(func, obj, expect) {
+        if(expect)
+            ok(func in obj, func + " not found in " + obj);
+        else
+            ok(!(func in obj), func + " found in " + obj);
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("ScriptEngineMajorVersion", g, true);
+
+    test_exposed("JSON", g, v >= 8);
+
+    next_test();
+}
+
 function test_elem_by_id() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
 
@@ -196,6 +215,7 @@ var tests = [
     test_elem_props,
     test_doc_props,
     test_window_props,
+    test_javascript,
     test_xhr_props,
     test_elem_by_id,
     test_conditional_comments
