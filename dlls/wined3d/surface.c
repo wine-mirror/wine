@@ -2226,6 +2226,7 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
     struct wined3d_texture *texture = surface->container;
     struct wined3d_surface *restore_rt = NULL;
     struct wined3d_device *device;
+    unsigned int level;
     RECT r;
 
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
@@ -2250,8 +2251,9 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
     else
         restore_rt = NULL;
 
-    SetRect(&r, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
-            wined3d_texture_get_level_height(texture, surface->texture_level));
+    level = sub_resource_idx % texture->level_count;
+    SetRect(&r, 0, 0, wined3d_texture_get_level_width(texture, level),
+            wined3d_texture_get_level_height(texture, level));
     wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_COLOR_BLIT, context,
             surface, WINED3D_LOCATION_TEXTURE_RGB, &r,
