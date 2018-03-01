@@ -52,6 +52,9 @@ xhr.js HTML "xhr.js"
 /* @makedep: elements.js */
 elements.js HTML "elements.js"
 
+/* @makedep: es5.js */
+es5.js HTML "es5.js"
+
 /* @makedep: events.js */
 events.js HTML "events.js"
 

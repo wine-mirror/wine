@@ -294,6 +294,7 @@ obj = new Date();
 ok(!obj.hasOwnProperty('getTime'), "obj.hasOwnProperty('getTime') is true");
 ok(!Date.hasOwnProperty('getTime'), "Date.hasOwnProperty('getTime') is true");
 ok(Date.prototype.hasOwnProperty('getTime'), "Date.prototype.hasOwnProperty('getTime') is false");
+ok(!("now" in Date), "now found in Date");
 
 obj = new Number();
 ok(!obj.hasOwnProperty('toFixed'), "obj.hasOwnProperty('toFixed') is true");

@@ -121,6 +121,7 @@ function test_javascript() {
     test_exposed("ScriptEngineMajorVersion", g, true);
 
     test_exposed("JSON", g, v >= 8);
+    test_exposed("now", Date, true);
 
     next_test();
 }
