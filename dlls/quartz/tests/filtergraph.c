@@ -398,49 +398,98 @@ static void test_state_change(IFilterGraph2 *graph)
     IMediaControl_Release(control);
 }
 
+static void test_media_event(IFilterGraph2 *graph)
+{
+    IMediaEvent *media_event;
+    IMediaSeeking *seeking;
+    IMediaControl *control;
+    IMediaFilter *filter;
+    LONG_PTR lparam1, lparam2;
+    LONGLONG current, stop;
+    OAFilterState state;
+    int got_eos = 0;
+    HANDLE event;
+    HRESULT hr;
+    LONG code;
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+    ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %#x\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %#x\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&media_event);
+    ok(hr == S_OK, "QueryInterface(IMediaEvent) failed: %#x\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
+    ok(hr == S_OK, "QueryInterface(IMediaEvent) failed: %#x\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(SUCCEEDED(hr), "Stop() failed: %#x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() timed out\n");
+
+    hr = IMediaSeeking_GetDuration(seeking, &stop);
+    ok(hr == S_OK, "GetDuration() failed: %#x\n", hr);
+    current = 0;
+    hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning, &stop, AM_SEEKING_AbsolutePositioning);
+    ok(hr == S_OK, "SetPositions() failed: %#x\n", hr);
+
+    hr = IMediaFilter_SetSyncSource(filter, NULL);
+    ok(hr == S_OK, "SetSyncSource() failed: %#x\n", hr);
+
+    hr = IMediaEvent_GetEventHandle(media_event, (OAEVENT *)&event);
+    ok(hr == S_OK, "GetEventHandle() failed: %#x\n", hr);
+
+    /* flush existing events */
+    while ((hr = IMediaEvent_GetEvent(media_event, &code, &lparam1, &lparam2, 0)) == S_OK);
+
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "event should not be signaled\n");
+
+    hr = IMediaControl_Run(control);
+    ok(SUCCEEDED(hr), "Run() failed: %#x\n", hr);
+
+    while (!got_eos)
+    {
+        if (WaitForSingleObject(event, 1000) == WAIT_TIMEOUT)
+            break;
+
+        while ((hr = IMediaEvent_GetEvent(media_event, &code, &lparam1, &lparam2, 0)) == S_OK)
+        {
+            if (code == EC_COMPLETE)
+            {
+                got_eos = 1;
+                break;
+            }
+        }
+    }
+    ok(got_eos, "didn't get EOS\n");
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
+    ok(hr == S_OK, "GetCurrentPosition() failed: %#x\n", hr);
+todo_wine
+    ok(current == stop, "expected %s, got %s\n", wine_dbgstr_longlong(stop), wine_dbgstr_longlong(current));
+
+    hr = IMediaControl_Stop(control);
+    ok(SUCCEEDED(hr), "Run() failed: %#x\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "GetState() timed out\n");
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "SetDefaultSinkSource() failed: %#x\n", hr);
+
+    IMediaSeeking_Release(seeking);
+    IMediaEvent_Release(media_event);
+    IMediaControl_Release(control);
+    IMediaFilter_Release(filter);
+}
+
 static void rungraph(IFilterGraph2 *graph)
 {
-    HRESULT hr;
-    IMediaControl* pmc;
-    IMediaEvent* pme;
-    IMediaFilter* pmf;
-    HANDLE hEvent;
-
     test_basic_video(graph);
     test_mediacontrol(graph);
     test_state_change(graph);
-
-    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&pmc);
-    ok(hr==S_OK, "Cannot get IMediaControl interface returned: %x\n", hr);
-
-    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&pmf);
-    ok(hr==S_OK, "Cannot get IMediaFilter interface returned: %x\n", hr);
-
-    IMediaControl_Stop(pmc);
-
-    IMediaFilter_SetSyncSource(pmf, NULL);
-
-    IMediaFilter_Release(pmf);
-
-    hr = IMediaControl_Run(pmc);
-    ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
-
-    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (LPVOID*)&pme);
-    ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %x\n", hr);
-
-    hr = IMediaEvent_GetEventHandle(pme, (OAEVENT*)&hEvent);
-    ok(hr==S_OK, "Cannot get event handle returned: %x\n", hr);
-
-    ok(WaitForSingleObject(hEvent, 2000) == WAIT_OBJECT_0, "Wait failed\n");
-
-    hr = IMediaEvent_Release(pme);
-    ok(hr==2, "Releasing mediaevent returned: %x\n", hr);
-
-    hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK, "Cannot stop the graph returned: %x\n", hr);
-    
-    hr = IMediaControl_Release(pmc);
-    ok(hr==1, "Releasing mediacontrol returned: %x\n", hr);
+    test_media_event(graph);
 }
 
 static HRESULT test_graph_builder_connect(WCHAR *filename)
