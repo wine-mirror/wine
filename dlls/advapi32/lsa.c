@@ -763,16 +763,38 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         break;
         case  PolicyDnsDomainInformation:	/* 12 (0xc) */
         {
-            /* Only the domain name is valid for the local computer.
-             * All other fields are zero.
-             */
-            PPOLICY_DNS_DOMAIN_INFO pinfo;
+            struct di
+            {
+                POLICY_DNS_DOMAIN_INFO info;
+                SID sid;
+                WCHAR domain_name[MAX_COMPUTERNAME_LENGTH + 1];
+                WCHAR dns_domain_name[MAX_COMPUTERNAME_LENGTH + 1];
+                WCHAR dns_forest_name[MAX_COMPUTERNAME_LENGTH + 1];
+            };
+            DWORD dwSize;
+            struct di *xdi;
 
-            pinfo = ADVAPI_GetDomainName(sizeof(*pinfo), offsetof(POLICY_DNS_DOMAIN_INFO, Name));
+            xdi = heap_alloc_zero(sizeof(*xdi));
+            if (!xdi) return STATUS_NO_MEMORY;
 
-            TRACE("setting domain to %s\n", debugstr_w(pinfo->Name.Buffer));
+            dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+            if (GetComputerNameW(xdi->domain_name, &dwSize))
+            {
+                xdi->info.Name.Buffer = xdi->domain_name;
+                xdi->info.Name.Length = dwSize * sizeof(WCHAR);
+                xdi->info.Name.MaximumLength = (dwSize + 1) * sizeof(WCHAR);
+                TRACE("setting Name to %s\n", debugstr_w(xdi->info.Name.Buffer));
+            }
 
-            *Buffer = pinfo;
+            /* FIXME: also set DnsDomainName and DnsForestName */
+
+            if (ADVAPI_GetComputerSid(&xdi->sid))
+            {
+                xdi->info.Sid = &xdi->sid;
+                TRACE("setting SID to %s\n", debugstr_sid(&xdi->sid));
+            }
+
+            *Buffer = xdi;
         }
         break;
         case  PolicyAuditLogInformation:

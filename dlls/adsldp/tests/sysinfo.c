@@ -160,9 +160,8 @@ static void test_sysinfo(void)
     ok(hr == S_OK, "got %#x\n", hr);
     IDispatch_Release(dispatch);
 
-    hr = IADsADSystemInfo_get_UserName(sysinfo, &bstr);
-todo_wine
-    ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_NONE_MAPPED), "got %#x\n", hr);
+    hr = IADsADSystemInfo_get_ComputerName(sysinfo, &bstr);
+    ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_CANT_ACCESS_DOMAIN_INFO), "got %#x\n", hr);
     if (hr != S_OK)
     {
         skip("Computer is not part of a domain, skipping the tests\n");
@@ -171,7 +170,7 @@ todo_wine
     }
     SysFreeString(bstr);
 
-    hr = IADsADSystemInfo_get_ComputerName(sysinfo, &bstr);
+    hr = IADsADSystemInfo_get_UserName(sysinfo, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
     if (hr == S_OK) SysFreeString(bstr);
 
