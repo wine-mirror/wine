@@ -90,8 +90,19 @@ static const builtin_prop_t *find_builtin_prop(jsdisp_t *This, const WCHAR *name
         i = (min+max)/2;
 
         r = strcmpW(name, This->builtin_info->props[i].name);
-        if(!r)
+        if(!r) {
+            /* Skip prop if it's available only in higher compatibility mode. */
+            unsigned version = (This->builtin_info->props[i].flags & PROPF_VERSION_MASK)
+                >> PROPF_VERSION_SHIFT;
+            if(version && version > This->ctx->version)
+                return NULL;
+
+            /* Skip prop if it's available only in HTML mode and we're not running in HTML mode. */
+            if((This->builtin_info->props[i].flags & PROPF_HTML) && !This->ctx->html_mode)
+                return NULL;
+
             return This->builtin_info->props + i;
+        }
 
         if(r < 0)
             max = i-1;
