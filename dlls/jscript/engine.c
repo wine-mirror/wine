@@ -520,7 +520,7 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 }
 
 /* ECMA-262 3rd Edition    11.9.6 */
-static HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
+HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
 {
     jsval_type_t type = jsval_type(lval);
 

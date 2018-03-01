@@ -27,6 +27,34 @@ function test_date_now() {
     next_test();
 }
 
+function test_indexOf() {
+    function expect(array, args, exr) {
+        var r = Array.prototype.indexOf.apply(array, args);
+        ok(r == exr, "indexOf returned " + r + " expected " + exr);
+    }
+
+    ok(Array.prototype.indexOf.length == 1, "indexOf.length = " + Array.prototype.indexOf.length);
+
+    expect([1,2,3], [2], 1);
+    expect([1,undefined,3], [undefined], 1);
+    expect([1,undefined,3], [], 1);
+    expect([1,,3], [undefined], -1);
+    expect([1,2,3,4,5,6], [2, 2], -1);
+    expect([1,2,3,4,5,6], [5, -1], -1);
+    expect([1,2,3,4,5,6], [5, -2], 4);
+    expect([1,2,3,4,5,6], [5, -20], 4);
+    expect([1,2,3,4,5,6], [5, 20], -1);
+    expect("abc", ["b"], 1);
+    expect(true, [true], -1);
+    expect({"4": 4, length: 5}, [4], 4);
+    expect({"4": 4, length: 5}, [undefined], -1);
+    expect({"4": 4, length: 3}, [4], -1);
+    expect({"test": true}, [true], -1);
+    expect([1,2,3], [2, 1.9], 1);
+
+    next_test();
+}
+
 function test_isArray() {
     function expect_array(a, exr) {
         var r = Array.isArray(a);
@@ -47,5 +75,6 @@ function test_isArray() {
 
 var tests = [
     test_date_now,
+    test_indexOf,
     test_isArray
 ];
