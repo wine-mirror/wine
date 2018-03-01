@@ -4714,9 +4714,11 @@ char * CDECL MSVCRT_gets(char *buf)
 
   MSVCRT__lock_file(MSVCRT_stdin);
   for(cc = MSVCRT__fgetc_nolock(MSVCRT_stdin); cc != MSVCRT_EOF && cc != '\n';
-      cc = MSVCRT__fgetc_nolock(MSVCRT_stdin))
-  if(cc != '\r') *buf++ = (char)cc;
-
+          cc = MSVCRT__fgetc_nolock(MSVCRT_stdin))
+  {
+      if(cc != '\r')
+          *buf++ = (char)cc;
+  }
   *buf = '\0';
 
   TRACE("got '%s'\n", buf_start);
