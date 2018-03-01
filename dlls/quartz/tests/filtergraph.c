@@ -284,12 +284,11 @@ static void test_basic_video(IFilterGraph2 *graph)
     IBasicVideo_Release(pbv);
 }
 
-static void test_mediacontrol(IFilterGraph2 *graph)
+static void test_media_seeking(IFilterGraph2 *graph)
 {
     IMediaSeeking *seeking;
     IMediaFilter *filter;
-    IMediaControl *control;
-    LONGLONG pos;
+    LONGLONG pos, stop, duration;
     GUID format;
     HRESULT hr;
 
@@ -299,9 +298,6 @@ static void test_mediacontrol(IFilterGraph2 *graph)
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %08x\n", hr);
-
-    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
 
     format = GUID_NULL;
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
@@ -327,21 +323,31 @@ static void test_mediacontrol(IFilterGraph2 *graph)
     ok(hr == S_OK, "GetCurrentPosition failed: %#x\n", hr);
     ok(pos == 0, "got %s\n", wine_dbgstr_longlong(pos));
 
+    hr = IMediaSeeking_GetDuration(seeking, &duration);
+    ok(hr == S_OK, "GetDuration failed: %#x\n", hr);
+    ok(duration > 0, "got %s\n", wine_dbgstr_longlong(duration));
+
+    hr = IMediaSeeking_GetStopPosition(seeking, &stop);
+    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
+    ok(stop == duration || stop == duration + 1, "expected %s, got %s\n",
+        wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
+
     hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_ReturnTime, NULL, AM_SEEKING_NoPositioning);
     ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
     hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_NoPositioning, NULL, AM_SEEKING_ReturnTime);
     ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
 
+    pos = 0;
+    hr = IMediaSeeking_SetPositions(seeking, &pos, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
+
     IMediaFilter_SetSyncSource(filter, NULL);
     pos = 0xdeadbeef;
     hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
-    ok(hr == S_OK, "GetCurrentPosition failed: %#x\n", hr);
-    ok(pos == 0, "got %s\n", wine_dbgstr_longlong(pos));
+    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
+    ok(pos == 0, "Position != 0 (%s)\n", wine_dbgstr_longlong(pos));
+    IFilterGraph2_SetDefaultSyncSource(graph);
 
-    hr = IMediaControl_GetState(control, 1000, NULL);
-    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
-
-    IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
     IMediaFilter_Release(filter);
 }
@@ -487,7 +493,7 @@ todo_wine
 static void rungraph(IFilterGraph2 *graph)
 {
     test_basic_video(graph);
-    test_mediacontrol(graph);
+    test_media_seeking(graph);
     test_state_change(graph);
     test_media_event(graph);
 }
