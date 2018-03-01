@@ -864,6 +864,7 @@ with_tiff
 with_udev
 with_sdl
 with_v4l
+with_vulkan
 with_xcomposite
 with_xcursor
 with_xfixes
@@ -2439,6 +2440,7 @@ Optional Packages:
   --without-udev          do not use udev (plug and play support)
   --without-sdl           do not use SDL
   --without-v4l           do not use v4l1 (v4l support)
+  --without-vulkan        do not use Vulkan
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
   --without-xfixes        do not use Xfixes for clipboard change notifications
@@ -3756,6 +3758,12 @@ fi
 # Check whether --with-v4l was given.
 if test "${with_v4l+set}" = set; then :
   withval=$with_v4l;
+fi
+
+
+# Check whether --with-vulkan was given.
+if test "${with_vulkan+set}" = set; then :
+  withval=$with_vulkan;
 fi
 
 
@@ -14601,6 +14609,72 @@ if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$ena
         "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
+fi
+
+if test "x$with_vulkan" != "xno"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lvulkan" >&5
+$as_echo_n "checking for -lvulkan... " >&6; }
+if ${ac_cv_lib_soname_vulkan+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lvulkan  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vkGetInstanceProcAddr ();
+int
+main ()
+{
+return vkGetInstanceProcAddr ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_vulkan=`$ac_cv_path_LDD conftest.exe | grep "vulkan" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_vulkan=`$OTOOL -L conftest$ac_exeext | grep "libvulkan\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libvulkan\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_vulkan=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libvulkan\\.$LIBEXT" | sed -e "s/^.*\\[\\(libvulkan\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_vulkan:+false} :; then :
+  ac_cv_lib_soname_vulkan=`$LDD conftest$ac_exeext | grep "libvulkan\\.$LIBEXT" | sed -e "s/^.*\(libvulkan\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_vulkan:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vulkan" >&5
+$as_echo "$ac_cv_lib_soname_vulkan" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBVULKAN "$ac_cv_lib_soname_vulkan"
+_ACEOF
+
+
+fi
+fi
+if test "x$ac_cv_lib_soname_vulkan" = "x"; then :
+  case "x$with_vulkan" in
+  x)   as_fn_append wine_notices "|libvulkan ${notice_platform}development files not found, Vulkan won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libvulkan ${notice_platform}development files not found, Vulkan won't be supported.
+This is an error since --with-vulkan was requested." "$LINENO" 5 ;;
+esac
+
 fi
 
 

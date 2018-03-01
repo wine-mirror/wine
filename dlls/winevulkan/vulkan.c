@@ -24,8 +24,10 @@
 #include "winuser.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
+#include "vulkan_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -66,11 +68,54 @@ static BOOL wine_vk_init(void)
     return TRUE;
 }
 
+/* Helper function used for freeing an instance structure. This function supports full
+ * and partial object cleanups and can thus be used for vkCreateInstance failures.
+ */
+static void wine_vk_instance_free(struct VkInstance_T *instance)
+{
+    if (!instance)
+        return;
+
+    if (instance->instance)
+        vk_funcs->p_vkDestroyInstance(instance->instance, NULL /* allocator */);
+
+    heap_free(instance);
+}
+
 static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
-    TRACE("%p %p %p\n", create_info, allocator, instance);
-    return vk_funcs->p_vkCreateInstance(create_info, allocator, instance);
+    struct VkInstance_T *object = NULL;
+    VkResult res;
+
+    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate memory for instance\n");
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto err;
+    }
+    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+
+    res = vk_funcs->p_vkCreateInstance(create_info, NULL /* allocator */, &object->instance);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to create instance, res=%d\n", res);
+        goto err;
+    }
+
+    *instance = object;
+    TRACE("Done, instance=%p native_instance=%p\n", object, object->instance);
+    return VK_SUCCESS;
+
+err:
+    wine_vk_instance_free(object);
+    return res;
 }
 
 static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,

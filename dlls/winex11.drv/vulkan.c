@@ -20,22 +20,67 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
+#ifdef SONAME_LIBVULKAN
+
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
+
+static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
+static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
+
+static BOOL wine_vk_init(void)
+{
+    static BOOL init_done = FALSE;
+    static void *vulkan_handle;
+
+    if (init_done) return (vulkan_handle != NULL);
+    init_done = TRUE;
+
+    if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0))) return FALSE;
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
+LOAD_FUNCPTR(vkCreateInstance)
+LOAD_FUNCPTR(vkDestroyInstance)
+#undef LOAD_FUNCPTR
+
+    return TRUE;
+}
 
 static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
-    FIXME("stub: %p %p %p\n", create_info, allocator, instance);
-    return VK_ERROR_INCOMPATIBLE_DRIVER;
+    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    /* TODO: convert win32 to x11 extensions here. */
+    if (create_info->enabledExtensionCount > 0)
+    {
+        FIXME("Extensions are not supported yet, aborting!\n");
+        return VK_ERROR_INCOMPATIBLE_DRIVER;
+    }
+
+    return pvkCreateInstance(create_info, NULL /* allocator */, instance);
 }
 
 static void X11DRV_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *allocator)
 {
-    FIXME("stub: %p %p\n", instance, allocator);
+    TRACE("%p %p\n", instance, allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    pvkDestroyInstance(instance, NULL /* allocator */);
 }
 
 static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_name,
@@ -75,7 +120,7 @@ static void * X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name
     return NULL;
 }
 
-static struct vulkan_funcs vulkan_funcs =
+static const struct vulkan_funcs vulkan_funcs =
 {
     X11DRV_vkCreateInstance,
     X11DRV_vkDestroyInstance,
@@ -91,5 +136,17 @@ const struct vulkan_funcs *get_vulkan_driver(UINT version)
         return NULL;
     }
 
-    return &vulkan_funcs;
+    if (wine_vk_init())
+        return &vulkan_funcs;
+
+    return NULL;
 }
+
+#else /* No vulkan */
+
+const struct vulkan_funcs *get_vulkan_driver(UINT version)
+{
+    return NULL;
+}
+
+#endif /* SONAME_LIBVULKAN */
