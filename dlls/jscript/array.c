@@ -1079,6 +1079,24 @@ static const builtin_info_t ArrayInst_info = {
     Array_on_put
 };
 
+/* ECMA-262 5.1 Edition    15.4.3.2 */
+static HRESULT ArrayConstr_isArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *obj;
+
+    TRACE("\n");
+
+    if(!argc || !is_object_instance(argv[0])) {
+        if(r) *r = jsval_bool(FALSE);
+        return S_OK;
+    }
+
+    obj = iface_to_jsdisp(get_object(argv[0]));
+    if(r) *r = jsval_bool(obj && is_class(obj, JSCLASS_ARRAY));
+    if(obj) jsdisp_release(obj);
+    return S_OK;
+}
+
 static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -1153,6 +1171,21 @@ static HRESULT alloc_array(script_ctx_t *ctx, jsdisp_t *object_prototype, ArrayI
     return S_OK;
 }
 
+static const WCHAR isArrayW[] = {'i','s','A','r','r','a','y',0};
+
+static const builtin_prop_t ArrayConstr_props[] = {
+    {isArrayW,    ArrayConstr_isArray,    PROPF_ES5|PROPF_METHOD|1}
+};
+
+static const builtin_info_t ArrayConstr_info = {
+    JSCLASS_FUNCTION,
+    DEFAULT_FUNCTION_VALUE,
+    sizeof(ArrayConstr_props)/sizeof(*ArrayConstr_props),
+    ArrayConstr_props,
+    NULL,
+    NULL
+};
+
 HRESULT create_array_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
     ArrayInstance *array;
@@ -1164,7 +1197,7 @@ HRESULT create_array_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdis
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, ArrayConstr_value, ArrayW, NULL, PROPF_CONSTR|1, &array->dispex, ret);
+    hres = create_builtin_constructor(ctx, ArrayConstr_value, ArrayW, &ArrayConstr_info, PROPF_CONSTR|1, &array->dispex, ret);
 
     jsdisp_release(&array->dispex);
     return hres;

@@ -122,6 +122,7 @@ function test_javascript() {
 
     test_exposed("JSON", g, v >= 8);
     test_exposed("now", Date, true);
+    test_exposed("isArray", Array, v >= 9);
 
     next_test();
 }

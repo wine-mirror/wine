@@ -27,6 +27,25 @@ function test_date_now() {
     next_test();
 }
 
+function test_isArray() {
+    function expect_array(a, exr) {
+        var r = Array.isArray(a);
+        ok(r === exr, "isArray returned " + r + " expected " + exr);
+    }
+
+    expect_array([1], true);
+    expect_array(Array, false);
+    expect_array(new Array(), true);
+    expect_array({"1": 1, "2": 2, length: 2}, false);
+
+    function C() {}
+    C.prototype = Array.prototype;
+    expect_array(new C(), false);
+
+    next_test();
+}
+
 var tests = [
-    test_date_now
+    test_date_now,
+    test_isArray
 ];
