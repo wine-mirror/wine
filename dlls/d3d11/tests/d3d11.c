@@ -7887,10 +7887,10 @@ static void test_sample_c_lz(void)
 
 static void test_multiple_render_targets(void)
 {
+    ID3D11RenderTargetView *rtv[4], *tmp_rtv[4];
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11InputLayout *input_layout;
     unsigned int stride, offset, i;
-    ID3D11RenderTargetView *rtv[4];
     ID3D11DeviceContext *context;
     ID3D11Texture2D *rt[4];
     ID3D11VertexShader *vs;
@@ -8025,9 +8025,21 @@ static void test_multiple_render_targets(void)
 
     for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D11DeviceContext_ClearRenderTargetView(context, rtv[i], red);
-
     ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(rt[0], 0xffffffff, 2);
+    check_texture_color(rt[1], 0x7f7f7f7f, 2);
+    check_texture_color(rt[2], 0x33333333, 2);
+    check_texture_color(rt[3], 0xff7f3300, 2);
 
+    for (i = 0; i < ARRAY_SIZE(rtv); ++i)
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtv[i], red);
+    for (i = 0; i < ARRAY_SIZE(tmp_rtv); ++i)
+    {
+        memset(tmp_rtv, 0, sizeof(tmp_rtv));
+        tmp_rtv[i] = rtv[i];
+        ID3D11DeviceContext_OMSetRenderTargets(context, 4, tmp_rtv, NULL);
+        ID3D11DeviceContext_Draw(context, 4, 0);
+    }
     check_texture_color(rt[0], 0xffffffff, 2);
     check_texture_color(rt[1], 0x7f7f7f7f, 2);
     check_texture_color(rt[2], 0x33333333, 2);
