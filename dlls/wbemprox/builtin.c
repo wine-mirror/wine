@@ -165,6 +165,8 @@ static const WCHAR prop_codesetW[] =
     {'C','o','d','e','S','e','t',0};
 static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
+static const WCHAR prop_configmanagererrorcodeW[] =
+    {'C','o','n','f','i','g','M','a','n','a','g','e','r','E','r','r','o','r','C','o','d','e',0};
 static const WCHAR prop_countrycodeW[] =
     {'C','o','u','n','t','r','y','C','o','d','e',0};
 static const WCHAR prop_cpustatusW[] =
@@ -700,24 +702,25 @@ static const struct column col_systemsecurity[] =
 };
 static const struct column col_videocontroller[] =
 {
-    { prop_adapterdactypeW,       CIM_STRING },
-    { prop_adapterramW,           CIM_UINT32, VT_I4 },
-    { prop_availabilityW,         CIM_UINT16 },
-    { prop_captionW,              CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_currentbitsperpixelW,  CIM_UINT32, VT_I4 },
-    { prop_currenthorizontalresW, CIM_UINT32, VT_I4 },
-    { prop_currentrefreshrateW,   CIM_UINT32, VT_I4 },
-    { prop_currentscanmodeW,      CIM_UINT16, VT_I4 },
-    { prop_currentverticalresW,   CIM_UINT32, VT_I4 },
-    { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
-    { prop_driverversionW,        CIM_STRING },
-    { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_videoarchitectureW,    CIM_UINT16, VT_I4 },
-    { prop_videomemorytypeW,      CIM_UINT16, VT_I4 },
-    { prop_videomodedescriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_videoprocessorW,       CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_adapterdactypeW,         CIM_STRING },
+    { prop_adapterramW,             CIM_UINT32, VT_I4 },
+    { prop_availabilityW,           CIM_UINT16 },
+    { prop_captionW,                CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_configmanagererrorcodeW, CIM_UINT32, VT_I4 },
+    { prop_currentbitsperpixelW,    CIM_UINT32, VT_I4 },
+    { prop_currenthorizontalresW,   CIM_UINT32, VT_I4 },
+    { prop_currentrefreshrateW,     CIM_UINT32, VT_I4 },
+    { prop_currentscanmodeW,        CIM_UINT16, VT_I4 },
+    { prop_currentverticalresW,     CIM_UINT32, VT_I4 },
+    { prop_descriptionW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_deviceidW,               CIM_STRING|COL_FLAG_KEY },
+    { prop_driverversionW,          CIM_STRING },
+    { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_pnpdeviceidW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_videoarchitectureW,      CIM_UINT16, VT_I4 },
+    { prop_videomemorytypeW,        CIM_UINT16, VT_I4 },
+    { prop_videomodedescriptionW,   CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_videoprocessorW,         CIM_STRING|COL_FLAG_DYNAMIC },
 };
 
 static const WCHAR baseboard_manufacturerW[] =
@@ -1109,6 +1112,7 @@ struct record_videocontroller
     UINT32       adapter_ram;
     UINT16       availability;
     const WCHAR *caption;
+    UINT32       config_errorcode;
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
     UINT32       current_refreshrate;
@@ -3257,6 +3261,7 @@ done:
     rec->adapter_dactype       = videocontroller_dactypeW;
     rec->adapter_ram           = vidmem;
     rec->availability          = 3; /* Running or Full Power */
+    rec->config_errorcode      = 0; /* no error */
     rec->caption               = heap_strdupW( name );
     rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
     rec->current_horizontalres = hres;
