@@ -215,6 +215,8 @@ static const WCHAR prop_domainroleW[] =
     {'D','o','m','a','i','n','R','o','l','e',0};
 static const WCHAR prop_driveW[] =
     {'D','r','i','v','e',0};
+static const WCHAR prop_driverdateW[] =
+    {'D','r','i','v','e','r','D','a','t','e',0};
 static const WCHAR prop_drivernameW[] =
     {'D','r','i','v','e','r','N','a','m','e',0};
 static const WCHAR prop_driverversionW[] =
@@ -718,6 +720,7 @@ static const struct column col_videocontroller[] =
     { prop_currentverticalresW,     CIM_UINT32, VT_I4 },
     { prop_descriptionW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,               CIM_STRING|COL_FLAG_KEY },
+    { prop_driverdateW,             CIM_DATETIME },
     { prop_driverversionW,          CIM_STRING },
     { prop_installeddisplaydriversW,CIM_STRING },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
@@ -819,6 +822,8 @@ static const WCHAR videocontroller_dactypeW[] =
     {'I','n','t','e','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
+static const WCHAR videocontroller_driverdateW[] =
+    {'2','0','1','7','0','1','0','1','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR videocontroller_driverversionW[] =
     {'1','.','0',0};
 static const WCHAR videocontroller_statusW[] =
@@ -1128,6 +1133,7 @@ struct record_videocontroller
     UINT32       current_verticalres;
     const WCHAR *description;
     const WCHAR *device_id;
+    const WCHAR *driverdate;
     const WCHAR *driverversion;
     const WCHAR *installeddriver;
     const WCHAR *name;
@@ -3303,6 +3309,7 @@ done:
     rec->current_verticalres   = vres;
     rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
+    rec->driverdate            = videocontroller_driverdateW;
     rec->driverversion         = videocontroller_driverversionW;
     rec->installeddriver       = get_installeddriver( desc.VendorId );
     rec->name                  = heap_strdupW( name );
