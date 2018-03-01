@@ -12614,14 +12614,13 @@ static void test_draw_uav_only(void)
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
-    /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
-    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &test_context.backbuffer_rtv, NULL,
+    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 0, NULL, NULL,
             0, 1, &uav, NULL);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, values);
     memset(&vp, 0, sizeof(vp));
-    vp.Width = 1.0f;
-    vp.Height = 100.0f;
+    vp.Width = 10.0f;
+    vp.Height = 10.0f;
     ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, values);
     draw_quad(&test_context);
@@ -17685,9 +17684,8 @@ static void test_ps_cs_uav_binding(void)
     ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cs_cb);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &cs_uav, NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &ps_cb);
-    /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
     ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context,
-            1, &test_context.backbuffer_rtv, NULL, 1, 1, &ps_uav, NULL);
+            0, NULL, NULL, 1, 1, &ps_uav, NULL);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, cs_uav, zero);
     check_texture_float(cs_texture, 0.0f, 2);
@@ -17749,11 +17747,8 @@ static void test_atomic_instructions(void)
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     struct d3d11_test_context test_context;
     struct resource_readback rb, out_rb;
-    D3D11_TEXTURE2D_DESC texture_desc;
     D3D11_BUFFER_DESC buffer_desc;
     ID3D11DeviceContext *context;
-    ID3D11RenderTargetView *rtv;
-    ID3D11Texture2D *texture;
     ID3D11ComputeShader *cs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
@@ -17883,22 +17878,6 @@ static void test_atomic_instructions(void)
     device = test_context.device;
     context = test_context.immediate_context;
 
-    texture_desc.Width = 1;
-    texture_desc.Height = 1;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
-
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 2 * sizeof(struct uvec4), NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
@@ -17925,8 +17904,8 @@ static void test_atomic_instructions(void)
 
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
-    vp.Width = texture_desc.Width;
-    vp.Height = texture_desc.Height;
+    vp.Width = 1.0f;
+    vp.Height = 1.0f;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
@@ -17949,8 +17928,7 @@ static void test_atomic_instructions(void)
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)in_buffer, 0,
                 NULL, test->input, 0, 0);
 
-        /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
-        ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, NULL,
+        ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 0, NULL, NULL,
                 0, 1, &in_uav, NULL);
 
         draw_quad(&test_context);
@@ -18007,8 +17985,6 @@ static void test_atomic_instructions(void)
     ID3D11Buffer_Release(out_buffer);
     ID3D11ComputeShader_Release(cs);
     ID3D11PixelShader_Release(ps);
-    ID3D11RenderTargetView_Release(rtv);
-    ID3D11Texture2D_Release(texture);
     ID3D11UnorderedAccessView_Release(in_uav);
     ID3D11UnorderedAccessView_Release(out_uav);
     release_test_context(&test_context);
