@@ -361,6 +361,8 @@ static const WCHAR prop_startingoffsetW[] =
     {'S','t','a','r','t','i','n','g','O','f','f','s','e','t',0};
 static const WCHAR prop_stateW[] =
     {'S','t','a','t','e',0};
+static const WCHAR prop_statusW[] =
+    {'S','t','a','t','u','s',0};
 static const WCHAR prop_statusinfoW[] =
     {'S','t','a','t','u','s','I','n','f','o',0};
 static const WCHAR prop_strvalueW[] =
@@ -717,6 +719,7 @@ static const struct column col_videocontroller[] =
     { prop_driverversionW,          CIM_STRING },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pnpdeviceidW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_statusW,                 CIM_STRING },
     { prop_videoarchitectureW,      CIM_UINT16, VT_I4 },
     { prop_videomemorytypeW,        CIM_UINT16, VT_I4 },
     { prop_videomodedescriptionW,   CIM_STRING|COL_FLAG_DYNAMIC },
@@ -815,6 +818,8 @@ static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 static const WCHAR videocontroller_driverversionW[] =
     {'1','.','0',0};
+static const WCHAR videocontroller_statusW[] =
+    {'O','K',0};
 
 #include "pshpack1.h"
 struct record_baseboard
@@ -1123,6 +1128,7 @@ struct record_videocontroller
     const WCHAR *driverversion;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
+    const WCHAR *status;
     UINT16       videoarchitecture;
     UINT16       videomemorytype;
     const WCHAR *videomodedescription;
@@ -3273,6 +3279,7 @@ done:
     rec->driverversion         = videocontroller_driverversionW;
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
+    rec->status                = videocontroller_statusW;
     rec->videoarchitecture     = 2; /* Unknown */
     rec->videomemorytype       = 2; /* Unknown */
     wsprintfW( mode, fmtW, hres, vres, (UINT64)1 << rec->current_bitsperpixel );
