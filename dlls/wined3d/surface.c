@@ -1722,9 +1722,9 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, enum wined3d_texture_filter_type filter)
 {
+    unsigned int src_width, src_height, src_pow2_width, src_pow2_height, src_level;
     unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
-    unsigned int src_width, src_height, src_pow2_width, src_pow2_height;
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
@@ -1752,10 +1752,11 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     wined3d_texture_load(dst_texture, context, FALSE);
 
     offscreen_buffer = context_get_offscreen_gl_buffer(context);
-    src_width = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
-    src_height = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
-    src_pow2_width = wined3d_texture_get_level_pow2_width(src_texture, src_surface->texture_level);
-    src_pow2_height = wined3d_texture_get_level_pow2_height(src_texture, src_surface->texture_level);
+    src_level = src_sub_resource_idx % src_texture->level_count;
+    src_width = wined3d_texture_get_level_width(src_texture, src_level);
+    src_height = wined3d_texture_get_level_height(src_texture, src_level);
+    src_pow2_width = wined3d_texture_get_level_pow2_width(src_texture, src_level);
+    src_pow2_height = wined3d_texture_get_level_pow2_height(src_texture, src_level);
 
     src_offscreen = wined3d_resource_is_offscreen(&src_texture->resource);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
