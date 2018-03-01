@@ -909,6 +909,8 @@ arr = [,,,,,];
 tmp = arr.pop();
 ok(arr.length === 5, "arr.length = " + arr.length);
 ok(tmp === undefined, "tmp = " + tmp);
+tmp = [1,2,,,].pop();
+ok(tmp === undefined, "tmp = " + tmp);
 
 function PseudoArray() {
     this[0] = 0;

@@ -387,9 +387,10 @@ static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
     hres = jsdisp_get_idx(jsthis, length, &val);
     if(SUCCEEDED(hres))
         hres = jsdisp_delete_idx(jsthis, length);
-    else if(hres == DISP_E_UNKNOWNNAME)
+    else if(hres == DISP_E_UNKNOWNNAME) {
         val = jsval_undefined();
-    else
+        hres = S_OK;
+    }else
         return hres;
 
     if(SUCCEEDED(hres))
