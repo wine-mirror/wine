@@ -117,12 +117,29 @@ static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr )
     }
 }
 
+static DWORD *get_reg_address( CONTEXT *context, BYTE rm )
+{
+    switch (rm & 7)
+    {
+    case 0: return &context->Eax;
+    case 1: return &context->Ecx;
+    case 2: return &context->Edx;
+    case 3: return &context->Ebx;
+    case 4: return &context->Esp;
+    case 5: return &context->Ebp;
+    case 6: return &context->Esi;
+    case 7: return &context->Edi;
+    }
+    return NULL;
+}
+
+
 /***********************************************************************
  *           INSTR_GetOperandAddr
  *
  * Return the address of an instruction operand (from the mod/rm byte).
  */
-static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
+static void *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
     int mod, rm, base = 0, index = 0, ss = 0, off;
@@ -135,20 +152,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
     rm = mod & 7;
     mod >>= 6;
 
-    if (mod == 3)
-    {
-        switch(rm)
-        {
-        case 0: return (BYTE *)&context->Eax;
-        case 1: return (BYTE *)&context->Ecx;
-        case 2: return (BYTE *)&context->Edx;
-        case 3: return (BYTE *)&context->Ebx;
-        case 4: return (BYTE *)&context->Esp;
-        case 5: return (BYTE *)&context->Ebp;
-        case 6: return (BYTE *)&context->Esi;
-        case 7: return (BYTE *)&context->Edi;
-        }
-    }
+    if (mod == 3) return get_reg_address( context, rm );
 
     if (long_addr)
     {
@@ -254,7 +258,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
         base &= 0xffff;
     }
     /* FIXME: we assume that all segments have a base of 0 */
-    return (BYTE *)(base + (index << ss));
+    return (void *)(base + (index << ss));
 #undef GET_VAL
 }
 
