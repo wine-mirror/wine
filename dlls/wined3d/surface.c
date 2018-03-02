@@ -246,14 +246,14 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
     masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
 }
 
-static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
+static BOOL texture2d_is_full_rect(const struct wined3d_texture *texture, unsigned int level, const RECT *r)
 {
     unsigned int t;
 
-    t = wined3d_texture_get_level_width(surface->container, surface->texture_level);
+    t = wined3d_texture_get_level_width(texture, level);
     if ((r->left && r->right) || abs(r->right - r->left) != t)
         return FALSE;
-    t = wined3d_texture_get_level_height(surface->container, surface->texture_level);
+    t = wined3d_texture_get_level_height(texture, level);
     if ((r->top && r->bottom) || abs(r->bottom - r->top) != t)
         return FALSE;
     return TRUE;
@@ -313,7 +313,7 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. */
     wined3d_texture_load_location(src_texture, src_sub_resource_idx, context, src_location);
-    if (!surface_is_full_rect(dst_surface, dst_rect))
+    if (!texture2d_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, dst_rect))
         wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location);
     else
         wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
@@ -419,7 +419,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
      * in fact harmful if we're being called by surface_load_location() with
      * the purpose of loading the destination surface.) */
     wined3d_texture_load_location(src_texture, src_sub_resource_idx, old_ctx, src_location);
-    if (!surface_is_full_rect(dst_surface, &dst_rect))
+    if (!texture2d_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, &dst_rect))
         wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, old_ctx, dst_location);
     else
         wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, old_ctx, dst_location);
@@ -2679,7 +2679,7 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     if (!location)
         location = dst_texture->flags & WINED3D_TEXTURE_IS_SRGB
                 ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
-    if (surface_is_full_rect(dst_surface, dst_rect))
+    if (texture2d_is_full_rect(dst_texture, dst_level, dst_rect))
     {
         if (!wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, location))
             ERR("Failed to prepare the destination sub-resource into %s.\n", wined3d_debug_location(location));
