@@ -51,6 +51,7 @@ struct wine_vk_base
 struct VkInstance_T
 {
     struct wine_vk_base base;
+    struct vulkan_instance_funcs funcs;
     VkInstance instance; /* native instance */
 };
 

@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
+static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 
 static BOOL wine_vk_init(void)
 {
@@ -50,6 +51,7 @@ static BOOL wine_vk_init(void)
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
 LOAD_FUNCPTR(vkCreateInstance)
 LOAD_FUNCPTR(vkDestroyInstance)
+LOAD_FUNCPTR(vkGetInstanceProcAddr)
 #undef LOAD_FUNCPTR
 
     return TRUE;
@@ -116,8 +118,8 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
 
 static void * X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
-    FIXME("stub: %p, %s\n", instance, debugstr_a(name));
-    return NULL;
+    TRACE("%p, %s\n", instance, debugstr_a(name));
+    return pvkGetInstanceProcAddr(instance, name);
 }
 
 static const struct vulkan_funcs vulkan_funcs =

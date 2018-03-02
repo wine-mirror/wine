@@ -1035,17 +1035,41 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
-                continue
-
-            if vk_func.is_global_func():
-                continue
-
-            if vk_func.needs_thunk():
+            if not vk_func.is_required() or vk_func.is_global_func() or vk_func.needs_thunk():
                 continue
 
             f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_", postfix="DECLSPEC_HIDDEN")))
         f.write("\n")
+
+        f.write("/* For use by vkInstance and children */\n")
+        f.write("struct vulkan_instance_funcs\n{\n")
+        for vk_func in self.registry.instance_funcs:
+            if not vk_func.is_required():
+                continue
+
+            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+                LOGGER.debug("skipping {0} in vulkan_instance_funcs".format(vk_func.name))
+                continue
+
+            f.write("    {0};\n".format(vk_func.pfn(conv=False)))
+        f.write("};\n\n")
+
+        f.write("#define ALL_VK_INSTANCE_FUNCS() \\\n")
+        first = True
+        for vk_func in self.registry.instance_funcs:
+            if not vk_func.is_required():
+                continue
+
+            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+                LOGGER.debug("skipping {0} in ALL_VK_INSTANCE_FUNCS".format(vk_func.name))
+                continue
+
+            if first:
+                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
+                first = False
+            else:
+                f.write("\\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
 
