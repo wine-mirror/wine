@@ -225,6 +225,8 @@ static const WCHAR prop_flavorW[] =
     {'F','l','a','v','o','r',0};
 static const WCHAR prop_freespaceW[] =
     {'F','r','e','e','S','p','a','c','e',0};
+static const WCHAR prop_freephysicalmemoryW[] =
+    {'F','r','e','e','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_horizontalresolutionW[] =
@@ -539,6 +541,7 @@ static const struct column col_os[] =
     { prop_codesetW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_countrycodeW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,             CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_freephysicalmemoryW,     CIM_UINT64 },
     { prop_installdateW,            CIM_DATETIME },
     { prop_lastbootuptimeW,         CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
@@ -939,6 +942,7 @@ struct record_operatingsystem
     const WCHAR *codeset;
     const WCHAR *countrycode;
     const WCHAR *csdversion;
+    UINT64       freephysicalmemory;
     const WCHAR *installdate;
     const WCHAR *lastbootuptime;
     const WCHAR *localdatetime;
@@ -1320,6 +1324,15 @@ static UINT64 get_total_physical_memory(void)
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
     return status.ullTotalPhys;
+}
+
+static UINT64 get_available_physical_memory(void)
+{
+    MEMORYSTATUSEX status;
+
+    status.dwLength = sizeof(status);
+    if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
+    return status.ullAvailPhys;
 }
 
 static WCHAR *get_computername(void)
@@ -2892,6 +2905,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->codeset                = get_codeset();
     rec->countrycode            = get_countrycode();
     rec->csdversion             = ver.szCSDVersion[0] ? heap_strdupW( ver.szCSDVersion ) : NULL;
+    rec->freephysicalmemory     = get_available_physical_memory() / 1024;
     rec->installdate            = os_installdateW;
     rec->lastbootuptime         = get_lastbootuptime();
     rec->localdatetime          = get_localdatetime();
