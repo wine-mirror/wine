@@ -259,6 +259,8 @@ static const WCHAR prop_localdatetimeW[] =
     {'L','o','c','a','l','D','a','t','e','T','i','m','e',0};
 static const WCHAR prop_localeW[] =
     {'L','o','c','a','l','e',0};
+static const WCHAR prop_locationW[] =
+    {'L','o','c','a','t','i','o','n',0};
 static const WCHAR prop_lockpresentW[] =
     {'L','o','c','k','P','r','e','s','e','n','t',0};
 static const WCHAR prop_macaddressW[] =
@@ -305,6 +307,8 @@ static const WCHAR prop_pixelsperxlogicalinchW[] =
     {'P','i','x','e','l','s','P','e','r','X','L','o','g','i','c','a','l','I','n','c','h',0};
 static const WCHAR prop_pnpdeviceidW[] =
     {'P','N','P','D','e','v','i','c','e','I','D',0};
+static const WCHAR prop_portnameW[] =
+    {'P','o','r','t','N','a','m','e',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_primaryW[] =
@@ -584,11 +588,14 @@ static const struct column col_physicalmemory[] =
 static const struct column col_printer[] =
 {
     { prop_attributesW,           CIM_UINT32 },
+    { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_drivernameW,           CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_horizontalresolutionW, CIM_UINT32 },
     { prop_localW,                CIM_BOOLEAN },
+    { prop_locationW,             CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_networkW,              CIM_BOOLEAN }
+    { prop_networkW,              CIM_BOOLEAN },
+    { prop_portnameW,             CIM_STRING|COL_FLAG_DYNAMIC },
 };
 static const struct column col_process[] =
 {
@@ -985,11 +992,14 @@ struct record_physicalmemory
 struct record_printer
 {
     UINT32       attributes;
+    const WCHAR *device_id;
     const WCHAR *drivername;
     UINT32       horizontalresolution;
     int          local;
+    const WCHAR *location;
     const WCHAR *name;
     int          network;
+    const WCHAR *portname;
 };
 struct record_process
 {
@@ -2465,10 +2475,12 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
 
 static enum fill_status fill_printer( struct table *table, const struct expr *cond )
 {
+    static const WCHAR fmtW[] = {'P','r','i','n','t','e','r','%','d',0};
     struct record_printer *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
     PRINTER_INFO_2W *info;
     DWORD i, offset = 0, count = 0, size = 0, num_rows = 0;
+    WCHAR id[20];
 
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FILL_STATUS_FAILED;
@@ -2489,11 +2501,15 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     {
         rec = (struct record_printer *)(table->data + offset);
         rec->attributes           = info[i].Attributes;
+        sprintfW( id, fmtW, i );
+        rec->device_id            = heap_strdupW( id );
         rec->drivername           = heap_strdupW( info[i].pDriverName );
         rec->horizontalresolution = info[i].pDevMode->u1.s1.dmPrintQuality;
         rec->local                = -1;
+        rec->location             = heap_strdupW( info[i].pLocation );
         rec->name                 = heap_strdupW( info[i].pPrinterName );
         rec->network              = 0;
+        rec->portname             = heap_strdupW( info[i].pPortName );
         if (!match_row( table, i, cond, &status ))
         {
             free_row_values( table, i );
