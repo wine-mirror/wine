@@ -2629,8 +2629,8 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int src_sub_resource_idx, dst_sub_resource_idx;
+    unsigned int src_level, src_layer, dst_level, dst_layer;
     struct wined3d_texture *src_texture, *dst_texture;
-    unsigned int src_layer, dst_layer;
     struct wined3d_blitter *next;
     GLuint src_name, dst_name;
     DWORD location;
@@ -2660,7 +2660,12 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     TRACE("Blit using ARB_copy_image.\n");
 
     src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
+    src_level = src_sub_resource_idx % src_texture->level_count;
+    src_layer = src_sub_resource_idx / src_texture->level_count;
+
     dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    dst_level = dst_sub_resource_idx % dst_texture->level_count;
+    dst_layer = dst_sub_resource_idx / dst_texture->level_count;
 
     location = src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
     if (!location)
@@ -2669,7 +2674,6 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     if (!wined3d_texture_load_location(src_texture, src_sub_resource_idx, context, location))
         ERR("Failed to load the source sub-resource into %s.\n", wined3d_debug_location(location));
     src_name = wined3d_texture_get_texture_name(src_texture, context, location == WINED3D_LOCATION_TEXTURE_SRGB);
-    src_layer = src_sub_resource_idx / src_texture->level_count;
 
     location = dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
     if (!location)
@@ -2686,10 +2690,9 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
             ERR("Failed to load the destination sub-resource into %s.\n", wined3d_debug_location(location));
     }
     dst_name = wined3d_texture_get_texture_name(dst_texture, context, location == WINED3D_LOCATION_TEXTURE_SRGB);
-    dst_layer = dst_sub_resource_idx / dst_texture->level_count;
 
-    GL_EXTCALL(glCopyImageSubData(src_name, src_texture->target, src_surface->texture_level,
-            src_rect->left, src_rect->top, src_layer, dst_name, dst_texture->target, dst_surface->texture_level,
+    GL_EXTCALL(glCopyImageSubData(src_name, src_texture->target, src_level,
+            src_rect->left, src_rect->top, src_layer, dst_name, dst_texture->target, dst_level,
             dst_rect->left, dst_rect->top, dst_layer, src_rect->right - src_rect->left,
             src_rect->bottom - src_rect->top, 1));
     checkGLcall("copy image data");
