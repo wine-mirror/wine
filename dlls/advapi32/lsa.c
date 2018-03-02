@@ -763,16 +763,24 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         break;
         case  PolicyDnsDomainInformation:	/* 12 (0xc) */
         {
-            struct di
+            struct
             {
                 POLICY_DNS_DOMAIN_INFO info;
-                SID sid;
+                struct
+                {
+                    SID sid;
+                    DWORD sid_subauthority[3];
+                } domain_sid;
                 WCHAR domain_name[MAX_COMPUTERNAME_LENGTH + 1];
                 WCHAR dns_domain_name[MAX_COMPUTERNAME_LENGTH + 1];
                 WCHAR dns_forest_name[MAX_COMPUTERNAME_LENGTH + 1];
-            };
+            } *xdi;
+            struct
+            {
+                SID sid;
+                DWORD sid_subauthority[3];
+            } computer_sid;
             DWORD dwSize;
-            struct di *xdi;
 
             xdi = heap_alloc_zero(sizeof(*xdi));
             if (!xdi) return STATUS_NO_MEMORY;
@@ -788,10 +796,11 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 
             /* FIXME: also set DnsDomainName and DnsForestName */
 
-            if (ADVAPI_GetComputerSid(&xdi->sid))
+            dwSize = sizeof(xdi->domain_sid);
+            if (ADVAPI_GetComputerSid(&computer_sid.sid) && GetWindowsAccountDomainSid(&computer_sid.sid, &xdi->domain_sid.sid, &dwSize))
             {
-                xdi->info.Sid = &xdi->sid;
-                TRACE("setting SID to %s\n", debugstr_sid(&xdi->sid));
+                xdi->info.Sid = &xdi->domain_sid.sid;
+                TRACE("setting SID to %s\n", debugstr_sid(&xdi->domain_sid.sid));
             }
 
             *Buffer = xdi;

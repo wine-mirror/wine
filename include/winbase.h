@@ -2245,6 +2245,7 @@ WINBASEAPI BOOL        WINAPI GetVolumePathNameW(LPCWSTR,LPWSTR,DWORD);
 WINBASEAPI BOOL        WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR,LPSTR,DWORD,PDWORD);
 WINBASEAPI BOOL        WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR,LPWSTR,DWORD,PDWORD);
 #define                       GetVolumePathNamesForVolumeName WINELIB_NAME_AW(GetVolumePathNamesForVolumeName)
+WINADVAPI  BOOL        WINAPI GetWindowsAccountDomainSid(PSID,PSID,DWORD*);
 WINBASEAPI UINT        WINAPI GetWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetWindowsDirectory WINELIB_NAME_AW(GetWindowsDirectory)
