@@ -1412,7 +1412,12 @@ INT CDECL MSVCRT__isnan(double num)
 double CDECL MSVCRT__j0(double num)
 {
   /* FIXME: errno handling */
+#ifdef HAVE_J0
   return j0(num);
+#else
+  FIXME("not implemented\n");
+  return 0;
+#endif
 }
 
 /*********************************************************************
@@ -1421,7 +1426,12 @@ double CDECL MSVCRT__j0(double num)
 double CDECL MSVCRT__j1(double num)
 {
   /* FIXME: errno handling */
+#ifdef HAVE_J1
   return j1(num);
+#else
+  FIXME("not implemented\n");
+  return 0;
+#endif
 }
 
 /*********************************************************************
@@ -1430,7 +1440,12 @@ double CDECL MSVCRT__j1(double num)
 double CDECL MSVCRT__jn(int n, double num)
 {
   /* FIXME: errno handling */
+#ifdef HAVE_JN
   return jn(n, num);
+#else
+  FIXME("not implemented\n");
+  return 0;
+#endif
 }
 
 /*********************************************************************
@@ -1440,12 +1455,17 @@ double CDECL MSVCRT__y0(double num)
 {
   double retval;
   if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+#ifdef HAVE_Y0
   retval  = y0(num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
-    retval = sqrt(-1);
+    retval = NAN;
   }
+#else
+  FIXME("not implemented\n");
+  retval = 0;
+#endif
   return retval;
 }
 
@@ -1456,12 +1476,17 @@ double CDECL MSVCRT__y1(double num)
 {
   double retval;
   if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+#ifdef HAVE_Y1
   retval  = y1(num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
-    retval = sqrt(-1);
+    retval = NAN;
   }
+#else
+  FIXME("not implemented\n");
+  retval = 0;
+#endif
   return retval;
 }
 
@@ -1472,12 +1497,17 @@ double CDECL MSVCRT__yn(int order, double num)
 {
   double retval;
   if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+#ifdef HAVE_YN
   retval  = yn(order,num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
-    retval = sqrt(-1);
+    retval = NAN;
   }
+#else
+  FIXME("not implemented\n");
+  retval = 0;
+#endif
   return retval;
 }
 
