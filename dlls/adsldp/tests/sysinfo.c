@@ -165,14 +165,15 @@ static void test_sysinfo(void)
     if (hr != S_OK)
     {
         skip("Computer is not part of a domain, skipping the tests\n");
-        IADsADSystemInfo_Release(sysinfo);
-        return;
+        goto done;
     }
     SysFreeString(bstr);
 
     hr = IADsADSystemInfo_get_UserName(sysinfo, &bstr);
-    ok(hr == S_OK, "got %#x\n", hr);
-    if (hr == S_OK) SysFreeString(bstr);
+todo_wine
+    ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_NONE_MAPPED), "got %#x\n", hr);
+    if (hr != S_OK) goto done;
+    SysFreeString(bstr);
 
     hr = IADsADSystemInfo_get_SiteName(sysinfo, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
@@ -201,7 +202,7 @@ static void test_sysinfo(void)
     hr = IADsADSystemInfo_GetAnyDCName(sysinfo, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
     if (hr == S_OK) SysFreeString(bstr);
-
+done:
     IADsADSystemInfo_Release(sysinfo);
 }
 
