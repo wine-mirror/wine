@@ -107,7 +107,4 @@ extern void LOCALE_InitRegistry(void) DECLSPEC_HIDDEN;
 /* oldconfig.c */
 extern void convert_old_config(void) DECLSPEC_HIDDEN;
 
-/* returns directory handle for named objects */
-extern HANDLE get_BaseNamedObjects_handle(void) DECLSPEC_HIDDEN;
-
 #endif
