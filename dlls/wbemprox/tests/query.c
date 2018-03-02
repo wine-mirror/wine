@@ -1090,7 +1090,7 @@ static void test_SystemSecurity( IWbemServices *services )
     SysFreeString( class );
 }
 
-static void test_OperatingSystem( IWbemServices *services )
+static void test_Win32_OperatingSystem( IWbemServices *services )
 {
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
@@ -1098,6 +1098,7 @@ static void test_OperatingSystem( IWbemServices *services )
     static const WCHAR buildnumberW[] = {'B','u','i','l','d','N','u','m','b','e','r',0};
     static const WCHAR captionW[] = {'C','a','p','t','i','o','n',0};
     static const WCHAR csdversionW[] = {'C','S','D','V','e','r','s','i','o','n',0};
+    static const WCHAR freephysicalmemoryW[] = {'F','r','e','e','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
     static const WCHAR nameW[] = {'N','a','m','e',0};
     static const WCHAR osproductsuiteW[] = {'O','S','P','r','o','d','u','c','t','S','u','i','t','e',0};
     static const WCHAR ostypeW[] = {'O','S','T','y','p','e',0};
@@ -1150,6 +1151,15 @@ static void test_OperatingSystem( IWbemServices *services )
     ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     trace( "csdversion: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+    VariantClear( &val );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, freephysicalmemoryW, 0, &val, &type, NULL );
+    ok( hr == S_OK, "failed to get free physical memory size %08x\n", hr );
+    ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_UINT64, "unexpected type 0x%x\n", type );
+    trace( "freephysicalmemory %s\n", wine_dbgstr_w(V_BSTR(&val)) );
     VariantClear( &val );
 
     type = 0xdeadbeef;
@@ -1239,7 +1249,7 @@ static void test_OperatingSystem( IWbemServices *services )
     SysFreeString( wql );
 }
 
-static void test_ComputerSystemProduct( IWbemServices *services )
+static void test_Win32_ComputerSystemProduct( IWbemServices *services )
 {
     static const WCHAR identifyingnumberW[] =
         {'I','d','e','n','t','i','f','y','i','n','g','N','u','m','b','e','r',0};
@@ -1333,7 +1343,7 @@ static void test_ComputerSystemProduct( IWbemServices *services )
     SysFreeString( wql );
 }
 
-static void test_PhysicalMemory( IWbemServices *services )
+static void test_Win32_PhysicalMemory( IWbemServices *services )
 {
     static const WCHAR capacityW[] = {'C','a','p','a','c','i','t','y',0};
     static const WCHAR memorytypeW[] = {'M','e','m','o','r','y','T','y','p','e',0};
@@ -1382,7 +1392,7 @@ static void test_PhysicalMemory( IWbemServices *services )
     SysFreeString( wql );
 }
 
-static void test_IP4RouteTable( IWbemServices *services )
+static void test_Win32_IP4RouteTable( IWbemServices *services )
 {
     static const WCHAR destinationW[] = {'D','e','s','t','i','n','a','t','i','o','n',0};
     static const WCHAR interfaceindexW[] = {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
@@ -1668,10 +1678,10 @@ START_TEST(query)
     test_query_async( services );
     test_GetNames( services );
     test_SystemSecurity( services );
-    test_OperatingSystem( services );
-    test_ComputerSystemProduct( services );
-    test_PhysicalMemory( services );
-    test_IP4RouteTable( services );
+    test_Win32_OperatingSystem( services );
+    test_Win32_ComputerSystemProduct( services );
+    test_Win32_PhysicalMemory( services );
+    test_Win32_IP4RouteTable( services );
     test_Win32_Processor( services );
     test_Win32_VideoController( services );
 
