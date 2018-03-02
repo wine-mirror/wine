@@ -81,6 +81,23 @@ HANDLE get_BaseNamedObjects_handle(void)
     return handle;
 }
 
+static void get_create_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
+                                          SECURITY_ATTRIBUTES *sa, const WCHAR *name )
+{
+    attr->Length                   = sizeof(*attr);
+    attr->RootDirectory            = 0;
+    attr->ObjectName               = NULL;
+    attr->Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+    attr->SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr->SecurityQualityOfService = NULL;
+    if (name)
+    {
+        RtlInitUnicodeString( nameW, name );
+        attr->ObjectName = nameW;
+        attr->RootDirectory = get_BaseNamedObjects_handle();
+    }
+}
+
 static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
                                         BOOL inherit, const WCHAR *name )
 {
@@ -490,18 +507,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR
         return 0;
     }
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    get_create_object_attributes( &attr, &nameW, sa, name );
 
     status = NtCreateEvent( &ret, access, &attr,
                             (flags & CREATE_EVENT_MANUAL_RESET) ? NotificationEvent : SynchronizationEvent,
@@ -643,18 +649,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    get_create_object_attributes( &attr, &nameW, sa, name );
 
     status = NtCreateMutant( &ret, access, &attr, (flags & CREATE_MUTEX_INITIAL_OWNER) != 0 );
     if (status == STATUS_OBJECT_NAME_EXISTS)
@@ -777,18 +772,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LON
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    get_create_object_attributes( &attr, &nameW, sa, name );
 
     status = NtCreateSemaphore( &ret, access, &attr, initial, max );
     if (status == STATUS_OBJECT_NAME_EXISTS)
@@ -866,18 +850,7 @@ HANDLE WINAPI CreateJobObjectW( LPSECURITY_ATTRIBUTES sa, LPCWSTR name )
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    get_create_object_attributes( &attr, &nameW, sa, name );
 
     status = NtCreateJobObject( &ret, JOB_OBJECT_ALL_ACCESS, &attr );
     if (status == STATUS_OBJECT_NAME_EXISTS)
@@ -1057,18 +1030,7 @@ HANDLE WINAPI CreateWaitableTimerExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWO
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    get_create_object_attributes( &attr, &nameW, sa, name );
 
     status = NtCreateTimer( &handle, access, &attr,
                  (flags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? NotificationTimer : SynchronizationTimer );
