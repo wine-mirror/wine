@@ -799,7 +799,19 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                 TRACE("setting Name to %s\n", debugstr_w(xdi->info.Name.Buffer));
             }
 
-            /* FIXME: also set DnsDomainName and DnsForestName */
+            dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+            if (GetComputerNameExW(ComputerNameDnsDomain, xdi->dns_domain_name, &dwSize))
+            {
+                xdi->info.DnsDomainName.Buffer = xdi->dns_domain_name;
+                xdi->info.DnsDomainName.Length = dwSize * sizeof(WCHAR);
+                xdi->info.DnsDomainName.MaximumLength = (dwSize + 1) * sizeof(WCHAR);
+                TRACE("setting DnsDomainName to %s\n", debugstr_w(xdi->info.DnsDomainName.Buffer));
+
+                xdi->info.DnsForestName.Buffer = xdi->dns_domain_name;
+                xdi->info.DnsForestName.Length = dwSize * sizeof(WCHAR);
+                xdi->info.DnsForestName.MaximumLength = (dwSize + 1) * sizeof(WCHAR);
+                TRACE("setting DnsForestName to %s\n", debugstr_w(xdi->info.DnsForestName.Buffer));
+            }
 
             dwSize = sizeof(xdi->domain_sid);
             if (ADVAPI_GetComputerSid(&computer_sid.sid) && GetWindowsAccountDomainSid(&computer_sid.sid, &xdi->domain_sid.sid, &dwSize))
