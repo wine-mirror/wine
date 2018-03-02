@@ -5171,11 +5171,11 @@ static void test_GdipLoadImageFromStream(void)
     HRESULT hr;
 
     status = GdipLoadImageFromStream(NULL, NULL);
-    ok(status == InvalidParameter, "Unexected return value %d.\n", status);
+    ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
 
     image = (void *)0xdeadbeef;
     status = GdipLoadImageFromStream(NULL, &image);
-    ok(status == InvalidParameter, "Unexected return value %d.\n", status);
+    ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
     ok(image == (void *)0xdeadbeef, "Unexpected image pointer.\n");
 
     hglob = GlobalAlloc(0, sizeof(pngimage));
