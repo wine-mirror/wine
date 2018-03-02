@@ -17649,6 +17649,9 @@ for ac_func in \
 	exp2f \
 	expm1 \
 	expm1f \
+	j0 \
+	j1 \
+	jn \
 	lgamma \
 	lgammaf \
 	llrint \
@@ -17673,7 +17676,10 @@ for ac_func in \
 	round \
 	roundf \
 	trunc \
-	truncf
+	truncf \
+	y0 \
+	y1 \
+	yn
 
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

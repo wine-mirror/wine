@@ -342,6 +342,15 @@
 /* Define to 1 if you have the `isnanf' function. */
 #undef HAVE_ISNANF
 
+/* Define to 1 if you have the `j0' function. */
+#undef HAVE_J0
+
+/* Define to 1 if you have the `j1' function. */
+#undef HAVE_J1
+
+/* Define to 1 if you have the `jn' function. */
+#undef HAVE_JN
+
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
@@ -1364,6 +1373,15 @@
 
 /* Define if Xrandr has the XRRGetScreenResources function */
 #undef HAVE_XRRGETSCREENRESOURCES
+
+/* Define to 1 if you have the `y0' function. */
+#undef HAVE_Y0
+
+/* Define to 1 if you have the `y1' function. */
+#undef HAVE_Y1
+
+/* Define to 1 if you have the `yn' function. */
+#undef HAVE_YN
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_ZLIB

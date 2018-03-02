@@ -2698,6 +2698,9 @@ AC_CHECK_FUNCS(\
 	exp2f \
 	expm1 \
 	expm1f \
+	j0 \
+	j1 \
+	jn \
 	lgamma \
 	lgammaf \
 	llrint \
@@ -2722,7 +2725,10 @@ AC_CHECK_FUNCS(\
 	round \
 	roundf \
 	trunc \
-	truncf
+	truncf \
+	y0 \
+	y1 \
+	yn
 )
 LIBS="$ac_save_LIBS"
 
