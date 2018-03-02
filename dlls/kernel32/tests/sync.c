@@ -265,6 +265,16 @@ todo_wine
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    hOpened = OpenMutexA(READ_CONTROL, FALSE, NULL);
+    ok(!hOpened, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hOpened = OpenMutexW(READ_CONTROL, FALSE, NULL);
+    ok(!hOpened, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     hOpened = CreateMutexA(NULL, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "CreateMutex failed with error %d\n", GetLastError());
     ok(GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
@@ -517,6 +527,16 @@ static void test_event(void)
     ok( !handle2, "OpenEvent succeeded\n");
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenEvent succeeded\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenEventW( EVENT_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenEvent succeeded\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
     CloseHandle( handle );
 
     /* resource notifications are events too */
@@ -586,6 +606,16 @@ static void test_semaphore(void)
     ok( !handle2, "OpenSemaphore succeeded\n");
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenSemaphore succeeded\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenSemaphoreW( SEMAPHORE_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenSemaphore succeeded\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
     CloseHandle( handle );
 }
 
@@ -621,6 +651,16 @@ static void test_waitable_timer(void)
     handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
     ok( !handle2, "OpenWaitableTimer succeeded\n");
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenWaitableTimer failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenWaitableTimerW( TIMER_ALL_ACCESS, FALSE, NULL );
+    ok( !handle2, "OpenWaitableTimer failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }

@@ -81,6 +81,20 @@ HANDLE get_BaseNamedObjects_handle(void)
     return handle;
 }
 
+static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
+                                        BOOL inherit, const WCHAR *name )
+{
+    if (!name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    RtlInitUnicodeString( nameW, name );
+    InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0,
+                                get_BaseNamedObjects_handle(), NULL );
+    return TRUE;
+}
+
 /* helper for kernel32->ntdll timeout format conversion */
 static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout )
 {
@@ -530,18 +544,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenEventW( DWORD access, BOOL inherit, LPCWSTR 
 
     if (!is_version_nt()) access = EVENT_ALL_ACCESS;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
     status = NtOpenEvent( &ret, access, &attr );
     if (status != STATUS_SUCCESS)
@@ -692,18 +695,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenMutexW( DWORD access, BOOL inherit, LPCWSTR 
 
     if (!is_version_nt()) access = MUTEX_ALL_ACCESS;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
     status = NtOpenMutant( &ret, access, &attr );
     if (status != STATUS_SUCCESS)
@@ -837,18 +829,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreW( DWORD access, BOOL inherit, LPCW
 
     if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
     status = NtOpenSemaphore( &ret, access, &attr );
     if (status != STATUS_SUCCESS)
@@ -933,18 +914,7 @@ HANDLE WINAPI OpenJobObjectW( DWORD access, BOOL inherit, LPCWSTR name )
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
     status = NtOpenJobObject( &ret, access, &attr );
     if (status != STATUS_SUCCESS)
@@ -1140,18 +1110,7 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 
     if (!is_version_nt()) access = TIMER_ALL_ACCESS;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
     status = NtOpenTimer(&handle, access, &attr);
     if (status != STATUS_SUCCESS)
