@@ -786,11 +786,16 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
             if (!xdi) return STATUS_NO_MEMORY;
 
             dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-            if (GetComputerNameW(xdi->domain_name, &dwSize))
+            if (GetComputerNameExW(ComputerNamePhysicalDnsDomain, xdi->domain_name, &dwSize))
             {
+                WCHAR *dot;
+
+                dot = strrchrW(xdi->domain_name, '.');
+                if (dot) *dot = 0;
+                struprW(xdi->domain_name);
                 xdi->info.Name.Buffer = xdi->domain_name;
-                xdi->info.Name.Length = dwSize * sizeof(WCHAR);
-                xdi->info.Name.MaximumLength = (dwSize + 1) * sizeof(WCHAR);
+                xdi->info.Name.Length = strlenW(xdi->domain_name) * sizeof(WCHAR);
+                xdi->info.Name.MaximumLength = xdi->info.Name.Length + sizeof(WCHAR);
                 TRACE("setting Name to %s\n", debugstr_w(xdi->info.Name.Buffer));
             }
 
