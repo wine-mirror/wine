@@ -29,6 +29,8 @@
 
 #include "wine/test.h"
 
+HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
+HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 
 static const struct
@@ -113,11 +115,145 @@ static void test_PathCchCombineEx(void)
     }
 }
 
+struct addbackslash_test
+{
+    const char *path;
+    const char *result;
+    HRESULT hr;
+    SIZE_T size;
+    SIZE_T remaining;
+};
+
+static const struct addbackslash_test addbackslash_tests[] =
+{
+    { "C:",    "C:\\",    S_OK, MAX_PATH, MAX_PATH - 3 },
+    { "a.txt", "a.txt\\", S_OK, MAX_PATH, MAX_PATH - 6 },
+    { "a/b",   "a/b\\",   S_OK, MAX_PATH, MAX_PATH - 4 },
+
+    { "C:\\",  "C:\\",    S_FALSE, MAX_PATH, MAX_PATH - 3 },
+    { "C:\\",  "C:\\",    S_FALSE, 4, 1 },
+
+    { "C:",    "C:",      STRSAFE_E_INSUFFICIENT_BUFFER, 2, 0 },
+    { "C:",    "C:",      STRSAFE_E_INSUFFICIENT_BUFFER, 3, 1 },
+    { "C:\\",  "C:\\",    STRSAFE_E_INSUFFICIENT_BUFFER, 2, 0 },
+    { "C:\\",  "C:\\",    STRSAFE_E_INSUFFICIENT_BUFFER, 3, 0 },
+    { "C:\\",  "C:\\",    STRSAFE_E_INSUFFICIENT_BUFFER, 0, 0 },
+    { "C:",    "C:",      STRSAFE_E_INSUFFICIENT_BUFFER, 0, 0 },
+};
+
+static void test_PathCchAddBackslash(void)
+{
+    WCHAR pathW[MAX_PATH];
+    unsigned int i;
+    HRESULT hr;
+
+    if (!pPathCchAddBackslash)
+    {
+        win_skip("PathCchAddBackslash() is not availale.\n");
+        return;
+    }
+
+    pathW[0] = 0;
+    hr = pPathCchAddBackslash(pathW, 0);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+
+    pathW[0] = 0;
+    hr = pPathCchAddBackslash(pathW, 1);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+
+    pathW[0] = 0;
+    hr = pPathCchAddBackslash(pathW, 2);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+
+    for (i = 0; i < sizeof(addbackslash_tests)/sizeof(addbackslash_tests[0]); i++)
+    {
+        const struct addbackslash_test *test = &addbackslash_tests[i];
+        char path[MAX_PATH];
+
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        hr = pPathCchAddBackslash(pathW, test->size);
+        ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
+
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, sizeof(path)/sizeof(path[0]), NULL, NULL);
+        ok(!strcmp(path, test->result), "%u: unexpected resulting path %s.\n", i, path);
+    }
+}
+
+static void test_PathCchAddBackslashEx(void)
+{
+    WCHAR pathW[MAX_PATH];
+    SIZE_T remaining;
+    unsigned int i;
+    HRESULT hr;
+    WCHAR *ptrW;
+
+    if (!pPathCchAddBackslashEx)
+    {
+        win_skip("PathCchAddBackslashEx() is not availale.\n");
+        return;
+    }
+
+    pathW[0] = 0;
+    hr = pPathCchAddBackslashEx(pathW, 0, NULL, NULL);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+
+    pathW[0] = 0;
+    ptrW = (void *)0xdeadbeef;
+    remaining = 123;
+    hr = pPathCchAddBackslashEx(pathW, 1, &ptrW, &remaining);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+    ok(ptrW == pathW, "Unexpected endptr %p.\n", ptrW);
+    ok(remaining == 1, "Unexpected remaining size.\n");
+
+    pathW[0] = 0;
+    hr = pPathCchAddBackslashEx(pathW, 2, NULL, NULL);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(pathW[0] == 0, "Unexpected path.\n");
+
+    for (i = 0; i < sizeof(addbackslash_tests)/sizeof(addbackslash_tests[0]); i++)
+    {
+        const struct addbackslash_test *test = &addbackslash_tests[i];
+        char path[MAX_PATH];
+
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        hr = pPathCchAddBackslashEx(pathW, test->size, NULL, NULL);
+        ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
+
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, sizeof(path)/sizeof(path[0]), NULL, NULL);
+        ok(!strcmp(path, test->result), "%u: unexpected resulting path %s.\n", i, path);
+
+        ptrW = (void *)0xdeadbeef;
+        remaining = 123;
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        hr = pPathCchAddBackslashEx(pathW, test->size, &ptrW, &remaining);
+        ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(ptrW == (pathW + lstrlenW(pathW)), "%u: unexpected end pointer.\n", i);
+            ok(remaining == test->remaining, "%u: unexpected remaining buffer length.\n", i);
+        }
+        else
+        {
+            ok(ptrW == NULL, "%u: unexpecred end pointer.\n", i);
+            ok(remaining == 0, "%u: unexpected remaining buffer length.\n", i);
+        }
+    }
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
 
     pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
+    pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
+    pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
 
     test_PathCchCombineEx();
+    test_PathCchAddBackslash();
+    test_PathCchAddBackslashEx();
 }

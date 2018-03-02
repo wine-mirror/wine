@@ -23,4 +23,6 @@
 #define PATHCCH_DO_NOT_NORMALIZE_SEGMENTS       0x08
 #define PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH  0x10
 
+HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size);
+HRESULT WINAPI PathCchAddBackslashEx(WCHAR *path, SIZE_T size, WCHAR **end, SIZE_T *remaining);
 HRESULT WINAPI PathCchCombineEx(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);

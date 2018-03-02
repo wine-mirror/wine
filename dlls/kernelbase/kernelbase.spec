@@ -1029,8 +1029,8 @@
 @ stdcall PathAppendW(wstr wstr) shlwapi.PathAppendW
 @ stdcall PathCanonicalizeA(ptr str) shlwapi.PathCanonicalizeA
 @ stdcall PathCanonicalizeW(ptr wstr) shlwapi.PathCanonicalizeW
-# @ stub PathCchAddBackslash
-# @ stub PathCchAddBackslashEx
+@ stdcall PathCchAddBackslash(wstr long)
+@ stdcall PathCchAddBackslashEx(wstr long ptr ptr)
 # @ stub PathCchAddExtension
 # @ stub PathCchAppend
 # @ stub PathCchAppendEx
