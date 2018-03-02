@@ -270,6 +270,15 @@ HRESULT WINAPI DwmSetPresentParameters(HWND hwnd, DWM_PRESENT_PARAMETERS *params
 };
 
 /**********************************************************************
+ *           DwmSetIconicLivePreviewBitmap         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pos, DWORD flags)
+{
+    FIXME("(%p %p %p %x) stub\n", hwnd, hbmp, pos, flags);
+    return S_OK;
+};
+
+/**********************************************************************
  *           DwmSetIconicThumbnail         (DWMAPI.@)
  */
 HRESULT WINAPI DwmSetIconicThumbnail(HWND hwnd, HBITMAP hbmp, DWORD flags)
