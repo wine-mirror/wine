@@ -492,42 +492,42 @@ static void wined3d_texture_allocate_gl_mutable_storage(struct wined3d_texture *
         GLenum gl_internal_format, const struct wined3d_format *format,
         const struct wined3d_gl_info *gl_info)
 {
-    unsigned int i, level, sub_call_count;
+    unsigned int level, level_count, layer, layer_count;
+    GLsizei width, height;
+    GLenum target;
 
-    sub_call_count = texture->level_count;
-    if (texture->target != GL_TEXTURE_2D_ARRAY)
-        sub_call_count *= texture->layer_count;
+    level_count = texture->level_count;
+    layer_count = texture->target == GL_TEXTURE_2D_ARRAY ? 1 : texture->layer_count;
 
-    for (i = 0; i < sub_call_count; ++i)
+    for (layer = 0; layer < layer_count; ++layer)
     {
-        struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
-        GLsizei width, height;
-        GLenum target;
+        target = wined3d_texture_get_sub_resource_target(texture, layer * level_count);
 
-        level = surface->texture_level;
-        width = wined3d_texture_get_level_pow2_width(texture, level);
-        height = wined3d_texture_get_level_pow2_height(texture, level);
-        if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+        for (level = 0; level < level_count; ++level)
         {
-            height *= format->height_scale.numerator;
-            height /= format->height_scale.denominator;
-        }
-        target = wined3d_texture_get_sub_resource_target(texture, i);
+            width = wined3d_texture_get_level_pow2_width(texture, level);
+            height = wined3d_texture_get_level_pow2_height(texture, level);
+            if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+            {
+                height *= format->height_scale.numerator;
+                height /= format->height_scale.denominator;
+            }
 
-        TRACE("surface %p, target %#x, level %u, width %u, height %u.\n",
-                surface, target, level, width, height);
+            TRACE("texture %p, layer %u, level %u, target %#x, width %u, height %u.\n",
+                    texture, layer, level, target, width, height);
 
-        if (texture->target == GL_TEXTURE_2D_ARRAY)
-        {
-            GL_EXTCALL(glTexImage3D(target, level, gl_internal_format, width, height,
-                    texture->layer_count, 0, format->glFormat, format->glType, NULL));
-            checkGLcall("glTexImage3D");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glTexImage2D(target, level, gl_internal_format,
-                    width, height, 0, format->glFormat, format->glType, NULL);
-            checkGLcall("glTexImage2D");
+            if (texture->target == GL_TEXTURE_2D_ARRAY)
+            {
+                GL_EXTCALL(glTexImage3D(target, level, gl_internal_format, width, height,
+                        texture->layer_count, 0, format->glFormat, format->glType, NULL));
+                checkGLcall("glTexImage3D");
+            }
+            else
+            {
+                gl_info->gl_ops.gl.p_glTexImage2D(target, level, gl_internal_format,
+                        width, height, 0, format->glFormat, format->glType, NULL);
+                checkGLcall("glTexImage2D");
+            }
         }
     }
 }
