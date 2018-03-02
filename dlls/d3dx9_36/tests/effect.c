@@ -149,6 +149,46 @@ static void set_number(void *outdata, D3DXPARAMETER_TYPE outtype, const void *in
     }
 }
 
+static IDirect3DDevice9 *create_device(HWND *window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = { 0 };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HRESULT hr;
+    HWND wnd;
+
+    *window = NULL;
+
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Couldn't create application window.\n");
+        return NULL;
+    }
+
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Couldn't create IDirect3D9 object.\n");
+        DestroyWindow(wnd);
+        return NULL;
+    }
+
+    present_parameters.Windowed = TRUE;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_HARDWARE_VERTEXPROCESSING,
+            &present_parameters, &device);
+    IDirect3D9_Release(d3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x.\n", hr);
+        DestroyWindow(wnd);
+        return NULL;
+    }
+
+    *window = wnd;
+    return device;
+}
+
 static const char effect_desc[] =
 "Technique\n"
 "{\n"
@@ -7063,40 +7103,18 @@ static const DWORD test_effect_unsupported_shader_blob[] =
 
 static void test_effect_unsupported_shader(void)
 {
-    D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DVertexShader9 *vshader;
     unsigned int passes_count;
     IDirect3DDevice9 *device;
     UINT byte_code_size;
     ID3DXEffect *effect;
-    IDirect3D9 *d3d;
     void *byte_code;
     ULONG refcount;
     HWND window;
     HRESULT hr;
 
-    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
-    {
-        skip("Couldn't create application window\n");
+    if (!(device = create_device(&window)))
         return;
-    }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(window);
-        return;
-    }
-    present_parameters.Windowed = TRUE;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    if (FAILED(hr)) {
-        skip("Failed to create IDirect3DDevice9 object, hr %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(window);
-        return;
-    }
 
     hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
@@ -7168,7 +7186,6 @@ static void test_effect_unsupported_shader(void)
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-    IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
 
@@ -7217,11 +7234,9 @@ static const DWORD test_effect_null_shader_blob[] =
 
 static void test_effect_null_shader(void)
 {
-    D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9 *device;
     ID3DXEffect *effect;
     D3DXPASS_DESC desc;
-    IDirect3D9 *d3d;
     D3DXHANDLE pass;
     ULONG refcount;
     HWND window;
@@ -7230,29 +7245,8 @@ static void test_effect_null_shader(void)
     /* Creating a fresh device because the existing device can have invalid
      * render states from previous tests. If IDirect3DDevice9_ValidateDevice()
      * returns certain error codes, native ValidateTechnique() fails. */
-    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
-    {
-        skip("Failed to create window.\n");
+    if (!(device = create_device(&window)))
         return;
-    }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Failed to create IDirect3D9 object.\n");
-        DestroyWindow(window);
-        return;
-    }
-    present_parameters.Windowed = TRUE;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(window);
-        return;
-    }
 
     hr = D3DXCreateEffectEx(device, test_effect_null_shader_blob,
             sizeof(test_effect_null_shader_blob), NULL, NULL, NULL, 0, NULL, &effect, NULL);
@@ -7290,42 +7284,98 @@ static void test_effect_null_shader(void)
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_effect_clone(void)
+{
+    IDirect3DDevice9 *device, *device2, *device3;
+    ID3DXEffect *effect, *cloned;
+    HWND window, window2;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(&window)))
+        return;
+
+    /* D3DXFX_NOT_CLONEABLE */
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, D3DXFX_NOT_CLONEABLE, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    cloned = (void *)0xdeadbeef;
+    hr = effect->lpVtbl->CloneEffect(effect, NULL, &cloned);
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
+
+    hr = effect->lpVtbl->CloneEffect(effect, device, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    cloned = (void *)0xdeadbeef;
+    hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
+
+    effect->lpVtbl->Release(effect);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    cloned = (void *)0xdeadbeef;
+    hr = effect->lpVtbl->CloneEffect(effect, NULL, &cloned);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
+
+    hr = effect->lpVtbl->CloneEffect(effect, device, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
+todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+if (hr == D3D_OK)
+{
+    ok(cloned != effect, "Expected new effect instance.\n");
+    cloned->lpVtbl->Release(cloned);
+}
+    /* Try with different device. */
+    device2 = create_device(&window2);
+    hr = effect->lpVtbl->CloneEffect(effect, device2, &cloned);
+todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+if (hr == D3D_OK)
+{
+    ok(cloned != effect, "Expected new effect instance.\n");
+
+    hr = cloned->lpVtbl->GetDevice(cloned, &device3);
+    ok(hr == S_OK, "Failed to get effect device.\n");
+    ok(device3 == device2, "Unexpected device instance.\n");
+    IDirect3DDevice9_Release(device3);
+
+    cloned->lpVtbl->Release(cloned);
+}
+    IDirect3DDevice9_Release(device2);
+    DestroyWindow(window2);
+    effect->lpVtbl->Release(effect);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
 }
 
 START_TEST(effect)
 {
-    HWND wnd;
-    IDirect3D9 *d3d;
     IDirect3DDevice9 *device;
-    D3DPRESENT_PARAMETERS d3dpp;
-    HRESULT hr;
     ULONG refcount;
+    HWND wnd;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
-    {
-        skip("Couldn't create application window\n");
+    if (!(device = create_device(&wnd)))
         return;
-    }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr)) {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
 
     test_create_effect_and_pool(device);
     test_create_effect_compiler();
@@ -7349,10 +7399,9 @@ START_TEST(effect)
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-    refcount = IDirect3D9_Release(d3d);
-    ok(!refcount, "D3D9 object has %u references left.\n", refcount);
     DestroyWindow(wnd);
 
     test_effect_unsupported_shader();
     test_effect_null_shader();
+    test_effect_clone();
 }

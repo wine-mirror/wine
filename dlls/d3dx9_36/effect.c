@@ -4367,6 +4367,15 @@ static HRESULT WINAPI ID3DXEffectImpl_CloneEffect(ID3DXEffect *iface,
 
     FIXME("(%p)->(%p, %p): stub\n", This, device, effect);
 
+    if (!effect)
+        return D3DERR_INVALIDCALL;
+
+    if (This->base_effect.flags & D3DXFX_NOT_CLONEABLE)
+        return E_FAIL;
+
+    if (!device)
+        return D3DERR_INVALIDCALL;
+
     return E_NOTIMPL;
 }
 
