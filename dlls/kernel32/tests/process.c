@@ -3501,16 +3501,16 @@ static void test_process_info(void)
         sizeof(buf) /* ProcessHandleTracing */,
         sizeof(ULONG) /* ProcessIoPriority */,
         sizeof(ULONG) /* ProcessExecuteFlags */,
-#if 0 /* FIXME: Add remaining classes */
-        ProcessResourceManagement,
-        sizeof(ULONG) /* ProcessCookie */,
+        0 /* FIXME: sizeof(?) ProcessTlsInformation */,
+        0 /* FIXME: sizeof(?) ProcessCookie */,
         sizeof(SECTION_IMAGE_INFORMATION) /* ProcessImageInformation */,
-        sizeof(PROCESS_CYCLE_TIME_INFORMATION) /* ProcessCycleTime */,
+        0 /* FIXME: sizeof(PROCESS_CYCLE_TIME_INFORMATION) ProcessCycleTime */,
         sizeof(ULONG) /* ProcessPagePriority */,
         40 /* ProcessInstrumentationCallback */,
-        sizeof(PROCESS_STACK_ALLOCATION_INFORMATION) /* ProcessThreadStackAllocation */,
-        sizeof(PROCESS_WS_WATCH_INFORMATION_EX[]) /* ProcessWorkingSetWatchEx */,
+        0 /* FIXME: sizeof(PROCESS_STACK_ALLOCATION_INFORMATION) ProcessThreadStackAllocation */,
+        0 /* FIXME: sizeof(PROCESS_WS_WATCH_INFORMATION_EX[]) ProcessWorkingSetWatchEx */,
         sizeof(buf) /* ProcessImageFileNameWin32 */,
+#if 0 /* FIXME: Add remaining classes */
         sizeof(HANDLE) /* ProcessImageFileMapping */,
         sizeof(PROCESS_AFFINITY_UPDATE_MODE) /* ProcessAffinityUpdateMode */,
         sizeof(PROCESS_MEMORY_ALLOCATION_MODE) /* ProcessMemoryAllocationMode */,
@@ -3582,6 +3582,9 @@ static void test_process_info(void)
         case ProcessDefaultHardErrorMode:
         case ProcessHandleCount:
         case ProcessImageFileName:
+        case ProcessImageInformation:
+        case ProcessPagePriority:
+        case ProcessImageFileNameWin32:
             ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 
@@ -3599,6 +3602,7 @@ static void test_process_info(void)
         case ProcessExecuteFlags:
         case ProcessDebugPort:
         case ProcessDebugFlags:
+        case ProcessCookie:
 todo_wine
             ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
