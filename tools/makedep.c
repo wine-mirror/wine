@@ -200,6 +200,7 @@ struct makefile
     struct strarray implib_objs;
     struct strarray all_targets;
     struct strarray phony_targets;
+    struct strarray dependencies;
     struct strarray install_rules[NB_INSTALL_RULES];
 };
 
@@ -422,6 +423,17 @@ static int strarray_exists( const struct strarray *array, const char *str )
 static void strarray_add_uniq( struct strarray *array, const char *str )
 {
     if (!strarray_exists( array, str )) strarray_add( array, str );
+}
+
+
+/*******************************************************************
+ *         strarray_addall_uniq
+ */
+static void strarray_addall_uniq( struct strarray *array, struct strarray added )
+{
+    unsigned int i;
+
+    for (i = 0; i < added.count; i++) strarray_add_uniq( array, added.str[i] );
 }
 
 
@@ -3643,7 +3655,7 @@ static void output_sources( struct makefile *make )
             if (!strcmp( ext, output_source_funcs[j].ext )) break;
 
         output_source_funcs[j].fn( make, source, obj );
-        free( obj );
+        strarray_addall_uniq( &make->dependencies, source->dependencies );
     }
 
     /* special case for winetest: add resource files from other test dirs */
@@ -3705,9 +3717,14 @@ static void output_sources( struct makefile *make )
         output_uninstall_rules( make );
     }
 
+    if (make->dependencies.count)
+    {
+        output_filenames( make->dependencies );
+        output( ":\n" );
+    }
+
     strarray_addall( &make->clean_files, make->object_files );
-    for (i = 0; i < make->crossobj_files.count; i++)
-        strarray_add_uniq( &make->clean_files, make->crossobj_files.str[i] );
+    strarray_addall_uniq( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->all_targets );
     strarray_addall( &make->clean_files, get_expanded_make_var_array( make, "EXTRA_TARGETS" ));
 
