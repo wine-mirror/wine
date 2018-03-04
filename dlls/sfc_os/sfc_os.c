@@ -55,6 +55,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 BOOL WINAPI SfcGetNextProtectedFile(HANDLE handle, PROTECTED_FILE_DATA *data)
 {
     FIXME("%p %p\n", handle, data);
+
+    SetLastError(ERROR_NO_MORE_FILES);
     return FALSE;
 }
 
