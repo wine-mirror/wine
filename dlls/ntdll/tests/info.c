@@ -1416,12 +1416,11 @@ static void test_query_process_handlecount(void)
 
 static void test_query_process_image_file_name(void)
 {
+    static const WCHAR deviceW[] = {'\\','D','e','v','i','c','e','\\'};
     NTSTATUS status;
     ULONG ReturnLength;
     UNICODE_STRING image_file_name;
-    void *buffer;
-    char *file_nameA;
-    INT len;
+    UNICODE_STRING *buffer = NULL;
 
     status = pNtQueryInformationProcess(NULL, ProcessImageFileName, &image_file_name, sizeof(image_file_name), NULL);
     if (status == STATUS_INVALID_INFO_CLASS)
@@ -1437,18 +1436,14 @@ static void test_query_process_image_file_name(void)
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, sizeof(image_file_name), &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, ReturnLength);
+    buffer = heap_alloc(ReturnLength);
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, buffer, ReturnLength, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    memcpy(&image_file_name, buffer, sizeof(image_file_name));
-    len = WideCharToMultiByte(CP_ACP, 0, image_file_name.Buffer, image_file_name.Length/sizeof(WCHAR), NULL, 0, NULL, NULL);
-    file_nameA = HeapAlloc(GetProcessHeap(), 0, len + 1);
-    WideCharToMultiByte(CP_ACP, 0, image_file_name.Buffer, image_file_name.Length/sizeof(WCHAR), file_nameA, len, NULL, NULL);
-    file_nameA[len] = '\0';
-    HeapFree(GetProcessHeap(), 0, buffer);
-    trace("process image file name: %s\n", file_nameA);
-    todo_wine ok(strncmp(file_nameA, "\\Device\\", 8) == 0, "Process image name should be an NT path beginning with \\Device\\ (is %s)\n", file_nameA);
-    HeapFree(GetProcessHeap(), 0, file_nameA);
+todo_wine
+    ok(!memcmp(buffer->Buffer, deviceW, sizeof(deviceW)),
+        "Expected image name to begin with \\Device\\, got %s\n",
+        wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));
+    heap_free(buffer);
 }
 
 static void test_query_process_debug_object_handle(int argc, char **argv)

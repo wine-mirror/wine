@@ -33,3 +33,4 @@
 #include "winternl.h"
 
 #include "wine/test.h"
+#include "wine/heap.h"
