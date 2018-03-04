@@ -218,7 +218,6 @@ rm -f $wine_rules_file
 AC_SUBST(SUBDIRS,"")
 AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
-AC_SUBST(ALL_TEST_RESOURCES,"")
 
 wine_fn_append_file ()
 {
@@ -281,11 +280,7 @@ wine_fn_config_test ()
 {
     ac_dir=$[1]
     ac_name=$[2]
-
-    AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules; return])
-
-    wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
-    wine_fn_all_rules
+    AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
 }
 
 wine_fn_config_tool ()
@@ -374,11 +369,7 @@ dnl
 dnl Usage: WINE_CONFIG_TEST(dir)
 dnl
 AC_DEFUN([WINE_CONFIG_TEST],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_pushdef([ac_suffix],m4_if(m4_substr([$1],0,9),[programs/],[.exe_test],[_test]))dnl
-m4_pushdef([ac_name],[m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1])])dnl
-wine_fn_config_test $1 ac_name[]ac_suffix[]dnl
-m4_popdef([ac_suffix])dnl
-m4_popdef([ac_name])])
+wine_fn_config_test [$1]])
 
 dnl **** Create a static lib makefile from config.status ****
 dnl

@@ -14,7 +14,7 @@ RC_SRCS = \
 
 SVG_SRCS = winetest.svg
 
-EXTRA_OBJS = build.res $(ALL_TEST_RESOURCES)
+EXTRA_OBJS = build.res
 
 EXTRA_TARGETS = build.rc build.nfo
 

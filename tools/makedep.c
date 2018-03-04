@@ -134,6 +134,7 @@ static struct strarray extra_cflags;
 static struct strarray cpp_flags;
 static struct strarray unwind_flags;
 static struct strarray libs;
+static struct strarray enable_tests;
 static struct strarray cmdline_vars;
 static struct strarray disabled_dirs;
 static const char *root_src_dir;
@@ -3613,6 +3614,18 @@ static void output_sources( struct makefile *make )
         free( obj );
     }
 
+    /* special case for winetest: add resource files from other test dirs */
+    if (make->base_dir && !strcmp( make->base_dir, "programs/winetest" ))
+    {
+        struct strarray tests = enable_tests;
+        if (!tests.count)
+            for (i = 0; i < top_makefile->subdirs.count; i++)
+                if (top_makefile->submakes[i]->testdll && !top_makefile->submakes[i]->disabled)
+                    strarray_add( &tests, top_makefile->submakes[i]->testdll );
+        for (i = 0; i < tests.count; i++)
+            strarray_add( &make->object_files, replace_extension( tests.str[i], ".dll", "_test.res" ));
+    }
+
     if (make->dlldata_files.count)
     {
         output( "%s: %s %s\n", obj_dir_path( make, "dlldata.c" ),
@@ -4140,6 +4153,7 @@ int main( int argc, char *argv[] )
     cpp_flags    = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
     unwind_flags = get_expanded_make_var_array( top_makefile, "UNWINDFLAGS" );
     libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
+    enable_tests = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
 
     root_src_dir = get_expanded_make_variable( top_makefile, "srcdir" );
     tools_dir    = get_expanded_make_variable( top_makefile, "TOOLSDIR" );
