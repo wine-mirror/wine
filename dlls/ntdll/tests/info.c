@@ -1444,6 +1444,28 @@ todo_wine
         "Expected image name to begin with \\Device\\, got %s\n",
         wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));
     heap_free(buffer);
+
+    status = pNtQueryInformationProcess(NULL, ProcessImageFileNameWin32, &image_file_name, sizeof(image_file_name), NULL);
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip("ProcessImageFileNameWin32 is not supported\n");
+        return;
+    }
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileNameWin32, &image_file_name, 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileNameWin32, &image_file_name, sizeof(image_file_name), &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    buffer = heap_alloc(ReturnLength);
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileNameWin32, buffer, ReturnLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(memcmp(buffer->Buffer, deviceW, sizeof(deviceW)),
+        "Expected image name not to begin with \\Device\\, got %s\n",
+        wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));
+    heap_free(buffer);
 }
 
 static void test_query_process_debug_object_handle(int argc, char **argv)
