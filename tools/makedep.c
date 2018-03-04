@@ -3484,7 +3484,7 @@ static void output_subdirs( struct makefile *make )
             if (!submake->staticlib)
             {
                 strarray_add( &builddeps_deps, subdir );
-                if (!make->appmode.count)
+                if (!submake->appmode.count)
                 {
                     output( "manpages htmlpages sgmlpages xmlpages::\n" );
                     output( "\t@cd %s && $(MAKE) $@\n", subdir );
