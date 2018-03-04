@@ -18198,9 +18198,6 @@ Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 depend: \$(MAKEDEP) dummy
 	\$(MAKEDEP)"
 
-test -n "$CROSSTARGET" || wine_fn_append_rule "crosstest:
-	@echo \"crosstest is not supported (mingw not installed?)\" && false"
-
 if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"

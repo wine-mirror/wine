@@ -3547,13 +3547,13 @@ static void output_subdirs( struct makefile *make )
         strarray_add( &make->phony_targets, "check" );
         strarray_add( &make->phony_targets, "test" );
     }
-    if (crosstest_deps.count)
-    {
-        output( "crosstest:" );
-        output_filenames( crosstest_deps );
-        output( "\n" );
-        strarray_add( &make->phony_targets, "crosstest" );
-    }
+    output( "crosstest:" );
+    output_filenames( crosstest_deps );
+    output( "\n" );
+    if (!crosstest_deps.count)
+        output( "\t@echo \"crosstest is not supported (mingw not installed?)\" && false\n" );
+    strarray_add( &make->phony_targets, "crosstest" );
+
     output( "clean::\n");
     output_rm_filenames( clean_files );
     output( "testclean::\n");
