@@ -3954,7 +3954,9 @@ then
     WINE_APPEND_RULE(
 [tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext])
+Makefile: tools/makedep$ac_exeext
+fonts: tools/sfnt2fon
+include: tools tools/widl])
 else
     WINE_APPEND_RULE(
 [\$(MAKEDEP):

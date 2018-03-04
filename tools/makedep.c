@@ -3409,6 +3409,7 @@ static void output_subdirs( struct makefile *make )
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
     struct strarray tools_deps = empty_strarray;
+    struct strarray tooldeps_deps = empty_strarray;
     struct strarray winetest_deps = empty_strarray;
     struct strarray crosstest_deps = empty_strarray;
     unsigned int i, j;
@@ -3509,6 +3510,30 @@ static void output_subdirs( struct makefile *make )
                 strarray_add( &builddeps_deps, target );
             }
         }
+        else
+        {
+            if (!strcmp( submake->base_dir, "tools" ) || !strncmp( submake->base_dir, "tools/", 6 ))
+            {
+                strarray_add( &tooldeps_deps, submake->base_dir );
+                for (j = 0; j < submake->programs.count; j++)
+                    output( "%s/%s%s: %s\n", submake->base_dir,
+                            submake->programs.str[j], tools_ext, submake->base_dir );
+            }
+            if (submake->programs.count || submake->sharedlib)
+            {
+                struct strarray libs = get_expanded_make_var_array( submake, "EXTRALIBS" );
+                for (j = 0; j < submake->programs.count; j++)
+                    strarray_addall( &libs, get_expanded_file_local_var( submake,
+                                                                    submake->programs.str[j], "LDFLAGS" ));
+                output( "%s: libs/port", submake->base_dir );
+                for (j = 0; j < libs.count; j++)
+                {
+                    if (!strcmp( libs.str[j], "-lwpp" )) output_filename( "libs/wpp" );
+                    if (!strcmp( libs.str[j], "-lwine" )) output_filename( "libs/wine" );
+                }
+                output( "\n" );
+            }
+        }
 
         if (submake->install_rules[INSTALL_LIB].count)
         {
@@ -3532,6 +3557,13 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     output_filenames( makefile_deps );
     output( ":\n" );
+    if (tooldeps_deps.count)
+    {
+        output( "__tooldeps__:" );
+        output_filenames( tooldeps_deps );
+        output( "\n" );
+        strarray_add( &make->phony_targets, "__tooldeps__" );
+    }
     if (winetest_deps.count)
     {
         output( "programs/winetest:" );

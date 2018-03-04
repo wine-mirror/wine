@@ -7805,16 +7805,9 @@ wine_fn_config_tool ()
 {
     ac_dir=$1
     if test "x$enable_tools" = xno; then :
-  wine_fn_append_file DISABLED_SUBDIRS $ac_dir; return
+  return
 fi
-
     wine_fn_all_rules
-
-    wine_fn_append_rule "__tooldeps__: $ac_dir"
-    wine_fn_append_rule "$ac_dir: libs/port"
-    case $ac_dir in
-      tools/winebuild) wine_fn_append_rule "\$(WINEBUILD): $ac_dir" ;;
-    esac
 }
 
 wine_fn_config_symlink ()
@@ -19348,7 +19341,9 @@ if test "x$enable_tools" != xno
 then
     wine_fn_append_rule "tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext"
+Makefile: tools/makedep$ac_exeext
+fonts: tools/sfnt2fon
+include: tools tools/widl"
 else
     wine_fn_append_rule "\$(MAKEDEP):
 	@echo \"You need to run make in $TOOLSDIR first\" && false"

@@ -286,15 +286,8 @@ wine_fn_config_test ()
 wine_fn_config_tool ()
 {
     ac_dir=$[1]
-    AS_VAR_IF([enable_tools],[no],[wine_fn_append_file DISABLED_SUBDIRS $ac_dir; return])
-
+    AS_VAR_IF([enable_tools],[no],[return])
     wine_fn_all_rules
-
-    wine_fn_append_rule "__tooldeps__: $ac_dir"
-    wine_fn_append_rule "$ac_dir: libs/port"
-    case $ac_dir in
-      tools/winebuild) wine_fn_append_rule "\$(WINEBUILD): $ac_dir" ;;
-    esac
 }
 
 wine_fn_config_symlink ()
