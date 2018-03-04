@@ -229,65 +229,10 @@ wine_fn_append_rule ()
     AS_ECHO("$[1]") >>$wine_rules_file
 }
 
-wine_fn_all_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-}
-
-wine_fn_disabled_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-    wine_fn_append_file DISABLED_SUBDIRS $ac_dir
-}
-
 wine_fn_config_makefile ()
 {
-    ac_dir=$[1]
-    ac_enable=$[2]
-
-    case $ac_dir in
-    dnl These are created as symlinks for wow64 builds
-    fonts|server) test -z "$with_wine64" || return ;;
-    esac
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
-}
-
-wine_fn_config_lib ()
-{
-    ac_name=$[1]
-    ac_dir=dlls/$ac_name
-
-    wine_fn_all_rules
-}
-
-wine_fn_config_dll ()
-{
-    ac_name=$[1]
-    ac_dir=dlls/$ac_name
-    ac_enable=$[2]
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
-}
-
-wine_fn_config_program ()
-{
-    ac_name=$[1]
-    ac_dir=programs/$ac_name
-    ac_enable=$[2]
-    AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
-}
-
-wine_fn_config_test ()
-{
-    ac_dir=$[1]
-    ac_name=$[2]
-    AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules],[wine_fn_all_rules])
-}
-
-wine_fn_config_tool ()
-{
-    ac_dir=$[1]
-    AS_VAR_IF([enable_tools],[no],[return])
-    wine_fn_all_rules
+    wine_fn_append_file SUBDIRS $[1]
+    AS_VAR_IF([$[2]],[no],[wine_fn_append_file DISABLED_SUBDIRS $[1]])
 }
 
 wine_fn_config_symlink ()
@@ -298,12 +243,6 @@ wine_fn_config_symlink ()
 	@./config.status \$[@]"
     for f in $ac_links; do wine_fn_append_file CONFIGURE_TARGETS $f; done
 }])
-
-dnl **** Define helper function to append a file to a makefile file list ****
-dnl
-dnl Usage: WINE_APPEND_FILE(var,file)
-dnl
-AC_DEFUN([WINE_APPEND_FILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])wine_fn_append_file $1 "$2"])
 
 dnl **** Define helper function to append a rule to a makefile command list ****
 dnl
@@ -326,59 +265,14 @@ fi])[]dnl
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,enable)
+dnl Usage: WINE_CONFIG_MAKEFILE(file,enable,condition)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
+AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1])))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
-wine_fn_config_makefile [$1] ac_enable[]dnl
+m4_ifval([$3],[$3 || ])wine_fn_config_makefile [$1] ac_enable[]dnl
 AS_VAR_POPDEF([ac_enable])])
-
-dnl **** Create a dll makefile from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_DLL(name,enable)
-dnl
-AC_DEFUN([WINE_CONFIG_DLL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
-m4_append_uniq([_AC_USER_OPTS],ac_enable,[
-])dnl
-wine_fn_config_dll [$1] ac_enable[]dnl
-AS_VAR_POPDEF([ac_enable])])
-
-dnl **** Create a program makefile from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_PROGRAM(name,enable)
-dnl
-AC_DEFUN([WINE_CONFIG_PROGRAM],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
-m4_append_uniq([_AC_USER_OPTS],ac_enable,[
-])dnl
-wine_fn_config_program [$1] ac_enable[]dnl
-AS_VAR_POPDEF([ac_enable])])
-
-dnl **** Create a test makefile from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_TEST(dir)
-dnl
-AC_DEFUN([WINE_CONFIG_TEST],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_test [$1]])
-
-dnl **** Create a static lib makefile from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_LIB(name)
-dnl
-AC_DEFUN([WINE_CONFIG_LIB],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_lib [$1]])
-
-dnl **** Create a tool makefile from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_TOOL(name)
-dnl
-AC_DEFUN([WINE_CONFIG_TOOL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_append_uniq([_AC_USER_OPTS],[enable_tools],[
-])dnl
-wine_fn_config_tool [$1]])
 
 dnl **** Append a file to the .gitignore list ****
 dnl

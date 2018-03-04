@@ -886,6 +886,7 @@ enable_acledit
 enable_aclui
 enable_activeds
 enable_actxprxy
+enable_adsiid
 enable_adsldp
 enable_adsldpc
 enable_advapi32
@@ -1224,7 +1225,10 @@ enable_dwmapi
 enable_dwrite
 enable_dx8vb
 enable_dxdiagn
+enable_dxerr8
+enable_dxerr9
 enable_dxgi
+enable_dxguid
 enable_dxva2
 enable_esent
 enable_evr
@@ -1315,6 +1319,7 @@ enable_mf
 enable_mf3216
 enable_mfplat
 enable_mfreadwrite
+enable_mfuuid
 enable_mgmtapi
 enable_midimap
 enable_mlang
@@ -1480,6 +1485,8 @@ enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
 enable_sti
+enable_strmbase
+enable_strmiids
 enable_svrapi
 enable_sxs
 enable_t2embed
@@ -1500,6 +1507,7 @@ enable_usbd_sys
 enable_user32
 enable_userenv
 enable_usp10
+enable_uuid
 enable_uxtheme
 enable_vbscript
 enable_vcomp
@@ -1527,6 +1535,7 @@ enable_winealsa_drv
 enable_wineandroid_drv
 enable_winebus_sys
 enable_winecoreaudio_drv
+enable_winecrt0
 enable_wined3d
 enable_winegstreamer
 enable_winehid_sys
@@ -1603,9 +1612,9 @@ enable_xpsprint
 enable_xpssvcs
 enable_fonts
 enable_include
-enable_libs_port
-enable_libs_wine
-enable_libs_wpp
+enable_port
+enable_wine
+enable_wpp
 enable_loader
 enable_po
 enable_arp
@@ -1698,6 +1707,14 @@ enable_wusa
 enable_xcopy
 enable_server
 enable_tools
+enable_sfnt2fon
+enable_widl
+enable_winebuild
+enable_winedump
+enable_winegcc
+enable_winemaker
+enable_wmc
+enable_wrc
 '
       ac_precious_vars='build_alias
 host_alias
@@ -7732,82 +7749,12 @@ wine_fn_append_rule ()
     $as_echo "$1" >>$wine_rules_file
 }
 
-wine_fn_all_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-}
-
-wine_fn_disabled_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-    wine_fn_append_file DISABLED_SUBDIRS $ac_dir
-}
-
 wine_fn_config_makefile ()
 {
-    ac_dir=$1
-    ac_enable=$2
-
-    case $ac_dir in
-        fonts|server) test -z "$with_wine64" || return ;;
-    esac
-    if eval test \"x\$"$ac_enable"\" = x"no"; then :
-  wine_fn_disabled_rules
-else
-  wine_fn_all_rules
+    wine_fn_append_file SUBDIRS $1
+    if eval test \"x\$"$2"\" = x"no"; then :
+  wine_fn_append_file DISABLED_SUBDIRS $1
 fi
-}
-
-wine_fn_config_lib ()
-{
-    ac_name=$1
-    ac_dir=dlls/$ac_name
-
-    wine_fn_all_rules
-}
-
-wine_fn_config_dll ()
-{
-    ac_name=$1
-    ac_dir=dlls/$ac_name
-    ac_enable=$2
-    if eval test \"x\$"$ac_enable"\" = x"no"; then :
-  wine_fn_disabled_rules
-else
-  wine_fn_all_rules
-fi
-}
-
-wine_fn_config_program ()
-{
-    ac_name=$1
-    ac_dir=programs/$ac_name
-    ac_enable=$2
-    if eval test \"x\$"$ac_enable"\" = x"no"; then :
-  wine_fn_disabled_rules
-else
-  wine_fn_all_rules
-fi
-}
-
-wine_fn_config_test ()
-{
-    ac_dir=$1
-    ac_name=$2
-    if test "x$enable_tests" = xno; then :
-  wine_fn_disabled_rules
-else
-  wine_fn_all_rules
-fi
-}
-
-wine_fn_config_tool ()
-{
-    ac_dir=$1
-    if test "x$enable_tools" = xno; then :
-  return
-fi
-    wine_fn_all_rules
 }
 
 wine_fn_config_symlink ()
@@ -18203,1105 +18150,1105 @@ ac_config_links="$ac_config_links wine64:tools/winewrapper"
 wine_fn_config_symlink wine64
 fi
 
-wine_fn_config_dll acledit enable_acledit
-wine_fn_config_dll aclui enable_aclui
-wine_fn_config_dll activeds enable_activeds
-wine_fn_config_dll actxprxy enable_actxprxy
-wine_fn_config_lib adsiid
-wine_fn_config_dll adsldp enable_adsldp
-wine_fn_config_test dlls/adsldp/tests
-wine_fn_config_dll adsldpc enable_adsldpc
-wine_fn_config_dll advapi32 enable_advapi32
-wine_fn_config_test dlls/advapi32/tests
-wine_fn_config_dll advpack enable_advpack
-wine_fn_config_test dlls/advpack/tests
-wine_fn_config_dll amstream enable_amstream
-wine_fn_config_test dlls/amstream/tests
-wine_fn_config_dll api-ms-win-appmodel-identity-l1-1-0 enable_api_ms_win_appmodel_identity_l1_1_0
-wine_fn_config_dll api-ms-win-appmodel-runtime-l1-1-1 enable_api_ms_win_appmodel_runtime_l1_1_1
-wine_fn_config_dll api-ms-win-appmodel-runtime-l1-1-2 enable_api_ms_win_appmodel_runtime_l1_1_2
-wine_fn_config_dll api-ms-win-core-apiquery-l1-1-0 enable_api_ms_win_core_apiquery_l1_1_0
-wine_fn_config_dll api-ms-win-core-appcompat-l1-1-1 enable_api_ms_win_core_appcompat_l1_1_1
-wine_fn_config_dll api-ms-win-core-appinit-l1-1-0 enable_api_ms_win_core_appinit_l1_1_0
-wine_fn_config_dll api-ms-win-core-atoms-l1-1-0 enable_api_ms_win_core_atoms_l1_1_0
-wine_fn_config_dll api-ms-win-core-bem-l1-1-0 enable_api_ms_win_core_bem_l1_1_0
-wine_fn_config_dll api-ms-win-core-com-l1-1-0 enable_api_ms_win_core_com_l1_1_0
-wine_fn_config_dll api-ms-win-core-com-l1-1-1 enable_api_ms_win_core_com_l1_1_1
-wine_fn_config_dll api-ms-win-core-com-private-l1-1-0 enable_api_ms_win_core_com_private_l1_1_0
-wine_fn_config_dll api-ms-win-core-console-l1-1-0 enable_api_ms_win_core_console_l1_1_0
-wine_fn_config_dll api-ms-win-core-console-l2-1-0 enable_api_ms_win_core_console_l2_1_0
-wine_fn_config_dll api-ms-win-core-crt-l1-1-0 enable_api_ms_win_core_crt_l1_1_0
-wine_fn_config_dll api-ms-win-core-crt-l2-1-0 enable_api_ms_win_core_crt_l2_1_0
-wine_fn_config_dll api-ms-win-core-datetime-l1-1-0 enable_api_ms_win_core_datetime_l1_1_0
-wine_fn_config_dll api-ms-win-core-datetime-l1-1-1 enable_api_ms_win_core_datetime_l1_1_1
-wine_fn_config_dll api-ms-win-core-debug-l1-1-0 enable_api_ms_win_core_debug_l1_1_0
-wine_fn_config_dll api-ms-win-core-debug-l1-1-1 enable_api_ms_win_core_debug_l1_1_1
-wine_fn_config_dll api-ms-win-core-delayload-l1-1-0 enable_api_ms_win_core_delayload_l1_1_0
-wine_fn_config_dll api-ms-win-core-delayload-l1-1-1 enable_api_ms_win_core_delayload_l1_1_1
-wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-0 enable_api_ms_win_core_errorhandling_l1_1_0
-wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-1 enable_api_ms_win_core_errorhandling_l1_1_1
-wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-2 enable_api_ms_win_core_errorhandling_l1_1_2
-wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-3 enable_api_ms_win_core_errorhandling_l1_1_3
-wine_fn_config_dll api-ms-win-core-fibers-l1-1-0 enable_api_ms_win_core_fibers_l1_1_0
-wine_fn_config_dll api-ms-win-core-fibers-l1-1-1 enable_api_ms_win_core_fibers_l1_1_1
-wine_fn_config_dll api-ms-win-core-file-l1-1-0 enable_api_ms_win_core_file_l1_1_0
-wine_fn_config_dll api-ms-win-core-file-l1-2-0 enable_api_ms_win_core_file_l1_2_0
-wine_fn_config_dll api-ms-win-core-file-l1-2-1 enable_api_ms_win_core_file_l1_2_1
-wine_fn_config_dll api-ms-win-core-file-l1-2-2 enable_api_ms_win_core_file_l1_2_2
-wine_fn_config_dll api-ms-win-core-file-l2-1-0 enable_api_ms_win_core_file_l2_1_0
-wine_fn_config_dll api-ms-win-core-file-l2-1-1 enable_api_ms_win_core_file_l2_1_1
-wine_fn_config_dll api-ms-win-core-file-l2-1-2 enable_api_ms_win_core_file_l2_1_2
-wine_fn_config_dll api-ms-win-core-handle-l1-1-0 enable_api_ms_win_core_handle_l1_1_0
-wine_fn_config_dll api-ms-win-core-heap-l1-1-0 enable_api_ms_win_core_heap_l1_1_0
-wine_fn_config_dll api-ms-win-core-heap-l1-2-0 enable_api_ms_win_core_heap_l1_2_0
-wine_fn_config_dll api-ms-win-core-heap-l2-1-0 enable_api_ms_win_core_heap_l2_1_0
-wine_fn_config_dll api-ms-win-core-heap-obsolete-l1-1-0 enable_api_ms_win_core_heap_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-interlocked-l1-1-0 enable_api_ms_win_core_interlocked_l1_1_0
-wine_fn_config_dll api-ms-win-core-interlocked-l1-2-0 enable_api_ms_win_core_interlocked_l1_2_0
-wine_fn_config_dll api-ms-win-core-io-l1-1-0 enable_api_ms_win_core_io_l1_1_0
-wine_fn_config_dll api-ms-win-core-io-l1-1-1 enable_api_ms_win_core_io_l1_1_1
-wine_fn_config_dll api-ms-win-core-job-l1-1-0 enable_api_ms_win_core_job_l1_1_0
-wine_fn_config_dll api-ms-win-core-job-l2-1-0 enable_api_ms_win_core_job_l2_1_0
-wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-0 enable_api_ms_win_core_kernel32_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-1 enable_api_ms_win_core_kernel32_legacy_l1_1_1
-wine_fn_config_dll api-ms-win-core-kernel32-private-l1-1-1 enable_api_ms_win_core_kernel32_private_l1_1_1
-wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-0 enable_api_ms_win_core_libraryloader_l1_1_0
-wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-1 enable_api_ms_win_core_libraryloader_l1_1_1
-wine_fn_config_dll api-ms-win-core-libraryloader-l1-2-0 enable_api_ms_win_core_libraryloader_l1_2_0
-wine_fn_config_dll api-ms-win-core-libraryloader-l1-2-1 enable_api_ms_win_core_libraryloader_l1_2_1
-wine_fn_config_dll api-ms-win-core-libraryloader-l1-2-2 enable_api_ms_win_core_libraryloader_l1_2_2
-wine_fn_config_dll api-ms-win-core-localization-l1-1-0 enable_api_ms_win_core_localization_l1_1_0
-wine_fn_config_dll api-ms-win-core-localization-l1-2-0 enable_api_ms_win_core_localization_l1_2_0
-wine_fn_config_dll api-ms-win-core-localization-l1-2-1 enable_api_ms_win_core_localization_l1_2_1
-wine_fn_config_dll api-ms-win-core-localization-l2-1-0 enable_api_ms_win_core_localization_l2_1_0
-wine_fn_config_dll api-ms-win-core-localization-obsolete-l1-1-0 enable_api_ms_win_core_localization_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-localization-obsolete-l1-2-0 enable_api_ms_win_core_localization_obsolete_l1_2_0
-wine_fn_config_dll api-ms-win-core-localization-obsolete-l1-3-0 enable_api_ms_win_core_localization_obsolete_l1_3_0
-wine_fn_config_dll api-ms-win-core-localization-private-l1-1-0 enable_api_ms_win_core_localization_private_l1_1_0
-wine_fn_config_dll api-ms-win-core-localregistry-l1-1-0 enable_api_ms_win_core_localregistry_l1_1_0
-wine_fn_config_dll api-ms-win-core-memory-l1-1-0 enable_api_ms_win_core_memory_l1_1_0
-wine_fn_config_dll api-ms-win-core-memory-l1-1-1 enable_api_ms_win_core_memory_l1_1_1
-wine_fn_config_dll api-ms-win-core-memory-l1-1-2 enable_api_ms_win_core_memory_l1_1_2
-wine_fn_config_dll api-ms-win-core-misc-l1-1-0 enable_api_ms_win_core_misc_l1_1_0
-wine_fn_config_dll api-ms-win-core-namedpipe-l1-1-0 enable_api_ms_win_core_namedpipe_l1_1_0
-wine_fn_config_dll api-ms-win-core-namedpipe-l1-2-0 enable_api_ms_win_core_namedpipe_l1_2_0
-wine_fn_config_dll api-ms-win-core-namespace-l1-1-0 enable_api_ms_win_core_namespace_l1_1_0
-wine_fn_config_dll api-ms-win-core-normalization-l1-1-0 enable_api_ms_win_core_normalization_l1_1_0
-wine_fn_config_dll api-ms-win-core-path-l1-1-0 enable_api_ms_win_core_path_l1_1_0
-wine_fn_config_dll api-ms-win-core-privateprofile-l1-1-1 enable_api_ms_win_core_privateprofile_l1_1_1
-wine_fn_config_dll api-ms-win-core-processenvironment-l1-1-0 enable_api_ms_win_core_processenvironment_l1_1_0
-wine_fn_config_dll api-ms-win-core-processenvironment-l1-2-0 enable_api_ms_win_core_processenvironment_l1_2_0
-wine_fn_config_dll api-ms-win-core-processthreads-l1-1-0 enable_api_ms_win_core_processthreads_l1_1_0
-wine_fn_config_dll api-ms-win-core-processthreads-l1-1-1 enable_api_ms_win_core_processthreads_l1_1_1
-wine_fn_config_dll api-ms-win-core-processthreads-l1-1-2 enable_api_ms_win_core_processthreads_l1_1_2
-wine_fn_config_dll api-ms-win-core-processtopology-obsolete-l1-1-0 enable_api_ms_win_core_processtopology_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-profile-l1-1-0 enable_api_ms_win_core_profile_l1_1_0
-wine_fn_config_dll api-ms-win-core-psapi-ansi-l1-1-0 enable_api_ms_win_core_psapi_ansi_l1_1_0
-wine_fn_config_dll api-ms-win-core-psapi-l1-1-0 enable_api_ms_win_core_psapi_l1_1_0
-wine_fn_config_dll api-ms-win-core-psapi-obsolete-l1-1-0 enable_api_ms_win_core_psapi_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-quirks-l1-1-0 enable_api_ms_win_core_quirks_l1_1_0
-wine_fn_config_dll api-ms-win-core-realtime-l1-1-0 enable_api_ms_win_core_realtime_l1_1_0
-wine_fn_config_dll api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
-wine_fn_config_dll api-ms-win-core-registry-l2-1-0 enable_api_ms_win_core_registry_l2_1_0
-wine_fn_config_dll api-ms-win-core-registryuserspecific-l1-1-0 enable_api_ms_win_core_registryuserspecific_l1_1_0
-wine_fn_config_dll api-ms-win-core-rtlsupport-l1-1-0 enable_api_ms_win_core_rtlsupport_l1_1_0
-wine_fn_config_dll api-ms-win-core-rtlsupport-l1-2-0 enable_api_ms_win_core_rtlsupport_l1_2_0
-wine_fn_config_dll api-ms-win-core-shlwapi-legacy-l1-1-0 enable_api_ms_win_core_shlwapi_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-core-shlwapi-obsolete-l1-1-0 enable_api_ms_win_core_shlwapi_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-shlwapi-obsolete-l1-2-0 enable_api_ms_win_core_shlwapi_obsolete_l1_2_0
-wine_fn_config_dll api-ms-win-core-shutdown-l1-1-0 enable_api_ms_win_core_shutdown_l1_1_0
-wine_fn_config_dll api-ms-win-core-sidebyside-l1-1-0 enable_api_ms_win_core_sidebyside_l1_1_0
-wine_fn_config_dll api-ms-win-core-string-l1-1-0 enable_api_ms_win_core_string_l1_1_0
-wine_fn_config_dll api-ms-win-core-string-l2-1-0 enable_api_ms_win_core_string_l2_1_0
-wine_fn_config_dll api-ms-win-core-string-obsolete-l1-1-0 enable_api_ms_win_core_string_obsolete_l1_1_0
-wine_fn_config_dll api-ms-win-core-stringansi-l1-1-0 enable_api_ms_win_core_stringansi_l1_1_0
-wine_fn_config_dll api-ms-win-core-synch-ansi-l1-1-0 enable_api_ms_win_core_synch_ansi_l1_1_0
-wine_fn_config_dll api-ms-win-core-synch-l1-1-0 enable_api_ms_win_core_synch_l1_1_0
-wine_fn_config_dll api-ms-win-core-synch-l1-2-0 enable_api_ms_win_core_synch_l1_2_0
-wine_fn_config_dll api-ms-win-core-synch-l1-2-1 enable_api_ms_win_core_synch_l1_2_1
-wine_fn_config_dll api-ms-win-core-sysinfo-l1-1-0 enable_api_ms_win_core_sysinfo_l1_1_0
-wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-0 enable_api_ms_win_core_sysinfo_l1_2_0
-wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-1 enable_api_ms_win_core_sysinfo_l1_2_1
-wine_fn_config_dll api-ms-win-core-threadpool-l1-1-0 enable_api_ms_win_core_threadpool_l1_1_0
-wine_fn_config_dll api-ms-win-core-threadpool-l1-2-0 enable_api_ms_win_core_threadpool_l1_2_0
-wine_fn_config_dll api-ms-win-core-threadpool-legacy-l1-1-0 enable_api_ms_win_core_threadpool_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-core-threadpool-private-l1-1-0 enable_api_ms_win_core_threadpool_private_l1_1_0
-wine_fn_config_dll api-ms-win-core-timezone-l1-1-0 enable_api_ms_win_core_timezone_l1_1_0
-wine_fn_config_dll api-ms-win-core-toolhelp-l1-1-0 enable_api_ms_win_core_toolhelp_l1_1_0
-wine_fn_config_dll api-ms-win-core-url-l1-1-0 enable_api_ms_win_core_url_l1_1_0
-wine_fn_config_dll api-ms-win-core-util-l1-1-0 enable_api_ms_win_core_util_l1_1_0
-wine_fn_config_dll api-ms-win-core-version-l1-1-0 enable_api_ms_win_core_version_l1_1_0
-wine_fn_config_dll api-ms-win-core-version-l1-1-1 enable_api_ms_win_core_version_l1_1_1
-wine_fn_config_dll api-ms-win-core-version-private-l1-1-0 enable_api_ms_win_core_version_private_l1_1_0
-wine_fn_config_dll api-ms-win-core-versionansi-l1-1-0 enable_api_ms_win_core_versionansi_l1_1_0
-wine_fn_config_dll api-ms-win-core-windowserrorreporting-l1-1-0 enable_api_ms_win_core_windowserrorreporting_l1_1_0
-wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
-wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-1 enable_api_ms_win_core_winrt_error_l1_1_1
-wine_fn_config_dll api-ms-win-core-winrt-errorprivate-l1-1-1 enable_api_ms_win_core_winrt_errorprivate_l1_1_1
-wine_fn_config_dll api-ms-win-core-winrt-l1-1-0 enable_api_ms_win_core_winrt_l1_1_0
-wine_fn_config_dll api-ms-win-core-winrt-registration-l1-1-0 enable_api_ms_win_core_winrt_registration_l1_1_0
-wine_fn_config_dll api-ms-win-core-winrt-roparameterizediid-l1-1-0 enable_api_ms_win_core_winrt_roparameterizediid_l1_1_0
-wine_fn_config_dll api-ms-win-core-winrt-string-l1-1-0 enable_api_ms_win_core_winrt_string_l1_1_0
-wine_fn_config_dll api-ms-win-core-wow64-l1-1-0 enable_api_ms_win_core_wow64_l1_1_0
-wine_fn_config_dll api-ms-win-core-wow64-l1-1-1 enable_api_ms_win_core_wow64_l1_1_1
-wine_fn_config_dll api-ms-win-core-xstate-l1-1-0 enable_api_ms_win_core_xstate_l1_1_0
-wine_fn_config_dll api-ms-win-core-xstate-l2-1-0 enable_api_ms_win_core_xstate_l2_1_0
-wine_fn_config_dll api-ms-win-crt-conio-l1-1-0 enable_api_ms_win_crt_conio_l1_1_0
-wine_fn_config_dll api-ms-win-crt-convert-l1-1-0 enable_api_ms_win_crt_convert_l1_1_0
-wine_fn_config_dll api-ms-win-crt-environment-l1-1-0 enable_api_ms_win_crt_environment_l1_1_0
-wine_fn_config_dll api-ms-win-crt-filesystem-l1-1-0 enable_api_ms_win_crt_filesystem_l1_1_0
-wine_fn_config_dll api-ms-win-crt-heap-l1-1-0 enable_api_ms_win_crt_heap_l1_1_0
-wine_fn_config_dll api-ms-win-crt-locale-l1-1-0 enable_api_ms_win_crt_locale_l1_1_0
-wine_fn_config_dll api-ms-win-crt-math-l1-1-0 enable_api_ms_win_crt_math_l1_1_0
-wine_fn_config_dll api-ms-win-crt-multibyte-l1-1-0 enable_api_ms_win_crt_multibyte_l1_1_0
-wine_fn_config_dll api-ms-win-crt-private-l1-1-0 enable_api_ms_win_crt_private_l1_1_0
-wine_fn_config_dll api-ms-win-crt-process-l1-1-0 enable_api_ms_win_crt_process_l1_1_0
-wine_fn_config_dll api-ms-win-crt-runtime-l1-1-0 enable_api_ms_win_crt_runtime_l1_1_0
-wine_fn_config_dll api-ms-win-crt-stdio-l1-1-0 enable_api_ms_win_crt_stdio_l1_1_0
-wine_fn_config_dll api-ms-win-crt-string-l1-1-0 enable_api_ms_win_crt_string_l1_1_0
-wine_fn_config_dll api-ms-win-crt-time-l1-1-0 enable_api_ms_win_crt_time_l1_1_0
-wine_fn_config_dll api-ms-win-crt-utility-l1-1-0 enable_api_ms_win_crt_utility_l1_1_0
-wine_fn_config_dll api-ms-win-devices-config-l1-1-1 enable_api_ms_win_devices_config_l1_1_1
-wine_fn_config_dll api-ms-win-devices-query-l1-1-1 enable_api_ms_win_devices_query_l1_1_1
-wine_fn_config_dll api-ms-win-downlevel-advapi32-l1-1-0 enable_api_ms_win_downlevel_advapi32_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-advapi32-l2-1-0 enable_api_ms_win_downlevel_advapi32_l2_1_0
-wine_fn_config_dll api-ms-win-downlevel-normaliz-l1-1-0 enable_api_ms_win_downlevel_normaliz_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-ole32-l1-1-0 enable_api_ms_win_downlevel_ole32_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-shell32-l1-1-0 enable_api_ms_win_downlevel_shell32_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-shlwapi-l1-1-0 enable_api_ms_win_downlevel_shlwapi_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-shlwapi-l2-1-0 enable_api_ms_win_downlevel_shlwapi_l2_1_0
-wine_fn_config_dll api-ms-win-downlevel-user32-l1-1-0 enable_api_ms_win_downlevel_user32_l1_1_0
-wine_fn_config_dll api-ms-win-downlevel-version-l1-1-0 enable_api_ms_win_downlevel_version_l1_1_0
-wine_fn_config_dll api-ms-win-dx-d3dkmt-l1-1-0 enable_api_ms_win_dx_d3dkmt_l1_1_0
-wine_fn_config_dll api-ms-win-eventing-classicprovider-l1-1-0 enable_api_ms_win_eventing_classicprovider_l1_1_0
-wine_fn_config_dll api-ms-win-eventing-consumer-l1-1-0 enable_api_ms_win_eventing_consumer_l1_1_0
-wine_fn_config_dll api-ms-win-eventing-controller-l1-1-0 enable_api_ms_win_eventing_controller_l1_1_0
-wine_fn_config_dll api-ms-win-eventing-legacy-l1-1-0 enable_api_ms_win_eventing_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
-wine_fn_config_dll api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-mm-joystick-l1-1-0 enable_api_ms_win_mm_joystick_l1_1_0
-wine_fn_config_dll api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
-wine_fn_config_dll api-ms-win-mm-mme-l1-1-0 enable_api_ms_win_mm_mme_l1_1_0
-wine_fn_config_dll api-ms-win-mm-time-l1-1-0 enable_api_ms_win_mm_time_l1_1_0
-wine_fn_config_dll api-ms-win-ntuser-dc-access-l1-1-0 enable_api_ms_win_ntuser_dc_access_l1_1_0
-wine_fn_config_dll api-ms-win-ntuser-rectangle-l1-1-0 enable_api_ms_win_ntuser_rectangle_l1_1_0
-wine_fn_config_dll api-ms-win-perf-legacy-l1-1-0 enable_api_ms_win_perf_legacy_l1_1_0
-wine_fn_config_dll api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
-wine_fn_config_dll api-ms-win-power-setting-l1-1-0 enable_api_ms_win_power_setting_l1_1_0
-wine_fn_config_dll api-ms-win-rtcore-ntuser-private-l1-1-0 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
-wine_fn_config_dll api-ms-win-security-activedirectoryclient-l1-1-0 enable_api_ms_win_security_activedirectoryclient_l1_1_0
-wine_fn_config_dll api-ms-win-security-audit-l1-1-1 enable_api_ms_win_security_audit_l1_1_1
-wine_fn_config_dll api-ms-win-security-base-l1-1-0 enable_api_ms_win_security_base_l1_1_0
-wine_fn_config_dll api-ms-win-security-base-l1-2-0 enable_api_ms_win_security_base_l1_2_0
-wine_fn_config_dll api-ms-win-security-base-private-l1-1-1 enable_api_ms_win_security_base_private_l1_1_1
-wine_fn_config_dll api-ms-win-security-credentials-l1-1-0 enable_api_ms_win_security_credentials_l1_1_0
-wine_fn_config_dll api-ms-win-security-grouppolicy-l1-1-0 enable_api_ms_win_security_grouppolicy_l1_1_0
-wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-0 enable_api_ms_win_security_lsalookup_l1_1_0
-wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-1 enable_api_ms_win_security_lsalookup_l1_1_1
-wine_fn_config_dll api-ms-win-security-lsalookup-l2-1-0 enable_api_ms_win_security_lsalookup_l2_1_0
-wine_fn_config_dll api-ms-win-security-lsalookup-l2-1-1 enable_api_ms_win_security_lsalookup_l2_1_1
-wine_fn_config_dll api-ms-win-security-lsapolicy-l1-1-0 enable_api_ms_win_security_lsapolicy_l1_1_0
-wine_fn_config_dll api-ms-win-security-provider-l1-1-0 enable_api_ms_win_security_provider_l1_1_0
-wine_fn_config_dll api-ms-win-security-sddl-l1-1-0 enable_api_ms_win_security_sddl_l1_1_0
-wine_fn_config_dll api-ms-win-security-systemfunctions-l1-1-0 enable_api_ms_win_security_systemfunctions_l1_1_0
-wine_fn_config_dll api-ms-win-service-core-l1-1-0 enable_api_ms_win_service_core_l1_1_0
-wine_fn_config_dll api-ms-win-service-core-l1-1-1 enable_api_ms_win_service_core_l1_1_1
-wine_fn_config_dll api-ms-win-service-management-l1-1-0 enable_api_ms_win_service_management_l1_1_0
-wine_fn_config_dll api-ms-win-service-management-l2-1-0 enable_api_ms_win_service_management_l2_1_0
-wine_fn_config_dll api-ms-win-service-private-l1-1-1 enable_api_ms_win_service_private_l1_1_1
-wine_fn_config_dll api-ms-win-service-winsvc-l1-1-0 enable_api_ms_win_service_winsvc_l1_1_0
-wine_fn_config_dll api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
-wine_fn_config_dll api-ms-win-shcore-scaling-l1-1-1 enable_api_ms_win_shcore_scaling_l1_1_1
-wine_fn_config_dll api-ms-win-shell-shellcom-l1-1-0 enable_api_ms_win_shell_shellcom_l1_1_0
-wine_fn_config_dll api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_win_shell_shellfolders_l1_1_0
-wine_fn_config_dll apphelp enable_apphelp
-wine_fn_config_test dlls/apphelp/tests
-wine_fn_config_dll appwiz.cpl enable_appwiz_cpl
-wine_fn_config_dll atl enable_atl
-wine_fn_config_test dlls/atl/tests
-wine_fn_config_dll atl100 enable_atl100
-wine_fn_config_test dlls/atl100/tests
-wine_fn_config_dll atl110 enable_atl110
-wine_fn_config_dll atl80 enable_atl80
-wine_fn_config_test dlls/atl80/tests
-wine_fn_config_dll atl90 enable_atl90
-wine_fn_config_dll authz enable_authz
-wine_fn_config_dll avicap32 enable_avicap32
-wine_fn_config_dll avifil32 enable_avifil32
-wine_fn_config_test dlls/avifil32/tests
-wine_fn_config_dll avifile.dll16 enable_win16
-wine_fn_config_dll avrt enable_avrt
-wine_fn_config_dll bcrypt enable_bcrypt
-wine_fn_config_test dlls/bcrypt/tests
-wine_fn_config_dll bluetoothapis enable_bluetoothapis
-wine_fn_config_dll browseui enable_browseui
-wine_fn_config_test dlls/browseui/tests
-wine_fn_config_dll bthprops.cpl enable_bthprops_cpl
-wine_fn_config_dll cabinet enable_cabinet
-wine_fn_config_test dlls/cabinet/tests
-wine_fn_config_dll capi2032 enable_capi2032
-wine_fn_config_dll cards enable_cards
-wine_fn_config_dll cdosys enable_cdosys
-wine_fn_config_dll cfgmgr32 enable_cfgmgr32
-wine_fn_config_dll clusapi enable_clusapi
-wine_fn_config_dll combase enable_combase
-wine_fn_config_test dlls/combase/tests
-wine_fn_config_dll comcat enable_comcat
-wine_fn_config_test dlls/comcat/tests
-wine_fn_config_dll comctl32 enable_comctl32
-wine_fn_config_test dlls/comctl32/tests
-wine_fn_config_dll comdlg32 enable_comdlg32
-wine_fn_config_test dlls/comdlg32/tests
-wine_fn_config_dll comm.drv16 enable_win16
-wine_fn_config_dll commdlg.dll16 enable_win16
-wine_fn_config_dll compobj.dll16 enable_win16
-wine_fn_config_dll compstui enable_compstui
-wine_fn_config_dll comsvcs enable_comsvcs
-wine_fn_config_dll concrt140 enable_concrt140
-wine_fn_config_dll connect enable_connect
-wine_fn_config_dll credui enable_credui
-wine_fn_config_test dlls/credui/tests
-wine_fn_config_dll crtdll enable_crtdll
-wine_fn_config_dll crypt32 enable_crypt32
-wine_fn_config_test dlls/crypt32/tests
-wine_fn_config_dll cryptdlg enable_cryptdlg
-wine_fn_config_dll cryptdll enable_cryptdll
-wine_fn_config_dll cryptext enable_cryptext
-wine_fn_config_dll cryptnet enable_cryptnet
-wine_fn_config_test dlls/cryptnet/tests
-wine_fn_config_dll cryptui enable_cryptui
-wine_fn_config_test dlls/cryptui/tests
-wine_fn_config_dll ctapi32 enable_ctapi32
-wine_fn_config_dll ctl3d.dll16 enable_win16
-wine_fn_config_dll ctl3d32 enable_ctl3d32
-wine_fn_config_dll ctl3dv2.dll16 enable_win16
-wine_fn_config_dll d2d1 enable_d2d1
-wine_fn_config_test dlls/d2d1/tests
-wine_fn_config_dll d3d10 enable_d3d10
-wine_fn_config_test dlls/d3d10/tests
-wine_fn_config_dll d3d10_1 enable_d3d10_1
-wine_fn_config_test dlls/d3d10_1/tests
-wine_fn_config_dll d3d10core enable_d3d10core
-wine_fn_config_test dlls/d3d10core/tests
-wine_fn_config_dll d3d11 enable_d3d11
-wine_fn_config_test dlls/d3d11/tests
-wine_fn_config_dll d3d12 enable_d3d12
-wine_fn_config_test dlls/d3d12/tests
-wine_fn_config_dll d3d8 enable_d3d8
-wine_fn_config_test dlls/d3d8/tests
-wine_fn_config_dll d3d9 enable_d3d9
-wine_fn_config_test dlls/d3d9/tests
-wine_fn_config_dll d3dcompiler_33 enable_d3dcompiler_33
-wine_fn_config_dll d3dcompiler_34 enable_d3dcompiler_34
-wine_fn_config_dll d3dcompiler_35 enable_d3dcompiler_35
-wine_fn_config_dll d3dcompiler_36 enable_d3dcompiler_36
-wine_fn_config_dll d3dcompiler_37 enable_d3dcompiler_37
-wine_fn_config_dll d3dcompiler_38 enable_d3dcompiler_38
-wine_fn_config_dll d3dcompiler_39 enable_d3dcompiler_39
-wine_fn_config_dll d3dcompiler_40 enable_d3dcompiler_40
-wine_fn_config_dll d3dcompiler_41 enable_d3dcompiler_41
-wine_fn_config_dll d3dcompiler_42 enable_d3dcompiler_42
-wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43
-wine_fn_config_test dlls/d3dcompiler_43/tests
-wine_fn_config_dll d3dcompiler_46 enable_d3dcompiler_46
-wine_fn_config_dll d3dcompiler_47 enable_d3dcompiler_47
-wine_fn_config_dll d3dim enable_d3dim
-wine_fn_config_dll d3drm enable_d3drm
-wine_fn_config_test dlls/d3drm/tests
-wine_fn_config_dll d3dx10_33 enable_d3dx10_33
-wine_fn_config_dll d3dx10_34 enable_d3dx10_34
-wine_fn_config_dll d3dx10_35 enable_d3dx10_35
-wine_fn_config_dll d3dx10_36 enable_d3dx10_36
-wine_fn_config_dll d3dx10_37 enable_d3dx10_37
-wine_fn_config_dll d3dx10_38 enable_d3dx10_38
-wine_fn_config_dll d3dx10_39 enable_d3dx10_39
-wine_fn_config_dll d3dx10_40 enable_d3dx10_40
-wine_fn_config_dll d3dx10_41 enable_d3dx10_41
-wine_fn_config_dll d3dx10_42 enable_d3dx10_42
-wine_fn_config_dll d3dx10_43 enable_d3dx10_43
-wine_fn_config_test dlls/d3dx10_43/tests
-wine_fn_config_dll d3dx11_42 enable_d3dx11_42
-wine_fn_config_dll d3dx11_43 enable_d3dx11_43
-wine_fn_config_test dlls/d3dx11_43/tests
-wine_fn_config_dll d3dx9_24 enable_d3dx9_24
-wine_fn_config_dll d3dx9_25 enable_d3dx9_25
-wine_fn_config_dll d3dx9_26 enable_d3dx9_26
-wine_fn_config_dll d3dx9_27 enable_d3dx9_27
-wine_fn_config_dll d3dx9_28 enable_d3dx9_28
-wine_fn_config_dll d3dx9_29 enable_d3dx9_29
-wine_fn_config_dll d3dx9_30 enable_d3dx9_30
-wine_fn_config_dll d3dx9_31 enable_d3dx9_31
-wine_fn_config_dll d3dx9_32 enable_d3dx9_32
-wine_fn_config_dll d3dx9_33 enable_d3dx9_33
-wine_fn_config_dll d3dx9_34 enable_d3dx9_34
-wine_fn_config_dll d3dx9_35 enable_d3dx9_35
-wine_fn_config_dll d3dx9_36 enable_d3dx9_36
-wine_fn_config_test dlls/d3dx9_36/tests
-wine_fn_config_dll d3dx9_37 enable_d3dx9_37
-wine_fn_config_dll d3dx9_38 enable_d3dx9_38
-wine_fn_config_dll d3dx9_39 enable_d3dx9_39
-wine_fn_config_dll d3dx9_40 enable_d3dx9_40
-wine_fn_config_dll d3dx9_41 enable_d3dx9_41
-wine_fn_config_dll d3dx9_42 enable_d3dx9_42
-wine_fn_config_dll d3dx9_43 enable_d3dx9_43
-wine_fn_config_dll d3dxof enable_d3dxof
-wine_fn_config_test dlls/d3dxof/tests
-wine_fn_config_dll davclnt enable_davclnt
-wine_fn_config_dll dbgeng enable_dbgeng
-wine_fn_config_dll dbghelp enable_dbghelp
-wine_fn_config_dll dciman32 enable_dciman32
-wine_fn_config_dll ddeml.dll16 enable_win16
-wine_fn_config_dll ddraw enable_ddraw
-wine_fn_config_test dlls/ddraw/tests
-wine_fn_config_dll ddrawex enable_ddrawex
-wine_fn_config_test dlls/ddrawex/tests
-wine_fn_config_dll devenum enable_devenum
-wine_fn_config_test dlls/devenum/tests
-wine_fn_config_dll dhcpcsvc enable_dhcpcsvc
-wine_fn_config_dll dhtmled.ocx enable_dhtmled_ocx
-wine_fn_config_dll difxapi enable_difxapi
-wine_fn_config_dll dinput enable_dinput
-wine_fn_config_test dlls/dinput/tests
-wine_fn_config_dll dinput8 enable_dinput8
-wine_fn_config_test dlls/dinput8/tests
-wine_fn_config_dll dispdib.dll16 enable_win16
-wine_fn_config_dll dispex enable_dispex
-wine_fn_config_test dlls/dispex/tests
-wine_fn_config_dll display.drv16 enable_win16
-wine_fn_config_dll dmband enable_dmband
-wine_fn_config_test dlls/dmband/tests
-wine_fn_config_dll dmcompos enable_dmcompos
-wine_fn_config_test dlls/dmcompos/tests
-wine_fn_config_dll dmime enable_dmime
-wine_fn_config_test dlls/dmime/tests
-wine_fn_config_dll dmloader enable_dmloader
-wine_fn_config_test dlls/dmloader/tests
-wine_fn_config_dll dmscript enable_dmscript
-wine_fn_config_test dlls/dmscript/tests
-wine_fn_config_dll dmstyle enable_dmstyle
-wine_fn_config_test dlls/dmstyle/tests
-wine_fn_config_dll dmsynth enable_dmsynth
-wine_fn_config_test dlls/dmsynth/tests
-wine_fn_config_dll dmusic enable_dmusic
-wine_fn_config_test dlls/dmusic/tests
-wine_fn_config_dll dmusic32 enable_dmusic32
-wine_fn_config_dll dnsapi enable_dnsapi
-wine_fn_config_test dlls/dnsapi/tests
-wine_fn_config_dll dplay enable_dplay
-wine_fn_config_dll dplayx enable_dplayx
-wine_fn_config_test dlls/dplayx/tests
-wine_fn_config_dll dpnaddr enable_dpnaddr
-wine_fn_config_dll dpnet enable_dpnet
-wine_fn_config_test dlls/dpnet/tests
-wine_fn_config_dll dpnhpast enable_dpnhpast
-wine_fn_config_dll dpnlobby enable_dpnlobby
-wine_fn_config_dll dpvoice enable_dpvoice
-wine_fn_config_test dlls/dpvoice/tests
-wine_fn_config_dll dpwsockx enable_dpwsockx
-wine_fn_config_dll drmclien enable_drmclien
-wine_fn_config_dll dsound enable_dsound
-wine_fn_config_test dlls/dsound/tests
-wine_fn_config_dll dsquery enable_dsquery
-wine_fn_config_dll dssenh enable_dssenh
-wine_fn_config_test dlls/dssenh/tests
-wine_fn_config_dll dswave enable_dswave
-wine_fn_config_test dlls/dswave/tests
-wine_fn_config_dll dwmapi enable_dwmapi
-wine_fn_config_dll dwrite enable_dwrite
-wine_fn_config_test dlls/dwrite/tests
-wine_fn_config_dll dx8vb enable_dx8vb
-wine_fn_config_dll dxdiagn enable_dxdiagn
-wine_fn_config_test dlls/dxdiagn/tests
-wine_fn_config_lib dxerr8
-wine_fn_config_lib dxerr9
-wine_fn_config_dll dxgi enable_dxgi
-wine_fn_config_test dlls/dxgi/tests
-wine_fn_config_lib dxguid
-wine_fn_config_dll dxva2 enable_dxva2
-wine_fn_config_dll esent enable_esent
-wine_fn_config_dll evr enable_evr
-wine_fn_config_test dlls/evr/tests
-wine_fn_config_dll explorerframe enable_explorerframe
-wine_fn_config_test dlls/explorerframe/tests
-wine_fn_config_dll ext-ms-win-authz-context-l1-1-0 enable_ext_ms_win_authz_context_l1_1_0
-wine_fn_config_dll ext-ms-win-domainjoin-netjoin-l1-1-0 enable_ext_ms_win_domainjoin_netjoin_l1_1_0
-wine_fn_config_dll ext-ms-win-gdi-dc-create-l1-1-1 enable_ext_ms_win_gdi_dc_create_l1_1_1
-wine_fn_config_dll ext-ms-win-gdi-dc-l1-2-0 enable_ext_ms_win_gdi_dc_l1_2_0
-wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
-wine_fn_config_dll ext-ms-win-gdi-draw-l1-1-1 enable_ext_ms_win_gdi_draw_l1_1_1
-wine_fn_config_dll ext-ms-win-gdi-render-l1-1-0 enable_ext_ms_win_gdi_render_l1_1_0
-wine_fn_config_dll ext-ms-win-kernel32-package-current-l1-1-0 enable_ext_ms_win_kernel32_package_current_l1_1_0
-wine_fn_config_dll ext-ms-win-kernel32-package-l1-1-1 enable_ext_ms_win_kernel32_package_l1_1_1
-wine_fn_config_dll ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
-wine_fn_config_dll ext-ms-win-ntuser-private-l1-1-1 enable_ext_ms_win_ntuser_private_l1_1_1
-wine_fn_config_dll ext-ms-win-ntuser-rectangle-ext-l1-1-0 enable_ext_ms_win_ntuser_rectangle_ext_l1_1_0
-wine_fn_config_dll ext-ms-win-ntuser-uicontext-ext-l1-1-0 enable_ext_ms_win_ntuser_uicontext_ext_l1_1_0
-wine_fn_config_dll ext-ms-win-ntuser-window-l1-1-1 enable_ext_ms_win_ntuser_window_l1_1_1
-wine_fn_config_dll ext-ms-win-ntuser-windowclass-l1-1-1 enable_ext_ms_win_ntuser_windowclass_l1_1_1
-wine_fn_config_dll ext-ms-win-ras-rasapi32-l1-1-0 enable_ext_ms_win_ras_rasapi32_l1_1_0
-wine_fn_config_dll ext-ms-win-rtcore-gdi-object-l1-1-0 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
-wine_fn_config_dll ext-ms-win-rtcore-gdi-rgn-l1-1-0 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
-wine_fn_config_dll ext-ms-win-rtcore-ntuser-dc-access-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
-wine_fn_config_dll ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
-wine_fn_config_dll ext-ms-win-rtcore-ntuser-sysparams-l1-1-0 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
-wine_fn_config_dll ext-ms-win-security-credui-l1-1-0 enable_ext_ms_win_security_credui_l1_1_0
-wine_fn_config_dll ext-ms-win-security-cryptui-l1-1-0 enable_ext_ms_win_security_cryptui_l1_1_0
-wine_fn_config_dll faultrep enable_faultrep
-wine_fn_config_test dlls/faultrep/tests
-wine_fn_config_dll fltlib enable_fltlib
-wine_fn_config_dll fltmgr.sys enable_fltmgr_sys
-wine_fn_config_dll fntcache enable_fntcache
-wine_fn_config_dll fontsub enable_fontsub
-wine_fn_config_dll fusion enable_fusion
-wine_fn_config_test dlls/fusion/tests
-wine_fn_config_dll fwpuclnt enable_fwpuclnt
-wine_fn_config_dll gameux enable_gameux
-wine_fn_config_test dlls/gameux/tests
-wine_fn_config_dll gdi.exe16 enable_win16
-wine_fn_config_dll gdi32 enable_gdi32
-wine_fn_config_test dlls/gdi32/tests
-wine_fn_config_dll gdiplus enable_gdiplus
-wine_fn_config_test dlls/gdiplus/tests
-wine_fn_config_dll glu32 enable_glu32
-wine_fn_config_dll gphoto2.ds enable_gphoto2_ds
-wine_fn_config_dll gpkcsp enable_gpkcsp
-wine_fn_config_dll hal enable_hal
-wine_fn_config_dll hhctrl.ocx enable_hhctrl_ocx
-wine_fn_config_dll hid enable_hid
-wine_fn_config_test dlls/hid/tests
-wine_fn_config_dll hidclass.sys enable_hidclass_sys
-wine_fn_config_dll hlink enable_hlink
-wine_fn_config_test dlls/hlink/tests
-wine_fn_config_dll hnetcfg enable_hnetcfg
-wine_fn_config_test dlls/hnetcfg/tests
-wine_fn_config_dll httpapi enable_httpapi
-wine_fn_config_test dlls/httpapi/tests
-wine_fn_config_dll iccvid enable_iccvid
-wine_fn_config_dll icmp enable_icmp
-wine_fn_config_dll ieframe enable_ieframe
-wine_fn_config_test dlls/ieframe/tests
-wine_fn_config_dll ieproxy enable_ieproxy
-wine_fn_config_dll ifsmgr.vxd enable_win16
-wine_fn_config_dll imaadp32.acm enable_imaadp32_acm
-wine_fn_config_dll imagehlp enable_imagehlp
-wine_fn_config_test dlls/imagehlp/tests
-wine_fn_config_dll imm.dll16 enable_win16
-wine_fn_config_dll imm32 enable_imm32
-wine_fn_config_test dlls/imm32/tests
-wine_fn_config_dll inetcomm enable_inetcomm
-wine_fn_config_test dlls/inetcomm/tests
-wine_fn_config_dll inetcpl.cpl enable_inetcpl_cpl
-wine_fn_config_dll inetmib1 enable_inetmib1
-wine_fn_config_test dlls/inetmib1/tests
-wine_fn_config_dll infosoft enable_infosoft
-wine_fn_config_test dlls/infosoft/tests
-wine_fn_config_dll initpki enable_initpki
-wine_fn_config_dll inkobj enable_inkobj
-wine_fn_config_dll inseng enable_inseng
-wine_fn_config_dll iphlpapi enable_iphlpapi
-wine_fn_config_test dlls/iphlpapi/tests
-wine_fn_config_dll iprop enable_iprop
-wine_fn_config_dll irprops.cpl enable_irprops_cpl
-wine_fn_config_dll itircl enable_itircl
-wine_fn_config_dll itss enable_itss
-wine_fn_config_test dlls/itss/tests
-wine_fn_config_dll joy.cpl enable_joy_cpl
-wine_fn_config_dll jscript enable_jscript
-wine_fn_config_test dlls/jscript/tests
-wine_fn_config_dll jsproxy enable_jsproxy
-wine_fn_config_test dlls/jsproxy/tests
-wine_fn_config_dll kerberos enable_kerberos
-wine_fn_config_dll kernel32 enable_kernel32
-wine_fn_config_test dlls/kernel32/tests
-wine_fn_config_dll kernelbase enable_kernelbase
-wine_fn_config_test dlls/kernelbase/tests
-wine_fn_config_dll keyboard.drv16 enable_win16
-wine_fn_config_dll krnl386.exe16 enable_win16
-wine_fn_config_dll ksuser enable_ksuser
-wine_fn_config_dll ktmw32 enable_ktmw32
-wine_fn_config_dll l3codeca.acm enable_l3codeca_acm
-wine_fn_config_dll loadperf enable_loadperf
-wine_fn_config_dll localspl enable_localspl
-wine_fn_config_test dlls/localspl/tests
-wine_fn_config_dll localui enable_localui
-wine_fn_config_test dlls/localui/tests
-wine_fn_config_dll lz32 enable_lz32
-wine_fn_config_test dlls/lz32/tests
-wine_fn_config_dll lzexpand.dll16 enable_win16
-wine_fn_config_dll mapi32 enable_mapi32
-wine_fn_config_test dlls/mapi32/tests
-wine_fn_config_dll mapistub enable_mapistub
-wine_fn_config_dll mciavi32 enable_mciavi32
-wine_fn_config_dll mcicda enable_mcicda
-wine_fn_config_dll mciqtz32 enable_mciqtz32
-wine_fn_config_dll mciseq enable_mciseq
-wine_fn_config_dll mciwave enable_mciwave
-wine_fn_config_dll mf enable_mf
-wine_fn_config_test dlls/mf/tests
-wine_fn_config_dll mf3216 enable_mf3216
-wine_fn_config_dll mfplat enable_mfplat
-wine_fn_config_test dlls/mfplat/tests
-wine_fn_config_dll mfreadwrite enable_mfreadwrite
-wine_fn_config_lib mfuuid
-wine_fn_config_dll mgmtapi enable_mgmtapi
-wine_fn_config_dll midimap enable_midimap
-wine_fn_config_dll mlang enable_mlang
-wine_fn_config_test dlls/mlang/tests
-wine_fn_config_dll mmcndmgr enable_mmcndmgr
-wine_fn_config_test dlls/mmcndmgr/tests
-wine_fn_config_dll mmdevapi enable_mmdevapi
-wine_fn_config_test dlls/mmdevapi/tests
-wine_fn_config_dll mmdevldr.vxd enable_win16
-wine_fn_config_dll mmsystem.dll16 enable_win16
-wine_fn_config_dll monodebg.vxd enable_win16
-wine_fn_config_dll mountmgr.sys enable_mountmgr_sys
-wine_fn_config_dll mouse.drv16 enable_win16
-wine_fn_config_dll mpr enable_mpr
-wine_fn_config_test dlls/mpr/tests
-wine_fn_config_dll mprapi enable_mprapi
-wine_fn_config_dll msacm.dll16 enable_win16
-wine_fn_config_dll msacm32.drv enable_msacm32_drv
-wine_fn_config_dll msacm32 enable_msacm32
-wine_fn_config_test dlls/msacm32/tests
-wine_fn_config_dll msadp32.acm enable_msadp32_acm
-wine_fn_config_dll msasn1 enable_msasn1
-wine_fn_config_dll mscat32 enable_mscat32
-wine_fn_config_dll mscms enable_mscms
-wine_fn_config_test dlls/mscms/tests
-wine_fn_config_dll mscoree enable_mscoree
-wine_fn_config_test dlls/mscoree/tests
-wine_fn_config_dll msctf enable_msctf
-wine_fn_config_test dlls/msctf/tests
-wine_fn_config_dll msctfp enable_msctfp
-wine_fn_config_dll msdaps enable_msdaps
-wine_fn_config_dll msdelta enable_msdelta
-wine_fn_config_dll msdmo enable_msdmo
-wine_fn_config_test dlls/msdmo/tests
-wine_fn_config_dll msdrm enable_msdrm
-wine_fn_config_dll msftedit enable_msftedit
-wine_fn_config_dll msg711.acm enable_msg711_acm
-wine_fn_config_dll msgsm32.acm enable_msgsm32_acm
-wine_fn_config_dll mshtml.tlb enable_mshtml_tlb
-wine_fn_config_dll mshtml enable_mshtml
-wine_fn_config_test dlls/mshtml/tests
-wine_fn_config_dll msi enable_msi
-wine_fn_config_test dlls/msi/tests
-wine_fn_config_dll msident enable_msident
-wine_fn_config_dll msimg32 enable_msimg32
-wine_fn_config_dll msimsg enable_msimsg
-wine_fn_config_dll msimtf enable_msimtf
-wine_fn_config_dll msisip enable_msisip
-wine_fn_config_dll msisys.ocx enable_msisys_ocx
-wine_fn_config_dll msls31 enable_msls31
-wine_fn_config_dll msnet32 enable_msnet32
-wine_fn_config_dll mspatcha enable_mspatcha
-wine_fn_config_dll msports enable_msports
-wine_fn_config_dll msrle32 enable_msrle32
-wine_fn_config_test dlls/msrle32/tests
-wine_fn_config_dll msscript.ocx enable_msscript_ocx
-wine_fn_config_test dlls/msscript.ocx/tests
-wine_fn_config_dll mssign32 enable_mssign32
-wine_fn_config_dll mssip32 enable_mssip32
-wine_fn_config_dll mstask enable_mstask
-wine_fn_config_test dlls/mstask/tests
-wine_fn_config_dll msvcirt enable_msvcirt
-wine_fn_config_test dlls/msvcirt/tests
-wine_fn_config_dll msvcm80 enable_msvcm80
-wine_fn_config_dll msvcm90 enable_msvcm90
-wine_fn_config_dll msvcp100 enable_msvcp100
-wine_fn_config_test dlls/msvcp100/tests
-wine_fn_config_dll msvcp110 enable_msvcp110
-wine_fn_config_test dlls/msvcp110/tests
-wine_fn_config_dll msvcp120 enable_msvcp120
-wine_fn_config_test dlls/msvcp120/tests
-wine_fn_config_dll msvcp120_app enable_msvcp120_app
-wine_fn_config_dll msvcp140 enable_msvcp140
-wine_fn_config_test dlls/msvcp140/tests
-wine_fn_config_dll msvcp60 enable_msvcp60
-wine_fn_config_test dlls/msvcp60/tests
-wine_fn_config_dll msvcp70 enable_msvcp70
-wine_fn_config_dll msvcp71 enable_msvcp71
-wine_fn_config_dll msvcp80 enable_msvcp80
-wine_fn_config_dll msvcp90 enable_msvcp90
-wine_fn_config_test dlls/msvcp90/tests
-wine_fn_config_dll msvcr100 enable_msvcr100
-wine_fn_config_test dlls/msvcr100/tests
-wine_fn_config_dll msvcr110 enable_msvcr110
-wine_fn_config_dll msvcr120 enable_msvcr120
-wine_fn_config_test dlls/msvcr120/tests
-wine_fn_config_dll msvcr120_app enable_msvcr120_app
-wine_fn_config_dll msvcr70 enable_msvcr70
-wine_fn_config_dll msvcr71 enable_msvcr71
-wine_fn_config_dll msvcr80 enable_msvcr80
-wine_fn_config_dll msvcr90 enable_msvcr90
-wine_fn_config_test dlls/msvcr90/tests
-wine_fn_config_dll msvcrt enable_msvcrt
-wine_fn_config_test dlls/msvcrt/tests
-wine_fn_config_dll msvcrt20 enable_msvcrt20
-wine_fn_config_dll msvcrt40 enable_msvcrt40
-wine_fn_config_dll msvcrtd enable_msvcrtd
-wine_fn_config_test dlls/msvcrtd/tests
-wine_fn_config_dll msvfw32 enable_msvfw32
-wine_fn_config_test dlls/msvfw32/tests
-wine_fn_config_dll msvidc32 enable_msvidc32
-wine_fn_config_dll msvideo.dll16 enable_win16
-wine_fn_config_dll mswsock enable_mswsock
-wine_fn_config_dll msxml enable_msxml
-wine_fn_config_dll msxml2 enable_msxml2
-wine_fn_config_dll msxml3 enable_msxml3
-wine_fn_config_test dlls/msxml3/tests
-wine_fn_config_dll msxml4 enable_msxml4
-wine_fn_config_dll msxml6 enable_msxml6
-wine_fn_config_dll mtxdm enable_mtxdm
-wine_fn_config_dll ncrypt enable_ncrypt
-wine_fn_config_dll nddeapi enable_nddeapi
-wine_fn_config_dll ndis.sys enable_ndis_sys
-wine_fn_config_dll netapi32 enable_netapi32
-wine_fn_config_test dlls/netapi32/tests
-wine_fn_config_dll netcfgx enable_netcfgx
-wine_fn_config_test dlls/netcfgx/tests
-wine_fn_config_dll netprofm enable_netprofm
-wine_fn_config_test dlls/netprofm/tests
-wine_fn_config_dll newdev enable_newdev
-wine_fn_config_dll normaliz enable_normaliz
-wine_fn_config_dll npmshtml enable_npmshtml
-wine_fn_config_dll npptools enable_npptools
-wine_fn_config_dll ntdll enable_ntdll
-wine_fn_config_test dlls/ntdll/tests
-wine_fn_config_dll ntdsapi enable_ntdsapi
-wine_fn_config_test dlls/ntdsapi/tests
-wine_fn_config_dll ntoskrnl.exe enable_ntoskrnl_exe
-wine_fn_config_dll ntprint enable_ntprint
-wine_fn_config_test dlls/ntprint/tests
-wine_fn_config_dll objsel enable_objsel
-wine_fn_config_dll odbc32 enable_odbc32
-wine_fn_config_dll odbccp32 enable_odbccp32
-wine_fn_config_test dlls/odbccp32/tests
-wine_fn_config_dll odbccu32 enable_odbccu32
-wine_fn_config_dll ole2.dll16 enable_win16
-wine_fn_config_dll ole2conv.dll16 enable_win16
-wine_fn_config_dll ole2disp.dll16 enable_win16
-wine_fn_config_dll ole2nls.dll16 enable_win16
-wine_fn_config_dll ole2prox.dll16 enable_win16
-wine_fn_config_dll ole2thk.dll16 enable_win16
-wine_fn_config_dll ole32 enable_ole32
-wine_fn_config_test dlls/ole32/tests
-wine_fn_config_dll oleacc enable_oleacc
-wine_fn_config_test dlls/oleacc/tests
-wine_fn_config_dll oleaut32 enable_oleaut32
-wine_fn_config_test dlls/oleaut32/tests
-wine_fn_config_dll olecli.dll16 enable_win16
-wine_fn_config_dll olecli32 enable_olecli32
-wine_fn_config_dll oledb32 enable_oledb32
-wine_fn_config_test dlls/oledb32/tests
-wine_fn_config_dll oledlg enable_oledlg
-wine_fn_config_test dlls/oledlg/tests
-wine_fn_config_dll olepro32 enable_olepro32
-wine_fn_config_dll olesvr.dll16 enable_win16
-wine_fn_config_dll olesvr32 enable_olesvr32
-wine_fn_config_dll olethk32 enable_olethk32
-wine_fn_config_dll openal32 enable_openal32
-wine_fn_config_dll opencl enable_opencl
-wine_fn_config_dll opengl32 enable_opengl32
-wine_fn_config_test dlls/opengl32/tests
-wine_fn_config_dll packager enable_packager
-wine_fn_config_test dlls/packager/tests
-wine_fn_config_dll pdh enable_pdh
-wine_fn_config_test dlls/pdh/tests
-wine_fn_config_dll photometadatahandler enable_photometadatahandler
-wine_fn_config_dll pidgen enable_pidgen
-wine_fn_config_dll powrprof enable_powrprof
-wine_fn_config_dll printui enable_printui
-wine_fn_config_dll prntvpt enable_prntvpt
-wine_fn_config_dll propsys enable_propsys
-wine_fn_config_test dlls/propsys/tests
-wine_fn_config_dll psapi enable_psapi
-wine_fn_config_test dlls/psapi/tests
-wine_fn_config_dll pstorec enable_pstorec
-wine_fn_config_test dlls/pstorec/tests
-wine_fn_config_dll qcap enable_qcap
-wine_fn_config_test dlls/qcap/tests
-wine_fn_config_dll qedit enable_qedit
-wine_fn_config_test dlls/qedit/tests
-wine_fn_config_dll qmgr enable_qmgr
-wine_fn_config_test dlls/qmgr/tests
-wine_fn_config_dll qmgrprxy enable_qmgrprxy
-wine_fn_config_dll quartz enable_quartz
-wine_fn_config_test dlls/quartz/tests
-wine_fn_config_dll query enable_query
-wine_fn_config_dll rasapi16.dll16 enable_win16
-wine_fn_config_dll rasapi32 enable_rasapi32
-wine_fn_config_test dlls/rasapi32/tests
-wine_fn_config_dll rasdlg enable_rasdlg
-wine_fn_config_dll regapi enable_regapi
-wine_fn_config_dll resutils enable_resutils
-wine_fn_config_dll riched20 enable_riched20
-wine_fn_config_test dlls/riched20/tests
-wine_fn_config_dll riched32 enable_riched32
-wine_fn_config_test dlls/riched32/tests
-wine_fn_config_dll rpcrt4 enable_rpcrt4
-wine_fn_config_test dlls/rpcrt4/tests
-wine_fn_config_dll rsabase enable_rsabase
-wine_fn_config_dll rsaenh enable_rsaenh
-wine_fn_config_test dlls/rsaenh/tests
-wine_fn_config_dll rstrtmgr enable_rstrtmgr
-wine_fn_config_dll rtutils enable_rtutils
-wine_fn_config_dll samlib enable_samlib
-wine_fn_config_dll sane.ds enable_sane_ds
-wine_fn_config_dll sapi enable_sapi
-wine_fn_config_test dlls/sapi/tests
-wine_fn_config_dll scarddlg enable_scarddlg
-wine_fn_config_dll sccbase enable_sccbase
-wine_fn_config_dll schannel enable_schannel
-wine_fn_config_test dlls/schannel/tests
-wine_fn_config_dll schedsvc enable_schedsvc
-wine_fn_config_test dlls/schedsvc/tests
-wine_fn_config_dll scrobj enable_scrobj
-wine_fn_config_dll scrrun enable_scrrun
-wine_fn_config_test dlls/scrrun/tests
-wine_fn_config_dll scsiport.sys enable_scsiport_sys
-wine_fn_config_dll secur32 enable_secur32
-wine_fn_config_test dlls/secur32/tests
-wine_fn_config_dll security enable_security
-wine_fn_config_dll sensapi enable_sensapi
-wine_fn_config_dll serialui enable_serialui
-wine_fn_config_test dlls/serialui/tests
-wine_fn_config_dll setupapi enable_setupapi
-wine_fn_config_test dlls/setupapi/tests
-wine_fn_config_dll setupx.dll16 enable_win16
-wine_fn_config_dll sfc enable_sfc
-wine_fn_config_dll sfc_os enable_sfc_os
-wine_fn_config_dll shcore enable_shcore
-wine_fn_config_dll shdoclc enable_shdoclc
-wine_fn_config_dll shdocvw enable_shdocvw
-wine_fn_config_test dlls/shdocvw/tests
-wine_fn_config_dll shell.dll16 enable_win16
-wine_fn_config_dll shell32 enable_shell32
-wine_fn_config_test dlls/shell32/tests
-wine_fn_config_dll shfolder enable_shfolder
-wine_fn_config_dll shlwapi enable_shlwapi
-wine_fn_config_test dlls/shlwapi/tests
-wine_fn_config_dll slbcsp enable_slbcsp
-wine_fn_config_dll slc enable_slc
-wine_fn_config_test dlls/slc/tests
-wine_fn_config_dll snmpapi enable_snmpapi
-wine_fn_config_test dlls/snmpapi/tests
-wine_fn_config_dll softpub enable_softpub
-wine_fn_config_dll sound.drv16 enable_win16
-wine_fn_config_dll spoolss enable_spoolss
-wine_fn_config_test dlls/spoolss/tests
-wine_fn_config_dll sspicli enable_sspicli
-wine_fn_config_dll stdole2.tlb enable_stdole2_tlb
-wine_fn_config_dll stdole32.tlb enable_stdole32_tlb
-wine_fn_config_dll sti enable_sti
-wine_fn_config_test dlls/sti/tests
-wine_fn_config_dll storage.dll16 enable_win16
-wine_fn_config_dll stress.dll16 enable_win16
-wine_fn_config_lib strmbase
-wine_fn_config_lib strmiids
-wine_fn_config_dll svrapi enable_svrapi
-wine_fn_config_dll sxs enable_sxs
-wine_fn_config_test dlls/sxs/tests
-wine_fn_config_dll system.drv16 enable_win16
-wine_fn_config_dll t2embed enable_t2embed
-wine_fn_config_test dlls/t2embed/tests
-wine_fn_config_dll tapi32 enable_tapi32
-wine_fn_config_dll taskschd enable_taskschd
-wine_fn_config_test dlls/taskschd/tests
-wine_fn_config_dll tdh enable_tdh
-wine_fn_config_dll tdi.sys enable_tdi_sys
-wine_fn_config_dll toolhelp.dll16 enable_win16
-wine_fn_config_dll traffic enable_traffic
-wine_fn_config_dll twain.dll16 enable_win16
-wine_fn_config_dll twain_32 enable_twain_32
-wine_fn_config_test dlls/twain_32/tests
-wine_fn_config_dll typelib.dll16 enable_win16
-wine_fn_config_dll ucrtbase enable_ucrtbase
-wine_fn_config_test dlls/ucrtbase/tests
-wine_fn_config_dll uiautomationcore enable_uiautomationcore
-wine_fn_config_dll uiribbon enable_uiribbon
-wine_fn_config_dll unicows enable_unicows
-wine_fn_config_dll updspapi enable_updspapi
-wine_fn_config_dll url enable_url
-wine_fn_config_dll urlmon enable_urlmon
-wine_fn_config_test dlls/urlmon/tests
-wine_fn_config_dll usbd.sys enable_usbd_sys
-wine_fn_config_dll user.exe16 enable_win16
-wine_fn_config_dll user32 enable_user32
-wine_fn_config_test dlls/user32/tests
-wine_fn_config_dll userenv enable_userenv
-wine_fn_config_test dlls/userenv/tests
-wine_fn_config_dll usp10 enable_usp10
-wine_fn_config_test dlls/usp10/tests
-wine_fn_config_lib uuid
-wine_fn_config_dll uxtheme enable_uxtheme
-wine_fn_config_test dlls/uxtheme/tests
-wine_fn_config_dll vbscript enable_vbscript
-wine_fn_config_test dlls/vbscript/tests
-wine_fn_config_dll vcomp enable_vcomp
-wine_fn_config_test dlls/vcomp/tests
-wine_fn_config_dll vcomp100 enable_vcomp100
-wine_fn_config_dll vcomp110 enable_vcomp110
-wine_fn_config_dll vcomp120 enable_vcomp120
-wine_fn_config_dll vcomp140 enable_vcomp140
-wine_fn_config_dll vcomp90 enable_vcomp90
-wine_fn_config_dll vcruntime140 enable_vcruntime140
-wine_fn_config_dll vdhcp.vxd enable_win16
-wine_fn_config_dll vdmdbg enable_vdmdbg
-wine_fn_config_dll ver.dll16 enable_win16
-wine_fn_config_dll version enable_version
-wine_fn_config_test dlls/version/tests
-wine_fn_config_dll virtdisk enable_virtdisk
-wine_fn_config_dll vmm.vxd enable_win16
-wine_fn_config_dll vnbt.vxd enable_win16
-wine_fn_config_dll vnetbios.vxd enable_win16
-wine_fn_config_dll vssapi enable_vssapi
-wine_fn_config_dll vtdapi.vxd enable_win16
-wine_fn_config_dll vwin32.vxd enable_win16
-wine_fn_config_dll w32skrnl enable_win16
-wine_fn_config_dll w32sys.dll16 enable_win16
-wine_fn_config_dll wbemdisp enable_wbemdisp
-wine_fn_config_test dlls/wbemdisp/tests
-wine_fn_config_dll wbemprox enable_wbemprox
-wine_fn_config_test dlls/wbemprox/tests
-wine_fn_config_dll wdscore enable_wdscore
-wine_fn_config_dll webservices enable_webservices
-wine_fn_config_test dlls/webservices/tests
-wine_fn_config_dll wer enable_wer
-wine_fn_config_test dlls/wer/tests
-wine_fn_config_dll wevtapi enable_wevtapi
-wine_fn_config_dll wiaservc enable_wiaservc
-wine_fn_config_test dlls/wiaservc/tests
-wine_fn_config_dll wimgapi enable_wimgapi
-wine_fn_config_dll win32s16.dll16 enable_win16
-wine_fn_config_dll win87em.dll16 enable_win16
-wine_fn_config_dll winaspi.dll16 enable_win16
-wine_fn_config_dll windebug.dll16 enable_win16
-wine_fn_config_dll windowscodecs enable_windowscodecs
-wine_fn_config_test dlls/windowscodecs/tests
-wine_fn_config_dll windowscodecsext enable_windowscodecsext
-wine_fn_config_test dlls/windowscodecsext/tests
-wine_fn_config_dll winealsa.drv enable_winealsa_drv
-wine_fn_config_dll wineandroid.drv enable_wineandroid_drv
-wine_fn_config_dll winebus.sys enable_winebus_sys
-wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
-wine_fn_config_lib winecrt0
-wine_fn_config_dll wined3d enable_wined3d
-wine_fn_config_dll winegstreamer enable_winegstreamer
-wine_fn_config_dll winehid.sys enable_winehid_sys
-wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
-wine_fn_config_dll winemac.drv enable_winemac_drv
-wine_fn_config_dll winemapi enable_winemapi
-wine_fn_config_dll wineoss.drv enable_wineoss_drv
-wine_fn_config_dll wineps.drv enable_wineps_drv
-wine_fn_config_dll wineps16.drv16 enable_win16
-wine_fn_config_dll winepulse.drv enable_winepulse_drv
-wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
-wine_fn_config_dll winevulkan enable_winevulkan
-wine_fn_config_dll winex11.drv enable_winex11_drv
-wine_fn_config_dll wing.dll16 enable_win16
-wine_fn_config_dll wing32 enable_wing32
-wine_fn_config_dll winhttp enable_winhttp
-wine_fn_config_test dlls/winhttp/tests
-wine_fn_config_dll wininet enable_wininet
-wine_fn_config_test dlls/wininet/tests
-wine_fn_config_dll winmm enable_winmm
-wine_fn_config_test dlls/winmm/tests
-wine_fn_config_dll winnls.dll16 enable_win16
-wine_fn_config_dll winnls32 enable_winnls32
-wine_fn_config_dll winscard enable_winscard
-wine_fn_config_dll winsock.dll16 enable_win16
-wine_fn_config_dll winspool.drv enable_winspool_drv
-wine_fn_config_test dlls/winspool.drv/tests
-wine_fn_config_dll winsta enable_winsta
-wine_fn_config_dll wintab.dll16 enable_win16
-wine_fn_config_dll wintab32 enable_wintab32
-wine_fn_config_test dlls/wintab32/tests
-wine_fn_config_dll wintrust enable_wintrust
-wine_fn_config_test dlls/wintrust/tests
-wine_fn_config_dll winusb enable_winusb
-wine_fn_config_dll wlanapi enable_wlanapi
-wine_fn_config_test dlls/wlanapi/tests
-wine_fn_config_dll wldap32 enable_wldap32
-wine_fn_config_test dlls/wldap32/tests
-wine_fn_config_dll wmasf enable_wmasf
-wine_fn_config_dll wmi enable_wmi
-wine_fn_config_dll wmiutils enable_wmiutils
-wine_fn_config_test dlls/wmiutils/tests
-wine_fn_config_dll wmp enable_wmp
-wine_fn_config_test dlls/wmp/tests
-wine_fn_config_dll wmphoto enable_wmphoto
-wine_fn_config_dll wmvcore enable_wmvcore
-wine_fn_config_test dlls/wmvcore/tests
-wine_fn_config_dll wnaspi32 enable_wnaspi32
-wine_fn_config_dll wow32 enable_win16
-wine_fn_config_dll wpc enable_wpc
-wine_fn_config_test dlls/wpc/tests
-wine_fn_config_dll wpcap enable_wpcap
-wine_fn_config_dll ws2_32 enable_ws2_32
-wine_fn_config_test dlls/ws2_32/tests
-wine_fn_config_dll wsdapi enable_wsdapi
-wine_fn_config_test dlls/wsdapi/tests
-wine_fn_config_dll wshom.ocx enable_wshom_ocx
-wine_fn_config_test dlls/wshom.ocx/tests
-wine_fn_config_dll wsnmp32 enable_wsnmp32
-wine_fn_config_test dlls/wsnmp32/tests
-wine_fn_config_dll wsock32 enable_wsock32
-wine_fn_config_dll wtsapi32 enable_wtsapi32
-wine_fn_config_test dlls/wtsapi32/tests
-wine_fn_config_dll wuapi enable_wuapi
-wine_fn_config_dll wuaueng enable_wuaueng
-wine_fn_config_dll x3daudio1_0 enable_x3daudio1_0
-wine_fn_config_dll x3daudio1_1 enable_x3daudio1_1
-wine_fn_config_dll x3daudio1_2 enable_x3daudio1_2
-wine_fn_config_dll x3daudio1_3 enable_x3daudio1_3
-wine_fn_config_dll x3daudio1_4 enable_x3daudio1_4
-wine_fn_config_dll x3daudio1_5 enable_x3daudio1_5
-wine_fn_config_dll x3daudio1_6 enable_x3daudio1_6
-wine_fn_config_dll x3daudio1_7 enable_x3daudio1_7
-wine_fn_config_dll xapofx1_1 enable_xapofx1_1
-wine_fn_config_dll xapofx1_2 enable_xapofx1_2
-wine_fn_config_dll xapofx1_3 enable_xapofx1_3
-wine_fn_config_dll xapofx1_4 enable_xapofx1_4
-wine_fn_config_dll xapofx1_5 enable_xapofx1_5
-wine_fn_config_dll xaudio2_0 enable_xaudio2_0
-wine_fn_config_dll xaudio2_1 enable_xaudio2_1
-wine_fn_config_dll xaudio2_2 enable_xaudio2_2
-wine_fn_config_dll xaudio2_3 enable_xaudio2_3
-wine_fn_config_dll xaudio2_4 enable_xaudio2_4
-wine_fn_config_dll xaudio2_5 enable_xaudio2_5
-wine_fn_config_dll xaudio2_6 enable_xaudio2_6
-wine_fn_config_dll xaudio2_7 enable_xaudio2_7
-wine_fn_config_test dlls/xaudio2_7/tests
-wine_fn_config_dll xaudio2_8 enable_xaudio2_8
-wine_fn_config_dll xaudio2_9 enable_xaudio2_9
-wine_fn_config_dll xinput1_1 enable_xinput1_1
-wine_fn_config_dll xinput1_2 enable_xinput1_2
-wine_fn_config_dll xinput1_3 enable_xinput1_3
-wine_fn_config_test dlls/xinput1_3/tests
-wine_fn_config_dll xinput1_4 enable_xinput1_4
-wine_fn_config_dll xinput9_1_0 enable_xinput9_1_0
-wine_fn_config_dll xmllite enable_xmllite
-wine_fn_config_test dlls/xmllite/tests
-wine_fn_config_dll xolehlp enable_xolehlp
-wine_fn_config_dll xpsprint enable_xpsprint
-wine_fn_config_dll xpssvcs enable_xpssvcs
-wine_fn_config_makefile fonts enable_fonts
+wine_fn_config_makefile dlls/acledit enable_acledit
+wine_fn_config_makefile dlls/aclui enable_aclui
+wine_fn_config_makefile dlls/activeds enable_activeds
+wine_fn_config_makefile dlls/actxprxy enable_actxprxy
+wine_fn_config_makefile dlls/adsiid enable_adsiid
+wine_fn_config_makefile dlls/adsldp enable_adsldp
+wine_fn_config_makefile dlls/adsldp/tests enable_tests
+wine_fn_config_makefile dlls/adsldpc enable_adsldpc
+wine_fn_config_makefile dlls/advapi32 enable_advapi32
+wine_fn_config_makefile dlls/advapi32/tests enable_tests
+wine_fn_config_makefile dlls/advpack enable_advpack
+wine_fn_config_makefile dlls/advpack/tests enable_tests
+wine_fn_config_makefile dlls/amstream enable_amstream
+wine_fn_config_makefile dlls/amstream/tests enable_tests
+wine_fn_config_makefile dlls/api-ms-win-appmodel-identity-l1-1-0 enable_api_ms_win_appmodel_identity_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-appmodel-runtime-l1-1-1 enable_api_ms_win_appmodel_runtime_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-appmodel-runtime-l1-1-2 enable_api_ms_win_appmodel_runtime_l1_1_2
+wine_fn_config_makefile dlls/api-ms-win-core-apiquery-l1-1-0 enable_api_ms_win_core_apiquery_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-appcompat-l1-1-1 enable_api_ms_win_core_appcompat_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-appinit-l1-1-0 enable_api_ms_win_core_appinit_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-atoms-l1-1-0 enable_api_ms_win_core_atoms_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-bem-l1-1-0 enable_api_ms_win_core_bem_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-com-l1-1-0 enable_api_ms_win_core_com_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-com-l1-1-1 enable_api_ms_win_core_com_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-com-private-l1-1-0 enable_api_ms_win_core_com_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-console-l1-1-0 enable_api_ms_win_core_console_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-console-l2-1-0 enable_api_ms_win_core_console_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-crt-l1-1-0 enable_api_ms_win_core_crt_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-crt-l2-1-0 enable_api_ms_win_core_crt_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-datetime-l1-1-0 enable_api_ms_win_core_datetime_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-datetime-l1-1-1 enable_api_ms_win_core_datetime_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-debug-l1-1-0 enable_api_ms_win_core_debug_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-debug-l1-1-1 enable_api_ms_win_core_debug_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-delayload-l1-1-0 enable_api_ms_win_core_delayload_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-delayload-l1-1-1 enable_api_ms_win_core_delayload_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-errorhandling-l1-1-0 enable_api_ms_win_core_errorhandling_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-errorhandling-l1-1-1 enable_api_ms_win_core_errorhandling_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-errorhandling-l1-1-2 enable_api_ms_win_core_errorhandling_l1_1_2
+wine_fn_config_makefile dlls/api-ms-win-core-errorhandling-l1-1-3 enable_api_ms_win_core_errorhandling_l1_1_3
+wine_fn_config_makefile dlls/api-ms-win-core-fibers-l1-1-0 enable_api_ms_win_core_fibers_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-fibers-l1-1-1 enable_api_ms_win_core_fibers_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-file-l1-1-0 enable_api_ms_win_core_file_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-file-l1-2-0 enable_api_ms_win_core_file_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-file-l1-2-1 enable_api_ms_win_core_file_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-file-l1-2-2 enable_api_ms_win_core_file_l1_2_2
+wine_fn_config_makefile dlls/api-ms-win-core-file-l2-1-0 enable_api_ms_win_core_file_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-file-l2-1-1 enable_api_ms_win_core_file_l2_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-file-l2-1-2 enable_api_ms_win_core_file_l2_1_2
+wine_fn_config_makefile dlls/api-ms-win-core-handle-l1-1-0 enable_api_ms_win_core_handle_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-heap-l1-1-0 enable_api_ms_win_core_heap_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-heap-l1-2-0 enable_api_ms_win_core_heap_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-heap-l2-1-0 enable_api_ms_win_core_heap_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-heap-obsolete-l1-1-0 enable_api_ms_win_core_heap_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-interlocked-l1-1-0 enable_api_ms_win_core_interlocked_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-interlocked-l1-2-0 enable_api_ms_win_core_interlocked_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-io-l1-1-0 enable_api_ms_win_core_io_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-io-l1-1-1 enable_api_ms_win_core_io_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-job-l1-1-0 enable_api_ms_win_core_job_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-job-l2-1-0 enable_api_ms_win_core_job_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-kernel32-legacy-l1-1-0 enable_api_ms_win_core_kernel32_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-kernel32-legacy-l1-1-1 enable_api_ms_win_core_kernel32_legacy_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-kernel32-private-l1-1-1 enable_api_ms_win_core_kernel32_private_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-libraryloader-l1-1-0 enable_api_ms_win_core_libraryloader_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-libraryloader-l1-1-1 enable_api_ms_win_core_libraryloader_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-libraryloader-l1-2-0 enable_api_ms_win_core_libraryloader_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-libraryloader-l1-2-1 enable_api_ms_win_core_libraryloader_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-libraryloader-l1-2-2 enable_api_ms_win_core_libraryloader_l1_2_2
+wine_fn_config_makefile dlls/api-ms-win-core-localization-l1-1-0 enable_api_ms_win_core_localization_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-l1-2-0 enable_api_ms_win_core_localization_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-l1-2-1 enable_api_ms_win_core_localization_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-localization-l2-1-0 enable_api_ms_win_core_localization_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-obsolete-l1-1-0 enable_api_ms_win_core_localization_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-obsolete-l1-2-0 enable_api_ms_win_core_localization_obsolete_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-obsolete-l1-3-0 enable_api_ms_win_core_localization_obsolete_l1_3_0
+wine_fn_config_makefile dlls/api-ms-win-core-localization-private-l1-1-0 enable_api_ms_win_core_localization_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-localregistry-l1-1-0 enable_api_ms_win_core_localregistry_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-0 enable_api_ms_win_core_memory_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-1 enable_api_ms_win_core_memory_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-2 enable_api_ms_win_core_memory_l1_1_2
+wine_fn_config_makefile dlls/api-ms-win-core-misc-l1-1-0 enable_api_ms_win_core_misc_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-namedpipe-l1-1-0 enable_api_ms_win_core_namedpipe_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-namedpipe-l1-2-0 enable_api_ms_win_core_namedpipe_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-namespace-l1-1-0 enable_api_ms_win_core_namespace_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-normalization-l1-1-0 enable_api_ms_win_core_normalization_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-path-l1-1-0 enable_api_ms_win_core_path_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-privateprofile-l1-1-1 enable_api_ms_win_core_privateprofile_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-processenvironment-l1-1-0 enable_api_ms_win_core_processenvironment_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-processenvironment-l1-2-0 enable_api_ms_win_core_processenvironment_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-processthreads-l1-1-0 enable_api_ms_win_core_processthreads_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-processthreads-l1-1-1 enable_api_ms_win_core_processthreads_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-processthreads-l1-1-2 enable_api_ms_win_core_processthreads_l1_1_2
+wine_fn_config_makefile dlls/api-ms-win-core-processtopology-obsolete-l1-1-0 enable_api_ms_win_core_processtopology_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-profile-l1-1-0 enable_api_ms_win_core_profile_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-psapi-ansi-l1-1-0 enable_api_ms_win_core_psapi_ansi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-psapi-l1-1-0 enable_api_ms_win_core_psapi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-psapi-obsolete-l1-1-0 enable_api_ms_win_core_psapi_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-quirks-l1-1-0 enable_api_ms_win_core_quirks_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-realtime-l1-1-0 enable_api_ms_win_core_realtime_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-registry-l2-1-0 enable_api_ms_win_core_registry_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-registryuserspecific-l1-1-0 enable_api_ms_win_core_registryuserspecific_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-rtlsupport-l1-1-0 enable_api_ms_win_core_rtlsupport_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-rtlsupport-l1-2-0 enable_api_ms_win_core_rtlsupport_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-shlwapi-legacy-l1-1-0 enable_api_ms_win_core_shlwapi_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-shlwapi-obsolete-l1-1-0 enable_api_ms_win_core_shlwapi_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-shlwapi-obsolete-l1-2-0 enable_api_ms_win_core_shlwapi_obsolete_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-shutdown-l1-1-0 enable_api_ms_win_core_shutdown_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-sidebyside-l1-1-0 enable_api_ms_win_core_sidebyside_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-string-l1-1-0 enable_api_ms_win_core_string_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-string-l2-1-0 enable_api_ms_win_core_string_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-string-obsolete-l1-1-0 enable_api_ms_win_core_string_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-stringansi-l1-1-0 enable_api_ms_win_core_stringansi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-synch-ansi-l1-1-0 enable_api_ms_win_core_synch_ansi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-synch-l1-1-0 enable_api_ms_win_core_synch_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-synch-l1-2-0 enable_api_ms_win_core_synch_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-synch-l1-2-1 enable_api_ms_win_core_synch_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-1-0 enable_api_ms_win_core_sysinfo_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-2-0 enable_api_ms_win_core_sysinfo_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-2-1 enable_api_ms_win_core_sysinfo_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-threadpool-l1-1-0 enable_api_ms_win_core_threadpool_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-threadpool-l1-2-0 enable_api_ms_win_core_threadpool_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-core-threadpool-legacy-l1-1-0 enable_api_ms_win_core_threadpool_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-threadpool-private-l1-1-0 enable_api_ms_win_core_threadpool_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-timezone-l1-1-0 enable_api_ms_win_core_timezone_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-toolhelp-l1-1-0 enable_api_ms_win_core_toolhelp_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-url-l1-1-0 enable_api_ms_win_core_url_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-util-l1-1-0 enable_api_ms_win_core_util_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-version-l1-1-0 enable_api_ms_win_core_version_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-version-l1-1-1 enable_api_ms_win_core_version_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-version-private-l1-1-0 enable_api_ms_win_core_version_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-versionansi-l1-1-0 enable_api_ms_win_core_versionansi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-windowserrorreporting-l1-1-0 enable_api_ms_win_core_windowserrorreporting_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-error-l1-1-1 enable_api_ms_win_core_winrt_error_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-errorprivate-l1-1-1 enable_api_ms_win_core_winrt_errorprivate_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-l1-1-0 enable_api_ms_win_core_winrt_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-registration-l1-1-0 enable_api_ms_win_core_winrt_registration_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-roparameterizediid-l1-1-0 enable_api_ms_win_core_winrt_roparameterizediid_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-winrt-string-l1-1-0 enable_api_ms_win_core_winrt_string_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-wow64-l1-1-0 enable_api_ms_win_core_wow64_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-wow64-l1-1-1 enable_api_ms_win_core_wow64_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-core-xstate-l1-1-0 enable_api_ms_win_core_xstate_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-xstate-l2-1-0 enable_api_ms_win_core_xstate_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-conio-l1-1-0 enable_api_ms_win_crt_conio_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-convert-l1-1-0 enable_api_ms_win_crt_convert_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-environment-l1-1-0 enable_api_ms_win_crt_environment_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-filesystem-l1-1-0 enable_api_ms_win_crt_filesystem_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-heap-l1-1-0 enable_api_ms_win_crt_heap_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-locale-l1-1-0 enable_api_ms_win_crt_locale_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-math-l1-1-0 enable_api_ms_win_crt_math_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-multibyte-l1-1-0 enable_api_ms_win_crt_multibyte_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-private-l1-1-0 enable_api_ms_win_crt_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-process-l1-1-0 enable_api_ms_win_crt_process_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-runtime-l1-1-0 enable_api_ms_win_crt_runtime_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-stdio-l1-1-0 enable_api_ms_win_crt_stdio_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-string-l1-1-0 enable_api_ms_win_crt_string_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-time-l1-1-0 enable_api_ms_win_crt_time_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-crt-utility-l1-1-0 enable_api_ms_win_crt_utility_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-devices-config-l1-1-1 enable_api_ms_win_devices_config_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-devices-query-l1-1-1 enable_api_ms_win_devices_query_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-downlevel-advapi32-l1-1-0 enable_api_ms_win_downlevel_advapi32_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-advapi32-l2-1-0 enable_api_ms_win_downlevel_advapi32_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-normaliz-l1-1-0 enable_api_ms_win_downlevel_normaliz_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-ole32-l1-1-0 enable_api_ms_win_downlevel_ole32_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-shell32-l1-1-0 enable_api_ms_win_downlevel_shell32_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-shlwapi-l1-1-0 enable_api_ms_win_downlevel_shlwapi_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-shlwapi-l2-1-0 enable_api_ms_win_downlevel_shlwapi_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-user32-l1-1-0 enable_api_ms_win_downlevel_user32_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-downlevel-version-l1-1-0 enable_api_ms_win_downlevel_version_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-dx-d3dkmt-l1-1-0 enable_api_ms_win_dx_d3dkmt_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventing-classicprovider-l1-1-0 enable_api_ms_win_eventing_classicprovider_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventing-consumer-l1-1-0 enable_api_ms_win_eventing_consumer_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventing-controller-l1-1-0 enable_api_ms_win_eventing_controller_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventing-legacy-l1-1-0 enable_api_ms_win_eventing_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-mm-joystick-l1-1-0 enable_api_ms_win_mm_joystick_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-mm-mme-l1-1-0 enable_api_ms_win_mm_mme_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-mm-time-l1-1-0 enable_api_ms_win_mm_time_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-ntuser-dc-access-l1-1-0 enable_api_ms_win_ntuser_dc_access_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-ntuser-rectangle-l1-1-0 enable_api_ms_win_ntuser_rectangle_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-perf-legacy-l1-1-0 enable_api_ms_win_perf_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-power-setting-l1-1-0 enable_api_ms_win_power_setting_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-private-l1-1-0 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-activedirectoryclient-l1-1-0 enable_api_ms_win_security_activedirectoryclient_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-audit-l1-1-1 enable_api_ms_win_security_audit_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-security-base-l1-1-0 enable_api_ms_win_security_base_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-base-l1-2-0 enable_api_ms_win_security_base_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-security-base-private-l1-1-1 enable_api_ms_win_security_base_private_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-security-credentials-l1-1-0 enable_api_ms_win_security_credentials_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-grouppolicy-l1-1-0 enable_api_ms_win_security_grouppolicy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-lsalookup-l1-1-0 enable_api_ms_win_security_lsalookup_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-lsalookup-l1-1-1 enable_api_ms_win_security_lsalookup_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-security-lsalookup-l2-1-0 enable_api_ms_win_security_lsalookup_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-lsalookup-l2-1-1 enable_api_ms_win_security_lsalookup_l2_1_1
+wine_fn_config_makefile dlls/api-ms-win-security-lsapolicy-l1-1-0 enable_api_ms_win_security_lsapolicy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-provider-l1-1-0 enable_api_ms_win_security_provider_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-sddl-l1-1-0 enable_api_ms_win_security_sddl_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-security-systemfunctions-l1-1-0 enable_api_ms_win_security_systemfunctions_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-service-core-l1-1-0 enable_api_ms_win_service_core_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-service-core-l1-1-1 enable_api_ms_win_service_core_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-service-management-l1-1-0 enable_api_ms_win_service_management_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-service-management-l2-1-0 enable_api_ms_win_service_management_l2_1_0
+wine_fn_config_makefile dlls/api-ms-win-service-private-l1-1-1 enable_api_ms_win_service_private_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-1-0 enable_api_ms_win_service_winsvc_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
+wine_fn_config_makefile dlls/api-ms-win-shcore-scaling-l1-1-1 enable_api_ms_win_shcore_scaling_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-shell-shellcom-l1-1-0 enable_api_ms_win_shell_shellcom_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_win_shell_shellfolders_l1_1_0
+wine_fn_config_makefile dlls/apphelp enable_apphelp
+wine_fn_config_makefile dlls/apphelp/tests enable_tests
+wine_fn_config_makefile dlls/appwiz.cpl enable_appwiz_cpl
+wine_fn_config_makefile dlls/atl enable_atl
+wine_fn_config_makefile dlls/atl/tests enable_tests
+wine_fn_config_makefile dlls/atl100 enable_atl100
+wine_fn_config_makefile dlls/atl100/tests enable_tests
+wine_fn_config_makefile dlls/atl110 enable_atl110
+wine_fn_config_makefile dlls/atl80 enable_atl80
+wine_fn_config_makefile dlls/atl80/tests enable_tests
+wine_fn_config_makefile dlls/atl90 enable_atl90
+wine_fn_config_makefile dlls/authz enable_authz
+wine_fn_config_makefile dlls/avicap32 enable_avicap32
+wine_fn_config_makefile dlls/avifil32 enable_avifil32
+wine_fn_config_makefile dlls/avifil32/tests enable_tests
+wine_fn_config_makefile dlls/avifile.dll16 enable_win16
+wine_fn_config_makefile dlls/avrt enable_avrt
+wine_fn_config_makefile dlls/bcrypt enable_bcrypt
+wine_fn_config_makefile dlls/bcrypt/tests enable_tests
+wine_fn_config_makefile dlls/bluetoothapis enable_bluetoothapis
+wine_fn_config_makefile dlls/browseui enable_browseui
+wine_fn_config_makefile dlls/browseui/tests enable_tests
+wine_fn_config_makefile dlls/bthprops.cpl enable_bthprops_cpl
+wine_fn_config_makefile dlls/cabinet enable_cabinet
+wine_fn_config_makefile dlls/cabinet/tests enable_tests
+wine_fn_config_makefile dlls/capi2032 enable_capi2032
+wine_fn_config_makefile dlls/cards enable_cards
+wine_fn_config_makefile dlls/cdosys enable_cdosys
+wine_fn_config_makefile dlls/cfgmgr32 enable_cfgmgr32
+wine_fn_config_makefile dlls/clusapi enable_clusapi
+wine_fn_config_makefile dlls/combase enable_combase
+wine_fn_config_makefile dlls/combase/tests enable_tests
+wine_fn_config_makefile dlls/comcat enable_comcat
+wine_fn_config_makefile dlls/comcat/tests enable_tests
+wine_fn_config_makefile dlls/comctl32 enable_comctl32
+wine_fn_config_makefile dlls/comctl32/tests enable_tests
+wine_fn_config_makefile dlls/comdlg32 enable_comdlg32
+wine_fn_config_makefile dlls/comdlg32/tests enable_tests
+wine_fn_config_makefile dlls/comm.drv16 enable_win16
+wine_fn_config_makefile dlls/commdlg.dll16 enable_win16
+wine_fn_config_makefile dlls/compobj.dll16 enable_win16
+wine_fn_config_makefile dlls/compstui enable_compstui
+wine_fn_config_makefile dlls/comsvcs enable_comsvcs
+wine_fn_config_makefile dlls/concrt140 enable_concrt140
+wine_fn_config_makefile dlls/connect enable_connect
+wine_fn_config_makefile dlls/credui enable_credui
+wine_fn_config_makefile dlls/credui/tests enable_tests
+wine_fn_config_makefile dlls/crtdll enable_crtdll
+wine_fn_config_makefile dlls/crypt32 enable_crypt32
+wine_fn_config_makefile dlls/crypt32/tests enable_tests
+wine_fn_config_makefile dlls/cryptdlg enable_cryptdlg
+wine_fn_config_makefile dlls/cryptdll enable_cryptdll
+wine_fn_config_makefile dlls/cryptext enable_cryptext
+wine_fn_config_makefile dlls/cryptnet enable_cryptnet
+wine_fn_config_makefile dlls/cryptnet/tests enable_tests
+wine_fn_config_makefile dlls/cryptui enable_cryptui
+wine_fn_config_makefile dlls/cryptui/tests enable_tests
+wine_fn_config_makefile dlls/ctapi32 enable_ctapi32
+wine_fn_config_makefile dlls/ctl3d.dll16 enable_win16
+wine_fn_config_makefile dlls/ctl3d32 enable_ctl3d32
+wine_fn_config_makefile dlls/ctl3dv2.dll16 enable_win16
+wine_fn_config_makefile dlls/d2d1 enable_d2d1
+wine_fn_config_makefile dlls/d2d1/tests enable_tests
+wine_fn_config_makefile dlls/d3d10 enable_d3d10
+wine_fn_config_makefile dlls/d3d10/tests enable_tests
+wine_fn_config_makefile dlls/d3d10_1 enable_d3d10_1
+wine_fn_config_makefile dlls/d3d10_1/tests enable_tests
+wine_fn_config_makefile dlls/d3d10core enable_d3d10core
+wine_fn_config_makefile dlls/d3d10core/tests enable_tests
+wine_fn_config_makefile dlls/d3d11 enable_d3d11
+wine_fn_config_makefile dlls/d3d11/tests enable_tests
+wine_fn_config_makefile dlls/d3d12 enable_d3d12
+wine_fn_config_makefile dlls/d3d12/tests enable_tests
+wine_fn_config_makefile dlls/d3d8 enable_d3d8
+wine_fn_config_makefile dlls/d3d8/tests enable_tests
+wine_fn_config_makefile dlls/d3d9 enable_d3d9
+wine_fn_config_makefile dlls/d3d9/tests enable_tests
+wine_fn_config_makefile dlls/d3dcompiler_33 enable_d3dcompiler_33
+wine_fn_config_makefile dlls/d3dcompiler_34 enable_d3dcompiler_34
+wine_fn_config_makefile dlls/d3dcompiler_35 enable_d3dcompiler_35
+wine_fn_config_makefile dlls/d3dcompiler_36 enable_d3dcompiler_36
+wine_fn_config_makefile dlls/d3dcompiler_37 enable_d3dcompiler_37
+wine_fn_config_makefile dlls/d3dcompiler_38 enable_d3dcompiler_38
+wine_fn_config_makefile dlls/d3dcompiler_39 enable_d3dcompiler_39
+wine_fn_config_makefile dlls/d3dcompiler_40 enable_d3dcompiler_40
+wine_fn_config_makefile dlls/d3dcompiler_41 enable_d3dcompiler_41
+wine_fn_config_makefile dlls/d3dcompiler_42 enable_d3dcompiler_42
+wine_fn_config_makefile dlls/d3dcompiler_43 enable_d3dcompiler_43
+wine_fn_config_makefile dlls/d3dcompiler_43/tests enable_tests
+wine_fn_config_makefile dlls/d3dcompiler_46 enable_d3dcompiler_46
+wine_fn_config_makefile dlls/d3dcompiler_47 enable_d3dcompiler_47
+wine_fn_config_makefile dlls/d3dim enable_d3dim
+wine_fn_config_makefile dlls/d3drm enable_d3drm
+wine_fn_config_makefile dlls/d3drm/tests enable_tests
+wine_fn_config_makefile dlls/d3dx10_33 enable_d3dx10_33
+wine_fn_config_makefile dlls/d3dx10_34 enable_d3dx10_34
+wine_fn_config_makefile dlls/d3dx10_35 enable_d3dx10_35
+wine_fn_config_makefile dlls/d3dx10_36 enable_d3dx10_36
+wine_fn_config_makefile dlls/d3dx10_37 enable_d3dx10_37
+wine_fn_config_makefile dlls/d3dx10_38 enable_d3dx10_38
+wine_fn_config_makefile dlls/d3dx10_39 enable_d3dx10_39
+wine_fn_config_makefile dlls/d3dx10_40 enable_d3dx10_40
+wine_fn_config_makefile dlls/d3dx10_41 enable_d3dx10_41
+wine_fn_config_makefile dlls/d3dx10_42 enable_d3dx10_42
+wine_fn_config_makefile dlls/d3dx10_43 enable_d3dx10_43
+wine_fn_config_makefile dlls/d3dx10_43/tests enable_tests
+wine_fn_config_makefile dlls/d3dx11_42 enable_d3dx11_42
+wine_fn_config_makefile dlls/d3dx11_43 enable_d3dx11_43
+wine_fn_config_makefile dlls/d3dx11_43/tests enable_tests
+wine_fn_config_makefile dlls/d3dx9_24 enable_d3dx9_24
+wine_fn_config_makefile dlls/d3dx9_25 enable_d3dx9_25
+wine_fn_config_makefile dlls/d3dx9_26 enable_d3dx9_26
+wine_fn_config_makefile dlls/d3dx9_27 enable_d3dx9_27
+wine_fn_config_makefile dlls/d3dx9_28 enable_d3dx9_28
+wine_fn_config_makefile dlls/d3dx9_29 enable_d3dx9_29
+wine_fn_config_makefile dlls/d3dx9_30 enable_d3dx9_30
+wine_fn_config_makefile dlls/d3dx9_31 enable_d3dx9_31
+wine_fn_config_makefile dlls/d3dx9_32 enable_d3dx9_32
+wine_fn_config_makefile dlls/d3dx9_33 enable_d3dx9_33
+wine_fn_config_makefile dlls/d3dx9_34 enable_d3dx9_34
+wine_fn_config_makefile dlls/d3dx9_35 enable_d3dx9_35
+wine_fn_config_makefile dlls/d3dx9_36 enable_d3dx9_36
+wine_fn_config_makefile dlls/d3dx9_36/tests enable_tests
+wine_fn_config_makefile dlls/d3dx9_37 enable_d3dx9_37
+wine_fn_config_makefile dlls/d3dx9_38 enable_d3dx9_38
+wine_fn_config_makefile dlls/d3dx9_39 enable_d3dx9_39
+wine_fn_config_makefile dlls/d3dx9_40 enable_d3dx9_40
+wine_fn_config_makefile dlls/d3dx9_41 enable_d3dx9_41
+wine_fn_config_makefile dlls/d3dx9_42 enable_d3dx9_42
+wine_fn_config_makefile dlls/d3dx9_43 enable_d3dx9_43
+wine_fn_config_makefile dlls/d3dxof enable_d3dxof
+wine_fn_config_makefile dlls/d3dxof/tests enable_tests
+wine_fn_config_makefile dlls/davclnt enable_davclnt
+wine_fn_config_makefile dlls/dbgeng enable_dbgeng
+wine_fn_config_makefile dlls/dbghelp enable_dbghelp
+wine_fn_config_makefile dlls/dciman32 enable_dciman32
+wine_fn_config_makefile dlls/ddeml.dll16 enable_win16
+wine_fn_config_makefile dlls/ddraw enable_ddraw
+wine_fn_config_makefile dlls/ddraw/tests enable_tests
+wine_fn_config_makefile dlls/ddrawex enable_ddrawex
+wine_fn_config_makefile dlls/ddrawex/tests enable_tests
+wine_fn_config_makefile dlls/devenum enable_devenum
+wine_fn_config_makefile dlls/devenum/tests enable_tests
+wine_fn_config_makefile dlls/dhcpcsvc enable_dhcpcsvc
+wine_fn_config_makefile dlls/dhtmled.ocx enable_dhtmled_ocx
+wine_fn_config_makefile dlls/difxapi enable_difxapi
+wine_fn_config_makefile dlls/dinput enable_dinput
+wine_fn_config_makefile dlls/dinput/tests enable_tests
+wine_fn_config_makefile dlls/dinput8 enable_dinput8
+wine_fn_config_makefile dlls/dinput8/tests enable_tests
+wine_fn_config_makefile dlls/dispdib.dll16 enable_win16
+wine_fn_config_makefile dlls/dispex enable_dispex
+wine_fn_config_makefile dlls/dispex/tests enable_tests
+wine_fn_config_makefile dlls/display.drv16 enable_win16
+wine_fn_config_makefile dlls/dmband enable_dmband
+wine_fn_config_makefile dlls/dmband/tests enable_tests
+wine_fn_config_makefile dlls/dmcompos enable_dmcompos
+wine_fn_config_makefile dlls/dmcompos/tests enable_tests
+wine_fn_config_makefile dlls/dmime enable_dmime
+wine_fn_config_makefile dlls/dmime/tests enable_tests
+wine_fn_config_makefile dlls/dmloader enable_dmloader
+wine_fn_config_makefile dlls/dmloader/tests enable_tests
+wine_fn_config_makefile dlls/dmscript enable_dmscript
+wine_fn_config_makefile dlls/dmscript/tests enable_tests
+wine_fn_config_makefile dlls/dmstyle enable_dmstyle
+wine_fn_config_makefile dlls/dmstyle/tests enable_tests
+wine_fn_config_makefile dlls/dmsynth enable_dmsynth
+wine_fn_config_makefile dlls/dmsynth/tests enable_tests
+wine_fn_config_makefile dlls/dmusic enable_dmusic
+wine_fn_config_makefile dlls/dmusic/tests enable_tests
+wine_fn_config_makefile dlls/dmusic32 enable_dmusic32
+wine_fn_config_makefile dlls/dnsapi enable_dnsapi
+wine_fn_config_makefile dlls/dnsapi/tests enable_tests
+wine_fn_config_makefile dlls/dplay enable_dplay
+wine_fn_config_makefile dlls/dplayx enable_dplayx
+wine_fn_config_makefile dlls/dplayx/tests enable_tests
+wine_fn_config_makefile dlls/dpnaddr enable_dpnaddr
+wine_fn_config_makefile dlls/dpnet enable_dpnet
+wine_fn_config_makefile dlls/dpnet/tests enable_tests
+wine_fn_config_makefile dlls/dpnhpast enable_dpnhpast
+wine_fn_config_makefile dlls/dpnlobby enable_dpnlobby
+wine_fn_config_makefile dlls/dpvoice enable_dpvoice
+wine_fn_config_makefile dlls/dpvoice/tests enable_tests
+wine_fn_config_makefile dlls/dpwsockx enable_dpwsockx
+wine_fn_config_makefile dlls/drmclien enable_drmclien
+wine_fn_config_makefile dlls/dsound enable_dsound
+wine_fn_config_makefile dlls/dsound/tests enable_tests
+wine_fn_config_makefile dlls/dsquery enable_dsquery
+wine_fn_config_makefile dlls/dssenh enable_dssenh
+wine_fn_config_makefile dlls/dssenh/tests enable_tests
+wine_fn_config_makefile dlls/dswave enable_dswave
+wine_fn_config_makefile dlls/dswave/tests enable_tests
+wine_fn_config_makefile dlls/dwmapi enable_dwmapi
+wine_fn_config_makefile dlls/dwrite enable_dwrite
+wine_fn_config_makefile dlls/dwrite/tests enable_tests
+wine_fn_config_makefile dlls/dx8vb enable_dx8vb
+wine_fn_config_makefile dlls/dxdiagn enable_dxdiagn
+wine_fn_config_makefile dlls/dxdiagn/tests enable_tests
+wine_fn_config_makefile dlls/dxerr8 enable_dxerr8
+wine_fn_config_makefile dlls/dxerr9 enable_dxerr9
+wine_fn_config_makefile dlls/dxgi enable_dxgi
+wine_fn_config_makefile dlls/dxgi/tests enable_tests
+wine_fn_config_makefile dlls/dxguid enable_dxguid
+wine_fn_config_makefile dlls/dxva2 enable_dxva2
+wine_fn_config_makefile dlls/esent enable_esent
+wine_fn_config_makefile dlls/evr enable_evr
+wine_fn_config_makefile dlls/evr/tests enable_tests
+wine_fn_config_makefile dlls/explorerframe enable_explorerframe
+wine_fn_config_makefile dlls/explorerframe/tests enable_tests
+wine_fn_config_makefile dlls/ext-ms-win-authz-context-l1-1-0 enable_ext_ms_win_authz_context_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-domainjoin-netjoin-l1-1-0 enable_ext_ms_win_domainjoin_netjoin_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-gdi-dc-create-l1-1-1 enable_ext_ms_win_gdi_dc_create_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-gdi-dc-l1-2-0 enable_ext_ms_win_gdi_dc_l1_2_0
+wine_fn_config_makefile dlls/ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-gdi-draw-l1-1-1 enable_ext_ms_win_gdi_draw_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-gdi-render-l1-1-0 enable_ext_ms_win_gdi_render_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-kernel32-package-current-l1-1-0 enable_ext_ms_win_kernel32_package_current_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-kernel32-package-l1-1-1 enable_ext_ms_win_kernel32_package_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-private-l1-1-1 enable_ext_ms_win_ntuser_private_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-rectangle-ext-l1-1-0 enable_ext_ms_win_ntuser_rectangle_ext_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-uicontext-ext-l1-1-0 enable_ext_ms_win_ntuser_uicontext_ext_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-window-l1-1-1 enable_ext_ms_win_ntuser_window_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-windowclass-l1-1-1 enable_ext_ms_win_ntuser_windowclass_l1_1_1
+wine_fn_config_makefile dlls/ext-ms-win-ras-rasapi32-l1-1-0 enable_ext_ms_win_ras_rasapi32_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-object-l1-1-0 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-rgn-l1-1-0 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dc-access-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-sysparams-l1-1-0 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-security-credui-l1-1-0 enable_ext_ms_win_security_credui_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-security-cryptui-l1-1-0 enable_ext_ms_win_security_cryptui_l1_1_0
+wine_fn_config_makefile dlls/faultrep enable_faultrep
+wine_fn_config_makefile dlls/faultrep/tests enable_tests
+wine_fn_config_makefile dlls/fltlib enable_fltlib
+wine_fn_config_makefile dlls/fltmgr.sys enable_fltmgr_sys
+wine_fn_config_makefile dlls/fntcache enable_fntcache
+wine_fn_config_makefile dlls/fontsub enable_fontsub
+wine_fn_config_makefile dlls/fusion enable_fusion
+wine_fn_config_makefile dlls/fusion/tests enable_tests
+wine_fn_config_makefile dlls/fwpuclnt enable_fwpuclnt
+wine_fn_config_makefile dlls/gameux enable_gameux
+wine_fn_config_makefile dlls/gameux/tests enable_tests
+wine_fn_config_makefile dlls/gdi.exe16 enable_win16
+wine_fn_config_makefile dlls/gdi32 enable_gdi32
+wine_fn_config_makefile dlls/gdi32/tests enable_tests
+wine_fn_config_makefile dlls/gdiplus enable_gdiplus
+wine_fn_config_makefile dlls/gdiplus/tests enable_tests
+wine_fn_config_makefile dlls/glu32 enable_glu32
+wine_fn_config_makefile dlls/gphoto2.ds enable_gphoto2_ds
+wine_fn_config_makefile dlls/gpkcsp enable_gpkcsp
+wine_fn_config_makefile dlls/hal enable_hal
+wine_fn_config_makefile dlls/hhctrl.ocx enable_hhctrl_ocx
+wine_fn_config_makefile dlls/hid enable_hid
+wine_fn_config_makefile dlls/hid/tests enable_tests
+wine_fn_config_makefile dlls/hidclass.sys enable_hidclass_sys
+wine_fn_config_makefile dlls/hlink enable_hlink
+wine_fn_config_makefile dlls/hlink/tests enable_tests
+wine_fn_config_makefile dlls/hnetcfg enable_hnetcfg
+wine_fn_config_makefile dlls/hnetcfg/tests enable_tests
+wine_fn_config_makefile dlls/httpapi enable_httpapi
+wine_fn_config_makefile dlls/httpapi/tests enable_tests
+wine_fn_config_makefile dlls/iccvid enable_iccvid
+wine_fn_config_makefile dlls/icmp enable_icmp
+wine_fn_config_makefile dlls/ieframe enable_ieframe
+wine_fn_config_makefile dlls/ieframe/tests enable_tests
+wine_fn_config_makefile dlls/ieproxy enable_ieproxy
+wine_fn_config_makefile dlls/ifsmgr.vxd enable_win16
+wine_fn_config_makefile dlls/imaadp32.acm enable_imaadp32_acm
+wine_fn_config_makefile dlls/imagehlp enable_imagehlp
+wine_fn_config_makefile dlls/imagehlp/tests enable_tests
+wine_fn_config_makefile dlls/imm.dll16 enable_win16
+wine_fn_config_makefile dlls/imm32 enable_imm32
+wine_fn_config_makefile dlls/imm32/tests enable_tests
+wine_fn_config_makefile dlls/inetcomm enable_inetcomm
+wine_fn_config_makefile dlls/inetcomm/tests enable_tests
+wine_fn_config_makefile dlls/inetcpl.cpl enable_inetcpl_cpl
+wine_fn_config_makefile dlls/inetmib1 enable_inetmib1
+wine_fn_config_makefile dlls/inetmib1/tests enable_tests
+wine_fn_config_makefile dlls/infosoft enable_infosoft
+wine_fn_config_makefile dlls/infosoft/tests enable_tests
+wine_fn_config_makefile dlls/initpki enable_initpki
+wine_fn_config_makefile dlls/inkobj enable_inkobj
+wine_fn_config_makefile dlls/inseng enable_inseng
+wine_fn_config_makefile dlls/iphlpapi enable_iphlpapi
+wine_fn_config_makefile dlls/iphlpapi/tests enable_tests
+wine_fn_config_makefile dlls/iprop enable_iprop
+wine_fn_config_makefile dlls/irprops.cpl enable_irprops_cpl
+wine_fn_config_makefile dlls/itircl enable_itircl
+wine_fn_config_makefile dlls/itss enable_itss
+wine_fn_config_makefile dlls/itss/tests enable_tests
+wine_fn_config_makefile dlls/joy.cpl enable_joy_cpl
+wine_fn_config_makefile dlls/jscript enable_jscript
+wine_fn_config_makefile dlls/jscript/tests enable_tests
+wine_fn_config_makefile dlls/jsproxy enable_jsproxy
+wine_fn_config_makefile dlls/jsproxy/tests enable_tests
+wine_fn_config_makefile dlls/kerberos enable_kerberos
+wine_fn_config_makefile dlls/kernel32 enable_kernel32
+wine_fn_config_makefile dlls/kernel32/tests enable_tests
+wine_fn_config_makefile dlls/kernelbase enable_kernelbase
+wine_fn_config_makefile dlls/kernelbase/tests enable_tests
+wine_fn_config_makefile dlls/keyboard.drv16 enable_win16
+wine_fn_config_makefile dlls/krnl386.exe16 enable_win16
+wine_fn_config_makefile dlls/ksuser enable_ksuser
+wine_fn_config_makefile dlls/ktmw32 enable_ktmw32
+wine_fn_config_makefile dlls/l3codeca.acm enable_l3codeca_acm
+wine_fn_config_makefile dlls/loadperf enable_loadperf
+wine_fn_config_makefile dlls/localspl enable_localspl
+wine_fn_config_makefile dlls/localspl/tests enable_tests
+wine_fn_config_makefile dlls/localui enable_localui
+wine_fn_config_makefile dlls/localui/tests enable_tests
+wine_fn_config_makefile dlls/lz32 enable_lz32
+wine_fn_config_makefile dlls/lz32/tests enable_tests
+wine_fn_config_makefile dlls/lzexpand.dll16 enable_win16
+wine_fn_config_makefile dlls/mapi32 enable_mapi32
+wine_fn_config_makefile dlls/mapi32/tests enable_tests
+wine_fn_config_makefile dlls/mapistub enable_mapistub
+wine_fn_config_makefile dlls/mciavi32 enable_mciavi32
+wine_fn_config_makefile dlls/mcicda enable_mcicda
+wine_fn_config_makefile dlls/mciqtz32 enable_mciqtz32
+wine_fn_config_makefile dlls/mciseq enable_mciseq
+wine_fn_config_makefile dlls/mciwave enable_mciwave
+wine_fn_config_makefile dlls/mf enable_mf
+wine_fn_config_makefile dlls/mf/tests enable_tests
+wine_fn_config_makefile dlls/mf3216 enable_mf3216
+wine_fn_config_makefile dlls/mfplat enable_mfplat
+wine_fn_config_makefile dlls/mfplat/tests enable_tests
+wine_fn_config_makefile dlls/mfreadwrite enable_mfreadwrite
+wine_fn_config_makefile dlls/mfuuid enable_mfuuid
+wine_fn_config_makefile dlls/mgmtapi enable_mgmtapi
+wine_fn_config_makefile dlls/midimap enable_midimap
+wine_fn_config_makefile dlls/mlang enable_mlang
+wine_fn_config_makefile dlls/mlang/tests enable_tests
+wine_fn_config_makefile dlls/mmcndmgr enable_mmcndmgr
+wine_fn_config_makefile dlls/mmcndmgr/tests enable_tests
+wine_fn_config_makefile dlls/mmdevapi enable_mmdevapi
+wine_fn_config_makefile dlls/mmdevapi/tests enable_tests
+wine_fn_config_makefile dlls/mmdevldr.vxd enable_win16
+wine_fn_config_makefile dlls/mmsystem.dll16 enable_win16
+wine_fn_config_makefile dlls/monodebg.vxd enable_win16
+wine_fn_config_makefile dlls/mountmgr.sys enable_mountmgr_sys
+wine_fn_config_makefile dlls/mouse.drv16 enable_win16
+wine_fn_config_makefile dlls/mpr enable_mpr
+wine_fn_config_makefile dlls/mpr/tests enable_tests
+wine_fn_config_makefile dlls/mprapi enable_mprapi
+wine_fn_config_makefile dlls/msacm.dll16 enable_win16
+wine_fn_config_makefile dlls/msacm32.drv enable_msacm32_drv
+wine_fn_config_makefile dlls/msacm32 enable_msacm32
+wine_fn_config_makefile dlls/msacm32/tests enable_tests
+wine_fn_config_makefile dlls/msadp32.acm enable_msadp32_acm
+wine_fn_config_makefile dlls/msasn1 enable_msasn1
+wine_fn_config_makefile dlls/mscat32 enable_mscat32
+wine_fn_config_makefile dlls/mscms enable_mscms
+wine_fn_config_makefile dlls/mscms/tests enable_tests
+wine_fn_config_makefile dlls/mscoree enable_mscoree
+wine_fn_config_makefile dlls/mscoree/tests enable_tests
+wine_fn_config_makefile dlls/msctf enable_msctf
+wine_fn_config_makefile dlls/msctf/tests enable_tests
+wine_fn_config_makefile dlls/msctfp enable_msctfp
+wine_fn_config_makefile dlls/msdaps enable_msdaps
+wine_fn_config_makefile dlls/msdelta enable_msdelta
+wine_fn_config_makefile dlls/msdmo enable_msdmo
+wine_fn_config_makefile dlls/msdmo/tests enable_tests
+wine_fn_config_makefile dlls/msdrm enable_msdrm
+wine_fn_config_makefile dlls/msftedit enable_msftedit
+wine_fn_config_makefile dlls/msg711.acm enable_msg711_acm
+wine_fn_config_makefile dlls/msgsm32.acm enable_msgsm32_acm
+wine_fn_config_makefile dlls/mshtml.tlb enable_mshtml_tlb
+wine_fn_config_makefile dlls/mshtml enable_mshtml
+wine_fn_config_makefile dlls/mshtml/tests enable_tests
+wine_fn_config_makefile dlls/msi enable_msi
+wine_fn_config_makefile dlls/msi/tests enable_tests
+wine_fn_config_makefile dlls/msident enable_msident
+wine_fn_config_makefile dlls/msimg32 enable_msimg32
+wine_fn_config_makefile dlls/msimsg enable_msimsg
+wine_fn_config_makefile dlls/msimtf enable_msimtf
+wine_fn_config_makefile dlls/msisip enable_msisip
+wine_fn_config_makefile dlls/msisys.ocx enable_msisys_ocx
+wine_fn_config_makefile dlls/msls31 enable_msls31
+wine_fn_config_makefile dlls/msnet32 enable_msnet32
+wine_fn_config_makefile dlls/mspatcha enable_mspatcha
+wine_fn_config_makefile dlls/msports enable_msports
+wine_fn_config_makefile dlls/msrle32 enable_msrle32
+wine_fn_config_makefile dlls/msrle32/tests enable_tests
+wine_fn_config_makefile dlls/msscript.ocx enable_msscript_ocx
+wine_fn_config_makefile dlls/msscript.ocx/tests enable_tests
+wine_fn_config_makefile dlls/mssign32 enable_mssign32
+wine_fn_config_makefile dlls/mssip32 enable_mssip32
+wine_fn_config_makefile dlls/mstask enable_mstask
+wine_fn_config_makefile dlls/mstask/tests enable_tests
+wine_fn_config_makefile dlls/msvcirt enable_msvcirt
+wine_fn_config_makefile dlls/msvcirt/tests enable_tests
+wine_fn_config_makefile dlls/msvcm80 enable_msvcm80
+wine_fn_config_makefile dlls/msvcm90 enable_msvcm90
+wine_fn_config_makefile dlls/msvcp100 enable_msvcp100
+wine_fn_config_makefile dlls/msvcp100/tests enable_tests
+wine_fn_config_makefile dlls/msvcp110 enable_msvcp110
+wine_fn_config_makefile dlls/msvcp110/tests enable_tests
+wine_fn_config_makefile dlls/msvcp120 enable_msvcp120
+wine_fn_config_makefile dlls/msvcp120/tests enable_tests
+wine_fn_config_makefile dlls/msvcp120_app enable_msvcp120_app
+wine_fn_config_makefile dlls/msvcp140 enable_msvcp140
+wine_fn_config_makefile dlls/msvcp140/tests enable_tests
+wine_fn_config_makefile dlls/msvcp60 enable_msvcp60
+wine_fn_config_makefile dlls/msvcp60/tests enable_tests
+wine_fn_config_makefile dlls/msvcp70 enable_msvcp70
+wine_fn_config_makefile dlls/msvcp71 enable_msvcp71
+wine_fn_config_makefile dlls/msvcp80 enable_msvcp80
+wine_fn_config_makefile dlls/msvcp90 enable_msvcp90
+wine_fn_config_makefile dlls/msvcp90/tests enable_tests
+wine_fn_config_makefile dlls/msvcr100 enable_msvcr100
+wine_fn_config_makefile dlls/msvcr100/tests enable_tests
+wine_fn_config_makefile dlls/msvcr110 enable_msvcr110
+wine_fn_config_makefile dlls/msvcr120 enable_msvcr120
+wine_fn_config_makefile dlls/msvcr120/tests enable_tests
+wine_fn_config_makefile dlls/msvcr120_app enable_msvcr120_app
+wine_fn_config_makefile dlls/msvcr70 enable_msvcr70
+wine_fn_config_makefile dlls/msvcr71 enable_msvcr71
+wine_fn_config_makefile dlls/msvcr80 enable_msvcr80
+wine_fn_config_makefile dlls/msvcr90 enable_msvcr90
+wine_fn_config_makefile dlls/msvcr90/tests enable_tests
+wine_fn_config_makefile dlls/msvcrt enable_msvcrt
+wine_fn_config_makefile dlls/msvcrt/tests enable_tests
+wine_fn_config_makefile dlls/msvcrt20 enable_msvcrt20
+wine_fn_config_makefile dlls/msvcrt40 enable_msvcrt40
+wine_fn_config_makefile dlls/msvcrtd enable_msvcrtd
+wine_fn_config_makefile dlls/msvcrtd/tests enable_tests
+wine_fn_config_makefile dlls/msvfw32 enable_msvfw32
+wine_fn_config_makefile dlls/msvfw32/tests enable_tests
+wine_fn_config_makefile dlls/msvidc32 enable_msvidc32
+wine_fn_config_makefile dlls/msvideo.dll16 enable_win16
+wine_fn_config_makefile dlls/mswsock enable_mswsock
+wine_fn_config_makefile dlls/msxml enable_msxml
+wine_fn_config_makefile dlls/msxml2 enable_msxml2
+wine_fn_config_makefile dlls/msxml3 enable_msxml3
+wine_fn_config_makefile dlls/msxml3/tests enable_tests
+wine_fn_config_makefile dlls/msxml4 enable_msxml4
+wine_fn_config_makefile dlls/msxml6 enable_msxml6
+wine_fn_config_makefile dlls/mtxdm enable_mtxdm
+wine_fn_config_makefile dlls/ncrypt enable_ncrypt
+wine_fn_config_makefile dlls/nddeapi enable_nddeapi
+wine_fn_config_makefile dlls/ndis.sys enable_ndis_sys
+wine_fn_config_makefile dlls/netapi32 enable_netapi32
+wine_fn_config_makefile dlls/netapi32/tests enable_tests
+wine_fn_config_makefile dlls/netcfgx enable_netcfgx
+wine_fn_config_makefile dlls/netcfgx/tests enable_tests
+wine_fn_config_makefile dlls/netprofm enable_netprofm
+wine_fn_config_makefile dlls/netprofm/tests enable_tests
+wine_fn_config_makefile dlls/newdev enable_newdev
+wine_fn_config_makefile dlls/normaliz enable_normaliz
+wine_fn_config_makefile dlls/npmshtml enable_npmshtml
+wine_fn_config_makefile dlls/npptools enable_npptools
+wine_fn_config_makefile dlls/ntdll enable_ntdll
+wine_fn_config_makefile dlls/ntdll/tests enable_tests
+wine_fn_config_makefile dlls/ntdsapi enable_ntdsapi
+wine_fn_config_makefile dlls/ntdsapi/tests enable_tests
+wine_fn_config_makefile dlls/ntoskrnl.exe enable_ntoskrnl_exe
+wine_fn_config_makefile dlls/ntprint enable_ntprint
+wine_fn_config_makefile dlls/ntprint/tests enable_tests
+wine_fn_config_makefile dlls/objsel enable_objsel
+wine_fn_config_makefile dlls/odbc32 enable_odbc32
+wine_fn_config_makefile dlls/odbccp32 enable_odbccp32
+wine_fn_config_makefile dlls/odbccp32/tests enable_tests
+wine_fn_config_makefile dlls/odbccu32 enable_odbccu32
+wine_fn_config_makefile dlls/ole2.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2conv.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2disp.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2nls.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2prox.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2thk.dll16 enable_win16
+wine_fn_config_makefile dlls/ole32 enable_ole32
+wine_fn_config_makefile dlls/ole32/tests enable_tests
+wine_fn_config_makefile dlls/oleacc enable_oleacc
+wine_fn_config_makefile dlls/oleacc/tests enable_tests
+wine_fn_config_makefile dlls/oleaut32 enable_oleaut32
+wine_fn_config_makefile dlls/oleaut32/tests enable_tests
+wine_fn_config_makefile dlls/olecli.dll16 enable_win16
+wine_fn_config_makefile dlls/olecli32 enable_olecli32
+wine_fn_config_makefile dlls/oledb32 enable_oledb32
+wine_fn_config_makefile dlls/oledb32/tests enable_tests
+wine_fn_config_makefile dlls/oledlg enable_oledlg
+wine_fn_config_makefile dlls/oledlg/tests enable_tests
+wine_fn_config_makefile dlls/olepro32 enable_olepro32
+wine_fn_config_makefile dlls/olesvr.dll16 enable_win16
+wine_fn_config_makefile dlls/olesvr32 enable_olesvr32
+wine_fn_config_makefile dlls/olethk32 enable_olethk32
+wine_fn_config_makefile dlls/openal32 enable_openal32
+wine_fn_config_makefile dlls/opencl enable_opencl
+wine_fn_config_makefile dlls/opengl32 enable_opengl32
+wine_fn_config_makefile dlls/opengl32/tests enable_tests
+wine_fn_config_makefile dlls/packager enable_packager
+wine_fn_config_makefile dlls/packager/tests enable_tests
+wine_fn_config_makefile dlls/pdh enable_pdh
+wine_fn_config_makefile dlls/pdh/tests enable_tests
+wine_fn_config_makefile dlls/photometadatahandler enable_photometadatahandler
+wine_fn_config_makefile dlls/pidgen enable_pidgen
+wine_fn_config_makefile dlls/powrprof enable_powrprof
+wine_fn_config_makefile dlls/printui enable_printui
+wine_fn_config_makefile dlls/prntvpt enable_prntvpt
+wine_fn_config_makefile dlls/propsys enable_propsys
+wine_fn_config_makefile dlls/propsys/tests enable_tests
+wine_fn_config_makefile dlls/psapi enable_psapi
+wine_fn_config_makefile dlls/psapi/tests enable_tests
+wine_fn_config_makefile dlls/pstorec enable_pstorec
+wine_fn_config_makefile dlls/pstorec/tests enable_tests
+wine_fn_config_makefile dlls/qcap enable_qcap
+wine_fn_config_makefile dlls/qcap/tests enable_tests
+wine_fn_config_makefile dlls/qedit enable_qedit
+wine_fn_config_makefile dlls/qedit/tests enable_tests
+wine_fn_config_makefile dlls/qmgr enable_qmgr
+wine_fn_config_makefile dlls/qmgr/tests enable_tests
+wine_fn_config_makefile dlls/qmgrprxy enable_qmgrprxy
+wine_fn_config_makefile dlls/quartz enable_quartz
+wine_fn_config_makefile dlls/quartz/tests enable_tests
+wine_fn_config_makefile dlls/query enable_query
+wine_fn_config_makefile dlls/rasapi16.dll16 enable_win16
+wine_fn_config_makefile dlls/rasapi32 enable_rasapi32
+wine_fn_config_makefile dlls/rasapi32/tests enable_tests
+wine_fn_config_makefile dlls/rasdlg enable_rasdlg
+wine_fn_config_makefile dlls/regapi enable_regapi
+wine_fn_config_makefile dlls/resutils enable_resutils
+wine_fn_config_makefile dlls/riched20 enable_riched20
+wine_fn_config_makefile dlls/riched20/tests enable_tests
+wine_fn_config_makefile dlls/riched32 enable_riched32
+wine_fn_config_makefile dlls/riched32/tests enable_tests
+wine_fn_config_makefile dlls/rpcrt4 enable_rpcrt4
+wine_fn_config_makefile dlls/rpcrt4/tests enable_tests
+wine_fn_config_makefile dlls/rsabase enable_rsabase
+wine_fn_config_makefile dlls/rsaenh enable_rsaenh
+wine_fn_config_makefile dlls/rsaenh/tests enable_tests
+wine_fn_config_makefile dlls/rstrtmgr enable_rstrtmgr
+wine_fn_config_makefile dlls/rtutils enable_rtutils
+wine_fn_config_makefile dlls/samlib enable_samlib
+wine_fn_config_makefile dlls/sane.ds enable_sane_ds
+wine_fn_config_makefile dlls/sapi enable_sapi
+wine_fn_config_makefile dlls/sapi/tests enable_tests
+wine_fn_config_makefile dlls/scarddlg enable_scarddlg
+wine_fn_config_makefile dlls/sccbase enable_sccbase
+wine_fn_config_makefile dlls/schannel enable_schannel
+wine_fn_config_makefile dlls/schannel/tests enable_tests
+wine_fn_config_makefile dlls/schedsvc enable_schedsvc
+wine_fn_config_makefile dlls/schedsvc/tests enable_tests
+wine_fn_config_makefile dlls/scrobj enable_scrobj
+wine_fn_config_makefile dlls/scrrun enable_scrrun
+wine_fn_config_makefile dlls/scrrun/tests enable_tests
+wine_fn_config_makefile dlls/scsiport.sys enable_scsiport_sys
+wine_fn_config_makefile dlls/secur32 enable_secur32
+wine_fn_config_makefile dlls/secur32/tests enable_tests
+wine_fn_config_makefile dlls/security enable_security
+wine_fn_config_makefile dlls/sensapi enable_sensapi
+wine_fn_config_makefile dlls/serialui enable_serialui
+wine_fn_config_makefile dlls/serialui/tests enable_tests
+wine_fn_config_makefile dlls/setupapi enable_setupapi
+wine_fn_config_makefile dlls/setupapi/tests enable_tests
+wine_fn_config_makefile dlls/setupx.dll16 enable_win16
+wine_fn_config_makefile dlls/sfc enable_sfc
+wine_fn_config_makefile dlls/sfc_os enable_sfc_os
+wine_fn_config_makefile dlls/shcore enable_shcore
+wine_fn_config_makefile dlls/shdoclc enable_shdoclc
+wine_fn_config_makefile dlls/shdocvw enable_shdocvw
+wine_fn_config_makefile dlls/shdocvw/tests enable_tests
+wine_fn_config_makefile dlls/shell.dll16 enable_win16
+wine_fn_config_makefile dlls/shell32 enable_shell32
+wine_fn_config_makefile dlls/shell32/tests enable_tests
+wine_fn_config_makefile dlls/shfolder enable_shfolder
+wine_fn_config_makefile dlls/shlwapi enable_shlwapi
+wine_fn_config_makefile dlls/shlwapi/tests enable_tests
+wine_fn_config_makefile dlls/slbcsp enable_slbcsp
+wine_fn_config_makefile dlls/slc enable_slc
+wine_fn_config_makefile dlls/slc/tests enable_tests
+wine_fn_config_makefile dlls/snmpapi enable_snmpapi
+wine_fn_config_makefile dlls/snmpapi/tests enable_tests
+wine_fn_config_makefile dlls/softpub enable_softpub
+wine_fn_config_makefile dlls/sound.drv16 enable_win16
+wine_fn_config_makefile dlls/spoolss enable_spoolss
+wine_fn_config_makefile dlls/spoolss/tests enable_tests
+wine_fn_config_makefile dlls/sspicli enable_sspicli
+wine_fn_config_makefile dlls/stdole2.tlb enable_stdole2_tlb
+wine_fn_config_makefile dlls/stdole32.tlb enable_stdole32_tlb
+wine_fn_config_makefile dlls/sti enable_sti
+wine_fn_config_makefile dlls/sti/tests enable_tests
+wine_fn_config_makefile dlls/storage.dll16 enable_win16
+wine_fn_config_makefile dlls/stress.dll16 enable_win16
+wine_fn_config_makefile dlls/strmbase enable_strmbase
+wine_fn_config_makefile dlls/strmiids enable_strmiids
+wine_fn_config_makefile dlls/svrapi enable_svrapi
+wine_fn_config_makefile dlls/sxs enable_sxs
+wine_fn_config_makefile dlls/sxs/tests enable_tests
+wine_fn_config_makefile dlls/system.drv16 enable_win16
+wine_fn_config_makefile dlls/t2embed enable_t2embed
+wine_fn_config_makefile dlls/t2embed/tests enable_tests
+wine_fn_config_makefile dlls/tapi32 enable_tapi32
+wine_fn_config_makefile dlls/taskschd enable_taskschd
+wine_fn_config_makefile dlls/taskschd/tests enable_tests
+wine_fn_config_makefile dlls/tdh enable_tdh
+wine_fn_config_makefile dlls/tdi.sys enable_tdi_sys
+wine_fn_config_makefile dlls/toolhelp.dll16 enable_win16
+wine_fn_config_makefile dlls/traffic enable_traffic
+wine_fn_config_makefile dlls/twain.dll16 enable_win16
+wine_fn_config_makefile dlls/twain_32 enable_twain_32
+wine_fn_config_makefile dlls/twain_32/tests enable_tests
+wine_fn_config_makefile dlls/typelib.dll16 enable_win16
+wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
+wine_fn_config_makefile dlls/ucrtbase/tests enable_tests
+wine_fn_config_makefile dlls/uiautomationcore enable_uiautomationcore
+wine_fn_config_makefile dlls/uiribbon enable_uiribbon
+wine_fn_config_makefile dlls/unicows enable_unicows
+wine_fn_config_makefile dlls/updspapi enable_updspapi
+wine_fn_config_makefile dlls/url enable_url
+wine_fn_config_makefile dlls/urlmon enable_urlmon
+wine_fn_config_makefile dlls/urlmon/tests enable_tests
+wine_fn_config_makefile dlls/usbd.sys enable_usbd_sys
+wine_fn_config_makefile dlls/user.exe16 enable_win16
+wine_fn_config_makefile dlls/user32 enable_user32
+wine_fn_config_makefile dlls/user32/tests enable_tests
+wine_fn_config_makefile dlls/userenv enable_userenv
+wine_fn_config_makefile dlls/userenv/tests enable_tests
+wine_fn_config_makefile dlls/usp10 enable_usp10
+wine_fn_config_makefile dlls/usp10/tests enable_tests
+wine_fn_config_makefile dlls/uuid enable_uuid
+wine_fn_config_makefile dlls/uxtheme enable_uxtheme
+wine_fn_config_makefile dlls/uxtheme/tests enable_tests
+wine_fn_config_makefile dlls/vbscript enable_vbscript
+wine_fn_config_makefile dlls/vbscript/tests enable_tests
+wine_fn_config_makefile dlls/vcomp enable_vcomp
+wine_fn_config_makefile dlls/vcomp/tests enable_tests
+wine_fn_config_makefile dlls/vcomp100 enable_vcomp100
+wine_fn_config_makefile dlls/vcomp110 enable_vcomp110
+wine_fn_config_makefile dlls/vcomp120 enable_vcomp120
+wine_fn_config_makefile dlls/vcomp140 enable_vcomp140
+wine_fn_config_makefile dlls/vcomp90 enable_vcomp90
+wine_fn_config_makefile dlls/vcruntime140 enable_vcruntime140
+wine_fn_config_makefile dlls/vdhcp.vxd enable_win16
+wine_fn_config_makefile dlls/vdmdbg enable_vdmdbg
+wine_fn_config_makefile dlls/ver.dll16 enable_win16
+wine_fn_config_makefile dlls/version enable_version
+wine_fn_config_makefile dlls/version/tests enable_tests
+wine_fn_config_makefile dlls/virtdisk enable_virtdisk
+wine_fn_config_makefile dlls/vmm.vxd enable_win16
+wine_fn_config_makefile dlls/vnbt.vxd enable_win16
+wine_fn_config_makefile dlls/vnetbios.vxd enable_win16
+wine_fn_config_makefile dlls/vssapi enable_vssapi
+wine_fn_config_makefile dlls/vtdapi.vxd enable_win16
+wine_fn_config_makefile dlls/vwin32.vxd enable_win16
+wine_fn_config_makefile dlls/w32skrnl enable_win16
+wine_fn_config_makefile dlls/w32sys.dll16 enable_win16
+wine_fn_config_makefile dlls/wbemdisp enable_wbemdisp
+wine_fn_config_makefile dlls/wbemdisp/tests enable_tests
+wine_fn_config_makefile dlls/wbemprox enable_wbemprox
+wine_fn_config_makefile dlls/wbemprox/tests enable_tests
+wine_fn_config_makefile dlls/wdscore enable_wdscore
+wine_fn_config_makefile dlls/webservices enable_webservices
+wine_fn_config_makefile dlls/webservices/tests enable_tests
+wine_fn_config_makefile dlls/wer enable_wer
+wine_fn_config_makefile dlls/wer/tests enable_tests
+wine_fn_config_makefile dlls/wevtapi enable_wevtapi
+wine_fn_config_makefile dlls/wiaservc enable_wiaservc
+wine_fn_config_makefile dlls/wiaservc/tests enable_tests
+wine_fn_config_makefile dlls/wimgapi enable_wimgapi
+wine_fn_config_makefile dlls/win32s16.dll16 enable_win16
+wine_fn_config_makefile dlls/win87em.dll16 enable_win16
+wine_fn_config_makefile dlls/winaspi.dll16 enable_win16
+wine_fn_config_makefile dlls/windebug.dll16 enable_win16
+wine_fn_config_makefile dlls/windowscodecs enable_windowscodecs
+wine_fn_config_makefile dlls/windowscodecs/tests enable_tests
+wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext
+wine_fn_config_makefile dlls/windowscodecsext/tests enable_tests
+wine_fn_config_makefile dlls/winealsa.drv enable_winealsa_drv
+wine_fn_config_makefile dlls/wineandroid.drv enable_wineandroid_drv
+wine_fn_config_makefile dlls/winebus.sys enable_winebus_sys
+wine_fn_config_makefile dlls/winecoreaudio.drv enable_winecoreaudio_drv
+wine_fn_config_makefile dlls/winecrt0 enable_winecrt0
+wine_fn_config_makefile dlls/wined3d enable_wined3d
+wine_fn_config_makefile dlls/winegstreamer enable_winegstreamer
+wine_fn_config_makefile dlls/winehid.sys enable_winehid_sys
+wine_fn_config_makefile dlls/winejoystick.drv enable_winejoystick_drv
+wine_fn_config_makefile dlls/winemac.drv enable_winemac_drv
+wine_fn_config_makefile dlls/winemapi enable_winemapi
+wine_fn_config_makefile dlls/wineoss.drv enable_wineoss_drv
+wine_fn_config_makefile dlls/wineps.drv enable_wineps_drv
+wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
+wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
+wine_fn_config_makefile dlls/wineqtdecoder enable_wineqtdecoder
+wine_fn_config_makefile dlls/winevulkan enable_winevulkan
+wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
+wine_fn_config_makefile dlls/wing.dll16 enable_win16
+wine_fn_config_makefile dlls/wing32 enable_wing32
+wine_fn_config_makefile dlls/winhttp enable_winhttp
+wine_fn_config_makefile dlls/winhttp/tests enable_tests
+wine_fn_config_makefile dlls/wininet enable_wininet
+wine_fn_config_makefile dlls/wininet/tests enable_tests
+wine_fn_config_makefile dlls/winmm enable_winmm
+wine_fn_config_makefile dlls/winmm/tests enable_tests
+wine_fn_config_makefile dlls/winnls.dll16 enable_win16
+wine_fn_config_makefile dlls/winnls32 enable_winnls32
+wine_fn_config_makefile dlls/winscard enable_winscard
+wine_fn_config_makefile dlls/winsock.dll16 enable_win16
+wine_fn_config_makefile dlls/winspool.drv enable_winspool_drv
+wine_fn_config_makefile dlls/winspool.drv/tests enable_tests
+wine_fn_config_makefile dlls/winsta enable_winsta
+wine_fn_config_makefile dlls/wintab.dll16 enable_win16
+wine_fn_config_makefile dlls/wintab32 enable_wintab32
+wine_fn_config_makefile dlls/wintab32/tests enable_tests
+wine_fn_config_makefile dlls/wintrust enable_wintrust
+wine_fn_config_makefile dlls/wintrust/tests enable_tests
+wine_fn_config_makefile dlls/winusb enable_winusb
+wine_fn_config_makefile dlls/wlanapi enable_wlanapi
+wine_fn_config_makefile dlls/wlanapi/tests enable_tests
+wine_fn_config_makefile dlls/wldap32 enable_wldap32
+wine_fn_config_makefile dlls/wldap32/tests enable_tests
+wine_fn_config_makefile dlls/wmasf enable_wmasf
+wine_fn_config_makefile dlls/wmi enable_wmi
+wine_fn_config_makefile dlls/wmiutils enable_wmiutils
+wine_fn_config_makefile dlls/wmiutils/tests enable_tests
+wine_fn_config_makefile dlls/wmp enable_wmp
+wine_fn_config_makefile dlls/wmp/tests enable_tests
+wine_fn_config_makefile dlls/wmphoto enable_wmphoto
+wine_fn_config_makefile dlls/wmvcore enable_wmvcore
+wine_fn_config_makefile dlls/wmvcore/tests enable_tests
+wine_fn_config_makefile dlls/wnaspi32 enable_wnaspi32
+wine_fn_config_makefile dlls/wow32 enable_win16
+wine_fn_config_makefile dlls/wpc enable_wpc
+wine_fn_config_makefile dlls/wpc/tests enable_tests
+wine_fn_config_makefile dlls/wpcap enable_wpcap
+wine_fn_config_makefile dlls/ws2_32 enable_ws2_32
+wine_fn_config_makefile dlls/ws2_32/tests enable_tests
+wine_fn_config_makefile dlls/wsdapi enable_wsdapi
+wine_fn_config_makefile dlls/wsdapi/tests enable_tests
+wine_fn_config_makefile dlls/wshom.ocx enable_wshom_ocx
+wine_fn_config_makefile dlls/wshom.ocx/tests enable_tests
+wine_fn_config_makefile dlls/wsnmp32 enable_wsnmp32
+wine_fn_config_makefile dlls/wsnmp32/tests enable_tests
+wine_fn_config_makefile dlls/wsock32 enable_wsock32
+wine_fn_config_makefile dlls/wtsapi32 enable_wtsapi32
+wine_fn_config_makefile dlls/wtsapi32/tests enable_tests
+wine_fn_config_makefile dlls/wuapi enable_wuapi
+wine_fn_config_makefile dlls/wuaueng enable_wuaueng
+wine_fn_config_makefile dlls/x3daudio1_0 enable_x3daudio1_0
+wine_fn_config_makefile dlls/x3daudio1_1 enable_x3daudio1_1
+wine_fn_config_makefile dlls/x3daudio1_2 enable_x3daudio1_2
+wine_fn_config_makefile dlls/x3daudio1_3 enable_x3daudio1_3
+wine_fn_config_makefile dlls/x3daudio1_4 enable_x3daudio1_4
+wine_fn_config_makefile dlls/x3daudio1_5 enable_x3daudio1_5
+wine_fn_config_makefile dlls/x3daudio1_6 enable_x3daudio1_6
+wine_fn_config_makefile dlls/x3daudio1_7 enable_x3daudio1_7
+wine_fn_config_makefile dlls/xapofx1_1 enable_xapofx1_1
+wine_fn_config_makefile dlls/xapofx1_2 enable_xapofx1_2
+wine_fn_config_makefile dlls/xapofx1_3 enable_xapofx1_3
+wine_fn_config_makefile dlls/xapofx1_4 enable_xapofx1_4
+wine_fn_config_makefile dlls/xapofx1_5 enable_xapofx1_5
+wine_fn_config_makefile dlls/xaudio2_0 enable_xaudio2_0
+wine_fn_config_makefile dlls/xaudio2_1 enable_xaudio2_1
+wine_fn_config_makefile dlls/xaudio2_2 enable_xaudio2_2
+wine_fn_config_makefile dlls/xaudio2_3 enable_xaudio2_3
+wine_fn_config_makefile dlls/xaudio2_4 enable_xaudio2_4
+wine_fn_config_makefile dlls/xaudio2_5 enable_xaudio2_5
+wine_fn_config_makefile dlls/xaudio2_6 enable_xaudio2_6
+wine_fn_config_makefile dlls/xaudio2_7 enable_xaudio2_7
+wine_fn_config_makefile dlls/xaudio2_7/tests enable_tests
+wine_fn_config_makefile dlls/xaudio2_8 enable_xaudio2_8
+wine_fn_config_makefile dlls/xaudio2_9 enable_xaudio2_9
+wine_fn_config_makefile dlls/xinput1_1 enable_xinput1_1
+wine_fn_config_makefile dlls/xinput1_2 enable_xinput1_2
+wine_fn_config_makefile dlls/xinput1_3 enable_xinput1_3
+wine_fn_config_makefile dlls/xinput1_3/tests enable_tests
+wine_fn_config_makefile dlls/xinput1_4 enable_xinput1_4
+wine_fn_config_makefile dlls/xinput9_1_0 enable_xinput9_1_0
+wine_fn_config_makefile dlls/xmllite enable_xmllite
+wine_fn_config_makefile dlls/xmllite/tests enable_tests
+wine_fn_config_makefile dlls/xolehlp enable_xolehlp
+wine_fn_config_makefile dlls/xpsprint enable_xpsprint
+wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
+test -n "$with_wine64" || wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
-wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine
-wine_fn_config_makefile libs/wpp enable_libs_wpp
+wine_fn_config_makefile libs/port enable_port
+wine_fn_config_makefile libs/wine enable_wine
+wine_fn_config_makefile libs/wpp enable_wpp
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile po enable_po
-wine_fn_config_program arp enable_arp
-wine_fn_config_program aspnet_regiis enable_aspnet_regiis
-wine_fn_config_program attrib enable_attrib
-wine_fn_config_program cabarc enable_cabarc
-wine_fn_config_program cacls enable_cacls
-wine_fn_config_program clock enable_clock
-wine_fn_config_program cmd enable_cmd
-wine_fn_config_test programs/cmd/tests
-wine_fn_config_program conhost enable_conhost
-wine_fn_config_program control enable_control
-wine_fn_config_program cscript enable_cscript
-wine_fn_config_program dpnsvr enable_dpnsvr
-wine_fn_config_program dxdiag enable_dxdiag
-wine_fn_config_program eject enable_eject
-wine_fn_config_program expand enable_expand
-wine_fn_config_program explorer enable_explorer
-wine_fn_config_program extrac32 enable_extrac32
-wine_fn_config_program findstr enable_findstr
-wine_fn_config_program fsutil enable_fsutil
-wine_fn_config_program hh enable_hh
-wine_fn_config_program hostname enable_hostname
-wine_fn_config_program icacls enable_icacls
-wine_fn_config_program icinfo enable_icinfo
-wine_fn_config_program iexplore enable_iexplore
-wine_fn_config_program ipconfig enable_ipconfig
-wine_fn_config_program lodctr enable_lodctr
-wine_fn_config_program mofcomp enable_mofcomp
-wine_fn_config_program mshta enable_mshta
-wine_fn_config_program msiexec enable_msiexec
-wine_fn_config_program msinfo32 enable_msinfo32
-wine_fn_config_program net enable_net
-wine_fn_config_program netsh enable_netsh
-wine_fn_config_program netstat enable_netstat
-wine_fn_config_program ngen enable_ngen
-wine_fn_config_program notepad enable_notepad
-wine_fn_config_program oleview enable_oleview
-wine_fn_config_program ping enable_ping
-wine_fn_config_program plugplay enable_plugplay
-wine_fn_config_program powershell enable_powershell
-wine_fn_config_program presentationfontcache enable_presentationfontcache
-wine_fn_config_program progman enable_progman
-wine_fn_config_program reg enable_reg
-wine_fn_config_test programs/reg/tests
-wine_fn_config_program regasm enable_regasm
-wine_fn_config_program regedit enable_regedit
-wine_fn_config_test programs/regedit/tests
-wine_fn_config_program regsvcs enable_regsvcs
-wine_fn_config_program regsvr32 enable_regsvr32
-wine_fn_config_program rpcss enable_rpcss
-wine_fn_config_program rundll.exe16 enable_win16
-wine_fn_config_program rundll32 enable_rundll32
-wine_fn_config_program sc enable_sc
-wine_fn_config_program schtasks enable_schtasks
-wine_fn_config_test programs/schtasks/tests
-wine_fn_config_program sdbinst enable_sdbinst
-wine_fn_config_program secedit enable_secedit
-wine_fn_config_program servicemodelreg enable_servicemodelreg
-wine_fn_config_program services enable_services
-wine_fn_config_test programs/services/tests
-wine_fn_config_program shutdown enable_shutdown
-wine_fn_config_program spoolsv enable_spoolsv
-wine_fn_config_program start enable_start
-wine_fn_config_program subst enable_subst
-wine_fn_config_program svchost enable_svchost
-wine_fn_config_program systeminfo enable_systeminfo
-wine_fn_config_program taskkill enable_taskkill
-wine_fn_config_program tasklist enable_tasklist
-wine_fn_config_program taskmgr enable_taskmgr
-wine_fn_config_program termsv enable_termsv
-wine_fn_config_program uninstaller enable_uninstaller
-wine_fn_config_program unlodctr enable_unlodctr
-wine_fn_config_program view enable_view
-wine_fn_config_program wevtutil enable_wevtutil
-wine_fn_config_program wineboot enable_wineboot
-wine_fn_config_program winebrowser enable_winebrowser
-wine_fn_config_program winecfg enable_winecfg
-wine_fn_config_program wineconsole enable_wineconsole
-wine_fn_config_program winedbg enable_winedbg
-wine_fn_config_program winedevice enable_winedevice
-wine_fn_config_program winefile enable_winefile
-wine_fn_config_program winemenubuilder enable_winemenubuilder
-wine_fn_config_program winemine enable_winemine
-wine_fn_config_program winemsibuilder enable_winemsibuilder
-wine_fn_config_program winepath enable_winepath
-wine_fn_config_program winetest enable_winetest
-wine_fn_config_program winevdm enable_win16
-wine_fn_config_program winhelp.exe16 enable_win16
-wine_fn_config_program winhlp32 enable_winhlp32
-wine_fn_config_program winoldap.mod16 enable_win16
-wine_fn_config_program winver enable_winver
-wine_fn_config_program wmic enable_wmic
-wine_fn_config_program wmplayer enable_wmplayer
-wine_fn_config_program wordpad enable_wordpad
-wine_fn_config_program write enable_write
-wine_fn_config_program wscript enable_wscript
-wine_fn_config_test programs/wscript/tests
-wine_fn_config_program wusa enable_wusa
-wine_fn_config_program xcopy enable_xcopy
-wine_fn_config_test programs/xcopy/tests
-wine_fn_config_makefile server enable_server
-wine_fn_config_tool tools
-wine_fn_config_tool tools/sfnt2fon
-wine_fn_config_tool tools/widl
-wine_fn_config_tool tools/winebuild
-wine_fn_config_tool tools/winedump
-wine_fn_config_tool tools/winegcc
-wine_fn_config_tool tools/winemaker
-wine_fn_config_tool tools/wmc
-wine_fn_config_tool tools/wrc
+wine_fn_config_makefile programs/arp enable_arp
+wine_fn_config_makefile programs/aspnet_regiis enable_aspnet_regiis
+wine_fn_config_makefile programs/attrib enable_attrib
+wine_fn_config_makefile programs/cabarc enable_cabarc
+wine_fn_config_makefile programs/cacls enable_cacls
+wine_fn_config_makefile programs/clock enable_clock
+wine_fn_config_makefile programs/cmd enable_cmd
+wine_fn_config_makefile programs/cmd/tests enable_tests
+wine_fn_config_makefile programs/conhost enable_conhost
+wine_fn_config_makefile programs/control enable_control
+wine_fn_config_makefile programs/cscript enable_cscript
+wine_fn_config_makefile programs/dpnsvr enable_dpnsvr
+wine_fn_config_makefile programs/dxdiag enable_dxdiag
+wine_fn_config_makefile programs/eject enable_eject
+wine_fn_config_makefile programs/expand enable_expand
+wine_fn_config_makefile programs/explorer enable_explorer
+wine_fn_config_makefile programs/extrac32 enable_extrac32
+wine_fn_config_makefile programs/findstr enable_findstr
+wine_fn_config_makefile programs/fsutil enable_fsutil
+wine_fn_config_makefile programs/hh enable_hh
+wine_fn_config_makefile programs/hostname enable_hostname
+wine_fn_config_makefile programs/icacls enable_icacls
+wine_fn_config_makefile programs/icinfo enable_icinfo
+wine_fn_config_makefile programs/iexplore enable_iexplore
+wine_fn_config_makefile programs/ipconfig enable_ipconfig
+wine_fn_config_makefile programs/lodctr enable_lodctr
+wine_fn_config_makefile programs/mofcomp enable_mofcomp
+wine_fn_config_makefile programs/mshta enable_mshta
+wine_fn_config_makefile programs/msiexec enable_msiexec
+wine_fn_config_makefile programs/msinfo32 enable_msinfo32
+wine_fn_config_makefile programs/net enable_net
+wine_fn_config_makefile programs/netsh enable_netsh
+wine_fn_config_makefile programs/netstat enable_netstat
+wine_fn_config_makefile programs/ngen enable_ngen
+wine_fn_config_makefile programs/notepad enable_notepad
+wine_fn_config_makefile programs/oleview enable_oleview
+wine_fn_config_makefile programs/ping enable_ping
+wine_fn_config_makefile programs/plugplay enable_plugplay
+wine_fn_config_makefile programs/powershell enable_powershell
+wine_fn_config_makefile programs/presentationfontcache enable_presentationfontcache
+wine_fn_config_makefile programs/progman enable_progman
+wine_fn_config_makefile programs/reg enable_reg
+wine_fn_config_makefile programs/reg/tests enable_tests
+wine_fn_config_makefile programs/regasm enable_regasm
+wine_fn_config_makefile programs/regedit enable_regedit
+wine_fn_config_makefile programs/regedit/tests enable_tests
+wine_fn_config_makefile programs/regsvcs enable_regsvcs
+wine_fn_config_makefile programs/regsvr32 enable_regsvr32
+wine_fn_config_makefile programs/rpcss enable_rpcss
+wine_fn_config_makefile programs/rundll.exe16 enable_win16
+wine_fn_config_makefile programs/rundll32 enable_rundll32
+wine_fn_config_makefile programs/sc enable_sc
+wine_fn_config_makefile programs/schtasks enable_schtasks
+wine_fn_config_makefile programs/schtasks/tests enable_tests
+wine_fn_config_makefile programs/sdbinst enable_sdbinst
+wine_fn_config_makefile programs/secedit enable_secedit
+wine_fn_config_makefile programs/servicemodelreg enable_servicemodelreg
+wine_fn_config_makefile programs/services enable_services
+wine_fn_config_makefile programs/services/tests enable_tests
+wine_fn_config_makefile programs/shutdown enable_shutdown
+wine_fn_config_makefile programs/spoolsv enable_spoolsv
+wine_fn_config_makefile programs/start enable_start
+wine_fn_config_makefile programs/subst enable_subst
+wine_fn_config_makefile programs/svchost enable_svchost
+wine_fn_config_makefile programs/systeminfo enable_systeminfo
+wine_fn_config_makefile programs/taskkill enable_taskkill
+wine_fn_config_makefile programs/tasklist enable_tasklist
+wine_fn_config_makefile programs/taskmgr enable_taskmgr
+wine_fn_config_makefile programs/termsv enable_termsv
+wine_fn_config_makefile programs/uninstaller enable_uninstaller
+wine_fn_config_makefile programs/unlodctr enable_unlodctr
+wine_fn_config_makefile programs/view enable_view
+wine_fn_config_makefile programs/wevtutil enable_wevtutil
+wine_fn_config_makefile programs/wineboot enable_wineboot
+wine_fn_config_makefile programs/winebrowser enable_winebrowser
+wine_fn_config_makefile programs/winecfg enable_winecfg
+wine_fn_config_makefile programs/wineconsole enable_wineconsole
+wine_fn_config_makefile programs/winedbg enable_winedbg
+wine_fn_config_makefile programs/winedevice enable_winedevice
+wine_fn_config_makefile programs/winefile enable_winefile
+wine_fn_config_makefile programs/winemenubuilder enable_winemenubuilder
+wine_fn_config_makefile programs/winemine enable_winemine
+wine_fn_config_makefile programs/winemsibuilder enable_winemsibuilder
+wine_fn_config_makefile programs/winepath enable_winepath
+wine_fn_config_makefile programs/winetest enable_winetest
+wine_fn_config_makefile programs/winevdm enable_win16
+wine_fn_config_makefile programs/winhelp.exe16 enable_win16
+wine_fn_config_makefile programs/winhlp32 enable_winhlp32
+wine_fn_config_makefile programs/winoldap.mod16 enable_win16
+wine_fn_config_makefile programs/winver enable_winver
+wine_fn_config_makefile programs/wmic enable_wmic
+wine_fn_config_makefile programs/wmplayer enable_wmplayer
+wine_fn_config_makefile programs/wordpad enable_wordpad
+wine_fn_config_makefile programs/write enable_write
+wine_fn_config_makefile programs/wscript enable_wscript
+wine_fn_config_makefile programs/wscript/tests enable_tests
+wine_fn_config_makefile programs/wusa enable_wusa
+wine_fn_config_makefile programs/xcopy enable_xcopy
+wine_fn_config_makefile programs/xcopy/tests enable_tests
+test -n "$with_wine64" || wine_fn_config_makefile server enable_server
+test "x$enable_tools" = xno || wine_fn_config_makefile tools enable_tools
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/sfnt2fon enable_sfnt2fon
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/widl enable_widl
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/winebuild enable_winebuild
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/winedump enable_winedump
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/winegcc enable_winegcc
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/winemaker enable_winemaker
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/wmc enable_wmc
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/wrc enable_wrc
 
 
 wine_fn_append_file CONFIGURE_TARGETS "TAGS"

@@ -342,9 +342,8 @@ sub assign_sources_to_makefiles(@)
 
         my $make = $makefiles{"$dir/Makefile"};
         my $name = substr( $file, length($dir) + 1 );
-        my %flags = get_makedep_flags( $file );
 
-        next if $file =~ /^include\/wine\// && !%flags && !$exported_wine_headers{$name};
+        next if $file =~ /^include\/wine\// && !get_makedep_flags($file) && !$exported_wine_headers{$name};
 
         if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
@@ -376,7 +375,7 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.idl$/)
         {
-            die "no makedep flags specified in $file" unless %flags || $dir eq "include";
+            die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
             push @{${$make}{"=IDL_SRCS"}}, $name;
         }
         elsif ($name =~ /\.man\.in$/)
@@ -420,72 +419,57 @@ sub update_makefiles(@)
 
     foreach my $file (sort @_)
     {
+        next if $file eq "Makefile";
         my %make = %{$makefiles{$file}};
+        (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
         my $args = "";
-        my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
         if (defined($make{"TESTDLL"}))  # test
         {
             die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile$/;
             die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_TEST($dir)\n";
         }
         elsif (defined($make{"MODULE"}) && $make{"MODULE"} =~ /\.a$/)  # import lib
         {
             die "MODULE should not be defined as static lib in $file" unless $file =~ /^dlls\//;
             die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_LIB($name)\n";
         }
-        elsif (defined($make{"MODULE"}) && defined($make{"APPMODE"}))  # program
+        elsif (defined($make{"MODULE"}))  # dll or program
         {
-            die "APPMODE should not be defined in $file" unless $file =~ /^programs\//;
+            (my $name = $file) =~ s/^(dlls|programs)\/(.*)\/Makefile/$2/;
+            die "MODULE should not be defined in $file" unless $file =~ /^(dlls|programs)\//;
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
-            if ($name =~ /\./)
+            die "Invalid MODULE in $file" if $name =~ /\./ && $make{"MODULE"} ne $name;
+            if ($file =~ /^programs\//)
             {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
+                die "APPMODE should be defined in $file" unless defined $make{"APPMODE"} ;
+                die "Invalid MODULE in $file" unless $name =~ /\./ || $make{"MODULE"} eq "$name.exe";
             }
             else
             {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
+                die "APPMODE should not be defined in $file" if defined $make{"APPMODE"} ;
+                die "Invalid MODULE in $file" unless $name =~ /\./ || $make{"MODULE"} eq "$name.dll";
             }
-            $args .= ",enable_win16" if $is_win16;
-            push @lines, "WINE_CONFIG_PROGRAM($name$args)\n";
-        }
-        elsif (defined($make{"MODULE"}))  # dll
-        {
-            die "APPMODE should be defined in $file" if $file =~ /^programs\//;
-            die "MODULE should not be defined in $file" unless $file =~ /^dlls\//;
-            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            if ($name =~ /\./)
+            if (defined $make{"IMPORTLIB"})
             {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
+                die "IMPORTLIB not allowed in programs\n" if $file =~ /^programs\//;
+                die "Invalid IMPORTLIB name in $file" if $make{"IMPORTLIB"} =~ /\./;
             }
-            else
-            {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
-            }
-            my $implib = $make{"IMPORTLIB"} || "";
-            die "Invalid IMPORTLIB name in $file" if $implib =~ /\./;
-            $args .= ",enable_win16" if $is_win16;
-            push @lines, "WINE_CONFIG_DLL($name$args)\n";
+            $args = ",enable_win16" if $make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}};
         }
         elsif ($file =~ /^tools.*\/Makefile$/)
         {
             die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_TOOL($name)\n";
+            $args = ",,[test \"x\$enable_tools\" = xno]";
         }
-        elsif ($file =~ /\/Makefile$/)
+        elsif (($dir eq "fonts") || ($dir eq "server"))
         {
-            (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_MAKEFILE($name)\n";
+            # these are created as symlinks for wow64 builds
+            $args = ",,[test -n \"\$with_wine64\"]";
         }
+        push @lines, "WINE_CONFIG_MAKEFILE($dir$args)\n";
     }
 
     # update the source variables in all the makefiles
@@ -493,7 +477,7 @@ sub update_makefiles(@)
     foreach my $file (sort @_) { replace_makefile_variables( $file ); }
 
     push @lines, "dnl End of auto-generated output commands\n";
-    replace_in_file( "configure.ac", '^WINE_CONFIG_DLL', '^dnl End of auto-generated output commands\n$', @lines);
+    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKEFILE', '^dnl End of auto-generated output commands\n$', @lines);
 }
 
 
