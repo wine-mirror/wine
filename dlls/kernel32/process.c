@@ -4225,6 +4225,16 @@ BOOL WINAPI UpdateProcThreadAttribute(struct _PROC_THREAD_ATTRIBUTE_LIST *list,
 }
 
 /***********************************************************************
+ *           CreateUmsCompletionList   (KERNEL32.@)
+ */
+BOOL WINAPI CreateUmsCompletionList(PUMS_COMPLETION_LIST *list)
+{
+    FIXME( "%p: stub\n", list );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/***********************************************************************
  *           DeleteProcThreadAttributeList       (KERNEL32.@)
  */
 void WINAPI DeleteProcThreadAttributeList(struct _PROC_THREAD_ATTRIBUTE_LIST *list)
