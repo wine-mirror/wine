@@ -1916,6 +1916,7 @@ WINBASEAPI BOOL        WINAPI DeleteUmsThreadContext(PUMS_CONTEXT);
 WINBASEAPI BOOL        WINAPI DeleteVolumeMountPointA(LPCSTR);
 WINBASEAPI BOOL        WINAPI DeleteVolumeMountPointW(LPCWSTR);
 #define                       DeleteVolumeMountPoint WINELIB_NAME_AW(DeleteVolumeMountPoint)
+WINBASEAPI BOOL        WINAPI DequeueUmsCompletionListItems(void *, DWORD, PUMS_CONTEXT *);
 WINADVAPI  BOOL        WINAPI DeregisterEventSource(HANDLE);
 WINADVAPI  BOOL        WINAPI DestroyPrivateObjectSecurity(PSECURITY_DESCRIPTOR*);
 WINBASEAPI BOOL        WINAPI DeviceIoControl(HANDLE,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);

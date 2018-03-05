@@ -377,7 +377,7 @@
 @ stdcall -arch=x86_64 DeleteUmsThreadContext(ptr)
 @ stdcall DeleteVolumeMountPointA(str)
 @ stdcall DeleteVolumeMountPointW(wstr)
-# @ stub -arch=x86_64 DequeueUmsCompletionListItems
+@ stdcall -arch=x86_64 DequeueUmsCompletionListItems(ptr long ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
 @ stdcall DisableThreadLibraryCalls(long)
 @ stdcall DisconnectNamedPipe(long)

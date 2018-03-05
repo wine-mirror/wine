@@ -4272,6 +4272,16 @@ BOOL WINAPI DeleteUmsThreadContext(PUMS_CONTEXT ctx)
     return FALSE;
 }
 
+/***********************************************************************
+ *           DequeueUmsCompletionListItems   (KERNEL32.@)
+ */
+BOOL WINAPI DequeueUmsCompletionListItems(void *list, DWORD timeout, PUMS_CONTEXT *ctx)
+{
+    FIXME( "%p,%08x,%p: stub\n", list, timeout, ctx );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
