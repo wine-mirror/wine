@@ -65,7 +65,9 @@ static BOOL enum_find_filter(const WCHAR *wszFilterName, IEnumMoniker *pEnum)
 
 static void test_fm2_enummatchingfilters(void)
 {
+    IEnumRegFilters *enum_reg;
     IFilterMapper2 *pMapper = NULL;
+    IFilterMapper *mapper;
     HRESULT hr;
     REGFILTER2 rgf2;
     REGFILTERPINS2 rgPins2[2];
@@ -76,6 +78,8 @@ static void test_fm2_enummatchingfilters(void)
     CLSID clsidFilter2;
     IEnumMoniker *pEnum = NULL;
     BOOL found, registered = TRUE;
+    REGFILTER *regfilter;
+    ULONG count;
 
     ZeroMemory(&rgf2, sizeof(rgf2));
 
@@ -168,6 +172,22 @@ static void test_fm2_enummatchingfilters(void)
             found = enum_find_filter(wszFilterName1, pEnum);
             ok(found, "EnumMatchingFilters failed to return the test filter 1\n");
         }
+
+        hr = IFilterMapper2_QueryInterface(pMapper, &IID_IFilterMapper, (void **)&mapper);
+        ok(hr == S_OK, "QueryInterface(IFilterMapper) failed: %#x\n", hr);
+
+        found = FALSE;
+        hr = IFilterMapper_EnumMatchingFilters(mapper, &enum_reg, MERIT_UNLIKELY,
+            FALSE, GUID_NULL, GUID_NULL, FALSE, FALSE, GUID_NULL, GUID_NULL);
+        ok(hr == S_OK, "IFilterMapper_EnumMatchingFilters failed: %#x\n", hr);
+        while (!found && IEnumRegFilters_Next(enum_reg, 1, &regfilter, &count) == S_OK)
+        {
+            trace("%s %s\n", wine_dbgstr_guid(&regfilter->Clsid), wine_dbgstr_w(regfilter->Name));
+            if (!lstrcmpW(regfilter->Name, wszFilterName1) && IsEqualGUID(&clsidFilter1, &regfilter->Clsid))
+                found = TRUE;
+        }
+        IEnumRegFilters_Release(enum_reg);
+        ok(found, "IFilterMapper didn't find filter\n");
     }
 
     if (pEnum) IEnumMoniker_Release(pEnum);
