@@ -4292,6 +4292,16 @@ BOOL WINAPI EnterUmsSchedulingMode(UMS_SCHEDULER_STARTUP_INFO *info)
     return FALSE;
 }
 
+/***********************************************************************
+ *           ExecuteUmsThread   (KERNEL32.@)
+ */
+BOOL WINAPI ExecuteUmsThread(PUMS_CONTEXT ctx)
+{
+    FIXME( "%p: stub\n", ctx );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */

@@ -437,7 +437,7 @@
 @ stdcall -arch=x86_64 EnterUmsSchedulingMode(ptr)
 @ stdcall EraseTape(ptr long long)
 @ stdcall EscapeCommFunction(long long)
-# @ stub -arch=x86_64 ExecuteUmsThread
+@ stdcall -arch=x86_64 ExecuteUmsThread(ptr)
 @ stdcall ExitProcess(long)
 @ stdcall ExitThread(long)
 @ stub ExitVDM
