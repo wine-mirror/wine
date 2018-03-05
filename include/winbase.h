@@ -2073,6 +2073,7 @@ WINBASEAPI DWORD       WINAPI GetCurrentProcessorNumber(void);
 WINBASEAPI VOID        WINAPI GetCurrentProcessorNumberEx(PPROCESSOR_NUMBER);
 WINBASEAPI HANDLE      WINAPI GetCurrentThread(void);
 #define                       GetCurrentTime() GetTickCount()
+WINBASEAPI PUMS_CONTEXT WINAPI GetCurrentUmsThread(void);
 WINBASEAPI BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);
 WINBASEAPI BOOL        WINAPI GetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,LPDWORD);
 #define                       GetDefaultCommConfig WINELIB_NAME_AW(GetDefaultCommConfig)

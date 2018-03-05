@@ -4302,6 +4302,16 @@ BOOL WINAPI ExecuteUmsThread(PUMS_CONTEXT ctx)
     return FALSE;
 }
 
+/***********************************************************************
+ *           GetCurrentUmsThread   (KERNEL32.@)
+ */
+PUMS_CONTEXT WINAPI GetCurrentUmsThread(void)
+{
+    FIXME( "stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */

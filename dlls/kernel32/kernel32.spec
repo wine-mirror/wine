@@ -637,7 +637,7 @@
 @ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
 @ stdcall -norelay GetCurrentThread()
 @ stdcall -norelay GetCurrentThreadId()
-# @ stub -arch=x86_64 GetCurrentUmsThread
+@ stdcall -arch=x86_64 GetCurrentUmsThread()
 @ stdcall GetDateFormatA(long long ptr str ptr long)
 @ stdcall GetDateFormatEx(wstr long ptr wstr ptr long wstr)
 @ stdcall GetDateFormatW(long long ptr wstr ptr long)
