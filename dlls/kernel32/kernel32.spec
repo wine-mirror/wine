@@ -735,7 +735,7 @@
 # @ stub GetNamedPipeServerProcessId
 # @ stub GetNamedPipeServerSessionId
 @ stdcall GetNativeSystemInfo(ptr)
-# @ stub -arch=x86_64 GetNextUmsListItem
+@ stdcall -arch=x86_64 GetNextUmsListItem(ptr)
 @ stub GetNextVDMCommand
 @ stub GetNlsSectionName
 # @ stub GetNLSVersion

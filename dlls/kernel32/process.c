@@ -4312,6 +4312,16 @@ PUMS_CONTEXT WINAPI GetCurrentUmsThread(void)
     return FALSE;
 }
 
+/***********************************************************************
+ *           GetNextUmsListItem   (KERNEL32.@)
+ */
+PUMS_CONTEXT WINAPI GetNextUmsListItem(PUMS_CONTEXT ctx)
+{
+    FIXME( "%p: stub\n", ctx );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return NULL;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
