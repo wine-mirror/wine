@@ -4354,6 +4354,16 @@ BOOL WINAPI SetUmsThreadInformation(PUMS_CONTEXT ctx, UMS_THREAD_INFO_CLASS clas
     return FALSE;
 }
 
+/***********************************************************************
+ *           UmsThreadYield   (KERNEL32.@)
+ */
+BOOL WINAPI UmsThreadYield(void *param)
+{
+    FIXME( "%p: stub\n", param );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */

@@ -1524,7 +1524,7 @@
 # @ stub -arch=x86_64 uaw_wcsicmp
 # @ stub -arch=x86_64 uaw_wcslen
 # @ stub -arch=x86_64 uaw_wcsrchr
-# @ stub -arch=x86_64 UmsThreadYield
+@ stdcall -arch=x86_64 UmsThreadYield(ptr)
 # @ stub -arch=x86_64 __misaligned_access
 @ stdcall -i386 -private UTRegister(long str str str ptr ptr ptr) krnl386.exe16.UTRegister
 @ stdcall -i386 -private UTUnRegister(long) krnl386.exe16.UTUnRegister
