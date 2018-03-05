@@ -1464,7 +1464,7 @@
 @ stdcall SetThreadpoolWait(ptr long ptr)
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
-# @ stub -arch=x86_64 SetUmsThreadInformation
+@ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
 @ stdcall SetUnhandledExceptionFilter(ptr)
 @ stdcall SetUserGeoID(long)
 @ stub SetVDMCurrentDirectories

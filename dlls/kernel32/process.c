@@ -4343,6 +4343,17 @@ BOOL WINAPI QueryUmsThreadInformation(PUMS_CONTEXT ctx, UMS_THREAD_INFO_CLASS cl
     return FALSE;
 }
 
+/***********************************************************************
+ *           SetUmsThreadInformation   (KERNEL32.@)
+ */
+BOOL WINAPI SetUmsThreadInformation(PUMS_CONTEXT ctx, UMS_THREAD_INFO_CLASS class,
+                                     void *buf, ULONG length)
+{
+    FIXME( "%p,%08x,%p,%08x: stub\n", ctx, class, buf, length );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
