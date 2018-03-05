@@ -6123,6 +6123,27 @@ typedef VOID (CALLBACK *PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PVOID
 
 NTSYSAPI BOOLEAN NTAPI RtlGetProductInfo(DWORD,DWORD,DWORD,DWORD,PDWORD);
 
+typedef enum _RTL_UMS_THREAD_INFO_CLASS
+{
+    UmsThreadInvalidInfoClass,
+    UmsThreadUserContext,
+    UmsThreadPriority,
+    UmsThreadAffinity,
+    UmsThreadTeb,
+    UmsThreadIsSuspended,
+    UmsThreadIsTerminated,
+    UmsThreadMaxInfoClass
+} RTL_UMS_THREAD_INFO_CLASS, *PRTL_UMS_THREAD_INFO_CLASS;
+
+typedef enum _RTL_UMS_SCHEDULER_REASON
+{
+    UmsSchedulerStartup,
+    UmsSchedulerThreadBlocked,
+    UmsSchedulerThreadYield,
+} RTL_UMS_SCHEDULER_REASON, *PRTL_UMS_SCHEDULER_REASON;
+
+typedef void (CALLBACK *PRTL_UMS_SCHEDULER_ENTRY_POINT)(RTL_UMS_SCHEDULER_REASON,ULONG_PTR,PVOID);
+
 #ifdef __cplusplus
 }
 #endif
