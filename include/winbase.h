@@ -1939,6 +1939,7 @@ WINBASEAPI BOOL        WINAPI EndUpdateResourceA(HANDLE,BOOL);
 WINBASEAPI BOOL        WINAPI EndUpdateResourceW(HANDLE,BOOL);
 #define                       EndUpdateResource WINELIB_NAME_AW(EndUpdateResource)
 WINBASEAPI void        WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+WINBASEAPI BOOL        WINAPI EnterUmsSchedulingMode(PUMS_SCHEDULER_STARTUP_INFO);
 WINBASEAPI BOOL        WINAPI EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LONG_PTR);
 WINBASEAPI BOOL        WINAPI EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG_PTR);
 #define                       EnumResourceLanguages WINELIB_NAME_AW(EnumResourceLanguages)

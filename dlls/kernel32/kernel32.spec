@@ -434,7 +434,7 @@
 @ stdcall EnumUILanguagesW(ptr long long)
 # @ stub EnumerateLocalComputerNamesA
 # @ stub EnumerateLocalComputerNamesW
-# @ stub -arch=x86_64 EnterUmsSchedulingMode
+@ stdcall -arch=x86_64 EnterUmsSchedulingMode(ptr)
 @ stdcall EraseTape(ptr long long)
 @ stdcall EscapeCommFunction(long long)
 # @ stub -arch=x86_64 ExecuteUmsThread

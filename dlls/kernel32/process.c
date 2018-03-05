@@ -4282,6 +4282,16 @@ BOOL WINAPI DequeueUmsCompletionListItems(void *list, DWORD timeout, PUMS_CONTEX
     return FALSE;
 }
 
+/***********************************************************************
+ *           EnterUmsSchedulingMode   (KERNEL32.@)
+ */
+BOOL WINAPI EnterUmsSchedulingMode(UMS_SCHEDULER_STARTUP_INFO *info)
+{
+    FIXME( "%p: stub\n", info );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
