@@ -4252,6 +4252,16 @@ void WINAPI DeleteProcThreadAttributeList(struct _PROC_THREAD_ATTRIBUTE_LIST *li
     return;
 }
 
+/***********************************************************************
+ *           DeleteUmsCompletionList   (KERNEL32.@)
+ */
+BOOL WINAPI DeleteUmsCompletionList(PUMS_COMPLETION_LIST list)
+{
+    FIXME( "%p: stub\n", list );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
