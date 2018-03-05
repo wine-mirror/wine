@@ -4322,6 +4322,16 @@ PUMS_CONTEXT WINAPI GetNextUmsListItem(PUMS_CONTEXT ctx)
     return NULL;
 }
 
+/***********************************************************************
+ *           GetUmsCompletionListEvent   (KERNEL32.@)
+ */
+BOOL WINAPI GetUmsCompletionListEvent(PUMS_COMPLETION_LIST list, HANDLE *event)
+{
+    FIXME( "%p,%p: stub\n", list, event );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */

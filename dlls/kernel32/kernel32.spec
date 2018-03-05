@@ -866,7 +866,7 @@
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr)
 @ stdcall GetThreadUILanguage()
 # @ stub GetUILanguageInfo
-# @ stub -arch=x86_64 GetUmsCompletionListEvent
+@ stdcall -arch=x86_64 GetUmsCompletionListEvent(ptr ptr)
 # @ stub -arch=x86_64 GetUmsSystemThreadInformation
 @ stdcall GetUserDefaultLCID()
 @ stdcall GetUserDefaultLangID()
