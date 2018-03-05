@@ -4332,6 +4332,17 @@ BOOL WINAPI GetUmsCompletionListEvent(PUMS_COMPLETION_LIST list, HANDLE *event)
     return FALSE;
 }
 
+/***********************************************************************
+ *           QueryUmsThreadInformation   (KERNEL32.@)
+ */
+BOOL WINAPI QueryUmsThreadInformation(PUMS_CONTEXT ctx, UMS_THREAD_INFO_CLASS class,
+                                       void *buf, ULONG length, ULONG *ret_length)
+{
+    FIXME( "%p,%08x,%p,%08x,%p: stub\n", ctx, class, buf, length, ret_length );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */

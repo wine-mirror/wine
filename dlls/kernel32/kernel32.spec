@@ -1175,7 +1175,7 @@
 @ stdcall QueryThreadCycleTime(long ptr)
 # @ stub QueryThreadProfiling
 # @ stub QueryThreadpoolStackInformation
-# @ stub -arch=x86_64 QueryUmsThreadInformation
+@ stdcall -arch=x86_64 QueryUmsThreadInformation(ptr long ptr long ptr)
 @ stdcall QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall QueueUserAPC(ptr long long)
