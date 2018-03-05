@@ -3501,8 +3501,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     if (!psva) return E_INVALIDARG;
     if (!pGoffset) return E_FAIL;
 
-    glyphProps = heap_alloc(sizeof(SCRIPT_GLYPHPROP)*cGlyphs);
-    if (!glyphProps) return E_OUTOFMEMORY;
+    if (!(glyphProps = heap_calloc(cGlyphs, sizeof(*glyphProps))))
+        return E_OUTOFMEMORY;
 
     for (i = 0; i < cGlyphs; i++)
         glyphProps[i].sva = psva[i];
