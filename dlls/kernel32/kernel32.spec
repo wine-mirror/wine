@@ -341,7 +341,7 @@
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateToolhelp32Snapshot(long long)
 @ stdcall -arch=x86_64 CreateUmsCompletionList(ptr)
-# @ stub -arch=x86_64 CreateUmsThreadContext
+@ stdcall -arch=x86_64 CreateUmsThreadContext(ptr)
 @ stub CreateVirtualBuffer
 @ stdcall CreateWaitableTimerA(ptr long str)
 @ stdcall CreateWaitableTimerExA(ptr str long long)
