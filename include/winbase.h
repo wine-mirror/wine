@@ -1912,6 +1912,7 @@ WINBASEAPI BOOL        WINAPI DeleteTimerQueue(HANDLE);
 WINBASEAPI BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
 WINBASEAPI BOOL        WINAPI DeleteTimerQueueTimer(HANDLE,HANDLE,HANDLE);
 WINBASEAPI BOOL        WINAPI DeleteUmsCompletionList(PUMS_COMPLETION_LIST);
+WINBASEAPI BOOL        WINAPI DeleteUmsThreadContext(PUMS_CONTEXT);
 WINBASEAPI BOOL        WINAPI DeleteVolumeMountPointA(LPCSTR);
 WINBASEAPI BOOL        WINAPI DeleteVolumeMountPointW(LPCWSTR);
 #define                       DeleteVolumeMountPoint WINELIB_NAME_AW(DeleteVolumeMountPoint)

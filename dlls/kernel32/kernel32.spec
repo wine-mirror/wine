@@ -374,7 +374,7 @@
 @ stdcall DeleteTimerQueueEx (long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
 @ stdcall -arch=x86_64 DeleteUmsCompletionList(ptr)
-# @ stub -arch=x86_64 DeleteUmsThreadContext
+@ stdcall -arch=x86_64 DeleteUmsThreadContext(ptr)
 @ stdcall DeleteVolumeMountPointA(str)
 @ stdcall DeleteVolumeMountPointW(wstr)
 # @ stub -arch=x86_64 DequeueUmsCompletionListItems

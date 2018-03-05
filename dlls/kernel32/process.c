@@ -4262,6 +4262,16 @@ BOOL WINAPI DeleteUmsCompletionList(PUMS_COMPLETION_LIST list)
     return FALSE;
 }
 
+/***********************************************************************
+ *           DeleteUmsThreadContext   (KERNEL32.@)
+ */
+BOOL WINAPI DeleteUmsThreadContext(PUMS_CONTEXT ctx)
+{
+    FIXME( "%p: stub\n", ctx );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /**********************************************************************
  *           BaseFlushAppcompatCache     (KERNEL32.@)
  */
