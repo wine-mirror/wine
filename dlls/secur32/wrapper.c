@@ -28,9 +28,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 /* Tries to allocate a new SecHandle, into which it stores package (in
- * phSec->dwUpper) and a copy of realHandle (allocated with SECUR32_ALLOC,
- * and stored in phSec->dwLower).  SecHandle is equivalent to both a
- * CredHandle and a CtxtHandle.
+ * phSec->dwUpper) and a copy of realHandle (stored in phSec->dwLower).
+ * SecHandle is equivalent to both a CredHandle and a CtxtHandle.
  */
 static SECURITY_STATUS SECUR32_makeSecHandle(PSecHandle phSec,
  SecurePackage *package, PSecHandle realHandle)
