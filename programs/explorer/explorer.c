@@ -24,6 +24,7 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "explorer_private.h"
 #include "resource.h"
 
@@ -631,16 +632,26 @@ static IShellFolder* get_starting_shell_folder(parameters_struct* params)
 {
     IShellFolder* desktop,*folder;
     LPITEMIDLIST root_pidl;
+    WCHAR *fullpath = NULL;
     HRESULT hres;
+    DWORD size;
 
     SHGetDesktopFolder(&desktop);
     if (!params->root[0])
     {
         return desktop;
     }
+
+    size = GetFullPathNameW(params->root, 0, fullpath, NULL);
+    if (!size)
+        return desktop;
+    fullpath = heap_alloc(size * sizeof(WCHAR));
+    GetFullPathNameW(params->root, size, fullpath, NULL);
+
     hres = IShellFolder_ParseDisplayName(desktop,NULL,NULL,
-                                         params->root,NULL,
+                                         fullpath,NULL,
                                          &root_pidl,NULL);
+    heap_free(fullpath);
 
     if(FAILED(hres))
     {
