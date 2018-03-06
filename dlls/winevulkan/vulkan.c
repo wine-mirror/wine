@@ -213,6 +213,32 @@ void WINAPI wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallba
     wine_vk_instance_free(instance);
 }
 
+VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev,
+        const char *layer_name, uint32_t *count, VkExtensionProperties *properties)
+{
+    TRACE("%p, %p, %p, %p\n", phys_dev, layer_name, count, properties);
+
+    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
+    if (layer_name)
+    {
+        ERR("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    if (!properties)
+    {
+        *count = 0; /* No extensions yet. */
+        return VK_SUCCESS;
+    }
+
+    /* When properties is not NULL, we copy the extensions over and set count to
+     * the number of copied extensions. For now we don't have much to do as we don't support
+     * any extensions yet.
+     */
+    *count = 0;
+    return VK_SUCCESS;
+}
+
 static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {

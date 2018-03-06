@@ -16,12 +16,6 @@ static VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice physicalDevice, cons
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
 
-static VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties)
-{
-    FIXME("stub: %p, %p, %p, %p\n", physicalDevice, pLayerName, pPropertyCount, pProperties);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
-}
-
 static VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
 {
     FIXME("stub: %p, %p, %p\n", physicalDevice, pPropertyCount, pProperties);
