@@ -1677,6 +1677,7 @@ typedef struct
     IExecAction IExecAction_iface;
     LONG ref;
     WCHAR *path;
+    WCHAR *directory;
 } ExecAction;
 
 static inline ExecAction *impl_from_IExecAction(IExecAction *iface)
@@ -1699,6 +1700,7 @@ static ULONG WINAPI ExecAction_Release(IExecAction *iface)
     {
         TRACE("destroying %p\n", iface);
         heap_free(action->path);
+        heap_free(action->directory);
         heap_free(action);
     }
 
@@ -1824,8 +1826,16 @@ static HRESULT WINAPI ExecAction_get_WorkingDirectory(IExecAction *iface, BSTR *
 
 static HRESULT WINAPI ExecAction_put_WorkingDirectory(IExecAction *iface, BSTR directory)
 {
-    FIXME("%p,%s: stub\n", iface, debugstr_w(directory));
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+    WCHAR *str = NULL;
+
+    TRACE("%p,%s\n", iface, debugstr_w(directory));
+
+    if (directory && !(str = heap_strdupW((directory)))) return E_OUTOFMEMORY;
+    heap_free(action->directory);
+    action->directory = str;
+
+    return S_OK;
 }
 
 static const IExecActionVtbl Action_vtbl =
@@ -1858,6 +1868,7 @@ static HRESULT ExecAction_create(IExecAction **obj)
     action->IExecAction_iface.lpVtbl = &Action_vtbl;
     action->ref = 1;
     action->path = NULL;
+    action->directory = NULL;
 
     *obj = &action->IExecAction_iface;
 
