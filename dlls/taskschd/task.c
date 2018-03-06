@@ -1678,6 +1678,7 @@ typedef struct
     LONG ref;
     WCHAR *path;
     WCHAR *directory;
+    WCHAR *args;
 } ExecAction;
 
 static inline ExecAction *impl_from_IExecAction(IExecAction *iface)
@@ -1701,6 +1702,7 @@ static ULONG WINAPI ExecAction_Release(IExecAction *iface)
         TRACE("destroying %p\n", iface);
         heap_free(action->path);
         heap_free(action->directory);
+        heap_free(action->args);
         heap_free(action);
     }
 
@@ -1814,7 +1816,15 @@ static HRESULT WINAPI ExecAction_get_Arguments(IExecAction *iface, BSTR *argumen
 
 static HRESULT WINAPI ExecAction_put_Arguments(IExecAction *iface, BSTR arguments)
 {
-    FIXME("%p,%s: stub\n", iface, debugstr_w(arguments));
+    ExecAction *action = impl_from_IExecAction(iface);
+    WCHAR *str = NULL;
+
+    TRACE("%p,%s\n", iface, debugstr_w(arguments));
+
+    if (arguments && !(str = heap_strdupW((arguments)))) return E_OUTOFMEMORY;
+    heap_free(action->args);
+    action->args = str;
+
     return S_OK;
 }
 
@@ -1877,6 +1887,7 @@ static HRESULT ExecAction_create(IExecAction **obj)
     action->ref = 1;
     action->path = NULL;
     action->directory = NULL;
+    action->args = NULL;
 
     *obj = &action->IExecAction_iface;
 
