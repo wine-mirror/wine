@@ -624,7 +624,7 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     else if (This->cinfo.out_color_space == JCS_CMYK) bpp = 32;
     else bpp = 24;
 
-    stride = bpp * This->cinfo.output_width;
+    stride = (bpp * This->cinfo.output_width + 7) / 8;
     data_size = stride * This->cinfo.output_height;
 
     max_row_needed = prc->Y + prc->Height;
