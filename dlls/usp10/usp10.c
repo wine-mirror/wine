@@ -3333,10 +3333,10 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     if (!psva || !pcGlyphs) return E_INVALIDARG;
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
 
-    charProps = heap_alloc_zero(sizeof(SCRIPT_CHARPROP)*cChars);
-    if (!charProps) return E_OUTOFMEMORY;
-    glyphProps = heap_alloc_zero(sizeof(SCRIPT_GLYPHPROP)*cMaxGlyphs);
-    if (!glyphProps)
+    if (!(charProps = heap_calloc(cChars, sizeof(*charProps))))
+        return E_OUTOFMEMORY;
+
+    if (!(glyphProps = heap_calloc(cMaxGlyphs, sizeof(*glyphProps))))
     {
         heap_free(charProps);
         return E_OUTOFMEMORY;
