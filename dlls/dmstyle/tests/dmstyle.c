@@ -356,13 +356,13 @@ struct chunk {
    followed by the chunks of the list and terminated with 0. */
 static IStream *gen_riff_stream(const FOURCC *ids)
 {
+    static const LARGE_INTEGER zero;
     int level = -1;
     DWORD *sizes[4];    /* Stack for the sizes of RIFF and LIST chunks */
     char riff[1024];
     char *p = riff;
     struct chunk *ck;
     IStream *stream;
-    LARGE_INTEGER zero = {0};
 
     do {
         ck = (struct chunk *)p;
