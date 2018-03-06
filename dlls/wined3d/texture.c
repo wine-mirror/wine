@@ -1788,10 +1788,39 @@ static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int 
             texture->resource.format, &src_rect, row_pitch, &dst_point, FALSE, data);
 }
 
+/* Context activation is done by the caller. Context may be NULL in ddraw-only mode. */
 static BOOL texture2d_load_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_context *context, DWORD location)
 {
-    return surface_load_location(texture->sub_resources[sub_resource_idx].u.surface, context, location);
+    struct wined3d_surface *surface;
+
+    TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
+            texture, sub_resource_idx, context, wined3d_debug_location(location));
+
+    surface = texture->sub_resources[sub_resource_idx].u.surface;
+    switch (location)
+    {
+        case WINED3D_LOCATION_USER_MEMORY:
+        case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_BUFFER:
+            return surface_load_sysmem(surface, context, location);
+
+        case WINED3D_LOCATION_DRAWABLE:
+            return surface_load_drawable(surface, context);
+
+        case WINED3D_LOCATION_RB_RESOLVED:
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+            return surface_load_renderbuffer(surface, context, location);
+
+        case WINED3D_LOCATION_TEXTURE_RGB:
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+            return surface_load_texture(surface, context,
+                    location == WINED3D_LOCATION_TEXTURE_SRGB);
+
+        default:
+            ERR("Don't know how to handle location %#x.\n", location);
+            return FALSE;
+    }
 }
 
 /* Context activation is done by the caller. */
