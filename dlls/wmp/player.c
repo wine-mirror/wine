@@ -756,15 +756,19 @@ static HRESULT WINAPI WMPSettings_get_isAvailable(IWMPSettings *iface, BSTR item
 static HRESULT WINAPI WMPSettings_get_autoStart(IWMPSettings *iface, VARIANT_BOOL *p)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    if (!p)
+        return E_POINTER;
+    *p = This->auto_start;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_put_autoStart(IWMPSettings *iface, VARIANT_BOOL v)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, v);
+    This->auto_start = v;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_get_baseURL(IWMPSettings *iface, BSTR *p)
@@ -798,15 +802,22 @@ static HRESULT WINAPI WMPSettings_put_defaultFrame(IWMPSettings *iface, BSTR v)
 static HRESULT WINAPI WMPSettings_get_invokeURLs(IWMPSettings *iface, VARIANT_BOOL *p)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if (!p)
+        return E_POINTER;
+    *p = This->invoke_urls;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_put_invokeURLs(IWMPSettings *iface, VARIANT_BOOL v)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    /* Leaving as FIXME as we don't currently use this */
     FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    This->invoke_urls = v;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_get_mute(IWMPSettings *iface, VARIANT_BOOL *p)
@@ -896,15 +907,22 @@ static HRESULT WINAPI WMPSettings_setMode(IWMPSettings *iface, BSTR mode, VARIAN
 static HRESULT WINAPI WMPSettings_get_enableErrorDialogs(IWMPSettings *iface, VARIANT_BOOL *p)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if (!p)
+        return E_POINTER;
+    *p = This->enable_error_dialogs;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_put_enableErrorDialogs(IWMPSettings *iface, VARIANT_BOOL v)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    /* Leaving as FIXME as we don't currently use this */
     FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    This->enable_error_dialogs = v;
+    return S_OK;
 }
 
 static const IWMPSettingsVtbl WMPSettingsVtbl = {
@@ -1139,10 +1157,13 @@ static const IWMPControlsVtbl WMPControlsVtbl = {
     WMPControls_playItem,
 };
 
-void init_player_ifaces(WindowsMediaPlayer *wmp)
+void init_player(WindowsMediaPlayer *wmp)
 {
     wmp->IWMPPlayer4_iface.lpVtbl = &WMPPlayer4Vtbl;
     wmp->IWMPPlayer_iface.lpVtbl = &WMPPlayerVtbl;
     wmp->IWMPSettings_iface.lpVtbl = &WMPSettingsVtbl;
     wmp->IWMPControls_iface.lpVtbl = &WMPControlsVtbl;
+
+    wmp->invoke_urls = VARIANT_TRUE;
+    wmp->auto_start = VARIANT_TRUE;
 }

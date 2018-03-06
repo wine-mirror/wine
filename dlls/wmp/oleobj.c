@@ -898,7 +898,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
 
     wmp->ref = 1;
 
-    init_player_ifaces(wmp);
+    init_player(wmp);
 
     ConnectionPointContainer_Init(wmp);
     hdc = GetDC(0);

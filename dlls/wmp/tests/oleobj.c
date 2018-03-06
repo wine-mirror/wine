@@ -860,6 +860,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPPlayer4 *player4;
     IWMPPlayer *player;
     IWMPControls *controls;
+    VARIANT_BOOL vbool;
     HRESULT hres;
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
@@ -886,6 +887,34 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(hres == S_OK, "Could not get IWMPSettings iface: %08x\n", hres);
     ok(settings == settings_qi, "settings != settings_qi\n");
     IWMPSettings_Release(settings_qi);
+
+    /* Test few settings put/gets */
+    hres = IWMPSettings_get_autoStart(settings, &vbool);
+    ok(hres == S_OK, "Could not get autoStart from IWMPSettings: %08x\n", hres);
+    ok(vbool == VARIANT_TRUE, "autoStart = %x\n", vbool);
+    hres = IWMPSettings_put_autoStart(settings, VARIANT_FALSE);
+    ok(hres == S_OK, "Could not put autoStart in IWMPSettings: %08x\n", hres);
+    hres = IWMPSettings_get_autoStart(settings, &vbool);
+    ok(hres == S_OK, "Could not get autoStart from IWMPSettings: %08x\n", hres);
+    ok(!vbool, "autoStart = %x\n", vbool);
+
+    hres = IWMPSettings_get_invokeURLs(settings, &vbool);
+    ok(hres == S_OK, "Could not get invokeURLs from IWMPSettings: %08x\n", hres);
+    ok(vbool == VARIANT_TRUE, "invokeURLs = %x\n", vbool);
+    hres = IWMPSettings_put_invokeURLs(settings, VARIANT_FALSE);
+    ok(hres == S_OK, "Could not put invokeURLs in IWMPSettings: %08x\n", hres);
+    hres = IWMPSettings_get_invokeURLs(settings, &vbool);
+    ok(hres == S_OK, "Could not get invokeURLs from IWMPSettings: %08x\n", hres);
+    ok(!vbool, "invokeURLs = %x\n", vbool);
+
+    hres = IWMPSettings_get_enableErrorDialogs(settings, &vbool);
+    ok(hres == S_OK, "Could not get enableErrorDialogs from IWMPSettings: %08x\n", hres);
+    ok(vbool == VARIANT_FALSE, "enableErrorDialogs = %x\n", vbool);
+    hres = IWMPSettings_put_enableErrorDialogs(settings, VARIANT_TRUE);
+    ok(hres == S_OK, "Could not put enableErrorDialogs in IWMPSettings: %08x\n", hres);
+    hres = IWMPSettings_get_enableErrorDialogs(settings, &vbool);
+    ok(hres == S_OK, "Could not get enableErrorDialogs from IWMPSettings: %08x\n", hres);
+    ok(vbool == VARIANT_TRUE, "enableErrorDialogs = %x\n", vbool);
 
     IWMPSettings_Release(settings);
     IWMPPlayer4_Release(player4);

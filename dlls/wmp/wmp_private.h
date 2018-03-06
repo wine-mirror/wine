@@ -52,10 +52,15 @@ struct WindowsMediaPlayer {
     HWND hwnd;
     SIZEL extent;
 
+    /* Settings */
+    VARIANT_BOOL auto_start;
+    VARIANT_BOOL invoke_urls;
+    VARIANT_BOOL enable_error_dialogs;
+
     ConnectionPoint *wmpocx;
 };
 
-void init_player_ifaces(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
+void init_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 
