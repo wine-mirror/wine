@@ -1810,8 +1810,16 @@ static HRESULT WINAPI ExecAction_put_Path(IExecAction *iface, BSTR path)
 
 static HRESULT WINAPI ExecAction_get_Arguments(IExecAction *iface, BSTR *arguments)
 {
-    FIXME("%p,%p: stub\n", iface, arguments);
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+
+    TRACE("%p,%p\n", iface, arguments);
+
+    if (!arguments) return E_POINTER;
+
+    if (!action->args) *arguments = NULL;
+    else if (!(*arguments = SysAllocString(action->args))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ExecAction_put_Arguments(IExecAction *iface, BSTR arguments)
