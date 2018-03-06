@@ -299,6 +299,18 @@ static const char manifest9[] =
 "</trustInfo>"
 "</assembly>";
 
+static const char manifest10[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" xmlns:asmv2=\"urn:schemas-microsoft-com:asm.v2\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.0.0.0\"  name=\"Wine.Test\" type=\"win32\"></assemblyIdentity>"
+"<asmv2:trustInfo>"
+"    <asmv2:security>"
+"        <asmv2:requestedPrivileges>"
+"            <asmv2:requestedExecutionLevel level=\"requireAdministrator\" uiAccess=\"true\"></asmv2:requestedExecutionLevel>"
+"        </asmv2:requestedPrivileges>"
+"    </asmv2:security>"
+"</asmv2:trustInfo>"
+"</assembly>";
+
 static const char testdep_manifest1[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity type=\"win32\" name=\"testdep\" version=\"6.5.4.3\" processorArchitecture=\"" ARCH "\"/>"
@@ -2217,6 +2229,20 @@ static void test_actctx(void)
     }
     else
         skip("Could not create manifest file 9\n");
+
+    if(create_manifest_file("test10.manifest", manifest10, -1, NULL, NULL)) {
+        handle = test_create("test10.manifest");
+        ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+        DeleteFileA("test10.manifest");
+        DeleteFileA("testdep.manifest");
+        if(handle != INVALID_HANDLE_VALUE)
+        {
+            test_runlevel_info(handle, &runlevel_info8, __LINE__);
+            pReleaseActCtx(handle);
+        }
+    }
+    else
+        skip("Could not create manifest file 10\n");
 
     trace("manifest4\n");
 

@@ -2385,7 +2385,7 @@ static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assemb
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
-        if (xmlstr_cmp_end(&elem, requestedExecutionLevelW))
+        if (xml_elem_cmp_end(&elem, requestedExecutionLevelW, asmv2W))
         {
             ret = parse_end_element(xmlbuf);
             break;
@@ -2407,12 +2407,12 @@ static BOOL parse_requested_privileges_elem(xmlbuf_t* xmlbuf, struct assembly* a
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
-        if (xmlstr_cmp_end(&elem, requestedPrivilegesW))
+        if (xml_elem_cmp_end(&elem, requestedPrivilegesW, asmv2W))
         {
             ret = parse_end_element(xmlbuf);
             break;
         }
-        else if (xmlstr_cmp(&elem, requestedExecutionLevelW))
+        else if (xml_elem_cmp(&elem, requestedExecutionLevelW, asmv2W))
             ret = parse_requested_execution_level_elem(xmlbuf, assembly, acl);
         else
         {
@@ -2431,12 +2431,12 @@ static BOOL parse_security_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, str
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
-        if (xmlstr_cmp_end(&elem, securityW))
+        if (xml_elem_cmp_end(&elem, securityW, asmv2W))
         {
             ret = parse_end_element(xmlbuf);
             break;
         }
-        else if (xmlstr_cmp(&elem, requestedPrivilegesW))
+        else if (xml_elem_cmp(&elem, requestedPrivilegesW, asmv2W))
             ret = parse_requested_privileges_elem(xmlbuf, assembly, acl);
         else
         {
@@ -2455,12 +2455,12 @@ static BOOL parse_trust_info_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, s
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
-        if (xmlstr_cmp_end(&elem, trustInfoW))
+        if (xml_elem_cmp_end(&elem, trustInfoW, asmv2W))
         {
             ret = parse_end_element(xmlbuf);
             break;
         }
-        else if (xmlstr_cmp(&elem, securityW))
+        else if (xml_elem_cmp(&elem, securityW, asmv2W))
             ret = parse_security_elem(xmlbuf, assembly, acl);
         else
         {
