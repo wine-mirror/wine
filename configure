@@ -1403,6 +1403,7 @@ enable_netapi32
 enable_netcfgx
 enable_netprofm
 enable_newdev
+enable_ninput
 enable_normaliz
 enable_npmshtml
 enable_npptools
@@ -18818,6 +18819,7 @@ wine_fn_config_makefile dlls/netcfgx/tests enable_tests
 wine_fn_config_makefile dlls/netprofm enable_netprofm
 wine_fn_config_makefile dlls/netprofm/tests enable_tests
 wine_fn_config_makefile dlls/newdev enable_newdev
+wine_fn_config_makefile dlls/ninput enable_ninput
 wine_fn_config_makefile dlls/normaliz enable_normaliz
 wine_fn_config_makefile dlls/npmshtml enable_npmshtml
 wine_fn_config_makefile dlls/npptools enable_npptools
