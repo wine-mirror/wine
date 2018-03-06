@@ -723,71 +723,94 @@ static void test_parsedescriptor(void)
     };
     FOURCC empty[] = {FOURCC_RIFF, ~0, 0};
     FOURCC inam[] = {FOURCC_RIFF, ~0, FOURCC_LIST, ~0, mmioFOURCC('I','N','A','M'), 0, 0};
-#define X(form)         form, #form
+#define X(class)        &CLSID_ ## class, #class
+#define Y(form)         form, #form
     const struct {
+        REFCLSID clsid;
+        const char *class;
         FOURCC form;
         const char *name;
+        BOOL needs_size;
     } forms[] = {
-        { X(DMUS_FOURCC_SEGMENT_FORM) },
-        { X(mmioFOURCC('W','A','V','E')) },
+        { X(DirectMusicSegment), Y(DMUS_FOURCC_SEGMENT_FORM), FALSE },
+        { X(DirectMusicSegment), Y(mmioFOURCC('W','A','V','E')), FALSE },
+        { X(DirectMusicAudioPathConfig), Y(DMUS_FOURCC_AUDIOPATH_FORM), TRUE },
+        { X(DirectMusicGraph), Y(DMUS_FOURCC_TOOLGRAPH_FORM), TRUE },
     };
 #undef X
+#undef Y
 
-    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectMusicObject, (void **)&dmo);
-    if (hr != S_OK) {
-        win_skip("Could not create DirectMusicSegment object: %08x\n", hr);
-        return;
-    }
     for (i = 0; i < ARRAY_SIZE(forms); i++) {
-        trace("Testing %s\n", forms[i].name);
+        trace("Testing %s / %s\n", forms[i].class, forms[i].name);
+        hr = CoCreateInstance(forms[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject,
+                (void **)&dmo);
+        if (hr != S_OK) {
+            win_skip("Could not create %s object: %08x\n", forms[i].class, hr);
+            return;
+        }
 
         /* Nothing loaded */
         memset(&desc, 0, sizeof(desc));
         hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+        if (forms[i].needs_size) {
+            todo_wine ok(hr == E_INVALIDARG,
+                    "GetDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+            desc.dwSize = sizeof(desc);
+            hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+        }
         ok(hr == S_OK, "GetDescriptor failed: %08x, expected S_OK\n", hr);
         ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
                 desc.dwValidData);
-        ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicSegment),
-                "Got class guid %s, expected CLSID_DirectMusicSegment\n",
-                wine_dbgstr_guid(&desc.guidClass));
+        ok(IsEqualGUID(&desc.guidClass, forms[i].clsid), "Got class guid %s, expected CLSID_%s\n",
+                wine_dbgstr_guid(&desc.guidClass), forms[i].class);
 
         /* Empty RIFF stream */
         empty[1] = forms[i].form;
         stream = gen_riff_stream(empty);
         memset(&desc, 0, sizeof(desc));
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-        ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+        if (forms[i].needs_size) {
+            todo_wine ok(hr == E_INVALIDARG,
+                    "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+            desc.dwSize = sizeof(desc);
+            hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+        }
+        todo_wine_if(forms[i].needs_size)
+            ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
         ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
                 desc.dwValidData);
-        ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicSegment),
-                "Got class guid %s, expected CLSID_DirectMusicSegment\n",
-                wine_dbgstr_guid(&desc.guidClass));
+        ok(IsEqualGUID(&desc.guidClass, forms[i].clsid), "Got class guid %s, expected CLSID_%s\n",
+                wine_dbgstr_guid(&desc.guidClass), forms[i].class);
         IStream_Release(stream);
 
         /* Wrong form */
         empty[1] = DMUS_FOURCC_CONTAINER_FORM;
         stream = gen_riff_stream(empty);
         memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-        ok(hr == E_FAIL, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+        if (forms[i].needs_size)
+            todo_wine ok(hr == DMUS_E_CHUNKNOTFOUND,
+                    "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
+        else
+            ok(hr == E_FAIL, "ParseDescriptor failed: %08x, expected E_FAIL\n", hr);
         todo_wine ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
 
         /* All desc chunks */
         alldesc[1] = forms[i].form;
         stream = gen_riff_stream(alldesc);
         memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
         valid = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS | DMUS_OBJ_VERSION;
-        if (forms[i].form == DMUS_FOURCC_SEGMENT_FORM)
+        if (forms[i].form != mmioFOURCC('W','A','V','E'))
             valid |= DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY;
         todo_wine_if(forms[i].form == mmioFOURCC('W','A','V','E'))
             ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData,
                     valid);
-        ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicSegment),
-                "Got class guid %s, expected %s\n", wine_dbgstr_guid(&desc.guidClass),
-                wine_dbgstr_guid(&CLSID_DirectMusicSegment));
+        ok(IsEqualGUID(&desc.guidClass, forms[i].clsid), "Got class guid %s, expected CLSID_%s\n",
+                wine_dbgstr_guid(&desc.guidClass), forms[i].class);
         ok(IsEqualGUID(&desc.guidObject, &GUID_NULL), "Got object guid %s, expected GUID_NULL\n",
                 wine_dbgstr_guid(&desc.guidClass));
         if (forms[i].form == DMUS_FOURCC_SEGMENT_FORM)
@@ -799,6 +822,7 @@ static void test_parsedescriptor(void)
         dupes[1] = forms[i].form;
         stream = gen_riff_stream(dupes);
         memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
         todo_wine_if(forms[i].form == mmioFOURCC('W','A','V','E'))
@@ -811,9 +835,10 @@ static void test_parsedescriptor(void)
         inam[3] = DMUS_FOURCC_UNFO_LIST;
         stream = gen_riff_stream(inam);
         memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-        todo_wine_if(forms[i].form == DMUS_FOURCC_SEGMENT_FORM)
+        todo_wine_if(forms[i].form != mmioFOURCC('W','A','V','E'))
             ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
                     desc.dwValidData);
         IStream_Release(stream);
@@ -822,6 +847,7 @@ static void test_parsedescriptor(void)
         inam[3] = DMUS_FOURCC_INFO_LIST;
         stream = gen_riff_stream(inam);
         memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
         valid = DMUS_OBJ_CLASS;
@@ -834,8 +860,9 @@ static void test_parsedescriptor(void)
             todo_wine ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)),
                     "Got name '%s', expected 'I'\n", wine_dbgstr_w(desc.wszName));
         IStream_Release(stream);
+
+        IDirectMusicObject_Release(dmo);
     }
-    IDirectMusicObject_Release(dmo);
 }
 
 START_TEST(dmime)
