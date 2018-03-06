@@ -950,7 +950,7 @@ TREEVIEW_RecalculateVisibleOrder(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *start)
 
     infoPtr->maxVisibleOrder = order;
 
-    for (item = start; item != NULL;
+    for (item = infoPtr->root->firstChild; item != NULL;
 	 item = TREEVIEW_GetNextListItem(infoPtr, item))
     {
 	TREEVIEW_ComputeItemRect(infoPtr, item);
