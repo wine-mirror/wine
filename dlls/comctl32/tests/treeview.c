@@ -1528,6 +1528,49 @@ static void test_expandinvisible(void)
     DestroyWindow(hTree);
 }
 
+static void test_expand(void)
+{
+    HTREEITEM first, second, last, child;
+    TVINSERTSTRUCTA ins;
+    BOOL visible;
+    RECT rect;
+    HWND tv;
+    int i;
+
+    tv = create_treeview_control(0);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_LAST;
+    U(ins).item.mask = 0;
+    first = TreeView_InsertItemA(tv, &ins);
+    ok(first != NULL, "failed to insert first node\n");
+    second = TreeView_InsertItemA(tv, &ins);
+    ok(second != NULL, "failed to insert second node\n");
+    for (i=0; i<100; i++)
+    {
+        last = TreeView_InsertItemA(tv, &ins);
+        ok(last != NULL, "failed to insert %d node\n", i);
+    }
+
+    ins.hParent = second;
+    child = TreeView_InsertItemA(tv, &ins);
+    ok(child != NULL, "failed to insert child node\n");
+
+    ok(SendMessageA(tv, TVM_SELECTITEM, TVGN_CARET, (LPARAM)last), "last node selection failed\n");
+    ok(SendMessageA(tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)second), "expand of second node failed\n");
+    ok(SendMessageA(tv, TVM_SELECTITEM, TVGN_CARET, (LPARAM)first), "first node selection failed\n");
+
+    *(HTREEITEM *)&rect = first;
+    visible = SendMessageA(tv, TVM_GETITEMRECT, FALSE, (LPARAM)&rect);
+    ok(visible, "first node should be visible\n");
+    ok(!rect.left, "rect.left = %d\n", rect.left);
+    ok(!rect.top, "rect.top = %d\n", rect.top);
+    ok(rect.right, "rect.right = 0\n");
+    ok(rect.bottom, "rect.bottom = 0\n");
+
+    DestroyWindow(tv);
+}
+
 static void test_itemedit(void)
 {
     DWORD r;
@@ -2859,6 +2902,7 @@ START_TEST(treeview)
     test_get_set_tooltips();
     test_get_set_unicodeformat();
     test_expandinvisible();
+    test_expand();
     test_itemedit();
     test_treeview_classinfo();
     test_delete_items();
