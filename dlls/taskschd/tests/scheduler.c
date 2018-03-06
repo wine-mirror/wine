@@ -1304,12 +1304,17 @@ static void test_daily_trigger(ITrigger *trigger)
 static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = { 't','a','s','k','1','.','e','x','e',0 };
+    static WCHAR workdir[] = { 'w','o','r','k','d','i','r',0 };
+    static WCHAR args[] = { 'a','r','g','u','m','e','n','s',0 };
     HRESULT hr;
     IActionCollection *actions;
     IAction *action;
     IExecAction *exec_action;
     TASK_ACTION_TYPE type;
     BSTR path;
+
+    hr = ITaskDefinition_get_Actions(taskdef, NULL);
+    ok(hr == E_POINTER, "got %#x\n", hr);
 
     hr = ITaskDefinition_get_Actions(taskdef, &actions);
     ok(hr == S_OK, "get_Actions error %#x\n", hr);
@@ -1325,10 +1330,16 @@ static void create_action(ITaskDefinition *taskdef)
     ok(hr == S_OK, "get_Type error %#x\n", hr);
     ok(type == TASK_ACTION_EXEC, "got %u\n", type );
 
+    hr = IExecAction_get_Path(exec_action, NULL);
+    ok(hr == E_POINTER, "got %#x\n", hr);
+
     path = (BSTR)0xdeadbeef;
     hr = IExecAction_get_Path(exec_action, &path);
     ok(hr == S_OK, "get_Path error %#x\n", hr);
     ok(path == NULL, "path not set\n");
+
+    hr = IExecAction_put_Path(exec_action, NULL);
+    ok(hr == S_OK, "put_Path error %#x\n", hr);
 
     hr = IExecAction_put_Path(exec_action, task1_exe);
     ok(hr == S_OK, "put_Path error %#x\n", hr);
@@ -1337,7 +1348,49 @@ static void create_action(ITaskDefinition *taskdef)
     hr = IExecAction_get_Path(exec_action, &path);
     ok(hr == S_OK, "get_Path error %#x\n", hr);
     ok(path != NULL, "path not set\n");
-    ok(!lstrcmpW(path, task1_exe), "wrong path\n" );
+    ok(!lstrcmpW(path, task1_exe), "got %s\n", wine_dbgstr_w(path));
+    SysFreeString(path);
+
+    hr = IExecAction_get_WorkingDirectory(exec_action, NULL);
+    ok(hr == E_POINTER, "got %#x\n", hr);
+
+    path = (BSTR)0xdeadbeef;
+    hr = IExecAction_get_WorkingDirectory(exec_action, &path);
+    ok(hr == S_OK, "get_WorkingDirectory error %#x\n", hr);
+    ok(path == NULL, "workdir not set\n");
+
+    hr = IExecAction_put_WorkingDirectory(exec_action, NULL);
+    ok(hr == S_OK, "put_WorkingDirectory error %#x\n", hr);
+
+    hr = IExecAction_put_WorkingDirectory(exec_action, workdir);
+    ok(hr == S_OK, "put_WorkingDirectory error %#x\n", hr);
+
+    path = NULL;
+    hr = IExecAction_get_WorkingDirectory(exec_action, &path);
+    ok(hr == S_OK, "get_WorkingDirectory error %#x\n", hr);
+    ok(path != NULL, "workdir not set\n");
+    ok(!lstrcmpW(path, workdir), "got %s\n", wine_dbgstr_w(path));
+    SysFreeString(path);
+
+    hr = IExecAction_get_Arguments(exec_action, NULL);
+    ok(hr == E_POINTER, "got %#x\n", hr);
+
+    path = (BSTR)0xdeadbeef;
+    hr = IExecAction_get_Arguments(exec_action, &path);
+    ok(hr == S_OK, "get_Arguments error %#x\n", hr);
+    ok(path == NULL, "args not set\n");
+
+    hr = IExecAction_put_Arguments(exec_action, NULL);
+    ok(hr == S_OK, "put_Arguments error %#x\n", hr);
+
+    hr = IExecAction_put_Arguments(exec_action, args);
+    ok(hr == S_OK, "put_WorkingDirectory error %#x\n", hr);
+
+    path = NULL;
+    hr = IExecAction_get_Arguments(exec_action, &path);
+    ok(hr == S_OK, "get_Arguments error %#x\n", hr);
+    ok(path != NULL, "args not set\n");
+    ok(!lstrcmpW(path, args), "got %s\n", wine_dbgstr_w(path));
     SysFreeString(path);
 
     IExecAction_Release(exec_action);
