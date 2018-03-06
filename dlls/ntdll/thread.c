@@ -522,6 +522,23 @@ static void start_thread( struct startup_info *info )
 
 
 /***********************************************************************
+ *              NtCreateThreadEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle_ptr, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                  HANDLE process, LPTHREAD_START_ROUTINE start, void *param,
+                                  ULONG flags, ULONG zero_bits, ULONG stack_commit,
+                                  ULONG stack_reserve, void *attribute_list )
+{
+    FIXME( "%p, %x, %p, %p, %p, %p, %x, %x, %x, %x, %p semi-stub!\n", handle_ptr, access, attr,
+           process, start, param, flags, zero_bits, stack_commit, stack_reserve, attribute_list );
+
+    return RtlCreateUserThread( process, NULL, flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED,
+                                NULL, stack_reserve, stack_commit, (PRTL_THREAD_START_ROUTINE)start,
+                                param, handle_ptr, NULL );
+}
+
+
+/***********************************************************************
  *              RtlCreateUserThread   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *descr,
