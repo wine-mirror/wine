@@ -333,12 +333,12 @@ static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_
         {
             if (ptr)
             {
-                if (is_data_file_module(hmod))
-                {
-                    HMODULE mod = (HMODULE)((ULONG_PTR)hmod & ~1);
-                    *ptr = RtlImageRvaToVa( RtlImageNtHeader(mod), mod, entry->OffsetToData, NULL );
-                }
-                else *ptr = (char *)hmod + entry->OffsetToData;
+                BOOL is_data_file = is_data_file_module(hmod);
+                hmod = (HMODULE)((ULONG_PTR)hmod & ~3);
+                if (is_data_file)
+                    *ptr = RtlImageRvaToVa( RtlImageNtHeader(hmod), hmod, entry->OffsetToData, NULL );
+                else
+                    *ptr = (char *)hmod + entry->OffsetToData;
             }
             if (size) *size = entry->Size;
             status = STATUS_SUCCESS;

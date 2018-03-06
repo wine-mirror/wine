@@ -3277,11 +3277,8 @@ PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir,
     const IMAGE_NT_HEADERS *nt;
     DWORD addr;
 
-    if ((ULONG_PTR)module & 1)  /* mapped as data file */
-    {
-        module = (HMODULE)((ULONG_PTR)module & ~1);
-        image = FALSE;
-    }
+    if ((ULONG_PTR)module & 1) image = FALSE;  /* mapped as data file */
+    module = (HMODULE)((ULONG_PTR)module & ~3);
     if (!(nt = RtlImageNtHeader( module ))) return NULL;
     if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
