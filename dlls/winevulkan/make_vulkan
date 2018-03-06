@@ -90,6 +90,7 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkDestroyInstance" : {"dispatch" : True, "driver" : True, "thunk" : False },
+    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
 }
 
 
