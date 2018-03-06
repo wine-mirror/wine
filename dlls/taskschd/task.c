@@ -1820,8 +1820,16 @@ static HRESULT WINAPI ExecAction_put_Arguments(IExecAction *iface, BSTR argument
 
 static HRESULT WINAPI ExecAction_get_WorkingDirectory(IExecAction *iface, BSTR *directory)
 {
-    FIXME("%p,%p: stub\n", iface, directory);
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+
+    TRACE("%p,%p\n", iface, directory);
+
+    if (!directory) return E_POINTER;
+
+    if (!action->directory) *directory = NULL;
+    else if (!(*directory = SysAllocString(action->directory))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ExecAction_put_WorkingDirectory(IExecAction *iface, BSTR directory)
