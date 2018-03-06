@@ -171,7 +171,7 @@ static void test_profile_sections(void)
     DWORD count;
     char buf[100];
     char *p;
-    static const char content[]="[section1]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n[section2]\r\n";
+    static const char content[]="[section1]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n[section2]\r\n[section3]\r\n=val5\r\n";
     static const char testfile4[]=".\\testwine4.ini";
     BOOL on_win98 = FALSE;
 
@@ -235,6 +235,19 @@ static void test_profile_sections(void)
     for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
         p[-1] = ',';
     ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
+            ret, buf);
+    ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    ok( GetLastError() == ERROR_SUCCESS ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "expected ERROR_SUCCESS, got %d\n", GetLastError());
+
+    /* Existing section with no keys but has values */
+    SetLastError(0xdeadbeef);
+    ret=GetPrivateProfileSectionA("section3", buf, sizeof(buf), testfile4);
+    trace("section3 return: %s\n", buf);
+    for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
+        p[-1] = ',';
+    ok( ret == 6 && !strcmp( buf, "=val5"), "wrong section returned(%d): %s\n",
             ret, buf);
     ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
     ok( GetLastError() == ERROR_SUCCESS ||
