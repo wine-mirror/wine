@@ -1055,6 +1055,7 @@ enable_api_ms_win_eventing_controller_l1_1_0
 enable_api_ms_win_eventing_legacy_l1_1_0
 enable_api_ms_win_eventing_provider_l1_1_0
 enable_api_ms_win_eventlog_legacy_l1_1_0
+enable_api_ms_win_gdi_dpiinfo_l1_1_0
 enable_api_ms_win_mm_joystick_l1_1_0
 enable_api_ms_win_mm_misc_l1_1_1
 enable_api_ms_win_mm_mme_l1_1_0
@@ -18337,6 +18338,7 @@ wine_fn_config_makefile dlls/api-ms-win-eventing-controller-l1-1-0 enable_api_ms
 wine_fn_config_makefile dlls/api-ms-win-eventing-legacy-l1-1-0 enable_api_ms_win_eventing_legacy_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-gdi-dpiinfo-l1-1-0 enable_api_ms_win_gdi_dpiinfo_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-mm-joystick-l1-1-0 enable_api_ms_win_mm_joystick_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
 wine_fn_config_makefile dlls/api-ms-win-mm-mme-l1-1-0 enable_api_ms_win_mm_mme_l1_1_0
