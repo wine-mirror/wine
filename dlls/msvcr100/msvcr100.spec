@@ -588,7 +588,7 @@
 @ stub ___fls_getvalue@4
 @ stub ___fls_setvalue@8
 @ cdecl __fpecode()
-@ stub __free_locale
+@ cdecl __free_locale(ptr) MSVCRT__free_locale
 @ stub __get_current_locale
 @ stub __get_flsindex
 @ stub __get_tlsindex

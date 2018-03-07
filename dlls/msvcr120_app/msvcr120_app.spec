@@ -902,7 +902,7 @@
 @ cdecl __doserrno() msvcr120.__doserrno
 @ cdecl __dstbias() msvcr120.__dstbias
 @ cdecl __fpecode() msvcr120.__fpecode
-@ stub __free_locale
+@ cdecl __free_locale(ptr) msvcr120.__free_locale
 @ stub __get_current_locale
 @ stub __get_flsindex
 @ stub __get_tlsindex

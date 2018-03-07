@@ -926,7 +926,7 @@
 @ cdecl __doserrno() MSVCRT___doserrno
 @ cdecl __dstbias() MSVCRT___p__dstbias
 @ cdecl __fpecode()
-@ stub __free_locale
+@ cdecl __free_locale(ptr) MSVCRT__free_locale
 @ stub __get_current_locale
 @ stub __get_flsindex
 @ stub __get_tlsindex

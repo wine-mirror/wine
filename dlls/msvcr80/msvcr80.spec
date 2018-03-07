@@ -226,7 +226,7 @@
 @ stub -arch=i386 ___fls_setvalue@8
 @ stub -arch=x86_64 __fls_setvalue
 @ cdecl __fpecode()
-@ stub __free_locale
+@ cdecl __free_locale(ptr) MSVCRT__free_locale
 @ stub __get_app_type
 @ stub __get_current_locale
 @ stub __get_flsindex
