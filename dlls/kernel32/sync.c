@@ -1731,10 +1731,7 @@ BOOL WINAPI TransactNamedPipe(
           read_size, bytes_read, overlapped);
 
     if (overlapped)
-    {
         FIXME("Doesn't support overlapped operation as yet\n");
-        return FALSE;
-    }
 
     r = WriteFile(handle, write_buf, write_size, &count, NULL);
     if (r)
