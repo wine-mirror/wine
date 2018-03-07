@@ -332,15 +332,20 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
     GpRegion *rgn;
     GpMatrix transform;
     GpStatus stat;
+    BOOL identity;
 
     stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &transform);
+
+    if (stat == Ok)
+        stat = GdipIsMatrixIdentity(&transform, &identity);
 
     if (stat == Ok)
         stat = GdipCloneRegion(graphics->clip, &rgn);
 
     if (stat == Ok)
     {
-        stat = GdipTransformRegion(rgn, &transform);
+        if (!identity)
+            stat = GdipTransformRegion(rgn, &transform);
 
         if (stat == Ok)
             stat = GdipGetRegionHRgn(rgn, NULL, hrgn);
@@ -6333,9 +6338,12 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
     if (status == Ok)
     {
         GpMatrix world_to_device;
+        BOOL identity;
 
         get_graphics_transform(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
-        status = GdipTransformRegion(region, &world_to_device);
+        status = GdipIsMatrixIdentity(&world_to_device, &identity);
+        if (status == Ok && !identity)
+            status = GdipTransformRegion(region, &world_to_device);
         if (status == Ok)
             status = GdipCombineRegionRegion(graphics->clip, region, mode);
 
@@ -6384,9 +6392,12 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
     if (status == Ok)
     {
         GpMatrix world_to_device;
+        BOOL identity;
 
         get_graphics_transform(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
-        status = GdipTransformRegion(clip, &world_to_device);
+        status = GdipIsMatrixIdentity(&world_to_device, &identity);
+        if (status == Ok && !identity)
+            status = GdipTransformRegion(clip, &world_to_device);
         if (status == Ok)
             status = GdipCombineRegionRegion(graphics->clip, clip, mode);
 
