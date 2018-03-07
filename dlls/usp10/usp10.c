@@ -3188,8 +3188,9 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
         WCHAR *rChars;
         if ((hr = SHAPE_CheckFontForRequiredFeatures(hdc, (ScriptCache *)*psc, psa)) != S_OK) return hr;
 
-        rChars = heap_alloc(sizeof(WCHAR) * cChars);
-        if (!rChars) return E_OUTOFMEMORY;
+        if (!(rChars = heap_calloc(cChars, sizeof(*rChars))))
+            return E_OUTOFMEMORY;
+
         for (i = 0, g = 0, cluster = 0; i < cChars; i++)
         {
             int idx = i;
