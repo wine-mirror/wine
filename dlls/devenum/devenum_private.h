@@ -95,6 +95,7 @@ static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                           'M','i','c','r','o','s','o','f','t','\\',
                                           'A','c','t','i','v','e','M','o','v','i','e','\\',
                                           'd','e','v','e','n','u','m','\\',0};
+static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
 
 extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
 
