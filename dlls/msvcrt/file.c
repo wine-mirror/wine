@@ -4719,10 +4719,16 @@ char * CDECL MSVCRT_gets(char *buf)
       if(cc != '\r')
           *buf++ = (char)cc;
   }
+  MSVCRT__unlock_file(MSVCRT_stdin);
+
+  if ((cc == MSVCRT_EOF) && (buf_start == buf))
+  {
+    TRACE(":nothing read\n");
+    return NULL;
+  }
   *buf = '\0';
 
   TRACE("got '%s'\n", buf_start);
-  MSVCRT__unlock_file(MSVCRT_stdin);
   return buf_start;
 }
 
@@ -4741,10 +4747,16 @@ MSVCRT_wchar_t* CDECL MSVCRT__getws(MSVCRT_wchar_t* buf)
         if (cc != '\r')
             *buf++ = (MSVCRT_wchar_t)cc;
     }
+    MSVCRT__unlock_file(MSVCRT_stdin);
+
+    if ((cc == MSVCRT_WEOF) && (ws == buf))
+    {
+      TRACE(":nothing read\n");
+      return NULL;
+    }
     *buf = '\0';
 
     TRACE("got %s\n", debugstr_w(ws));
-    MSVCRT__unlock_file(MSVCRT_stdin);
     return ws;
 }
 
