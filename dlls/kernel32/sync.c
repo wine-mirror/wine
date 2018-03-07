@@ -40,6 +40,7 @@
 #include "winioctl.h"
 #include "ddk/wdm.h"
 
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "kernel_private.h"
 
@@ -1784,16 +1785,22 @@ BOOL WINAPI GetNamedPipeHandleStateA(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    WARN("%p %p %p %p %p %p %d: semi-stub\n",
-         hNamedPipe, lpState, lpCurInstances,
-         lpMaxCollectionCount, lpCollectDataTimeout,
-         lpUsername, nUsernameMaxSize);
+    WCHAR *username = NULL;
+    BOOL ret;
 
-    if (lpUsername && nUsernameMaxSize)
-        *lpUsername = 0;
+    WARN("%p %p %p %p %p %p %d: semi-stub\n", hNamedPipe, lpState, lpCurInstances,
+         lpMaxCollectionCount, lpCollectDataTimeout, lpUsername, nUsernameMaxSize);
 
-    return GetNamedPipeHandleStateW(hNamedPipe, lpState, lpCurInstances,
-                                    lpMaxCollectionCount, lpCollectDataTimeout, NULL, 0);
+    if (lpUsername && nUsernameMaxSize &&
+        !(username = HeapAlloc(GetProcessHeap(), 0, nUsernameMaxSize * sizeof(WCHAR)))) return FALSE;
+
+    ret = GetNamedPipeHandleStateW(hNamedPipe, lpState, lpCurInstances, lpMaxCollectionCount,
+                                   lpCollectDataTimeout, username, nUsernameMaxSize);
+    if (ret && username)
+        WideCharToMultiByte(CP_ACP, 0, username, -1, lpUsername, nUsernameMaxSize, NULL, NULL);
+
+    HeapFree(GetProcessHeap(), 0, username);
+    return ret;
 }
 
 /***********************************************************************
@@ -1807,10 +1814,8 @@ BOOL WINAPI GetNamedPipeHandleStateW(
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
-    FIXME("%p %p %p %p %p %p %d: semi-stub\n",
-          hNamedPipe, lpState, lpCurInstances,
-          lpMaxCollectionCount, lpCollectDataTimeout,
-          lpUsername, nUsernameMaxSize);
+    FIXME("%p %p %p %p %p %p %d: semi-stub\n", hNamedPipe, lpState, lpCurInstances,
+          lpMaxCollectionCount, lpCollectDataTimeout, lpUsername, nUsernameMaxSize);
 
     if (lpMaxCollectionCount)
         *lpMaxCollectionCount = 0;
@@ -1819,7 +1824,11 @@ BOOL WINAPI GetNamedPipeHandleStateW(
         *lpCollectDataTimeout = 0;
 
     if (lpUsername && nUsernameMaxSize)
-        *lpUsername = 0;
+    {
+        const char *username = wine_get_user_name();
+        int len = MultiByteToWideChar(CP_UNIXCP, 0, username, -1, lpUsername, nUsernameMaxSize);
+        if (!len) *lpUsername = 0;
+    }
 
     if (lpState)
     {
