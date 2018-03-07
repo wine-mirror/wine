@@ -34,10 +34,10 @@ typedef struct
 {
     IEnumMoniker IEnumMoniker_iface;
     LONG ref;
-    DWORD index;
-    DWORD subkey_cnt;
-    HKEY hkey;
-    HKEY special_hkey;
+    HKEY sw_key;
+    DWORD sw_index;
+    HKEY cm_key;
+    DWORD cm_index;
 } EnumMonikerImpl;
 
 typedef struct
@@ -748,9 +748,8 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_Release(IEnumMoniker *iface)
 
     if (!ref)
     {
-        if(This->special_hkey)
-            RegCloseKey(This->special_hkey);
-        RegCloseKey(This->hkey);
+        RegCloseKey(This->sw_key);
+        RegCloseKey(This->cm_key);
         CoTaskMemFree(This);
         DEVENUM_UnlockModule();
         return 0;
@@ -766,36 +765,41 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
     LONG res;
     ULONG fetched = 0;
     MediaCatMoniker * pMoniker;
+    HKEY hkey;
 
     TRACE("(%p)->(%d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     while (fetched < celt)
     {
-        if(This->index+fetched < This->subkey_cnt)
-            res = RegEnumKeyW(This->hkey, This->index+fetched, buffer, sizeof(buffer) / sizeof(WCHAR));
-        else if(This->special_hkey)
-            res = RegEnumKeyW(This->special_hkey, This->index+fetched-This->subkey_cnt, buffer, sizeof(buffer) / sizeof(WCHAR));
+        /* FIXME: try PNP devices and DMOs first */
+
+        /* try DirectShow filters */
+        if (!(res = RegEnumKeyW(This->sw_key, This->sw_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
+        {
+            This->sw_index++;
+            if ((res = RegOpenKeyExW(This->sw_key, buffer, 0, KEY_QUERY_VALUE, &hkey)))
+                break;
+        }
+        /* then try codecs */
+        else if (!(res = RegEnumKeyW(This->cm_key, This->cm_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
+        {
+            This->cm_index++;
+
+            if ((res = RegOpenKeyExW(This->cm_key, buffer, 0, KEY_QUERY_VALUE, &hkey)))
+                break;
+        }
         else
             break;
-        if (res != ERROR_SUCCESS)
-        {
-            break;
-        }
+
         pMoniker = DEVENUM_IMediaCatMoniker_Construct();
         if (!pMoniker)
             return E_OUTOFMEMORY;
 
-        if (RegOpenKeyW(This->index+fetched < This->subkey_cnt ? This->hkey : This->special_hkey,
-                        buffer, &pMoniker->hkey) != ERROR_SUCCESS)
-        {
-            IMoniker_Release(&pMoniker->IMoniker_iface);
-            break;
-        }
+        pMoniker->hkey = hkey;
+
         rgelt[fetched] = &pMoniker->IMoniker_iface;
         fetched++;
     }
-
-    This->index += fetched;
 
     TRACE("-- fetched %d\n", fetched);
 
@@ -811,21 +815,26 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
 static HRESULT WINAPI DEVENUM_IEnumMoniker_Skip(IEnumMoniker *iface, ULONG celt)
 {
     EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
-    DWORD special_subkeys = 0;
 
     TRACE("(%p)->(%d)\n", iface, celt);
 
-    /* Before incrementing, check if there are any more values to run through.
-       Some programs use the Skip() function to get the number of devices */
-    if(This->special_hkey)
-        RegQueryInfoKeyW(This->special_hkey, NULL, NULL, NULL, &special_subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-    if((This->index + celt) >= This->subkey_cnt + special_subkeys)
+    while (celt--)
     {
-        return S_FALSE;
-    }
+        /* FIXME: try PNP devices and DMOs first */
 
-    This->index += celt;
+        /* try DirectShow filters */
+        if (RegEnumKeyW(This->sw_key, This->sw_index, NULL, 0) != ERROR_NO_MORE_ITEMS)
+        {
+            This->sw_index++;
+        }
+        /* then try codecs */
+        else if (RegEnumKeyW(This->cm_key, This->cm_index, NULL, 0) != ERROR_NO_MORE_ITEMS)
+        {
+            This->cm_index++;
+        }
+        else
+            return S_FALSE;
+    }
 
     return S_OK;
 }
@@ -836,7 +845,8 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Reset(IEnumMoniker *iface)
 
     TRACE("(%p)->()\n", iface);
 
-    This->index = 0;
+    This->sw_index = 0;
+    This->cm_index = 0;
 
     return S_OK;
 }
@@ -862,23 +872,31 @@ static const IEnumMonikerVtbl IEnumMoniker_Vtbl =
     DEVENUM_IEnumMoniker_Clone
 };
 
-HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, HKEY special_hkey, IEnumMoniker ** ppEnumMoniker)
+HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **ppEnumMoniker)
 {
     EnumMonikerImpl * pEnumMoniker = CoTaskMemAlloc(sizeof(EnumMonikerImpl));
+    WCHAR buffer[78];
+
     if (!pEnumMoniker)
         return E_OUTOFMEMORY;
 
     pEnumMoniker->IEnumMoniker_iface.lpVtbl = &IEnumMoniker_Vtbl;
     pEnumMoniker->ref = 1;
-    pEnumMoniker->index = 0;
-    pEnumMoniker->hkey = hkey;
-    pEnumMoniker->special_hkey = special_hkey;
+    pEnumMoniker->sw_index = 0;
+    pEnumMoniker->cm_index = 0;
+
+    strcpyW(buffer, clsidW);
+    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
+    strcatW(buffer, instanceW);
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->sw_key))
+        pEnumMoniker->sw_key = NULL;
+
+    strcpyW(buffer, wszActiveMovieKey);
+    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->cm_key))
+        pEnumMoniker->cm_key = NULL;
 
     *ppEnumMoniker = &pEnumMoniker->IEnumMoniker_iface;
-
-    if(RegQueryInfoKeyW(pEnumMoniker->hkey, NULL, NULL, NULL, &pEnumMoniker->subkey_cnt, NULL, NULL, NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
-        pEnumMoniker->subkey_cnt = 0;
-
 
     DEVENUM_LockModule();
 

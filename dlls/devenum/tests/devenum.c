@@ -287,14 +287,153 @@ static void test_register_filter(void)
     ok(find_moniker(&CLSID_AudioRendererCategory, mon), "filter should be registered\n");
 
     hr = IFilterMapper2_UnregisterFilter(mapper2, &CLSID_AudioRendererCategory, NULL, &CLSID_TestFilter);
-todo_wine
     ok(hr == S_OK, "UnregisterFilter failed: %#x\n", hr);
 
-todo_wine
     ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "filter should not be registered\n");
     IMoniker_Release(mon);
 
     IFilterMapper2_Release(mapper2);
+}
+
+static IMoniker *check_display_name_(int line, IParseDisplayName *parser, WCHAR *buffer)
+{
+    IMoniker *mon;
+    ULONG eaten;
+    HRESULT hr;
+    WCHAR *str;
+
+    hr = IParseDisplayName_ParseDisplayName(parser, NULL, buffer, &eaten, &mon);
+    ok_(__FILE__, line)(hr == S_OK, "ParseDisplayName failed: %#x\n", hr);
+
+    hr = IMoniker_GetDisplayName(mon, NULL, NULL, &str);
+todo_wine {
+    ok_(__FILE__, line)(hr == S_OK, "GetDisplayName failed: %#x\n", hr);
+    ok_(__FILE__, line)(!lstrcmpW(str, buffer), "got %s\n", wine_dbgstr_w(str));
+}
+
+    CoTaskMemFree(str);
+
+    return mon;
+}
+#define check_display_name(parser, buffer) check_display_name_(__LINE__, parser, buffer)
+
+static void test_directshow_filter(void)
+{
+    static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','s','w',':',0};
+    static const WCHAR instanceW[] = {'\\','I','n','s','t','a','n','c','e',0};
+    static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
+    static WCHAR testW[] = {'\\','t','e','s','t',0};
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    IMoniker *mon;
+    WCHAR buffer[200];
+    LRESULT res;
+    VARIANT var;
+    HRESULT hr;
+
+    /* Test ParseDisplayName and GetDisplayName */
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
+
+    lstrcpyW(buffer, deviceW);
+    StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    lstrcatW(buffer, testW);
+    mon = check_display_name(parser, buffer);
+
+    /* Test writing and reading from the property bag */
+    ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "filter should not be registered\n");
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+    VariantInit(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got %#x\n", hr);
+
+    /* writing causes the key to be created */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(testW);
+    hr = IPropertyBag_Write(prop_bag, friendly_name, &var);
+    if (hr != E_ACCESSDENIED)
+    {
+        ok(hr == S_OK, "Write failed: %#x\n", hr);
+
+        ok(find_moniker(&CLSID_AudioRendererCategory, mon), "filter should be registered\n");
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        ok(hr == S_OK, "Read failed: %#x\n", hr);
+        ok(!lstrcmpW(V_BSTR(&var), testW), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
+        IMoniker_Release(mon);
+
+        /* devenum doesn't give us a way to unregister—we have to do that manually */
+        lstrcpyW(buffer, clsidW);
+        StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+        lstrcatW(buffer, instanceW);
+        lstrcatW(buffer, testW);
+        res = RegDeleteKeyW(HKEY_CLASSES_ROOT, buffer);
+        ok(!res, "RegDeleteKey failed: %lu\n", res);
+    }
+
+    VariantClear(&var);
+    IPropertyBag_Release(prop_bag);
+    IParseDisplayName_Release(parser);
+}
+
+static void test_codec(void)
+{
+    static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','c','m',':',0};
+    static WCHAR testW[] = {'\\','t','e','s','t',0};
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    IMoniker *mon;
+    WCHAR buffer[200];
+    VARIANT var;
+    HRESULT hr;
+
+    /* Test ParseDisplayName and GetDisplayName */
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
+
+    lstrcpyW(buffer, deviceW);
+    StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    lstrcatW(buffer, testW);
+    mon = check_display_name(parser, buffer);
+
+    /* Test writing and reading from the property bag */
+    ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "codec should not be registered\n");
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+    VariantInit(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got %#x\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(testW);
+    hr = IPropertyBag_Write(prop_bag, friendly_name, &var);
+    ok(hr == S_OK, "Write failed: %#x\n", hr);
+
+    VariantClear(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == S_OK, "Read failed: %#x\n", hr);
+    ok(!lstrcmpW(V_BSTR(&var), testW), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
+    /* unlike DirectShow filters, these are automatically generated, so
+     * enumerating them will destroy the key */
+todo_wine
+    ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "codec should not be registered\n");
+
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got %#x\n", hr);
+
+    IPropertyBag_Release(prop_bag);
+    IMoniker_Release(mon);
+
+    IParseDisplayName_Release(parser);
 }
 
 START_TEST(devenum)
@@ -316,6 +455,8 @@ START_TEST(devenum)
 
     test_moniker_isequal();
     test_register_filter();
+    test_directshow_filter();
+    test_codec();
 
     CoUninitialize();
 }

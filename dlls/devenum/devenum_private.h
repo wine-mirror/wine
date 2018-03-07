@@ -60,6 +60,12 @@ typedef struct
     IClassFactory IClassFactory_iface;
 } ClassFactoryImpl;
 
+enum device_type
+{
+    DEVICE_FILTER,
+    DEVICE_CODEC,
+};
+
 typedef struct
 {
     IMoniker IMoniker_iface;
@@ -68,23 +74,24 @@ typedef struct
 } MediaCatMoniker;
 
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void) DECLSPEC_HIDDEN;
-HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, HKEY special_hkey, IEnumMoniker ** ppEnumMoniker) DECLSPEC_HIDDEN;
+HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **enum_mon) DECLSPEC_HIDDEN;
 
 extern ClassFactoryImpl DEVENUM_ClassFactory DECLSPEC_HIDDEN;
 extern ICreateDevEnum DEVENUM_CreateDevEnum DECLSPEC_HIDDEN;
 extern IParseDisplayName DEVENUM_ParseDisplayName DECLSPEC_HIDDEN;
 
 /**********************************************************************
- * Private helper function to get AM filter category key location
- */
-HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen) DECLSPEC_HIDDEN;
-
-/**********************************************************************
  * Global string constant declarations
  */
+
+static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
+static const WCHAR instanceW[] = {'\\','I','n','s','t','a','n','c','e',0};
+static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
+                                          'M','i','c','r','o','s','o','f','t','\\',
+                                          'A','c','t','i','v','e','M','o','v','i','e','\\',
+                                          'd','e','v','e','n','u','m','\\',0};
+
 extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
-extern const WCHAR wszInstanceKeyName[] DECLSPEC_HIDDEN;
-#define CLSID_STR_LEN (sizeof(clsid_keyname) / sizeof(WCHAR))
 
 /**********************************************************************
  * Resource IDs
