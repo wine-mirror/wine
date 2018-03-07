@@ -211,7 +211,78 @@ static void test_moniker_isequal(void)
     return;
 }
 
-/* CLSID_CDeviceMoniker */
+static BOOL find_moniker(const GUID *class, IMoniker *needle)
+{
+    ICreateDevEnum *devenum;
+    IEnumMoniker *enum_mon;
+    IMoniker *mon;
+    BOOL found = FALSE;
+
+    CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC, &IID_ICreateDevEnum, (void **)&devenum);
+    ICreateDevEnum_CreateClassEnumerator(devenum, class, &enum_mon, 0);
+    while (!found && IEnumMoniker_Next(enum_mon, 1, &mon, NULL) == S_OK)
+    {
+        if (IMoniker_IsEqual(mon, needle) == S_OK)
+            found = TRUE;
+
+        IMoniker_Release(mon);
+    }
+
+    IEnumMoniker_Release(enum_mon);
+    ICreateDevEnum_Release(devenum);
+    return found;
+}
+
+DEFINE_GUID(CLSID_TestFilter,  0xdeadbeef,0xcf51,0x43e6,0xb6,0xc5,0x29,0x9e,0xa8,0xb6,0xb5,0x91);
+
+static void test_register_filter(void)
+{
+    static const WCHAR name[] = {'d','e','v','e','n','u','m',' ','t','e','s','t',0};
+    IFilterMapper2 *mapper2;
+    IMoniker *mon = NULL;
+    REGFILTER2 rgf2 = {0};
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC, &IID_IFilterMapper2, (void **)&mapper2);
+    ok(hr == S_OK, "Failed to create FilterMapper2: %#x\n", hr);
+
+    rgf2.dwVersion = 2;
+    rgf2.dwMerit = MERIT_UNLIKELY;
+    S2(U(rgf2)).cPins2 = 0;
+
+    hr = IFilterMapper2_RegisterFilter(mapper2, &CLSID_TestFilter, name, &mon, NULL, NULL, &rgf2);
+    if (hr == E_ACCESSDENIED)
+    {
+        skip("Not enough permissions to register filters\n");
+        IFilterMapper2_Release(mapper2);
+        return;
+    }
+    ok(hr == S_OK, "RegisterFilter failed: %#x\n", hr);
+
+    ok(find_moniker(&CLSID_LegacyAmFilterCategory, mon), "filter should be registered\n");
+
+    hr = IFilterMapper2_UnregisterFilter(mapper2, NULL, NULL, &CLSID_TestFilter);
+    ok(hr == S_OK, "UnregisterFilter failed: %#x\n", hr);
+
+    ok(!find_moniker(&CLSID_LegacyAmFilterCategory, mon), "filter should not be registered\n");
+    IMoniker_Release(mon);
+
+    mon = NULL;
+    hr = IFilterMapper2_RegisterFilter(mapper2, &CLSID_TestFilter, name, &mon, &CLSID_AudioRendererCategory, NULL, &rgf2);
+    ok(hr == S_OK, "RegisterFilter failed: %#x\n", hr);
+
+    ok(find_moniker(&CLSID_AudioRendererCategory, mon), "filter should be registered\n");
+
+    hr = IFilterMapper2_UnregisterFilter(mapper2, &CLSID_AudioRendererCategory, NULL, &CLSID_TestFilter);
+todo_wine
+    ok(hr == S_OK, "UnregisterFilter failed: %#x\n", hr);
+
+todo_wine
+    ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "filter should not be registered\n");
+    IMoniker_Release(mon);
+
+    IFilterMapper2_Release(mapper2);
+}
 
 START_TEST(devenum)
 {
@@ -231,6 +302,7 @@ START_TEST(devenum)
     }
 
     test_moniker_isequal();
+    test_register_filter();
 
     CoUninitialize();
 }
