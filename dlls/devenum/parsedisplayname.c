@@ -81,9 +81,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
     WCHAR buffer[MAX_PATH];
     enum device_type type;
     MediaCatMoniker *mon;
-    HKEY hbasekey;
     CLSID class;
-    LRESULT res;
 
     TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(name), eaten, ret);
 
@@ -96,15 +94,11 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
     if (name[0] == 's' && name[1] == 'w' && name[2] == ':')
     {
         type = DEVICE_FILTER;
-        if ((res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsidW, 0, 0, &hbasekey)))
-            return HRESULT_FROM_WIN32(res);
         name += 3;
     }
     else if (name[0] == 'c' && name[1] == 'm' && name[2] == ':')
     {
         type = DEVICE_CODEC;
-        if ((res = RegOpenKeyExW(HKEY_CURRENT_USER, wszActiveMovieKey, 0, 0, &hbasekey)))
-            return HRESULT_FROM_WIN32(res);
         name += 3;
     }
     else
@@ -133,21 +127,6 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
     }
     strcpyW(mon->name, name);
 
-    buffer[0] = 0;
-    if (mon->has_class)
-    {
-        StringFromGUID2(&mon->class, buffer, CHARS_IN_GUID);
-        if (mon->type == DEVICE_FILTER)
-            strcatW(buffer, instanceW);
-        strcatW(buffer, backslashW);
-    }
-    strcatW(buffer, mon->name);
-
-    if (RegCreateKeyW(hbasekey, buffer, &mon->hkey))
-    {
-        IMoniker_Release(&mon->IMoniker_iface);
-        return MK_E_NOOBJECT;
-    }
     *ret = &mon->IMoniker_iface;
 
     return S_OK;

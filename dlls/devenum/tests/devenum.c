@@ -326,7 +326,6 @@ static void test_directshow_filter(void)
     mon = check_display_name(parser, buffer);
 
     /* Test writing and reading from the property bag */
-todo_wine
     ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "filter should not be registered\n");
 
     hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
@@ -425,7 +424,6 @@ static void test_codec(void)
     mon = check_display_name(parser, buffer);
 
     /* Test writing and reading from the property bag */
-todo_wine
     ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "codec should not be registered\n");
 
     hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);

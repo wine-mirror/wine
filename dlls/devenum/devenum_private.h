@@ -70,7 +70,6 @@ typedef struct
 {
     IMoniker IMoniker_iface;
     LONG ref;
-    HKEY hkey;
     CLSID class;
     BOOL has_class;
     enum device_type type;
