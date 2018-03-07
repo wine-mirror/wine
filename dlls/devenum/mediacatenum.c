@@ -345,6 +345,7 @@ static ULONG WINAPI DEVENUM_IMediaCatMoniker_Release(IMoniker *iface)
 
     if (ref == 0) {
         RegCloseKey(This->hkey);
+        CoTaskMemFree(This->name);
         CoTaskMemFree(This);
         DEVENUM_UnlockModule();
     }
@@ -695,6 +696,8 @@ MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void)
     pMoniker->IMoniker_iface.lpVtbl = &IMoniker_Vtbl;
     pMoniker->ref = 0;
     pMoniker->hkey = NULL;
+    pMoniker->has_class = FALSE;
+    pMoniker->name = NULL;
 
     DEVENUM_IMediaCatMoniker_AddRef(&pMoniker->IMoniker_iface);
 

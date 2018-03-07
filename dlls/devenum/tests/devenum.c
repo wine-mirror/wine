@@ -378,6 +378,43 @@ static void test_directshow_filter(void)
 
     VariantClear(&var);
     IPropertyBag_Release(prop_bag);
+
+    /* name can be anything */
+
+    lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, testW+1);
+    mon = check_display_name(parser, buffer);
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+    VariantClear(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got %#x\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(testW);
+    hr = IPropertyBag_Write(prop_bag, friendly_name, &var);
+    if (hr != E_ACCESSDENIED)
+    {
+        ok(hr == S_OK, "Write failed: %#x\n", hr);
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        ok(hr == S_OK, "Read failed: %#x\n", hr);
+        ok(!lstrcmpW(V_BSTR(&var), testW), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
+        IMoniker_Release(mon);
+
+        /* vista+ stores it inside the Instance key */
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, "CLSID\\test\\Instance");
+
+        res = RegDeleteKeyA(HKEY_CLASSES_ROOT, "CLSID\\test");
+        ok(!res, "RegDeleteKey failed: %lu\n", res);
+    }
+
+    VariantClear(&var);
+    IPropertyBag_Release(prop_bag);
     IParseDisplayName_Release(parser);
 }
 

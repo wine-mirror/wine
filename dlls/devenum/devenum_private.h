@@ -71,6 +71,10 @@ typedef struct
     IMoniker IMoniker_iface;
     LONG ref;
     HKEY hkey;
+    CLSID class;
+    BOOL has_class;
+    enum device_type type;
+    WCHAR *name;
 } MediaCatMoniker;
 
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void) DECLSPEC_HIDDEN;
@@ -84,6 +88,7 @@ extern IParseDisplayName DEVENUM_ParseDisplayName DECLSPEC_HIDDEN;
  * Global string constant declarations
  */
 
+static const WCHAR backslashW[] = {'\\',0};
 static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
 static const WCHAR instanceW[] = {'\\','I','n','s','t','a','n','c','e',0};
 static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
