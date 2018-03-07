@@ -348,6 +348,7 @@ my @dll_groups =
   "api-ms-win-rtcore-ntuser-private-l1-1-0",
   "api-ms-win-rtcore-ntuser-window-l1-1-0",
   "api-ms-win-rtcore-ntuser-winevent-l1-1-0",
+  "api-ms-win-rtcore-ntuser-wmpointer-l1-1-0",
   "ext-ms-win-ntuser-message-l1-1-1",
   "ext-ms-win-ntuser-private-l1-1-1",
   "ext-ms-win-ntuser-rectangle-ext-l1-1-0",

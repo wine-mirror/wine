@@ -1068,6 +1068,7 @@ enable_api_ms_win_power_setting_l1_1_0
 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
 enable_api_ms_win_rtcore_ntuser_window_l1_1_0
 enable_api_ms_win_rtcore_ntuser_winevent_l1_1_0
+enable_api_ms_win_rtcore_ntuser_wmpointer_l1_1_0
 enable_api_ms_win_security_activedirectoryclient_l1_1_0
 enable_api_ms_win_security_audit_l1_1_1
 enable_api_ms_win_security_base_l1_1_0
@@ -18353,6 +18354,7 @@ wine_fn_config_makefile dlls/api-ms-win-power-setting-l1-1-0 enable_api_ms_win_p
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-private-l1-1-0 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-window-l1-1-0 enable_api_ms_win_rtcore_ntuser_window_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-winevent-l1-1-0 enable_api_ms_win_rtcore_ntuser_winevent_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-wmpointer-l1-1-0 enable_api_ms_win_rtcore_ntuser_wmpointer_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-security-activedirectoryclient-l1-1-0 enable_api_ms_win_security_activedirectoryclient_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-security-audit-l1-1-1 enable_api_ms_win_security_audit_l1_1_1
 wine_fn_config_makefile dlls/api-ms-win-security-base-l1-1-0 enable_api_ms_win_security_base_l1_1_0
