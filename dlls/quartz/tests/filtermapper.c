@@ -182,7 +182,6 @@ static void test_fm2_enummatchingfilters(void)
         ok(hr == S_OK, "IFilterMapper_EnumMatchingFilters failed: %#x\n", hr);
         while (!found && IEnumRegFilters_Next(enum_reg, 1, &regfilter, &count) == S_OK)
         {
-            trace("%s %s\n", wine_dbgstr_guid(&regfilter->Clsid), wine_dbgstr_w(regfilter->Name));
             if (!lstrcmpW(regfilter->Name, wszFilterName1) && IsEqualGUID(&clsidFilter1, &regfilter->Clsid))
                 found = TRUE;
         }
