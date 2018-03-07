@@ -82,10 +82,12 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
     LPOLESTR pszClass = NULL;
     MediaCatMoniker * pMoniker = NULL;
     CLSID clsidDevice;
-    HRESULT res = S_OK;
+    HRESULT hr = S_OK;
     WCHAR wszRegKeyName[MAX_PATH];
+    enum device_type type;
     HKEY hbasekey;
     int classlen;
+    LONG res;
     static const WCHAR wszRegSeparator[] =   {'\\', 0 };
 
     TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
@@ -93,6 +95,25 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
     *ppmkOut = NULL;
     if (pchEaten)
         *pchEaten = strlenW(pszDisplayName);
+
+    pszDisplayName = strchrW(pszDisplayName, ':') + 1;
+    if (pszDisplayName[0] == 's' && pszDisplayName[1] == 'w' && pszDisplayName[2] == ':')
+    {
+        type = DEVICE_FILTER;
+        if ((res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsidW, 0, 0, &hbasekey)))
+            return HRESULT_FROM_WIN32(res);
+    }
+    else if (pszDisplayName[0] == 'c' && pszDisplayName[1] == 'm' && pszDisplayName[2] == ':')
+    {
+        type = DEVICE_CODEC;
+        if ((res = RegOpenKeyExW(HKEY_CURRENT_USER, wszActiveMovieKey, 0, 0, &hbasekey)))
+            return HRESULT_FROM_WIN32(res);
+    }
+    else
+    {
+        FIXME("unhandled device type %s\n", debugstr_w(pszDisplayName+1));
+        return MK_E_SYNTAX;
+    }
 
     pszDisplayName = strchrW(pszDisplayName, '{');
     pszBetween = strchrW(pszDisplayName, '}') + 2;
@@ -110,35 +131,32 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
 
     TRACE("Device CLSID: %s\n", debugstr_w(pszClass));
 
-    res = CLSIDFromString(pszClass, &clsidDevice);
+    hr = CLSIDFromString(pszClass, &clsidDevice);
 
-    if (SUCCEEDED(res))
-    {
-        res = DEVENUM_GetCategoryKey(&clsidDevice, &hbasekey, wszRegKeyName, MAX_PATH);
-    }
-
-    if (SUCCEEDED(res))
+    if (SUCCEEDED(hr))
     {
         pMoniker = DEVENUM_IMediaCatMoniker_Construct();
         if (pMoniker)
         {
+            strcpyW(wszRegKeyName, pszClass);
+            if (type == DEVICE_FILTER)
+                strcatW(wszRegKeyName, instanceW);
             strcatW(wszRegKeyName, wszRegSeparator);
             strcatW(wszRegKeyName, pszBetween);
-
             if (RegCreateKeyW(hbasekey, wszRegKeyName, &pMoniker->hkey) == ERROR_SUCCESS)
                 *ppmkOut = &pMoniker->IMoniker_iface;
             else
             {
                 IMoniker_Release(&pMoniker->IMoniker_iface);
-                res = MK_E_NOOBJECT;
+                hr = MK_E_NOOBJECT;
             }
         }
     }
 
     CoTaskMemFree(pszClass);
 
-    TRACE("-- returning: %x\n", res);
-    return res;
+    TRACE("-- returning: %x\n", hr);
+    return hr;
 }
 
 /**********************************************************************

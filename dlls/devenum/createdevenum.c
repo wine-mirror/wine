@@ -38,13 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 extern HINSTANCE DEVENUM_hInstance;
 
-const WCHAR wszInstanceKeyName[] ={'\\','I','n','s','t','a','n','c','e',0};
-
 static const WCHAR wszRegSeparator[] =   {'\\', 0 };
-static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                   'M','i','c','r','o','s','o','f','t','\\',
-                                   'A','c','t','i','v','e','M','o','v','i','e','\\',
-                                   'd','e','v','e','n','u','m','\\',0};
 static const WCHAR wszFilterKeyName[] = {'F','i','l','t','e','r',0};
 static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 static const WCHAR wszPins[] = {'P','i','n','s',0};
@@ -58,7 +52,7 @@ static const WCHAR wszWaveInID[] = {'W','a','v','e','I','n','I','D',0};
 static const WCHAR wszWaveOutID[] = {'W','a','v','e','O','u','t','I','D',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
-static HRESULT DEVENUM_CreateSpecialCategories(void);
+static HRESULT register_codecs(void);
 
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_QueryInterface (also IUnknown)
@@ -106,63 +100,6 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
     DEVENUM_UnlockModule();
 
     return 1; /* non-heap based object */
-}
-
-static BOOL IsSpecialCategory(const CLSID *clsid)
-{
-    return IsEqualGUID(clsid, &CLSID_AudioRendererCategory) ||
-        IsEqualGUID(clsid, &CLSID_AudioInputDeviceCategory) ||
-        IsEqualGUID(clsid, &CLSID_VideoInputDeviceCategory) ||
-        IsEqualGUID(clsid, &CLSID_VideoCompressorCategory) ||
-        IsEqualGUID(clsid, &CLSID_MidiRendererCategory);
-}
-
-HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen)
-{
-    if (IsSpecialCategory(clsidDeviceClass))
-    {
-        *pBaseKey = HKEY_CURRENT_USER;
-        strcpyW(wszRegKeyName, wszActiveMovieKey);
-
-        if (!StringFromGUID2(clsidDeviceClass, wszRegKeyName + strlenW(wszRegKeyName), maxLen - strlenW(wszRegKeyName)))
-            return E_OUTOFMEMORY;
-    }
-    else
-    {
-        *pBaseKey = HKEY_CLASSES_ROOT;
-        strcpyW(wszRegKeyName, clsid_keyname);
-        strcatW(wszRegKeyName, wszRegSeparator);
-
-        if (!StringFromGUID2(clsidDeviceClass, wszRegKeyName + CLSID_STR_LEN, maxLen - CLSID_STR_LEN))
-            return E_OUTOFMEMORY;
-
-        strcatW(wszRegKeyName, wszInstanceKeyName);
-    }
-
-    return S_OK;
-}
-
-static HKEY open_category_key(const CLSID *clsid)
-{
-    WCHAR key_name[sizeof(wszInstanceKeyName)/sizeof(WCHAR) + CHARS_IN_GUID-1 + 6 /* strlen("CLSID\") */], *ptr;
-    HKEY ret;
-
-    strcpyW(key_name, clsid_keyname);
-    ptr = key_name + strlenW(key_name);
-    *ptr++ = '\\';
-
-    if (!StringFromGUID2(clsid, ptr, CHARS_IN_GUID))
-        return NULL;
-
-    ptr += strlenW(ptr);
-    strcpyW(ptr, wszInstanceKeyName);
-
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &ret) != ERROR_SUCCESS) {
-        WARN("Could not open %s\n", debugstr_w(key_name));
-        return NULL;
-    }
-
-    return ret;
 }
 
 static HKEY open_special_category_key(const CLSID *clsid, BOOL create)
@@ -400,14 +337,13 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
         {
             WCHAR wszFilterSubkeyName[64];
             DWORD cName = sizeof(wszFilterSubkeyName) / sizeof(WCHAR);
-            HKEY hkeyCategoryBaseKey;
             WCHAR wszRegKey[MAX_PATH];
             HKEY hkeyInstance = NULL;
 
             if (RegEnumKeyExW(hkeyFilter, i, wszFilterSubkeyName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
-            hr = DEVENUM_GetCategoryKey(&CLSID_LegacyAmFilterCategory, &hkeyCategoryBaseKey, wszRegKey, MAX_PATH);
-            if (FAILED(hr)) continue;
+            strcpyW(wszRegKey, wszActiveMovieKey);
+            StringFromGUID2(&CLSID_LegacyAmFilterCategory, wszRegKey + strlenW(wszRegKey), CHARS_IN_GUID);
 
             strcatW(wszRegKey, wszRegSeparator);
             strcatW(wszRegKey, wszFilterSubkeyName);
@@ -512,9 +448,6 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     IEnumMoniker **ppEnumMoniker,
     DWORD dwFlags)
 {
-    HKEY hkey, special_hkey = NULL;
-    HRESULT hr;
-
     TRACE("(%p)->(%s, %p, %x)\n", iface, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags);
 
     if (!ppEnumMoniker)
@@ -522,34 +455,10 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 
     *ppEnumMoniker = NULL;
 
-    if (IsEqualGUID(clsidDeviceClass, &CLSID_LegacyAmFilterCategory))
-    {
-        DEVENUM_RegisterLegacyAmFilters();
-    }
+    register_codecs();
+    DEVENUM_RegisterLegacyAmFilters();
 
-    if (IsSpecialCategory(clsidDeviceClass))
-    {
-         hr = DEVENUM_CreateSpecialCategories();
-         if (FAILED(hr))
-             return hr;
-
-         special_hkey = open_special_category_key(clsidDeviceClass, FALSE);
-         if (!special_hkey)
-         {
-             ERR("Couldn't open registry key for special device: %s\n",
-                 debugstr_guid(clsidDeviceClass));
-             return S_FALSE;
-         }
-    }
-
-    hkey = open_category_key(clsidDeviceClass);
-    if (!hkey && !special_hkey)
-    {
-        FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
-        return S_FALSE;
-    }
-
-    return DEVENUM_IEnumMoniker_Construct(hkey, special_hkey, ppEnumMoniker);
+    return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
 
 /**********************************************************************
@@ -644,22 +553,17 @@ static const WCHAR DEVENUM_populate_handle_nameW[] =
      'D','e','v','e','n','u','m','_',
      'P','o','p','u','l','a','t','e',0};
 
-/**********************************************************************
- * DEVENUM_CreateSpecialCategories (INTERNAL)
- *
- * Creates the keys in the registry for the dynamic categories
- */
-static HRESULT DEVENUM_CreateSpecialCategories(void)
+static HRESULT register_codecs(void)
 {
     HRESULT res;
     WCHAR szDSoundNameFormat[MAX_PATH + 1];
     WCHAR szDSoundName[MAX_PATH + 1];
+    WCHAR class[CHARS_IN_GUID];
     DWORD iDefaultDevice = -1;
     UINT numDevs;
     IFilterMapper2 * pMapper = NULL;
     REGFILTER2 rf2;
     REGFILTERPINS2 rfp2;
-    WCHAR path[MAX_PATH];
     HKEY basekey;
 
     if (DEVENUM_populate_handle)
@@ -680,16 +584,18 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
     /* Since devices can change between session, for example because you just plugged in a webcam
      * or switched from pulseaudio to alsa, delete all old devices first
      */
-    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_AudioRendererCategory, &basekey, path, MAX_PATH)))
-        RegDeleteTreeW(basekey, path);
-    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_AudioInputDeviceCategory, &basekey, path, MAX_PATH)))
-        RegDeleteTreeW(basekey, path);
-    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_VideoInputDeviceCategory, &basekey, path, MAX_PATH)))
-        RegDeleteTreeW(basekey, path);
-    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_MidiRendererCategory, &basekey, path, MAX_PATH)))
-        RegDeleteTreeW(basekey, path);
-    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_VideoCompressorCategory, &basekey, path, MAX_PATH)))
-        RegDeleteTreeW(basekey, path);
+    RegOpenKeyW(HKEY_CURRENT_USER, wszActiveMovieKey, &basekey);
+    StringFromGUID2(&CLSID_AudioRendererCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
+    StringFromGUID2(&CLSID_AudioInputDeviceCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
+    StringFromGUID2(&CLSID_VideoInputDeviceCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
+    StringFromGUID2(&CLSID_MidiRendererCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
+    StringFromGUID2(&CLSID_VideoCompressorCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
+    RegCloseKey(basekey);
 
     rf2.dwVersion = 2;
     rf2.dwMerit = MERIT_PREFERRED;
