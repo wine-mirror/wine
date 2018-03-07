@@ -30,57 +30,56 @@
 
 static const WCHAR friendly_name[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR fcc_handlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
+static const WCHAR clsidW[] = {'C','L','S','I','D',0};
 static const WCHAR mrleW[] = {'m','r','l','e',0};
-
-struct category
-{
-    const char * name;
-    const GUID * clsid;
-};
-
-static struct category am_categories[] =
-{
-    { "Legacy AM Filter category", &CLSID_LegacyAmFilterCategory },
-    { "Audio renderer category", &CLSID_AudioRendererCategory },
-    { "Midi renderer category", &CLSID_MidiRendererCategory },
-    { "Audio input device category", &CLSID_AudioInputDeviceCategory },
-    { "Video input device category", &CLSID_VideoInputDeviceCategory },
-    { "Audio compressor category", &CLSID_AudioCompressorCategory },
-    { "Video compressor category", &CLSID_VideoCompressorCategory }
-};
 
 static void test_devenum(IBindCtx *bind_ctx)
 {
-    HRESULT res;
+    IEnumMoniker *enum_cat, *enum_moniker;
     ICreateDevEnum* create_devenum;
-    IEnumMoniker* enum_moniker = NULL;
+    IPropertyBag *prop_bag;
+    IMoniker *moniker;
     BOOL have_mrle = FALSE;
-    int i;
+    GUID cat_guid, clsid;
+    VARIANT var;
+    HRESULT hr;
 
-    res = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC,
+    hr = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC,
                            &IID_ICreateDevEnum, (LPVOID*)&create_devenum);
-    if (res != S_OK) {
-        skip("Cannot create SystemDeviceEnum object (%x)\n", res);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create devenum: %#x\n", hr);
 
-    for (i = 0; i < (sizeof(am_categories) / sizeof(struct category)); i++)
+    hr = ICreateDevEnum_CreateClassEnumerator(create_devenum, &CLSID_ActiveMovieCategories, &enum_cat, 0);
+    ok(hr == S_OK, "Failed to enum categories: %#x\n", hr);
+
+    while (IEnumMoniker_Next(enum_cat, 1, &moniker, NULL) == S_OK)
     {
-        if (winetest_debug > 1)
-            trace("%s:\n", am_categories[i].name);
+        hr = IMoniker_BindToStorage(moniker, bind_ctx, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+        ok(hr == S_OK, "IMoniker_BindToStorage failed: %#x\n", hr);
 
-        res = ICreateDevEnum_CreateClassEnumerator(create_devenum, am_categories[i].clsid, &enum_moniker, 0);
-        ok(SUCCEEDED(res), "Cannot create enum moniker (res = %x)\n", res);
-        if (res == S_OK)
+        VariantInit(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        ok(hr == S_OK, "Failed to read FriendlyName: %#x\n", hr);
+
+        if (winetest_debug > 1)
+            trace("%s:\n", wine_dbgstr_w(V_BSTR(&var)));
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, clsidW, &var, NULL);
+        ok(hr == S_OK, "Failed to read CLSID: %#x\n", hr);
+
+        hr = CLSIDFromString(V_BSTR(&var), &cat_guid);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        IPropertyBag_Release(prop_bag);
+        IMoniker_Release(moniker);
+
+        hr = ICreateDevEnum_CreateClassEnumerator(create_devenum, &cat_guid, &enum_moniker, 0);
+        ok(SUCCEEDED(hr), "Failed to enum devices: %#x\n", hr);
+
+        if (hr == S_OK)
         {
-            IMoniker* moniker;
             while (IEnumMoniker_Next(enum_moniker, 1, &moniker, NULL) == S_OK)
             {
-                IPropertyBag* prop_bag = NULL;
-                VARIANT var;
-                HRESULT hr;
-                CLSID clsid = {0};
-
                 hr = IMoniker_GetClassID(moniker, NULL);
                 ok(hr == E_INVALIDARG, "IMoniker_GetClassID should failed %x\n", hr);
 
@@ -93,36 +92,24 @@ static void test_devenum(IBindCtx *bind_ctx)
                 hr = IMoniker_BindToStorage(moniker, bind_ctx, NULL, &IID_IPropertyBag, (LPVOID*)&prop_bag);
                 ok(hr == S_OK, "IMoniker_BindToStorage failed with error %x\n", hr);
 
-                if (SUCCEEDED(hr))
-                {
-                    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
-                    ok((hr == S_OK) || broken(hr == 0x80070002), "IPropertyBag_Read failed with error %x\n", hr);
+                hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+                ok(hr == S_OK, "IPropertyBag_Read failed: %#x\n", hr);
 
-                    if (SUCCEEDED(hr))
-                    {
-                        if (winetest_debug > 1)
-                            trace("  %s\n", wine_dbgstr_w(V_BSTR(&var)));
+                if (winetest_debug > 1)
+                    trace("  %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
+                if (IsEqualGUID(&CLSID_VideoCompressorCategory, &cat_guid)) {
+                    /* Test well known compressor to ensure that we really enumerate codecs */
+                    hr = IPropertyBag_Read(prop_bag, fcc_handlerW, &var, NULL);
+                    if (SUCCEEDED(hr)) {
+                        ok(V_VT(&var) == VT_BSTR, "V_VT(var) = %d\n", V_VT(&var));
+                        if(!lstrcmpW(V_BSTR(&var), mrleW))
+                            have_mrle = TRUE;
                         VariantClear(&var);
-                    }
-                    else
-                    {
-                        trace("  ???\n");
-                    }
-
-                    if (IsEqualGUID(&CLSID_VideoCompressorCategory, am_categories[i].clsid)) {
-                        /* Test well known compressor to ensure that we really enumerate codecs */
-                        hr = IPropertyBag_Read(prop_bag, fcc_handlerW, &var, NULL);
-                        if (SUCCEEDED(hr)) {
-                            ok(V_VT(&var) == VT_BSTR, "V_VT(var) = %d\n", V_VT(&var));
-                            if(!lstrcmpW(V_BSTR(&var), mrleW))
-                                have_mrle = TRUE;
-                            VariantClear(&var);
-                        }
                     }
                 }
 
-                if (prop_bag)
-                    IPropertyBag_Release(prop_bag);
+                IPropertyBag_Release(prop_bag);
                 IMoniker_Release(moniker);
             }
             IEnumMoniker_Release(enum_moniker);
