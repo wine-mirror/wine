@@ -157,6 +157,7 @@ int main(int argc, char** argv)
     printf("Pinging %s [%s] with %d bytes of data:\n", hostname, ip, l);
     for (;;)
     {
+        SetLastError(0);
         retval = IcmpSendEcho(icmp_file, ipaddr, send_data, l,
             NULL, reply_buffer, reply_size, w);
         if (retval != 0)
@@ -177,7 +178,10 @@ int main(int argc, char** argv)
         }
         else
         {
-            printf("Request timed out.\n");
+            if (GetLastError() == IP_REQ_TIMED_OUT)
+                puts("Request timed out.");
+            else
+                puts("PING: transmit failed. General failure.");
             lost++;
         }
         i++;
