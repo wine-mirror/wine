@@ -898,6 +898,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPMedia *media;
     IWMPControls *controls;
     VARIANT_BOOL vbool;
+    IWMPNetwork *network;
     HRESULT hres;
     BSTR filename;
     BSTR url;
@@ -916,6 +917,19 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(player == NULL, "player != NULL\n");
 
     IWMPControls_Release(controls);
+
+    /* IWPNetwork */
+    network = NULL;
+    hres = IWMPPlayer4_get_network(player4, &network);
+    ok(hres == S_OK, "get_network failed: %08x\n", hres);
+    ok(network != NULL, "network = NULL\n");
+
+    player = NULL;
+    hres = IWMPNetwork_QueryInterface(network, &IID_IWMPPlayer, (void**)&player);
+    ok(hres != S_OK, "Getting IWMPPlayer from IWMPNetwork SUCCEEDED\n");
+    ok(player == NULL, "player != NULL\n");
+
+    IWMPNetwork_Release(network);
 
     media = NULL;
     hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPMedia, (void**)&media);

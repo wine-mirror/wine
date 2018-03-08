@@ -54,6 +54,7 @@ struct WindowsMediaPlayer {
     IWMPPlayer IWMPPlayer_iface;
     IWMPSettings IWMPSettings_iface;
     IWMPControls IWMPControls_iface;
+    IWMPNetwork IWMPNetwork_iface;
 
     LONG ref;
 
