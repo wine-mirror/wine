@@ -38,6 +38,11 @@ typedef struct __Container_proxy {
     _Iterator_base12 *head;
 } _Container_proxy;
 
+typedef struct {
+    void *vtable;
+    int id;
+} _Runtime_object;
+
 #undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
@@ -51,6 +56,8 @@ static void (__thiscall *p__Container_base12__Orphan_all)(_Container_base12*);
 static void (__thiscall *p__Container_base12_dtor)(_Container_base12*);
 static _Iterator_base12** (__thiscall *p__Container_base12__Getpfirst)(_Container_base12*);
 static void (__thiscall *p__Container_base12__Swap_all)(_Container_base12*, _Container_base12*);
+static _Runtime_object* (__thiscall *p__Runtime_object_ctor)(_Runtime_object*);
+static _Runtime_object* (__thiscall *p__Runtime_object_ctor_id)(_Runtime_object*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -111,6 +118,8 @@ static BOOL init(void)
         SET(p__Container_base12_dtor, "??1_Container_base12@std@@QEAA@XZ");
         SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ");
         SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z");
+        SET(p__Runtime_object_ctor, "??0_Runtime_object@details@Concurrency@@QEAA@XZ");
+        SET(p__Runtime_object_ctor_id, "??0_Runtime_object@details@Concurrency@@QEAA@H@Z");
     }else {
 #ifdef __arm__
         SET(p__Container_base12_copy_ctor, "??0_Container_base12@std@@QAA@ABU01@@Z");
@@ -119,6 +128,8 @@ static BOOL init(void)
         SET(p__Container_base12_dtor, "??1_Container_base12@std@@QAA@XZ");
         SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ");
         SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QAAXAAU12@@Z");
+        SET(p__Runtime_object_ctor, "??0_Runtime_object@details@Concurrency@@QAA@XZ");
+        SET(p__Runtime_object_ctor_id, "??0_Runtime_object@details@Concurrency@@QAA@H@Z");
 #else
         SET(p__Container_base12_copy_ctor, "??0_Container_base12@std@@QAE@ABU01@@Z");
         SET(p__Container_base12_ctor, "??0_Container_base12@std@@QAE@XZ");
@@ -126,6 +137,8 @@ static BOOL init(void)
         SET(p__Container_base12_dtor, "??1_Container_base12@std@@QAE@XZ");
         SET(p__Container_base12__Getpfirst, "?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ");
         SET(p__Container_base12__Swap_all, "?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z");
+        SET(p__Runtime_object_ctor, "??0_Runtime_object@details@Concurrency@@QAE@XZ");
+        SET(p__Runtime_object_ctor_id, "??0_Runtime_object@details@Concurrency@@QAE@H@Z");
 #endif /* __arm__ */
     }
 
@@ -230,14 +243,35 @@ static void test_vbtable_size_exports(void)
     }
 }
 
+static void test__Runtime_object(void)
+{
+    _Runtime_object ro;
+    memset(&ro, 0, sizeof(ro));
+
+    call_func1(p__Runtime_object_ctor, &ro);
+    ok(ro.id == 0, "ro.id = %d\n", ro.id);
+    call_func1(p__Runtime_object_ctor, &ro);
+    ok(ro.id == 2, "ro.id = %d\n", ro.id);
+    call_func1(p__Runtime_object_ctor, &ro);
+    ok(ro.id == 4, "ro.id = %d\n", ro.id);
+    call_func2(p__Runtime_object_ctor_id, &ro, 0);
+    ok(ro.id == 0, "ro.id = %d\n", ro.id);
+    call_func2(p__Runtime_object_ctor_id, &ro, 1);
+    ok(ro.id == 1, "ro.id = %d\n", ro.id);
+    call_func2(p__Runtime_object_ctor_id, &ro, 10);
+    ok(ro.id == 10, "ro.id = %d\n", ro.id);
+    call_func1(p__Runtime_object_ctor, &ro);
+    ok(ro.id == 6, "ro.id = %d\n", ro.id);
+}
+
 START_TEST(misc)
 {
     if(!init())
         return;
 
     test__Container_base12();
-
     test_vbtable_size_exports();
+    test__Runtime_object();
 
     FreeLibrary(msvcp);
 }

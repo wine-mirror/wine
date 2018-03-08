@@ -1559,6 +1559,48 @@ void __thiscall _Concurrent_queue_base_v4_dummy(_Concurrent_queue_base_v4 *this)
 }
 
 DEFINE_RTTI_DATA0(_Concurrent_queue_base_v4, 0, ".?AV_Concurrent_queue_base_v4@details@Concurrency@@")
+
+static int _Runtime_object_id;
+
+typedef struct
+{
+    const vtable_ptr *vtable;
+    int id;
+} _Runtime_object;
+
+extern const vtable_ptr MSVCP__Runtime_object_vtable;
+
+/* ??0_Runtime_object@details@Concurrency@@QAE@H@Z */
+/* ??0_Runtime_object@details@Concurrency@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(_Runtime_object_ctor_id, 8)
+_Runtime_object* __thiscall _Runtime_object_ctor_id(_Runtime_object *this, int id)
+{
+    TRACE("(%p %d)\n", this, id);
+    this->vtable = &MSVCP__Runtime_object_vtable;
+    this->id = id;
+    return this;
+}
+
+/* ??0_Runtime_object@details@Concurrency@@QAE@XZ */
+/* ??0_Runtime_object@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Runtime_object_ctor, 4)
+_Runtime_object* __thiscall _Runtime_object_ctor(_Runtime_object *this)
+{
+    TRACE("(%p)\n", this);
+    this->vtable = &MSVCP__Runtime_object_vtable;
+    this->id = InterlockedExchangeAdd(&_Runtime_object_id, 2);
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(_Runtime_object__GetId, 4)
+int __thiscall _Runtime_object__GetId(_Runtime_object *this)
+{
+    TRACE("(%p)\n", this);
+    return this->id;
+}
+
+DEFINE_RTTI_DATA0(_Runtime_object, 0, ".?AV_Runtime_object@details@Concurrency@@")
+
 #endif
 
 #ifndef __GNUC__
@@ -1597,6 +1639,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_vector_dtor)
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy));
+    __ASM_VTABLE(_Runtime_object,
+            VTABLE_ADD_FUNC(_Runtime_object__GetId));
 #endif
 #if _MSVCP_VER >= 110
     __ASM_VTABLE(_Pad,
@@ -1756,6 +1800,7 @@ void init_misc(void *base)
 #endif
 #if _MSVCP_VER >= 100
     init__Concurrent_queue_base_v4_rtti(base);
+    init__Runtime_object_rtti(base);
 #endif
 #if _MSVCP_VER >= 110
     init__Pad_rtti(base);

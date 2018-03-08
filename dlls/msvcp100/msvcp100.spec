@@ -203,10 +203,12 @@
 @ stub -arch=win64 ??0_Mutex@std@@QEAA@W4_Uninitialized@1@@Z
 @ thiscall -arch=win32 ??0_Mutex@std@@QAE@XZ(ptr) mutex_ctor
 @ cdecl -arch=win64 ??0_Mutex@std@@QEAA@XZ(ptr) mutex_ctor
-@ stub -arch=win32 ??0_Runtime_object@details@Concurrency@@QAE@H@Z
-@ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z
-@ stub -arch=win32 ??0_Runtime_object@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0_Runtime_object@details@Concurrency@@QAA@H@Z(ptr long) _Runtime_object_ctor_id
+@ thiscall -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@H@Z(ptr long) _Runtime_object_ctor_id
+@ cdecl -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z(ptr long) _Runtime_object_ctor_id
+@ cdecl -arch=arm ??0_Runtime_object@details@Concurrency@@QAA@XZ(ptr) _Runtime_object_ctor
+@ thiscall -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@XZ(ptr) _Runtime_object_ctor
+@ cdecl -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@XZ(ptr) _Runtime_object_ctor
 @ thiscall -arch=win32 ??0_Timevec@std@@QAE@ABV01@@Z(ptr ptr) _Timevec_copy_ctor
 @ cdecl -arch=win64 ??0_Timevec@std@@QEAA@AEBV01@@Z(ptr ptr) _Timevec_copy_ctor
 @ thiscall -arch=win32 ??0_Timevec@std@@QAE@PAX@Z(ptr ptr) _Timevec_ctor_timeptr
