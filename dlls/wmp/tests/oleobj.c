@@ -18,12 +18,16 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define COBJMACROS
+#include <stdarg.h>
 #include <initguid.h>
+#include <windef.h>
+#include <winbase.h>
 #include <windows.h>
 #include <wmp.h>
 #include <olectl.h>
 
 #include "wine/test.h"
+#include "wine/heap.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -49,6 +53,12 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_CALLED_OR_BROKEN(func) \
+    do { \
+        ok(called_ ## func || broken(1), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 DEFINE_EXPECT(GetContainer);
 DEFINE_EXPECT(GetExtendedControl);
 DEFINE_EXPECT(GetWindow);
@@ -59,6 +69,32 @@ DEFINE_EXPECT(OnInPlaceDeactivate);
 DEFINE_EXPECT(GetWindowContext);
 DEFINE_EXPECT(ShowObject);
 DEFINE_EXPECT(OnShowWindow_FALSE);
+
+static const WCHAR mp4file[] = {'a','v','.','m','p','4',0};
+static inline WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+        GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+
+    return pathW;
+}
 
 static HWND container_hwnd;
 
@@ -859,9 +895,12 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPSettings *settings, *settings_qi;
     IWMPPlayer4 *player4;
     IWMPPlayer *player;
+    IWMPMedia *media;
     IWMPControls *controls;
     VARIANT_BOOL vbool;
     HRESULT hres;
+    BSTR filename;
+    BSTR url;
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
     ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08x\n", hres);
@@ -877,6 +916,52 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(player == NULL, "player != NULL\n");
 
     IWMPControls_Release(controls);
+
+    media = NULL;
+    hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPMedia, (void**)&media);
+    ok(hres == E_NOINTERFACE, "get_currentMedia SUCCEEDED: %08x\n", hres);
+    ok(media == NULL, "media != NULL\n");
+
+    /* Test media put/get */
+    media = NULL;
+    hres = IWMPPlayer4_get_currentMedia(player4, &media);
+    ok(hres == S_FALSE, "get_currentMedia SUCCEEDED\n");
+    ok(media == NULL, "media != NULL\n");
+
+    filename = SysAllocString(load_resource(mp4file));
+
+
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Invoke_USERMODE);
+    hres = IWMPPlayer4_put_URL(player4, filename);
+    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08x\n", hres);
+    todo_wine CHECK_CALLED_OR_BROKEN(GetContainer);
+    todo_wine CHECK_CALLED(Invoke_USERMODE);
+
+    url = NULL;
+    SET_EXPECT(Invoke_USERMODE);
+    hres = IWMPPlayer4_get_URL(player4, &url);
+    todo_wine ok(hres == S_OK, "IWMPPlayer4_get_URL failed: %08x\n", hres);
+    todo_wine ok(0 == lstrcmpW(url, filename), "%s != %s", wine_dbgstr_w(url), wine_dbgstr_w(filename));
+    todo_wine CHECK_CALLED(Invoke_USERMODE);
+    SysFreeString(url);
+
+    hres = IWMPPlayer4_get_currentMedia(player4, &media);
+    ok(hres == S_OK, "get_currentMedia failed: %08x\n", hres);
+    ok(media != NULL, "media = (%p)\n", media);
+
+    SET_EXPECT(GetContainer);
+    hres = IWMPPlayer4_put_currentMedia(player4, media);
+    ok(hres == S_OK, "put_currentMedia failed: %08x\n", hres);
+    todo_wine CHECK_CALLED_OR_BROKEN(GetContainer);
+
+    IWMPMedia_Release(media);
+
+    hres = IWMPPlayer4_get_currentMedia(player4, &media);
+    ok(hres == S_OK, "get_currentMedia failed: %08x\n", hres);
+    ok(media != NULL, "media = (%p)\n", media);
+
+    IWMPMedia_Release(media);
 
     settings = NULL;
     hres = IWMPPlayer4_get_settings(player4, &settings);
@@ -934,6 +1019,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 
     IWMPSettings_Release(settings);
     IWMPPlayer_Release(player);
+    SysFreeString(filename);
 }
 
 #define test_rect_size(a,b,c) _test_rect_size(__LINE__,a,b,c)

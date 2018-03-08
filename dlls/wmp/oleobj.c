@@ -308,6 +308,7 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
     if(!ref) {
         release_client_site(This);
         ConnectionPointContainer_Destroy(This);
+        destroy_player(This);
         heap_free(This);
     }
 
