@@ -2593,8 +2593,8 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     }
 
     if(event->event_id != EVENTID_LAST && (event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS)) {
-        for(i = 0; !event->prevent_default && i < chain_cnt; i++) {
-            BOOL prevent_default = FALSE;
+        BOOL prevent_default = event->prevent_default;
+        for(i = 0; !prevent_default && i < chain_cnt; i++) {
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
             if(!vtbl || !vtbl->handle_event_default)
                 continue;
@@ -2603,7 +2603,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
             if(FAILED(hres) || event->stop_propagation)
                 break;
             if(prevent_default)
-                IDOMEvent_preventDefault(&event->IDOMEvent_iface);
+                nsIDOMEvent_PreventDefault(event->nsevent);
         }
     }
 
