@@ -358,6 +358,7 @@ function test_prevent_default() {
 
     elem.onclick = function(event) {
         event.preventDefault();
+        ok(event.defaultPrevented === false, "defaultPrevented");
     }
     e = document.createEvent("Event");
     e.initEvent("click", true, false);
@@ -371,6 +372,19 @@ function test_prevent_default() {
     e.initEvent("click", true, true);
     r = elem.dispatchEvent(e);
     ok(r === true, "dispatchEvent returned " + r);
+
+    e = document.createEvent("Event");
+    e.initEvent("click", false, true);
+    e.preventDefault();
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+
+    e = document.createEvent("Event");
+    e.initEvent("click", false, true);
+    elem.onclick = null;
+    r = elem.dispatchEvent(e);
+    ok(r === true, "dispatchEvent returned " + r);
+    e.preventDefault();
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
 
     next_test();
 }
