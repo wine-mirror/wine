@@ -350,6 +350,7 @@ my @dll_groups =
   "api-ms-win-downlevel-user32-l1-1-0",
   "api-ms-win-ntuser-dc-access-l1-1-0",
   "api-ms-win-rtcore-ntuser-private-l1-1-0",
+  "api-ms-win-rtcore-ntuser-private-l1-1-4",
   "api-ms-win-rtcore-ntuser-window-l1-1-0",
   "api-ms-win-rtcore-ntuser-winevent-l1-1-0",
   "api-ms-win-rtcore-ntuser-wmpointer-l1-1-0",
