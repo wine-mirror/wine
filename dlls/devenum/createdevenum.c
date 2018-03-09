@@ -124,7 +124,7 @@ static HKEY open_special_category_key(const CLSID *clsid, BOOL create)
     return ret;
 }
 
-static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
+static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS2 *rgPin)
 {
     HKEY hkeyTypes = NULL;
     DWORD dwMajorTypes, i;
@@ -221,7 +221,11 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
 {
     HKEY hkeyPins = NULL;
     DWORD dwPinsSubkeys, i;
-    REGFILTERPINS *rgPins = NULL;
+    REGFILTERPINS2 *rgPins = NULL;
+
+    rgf2->dwVersion = 2;
+    rgf2->u.s2.cPins2 = 0;
+    rgf2->u.s2.rgPins2 = NULL;
 
     if (RegOpenKeyExW(hkeyFilterClass, wszPins, 0, KEY_READ, &hkeyPins) != ERROR_SUCCESS)
         return ;
@@ -235,7 +239,7 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
 
     if (dwPinsSubkeys)
     {
-        rgPins = CoTaskMemAlloc(sizeof(REGFILTERPINS) * dwPinsSubkeys);
+        rgPins = CoTaskMemAlloc(sizeof(REGFILTERPINS2) * dwPinsSubkeys);
         if (!rgPins)
         {
             RegCloseKey(hkeyPins);
@@ -248,65 +252,64 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
         HKEY hkeyPinKey = NULL;
         WCHAR wszPinName[MAX_PATH];
         DWORD cName = sizeof(wszPinName) / sizeof(WCHAR);
-        DWORD Type, cbData;
-        REGFILTERPINS *rgPin = &rgPins[rgf2->u.s1.cPins];
+        REGFILTERPINS2 *rgPin = &rgPins[rgf2->u.s2.cPins2];
+        DWORD value, size, Type;
         LONG lRet;
 
-        rgPin->strName = NULL;
-        rgPin->clsConnectsToFilter = &GUID_NULL;
-        rgPin->strConnectsToPin = NULL;
-        rgPin->nMediaTypes = 0;
-        rgPin->lpMediaType = NULL;
+        memset(rgPin, 0, sizeof(*rgPin));
 
         if (RegEnumKeyExW(hkeyPins, i, wszPinName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
         if (RegOpenKeyExW(hkeyPins, wszPinName, 0, KEY_READ, &hkeyPinKey) != ERROR_SUCCESS) continue;
 
-        rgPin->strName = CoTaskMemAlloc((strlenW(wszPinName) + 1) * sizeof(WCHAR));
-        if (!rgPin->strName) goto error_cleanup;
-
-        strcpyW(rgPin->strName, wszPinName);
-
-        cbData = sizeof(rgPin->bMany);
-        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedMany, NULL, &Type, (LPBYTE)&rgPin->bMany, &cbData);
+        size = sizeof(DWORD);
+        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedMany, NULL, &Type, (BYTE *)&value, &size);
         if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
             goto error_cleanup;
+        if (value)
+            rgPin->dwFlags |= REG_PINFLAG_B_MANY;
 
-        cbData = sizeof(rgPin->bZero);
-        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedZero, NULL, &Type, (LPBYTE)&rgPin->bZero, &cbData);
+        size = sizeof(DWORD);
+        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedZero, NULL, &Type, (BYTE *)&value, &size);
         if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
             goto error_cleanup;
+        if (value)
+            rgPin->dwFlags |= REG_PINFLAG_B_ZERO;
 
-        cbData = sizeof(rgPin->bOutput);
-        lRet = RegQueryValueExW(hkeyPinKey, wszDirection, NULL, &Type, (LPBYTE)&rgPin->bOutput, &cbData);
+        size = sizeof(DWORD);
+        lRet = RegQueryValueExW(hkeyPinKey, wszDirection, NULL, &Type, (BYTE *)&value, &size);
         if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
             goto error_cleanup;
+        if (value)
+            rgPin->dwFlags |= REG_PINFLAG_B_OUTPUT;
 
-        cbData = sizeof(rgPin->bRendered);
-        lRet = RegQueryValueExW(hkeyPinKey, wszIsRendered, NULL, &Type, (LPBYTE)&rgPin->bRendered, &cbData);
+
+        size = sizeof(DWORD);
+        lRet = RegQueryValueExW(hkeyPinKey, wszIsRendered, NULL, &Type, (BYTE *)&value, &size);
         if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
             goto error_cleanup;
+        if (value)
+            rgPin->dwFlags |= REG_PINFLAG_B_RENDERER;
 
         DEVENUM_ReadPinTypes(hkeyPinKey, rgPin);
 
-        ++rgf2->u.s1.cPins;
+        ++rgf2->u.s2.cPins2;
         continue;
 
         error_cleanup:
 
         RegCloseKey(hkeyPinKey);
-        CoTaskMemFree(rgPin->strName);
     }
 
     RegCloseKey(hkeyPins);
 
-    if (rgPins && !rgf2->u.s1.cPins)
+    if (rgPins && !rgf2->u.s2.cPins2)
     {
         CoTaskMemFree(rgPins);
         rgPins = NULL;
     }
 
-    rgf2->u.s1.rgPins = rgPins;
+    rgf2->u.s2.rgPins2 = rgPins;
 }
 
 static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
@@ -374,10 +377,7 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
                 if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &hkeyFilterClass) != ERROR_SUCCESS)
                     continue;
 
-                rgf2.dwVersion = 1;
                 rgf2.dwMerit = 0;
-                rgf2.u.s1.cPins = 0;
-                rgf2.u.s1.rgPins = NULL;
 
                 cbData = sizeof(wszFilterName);
                 if (RegQueryValueExW(hkeyFilterClass, NULL, NULL, &Type, (LPBYTE)wszFilterName, &cbData) != ERROR_SUCCESS ||
@@ -403,29 +403,27 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
 
                 if (hkeyFilterClass) RegCloseKey(hkeyFilterClass);
 
-                if (rgf2.u.s1.rgPins)
+                if (rgf2.u.s2.rgPins2)
                 {
                     UINT iPin;
 
-                    for (iPin = 0; iPin < rgf2.u.s1.cPins; iPin++)
+                    for (iPin = 0; iPin < rgf2.u.s2.cPins2; iPin++)
                     {
-                        CoTaskMemFree(rgf2.u.s1.rgPins[iPin].strName);
-
-                        if (rgf2.u.s1.rgPins[iPin].lpMediaType)
+                        if (rgf2.u.s2.rgPins2[iPin].lpMediaType)
                         {
                             UINT iType;
 
-                            for (iType = 0; iType < rgf2.u.s1.rgPins[iPin].nMediaTypes; iType++)
+                            for (iType = 0; iType < rgf2.u.s2.rgPins2[iPin].nMediaTypes; iType++)
                             {
-                                CoTaskMemFree((void*)rgf2.u.s1.rgPins[iPin].lpMediaType[iType].clsMajorType);
-                                CoTaskMemFree((void*)rgf2.u.s1.rgPins[iPin].lpMediaType[iType].clsMinorType);
+                                CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType[iType].clsMajorType);
+                                CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType[iType].clsMinorType);
                             }
 
-                            CoTaskMemFree((void*)rgf2.u.s1.rgPins[iPin].lpMediaType);
+                            CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType);
                         }
                     }
 
-                    CoTaskMemFree((void*)rgf2.u.s1.rgPins);
+                    CoTaskMemFree((void*)rgf2.u.s2.rgPins2);
                 }
             }
         }
