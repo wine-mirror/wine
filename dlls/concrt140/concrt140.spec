@@ -30,10 +30,10 @@
 @ stub -arch=win64 ??0_ReentrantLock@details@Concurrency@@QEAA@XZ
 @ thiscall -arch=i386 ??0_ReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_ReentrantPPLLock@details@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0_ReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??0_ReentrantPPLLock@details@Concurrency@@QEAA@XZ
-@ stub -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@H@Z
-@ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z
-@ stub -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@H@Z(ptr long) msvcp120.??0_Runtime_object@details@Concurrency@@QAE@H@Z
+@ cdecl -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z(ptr long) msvcp120.??0_Runtime_object@details@Concurrency@@QEAA@H@Z
+@ thiscall -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@XZ(ptr) msvcp120.??0_Runtime_object@details@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@XZ(ptr) msvcp120.??0_Runtime_object@details@Concurrency@@QEAA@XZ
 @ thiscall -arch=i386 ??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z(ptr ptr) msvcr120.??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z
 @ cdecl -arch=win64 ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z(ptr ptr) msvcr120.??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z
 @ stub -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
