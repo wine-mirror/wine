@@ -318,6 +318,10 @@ my @dll_groups =
   "iprop",
  ],
  [
+  "oleacc",
+  "ext-ms-win-oleacc-l1-1-0",
+ ],
+ [
   "shell32",
   "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
