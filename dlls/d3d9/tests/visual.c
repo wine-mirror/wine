@@ -6455,6 +6455,76 @@ static void test_mipmap_autogen(void)
     color = getPixelColor(device, 440, 270);
     ok(color == 0x0000ff00, "Unexpected color 0x%08x.\n", color);
 
+    /* Test format not supporting D3DUSAGE_AUTOGENMIPMAP. */
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_A1R5G5B5);
+    if (hr != D3DOK_NOAUTOGEN)
+    {
+        skip("D3DFMT_A1R5G5B5 support is not D3DOK_NOAUTOGEN (%#x).\n", hr);
+    }
+    else
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 0, D3DUSAGE_AUTOGENMIPMAP,
+                D3DFMT_A1R5G5B5, D3DPOOL_MANAGED, &texture, 0);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+        hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+        for (y = 0; y < 1024; ++y)
+        {
+            for (x = 0; x < 1024; ++x)
+            {
+                WORD *dst = (WORD *)(((BYTE *)lr.pBits) + y * lr.Pitch + x * 2);
+                POINT pt;
+
+                pt.x = x;
+                pt.y = y;
+                if (PtInRect(&r1, pt))
+                    *dst = 0xfc00;
+                else if (PtInRect(&r2, pt))
+                    *dst = 0x83e0;
+                else if (PtInRect(&r3, pt))
+                    *dst = 0x801f;
+                else if (PtInRect(&r4, pt))
+                    *dst = 0x8000;
+                else
+                    *dst = 0xffff;
+            }
+        }
+        hr = IDirect3DTexture9_UnlockRect(texture, 0);
+        ok(SUCCEEDED(hr), "Failed to unmap texture, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+        ok(SUCCEEDED(hr), "Failed to set texture, %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        IDirect3DTexture9_Release(texture);
+
+        color = getPixelColor(device, 200, 200);
+        ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 280, 200);
+        ok(color == 0x000000ff, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 360, 200);
+        ok(color == 0x00000000, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 440, 200);
+        ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 200, 270);
+        ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 280, 270);
+        ok(color == 0x00ff0000, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 360, 270);
+        ok(color == 0x0000ff00, "Unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 440, 270);
+        ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+    }
+
     IDirect3DSurface9_Release(backbuffer);
 
     refcount = IDirect3DDevice9_Release(device);
