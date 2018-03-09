@@ -1,0 +1,4 @@
+MODULE    = sas.dll
+
+C_SRCS = \
+	main.c
