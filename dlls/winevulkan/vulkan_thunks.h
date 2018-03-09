@@ -9,6 +9,7 @@
 #endif
 
 /* For use by vk_icdGetInstanceProcAddr / vkGetInstanceProcAddr */
+void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 
 /* Functions for which we have custom implementations outside of the thunks. */

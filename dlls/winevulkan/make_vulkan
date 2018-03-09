@@ -357,6 +357,9 @@ class VkFunction(object):
         if self.params[0].type != "VkPhysicalDevice":
             return True
 
+        if self.is_device_func():
+            return True
+
         return False
 
     def needs_thunk(self):
@@ -498,6 +501,8 @@ class VkFunction(object):
             stub += "    return VK_ERROR_OUT_OF_HOST_MEMORY;\n"
         elif self.type == "VkBool32":
             stub += "    return VK_FALSE;\n"
+        elif self.type == "PFN_vkVoidFunction":
+            stub += "    return NULL;\n"
 
         stub += "}\n\n"
         return stub
@@ -1688,18 +1693,13 @@ class VkGenerator(object):
             f.write(conv.definition())
         f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
 
-        # Create thunks for instance functions.
+        # Create thunks for instance and device functions.
         # Global functions don't go through the thunks.
         for vk_func in self.registry.funcs.values():
             if not vk_func.is_required():
                 continue
 
             if vk_func.is_global_func():
-                continue
-
-            # We don't support device functions yet as other plumbing
-            # is needed first.
-            if vk_func.is_device_func():
                 continue
 
             if not vk_func.needs_thunk():
@@ -1710,6 +1710,18 @@ class VkGenerator(object):
                 f.write("static " + vk_func.stub(prefix=prefix, call_conv="WINAPI"))
             else:
                 f.write("static " + vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+
+        f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
+        for vk_func in self.registry.device_funcs:
+            if not vk_func.is_required():
+                continue
+
+            if not vk_func.needs_dispatch():
+                LOGGER.debug("skipping {0} in device dispatch table".format(vk_func.name))
+                continue
+
+            f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
+        f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
         for vk_func in self.registry.instance_funcs:
@@ -1723,6 +1735,20 @@ class VkGenerator(object):
             f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
         f.write("};\n\n")
 
+        f.write("void *wine_vk_get_device_proc_addr(const char *name)\n")
+        f.write("{\n")
+        f.write("    unsigned int i;\n")
+        f.write("    for (i = 0; i < ARRAY_SIZE(vk_device_dispatch_table); i++)\n")
+        f.write("    {\n")
+        f.write("        if (strcmp(vk_device_dispatch_table[i].name, name) == 0)\n")
+        f.write("        {\n")
+        f.write("            TRACE(\"Found name=%s in device table\\n\", name);\n")
+        f.write("            return vk_device_dispatch_table[i].func;\n")
+        f.write("        }\n")
+        f.write("    }\n")
+        f.write("    return NULL;\n")
+        f.write("}\n\n")
+
         f.write("void *wine_vk_get_instance_proc_addr(const char *name)\n")
         f.write("{\n")
         f.write("    unsigned int i;\n")
@@ -1730,7 +1756,7 @@ class VkGenerator(object):
         f.write("    {\n")
         f.write("        if (strcmp(vk_instance_dispatch_table[i].name, name) == 0)\n")
         f.write("        {\n")
-        f.write("            TRACE(\"Found pName=%s in instance table\\n\", name);\n")
+        f.write("            TRACE(\"Found name=%s in instance table\\n\", name);\n")
         f.write("            return vk_instance_dispatch_table[i].func;\n")
         f.write("        }\n")
         f.write("    }\n")
@@ -1749,6 +1775,7 @@ class VkGenerator(object):
         f.write("#endif\n\n")
 
         f.write("/* For use by vk_icdGetInstanceProcAddr / vkGetInstanceProcAddr */\n")
+        f.write("void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;\n")
         f.write("void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;\n\n")
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
