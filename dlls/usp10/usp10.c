@@ -1948,8 +1948,7 @@ static BOOL requires_fallback(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
     if (SHAPE_CheckFontForRequiredFeatures(hdc, (ScriptCache *)*psc, psa) != S_OK)
         return TRUE;
 
-    glyphs = heap_alloc(sizeof(WORD) * cChars);
-    if (!glyphs)
+    if (!(glyphs = heap_calloc(cChars, sizeof(*glyphs))))
         return FALSE;
     if (ScriptGetCMap(hdc, psc, pwcInChars, cChars, 0, glyphs) != S_OK)
     {
