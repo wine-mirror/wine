@@ -1258,6 +1258,7 @@ enable_ext_ms_win_ntuser_window_l1_1_1
 enable_ext_ms_win_ntuser_windowclass_l1_1_1
 enable_ext_ms_win_oleacc_l1_1_0
 enable_ext_ms_win_ras_rasapi32_l1_1_0
+enable_ext_ms_win_rtcore_gdi_devcaps_l1_1_0
 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
@@ -18613,6 +18614,7 @@ wine_fn_config_makefile dlls/ext-ms-win-ntuser-window-l1-1-1 enable_ext_ms_win_n
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-windowclass-l1-1-1 enable_ext_ms_win_ntuser_windowclass_l1_1_1
 wine_fn_config_makefile dlls/ext-ms-win-oleacc-l1-1-0 enable_ext_ms_win_oleacc_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-ras-rasapi32-l1-1-0 enable_ext_ms_win_ras_rasapi32_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-devcaps-l1-1-0 enable_ext_ms_win_rtcore_gdi_devcaps_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-object-l1-1-0 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-rgn-l1-1-0 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dc-access-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
