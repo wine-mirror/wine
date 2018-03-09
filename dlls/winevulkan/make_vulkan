@@ -94,6 +94,7 @@ FUNCTION_OVERRIDES = {
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
 
     # Device functions
+    "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},
 }
 

@@ -570,11 +570,6 @@ static void WINAPI wine_vkDestroyDescriptorSetLayout(VkDevice device, VkDescript
     FIXME("stub: %p, 0x%s, %p\n", device, wine_dbgstr_longlong(descriptorSetLayout), pAllocator);
 }
 
-static void WINAPI wine_vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *pAllocator)
-{
-    FIXME("stub: %p, %p\n", device, pAllocator);
-}
-
 static void WINAPI wine_vkDestroyEvent(VkDevice device, VkEvent event, const VkAllocationCallbacks *pAllocator)
 {
     FIXME("stub: %p, 0x%s, %p\n", device, wine_dbgstr_longlong(event), pAllocator);

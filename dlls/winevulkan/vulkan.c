@@ -271,6 +271,16 @@ err:
     return res;
 }
 
+void WINAPI wine_vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
+{
+    TRACE("%p %p\n", device, allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    wine_vk_device_free(device);
+}
+
 void WINAPI wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *allocator)
 {
     TRACE("%p, %p\n", instance, allocator);
