@@ -2762,7 +2762,9 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
                     "movl %esp,%ebp\n\t"
                     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                     "leal -(0x2cc+8)(%esp),%esp\n\t" /* sizeof(CONTEXT) + alignment */
-                    "pushl %esp\n\t"                 /* context */
+                    "pushl %eax\n\t"
+                    "leal 4(%esp),%eax\n\t"          /* context */
+                    "xchgl %eax,(%esp)\n\t"
                     "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
                     "leal 24(%ebp),%eax\n\t"
                     "movl %eax,0xc4(%esp)\n\t"       /* context->Esp */
