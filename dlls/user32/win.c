@@ -4029,3 +4029,37 @@ BOOL WINAPI GetGestureInfo(HGESTUREINFO handle, PGESTUREINFO ptr)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*****************************************************************************
+ *              GetWindowDisplayAffinity (USER32.@)
+ */
+BOOL WINAPI GetWindowDisplayAffinity(HWND hwnd, DWORD *affinity)
+{
+    FIXME("(%p, %p): stub\n", hwnd, affinity);
+
+    if (!hwnd || !affinity)
+    {
+        SetLastError(hwnd ? ERROR_NOACCESS : ERROR_INVALID_WINDOW_HANDLE);
+        return FALSE;
+    }
+
+    *affinity = WDA_NONE;
+    return TRUE;
+}
+
+/*****************************************************************************
+ *              SetWindowDisplayAffinity (USER32.@)
+ */
+BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
+{
+    FIXME("(%p, %u): stub\n", hwnd, affinity);
+
+    if (!hwnd)
+    {
+        SetLastError(ERROR_INVALID_WINDOW_HANDLE);
+        return FALSE;
+    }
+
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return FALSE;
+}

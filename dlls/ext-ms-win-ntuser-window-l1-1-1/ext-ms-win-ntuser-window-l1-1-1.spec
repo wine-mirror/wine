@@ -24,7 +24,7 @@
 @ stdcall GetPropW(long wstr) user32.GetPropW
 @ stdcall GetShellWindow() user32.GetShellWindow
 @ stdcall GetWindow(long long) user32.GetWindow
-@ stub GetWindowDisplayAffinity
+@ stdcall GetWindowDisplayAffinity(long ptr) user32.GetWindowDisplayAffinity
 @ stdcall GetWindowInfo(long ptr) user32.GetWindowInfo
 @ stdcall GetWindowPlacement(long ptr) user32.GetWindowPlacement
 @ stdcall GetWindowRect(long ptr) user32.GetWindowRect
@@ -43,7 +43,7 @@
 @ stdcall SetLayeredWindowAttributes(ptr long long long) user32.SetLayeredWindowAttributes
 @ stdcall SetParent(long long) user32.SetParent
 @ stdcall SetPropW(long wstr long) user32.SetPropW
-@ stub SetWindowDisplayAffinity
+@ stdcall SetWindowDisplayAffinity(long long) user32.SetWindowDisplayAffinity
 @ stdcall SetWindowPos(long long long long long long long) user32.SetWindowPos
 @ stdcall SetWindowTextW(long wstr) user32.SetWindowTextW
 @ stdcall SetWindowsHookExW(long long long long) user32.SetWindowsHookExW

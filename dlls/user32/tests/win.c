@@ -67,6 +67,8 @@ static BOOL (WINAPI *pFlashWindowEx)( PFLASHWINFO pfwi );
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
+static BOOL (WINAPI *pGetWindowDisplayAffinity)(HWND hwnd, DWORD *affinity);
+static BOOL (WINAPI *pSetWindowDisplayAffinity)(HWND hwnd, DWORD affinity);
 
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
@@ -10415,6 +10417,88 @@ if (!is_wine) /* FIXME: remove once Wine is fixed */
     DestroyWindow(owner);
 }
 
+static void test_display_affinity( HWND win )
+{
+    DWORD affinity;
+    BOOL ret, dwm;
+    LONG styleex;
+
+    if (!pGetWindowDisplayAffinity || !pSetWindowDisplayAffinity)
+    {
+        win_skip("GetWindowDisplayAffinity or SetWindowDisplayAffinity missing\n");
+        return;
+    }
+
+    ret = pGetWindowDisplayAffinity(NULL, NULL);
+    ok(!ret, "GetWindowDisplayAffinity succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "Expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
+
+    ret = pGetWindowDisplayAffinity(NULL, &affinity);
+    ok(!ret, "GetWindowDisplayAffinity succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "Expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
+
+    ret = pGetWindowDisplayAffinity(win, NULL);
+    ok(!ret, "GetWindowDisplayAffinity succeeded\n");
+    ok(GetLastError() == ERROR_NOACCESS, "Expected ERROR_NOACCESS, got %u\n", GetLastError());
+
+    styleex = GetWindowLongW(win, GWL_EXSTYLE);
+    SetWindowLongW(win, GWL_EXSTYLE, styleex & ~WS_EX_LAYERED);
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    /* Windows 7 fails with ERROR_NOT_ENOUGH_MEMORY when dwm compositing is disabled */
+    ret = pSetWindowDisplayAffinity(win, WDA_MONITOR);
+    ok(ret || GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+       "SetWindowDisplayAffinity failed with %u\n", GetLastError());
+    dwm = ret;
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    if (dwm) ok(affinity == WDA_MONITOR, "Expected WDA_MONITOR, got 0x%x\n", affinity);
+    else ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    ret = pSetWindowDisplayAffinity(win, WDA_NONE);
+    ok(ret || GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+       "SetWindowDisplayAffinity failed with %u\n", GetLastError());
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    SetWindowLongW(win, GWL_EXSTYLE, styleex | WS_EX_LAYERED);
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    ret = pSetWindowDisplayAffinity(win, WDA_MONITOR);
+    ok(ret || GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+       "SetWindowDisplayAffinity failed with %u\n", GetLastError());
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    if (dwm) ok(affinity == WDA_MONITOR, "Expected WDA_MONITOR, got 0x%x\n", affinity);
+    else ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    ret = pSetWindowDisplayAffinity(win, WDA_NONE);
+    ok(ret || GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+       "SetWindowDisplayAffinity failed with %u\n", GetLastError());
+
+    affinity = 0xdeadbeef;
+    ret = pGetWindowDisplayAffinity(win, &affinity);
+    ok(ret, "GetWindowDisplayAffinity failed with %u\n", GetLastError());
+    ok(affinity == WDA_NONE, "Expected WDA_NONE, got 0x%x\n", affinity);
+
+    SetWindowLongW(win, GWL_EXSTYLE, styleex);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -10439,6 +10523,8 @@ START_TEST(win)
     pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
     pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
     pMirrorRgn = (void *)GetProcAddress( gdi32, "MirrorRgn" );
+    pGetWindowDisplayAffinity = (void *)GetProcAddress( user32, "GetWindowDisplayAffinity" );
+    pSetWindowDisplayAffinity = (void *)GetProcAddress( user32, "SetWindowDisplayAffinity" );
 
     if (argc==4 && !strcmp(argv[2], "create_children"))
     {
@@ -10563,6 +10649,7 @@ START_TEST(win)
     test_deferwindowpos();
     test_LockWindowUpdate(hwndMain);
     test_desktop();
+    test_display_affinity(hwndMain);
     test_hide_window();
     test_minimize_window(hwndMain);
 

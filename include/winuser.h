@@ -2533,6 +2533,9 @@ typedef struct tagMINIMIZEDMETRICS {
     int iArrange;
 } MINIMIZEDMETRICS, *PMINIMIZEDMETRICS, *LPMINIMIZEDMETRICS;
 
+/* Window affinity */
+#define WDA_NONE     0x0
+#define WDA_MONITOR  0x1
 
 /* Window scrolling */
 #define SW_SCROLLCHILDREN      0x0001
@@ -3771,6 +3774,7 @@ WINUSERAPI BOOL        WINAPI GetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION
 WINUSERAPI HWND        WINAPI GetWindow(HWND,UINT);
 WINUSERAPI DWORD       WINAPI GetWindowContextHelpId(HWND);
 WINUSERAPI HDC         WINAPI GetWindowDC(HWND);
+WINUSERAPI BOOL        WINAPI GetWindowDisplayAffinity(HWND,DWORD*);
 WINUSERAPI BOOL        WINAPI GetWindowInfo(HWND, PWINDOWINFO);
 WINUSERAPI LONG        WINAPI GetWindowLongA(HWND,INT);
 WINUSERAPI LONG        WINAPI GetWindowLongW(HWND,INT);
@@ -4073,6 +4077,7 @@ WINUSERAPI BOOL        WINAPI SetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD)
 #define                       SetUserObjectInformation WINELIB_NAME_AW(SetUserObjectInformation)
 WINUSERAPI BOOL        WINAPI SetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 WINUSERAPI BOOL        WINAPI SetWindowContextHelpId(HWND,DWORD);
+WINUSERAPI BOOL        WINAPI SetWindowDisplayAffinity(HWND,DWORD);
 WINUSERAPI LONG        WINAPI SetWindowLongA(HWND,INT,LONG);
 WINUSERAPI LONG        WINAPI SetWindowLongW(HWND,INT,LONG);
 #define                       SetWindowLong WINELIB_NAME_AW(SetWindowLong)

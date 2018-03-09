@@ -388,6 +388,7 @@
 @ stdcall GetWindow(long long)
 @ stdcall GetWindowContextHelpId(long)
 @ stdcall GetWindowDC(long)
+@ stdcall GetWindowDisplayAffinity(long ptr)
 @ stdcall GetWindowInfo(long ptr)
 @ stdcall GetWindowLongA(long long)
 @ stdcall -arch=win64 GetWindowLongPtrA(long long)
@@ -691,6 +692,7 @@
 @ stdcall SetUserObjectSecurity(long ptr ptr)
 @ stdcall SetWinEventHook(long long long ptr long long long)
 @ stdcall SetWindowContextHelpId(long long)
+@ stdcall SetWindowDisplayAffinity(long long)
 @ stub SetWindowFullScreenState
 @ stdcall SetWindowLongA(long long long)
 @ stdcall -arch=win64 SetWindowLongPtrA(long long long)
