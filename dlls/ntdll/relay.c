@@ -745,7 +745,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
             TRACE( "%08lx", stack[i] );
             break;
         }
-        if (!is_ret_val( arg_types[i] )) TRACE( "," );
+        if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
     }
     *nb_args = i;
     TRACE( ") ret=%08lx\n", stack[-1] );
