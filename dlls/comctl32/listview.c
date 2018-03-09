@@ -1727,7 +1727,9 @@ static inline void LISTVIEW_InvalidateItem(const LISTVIEW_INFO *infoPtr, INT nIt
 {
     RECT rcBox;
 
-    if(!is_redrawing(infoPtr)) return; 
+    if (!is_redrawing(infoPtr) || nItem < 0 || nItem >= infoPtr->nItemCount)
+        return;
+
     LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
     LISTVIEW_InvalidateRect(infoPtr, &rcBox);
 }
