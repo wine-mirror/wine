@@ -297,6 +297,12 @@ static void test_legacy_filter_registration(void)
     ret = RegDeleteKeyW(HKEY_CLASSES_ROOT, key_name);
     ok(!ret, "RegDeleteKeyA failed: %lu\n", ret);
 
+    hr = IFilterMapper_RegisterFilter(mapper, clsid, testfilterW, MERIT_UNLIKELY);
+    ok(hr == S_OK, "RegisterFilter failed: %#x\n", hr);
+
+    hr = IFilterMapper_UnregisterFilter(mapper, clsid);
+    ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
+
     IFilterMapper_Release(mapper);
     IFilterMapper2_Release(mapper2);
 }
