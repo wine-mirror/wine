@@ -4,7 +4,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 1
+#define WINE_VULKAN_DRIVER_VERSION 2
 
 struct vulkan_funcs
 {
@@ -15,6 +15,7 @@ struct vulkan_funcs
     VkResult (*p_vkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
     void (*p_vkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
     VkResult (*p_vkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
+    void * (*p_vkGetDeviceProcAddr)(VkDevice, const char *);
     void * (*p_vkGetInstanceProcAddr)(VkInstance, const char *);
 };
 

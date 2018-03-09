@@ -42,6 +42,22 @@ static void *wine_vk_get_global_proc_addr(const char *name);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
 
+/* Helper function used for freeing a device structure. This function supports full
+ * and partial object cleanups and can thus be used for vkCreateDevice failures.
+ */
+static void wine_vk_device_free(struct VkDevice_T *device)
+{
+    if (!device)
+        return;
+
+    if (device->device && device->funcs.p_vkDestroyDevice)
+    {
+        device->funcs.p_vkDestroyDevice(device->device, NULL /* pAllocator */);
+    }
+
+    heap_free(device);
+}
+
 static BOOL wine_vk_init(void)
 {
     HDC hdc = GetDC(0);
@@ -146,6 +162,58 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
     heap_free(instance);
 }
 
+VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
+        const VkDeviceCreateInfo *create_info,
+        const VkAllocationCallbacks *allocator, VkDevice *device)
+{
+    struct VkDevice_T *object = NULL;
+    VkResult res;
+
+    TRACE("%p %p %p %p\n", phys_dev, create_info, allocator, device);
+
+    if (allocator)
+    {
+        FIXME("Support for allocation callbacks not implemented yet\n");
+    }
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+
+    /* At least for now we can directly pass create_info through. All extensions we report
+     * should be compatible. In addition the loader is supposed to sanitize values e.g. layers.
+     */
+    res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
+            create_info, NULL /* allocator */, &object->device);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to create device\n");
+        goto err;
+    }
+
+    object->phys_dev = phys_dev;
+
+    /* Just load all function pointers we are aware off. The loader takes care of filtering.
+     * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
+     * as functions pass through fewer dispatch tables within the loader.
+     */
+#define USE_VK_FUNC(name) \
+    object->funcs.p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(object->device, #name); \
+    if (object->funcs.p_##name == NULL) \
+        TRACE("Not found %s\n", #name);
+    ALL_VK_DEVICE_FUNCS()
+#undef USE_VK_FUNC
+
+    *device = object;
+    return VK_SUCCESS;
+
+err:
+    wine_vk_device_free(object);
+    return res;
+}
+
 static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
@@ -178,7 +246,7 @@ static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_
      * ICD may support.
      */
 #define USE_VK_FUNC(name) \
-    object->funcs.p_##name = (void*)vk_funcs->p_vkGetInstanceProcAddr(object->instance, #name);
+    object->funcs.p_##name = (void *)vk_funcs->p_vkGetInstanceProcAddr(object->instance, #name);
     ALL_VK_INSTANCE_FUNCS()
 #undef USE_VK_FUNC
 

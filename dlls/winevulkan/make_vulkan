@@ -71,7 +71,7 @@ WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 1
+DRIVER_VERSION = 2
 
 # Table of functions for which we have a special implementation.
 # This are regular device / instance functions for which we need
@@ -88,9 +88,13 @@ FUNCTION_OVERRIDES = {
     "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : False},
 
     # Instance functions
+    "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyInstance" : {"dispatch" : True, "driver" : True, "thunk" : False },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
+
+    # Device functions
+    "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : True},
 }
 
 
@@ -351,9 +355,6 @@ class VkFunction(object):
 
     def needs_stub(self):
         """ Temporary function to limit script hacks until more code is implemented. """
-        if self.name == "vkCreateDevice":
-            return True
-
         if self.params[0].type != "VkPhysicalDevice":
             return True
 
@@ -1791,6 +1792,19 @@ class VkGenerator(object):
             f.write(struct.definition(align=False, conv=True, postfix="_host"))
         f.write("\n")
 
+        f.write("/* For use by vkDevice and children */\n")
+        f.write("struct vulkan_device_funcs\n{\n")
+        for vk_func in self.registry.device_funcs:
+            if not vk_func.is_required():
+                continue
+
+            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+                LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
+                continue
+
+            f.write("    {0};\n".format(vk_func.pfn(conv=False)))
+        f.write("};\n\n")
+
         f.write("/* For use by vkInstance and children */\n")
         f.write("struct vulkan_instance_funcs\n{\n")
         for vk_func in self.registry.instance_funcs:
@@ -1810,6 +1824,23 @@ class VkGenerator(object):
             else:
                 f.write("    {0};\n".format(vk_func.pfn(conv=False)))
         f.write("};\n\n")
+
+        f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
+        first = True
+        for vk_func in self.registry.device_funcs:
+            if not vk_func.is_required():
+                continue
+
+            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+                LOGGER.debug("skipping {0} in ALL_VK_DEVICE_FUNCS".format(vk_func.name))
+                continue
+
+            if first:
+                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
+                first = False
+            else:
+                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS() \\\n")
         first = True

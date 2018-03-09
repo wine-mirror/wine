@@ -48,6 +48,14 @@ struct wine_vk_base
     UINT_PTR loader_magic;
 };
 
+struct VkDevice_T
+{
+    struct wine_vk_base base;
+    struct vulkan_device_funcs funcs;
+    struct VkPhysicalDevice_T *phys_dev; /* parent */
+    VkDevice device; /* native device */
+};
+
 struct VkInstance_T
 {
     struct wine_vk_base base;

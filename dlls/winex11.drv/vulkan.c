@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
+static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 
 static BOOL wine_vk_init(void)
@@ -51,6 +52,7 @@ static BOOL wine_vk_init(void)
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
 LOAD_FUNCPTR(vkCreateInstance)
 LOAD_FUNCPTR(vkDestroyInstance)
+LOAD_FUNCPTR(vkGetDeviceProcAddr)
 LOAD_FUNCPTR(vkGetInstanceProcAddr)
 #undef LOAD_FUNCPTR
 
@@ -116,6 +118,12 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
     return VK_SUCCESS;
 }
 
+static void * X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
+{
+    TRACE("%p, %s\n", device, debugstr_a(name));
+    return pvkGetDeviceProcAddr(device, name);
+}
+
 static void * X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     TRACE("%p, %s\n", instance, debugstr_a(name));
@@ -127,6 +135,7 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkCreateInstance,
     X11DRV_vkDestroyInstance,
     X11DRV_vkEnumerateInstanceExtensionProperties,
+    X11DRV_vkGetDeviceProcAddr,
     X11DRV_vkGetInstanceProcAddr
 };
 
