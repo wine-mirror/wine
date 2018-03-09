@@ -445,11 +445,9 @@ static void test_codec(void)
 
     /* unlike DirectShow filters, these are automatically generated, so
      * enumerating them will destroy the key */
-todo_wine
     ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "codec should not be registered\n");
 
     hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got %#x\n", hr);
 
     IPropertyBag_Release(prop_bag);

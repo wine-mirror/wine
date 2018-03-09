@@ -547,12 +547,6 @@ static void register_vfw_codecs(void)
     RegCloseKey(basekey);
 }
 
-static HANDLE DEVENUM_populate_handle;
-static const WCHAR DEVENUM_populate_handle_nameW[] =
-    {'_','_','W','I','N','E','_',
-     'D','e','v','e','n','u','m','_',
-     'P','o','p','u','l','a','t','e',0};
-
 static HRESULT register_codecs(void)
 {
     HRESULT res;
@@ -565,21 +559,6 @@ static HRESULT register_codecs(void)
     REGFILTER2 rf2;
     REGFILTERPINS2 rfp2;
     HKEY basekey;
-
-    if (DEVENUM_populate_handle)
-        return S_OK;
-    DEVENUM_populate_handle = CreateEventW(NULL, TRUE, FALSE, DEVENUM_populate_handle_nameW);
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        /* Webcams can take some time to scan if the driver is badly written and it enables them,
-         * so have a 10 s timeout here
-         */
-        if (WaitForSingleObject(DEVENUM_populate_handle, 10000) == WAIT_TIMEOUT)
-            WARN("Waiting for object timed out\n");
-        TRACE("No need to rescan\n");
-        return S_OK;
-    }
-    TRACE("Scanning for devices\n");
 
     /* Since devices can change between session, for example because you just plugged in a webcam
      * or switched from pulseaudio to alsa, delete all old devices first
@@ -878,6 +857,5 @@ static HRESULT register_codecs(void)
 
     register_vfw_codecs();
 
-    SetEvent(DEVENUM_populate_handle);
     return res;
 }
