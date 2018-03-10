@@ -165,7 +165,10 @@ DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUI
 
 DWORD WINAPI XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
 {
-    FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
+    static int once;
+
+    if (!once++)
+        FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
