@@ -1577,8 +1577,9 @@ static HRESULT WINAPI WMPMedia_get_isIdentical(IWMPMedia *iface, IWMPMedia *othe
 static HRESULT WINAPI WMPMedia_get_sourceURL(IWMPMedia *iface, BSTR *pbstrSourceUrl)
 {
     WMPMedia *This = impl_from_IWMPMedia(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrSourceUrl);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pbstrSourceUrl);
+    *pbstrSourceUrl = SysAllocString(This->url);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPMedia_get_name(IWMPMedia *iface, BSTR *pbstrName)

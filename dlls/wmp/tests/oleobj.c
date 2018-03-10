@@ -955,14 +955,20 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     url = NULL;
     SET_EXPECT(Invoke_USERMODE);
     hres = IWMPPlayer4_get_URL(player4, &url);
-    todo_wine ok(hres == S_OK, "IWMPPlayer4_get_URL failed: %08x\n", hres);
-    todo_wine ok(0 == lstrcmpW(url, filename), "%s != %s", wine_dbgstr_w(url), wine_dbgstr_w(filename));
+    ok(hres == S_OK, "IWMPPlayer4_get_URL failed: %08x\n", hres);
+    ok(0 == lstrcmpW(url, filename), "%s != %s", wine_dbgstr_w(url), wine_dbgstr_w(filename));
     todo_wine CHECK_CALLED(Invoke_USERMODE);
     SysFreeString(url);
 
     hres = IWMPPlayer4_get_currentMedia(player4, &media);
     ok(hres == S_OK, "get_currentMedia failed: %08x\n", hres);
     ok(media != NULL, "media = (%p)\n", media);
+
+    url = NULL;
+    hres = IWMPMedia_get_sourceURL(media, &url);
+    ok(hres == S_OK, "IWMPMedia_get_sourceURL failed: %08x\n", hres);
+    ok(0 == lstrcmpW(url, filename), "%s != %s", wine_dbgstr_w(url), wine_dbgstr_w(filename));
+    SysFreeString(url);
 
     SET_EXPECT(GetContainer);
     hres = IWMPPlayer4_put_currentMedia(player4, media);
