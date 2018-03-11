@@ -69,9 +69,11 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
     0x028f, /* Xbox360 Wireless Controller */
     0x02d1, /* Xbox One Controller */
     0x02dd, /* Xbox One Controller (Covert Forces/Firmware 2015) */
+    0x02e0, /* Xbox One X Controller */
     0x02e3, /* Xbox One Elite Controller */
     0x02e6, /* Wireless XBox Controller Dongle */
     0x02ea, /* Xbox One S Controller */
+    0x02fd, /* Xbox One S Controller (Firmware 2017) */
     0x0719, /* Xbox 360 Wireless Adapter */
 };
 
