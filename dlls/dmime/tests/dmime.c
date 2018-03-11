@@ -781,6 +781,19 @@ static void test_parsedescriptor(void)
                 wine_dbgstr_guid(&desc.guidClass), forms[i].class);
         IStream_Release(stream);
 
+        /* NULL pointers */
+        memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, &desc);
+        ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+        hr = IDirectMusicObject_ParseDescriptor(dmo, stream, NULL);
+        if (forms[i].needs_size)
+            ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+        else
+            ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+        hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, NULL);
+        ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+
         /* Wrong form */
         empty[1] = DMUS_FOURCC_CONTAINER_FORM;
         stream = gen_riff_stream(empty);
