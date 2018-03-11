@@ -101,8 +101,6 @@ extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
 /**********************************************************************
  * Resource IDs
  */
-#define IDS_DEVENUM_DSDEFAULT 7
-#define IDS_DEVENUM_DS        8
 #define IDS_DEVENUM_WODEFAULT 9
 #define IDS_DEVENUM_MIDEFAULT 10
 #define IDS_DEVENUM_KSDEFAULT 11

@@ -2936,18 +2936,10 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Napomena: Privatan ključ za ovaj certifikat se ne može izvesti."
 
 #: devenum.rc:33
-msgid "Default DirectSound"
-msgstr "Podrazumijevani DirectSound"
-
-#: devenum.rc:34
-msgid "DirectSound: %s"
-msgstr "DirectSound: %s"
-
-#: devenum.rc:35
 msgid "Default WaveOut Device"
 msgstr "Podrazumijevani WaveOut uređaj"
 
-#: devenum.rc:36
+#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Podrazumijevani MidiOut uređaj"
 

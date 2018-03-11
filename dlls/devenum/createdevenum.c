@@ -29,6 +29,7 @@
 #include "devenum_private.h"
 #include "vfw.h"
 #include "aviriff.h"
+#include "dsound.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -52,7 +53,6 @@ static const WCHAR wszIsRendered[] = {'I','s','R','e','n','d','e','r','e','d',0}
 static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR wszWaveInID[] = {'W','a','v','e','I','n','I','D',0};
-static const WCHAR wszWaveOutID[] = {'W','a','v','e','O','u','t','I','D',0};
 static const WCHAR wszFilterData[] = {'F','i','l','t','e','r','D','a','t','a',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
@@ -509,6 +509,91 @@ cleanup:
     if (hkeyFilter) RegCloseKey(hkeyFilter);
 }
 
+static BOOL CALLBACK register_dsound_devices(GUID *guid, const WCHAR *desc, const WCHAR *module, void *context)
+{
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',' ','D','i','r','e','c','t','S','o','u','n','d',' ','D','e','v','i','c','e',0};
+    static const WCHAR directsoundW[] = {'D','i','r','e','c','t','S','o','u','n','d',':',' ',0};
+    static const WCHAR dsguidW[] = {'D','S','G','u','i','d',0};
+    IPropertyBag *prop_bag = NULL;
+    REGFILTERPINS2 rgpins = {0};
+    REGPINTYPES rgtypes = {0};
+    REGFILTER2 rgf = {0};
+    WCHAR clsid[CHARS_IN_GUID];
+    IMoniker *mon = NULL;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
+    if (FAILED(hr)) goto cleanup;
+
+    V_VT(&var) = VT_BSTR;
+    if (guid)
+    {
+        WCHAR *name = heap_alloc(sizeof(defaultW) + strlenW(desc) * sizeof(WCHAR));
+        if (!name)
+            goto cleanup;
+        strcpyW(name, directsoundW);
+        strcatW(name, desc);
+
+        V_BSTR(&var) = SysAllocString(name);
+        heap_free(name);
+    }
+    else
+        V_BSTR(&var) = SysAllocString(defaultW);
+
+    if (!V_BSTR(&var))
+        goto cleanup;
+
+    hr = register_codec(&CLSID_AudioRendererCategory, V_BSTR(&var), &mon);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    if (FAILED(hr)) goto cleanup;
+
+    /* write friendly name */
+    hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
+    if (FAILED(hr)) goto cleanup;
+    VariantClear(&var);
+
+    /* write clsid */
+    V_VT(&var) = VT_BSTR;
+    StringFromGUID2(&CLSID_DSoundRender, clsid, CHARS_IN_GUID);
+    if (!(V_BSTR(&var) = SysAllocString(clsid)))
+        goto cleanup;
+    hr = IPropertyBag_Write(prop_bag, clsid_keyname, &var);
+    if (FAILED(hr)) goto cleanup;
+    VariantClear(&var);
+
+    /* write filter data */
+    rgf.dwVersion = 2;
+    rgf.dwMerit = guid ? MERIT_DO_NOT_USE : MERIT_PREFERRED;
+    rgf.u.s2.cPins2 = 1;
+    rgf.u.s2.rgPins2 = &rgpins;
+    rgpins.dwFlags = REG_PINFLAG_B_RENDERER;
+    /* FIXME: native registers many more formats */
+    rgpins.nMediaTypes = 1;
+    rgpins.lpMediaType = &rgtypes;
+    rgtypes.clsMajorType = &MEDIATYPE_Audio;
+    rgtypes.clsMinorType = &MEDIASUBTYPE_PCM;
+
+    write_filter_data(prop_bag, &rgf);
+
+    /* write DSound guid */
+    V_VT(&var) = VT_BSTR;
+    StringFromGUID2(guid ? guid : &GUID_NULL, clsid, CHARS_IN_GUID);
+    if (!(V_BSTR(&var) = SysAllocString(clsid)))
+        goto cleanup;
+    hr = IPropertyBag_Write(prop_bag, dsguidW, &var);
+    if (FAILED(hr)) goto cleanup;
+
+cleanup:
+    VariantClear(&var);
+    if (prop_bag) IPropertyBag_Release(prop_bag);
+    if (mon) IMoniker_Release(mon);
+
+    return TRUE;
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -518,6 +603,8 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     IEnumMoniker **ppEnumMoniker,
     DWORD dwFlags)
 {
+    HRESULT hr;
+
     TRACE("(%p)->(%s, %p, %x)\n", iface, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags);
 
     if (!ppEnumMoniker)
@@ -527,6 +614,8 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 
     register_codecs();
     register_legacy_filters();
+    hr = DirectSoundEnumerateW(&register_dsound_devices, NULL);
+    if (FAILED(hr)) return hr;
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -620,8 +709,6 @@ static void register_vfw_codecs(void)
 static HRESULT register_codecs(void)
 {
     HRESULT res;
-    WCHAR szDSoundNameFormat[MAX_PATH + 1];
-    WCHAR szDSoundName[MAX_PATH + 1];
     WCHAR class[CHARS_IN_GUID];
     DWORD iDefaultDevice = -1;
     UINT numDevs;
@@ -656,12 +743,6 @@ static HRESULT register_codecs(void)
     rfp2.nMediums = 0;
     rfp2.lpMedium = NULL;
     rfp2.clsPinCategory = &IID_NULL;
-
-    if (!LoadStringW(DEVENUM_hInstance, IDS_DEVENUM_DS, szDSoundNameFormat, sizeof(szDSoundNameFormat)/sizeof(szDSoundNameFormat[0])-1))
-    {
-        ERR("Couldn't get string resource (GetLastError() is %d)\n", GetLastError());
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
 
     res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
                            &IID_IFilterMapper2, (void **) &pMapper);
@@ -711,37 +792,6 @@ static HRESULT register_codecs(void)
 					      &pMoniker,
 					      &CLSID_AudioRendererCategory,
 					      wocaps.szPname,
-					      &rf2);
-
-                if (pMoniker)
-                {
-                    VARIANT var;
-
-                    V_VT(&var) = VT_I4;
-                    V_I4(&var) = i;
-                    res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
-                    if (SUCCEEDED(res))
-                        res = IPropertyBag_Write(pPropBag, wszWaveOutID, &var);
-                    else
-                        pPropBag = NULL;
-
-                    V_VT(&var) = VT_LPWSTR;
-                    V_BSTR(&var) = wocaps.szPname;
-                    if (SUCCEEDED(res))
-                        res = IPropertyBag_Write(pPropBag, wszFriendlyName, &var);
-                    if (pPropBag)
-                        IPropertyBag_Release(pPropBag);
-                    IMoniker_Release(pMoniker);
-                    pMoniker = NULL;
-                }
-
-		wsprintfW(szDSoundName, szDSoundNameFormat, wocaps.szPname);
-	        res = IFilterMapper2_RegisterFilter(pMapper,
-		                              &CLSID_DSoundRender,
-					      szDSoundName,
-					      &pMoniker,
-					      &CLSID_AudioRendererCategory,
-					      szDSoundName,
 					      &rf2);
 
                 /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */

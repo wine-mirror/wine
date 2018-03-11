@@ -2948,18 +2948,10 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Примечание: закрытый ключ этого сертификата не экспортируемый."
 
 #: devenum.rc:33
-msgid "Default DirectSound"
-msgstr "Стандартный DirectSound"
-
-#: devenum.rc:34
-msgid "DirectSound: %s"
-msgstr "DirectSound: %s"
-
-#: devenum.rc:35
 msgid "Default WaveOut Device"
 msgstr "Звуковое устройство вывода по умолчанию"
 
-#: devenum.rc:36
+#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
