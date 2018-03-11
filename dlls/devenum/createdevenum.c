@@ -32,13 +32,16 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 #include "mmddk.h"
+
+#include "initguid.h"
+#include "fil_data.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 extern HINSTANCE DEVENUM_hInstance;
 
-static const WCHAR wszRegSeparator[] =   {'\\', 0 };
 static const WCHAR wszFilterKeyName[] = {'F','i','l','t','e','r',0};
 static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 static const WCHAR wszPins[] = {'P','i','n','s',0};
@@ -50,9 +53,11 @@ static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR wszWaveInID[] = {'W','a','v','e','I','n','I','D',0};
 static const WCHAR wszWaveOutID[] = {'W','a','v','e','O','u','t','I','D',0};
+static const WCHAR wszFilterData[] = {'F','i','l','t','e','r','D','a','t','a',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
 static HRESULT register_codecs(void);
+static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory);
 
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_QueryInterface (also IUnknown)
@@ -122,6 +127,36 @@ static HKEY open_special_category_key(const CLSID *clsid, BOOL create)
     }
 
     return ret;
+}
+
+static HRESULT register_codec(const CLSID *class, const WCHAR *name, IMoniker **ret)
+{
+    static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','c','m',':',0};
+    IParseDisplayName *parser;
+    WCHAR *buffer;
+    ULONG eaten;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    if (FAILED(hr))
+        return hr;
+
+    buffer = heap_alloc((strlenW(deviceW) + CHARS_IN_GUID + strlenW(name) + 1) * sizeof(WCHAR));
+    if (!buffer)
+    {
+        IParseDisplayName_Release(parser);
+        return E_OUTOFMEMORY;
+    }
+
+    strcpyW(buffer, deviceW);
+    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
+    strcatW(buffer, backslashW);
+    strcatW(buffer, name);
+
+    hr = IParseDisplayName_ParseDisplayName(parser, NULL, buffer, &eaten, ret);
+    IParseDisplayName_Release(parser);
+    heap_free(buffer);
+    return hr;
 }
 
 static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS2 *rgPin)
@@ -312,21 +347,77 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
     rgf2->u.s2.rgPins2 = rgPins;
 }
 
-static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
+static void free_regfilter2(REGFILTER2 *rgf)
+{
+    if (rgf->u.s2.rgPins2)
+    {
+        UINT iPin;
+
+        for (iPin = 0; iPin < rgf->u.s2.cPins2; iPin++)
+        {
+            if (rgf->u.s2.rgPins2[iPin].lpMediaType)
+            {
+                UINT iType;
+
+                for (iType = 0; iType < rgf->u.s2.rgPins2[iPin].nMediaTypes; iType++)
+                {
+                    CoTaskMemFree((void *)rgf->u.s2.rgPins2[iPin].lpMediaType[iType].clsMajorType);
+                    CoTaskMemFree((void *)rgf->u.s2.rgPins2[iPin].lpMediaType[iType].clsMinorType);
+                }
+
+                CoTaskMemFree((void *)rgf->u.s2.rgPins2[iPin].lpMediaType);
+            }
+        }
+
+        CoTaskMemFree((void *)rgf->u.s2.rgPins2);
+    }
+}
+
+static void write_filter_data(IPropertyBag *prop_bag, REGFILTER2 *rgf)
+{
+    IAMFilterData *fildata;
+    SAFEARRAYBOUND sabound;
+    BYTE *data, *array;
+    VARIANT var = {};
+    ULONG size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC, &IID_IAMFilterData, (void **)&fildata);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IAMFilterData_CreateFilterData(fildata, rgf, &data, &size);
+    if (FAILED(hr)) goto cleanup;
+
+    V_VT(&var) = VT_ARRAY | VT_UI1;
+    sabound.lLbound = 0;
+    sabound.cElements = size;
+    if (!(V_ARRAY(&var) = SafeArrayCreate(VT_UI1, 1, &sabound)))
+        goto cleanup;
+    hr = SafeArrayAccessData(V_ARRAY(&var), (void *)&array);
+    if (FAILED(hr)) goto cleanup;
+
+    memcpy(array, data, size);
+    hr = SafeArrayUnaccessData(V_ARRAY(&var));
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IPropertyBag_Write(prop_bag, wszFilterData, &var);
+    if (FAILED(hr)) goto cleanup;
+
+cleanup:
+    VariantClear(&var);
+    CoTaskMemFree(data);
+    IAMFilterData_Release(fildata);
+}
+
+static void register_legacy_filters(void)
 {
     HKEY hkeyFilter = NULL;
     DWORD dwFilterSubkeys, i;
     LONG lRet;
-    IFilterMapper2 *pMapper = NULL;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
-                           &IID_IFilterMapper2, (void **) &pMapper);
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFilterKeyName, 0, KEY_READ, &hkeyFilter);
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
+    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFilterKeyName, 0, KEY_READ, &hkeyFilter);
+    hr = HRESULT_FROM_WIN32(lRet);
 
     if (SUCCEEDED(hr))
     {
@@ -335,106 +426,87 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
     }
 
     if (SUCCEEDED(hr))
+        hr = DEVENUM_CreateAMCategoryKey(&CLSID_LegacyAmFilterCategory);
+
+    if (SUCCEEDED(hr))
     {
         for (i = 0; i < dwFilterSubkeys; i++)
         {
             WCHAR wszFilterSubkeyName[64];
             DWORD cName = sizeof(wszFilterSubkeyName) / sizeof(WCHAR);
+            IPropertyBag *prop_bag = NULL;
             WCHAR wszRegKey[MAX_PATH];
-            HKEY hkeyInstance = NULL;
+            HKEY classkey = NULL;
+            IMoniker *mon = NULL;
+            VARIANT var = {};
+            REGFILTER2 rgf2;
+            DWORD Type, len;
 
             if (RegEnumKeyExW(hkeyFilter, i, wszFilterSubkeyName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
-            strcpyW(wszRegKey, wszActiveMovieKey);
-            StringFromGUID2(&CLSID_LegacyAmFilterCategory, wszRegKey + strlenW(wszRegKey), CHARS_IN_GUID);
+            TRACE("Registering %s\n", debugstr_w(wszFilterSubkeyName));
 
-            strcatW(wszRegKey, wszRegSeparator);
+            strcpyW(wszRegKey, clsidW);
             strcatW(wszRegKey, wszFilterSubkeyName);
 
-            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &hkeyInstance) == ERROR_SUCCESS)
+            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &classkey) != ERROR_SUCCESS)
+                continue;
+
+            hr = register_codec(&CLSID_LegacyAmFilterCategory, wszFilterSubkeyName, &mon);
+            if (FAILED(hr)) goto cleanup;
+
+            hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+            if (FAILED(hr)) goto cleanup;
+
+            /* write friendly name */
+            len = 0;
+            V_VT(&var) = VT_BSTR;
+            if (!RegQueryValueExW(classkey, NULL, NULL, &Type, NULL, &len))
             {
-                RegCloseKey(hkeyInstance);
+                WCHAR *friendlyname = heap_alloc(len);
+                if (!friendlyname)
+                    goto cleanup;
+                RegQueryValueExW(classkey, NULL, NULL, &Type, (BYTE *)friendlyname, &len);
+                V_BSTR(&var) = SysAllocStringLen(friendlyname, len/sizeof(WCHAR));
+                heap_free(friendlyname);
             }
             else
-            {
-                /* Filter is registered the IFilterMapper(1)-way in HKCR\Filter. Needs to be added to
-                 * legacy am filter category. */
-                HKEY hkeyFilterClass = NULL;
-                REGFILTER2 rgf2;
-                CLSID clsidFilter;
-                WCHAR wszFilterName[MAX_PATH];
-                DWORD Type;
-                DWORD cbData;
-                HRESULT res;
-                IMoniker *pMoniker = NULL;
+                V_BSTR(&var) = SysAllocString(wszFilterSubkeyName);
 
-                TRACE("Registering %s\n", debugstr_w(wszFilterSubkeyName));
+            if (!V_BSTR(&var))
+                goto cleanup;
+            hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
+            if (FAILED(hr)) goto cleanup;
+            VariantClear(&var);
 
-                strcpyW(wszRegKey, clsid_keyname);
-                strcatW(wszRegKey, wszRegSeparator);
-                strcatW(wszRegKey, wszFilterSubkeyName);
+            /* write clsid */
+            V_VT(&var) = VT_BSTR;
+            if (!(V_BSTR(&var) = SysAllocString(wszFilterSubkeyName)))
+                goto cleanup;
+            hr = IPropertyBag_Write(prop_bag, clsid_keyname, &var);
+            if (FAILED(hr)) goto cleanup;
+            VariantClear(&var);
 
-                if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &hkeyFilterClass) != ERROR_SUCCESS)
-                    continue;
+            /* write filter data */
+            rgf2.dwMerit = MERIT_NORMAL;
 
-                rgf2.dwMerit = 0;
+            len = sizeof(rgf2.dwMerit);
+            RegQueryValueExW(classkey, wszMeritName, NULL, &Type, (BYTE *)&rgf2.dwMerit, &len);
 
-                cbData = sizeof(wszFilterName);
-                if (RegQueryValueExW(hkeyFilterClass, NULL, NULL, &Type, (LPBYTE)wszFilterName, &cbData) != ERROR_SUCCESS ||
-                    Type != REG_SZ)
-                    goto cleanup;
+            DEVENUM_ReadPins(classkey, &rgf2);
 
-                cbData = sizeof(rgf2.dwMerit);
-                if (RegQueryValueExW(hkeyFilterClass, wszMeritName, NULL, &Type, (LPBYTE)&rgf2.dwMerit, &cbData) != ERROR_SUCCESS ||
-                    Type != REG_DWORD)
-                    goto cleanup;
+            write_filter_data(prop_bag, &rgf2);
 
-                DEVENUM_ReadPins(hkeyFilterClass, &rgf2);
-
-                res = CLSIDFromString(wszFilterSubkeyName, &clsidFilter);
-                if (FAILED(res)) goto cleanup;
-
-                IFilterMapper2_RegisterFilter(pMapper, &clsidFilter, wszFilterName, &pMoniker, NULL, NULL, &rgf2);
-
-                if (pMoniker)
-                    IMoniker_Release(pMoniker);
-
-                cleanup:
-
-                if (hkeyFilterClass) RegCloseKey(hkeyFilterClass);
-
-                if (rgf2.u.s2.rgPins2)
-                {
-                    UINT iPin;
-
-                    for (iPin = 0; iPin < rgf2.u.s2.cPins2; iPin++)
-                    {
-                        if (rgf2.u.s2.rgPins2[iPin].lpMediaType)
-                        {
-                            UINT iType;
-
-                            for (iType = 0; iType < rgf2.u.s2.rgPins2[iPin].nMediaTypes; iType++)
-                            {
-                                CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType[iType].clsMajorType);
-                                CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType[iType].clsMinorType);
-                            }
-
-                            CoTaskMemFree((void*)rgf2.u.s2.rgPins2[iPin].lpMediaType);
-                        }
-                    }
-
-                    CoTaskMemFree((void*)rgf2.u.s2.rgPins2);
-                }
-            }
+cleanup:
+            if (prop_bag) IPropertyBag_Release(prop_bag);
+            if (mon) IMoniker_Release(mon);
+            RegCloseKey(classkey);
+            VariantClear(&var);
+            free_regfilter2(&rgf2);
         }
     }
 
     if (hkeyFilter) RegCloseKey(hkeyFilter);
-
-    if (pMapper)
-        IFilterMapper2_Release(pMapper);
-
-    return S_OK;
 }
 
 /**********************************************************************
@@ -454,7 +526,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     *ppEnumMoniker = NULL;
 
     register_codecs();
-    DEVENUM_RegisterLegacyAmFilters();
+    register_legacy_filters();
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -562,6 +634,8 @@ static HRESULT register_codecs(void)
      * or switched from pulseaudio to alsa, delete all old devices first
      */
     RegOpenKeyW(HKEY_CURRENT_USER, wszActiveMovieKey, &basekey);
+    StringFromGUID2(&CLSID_LegacyAmFilterCategory, class, CHARS_IN_GUID);
+    RegDeleteTreeW(basekey, class);
     StringFromGUID2(&CLSID_AudioRendererCategory, class, CHARS_IN_GUID);
     RegDeleteTreeW(basekey, class);
     StringFromGUID2(&CLSID_AudioInputDeviceCategory, class, CHARS_IN_GUID);

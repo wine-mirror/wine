@@ -27,11 +27,16 @@
 #include "ole2.h"
 #include "strmif.h"
 #include "uuids.h"
+#include "vfwmsgs.h"
 
 static const WCHAR friendly_name[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR fcc_handlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
+static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
 static const WCHAR clsidW[] = {'C','L','S','I','D',0};
 static const WCHAR mrleW[] = {'m','r','l','e',0};
+static const WCHAR swW[] = {'s','w',':',0};
+static const WCHAR cmW[] = {'c','m',':',0};
+static const WCHAR backslashW[] = {'\\',0};
 
 static void test_devenum(IBindCtx *bind_ctx)
 {
@@ -304,7 +309,6 @@ static IMoniker *check_display_name_(int line, IParseDisplayName *parser, WCHAR 
 
 static void test_directshow_filter(void)
 {
-    static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','s','w',':',0};
     static const WCHAR instanceW[] = {'\\','I','n','s','t','a','n','c','e',0};
     static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
     static WCHAR testW[] = {'\\','t','e','s','t',0};
@@ -321,6 +325,7 @@ static void test_directshow_filter(void)
     ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
 
     lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, swW);
     StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
     lstrcatW(buffer, testW);
     mon = check_display_name(parser, buffer);
@@ -367,6 +372,7 @@ static void test_directshow_filter(void)
     /* name can be anything */
 
     lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, swW);
     lstrcatW(buffer, testW+1);
     mon = check_display_name(parser, buffer);
 
@@ -405,7 +411,6 @@ static void test_directshow_filter(void)
 
 static void test_codec(void)
 {
-    static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','c','m',':',0};
     static WCHAR testW[] = {'\\','t','e','s','t',0};
     IParseDisplayName *parser;
     IPropertyBag *prop_bag;
@@ -419,6 +424,7 @@ static void test_codec(void)
     ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
 
     lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, cmW);
     StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
     lstrcatW(buffer, testW);
     mon = check_display_name(parser, buffer);
@@ -456,6 +462,70 @@ static void test_codec(void)
     IParseDisplayName_Release(parser);
 }
 
+static void test_legacy_filter(void)
+{
+    static const WCHAR nameW[] = {'t','e','s','t',0};
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    IFilterMapper *mapper;
+    IMoniker *mon;
+    WCHAR buffer[200];
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC, &IID_IFilterMapper, (void **)&mapper);
+    ok(hr == S_OK, "Failed to create FilterMapper: %#x\n", hr);
+
+    hr = IFilterMapper_RegisterFilter(mapper, CLSID_TestFilter, nameW, 0xdeadbeef);
+    if (hr == VFW_E_BAD_KEY)
+    {
+        win_skip("not enough permissions to register filters\n");
+        goto end;
+    }
+    ok(hr == S_OK, "RegisterFilter failed: %#x\n", hr);
+
+    lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, cmW);
+    StringFromGUID2(&CLSID_LegacyAmFilterCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    lstrcatW(buffer, backslashW);
+    StringFromGUID2(&CLSID_TestFilter, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+
+    mon = check_display_name(parser, buffer);
+    ok(find_moniker(&CLSID_LegacyAmFilterCategory, mon), "filter should be registered\n");
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+    VariantInit(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == S_OK, "Read failed: %#x\n", hr);
+
+    StringFromGUID2(&CLSID_TestFilter, buffer, CHARS_IN_GUID);
+    ok(!lstrcmpW(buffer, V_BSTR(&var)), "expected %s, got %s\n",
+        wine_dbgstr_w(buffer), wine_dbgstr_w(V_BSTR(&var)));
+
+    VariantClear(&var);
+    hr = IPropertyBag_Read(prop_bag, clsidW, &var, NULL);
+    ok(hr == S_OK, "Read failed: %#x\n", hr);
+    ok(!lstrcmpW(buffer, V_BSTR(&var)), "expected %s, got %s\n",
+        wine_dbgstr_w(buffer), wine_dbgstr_w(V_BSTR(&var)));
+
+    IPropertyBag_Release(prop_bag);
+
+    hr = IFilterMapper_UnregisterFilter(mapper, CLSID_TestFilter);
+    ok(hr == S_OK, "UnregisterFilter failed: %#x\n", hr);
+
+    ok(!find_moniker(&CLSID_LegacyAmFilterCategory, mon), "filter should not be registered\n");
+    IMoniker_Release(mon);
+
+end:
+    IFilterMapper_Release(mapper);
+    IParseDisplayName_Release(parser);
+}
+
 START_TEST(devenum)
 {
     IBindCtx *bind_ctx = NULL;
@@ -477,6 +547,8 @@ START_TEST(devenum)
     test_register_filter();
     test_directshow_filter();
     test_codec();
+
+    test_legacy_filter();
 
     CoUninitialize();
 }

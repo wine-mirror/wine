@@ -294,6 +294,24 @@ static void test_legacy_filter_registration(void)
     hr = IFilterMapper_UnregisterFilter(mapper, clsid);
     ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
 
+    hr = IFilterMapper2_EnumMatchingFilters(mapper2, &enum_mon, 0, TRUE, MERIT_UNLIKELY, TRUE,
+            0, NULL, NULL, &GUID_NULL, FALSE, FALSE, 0, NULL, NULL, &GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper2_EnumMatchingFilters failed: %x\n", hr);
+    ok(!enum_find_filter(testfilterW, enum_mon), "IFilterMapper2 shouldn't find filter\n");
+    IEnumMoniker_Release(enum_mon);
+
+    found = FALSE;
+    hr = IFilterMapper_EnumMatchingFilters(mapper, &enum_reg, MERIT_UNLIKELY, TRUE, GUID_NULL, GUID_NULL,
+        FALSE, FALSE, GUID_NULL, GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper_EnumMatchingFilters failed with %x\n", hr);
+    while(!found && IEnumRegFilters_Next(enum_reg, 1, &regfilter, &count) == S_OK)
+    {
+        if (!lstrcmpW(regfilter->Name, testfilterW) && IsEqualGUID(&clsid, &regfilter->Clsid))
+            found = TRUE;
+    }
+    IEnumRegFilters_Release(enum_reg);
+    ok(!found, "IFilterMapper shouldn't find filter\n");
+
     ret = RegDeleteKeyW(HKEY_CLASSES_ROOT, key_name);
     ok(!ret, "RegDeleteKeyA failed: %lu\n", ret);
 

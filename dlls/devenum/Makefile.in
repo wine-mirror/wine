@@ -9,6 +9,8 @@ C_SRCS = \
 	mediacatenum.c \
 	parsedisplayname.c
 
-IDL_SRCS = devenum_classes.idl
+IDL_SRCS = \
+	devenum_classes.idl \
+	fil_data.idl
 
 RC_SRCS = devenum.rc
