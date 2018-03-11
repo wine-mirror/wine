@@ -762,7 +762,7 @@ static void test_asctime(void)
     }
 
     ret = p_asctime(&epoch);
-    todo_wine ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
+    ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
 }
 
 START_TEST(misc)

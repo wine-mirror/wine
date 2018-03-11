@@ -1349,9 +1349,16 @@ static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)
         return NULL;
     }
 
+#if _MSVCR_VER>=140
+    /* C89 (4.12.3.1) uses space-padding for day of month. */
+    MSVCRT__snprintf(buf, 26, "%s %s %2d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
+            month[mstm->tm_mon], mstm->tm_mday, mstm->tm_hour, mstm->tm_min,
+            mstm->tm_sec, '1'+(mstm->tm_year+900)/1000, (900+mstm->tm_year)%1000);
+#else
     MSVCRT__snprintf(buf, 26, "%s %s %02d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
             month[mstm->tm_mon], mstm->tm_mday, mstm->tm_hour, mstm->tm_min,
             mstm->tm_sec, '1'+(mstm->tm_year+900)/1000, (900+mstm->tm_year)%1000);
+#endif
     return buf;
 }
 
