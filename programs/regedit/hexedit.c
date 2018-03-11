@@ -330,16 +330,6 @@ HexEdit_Char (HEXEDIT_INFO *infoPtr, WCHAR ch)
 }
 
 static inline LRESULT
-HexEdit_Create (HEXEDIT_INFO *infoPtr, LPCREATESTRUCTW lpcs)
-{
-    HexEdit_SetFont(infoPtr, GetStockObject(SYSTEM_FONT), FALSE);
-    HexEdit_UpdateScrollbars(infoPtr);
-
-    return 0;
-}
-
-
-static inline LRESULT
 HexEdit_Destroy (HEXEDIT_INFO *infoPtr)
 {
     HWND hwnd = infoPtr->hwndSelf;
@@ -629,9 +619,6 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CHAR:
 	    return HexEdit_Char (infoPtr, (WCHAR)wParam);
-
-	case WM_CREATE:
-	    return HexEdit_Create (infoPtr, (LPCREATESTRUCTW)lParam);
 
 	case WM_DESTROY:
 	    return HexEdit_Destroy (infoPtr);

@@ -151,6 +151,7 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
         else
             SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
         SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
+        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, WM_SETFONT, (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
