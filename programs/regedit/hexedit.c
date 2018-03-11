@@ -73,32 +73,35 @@ static inline BYTE hexchar_to_byte(WCHAR ch)
         return -1;
 }
 
-static LPWSTR HexEdit_GetLineText(BYTE *pData, LONG cbData, LONG pad)
+static LPWSTR HexEdit_GetLineText(int offset, BYTE *pData, LONG cbData, LONG pad)
 {
+    static const WCHAR percent_04xW[] = {'%','0','4','X',' ',' ',0};
     static const WCHAR percent_02xW[] = {'%','0','2','X',' ',0};
 
-    WCHAR *lpszLine = heap_xalloc((cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
+    WCHAR *lpszLine = heap_xalloc((6 + cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
     LONG i;
 
+    wsprintfW(lpszLine, percent_04xW, offset);
+
     for (i = 0; i < cbData; i++)
-        wsprintfW(lpszLine + i*3, percent_02xW, pData[i]);
+        wsprintfW(lpszLine + 6 + i*3, percent_02xW, pData[offset + i]);
     for (i = 0; i < pad * 3; i++)
-        lpszLine[cbData * 3 + i] = ' ';
+        lpszLine[6 + cbData * 3 + i] = ' ';
 
     for (i = 0; i < DIV_SPACES; i++)
-        lpszLine[cbData * 3 + pad * 3 + i] = ' ';
+        lpszLine[6 + cbData * 3 + pad * 3 + i] = ' ';
 
     /* attempt an ASCII representation if the characters are printable,
      * otherwise display a '.' */
     for (i = 0; i < cbData; i++)
     {
         /* (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER) */
-        if (isprint(pData[i]))
-            lpszLine[cbData * 3 + pad * 3 + DIV_SPACES + i] = pData[i];
+        if (isprint(pData[offset + i]))
+            lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = pData[offset + i];
         else
-            lpszLine[cbData * 3 + pad * 3 + DIV_SPACES + i] = '.';
+            lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = '.';
     }
-    lpszLine[cbData * 3 + pad * 3 + DIV_SPACES + cbData] = 0;
+    lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + cbData] = 0;
     return lpszLine;
 }
 
@@ -110,9 +113,9 @@ HexEdit_Paint(HEXEDIT_INFO *infoPtr)
     INT nXStart, nYStart;
     COLORREF clrOldText;
     HFONT hOldFont;
-    BYTE *pData;
     INT iMode;
     LONG lByteOffset = infoPtr->nScrollPos * infoPtr->nBytesPerLine;
+    int i;
 
     /* Make a gap from the frame */
     nXStart = GetSystemMetrics(SM_CXBORDER);
@@ -125,17 +128,16 @@ HexEdit_Paint(HEXEDIT_INFO *infoPtr)
 
     iMode = SetBkMode(hdc, TRANSPARENT);
     hOldFont = SelectObject(hdc, infoPtr->hFont);
-        
-    for (pData = infoPtr->pData + lByteOffset; pData < infoPtr->pData + infoPtr->cbData; pData += infoPtr->nBytesPerLine)
+
+    for (i = lByteOffset; i < infoPtr->cbData; i += infoPtr->nBytesPerLine)
     {
         LPWSTR lpszLine;
-        LONG nLineLen = min((LONG)((infoPtr->pData + infoPtr->cbData) - pData),
-            infoPtr->nBytesPerLine);
+        LONG nLineLen = min(infoPtr->cbData - i, infoPtr->nBytesPerLine);
 
-        lpszLine = HexEdit_GetLineText(pData, nLineLen, infoPtr->nBytesPerLine - nLineLen);
+        lpszLine = HexEdit_GetLineText(i, infoPtr->pData, nLineLen, infoPtr->nBytesPerLine - nLineLen);
 
         /* FIXME: draw hex <-> ASCII mapping highlighted? */
-        TextOutW(hdc, nXStart, nYStart, lpszLine, infoPtr->nBytesPerLine * 3 + DIV_SPACES + nLineLen);
+        TextOutW(hdc, nXStart, nYStart, lpszLine, lstrlenW(lpszLine));
 
         nYStart += infoPtr->nHeight;
         heap_free(lpszLine);
@@ -158,14 +160,14 @@ HexEdit_UpdateCaret(HEXEDIT_INFO *infoPtr)
     INT nByteLinePos = nCaretBytePos % infoPtr->nBytesPerLine;
     INT nLine = nCaretBytePos / infoPtr->nBytesPerLine;
     LONG nLineLen = min(infoPtr->cbData - nLine * infoPtr->nBytesPerLine, infoPtr->nBytesPerLine);
-    LPWSTR lpszLine = HexEdit_GetLineText(infoPtr->pData + nLine * infoPtr->nBytesPerLine, nLineLen, infoPtr->nBytesPerLine - nLineLen);
+    LPWSTR lpszLine = HexEdit_GetLineText(nLine * infoPtr->nBytesPerLine, infoPtr->pData, nLineLen, infoPtr->nBytesPerLine - nLineLen);
     INT nCharOffset;
 
     /* calculate offset of character caret is on in the line */
     if (infoPtr->bFocusHex)
-        nCharOffset = nByteLinePos*3 + infoPtr->nCaretPos % 2;
+        nCharOffset = 6 + nByteLinePos*3 + infoPtr->nCaretPos % 2;
     else
-        nCharOffset = infoPtr->nBytesPerLine*3 + DIV_SPACES + nByteLinePos;
+        nCharOffset = 6 + infoPtr->nBytesPerLine*3 + DIV_SPACES + nByteLinePos;
 
     hdc = GetDC(infoPtr->hwndSelf);
     hOldFont = SelectObject(hdc, infoPtr->hFont);
@@ -517,7 +519,7 @@ HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw)
         SIZE size;
 
         memset(pData, 0, i);
-        lpszLine = HexEdit_GetLineText(pData, i, 0);
+        lpszLine = HexEdit_GetLineText(0, pData, i, 0);
         GetTextExtentPoint32W(hdc, lpszLine, lstrlenW(lpszLine), &size);
         heap_free(lpszLine);
         heap_free(pData);
