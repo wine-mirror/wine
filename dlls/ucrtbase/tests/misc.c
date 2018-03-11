@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <share.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -123,6 +124,7 @@ static int (CDECL *p__iswblank_l)(wint_t,_locale_t);
 static int (CDECL *p_fesetround)(int);
 static void (CDECL *p___setusermatherr)(MSVCRT_matherr_func);
 static int* (CDECL *p_errno)(void);
+static char* (CDECL *p_asctime)(const struct tm *);
 
 static void test__initialize_onexit_table(void)
 {
@@ -426,6 +428,7 @@ static BOOL init(void)
     p_fesetround = (void*)GetProcAddress(module, "fesetround");
     p___setusermatherr = (void*)GetProcAddress(module, "__setusermatherr");
     p_errno = (void*)GetProcAddress(module, "_errno");
+    p_asctime = (void*)GetProcAddress(module, "asctime");
 
     return TRUE;
 }
@@ -747,6 +750,21 @@ static void test_math_errors(void)
     }
 }
 
+static void test_asctime(void)
+{
+    const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
+    char *ret;
+
+    if(!p_asctime)
+    {
+        win_skip("asctime is not available\n");
+        return;
+    }
+
+    ret = p_asctime(&epoch);
+    todo_wine ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -772,4 +790,5 @@ START_TEST(misc)
     test_lldiv();
     test_isblank();
     test_math_errors();
+    test_asctime();
 }
