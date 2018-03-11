@@ -145,6 +145,7 @@ static NTSTATUS (WINAPI * pRtlUnicodeStringToAnsiString)(PSTRING, PUNICODE_STRIN
 static NTSTATUS (WINAPI * pRtlFreeHeap)(PVOID, ULONG, PVOID);
 static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
+static NTSTATUS (WINAPI * pRtlCreateRegistryKey)(ULONG, PWSTR);
 static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*,void *);
 static NTSTATUS (WINAPI * pNtNotifyChangeKey)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,ULONG,BOOLEAN,PVOID,ULONG,BOOLEAN);
 static NTSTATUS (WINAPI * pNtNotifyChangeMultipleKeys)(HANDLE,ULONG,OBJECT_ATTRIBUTES*,HANDLE,PIO_APC_ROUTINE,
@@ -196,6 +197,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(RtlFreeHeap)
     NTDLL_GET_PROC(RtlAllocateHeap)
     NTDLL_GET_PROC(RtlZeroMemory)
+    NTDLL_GET_PROC(RtlCreateRegistryKey)
     NTDLL_GET_PROC(RtlpNtQueryValueKey)
     NTDLL_GET_PROC(RtlOpenCurrentUser)
     NTDLL_GET_PROC(NtWaitForSingleObject)
@@ -1940,6 +1942,74 @@ static void test_notify(void)
     pNtClose(events[1]);
 }
 
+static void test_RtlCreateRegistryKey(void)
+{
+    static WCHAR empty[] = {0};
+    static const WCHAR key1[] = {'\\','R','t','l','C','r','e','a','t','e','R','e','g','i','s','t','r','y','K','e','y',0};
+    UNICODE_STRING str;
+    SIZE_T size;
+    NTSTATUS status;
+
+    RtlDuplicateUnicodeString(1, &winetestpath, &str);
+    size = str.MaximumLength + sizeof(key1)* sizeof(WCHAR) * 2;
+    str.Buffer = pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, str.Buffer, size);
+    str.MaximumLength = size;
+    pRtlAppendUnicodeToString(&str, key1);
+    pRtlAppendUnicodeToString(&str, key1);
+
+    /* should work */
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, winetestpath.Buffer);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER, NULL);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER | RTL_REGISTRY_OPTIONAL, NULL);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER, empty);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER | RTL_REGISTRY_OPTIONAL, empty);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+
+    /* invalid first parameter */
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER+1, winetestpath.Buffer);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+
+    status = pRtlCreateRegistryKey((RTL_REGISTRY_USER+1) | RTL_REGISTRY_OPTIONAL, winetestpath.Buffer);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+
+    /* invalid second parameter */
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, NULL);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, NULL);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, empty);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, empty);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, str.Buffer);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
+
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, str.Buffer);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
+
+    /* both parameters invalid */
+    status = pRtlCreateRegistryKey(RTL_REGISTRY_USER+1, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+
+    status = pRtlCreateRegistryKey((RTL_REGISTRY_USER+1) | RTL_REGISTRY_OPTIONAL, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -1965,6 +2035,7 @@ START_TEST(reg)
     test_NtQueryValueKey();
     test_long_value_name();
     test_notify();
+    test_RtlCreateRegistryKey();
     test_NtDeleteKey();
     test_symlinks();
     test_redirection();
