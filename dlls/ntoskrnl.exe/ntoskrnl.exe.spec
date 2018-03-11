@@ -975,7 +975,7 @@
 @ stdcall RtlCreateAcl(ptr long long)
 @ stdcall RtlCreateAtomTable(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
-@ stub RtlCreateRegistryKey
+@ stdcall RtlCreateRegistryKey(long wstr)
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
 @ stub RtlCreateSystemVolumeInformationFolder
 @ stdcall RtlCreateUnicodeString(ptr wstr)
