@@ -530,6 +530,8 @@ HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw)
         }
     }
 
+    HexEdit_UpdateScrollbars(infoPtr);
+
     if (infoPtr->hFont)
         SelectObject(hdc, hOldFont);
     ReleaseDC (infoPtr->hwndSelf, hdc);
