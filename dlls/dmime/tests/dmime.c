@@ -770,12 +770,12 @@ static void test_parsedescriptor(void)
         memset(&desc, 0, sizeof(desc));
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         if (forms[i].needs_size) {
-            todo_wine ok(hr == E_INVALIDARG,
-                    "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
+            todo_wine_if(forms[i].form == DMUS_FOURCC_TOOLGRAPH_FORM)
+                ok(hr == E_INVALIDARG, "ParseDescriptor failed: %08x, expected E_INVALIDARG\n", hr);
             desc.dwSize = sizeof(desc);
             hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         }
-        todo_wine_if(forms[i].needs_size)
+        todo_wine_if(forms[i].form == DMUS_FOURCC_TOOLGRAPH_FORM)
             ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
         ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
                 desc.dwValidData);
@@ -790,11 +790,12 @@ static void test_parsedescriptor(void)
         desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         if (forms[i].needs_size)
-            todo_wine ok(hr == DMUS_E_CHUNKNOTFOUND,
+            todo_wine_if(forms[i].form == DMUS_FOURCC_TOOLGRAPH_FORM)
+                ok(hr == DMUS_E_CHUNKNOTFOUND,
                     "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
         else
             ok(hr == E_FAIL, "ParseDescriptor failed: %08x, expected E_FAIL\n", hr);
-        todo_wine_if(forms[i].needs_size)
+        todo_wine_if(forms[i].form == DMUS_FOURCC_TOOLGRAPH_FORM)
             ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
 
         /* All desc chunks */
@@ -838,7 +839,7 @@ static void test_parsedescriptor(void)
         desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
         ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-        todo_wine_if(forms[i].needs_size)
+        todo_wine_if(forms[i].form == DMUS_FOURCC_TOOLGRAPH_FORM)
             ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
                     desc.dwValidData);
         IStream_Release(stream);
