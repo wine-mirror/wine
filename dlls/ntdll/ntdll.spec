@@ -509,7 +509,7 @@
 @ stdcall RtlCreateProcessParameters(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub RtlCreatePropertySet
 @ stdcall RtlCreateQueryDebugBuffer(long long)
-@ stub RtlCreateRegistryKey
+@ stdcall RtlCreateRegistryKey(long wstr)
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
 # @ stub RtlCreateSystemVolumeInformationFolder
 @ stub RtlCreateTagHeap

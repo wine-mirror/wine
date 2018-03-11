@@ -1133,13 +1133,10 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 }
 
 
-static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
+static NTSTATUS RTL_KeyHandleCreateObject(ULONG RelativeTo, PCWSTR Path, POBJECT_ATTRIBUTES regkey, PUNICODE_STRING str)
 {
-    UNICODE_STRING KeyString;
-    OBJECT_ATTRIBUTES regkey;
     PCWSTR base;
     INT len;
-    NTSTATUS status;
 
     static const WCHAR empty[] = {0};
     static const WCHAR control[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
@@ -1191,17 +1188,30 @@ static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
     }
 
     len = (strlenW(base) + strlenW(Path) + 1) * sizeof(WCHAR);
-    KeyString.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
-    if (KeyString.Buffer == NULL)
+    str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
+    if (str->Buffer == NULL)
         return STATUS_NO_MEMORY;
 
-    strcpyW(KeyString.Buffer, base);
-    strcatW(KeyString.Buffer, Path);
-    KeyString.Length = len - sizeof(WCHAR);
-    KeyString.MaximumLength = len;
-    InitializeObjectAttributes(&regkey, &KeyString, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    strcpyW(str->Buffer, base);
+    strcatW(str->Buffer, Path);
+    str->Length = len - sizeof(WCHAR);
+    str->MaximumLength = len;
+    InitializeObjectAttributes(regkey, str, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
+{
+    OBJECT_ATTRIBUTES regkey;
+    UNICODE_STRING string;
+    NTSTATUS status;
+
+    status = RTL_KeyHandleCreateObject(RelativeTo, Path, &regkey, &string);
+    if(status != STATUS_SUCCESS)
+	return status;
+
     status = NtOpenKey(handle, KEY_ALL_ACCESS, &regkey);
-    RtlFreeHeap(GetProcessHeap(), 0, KeyString.Buffer);
+    RtlFreeUnicodeString( &string );
     return status;
 }
 
@@ -1411,6 +1421,41 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
     status = RTL_GetKeyHandle(RelativeTo, Path, &handle);
     if (handle) NtClose(handle);
     if (status == STATUS_INVALID_HANDLE) status = STATUS_OBJECT_NAME_NOT_FOUND;
+    return status;
+}
+
+/*************************************************************************
+ * RtlCreateRegistryKey   [NTDLL.@]
+ *
+ * Add a key to the registry given by absolute or relative path
+ *
+ * PARAMS
+ *  RelativeTo  [I] Registry path that Path refers to
+ *  path        [I] Path to key
+ *
+ * RETURNS
+ *  STATUS_SUCCESS or an appropriate NTSTATUS error code.
+ */
+NTSTATUS WINAPI RtlCreateRegistryKey(ULONG RelativeTo, PWSTR path)
+{
+    OBJECT_ATTRIBUTES regkey;
+    UNICODE_STRING string;
+    HANDLE handle;
+    NTSTATUS status;
+
+    RelativeTo &= ~RTL_REGISTRY_OPTIONAL;
+
+    if (!RelativeTo && (path == NULL || path[0] == 0))
+        return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    if (RelativeTo <= RTL_REGISTRY_USER && (path == NULL || path[0] == 0))
+        return STATUS_SUCCESS;
+    status = RTL_KeyHandleCreateObject(RelativeTo, path, &regkey, &string);
+    if(status != STATUS_SUCCESS)
+	return status;
+
+    status = NtCreateKey(&handle, KEY_ALL_ACCESS, &regkey, 0, NULL, REG_OPTION_NON_VOLATILE, NULL);
+    if (handle) NtClose(handle);
+    RtlFreeUnicodeString( &string );
     return status;
 }
 
