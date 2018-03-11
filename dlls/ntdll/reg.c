@@ -1401,9 +1401,11 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
 
     TRACE("(%d, %s)\n", RelativeTo, debugstr_w(Path));
 
-    if((!RelativeTo) && Path == NULL)
+    if(!RelativeTo && (Path == NULL || Path[0] == 0))
         return STATUS_OBJECT_PATH_SYNTAX_BAD;
     if(RelativeTo & RTL_REGISTRY_HANDLE)
+        return STATUS_SUCCESS;
+    if((RelativeTo <= RTL_REGISTRY_USER) && (Path == NULL || Path[0] == 0))
         return STATUS_SUCCESS;
 
     status = RTL_GetKeyHandle(RelativeTo, Path, &handle);

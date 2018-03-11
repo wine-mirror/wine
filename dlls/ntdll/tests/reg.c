@@ -671,6 +671,7 @@ static void test_RtlOpenCurrentUser(void)
 
 static void test_RtlCheckRegistryKey(void)
 {
+    static WCHAR empty[] = {0};
     NTSTATUS status;
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer);
@@ -678,6 +679,18 @@ static void test_RtlCheckRegistryKey(void)
 
     status = pRtlCheckRegistryKey((RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL), winetestpath.Buffer);
     ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08x\n", status);
+
+    status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, NULL);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being NULL: 0x%08x\n", status);
+
+    status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, empty);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being empty: 0x%08x\n", status);
+
+    status = pRtlCheckRegistryKey(RTL_REGISTRY_USER, NULL);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being NULL: 0x%08x\n", status);
+
+    status = pRtlCheckRegistryKey(RTL_REGISTRY_USER, empty);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being empty: 0x%08x\n", status);
 }
 
 static void test_NtFlushKey(void)
