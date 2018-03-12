@@ -26,6 +26,7 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/library.h"
 
 /* We only want host compatible structures and don't need alignment. */
@@ -74,6 +75,54 @@ LOAD_FUNCPTR(vkGetInstanceProcAddr)
     return TRUE;
 }
 
+/* Helper function for converting between win32 and X11 compatible VkInstanceCreateInfo.
+ * Caller is responsible for allocation and cleanup of 'dst'.
+ */
+static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
+        VkInstanceCreateInfo *dst)
+{
+    unsigned int i;
+    const char **enabled_extensions = NULL;
+
+    dst->sType = src->sType;
+    dst->flags = src->flags;
+    dst->pApplicationInfo = src->pApplicationInfo;
+    dst->pNext = src->pNext;
+    dst->enabledLayerCount = 0;
+    dst->ppEnabledLayerNames = NULL;
+    dst->enabledExtensionCount = 0;
+    dst->ppEnabledExtensionNames = NULL;
+
+    if (src->enabledExtensionCount > 0)
+    {
+        enabled_extensions = heap_calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
+        if (!enabled_extensions)
+        {
+            ERR("Failed to allocate memory for enabled extensions\n");
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        for (i = 0; i < src->enabledExtensionCount; i++)
+        {
+            /* Substitute extension with X11 ones else copy. Long-term, when we
+             * support more extensions, we should store these in a list.
+             */
+            if (!strcmp(src->ppEnabledExtensionNames[i], "VK_KHR_win32_surface"))
+            {
+                enabled_extensions[i] = "VK_KHR_xlib_surface";
+            }
+            else
+            {
+                enabled_extensions[i] = src->ppEnabledExtensionNames[i];
+            }
+        }
+        dst->ppEnabledExtensionNames = enabled_extensions;
+        dst->enabledExtensionCount = src->enabledExtensionCount;
+    }
+
+    return VK_SUCCESS;
+}
+
 static VkResult X11DRV_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
         uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *index)
 {
@@ -87,19 +136,28 @@ static VkResult X11DRV_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swa
 static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
+    VkInstanceCreateInfo create_info_host;
+    VkResult res;
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    /* TODO: convert win32 to x11 extensions here. */
-    if (create_info->enabledExtensionCount > 0)
+    /* Perform a second pass on converting VkInstanceCreateInfo. Winevulkan
+     * performed a first pass in which it handles everything except for WSI
+     * functionality such as VK_KHR_win32_surface. Handle this now.
+     */
+    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
+    if (res != VK_SUCCESS)
     {
-        FIXME("Extensions are not supported yet, aborting!\n");
-        return VK_ERROR_INCOMPATIBLE_DRIVER;
+        ERR("Failed to convert instance create info, res=%d\n", res);
+        return res;
     }
 
-    return pvkCreateInstance(create_info, NULL /* allocator */, instance);
+    res = pvkCreateInstance(&create_info_host, NULL /* allocator */, instance);
+
+    heap_free((void *)create_info_host.ppEnabledExtensionNames);
+    return res;
 }
 
 static VkResult X11DRV_vkCreateSwapchainKHR(VkDevice device,
