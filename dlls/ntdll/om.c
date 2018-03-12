@@ -688,13 +688,10 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject( HANDLE handle, PUNICODE_STRING target
 /******************************************************************************
  *  NtAllocateUuids   [NTDLL.@]
  */
-NTSTATUS WINAPI NtAllocateUuids(
-        PULARGE_INTEGER Time,
-        PULONG Range,
-        PULONG Sequence)
+NTSTATUS WINAPI NtAllocateUuids( ULARGE_INTEGER *time, ULONG *delta, ULONG *sequence, UCHAR *seed )
 {
-        FIXME("(%p,%p,%p), stub.\n", Time, Range, Sequence);
-	return 0;
+    FIXME("(%p,%p,%p,%p), stub.\n", time, delta, sequence, seed);
+    return STATUS_SUCCESS;
 }
 
 /**************************************************************************

@@ -740,7 +740,7 @@
 @ stdcall NtAddAtom(ptr long ptr)
 @ stdcall NtAdjustPrivilegesToken(long long ptr long ptr ptr)
 @ stdcall NtAllocateLocallyUniqueId(ptr)
-@ stdcall NtAllocateUuids(ptr ptr ptr)
+@ stdcall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stub NtBuildNumber
 @ stdcall NtClose(long)
