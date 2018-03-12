@@ -1250,6 +1250,7 @@ enable_ext_ms_win_gdi_render_l1_1_0
 enable_ext_ms_win_kernel32_package_current_l1_1_0
 enable_ext_ms_win_kernel32_package_l1_1_1
 enable_ext_ms_win_ntuser_draw_l1_1_0
+enable_ext_ms_win_ntuser_gui_l1_3_0
 enable_ext_ms_win_ntuser_message_l1_1_1
 enable_ext_ms_win_ntuser_mouse_l1_1_0
 enable_ext_ms_win_ntuser_private_l1_1_1
@@ -18609,6 +18610,7 @@ wine_fn_config_makefile dlls/ext-ms-win-gdi-render-l1-1-0 enable_ext_ms_win_gdi_
 wine_fn_config_makefile dlls/ext-ms-win-kernel32-package-current-l1-1-0 enable_ext_ms_win_kernel32_package_current_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-kernel32-package-l1-1-1 enable_ext_ms_win_kernel32_package_l1_1_1
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-draw-l1-1-0 enable_ext_ms_win_ntuser_draw_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-gui-l1-3-0 enable_ext_ms_win_ntuser_gui_l1_3_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-mouse-l1-1-0 enable_ext_ms_win_ntuser_mouse_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-private-l1-1-1 enable_ext_ms_win_ntuser_private_l1_1_1
