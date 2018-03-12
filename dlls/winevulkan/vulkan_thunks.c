@@ -895,6 +895,7 @@ static VkResult WINAPI wine_vkWaitForFences(VkDevice device, uint32_t fenceCount
 
 static const struct vulkan_func vk_device_dispatch_table[] =
 {
+    {"vkAcquireNextImageKHR", &wine_vkAcquireNextImageKHR},
     {"vkAllocateCommandBuffers", &wine_vkAllocateCommandBuffers},
     {"vkAllocateDescriptorSets", &wine_vkAllocateDescriptorSets},
     {"vkAllocateMemory", &wine_vkAllocateMemory},
@@ -964,6 +965,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateSampler", &wine_vkCreateSampler},
     {"vkCreateSemaphore", &wine_vkCreateSemaphore},
     {"vkCreateShaderModule", &wine_vkCreateShaderModule},
+    {"vkCreateSwapchainKHR", &wine_vkCreateSwapchainKHR},
     {"vkDestroyBuffer", &wine_vkDestroyBuffer},
     {"vkDestroyBufferView", &wine_vkDestroyBufferView},
     {"vkDestroyCommandPool", &wine_vkDestroyCommandPool},
@@ -983,6 +985,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroySampler", &wine_vkDestroySampler},
     {"vkDestroySemaphore", &wine_vkDestroySemaphore},
     {"vkDestroyShaderModule", &wine_vkDestroyShaderModule},
+    {"vkDestroySwapchainKHR", &wine_vkDestroySwapchainKHR},
     {"vkDeviceWaitIdle", &wine_vkDeviceWaitIdle},
     {"vkEndCommandBuffer", &wine_vkEndCommandBuffer},
     {"vkFlushMappedMemoryRanges", &wine_vkFlushMappedMemoryRanges},
@@ -1001,10 +1004,12 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetPipelineCacheData", &wine_vkGetPipelineCacheData},
     {"vkGetQueryPoolResults", &wine_vkGetQueryPoolResults},
     {"vkGetRenderAreaGranularity", &wine_vkGetRenderAreaGranularity},
+    {"vkGetSwapchainImagesKHR", &wine_vkGetSwapchainImagesKHR},
     {"vkInvalidateMappedMemoryRanges", &wine_vkInvalidateMappedMemoryRanges},
     {"vkMapMemory", &wine_vkMapMemory},
     {"vkMergePipelineCaches", &wine_vkMergePipelineCaches},
     {"vkQueueBindSparse", &wine_vkQueueBindSparse},
+    {"vkQueuePresentKHR", &wine_vkQueuePresentKHR},
     {"vkQueueSubmit", &wine_vkQueueSubmit},
     {"vkQueueWaitIdle", &wine_vkQueueWaitIdle},
     {"vkResetCommandBuffer", &wine_vkResetCommandBuffer},
@@ -1021,7 +1026,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
 static const struct vulkan_func vk_instance_dispatch_table[] =
 {
     {"vkCreateDevice", &wine_vkCreateDevice},
+    {"vkCreateWin32SurfaceKHR", &wine_vkCreateWin32SurfaceKHR},
     {"vkDestroyInstance", &wine_vkDestroyInstance},
+    {"vkDestroySurfaceKHR", &wine_vkDestroySurfaceKHR},
     {"vkEnumerateDeviceExtensionProperties", &wine_vkEnumerateDeviceExtensionProperties},
     {"vkEnumerateDeviceLayerProperties", &wine_vkEnumerateDeviceLayerProperties},
     {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
@@ -1032,6 +1039,11 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceProperties", &wine_vkGetPhysicalDeviceProperties},
     {"vkGetPhysicalDeviceQueueFamilyProperties", &wine_vkGetPhysicalDeviceQueueFamilyProperties},
     {"vkGetPhysicalDeviceSparseImageFormatProperties", &wine_vkGetPhysicalDeviceSparseImageFormatProperties},
+    {"vkGetPhysicalDeviceSurfaceCapabilitiesKHR", &wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR},
+    {"vkGetPhysicalDeviceSurfaceFormatsKHR", &wine_vkGetPhysicalDeviceSurfaceFormatsKHR},
+    {"vkGetPhysicalDeviceSurfacePresentModesKHR", &wine_vkGetPhysicalDeviceSurfacePresentModesKHR},
+    {"vkGetPhysicalDeviceSurfaceSupportKHR", &wine_vkGetPhysicalDeviceSurfaceSupportKHR},
+    {"vkGetPhysicalDeviceWin32PresentationSupportKHR", &wine_vkGetPhysicalDeviceWin32PresentationSupportKHR},
 };
 
 void *wine_vk_get_device_proc_addr(const char *name)

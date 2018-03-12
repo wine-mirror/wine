@@ -68,10 +68,27 @@ WINE_VULKAN_DRIVER_H = "../../include/wine/vulkan_driver.h"
 WINE_VULKAN_THUNKS_C = "vulkan_thunks.c"
 WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 
+# Extension enum values start at a certain offset (EXT_BASE).
+# Relative to the offset each extension has a block (EXT_BLOCK_SIZE)
+# of values.
+# Start for a given extension is:
+# EXT_BASE + (extension_number-1) * EXT_BLOCK_SIZE
+EXT_BASE = 1000000000
+EXT_BLOCK_SIZE = 1000
+
+# In general instance extensions can't be automatically generated
+# and need custom wrappers due to e.g. win32 / X11 specific code.
+# List of supported instance extensions.
+SUPPORTED_EXTENSIONS = [
+    "VK_KHR_surface",
+    "VK_KHR_win32_surface",
+    "VK_KHR_swapchain",
+]
+
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 2
+DRIVER_VERSION = 3
 
 # Table of functions for which we have a special implementation.
 # This are regular device / instance functions for which we need
@@ -96,6 +113,24 @@ FUNCTION_OVERRIDES = {
     # Device functions
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},
+
+    # VK_KHR_surface
+    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+
+    # VK_KHR_win32_surface
+    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+
+    # VK_KHR_swapchain
+    "vkAcquireNextImageKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
 }
 
 
@@ -356,6 +391,11 @@ class VkFunction(object):
 
     def needs_stub(self):
         """ Temporary function to limit script hacks until more code is implemented. """
+
+        # Temporary hack to pull in VkSwapChainCreateInfoKHR.
+        if self.name == "vkCreateSwapchainKHR":
+            return False
+
         if self.params[0].type != "VkPhysicalDevice":
             return True
 
@@ -1997,6 +2037,7 @@ class VkRegistry(object):
 
         # Pull in any required types and functions.
         self._parse_features(root)
+        self._parse_extensions(root)
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
@@ -2098,6 +2139,77 @@ class VkRegistry(object):
                     self.consts.append(VkConstant(value.attrib.get("name"), value.attrib.get("value")))
 
         self.enums = OrderedDict(sorted(enums.items()))
+
+    def _parse_extensions(self, root):
+        """ Parse extensions section and pull in any types and commands for this extensioin. """
+        extensions = []
+        exts = root.findall("./extensions/extension")
+        for ext in exts:
+            ext_name = ext.attrib["name"]
+
+            # Some extensions are not ready or have numbers reserved as a place holder.
+            if ext.attrib["supported"] == "disabled":
+                LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
+                continue
+
+            # We only support a handful of extensions for now through a whitelist.
+            if ext_name not in SUPPORTED_EXTENSIONS:
+                LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
+                continue
+
+            LOGGER.debug("Loading extension: {0}".format(ext_name))
+
+            # Extensions can add enum values to Core / extension enums, so add these.
+            enums = ext.findall("require/enum")
+            for enum_elem in enums:
+                if "bitpos" in enum_elem.keys():
+                    # We need to add an extra value to an existing enum type.
+                    # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
+                    type_name = enum_elem.attrib["extends"]
+                    enum = self.types[type_name]["data"]
+                    enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
+                elif "offset" in enum_elem.keys():
+                    ext_number = int(ext.attrib["number"])
+                    offset = int(enum_elem.attrib["offset"])
+                    value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
+
+                    # Deal with negative values.
+                    direction = enum_elem.attrib.get("dir")
+                    if direction is not None:
+                        value = -value
+
+                    type_name = enum_elem.attrib["extends"]
+                    enum = self.types[type_name]["data"]
+                    enum.add(VkEnumValue(enum_elem.attrib["name"], value))
+
+                elif "value" in enum_elem.keys():
+                    # For now skip, it mostly contains extension name and version info.
+                    continue
+                else:
+                    # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
+                    continue
+
+            # Store a list with extensions.
+            ext_type = ext.attrib["type"]
+            ext_info = {"name" : ext_name, "type" : ext_type}
+            extensions.append(ext_info)
+
+            commands = ext.findall("require/command")
+            if not commands:
+                continue
+
+            # Pull in any commands we need. We infer types to pull in from the command
+            # as well.
+            for command in commands:
+                cmd_name = command.attrib["name"]
+                self._mark_command_required(cmd_name)
+
+                # Set extension name on the function call as we were not aware of the
+                # name during initial parsing.
+                self.funcs[cmd_name].extension = ext_name
+
+        # Sort in alphabetical order.
+        self.extensions = sorted(extensions, key=lambda ext: ext["name"])
 
     def _parse_features(self, root):
         """ Parse the feature section, which describes Core commands and types needed. """
