@@ -11424,9 +11424,10 @@ static void test_resource_priority(void)
 static void test_swapchain_parameters(void)
 {
     IDirect3DDevice9 *device;
+    HRESULT hr, expected_hr;
     IDirect3D9 *d3d;
+    D3DCAPS9 caps;
     HWND window;
-    HRESULT hr;
     unsigned int i;
     D3DPRESENT_PARAMETERS present_parameters, present_parameters_windowed = {0}, present_parameters2;
     IDirect3DSwapChain9 *swapchain;
@@ -11490,6 +11491,9 @@ static void test_swapchain_parameters(void)
         DestroyWindow(window);
         return;
     }
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Failed to get device caps, hr %#x.\n", hr);
     IDirect3DDevice9_Release(device);
 
     present_parameters_windowed.BackBufferWidth = registry_mode.dmPelsWidth;
@@ -11557,6 +11561,54 @@ static void test_swapchain_parameters(void)
             hr = IDirect3DDevice9_Reset(device, &present_parameters_windowed);
             ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, test %u.\n", hr, i);
         }
+        IDirect3DDevice9_Release(device);
+    }
+
+    for (i = 0; i < 10; ++i)
+    {
+        memset(&present_parameters, 0, sizeof(present_parameters));
+        present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
+        present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
+        present_parameters.hDeviceWindow = window;
+        present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+        present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        present_parameters.Windowed = FALSE;
+        present_parameters.BackBufferCount = 2;
+
+        present_parameters.PresentationInterval = i;
+        switch (present_parameters.PresentationInterval)
+        {
+            case D3DPRESENT_INTERVAL_ONE:
+            case D3DPRESENT_INTERVAL_TWO:
+            case D3DPRESENT_INTERVAL_THREE:
+            case D3DPRESENT_INTERVAL_FOUR:
+                if (!(caps.PresentationIntervals & present_parameters.PresentationInterval))
+                    continue;
+                /* Fall through */
+            case D3DPRESENT_INTERVAL_DEFAULT:
+                expected_hr = D3D_OK;
+                break;
+            default:
+                expected_hr = D3DERR_INVALIDCALL;
+                break;
+        }
+
+        hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+                D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+        ok(hr == expected_hr, "Got unexpected hr %#x, test %u.\n", hr, i);
+        if (FAILED(hr))
+            continue;
+
+        hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+        ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x, test %u.\n", hr, i);
+
+        hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
+        ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x, test %u.\n", hr, i);
+        ok(present_parameters2.PresentationInterval == i,
+                "Got presentation interval %#x, expected %#x.\n",
+                present_parameters2.PresentationInterval, i);
+
+        IDirect3DSwapChain9_Release(swapchain);
         IDirect3DDevice9_Release(device);
     }
 
