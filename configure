@@ -1262,6 +1262,7 @@ enable_ext_ms_win_ras_rasapi32_l1_1_0
 enable_ext_ms_win_rtcore_gdi_devcaps_l1_1_0
 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
+enable_ext_ms_win_rtcore_ntuser_cursor_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_syscolors_l1_1_0
@@ -18620,6 +18621,7 @@ wine_fn_config_makefile dlls/ext-ms-win-ras-rasapi32-l1-1-0 enable_ext_ms_win_ra
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-devcaps-l1-1-0 enable_ext_ms_win_rtcore_gdi_devcaps_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-object-l1-1-0 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-rgn-l1-1-0 enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-cursor-l1-1-0 enable_ext_ms_win_rtcore_ntuser_cursor_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dc-access-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-syscolors-l1-1-0 enable_ext_ms_win_rtcore_ntuser_syscolors_l1_1_0
