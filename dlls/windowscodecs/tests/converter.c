@@ -663,7 +663,6 @@ static void check_bmp_format(IStream *stream, const struct bitmap_data *data)
 
     ok(bih.biSize == sizeof(bih), "Unexpected header size %d.\n", bih.biSize);
     ok(bih.biWidth == data->width, "Unexpected bitmap width %d.\n", bih.biWidth);
-todo_wine
     ok(bih.biHeight == data->height, "Unexpected bitmap height %d.\n", bih.biHeight);
     ok(bih.biPlanes == 1, "Unexpected planes count %d.\n", bih.biPlanes);
 
