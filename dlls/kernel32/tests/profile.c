@@ -956,6 +956,7 @@ static void test_WritePrivateProfileString(void)
     LPCSTR data;
     CHAR path[MAX_PATH];
     CHAR temp[MAX_PATH];
+    HANDLE file;
 
     SetLastError(0xdeadbeef);
     ret = WritePrivateProfileStringW(NULL, NULL, NULL, NULL);
@@ -1069,12 +1070,14 @@ static void test_WritePrivateProfileString(void)
        "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
     /* Relative paths are relative to X:\\%WINDIR% */
-    GetWindowsDirectoryA(temp, MAX_PATH);
-    GetTempFileNameA(temp, "win", 1, path);
-    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
+    GetWindowsDirectoryA(path, MAX_PATH);
+    strcat(path, "\\win1.tmp");
+    file = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
         skip("Not allowed to create a file in the Windows directory\n");
     else
     {
+        CloseHandle(file);
         DeleteFileA(path);
 
         data = "[App]\r\n"
