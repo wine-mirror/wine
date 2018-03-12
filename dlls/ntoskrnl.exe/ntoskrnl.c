@@ -2258,6 +2258,19 @@ static void ObReferenceObject( void *obj )
 
 
 /***********************************************************************
+ *           ObReferenceObjectByPointer   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObReferenceObjectByPointer(void *obj, ACCESS_MASK access,
+                                           POBJECT_TYPE type,
+                                           KPROCESSOR_MODE mode)
+{
+    FIXME("(%p, %x, %p, %d): stub\n", obj, access, type, mode);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           ObDereferenceObject   (NTOSKRNL.EXE.@)
  */
 void WINAPI ObDereferenceObject( void *obj )
