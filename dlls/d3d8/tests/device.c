@@ -7865,11 +7865,12 @@ static void test_resource_priority(void)
 
 static void test_swapchain_parameters(void)
 {
-    IDirect3DDevice8 *device;
-    IDirect3D8 *d3d;
     IDirect3DSurface8 *backbuffer;
+    IDirect3DDevice8 *device;
+    HRESULT hr, expected_hr;
+    IDirect3D8 *d3d;
+    D3DCAPS8 caps;
     HWND window;
-    HRESULT hr;
     unsigned int i, j;
     D3DPRESENT_PARAMETERS present_parameters, present_parameters_windowed = {0};
     static const struct
@@ -7933,6 +7934,8 @@ static void test_swapchain_parameters(void)
         DestroyWindow(window);
         return;
     }
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
     IDirect3DDevice8_Release(device);
 
     present_parameters_windowed.BackBufferWidth = registry_mode.dmPelsWidth;
@@ -8010,6 +8013,42 @@ static void test_swapchain_parameters(void)
             ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %x, test %u.\n", hr, i);
         }
         IDirect3DDevice8_Release(device);
+    }
+
+    for (i = 0; i < 10; ++i)
+    {
+        memset(&present_parameters, 0, sizeof(present_parameters));
+        present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
+        present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
+        present_parameters.hDeviceWindow = window;
+        present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+        present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        present_parameters.Windowed = FALSE;
+        present_parameters.BackBufferCount = 2;
+
+        present_parameters.FullScreen_PresentationInterval = i;
+        switch (present_parameters.FullScreen_PresentationInterval)
+        {
+            case D3DPRESENT_INTERVAL_ONE:
+            case D3DPRESENT_INTERVAL_TWO:
+            case D3DPRESENT_INTERVAL_THREE:
+            case D3DPRESENT_INTERVAL_FOUR:
+                if (!(caps.PresentationIntervals & present_parameters.FullScreen_PresentationInterval))
+                    continue;
+                /* Fall through */
+            case D3DPRESENT_INTERVAL_DEFAULT:
+                expected_hr = D3D_OK;
+                break;
+            default:
+                expected_hr = D3DERR_INVALIDCALL;
+                break;
+        }
+
+        hr = IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+                D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+        ok(hr == expected_hr, "Got unexpected hr %#x, test %u.\n", hr, i);
+        if (SUCCEEDED(hr))
+            IDirect3DDevice8_Release(device);
     }
 
     IDirect3D8_Release(d3d);
