@@ -88,6 +88,7 @@ struct ScriptControl {
     IOleClientSite *site;
     SIZEL extent;
     LONG timeout;
+    VARIANT_BOOL allow_ui;
 
     /* connection points */
     ConnectionPoint *cp_list;
@@ -825,15 +826,22 @@ static HRESULT WINAPI ScriptControl_put_Timeout(IScriptControl *iface, LONG time
 static HRESULT WINAPI ScriptControl_get_AllowUI(IScriptControl *iface, VARIANT_BOOL *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    *p = This->allow_ui;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_put_AllowUI(IScriptControl *iface, VARIANT_BOOL allow_ui)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%x)\n", This, allow_ui);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, allow_ui);
+
+    This->allow_ui = allow_ui;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_get_UseSafeSubset(IScriptControl *iface, VARIANT_BOOL *p)
@@ -1891,6 +1899,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->timeout = 10000;
     script_control->view_sink_flags = 0;
     script_control->view_sink = NULL;
+    script_control->allow_ui = VARIANT_TRUE;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
