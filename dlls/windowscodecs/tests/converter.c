@@ -632,9 +632,60 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
     }
 }
 
-static void check_bmp_format(IStream *stream, const WICPixelFormatGUID *format)
+static void check_bmp_format(IStream *stream, const struct bitmap_data *data)
 {
-    /* FIXME */
+    BITMAPFILEHEADER bfh;
+    BITMAPINFOHEADER bih;
+    HRESULT hr;
+    ULONG len;
+
+    hr = IStream_Read(stream, &bfh, sizeof(bfh), &len);
+    ok(hr == S_OK, "Failed to read file header, hr %#x.\n", hr);
+
+    hr = IStream_Read(stream, &bih, sizeof(bih), &len);
+    ok(hr == S_OK, "Failed to read file header, hr %#x.\n", hr);
+
+    ok(bfh.bfType == 0x4d42, "Unexpected header type, %#x.\n", bfh.bfType);
+    ok(bfh.bfSize != 0, "Unexpected bitmap size %d.\n", bfh.bfSize);
+    ok(bfh.bfReserved1 == 0, "Unexpected bfReserved1 field.\n");
+    ok(bfh.bfReserved2 == 0, "Unexpected bfReserved2 field.\n");
+
+    if (IsEqualGUID(data->format, &GUID_WICPixelFormat1bppIndexed)
+            || IsEqualGUID(data->format, &GUID_WICPixelFormat8bppIndexed))
+    {
+        /* TODO: test with actual palette size */
+        ok(bfh.bfOffBits > sizeof(bfh) + sizeof(bih), "Unexpected data offset %d, format %s.\n",
+            bfh.bfOffBits, wine_dbgstr_guid(data->format));
+    }
+    else
+        ok(bfh.bfOffBits == sizeof(bfh) + sizeof(bih), "Unexpected data offset %d, format %s.\n",
+            bfh.bfOffBits, wine_dbgstr_guid(data->format));
+
+    ok(bih.biSize == sizeof(bih), "Unexpected header size %d.\n", bih.biSize);
+    ok(bih.biWidth == data->width, "Unexpected bitmap width %d.\n", bih.biWidth);
+todo_wine
+    ok(bih.biHeight == data->height, "Unexpected bitmap height %d.\n", bih.biHeight);
+    ok(bih.biPlanes == 1, "Unexpected planes count %d.\n", bih.biPlanes);
+
+    if (IsEqualGUID(data->format, &GUID_WICPixelFormat1bppIndexed))
+        ok(bih.biBitCount == 1, "Unexpected bit count %u, format %s.\n", bih.biBitCount,
+            wine_dbgstr_guid(data->format));
+    else if (IsEqualGUID(data->format, &GUID_WICPixelFormat8bppIndexed))
+        ok(bih.biBitCount == 8, "Unexpected bit count %u, format %s.\n", bih.biBitCount,
+            wine_dbgstr_guid(data->format));
+    else if (IsEqualGUID(data->format, &GUID_WICPixelFormat32bppBGR))
+        ok(bih.biBitCount == 32, "Unexpected bit count %u, format %s.\n", bih.biBitCount,
+            wine_dbgstr_guid(data->format));
+
+    ok(bih.biCompression == BI_RGB, "Unexpected compression mode %u.\n", bih.biCompression);
+todo_wine
+    ok(bih.biSizeImage == 0, "Unexpected image size %d.\n", bih.biSizeImage);
+    ok(bih.biXPelsPerMeter == 3780 || broken(bih.biXPelsPerMeter == 0) /* XP */, "Unexpected horz resolution %d.\n",
+            bih.biXPelsPerMeter);
+    ok(bih.biYPelsPerMeter == 3780 || broken(bih.biYPelsPerMeter == 0) /* XP */, "Unexpected vert resolution %d.\n",
+            bih.biYPelsPerMeter);
+
+    /* FIXME: test actual data */
 }
 
 static void check_tiff_format(IStream *stream, const WICPixelFormatGUID *format)
@@ -722,7 +773,7 @@ static void check_png_format(IStream *stream, const WICPixelFormatGUID *format)
         ok(0, "unknown PNG pixel format %s\n", wine_dbgstr_guid(format));
 }
 
-static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WICPixelFormatGUID *format)
+static void check_bitmap_format(IStream *stream, const CLSID *encoder, const struct bitmap_data *dst)
 {
     HRESULT hr;
     LARGE_INTEGER pos;
@@ -732,11 +783,11 @@ static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WIC
     ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
 
     if (IsEqualGUID(encoder, &CLSID_WICPngEncoder))
-        check_png_format(stream, format);
+        check_png_format(stream, dst->format);
     else if (IsEqualGUID(encoder, &CLSID_WICBmpEncoder))
-        check_bmp_format(stream, format);
+        check_bmp_format(stream, dst);
     else if (IsEqualGUID(encoder, &CLSID_WICTiffEncoder))
-        check_tiff_format(stream, format);
+        check_tiff_format(stream, dst->format);
     else
         ok(0, "unknown encoder %s\n", wine_dbgstr_guid(encoder));
 
@@ -972,7 +1023,7 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                 hr = IWICBitmapEncoder_Commit(encoder);
                 ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
 
-                check_bitmap_format(stream, clsid_encoder, dsts[0]->format);
+                check_bitmap_format(stream, clsid_encoder, dsts[0]);
             }
 
             if (SUCCEEDED(hr))
