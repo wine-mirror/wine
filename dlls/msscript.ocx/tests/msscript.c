@@ -1227,6 +1227,33 @@ static void test_AddObject(void)
     SysFreeString(objname);
 }
 
+static void test_AllowUI(void)
+{
+    IScriptControl *sc;
+    VARIANT_BOOL allow;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_AllowUI(sc, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_AllowUI(sc, &allow);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(allow == VARIANT_TRUE, "got %d\n", allow);
+
+    hr = IScriptControl_put_AllowUI(sc, VARIANT_FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_AllowUI(sc, &allow);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(allow == VARIANT_FALSE, "got %d\n", allow);
+
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1253,6 +1280,7 @@ START_TEST(msscript)
     test_timeout();
     test_Reset();
     test_AddObject();
+    test_AllowUI();
 
     CoUninitialize();
 }
