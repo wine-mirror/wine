@@ -38,6 +38,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
  */
 #define WINE_VULKAN_ICD_VERSION 4
 
+/* All Vulkan structures use this structure for the first elements. */
+struct wine_vk_structure_header
+{
+    VkStructureType sType;
+    const void *pNext;
+};
+
 static void *wine_vk_get_global_proc_addr(const char *name);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
@@ -72,6 +79,58 @@ static BOOL wine_vk_init(void)
 
     ReleaseDC(0, hdc);
     return TRUE;
+}
+
+/* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
+ * This function takes care of extensions handled at winevulkan layer, a Wine graphics
+ * driver is responsible for handling e.g. surface extensions.
+ */
+static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
+        VkInstanceCreateInfo *dst)
+{
+    dst->sType = src->sType;
+    dst->flags = src->flags;
+    dst->pApplicationInfo = src->pApplicationInfo;
+
+    /* Application and loader can pass in a chain of extensions through pNext.
+     * We can't blindy pass these through as often these contain callbacks or
+     * they can even be pass structures for loader / ICD internal use. For now
+     * we ignore everything in pNext chain, but we print FIXMEs.
+     */
+    if (src->pNext)
+    {
+        const struct wine_vk_structure_header *header;
+
+        for (header = src->pNext; header; header = header->pNext)
+        {
+            switch (header->sType)
+            {
+                case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
+                    /* Can be used to register new dispatchable object types
+                     * to the loader. We should ignore it as it will confuse the
+                     * host its loader.
+                     */
+                    break;
+
+                default:
+                    FIXME("Application requested a linked structure of type %d\n", header->sType);
+            }
+        }
+    }
+    /* For now don't support anything. */
+    dst->pNext = NULL;
+
+    /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
+     * filter this data out as well.
+     */
+    dst->enabledLayerCount = 0;
+    dst->ppEnabledLayerNames = NULL;
+
+    /* TODO: convert non-WSI win32 extensions here to host specific ones. */
+    dst->ppEnabledExtensionNames = src->ppEnabledExtensionNames;
+    dst->enabledExtensionCount = src->enabledExtensionCount;
+
+    return VK_SUCCESS;
 }
 
 /* Helper function which stores wrapped physical devices in the instance object. */
@@ -229,6 +288,7 @@ static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
     struct VkInstance_T *object = NULL;
+    VkInstanceCreateInfo create_info_host;
     VkResult res;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
@@ -245,7 +305,14 @@ static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    res = vk_funcs->p_vkCreateInstance(create_info, NULL /* allocator */, &object->instance);
+    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to convert instance create info, res=%d\n", res);
+        goto err;
+    }
+
+    res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
