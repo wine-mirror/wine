@@ -1373,7 +1373,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
-    if (!(scripts = heap_alloc(cInChars * sizeof(*scripts))))
+    if (!(scripts = heap_calloc(cInChars, sizeof(*scripts))))
         return E_OUTOFMEMORY;
 
     for (i = 0; i < cInChars; i++)
@@ -1464,16 +1464,13 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
     if (psState && psControl)
     {
-        levels = heap_alloc_zero(cInChars * sizeof(WORD));
-        if (!levels)
+        if (!(levels = heap_calloc(cInChars, sizeof(*levels))))
             goto nomemory;
 
-        overrides = heap_alloc_zero(cInChars * sizeof(WORD));
-        if (!overrides)
+        if (!(overrides = heap_calloc(cInChars, sizeof(*overrides))))
             goto nomemory;
 
-        layout_levels = heap_alloc_zero(cInChars * sizeof(WORD));
-        if (!layout_levels)
+        if (!(layout_levels = heap_calloc(cInChars, sizeof(*layout_levels))))
             goto nomemory;
 
         if (psState->fOverrideDirection)
@@ -1519,8 +1516,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             static const WCHAR math_punc[] = {'#','$','%','+',',','-','.','/',':',0x2212, 0x2044, 0x00a0,0};
             static const WCHAR repeatable_math_punc[] = {'#','$','%','+','-','/',0x2212, 0x2044,0};
 
-            strength = heap_alloc_zero(cInChars * sizeof(WORD));
-            if (!strength)
+            if (!(strength = heap_calloc(cInChars, sizeof(*strength))))
                 goto nomemory;
             BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
 
