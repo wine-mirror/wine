@@ -434,7 +434,7 @@
 @ stub IoRegisterLastChanceShutdownNotification
 @ stdcall IoRegisterPlugPlayNotification(long long ptr ptr ptr ptr ptr)
 @ stdcall IoRegisterShutdownNotification(ptr)
-@ stdcall IoReleaseCancelSpinLock(ptr)
+@ stdcall IoReleaseCancelSpinLock(long)
 @ stub IoReleaseRemoveLockAndWaitEx
 @ stub IoReleaseRemoveLockEx
 @ stub IoReleaseVpbSpinLock
