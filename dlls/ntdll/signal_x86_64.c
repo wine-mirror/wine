@@ -2917,6 +2917,12 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:   /* Breakpoint exception */
+        /* Check if this is actuallly icebp instruction */
+        if (((unsigned char *)rec->ExceptionAddress)[-1] == 0xF1)
+        {
+            rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
+            break;
+        }
         rec->ExceptionAddress = (char *)rec->ExceptionAddress - 1;  /* back up over the int3 instruction */
         /* fall through */
     default:

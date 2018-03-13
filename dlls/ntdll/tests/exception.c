@@ -2292,10 +2292,8 @@ static const struct exception
 /* 35 */
     { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffffffffffff; ret */
       0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffffffffffff } },
-#if 0
     { { 0xf1, 0x90, 0xc3 },  /* icebp; nop; ret */
       1, 1, STATUS_SINGLE_STEP, 0 },
-#endif
     { { 0xcd, 0x2c, 0xc3 },
       0, 2, STATUS_ASSERTION_FAILURE, 0 },
 };
