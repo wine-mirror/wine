@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/library.h"
+#include "x11drv.h"
 
 /* We only want host compatible structures and don't need alignment. */
 #define WINE_VK_ALIGN(x)
@@ -43,8 +44,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
+#define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
+
+struct wine_vk_surface
+{
+    Window window;
+    VkSurfaceKHR surface; /* native surface */
+};
+
+typedef struct VkXlibSurfaceCreateInfoKHR
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkXlibSurfaceCreateFlagsKHR flags;
+    Display *dpy;
+    Window window;
+} VkXlibSurfaceCreateInfoKHR;
+
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
+static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
+static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 
@@ -67,7 +88,9 @@ static BOOL wine_vk_init(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
 LOAD_FUNCPTR(vkCreateInstance)
+LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
 LOAD_FUNCPTR(vkDestroyInstance)
+LOAD_FUNCPTR(vkDestroySurfaceKHR)
 LOAD_FUNCPTR(vkGetDeviceProcAddr)
 LOAD_FUNCPTR(vkGetInstanceProcAddr)
 #undef LOAD_FUNCPTR
@@ -123,6 +146,20 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     return VK_SUCCESS;
 }
 
+static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface *surface)
+{
+    if (!surface)
+        return;
+
+    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
+    pvkDestroySurfaceKHR(instance, surface->surface, NULL /* allocator */);
+
+    if (surface->window)
+        XDestroyWindow(gdi_display, surface->window);
+
+    heap_free(surface);
+}
+
 static VkResult X11DRV_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
         uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *index)
 {
@@ -172,8 +209,57 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         const VkWin32SurfaceCreateInfoKHR *create_info,
         const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
 {
-    FIXME("stub: %p %p %p %p\n", instance, create_info, allocator, surface);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    VkResult res;
+    VkXlibSurfaceCreateInfoKHR create_info_host;
+    struct wine_vk_surface *x11_surface;
+
+    TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    /* TODO: support child window rendering. */
+    if (GetAncestor(create_info->hwnd, GA_PARENT) != GetDesktopWindow())
+    {
+        FIXME("Application requires child window rendering, which is not implemented yet!\n");
+        return VK_ERROR_INCOMPATIBLE_DRIVER;
+    }
+
+    x11_surface = heap_alloc_zero(sizeof(*x11_surface));
+    if (!x11_surface)
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
+    if (!x11_surface->window)
+    {
+        ERR("Failed to allocate client window for hwnd=%p\n", create_info->hwnd);
+
+        /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto err;
+    }
+
+    create_info_host.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+    create_info_host.pNext = NULL;
+    create_info_host.flags = 0; /* reserved */
+    create_info_host.dpy = gdi_display;
+    create_info_host.window = x11_surface->window;
+
+    res = pvkCreateXlibSurfaceKHR(instance, &create_info_host, NULL /* allocator */, &x11_surface->surface);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to create Xlib surface, res=%d\n", res);
+        goto err;
+    }
+
+    *surface = (uintptr_t)x11_surface;
+
+    TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
+    return VK_SUCCESS;
+
+err:
+    wine_vk_surface_destroy(instance, x11_surface);
+    return res;
 }
 
 static void X11DRV_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *allocator)
