@@ -2354,8 +2354,6 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     trace( "exception %u: %x flags:%x addr:%p\n",
            entry, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
 
-todo_wine_if( rec->ExceptionCode != except->status &&
-              rec->ExceptionCode != except->alt_status )
     ok( rec->ExceptionCode == except->status ||
         (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
         "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );

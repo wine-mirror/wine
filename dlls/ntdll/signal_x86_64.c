@@ -2809,6 +2809,9 @@ static inline BOOL handle_interrupt( unsigned int interrupt, EXCEPTION_RECORD *r
 {
     switch(interrupt)
     {
+    case 0x2c:
+        rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
+        return TRUE;
     case 0x2d:
         context->Rip += 3;
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
