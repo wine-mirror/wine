@@ -77,6 +77,12 @@ static const struct VkExtensionProperties winex11_vk_instance_extensions[] =
     { "VK_KHR_win32_surface", 1},
 };
 
+/* Helper function to convert VkSurfaceKHR (uint64_t) to a surface pointer. */
+static inline struct wine_vk_surface * surface_from_handle(VkSurfaceKHR handle)
+{
+    return ((struct wine_vk_surface *)(uintptr_t)handle);
+}
+
 static BOOL wine_vk_init(void)
 {
     static BOOL init_done = FALSE;
@@ -277,7 +283,14 @@ static void X11DRV_vkDestroyInstance(VkInstance instance, const VkAllocationCall
 static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
         const VkAllocationCallbacks *allocator)
 {
-    FIXME("stub: %p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
+    struct wine_vk_surface *x11_surface = surface_from_handle(surface);
+
+    TRACE("%p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    wine_vk_surface_destroy(instance, x11_surface);
 }
 
 static void X11DRV_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
