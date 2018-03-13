@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "taskschd.h"
 #include "mstask.h"
 #include "mstask_private.h"
 #include "wine/debug.h"

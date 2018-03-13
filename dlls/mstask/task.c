@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Google (Roy Shea)
+ * Copyright (C) 2018 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "taskschd.h"
 #include "mstask.h"
 #include "mstask_private.h"
 #include "wine/debug.h"
@@ -34,7 +36,7 @@ typedef struct
     ITask ITask_iface;
     IPersistFile IPersistFile_iface;
     LONG ref;
-    LPWSTR taskName;
+    IRegisteredTask *regtask;
     LPWSTR applicationName;
     LPWSTR parameters;
     LPWSTR comment;
@@ -58,7 +60,6 @@ static void TaskDestructor(TaskImpl *This)
     HeapFree(GetProcessHeap(), 0, This->accountName);
     HeapFree(GetProcessHeap(), 0, This->comment);
     HeapFree(GetProcessHeap(), 0, This->parameters);
-    HeapFree(GetProcessHeap(), 0, This->taskName);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
 }
@@ -761,28 +762,49 @@ static const IPersistFileVtbl MSTASK_IPersistFileVtbl =
     MSTASK_IPersistFile_GetCurFile
 };
 
-HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
+HRESULT TaskConstructor(ITaskFolder *folder, const WCHAR *task_name, ITask **task, BOOL create)
 {
     TaskImpl *This;
-    int n;
+    IRegisteredTask *regtask;
+    BSTR bstr;
+    HRESULT hr;
 
-    TRACE("(%s, %p)\n", debugstr_w(pwszTaskName), ppObj);
+    TRACE("(%s, %p)\n", debugstr_w(task_name), task);
+
+    bstr = SysAllocString(task_name);
+    if (!bstr) return E_OUTOFMEMORY;
+
+    if (create)
+    {
+        static const char xml_tmplate[] =
+            "<?xml version=\"1.0\"?>\n"
+            "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+            "</Task>\n";
+        WCHAR xmlW[sizeof(xml_tmplate)];
+        VARIANT v_null;
+
+        MultiByteToWideChar(CP_ACP, 0, xml_tmplate, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+
+        V_VT(&v_null) = VT_NULL;
+        hr = ITaskFolder_RegisterTask(folder, bstr, xmlW, TASK_CREATE | TASK_UPDATE,
+                                      v_null, v_null, TASK_LOGON_NONE, v_null, &regtask);
+    }
+    else
+        hr = ITaskFolder_GetTask(folder, bstr, &regtask);
+    SysFreeString(bstr);
+    if (hr != S_OK) return hr;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
+    {
+        IRegisteredTask_Release(regtask);
         return E_OUTOFMEMORY;
+    }
 
     This->ITask_iface.lpVtbl = &MSTASK_ITaskVtbl;
     This->IPersistFile_iface.lpVtbl = &MSTASK_IPersistFileVtbl;
     This->ref = 1;
-    n = (lstrlenW(pwszTaskName) + 1) * sizeof(WCHAR);
-    This->taskName = HeapAlloc(GetProcessHeap(), 0, n);
-    if (!This->taskName)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
-    lstrcpyW(This->taskName, pwszTaskName);
+    This->regtask = regtask;
     This->applicationName = NULL;
     This->parameters = NULL;
     This->comment = NULL;
@@ -791,7 +813,7 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
 
-    *ppObj = &This->ITask_iface;
+    *task = &This->ITask_iface;
     InterlockedIncrement(&dll_ref);
     return S_OK;
 }

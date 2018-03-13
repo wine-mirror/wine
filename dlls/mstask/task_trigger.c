@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "winternl.h"
+#include "taskschd.h"
 #include "mstask.h"
 #include "mstask_private.h"
 #include "wine/debug.h"

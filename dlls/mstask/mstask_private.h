@@ -26,6 +26,6 @@ extern ClassFactoryImpl MSTASK_ClassFactory DECLSPEC_HIDDEN;
 
 extern HRESULT TaskTriggerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
 extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
-extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj) DECLSPEC_HIDDEN;
+extern HRESULT TaskConstructor(ITaskFolder *folder, const WCHAR *task_name, ITask **task, BOOL create) DECLSPEC_HIDDEN;
 
 #endif /* __MSTASK_PRIVATE_H__ */
