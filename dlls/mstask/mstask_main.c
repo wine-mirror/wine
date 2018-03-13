@@ -16,14 +16,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdio.h>
+#include <stdarg.h>
 
-#include "mstask_private.h"
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "rpcproxy.h"
-
+#include "mstask.h"
+#include "mstask_private.h"
 #include "wine/debug.h"
-
 
 WINE_DEFAULT_DEBUG_CHANNEL(mstask);
 

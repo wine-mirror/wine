@@ -1,5 +1,5 @@
 MODULE    = mstask.dll
-IMPORTS   = uuid ole32
+IMPORTS   = ole32
 
 C_SRCS = \
 	factory.c \

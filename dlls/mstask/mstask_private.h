@@ -19,16 +19,6 @@
 #ifndef __MSTASK_PRIVATE_H__
 #define __MSTASK_PRIVATE_H__
 
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "ole2.h"
-#include "mstask.h"
-
 extern LONG dll_ref DECLSPEC_HIDDEN;
 
 typedef struct ClassFactoryImpl ClassFactoryImpl;

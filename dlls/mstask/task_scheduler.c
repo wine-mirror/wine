@@ -16,7 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "corerror.h"
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "initguid.h"
+#include "objbase.h"
+#include "mstask.h"
 #include "mstask_private.h"
 #include "wine/debug.h"
 
@@ -268,8 +276,8 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(
 {
     TRACE("%p, %s, %s, %p: stub\n", iface, debugstr_w(pwszName),
             debugstr_guid(riid), ppunk);
-    FIXME("Partial stub always returning COR_E_FILENOTFOUND\n");
-    return COR_E_FILENOTFOUND;
+    FIXME("Partial stub always returning ERROR_FILE_NOT_FOUND\n");
+    return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(
