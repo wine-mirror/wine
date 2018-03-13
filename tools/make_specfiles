@@ -92,6 +92,10 @@ my @dll_groups =
   "d3dx10_33",
  ],
  [
+  "d3dx11_43",
+  "d3dx11_42",
+ ],
+ [
   "xinput1_3",
   "xinput1_4",
   "xinput1_2",
