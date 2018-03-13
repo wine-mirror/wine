@@ -377,6 +377,7 @@ my @dll_groups =
   "ext-ms-win-rtcore-ntuser-dc-access-l1-1-0",
   "ext-ms-win-rtcore-ntuser-dpi-l1-1-0",
   "ext-ms-win-rtcore-ntuser-dpi-l1-2-0",
+  "ext-ms-win-rtcore-ntuser-rawinput-l1-1-0",
   "ext-ms-win-rtcore-ntuser-syscolors-l1-1-0",
   "ext-ms-win-rtcore-ntuser-sysparams-l1-1-0",
  ],
