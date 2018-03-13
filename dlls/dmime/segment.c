@@ -1001,35 +1001,6 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_C
   return S_OK;
 }
 
-static HRESULT load_wave(IStream *pClonedStream, IDirectMusicObject **ppWaveObject)
-{
-  HRESULT hr = E_FAIL;
-  IPersistStream* pPersistStream = NULL;
-  
-  hr = CoCreateInstance (&CLSID_DirectSoundWave, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*) ppWaveObject);
-  if (FAILED(hr)) {
-    ERR(": could not create object\n");
-    return hr;
-  }
-  /* acquire PersistStream interface */
-  hr = IDirectMusicObject_QueryInterface (*ppWaveObject, &IID_IPersistStream, (LPVOID*) &pPersistStream);
-  if (FAILED(hr)) {
-    ERR(": could not acquire IPersistStream\n");
-    return hr;
-  }
-  /* load */
-  hr = IPersistStream_Load (pPersistStream, pClonedStream);
-  if (FAILED(hr)) {
-    ERR(": failed to load object\n");
-    return hr;
-  }
-  
-  /* release all loading-related stuff */
-  IPersistStream_Release (pPersistStream);
-
-  return S_OK;
-}
-
 static inline IDirectMusicSegment8Impl *impl_from_IPersistStream(IPersistStream *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicSegment8Impl, dmobj.IPersistStream_iface);
@@ -1064,25 +1035,7 @@ static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *pS
       break;
     }
     case mmioFOURCC('W','A','V','E'): {
-      LPSTREAM pClonedStream = NULL;	
-      IDirectMusicObject* pWave = NULL;
-
-      FIXME_(dmfile)(": WAVE form (loading to be checked)\n");
-
-      IStream_Clone (pStm, &pClonedStream);
-	
-      liMove.QuadPart = - (LONGLONG)(sizeof(FOURCC) * 2 + sizeof(DWORD));
-      IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-
-      hr = load_wave(pClonedStream, &pWave);
-      if (FAILED(hr)) {
-	ERR(": could not load track\n");
-	return hr;
-      }
-      IStream_Release (pClonedStream);
-      
-      IDirectMusicTrack_Release(pWave); pWave = NULL; /* now we can release at as it inserted */
-
+      FIXME(": WAVE form loading not implemented\n");
       liMove.QuadPart = StreamSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
       break;      
