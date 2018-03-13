@@ -111,6 +111,36 @@ typedef struct _JUMP_BUFFER
     SETJMP_FLOAT128  Xmm15;
 } _JUMP_BUFFER;
 
+typedef union _UNWIND_CODE
+{
+    struct
+    {
+        BYTE CodeOffset;
+        BYTE UnwindOp : 4;
+        BYTE OpInfo   : 4;
+    } s;
+    USHORT FrameOffset;
+} UNWIND_CODE;
+
+typedef struct _UNWIND_INFO
+{
+    BYTE Version       : 3;
+    BYTE Flags         : 5;
+    BYTE SizeOfProlog;
+    BYTE CountOfCodes;
+    BYTE FrameRegister : 4;
+    BYTE FrameOffset   : 4;
+    UNWIND_CODE UnwindCode[1]; /* actually CountOfCodes (aligned) */
+/*
+ *  union
+ *  {
+ *      OPTIONAL ULONG ExceptionHandler;
+ *      OPTIONAL ULONG FunctionEntry;
+ *  };
+ *  OPTIONAL ULONG ExceptionData[];
+ */
+} UNWIND_INFO;
+
 static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
@@ -2150,6 +2180,257 @@ static void test___C_specific_handler(void)
     ok(dispatch.ScopeIndex == 1, "dispatch.ScopeIndex = %d\n", dispatch.ScopeIndex);
 }
 
+/* This is heavily based on the i386 exception tests. */
+static const struct exception
+{
+    BYTE     code[18];      /* asm code */
+    BYTE     offset;        /* offset of faulting instruction */
+    BYTE     length;        /* length of faulting instruction */
+    NTSTATUS status;        /* expected status code */
+    DWORD    nb_params;     /* expected number of parameters */
+    ULONG64  params[4];     /* expected parameters */
+    NTSTATUS alt_status;    /* alternative status code */
+    DWORD    alt_nb_params; /* alternative number of parameters */
+    ULONG64  alt_params[4]; /* alternative parameters */
+} exceptions[] =
+{
+/* 0 */
+    /* test some privileged instructions */
+    { { 0xfb, 0xc3 },  /* 0: sti; ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x6c, 0xc3 },  /* 1: insb (%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x6d, 0xc3 },  /* 2: insl (%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x6e, 0xc3 },  /* 3: outsb (%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x6f, 0xc3 },  /* 4: outsl (%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+/* 5 */
+    { { 0xe4, 0x11, 0xc3 },  /* 5: inb $0x11,%al; ret */
+      0, 2, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xe5, 0x11, 0xc3 },  /* 6: inl $0x11,%eax; ret */
+      0, 2, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xe6, 0x11, 0xc3 },  /* 7: outb %al,$0x11; ret */
+      0, 2, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xe7, 0x11, 0xc3 },  /* 8: outl %eax,$0x11; ret */
+      0, 2, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xed, 0xc3 },  /* 9: inl (%dx),%eax; ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+/* 10 */
+    { { 0xee, 0xc3 },  /* 10: outb %al,(%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xef, 0xc3 },  /* 11: outl %eax,(%dx); ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xf4, 0xc3 },  /* 12: hlt; ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0xfa, 0xc3 },  /* 13: cli; ret */
+      0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+
+    /* test iret to invalid selector */
+    { { 0x6a, 0x00, 0x6a, 0x00, 0x6a, 0x00, 0xcf, 0x83, 0xc4, 0x18, 0xc3 },
+      /* 15: pushq $0; pushq $0; pushq $0; iret; addl $24,%esp; ret */
+      6, 1, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffffffffffff } },
+/* 15 */
+    /* test loading an invalid selector */
+    { { 0xb8, 0xef, 0xbe, 0x00, 0x00, 0x8e, 0xe8, 0xc3 },  /* 16: mov $beef,%ax; mov %ax,%gs; ret */
+      5, 2, STATUS_ACCESS_VIOLATION, 2, { 0, 0xbee8 } }, /* 0xbee8 or 0xffffffff */
+
+    /* test overlong instruction (limit is 15 bytes) */
+    { { 0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0xfa,0xc3 },
+      0, 16, STATUS_ILLEGAL_INSTRUCTION, 0, { 0 },
+      STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffffffffffff } },
+
+    /* test invalid interrupt */
+    { { 0xcd, 0xff, 0xc3 },   /* int $0xff; ret */
+      0, 2, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffffffffffff } },
+
+    /* test moves to/from Crx */
+    { { 0x0f, 0x20, 0xc0, 0xc3 },  /* movl %cr0,%eax; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x20, 0xe0, 0xc3 },  /* movl %cr4,%eax; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+/* 20 */
+    { { 0x0f, 0x22, 0xc0, 0xc3 },  /* movl %eax,%cr0; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x22, 0xe0, 0xc3 },  /* movl %eax,%cr4; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+
+    /* test moves to/from Drx */
+    { { 0x0f, 0x21, 0xc0, 0xc3 },  /* movl %dr0,%eax; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x21, 0xc8, 0xc3 },  /* movl %dr1,%eax; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x21, 0xf8, 0xc3 },  /* movl %dr7,%eax; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+/* 25 */
+    { { 0x0f, 0x23, 0xc0, 0xc3 },  /* movl %eax,%dr0; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x23, 0xc8, 0xc3 },  /* movl %eax,%dr1; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+    { { 0x0f, 0x23, 0xf8, 0xc3 },  /* movl %eax,%dr7; ret */
+      0, 3, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+
+    /* test memory reads */
+    { { 0xa1, 0xfc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffffffffffc,%eax; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffffffffffc } },
+    { { 0xa1, 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffffffffffd,%eax; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffffffffffd } },
+/* 30 */
+    { { 0xa1, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffffffffffe,%eax; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffffffffffe } },
+    { { 0xa1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xffffffffffffffff,%eax; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffffffffffff } },
+
+    /* test memory writes */
+    { { 0xa3, 0xfc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffffffffffc; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffffffffffc } },
+    { { 0xa3, 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffffffffffd; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffffffffffd } },
+    { { 0xa3, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffffffffffe; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffffffffffe } },
+/* 35 */
+    { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffffffffffff; ret */
+      0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffffffffffff } },
+#if 0
+    { { 0xf1, 0x90, 0xc3 },  /* icebp; nop; ret */
+      1, 1, STATUS_SINGLE_STEP, 0 },
+#endif
+    { { 0xcd, 0x2c, 0xc3 },
+      0, 2, STATUS_ASSERTION_FAILURE, 0 },
+};
+
+static int got_exception;
+
+static void run_exception_test(void *handler, const void* context,
+                               const void *code, unsigned int code_size,
+                               DWORD access)
+{
+    unsigned char buf[8 + 6 + 8 + 8];
+    RUNTIME_FUNCTION runtime_func;
+    UNWIND_INFO *unwind = (UNWIND_INFO *)buf;
+    void (*func)(void) = code_mem;
+    DWORD oldaccess, oldaccess2;
+
+    runtime_func.BeginAddress = 0;
+    runtime_func.EndAddress = code_size;
+    runtime_func.UnwindData = 0x1000;
+
+    unwind->Version = 1;
+    unwind->Flags = UNW_FLAG_EHANDLER;
+    unwind->SizeOfProlog = 0;
+    unwind->CountOfCodes = 0;
+    unwind->FrameRegister = 0;
+    unwind->FrameOffset = 0;
+    *(ULONG *)&buf[4] = 0x1010;
+    *(const void **)&buf[8] = context;
+
+    /* jmp near */
+    buf[16] = 0xff;
+    buf[17] = 0x25;
+    *(ULONG *)&buf[18] = 0;
+    *(void **)&buf[22] = handler;
+
+    memcpy((unsigned char *)code_mem + 0x1000, buf, sizeof(buf));
+    memcpy(code_mem, code, code_size);
+    if(access)
+        VirtualProtect(code_mem, code_size, access, &oldaccess);
+
+    pRtlAddFunctionTable(&runtime_func, 1, (ULONG_PTR)code_mem);
+    func();
+    pRtlDeleteFunctionTable(&runtime_func);
+
+    if(access)
+        VirtualProtect(code_mem, code_size, oldaccess, &oldaccess2);
+}
+
+static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                      CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    const struct exception *except = *(const struct exception **)(dispatcher->HandlerData);
+    unsigned int i, parameter_count, entry = except - exceptions;
+
+    got_exception++;
+    trace( "exception %u: %x flags:%x addr:%p\n",
+           entry, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+
+todo_wine_if( rec->ExceptionCode != except->status &&
+              rec->ExceptionCode != except->alt_status )
+    ok( rec->ExceptionCode == except->status ||
+        (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
+        "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );
+    ok( context->Rip == (DWORD_PTR)code_mem + except->offset,
+        "%u: Unexpected eip %#lx/%#lx\n", entry,
+        context->Rip, (DWORD_PTR)code_mem + except->offset );
+    ok( rec->ExceptionAddress == (char*)context->Rip ||
+        (rec->ExceptionCode == STATUS_BREAKPOINT && rec->ExceptionAddress == (char*)context->Rip + 1),
+        "%u: Unexpected exception address %p/%p\n", entry,
+        rec->ExceptionAddress, (char*)context->Rip );
+
+    if (except->status == STATUS_BREAKPOINT && is_wow64)
+        parameter_count = 1;
+    else if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
+        parameter_count = except->nb_params;
+    else
+        parameter_count = except->alt_nb_params;
+
+todo_wine_if( rec->NumberParameters != parameter_count )
+    ok( rec->NumberParameters == parameter_count,
+        "%u: Unexpected parameter count %u/%u\n", entry, rec->NumberParameters, parameter_count );
+
+    /* Most CPUs (except Intel Core apparently) report a segment limit violation */
+    /* instead of page faults for accesses beyond 0xffffffffffffffff */
+    if (except->nb_params == 2 && except->params[1] >= 0xfffffffffffffffd)
+    {
+        if (rec->ExceptionInformation[0] == 0 && rec->ExceptionInformation[1] == 0xffffffffffffffff)
+            goto skip_params;
+    }
+
+    /* Seems that both 0xbee8 and 0xfffffffffffffffff can be returned in windows */
+    if (except->nb_params == 2 && rec->NumberParameters == 2
+        && except->params[1] == 0xbee8 && rec->ExceptionInformation[1] == 0xffffffffffffffff
+        && except->params[0] == rec->ExceptionInformation[0])
+    {
+        goto skip_params;
+    }
+
+    if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
+    {
+        for (i = 0; i < rec->NumberParameters; i++)
+            ok( rec->ExceptionInformation[i] == except->params[i],
+                "%u: Wrong parameter %d: %lx/%lx\n",
+                entry, i, rec->ExceptionInformation[i], except->params[i] );
+    }
+    else
+    {
+        for (i = 0; i < rec->NumberParameters; i++)
+            ok( rec->ExceptionInformation[i] == except->alt_params[i],
+                "%u: Wrong parameter %d: %lx/%lx\n",
+                entry, i, rec->ExceptionInformation[i], except->alt_params[i] );
+    }
+
+skip_params:
+    /* don't handle exception if it's not the address we expected */
+    if (context->Rip != (DWORD_PTR)code_mem + except->offset) return ExceptionContinueSearch;
+
+    context->Rip += except->length;
+    return ExceptionContinueExecution;
+}
+
+static void test_prot_fault(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); i++)
+    {
+        got_exception = 0;
+        run_exception_test(handler, &exceptions[i], &exceptions[i].code,
+                           sizeof(exceptions[i].code), 0);
+        ok( got_exception == (exceptions[i].status != 0),
+            "%u: bad exception count %d\n", i, got_exception );
+    }
+}
+
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -2744,6 +3025,7 @@ START_TEST(exception)
     test_virtual_unwind();
     test___C_specific_handler();
     test_restore_context();
+    test_prot_fault();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
