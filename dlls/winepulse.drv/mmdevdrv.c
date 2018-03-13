@@ -260,7 +260,7 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
  * but that cannot be used because it uses pthread_create directly
  *
  * pa_threaded_mainloop_(un)lock -> pthread_mutex_(un)lock
- * pa_threaded_mainloop_signal -> pthread_cond_signal
+ * pa_threaded_mainloop_signal -> pthread_cond_broadcast
  * pa_threaded_mainloop_wait -> pthread_cond_wait
  */
 
@@ -277,7 +277,7 @@ static DWORD CALLBACK pulse_mainloop_thread(void *tmp) {
     pulse_ml = pa_mainloop_new();
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
     pthread_mutex_lock(&pulse_lock);
-    pthread_cond_signal(&pulse_cond);
+    pthread_cond_broadcast(&pulse_cond);
     pa_mainloop_run(pulse_ml, &ret);
     pthread_mutex_unlock(&pulse_lock);
     pa_mainloop_free(pulse_ml);
@@ -307,14 +307,14 @@ static void pulse_contextcallback(pa_context *c, void *userdata)
             WARN("Context failed: %s\n", pa_strerror(pa_context_errno(c)));
             break;
     }
-    pthread_cond_signal(&pulse_cond);
+    pthread_cond_broadcast(&pulse_cond);
 }
 
 static void pulse_stream_state(pa_stream *s, void *user)
 {
     pa_stream_state_t state = pa_stream_get_state(s);
     TRACE("Stream state changed to %i\n", state);
-    pthread_cond_signal(&pulse_cond);
+    pthread_cond_broadcast(&pulse_cond);
 }
 
 static const enum pa_channel_position pulse_pos_from_wfx[] = {
@@ -632,7 +632,7 @@ static void dump_attr(const pa_buffer_attr *attr) {
 static void pulse_op_cb(pa_stream *s, int success, void *user) {
     TRACE("Success: %i\n", success);
     *(int*)user = success;
-    pthread_cond_signal(&pulse_cond);
+    pthread_cond_broadcast(&pulse_cond);
 }
 
 static void pulse_attr_update(pa_stream *s, void *user) {
