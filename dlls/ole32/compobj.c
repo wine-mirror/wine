@@ -1339,7 +1339,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
         hr = DllGetClassObject(rclsid, riid, ppv);
 
         if (hr != S_OK)
-            ERR("DllGetClassObject returned error 0x%08x\n", hr);
+            ERR("DllGetClassObject returned error 0x%08x for dll %s\n", hr, debugstr_w(dllpath));
 
         return hr;
     }
@@ -1388,7 +1388,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
         hr = apartment_loaded_dll->dll->DllGetClassObject(rclsid, riid, ppv);
 
         if (hr != S_OK)
-            ERR("DllGetClassObject returned error 0x%08x\n", hr);
+            ERR("DllGetClassObject returned error 0x%08x for dll %s\n", hr, debugstr_w(dllpath));
     }
 
     return hr;
