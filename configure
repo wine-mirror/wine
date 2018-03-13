@@ -1271,6 +1271,7 @@ enable_ext_ms_win_rtcore_gdi_rgn_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_cursor_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
+enable_ext_ms_win_rtcore_ntuser_dpi_l1_2_0
 enable_ext_ms_win_rtcore_ntuser_syscolors_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
 enable_ext_ms_win_security_credui_l1_1_0
@@ -18636,6 +18637,7 @@ wine_fn_config_makefile dlls/ext-ms-win-rtcore-gdi-rgn-l1-1-0 enable_ext_ms_win_
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-cursor-l1-1-0 enable_ext_ms_win_rtcore_ntuser_cursor_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dc-access-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dc_access_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-dpi-l1-2-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_2_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-syscolors-l1-1-0 enable_ext_ms_win_rtcore_ntuser_syscolors_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-rtcore-ntuser-sysparams-l1-1-0 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-security-credui-l1-1-0 enable_ext_ms_win_security_credui_l1_1_0
