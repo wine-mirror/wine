@@ -2876,6 +2876,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             if (!err && (rec->ExceptionCode = is_privileged_instr( win_context ))) break;
             if ((err & 7) == 2 && handle_interrupt( err >> 3, rec, win_context )) break;
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+            rec->NumberParameters = 2;
+            rec->ExceptionInformation[0] = 0;
+            rec->ExceptionInformation[1] = 0xffffffffffffffff;
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */

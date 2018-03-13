@@ -2370,7 +2370,6 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     else
         parameter_count = except->alt_nb_params;
 
-todo_wine_if( rec->NumberParameters != parameter_count )
     ok( rec->NumberParameters == parameter_count,
         "%u: Unexpected parameter count %u/%u\n", entry, rec->NumberParameters, parameter_count );
 
