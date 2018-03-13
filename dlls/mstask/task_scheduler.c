@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Google (Roy Shea)
+ * Copyright (C) 2018 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +25,7 @@
 #include "winbase.h"
 #include "initguid.h"
 #include "objbase.h"
+#include "taskschd.h"
 #include "mstask.h"
 #include "mstask_private.h"
 #include "wine/debug.h"
@@ -34,6 +36,7 @@ typedef struct
 {
     ITaskScheduler ITaskScheduler_iface;
     LONG ref;
+    ITaskService *service;
 } TaskSchedulerImpl;
 
 typedef struct
@@ -55,6 +58,7 @@ static inline EnumWorkItemsImpl *impl_from_IEnumWorkItems(IEnumWorkItems *iface)
 static void TaskSchedulerDestructor(TaskSchedulerImpl *This)
 {
     TRACE("%p\n", This);
+    ITaskService_Release(This->service);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
 }
@@ -198,60 +202,56 @@ static ULONG WINAPI MSTASK_ITaskScheduler_Release(
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_SetTargetComputer(
-        ITaskScheduler* iface,
-        LPCWSTR pwszComputer)
+        ITaskScheduler *iface, LPCWSTR comp_name)
 {
     TaskSchedulerImpl *This = impl_from_ITaskScheduler(iface);
-    WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 3];  /* extra space for two '\' and a zero */
-    DWORD len = MAX_COMPUTERNAME_LENGTH + 1;    /* extra space for a zero */
+    VARIANT v_null, v_comp;
+    HRESULT hr;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(pwszComputer));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(comp_name));
 
-    /* NULL is an alias for the local computer */
-    if (!pwszComputer)
-        return S_OK;
-
-    buffer[0] = '\\';
-    buffer[1] = '\\';
-    if (GetComputerNameW(buffer + 2, &len))
-    {
-        if (!lstrcmpiW(buffer, pwszComputer) ||    /* full unc name */
-            !lstrcmpiW(buffer + 2, pwszComputer))  /* name without backslash */
-            return S_OK;
-    }
-
-    FIXME("remote computer %s not supported\n", debugstr_w(pwszComputer));
-    return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
+    V_VT(&v_null) = VT_NULL;
+    V_VT(&v_comp) = VT_BSTR;
+    V_BSTR(&v_comp) = SysAllocString(comp_name);
+    hr = ITaskService_Connect(This->service, v_comp, v_null, v_null, v_null);
+    SysFreeString(V_BSTR(&v_comp));
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_GetTargetComputer(
-        ITaskScheduler* iface,
-        LPWSTR *ppwszComputer)
+        ITaskScheduler *iface, LPWSTR *comp_name)
 {
     TaskSchedulerImpl *This = impl_from_ITaskScheduler(iface);
-    LPWSTR buffer;
-    DWORD len = MAX_COMPUTERNAME_LENGTH + 1; /* extra space for the zero */
+    BSTR bstr;
+    WCHAR *buffer;
+    HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, ppwszComputer);
+    TRACE("(%p)->(%p)\n", This, comp_name);
 
-    if (!ppwszComputer)
+    if (!comp_name)
         return E_INVALIDARG;
 
+    hr = ITaskService_get_TargetServer(This->service, &bstr);
+    if (hr != S_OK) return hr;
+
     /* extra space for two '\' and a zero */
-    buffer = CoTaskMemAlloc((MAX_COMPUTERNAME_LENGTH + 3) * sizeof(WCHAR));
+    buffer = CoTaskMemAlloc((SysStringLen(bstr) + 3) * sizeof(WCHAR));
     if (buffer)
     {
         buffer[0] = '\\';
         buffer[1] = '\\';
-        if (GetComputerNameW(buffer + 2, &len))
-        {
-            *ppwszComputer = buffer;
-            return S_OK;
-        }
-        CoTaskMemFree(buffer);
+        lstrcpyW(buffer + 2, bstr);
+        *comp_name = buffer;
+        hr = S_OK;
     }
-    *ppwszComputer = NULL;
-    return HRESULT_FROM_WIN32(GetLastError());
+    else
+    {
+        *comp_name = NULL;
+        hr = E_OUTOFMEMORY;
+    }
+
+    SysFreeString(bstr);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Enum(
@@ -346,13 +346,32 @@ static const ITaskSchedulerVtbl MSTASK_ITaskSchedulerVtbl =
 HRESULT TaskSchedulerConstructor(LPVOID *ppObj)
 {
     TaskSchedulerImpl *This;
+    ITaskService *service;
+    VARIANT v_null;
+    HRESULT hr;
+
     TRACE("(%p)\n", ppObj);
+
+    hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
+    if (hr != S_OK) return hr;
+
+    V_VT(&v_null) = VT_NULL;
+    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+    if (hr != S_OK)
+    {
+        ITaskService_Release(service);
+        return hr;
+    }
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
+    {
+        ITaskService_Release(service);
         return E_OUTOFMEMORY;
+    }
 
     This->ITaskScheduler_iface.lpVtbl = &MSTASK_ITaskSchedulerVtbl;
+    This->service = service;
     This->ref = 1;
 
     *ppObj = &This->ITaskScheduler_iface;
