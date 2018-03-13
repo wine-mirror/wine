@@ -152,7 +152,7 @@ static BOOL is_autogenmipmap_supported(IDirect3DDevice9 *device, D3DRESOURCETYPE
         mode.Format, D3DUSAGE_AUTOGENMIPMAP, resource_type, D3DFMT_A8R8G8B8);
 
     IDirect3D9_Release(d3d9);
-    return SUCCEEDED(hr);
+    return hr == D3D_OK;
 }
 
 static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
@@ -626,25 +626,9 @@ static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
 
-    if (!is_autogenmipmap_supported(device, D3DRTYPE_VOLUMETEXTURE))
-    {
-        skip("No D3DUSAGE_AUTOGENMIPMAP support for volume textures\n");
-        return;
-    }
-
-    /* mipmaps when D3DUSAGE_AUTOGENMIPMAP is set */
-    mipmaps = 0;
-    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
-    mipmaps = 1;
-    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
-    mipmaps = 3;
-    hr = D3DXCheckVolumeTextureRequirements(device, NULL, NULL,NULL, &mipmaps, D3DUSAGE_AUTOGENMIPMAP, NULL, D3DPOOL_DEFAULT);
-    ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(mipmaps == 0, "Returned mipmaps %d, expected %d\n", mipmaps, 0);
+    /* D3DUSAGE_AUTOGENMIPMAP is never supported for volume textures. */
+    ok(!is_autogenmipmap_supported(device, D3DRTYPE_VOLUMETEXTURE),
+            "D3DUSAGE_AUTOGENMIPMAP is unexpectedly supported on volume textures.\n");
 }
 
 static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
