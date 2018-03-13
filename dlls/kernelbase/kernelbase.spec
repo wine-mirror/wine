@@ -363,7 +363,7 @@
 # @ stub FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stub FindNLSString
-@ stub FindNLSStringEx
+@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
 @ stdcall FindNextChangeNotification(long) kernel32.FindNextChangeNotification
 @ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
 # @ stub FindNextFileNameW

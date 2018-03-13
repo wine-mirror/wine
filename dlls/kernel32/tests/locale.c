@@ -103,6 +103,7 @@ static BOOL (WINAPI *pGetThreadPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULON
 static BOOL (WINAPI *pGetUserPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
 static WCHAR (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 static INT (WINAPI *pGetNumberFormatEx)(LPCWSTR, DWORD, LPCWSTR, const NUMBERFMTW *, LPWSTR, int);
+static INT (WINAPI *pFindNLSStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT, LPINT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 
 static void InitFunctionPointers(void)
 {
@@ -135,6 +136,7 @@ static void InitFunctionPointers(void)
   X(GetThreadPreferredUILanguages);
   X(GetUserPreferredUILanguages);
   X(GetNumberFormatEx);
+  X(FindNLSStringEx);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -5329,6 +5331,118 @@ static void test_GetUserPreferredUILanguages(void)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
+static void test_FindNLSStringEx(void)
+{
+    INT res;
+    static WCHAR en_simpsimpW[] = {'S','i','m','p','l','e','S','i','m','p','l','e',0};
+    static WCHAR en_simpW[] = {'S','i','m','p','l','e',0};
+    static WCHAR comb_s_accent1W[] = {0x1e69, 'o','u','r','c','e',0};
+    static WCHAR comb_s_accent2W[] = {0x0073,0x323,0x307,'o','u','r','c','e',0};
+    static WCHAR comb_q_accent1W[] = {0x0071,0x0307,0x323,'u','o','t','e',0};
+    static WCHAR comb_q_accent2W[] = {0x0071,0x0323,0x307,'u','o','t','e',0};
+    struct test_data {
+        const WCHAR *locale;
+        DWORD flags;
+        WCHAR *src;
+        INT src_size;
+        WCHAR *value;
+        INT val_size;
+        INT found;
+        INT expected_ret;
+        INT expected_found;
+        int todo;
+        BOOL broken_vista_servers;
+    };
+
+    static struct test_data test_arr[] =
+    {
+        { localeW, FIND_FROMSTART, en_simpsimpW, sizeof(en_simpsimpW)/sizeof(WCHAR)-1,
+          en_simpW, sizeof(en_simpW)/sizeof(WCHAR)-1, 0, 0, 6, 0, FALSE},
+        { localeW, FIND_FROMEND, en_simpsimpW, sizeof(en_simpsimpW)/sizeof(WCHAR)-1,
+          en_simpW, sizeof(en_simpW)/sizeof(WCHAR)-1, 0, 6, 6, 0, FALSE},
+        { localeW, FIND_STARTSWITH, en_simpsimpW, sizeof(en_simpsimpW)/sizeof(WCHAR)-1,
+          en_simpW, sizeof(en_simpW)/sizeof(WCHAR)-1, 0, 0, 6, 0, FALSE},
+        { localeW, FIND_ENDSWITH, en_simpsimpW, sizeof(en_simpsimpW)/sizeof(WCHAR)-1,
+          en_simpW, sizeof(en_simpW)/sizeof(WCHAR)-1, 0, 6, 6, 0, FALSE},
+        { localeW, FIND_FROMSTART, comb_s_accent1W, sizeof(comb_s_accent1W)/sizeof(WCHAR)-1,
+          comb_s_accent2W, sizeof(comb_s_accent2W)/sizeof(WCHAR)-1, 0, 0, 6, 1, TRUE },
+        { localeW, FIND_FROMSTART, comb_q_accent1W, sizeof(comb_q_accent1W)/sizeof(WCHAR)-1,
+          comb_q_accent2W, sizeof(comb_q_accent2W)/sizeof(WCHAR)-1, 0, 0, 7, 1, FALSE },
+        { 0 }
+    };
+    struct test_data *ptest;
+
+    if (!pFindNLSStringEx)
+    {
+        win_skip("FindNLSStringEx is not available.\n");
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    res = pFindNLSStringEx(invalidW, FIND_FROMSTART, fooW, 3, fooW,
+                           3, NULL, NULL, NULL, 0);
+    ok(res, "Expected failure of FindNLSStringEx. Return value was %d\n", res);
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected ERROR_INVALID_PARAMETER as last error; got %d\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    res = pFindNLSStringEx(localeW, FIND_FROMSTART, NULL, 3, fooW, 3,
+                           NULL, NULL, NULL, 0);
+    ok(res, "Expected failure of FindNLSStringEx. Return value was %d\n", res);
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected ERROR_INVALID_PARAMETER as last error; got %d\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    res = pFindNLSStringEx(localeW, FIND_FROMSTART, fooW, -5, fooW, 3,
+                           NULL, NULL, NULL, 0);
+    ok(res, "Expected failure of FindNLSStringEx. Return value was %d\n", res);
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected ERROR_INVALID_PARAMETER as last error; got %d\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    res = pFindNLSStringEx(localeW, FIND_FROMSTART, fooW, 3, NULL, 3,
+                           NULL, NULL, NULL, 0);
+    ok(res, "Expected failure of FindNLSStringEx. Return value was %d\n", res);
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected ERROR_INVALID_PARAMETER as last error; got %d\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    res = pFindNLSStringEx(localeW, FIND_FROMSTART, fooW, 3, fooW, -5,
+                           NULL, NULL, NULL, 0);
+    ok(res, "Expected failure of FindNLSStringEx. Return value was %d\n", res);
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected ERROR_INVALID_PARAMETER as last error; got %d\n", GetLastError());
+
+    for (ptest = test_arr; ptest->src != NULL; ptest++)
+    {
+        todo_wine_if(ptest->todo)
+        {
+            res = pFindNLSStringEx(ptest->locale, ptest->flags, ptest->src, ptest->src_size,
+                                   ptest->value, ptest->val_size, &ptest->found, NULL, NULL, 0);
+            if (ptest->broken_vista_servers)
+            {
+                ok(res == ptest->expected_ret || /* Win 7 onwards */
+                   broken(res == -1), /* Win Vista, Server 2003 and 2008 */
+                   "Expected FindNLSStringEx to return %d. Returned value was %d\n",
+                   ptest->expected_ret, res);
+                ok(ptest->found == ptest->expected_found || /* Win 7 onwards */
+                   broken(ptest->found == 0), /* Win Vista, Server 2003 and 2008 */
+                   "Expected FindNLSStringEx to output %d. Value was %d\n",
+                   ptest->expected_found, ptest->found);
+            }
+            else
+            {
+                ok(res == ptest->expected_ret,
+                   "Expected FindNLSStringEx to return %d. Returned value was %d\n",
+                   ptest->expected_ret, res);
+                ok(ptest->found == ptest->expected_found,
+                   "Expected FindNLSStringEx to output %d. Value was %d\n",
+                   ptest->expected_found, ptest->found);
+            }
+        }
+    }
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -5375,6 +5489,7 @@ START_TEST(locale)
   test_GetSystemPreferredUILanguages();
   test_GetThreadPreferredUILanguages();
   test_GetUserPreferredUILanguages();
+  test_FindNLSStringEx();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }

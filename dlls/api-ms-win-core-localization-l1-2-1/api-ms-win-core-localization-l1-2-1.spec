@@ -4,7 +4,7 @@
 @ stdcall EnumSystemLocalesEx(ptr long long ptr) kernel32.EnumSystemLocalesEx
 @ stdcall EnumSystemLocalesW(ptr long) kernel32.EnumSystemLocalesW
 @ stub FindNLSString
-@ stub FindNLSStringEx
+@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
 @ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA
 @ stdcall FormatMessageW(long ptr long long ptr long ptr) kernel32.FormatMessageW
 @ stdcall GetACP() kernel32.GetACP

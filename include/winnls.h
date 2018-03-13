@@ -352,6 +352,10 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define NORM_IGNOREKANATYPE        0x00010000
 #define NORM_IGNOREWIDTH           0x00020000
 #define NORM_LINGUISTIC_CASING     0x08000000
+#define FIND_STARTSWITH            0x00100000
+#define FIND_ENDSWITH              0x00200000
+#define FIND_FROMSTART             0x00400000
+#define FIND_FROMEND               0x00800000
 
 #define CP_ACP        0
 #define CP_OEMCP      1
@@ -961,6 +965,7 @@ WINBASEAPI BOOL        WINAPI SetThreadLocale(LCID);
 WINBASEAPI LANGID      WINAPI SetThreadUILanguage(LANGID);
 WINBASEAPI BOOL        WINAPI SetUserGeoID(GEOID);
 WINBASEAPI INT         WINAPI WideCharToMultiByte(UINT,DWORD,LPCWSTR,INT,LPSTR,INT,LPCSTR,LPBOOL);
+WINBASEAPI INT         WINAPI FindNLSStringEx(const WCHAR *,DWORD,const WCHAR *,INT,const WCHAR *,INT,INT *,NLSVERSIONINFO *,void *,LPARAM);
 
 #ifdef __cplusplus
 }
