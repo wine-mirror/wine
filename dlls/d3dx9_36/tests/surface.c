@@ -944,17 +944,22 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 
         /* Test D3DXLoadSurfaceFromMemory with indexed color image */
+        if (0)
+        {
+        /* Crashes on Nvidia Win10. */
         palette.peRed   = bmp_1bpp[56];
         palette.peGreen = bmp_1bpp[55];
         palette.peBlue  = bmp_1bpp[54];
         palette.peFlags = bmp_1bpp[57]; /* peFlags is the alpha component in DX8 and higher */
-        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, &bmp_1bpp[62], D3DFMT_P8, 4, (const PALETTEENTRY*)&palette, &rect, D3DX_FILTER_NONE, 0);
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, &bmp_1bpp[62],
+                D3DFMT_P8, 1, (const PALETTEENTRY *)&palette, &rect, D3DX_FILTER_NONE, 0);
         ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x\n", hr);
         ok(*(DWORD*)lockrect.pBits == 0x80f3f2f1, "Pixel color mismatch: got %#x, expected 0x80f3f2f1\n", *(DWORD*)lockrect.pBits);
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x\n", hr);
+        }
 
         /* Test D3DXLoadSurfaceFromFileInMemory with indexed color image (alpha is not taken into account for bmp file) */
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_FILTER_NONE, 0, NULL);
