@@ -2721,6 +2721,86 @@ static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /***********************************************************************
+ *           is_privileged_instr
+ *
+ * Check if the fault location is a privileged instruction.
+ */
+static inline DWORD is_privileged_instr( CONTEXT *context )
+{
+    const BYTE *instr = (BYTE *)context->Rip;
+    unsigned int prefix_count = 0;
+
+    for (;;) switch(*instr)
+    {
+    /* instruction prefixes */
+    case 0x2e:  /* %cs: */
+    case 0x36:  /* %ss: */
+    case 0x3e:  /* %ds: */
+    case 0x26:  /* %es: */
+    case 0x40:  /* rex */
+    case 0x41:  /* rex */
+    case 0x42:  /* rex */
+    case 0x43:  /* rex */
+    case 0x44:  /* rex */
+    case 0x45:  /* rex */
+    case 0x46:  /* rex */
+    case 0x47:  /* rex */
+    case 0x48:  /* rex */
+    case 0x49:  /* rex */
+    case 0x4a:  /* rex */
+    case 0x4b:  /* rex */
+    case 0x4c:  /* rex */
+    case 0x4d:  /* rex */
+    case 0x4e:  /* rex */
+    case 0x4f:  /* rex */
+    case 0x64:  /* %fs: */
+    case 0x65:  /* %gs: */
+    case 0x66:  /* opcode size */
+    case 0x67:  /* addr size */
+    case 0xf0:  /* lock */
+    case 0xf2:  /* repne */
+    case 0xf3:  /* repe */
+        if (++prefix_count >= 15) return EXCEPTION_ILLEGAL_INSTRUCTION;
+        instr++;
+        continue;
+
+    case 0x0f: /* extended instruction */
+        switch(instr[1])
+        {
+        case 0x06: /* clts */
+        case 0x08: /* invd */
+        case 0x09: /* wbinvd */
+        case 0x20: /* mov crX, reg */
+        case 0x21: /* mov drX, reg */
+        case 0x22: /* mov reg, crX */
+        case 0x23: /* mov reg drX */
+            return EXCEPTION_PRIV_INSTRUCTION;
+        }
+        return 0;
+    case 0x6c: /* insb (%dx) */
+    case 0x6d: /* insl (%dx) */
+    case 0x6e: /* outsb (%dx) */
+    case 0x6f: /* outsl (%dx) */
+    case 0xcd: /* int $xx */
+    case 0xe4: /* inb al,XX */
+    case 0xe5: /* in (e)ax,XX */
+    case 0xe6: /* outb XX,al */
+    case 0xe7: /* out XX,(e)ax */
+    case 0xec: /* inb (%dx),%al */
+    case 0xed: /* inl (%dx),%eax */
+    case 0xee: /* outb %al,(%dx) */
+    case 0xef: /* outl %eax,(%dx) */
+    case 0xf4: /* hlt */
+    case 0xfa: /* cli */
+    case 0xfb: /* sti */
+        return EXCEPTION_PRIV_INSTRUCTION;
+    default:
+        return 0;
+    }
+}
+
+
+/***********************************************************************
  *           handle_interrupt
  *
  * Handle an interrupt.
@@ -2790,8 +2870,8 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         {
             CONTEXT *win_context = get_exception_context( rec );
             WORD err = ERROR_sig(ucontext);
+            if (!err && (rec->ExceptionCode = is_privileged_instr( win_context ))) break;
             if ((err & 7) == 2 && handle_interrupt( err >> 3, rec, win_context )) break;
-            rec->ExceptionCode = err ? EXCEPTION_ACCESS_VIOLATION : EXCEPTION_PRIV_INSTRUCTION;
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         }
         break;
