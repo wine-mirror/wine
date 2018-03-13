@@ -18,7 +18,7 @@
 @ stdcall D3DXCompileShaderFromResourceW(ptr wstr ptr ptr str str long ptr ptr ptr)
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr)
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr)
-@ stub D3DXComputeNormalMap(ptr ptr ptr long long float)
+@ stdcall D3DXComputeNormalMap(ptr ptr ptr long long float)
 @ stdcall D3DXComputeNormals(ptr ptr)
 @ stub D3DXComputeTangent(ptr long long long long ptr)
 @ stub D3DXComputeTangentFrame(ptr long)
