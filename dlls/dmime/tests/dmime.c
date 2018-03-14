@@ -779,7 +779,6 @@ static void test_parsedescriptor(void)
                 desc.dwValidData);
         ok(IsEqualGUID(&desc.guidClass, forms[i].clsid), "Got class guid %s, expected CLSID_%s\n",
                 wine_dbgstr_guid(&desc.guidClass), forms[i].class);
-        IStream_Release(stream);
 
         /* NULL pointers */
         memset(&desc, 0, sizeof(desc));
@@ -793,6 +792,7 @@ static void test_parsedescriptor(void)
             ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
         hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, NULL);
         ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+        IStream_Release(stream);
 
         /* Wrong form */
         empty[1] = DMUS_FOURCC_CONTAINER_FORM;
@@ -806,6 +806,7 @@ static void test_parsedescriptor(void)
         else
             ok(hr == E_FAIL, "ParseDescriptor failed: %08x, expected E_FAIL\n", hr);
         ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
+        IStream_Release(stream);
 
         /* All desc chunks */
         alldesc[1] = forms[i].form;
