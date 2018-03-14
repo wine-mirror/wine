@@ -2580,25 +2580,31 @@ static LoadedScript *usp10_script_cache_get_script(ScriptCache *script_cache, OP
 
 static void GSUB_initialize_script_cache(ScriptCache *psc)
 {
-    int i;
+    const OT_ScriptList *script;
+    const GSUB_Header *header;
+    SIZE_T i;
 
-    if (psc->GSUB_Table)
+    if (!(header = psc->GSUB_Table))
+        return;
+
+    script = (const OT_ScriptList *)((const BYTE *)header + GET_BE_WORD(header->ScriptList));
+    psc->script_count = GET_BE_WORD(script->ScriptCount);
+
+    TRACE("Initialising %li scripts in this font.\n", psc->script_count);
+
+    if (!psc->script_count)
+        return;
+
+    if (!usp10_array_reserve((void **)&psc->scripts, &psc->scripts_size, psc->script_count, sizeof(*psc->scripts)))
+        ERR("Failed to allocate script array.\n");
+
+    for (i = 0; i < psc->script_count; ++i)
     {
-        const OT_ScriptList *script;
-        const GSUB_Header* header = (const GSUB_Header*)psc->GSUB_Table;
-        script = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
-        psc->script_count = GET_BE_WORD(script->ScriptCount);
-        TRACE("initializing %li scripts in this font\n",psc->script_count);
-        if (psc->script_count)
-        {
-            psc->scripts = heap_alloc_zero(psc->script_count * sizeof(*psc->scripts));
-            for (i = 0; i < psc->script_count; i++)
-            {
-                int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
-                psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
-                psc->scripts[i].gsub_table = ((const BYTE*)script + offset);
-            }
-        }
+        psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0],
+                script->ScriptRecord[i].ScriptTag[1],
+                script->ScriptRecord[i].ScriptTag[2],
+                script->ScriptRecord[i].ScriptTag[3]);
+        psc->scripts[i].gsub_table = (const BYTE *)script + GET_BE_WORD(script->ScriptRecord[i].Script);
     }
 }
 
