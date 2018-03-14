@@ -64,6 +64,81 @@ typedef struct VkMemoryAllocateInfo_host
     uint32_t memoryTypeIndex;
 } VkMemoryAllocateInfo_host;
 
+typedef struct VkCommandBufferInheritanceInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRenderPass renderPass;
+    uint32_t subpass;
+    VkFramebuffer framebuffer;
+    VkBool32 occlusionQueryEnable;
+    VkQueryControlFlags queryFlags;
+    VkQueryPipelineStatisticFlags pipelineStatistics;
+} VkCommandBufferInheritanceInfo_host;
+
+typedef struct VkCommandBufferBeginInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkCommandBufferUsageFlags flags;
+    const VkCommandBufferInheritanceInfo_host *pInheritanceInfo;
+} VkCommandBufferBeginInfo_host;
+
+typedef struct VkRenderPassBeginInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRenderPass renderPass;
+    VkFramebuffer framebuffer;
+    VkRect2D renderArea;
+    uint32_t clearValueCount;
+    const VkClearValue *pClearValues;
+} VkRenderPassBeginInfo_host;
+
+typedef struct VkBufferCopy_host
+{
+    VkDeviceSize srcOffset;
+    VkDeviceSize dstOffset;
+    VkDeviceSize size;
+} VkBufferCopy_host;
+
+typedef struct VkBufferImageCopy_host
+{
+    VkDeviceSize bufferOffset;
+    uint32_t bufferRowLength;
+    uint32_t bufferImageHeight;
+    VkImageSubresourceLayers imageSubresource;
+    VkOffset3D imageOffset;
+    VkExtent3D imageExtent;
+} VkBufferImageCopy_host;
+
+typedef struct VkBufferMemoryBarrier_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkAccessFlags srcAccessMask;
+    VkAccessFlags dstAccessMask;
+    uint32_t srcQueueFamilyIndex;
+    uint32_t dstQueueFamilyIndex;
+    VkBuffer buffer;
+    VkDeviceSize offset;
+    VkDeviceSize size;
+} VkBufferMemoryBarrier_host;
+
+typedef struct VkImageMemoryBarrier_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkAccessFlags srcAccessMask;
+    VkAccessFlags dstAccessMask;
+    VkImageLayout oldLayout;
+    VkImageLayout newLayout;
+    uint32_t srcQueueFamilyIndex;
+    uint32_t dstQueueFamilyIndex;
+    VkImage image;
+    VkImageSubresourceRange subresourceRange;
+} VkImageMemoryBarrier_host;
+
 typedef struct VkBufferCreateInfo_host
 {
     VkStructureType sType;
@@ -410,11 +485,19 @@ struct vulkan_device_funcs
 #else
     VkResult (*p_vkAllocateMemory)(VkDevice, const VkMemoryAllocateInfo *, const VkAllocationCallbacks *, VkDeviceMemory *);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkBeginCommandBuffer)(VkCommandBuffer, const VkCommandBufferBeginInfo_host *);
+#else
     VkResult (*p_vkBeginCommandBuffer)(VkCommandBuffer, const VkCommandBufferBeginInfo *);
+#endif
     VkResult (*p_vkBindBufferMemory)(VkDevice, VkBuffer, VkDeviceMemory, VkDeviceSize);
     VkResult (*p_vkBindImageMemory)(VkDevice, VkImage, VkDeviceMemory, VkDeviceSize);
     void (*p_vkCmdBeginQuery)(VkCommandBuffer, VkQueryPool, uint32_t, VkQueryControlFlags);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, VkSubpassContents);
+#else
     void (*p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo *, VkSubpassContents);
+#endif
     void (*p_vkCmdBindDescriptorSets)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkDescriptorSet *, uint32_t, const uint32_t *);
     void (*p_vkCmdBindIndexBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkIndexType);
     void (*p_vkCmdBindPipeline)(VkCommandBuffer, VkPipelineBindPoint, VkPipeline);
@@ -423,10 +506,22 @@ struct vulkan_device_funcs
     void (*p_vkCmdClearAttachments)(VkCommandBuffer, uint32_t, const VkClearAttachment *, uint32_t, const VkClearRect *);
     void (*p_vkCmdClearColorImage)(VkCommandBuffer, VkImage, VkImageLayout, const VkClearColorValue *, uint32_t, const VkImageSubresourceRange *);
     void (*p_vkCmdClearDepthStencilImage)(VkCommandBuffer, VkImage, VkImageLayout, const VkClearDepthStencilValue *, uint32_t, const VkImageSubresourceRange *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyBuffer)(VkCommandBuffer, VkBuffer, VkBuffer, uint32_t, const VkBufferCopy_host *);
+#else
     void (*p_vkCmdCopyBuffer)(VkCommandBuffer, VkBuffer, VkBuffer, uint32_t, const VkBufferCopy *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyBufferToImage)(VkCommandBuffer, VkBuffer, VkImage, VkImageLayout, uint32_t, const VkBufferImageCopy_host *);
+#else
     void (*p_vkCmdCopyBufferToImage)(VkCommandBuffer, VkBuffer, VkImage, VkImageLayout, uint32_t, const VkBufferImageCopy *);
+#endif
     void (*p_vkCmdCopyImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageCopy *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyImageToBuffer)(VkCommandBuffer, VkImage, VkImageLayout, VkBuffer, uint32_t, const VkBufferImageCopy_host *);
+#else
     void (*p_vkCmdCopyImageToBuffer)(VkCommandBuffer, VkImage, VkImageLayout, VkBuffer, uint32_t, const VkBufferImageCopy *);
+#endif
     void (*p_vkCmdCopyQueryPoolResults)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t, VkBuffer, VkDeviceSize, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkCmdDispatch)(VkCommandBuffer, uint32_t, uint32_t, uint32_t);
     void (*p_vkCmdDispatchIndirect)(VkCommandBuffer, VkBuffer, VkDeviceSize);
@@ -439,7 +534,11 @@ struct vulkan_device_funcs
     void (*p_vkCmdExecuteCommands)(VkCommandBuffer, uint32_t, const VkCommandBuffer *);
     void (*p_vkCmdFillBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkDeviceSize, uint32_t);
     void (*p_vkCmdNextSubpass)(VkCommandBuffer, VkSubpassContents);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdPipelineBarrier)(VkCommandBuffer, VkPipelineStageFlags, VkPipelineStageFlags, VkDependencyFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier_host *, uint32_t, const VkImageMemoryBarrier_host *);
+#else
     void (*p_vkCmdPipelineBarrier)(VkCommandBuffer, VkPipelineStageFlags, VkPipelineStageFlags, VkDependencyFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier *, uint32_t, const VkImageMemoryBarrier *);
+#endif
     void (*p_vkCmdPushConstants)(VkCommandBuffer, VkPipelineLayout, VkShaderStageFlags, uint32_t, uint32_t, const void *);
     void (*p_vkCmdResetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdResetQueryPool)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t);
@@ -455,7 +554,11 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetStencilWriteMask)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (*p_vkCmdSetViewport)(VkCommandBuffer, uint32_t, uint32_t, const VkViewport *);
     void (*p_vkCmdUpdateBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkDeviceSize, const void *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdWaitEvents)(VkCommandBuffer, uint32_t, const VkEvent *, VkPipelineStageFlags, VkPipelineStageFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier_host *, uint32_t, const VkImageMemoryBarrier_host *);
+#else
     void (*p_vkCmdWaitEvents)(VkCommandBuffer, uint32_t, const VkEvent *, VkPipelineStageFlags, VkPipelineStageFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier *, uint32_t, const VkImageMemoryBarrier *);
+#endif
     void (*p_vkCmdWriteTimestamp)(VkCommandBuffer, VkPipelineStageFlagBits, VkQueryPool, uint32_t);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkCreateBuffer)(VkDevice, const VkBufferCreateInfo_host *, const VkAllocationCallbacks *, VkBuffer *);

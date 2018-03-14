@@ -396,7 +396,7 @@ class VkFunction(object):
     def needs_stub(self):
         """ Temporary function to limit script hacks until more code is implemented. """
 
-        if self.params[0].type in ["VkCommandBuffer", "VkQueue"]:
+        if self.params[0].type in ["VkQueue"]:
             return True
 
         return False

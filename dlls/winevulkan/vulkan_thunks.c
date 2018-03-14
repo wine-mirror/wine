@@ -44,6 +44,180 @@ static inline void convert_VkMemoryAllocateInfo_win_to_host(const VkMemoryAlloca
     out->memoryTypeIndex = in->memoryTypeIndex;
 }
 
+static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win_to_host(const VkCommandBufferInheritanceInfo *in, uint32_t count)
+{
+    VkCommandBufferInheritanceInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].renderPass = in[i].renderPass;
+        out[i].subpass = in[i].subpass;
+        out[i].framebuffer = in[i].framebuffer;
+        out[i].occlusionQueryEnable = in[i].occlusionQueryEnable;
+        out[i].queryFlags = in[i].queryFlags;
+        out[i].pipelineStatistics = in[i].pipelineStatistics;
+    }
+
+    return out;
+}
+
+static inline void free_VkCommandBufferInheritanceInfo_array(VkCommandBufferInheritanceInfo_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline void convert_VkCommandBufferBeginInfo_win_to_host(const VkCommandBufferBeginInfo *in, VkCommandBufferBeginInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->pInheritanceInfo = convert_VkCommandBufferInheritanceInfo_array_win_to_host(in->pInheritanceInfo, 1);
+}
+
+static inline void free_VkCommandBufferBeginInfo(VkCommandBufferBeginInfo_host *in)
+{
+    free_VkCommandBufferInheritanceInfo_array((VkCommandBufferInheritanceInfo_host *)in->pInheritanceInfo, 1);
+}
+
+static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassBeginInfo *in, VkRenderPassBeginInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->renderPass = in->renderPass;
+    out->framebuffer = in->framebuffer;
+    out->renderArea = in->renderArea;
+    out->clearValueCount = in->clearValueCount;
+    out->pClearValues = in->pClearValues;
+}
+
+static inline VkBufferCopy_host *convert_VkBufferCopy_array_win_to_host(const VkBufferCopy *in, uint32_t count)
+{
+    VkBufferCopy_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].srcOffset = in[i].srcOffset;
+        out[i].dstOffset = in[i].dstOffset;
+        out[i].size = in[i].size;
+    }
+
+    return out;
+}
+
+static inline void free_VkBufferCopy_array(VkBufferCopy_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win_to_host(const VkBufferImageCopy *in, uint32_t count)
+{
+    VkBufferImageCopy_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].bufferOffset = in[i].bufferOffset;
+        out[i].bufferRowLength = in[i].bufferRowLength;
+        out[i].bufferImageHeight = in[i].bufferImageHeight;
+        out[i].imageSubresource = in[i].imageSubresource;
+        out[i].imageOffset = in[i].imageOffset;
+        out[i].imageExtent = in[i].imageExtent;
+    }
+
+    return out;
+}
+
+static inline void free_VkBufferImageCopy_array(VkBufferImageCopy_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win_to_host(const VkBufferMemoryBarrier *in, uint32_t count)
+{
+    VkBufferMemoryBarrier_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].srcAccessMask = in[i].srcAccessMask;
+        out[i].dstAccessMask = in[i].dstAccessMask;
+        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
+        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
+        out[i].buffer = in[i].buffer;
+        out[i].offset = in[i].offset;
+        out[i].size = in[i].size;
+    }
+
+    return out;
+}
+
+static inline void free_VkBufferMemoryBarrier_array(VkBufferMemoryBarrier_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win_to_host(const VkImageMemoryBarrier *in, uint32_t count)
+{
+    VkImageMemoryBarrier_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].srcAccessMask = in[i].srcAccessMask;
+        out[i].dstAccessMask = in[i].dstAccessMask;
+        out[i].oldLayout = in[i].oldLayout;
+        out[i].newLayout = in[i].newLayout;
+        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
+        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
+        out[i].image = in[i].image;
+        out[i].subresourceRange = in[i].subresourceRange;
+    }
+
+    return out;
+}
+
+static inline void free_VkImageMemoryBarrier_array(VkImageMemoryBarrier_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
 static inline void convert_VkBufferCreateInfo_win_to_host(const VkBufferCreateInfo *in, VkBufferCreateInfo_host *out)
 {
     if (!in) return;
@@ -584,8 +758,20 @@ static VkResult WINAPI wine_vkAllocateMemory(VkDevice device, const VkMemoryAllo
 
 static VkResult WINAPI wine_vkBeginCommandBuffer(VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo *pBeginInfo)
 {
-    FIXME("stub: %p, %p\n", commandBuffer, pBeginInfo);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkCommandBufferBeginInfo_host pBeginInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pBeginInfo);
+
+    convert_VkCommandBufferBeginInfo_win_to_host(pBeginInfo, &pBeginInfo_host);
+    result = commandBuffer->device->funcs.p_vkBeginCommandBuffer(commandBuffer->command_buffer, &pBeginInfo_host);
+
+    free_VkCommandBufferBeginInfo(&pBeginInfo_host);
+    return result;
+#else
+    TRACE("%p, %p\n", commandBuffer, pBeginInfo);
+    return commandBuffer->device->funcs.p_vkBeginCommandBuffer(commandBuffer->command_buffer, pBeginInfo);
+#endif
 }
 
 static VkResult WINAPI wine_vkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset)
@@ -602,217 +788,325 @@ static VkResult WINAPI wine_vkBindImageMemory(VkDevice device, VkImage image, Vk
 
 static void WINAPI wine_vkCmdBeginQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags)
 {
-    FIXME("stub: %p, 0x%s, %u, %#x\n", commandBuffer, wine_dbgstr_longlong(queryPool), query, flags);
+    TRACE("%p, 0x%s, %u, %#x\n", commandBuffer, wine_dbgstr_longlong(queryPool), query, flags);
+    commandBuffer->device->funcs.p_vkCmdBeginQuery(commandBuffer->command_buffer, queryPool, query, flags);
 }
 
 static void WINAPI wine_vkCmdBeginRenderPass(VkCommandBuffer commandBuffer, const VkRenderPassBeginInfo *pRenderPassBegin, VkSubpassContents contents)
 {
-    FIXME("stub: %p, %p, %d\n", commandBuffer, pRenderPassBegin, contents);
+#if defined(USE_STRUCT_CONVERSION)
+    VkRenderPassBeginInfo_host pRenderPassBegin_host;
+    TRACE("%p, %p, %d\n", commandBuffer, pRenderPassBegin, contents);
+
+    convert_VkRenderPassBeginInfo_win_to_host(pRenderPassBegin, &pRenderPassBegin_host);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderPass(commandBuffer->command_buffer, &pRenderPassBegin_host, contents);
+
+#else
+    TRACE("%p, %p, %d\n", commandBuffer, pRenderPassBegin, contents);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderPass(commandBuffer->command_buffer, pRenderPassBegin, contents);
+#endif
 }
 
 static void WINAPI wine_vkCmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet *pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t *pDynamicOffsets)
 {
-    FIXME("stub: %p, %d, 0x%s, %u, %u, %p, %u, %p\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(layout), firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
+    TRACE("%p, %d, 0x%s, %u, %u, %p, %u, %p\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(layout), firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
+    commandBuffer->device->funcs.p_vkCmdBindDescriptorSets(commandBuffer->command_buffer, pipelineBindPoint, layout, firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
 }
 
 static void WINAPI wine_vkCmdBindIndexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, %d\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), indexType);
+    TRACE("%p, 0x%s, 0x%s, %d\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), indexType);
+    commandBuffer->device->funcs.p_vkCmdBindIndexBuffer(commandBuffer->command_buffer, buffer, offset, indexType);
 }
 
 static void WINAPI wine_vkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline)
 {
-    FIXME("stub: %p, %d, 0x%s\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(pipeline));
+    TRACE("%p, %d, 0x%s\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(pipeline));
+    commandBuffer->device->funcs.p_vkCmdBindPipeline(commandBuffer->command_buffer, pipelineBindPoint, pipeline);
 }
 
 static void WINAPI wine_vkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint32_t firstBinding, uint32_t bindingCount, const VkBuffer *pBuffers, const VkDeviceSize *pOffsets)
 {
-    FIXME("stub: %p, %u, %u, %p, %p\n", commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets);
+    TRACE("%p, %u, %u, %p, %p\n", commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets);
+    commandBuffer->device->funcs.p_vkCmdBindVertexBuffers(commandBuffer->command_buffer, firstBinding, bindingCount, pBuffers, pOffsets);
 }
 
 static void WINAPI wine_vkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit *pRegions, VkFilter filter)
 {
-    FIXME("stub: %p, 0x%s, %d, 0x%s, %d, %u, %p, %d\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions, filter);
+    TRACE("%p, 0x%s, %d, 0x%s, %d, %u, %p, %d\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions, filter);
+    commandBuffer->device->funcs.p_vkCmdBlitImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions, filter);
 }
 
 static void WINAPI wine_vkCmdClearAttachments(VkCommandBuffer commandBuffer, uint32_t attachmentCount, const VkClearAttachment *pAttachments, uint32_t rectCount, const VkClearRect *pRects)
 {
-    FIXME("stub: %p, %u, %p, %u, %p\n", commandBuffer, attachmentCount, pAttachments, rectCount, pRects);
+    TRACE("%p, %u, %p, %u, %p\n", commandBuffer, attachmentCount, pAttachments, rectCount, pRects);
+    commandBuffer->device->funcs.p_vkCmdClearAttachments(commandBuffer->command_buffer, attachmentCount, pAttachments, rectCount, pRects);
 }
 
 static void WINAPI wine_vkCmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, const VkClearColorValue *pColor, uint32_t rangeCount, const VkImageSubresourceRange *pRanges)
 {
-    FIXME("stub: %p, 0x%s, %d, %p, %u, %p\n", commandBuffer, wine_dbgstr_longlong(image), imageLayout, pColor, rangeCount, pRanges);
+    TRACE("%p, 0x%s, %d, %p, %u, %p\n", commandBuffer, wine_dbgstr_longlong(image), imageLayout, pColor, rangeCount, pRanges);
+    commandBuffer->device->funcs.p_vkCmdClearColorImage(commandBuffer->command_buffer, image, imageLayout, pColor, rangeCount, pRanges);
 }
 
 static void WINAPI wine_vkCmdClearDepthStencilImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, const VkClearDepthStencilValue *pDepthStencil, uint32_t rangeCount, const VkImageSubresourceRange *pRanges)
 {
-    FIXME("stub: %p, 0x%s, %d, %p, %u, %p\n", commandBuffer, wine_dbgstr_longlong(image), imageLayout, pDepthStencil, rangeCount, pRanges);
+    TRACE("%p, 0x%s, %d, %p, %u, %p\n", commandBuffer, wine_dbgstr_longlong(image), imageLayout, pDepthStencil, rangeCount, pRanges);
+    commandBuffer->device->funcs.p_vkCmdClearDepthStencilImage(commandBuffer->command_buffer, image, imageLayout, pDepthStencil, rangeCount, pRanges);
 }
 
 static void WINAPI wine_vkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferCopy *pRegions)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+#if defined(USE_STRUCT_CONVERSION)
+    VkBufferCopy_host *pRegions_host;
+    TRACE("%p, 0x%s, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+
+    pRegions_host = convert_VkBufferCopy_array_win_to_host(pRegions, regionCount);
+    commandBuffer->device->funcs.p_vkCmdCopyBuffer(commandBuffer->command_buffer, srcBuffer, dstBuffer, regionCount, pRegions_host);
+
+    free_VkBufferCopy_array(pRegions_host, regionCount);
+#else
+    TRACE("%p, 0x%s, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+    commandBuffer->device->funcs.p_vkCmdCopyBuffer(commandBuffer->command_buffer, srcBuffer, dstBuffer, regionCount, pRegions);
+#endif
 }
 
 static void WINAPI wine_vkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkBufferImageCopy *pRegions)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+#if defined(USE_STRUCT_CONVERSION)
+    VkBufferImageCopy_host *pRegions_host;
+    TRACE("%p, 0x%s, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+
+    pRegions_host = convert_VkBufferImageCopy_array_win_to_host(pRegions, regionCount);
+    commandBuffer->device->funcs.p_vkCmdCopyBufferToImage(commandBuffer->command_buffer, srcBuffer, dstImage, dstImageLayout, regionCount, pRegions_host);
+
+    free_VkBufferImageCopy_array(pRegions_host, regionCount);
+#else
+    TRACE("%p, 0x%s, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcBuffer), wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+    commandBuffer->device->funcs.p_vkCmdCopyBufferToImage(commandBuffer->command_buffer, srcBuffer, dstImage, dstImageLayout, regionCount, pRegions);
+#endif
 }
 
 static void WINAPI wine_vkCmdCopyImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy *pRegions)
 {
-    FIXME("stub: %p, 0x%s, %d, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+    TRACE("%p, 0x%s, %d, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+    commandBuffer->device->funcs.p_vkCmdCopyImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions);
 }
 
 static void WINAPI wine_vkCmdCopyImageToBuffer(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferImageCopy *pRegions)
 {
-    FIXME("stub: %p, 0x%s, %d, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+#if defined(USE_STRUCT_CONVERSION)
+    VkBufferImageCopy_host *pRegions_host;
+    TRACE("%p, 0x%s, %d, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+
+    pRegions_host = convert_VkBufferImageCopy_array_win_to_host(pRegions, regionCount);
+    commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer(commandBuffer->command_buffer, srcImage, srcImageLayout, dstBuffer, regionCount, pRegions_host);
+
+    free_VkBufferImageCopy_array(pRegions_host, regionCount);
+#else
+    TRACE("%p, 0x%s, %d, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
+    commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer(commandBuffer->command_buffer, srcImage, srcImageLayout, dstBuffer, regionCount, pRegions);
+#endif
 }
 
 static void WINAPI wine_vkCmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize stride, VkQueryResultFlags flags)
 {
-    FIXME("stub: %p, 0x%s, %u, %u, 0x%s, 0x%s, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(queryPool), firstQuery, queryCount, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(stride), flags);
+    TRACE("%p, 0x%s, %u, %u, 0x%s, 0x%s, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(queryPool), firstQuery, queryCount, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(stride), flags);
+    commandBuffer->device->funcs.p_vkCmdCopyQueryPoolResults(commandBuffer->command_buffer, queryPool, firstQuery, queryCount, dstBuffer, dstOffset, stride, flags);
 }
 
 static void WINAPI wine_vkCmdDispatch(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
 {
-    FIXME("stub: %p, %u, %u, %u\n", commandBuffer, groupCountX, groupCountY, groupCountZ);
+    TRACE("%p, %u, %u, %u\n", commandBuffer, groupCountX, groupCountY, groupCountZ);
+    commandBuffer->device->funcs.p_vkCmdDispatch(commandBuffer->command_buffer, groupCountX, groupCountY, groupCountZ);
 }
 
 static void WINAPI wine_vkCmdDispatchIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset)
 {
-    FIXME("stub: %p, 0x%s, 0x%s\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset));
+    TRACE("%p, 0x%s, 0x%s\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset));
+    commandBuffer->device->funcs.p_vkCmdDispatchIndirect(commandBuffer->command_buffer, buffer, offset);
 }
 
 static void WINAPI wine_vkCmdDraw(VkCommandBuffer commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
 {
-    FIXME("stub: %p, %u, %u, %u, %u\n", commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    TRACE("%p, %u, %u, %u, %u\n", commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    commandBuffer->device->funcs.p_vkCmdDraw(commandBuffer->command_buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
 static void WINAPI wine_vkCmdDrawIndexed(VkCommandBuffer commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
 {
-    FIXME("stub: %p, %u, %u, %u, %d, %u\n", commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    TRACE("%p, %u, %u, %u, %d, %u\n", commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    commandBuffer->device->funcs.p_vkCmdDrawIndexed(commandBuffer->command_buffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 static void WINAPI wine_vkCmdDrawIndexedIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
+    TRACE("%p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirect(commandBuffer->command_buffer, buffer, offset, drawCount, stride);
 }
 
 static void WINAPI wine_vkCmdDrawIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
+    TRACE("%p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawIndirect(commandBuffer->command_buffer, buffer, offset, drawCount, stride);
 }
 
 static void WINAPI wine_vkCmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query)
 {
-    FIXME("stub: %p, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(queryPool), query);
+    TRACE("%p, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(queryPool), query);
+    commandBuffer->device->funcs.p_vkCmdEndQuery(commandBuffer->command_buffer, queryPool, query);
 }
 
 static void WINAPI wine_vkCmdEndRenderPass(VkCommandBuffer commandBuffer)
 {
-    FIXME("stub: %p\n", commandBuffer);
+    TRACE("%p\n", commandBuffer);
+    commandBuffer->device->funcs.p_vkCmdEndRenderPass(commandBuffer->command_buffer);
 }
 
 static void WINAPI wine_vkCmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize size, uint32_t data)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(size), data);
+    TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(size), data);
+    commandBuffer->device->funcs.p_vkCmdFillBuffer(commandBuffer->command_buffer, dstBuffer, dstOffset, size, data);
 }
 
 static void WINAPI wine_vkCmdNextSubpass(VkCommandBuffer commandBuffer, VkSubpassContents contents)
 {
-    FIXME("stub: %p, %d\n", commandBuffer, contents);
+    TRACE("%p, %d\n", commandBuffer, contents);
+    commandBuffer->device->funcs.p_vkCmdNextSubpass(commandBuffer->command_buffer, contents);
 }
 
 static void WINAPI wine_vkCmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint32_t memoryBarrierCount, const VkMemoryBarrier *pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier *pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier *pImageMemoryBarriers)
 {
-    FIXME("stub: %p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+#if defined(USE_STRUCT_CONVERSION)
+    VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
+    VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    TRACE("%p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+
+    pBufferMemoryBarriers_host = convert_VkBufferMemoryBarrier_array_win_to_host(pBufferMemoryBarriers, bufferMemoryBarrierCount);
+    pImageMemoryBarriers_host = convert_VkImageMemoryBarrier_array_win_to_host(pImageMemoryBarriers, imageMemoryBarrierCount);
+    commandBuffer->device->funcs.p_vkCmdPipelineBarrier(commandBuffer->command_buffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers_host, imageMemoryBarrierCount, pImageMemoryBarriers_host);
+
+    free_VkBufferMemoryBarrier_array(pBufferMemoryBarriers_host, bufferMemoryBarrierCount);
+    free_VkImageMemoryBarrier_array(pImageMemoryBarriers_host, imageMemoryBarrierCount);
+#else
+    TRACE("%p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+    commandBuffer->device->funcs.p_vkCmdPipelineBarrier(commandBuffer->command_buffer, srcStageMask, dstStageMask, dependencyFlags, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+#endif
 }
 
 static void WINAPI wine_vkCmdPushConstants(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size, const void *pValues)
 {
-    FIXME("stub: %p, 0x%s, %#x, %u, %u, %p\n", commandBuffer, wine_dbgstr_longlong(layout), stageFlags, offset, size, pValues);
+    TRACE("%p, 0x%s, %#x, %u, %u, %p\n", commandBuffer, wine_dbgstr_longlong(layout), stageFlags, offset, size, pValues);
+    commandBuffer->device->funcs.p_vkCmdPushConstants(commandBuffer->command_buffer, layout, stageFlags, offset, size, pValues);
 }
 
 static void WINAPI wine_vkCmdResetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
 {
-    FIXME("stub: %p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
+    TRACE("%p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
+    commandBuffer->device->funcs.p_vkCmdResetEvent(commandBuffer->command_buffer, event, stageMask);
 }
 
 static void WINAPI wine_vkCmdResetQueryPool(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)
 {
-    FIXME("stub: %p, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(queryPool), firstQuery, queryCount);
+    TRACE("%p, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(queryPool), firstQuery, queryCount);
+    commandBuffer->device->funcs.p_vkCmdResetQueryPool(commandBuffer->command_buffer, queryPool, firstQuery, queryCount);
 }
 
 static void WINAPI wine_vkCmdResolveImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageResolve *pRegions)
 {
-    FIXME("stub: %p, 0x%s, %d, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+    TRACE("%p, 0x%s, %d, 0x%s, %d, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
+    commandBuffer->device->funcs.p_vkCmdResolveImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions);
 }
 
 static void WINAPI wine_vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const float blendConstants[4])
 {
-    FIXME("stub: %p, %p\n", commandBuffer, blendConstants);
+    TRACE("%p, %p\n", commandBuffer, blendConstants);
+    commandBuffer->device->funcs.p_vkCmdSetBlendConstants(commandBuffer->command_buffer, blendConstants);
 }
 
 static void WINAPI wine_vkCmdSetDepthBias(VkCommandBuffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
 {
-    FIXME("stub: %p, %f, %f, %f\n", commandBuffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
+    TRACE("%p, %f, %f, %f\n", commandBuffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
+    commandBuffer->device->funcs.p_vkCmdSetDepthBias(commandBuffer->command_buffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
 }
 
 static void WINAPI wine_vkCmdSetDepthBounds(VkCommandBuffer commandBuffer, float minDepthBounds, float maxDepthBounds)
 {
-    FIXME("stub: %p, %f, %f\n", commandBuffer, minDepthBounds, maxDepthBounds);
+    TRACE("%p, %f, %f\n", commandBuffer, minDepthBounds, maxDepthBounds);
+    commandBuffer->device->funcs.p_vkCmdSetDepthBounds(commandBuffer->command_buffer, minDepthBounds, maxDepthBounds);
 }
 
 static void WINAPI wine_vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
 {
-    FIXME("stub: %p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
+    TRACE("%p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
+    commandBuffer->device->funcs.p_vkCmdSetEvent(commandBuffer->command_buffer, event, stageMask);
 }
 
 static void WINAPI wine_vkCmdSetLineWidth(VkCommandBuffer commandBuffer, float lineWidth)
 {
-    FIXME("stub: %p, %f\n", commandBuffer, lineWidth);
+    TRACE("%p, %f\n", commandBuffer, lineWidth);
+    commandBuffer->device->funcs.p_vkCmdSetLineWidth(commandBuffer->command_buffer, lineWidth);
 }
 
 static void WINAPI wine_vkCmdSetScissor(VkCommandBuffer commandBuffer, uint32_t firstScissor, uint32_t scissorCount, const VkRect2D *pScissors)
 {
-    FIXME("stub: %p, %u, %u, %p\n", commandBuffer, firstScissor, scissorCount, pScissors);
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstScissor, scissorCount, pScissors);
+    commandBuffer->device->funcs.p_vkCmdSetScissor(commandBuffer->command_buffer, firstScissor, scissorCount, pScissors);
 }
 
 static void WINAPI wine_vkCmdSetStencilCompareMask(VkCommandBuffer commandBuffer, VkStencilFaceFlags faceMask, uint32_t compareMask)
 {
-    FIXME("stub: %p, %#x, %u\n", commandBuffer, faceMask, compareMask);
+    TRACE("%p, %#x, %u\n", commandBuffer, faceMask, compareMask);
+    commandBuffer->device->funcs.p_vkCmdSetStencilCompareMask(commandBuffer->command_buffer, faceMask, compareMask);
 }
 
 static void WINAPI wine_vkCmdSetStencilReference(VkCommandBuffer commandBuffer, VkStencilFaceFlags faceMask, uint32_t reference)
 {
-    FIXME("stub: %p, %#x, %u\n", commandBuffer, faceMask, reference);
+    TRACE("%p, %#x, %u\n", commandBuffer, faceMask, reference);
+    commandBuffer->device->funcs.p_vkCmdSetStencilReference(commandBuffer->command_buffer, faceMask, reference);
 }
 
 static void WINAPI wine_vkCmdSetStencilWriteMask(VkCommandBuffer commandBuffer, VkStencilFaceFlags faceMask, uint32_t writeMask)
 {
-    FIXME("stub: %p, %#x, %u\n", commandBuffer, faceMask, writeMask);
+    TRACE("%p, %#x, %u\n", commandBuffer, faceMask, writeMask);
+    commandBuffer->device->funcs.p_vkCmdSetStencilWriteMask(commandBuffer->command_buffer, faceMask, writeMask);
 }
 
 static void WINAPI wine_vkCmdSetViewport(VkCommandBuffer commandBuffer, uint32_t firstViewport, uint32_t viewportCount, const VkViewport *pViewports)
 {
-    FIXME("stub: %p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pViewports);
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pViewports);
+    commandBuffer->device->funcs.p_vkCmdSetViewport(commandBuffer->command_buffer, firstViewport, viewportCount, pViewports);
 }
 
 static void WINAPI wine_vkCmdUpdateBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize dataSize, const void *pData)
 {
-    FIXME("stub: %p, 0x%s, 0x%s, 0x%s, %p\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(dataSize), pData);
+    TRACE("%p, 0x%s, 0x%s, 0x%s, %p\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(dataSize), pData);
+    commandBuffer->device->funcs.p_vkCmdUpdateBuffer(commandBuffer->command_buffer, dstBuffer, dstOffset, dataSize, pData);
 }
 
 static void WINAPI wine_vkCmdWaitEvents(VkCommandBuffer commandBuffer, uint32_t eventCount, const VkEvent *pEvents, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, uint32_t memoryBarrierCount, const VkMemoryBarrier *pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier *pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier *pImageMemoryBarriers)
 {
-    FIXME("stub: %p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, eventCount, pEvents, srcStageMask, dstStageMask, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+#if defined(USE_STRUCT_CONVERSION)
+    VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
+    VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    TRACE("%p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, eventCount, pEvents, srcStageMask, dstStageMask, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+
+    pBufferMemoryBarriers_host = convert_VkBufferMemoryBarrier_array_win_to_host(pBufferMemoryBarriers, bufferMemoryBarrierCount);
+    pImageMemoryBarriers_host = convert_VkImageMemoryBarrier_array_win_to_host(pImageMemoryBarriers, imageMemoryBarrierCount);
+    commandBuffer->device->funcs.p_vkCmdWaitEvents(commandBuffer->command_buffer, eventCount, pEvents, srcStageMask, dstStageMask, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers_host, imageMemoryBarrierCount, pImageMemoryBarriers_host);
+
+    free_VkBufferMemoryBarrier_array(pBufferMemoryBarriers_host, bufferMemoryBarrierCount);
+    free_VkImageMemoryBarrier_array(pImageMemoryBarriers_host, imageMemoryBarrierCount);
+#else
+    TRACE("%p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", commandBuffer, eventCount, pEvents, srcStageMask, dstStageMask, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+    commandBuffer->device->funcs.p_vkCmdWaitEvents(commandBuffer->command_buffer, eventCount, pEvents, srcStageMask, dstStageMask, memoryBarrierCount, pMemoryBarriers, bufferMemoryBarrierCount, pBufferMemoryBarriers, imageMemoryBarrierCount, pImageMemoryBarriers);
+#endif
 }
 
 static void WINAPI wine_vkCmdWriteTimestamp(VkCommandBuffer commandBuffer, VkPipelineStageFlagBits pipelineStage, VkQueryPool queryPool, uint32_t query)
 {
-    FIXME("stub: %p, %d, 0x%s, %u\n", commandBuffer, pipelineStage, wine_dbgstr_longlong(queryPool), query);
+    TRACE("%p, %d, 0x%s, %u\n", commandBuffer, pipelineStage, wine_dbgstr_longlong(queryPool), query);
+    commandBuffer->device->funcs.p_vkCmdWriteTimestamp(commandBuffer->command_buffer, pipelineStage, queryPool, query);
 }
 
 static VkResult WINAPI wine_vkCreateBuffer(VkDevice device, const VkBufferCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkBuffer *pBuffer)
@@ -1113,8 +1407,8 @@ static VkResult WINAPI wine_vkDeviceWaitIdle(VkDevice device)
 
 static VkResult WINAPI wine_vkEndCommandBuffer(VkCommandBuffer commandBuffer)
 {
-    FIXME("stub: %p\n", commandBuffer);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("%p\n", commandBuffer);
+    return commandBuffer->device->funcs.p_vkEndCommandBuffer(commandBuffer->command_buffer);
 }
 
 static VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
@@ -1361,8 +1655,8 @@ static VkResult WINAPI wine_vkQueueWaitIdle(VkQueue queue)
 
 static VkResult WINAPI wine_vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags)
 {
-    FIXME("stub: %p, %#x\n", commandBuffer, flags);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("%p, %#x\n", commandBuffer, flags);
+    return commandBuffer->device->funcs.p_vkResetCommandBuffer(commandBuffer->command_buffer, flags);
 }
 
 static VkResult WINAPI wine_vkResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags)
