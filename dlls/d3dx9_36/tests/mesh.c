@@ -3791,7 +3791,21 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
     return S_OK;
 }
 
-static BOOL compute_text_mesh(struct mesh *mesh, const char *text,
+static void free_outline(struct outline *outline)
+{
+    HeapFree(GetProcessHeap(), 0, outline->items);
+}
+
+static void free_glyphinfo(struct glyphinfo *glyph)
+{
+    unsigned int i;
+
+    for (i = 0; i < glyph->outlines.count; ++i)
+        free_outline(&glyph->outlines.items[i]);
+    HeapFree(GetProcessHeap(), 0, glyph->outlines.items);
+}
+
+static void compute_text_mesh(struct mesh *mesh, const char *text,
         float deviation, float extrusion, float otmEMSquare, const struct glyphinfo *glyphs)
 {
     DWORD nb_vertices, nb_faces;
@@ -3824,8 +3838,7 @@ static BOOL compute_text_mesh(struct mesh *mesh, const char *text,
     nb_vertices = (nb_outline_points + nb_corners) * 2 + textlen;
     nb_faces = nb_outline_points * 2;
 
-    if (!new_mesh(mesh, nb_vertices, nb_faces))
-        return FALSE;
+    ok(new_mesh(mesh, nb_vertices, nb_faces), "Failed to create reference text mesh.\n");
 
     /* convert 2D vertices and faces into 3D mesh */
     vertex_ptr = mesh->vertices;
@@ -3934,8 +3947,6 @@ static BOOL compute_text_mesh(struct mesh *mesh, const char *text,
         vertex_ptr->normal.z = 1;
         vertex_ptr++;
     }
-
-    return TRUE;
 }
 
 static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh,
@@ -3955,93 +3966,48 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
     number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
     number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
 
-    /* vertex buffer */
     hr = d3dxmesh->lpVtbl->GetVertexBuffer(d3dxmesh, &vertex_buffer);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't get vertex buffers\n");
-        goto error;
-    }
-
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
     hr = IDirect3DVertexBuffer9_GetDesc(vertex_buffer, &vertex_buffer_description);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
-
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't get vertex buffer description\n");
-    }
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(vertex_buffer_description.Format == D3DFMT_VERTEXDATA, "Test %s, unexpected format %u.\n",
+            name, vertex_buffer_description.Format);
+    ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, unexpected resource type %u.\n",
+            name, vertex_buffer_description.Type);
+    ok(!vertex_buffer_description.Usage, "Test %s, unexpected usage %#x.\n", name, vertex_buffer_description.Usage);
+    ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, unexpected pool %u.\n",
+            name, vertex_buffer_description.Pool);
+    ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, unexpected FVF %#x (expected %#x).\n",
+            name, vertex_buffer_description.FVF, mesh->fvf);
+    if (!mesh->fvf)
+        expected = number_of_vertices * mesh->vertex_size;
     else
-    {
-        ok(vertex_buffer_description.Format == D3DFMT_VERTEXDATA, "Test %s, result %x, expected %x (D3DFMT_VERTEXDATA)\n",
-           name, vertex_buffer_description.Format, D3DFMT_VERTEXDATA);
-        ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_VERTEXBUFFER)\n",
-           name, vertex_buffer_description.Type, D3DRTYPE_VERTEXBUFFER);
-        ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
-        ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
-           name, vertex_buffer_description.Pool, D3DPOOL_MANAGED);
-        ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %x, expected %x\n",
-           name, vertex_buffer_description.FVF, mesh->fvf);
-        if (mesh->fvf == 0)
-        {
-            expected = number_of_vertices * mesh->vertex_size;
-        }
-        else
-        {
-            expected = number_of_vertices * D3DXGetFVFVertexSize(mesh->fvf);
-        }
-        ok(vertex_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
-           name, vertex_buffer_description.Size, expected);
-    }
+        expected = number_of_vertices * D3DXGetFVFVertexSize(mesh->fvf);
+    ok(vertex_buffer_description.Size == expected, "Test %s, unexpected size %u (expected %u).\n",
+            name, vertex_buffer_description.Size, expected);
 
     hr = d3dxmesh->lpVtbl->GetIndexBuffer(d3dxmesh, &index_buffer);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't get index buffer\n");
-        goto error;
-    }
-
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
     hr = IDirect3DIndexBuffer9_GetDesc(index_buffer, &index_buffer_description);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(index_buffer_description.Format == D3DFMT_INDEX16, "Test %s, unexpected format %u.\n",
+            name, index_buffer_description.Format);
+    ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, unexpected resource type %u.\n",
+            name, index_buffer_description.Type);
+    ok(!index_buffer_description.Usage, "Test %s, unexpected usage %#x.\n",
+            name, index_buffer_description.Usage);
+    ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, unexpected pool %u.\n",
+            name, index_buffer_description.Pool);
+    expected = number_of_faces * sizeof(WORD) * 3;
+    ok(index_buffer_description.Size == expected, "Test %s, unexpected size %u.\n",
+            name, index_buffer_description.Size);
 
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't get index buffer description\n");
-    }
-    else
-    {
-        ok(index_buffer_description.Format == D3DFMT_INDEX16, "Test %s, result %x, expected %x (D3DFMT_INDEX16)\n",
-           name, index_buffer_description.Format, D3DFMT_INDEX16);
-        ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
-           name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
-        ok(index_buffer_description.Usage == 0, "Test %s, result %#x, expected %#x.\n",
-                name, index_buffer_description.Usage, 0);
-        ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
-           name, index_buffer_description.Pool, D3DPOOL_MANAGED);
-        expected = number_of_faces * sizeof(WORD) * 3;
-        ok(index_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
-           name, index_buffer_description.Size, expected);
-    }
-
-    /* specify offset and size to avoid potential overruns */
     hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
             (void **)&vertices, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't lock vertex buffer\n");
-        goto error;
-    }
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
     hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
             (void **)&faces, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't lock index buffer\n");
-        goto error;
-    }
-
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
     face_idx1 = 0;
     vtx_idx2 = 0;
     face_idx2 = 0;
@@ -4242,66 +4208,49 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
         }
     }
 
-error:
-    if (vertices) IDirect3DVertexBuffer9_Unlock(vertex_buffer);
-    if (faces) IDirect3DIndexBuffer9_Unlock(index_buffer);
-    if (index_buffer) IDirect3DIndexBuffer9_Release(index_buffer);
-    if (vertex_buffer) IDirect3DVertexBuffer9_Release(vertex_buffer);
+    IDirect3DIndexBuffer9_Unlock(index_buffer);
+    IDirect3DVertexBuffer9_Unlock(vertex_buffer);
+    IDirect3DIndexBuffer9_Release(index_buffer);
+    IDirect3DVertexBuffer9_Release(vertex_buffer);
 }
 
 static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text, float deviation, float extrusion)
 {
+    static const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
     HRESULT hr;
     ID3DXMesh *d3dxmesh = NULL;
     struct mesh mesh = {0};
     char name[256];
     OUTLINETEXTMETRICA otm;
     GLYPHMETRICS gm;
-    struct glyphinfo *glyphs = NULL;
+    struct glyphinfo *glyphs;
     GLYPHMETRICSFLOAT *glyphmetrics_float = HeapAlloc(GetProcessHeap(), 0, sizeof(GLYPHMETRICSFLOAT) * strlen(text));
     int i;
     LOGFONTA lf;
     float offset_x;
     size_t textlen;
     HFONT font = NULL, oldfont = NULL;
-    char *raw_outline = NULL;
+    char *raw_outline;
 
     sprintf(name, "text ('%s', %f, %f)", text, deviation, extrusion);
 
     hr = D3DXCreateTextA(device, hdc, text, deviation, extrusion, &d3dxmesh, NULL, glyphmetrics_float);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-    if (hr != D3D_OK)
-    {
-        skip("Couldn't create text with D3DXCreateText\n");
-        goto error;
-    }
 
     /* must select a modified font having lfHeight = otm.otmEMSquare before
      * calling GetGlyphOutline to get the expected values */
-    if (!GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf)
-            || !GetOutlineTextMetricsA(hdc, sizeof(otm), &otm))
-    {
-        skip("Couldn't get text outline\n");
-        goto error;
-    }
+    ok(GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf), "Failed to get current DC font.\n");
+    ok(GetOutlineTextMetricsA(hdc, sizeof(otm), &otm), "Failed to get DC font outline.\n");
     lf.lfHeight = otm.otmEMSquare;
     lf.lfWidth = 0;
-    if (!(font = CreateFontIndirectA(&lf)))
-    {
-        skip("Couldn't create the modified font\n");
-        goto error;
-    }
+    ok(!!(font = CreateFontIndirectA(&lf)), "Failed to create font.\n");
 
     textlen = strlen(text);
     glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
-    if (!glyphs)
-        goto error;
-
     oldfont = SelectObject(hdc, font);
 
     for (i = 0; i < textlen; i++)
     {
-        const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
         GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
         compare_float(glyphmetrics_float[i].gmfBlackBoxX, gm.gmBlackBoxX / (float)otm.otmEMSquare);
         compare_float(glyphmetrics_float[i].gmfBlackBoxY, gm.gmBlackBoxY / (float)otm.otmEMSquare);
@@ -4317,64 +4266,36 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     offset_x = 0.0f;
     for (i = 0; i < textlen; i++)
     {
-        /* get outline points from data returned from GetGlyphOutline */
-        const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
-        int datasize;
+        DWORD datasize;
 
         glyphs[i].offset_x = offset_x;
 
         datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
-        if (datasize < 0)
-        {
-            SelectObject(hdc, oldfont);
-            goto error;
-        }
-        HeapFree(GetProcessHeap(), 0, raw_outline);
+        ok(datasize != GDI_ERROR, "Failed to retrieve GDI glyph outline size.\n");
         raw_outline = HeapAlloc(GetProcessHeap(), 0, datasize);
-        if (!raw_outline)
-        {
-            SelectObject(hdc, oldfont);
-            goto error;
-        }
         datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, datasize, raw_outline, &identity);
-
+        ok(datasize != GDI_ERROR, "Failed to retrieve GDI glyph outline.\n");
         create_outline(&glyphs[i], raw_outline, datasize, deviation, otm.otmEMSquare);
+        HeapFree(GetProcessHeap(), 0, raw_outline);
 
         offset_x += gm.gmCellIncX / (float)otm.otmEMSquare;
     }
 
     SelectObject(hdc, oldfont);
 
-    ZeroMemory(&mesh, sizeof(mesh));
-    if (!compute_text_mesh(&mesh, text, deviation, extrusion, otm.otmEMSquare, glyphs))
-    {
-        skip("Couldn't create mesh\n");
-        d3dxmesh->lpVtbl->Release(d3dxmesh);
-        return;
-    }
+    compute_text_mesh(&mesh, text, deviation, extrusion, otm.otmEMSquare, glyphs);
     mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
 
     compare_text_outline_mesh(name, d3dxmesh, &mesh, textlen, extrusion, glyphs);
 
-error:
     free_mesh(&mesh);
-
-    if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
-    if (font) DeleteObject(font);
+    d3dxmesh->lpVtbl->Release(d3dxmesh);
+    DeleteObject(font);
     HeapFree(GetProcessHeap(), 0, glyphmetrics_float);
 
-    if (glyphs)
-    {
-        for (i = 0; i < textlen; i++)
-        {
-            int j;
-            for (j = 0; j < glyphs[i].outlines.count; j++)
-                HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items[j].items);
-            HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items);
-        }
-        HeapFree(GetProcessHeap(), 0, glyphs);
-    }
-    HeapFree(GetProcessHeap(), 0, raw_outline);
+    for (i = 0; i < textlen; i++)
+        free_glyphinfo(&glyphs[i]);
+    HeapFree(GetProcessHeap(), 0, glyphs);
 }
 
 static void D3DXCreateTextTest(void)
