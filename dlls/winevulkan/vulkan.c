@@ -52,6 +52,22 @@ static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
 
+/* Helper function for release command buffers. */
+static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPool pool,
+        uint32_t count, const VkCommandBuffer *buffers)
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (!buffers[i])
+            continue;
+
+        device->funcs.p_vkFreeCommandBuffers(device->device, pool, 1, &buffers[i]->command_buffer);
+        heap_free(buffers[i]);
+    }
+}
+
 /* Helper function to create queues for a given family index. */
 static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
         uint32_t family_index, uint32_t queue_count)
@@ -362,6 +378,61 @@ VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapc
 
     return vk_funcs->p_vkAcquireNextImageKHR(device->device, swapchain, timeout,
             semaphore, fence, image_index);
+}
+
+VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
+        const VkCommandBufferAllocateInfo *allocate_info, VkCommandBuffer *buffers)
+{
+    VkResult res = VK_SUCCESS;
+    unsigned int i;
+
+    TRACE("%p %p %p\n", device, allocate_info, buffers);
+
+    memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
+
+    for (i = 0; i < allocate_info->commandBufferCount; i++)
+    {
+#if defined(USE_STRUCT_CONVERSION)
+        VkCommandBufferAllocateInfo_host allocate_info_host;
+#else
+        VkCommandBufferAllocateInfo allocate_info_host;
+#endif
+        /* TODO: future extensions (none yet) may require pNext conversion. */
+        allocate_info_host.pNext = allocate_info->pNext;
+        allocate_info_host.sType = allocate_info->sType;
+        allocate_info_host.commandPool = allocate_info->commandPool;
+        allocate_info_host.level = allocate_info->level;
+        allocate_info_host.commandBufferCount = 1;
+
+        TRACE("Creating command buffer %u, pool 0x%s, level %#x\n", i,
+                wine_dbgstr_longlong(allocate_info_host.commandPool),
+                allocate_info_host.level);
+
+        if (!(buffers[i] = heap_alloc_zero(sizeof(*buffers))))
+        {
+            res = VK_ERROR_OUT_OF_HOST_MEMORY;
+            break;
+        }
+
+        buffers[i]->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        buffers[i]->device = device;
+        res = device->funcs.p_vkAllocateCommandBuffers(device->device,
+                &allocate_info_host, &buffers[i]->command_buffer);
+        if (res != VK_SUCCESS)
+        {
+            ERR("Failed to allocate command buffer, res=%d\n", res);
+            break;
+        }
+    }
+
+    if (res != VK_SUCCESS)
+    {
+        wine_vk_command_buffers_free(device, allocate_info->commandPool, i, buffers);
+        memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
+        return res;
+    }
+
+    return VK_SUCCESS;
 }
 
 VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
@@ -708,6 +779,14 @@ VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *d
 
     TRACE("Returning %u devices\n", *device_count);
     return res;
+}
+
+void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool, uint32_t count,
+        const VkCommandBuffer *buffers)
+{
+    TRACE("%p 0x%s %u %p\n", device, wine_dbgstr_longlong(pool), count, buffers);
+
+    wine_vk_command_buffers_free(device, pool, count, buffers);
 }
 
 PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *name)

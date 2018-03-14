@@ -111,7 +111,9 @@ FUNCTION_OVERRIDES = {
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
 
     # Device functions
+    "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : False},
 
@@ -392,13 +394,6 @@ class VkFunction(object):
 
     def needs_stub(self):
         """ Temporary function to limit script hacks until more code is implemented. """
-
-        # Temporary hack to pull in VkSwapChainCreateInfoKHR.
-        if self.name == "vkCreateSwapchainKHR":
-            return False
-
-        if self.name in ["vkAllocateCommandBuffers", "vkFreeCommandBuffers"]:
-            return True
 
         if self.params[0].type in ["VkCommandBuffer", "VkQueue"]:
             return True

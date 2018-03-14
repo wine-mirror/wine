@@ -48,6 +48,13 @@ struct wine_vk_base
     UINT_PTR loader_magic;
 };
 
+struct VkCommandBuffer_T
+{
+    struct wine_vk_base base;
+    VkDevice device; /* parent */
+    VkCommandBuffer command_buffer; /* native command buffer */
+};
+
 struct VkDevice_T
 {
     struct wine_vk_base base;
