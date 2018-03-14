@@ -89,6 +89,7 @@ typedef struct _wine_modref
     LDR_MODULE            ldr;
     dev_t                 dev;
     ino_t                 ino;
+    int                   alloc_deps;
     int                   nDeps;
     struct _wine_modref **deps;
 } WINE_MODREF;
@@ -483,15 +484,16 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
             if (!imports_fixup_done && current_modref)
             {
                 WINE_MODREF **deps;
-                if (current_modref->nDeps)
+                if (current_modref->alloc_deps)
                     deps = RtlReAllocateHeap( GetProcessHeap(), 0, current_modref->deps,
-                                              (current_modref->nDeps + 1) * sizeof(*deps) );
+                                              (current_modref->alloc_deps + 1) * sizeof(*deps) );
                 else
                     deps = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*deps) );
                 if (deps)
                 {
                     deps[current_modref->nDeps++] = wm;
                     current_modref->deps = deps;
+                    current_modref->alloc_deps++;
                 }
             }
             else if (process_attach( wm, NULL ) != STATUS_SUCCESS)
@@ -936,6 +938,7 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
     wm->nDeps = 1;
+    wm->alloc_deps = 1;
     wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(WINE_MODREF *) );
 
     prev = current_modref;
@@ -968,7 +971,7 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
  */
 static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 {
-    int i, nb_imports;
+    int i, dep, nb_imports;
     const IMAGE_IMPORT_DESCRIPTOR *imports;
     WINE_MODREF *prev, *imp;
     DWORD size;
@@ -993,7 +996,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
         RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     /* Allocate module dependency list */
-    wm->nDeps = nb_imports;
+    wm->alloc_deps = nb_imports;
     wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, nb_imports*sizeof(WINE_MODREF *) );
 
     /* load the imported modules. They are automatically
@@ -1004,12 +1007,14 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     status = STATUS_SUCCESS;
     for (i = 0; i < nb_imports; i++)
     {
+        dep = wm->nDeps++;
+
         if (!import_dll( wm->ldr.BaseAddress, &imports[i], load_path, &imp ))
         {
             imp = NULL;
             status = STATUS_DLL_NOT_FOUND;
         }
-        wm->deps[i] = imp;
+        wm->deps[dep] = imp;
     }
     current_modref = prev;
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
