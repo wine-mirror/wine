@@ -2365,7 +2365,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             struct wined3d_surface *surface;
 
             surface = &surfaces[idx];
-            surface->container = texture;
 
             sub_resource = &texture->sub_resources[idx];
             sub_resource->locations = WINED3D_LOCATION_DISCARDED;
