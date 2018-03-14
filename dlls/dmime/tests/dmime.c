@@ -723,6 +723,7 @@ static void test_parsedescriptor(void)
     };
     FOURCC empty[] = {FOURCC_RIFF, ~0, 0};
     FOURCC inam[] = {FOURCC_RIFF, ~0, FOURCC_LIST, ~0, mmioFOURCC('I','N','A','M'), 0, 0};
+    FOURCC noriff[] = {mmioFOURCC('J','U','N','K'), 0};
 #define X(class)        &CLSID_ ## class, #class
 #define Y(form)         form, #form
     const struct {
@@ -797,6 +798,19 @@ static void test_parsedescriptor(void)
         /* Wrong form */
         empty[1] = DMUS_FOURCC_CONTAINER_FORM;
         stream = gen_riff_stream(empty);
+        memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
+        if (forms[i].needs_size)
+            ok(hr == DMUS_E_CHUNKNOTFOUND,
+                    "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
+        else
+            ok(hr == E_FAIL, "ParseDescriptor failed: %08x, expected E_FAIL\n", hr);
+        ok(!desc.dwValidData, "Got valid data %#x, expected 0\n", desc.dwValidData);
+        IStream_Release(stream);
+
+        /* Not a RIFF stream */
+        stream = gen_riff_stream(noriff);
         memset(&desc, 0, sizeof(desc));
         desc.dwSize = sizeof(desc);
         hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
