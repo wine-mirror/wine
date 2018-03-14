@@ -1555,13 +1555,16 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
             case D3DXPT_TEXTURECUBE:
                 for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
                 {
-                    IUnknown *unk = ((IUnknown **)data)[i];
-                    if (unk)
-                        IUnknown_AddRef(unk);
+                    IUnknown *old_texture = ((IUnknown **)param->data)[i];
+                    IUnknown *new_texture = ((IUnknown **)data)[i];
 
-                    unk = ((IUnknown **)param->data)[i];
-                    if (unk)
-                        IUnknown_Release(unk);
+                    if (new_texture == old_texture)
+                        continue;
+
+                    if (new_texture)
+                        IUnknown_AddRef(new_texture);
+                    if (old_texture)
+                        IUnknown_Release(old_texture);
                 }
             /* fallthrough */
             case D3DXPT_VOID:
