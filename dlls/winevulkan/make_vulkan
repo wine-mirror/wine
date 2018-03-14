@@ -112,6 +112,7 @@ FUNCTION_OVERRIDES = {
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkCmdExecuteCommands" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},

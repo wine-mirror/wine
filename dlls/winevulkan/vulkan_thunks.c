@@ -715,11 +715,6 @@ static void WINAPI wine_vkCmdEndRenderPass(VkCommandBuffer commandBuffer)
     FIXME("stub: %p\n", commandBuffer);
 }
 
-static void WINAPI wine_vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCount, const VkCommandBuffer *pCommandBuffers)
-{
-    FIXME("stub: %p, %u, %p\n", commandBuffer, commandBufferCount, pCommandBuffers);
-}
-
 static void WINAPI wine_vkCmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize size, uint32_t data)
 {
     FIXME("stub: %p, 0x%s, 0x%s, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(size), data);
