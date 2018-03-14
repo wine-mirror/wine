@@ -1803,6 +1803,26 @@ class VkGenerator(object):
         f.write("        }\n")
         f.write("    }\n")
         f.write("    return NULL;\n")
+        f.write("}\n\n")
+
+        # Create array of device extensions.
+        f.write("static const char * const vk_device_extensions[] =\n{\n")
+        for ext in self.registry.extensions:
+            if ext["type"] != "device":
+                continue
+
+            f.write("    \"{0}\",\n".format(ext["name"]))
+        f.write("};\n\n")
+
+        f.write("BOOL wine_vk_device_extension_supported(const char *name)\n")
+        f.write("{\n")
+        f.write("    unsigned int i;\n")
+        f.write("    for (i = 0; i < ARRAY_SIZE(vk_device_extensions); i++)\n")
+        f.write("    {\n")
+        f.write("        if (strcmp(vk_device_extensions[i], name) == 0)\n")
+        f.write("            return TRUE;\n")
+        f.write("    }\n")
+        f.write("    return FALSE;\n")
         f.write("}\n")
 
     def generate_thunks_h(self, f, prefix):
@@ -1819,6 +1839,8 @@ class VkGenerator(object):
         f.write("/* For use by vk_icdGetInstanceProcAddr / vkGetInstanceProcAddr */\n")
         f.write("void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;\n")
         f.write("void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;\n\n")
+
+        f.write("BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;\n\n")
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")

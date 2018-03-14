@@ -1073,3 +1073,19 @@ void *wine_vk_get_instance_proc_addr(const char *name)
     }
     return NULL;
 }
+
+static const char * const vk_device_extensions[] =
+{
+    "VK_KHR_swapchain",
+};
+
+BOOL wine_vk_device_extension_supported(const char *name)
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(vk_device_extensions); i++)
+    {
+        if (strcmp(vk_device_extensions[i], name) == 0)
+            return TRUE;
+    }
+    return FALSE;
+}

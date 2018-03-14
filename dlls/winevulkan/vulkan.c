@@ -46,6 +46,9 @@ struct wine_vk_structure_header
 };
 
 static void *wine_vk_get_global_proc_addr(const char *name);
+static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
+        VkPhysicalDevice phys_dev_host);
+static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
 
@@ -170,17 +173,13 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
     /* Wrap each native physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < num_phys_devs; i++)
     {
-        struct VkPhysicalDevice_T *phys_dev = heap_alloc(sizeof(*phys_dev));
+        struct VkPhysicalDevice_T *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i]);
         if (!phys_dev)
         {
             ERR("Unable to allocate memory for physical device!\n");
             res = VK_ERROR_OUT_OF_HOST_MEMORY;
             goto err;
         }
-
-        phys_dev->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
-        phys_dev->instance = instance;
-        phys_dev->phys_dev = tmp_phys_devs[i];
 
         instance->phys_devs[i] = phys_dev;
         instance->num_phys_devs = i + 1;
@@ -192,7 +191,6 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
 
 err:
     heap_free(tmp_phys_devs);
-
     return res;
 }
 
@@ -210,7 +208,7 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
 
         for (i = 0; i < instance->num_phys_devs; i++)
         {
-            heap_free(&instance->phys_devs[i]);
+            wine_vk_physical_device_free(instance->phys_devs[i]);
         }
         heap_free(instance->phys_devs);
     }
@@ -219,6 +217,99 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
         vk_funcs->p_vkDestroyInstance(instance->instance, NULL /* allocator */);
 
     heap_free(instance);
+}
+
+static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
+        VkPhysicalDevice phys_dev)
+{
+    struct VkPhysicalDevice_T *object;
+    uint32_t num_host_properties, num_properties = 0;
+    VkExtensionProperties *host_properties = NULL;
+    VkResult res;
+    unsigned int i, j;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return NULL;
+
+    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    object->instance = instance;
+    object->phys_dev = phys_dev;
+
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+            NULL, &num_host_properties, NULL);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to enumerate device extensions, res=%d\n", res);
+        goto err;
+    }
+
+    host_properties = heap_calloc(num_host_properties, sizeof(*host_properties));
+    if (!host_properties)
+    {
+        ERR("Failed to allocate memory for device properties!\n");
+        goto err;
+    }
+
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+            NULL, &num_host_properties, host_properties);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to enumerate device extensions, res=%d\n", res);
+        goto err;
+    }
+
+    /* Count list of extensions for which we have an implementation.
+     * TODO: perform translation for platform specific extensions.
+     */
+    for (i = 0; i < num_host_properties; i++)
+    {
+        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
+        {
+            TRACE("Enabling extension '%s' for physical device %p\n", host_properties[i].extensionName, object);
+            num_properties++;
+        }
+        else
+        {
+            TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
+        }
+    }
+
+    TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
+
+    object->properties = heap_calloc(num_properties, sizeof(*object->properties));
+    if (!object->properties)
+    {
+        ERR("Failed to allocate memory for device properties!\n");
+        goto err;
+    }
+
+    for (i = 0, j = 0; i < num_host_properties; i++)
+    {
+        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
+        {
+            memcpy(&object->properties[j], &host_properties[i], sizeof(*object->properties));
+            j++;
+        }
+    }
+    object->num_properties = num_properties;
+
+    heap_free(host_properties);
+    return object;
+
+err:
+    wine_vk_physical_device_free(object);
+    heap_free(host_properties);
+    return NULL;
+}
+
+static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
+{
+    if (!phys_dev)
+        return;
+
+    heap_free(phys_dev->properties);
+    heap_free(phys_dev);
 }
 
 VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
@@ -460,6 +551,9 @@ void WINAPI wine_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain
 VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev,
         const char *layer_name, uint32_t *count, VkExtensionProperties *properties)
 {
+    VkResult res;
+    unsigned int i, num_copies;
+
     TRACE("%p, %p, %p, %p\n", phys_dev, layer_name, count, properties);
 
     /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
@@ -471,16 +565,32 @@ VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_
 
     if (!properties)
     {
-        *count = 0; /* No extensions yet. */
+        *count = phys_dev->num_properties;
         return VK_SUCCESS;
     }
 
-    /* When properties is not NULL, we copy the extensions over and set count to
-     * the number of copied extensions. For now we don't have much to do as we don't support
-     * any extensions yet.
-     */
-    *count = 0;
-    return VK_SUCCESS;
+    if (*count < phys_dev->num_properties)
+    {
+        /* Incomplete is a type of success used to signal the application
+         * that not all devices got copied.
+         */
+        num_copies = *count;
+        res = VK_INCOMPLETE;
+    }
+    else
+    {
+        num_copies = phys_dev->num_properties;
+        res = VK_SUCCESS;
+    }
+
+    for (i = 0; i < num_copies; i++)
+    {
+        memcpy(&properties[i], &phys_dev->properties[i], sizeof(phys_dev->properties[i]));
+    }
+    *count = num_copies;
+
+    TRACE("Result %d, extensions copied %u\n", res, num_copies);
+    return res;
 }
 
 static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
