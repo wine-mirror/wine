@@ -4351,6 +4351,7 @@ static HRESULT WINAPI ID3DXEffectImpl_ApplyParameterBlock(ID3DXEffect* iface, D3
     return E_NOTIMPL;
 }
 
+#if D3DX_SDK_VERSION >= 26
 static HRESULT WINAPI ID3DXEffectImpl_DeleteParameterBlock(ID3DXEffect* iface, D3DXHANDLE parameter_block)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
@@ -4359,6 +4360,7 @@ static HRESULT WINAPI ID3DXEffectImpl_DeleteParameterBlock(ID3DXEffect* iface, D
 
     return E_NOTIMPL;
 }
+#endif
 
 static HRESULT WINAPI ID3DXEffectImpl_CloneEffect(ID3DXEffect *iface,
         struct IDirect3DDevice9 *device, struct ID3DXEffect **effect)
@@ -4370,6 +4372,7 @@ static HRESULT WINAPI ID3DXEffectImpl_CloneEffect(ID3DXEffect *iface,
     return E_NOTIMPL;
 }
 
+#if D3DX_SDK_VERSION >= 27
 static HRESULT WINAPI ID3DXEffectImpl_SetRawValue(ID3DXEffect *iface,
         D3DXHANDLE parameter, const void *data, UINT byte_offset, UINT bytes)
 {
@@ -4378,6 +4381,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetRawValue(ID3DXEffect *iface,
 
     return E_NOTIMPL;
 }
+#endif
 
 static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl =
 {
@@ -4460,9 +4464,13 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl =
     ID3DXEffectImpl_BeginParameterBlock,
     ID3DXEffectImpl_EndParameterBlock,
     ID3DXEffectImpl_ApplyParameterBlock,
+#if D3DX_SDK_VERSION >= 26
     ID3DXEffectImpl_DeleteParameterBlock,
+#endif
     ID3DXEffectImpl_CloneEffect,
+#if D3DX_SDK_VERSION >= 27
     ID3DXEffectImpl_SetRawValue
+#endif
 };
 
 static inline struct ID3DXEffectCompilerImpl *impl_from_ID3DXEffectCompiler(ID3DXEffectCompiler *iface)
