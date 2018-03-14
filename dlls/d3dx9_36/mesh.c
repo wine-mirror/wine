@@ -4565,7 +4565,7 @@ HRESULT WINAPI D3DXCreatePolygon(struct IDirect3DDevice9 *device, float length, 
     struct vertex *vertices;
     WORD (*faces)[3];
     DWORD (*adjacency_buf)[3];
-    float scale;
+    float angle, scale;
     unsigned int i;
 
     TRACE("device %p, length %f, sides %u, mesh %p, adjacency %p.\n",
@@ -4593,7 +4593,9 @@ HRESULT WINAPI D3DXCreatePolygon(struct IDirect3DDevice9 *device, float length, 
         return hr;
     }
 
-    scale = 0.5f * length / sinf(D3DX_PI / sides);
+    angle = D3DX_PI / sides;
+    scale = 0.5f * length / sinf(angle);
+    angle *= 2.0f;
 
     vertices[0].position.x = 0.0f;
     vertices[0].position.y = 0.0f;
@@ -4604,8 +4606,8 @@ HRESULT WINAPI D3DXCreatePolygon(struct IDirect3DDevice9 *device, float length, 
 
     for (i = 0; i < sides; ++i)
     {
-        vertices[i + 1].position.x = cosf(2.0f * D3DX_PI * i / sides) * scale;
-        vertices[i + 1].position.y = sinf(2.0f * D3DX_PI * i / sides) * scale;
+        vertices[i + 1].position.x = cosf(angle * i) * scale;
+        vertices[i + 1].position.y = sinf(angle * i) * scale;
         vertices[i + 1].position.z = 0.0f;
         vertices[i + 1].normal.x = 0.0f;
         vertices[i + 1].normal.y = 0.0f;

@@ -2683,12 +2683,14 @@ static void D3DXCreateBoxTest(void)
 static BOOL compute_polygon(struct mesh *mesh, float length, unsigned int sides)
 {
     unsigned int i;
-    float scale;
+    float angle, scale;
 
     if (!new_mesh(mesh, sides + 1, sides))
         return FALSE;
 
-    scale = 0.5f * length / sinf(D3DX_PI / sides);
+    angle = D3DX_PI / sides;
+    scale = 0.5f * length / sinf(angle);
+    angle *= 2.0f;
 
     mesh->vertices[0].position.x = 0.0f;
     mesh->vertices[0].position.y = 0.0f;
@@ -2699,8 +2701,8 @@ static BOOL compute_polygon(struct mesh *mesh, float length, unsigned int sides)
 
     for (i = 0; i < sides; ++i)
     {
-        mesh->vertices[i + 1].position.x = cosf(2.0f * D3DX_PI * i / sides) * scale;
-        mesh->vertices[i + 1].position.y = sinf(2.0f * D3DX_PI * i / sides) * scale;
+        mesh->vertices[i + 1].position.x = cosf(angle * i) * scale;
+        mesh->vertices[i + 1].position.y = sinf(angle * i) * scale;
         mesh->vertices[i + 1].position.z = 0.0f;
         mesh->vertices[i + 1].normal.x = 0.0f;
         mesh->vertices[i + 1].normal.y = 0.0f;
@@ -2807,6 +2809,7 @@ static void D3DXCreatePolygonTest(void)
     test_polygon(device, 10.0f, 5);
     test_polygon(device, 10.0f, 10);
     test_polygon(device, 20.0f, 10);
+    test_polygon(device, 20.0f, 32000);
 
     free_test_context(test_context);
 }
