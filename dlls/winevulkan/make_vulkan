@@ -113,6 +113,7 @@ FUNCTION_OVERRIDES = {
     # Device functions
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface
     "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
@@ -395,9 +396,6 @@ class VkFunction(object):
         # Temporary hack to pull in VkSwapChainCreateInfoKHR.
         if self.name == "vkCreateSwapchainKHR":
             return False
-
-        if self.params[0].type != "VkPhysicalDevice":
-            return True
 
         if self.is_device_func():
             return True

@@ -685,11 +685,6 @@ static void WINAPI wine_vkGetDeviceMemoryCommitment(VkDevice device, VkDeviceMem
     FIXME("stub: %p, 0x%s, %p\n", device, wine_dbgstr_longlong(memory), pCommittedMemoryInBytes);
 }
 
-static void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue *pQueue)
-{
-    FIXME("stub: %p, %u, %u, %p\n", device, queueFamilyIndex, queueIndex, pQueue);
-}
-
 static VkResult WINAPI wine_vkGetEventStatus(VkDevice device, VkEvent event)
 {
     FIXME("stub: %p, 0x%s\n", device, wine_dbgstr_longlong(event));
