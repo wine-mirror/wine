@@ -80,6 +80,7 @@ EXT_BLOCK_SIZE = 1000
 # and need custom wrappers due to e.g. win32 / X11 specific code.
 # List of supported instance extensions.
 SUPPORTED_EXTENSIONS = [
+    "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
     "VK_KHR_swapchain",

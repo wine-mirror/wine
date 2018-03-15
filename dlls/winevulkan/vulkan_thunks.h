@@ -290,6 +290,13 @@ typedef struct VkImageFormatProperties_host
     VkDeviceSize maxResourceSize;
 } VkImageFormatProperties_host;
 
+typedef struct VkImageFormatProperties2KHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkImageFormatProperties_host imageFormatProperties;
+} VkImageFormatProperties2KHR_host;
+
 typedef struct VkMemoryHeap_host
 {
     VkDeviceSize size;
@@ -303,6 +310,13 @@ typedef struct VkPhysicalDeviceMemoryProperties_host
     uint32_t memoryHeapCount;
     VkMemoryHeap_host memoryHeaps[VK_MAX_MEMORY_HEAPS];
 } VkPhysicalDeviceMemoryProperties_host;
+
+typedef struct VkPhysicalDeviceMemoryProperties2KHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPhysicalDeviceMemoryProperties_host memoryProperties;
+} VkPhysicalDeviceMemoryProperties2KHR_host;
 
 typedef struct VkPhysicalDeviceLimits_host
 {
@@ -426,6 +440,13 @@ typedef struct VkPhysicalDeviceProperties_host
     VkPhysicalDeviceLimits_host limits;
     VkPhysicalDeviceSparseProperties sparseProperties;
 } VkPhysicalDeviceProperties_host;
+
+typedef struct VkPhysicalDeviceProperties2KHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPhysicalDeviceProperties_host properties;
+} VkPhysicalDeviceProperties2KHR_host;
 
 typedef struct VkSparseMemoryBind_host
 {
@@ -750,11 +771,18 @@ struct vulkan_instance_funcs
     VkResult (*p_vkEnumerateDeviceLayerProperties)(VkPhysicalDevice, uint32_t *, VkLayerProperties *);
     VkResult (*p_vkEnumeratePhysicalDevices)(VkInstance, uint32_t *, VkPhysicalDevice *);
     void (*p_vkGetPhysicalDeviceFeatures)(VkPhysicalDevice, VkPhysicalDeviceFeatures *);
+    void (*p_vkGetPhysicalDeviceFeatures2KHR)(VkPhysicalDevice, VkPhysicalDeviceFeatures2KHR *);
     void (*p_vkGetPhysicalDeviceFormatProperties)(VkPhysicalDevice, VkFormat, VkFormatProperties *);
+    void (*p_vkGetPhysicalDeviceFormatProperties2KHR)(VkPhysicalDevice, VkFormat, VkFormatProperties2KHR *);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkGetPhysicalDeviceImageFormatProperties)(VkPhysicalDevice, VkFormat, VkImageType, VkImageTiling, VkImageUsageFlags, VkImageCreateFlags, VkImageFormatProperties_host *);
 #else
     VkResult (*p_vkGetPhysicalDeviceImageFormatProperties)(VkPhysicalDevice, VkFormat, VkImageType, VkImageTiling, VkImageUsageFlags, VkImageCreateFlags, VkImageFormatProperties *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPhysicalDeviceImageFormatProperties2KHR)(VkPhysicalDevice, const VkPhysicalDeviceImageFormatInfo2KHR *, VkImageFormatProperties2KHR_host *);
+#else
+    VkResult (*p_vkGetPhysicalDeviceImageFormatProperties2KHR)(VkPhysicalDevice, const VkPhysicalDeviceImageFormatInfo2KHR *, VkImageFormatProperties2KHR *);
 #endif
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkGetPhysicalDeviceMemoryProperties)(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties_host *);
@@ -762,12 +790,24 @@ struct vulkan_instance_funcs
     void (*p_vkGetPhysicalDeviceMemoryProperties)(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties *);
 #endif
 #if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkGetPhysicalDeviceMemoryProperties2KHR)(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties2KHR_host *);
+#else
+    void (*p_vkGetPhysicalDeviceMemoryProperties2KHR)(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties2KHR *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
     void (*p_vkGetPhysicalDeviceProperties)(VkPhysicalDevice, VkPhysicalDeviceProperties_host *);
 #else
     void (*p_vkGetPhysicalDeviceProperties)(VkPhysicalDevice, VkPhysicalDeviceProperties *);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkGetPhysicalDeviceProperties2KHR)(VkPhysicalDevice, VkPhysicalDeviceProperties2KHR_host *);
+#else
+    void (*p_vkGetPhysicalDeviceProperties2KHR)(VkPhysicalDevice, VkPhysicalDeviceProperties2KHR *);
+#endif
     void (*p_vkGetPhysicalDeviceQueueFamilyProperties)(VkPhysicalDevice, uint32_t *, VkQueueFamilyProperties *);
+    void (*p_vkGetPhysicalDeviceQueueFamilyProperties2KHR)(VkPhysicalDevice, uint32_t *, VkQueueFamilyProperties2KHR *);
     void (*p_vkGetPhysicalDeviceSparseImageFormatProperties)(VkPhysicalDevice, VkFormat, VkImageType, VkSampleCountFlagBits, VkImageUsageFlags, VkImageTiling, uint32_t *, VkSparseImageFormatProperties *);
+    void (*p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2KHR *, uint32_t *, VkSparseImageFormatProperties2KHR *);
 };
 
 #define ALL_VK_DEVICE_FUNCS() \
@@ -898,11 +938,18 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkEnumerateDeviceLayerProperties)\
     USE_VK_FUNC(vkEnumeratePhysicalDevices)\
     USE_VK_FUNC(vkGetPhysicalDeviceFeatures)\
+    USE_VK_FUNC(vkGetPhysicalDeviceFeatures2KHR)\
     USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties)\
+    USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties2KHR)\
     USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties)\
+    USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties2KHR)\
     USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties)\
+    USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties2KHR)\
     USE_VK_FUNC(vkGetPhysicalDeviceProperties)\
+    USE_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)\
     USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties)
+    USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties2KHR)\
+    USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties)\
+    USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties2KHR)
 
 #endif /* __WINE_VULKAN_THUNKS_H */

@@ -450,6 +450,23 @@ static inline void convert_VkImageFormatProperties_host_to_win(const VkImageForm
     out->maxResourceSize = in->maxResourceSize;
 }
 
+static inline void convert_VkImageFormatProperties2KHR_win_to_host(const VkImageFormatProperties2KHR *in, VkImageFormatProperties2KHR_host *out)
+{
+    if (!in) return;
+
+    out->pNext = in->pNext;
+    out->sType = in->sType;
+}
+
+static inline void convert_VkImageFormatProperties2KHR_host_to_win(const VkImageFormatProperties2KHR_host *in, VkImageFormatProperties2KHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    convert_VkImageFormatProperties_host_to_win(&in->imageFormatProperties, &out->imageFormatProperties);
+}
+
 static inline void convert_VkMemoryHeap_static_array_host_to_win(const VkMemoryHeap_host *in, VkMemoryHeap *out, uint32_t count)
 {
     unsigned int i;
@@ -471,6 +488,23 @@ static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win(const Vk
     memcpy(out->memoryTypes, in->memoryTypes, VK_MAX_MEMORY_TYPES * sizeof(VkMemoryType));
     out->memoryHeapCount = in->memoryHeapCount;
     convert_VkMemoryHeap_static_array_host_to_win(in->memoryHeaps, out->memoryHeaps, VK_MAX_MEMORY_HEAPS);
+}
+
+static inline void convert_VkPhysicalDeviceMemoryProperties2KHR_win_to_host(const VkPhysicalDeviceMemoryProperties2KHR *in, VkPhysicalDeviceMemoryProperties2KHR_host *out)
+{
+    if (!in) return;
+
+    out->pNext = in->pNext;
+    out->sType = in->sType;
+}
+
+static inline void convert_VkPhysicalDeviceMemoryProperties2KHR_host_to_win(const VkPhysicalDeviceMemoryProperties2KHR_host *in, VkPhysicalDeviceMemoryProperties2KHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    convert_VkPhysicalDeviceMemoryProperties_host_to_win(&in->memoryProperties, &out->memoryProperties);
 }
 
 static inline void convert_VkPhysicalDeviceLimits_host_to_win(const VkPhysicalDeviceLimits_host *in, VkPhysicalDeviceLimits *out)
@@ -598,6 +632,23 @@ static inline void convert_VkPhysicalDeviceProperties_host_to_win(const VkPhysic
     memcpy(out->pipelineCacheUUID, in->pipelineCacheUUID, VK_UUID_SIZE * sizeof(uint8_t));
     convert_VkPhysicalDeviceLimits_host_to_win(&in->limits, &out->limits);
     out->sparseProperties = in->sparseProperties;
+}
+
+static inline void convert_VkPhysicalDeviceProperties2KHR_win_to_host(const VkPhysicalDeviceProperties2KHR *in, VkPhysicalDeviceProperties2KHR_host *out)
+{
+    if (!in) return;
+
+    out->pNext = in->pNext;
+    out->sType = in->sType;
+}
+
+static inline void convert_VkPhysicalDeviceProperties2KHR_host_to_win(const VkPhysicalDeviceProperties2KHR_host *in, VkPhysicalDeviceProperties2KHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    convert_VkPhysicalDeviceProperties_host_to_win(&in->properties, &out->properties);
 }
 
 static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win_to_host(const VkSparseMemoryBind *in, uint32_t count)
@@ -1712,10 +1763,22 @@ static void WINAPI wine_vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDev
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFeatures(physicalDevice->phys_dev, pFeatures);
 }
 
+static void WINAPI wine_vkGetPhysicalDeviceFeatures2KHR(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures2KHR *pFeatures)
+{
+    TRACE("%p, %p\n", physicalDevice, pFeatures);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFeatures2KHR(physicalDevice->phys_dev, pFeatures);
+}
+
 static void WINAPI wine_vkGetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkFormatProperties *pFormatProperties)
 {
     TRACE("%p, %d, %p\n", physicalDevice, format, pFormatProperties);
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties(physicalDevice->phys_dev, format, pFormatProperties);
+}
+
+static void WINAPI wine_vkGetPhysicalDeviceFormatProperties2KHR(VkPhysicalDevice physicalDevice, VkFormat format, VkFormatProperties2KHR *pFormatProperties)
+{
+    TRACE("%p, %d, %p\n", physicalDevice, format, pFormatProperties);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2KHR(physicalDevice->phys_dev, format, pFormatProperties);
 }
 
 static VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkImageTiling tiling, VkImageUsageFlags usage, VkImageCreateFlags flags, VkImageFormatProperties *pImageFormatProperties)
@@ -1735,6 +1798,24 @@ static VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties(VkPhysicalD
 #endif
 }
 
+static VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2KHR *pImageFormatInfo, VkImageFormatProperties2KHR *pImageFormatProperties)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkImageFormatProperties2KHR_host pImageFormatProperties_host;
+    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
+
+    convert_VkImageFormatProperties2KHR_win_to_host(pImageFormatProperties, &pImageFormatProperties_host);
+    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
+
+    convert_VkImageFormatProperties2KHR_host_to_win(&pImageFormatProperties_host, pImageFormatProperties);
+    return result;
+#else
+    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
+    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, pImageFormatProperties);
+#endif
+}
+
 static void WINAPI wine_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties *pMemoryProperties)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -1747,6 +1828,22 @@ static void WINAPI wine_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice phy
 #else
     TRACE("%p, %p\n", physicalDevice, pMemoryProperties);
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(physicalDevice->phys_dev, pMemoryProperties);
+#endif
+}
+
+static void WINAPI wine_vkGetPhysicalDeviceMemoryProperties2KHR(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties2KHR *pMemoryProperties)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkPhysicalDeviceMemoryProperties2KHR_host pMemoryProperties_host;
+    TRACE("%p, %p\n", physicalDevice, pMemoryProperties);
+
+    convert_VkPhysicalDeviceMemoryProperties2KHR_win_to_host(pMemoryProperties, &pMemoryProperties_host);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(physicalDevice->phys_dev, &pMemoryProperties_host);
+
+    convert_VkPhysicalDeviceMemoryProperties2KHR_host_to_win(&pMemoryProperties_host, pMemoryProperties);
+#else
+    TRACE("%p, %p\n", physicalDevice, pMemoryProperties);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(physicalDevice->phys_dev, pMemoryProperties);
 #endif
 }
 
@@ -1765,16 +1862,44 @@ static void WINAPI wine_vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalD
 #endif
 }
 
+static void WINAPI wine_vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties2KHR *pProperties)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkPhysicalDeviceProperties2KHR_host pProperties_host;
+    TRACE("%p, %p\n", physicalDevice, pProperties);
+
+    convert_VkPhysicalDeviceProperties2KHR_win_to_host(pProperties, &pProperties_host);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(physicalDevice->phys_dev, &pProperties_host);
+
+    convert_VkPhysicalDeviceProperties2KHR_host_to_win(&pProperties_host, pProperties);
+#else
+    TRACE("%p, %p\n", physicalDevice, pProperties);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(physicalDevice->phys_dev, pProperties);
+#endif
+}
+
 static void WINAPI wine_vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint32_t *pQueueFamilyPropertyCount, VkQueueFamilyProperties *pQueueFamilyProperties)
 {
     TRACE("%p, %p, %p\n", physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice->phys_dev, pQueueFamilyPropertyCount, pQueueFamilyProperties);
 }
 
+static void WINAPI wine_vkGetPhysicalDeviceQueueFamilyProperties2KHR(VkPhysicalDevice physicalDevice, uint32_t *pQueueFamilyPropertyCount, VkQueueFamilyProperties2KHR *pQueueFamilyProperties)
+{
+    TRACE("%p, %p, %p\n", physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(physicalDevice->phys_dev, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+}
+
 static void WINAPI wine_vkGetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkSampleCountFlagBits samples, VkImageUsageFlags usage, VkImageTiling tiling, uint32_t *pPropertyCount, VkSparseImageFormatProperties *pProperties)
 {
     TRACE("%p, %d, %d, %d, %#x, %d, %p, %p\n", physicalDevice, format, type, samples, usage, tiling, pPropertyCount, pProperties);
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties(physicalDevice->phys_dev, format, type, samples, usage, tiling, pPropertyCount, pProperties);
+}
+
+static void WINAPI wine_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2KHR *pFormatInfo, uint32_t *pPropertyCount, VkSparseImageFormatProperties2KHR *pProperties)
+{
+    TRACE("%p, %p, %p, %p\n", physicalDevice, pFormatInfo, pPropertyCount, pProperties);
+    physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(physicalDevice->phys_dev, pFormatInfo, pPropertyCount, pProperties);
 }
 
 static VkResult WINAPI wine_vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipelineCache, size_t *pDataSize, void *pData)
@@ -2056,12 +2181,19 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkEnumerateDeviceLayerProperties", &wine_vkEnumerateDeviceLayerProperties},
     {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
     {"vkGetPhysicalDeviceFeatures", &wine_vkGetPhysicalDeviceFeatures},
+    {"vkGetPhysicalDeviceFeatures2KHR", &wine_vkGetPhysicalDeviceFeatures2KHR},
     {"vkGetPhysicalDeviceFormatProperties", &wine_vkGetPhysicalDeviceFormatProperties},
+    {"vkGetPhysicalDeviceFormatProperties2KHR", &wine_vkGetPhysicalDeviceFormatProperties2KHR},
     {"vkGetPhysicalDeviceImageFormatProperties", &wine_vkGetPhysicalDeviceImageFormatProperties},
+    {"vkGetPhysicalDeviceImageFormatProperties2KHR", &wine_vkGetPhysicalDeviceImageFormatProperties2KHR},
     {"vkGetPhysicalDeviceMemoryProperties", &wine_vkGetPhysicalDeviceMemoryProperties},
+    {"vkGetPhysicalDeviceMemoryProperties2KHR", &wine_vkGetPhysicalDeviceMemoryProperties2KHR},
     {"vkGetPhysicalDeviceProperties", &wine_vkGetPhysicalDeviceProperties},
+    {"vkGetPhysicalDeviceProperties2KHR", &wine_vkGetPhysicalDeviceProperties2KHR},
     {"vkGetPhysicalDeviceQueueFamilyProperties", &wine_vkGetPhysicalDeviceQueueFamilyProperties},
+    {"vkGetPhysicalDeviceQueueFamilyProperties2KHR", &wine_vkGetPhysicalDeviceQueueFamilyProperties2KHR},
     {"vkGetPhysicalDeviceSparseImageFormatProperties", &wine_vkGetPhysicalDeviceSparseImageFormatProperties},
+    {"vkGetPhysicalDeviceSparseImageFormatProperties2KHR", &wine_vkGetPhysicalDeviceSparseImageFormatProperties2KHR},
     {"vkGetPhysicalDeviceSurfaceCapabilitiesKHR", &wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR},
     {"vkGetPhysicalDeviceSurfaceFormatsKHR", &wine_vkGetPhysicalDeviceSurfaceFormatsKHR},
     {"vkGetPhysicalDeviceSurfacePresentModesKHR", &wine_vkGetPhysicalDeviceSurfacePresentModesKHR},
@@ -2104,6 +2236,7 @@ static const char * const vk_device_extensions[] =
 
 static const char *vk_instance_extensions[] =
 {
+    "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
 };
