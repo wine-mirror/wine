@@ -149,7 +149,7 @@ static void test_PathCchAddBackslash(void)
 
     if (!pPathCchAddBackslash)
     {
-        win_skip("PathCchAddBackslash() is not availale.\n");
+        win_skip("PathCchAddBackslash() is not available.\n");
         return;
     }
 
@@ -192,7 +192,7 @@ static void test_PathCchAddBackslashEx(void)
 
     if (!pPathCchAddBackslashEx)
     {
-        win_skip("PathCchAddBackslashEx() is not availale.\n");
+        win_skip("PathCchAddBackslashEx() is not available.\n");
         return;
     }
 
