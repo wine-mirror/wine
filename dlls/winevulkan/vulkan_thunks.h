@@ -13,6 +13,7 @@ void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 
 BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
+BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 
 /* Functions for which we have custom implementations outside of the thunks. */
 VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *pImageIndex) DECLSPEC_HIDDEN;

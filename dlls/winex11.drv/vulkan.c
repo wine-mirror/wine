@@ -21,6 +21,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -39,10 +40,6 @@
 #ifdef SONAME_LIBVULKAN
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
 
 typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
@@ -69,6 +66,7 @@ static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreate
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
+static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *);
@@ -79,12 +77,45 @@ static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevi
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
-/* TODO: dynamically generate based on host driver capabilities. */
-static const struct VkExtensionProperties winex11_vk_instance_extensions[] =
+static struct VkExtensionProperties *winex11_vk_instance_extensions = NULL;
+static unsigned int winex11_vk_instance_extensions_count = 0;
+
+static void wine_vk_load_instance_extensions(void)
 {
-    { "VK_KHR_surface", 1 },
-    { "VK_KHR_win32_surface", 1},
-};
+    uint32_t num_properties;
+    VkExtensionProperties *properties;
+    unsigned int i;
+
+    pvkEnumerateInstanceExtensionProperties(NULL, &num_properties, NULL);
+
+    properties = heap_calloc(num_properties, sizeof(*properties));
+    if (!properties)
+        return;
+
+    /* We will return the same number of instance extensions reported by the host back to
+     * winevulkan. Along the way we may replace xlib extensions with their win32 equivalents.
+     * Winevulkan will perform more detailed filtering as it knows whether it has thunks
+     * for a particular extension.
+     */
+    pvkEnumerateInstanceExtensionProperties(NULL, &num_properties, properties);
+    for (i = 0; i < num_properties; i++)
+    {
+        /* For now the only x11 extension we need to fixup. Long-term we may need an array. */
+        if (!strcmp(properties[i].extensionName, "VK_KHR_xlib_surface"))
+        {
+            TRACE("Substituting VK_KHR_xlib_surface for VK_KHR_win32_surface\n");
+
+            memset(properties[i].extensionName, 0, sizeof(properties[i].extensionName));
+            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName), "VK_KHR_win32_surface");
+            properties[i].specVersion = 6; /* Revision as of 4/24/2017 */
+        }
+
+        TRACE("Loaded extension: %s\n", properties[i].extensionName);
+    }
+
+    winex11_vk_instance_extensions = properties;
+    winex11_vk_instance_extensions_count = num_properties;
+}
 
 /* Helper function to convert VkSurfaceKHR (uint64_t) to a surface pointer. */
 static inline struct wine_vk_surface * surface_from_handle(VkSurfaceKHR handle)
@@ -110,6 +141,7 @@ LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
 LOAD_FUNCPTR(vkDestroyInstance)
 LOAD_FUNCPTR(vkDestroySurfaceKHR)
 LOAD_FUNCPTR(vkDestroySwapchainKHR)
+LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties)
 LOAD_FUNCPTR(vkGetDeviceProcAddr)
 LOAD_FUNCPTR(vkGetInstanceProcAddr)
 LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
@@ -120,6 +152,8 @@ LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR)
 LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
 LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
+
+    wine_vk_load_instance_extensions();
 
     return TRUE;
 }
@@ -353,11 +387,11 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
          * VK_KHR_win32_surface. Long-term this needs to be an intersection
          * between what the native library supports and what thunks we have.
          */
-        *count = ARRAY_SIZE(winex11_vk_instance_extensions);
+        *count = winex11_vk_instance_extensions_count;
         return VK_SUCCESS;
     }
 
-    if (*count < ARRAY_SIZE(winex11_vk_instance_extensions))
+    if (*count < winex11_vk_instance_extensions_count)
     {
         /* Incomplete is a type of success used to signal the application
          * that not all devices got copied.
@@ -367,13 +401,13 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
     }
     else
     {
-        num_copies = ARRAY_SIZE(winex11_vk_instance_extensions);
+        num_copies = winex11_vk_instance_extensions_count;
         res = VK_SUCCESS;
     }
 
     for (i = 0; i < num_copies; i++)
     {
-        memcpy(&properties[i], &winex11_vk_instance_extensions[i], sizeof(winex11_vk_instance_extensions[i]));
+        memcpy(&properties[i], &winex11_vk_instance_extensions[i], sizeof(*properties));
     }
     *count = num_copies;
 

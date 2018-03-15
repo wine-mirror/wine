@@ -2102,12 +2102,29 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_swapchain",
 };
 
+static const char *vk_instance_extensions[] =
+{
+    "VK_KHR_surface",
+    "VK_KHR_win32_surface",
+};
+
 BOOL wine_vk_device_extension_supported(const char *name)
 {
     unsigned int i;
     for (i = 0; i < ARRAY_SIZE(vk_device_extensions); i++)
     {
         if (strcmp(vk_device_extensions[i], name) == 0)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL wine_vk_instance_extension_supported(const char *name)
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(vk_instance_extensions); i++)
+    {
+        if (strcmp(vk_instance_extensions[i], name) == 0)
             return TRUE;
     }
     return FALSE;
