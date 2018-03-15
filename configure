@@ -1065,6 +1065,7 @@ enable_api_ms_win_ntuser_rectangle_l1_1_0
 enable_api_ms_win_perf_legacy_l1_1_0
 enable_api_ms_win_power_base_l1_1_0
 enable_api_ms_win_power_setting_l1_1_0
+enable_api_ms_win_rtcore_ntuser_draw_l1_1_0
 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
 enable_api_ms_win_rtcore_ntuser_private_l1_1_4
 enable_api_ms_win_rtcore_ntuser_window_l1_1_0
@@ -18370,6 +18371,7 @@ wine_fn_config_makefile dlls/api-ms-win-ntuser-rectangle-l1-1-0 enable_api_ms_wi
 wine_fn_config_makefile dlls/api-ms-win-perf-legacy-l1-1-0 enable_api_ms_win_perf_legacy_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-power-setting-l1-1-0 enable_api_ms_win_power_setting_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-draw-l1-1-0 enable_api_ms_win_rtcore_ntuser_draw_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-private-l1-1-0 enable_api_ms_win_rtcore_ntuser_private_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-private-l1-1-4 enable_api_ms_win_rtcore_ntuser_private_l1_1_4
 wine_fn_config_makefile dlls/api-ms-win-rtcore-ntuser-window-l1-1-0 enable_api_ms_win_rtcore_ntuser_window_l1_1_0
