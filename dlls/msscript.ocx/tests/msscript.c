@@ -1291,6 +1291,59 @@ static void test_UseSafeSubset(void)
     IScriptControl_Release(sc);
 }
 
+static void test_State(void)
+{
+    IScriptControl *sc;
+    ScriptControlStates state;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_State(sc, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_put_State(sc, Connected);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    str = SysAllocString(vbW);
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == Initialized, "got %d\n", state);
+
+    hr = IScriptControl_put_State(sc, Connected);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == Connected, "got %d\n", state);
+
+    hr = IScriptControl_put_State(sc, 2);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == Connected, "got %d\n", state);
+
+    hr = IScriptControl_put_State(sc, -1);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == Connected, "got %d\n", state);
+
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1319,6 +1372,7 @@ START_TEST(msscript)
     test_AddObject();
     test_AllowUI();
     test_UseSafeSubset();
+    test_State();
 
     CoUninitialize();
 }

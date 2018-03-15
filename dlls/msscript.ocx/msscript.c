@@ -91,6 +91,7 @@ struct ScriptControl {
     LONG timeout;
     VARIANT_BOOL allow_ui;
     VARIANT_BOOL use_safe_subset;
+    ScriptControlStates state;
 
     /* connection points */
     ConnectionPoint *cp_list;
@@ -761,15 +762,31 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
 static HRESULT WINAPI ScriptControl_get_State(IScriptControl *iface, ScriptControlStates *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    if(!This->host)
+        return E_FAIL;
+
+    *p = This->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_put_State(IScriptControl *iface, ScriptControlStates state)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%x)\n", This, state);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, state);
+
+    if(!This->host)
+        return E_FAIL;
+
+    if(state != Initialized && state != Connected)
+        return CTL_E_INVALIDPROPERTYVALUE;
+
+    This->state = state;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwnd)
@@ -1900,6 +1917,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->view_sink = NULL;
     script_control->allow_ui = VARIANT_TRUE;
     script_control->use_safe_subset = VARIANT_FALSE;
+    script_control->state = Initialized;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
