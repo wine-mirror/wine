@@ -3158,7 +3158,8 @@ struct wined3d_texture
     {
         struct list entry;
         struct list overlays;
-        struct wined3d_surface *dst;
+        struct wined3d_texture *dst_texture;
+        unsigned int dst_sub_resource_idx;
         RECT src_rect;
         RECT dst_rect;
     } *overlay_info;
