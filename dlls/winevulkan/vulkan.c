@@ -902,7 +902,26 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
     if (func)
         return func;
 
-    TRACE("Function %s not found\n", debugstr_a(name));
+    /* vkGetDeviceProcAddr was intended for loading device and subdevice functions.
+     * idTech 6 titles such as Doom and Wolfenstein II, however use it also for
+     * loading of instance functions. This is undefined behavior as the specification
+     * disallows using any of the returned function pointers outside of device /
+     * subdevice objects. The games don't actually use the function pointers and if they
+     * did, they would crash as VkInstance / VkPhysicalDevice parameters need unwrapping.
+     * Khronos clarified behavior in the Vulkan spec and expects drivers to get updated,
+     * however it would require both driver and game fixes. Since it are major titles
+     * it is not clear what will happen. At least for now we need the hack below.
+     * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
+     * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
+     */
+    func = wine_vk_get_instance_proc_addr(name);
+    if (func)
+    {
+        WARN("Returning instance function '%s'.\n", debugstr_a(name));
+        return func;
+    }
+
+    TRACE("Function %s not found.\n", debugstr_a(name));
     return NULL;
 }
 
