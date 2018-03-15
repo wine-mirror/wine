@@ -838,42 +838,27 @@ static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *l
     return res;
 }
 
-VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *device_count,
+VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *count,
         VkPhysicalDevice *devices)
 {
-    VkResult res;
-    unsigned int i, num_copies;
+    unsigned int i;
 
-    TRACE("%p %p %p\n", instance, device_count, devices);
+    TRACE("%p %p %p\n", instance, count, devices);
 
     if (!devices)
     {
-        *device_count = instance->num_phys_devs;
+        *count = instance->num_phys_devs;
         return VK_SUCCESS;
     }
 
-    if (*device_count < instance->num_phys_devs)
-    {
-        /* Incomplete is a type of success used to signal the application
-         * that not all devices got copied.
-         */
-        num_copies = *device_count;
-        res = VK_INCOMPLETE;
-    }
-    else
-    {
-        num_copies = instance->num_phys_devs;
-        res = VK_SUCCESS;
-    }
-
-    for (i = 0; i < num_copies; i++)
+    *count = min(*count, instance->num_phys_devs);
+    for (i = 0; i < *count; i++)
     {
         devices[i] = instance->phys_devs[i];
     }
-    *device_count = num_copies;
 
-    TRACE("Returning %u devices\n", *device_count);
-    return res;
+    TRACE("Returning %u devices.\n", *count);
+    return *count < instance->num_phys_devs ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool, uint32_t count,
