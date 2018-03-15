@@ -3090,7 +3090,6 @@ struct wined3d_texture_ops
             struct wined3d_context *context, DWORD location);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
-    void (*texture_cleanup_sub_resources)(struct wined3d_texture *texture);
 };
 
 #define WINED3D_TEXTURE_COND_NP2            0x00000001
@@ -3162,6 +3161,12 @@ struct wined3d_texture
         RECT dst_rect;
     } *overlay_info;
 
+    struct wined3d_dc_info
+    {
+        HBITMAP bitmap;
+        HDC dc;
+    } *dc_info;
+
     struct list renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;
 
@@ -3170,11 +3175,6 @@ struct wined3d_texture
         void *parent;
         const struct wined3d_parent_ops *parent_ops;
 
-        struct wined3d_dc_info
-        {
-            HBITMAP bitmap;
-            HDC dc;
-        } *dc_info;
         unsigned int offset;
         unsigned int size;
 
