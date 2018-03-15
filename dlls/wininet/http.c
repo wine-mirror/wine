@@ -5147,6 +5147,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                 remove_header(request, szProxy_Authorization, TRUE);
                 destroy_authinfo(request->proxyAuthInfo);
                 request->proxyAuthInfo = NULL;
+                request->contentLength = 0;
+                request->netconn_stream.content_length = 0;
 
                 secure_proxy_connect = FALSE;
                 loop_next = TRUE;
