@@ -352,6 +352,10 @@ my @dll_groups =
   "api-ms-win-shcore-scaling-l1-1-1",
  ],
  [
+  "shcore",
+  "api-ms-win-shcore-obsolete-l1-1-0",
+ ],
+ [
   "user32",
   "api-ms-win-core-stringansi-l1-1-0",
   "api-ms-win-core-string-l2-1-0",
