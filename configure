@@ -1095,6 +1095,7 @@ enable_api_ms_win_service_winsvc_l1_1_0
 enable_api_ms_win_service_winsvc_l1_2_0
 enable_api_ms_win_shcore_obsolete_l1_1_0
 enable_api_ms_win_shcore_scaling_l1_1_1
+enable_api_ms_win_shcore_stream_l1_1_0
 enable_api_ms_win_shcore_thread_l1_1_0
 enable_api_ms_win_shell_shellcom_l1_1_0
 enable_api_ms_win_shell_shellfolders_l1_1_0
@@ -18399,6 +18400,7 @@ wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-1-0 enable_api_ms_win_
 wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-obsolete-l1-1-0 enable_api_ms_win_shcore_obsolete_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-scaling-l1-1-1 enable_api_ms_win_shcore_scaling_l1_1_1
+wine_fn_config_makefile dlls/api-ms-win-shcore-stream-l1-1-0 enable_api_ms_win_shcore_stream_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-thread-l1-1-0 enable_api_ms_win_shcore_thread_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shell-shellcom-l1-1-0 enable_api_ms_win_shell_shellcom_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_win_shell_shellfolders_l1_1_0

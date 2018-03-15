@@ -355,6 +355,7 @@ my @dll_groups =
   "shcore",
   "api-ms-win-shcore-obsolete-l1-1-0",
   "api-ms-win-shcore-thread-l1-1-0",
+  "api-ms-win-shcore-stream-l1-1-0",
  ],
  [
   "user32",
