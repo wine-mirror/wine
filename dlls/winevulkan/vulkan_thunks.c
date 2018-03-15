@@ -600,6 +600,196 @@ static inline void convert_VkPhysicalDeviceProperties_host_to_win(const VkPhysic
     out->sparseProperties = in->sparseProperties;
 }
 
+static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win_to_host(const VkSparseMemoryBind *in, uint32_t count)
+{
+    VkSparseMemoryBind_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].resourceOffset = in[i].resourceOffset;
+        out[i].size = in[i].size;
+        out[i].memory = in[i].memory;
+        out[i].memoryOffset = in[i].memoryOffset;
+        out[i].flags = in[i].flags;
+    }
+
+    return out;
+}
+
+static inline void free_VkSparseMemoryBind_array(VkSparseMemoryBind_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBindInfo_array_win_to_host(const VkSparseBufferMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseBufferMemoryBindInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].buffer = in[i].buffer;
+        out[i].bindCount = in[i].bindCount;
+        out[i].pBinds = convert_VkSparseMemoryBind_array_win_to_host(in[i].pBinds, in[i].bindCount);
+    }
+
+    return out;
+}
+
+static inline void free_VkSparseBufferMemoryBindInfo_array(VkSparseBufferMemoryBindInfo_host *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkSparseMemoryBind_array((VkSparseMemoryBind_host *)in[i].pBinds, in[i].bindCount);
+    }
+    heap_free(in);
+}
+
+static inline VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqueMemoryBindInfo_array_win_to_host(const VkSparseImageOpaqueMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseImageOpaqueMemoryBindInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].image = in[i].image;
+        out[i].bindCount = in[i].bindCount;
+        out[i].pBinds = convert_VkSparseMemoryBind_array_win_to_host(in[i].pBinds, in[i].bindCount);
+    }
+
+    return out;
+}
+
+static inline void free_VkSparseImageOpaqueMemoryBindInfo_array(VkSparseImageOpaqueMemoryBindInfo_host *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkSparseMemoryBind_array((VkSparseMemoryBind_host *)in[i].pBinds, in[i].bindCount);
+    }
+    heap_free(in);
+}
+
+static inline VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_array_win_to_host(const VkSparseImageMemoryBind *in, uint32_t count)
+{
+    VkSparseImageMemoryBind_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].subresource = in[i].subresource;
+        out[i].offset = in[i].offset;
+        out[i].extent = in[i].extent;
+        out[i].memory = in[i].memory;
+        out[i].memoryOffset = in[i].memoryOffset;
+        out[i].flags = in[i].flags;
+    }
+
+    return out;
+}
+
+static inline void free_VkSparseImageMemoryBind_array(VkSparseImageMemoryBind_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindInfo_array_win_to_host(const VkSparseImageMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseImageMemoryBindInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].image = in[i].image;
+        out[i].bindCount = in[i].bindCount;
+        out[i].pBinds = convert_VkSparseImageMemoryBind_array_win_to_host(in[i].pBinds, in[i].bindCount);
+    }
+
+    return out;
+}
+
+static inline void free_VkSparseImageMemoryBindInfo_array(VkSparseImageMemoryBindInfo_host *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkSparseImageMemoryBind_array((VkSparseImageMemoryBind_host *)in[i].pBinds, in[i].bindCount);
+    }
+    heap_free(in);
+}
+
+static inline VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win_to_host(const VkBindSparseInfo *in, uint32_t count)
+{
+    VkBindSparseInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
+        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
+        out[i].bufferBindCount = in[i].bufferBindCount;
+        out[i].pBufferBinds = convert_VkSparseBufferMemoryBindInfo_array_win_to_host(in[i].pBufferBinds, in[i].bufferBindCount);
+        out[i].imageOpaqueBindCount = in[i].imageOpaqueBindCount;
+        out[i].pImageOpaqueBinds = convert_VkSparseImageOpaqueMemoryBindInfo_array_win_to_host(in[i].pImageOpaqueBinds, in[i].imageOpaqueBindCount);
+        out[i].imageBindCount = in[i].imageBindCount;
+        out[i].pImageBinds = convert_VkSparseImageMemoryBindInfo_array_win_to_host(in[i].pImageBinds, in[i].imageBindCount);
+        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
+        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+    }
+
+    return out;
+}
+
+static inline void free_VkBindSparseInfo_array(VkBindSparseInfo_host *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkSparseBufferMemoryBindInfo_array((VkSparseBufferMemoryBindInfo_host *)in[i].pBufferBinds, in[i].bufferBindCount);
+        free_VkSparseImageOpaqueMemoryBindInfo_array((VkSparseImageOpaqueMemoryBindInfo_host *)in[i].pImageOpaqueBinds, in[i].imageOpaqueBindCount);
+        free_VkSparseImageMemoryBindInfo_array((VkSparseImageMemoryBindInfo_host *)in[i].pImageBinds, in[i].imageBindCount);
+    }
+    heap_free(in);
+}
+
 static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win_to_host(const VkDescriptorImageInfo *in, uint32_t count)
 {
     VkDescriptorImageInfo_host *out;
@@ -1637,14 +1827,26 @@ static VkResult WINAPI wine_vkMergePipelineCaches(VkDevice device, VkPipelineCac
 
 static VkResult WINAPI wine_vkQueueBindSparse(VkQueue queue, uint32_t bindInfoCount, const VkBindSparseInfo *pBindInfo, VkFence fence)
 {
-    FIXME("stub: %p, %u, %p, 0x%s\n", queue, bindInfoCount, pBindInfo, wine_dbgstr_longlong(fence));
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkBindSparseInfo_host *pBindInfo_host;
+    TRACE("%p, %u, %p, 0x%s\n", queue, bindInfoCount, pBindInfo, wine_dbgstr_longlong(fence));
+
+    pBindInfo_host = convert_VkBindSparseInfo_array_win_to_host(pBindInfo, bindInfoCount);
+    result = queue->device->funcs.p_vkQueueBindSparse(queue->queue, bindInfoCount, pBindInfo_host, fence);
+
+    free_VkBindSparseInfo_array(pBindInfo_host, bindInfoCount);
+    return result;
+#else
+    TRACE("%p, %u, %p, 0x%s\n", queue, bindInfoCount, pBindInfo, wine_dbgstr_longlong(fence));
+    return queue->device->funcs.p_vkQueueBindSparse(queue->queue, bindInfoCount, pBindInfo, fence);
+#endif
 }
 
 static VkResult WINAPI wine_vkQueueWaitIdle(VkQueue queue)
 {
-    FIXME("stub: %p\n", queue);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("%p\n", queue);
+    return queue->device->funcs.p_vkQueueWaitIdle(queue->queue);
 }
 
 static VkResult WINAPI wine_vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags)

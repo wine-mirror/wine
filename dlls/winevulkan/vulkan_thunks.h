@@ -426,6 +426,62 @@ typedef struct VkPhysicalDeviceProperties_host
     VkPhysicalDeviceSparseProperties sparseProperties;
 } VkPhysicalDeviceProperties_host;
 
+typedef struct VkSparseMemoryBind_host
+{
+    VkDeviceSize resourceOffset;
+    VkDeviceSize size;
+    VkDeviceMemory memory;
+    VkDeviceSize memoryOffset;
+    VkSparseMemoryBindFlags flags;
+} VkSparseMemoryBind_host;
+
+typedef struct VkSparseBufferMemoryBindInfo_host
+{
+    VkBuffer buffer;
+    uint32_t bindCount;
+    const VkSparseMemoryBind_host *pBinds;
+} VkSparseBufferMemoryBindInfo_host;
+
+typedef struct VkSparseImageOpaqueMemoryBindInfo_host
+{
+    VkImage image;
+    uint32_t bindCount;
+    const VkSparseMemoryBind_host *pBinds;
+} VkSparseImageOpaqueMemoryBindInfo_host;
+
+typedef struct VkSparseImageMemoryBind_host
+{
+    VkImageSubresource subresource;
+    VkOffset3D offset;
+    VkExtent3D extent;
+    VkDeviceMemory memory;
+    VkDeviceSize memoryOffset;
+    VkSparseMemoryBindFlags flags;
+} VkSparseImageMemoryBind_host;
+
+typedef struct VkSparseImageMemoryBindInfo_host
+{
+    VkImage image;
+    uint32_t bindCount;
+    const VkSparseImageMemoryBind_host *pBinds;
+} VkSparseImageMemoryBindInfo_host;
+
+typedef struct VkBindSparseInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t waitSemaphoreCount;
+    const VkSemaphore *pWaitSemaphores;
+    uint32_t bufferBindCount;
+    const VkSparseBufferMemoryBindInfo_host *pBufferBinds;
+    uint32_t imageOpaqueBindCount;
+    const VkSparseImageOpaqueMemoryBindInfo_host *pImageOpaqueBinds;
+    uint32_t imageBindCount;
+    const VkSparseImageMemoryBindInfo_host *pImageBinds;
+    uint32_t signalSemaphoreCount;
+    const VkSemaphore *pSignalSemaphores;
+} VkBindSparseInfo_host;
+
 typedef struct VkDescriptorImageInfo_host
 {
     VkSampler sampler;
@@ -663,7 +719,11 @@ struct vulkan_device_funcs
 #endif
     VkResult (*p_vkMapMemory)(VkDevice, VkDeviceMemory, VkDeviceSize, VkDeviceSize, VkMemoryMapFlags, void **);
     VkResult (*p_vkMergePipelineCaches)(VkDevice, VkPipelineCache, uint32_t, const VkPipelineCache *);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkQueueBindSparse)(VkQueue, uint32_t, const VkBindSparseInfo_host *, VkFence);
+#else
     VkResult (*p_vkQueueBindSparse)(VkQueue, uint32_t, const VkBindSparseInfo *, VkFence);
+#endif
     VkResult (*p_vkQueueSubmit)(VkQueue, uint32_t, const VkSubmitInfo *, VkFence);
     VkResult (*p_vkQueueWaitIdle)(VkQueue);
     VkResult (*p_vkResetCommandBuffer)(VkCommandBuffer, VkCommandBufferResetFlags);

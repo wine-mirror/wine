@@ -394,14 +394,6 @@ class VkFunction(object):
     def needs_dispatch(self):
         return self.dispatch
 
-    def needs_stub(self):
-        """ Temporary function to limit script hacks until more code is implemented. """
-
-        if self.params[0].type in ["VkQueue"]:
-            return True
-
-        return False
-
     def needs_thunk(self):
         return self.thunk_needed
 
@@ -1692,10 +1684,6 @@ class VkGenerator(object):
             if not func.is_required():
                 continue
 
-            # Temporary filter.
-            if func.needs_stub():
-                continue
-
             if not func.needs_conversion():
                 continue
 
@@ -1745,11 +1733,7 @@ class VkGenerator(object):
             if not vk_func.needs_thunk():
                 continue
 
-            # Temporary filter.
-            if vk_func.needs_stub():
-                f.write("static " + vk_func.stub(prefix=prefix, call_conv="WINAPI"))
-            else:
-                f.write("static " + vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+            f.write("static " + vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
@@ -1863,9 +1847,7 @@ class VkGenerator(object):
                 LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
                 continue
 
-            # Temporary filter out functions, which need conversion, but for which
-            # we are only implemented stubs at this point.
-            if not vk_func.needs_stub() and vk_func.needs_conversion():
+            if vk_func.needs_conversion():
                 f.write("#if defined(USE_STRUCT_CONVERSION)\n")
                 f.write("    {0};\n".format(vk_func.pfn(conv=True)))
                 f.write("#else\n")
