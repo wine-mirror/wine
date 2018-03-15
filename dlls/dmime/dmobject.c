@@ -292,7 +292,7 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
     desc->dwValidData = 0;
     desc->dwSize = sizeof(*desc);
 
-    while ((hr = stream_next_chunk(stream, &chunk) == S_OK)) {
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
         switch (chunk.id) {
             case DMUS_FOURCC_GUID_CHUNK:
                 if ((supported & DMUS_OBJ_OBJECT) && stream_chunk_get_data(stream, &chunk,
