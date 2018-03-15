@@ -1254,6 +1254,43 @@ static void test_AllowUI(void)
     IScriptControl_Release(sc);
 }
 
+static void test_UseSafeSubset(void)
+{
+    IScriptControl *sc;
+    VARIANT_BOOL use_safe_subset;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_UseSafeSubset(sc, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(use_safe_subset == VARIANT_FALSE, "got %d\n", use_safe_subset);
+
+    hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
+
+    str = SysAllocString(vbW);
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
+
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1281,6 +1318,7 @@ START_TEST(msscript)
     test_Reset();
     test_AddObject();
     test_AllowUI();
+    test_UseSafeSubset();
 
     CoUninitialize();
 }

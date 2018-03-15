@@ -90,6 +90,7 @@ struct ScriptControl {
     SIZEL extent;
     LONG timeout;
     VARIANT_BOOL allow_ui;
+    VARIANT_BOOL use_safe_subset;
 
     /* connection points */
     ConnectionPoint *cp_list;
@@ -838,15 +839,22 @@ static HRESULT WINAPI ScriptControl_put_AllowUI(IScriptControl *iface, VARIANT_B
 static HRESULT WINAPI ScriptControl_get_UseSafeSubset(IScriptControl *iface, VARIANT_BOOL *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    *p = This->use_safe_subset;
+    return S_OK;
 }
 
-static HRESULT WINAPI ScriptControl_put_UseSafeSubset(IScriptControl *iface, VARIANT_BOOL v)
+static HRESULT WINAPI ScriptControl_put_UseSafeSubset(IScriptControl *iface, VARIANT_BOOL use_safe_subset)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, use_safe_subset);
+
+    This->use_safe_subset = use_safe_subset;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_get_Modules(IScriptControl *iface, IScriptModuleCollection **p)
@@ -1891,6 +1899,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->view_sink_flags = 0;
     script_control->view_sink = NULL;
     script_control->allow_ui = VARIANT_TRUE;
+    script_control->use_safe_subset = VARIANT_FALSE;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
