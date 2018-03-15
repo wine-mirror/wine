@@ -79,11 +79,31 @@ EXT_BLOCK_SIZE = 1000
 # In general instance extensions can't be automatically generated
 # and need custom wrappers due to e.g. win32 / X11 specific code.
 # List of supported instance extensions.
-SUPPORTED_EXTENSIONS = [
+SUPPORTED_INSTANCE_EXTENSIONS = [
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
-    "VK_KHR_swapchain",
+]
+
+BLACKLISTED_EXTENSIONS = [
+    # Handling of VK_EXT_debug_report requires some consideration. The win32
+    # loader already provides it for us and it is somewhat usable. . If we add
+    # plumbing down to the native layer, we will get each message twice as we
+    # use 2 loaders (win32+native), but we may get output from the driver.
+    # In any case callback conversion is required.
+    "VK_EXT_debug_report",
+    "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
+    "VK_EXT_hdr_metadata", # Needs WSI work.
+    "VK_GOOGLE_display_timing",
+    "VK_KHR_display", # Needs WSI work.
+    "VK_KHR_external_fence_fd",
+    "VK_KHR_external_fence_win32",
+    "VK_KHR_external_memory",
+    "VK_KHR_external_semaphore",
+    # Relates to external_semaphore and needs type conversions in bitflags.
+    "VK_KHR_external_semaphore_capabilities",
+    "VK_KHR_shared_presentable_image", # Needs WSI work.
+    "VK_NV_external_memory_win32"
 ]
 
 # Functions part of our winevulkan graphics driver interface.
@@ -2185,10 +2205,30 @@ class VkRegistry(object):
                 LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
                 continue
 
-            # We only support a handful of extensions for now through a whitelist.
-            if ext_name not in SUPPORTED_EXTENSIONS:
+            # Disable highly experimental extensions as the APIs are unstable and can
+            # change between minor Vulkan revisions until API is final and becomes KHR
+            # or NV.
+            if "KHX" in ext_name or "NVX" in ext_name:
+                LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
+                continue
+
+            # Instance extensions often require a custom implementation, so filter.
+            ext_type = ext.attrib["type"]
+            if ext_type == "instance" and not ext_name in SUPPORTED_INSTANCE_EXTENSIONS:
+                LOGGER.debug("Skipping instance extension: {0}".format(ext_name))
+                continue
+
+            # We disable some extensions as either we haven't implemented
+            # support yet or because they are for platforms other than win32.
+            if ext_name in BLACKLISTED_EXTENSIONS:
                 LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
                 continue
+            elif "requires" in ext.attrib:
+                # Check if this extension builds on top of another blacklisted
+                # extension.
+                requires = ext.attrib["requires"].split(",")
+                if len(set(requires).intersection(BLACKLISTED_EXTENSIONS)) > 0:
+                    continue
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
@@ -2223,7 +2263,6 @@ class VkRegistry(object):
                     continue
 
             # Store a list with extensions.
-            ext_type = ext.attrib["type"]
             ext_info = {"name" : ext_name, "type" : ext_type}
             extensions.append(ext_info)
 

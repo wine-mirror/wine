@@ -218,6 +218,95 @@ static inline void free_VkImageMemoryBarrier_array(VkImageMemoryBarrier_host *in
     heap_free(in);
 }
 
+static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win_to_host(const VkDescriptorImageInfo *in, uint32_t count)
+{
+    VkDescriptorImageInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sampler = in[i].sampler;
+        out[i].imageView = in[i].imageView;
+        out[i].imageLayout = in[i].imageLayout;
+    }
+
+    return out;
+}
+
+static inline void free_VkDescriptorImageInfo_array(VkDescriptorImageInfo_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win_to_host(const VkDescriptorBufferInfo *in, uint32_t count)
+{
+    VkDescriptorBufferInfo_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].buffer = in[i].buffer;
+        out[i].offset = in[i].offset;
+        out[i].range = in[i].range;
+    }
+
+    return out;
+}
+
+static inline void free_VkDescriptorBufferInfo_array(VkDescriptorBufferInfo_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win_to_host(const VkWriteDescriptorSet *in, uint32_t count)
+{
+    VkWriteDescriptorSet_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].dstSet = in[i].dstSet;
+        out[i].dstBinding = in[i].dstBinding;
+        out[i].dstArrayElement = in[i].dstArrayElement;
+        out[i].descriptorCount = in[i].descriptorCount;
+        out[i].descriptorType = in[i].descriptorType;
+        out[i].pImageInfo = convert_VkDescriptorImageInfo_array_win_to_host(in[i].pImageInfo, in[i].descriptorCount);
+        out[i].pBufferInfo = convert_VkDescriptorBufferInfo_array_win_to_host(in[i].pBufferInfo, in[i].descriptorCount);
+        out[i].pTexelBufferView = in[i].pTexelBufferView;
+    }
+
+    return out;
+}
+
+static inline void free_VkWriteDescriptorSet_array(VkWriteDescriptorSet_host *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkDescriptorImageInfo_array((VkDescriptorImageInfo_host *)in[i].pImageInfo, in[i].descriptorCount);
+        free_VkDescriptorBufferInfo_array((VkDescriptorBufferInfo_host *)in[i].pBufferInfo, in[i].descriptorCount);
+    }
+    heap_free(in);
+}
+
 static inline void convert_VkBufferCreateInfo_win_to_host(const VkBufferCreateInfo *in, VkBufferCreateInfo_host *out)
 {
     if (!in) return;
@@ -285,6 +374,22 @@ static inline void free_VkComputePipelineCreateInfo_array(VkComputePipelineCreat
     if (!in) return;
 
     heap_free(in);
+}
+
+static inline void convert_VkDescriptorUpdateTemplateCreateInfoKHR_win_to_host(const VkDescriptorUpdateTemplateCreateInfoKHR *in, VkDescriptorUpdateTemplateCreateInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->descriptorUpdateEntryCount = in->descriptorUpdateEntryCount;
+    out->pDescriptorUpdateEntries = in->pDescriptorUpdateEntries;
+    out->templateType = in->templateType;
+    out->descriptorSetLayout = in->descriptorSetLayout;
+    out->pipelineBindPoint = in->pipelineBindPoint;
+    out->pipelineLayout = in->pipelineLayout;
+    out->set = in->set;
 }
 
 static inline void convert_VkFramebufferCreateInfo_win_to_host(const VkFramebufferCreateInfo *in, VkFramebufferCreateInfo_host *out)
@@ -841,95 +946,6 @@ static inline void free_VkBindSparseInfo_array(VkBindSparseInfo_host *in, uint32
     heap_free(in);
 }
 
-static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win_to_host(const VkDescriptorImageInfo *in, uint32_t count)
-{
-    VkDescriptorImageInfo_host *out;
-    unsigned int i;
-
-    if (!in) return NULL;
-
-    out = heap_alloc(count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i].sampler = in[i].sampler;
-        out[i].imageView = in[i].imageView;
-        out[i].imageLayout = in[i].imageLayout;
-    }
-
-    return out;
-}
-
-static inline void free_VkDescriptorImageInfo_array(VkDescriptorImageInfo_host *in, uint32_t count)
-{
-    if (!in) return;
-
-    heap_free(in);
-}
-
-static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win_to_host(const VkDescriptorBufferInfo *in, uint32_t count)
-{
-    VkDescriptorBufferInfo_host *out;
-    unsigned int i;
-
-    if (!in) return NULL;
-
-    out = heap_alloc(count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i].buffer = in[i].buffer;
-        out[i].offset = in[i].offset;
-        out[i].range = in[i].range;
-    }
-
-    return out;
-}
-
-static inline void free_VkDescriptorBufferInfo_array(VkDescriptorBufferInfo_host *in, uint32_t count)
-{
-    if (!in) return;
-
-    heap_free(in);
-}
-
-static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win_to_host(const VkWriteDescriptorSet *in, uint32_t count)
-{
-    VkWriteDescriptorSet_host *out;
-    unsigned int i;
-
-    if (!in) return NULL;
-
-    out = heap_alloc(count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].dstSet = in[i].dstSet;
-        out[i].dstBinding = in[i].dstBinding;
-        out[i].dstArrayElement = in[i].dstArrayElement;
-        out[i].descriptorCount = in[i].descriptorCount;
-        out[i].descriptorType = in[i].descriptorType;
-        out[i].pImageInfo = convert_VkDescriptorImageInfo_array_win_to_host(in[i].pImageInfo, in[i].descriptorCount);
-        out[i].pBufferInfo = convert_VkDescriptorBufferInfo_array_win_to_host(in[i].pBufferInfo, in[i].descriptorCount);
-        out[i].pTexelBufferView = in[i].pTexelBufferView;
-    }
-
-    return out;
-}
-
-static inline void free_VkWriteDescriptorSet_array(VkWriteDescriptorSet_host *in, uint32_t count)
-{
-    unsigned int i;
-
-    if (!in) return;
-
-    for (i = 0; i < count; i++)
-    {
-        free_VkDescriptorImageInfo_array((VkDescriptorImageInfo_host *)in[i].pImageInfo, in[i].descriptorCount);
-        free_VkDescriptorBufferInfo_array((VkDescriptorBufferInfo_host *)in[i].pBufferInfo, in[i].descriptorCount);
-    }
-    heap_free(in);
-}
-
 static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win_to_host(const VkCopyDescriptorSet *in, uint32_t count)
 {
     VkCopyDescriptorSet_host *out;
@@ -1186,10 +1202,22 @@ static void WINAPI wine_vkCmdDrawIndexedIndirect(VkCommandBuffer commandBuffer, 
     commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirect(commandBuffer->command_buffer, buffer, offset, drawCount, stride);
 }
 
+static void WINAPI wine_vkCmdDrawIndexedIndirectCountAMD(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride)
+{
+    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), wine_dbgstr_longlong(countBuffer), wine_dbgstr_longlong(countBufferOffset), maxDrawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirectCountAMD(commandBuffer->command_buffer, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
+}
+
 static void WINAPI wine_vkCmdDrawIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
 {
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
     commandBuffer->device->funcs.p_vkCmdDrawIndirect(commandBuffer->command_buffer, buffer, offset, drawCount, stride);
+}
+
+static void WINAPI wine_vkCmdDrawIndirectCountAMD(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride)
+{
+    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), wine_dbgstr_longlong(countBuffer), wine_dbgstr_longlong(countBufferOffset), maxDrawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawIndirectCountAMD(commandBuffer->command_buffer, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
 }
 
 static void WINAPI wine_vkCmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query)
@@ -1241,6 +1269,28 @@ static void WINAPI wine_vkCmdPushConstants(VkCommandBuffer commandBuffer, VkPipe
     commandBuffer->device->funcs.p_vkCmdPushConstants(commandBuffer->command_buffer, layout, stageFlags, offset, size, pValues);
 }
 
+static void WINAPI wine_vkCmdPushDescriptorSetKHR(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t set, uint32_t descriptorWriteCount, const VkWriteDescriptorSet *pDescriptorWrites)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkWriteDescriptorSet_host *pDescriptorWrites_host;
+    TRACE("%p, %d, 0x%s, %u, %u, %p\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(layout), set, descriptorWriteCount, pDescriptorWrites);
+
+    pDescriptorWrites_host = convert_VkWriteDescriptorSet_array_win_to_host(pDescriptorWrites, descriptorWriteCount);
+    commandBuffer->device->funcs.p_vkCmdPushDescriptorSetKHR(commandBuffer->command_buffer, pipelineBindPoint, layout, set, descriptorWriteCount, pDescriptorWrites_host);
+
+    free_VkWriteDescriptorSet_array(pDescriptorWrites_host, descriptorWriteCount);
+#else
+    TRACE("%p, %d, 0x%s, %u, %u, %p\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(layout), set, descriptorWriteCount, pDescriptorWrites);
+    commandBuffer->device->funcs.p_vkCmdPushDescriptorSetKHR(commandBuffer->command_buffer, pipelineBindPoint, layout, set, descriptorWriteCount, pDescriptorWrites);
+#endif
+}
+
+static void WINAPI wine_vkCmdPushDescriptorSetWithTemplateKHR(VkCommandBuffer commandBuffer, VkDescriptorUpdateTemplateKHR descriptorUpdateTemplate, VkPipelineLayout layout, uint32_t set, const void *pData)
+{
+    TRACE("%p, 0x%s, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(descriptorUpdateTemplate), wine_dbgstr_longlong(layout), set, pData);
+    commandBuffer->device->funcs.p_vkCmdPushDescriptorSetWithTemplateKHR(commandBuffer->command_buffer, descriptorUpdateTemplate, layout, set, pData);
+}
+
 static void WINAPI wine_vkCmdResetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
 {
     TRACE("%p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
@@ -1275,6 +1325,12 @@ static void WINAPI wine_vkCmdSetDepthBounds(VkCommandBuffer commandBuffer, float
 {
     TRACE("%p, %f, %f\n", commandBuffer, minDepthBounds, maxDepthBounds);
     commandBuffer->device->funcs.p_vkCmdSetDepthBounds(commandBuffer->command_buffer, minDepthBounds, maxDepthBounds);
+}
+
+static void WINAPI wine_vkCmdSetDiscardRectangleEXT(VkCommandBuffer commandBuffer, uint32_t firstDiscardRectangle, uint32_t discardRectangleCount, const VkRect2D *pDiscardRectangles)
+{
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstDiscardRectangle, discardRectangleCount, pDiscardRectangles);
+    commandBuffer->device->funcs.p_vkCmdSetDiscardRectangleEXT(commandBuffer->command_buffer, firstDiscardRectangle, discardRectangleCount, pDiscardRectangles);
 }
 
 static void WINAPI wine_vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
@@ -1317,6 +1373,12 @@ static void WINAPI wine_vkCmdSetViewport(VkCommandBuffer commandBuffer, uint32_t
 {
     TRACE("%p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pViewports);
     commandBuffer->device->funcs.p_vkCmdSetViewport(commandBuffer->command_buffer, firstViewport, viewportCount, pViewports);
+}
+
+static void WINAPI wine_vkCmdSetViewportWScalingNV(VkCommandBuffer commandBuffer, uint32_t firstViewport, uint32_t viewportCount, const VkViewportWScalingNV *pViewportWScalings)
+{
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pViewportWScalings);
+    commandBuffer->device->funcs.p_vkCmdSetViewportWScalingNV(commandBuffer->command_buffer, firstViewport, viewportCount, pViewportWScalings);
 }
 
 static void WINAPI wine_vkCmdUpdateBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize dataSize, const void *pData)
@@ -1418,6 +1480,23 @@ static VkResult WINAPI wine_vkCreateDescriptorSetLayout(VkDevice device, const V
 {
     TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pSetLayout);
     return device->funcs.p_vkCreateDescriptorSetLayout(device->device, pCreateInfo, NULL, pSetLayout);
+}
+
+static VkResult WINAPI wine_vkCreateDescriptorUpdateTemplateKHR(VkDevice device, const VkDescriptorUpdateTemplateCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorUpdateTemplateKHR *pDescriptorUpdateTemplate)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkDescriptorUpdateTemplateCreateInfoKHR_host pCreateInfo_host;
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
+
+    convert_VkDescriptorUpdateTemplateCreateInfoKHR_win_to_host(pCreateInfo, &pCreateInfo_host);
+    result = device->funcs.p_vkCreateDescriptorUpdateTemplateKHR(device->device, &pCreateInfo_host, NULL, pDescriptorUpdateTemplate);
+
+    return result;
+#else
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
+    return device->funcs.p_vkCreateDescriptorUpdateTemplateKHR(device->device, pCreateInfo, NULL, pDescriptorUpdateTemplate);
+#endif
 }
 
 static VkResult WINAPI wine_vkCreateEvent(VkDevice device, const VkEventCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkEvent *pEvent)
@@ -1560,6 +1639,12 @@ static void WINAPI wine_vkDestroyDescriptorSetLayout(VkDevice device, VkDescript
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(descriptorSetLayout), pAllocator);
     device->funcs.p_vkDestroyDescriptorSetLayout(device->device, descriptorSetLayout, NULL);
+}
+
+static void WINAPI wine_vkDestroyDescriptorUpdateTemplateKHR(VkDevice device, VkDescriptorUpdateTemplateKHR descriptorUpdateTemplate, const VkAllocationCallbacks *pAllocator)
+{
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(descriptorUpdateTemplate), pAllocator);
+    device->funcs.p_vkDestroyDescriptorUpdateTemplateKHR(device->device, descriptorUpdateTemplate, NULL);
 }
 
 static void WINAPI wine_vkDestroyEvent(VkDevice device, VkEvent event, const VkAllocationCallbacks *pAllocator)
@@ -2010,10 +2095,22 @@ static VkResult WINAPI wine_vkSetEvent(VkDevice device, VkEvent event)
     return device->funcs.p_vkSetEvent(device->device, event);
 }
 
+static void WINAPI wine_vkTrimCommandPoolKHR(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlagsKHR flags)
+{
+    TRACE("%p, 0x%s, %#x\n", device, wine_dbgstr_longlong(commandPool), flags);
+    device->funcs.p_vkTrimCommandPoolKHR(device->device, commandPool, flags);
+}
+
 static void WINAPI wine_vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
 {
     TRACE("%p, 0x%s\n", device, wine_dbgstr_longlong(memory));
     device->funcs.p_vkUnmapMemory(device->device, memory);
+}
+
+static void WINAPI wine_vkUpdateDescriptorSetWithTemplateKHR(VkDevice device, VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplateKHR descriptorUpdateTemplate, const void *pData)
+{
+    TRACE("%p, 0x%s, 0x%s, %p\n", device, wine_dbgstr_longlong(descriptorSet), wine_dbgstr_longlong(descriptorUpdateTemplate), pData);
+    device->funcs.p_vkUpdateDescriptorSetWithTemplateKHR(device->device, descriptorSet, descriptorUpdateTemplate, pData);
 }
 
 static void WINAPI wine_vkUpdateDescriptorSets(VkDevice device, uint32_t descriptorWriteCount, const VkWriteDescriptorSet *pDescriptorWrites, uint32_t descriptorCopyCount, const VkCopyDescriptorSet *pDescriptorCopies)
@@ -2070,7 +2167,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDraw", &wine_vkCmdDraw},
     {"vkCmdDrawIndexed", &wine_vkCmdDrawIndexed},
     {"vkCmdDrawIndexedIndirect", &wine_vkCmdDrawIndexedIndirect},
+    {"vkCmdDrawIndexedIndirectCountAMD", &wine_vkCmdDrawIndexedIndirectCountAMD},
     {"vkCmdDrawIndirect", &wine_vkCmdDrawIndirect},
+    {"vkCmdDrawIndirectCountAMD", &wine_vkCmdDrawIndirectCountAMD},
     {"vkCmdEndQuery", &wine_vkCmdEndQuery},
     {"vkCmdEndRenderPass", &wine_vkCmdEndRenderPass},
     {"vkCmdExecuteCommands", &wine_vkCmdExecuteCommands},
@@ -2078,12 +2177,15 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdNextSubpass", &wine_vkCmdNextSubpass},
     {"vkCmdPipelineBarrier", &wine_vkCmdPipelineBarrier},
     {"vkCmdPushConstants", &wine_vkCmdPushConstants},
+    {"vkCmdPushDescriptorSetKHR", &wine_vkCmdPushDescriptorSetKHR},
+    {"vkCmdPushDescriptorSetWithTemplateKHR", &wine_vkCmdPushDescriptorSetWithTemplateKHR},
     {"vkCmdResetEvent", &wine_vkCmdResetEvent},
     {"vkCmdResetQueryPool", &wine_vkCmdResetQueryPool},
     {"vkCmdResolveImage", &wine_vkCmdResolveImage},
     {"vkCmdSetBlendConstants", &wine_vkCmdSetBlendConstants},
     {"vkCmdSetDepthBias", &wine_vkCmdSetDepthBias},
     {"vkCmdSetDepthBounds", &wine_vkCmdSetDepthBounds},
+    {"vkCmdSetDiscardRectangleEXT", &wine_vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetEvent", &wine_vkCmdSetEvent},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
     {"vkCmdSetScissor", &wine_vkCmdSetScissor},
@@ -2091,6 +2193,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetStencilReference", &wine_vkCmdSetStencilReference},
     {"vkCmdSetStencilWriteMask", &wine_vkCmdSetStencilWriteMask},
     {"vkCmdSetViewport", &wine_vkCmdSetViewport},
+    {"vkCmdSetViewportWScalingNV", &wine_vkCmdSetViewportWScalingNV},
     {"vkCmdUpdateBuffer", &wine_vkCmdUpdateBuffer},
     {"vkCmdWaitEvents", &wine_vkCmdWaitEvents},
     {"vkCmdWriteTimestamp", &wine_vkCmdWriteTimestamp},
@@ -2100,6 +2203,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateComputePipelines", &wine_vkCreateComputePipelines},
     {"vkCreateDescriptorPool", &wine_vkCreateDescriptorPool},
     {"vkCreateDescriptorSetLayout", &wine_vkCreateDescriptorSetLayout},
+    {"vkCreateDescriptorUpdateTemplateKHR", &wine_vkCreateDescriptorUpdateTemplateKHR},
     {"vkCreateEvent", &wine_vkCreateEvent},
     {"vkCreateFence", &wine_vkCreateFence},
     {"vkCreateFramebuffer", &wine_vkCreateFramebuffer},
@@ -2119,6 +2223,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyCommandPool", &wine_vkDestroyCommandPool},
     {"vkDestroyDescriptorPool", &wine_vkDestroyDescriptorPool},
     {"vkDestroyDescriptorSetLayout", &wine_vkDestroyDescriptorSetLayout},
+    {"vkDestroyDescriptorUpdateTemplateKHR", &wine_vkDestroyDescriptorUpdateTemplateKHR},
     {"vkDestroyDevice", &wine_vkDestroyDevice},
     {"vkDestroyEvent", &wine_vkDestroyEvent},
     {"vkDestroyFence", &wine_vkDestroyFence},
@@ -2166,7 +2271,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkResetEvent", &wine_vkResetEvent},
     {"vkResetFences", &wine_vkResetFences},
     {"vkSetEvent", &wine_vkSetEvent},
+    {"vkTrimCommandPoolKHR", &wine_vkTrimCommandPoolKHR},
     {"vkUnmapMemory", &wine_vkUnmapMemory},
+    {"vkUpdateDescriptorSetWithTemplateKHR", &wine_vkUpdateDescriptorSetWithTemplateKHR},
     {"vkUpdateDescriptorSets", &wine_vkUpdateDescriptorSets},
     {"vkWaitForFences", &wine_vkWaitForFences},
 };
@@ -2231,7 +2338,35 @@ void *wine_vk_get_instance_proc_addr(const char *name)
 
 static const char * const vk_device_extensions[] =
 {
+    "VK_AMD_draw_indirect_count",
+    "VK_AMD_gcn_shader",
+    "VK_AMD_gpu_shader_half_float",
+    "VK_AMD_negative_viewport_height",
+    "VK_AMD_rasterization_order",
+    "VK_AMD_shader_ballot",
+    "VK_AMD_shader_explicit_vertex_parameter",
+    "VK_AMD_shader_trinary_minmax",
+    "VK_AMD_texture_gather_bias_lod",
+    "VK_EXT_discard_rectangles",
+    "VK_EXT_shader_subgroup_ballot",
+    "VK_EXT_shader_subgroup_vote",
+    "VK_IMG_filter_cubic",
+    "VK_IMG_format_pvrtc",
+    "VK_KHR_descriptor_update_template",
+    "VK_KHR_incremental_present",
+    "VK_KHR_maintenance1",
+    "VK_KHR_push_descriptor",
+    "VK_KHR_sampler_mirror_clamp_to_edge",
+    "VK_KHR_shader_draw_parameters",
     "VK_KHR_swapchain",
+    "VK_NV_clip_space_w_scaling",
+    "VK_NV_dedicated_allocation",
+    "VK_NV_external_memory",
+    "VK_NV_geometry_shader_passthrough",
+    "VK_NV_glsl_shader",
+    "VK_NV_sample_mask_override_coverage",
+    "VK_NV_viewport_array2",
+    "VK_NV_viewport_swizzle",
 };
 
 static const char *vk_instance_extensions[] =

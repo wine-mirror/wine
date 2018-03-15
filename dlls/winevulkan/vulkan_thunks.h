@@ -141,6 +141,34 @@ typedef struct VkImageMemoryBarrier_host
     VkImageSubresourceRange subresourceRange;
 } VkImageMemoryBarrier_host;
 
+typedef struct VkDescriptorImageInfo_host
+{
+    VkSampler sampler;
+    VkImageView imageView;
+    VkImageLayout imageLayout;
+} VkDescriptorImageInfo_host;
+
+typedef struct VkDescriptorBufferInfo_host
+{
+    VkBuffer buffer;
+    VkDeviceSize offset;
+    VkDeviceSize range;
+} VkDescriptorBufferInfo_host;
+
+typedef struct VkWriteDescriptorSet_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDescriptorSet dstSet;
+    uint32_t dstBinding;
+    uint32_t dstArrayElement;
+    uint32_t descriptorCount;
+    VkDescriptorType descriptorType;
+    const VkDescriptorImageInfo_host *pImageInfo;
+    const VkDescriptorBufferInfo_host *pBufferInfo;
+    const VkBufferView *pTexelBufferView;
+} VkWriteDescriptorSet_host;
+
 typedef struct VkBufferCreateInfo_host
 {
     VkStructureType sType;
@@ -185,6 +213,20 @@ typedef struct VkComputePipelineCreateInfo_host
     VkPipeline basePipelineHandle;
     int32_t basePipelineIndex;
 } VkComputePipelineCreateInfo_host;
+
+typedef struct VkDescriptorUpdateTemplateCreateInfoKHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDescriptorUpdateTemplateCreateFlagsKHR flags;
+    uint32_t descriptorUpdateEntryCount;
+    const VkDescriptorUpdateTemplateEntryKHR *pDescriptorUpdateEntries;
+    VkDescriptorUpdateTemplateTypeKHR templateType;
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipelineLayout pipelineLayout;
+    uint32_t set;
+} VkDescriptorUpdateTemplateCreateInfoKHR_host;
 
 typedef struct VkFramebufferCreateInfo_host
 {
@@ -504,34 +546,6 @@ typedef struct VkBindSparseInfo_host
     const VkSemaphore *pSignalSemaphores;
 } VkBindSparseInfo_host;
 
-typedef struct VkDescriptorImageInfo_host
-{
-    VkSampler sampler;
-    VkImageView imageView;
-    VkImageLayout imageLayout;
-} VkDescriptorImageInfo_host;
-
-typedef struct VkDescriptorBufferInfo_host
-{
-    VkBuffer buffer;
-    VkDeviceSize offset;
-    VkDeviceSize range;
-} VkDescriptorBufferInfo_host;
-
-typedef struct VkWriteDescriptorSet_host
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkDescriptorSet dstSet;
-    uint32_t dstBinding;
-    uint32_t dstArrayElement;
-    uint32_t descriptorCount;
-    VkDescriptorType descriptorType;
-    const VkDescriptorImageInfo_host *pImageInfo;
-    const VkDescriptorBufferInfo_host *pBufferInfo;
-    const VkBufferView *pTexelBufferView;
-} VkWriteDescriptorSet_host;
-
 typedef struct VkCopyDescriptorSet_host
 {
     VkStructureType sType;
@@ -607,7 +621,9 @@ struct vulkan_device_funcs
     void (*p_vkCmdDraw)(VkCommandBuffer, uint32_t, uint32_t, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndexed)(VkCommandBuffer, uint32_t, uint32_t, uint32_t, int32_t, uint32_t);
     void (*p_vkCmdDrawIndexedIndirect)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawIndexedIndirectCountAMD)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndirect)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawIndirectCountAMD)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdEndQuery)(VkCommandBuffer, VkQueryPool, uint32_t);
     void (*p_vkCmdEndRenderPass)(VkCommandBuffer);
     void (*p_vkCmdExecuteCommands)(VkCommandBuffer, uint32_t, const VkCommandBuffer *);
@@ -619,12 +635,19 @@ struct vulkan_device_funcs
     void (*p_vkCmdPipelineBarrier)(VkCommandBuffer, VkPipelineStageFlags, VkPipelineStageFlags, VkDependencyFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier *, uint32_t, const VkImageMemoryBarrier *);
 #endif
     void (*p_vkCmdPushConstants)(VkCommandBuffer, VkPipelineLayout, VkShaderStageFlags, uint32_t, uint32_t, const void *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdPushDescriptorSetKHR)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkWriteDescriptorSet_host *);
+#else
+    void (*p_vkCmdPushDescriptorSetKHR)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkWriteDescriptorSet *);
+#endif
+    void (*p_vkCmdPushDescriptorSetWithTemplateKHR)(VkCommandBuffer, VkDescriptorUpdateTemplateKHR, VkPipelineLayout, uint32_t, const void *);
     void (*p_vkCmdResetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdResetQueryPool)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t);
     void (*p_vkCmdResolveImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageResolve *);
     void (*p_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
     void (*p_vkCmdSetDepthBias)(VkCommandBuffer, float, float, float);
     void (*p_vkCmdSetDepthBounds)(VkCommandBuffer, float, float);
+    void (*p_vkCmdSetDiscardRectangleEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdSetLineWidth)(VkCommandBuffer, float);
     void (*p_vkCmdSetScissor)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
@@ -632,6 +655,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetStencilReference)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (*p_vkCmdSetStencilWriteMask)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (*p_vkCmdSetViewport)(VkCommandBuffer, uint32_t, uint32_t, const VkViewport *);
+    void (*p_vkCmdSetViewportWScalingNV)(VkCommandBuffer, uint32_t, uint32_t, const VkViewportWScalingNV *);
     void (*p_vkCmdUpdateBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkDeviceSize, const void *);
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdWaitEvents)(VkCommandBuffer, uint32_t, const VkEvent *, VkPipelineStageFlags, VkPipelineStageFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier_host *, uint32_t, const VkImageMemoryBarrier_host *);
@@ -657,6 +681,11 @@ struct vulkan_device_funcs
 #endif
     VkResult (*p_vkCreateDescriptorPool)(VkDevice, const VkDescriptorPoolCreateInfo *, const VkAllocationCallbacks *, VkDescriptorPool *);
     VkResult (*p_vkCreateDescriptorSetLayout)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, const VkAllocationCallbacks *, VkDescriptorSetLayout *);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkCreateDescriptorUpdateTemplateKHR)(VkDevice, const VkDescriptorUpdateTemplateCreateInfoKHR_host *, const VkAllocationCallbacks *, VkDescriptorUpdateTemplateKHR *);
+#else
+    VkResult (*p_vkCreateDescriptorUpdateTemplateKHR)(VkDevice, const VkDescriptorUpdateTemplateCreateInfoKHR *, const VkAllocationCallbacks *, VkDescriptorUpdateTemplateKHR *);
+#endif
     VkResult (*p_vkCreateEvent)(VkDevice, const VkEventCreateInfo *, const VkAllocationCallbacks *, VkEvent *);
     VkResult (*p_vkCreateFence)(VkDevice, const VkFenceCreateInfo *, const VkAllocationCallbacks *, VkFence *);
 #if defined(USE_STRUCT_CONVERSION)
@@ -687,6 +716,7 @@ struct vulkan_device_funcs
     void (*p_vkDestroyCommandPool)(VkDevice, VkCommandPool, const VkAllocationCallbacks *);
     void (*p_vkDestroyDescriptorPool)(VkDevice, VkDescriptorPool, const VkAllocationCallbacks *);
     void (*p_vkDestroyDescriptorSetLayout)(VkDevice, VkDescriptorSetLayout, const VkAllocationCallbacks *);
+    void (*p_vkDestroyDescriptorUpdateTemplateKHR)(VkDevice, VkDescriptorUpdateTemplateKHR, const VkAllocationCallbacks *);
     void (*p_vkDestroyDevice)(VkDevice, const VkAllocationCallbacks *);
     void (*p_vkDestroyEvent)(VkDevice, VkEvent, const VkAllocationCallbacks *);
     void (*p_vkDestroyFence)(VkDevice, VkFence, const VkAllocationCallbacks *);
@@ -754,7 +784,9 @@ struct vulkan_device_funcs
     VkResult (*p_vkResetEvent)(VkDevice, VkEvent);
     VkResult (*p_vkResetFences)(VkDevice, uint32_t, const VkFence *);
     VkResult (*p_vkSetEvent)(VkDevice, VkEvent);
+    void (*p_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlagsKHR);
     void (*p_vkUnmapMemory)(VkDevice, VkDeviceMemory);
+    void (*p_vkUpdateDescriptorSetWithTemplateKHR)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplateKHR, const void *);
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkUpdateDescriptorSets)(VkDevice, uint32_t, const VkWriteDescriptorSet_host *, uint32_t, const VkCopyDescriptorSet_host *);
 #else
@@ -837,7 +869,9 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdDraw) \
     USE_VK_FUNC(vkCmdDrawIndexed) \
     USE_VK_FUNC(vkCmdDrawIndexedIndirect) \
+    USE_VK_FUNC(vkCmdDrawIndexedIndirectCountAMD) \
     USE_VK_FUNC(vkCmdDrawIndirect) \
+    USE_VK_FUNC(vkCmdDrawIndirectCountAMD) \
     USE_VK_FUNC(vkCmdEndQuery) \
     USE_VK_FUNC(vkCmdEndRenderPass) \
     USE_VK_FUNC(vkCmdExecuteCommands) \
@@ -845,12 +879,15 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdNextSubpass) \
     USE_VK_FUNC(vkCmdPipelineBarrier) \
     USE_VK_FUNC(vkCmdPushConstants) \
+    USE_VK_FUNC(vkCmdPushDescriptorSetKHR) \
+    USE_VK_FUNC(vkCmdPushDescriptorSetWithTemplateKHR) \
     USE_VK_FUNC(vkCmdResetEvent) \
     USE_VK_FUNC(vkCmdResetQueryPool) \
     USE_VK_FUNC(vkCmdResolveImage) \
     USE_VK_FUNC(vkCmdSetBlendConstants) \
     USE_VK_FUNC(vkCmdSetDepthBias) \
     USE_VK_FUNC(vkCmdSetDepthBounds) \
+    USE_VK_FUNC(vkCmdSetDiscardRectangleEXT) \
     USE_VK_FUNC(vkCmdSetEvent) \
     USE_VK_FUNC(vkCmdSetLineWidth) \
     USE_VK_FUNC(vkCmdSetScissor) \
@@ -858,6 +895,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetStencilReference) \
     USE_VK_FUNC(vkCmdSetStencilWriteMask) \
     USE_VK_FUNC(vkCmdSetViewport) \
+    USE_VK_FUNC(vkCmdSetViewportWScalingNV) \
     USE_VK_FUNC(vkCmdUpdateBuffer) \
     USE_VK_FUNC(vkCmdWaitEvents) \
     USE_VK_FUNC(vkCmdWriteTimestamp) \
@@ -867,6 +905,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCreateComputePipelines) \
     USE_VK_FUNC(vkCreateDescriptorPool) \
     USE_VK_FUNC(vkCreateDescriptorSetLayout) \
+    USE_VK_FUNC(vkCreateDescriptorUpdateTemplateKHR) \
     USE_VK_FUNC(vkCreateEvent) \
     USE_VK_FUNC(vkCreateFence) \
     USE_VK_FUNC(vkCreateFramebuffer) \
@@ -885,6 +924,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkDestroyCommandPool) \
     USE_VK_FUNC(vkDestroyDescriptorPool) \
     USE_VK_FUNC(vkDestroyDescriptorSetLayout) \
+    USE_VK_FUNC(vkDestroyDescriptorUpdateTemplateKHR) \
     USE_VK_FUNC(vkDestroyDevice) \
     USE_VK_FUNC(vkDestroyEvent) \
     USE_VK_FUNC(vkDestroyFence) \
@@ -928,7 +968,9 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkResetEvent) \
     USE_VK_FUNC(vkResetFences) \
     USE_VK_FUNC(vkSetEvent) \
+    USE_VK_FUNC(vkTrimCommandPoolKHR) \
     USE_VK_FUNC(vkUnmapMemory) \
+    USE_VK_FUNC(vkUpdateDescriptorSetWithTemplateKHR) \
     USE_VK_FUNC(vkUpdateDescriptorSets) \
     USE_VK_FUNC(vkWaitForFences)
 
