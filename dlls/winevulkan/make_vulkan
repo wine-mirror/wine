@@ -464,7 +464,7 @@ class VkFunction(object):
         else:
             proto += " {0}(".format(self.name)
 
-        # Add all the paremeters.
+        # Add all the parameters.
         proto += ", ".join([p.definition() for p in self.params])
 
         if postfix is not None:

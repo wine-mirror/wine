@@ -153,7 +153,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     dst->pApplicationInfo = src->pApplicationInfo;
 
     /* Application and loader can pass in a chain of extensions through pNext.
-     * We can't blindy pass these through as often these contain callbacks or
+     * We can't blindly pass these through as often these contain callbacks or
      * they can even be pass structures for loader / ICD internal use. For now
      * we ignore everything in pNext chain, but we print FIXMEs.
      */
@@ -1011,7 +1011,7 @@ void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *na
     TRACE("%p %s\n", instance, debugstr_a(name));
 
     /* Initial version of the Vulkan ICD spec required vkGetInstanceProcAddr to be
-     * exported. vk_icdGetInstanceProcAddr was added later to separete ICD calls from
+     * exported. vk_icdGetInstanceProcAddr was added later to separate ICD calls from
      * Vulkan API. One of them in our case should forward to the other, so just forward
      * to the older vkGetInstanceProcAddr.
      */
