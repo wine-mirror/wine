@@ -259,6 +259,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     RECT rect = physDev->dc_rect;
 
                     OffsetRect( &rect, -physDev->dc_rect.left, -physDev->dc_rect.top );
+                    if (data->flush) XFlush( gdi_display );
                     XSetFunction( gdi_display, physDev->gc, GXcopy );
                     XCopyArea( gdi_display, data->gl_drawable, physDev->drawable, physDev->gc,
                                0, 0, rect.right, rect.bottom,
