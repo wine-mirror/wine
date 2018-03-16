@@ -154,6 +154,16 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    if(ctx->func->code_ctx->context) {
+        hres = disp_get_id(ctx->func->code_ctx->context, name, invoke_type, TRUE, &id);
+        if(SUCCEEDED(hres)) {
+            ref->type = REF_DISP;
+            ref->u.d.disp = ctx->func->code_ctx->context;
+            ref->u.d.id = id;
+            return S_OK;
+        }
+    }
+
     if(ctx->func->type != FUNC_GLOBAL && lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
 

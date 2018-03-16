@@ -636,6 +636,7 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
+    IDispatch *context = NULL;
     vbscode_t *code;
     HRESULT hres;
 
@@ -646,9 +647,20 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
+    if(pstrItemName) {
+        context = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!context) {
+            WARN("Inknown context %s\n", debugstr_w(pstrItemName));
+            return E_INVALIDARG;
+        }
+    }
+
     hres = compile_script(This->ctx, pstrCode, pstrDelimiter, &code);
     if(FAILED(hres))
         return hres;
+
+    if(context)
+        IDispatch_AddRef(code->context = context);
 
     if(!is_started(This)) {
         code->pending_exec = TRUE;

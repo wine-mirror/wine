@@ -342,6 +342,7 @@ struct _vbscode_t {
 
     BOOL pending_exec;
     function_t main_code;
+    IDispatch *context;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
