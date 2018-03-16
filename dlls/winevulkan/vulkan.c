@@ -823,19 +823,14 @@ static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *l
         if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
         {
             TRACE("Enabling extension '%s'\n", host_properties[i].extensionName);
-            memcpy(&properties[j], &host_properties[i], sizeof(*properties));
+            properties[j] = host_properties[i];
             j++;
         }
     }
-
-    /* Return incomplete if the buffer is smaller than the number of supported extensions. */
-    if (*count < num_properties)
-        res = VK_INCOMPLETE;
-    else
-        res = VK_SUCCESS;
+    *count = min(*count, num_properties);
 
     heap_free(host_properties);
-    return res;
+    return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *count,
