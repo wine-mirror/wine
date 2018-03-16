@@ -122,6 +122,10 @@ typedef struct tagLookInInfo
 /* Undefined windows message sent by CreateViewObject*/
 #define WM_GETISHELLBROWSER  WM_USER+7
 
+#define TBPLACES_CMDID_DESKTOP       0xa065
+#define TBPLACES_CMDID_MYDOCS        0xa066
+#define TBPLACES_CMDID_MYCOMPUTER    0xa067
+
 /* NOTE
  * Those macros exist in windowsx.h. However, you can't really use them since
  * they rely on the UNICODE defines and can't be used inside Wine itself.
@@ -197,7 +201,6 @@ static LRESULT FILEDLG95_SHELL_Init(HWND hwnd);
 static BOOL    FILEDLG95_SHELL_UpFolder(HWND hwnd);
 static BOOL    FILEDLG95_SHELL_ExecuteCommand(HWND hwnd, LPCSTR lpVerb);
 static void    FILEDLG95_SHELL_Clean(HWND hwnd);
-static BOOL    FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd);
 
 /* Functions used by the EDIT box */
 static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed);
@@ -242,6 +245,13 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
 static BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
 
+static BOOL is_places_bar_enabled(const FileOpenDlgInfos *fodInfos)
+{
+    return (fodInfos->ofnInfos->lStructSize == sizeof(*fodInfos->ofnInfos) &&
+            !(fodInfos->ofnInfos->FlagsEx & OFN_EX_NOPLACESBAR) &&
+             (fodInfos->ofnInfos->Flags & OFN_EXPLORER));
+}
+
 /***********************************************************************
  *      GetFileName95
  *
@@ -258,6 +268,7 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
     void *template;
     HRSRC hRes;
     HANDLE hDlgTmpl = 0;
+    WORD templateid;
 
     /* test for missing functionality */
     if (fodInfos->ofnInfos->Flags & UNIMPLEMENTED_FLAGS)
@@ -268,7 +279,12 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
 
     /* Create the dialog from a template */
 
-    if(!(hRes = FindResourceW(COMDLG32_hInstance,MAKEINTRESOURCEW(NEWFILEOPENORD),(LPCWSTR)RT_DIALOG)))
+    if (is_places_bar_enabled(fodInfos))
+        templateid = NEWFILEOPENV2ORD;
+    else
+        templateid = NEWFILEOPENORD;
+
+    if (!(hRes = FindResourceW(COMDLG32_hInstance, MAKEINTRESOURCEW(templateid), (LPCWSTR)RT_DIALOG)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -1306,8 +1322,18 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
     case WM_DESTROY:
       {
           FileOpenDlgInfos * fodInfos = get_filedlg_infoptr(hwnd);
+          HWND places_bar = GetDlgItem(hwnd, IDC_TOOLBARPLACES);
+          HIMAGELIST himl;
+
           if (fodInfos && fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
               MemDialogSize = fodInfos->sizedlg;
+
+          if (places_bar)
+          {
+              himl = (HIMAGELIST)SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_GETIMAGELIST, 0, 0);
+              SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETIMAGELIST, 0, 0);
+              ImageList_Destroy(himl);
+          }
           RemovePropW(hwnd, filedlg_info_propnameW);
           return FALSE;
       }
@@ -1395,8 +1421,8 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   RECT rectlook;
 
   HIMAGELIST toolbarImageList;
-  SHFILEINFOA shFileInfo;
   ITEMIDLIST *desktopPidl;
+  SHFILEINFOW fileinfo;
 
   FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
 
@@ -1465,16 +1491,65 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   /* Retrieve and add desktop icon to the toolbar */
   toolbarImageList = (HIMAGELIST)SendMessageW(fodInfos->DlgInfos.hwndTB, TB_GETIMAGELIST, 0, 0L);
   SHGetSpecialFolderLocation(hwnd, CSIDL_DESKTOP, &desktopPidl);
-  SHGetFileInfoA((LPCSTR)desktopPidl, 0, &shFileInfo, sizeof(shFileInfo),
+  SHGetFileInfoW((const WCHAR *)desktopPidl, 0, &fileinfo, sizeof(fileinfo),
     SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON);
-  ImageList_AddIcon(toolbarImageList, shFileInfo.hIcon);
+  ImageList_AddIcon(toolbarImageList, fileinfo.hIcon);
 
-  DestroyIcon(shFileInfo.hIcon);
+  DestroyIcon(fileinfo.hIcon);
   CoTaskMemFree(desktopPidl);
 
   /* Finish Toolbar Construction */
   SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSW, 9, (LPARAM) tbb);
   SendMessageW(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0);
+
+  if (is_places_bar_enabled(fodInfos))
+  {
+      static const struct bar_place_descr
+      {
+          int csidl;
+          int cmdid;
+      }
+      default_places[] =
+      {
+          { CSIDL_DESKTOP,     TBPLACES_CMDID_DESKTOP },
+          { CSIDL_MYDOCUMENTS, TBPLACES_CMDID_MYDOCS },
+          { CSIDL_DRIVES,      TBPLACES_CMDID_MYCOMPUTER },
+      };
+      TBBUTTON tb = { 0 };
+      HIMAGELIST himl;
+      RECT rect;
+      int i, cx;
+
+      SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_BUTTONSTRUCTSIZE, 0, 0);
+      GetClientRect(GetDlgItem(hwnd, IDC_TOOLBARPLACES), &rect);
+      cx = rect.right - rect.left;
+
+      SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETBUTTONWIDTH, 0, MAKELPARAM(cx, cx));
+
+      himl = ImageList_Create(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), ILC_COLOR32, 4, 1);
+      for (i = 0; i < sizeof(default_places)/sizeof(default_places[0]); i++)
+      {
+          ITEMIDLIST *pidl;
+
+          SHGetSpecialFolderLocation(NULL, default_places[i].csidl, &pidl);
+          memset(&fileinfo, 0, sizeof(fileinfo));
+          SHGetFileInfoW((const WCHAR *)pidl, 0, &fileinfo, sizeof(fileinfo),
+              SHGFI_PIDL | SHGFI_DISPLAYNAME | SHGFI_ICON);
+          ImageList_AddIcon(himl, fileinfo.hIcon);
+
+          tb.iBitmap = i;
+          tb.iString = (INT_PTR)fileinfo.szDisplayName;
+          tb.fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
+          tb.idCommand = default_places[i].cmdid;
+          SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_ADDBUTTONSW, 1, (LPARAM)&tb);
+
+          DestroyIcon(fileinfo.hIcon);
+          CoTaskMemFree(pidl);
+      }
+
+      SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETIMAGELIST, 0, (LPARAM)himl);
+      SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETBUTTONSIZE, 0, MAKELPARAM(cx, cx * 3 / 4));
+  }
 
   /* Set the window text with the text specified in the OPENFILENAME structure */
   if(fodInfos->title)
@@ -1818,6 +1893,25 @@ void FILEDLG95_Clean(HWND hwnd)
       FILEDLG95_LOOKIN_Clean(hwnd);
       FILEDLG95_SHELL_Clean(hwnd);
 }
+
+
+/***********************************************************************
+ * Browse to special folder
+ */
+static void filedlg_browse_to_specialfolder(const FileOpenDlgInfos *info, int csidl)
+{
+    LPITEMIDLIST pidl;
+
+    TRACE("%p, %d\n", info->ShellInfos.hwndOwner, csidl);
+
+    SHGetSpecialFolderLocation(0, csidl, &pidl);
+    IShellBrowser_BrowseObject(info->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
+    if (info->ofnInfos->Flags & OFN_EXPLORER)
+        SendCustomDlgNotificationMessage(info->ShellInfos.hwndOwner, CDN_FOLDERCHANGE);
+
+    COMDLG32_SHFree(pidl);
+}
+
 /***********************************************************************
  *      FILEDLG95_OnWMCommand
  *
@@ -1866,9 +1960,18 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam)
   case FCIDM_TB_REPORTVIEW:
     FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWDETAILSA);
     break;
-    /* Details option button */
+
   case FCIDM_TB_DESKTOP:
-    FILEDLG95_SHELL_BrowseToDesktop(hwnd);
+  case TBPLACES_CMDID_DESKTOP:
+    filedlg_browse_to_specialfolder(fodInfos, CSIDL_DESKTOP);
+    break;
+
+  case TBPLACES_CMDID_MYDOCS:
+    filedlg_browse_to_specialfolder(fodInfos, CSIDL_MYDOCUMENTS);
+    break;
+
+  case TBPLACES_CMDID_MYCOMPUTER:
+    filedlg_browse_to_specialfolder(fodInfos, CSIDL_DRIVES);
     break;
 
   case edt1:
@@ -2840,28 +2943,6 @@ static BOOL FILEDLG95_SHELL_UpFolder(HWND hwnd)
     return TRUE;
   }
   return FALSE;
-}
-
-/***********************************************************************
- *      FILEDLG95_SHELL_BrowseToDesktop
- *
- * Browse to the Desktop
- * If the function succeeds, the return value is nonzero.
- */
-static BOOL FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd)
-{
-  FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
-  LPITEMIDLIST pidl;
-  HRESULT hres;
-
-  TRACE("\n");
-
-  SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidl);
-  hres = IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
-  if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
-      SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
-  COMDLG32_SHFree(pidl);
-  return SUCCEEDED(hres);
 }
 /***********************************************************************
  *      FILEDLG95_SHELL_Clean

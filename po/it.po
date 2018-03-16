@@ -147,17 +147,17 @@ msgstr "&Installa"
 #: comctl32.rc:81 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
-#: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:501 credui.rc:53 cryptui.rc:264
-#: cryptui.rc:276 cryptui.rc:366 dinput.rc:47 ieframe.rc:97 inetcpl.rc:81
-#: localui.rc:45 localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48
-#: mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42
-#: setupapi.rc:42 setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312
-#: shell32.rc:342 shlwapi.rc:45 twain.rc:33 user32.rc:84 user32.rc:99
-#: wininet.rc:52 wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162
-#: oleview.rc:175 progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159
-#: progman.rc:181 progman.rc:200 progman.rc:217 regedit.rc:297 regedit.rc:308
-#: regedit.rc:321 regedit.rc:337 regedit.rc:350 regedit.rc:363 taskmgr.rc:443
-#: taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215 winecfg.rc:225
+#: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
+#: cryptui.rc:264 cryptui.rc:276 cryptui.rc:366 dinput.rc:47 ieframe.rc:97
+#: inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50 msacm32.rc:54
+#: mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95
+#: serialui.rc:42 setupapi.rc:42 setupapi.rc:60 shell32.rc:277 shell32.rc:301
+#: shell32.rc:312 shell32.rc:342 shlwapi.rc:45 twain.rc:33 user32.rc:84
+#: user32.rc:99 wininet.rc:52 wininet.rc:72 winspool.rc:43 notepad.rc:118
+#: oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125 progman.rc:143
+#: progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217 regedit.rc:297
+#: regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350 regedit.rc:363
+#: taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215 winecfg.rc:225
 #: wineconsole.rc:136 winefile.rc:129 winefile.rc:152 winefile.rc:182
 #: winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
 msgid "Cancel"
@@ -368,11 +368,11 @@ msgstr "R&eimpostare"
 
 #: comctl32.rc:96 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
 #: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:361 comdlg32.rc:479
-#: comdlg32.rc:502 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96 shell32.rc:128
-#: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
-#: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
-#: progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87 winefile.rc:82
-#: winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
+#: comdlg32.rc:505 comdlg32.rc:528 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96
+#: shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72
+#: progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160
+#: progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87
+#: winefile.rc:82 winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
 msgstr "&Aiuto"
 
@@ -434,8 +434,8 @@ msgstr "Oggi:"
 msgid "Go to today"
 msgstr "Vai a oggi"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:459 comdlg32.rc:485
-#: shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:459 comdlg32.rc:484
+#: comdlg32.rc:511 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "Apri"
 
@@ -803,31 +803,31 @@ msgstr "&Inferiore:"
 msgid "P&rinter..."
 msgstr "&Stampante..."
 
-#: comdlg32.rc:462
+#: comdlg32.rc:462 comdlg32.rc:487
 msgid "Look &in:"
 msgstr "Cerca &in:"
 
-#: comdlg32.rc:468
+#: comdlg32.rc:468 comdlg32.rc:494
 msgid "File &name:"
 msgstr "&Nome del file:"
 
-#: comdlg32.rc:472
+#: comdlg32.rc:472 comdlg32.rc:498
 msgid "Files of &type:"
 msgstr "&Tipo del file:"
 
-#: comdlg32.rc:475
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Open as &read-only"
 msgstr "Apri in &sola lettura"
 
-#: comdlg32.rc:477 comdlg32.rc:495 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:477 comdlg32.rc:503 comdlg32.rc:521 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Apri"
 
-#: comdlg32.rc:488
+#: comdlg32.rc:514
 msgid "File name:"
 msgstr "Nome del file:"
 
-#: comdlg32.rc:491
+#: comdlg32.rc:517
 msgid "Files of type:"
 msgstr "Tipo del file:"
 

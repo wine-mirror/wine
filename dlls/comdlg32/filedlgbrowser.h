@@ -131,6 +131,7 @@ typedef struct
 #define IDC_FILENAME                    edt1
 
 #define IDC_TOOLBAR			1
+#define IDC_TOOLBARPLACES               ctl1
 
 /***********************************************************************
  * Prototypes for the methods of the IShellBrowserImpl class
