@@ -92,61 +92,6 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* p
   return S_OK;
 }
 
-HRESULT IDirectMusicUtils_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) {
-
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  /**
-   * don't ask me why, but M$ puts INFO elements in UNFO list sometimes
-   * (though strings seem to be valid unicode) 
-   */
-  switch (pChunk->fccID) {
-
-  case mmioFOURCC('I','N','A','M'):
-  case DMUS_FOURCC_UNAM_CHUNK: {
-    TRACE(": name chunk\n");
-    pDesc->dwValidData |= DMUS_OBJ_NAME;
-    IStream_Read (pStm, pDesc->wszName, pChunk->dwSize, NULL);
-    TRACE(" - wszName: %s\n", debugstr_w(pDesc->wszName));
-    break;
-  }
-
-  case mmioFOURCC('I','A','R','T'):
-  case DMUS_FOURCC_UART_CHUNK: {
-    TRACE(": artist chunk (ignored)\n");
-    liMove.QuadPart = pChunk->dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-    break;
-  }
-  case mmioFOURCC('I','C','O','P'):
-  case DMUS_FOURCC_UCOP_CHUNK: {
-    TRACE(": copyright chunk (ignored)\n");
-    liMove.QuadPart = pChunk->dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-    break;
-  }
-  case mmioFOURCC('I','S','B','J'):
-  case DMUS_FOURCC_USBJ_CHUNK: {
-    TRACE(": subject chunk (ignored)\n");
-    liMove.QuadPart = pChunk->dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-    break;
-  }
-  case mmioFOURCC('I','C','M','T'):
-  case DMUS_FOURCC_UCMT_CHUNK: {
-    TRACE(": comment chunk (ignored)\n");
-    liMove.QuadPart = pChunk->dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-    break;
-  }
-  default:
-    /* not handled */
-    return S_FALSE;
-  }
-
-  return S_OK;
-}
-
 HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicObject** ppObject) {
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];

@@ -877,7 +877,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DWORD StreamSi
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamCount, ListSize[3], ListCount[3];
+  DWORD StreamCount;
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   StreamSize -= sizeof(FOURCC);
@@ -888,11 +888,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DWORD StreamSi
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
     TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
-    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &This->dmobj.desc);
-    if (FAILED(hr)) return hr;
-    
-    if (hr == S_FALSE) {
-      switch (Chunk.fccID) {
+    switch (Chunk.fccID) {
       case DMUS_FOURCC_SEGMENT_CHUNK: {
 	DWORD checkSz = sizeof(FOURCC);
 	TRACE_(dmfile)(": segment chunk\n");
@@ -938,34 +934,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DWORD StreamSi
       case FOURCC_LIST: {
 	IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
 	TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-	ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-	ListCount[0] = 0;
 	switch (Chunk.fccID) {
-	case DMUS_FOURCC_UNFO_LIST: {
-	  TRACE_(dmfile)(": UNFO list\n");
-	  do {
-	    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-            TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-
-            hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &This->dmobj.desc);
-	    if (FAILED(hr)) return hr;
-	    
-	    if (hr == S_FALSE) {
-	      switch (Chunk.fccID) {
-	      default: {
-		TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-		liMove.QuadPart = Chunk.dwSize;
-		IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-		break;						
-	      }
-	      }
-	    }
-
-            TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
-	  } while (ListCount[0] < ListSize[0]);
-	  break;
-	}
 	case DMUS_FOURCC_TRACK_LIST: {
 	  TRACE_(dmfile)(": TRACK list\n");
           hr = parse_track_list(This, &Chunk, pStm);
@@ -986,7 +955,6 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DWORD StreamSi
 	liMove.QuadPart = Chunk.dwSize;
 	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	break;						
-      }
       }
     }
     TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
