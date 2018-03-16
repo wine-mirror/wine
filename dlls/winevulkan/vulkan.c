@@ -92,7 +92,7 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
         device->funcs.p_vkGetDeviceQueue(device->device, family_index, i, &queue->queue);
 
         /* Set special header for ICD loader. */
-        ((struct wine_vk_base *)queue)->loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     }
 
     return queues;
