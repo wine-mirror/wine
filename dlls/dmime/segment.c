@@ -873,20 +873,14 @@ static HRESULT parse_track_list(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHU
   return S_OK;
 }
 
-static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DWORD StreamSize, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
+  DWORD StreamCount, ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
-  if (pChunk->fccID != DMUS_FOURCC_SEGMENT_FORM) {
-    ERR_(dmfile)(": %s chunk should be a segment form\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }
-
-  StreamSize = pChunk->dwSize - sizeof(FOURCC);
+  StreamSize -= sizeof(FOURCC);
   StreamCount = 0;
 
   do {
@@ -1006,57 +1000,35 @@ static inline IDirectMusicSegment8Impl *impl_from_IPersistStream(IPersistStream 
     return CONTAINING_RECORD(iface, IDirectMusicSegment8Impl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-  IDirectMusicSegment8Impl *This = impl_from_IPersistStream(iface);
-  HRESULT hr;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize;
-  /*DWORD ListSize[3], ListCount[3];*/
-  LARGE_INTEGER liMove; /* used when skipping chunks */
+    IDirectMusicSegment8Impl *This = impl_from_IPersistStream(iface);
+    struct chunk_entry riff = {0};
+    HRESULT hr;
 
-  TRACE("(%p, %p): Loading\n", This, pStm);
-  hr = IStream_Read (pStm, &Chunk, sizeof(Chunk), NULL);
-  if(hr != S_OK){
-    WARN("IStream_Read failed: %08x\n", hr);
-    return DMUS_E_UNSUPPORTED_STREAM;
-  }
-  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-  switch (Chunk.fccID) {	
-  case FOURCC_RIFF: {
-    IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
-    TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-    StreamSize = Chunk.dwSize - sizeof(FOURCC);
-    switch (Chunk.fccID) {
-    case DMUS_FOURCC_SEGMENT_FORM: {
-      TRACE_(dmfile)(": segment form\n");
-      hr = parse_segment_form(This, &Chunk, pStm);
-      if (FAILED(hr)) return hr;
-      break;
+    TRACE("(%p, %p): Loading\n", This, stream);
+
+    if (!stream)
+        return E_POINTER;
+
+    if (stream_get_chunk(stream, &riff) != S_OK || riff.id != FOURCC_RIFF)
+        return DMUS_E_UNSUPPORTED_STREAM;
+
+    stream_reset_chunk_start(stream, &riff);
+    hr = IDirectMusicObject_ParseDescriptor(&This->dmobj.IDirectMusicObject_iface, stream,
+            &This->dmobj.desc);
+    if (FAILED(hr))
+        return hr;
+    stream_reset_chunk_data(stream, &riff);
+
+    if (riff.type == DMUS_FOURCC_SEGMENT_FORM)
+        hr = parse_segment_form(This, riff.size, stream);
+    else {
+        FIXME("WAVE form loading not implemented\n");
+        hr = S_OK;
     }
-    case mmioFOURCC('W','A','V','E'): {
-      FIXME(": WAVE form loading not implemented\n");
-      liMove.QuadPart = StreamSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-      break;      
-    }
-    default: {
-      TRACE_(dmfile)(": unexpected chunk (loading failed)\n");
-      liMove.QuadPart = StreamSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-      return DMUS_E_UNSUPPORTED_STREAM;
-    }
-    }
-    TRACE_(dmfile)(": reading finished\n");
-    break;
-  }
-  default: {
-    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    return DMUS_E_UNSUPPORTED_STREAM;
-  }
-  }
-  
-  return S_OK;
+
+    return hr;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {

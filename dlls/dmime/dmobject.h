@@ -40,6 +40,26 @@ HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, 
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
         ULONG size) DECLSPEC_HIDDEN;
 
+static inline HRESULT stream_reset_chunk_data(IStream *stream, const struct chunk_entry *chunk)
+{
+    LARGE_INTEGER offset;
+
+    offset.QuadPart = chunk->offset.QuadPart + sizeof(FOURCC) + sizeof(DWORD);
+    if (chunk->id == FOURCC_RIFF || chunk->id == FOURCC_LIST)
+        offset.QuadPart += sizeof(FOURCC);
+
+    return IStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
+}
+
+static inline HRESULT stream_reset_chunk_start(IStream *stream, const struct chunk_entry *chunk)
+{
+    LARGE_INTEGER offset;
+
+    offset.QuadPart = chunk->offset.QuadPart;
+
+    return IStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
+}
+
 const char *debugstr_chunk(const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 
 
