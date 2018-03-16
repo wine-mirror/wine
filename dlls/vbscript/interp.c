@@ -99,6 +99,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 {
     named_item_t *item;
     function_t *func;
+    IDispatch *disp;
     unsigned i;
     DISPID id;
     HRESULT hres;
@@ -178,29 +179,11 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
     }
 
-    LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
-        if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpiW(item->name, name)) {
-            if(!item->disp) {
-                IUnknown *unk;
-
-                hres = IActiveScriptSite_GetItemInfo(ctx->script->site, item->name, SCRIPTINFO_IUNKNOWN, &unk, NULL);
-                if(FAILED(hres)) {
-                    WARN("GetItemInfo failed: %08x\n", hres);
-                    continue;
-                }
-
-                hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
-                IUnknown_Release(unk);
-                if(FAILED(hres)) {
-                    WARN("object does not implement IDispatch\n");
-                    continue;
-                }
-            }
-
-            ref->type = REF_OBJ;
-            ref->u.obj = item->disp;
-            return S_OK;
-        }
+    disp = lookup_named_item(ctx->script, name, SCRIPTITEM_ISVISIBLE);
+    if(disp) {
+        ref->type = REF_OBJ;
+        ref->u.obj = disp;
+        return S_OK;
     }
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
