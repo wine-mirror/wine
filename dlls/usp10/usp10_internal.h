@@ -161,10 +161,16 @@ typedef struct {
     LoadedFeature *features;
 } LoadedLanguage;
 
+enum usp10_script_table
+{
+    USP10_SCRIPT_TABLE_GSUB = 0,
+    USP10_SCRIPT_TABLE_GPOS,
+    USP10_SCRIPT_TABLE_COUNT
+};
+
 typedef struct {
     OPENTYPE_TAG tag;
-    const void *gsub_table;
-    const void *gpos_table;
+    const void *table[USP10_SCRIPT_TABLE_COUNT];
     LoadedLanguage default_language;
     BOOL languages_initialized;
     LoadedLanguage *languages;

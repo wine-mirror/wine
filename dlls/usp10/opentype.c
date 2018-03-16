@@ -2595,54 +2595,21 @@ static LoadedScript *usp10_script_cache_get_script(ScriptCache *script_cache, OP
     return NULL;
 }
 
-static void GSUB_initialize_script_cache(ScriptCache *psc)
-{
-    const OT_ScriptList *script;
-    const GSUB_Header *header;
-    SIZE_T i;
-
-    if (!(header = psc->GSUB_Table))
-        return;
-
-    script = (const OT_ScriptList *)((const BYTE *)header + GET_BE_WORD(header->ScriptList));
-    psc->script_count = GET_BE_WORD(script->ScriptCount);
-
-    TRACE("Initialising %li scripts in this font.\n", psc->script_count);
-
-    if (!psc->script_count)
-        return;
-
-    if (!usp10_array_reserve((void **)&psc->scripts, &psc->scripts_size, psc->script_count, sizeof(*psc->scripts)))
-        ERR("Failed to allocate script array.\n");
-
-    for (i = 0; i < psc->script_count; ++i)
-    {
-        psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0],
-                script->ScriptRecord[i].ScriptTag[1],
-                script->ScriptRecord[i].ScriptTag[2],
-                script->ScriptRecord[i].ScriptTag[3]);
-        psc->scripts[i].gsub_table = (const BYTE *)script + GET_BE_WORD(script->ScriptRecord[i].Script);
-    }
-}
-
-static void GPOS_expand_script_cache(ScriptCache *psc)
+static void usp10_script_cache_add_script_list(ScriptCache *script_cache,
+        enum usp10_script_table table, const OT_ScriptList *list)
 {
     SIZE_T initial_count, count, i;
-    const OT_ScriptList *list;
-    const GPOS_Header *header;
     LoadedScript *script;
     OPENTYPE_TAG tag;
 
-    if (!(header = psc->GPOS_Table))
-        return;
+    TRACE("script_cache %p, table %#x, list %p.\n", script_cache, table, list);
 
-    list = (const OT_ScriptList *)((const BYTE *)header + GET_BE_WORD(header->ScriptList));
     if (!(count = GET_BE_WORD(list->ScriptCount)))
         return;
 
-    TRACE("Initialising %lu scripts in this font.\n", count);
+    TRACE("Adding %lu scripts.\n", count);
 
-    initial_count = psc->script_count;
+    initial_count = script_cache->script_count;
     for (i = 0; i < count; ++i)
     {
         tag = MS_MAKE_TAG(list->ScriptRecord[i].ScriptTag[0],
@@ -2650,22 +2617,31 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
                 list->ScriptRecord[i].ScriptTag[2],
                 list->ScriptRecord[i].ScriptTag[3]);
 
-        if (!(initial_count && (script = usp10_script_cache_get_script(psc, tag)))
-                && !(script = usp10_script_cache_add_script(psc, tag)))
+        if (!(initial_count && (script = usp10_script_cache_get_script(script_cache, tag)))
+                && !(script = usp10_script_cache_add_script(script_cache, tag)))
             return;
 
-        script->gpos_table = (const BYTE *)list + GET_BE_WORD(list->ScriptRecord[i].Script);
+        script->table[table] = (const BYTE *)list + GET_BE_WORD(list->ScriptRecord[i].Script);
     }
 }
 
-static void _initialize_script_cache(ScriptCache *psc)
+static void _initialize_script_cache(ScriptCache *script_cache)
 {
-    if (!psc->scripts_initialized)
-    {
-        GSUB_initialize_script_cache(psc);
-        GPOS_expand_script_cache(psc);
-        psc->scripts_initialized = TRUE;
-    }
+    const GPOS_Header *gpos_header;
+    const GSUB_Header *gsub_header;
+
+    if (script_cache->scripts_initialized)
+        return;
+
+    if ((gsub_header = script_cache->GSUB_Table))
+        usp10_script_cache_add_script_list(script_cache, USP10_SCRIPT_TABLE_GSUB,
+                (const OT_ScriptList *)((const BYTE *)gsub_header + GET_BE_WORD(gsub_header->ScriptList)));
+
+    if ((gpos_header = script_cache->GPOS_Table))
+        usp10_script_cache_add_script_list(script_cache, USP10_SCRIPT_TABLE_GPOS,
+                (const OT_ScriptList *)((const BYTE *)gpos_header + GET_BE_WORD(gpos_header->ScriptList)));
+
+    script_cache->scripts_initialized = TRUE;
 }
 
 HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags)
@@ -2716,10 +2692,10 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 {
     int i;
 
-    if (script->gsub_table)
+    if (script->table[USP10_SCRIPT_TABLE_GSUB])
     {
         DWORD offset;
-        const OT_Script* table = script->gsub_table;
+        const OT_Script *table = script->table[USP10_SCRIPT_TABLE_GSUB];
         script->language_count = GET_BE_WORD(table->LangSysCount);
         offset = GET_BE_WORD(table->DefaultLangSys);
         if (offset)
@@ -2747,7 +2723,7 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 static void GPOS_expand_language_cache(LoadedScript *script)
 {
     int count;
-    const OT_Script* table = script->gpos_table;
+    const OT_Script *table = script->table[USP10_SCRIPT_TABLE_GPOS];
     LoadedLanguage *language;
     DWORD offset;
 
