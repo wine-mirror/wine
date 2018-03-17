@@ -22,35 +22,35 @@
 
 [
     helpstring("Microsoft AVI Files"),
-    threading(apartment),
+    threading(both),
     uuid(00020000-0000-0000-C000-000000000046)
 ]
 coclass AVIFile { interface IAVIFile; }
 
 [
     helpstring("AVI Compressed Stream"),
-    threading(apartment),
+    threading(both),
     uuid(00020001-0000-0000-c000-000000000046)
 ]
 coclass ICMStream { interface IAVIStream; }
 
 [
     helpstring("Microsoft Wave File"),
-    threading(apartment),
+    threading(both),
     uuid(00020003-0000-0000-c000-000000000046)
 ]
 coclass WAVFile { interface IAVIFile; }
 
 [
     helpstring("IAVIStream & IAVIFile Proxy"),
-    threading(apartment),
+    threading(both),
     uuid(0002000d-0000-0000-c000-000000000046)
 ]
 coclass AVIProxy { }
 
 [
     helpstring("ACM Compressed Audio Stream"),
-    threading(apartment),
+    threading(both),
     uuid(0002000f-0000-0000-c000-000000000046)
 ]
 coclass ACMStream { interface IAVIStream; }
