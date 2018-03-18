@@ -1423,9 +1423,9 @@
 @ cdecl -private _purecall() msvcrt._purecall
 @ varargs -private _snprintf(ptr long str) msvcrt._snprintf
 @ varargs -private _snwprintf(ptr long wstr) msvcrt._snwprintf
-@ cdecl -private _stricmp(str str) msvcrt._stricmp
+@ cdecl -private _stricmp(str str)
 @ cdecl -private _strlwr(str) msvcrt._strlwr
-@ cdecl -private _strnicmp(str str long) msvcrt._strnicmp
+@ cdecl -private _strnicmp(str str long) _strnicmp
 @ cdecl -private _strnset(str long long) msvcrt._strnset
 @ cdecl -private _strrev(str) msvcrt._strrev
 @ cdecl -private _strset(str long) msvcrt._strset
@@ -1434,7 +1434,7 @@
 @ cdecl -private _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
 @ cdecl -private _wcsicmp(wstr wstr) msvcrt._wcsicmp
 @ cdecl -private _wcslwr(wstr) msvcrt._wcslwr
-@ cdecl -private _wcsnicmp(wstr wstr long) msvcrt._wcsnicmp
+@ cdecl -private _wcsnicmp(wstr wstr long) NTOSKRNL__wcsnicmp
 @ cdecl -private _wcsnset(wstr long long) msvcrt._wcsnset
 @ cdecl -private _wcsrev(wstr) msvcrt._wcsrev
 @ cdecl -private _wcsupr(wstr) msvcrt._wcsupr
@@ -1449,9 +1449,9 @@
 @ cdecl -private mbstowcs(ptr str long) msvcrt.mbstowcs
 @ cdecl -private mbtowc(ptr str long) msvcrt.mbtowc
 @ cdecl -private memchr(ptr long long) msvcrt.memchr
-@ cdecl -private memcpy(ptr ptr long) msvcrt.memcpy
+@ cdecl -private memcpy(ptr ptr long) NTOSKRNL_memcpy
 @ cdecl -private memmove(ptr ptr long) msvcrt.memmove
-@ cdecl -private memset(ptr long long) msvcrt.memset
+@ cdecl -private memset(ptr long long) NTOSKRNL_memset
 @ cdecl -private qsort(ptr long long ptr) msvcrt.qsort
 @ cdecl -private rand() msvcrt.rand
 @ varargs -private sprintf(ptr str) msvcrt.sprintf
@@ -1482,7 +1482,7 @@
 @ cdecl -private wcscspn(wstr wstr) msvcrt.wcscspn
 @ cdecl -private wcslen(wstr) msvcrt.wcslen
 @ cdecl -private wcsncat(wstr wstr long) msvcrt.wcsncat
-@ cdecl -private wcsncmp(wstr wstr long) msvcrt.wcsncmp
+@ cdecl -private wcsncmp(wstr wstr long) NTOSKRNL_wcsncmp
 @ cdecl -private wcsncpy(ptr wstr long) msvcrt.wcsncpy
 @ cdecl -private wcsrchr(wstr long) msvcrt.wcsrchr
 @ cdecl -private wcsspn(wstr wstr) msvcrt.wcsspn

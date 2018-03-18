@@ -3291,3 +3291,52 @@ PKEVENT WINAPI IoCreateNotificationEvent(UNICODE_STRING *name, HANDLE *handle)
     FIXME( "stub: %s %p\n", debugstr_us(name), handle );
     return NULL;
 }
+
+
+/*********************************************************************
+ *                  memcpy   (NTOSKRNL.@)
+ *
+ * NOTES
+ *  Behaves like memmove.
+ */
+void * __cdecl NTOSKRNL_memcpy( void *dst, const void *src, size_t n )
+{
+    return memmove( dst, src, n );
+}
+
+/*********************************************************************
+ *                  memset   (NTOSKRNL.@)
+ */
+void * __cdecl NTOSKRNL_memset( void *dst, int c, size_t n )
+{
+    return memset( dst, c, n );
+}
+
+int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 )
+{
+    return strcasecmp( str1, str2 );
+}
+
+/*********************************************************************
+ *                  _strnicmp   (NTOSKRNL.@)
+ */
+int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
+{
+    return strncasecmp( str1, str2, n );
+}
+
+/*********************************************************************
+ *           _wcsnicmp    (NTOSKRNL.@)
+ */
+INT __cdecl NTOSKRNL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
+{
+    return strncmpiW( str1, str2, n );
+}
+
+/*********************************************************************
+ *           wcsncmp    (NTOSKRNL.@)
+ */
+INT __cdecl NTOSKRNL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
+{
+    return strncmpW( str1, str2, n );
+}
