@@ -32,7 +32,7 @@ static BOOL be_arm64_get_addr(HANDLE hThread, const CONTEXT* ctx,
     case be_cpu_addr_stack:
         return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Sp);
     case be_cpu_addr_frame:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Fp);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->u.s.Fp);
         break;
     }
     return FALSE;
@@ -81,7 +81,7 @@ static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_r
             buf[i] = '-';
 
     dbg_printf(" Pc:%016lx Sp:%016lx Lr:%016lx Cpsr:%08x(%s)\n",
-               ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr, buf);
+               ctx->Pc, ctx->Sp, ctx->u.s.Lr, ctx->Cpsr, buf);
     dbg_printf(" x0: %016lx x1: %016lx x2: %016lx x3: %016lx x4: %016lx\n",
                ctx->u.s.X0, ctx->u.s.X1, ctx->u.s.X2, ctx->u.s.X3, ctx->u.s.X4);
     dbg_printf(" x5: %016lx x6: %016lx x7: %016lx x8: %016lx x9: %016lx\n",
@@ -93,7 +93,7 @@ static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_r
     dbg_printf(" x20:%016lx x21:%016lx x22:%016lx x23:%016lx x24:%016lx\n",
                ctx->u.s.X20, ctx->u.s.X21, ctx->u.s.X22, ctx->u.s.X23, ctx->u.s.X24);
     dbg_printf(" x25:%016lx x26:%016lx x27:%016lx x28:%016lx Fp:%016lx\n",
-               ctx->u.s.X25, ctx->u.s.X26, ctx->u.s.X27, ctx->u.s.X28, ctx->Fp);
+               ctx->u.s.X25, ctx->u.s.X26, ctx->u.s.X27, ctx->u.s.X28, ctx->u.s.Fp);
 
     if (all_regs) dbg_printf( "Floating point ARM64 dump not implemented\n" );
 }
@@ -134,8 +134,8 @@ static struct dbg_internal_var be_arm64_ctx[] =
     {CV_ARM64_X0 +  26,   "x26",    (DWORD_PTR*)FIELD_OFFSET(CONTEXT, u.s.X26), dbg_itype_unsigned_long_int},
     {CV_ARM64_X0 +  27,   "x27",    (DWORD_PTR*)FIELD_OFFSET(CONTEXT, u.s.X27), dbg_itype_unsigned_long_int},
     {CV_ARM64_X0 +  28,   "x28",    (DWORD_PTR*)FIELD_OFFSET(CONTEXT, u.s.X28), dbg_itype_unsigned_long_int},
-    {CV_ARM64_FP,         "fp",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Fp),      dbg_itype_unsigned_long_int},
-    {CV_ARM64_LR,         "lr",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Lr),      dbg_itype_unsigned_long_int},
+    {CV_ARM64_FP,         "fp",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, u.s.Fp),  dbg_itype_unsigned_long_int},
+    {CV_ARM64_LR,         "lr",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, u.s.Lr),  dbg_itype_unsigned_long_int},
     {CV_ARM64_SP,         "sp",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Sp),      dbg_itype_unsigned_long_int},
     {CV_ARM64_PC,         "pc",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Pc),      dbg_itype_unsigned_long_int},
     {0,                   NULL,     0,                                          dbg_itype_none}

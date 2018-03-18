@@ -123,8 +123,8 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     DWORD i;
 
     context->ContextFlags = CONTEXT_FULL;
-    context->Fp     = FP_sig(sigcontext);     /* Frame pointer */
-    context->Lr     = LR_sig(sigcontext);     /* Link register */
+    context->u.s.Fp = FP_sig(sigcontext);     /* Frame pointer */
+    context->u.s.Lr = LR_sig(sigcontext);     /* Link register */
     context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
     context->Pc     = PC_sig(sigcontext);     /* Program Counter */
     context->Cpsr   = PSTATE_sig(sigcontext); /* Current State Register */
@@ -141,8 +141,8 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
     DWORD i;
 
-    FP_sig(sigcontext)     = context->Fp;     /* Frame pointer */
-    LR_sig(sigcontext)     = context->Lr;     /* Link register */
+    FP_sig(sigcontext)     = context->u.s.Fp; /* Frame pointer */
+    LR_sig(sigcontext)     = context->u.s.Lr; /* Link register */
     SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
     PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
     PSTATE_sig(sigcontext) = context->Cpsr;   /* Current State Register */
@@ -241,8 +241,8 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     flags &= ~CONTEXT_ARM64;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
-        to->Fp      = from->Fp;
-        to->Lr      = from->Lr;
+        to->u.s.Fp  = from->u.s.Fp;
+        to->u.s.Lr  = from->u.s.Lr;
         to->Sp      = from->Sp;
         to->Pc      = from->Pc;
         to->Cpsr    = from->Cpsr;
@@ -281,8 +281,8 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     if (flags & CONTEXT_CONTROL)
     {
         to->flags |= SERVER_CTX_CONTROL;
-        to->integer.arm64_regs.x[29] = from->Fp;
-        to->integer.arm64_regs.x[30] = from->Lr;
+        to->integer.arm64_regs.x[29] = from->u.s.Fp;
+        to->integer.arm64_regs.x[30] = from->u.s.Lr;
         to->ctl.arm64_regs.sp     = from->Sp;
         to->ctl.arm64_regs.pc     = from->Pc;
         to->ctl.arm64_regs.pstate = from->Cpsr;
@@ -326,8 +326,8 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= CONTEXT_CONTROL;
-        to->Fp     = from->integer.arm64_regs.x[29];
-        to->Lr     = from->integer.arm64_regs.x[30];
+        to->u.s.Fp = from->integer.arm64_regs.x[29];
+        to->u.s.Lr = from->integer.arm64_regs.x[30];
         to->Sp     = from->ctl.arm64_regs.sp;
         to->Pc     = from->ctl.arm64_regs.pc;
         to->Cpsr   = from->ctl.arm64_regs.pstate;

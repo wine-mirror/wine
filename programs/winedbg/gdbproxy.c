@@ -495,8 +495,8 @@ static struct cpu_register cpu_register_map[] = {
     REG(u.s.X26, 8, CONTEXT_INTEGER),
     REG(u.s.X27, 8, CONTEXT_INTEGER),
     REG(u.s.X28, 8, CONTEXT_INTEGER),
-    REG(Fp,  8, CONTEXT_INTEGER),
-    REG(Lr,  8, CONTEXT_INTEGER),
+    REG(u.s.Fp,  8, CONTEXT_INTEGER),
+    REG(u.s.Lr,  8, CONTEXT_INTEGER),
     REG(Sp,  8, CONTEXT_CONTROL),
     REG(Pc,  8, CONTEXT_CONTROL),
 };

@@ -1850,12 +1850,12 @@ typedef struct _CONTEXT
             DWORD64 X26;                /* 0d8 */
             DWORD64 X27;                /* 0e0 */
             DWORD64 X28;                /* 0e8 */
+            DWORD64 Fp;                 /* 0f0 */
+            DWORD64 Lr;                 /* 0f8 */
         } DUMMYSTRUCTNAME;
-        DWORD64 X[29];                  /* 008 */
+        DWORD64 X[31];                  /* 008 */
     } DUMMYUNIONNAME;
     /* CONTEXT_CONTROL */
-    DWORD64 Fp;                         /* 0f0 */
-    DWORD64 Lr;                         /* 0f8 */
     DWORD64 Sp;                         /* 100 */
     DWORD64 Pc;                         /* 108 */
     /* CONTEXT_FLOATING_POINT */
