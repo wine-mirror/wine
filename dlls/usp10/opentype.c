@@ -2690,33 +2690,38 @@ static LoadedLanguage *usp10_script_get_language(LoadedScript *script, OPENTYPE_
 
 static void GSUB_initialize_language_cache(LoadedScript *script)
 {
-    int i;
+    const OT_Script *table;
+    DWORD offset;
+    SIZE_T i;
 
-    if (script->table[USP10_SCRIPT_TABLE_GSUB])
+    if (!(table = script->table[USP10_SCRIPT_TABLE_GSUB]))
+        return;
+
+    if ((offset = GET_BE_WORD(table->DefaultLangSys)))
     {
-        DWORD offset;
-        const OT_Script *table = script->table[USP10_SCRIPT_TABLE_GSUB];
-        script->language_count = GET_BE_WORD(table->LangSysCount);
-        offset = GET_BE_WORD(table->DefaultLangSys);
-        if (offset)
-        {
-            script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
-            script->default_language.gsub_table = (const BYTE*)table + offset;
-        }
+        script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
+        script->default_language.gsub_table = (const BYTE *)table + offset;
+    }
 
-        if (script->language_count)
-        {
-            TRACE("Deflang %p, LangCount %li\n",script->default_language.gsub_table, script->language_count);
+    if (!(script->language_count = GET_BE_WORD(table->LangSysCount)))
+        return;
 
-            script->languages = heap_alloc_zero(script->language_count * sizeof(*script->languages));
+    TRACE("Deflang %p, LangCount %lu.\n", script->default_language.gsub_table, script->language_count);
 
-            for (i = 0; i < script->language_count; i++)
-            {
-                int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
-                script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
-                script->languages[i].gsub_table = ((const BYTE*)table + offset);
-            }
-        }
+    if (!usp10_array_reserve((void **)&script->languages, &script->languages_size,
+            script->language_count, sizeof(*script->languages)))
+    {
+        ERR("Failed to grow languages array.\n");
+        return;
+    }
+
+    for (i = 0; i < script->language_count; ++i)
+    {
+        script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0],
+                table->LangSysRecord[i].LangSysTag[1],
+                table->LangSysRecord[i].LangSysTag[2],
+                table->LangSysRecord[i].LangSysTag[3]);
+        script->languages[i].gsub_table = (const BYTE *)table + GET_BE_WORD(table->LangSysRecord[i].LangSys);
     }
 }
 
