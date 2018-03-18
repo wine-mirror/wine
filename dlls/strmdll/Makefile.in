@@ -1,0 +1,4 @@
+MODULE    = strmdll.dll
+
+C_SRCS = \
+	main.c
