@@ -82,7 +82,7 @@
 @ stub __conio_common_vcwprintf_s
 @ stub __conio_common_vcwscanf
 @ cdecl -arch=i386 __control87_2(long long ptr ptr)
-@ stub __current_exception
+@ cdecl __current_exception()
 @ stub __current_exception_context
 @ cdecl __daylight() MSVCRT___p__daylight
 @ stub __dcrt_get_wide_environment_from_os
