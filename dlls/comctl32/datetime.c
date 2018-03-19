@@ -322,10 +322,12 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR format)
     if (!format) {
 	DWORD format_item;
 
-	if (infoPtr->dwStyle & DTS_LONGDATEFORMAT)
-	    format_item = LOCALE_SLONGDATE;
-	else if ((infoPtr->dwStyle & DTS_TIMEFORMAT) == DTS_TIMEFORMAT)
-	    format_item = LOCALE_STIMEFORMAT;
+        if ((infoPtr->dwStyle & DTS_SHORTDATECENTURYFORMAT) == DTS_SHORTDATECENTURYFORMAT)
+            format_item = LOCALE_SSHORTDATE;
+        else if ((infoPtr->dwStyle & DTS_LONGDATEFORMAT) == DTS_LONGDATEFORMAT)
+            format_item = LOCALE_SLONGDATE;
+        else if ((infoPtr->dwStyle & DTS_TIMEFORMAT) == DTS_TIMEFORMAT)
+            format_item = LOCALE_STIMEFORMAT;
         else /* DTS_SHORTDATEFORMAT */
 	    format_item = LOCALE_SSHORTDATE;
 	GetLocaleInfoW(LOCALE_USER_DEFAULT, format_item, format_buf, ARRAY_SIZE(format_buf));
