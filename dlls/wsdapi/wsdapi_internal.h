@@ -49,6 +49,12 @@ typedef struct IWSDiscoveryPublisherImpl {
     BOOL                  publisherStarted;
 } IWSDiscoveryPublisherImpl;
 
+/* network.c */
+
+BOOL init_networking(IWSDiscoveryPublisherImpl *impl);
+void terminate_networking(IWSDiscoveryPublisherImpl *impl);
+BOOL send_udp_multicast(IWSDiscoveryPublisherImpl *impl, char *data, int length, int max_initial_delay);
+
 /* soap.c */
 
 HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG metadata_ver, ULONGLONG instance_id,

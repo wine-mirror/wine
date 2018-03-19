@@ -82,6 +82,8 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
 
     if (ref == 0)
     {
+        terminate_networking(This);
+
         if (This->xmlContext != NULL)
         {
             IWSDXMLContext_Release(This->xmlContext);
@@ -146,6 +148,9 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_RegisterNotificationSink(IWSDisc
     IWSDiscoveryPublisherNotify_AddRef(pSink);
 
     list_add_tail(&impl->notificationSinks, &sink->entry);
+
+    if ((!impl->publisherStarted) && (!init_networking(impl)))
+        return E_FAIL;
 
     return S_OK;
 }

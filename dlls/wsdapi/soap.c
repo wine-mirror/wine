@@ -27,6 +27,8 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
+
 #define APP_MAX_DELAY                       500
 
 static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_HEADER *header, WSDXML_ELEMENT *body_element,
@@ -34,6 +36,7 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
 {
     static const char xml_header[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
     ULONG xml_header_len = sizeof(xml_header) - 1;
+    HRESULT ret = E_FAIL;
     char *full_xml;
 
     /* TODO: Create SOAP envelope */
@@ -47,11 +50,21 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
     memcpy(full_xml, xml_header, xml_header_len);
     full_xml[xml_header_len] = 0;
 
-    /* TODO: Send the message */
+    if (remote_address == NULL)
+    {
+        /* Send the message via UDP multicast */
+        if (send_udp_multicast(impl, full_xml, sizeof(xml_header), max_initial_delay))
+            ret = S_OK;
+    }
+    else
+    {
+        /* TODO: Send the message via UDP unicast */
+        FIXME("TODO: Send the message via UDP unicast\n");
+    }
 
     heap_free(full_xml);
 
-    return S_OK;
+    return ret;
 }
 
 HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG metadata_ver, ULONGLONG instance_id,

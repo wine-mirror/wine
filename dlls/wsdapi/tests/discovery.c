@@ -570,7 +570,7 @@ static void Publish_tests(void)
 
     /* Publish the service */
     rc = IWSDiscoveryPublisher_Publish(publisher, publisherIdW, 1, 1, 1, NULL, NULL, NULL, NULL);
-    todo_wine ok(rc == S_OK, "Publish failed: %08x\n", rc);
+    ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
     /* Wait up to 2 seconds for messages to be received */
     if (WaitForMultipleObjects(msgStorage->numThreadHandles, msgStorage->threadHandles, TRUE, 2000) == WAIT_TIMEOUT)
@@ -583,7 +583,7 @@ static void Publish_tests(void)
     DeleteCriticalSection(&msgStorage->criticalSection);
 
     /* Verify we've received a message */
-    todo_wine ok(msgStorage->messageCount >= 1, "No messages received\n");
+    ok(msgStorage->messageCount >= 1, "No messages received\n");
 
     sprintf(endpointReferenceString, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address></wsa:EndpointReference>", publisherId);
 
