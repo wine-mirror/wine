@@ -697,7 +697,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
 		for (i = 0; i < max_count; i++)
 		{
 		    if(GetLocaleInfoW(LOCALE_USER_DEFAULT, lctype + i,
-			buffer, lstrlenW(buffer)))
+			buffer, ARRAY_SIZE(buffer)))
 		    {
 			GetTextExtentPoint32W(hdc, buffer, lstrlenW(buffer), &size);
 			if (size.cx > cx) cx = size.cx;
