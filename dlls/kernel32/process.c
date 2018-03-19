@@ -4019,6 +4019,16 @@ BOOL WINAPI GetNumaNodeProcessorMask(UCHAR node, PULONGLONG mask)
 }
 
 /**********************************************************************
+ *           GetNumaNodeProcessorMaskEx     (KERNEL32.@)
+ */
+BOOL WINAPI GetNumaNodeProcessorMaskEx(USHORT node, PGROUP_AFFINITY mask)
+{
+    FIXME("(%hu %p): stub\n", node, mask);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/**********************************************************************
  *           GetNumaAvailableMemoryNode     (KERNEL32.@)
  */
 BOOL WINAPI GetNumaAvailableMemoryNode(UCHAR node, PULONGLONG available_bytes)

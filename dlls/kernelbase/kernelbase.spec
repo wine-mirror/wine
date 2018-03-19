@@ -575,7 +575,7 @@
 @ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
 # @ stub GetNextFgPolicyRefreshInfoInternal
 @ stdcall GetNumaHighestNodeNumber(ptr) kernel32.GetNumaHighestNodeNumber
-# @ stub GetNumaNodeProcessorMaskEx
+@ stdcall GetNumaNodeProcessorMaskEx(long ptr) kernel32.GetNumaNodeProcessorMaskEx
 # @ stub GetNumaProximityNodeEx
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW

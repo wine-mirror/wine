@@ -746,7 +746,7 @@
 @ stdcall GetNumaHighestNodeNumber(ptr)
 # @ stub GetNumaNodeNumberFromHandle
 @ stdcall GetNumaNodeProcessorMask(long ptr)
-# @ stub GetNumaNodeProcessorMaskEx
+@ stdcall GetNumaNodeProcessorMaskEx(long ptr)
 # @ stub GetNumaProcessorMap
 @ stdcall GetNumaProcessorNode(long ptr)
 # @ stub GetNumaProcessorNodeEx
