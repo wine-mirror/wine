@@ -1454,6 +1454,58 @@ DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRU
     return 0;
 }
 
+static BOOL DATETIME_GetIdealSize(DATETIME_INFO *infoPtr, SIZE *size)
+{
+    SIZE field_size;
+    RECT rect;
+    SHORT width;
+    WCHAR txt[80];
+    HDC hdc;
+    HFONT oldFont;
+    int i;
+
+    size->cx = size->cy = 0;
+
+    hdc = GetDC(infoPtr->hwndSelf);
+    oldFont = SelectObject(hdc, infoPtr->hFont);
+
+    /* Get text font height */
+    DATETIME_ReturnTxt(infoPtr, 0, txt, ARRAY_SIZE(txt));
+    GetTextExtentPoint32W(hdc, txt, strlenW(txt), &field_size);
+    size->cy = field_size.cy;
+
+    /* Get text font width */
+    for (i = 0; i < infoPtr->nrFields; i++)
+    {
+        DATETIME_ReturnFieldWidth(infoPtr, hdc, i, &width);
+        size->cx += width;
+    }
+
+    SelectObject(hdc, oldFont);
+    ReleaseDC(infoPtr->hwndSelf, hdc);
+
+    if (infoPtr->dwStyle & DTS_UPDOWN)
+    {
+        GetWindowRect(infoPtr->hUpdown, &rect);
+        size->cx += rect.right - rect.left;
+    }
+    else
+    {
+        size->cx += infoPtr->calbutton.right - infoPtr->calbutton.left;
+    }
+
+    if (infoPtr->dwStyle & DTS_SHOWNONE)
+    {
+        size->cx += infoPtr->checkbox.right - infoPtr->checkbox.left;
+    }
+
+    /* Add space between controls for them not to get too close */
+    size->cx += 12;
+    size->cy += 4;
+
+    TRACE("cx=%d cy=%d\n", size->cx, size->cy);
+    return TRUE;
+}
 
 static LRESULT
 DATETIME_SetFont (DATETIME_INFO *infoPtr, HFONT font, BOOL repaint)
@@ -1584,6 +1636,9 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case DTM_GETMCFONT:
 	return SendMessageW (infoPtr->hMonthCal, WM_GETFONT, wParam, lParam);
+
+    case DTM_GETIDEALSIZE:
+        return DATETIME_GetIdealSize(infoPtr, (SIZE *)lParam);
 
     case WM_NOTIFY:
 	return DATETIME_Notify (infoPtr, (LPNMHDR)lParam);

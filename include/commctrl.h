@@ -5009,6 +5009,8 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
   SNDMSG (hdp, DTM_SETMCFONT, (WPARAM)hfont, (LPARAM)fRedraw)
 #define DateTime_GetMonthCalFont(hdp) \
   SNDMSG (hdp, DTM_GETMCFONT, 0, 0)
+#define DateTime_GetIdealSize(hdp, sz) \
+  (BOOL) SNDMSG (hdp, DTM_GETIDEALSIZE, 0, (LPARAM)sz)
 
 #define DA_LAST         (0x7fffffff)
 #define DPA_APPEND      (0x7fffffff)
