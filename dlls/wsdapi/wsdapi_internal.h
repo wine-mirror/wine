@@ -62,4 +62,8 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *hdr_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any);
 
+/* xml.c */
+
+LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value);
+
 #endif

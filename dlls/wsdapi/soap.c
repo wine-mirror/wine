@@ -71,6 +71,13 @@ static const WCHAR relatesToString[] = { 'R','e','l','a','t','e','s','T','o', 0 
 static const WCHAR appSequenceString[] = { 'A','p','p','S','e','q','u','e','n','c','e', 0 };
 static const WCHAR emptyString[] = { 0 };
 
+struct discovered_namespace
+{
+    struct list entry;
+    LPCWSTR prefix;
+    LPCWSTR uri;
+};
+
 static char *wide_to_utf8(LPCWSTR wide_string, int *length)
 {
     char *new_string = NULL;
@@ -252,6 +259,31 @@ static void populate_soap_header(WSD_SOAP_HEADER *header, LPCWSTR to, LPCWSTR ac
     /* TODO: Implement RelatesTo, ReplyTo, From, FaultTo */
 }
 
+static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *discovered_ns)
+{
+    struct discovered_namespace *ns;
+
+    LIST_FOR_EACH_ENTRY(ns, namespaces, struct discovered_namespace, entry)
+    {
+        if (lstrcmpW(ns->uri, discovered_ns->Uri) == 0)
+            return TRUE; /* Already added */
+    }
+
+    ns = WSDAllocateLinkedMemory(namespaces, sizeof(struct discovered_namespace));
+
+    if (ns == NULL)
+        return FALSE;
+
+    ns->prefix = duplicate_string(ns, discovered_ns->PreferredPrefix);
+    ns->uri = duplicate_string(ns, discovered_ns->Uri);
+
+    if ((ns->prefix == NULL) || (ns->uri == NULL))
+        return FALSE;
+
+    list_add_tail(namespaces, &ns->entry);
+    return TRUE;
+}
+
 static WSDXML_ELEMENT *create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header)
 {
     WSDXML_ELEMENT *header_element = NULL, *app_sequence_element = NULL;
@@ -309,9 +341,10 @@ cleanup:
 static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header, WSDXML_ELEMENT *body_element,
     WS_HEAP **heap, char **output_xml, ULONG *xml_length, struct list *discovered_namespaces)
 {
-    WS_XML_STRING *actual_envelope_prefix = NULL, *envelope_uri_xmlstr = NULL;
+    WS_XML_STRING *actual_envelope_prefix = NULL, *envelope_uri_xmlstr = NULL, *tmp_prefix = NULL, *tmp_uri = NULL;
     WSDXML_NAMESPACE *addressing_ns = NULL, *discovery_ns = NULL, *envelope_ns = NULL;
     WSDXML_ELEMENT *header_element = NULL;
+    struct discovered_namespace *ns;
     WS_XML_BUFFER *buffer = NULL;
     WS_XML_WRITER *writer = NULL;
     WS_XML_STRING envelope;
@@ -320,10 +353,13 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
 
     /* Create the necessary XML prefixes */
     if (FAILED(IWSDXMLContext_AddNamespace(xml_context, addressingNsUri, addressingPrefix, &addressing_ns))) goto cleanup;
+    if (!add_discovered_namespace(discovered_namespaces, addressing_ns)) goto cleanup;
 
     if (FAILED(IWSDXMLContext_AddNamespace(xml_context, discoveryNsUri, discoveryPrefix, &discovery_ns))) goto cleanup;
+    if (!add_discovered_namespace(discovered_namespaces, discovery_ns)) goto cleanup;
 
     if (FAILED(IWSDXMLContext_AddNamespace(xml_context, envelopeNsUri, envelopePrefix, &envelope_ns))) goto cleanup;
+    if (!add_discovered_namespace(discovered_namespaces, envelope_ns)) goto cleanup;
 
     envelope.bytes = envelopeString;
     envelope.length = sizeof(envelopeString) - 1;
@@ -355,6 +391,23 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
     /* <s:Envelope> */
     ret = WsWriteStartElement(writer, actual_envelope_prefix, &envelope, envelope_uri_xmlstr, NULL);
     if (FAILED(ret)) goto cleanup;
+
+    LIST_FOR_EACH_ENTRY(ns, discovered_namespaces, struct discovered_namespace, entry)
+    {
+        tmp_prefix = populate_xml_string(ns->prefix);
+        tmp_uri = populate_xml_string(ns->uri);
+
+        if ((tmp_prefix == NULL) || (tmp_uri == NULL)) goto cleanup;
+
+        ret = WsWriteXmlnsAttribute(writer, tmp_prefix, tmp_uri, FALSE, NULL);
+        if (FAILED(ret)) goto cleanup;
+
+        free_xml_string(tmp_prefix);
+        free_xml_string(tmp_uri);
+    }
+
+    tmp_prefix = NULL;
+    tmp_uri = NULL;
 
     /* Write the header */
     if (!write_xml_element(header_element, writer)) goto cleanup;
@@ -401,7 +454,7 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
     char *full_xml;
     HRESULT ret;
 
-    ret = create_soap_envelope(impl->xmlContext, header, NULL, &heap, &xml, &xml_length, NULL);
+    ret = create_soap_envelope(impl->xmlContext, header, NULL, &heap, &xml, &xml_length, discovered_namespaces);
     if (ret != S_OK) return ret;
 
     /* Prefix the XML header */
@@ -439,6 +492,7 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *hdr_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any)
 {
+    struct list *discoveredNamespaces = NULL;
     WSD_SOAP_HEADER soapHeader;
     WSD_APP_SEQUENCE sequence;
     WCHAR message_id[64];
@@ -450,13 +504,20 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
 
     if (!create_guid(message_id)) goto cleanup;
 
+    discoveredNamespaces = WSDAllocateLinkedMemory(NULL, sizeof(struct list));
+    if (!discoveredNamespaces) goto cleanup;
+
+    list_init(discoveredNamespaces);
+
     populate_soap_header(&soapHeader, discoveryTo, actionHello, message_id, &sequence, hdr_any);
 
     /* TODO: Populate message body */
 
     /* Write and send the message */
-    ret = write_and_send_message(impl, &soapHeader, NULL, NULL, NULL, APP_MAX_DELAY);
+    ret = write_and_send_message(impl, &soapHeader, NULL, discoveredNamespaces, NULL, APP_MAX_DELAY);
 
 cleanup:
+    WSDFreeLinkedMemory(discoveredNamespaces);
+
     return ret;
 }

@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 
-static LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value)
+LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value)
 {
     int valueLen;
     LPWSTR dup;

@@ -506,6 +506,7 @@ static void Publish_tests(void)
     messageStorage *msgStorage;
     WSADATA wsaData;
     BOOL messageOK;
+    BOOL hello_message_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
@@ -595,8 +596,8 @@ static void Publish_tests(void)
         msg = msgStorage->messages[i];
         messageOK = FALSE;
 
-        messageOK = (strstr(msg, "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Hello</wsa:Action>") != NULL);
-        messageOK = messageOK && (strstr(msg, endpointReferenceString) != NULL);
+        hello_message_seen = (strstr(msg, "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Hello</wsa:Action>") != NULL);
+        messageOK = hello_message_seen && (strstr(msg, endpointReferenceString) != NULL);
         messageOK = messageOK && (strstr(msg, "<wsd:AppSequence InstanceId=\"1\" MessageNumber=\"1\"></wsd:AppSequence>") != NULL);
         messageOK = messageOK && (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
 
@@ -610,7 +611,8 @@ static void Publish_tests(void)
 
     heap_free(msgStorage);
 
-    todo_wine ok(messageOK == TRUE, "Hello message not received\n");
+    ok(hello_message_seen == TRUE, "Hello message not received\n");
+    todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
 
 after_publish_test:
 
