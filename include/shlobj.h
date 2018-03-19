@@ -1801,6 +1801,7 @@ HRESULT WINAPI CDefFolderMenu_Create2(LPCITEMIDLIST pidlFolder, HWND hwnd, UINT 
                                       IContextMenu **ppcm);
 
 int WINAPI PickIconDlg(HWND owner, WCHAR *path, UINT path_len, int *index);
+HRESULT WINAPI SHLimitInputEdit(HWND hwnd, IShellFolder *folder);
 
 #include <poppack.h>
 

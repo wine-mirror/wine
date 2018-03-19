@@ -5217,6 +5217,34 @@ static void test_GetDefaultSearchGUID(void)
     CoUninitialize();
 }
 
+static void test_SHLimitInputEdit(void)
+{
+    IShellFolder *desktop;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "Failed to get desktop folder, hr %#x.\n", hr);
+
+    hr = SHLimitInputEdit(NULL, desktop);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hwnd = CreateWindowA("EDIT", NULL, WS_VISIBLE, 0, 0, 100, 30, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "Failed to create Edit control.\n");
+
+    hr = SHLimitInputEdit(hwnd, desktop);
+todo_wine
+    ok(hr == S_OK, "Failed to set input limits, hr %#x.\n", hr);
+
+    hr = SHLimitInputEdit(hwnd, desktop);
+todo_wine
+    ok(hr == S_OK, "Failed to set input limits, hr %#x.\n", hr);
+
+    DestroyWindow(hwnd);
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5258,6 +5286,7 @@ START_TEST(shlfolder)
     test_DataObject();
     test_GetDefaultColumn();
     test_GetDefaultSearchGUID();
+    test_SHLimitInputEdit();
 
     OleUninitialize();
 }
