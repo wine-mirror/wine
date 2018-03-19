@@ -138,26 +138,21 @@ if (0) /* TODO: Check the hang flags */
     SetLastError( 0xdeadbeef );
     recips = BSM_APPLICATIONS;
     ret = broadcast( BSF_POSTMESSAGE|BSF_SENDNOTIFYMESSAGE, &recips, WM_NULL, 100, 0 );
-    if (ret)
-    {
-        ok(ret==1, "Returned: %d\n", ret);
-        ok(WaitForSingleObject(hevent, 0) != WAIT_OBJECT_0, "Synchronous message sent instead\n");
-        PulseEvent(hevent);
+    ok(ret==1, "Returned: %d\n", ret);
+    ok(WaitForSingleObject(hevent, 0) != WAIT_OBJECT_0, "Synchronous message sent instead\n");
+    PulseEvent(hevent);
 
-        recips = BSM_APPLICATIONS;
-        ret = broadcast( BSF_SENDNOTIFYMESSAGE, &recips, WM_NULL, 100, BROADCAST_QUERY_DENY );
-        ok(ret==1, "Returned: %d\n", ret);
-        ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-        PulseEvent(hevent);
+    recips = BSM_APPLICATIONS;
+    ret = broadcast( BSF_SENDNOTIFYMESSAGE, &recips, WM_NULL, 100, BROADCAST_QUERY_DENY );
+    ok(ret==1, "Returned: %d\n", ret);
+    ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
+    PulseEvent(hevent);
 
-        recips = BSM_APPLICATIONS;
-        ret = broadcast( BSF_SENDNOTIFYMESSAGE|BSF_QUERY, &recips, WM_NULL, 100, BROADCAST_QUERY_DENY );
-        ok(!ret, "Returned: %d\n", ret);
-        ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-        PulseEvent(hevent);
-    }
-    else  /* BSF_SENDNOTIFYMESSAGE not supported on NT4 */
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "failed with err %u\n", GetLastError() );
+    recips = BSM_APPLICATIONS;
+    ret = broadcast( BSF_SENDNOTIFYMESSAGE|BSF_QUERY, &recips, WM_NULL, 100, BROADCAST_QUERY_DENY );
+    ok(!ret, "Returned: %d\n", ret);
+    ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
+    PulseEvent(hevent);
 
     recips = BSM_APPLICATIONS;
     ret = broadcast( 0, &recips, WM_NULL, 100, 0 );
