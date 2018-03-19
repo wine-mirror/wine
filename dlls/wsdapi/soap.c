@@ -116,6 +116,73 @@ static inline void free_xml_string(WS_XML_STRING *value)
     heap_free(value);
 }
 
+static BOOL write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
+{
+    WS_XML_STRING *local_name = NULL, *element_ns = NULL, *ns_prefix = NULL;
+    WS_XML_UTF16_TEXT utf16_text;
+    WSDXML_NODE *current_child;
+    WSDXML_TEXT *node_as_text;
+    BOOL retVal = FALSE;
+    int text_len;
+    HRESULT ret;
+
+    if (element == NULL)
+        return TRUE;
+
+    /* Start the element */
+    local_name = populate_xml_string(element->Name->LocalName);
+    if (local_name == NULL) goto cleanup;
+
+    element_ns = populate_xml_string(element->Name->Space->Uri);
+    if (element_ns == NULL) goto cleanup;
+
+    ns_prefix = populate_xml_string(element->Name->Space->PreferredPrefix);
+    if (ns_prefix == NULL) goto cleanup;
+
+    ret = WsWriteStartElement(writer, ns_prefix, local_name, element_ns, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    /* TODO: Write attributes */
+
+    /* Write child elements */
+    current_child = element->FirstChild;
+
+    while (current_child != NULL)
+    {
+        if (current_child->Type == ElementType)
+        {
+            if (!write_xml_element((WSDXML_ELEMENT *)current_child, writer)) goto cleanup;
+        }
+        else if (current_child->Type == TextType)
+        {
+            node_as_text = (WSDXML_TEXT *)current_child;
+            text_len = lstrlenW(node_as_text->Text);
+
+            utf16_text.text.textType = WS_XML_TEXT_TYPE_UTF16;
+            utf16_text.byteCount = min(WSD_MAX_TEXT_LENGTH, text_len) * sizeof(WCHAR);
+            utf16_text.bytes = (BYTE *)node_as_text->Text;
+
+            ret = WsWriteText(writer, (WS_XML_TEXT *)&utf16_text, NULL);
+            if (FAILED(ret)) goto cleanup;
+        }
+
+        current_child = current_child->Next;
+    }
+
+    /* End the element */
+    ret = WsWriteEndElement(writer, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    retVal = TRUE;
+
+cleanup:
+    free_xml_string(local_name);
+    free_xml_string(element_ns);
+    free_xml_string(ns_prefix);
+
+    return retVal;
+}
+
 static BOOL create_guid(LPWSTR buffer)
 {
     const WCHAR formatString[] = { 'u','r','n',':','u','u','i','d',':','%','s', 0 };
@@ -207,7 +274,8 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
     ret = WsWriteStartElement(writer, actual_envelope_prefix, &envelope, envelope_uri_xmlstr, NULL);
     if (FAILED(ret)) goto cleanup;
 
-    /* TODO: Write the header */
+    /* Write the header */
+    if (!write_xml_element(header_element, writer)) goto cleanup;
 
     ret = WsWriteEndElement(writer, NULL);
     if (FAILED(ret)) goto cleanup;
