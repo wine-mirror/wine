@@ -566,6 +566,20 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
             }
             return STATUS_SUCCESS;
         }
+        if (!strcmpW( prop, BCRYPT_AUTH_TAG_LENGTH ))
+        {
+            BCRYPT_AUTH_TAG_LENGTHS_STRUCT *tag_length = (void *)buf;
+            if (alg->mode != MODE_ID_GCM) return STATUS_NOT_SUPPORTED;
+            *ret_size = sizeof(*tag_length);
+            if (tag_length && size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+            if (tag_length)
+            {
+                tag_length->dwMinLength = 12;
+                tag_length->dwMaxLength = 16;
+                tag_length->dwIncrement =  1;
+            }
+            return STATUS_SUCCESS;
+        }
         break;
 
     default:

@@ -709,24 +709,24 @@ static void test_BCryptEncrypt(void)
 
     size = 0;
     ret = BCryptGetProperty(aes, BCRYPT_AUTH_TAG_LENGTH, NULL, 0, &size, 0);
-    todo_wine ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
     ret = BCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR*)BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     size = 0;
     ret = BCryptGetProperty(aes, BCRYPT_AUTH_TAG_LENGTH, NULL, 0, &size, 0);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(size == sizeof(tag_length), "got %u\n", size);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(tag_length), "got %u\n", size);
 
     size = 0;
     memset(&tag_length, 0, sizeof(tag_length));
     ret = BCryptGetProperty(aes, BCRYPT_AUTH_TAG_LENGTH, (UCHAR*)&tag_length, sizeof(tag_length), &size, 0);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(size == sizeof(tag_length), "got %u\n", size);
-    todo_wine ok(tag_length.dwMinLength == 12, "Expected 12, got %d\n", tag_length.dwMinLength);
-    todo_wine ok(tag_length.dwMaxLength == 16, "Expected 16, got %d\n", tag_length.dwMaxLength);
-    todo_wine ok(tag_length.dwIncrement == 1, "Expected 1, got %d\n", tag_length.dwIncrement);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(tag_length), "got %u\n", size);
+    ok(tag_length.dwMinLength == 12, "Expected 12, got %d\n", tag_length.dwMinLength);
+    ok(tag_length.dwMaxLength == 16, "Expected 16, got %d\n", tag_length.dwMaxLength);
+    ok(tag_length.dwIncrement == 1, "Expected 1, got %d\n", tag_length.dwIncrement);
 
     len = 0xdeadbeef;
     size = sizeof(len);
