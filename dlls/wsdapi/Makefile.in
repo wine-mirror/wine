@@ -8,4 +8,5 @@ C_SRCS = \
 	main.c \
 	memory.c \
 	msgparams.c \
+	soap.c \
 	xml.c
