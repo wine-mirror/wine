@@ -483,7 +483,7 @@ static void test_aes(void)
     memset(mode, 0, sizeof(mode));
     ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_GCM), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_GCM), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
     ok(size == 64, "got %u\n", size);
 
     test_alg_name(alg, "AES");

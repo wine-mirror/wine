@@ -540,17 +540,18 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
         }
         if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
         {
-            if (size >= sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR))
+            const WCHAR *mode;
+            switch (alg->mode)
             {
-                memcpy(buf, BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC));
-                *ret_size = sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR);
-                return STATUS_SUCCESS;
+                case MODE_ID_GCM: mode = BCRYPT_CHAIN_MODE_GCM; break;
+                case MODE_ID_CBC: mode = BCRYPT_CHAIN_MODE_CBC; break;
+                default: return STATUS_NOT_IMPLEMENTED;
             }
-            else
-            {
-                *ret_size = sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR);
-                return STATUS_BUFFER_TOO_SMALL;
-            }
+
+            *ret_size = 64;
+            if (size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+            memcpy( buf, mode, (strlenW(mode) + 1) * sizeof(WCHAR) );
+            return STATUS_SUCCESS;
         }
         if (!strcmpW( prop, BCRYPT_KEY_LENGTHS ))
         {
