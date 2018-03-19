@@ -84,9 +84,7 @@ static const WCHAR * const root_key_names[] =
     name_DYN_DATA
 };
 
-#define NB_SPECIAL_ROOT_KEYS   (sizeof(root_key_names)/sizeof(root_key_names[0]))
-
-static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
+static HKEY special_root_keys[ARRAY_SIZE(root_key_names)];
 static BOOL hkcu_cache_disabled;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));

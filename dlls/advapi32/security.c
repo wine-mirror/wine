@@ -964,7 +964,7 @@ CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(WellKnownSids); i++) {
         if (WellKnownSids[i].Type == WellKnownSidType) {
             DWORD length = GetSidLengthRequired(WellKnownSids[i].Sid.SubAuthorityCount);
 
@@ -991,7 +991,7 @@ CreateWellKnownSid( WELL_KNOWN_SID_TYPE WellKnownSidType,
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(WellKnownRids)/sizeof(WellKnownRids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(WellKnownRids); i++)
         if (WellKnownRids[i].Type == WellKnownSidType) {
             UCHAR domain_subauth = *GetSidSubAuthorityCount(DomainSid);
             DWORD domain_sid_length = GetSidLengthRequired(domain_subauth);
@@ -1028,7 +1028,7 @@ IsWellKnownSid( PSID pSid, WELL_KNOWN_SID_TYPE WellKnownSidType )
     unsigned int i;
     TRACE("(%s, %d)\n", debugstr_sid(pSid), WellKnownSidType);
 
-    for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(WellKnownSids); i++)
         if (WellKnownSids[i].Type == WellKnownSidType)
             if (EqualSid(pSid, (PSID)&(WellKnownSids[i].Sid.Revision)))
                 return TRUE;
@@ -2252,7 +2252,7 @@ LookupAccountSidW(
     /* check the well known SIDs first */
     for (i = 0; i <= WinAccountProtectedUsersSid; i++) {
         if (IsWellKnownSid(sid, i)) {
-            for (j = 0; j < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); j++) {
+            for (j = 0; j < ARRAY_SIZE(ACCOUNT_SIDS); j++) {
                 if (ACCOUNT_SIDS[j].type == i) {
                     ac = ACCOUNT_SIDS[j].account;
                     dm = ACCOUNT_SIDS[j].domain;
@@ -2937,7 +2937,7 @@ BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
     *handled = FALSE;
     split_domain_account( account_and_domain, &account, &domain );
 
-    for (i = 0; i < sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(ACCOUNT_SIDS); i++)
     {
         /* check domain first */
         if (domain.Buffer && !match_domain( i, &domain )) continue;
@@ -4926,7 +4926,7 @@ static BOOL DumpSidNumeric(PSID psid, WCHAR **pwptr, ULONG *plen)
 static BOOL DumpSid(PSID psid, WCHAR **pwptr, ULONG *plen)
 {
     size_t i;
-    for (i = 0; i < sizeof(WellKnownSids) / sizeof(WellKnownSids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(WellKnownSids); i++)
     {
         if (WellKnownSids[i].wstr[0] && EqualSid(psid, (PSID)&(WellKnownSids[i].Sid.Revision)))
         {
@@ -4983,7 +4983,7 @@ static void DumpRights(DWORD mask, WCHAR **pwptr, ULONG *plen)
         return;
 
     /* first check if the right have name */
-    for (i = 0; i < sizeof(AceRights)/sizeof(AceRights[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(AceRights); i++)
     {
         if (AceRights[i].wstr == NULL)
             break;
@@ -5633,11 +5633,11 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
     {
         unsigned int i;
 
-        for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(WellKnownSids); i++)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
                 return GetSidLengthRequired(WellKnownSids[i].Sid.SubAuthorityCount);
 
-        for (i = 0; i < sizeof(WellKnownRids)/sizeof(WellKnownRids[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(WellKnownRids); i++)
             if (!strncmpW(WellKnownRids[i].wstr, StringSid, 2))
             {
                 MAX_SID local;
@@ -5740,7 +5740,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
         unsigned int i;
         pisid->Revision = SDDL_REVISION;
 
-        for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(WellKnownSids); i++)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
             {
                 DWORD j;
@@ -5751,7 +5751,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
                 bret = TRUE;
             }
 
-        for (i = 0; i < sizeof(WellKnownRids)/sizeof(WellKnownRids[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(WellKnownRids); i++)
             if (!strncmpW(WellKnownRids[i].wstr, StringSid, 2))
             {
                 ADVAPI_GetComputerSid(pisid);

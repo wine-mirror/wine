@@ -248,7 +248,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
     SecKeychainAttributeList *attr_list;
     UInt32 info_tags[] = { kSecServiceItemAttr, kSecAccountItemAttr,
                            kSecCommentItemAttr, kSecCreationDateItemAttr };
-    info.count = sizeof(info_tags)/sizeof(info_tags[0]);
+    info.count = ARRAY_SIZE(info_tags);
     info.tag = info_tags;
     info.format = NULL;
     status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, &cred_blob_len, &cred_blob);
@@ -641,12 +641,12 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
     if (type == CRED_TYPE_GENERIC)
     {
         prefix = wszGenericPrefix;
-        len += sizeof(wszGenericPrefix)/sizeof(wszGenericPrefix[0]);
+        len += ARRAY_SIZE(wszGenericPrefix);
     }
     else
     {
         prefix = wszDomPasswdPrefix;
-        len += sizeof(wszDomPasswdPrefix)/sizeof(wszDomPasswdPrefix[0]);
+        len += ARRAY_SIZE(wszDomPasswdPrefix);
     }
 
     key_name = heap_alloc(len * sizeof(WCHAR));
@@ -792,7 +792,7 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
             UInt32 info_tags[] = { kSecServiceItemAttr };
             BOOL match;
 
-            info.count = sizeof(info_tags)/sizeof(info_tags[0]);
+            info.count = ARRAY_SIZE(info_tags);
             info.tag = info_tags;
             info.format = NULL;
             status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
@@ -851,7 +851,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
             UInt32 info_tags[] = { kSecServiceItemAttr };
             LPWSTR target_name;
             INT str_len;
-            info.count = sizeof(info_tags)/sizeof(info_tags[0]);
+            info.count = ARRAY_SIZE(info_tags);
             info.tag = info_tags;
             info.format = NULL;
             status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
@@ -1439,7 +1439,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
                 UInt32 info_tags[] = { kSecServiceItemAttr };
                 LPWSTR target_name;
                 INT str_len;
-                info.count = sizeof(info_tags)/sizeof(info_tags[0]);
+                info.count = ARRAY_SIZE(info_tags);
                 info.tag = info_tags;
                 info.format = NULL;
                 status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
