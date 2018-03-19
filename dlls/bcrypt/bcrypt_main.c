@@ -510,15 +510,15 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
 
-    status = generic_alg_property( id, prop, buf, size, ret_size );
+    status = generic_alg_property( alg->id, prop, buf, size, ret_size );
     if (status != STATUS_NOT_IMPLEMENTED)
         return status;
 
-    switch (id)
+    switch (alg->id)
     {
     case ALG_ID_AES:
         if (!strcmpW( prop, BCRYPT_BLOCK_LENGTH ))
@@ -567,11 +567,11 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_hash_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_hash_property( const struct hash *hash, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
 
-    status = generic_alg_property( id, prop, buf, size, ret_size );
+    status = generic_alg_property( hash->alg_id, prop, buf, size, ret_size );
     if (status == STATUS_NOT_IMPLEMENTED)
         FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return status;
@@ -591,12 +591,12 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, LPCWSTR prop, UCHAR *bu
     case MAGIC_ALG:
     {
         const struct algorithm *alg = (const struct algorithm *)object;
-        return get_alg_property( alg->id, prop, buffer, count, res );
+        return get_alg_property( alg, prop, buffer, count, res );
     }
     case MAGIC_HASH:
     {
         const struct hash *hash = (const struct hash *)object;
-        return get_hash_property( hash->alg_id, prop, buffer, count, res );
+        return get_hash_property( hash, prop, buffer, count, res );
     }
     default:
         WARN( "unknown magic %08x\n", object->magic );
@@ -798,7 +798,7 @@ struct key
 #endif
 
 #if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-static ULONG get_block_size( enum alg_id alg )
+static ULONG get_block_size( struct algorithm *alg )
 {
     ULONG ret = 0, size = sizeof(ret);
     get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
@@ -827,27 +827,27 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
 #endif
 
 #if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
-static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
 {
     UCHAR *buffer;
 
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
 
-    switch (id)
+    switch (alg->id)
     {
     case ALG_ID_AES:
         break;
 
     default:
-        FIXME( "algorithm %u not supported\n", id );
+        FIXME( "algorithm %u not supported\n", alg->id );
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!(key->block_size = get_block_size( id ))) return STATUS_INVALID_PARAMETER;
+    if (!(key->block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
     if (!(buffer = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
     memcpy( buffer, secret, secret_len );
 
-    key->alg_id     = id;
+    key->alg_id     = alg->id;
     key->handle     = 0;        /* initialized on first use */
     key->secret     = buffer;
     key->secret_len = secret_len;
@@ -937,25 +937,25 @@ static NTSTATUS key_destroy( struct key *key )
     return STATUS_SUCCESS;
 }
 #elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
 {
     UCHAR *buffer;
 
-    switch (id)
+    switch (alg->id)
     {
     case ALG_ID_AES:
         break;
 
     default:
-        FIXME( "algorithm %u not supported\n", id );
+        FIXME( "algorithm %u not supported\n", alg->id );
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!(key->block_size = get_block_size( id ))) return STATUS_INVALID_PARAMETER;
+    if (!(key->block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
     if (!(buffer = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
     memcpy( buffer, secret, secret_len );
 
-    key->alg_id      = id;
+    key->alg_id      = alg->id;
     key->ref_encrypt = NULL;        /* initialized on first use */
     key->ref_decrypt = NULL;
     key->secret      = buffer;
@@ -1034,7 +1034,7 @@ static NTSTATUS key_destroy( struct key *key )
     return STATUS_SUCCESS;
 }
 #else
-static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1089,7 +1089,7 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic = MAGIC_KEY;
 
-    if ((status = key_init( key, alg->id, secret, secret_len )))
+    if ((status = key_init( key, alg, secret, secret_len )))
     {
         heap_free( key );
         return status;
