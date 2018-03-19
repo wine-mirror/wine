@@ -192,6 +192,12 @@ enum alg_id
     ALG_ID_SHA512
 };
 
+enum mode_id
+{
+    MODE_ID_CBC,
+    MODE_ID_GCM
+};
+
 #define MAX_HASH_OUTPUT_BYTES 64
 #define MAX_HASH_BLOCK_BITS 1024
 
@@ -216,6 +222,7 @@ struct algorithm
 {
     struct object hdr;
     enum alg_id   id;
+    enum mode_id  mode;
     BOOL hmac;
 };
 
@@ -298,6 +305,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
     if (!(alg = heap_alloc( sizeof(*alg) ))) return STATUS_NO_MEMORY;
     alg->hdr.magic = MAGIC_ALG;
     alg->id        = alg_id;
+    alg->mode      = MODE_ID_CBC;
     alg->hmac      = flags & BCRYPT_ALG_HANDLE_HMAC_FLAG;
 
     *handle = alg;
@@ -567,6 +575,38 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    switch (alg->id)
+    {
+    case ALG_ID_AES:
+        if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+        {
+            if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+            {
+                alg->mode = MODE_ID_CBC;
+                return STATUS_SUCCESS;
+            }
+            else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM, size ))
+            {
+                alg->mode = MODE_ID_GCM;
+                return STATUS_SUCCESS;
+            }
+            else
+            {
+                FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+                return STATUS_NOT_IMPLEMENTED;
+            }
+        }
+        FIXME( "unsupported aes algorithm property %s\n", debugstr_w(prop) );
+        return STATUS_NOT_IMPLEMENTED;
+
+    default:
+        FIXME( "unsupported algorithm %u\n", alg->id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
 static NTSTATUS get_hash_property( const struct hash *hash, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
@@ -606,8 +646,28 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, LPCWSTR prop, UCHAR *bu
 
 NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
-    FIXME( "%p, %s, %p, %u, %08x\n", handle, debugstr_w(prop), value, size, flags );
-    return STATUS_NOT_IMPLEMENTED;
+    struct object *object = handle;
+
+    TRACE( "%p, %s, %p, %u, %08x\n", handle, debugstr_w(prop), value, size, flags );
+
+    if (!object) return STATUS_INVALID_HANDLE;
+
+    switch (object->magic)
+    {
+    case MAGIC_ALG:
+    {
+        struct algorithm *alg = (struct algorithm *)object;
+        return set_alg_property( alg, prop, value, size, flags );
+    }
+    case MAGIC_KEY:
+    {
+        FIXME( "keys not implemented yet\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    default:
+        WARN( "unknown magic %08x\n", object->magic );
+        return STATUS_INVALID_HANDLE;
+    }
 }
 
 NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDLE *handle, UCHAR *object, ULONG objectlen,
