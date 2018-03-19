@@ -22,12 +22,8 @@
 
 #define COBJMACROS
 
-#include "winsock2.h"
-#include "ws2tcpip.h"
-#include "windef.h"
-#include "winbase.h"
+#include "wsdapi_internal.h"
 #include "wine/debug.h"
-#include "wsdapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 
