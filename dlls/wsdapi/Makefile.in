@@ -1,6 +1,6 @@
 MODULE    = wsdapi.dll
 IMPORTLIB = wsdapi
-IMPORTS   = bcrypt iphlpapi rpcrt4 user32 ws2_32
+IMPORTS   = bcrypt iphlpapi rpcrt4 user32 webservices ws2_32
 
 C_SRCS = \
 	address.c \
