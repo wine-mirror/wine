@@ -50,7 +50,7 @@ static DWORD dwDDEInst;
 static const char *debugstr_hsz( HSZ hsz )
 {
     WCHAR buffer[256];
-    if (!DdeQueryStringW( dwDDEInst, hsz, buffer, sizeof(buffer)/sizeof(WCHAR), CP_WINUNICODE ))
+    if (!DdeQueryStringW( dwDDEInst, hsz, buffer, ARRAY_SIZE(buffer), CP_WINUNICODE ))
         return "<unknown>";
     return debugstr_w( buffer );
 }

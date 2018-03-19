@@ -82,8 +82,6 @@ static const LAYOUT_INFO g_layout_info[] =
     {IDCANCEL,          BF_BOTTOM|BF_RIGHT}
 };
 
-#define LAYOUT_INFO_COUNT (sizeof(g_layout_info)/sizeof(g_layout_info[0]))
-
 #define SUPPORTEDFLAGS (BIF_STATUSTEXT | \
                         BIF_BROWSEFORCOMPUTER | \
                         BIF_RETURNFSANCESTORS | \
@@ -667,7 +665,7 @@ static BOOL BrsFolder_OnCreate( HWND hWnd, browse_info *info )
     {
         RECT rcWnd;
 
-        info->layout = LayoutInit(hWnd, g_layout_info, LAYOUT_INFO_COUNT);
+        info->layout = LayoutInit(hWnd, g_layout_info, ARRAY_SIZE(g_layout_info));
 
         /* TODO: Windows allows shrinking the windows a bit */
         GetWindowRect(hWnd, &rcWnd);
@@ -1012,7 +1010,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_SIZE:
         if (info->layout)  /* new style dialogs */
-            LayoutUpdate(hWnd, info->layout, g_layout_info, LAYOUT_INFO_COUNT);
+            LayoutUpdate(hWnd, info->layout, g_layout_info, ARRAY_SIZE(g_layout_info));
         return 0;
 
     case BFFM_SETSTATUSTEXTA:

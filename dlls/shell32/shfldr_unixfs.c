@@ -1362,7 +1362,7 @@ static HRESULT WINAPI ShellFolder2_SetNameOf(IShellFolder2* iface, HWND hwnd,
         return E_INVALIDARG;
  
     /* check for invalid characters in lpcwszName. */
-    for (i=0; i < sizeof(awcInvalidChars)/sizeof(*awcInvalidChars); i++)
+    for (i=0; i < ARRAY_SIZE(awcInvalidChars); i++)
         if (StrChrW(lpcwszName, awcInvalidChars[i]))
             return HRESULT_FROM_WIN32(ERROR_CANCELLED);
 
@@ -1862,9 +1862,9 @@ static HRESULT WINAPI SFHelper_GetUniqueName(ISFHelper* iface, LPWSTR pwszName, 
 
     TRACE("(%p)->(%p %u)\n", This, pwszName, uLen);
 
-    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder, sizeof(wszNewFolder)/sizeof(WCHAR));
+    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder, ARRAY_SIZE(wszNewFolder));
 
-    if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR)+3)
+    if (uLen < ARRAY_SIZE(wszNewFolder) + 3)
         return E_INVALIDARG;
 
     hr = IShellFolder2_EnumObjects(&This->IShellFolder2_iface, 0,
@@ -1913,9 +1913,9 @@ static HRESULT WINAPI SFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCWSTR pw
         char szMessage[256 + FILENAME_MAX];
         char szCaption[256];
 
-        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_DENIED, szCaption, sizeof(szCaption));
+        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_DENIED, szCaption, ARRAY_SIZE(szCaption));
         sprintf(szMessage, szCaption, szNewDir);
-        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_CAPTION, szCaption, sizeof(szCaption));
+        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_CAPTION, szCaption, ARRAY_SIZE(szCaption));
         MessageBoxA(hwnd, szMessage, szCaption, MB_OK | MB_ICONEXCLAMATION);
 
         return E_FAIL;

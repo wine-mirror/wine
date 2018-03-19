@@ -1089,8 +1089,8 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
 
     TRACE ("(%p)(%p %u)\n", This, pwszName, uLen);
 
-    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder,  sizeof(wszNewFolder)/sizeof(WCHAR));
-    if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR) + 3)
+    LoadStringW(shell32_hInstance, IDS_NEWFOLDER, wszNewFolder, ARRAY_SIZE(wszNewFolder));
+    if (uLen < ARRAY_SIZE(wszNewFolder) + 3)
         return E_POINTER;
 
     lstrcpynW (pwszName, wszNewFolder, uLen);
@@ -1180,10 +1180,8 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
         WCHAR wszCaption[256];
 
         /* Cannot Create folder because of permissions */
-        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_DENIED, wszTempText,
-         sizeof (wszTempText)/sizeof (wszTempText[0]));
-        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_CAPTION, wszCaption,
-         sizeof (wszCaption)/sizeof (wszCaption[0]));
+        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_DENIED, wszTempText, ARRAY_SIZE(wszTempText));
+        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_CAPTION, wszCaption, ARRAY_SIZE(wszCaption));
         sprintfW (wszText, wszTempText, wszNewDir);
         MessageBoxW (hwnd, wszText, wszCaption, MB_OK | MB_ICONEXCLAMATION);
     }

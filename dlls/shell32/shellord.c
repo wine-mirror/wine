@@ -433,12 +433,12 @@ int WINAPIV ShellMessageBoxW(
 	    hInstance,hWnd,lpText,lpCaption,uType);
 
 	if (IS_INTRESOURCE(lpCaption))
-	  LoadStringW(hInstance, LOWORD(lpCaption), szTitle, sizeof(szTitle)/sizeof(szTitle[0]));
+	  LoadStringW(hInstance, LOWORD(lpCaption), szTitle, ARRAY_SIZE(szTitle));
 	else
 	  pszTitle = lpCaption;
 
 	if (IS_INTRESOURCE(lpText))
-	  LoadStringW(hInstance, LOWORD(lpText), szText, sizeof(szText)/sizeof(szText[0]));
+	  LoadStringW(hInstance, LOWORD(lpText), szText, ARRAY_SIZE(szText));
 	else
 	  pszText = lpText;
 
@@ -1774,7 +1774,7 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
             dwIndex = 0;
             do
             {
-                dwHandlerLen = sizeof(szHandler) / sizeof(szHandler[0]);
+                dwHandlerLen = ARRAY_SIZE(szHandler);
                 lRet = RegEnumKeyExW(hkPropSheetHandlers, dwIndex++, szHandler, &dwHandlerLen, NULL, NULL, NULL, NULL);
                 if (lRet != ERROR_SUCCESS)
                 {
@@ -1793,7 +1793,7 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
                     if (SHGetValueW(hkPropSheetHandlers, szHandler, NULL, NULL, szClsidHandler, &dwClsidSize) == ERROR_SUCCESS)
                     {
                         /* Force a NULL-termination and convert the string */
-                        szClsidHandler[(sizeof(szClsidHandler) / sizeof(szClsidHandler[0])) - 1] = 0;
+                        szClsidHandler[ARRAY_SIZE(szClsidHandler) - 1] = 0;
                         lRet = SHCLSIDFromStringW(szClsidHandler, &clsid);
                     }
                 }

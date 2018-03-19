@@ -3421,8 +3421,9 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
 
     TRACE("0x%02x,%p\n", folder, pszPath);
 
-    if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (folder >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
+
     if (!pszPath)
         return E_INVALIDARG;
 
@@ -3508,7 +3509,7 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
 
     TRACE("0x%08x,0x%02x,%p\n", dwFlags, folder, pszPath);
 
-    if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (folder >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
     if (CSIDL_Data[folder].type != CSIDL_Type_CurrVer)
         return E_INVALIDARG;
@@ -3612,7 +3613,7 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
 
     TRACE("%p,0x%08x,0x%02x,%p\n", hToken, dwFlags, folder, pszPath);
 
-    if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (folder >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
     if (CSIDL_Data[folder].type != CSIDL_Type_User)
         return E_INVALIDARG;
@@ -3684,7 +3685,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
 
     TRACE("0x%08x,0x%02x,%p\n", dwFlags, folder, pszPath);
 
-    if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (folder >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
     if (CSIDL_Data[folder].type != CSIDL_Type_AllUsers && CSIDL_Data[folder].type != CSIDL_Type_ProgramData)
         return E_INVALIDARG;
@@ -3997,7 +3998,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
     if (pszPath)
         *pszPath = '\0';
 
-    if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (folder >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
     if ((SHGFP_TYPE_CURRENT != dwFlags) && (SHGFP_TYPE_DEFAULT != dwFlags))
         return E_INVALIDARG;
@@ -4293,7 +4294,7 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
     }
 
     hr = _SHRegisterFolders(hRootKey, hToken, pUserShellFolderPath,
-     pShellFolderPath, folders, sizeof(folders) / sizeof(folders[0]));
+     pShellFolderPath, folders, ARRAY_SIZE(folders));
     TRACE("returning 0x%08x\n", hr);
     return hr;
 }
@@ -4318,7 +4319,7 @@ static HRESULT _SHRegisterCommonShellFolders(void)
 
     TRACE("\n");
     hr = _SHRegisterFolders(HKEY_LOCAL_MACHINE, NULL, szSHUserFolders,
-     szSHFolders, folders, sizeof(folders) / sizeof(folders[0]));
+     szSHFolders, folders, ARRAY_SIZE(folders));
     TRACE("returning 0x%08x\n", hr);
     return hr;
 }
@@ -4411,7 +4412,7 @@ static void _SHCreateSymbolicLinks(void)
     const WCHAR* MyOSXStuffW[] = { PicturesW, MoviesW, MusicW };
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
     static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DOCUMENTS", "DESKTOP" };
-    static const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
+    static const unsigned int num = ARRAY_SIZE(xdg_dirs);
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
@@ -4446,7 +4447,7 @@ static void _SHCreateSymbolicLinks(void)
                  * 'My Videos' and 'My Music' subfolders or fail silently if
                  * they already exist.
                  */
-                for (i = 0; i < sizeof(aidsMyStuff)/sizeof(*aidsMyStuff); i++)
+                for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++)
                 {
                     strcpy(szMyStuffTarget, szPersonalTarget);
                     if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
@@ -4486,7 +4487,7 @@ static void _SHCreateSymbolicLinks(void)
          * in '%USERPROFILE%\\My Documents' or fail silently if they already exist. */
         pszHome = NULL;
         strcpy(szPersonalTarget, pszPersonal);
-        for (i = 0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
+        for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++) {
             strcpy(szMyStuffTarget, szPersonalTarget);
             if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
                 mkdir(szMyStuffTarget, 0777);
@@ -4494,7 +4495,7 @@ static void _SHCreateSymbolicLinks(void)
     }
 
     /* Create symbolic links for 'My Pictures', 'My Videos' and 'My Music'. */
-    for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++)
+    for (i=0; i < ARRAY_SIZE(aidsMyStuff); i++)
     {
         /* Create the current 'My Whatever' folder and get its unix path. */
         hr = SHGetFolderPathW(NULL, acsidlMyStuff[i]|CSIDL_FLAG_CREATE, NULL,
@@ -4655,11 +4656,11 @@ static HRESULT set_folder_attributes(void)
     };
 
     unsigned int i;
-    WCHAR buffer[39 + (sizeof(clsidW) + sizeof(shellfolderW)) / sizeof(WCHAR)];
+    WCHAR buffer[39 + ARRAY_SIZE(clsidW) + ARRAY_SIZE(shellfolderW)];
     LONG res;
     HKEY hkey;
 
-    for (i = 0; i < sizeof(folders)/sizeof(folders[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(folders); i++)
     {
         strcpyW( buffer, clsidW );
         StringFromGUID2( folders[i].clsid, buffer + strlenW(buffer), 39 );
@@ -4855,7 +4856,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 static int csidl_from_id( const KNOWNFOLDERID *id )
 {
     int i;
-    for (i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(CSIDL_Data); i++)
         if (IsEqualGUID( CSIDL_Data[i].id, id )) return i;
     return -1;
 }
@@ -5049,7 +5050,7 @@ static HRESULT get_known_folder_registry_path(
     TRACE("(%s, %s, %p)\n", debugstr_guid(rfid), debugstr_w(lpStringGuid), lpPath);
 
     if(rfid)
-        StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+        StringFromGUID2(rfid, sGuid, ARRAY_SIZE(sGuid));
     else
         lstrcpyW(sGuid, lpStringGuid);
 
@@ -5178,7 +5179,7 @@ static HRESULT redirect_known_folder(
 
     if(SUCCEEDED(hr))
     {
-        StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+        StringFromGUID2(rfid, sGuid, ARRAY_SIZE(sGuid));
 
         hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sGuid, 0, REG_SZ, (LPBYTE)pszTargetPath, (lstrlenW(pszTargetPath)+1)*sizeof(WCHAR)));
 
@@ -5479,7 +5480,7 @@ static HRESULT get_known_folder_path_by_id(
     /* if this is registry-registered known folder, get path from registry */
     if(lpRegistryPath)
     {
-        StringFromGUID2(folderId, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+        StringFromGUID2(folderId, sGuid, ARRAY_SIZE(sGuid));
 
         hr = get_known_folder_path(sGuid, lpRegistryPath, ppszPath);
     }
@@ -5709,7 +5710,7 @@ static HRESULT WINAPI foldermanager_FolderIdFromCsidl(
 {
     TRACE("%d, %p\n", nCsidl, pfid);
 
-    if (nCsidl >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+    if (nCsidl >= ARRAY_SIZE(CSIDL_Data))
         return E_INVALIDARG;
     *pfid = *CSIDL_Data[nCsidl].id;
     return S_OK;
@@ -5879,7 +5880,7 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
         if(SUCCEEDED(hr) && !IsEqualGUID(&pKFD->fidParent, &GUID_NULL))
         {
             WCHAR sParentGuid[39];
-            StringFromGUID2(&pKFD->fidParent, sParentGuid, sizeof(sParentGuid)/sizeof(sParentGuid[0]));
+            StringFromGUID2(&pKFD->fidParent, sParentGuid, ARRAY_SIZE(sParentGuid));
 
             /* this known folder has parent folder */
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParentFolder, 0, REG_SZ, (LPBYTE)sParentGuid, sizeof(sParentGuid)));
@@ -5985,7 +5986,7 @@ static HRESULT foldermanager_create( void **ppv )
     fm->refs = 1;
     fm->num_ids = 0;
 
-    for (i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(CSIDL_Data); i++)
     {
         if (!IsEqualGUID( CSIDL_Data[i].id, &GUID_NULL )) fm->num_ids++;
     }
@@ -5995,7 +5996,7 @@ static HRESULT foldermanager_create( void **ppv )
         heap_free( fm );
         return E_OUTOFMEMORY;
     }
-    for (i = j = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+    for (i = j = 0; i < ARRAY_SIZE(CSIDL_Data); i++)
     {
         if (!IsEqualGUID( CSIDL_Data[i].id, &GUID_NULL ))
         {
@@ -6091,7 +6092,9 @@ HRESULT WINAPI SHGetKnownFolderItem(REFKNOWNFOLDERID rfid, KNOWN_FOLDER_FLAG fla
 static void register_system_knownfolders(void)
 {
     int i;
-    for(i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); ++i){
+
+    for (i = 0; i < ARRAY_SIZE(CSIDL_Data); ++i)
+    {
         const CSIDL_DATA *folder = &CSIDL_Data[i];
         if(folder->pszName){
             KNOWNFOLDER_DEFINITION kfd;

@@ -99,10 +99,8 @@ static const std_path paths[] = {
     {"XDG_CACHE_HOME", "$HOME/.cache"}
 };
 
-#define PATHS_COUNT (sizeof(paths)/sizeof(paths[0]))
-
 /* will be filled with paths as they are computed */
-static const char *path_values[PATHS_COUNT] = {
+static const char *path_values[ARRAY_SIZE(paths)] = {
     NULL,
     NULL,
     NULL,
@@ -161,7 +159,7 @@ static char *load_path(int path_id)
  */
 static const char *XDG_GetPath(int path_id)
 {
-    if (path_id >= PATHS_COUNT || path_id < 0)
+    if (path_id >= ARRAY_SIZE(paths) || path_id < 0)
     {
 	ERR("Invalid path_id %d\n", path_id);
 	return NULL;

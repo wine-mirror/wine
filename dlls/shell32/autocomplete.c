@@ -123,7 +123,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         {
             int len;
 
-            GetWindowTextW( hwnd, hwndText, sizeof(hwndText)/sizeof(WCHAR));
+            GetWindowTextW(hwnd, hwndText, ARRAY_SIZE(hwndText));
 
             switch(wParam) {
                 case VK_RETURN:

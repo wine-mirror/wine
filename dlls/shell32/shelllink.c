@@ -307,7 +307,7 @@ BOOL run_winemenubuilder( const WCHAR *args )
     WCHAR app[MAX_PATH];
     void *redir;
 
-    GetSystemDirectoryW( app, MAX_PATH - sizeof(menubuilder)/sizeof(WCHAR) );
+    GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE(menubuilder) );
     strcatW( app, menubuilder );
 
     len = (strlenW( app ) + strlenW( args ) + 1) * sizeof(WCHAR);
@@ -588,7 +588,7 @@ static HRESULT Stream_ReadChunk( IStream* stm, LPVOID *data )
 
 static BOOL Stream_LoadVolume( LOCAL_VOLUME_INFO *vol, volume_info *volume )
 {
-    const int label_sz = sizeof volume->label/sizeof volume->label[0];
+    const int label_sz = ARRAY_SIZE(volume->label);
     LPSTR label;
     int len;
 
@@ -782,14 +782,11 @@ static HRESULT WINAPI IPersistStream_fnLoad(
     if (TRACE_ON(shell))
     {
         WCHAR sTemp[MAX_PATH];
-        GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE, &This->time1,
-                       NULL, sTemp, sizeof(sTemp)/sizeof(*sTemp));
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time1, NULL, sTemp, ARRAY_SIZE(sTemp));
         TRACE("-- time1: %s\n", debugstr_w(sTemp) );
-        GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE, &This->time2,
-                       NULL, sTemp, sizeof(sTemp)/sizeof(*sTemp));
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time2, NULL, sTemp, ARRAY_SIZE(sTemp));
         TRACE("-- time2: %s\n", debugstr_w(sTemp) );
-        GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE, &This->time3,
-                       NULL, sTemp, sizeof(sTemp)/sizeof(*sTemp));
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time3, NULL, sTemp, ARRAY_SIZE(sTemp));
         TRACE("-- time3: %s\n", debugstr_w(sTemp) );
     }
 

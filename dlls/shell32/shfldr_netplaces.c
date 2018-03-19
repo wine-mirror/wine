@@ -79,8 +79,6 @@ static const shvheader networkplaces_header[] =
     { NULL, 0, IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10 },
 };
 
-#define NETWORKPLACESSHELLVIEWCOLUMNS sizeof(networkplaces_header)/sizeof(shvheader)
-
 /**************************************************************************
 *	ISF_NetworkPlaces_Constructor
 */
@@ -199,8 +197,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnParseDisplayName (IShellFolder2 * ifac
 
     szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
     len = strlenW(szElement);
-    if (len == sizeof(wszEntireNetwork)/sizeof(wszEntireNetwork[0]) &&
-        !strncmpiW(szElement, wszEntireNetwork, sizeof(wszEntireNetwork)/sizeof(wszEntireNetwork[0])))
+    if (len == ARRAY_SIZE(wszEntireNetwork) && !strncmpiW(szElement, wszEntireNetwork, ARRAY_SIZE(wszEntireNetwork)))
     {
         pidlTemp = _ILCreateEntireNetwork();
         if (pidlTemp)
@@ -534,7 +531,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnGetDefaultColumnState (
 
     TRACE ("(%p)->(%d %p)\n", This, iColumn, pcsFlags);
 
-    if (!pcsFlags || iColumn >= NETWORKPLACESSHELLVIEWCOLUMNS)
+    if (!pcsFlags || iColumn >= ARRAY_SIZE(networkplaces_header))
         return E_INVALIDARG;
 
     *pcsFlags = networkplaces_header[iColumn].pcsFlags;
@@ -567,7 +564,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnMapColumnToSCID (IShellFolder2 *iface,
 
     TRACE("(%p)->(%u %p)\n", This, column, scid);
 
-    if (column >= NETWORKPLACESSHELLVIEWCOLUMNS)
+    if (column >= ARRAY_SIZE(networkplaces_header))
         return E_INVALIDARG;
 
     return shellfolder_map_column_to_scid(networkplaces_header, column, scid);

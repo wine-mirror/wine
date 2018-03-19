@@ -187,7 +187,7 @@ BOOL HCR_GetExecuteCommandW( HKEY hkeyClass, LPCWSTR szClass, LPCWSTR szVerb, LP
             return FALSE;
         ret = FALSE;
 
-        if (HCR_GetDefaultVerbW(hkeyClass, szVerb, sTempVerb, sizeof(sTempVerb)/sizeof(sTempVerb[0])))
+        if (HCR_GetDefaultVerbW(hkeyClass, szVerb, sTempVerb, ARRAY_SIZE(sTempVerb)))
         {
             WCHAR sTemp[MAX_PATH];
             lstrcpyW(sTemp, swShell);

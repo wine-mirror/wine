@@ -426,7 +426,7 @@ static void ShellView_InitList(IShellViewImpl *This)
 
         lvColumn.fmt = sd.fmt;
         lvColumn.cx = MulDiv(sd.cxChar, tm.tmAveCharWidth * 3, 2); /* chars->pixel */
-        StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
+        StrRetToStrNW(nameW, ARRAY_SIZE(nameW), &sd.str, NULL);
         SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, This->columns, (LPARAM)&lvColumn);
     }
 

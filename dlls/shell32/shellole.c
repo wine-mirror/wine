@@ -150,7 +150,7 @@ HRESULT WINAPI SHCoCreateInstance(
         }
 
 	/* we look up the dll path in the registry */
-        SHStringFromGUIDW(myclsid, sClassID, sizeof(sClassID)/sizeof(WCHAR));
+        SHStringFromGUIDW(myclsid, sClassID, ARRAY_SIZE(sClassID));
 	lstrcpyW(sKeyName, sCLSID);
 	lstrcatW(sKeyName, sClassID);
 	lstrcatW(sKeyName, sInProcServer32);
@@ -258,7 +258,7 @@ DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id)
 {
     WCHAR buffer[40];
     TRACE("(%p(%s) %p)\n", clsid, clsid, id);
-    if (!MultiByteToWideChar( CP_ACP, 0, clsid, -1, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+    if (!MultiByteToWideChar( CP_ACP, 0, clsid, -1, buffer, ARRAY_SIZE(buffer) ))
         return CO_E_CLASSSTRING;
     return CLSIDFromString( buffer, id );
 }

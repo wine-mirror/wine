@@ -905,7 +905,7 @@ UINT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAd
 	  miiSrc.fType = MFT_STRING;
 	  miiSrc.dwTypeData = szName;
 	  miiSrc.dwItemData = 0;
-	  miiSrc.cch = sizeof(szName)/sizeof(WCHAR);
+	  miiSrc.cch = ARRAY_SIZE(szName);
 
 	  if (!GetMenuItemInfoW(hmSrc, nItem, TRUE, &miiSrc))
 	  {

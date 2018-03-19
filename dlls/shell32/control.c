@@ -124,10 +124,10 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 	   applet->info[i].icon = LoadIconW(applet->hModule, MAKEINTRESOURCEW(info.idIcon));
        if (info.idName != CPL_DYNAMIC_RES)
 	   LoadStringW(applet->hModule, info.idName,
-		       applet->info[i].name, sizeof(applet->info[i].name) / sizeof(WCHAR));
+		       applet->info[i].name, ARRAY_SIZE(applet->info[i].name));
        if (info.idInfo != CPL_DYNAMIC_RES)
 	   LoadStringW(applet->hModule, info.idInfo,
-		       applet->info[i].info, sizeof(applet->info[i].info) / sizeof(WCHAR));
+		       applet->info[i].info, ARRAY_SIZE(applet->info[i].info));
 
        /* some broken control panels seem to return incorrect values in CPL_INQUIRE,
           but proper data in CPL_NEWINQUIRE. if we get an empty string or a null
@@ -159,18 +159,16 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 	           memcpy(applet->info[i].info, newinfo.szInfo, sizeof(newinfo.szInfo));
 	       memcpy(applet->info[i].helpfile, newinfo.szHelpFile, sizeof(newinfo.szHelpFile));
 	   } else {
+               NEWCPLINFOA *infoA = (NEWCPLINFOA *)&newinfo;
+
 	       if (info.idName == CPL_DYNAMIC_RES)
-                   MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szName,
-	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szName) / sizeof(CHAR),
-			               applet->info[i].name, sizeof(applet->info[i].name) / sizeof(WCHAR));
+                   MultiByteToWideChar(CP_ACP, 0, infoA->szName, ARRAY_SIZE(infoA->szName),
+                       applet->info[i].name, ARRAY_SIZE(applet->info[i].name));
 	       if (info.idInfo == CPL_DYNAMIC_RES)
-                   MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szInfo,
-	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szInfo) / sizeof(CHAR),
-			               applet->info[i].info, sizeof(applet->info[i].info) / sizeof(WCHAR));
-               MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szHelpFile,
-	                           sizeof(((LPNEWCPLINFOA)&newinfo)->szHelpFile) / sizeof(CHAR),
-			           applet->info[i].helpfile,
-                                   sizeof(applet->info[i].helpfile) / sizeof(WCHAR));
+                   MultiByteToWideChar(CP_ACP, 0, infoA->szInfo, ARRAY_SIZE(infoA->szInfo),
+                       applet->info[i].info, ARRAY_SIZE(applet->info[i].info));
+               MultiByteToWideChar(CP_ACP, 0, infoA->szHelpFile, ARRAY_SIZE(infoA->szHelpFile),
+                       applet->info[i].helpfile, ARRAY_SIZE(applet->info[i].helpfile));
            }
        }
     }
@@ -229,7 +227,7 @@ static BOOL Control_CreateListView (CPanel *panel)
     /* Name column */
     lvc.iSubItem = 0;
     lvc.cx = (ws.right - ws.left) / 3;
-    LoadStringW(shell32_hInstance, IDS_CPANEL_NAME, buf, sizeof(buf) / sizeof(buf[0]));
+    LoadStringW(shell32_hInstance, IDS_CPANEL_NAME, buf, ARRAY_SIZE(buf));
 
     if (ListView_InsertColumnW(panel->hWndListView, 0, &lvc) == -1)
         return FALSE;
@@ -237,8 +235,7 @@ static BOOL Control_CreateListView (CPanel *panel)
     /* Description column */
     lvc.iSubItem = 1;
     lvc.cx = ((ws.right - ws.left) / 3) * 2;
-    LoadStringW(shell32_hInstance, IDS_CPANEL_DESCRIPTION, buf, sizeof(buf) /
-        sizeof(buf[0]));
+    LoadStringW(shell32_hInstance, IDS_CPANEL_DESCRIPTION, buf, ARRAY_SIZE(buf));
 
     if (ListView_InsertColumnW(panel->hWndListView, 1, &lvc) == -1)
         return FALSE;
@@ -300,7 +297,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
          mii.cbSize = sizeof(MENUITEMINFOW);
          mii.fMask = MIIM_ID | MIIM_STRING | MIIM_DATA;
          mii.dwTypeData = applet->info[i].name;
-         mii.cch = sizeof(applet->info[i].name) / sizeof(WCHAR);
+         mii.cch = ARRAY_SIZE(applet->info[i].name);
          mii.wID = IDM_CPANEL_APPLET_BASE + menucount;
          mii.dwItemData = (ULONG_PTR)item;
 
@@ -475,8 +472,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
                      HICON icon = LoadImageW(shell32_hInstance, MAKEINTRESOURCEW(IDI_SHELL_CONTROL_PANEL),
                                              IMAGE_ICON, 48, 48, LR_SHARED);
 
-                     LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName,
-                         sizeof(appName) / sizeof(appName[0]));
+                     LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName, ARRAY_SIZE(appName));
                      ShellAboutW(hWnd, appName, NULL, icon);
 
                      return 0;
@@ -616,7 +612,7 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     MSG		msg;
     WCHAR appName[MAX_STRING_LEN];
 
-    LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName, sizeof(appName) / sizeof(appName[0]));
+    LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName, ARRAY_SIZE(appName));
 
     wc.cbSize = sizeof(wc);
     wc.style = CS_HREDRAW|CS_VREDRAW;

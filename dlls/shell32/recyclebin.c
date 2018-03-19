@@ -200,13 +200,10 @@ static void DoRestore(RecycleBinMenu *This)
             WCHAR message[100];
             WCHAR caption[50];
             if(_ILIsFolder(ILFindLastID(dest_pidl)))
-                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITEFOLDER,
-                            message,sizeof(message)/sizeof(WCHAR));
+                LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_OVERWRITEFOLDER, message, ARRAY_SIZE(message));
             else
-                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITEFILE,
-                            message,sizeof(message)/sizeof(WCHAR));
-            LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITE_CAPTION,
-                        caption,sizeof(caption)/sizeof(WCHAR));
+                LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_OVERWRITEFILE, message, ARRAY_SIZE(message));
+            LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_OVERWRITE_CAPTION, caption, ARRAY_SIZE(caption));
 
             if(ShellMessageBoxW(shell32_hInstance,GetActiveWindow(),message,
                                 caption,MB_YESNO|MB_ICONEXCLAMATION,
@@ -788,22 +785,19 @@ static HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, B
                 WIN32_FIND_DATAW data;
                 TRASH_UnpackItemID(&((*apidl)->mkid),&data);
                 lstrcpynW(arg,data.cFileName,MAX_PATH);
-                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASEITEM,message,
-                            sizeof(message)/sizeof(WCHAR));
+                LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_ERASEITEM, message, ARRAY_SIZE(message));
                 break;
             }
         default:
             {
                 static const WCHAR format[]={'%','u','\0'};
-                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASEMULTIPLE,
-                            message,sizeof(message)/sizeof(WCHAR));
+                LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_ERASEMULTIPLE, message, ARRAY_SIZE(message));
                 sprintfW(arg,format,cidl);
                 break;
             }
 
         }
-        LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASE_CAPTION,caption,
-                    sizeof(caption)/sizeof(WCHAR));
+        LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_ERASE_CAPTION, caption, ARRAY_SIZE(caption));
         if(ShellMessageBoxW(shell32_hInstance,parent,message,caption,
                             MB_YESNO|MB_ICONEXCLAMATION,arg)!=IDYES)
             return ret;

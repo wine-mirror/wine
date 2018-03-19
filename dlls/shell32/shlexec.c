@@ -158,7 +158,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                 if (!done || (*fmt == '1'))
                 {
                     /*FIXME Is the call to SearchPathW() really needed? We already have separated out the parameter string in args. */
-                    if (SearchPathW(NULL, lpFile, wszExe, sizeof(xlpFile)/sizeof(WCHAR), xlpFile, NULL))
+                    if (SearchPathW(NULL, lpFile, wszExe, ARRAY_SIZE(xlpFile), xlpFile, NULL))
                         cmd = xlpFile;
                     else
                         cmd = lpFile;
@@ -202,7 +202,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 		    HGLOBAL hmem = SHAllocShared(pidl, ILGetSize(pidl), 0);
 		    pv = SHLockShared(hmem, 0);
 		    chars = sprintfW(buf, wszILPtr, pv);
-		    if (chars >= sizeof(buf)/sizeof(WCHAR))
+		    if (chars >= ARRAY_SIZE(buf))
 			ERR("pidl format buffer too small!\n");
 		    used += chars;
 		    if (used < len)
@@ -502,7 +502,7 @@ static UINT SHELL_FindExecutableByVerb(LPCWSTR lpVerb, LPWSTR key, LPWSTR classn
 
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, classname, 0, 0x02000000, &hkeyClass))
         return SE_ERR_NOASSOC;
-    if (!HCR_GetDefaultVerbW(hkeyClass, lpVerb, verb, sizeof(verb)/sizeof(verb[0])))
+    if (!HCR_GetDefaultVerbW(hkeyClass, lpVerb, verb, ARRAY_SIZE(verb)))
         return SE_ERR_NOASSOC;
     RegCloseKey(hkeyClass);
 
@@ -603,13 +603,13 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         return 33;
     }
 
-    if (SearchPathW(lpPath, lpFile, wszExe, sizeof(xlpFile)/sizeof(WCHAR), xlpFile, NULL))
+    if (SearchPathW(lpPath, lpFile, wszExe, ARRAY_SIZE(xlpFile), xlpFile, NULL))
     {
         TRACE("SearchPathW returned non-zero\n");
         lpFile = xlpFile;
         /* The file was found in the application-supplied default directory (or the system search path) */
     }
-    else if (lpPath && SearchPathW(NULL, lpFile, wszExe, sizeof(xlpFile)/sizeof(WCHAR), xlpFile, NULL))
+    else if (lpPath && SearchPathW(NULL, lpFile, wszExe, ARRAY_SIZE(xlpFile), xlpFile, NULL))
     {
         TRACE("SearchPathW returned non-zero\n");
         lpFile = xlpFile;
@@ -652,7 +652,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         /* See if it's a program - if GetProfileString fails, we skip this
          * section. Actually, if GetProfileString fails, we've probably
          * got a lot more to worry about than running a program... */
-        if (GetProfileStringW(wWindows, wPrograms, wExtensions, wBuffer, sizeof(wBuffer)/sizeof(WCHAR)) > 0)
+        if (GetProfileStringW(wWindows, wPrograms, wExtensions, wBuffer, ARRAY_SIZE(wBuffer)) > 0)
         {
             CharLowerW(wBuffer);
             tok = wBuffer;
@@ -684,7 +684,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
                            &classnamelen) == ERROR_SUCCESS)
         {
             classnamelen /= sizeof(WCHAR);
-	    if (classnamelen == sizeof(classname)/sizeof(WCHAR))
+            if (classnamelen == ARRAY_SIZE(classname))
 		classnamelen--;
             classname[classnamelen] = '\0';
             TRACE("File type: %s\n", debugstr_w(classname));
@@ -734,7 +734,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
 
 	/* Toss the leading dot */
 	extension++;
-	if (GetProfileStringW(wExtensions, extension, wszEmpty, command, sizeof(command)/sizeof(WCHAR)) > 0)
+	if (GetProfileStringW(wExtensions, extension, wszEmpty, command, ARRAY_SIZE(command)) > 0)
         {
             if (strlenW(command) != 0)
             {

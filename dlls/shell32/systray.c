@@ -30,6 +30,7 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "shellapi.h"
+#include "shell32_main.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -94,7 +95,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
 
     /* szTip */
     if (pnid->uFlags & NIF_TIP)
-        MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, sizeof(nidW.szTip)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, ARRAY_SIZE(nidW.szTip));
 
     if (cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
@@ -104,8 +105,8 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
         /* szInfo, szInfoTitle */
         if (pnid->uFlags & NIF_INFO)
         {
-            MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, -1,  nidW.szInfo, sizeof(nidW.szInfo)/sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, -1, nidW.szInfoTitle, sizeof(nidW.szInfoTitle)/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, -1,  nidW.szInfo, ARRAY_SIZE(nidW.szInfo));
+            MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, -1, nidW.szInfoTitle, ARRAY_SIZE(nidW.szInfoTitle));
         }
 
         nidW.u.uTimeout = pnid->u.uTimeout;
@@ -228,8 +229,8 @@ noicon:
     }
     if (data->uFlags & NIF_INFO)
     {
-        lstrcpynW( data->szInfo, nid->szInfo, sizeof(data->szInfo)/sizeof(WCHAR) );
-        lstrcpynW( data->szInfoTitle, nid->szInfoTitle, sizeof(data->szInfoTitle)/sizeof(WCHAR) );
+        lstrcpynW( data->szInfo, nid->szInfo, ARRAY_SIZE(data->szInfo) );
+        lstrcpynW( data->szInfoTitle, nid->szInfoTitle, ARRAY_SIZE(data->szInfoTitle));
         data->u.uTimeout  = nid->u.uTimeout;
         data->dwInfoFlags = nid->dwInfoFlags;
     }

@@ -499,8 +499,8 @@ static BOOL ConfirmDialog(HWND hWndOwner, UINT PromptId, UINT TitleId)
   WCHAR Prompt[256];
   WCHAR Title[256];
 
-  LoadStringW(shell32_hInstance, PromptId, Prompt, sizeof(Prompt) / sizeof(WCHAR));
-  LoadStringW(shell32_hInstance, TitleId, Title, sizeof(Title) / sizeof(WCHAR));
+  LoadStringW(shell32_hInstance, PromptId, Prompt, ARRAY_SIZE(Prompt));
+  LoadStringW(shell32_hInstance, TitleId, Title, ARRAY_SIZE(Title));
   return MessageBoxW(hWndOwner, Prompt, Title, MB_YESNO|MB_ICONQUESTION) == IDYES;
 }
 

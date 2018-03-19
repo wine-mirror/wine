@@ -676,7 +676,7 @@ get_friendly_name_fail:
     case ASSOCSTR_SHELLEXTENSION:
     {
         static const WCHAR shellexW[] = {'S','h','e','l','l','E','x','\\',0};
-        WCHAR keypath[sizeof(shellexW) / sizeof(shellexW[0]) + 39], guid[39];
+        WCHAR keypath[ARRAY_SIZE(shellexW) + 39], guid[39];
         CLSID clsid;
         HKEY hkey;
         DWORD size;

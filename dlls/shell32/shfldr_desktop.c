@@ -94,8 +94,6 @@ static const shvheader desktop_header[] =
     { &FMTID_Storage, PID_STG_ATTRIBUTES, IDS_SHV_COLUMN5, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 5  },
 };
 
-#define DESKTOPSHELLVIEWCOLUMNS sizeof(desktop_header)/sizeof(shvheader)
-
 /**************************************************************************
  *    ISF_Desktop_fnQueryInterface
  *
@@ -289,14 +287,14 @@ static void add_shell_namespace_extensions(IEnumIDListImpl *list, HKEY root)
     static const WCHAR clsidfmtW[] = {'C','L','S','I','D','\\','%','s','\\',
         'S','h','e','l','l','F','o','l','d','e','r',0};
     static const WCHAR attributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
-    WCHAR guid[39], clsidkeyW[sizeof(clsidfmtW)/sizeof(*clsidfmtW) + 39];
+    WCHAR guid[39], clsidkeyW[ARRAY_SIZE(clsidfmtW) + 39];
     DWORD size, i = 0;
     HKEY hkey;
 
     if (RegOpenKeyExW(root, Desktop_NameSpaceW, 0, KEY_READ, &hkey))
         return;
 
-    size = sizeof(guid)/sizeof(guid[0]);
+    size = ARRAY_SIZE(guid);
     while (!RegEnumKeyExW(hkey, i++, guid, &size, 0, NULL, NULL, NULL))
     {
         DWORD attributes, value_size = sizeof(attributes);
@@ -308,7 +306,7 @@ static void add_shell_namespace_extensions(IEnumIDListImpl *list, HKEY root)
 
         if (!(attributes & SFGAO_NONENUMERATED))
             AddToEnumList(list, _ILCreateGuidFromStrW(guid));
-        size = sizeof(guid)/sizeof(guid[0]);
+        size = ARRAY_SIZE(guid);
     }
 
     RegCloseKey(hkey);
@@ -784,8 +782,8 @@ static HRESULT WINAPI ISF_Desktop_fnGetDefaultColumnState (
 
     TRACE ("(%p)->(%d %p)\n", This, iColumn, pcsFlags);
 
-    if (!pcsFlags || iColumn >= DESKTOPSHELLVIEWCOLUMNS)
-    return E_INVALIDARG;
+    if (!pcsFlags || iColumn >= ARRAY_SIZE(desktop_header))
+        return E_INVALIDARG;
 
     *pcsFlags = desktop_header[iColumn].pcsFlags;
 
@@ -809,7 +807,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
 
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
-    if (!psd || iColumn >= DESKTOPSHELLVIEWCOLUMNS)
+    if (!psd || iColumn >= ARRAY_SIZE(desktop_header))
         return E_INVALIDARG;
 
     if (!pidl)
@@ -846,7 +844,7 @@ static HRESULT WINAPI ISF_Desktop_fnMapColumnToSCID(IShellFolder2 *iface, UINT c
 
     TRACE("(%p)->(%u %p)\n", This, column, scid);
 
-    if (column >= DESKTOPSHELLVIEWCOLUMNS)
+    if (column >= ARRAY_SIZE(desktop_header))
         return E_INVALIDARG;
 
     return shellfolder_map_column_to_scid(desktop_header, column, scid);
