@@ -32,6 +32,8 @@
 
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 static BOOL (WINAPI *pGetEventLogInformation)(HANDLE,DWORD,LPVOID,DWORD,LPDWORD);
 
@@ -674,7 +676,7 @@ static BOOL create_new_eventlog(void)
     }
 
     /* Create some event sources, the registry value 'Sources' is updated automatically */
-    for (i = 0; i < sizeof(eventsources)/sizeof(eventsources[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(eventsources); i++)
     {
         HKEY srckey;
 
@@ -833,7 +835,7 @@ static void test_readwrite(void)
     CloseEventLog(handle);
 
     /* Write a bunch of events while using different event sources */
-    for (i = 0; i < sizeof(read_write)/sizeof(read_write[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(read_write); i++)
     {
         DWORD oldest;
         BOOL run_sidtests = read_write[i].evt_sid & sidavailable;
@@ -1074,7 +1076,7 @@ static void test_autocreation(void)
         /* Build the expected string */
         memset(sources_verify, 0, sizeof(sources_verify));
         p = sources_verify;
-        for (i = sizeof(eventsources)/sizeof(eventsources[0]); i > 0; i--)
+        for (i = ARRAY_SIZE(eventsources); i > 0; i--)
         {
             lstrcpyA(p, eventsources[i - 1]);
             p += (lstrlenA(eventsources[i - 1]) + 1);
@@ -1132,7 +1134,7 @@ static void cleanup_eventlog(void)
     lstrcatA(winesvc, eventlogname);
 
     RegOpenKeyA(HKEY_LOCAL_MACHINE, winesvc, &key);
-    for (i = 0; i < sizeof(eventsources)/sizeof(eventsources[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(eventsources); i++)
         RegDeleteKeyA(key, eventsources[i]);
     RegDeleteValueA(key, "Sources");
     RegCloseKey(key);

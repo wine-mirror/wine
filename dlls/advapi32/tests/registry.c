@@ -32,6 +32,7 @@
 #include "winerror.h"
 #include "aclapi.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define IS_HKCR(hk) ((UINT_PTR)hk > 0 && ((UINT_PTR)hk & 3) == 2)
 
 static HKEY hkey_main;
@@ -66,7 +67,7 @@ static char *get_temp_buffer( int size )
     char *ret;
     UINT idx;
 
-    idx = ++pos % (sizeof(list)/sizeof(list[0]));
+    idx = ++pos % ARRAY_SIZE(list);
     if (list[idx])
         ret = HeapReAlloc( GetProcessHeap(), 0, list[idx], size );
     else

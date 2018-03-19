@@ -36,6 +36,8 @@
 
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 #ifndef PROCESS_QUERY_LIMITED_INFORMATION
 #define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
 #endif
@@ -365,7 +367,7 @@ static void test_sid(void)
     LocalFree(str);
     LocalFree(psid);
 
-    for( i = 0; i < sizeof(refs) / sizeof(refs[0]); i++ )
+    for( i = 0; i < ARRAY_SIZE(refs); i++ )
     {
         r = AllocateAndInitializeSid( &refs[i].auth, 1,1,0,0,0,0,0,0,0,
          &psid );
@@ -412,7 +414,7 @@ static void test_sid(void)
     }
     LocalFree(psid);
 
-    for(i = 0; i < sizeof(strsid_table) / sizeof(strsid_table[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(strsid_table); i++)
     {
         char *temp;
 
@@ -787,7 +789,7 @@ static void test_lookupPrivilegeValue(void)
     ok( ret,
      "LookupPrivilegeValueA(NULL, sEcREATEtOKENpRIVILEGE, &luid) failed: %d\n",
      GetLastError());
-    for (i = 0; i < sizeof(privs) / sizeof(privs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(privs); i++)
     {
         /* Not all privileges are implemented on all Windows versions, so
          * don't worry if the call fails
@@ -1879,7 +1881,7 @@ static void test_token_attr(void)
     for (i = 0; i < Privileges->PrivilegeCount; i++)
     {
         CHAR Name[256];
-        DWORD NameLen = sizeof(Name)/sizeof(Name[0]);
+        DWORD NameLen = ARRAY_SIZE(Name);
         LookupPrivilegeNameA(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
         trace("\t%s, 0x%x\n", Name, Privileges->Privileges[i].Attributes);
     }
@@ -2072,7 +2074,7 @@ static void test_CreateWellKnownSid(void)
     /* a domain sid usually have three subauthorities but we test that CreateWellKnownSid doesn't check it */
     AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
 
-    for (i = 0; i < sizeof(well_known_sid_values)/sizeof(well_known_sid_values[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(well_known_sid_values); i++)
     {
         const struct well_known_sid_value *value = &well_known_sid_values[i];
         char sid_buffer[SECURITY_MAX_SID_SIZE];
@@ -4193,7 +4195,7 @@ static void test_ConvertStringSecurityDescriptor(void)
         return;
     }
 
-    for (i = 0; i < sizeof(cssd)/sizeof(cssd[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cssd); i++)
     {
         DWORD GLE;
 
@@ -5330,7 +5332,7 @@ static void test_mutex_security(HANDLE token)
     access = get_obj_access(mutex);
     ok(access == MUTANT_ALL_ACCESS, "expected MUTANT_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), mutex, GetCurrentProcess(), &dup,
@@ -5387,7 +5389,7 @@ static void test_event_security(HANDLE token)
     access = get_obj_access(event);
     ok(access == EVENT_ALL_ACCESS, "expected EVENT_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), event, GetCurrentProcess(), &dup,
@@ -5444,7 +5446,7 @@ static void test_semaphore_security(HANDLE token)
     access = get_obj_access(sem);
     ok(access == SEMAPHORE_ALL_ACCESS, "expected SEMAPHORE_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), sem, GetCurrentProcess(), &dup,
@@ -5497,7 +5499,7 @@ static void test_named_pipe_security(HANDLE token)
     };
 
     /* Test the different security access options for pipes */
-    for (i = 0; i < sizeof(creation_access)/sizeof(creation_access[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(creation_access); i++)
     {
         SetLastError(0xdeadbeef);
         pipe = CreateNamedPipeA(WINE_TEST_PIPE, creation_access[i].open_mode,
@@ -5527,7 +5529,7 @@ static void test_named_pipe_security(HANDLE token)
     access = get_obj_access(file);
     ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
@@ -5552,7 +5554,7 @@ static void test_named_pipe_security(HANDLE token)
         access = get_obj_access(file);
         ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
 
-        for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(map); i++)
         {
             SetLastError( 0xdeadbeef );
             ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
@@ -5600,7 +5602,7 @@ static void test_file_security(HANDLE token)
     access = get_obj_access(file);
     ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
@@ -5658,7 +5660,7 @@ todo_wine
     access = get_obj_access(file);
     ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
@@ -5742,7 +5744,7 @@ static void test_filemap_security(void)
     SetFilePointer(file, 4096, NULL, FILE_BEGIN);
     SetEndOfFile(file);
 
-    for (i = 0; i < sizeof(prot_map)/sizeof(prot_map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(prot_map); i++)
     {
         if (map[i].open_only) continue;
 
@@ -5790,7 +5792,7 @@ static void test_filemap_security(void)
     ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE),
        "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         if (map[i].open_only) continue;
 
@@ -5813,7 +5815,7 @@ static void test_filemap_security(void)
                                          "Wine Test Open Mapping");
     ok(created_mapping != NULL, "CreateFileMapping failed with error %u\n", GetLastError());
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         if (!map[i].generic) continue;
 
@@ -5851,7 +5853,7 @@ static void test_thread_security(void)
     access = get_obj_access(thread);
     ok(access == THREAD_ALL_ACCESS_NT4 || access == THREAD_ALL_ACCESS_VISTA, "expected THREAD_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), thread, GetCurrentProcess(), &dup,
@@ -5933,7 +5935,7 @@ static void test_process_access(void)
     access = get_obj_access(process);
     ok(access == PROCESS_ALL_ACCESS_NT4 || access == PROCESS_ALL_ACCESS_VISTA, "expected PROCESS_ALL_ACCESS, got %#x\n", access);
 
-    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
     {
         SetLastError( 0xdeadbeef );
         ret = DuplicateHandle(GetCurrentProcess(), process, GetCurrentProcess(), &dup,

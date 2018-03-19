@@ -27,6 +27,8 @@
 
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 static BOOL (WINAPI *pCredDeleteA)(LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCredEnumerateA)(LPCSTR,DWORD,DWORD *,PCREDENTIALA **);
 static VOID (WINAPI *pCredFree)(PVOID);
@@ -658,7 +660,7 @@ static void test_CredUnmarshalCredentialA(void)
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         SetLastError(0xdeadbeef);
         type = 0;
