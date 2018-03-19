@@ -33,7 +33,7 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) ucrtbase.__RTDynamicCast
 @ cdecl __RTtypeid(ptr) ucrtbase.__RTtypeid
 @ stub __TypeMatch
-@ stub __current_exception
+@ cdecl __current_exception() ucrtbase.__current_exception
 @ stub __current_exception_context
 @ stub __dcrt_get_wide_environment_from_os
 @ stub __dcrt_initial_narrow_environment
