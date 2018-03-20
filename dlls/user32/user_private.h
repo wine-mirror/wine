@@ -269,7 +269,8 @@ extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM w
 extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                                  LRESULT *result, BOOL unicode, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 
-extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basename_offset) DECLSPEC_HIDDEN;
+extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basename_offset,
+        BOOL register_class) DECLSPEC_HIDDEN;
 
 /* message spy definitions */
 

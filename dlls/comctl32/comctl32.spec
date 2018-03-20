@@ -194,5 +194,6 @@
 @ stdcall PropertySheet(ptr) PropertySheetA
 @ stdcall PropertySheetA(ptr)
 @ stdcall PropertySheetW(ptr)
+@ stdcall RegisterClassNameW(wstr)
 @ stdcall UninitializeFlatSB(long)
 @ stdcall _TrackMouseEvent(ptr)

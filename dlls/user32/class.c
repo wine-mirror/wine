@@ -320,7 +320,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
-const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
+const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, BOOL register_class )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
@@ -332,7 +332,8 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
         ULONG module_len;
         ULONG module_offset;
     } *wndclass;
-    const WCHAR *module;
+    const WCHAR *module, *ret;
+    HMODULE hmod;
 
     if (basename_offset)
         *basename_offset = 0;
@@ -352,10 +353,42 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
         *basename_offset = wndclass->name_len / sizeof(WCHAR) - strlenW(name);
 
     module = (const WCHAR *)((BYTE *)data.lpSectionBase + wndclass->module_offset);
-    if (!GetModuleHandleW( module ))
-        LoadLibraryW( module );
+    if (!(hmod = GetModuleHandleW( module )))
+        hmod = LoadLibraryW( module );
 
-    return (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
+    ret = (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
+
+    if (register_class && hmod)
+    {
+        BOOL found = FALSE;
+        struct list *ptr;
+
+        USER_Lock();
+
+        LIST_FOR_EACH( ptr, &class_list )
+        {
+            CLASS *class = LIST_ENTRY( ptr, CLASS, entry );
+            if (strcmpiW( class->name, ret )) continue;
+            if (!class->local || class->hInstance == hmod)
+            {
+                found = TRUE;
+                break;
+            }
+        }
+
+        USER_Unlock();
+
+        if (!found)
+        {
+            BOOL (WINAPI *pRegisterClassNameW)(const WCHAR *class);
+
+            pRegisterClassNameW = (void *)GetProcAddress(hmod, "RegisterClassNameW");
+            if (pRegisterClassNameW)
+                pRegisterClassNameW(name);
+        }
+    }
+
+    return ret;
 }
 
 /***********************************************************************
@@ -373,7 +406,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 
     if (!name) return NULL;
 
-    name = CLASS_GetVersionedName( name, NULL );
+    name = CLASS_GetVersionedName( name, NULL, TRUE );
 
     for (;;)
     {
@@ -408,7 +441,6 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
     TRACE("%s %p -> not found\n", debugstr_w(name), hinstance);
     return NULL;
 }
-
 
 /***********************************************************************
  *           CLASS_RegisterClass
@@ -646,7 +678,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     {
         UINT basename_offset;
         if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, name, MAX_ATOM_LEN + 1 )) return 0;
-        classname = CLASS_GetVersionedName( name, &basename_offset );
+        classname = CLASS_GetVersionedName( name, &basename_offset, FALSE );
         classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
                                         wc->style, wc->cbClsExtra, wc->cbWndExtra );
     }
@@ -700,7 +732,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
-    classname = CLASS_GetVersionedName( wc->lpszClassName, &basename_offset );
+    classname = CLASS_GetVersionedName( wc->lpszClassName, &basename_offset, FALSE );
     if (!(classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
                                           wc->style, wc->cbClsExtra, wc->cbWndExtra )))
         return 0;
@@ -753,7 +785,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 
     GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
-    className = CLASS_GetVersionedName( className, NULL );
+    className = CLASS_GetVersionedName( className, NULL, FALSE );
     SERVER_START_REQ( destroy_class )
     {
         req->instance = wine_server_client_ptr( hInstance );

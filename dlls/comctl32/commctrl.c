@@ -69,6 +69,7 @@
 #include "shlwapi.h"
 #include "comctl32.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 
@@ -111,6 +112,40 @@ static void unregister_versioned_classes(void)
         UnregisterClassA(classes[i], NULL);
 
 #undef VERSION
+}
+
+BOOL WINAPI RegisterClassNameW(const WCHAR *class)
+{
+    static const struct
+    {
+        const WCHAR nameW[16];
+        void (*fn_register)(void);
+    }
+    classes[] =
+    {
+        { {'B','u','t','t','o','n',0}, BUTTON_Register },
+        { {'C','o','m','b','o','B','o','x',0}, COMBO_Register },
+        { {'C','o','m','b','o','L','B','o','x',0}, COMBOLBOX_Register },
+        { {'E','d','i','t',0}, EDIT_Register },
+        { {'L','i','s','t','B','o','x',0}, LISTBOX_Register },
+        { {'S','t','a','t','i','c',0}, STATIC_Register },
+    };
+
+    int min = 0, max = ARRAY_SIZE(classes) - 1;
+
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        if (!(res = strcmpiW(class, classes[pos].nameW)))
+        {
+            classes[pos].fn_register();
+            return TRUE;
+        }
+        if (res < 0) max = pos - 1;
+        else min = pos + 1;
+    }
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -171,13 +206,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TRACKBAR_Register ();
             TREEVIEW_Register ();
             UPDOWN_Register ();
-
-            BUTTON_Register ();
-            COMBO_Register ();
-            COMBOLBOX_Register ();
-            EDIT_Register ();
-            LISTBOX_Register ();
-            STATIC_Register ();
 
             /* subclass user32 controls */
             THEMING_Initialize ();
