@@ -8701,6 +8701,47 @@ static void test_device_caps(void)
     DestroyWindow(window);
 }
 
+static void test_get_info(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    BYTE info[1024];
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* As called by Chessmaster 9000 (bug 42118). */
+    hr = IDirect3DDevice8_GetInfo(device, 4, info, 16);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < 256; ++i)
+    {
+        hr = IDirect3DDevice8_GetInfo(device, i, info, sizeof(info));
+        if (i <= 4)
+            ok(hr == (i < 4 ? E_FAIL : S_FALSE), "info_id %u, unexpected hr %#x.\n", i, hr);
+        else
+            ok(hr == E_FAIL || hr == S_FALSE, "info_id %u, unexpected hr %#x.\n", i, hr);
+    }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -8811,6 +8852,7 @@ START_TEST(device)
     test_clip_planes_limits();
     test_swapchain_multisample_reset();
     test_device_caps();
+    test_get_info();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
