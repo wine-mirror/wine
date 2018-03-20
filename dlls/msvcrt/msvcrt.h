@@ -260,6 +260,7 @@ struct __thread_data {
     int                             unk7;
     EXCEPTION_RECORD               *exc_record;
     CONTEXT                        *ctx_record;
+    int                             processing_throw;
     frame_info                     *frame_info_head;
     void                           *unk8[6];
     LCID                            cached_lcid;

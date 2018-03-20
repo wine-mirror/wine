@@ -363,6 +363,7 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 
     ctx.rethrow = FALSE;
     __CxxRegisterExceptionObject(&ep, &ctx.frame_info);
+    msvcrt_get_thread_data()->processing_throw--;
     __TRY
     {
         __TRY
@@ -410,12 +411,14 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
     ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
     int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
             descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+    thread_data_t *data = msvcrt_get_thread_data();
     const tryblock_info *in_catch;
     EXCEPTION_RECORD catch_record;
     CONTEXT ctx;
     UINT i, j;
     INT *unwind_help;
 
+    data->processing_throw++;
     for (i=descr->tryblock_count; i>0; i--)
     {
         in_catch = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
@@ -494,6 +497,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
     }
 
     TRACE("no matching catch block found\n");
+    data->processing_throw--;
 }
 
 static LONG CALLBACK se_translation_filter(EXCEPTION_POINTERS *ep, void *c)

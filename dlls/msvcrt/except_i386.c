@@ -412,8 +412,9 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
     DWORD save_esp = ((DWORD*)frame)[-1];
-    thread_data_t *data;
+    thread_data_t *data = msvcrt_get_thread_data();
 
+    data->processing_throw++;
     for (i = 0; i < descr->tryblock_count; i++)
     {
         const tryblock_info *tryblock = &descr->tryblock[i];
@@ -456,11 +457,11 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
             cxx_local_unwind( frame, descr, tryblock->start_level );
             frame->trylevel = tryblock->end_level + 1;
 
-            data = msvcrt_get_thread_data();
             nested_frame.frame_info.rec = data->exc_record;
             nested_frame.frame_info.context = data->ctx_record;
             data->exc_record = rec;
             data->ctx_record = context;
+            data->processing_throw--;
 
             /* call the catch block */
             TRACE( "calling catch block %p addr %p ebp %p\n",
@@ -483,6 +484,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
             continue_after_catch( frame, addr );
         }
     }
+    data->processing_throw--;
 }
 
 /*********************************************************************

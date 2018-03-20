@@ -528,4 +528,13 @@ void** CDECL __current_exception_context(void)
     return (void**)&msvcrt_get_thread_data()->ctx_record;
 }
 
+/*********************************************************************
+ *  __processing_throw (UCRTBASE.@)
+ */
+int* CDECL __processing_throw(void)
+{
+    TRACE("()\n");
+    return &msvcrt_get_thread_data()->processing_throw;
+}
+
 #endif /* _MSVCR_VER>=140 */
