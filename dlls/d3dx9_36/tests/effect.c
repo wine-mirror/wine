@@ -5374,13 +5374,13 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
             ok(hr == D3D_OK, "Got result %#x, i %u, j %u.\n", hr, i, j);
         }
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_op_parameters[i].param_name);
-        ok(!!param, "GetParameterByName failed.\n");
+        ok(!!param, "Failed to get parameter (test %u).\n", i);
         hr = effect->lpVtbl->GetValue(effect, param, &fvect, sizeof(fvect));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Failed to get parameter value, hr %#x (test %u).\n", hr, i);
         hr = effect->lpVtbl->SetValue(effect, param, &fvect, sizeof(fvect));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Failed to set parameter value, hr %#x (test %u).\n", hr, i);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Failed to commit changes, hr %#x (test %u).\n", hr, i);
 
         test_effect_preshader_op_results(device, check_op_parameters[i].state_updated,
                 check_op_parameters[i].param_name);
