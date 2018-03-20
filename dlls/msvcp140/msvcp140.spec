@@ -3513,7 +3513,7 @@
 @ thiscall -arch=i386 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl ?uncaught_exception@std@@YA_NXZ() MSVCP__uncaught_exception
-@ stub ?uncaught_exceptions@std@@YAHXZ
+@ cdecl ?uncaught_exceptions@std@@YAHXZ() __uncaught_exceptions
 @ cdecl -arch=arm ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAAHXZ(ptr) basic_streambuf_char_underflow
 @ thiscall -arch=i386 ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_streambuf_char_underflow
 @ cdecl -arch=win64 ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_streambuf_char_underflow
