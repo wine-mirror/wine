@@ -974,6 +974,18 @@ static IDispatchExVtbl RefObjVtbl = {
 
 static IDispatchEx RefObj = { &RefObjVtbl };
 
+static ULONG global_ref;
+
+static ULONG WINAPI Global_AddRef(IDispatchEx *iface)
+{
+    return ++global_ref;
+}
+
+static ULONG WINAPI Global_Release(IDispatchEx *iface)
+{
+    return --global_ref;
+}
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
@@ -1476,8 +1488,8 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
 static IDispatchExVtbl GlobalVtbl = {
     DispatchEx_QueryInterface,
-    DispatchEx_AddRef,
-    DispatchEx_Release,
+    Global_AddRef,
+    Global_Release,
     DispatchEx_GetTypeInfoCount,
     DispatchEx_GetTypeInfo,
     DispatchEx_GetIDsOfNames,
@@ -1619,6 +1631,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
         ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&Global;
+    IUnknown_AddRef(*ppiunkItem);
     return S_OK;
 }
 
@@ -1814,6 +1827,7 @@ static void test_parse_context(void)
     static const WCHAR xW[] = {'x',0};
     static const WCHAR yW[] = {'y',0};
 
+    global_ref = 1;
     engine = create_and_init_script(0);
     if(!engine)
         return;
@@ -1855,6 +1869,7 @@ static void test_parse_context(void)
 
     IActiveScriptParse_Release(parser);
     close_script(engine);
+    ok(global_ref == 1, "global_ref = %u\n", global_ref);
 }
 
 static void parse_script_a(const char *src)
