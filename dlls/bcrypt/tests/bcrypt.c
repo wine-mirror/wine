@@ -751,12 +751,12 @@ static void test_BCryptEncrypt(void)
     memset(ciphertext, 0xff, sizeof(ciphertext));
     memset(tag, 0xff, sizeof(tag));
     ret = pBCryptEncrypt(key, data2, 32, &auth_info, ivbuf, 16, ciphertext, 32, &size, 0);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(size == 32, "got %u\n", size);
-    todo_wine ok(!memcmp(ciphertext, expected4, sizeof(expected4)), "wrong data\n");
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected4, sizeof(expected4)), "wrong data\n");
     todo_wine ok(!memcmp(tag, expected_tag, sizeof(expected_tag)), "wrong tag\n");
     for (i = 0; i < 32; i++)
-        todo_wine ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
+        ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
     for (i = 0; i < 16; i++)
         todo_wine ok(tag[i] == expected_tag[i], "%u: %02x != %02x\n", i, tag[i], expected_tag[i]);
 
@@ -766,12 +766,12 @@ static void test_BCryptEncrypt(void)
     memset(ciphertext, 0xff, sizeof(ciphertext));
     memset(tag, 0xff, sizeof(tag));
     ret = pBCryptEncrypt(key, data2, 24, &auth_info, ivbuf, 16, ciphertext, 24, &size, 0);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(size == 24, "got %u\n", size);
-    todo_wine ok(!memcmp(ciphertext, expected4, 24), "wrong data\n");
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 24, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected4, 24), "wrong data\n");
     todo_wine ok(!memcmp(tag, expected_tag2, sizeof(expected_tag2)), "wrong tag\n");
     for (i = 0; i < 24; i++)
-        todo_wine ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
+        ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
     for (i = 0; i < 16; i++)
         todo_wine ok(tag[i] == expected_tag2[i], "%u: %02x != %02x\n", i, tag[i], expected_tag2[i]);
 
@@ -784,7 +784,7 @@ static void test_BCryptEncrypt(void)
     memcpy(ivbuf, iv, sizeof(iv));
     memset(ciphertext, 0, sizeof(ciphertext));
     ret = pBCryptEncrypt(key, data2, 32, &auth_info, ivbuf, 16, ciphertext, 48, &size, BCRYPT_BLOCK_PADDING);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
 
     ret = pBCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);

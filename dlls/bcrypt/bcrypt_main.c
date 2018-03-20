@@ -63,6 +63,12 @@ MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_perror);
 #undef MAKE_FUNCPTR
 
+#if GNUTLS_VERSION_MAJOR < 3
+#define GNUTLS_CIPHER_AES_192_CBC 92
+#define GNUTLS_CIPHER_AES_128_GCM 93
+#define GNUTLS_CIPHER_AES_256_GCM 94
+#endif
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -848,6 +854,7 @@ struct key
 {
     struct object      hdr;
     enum alg_id        alg_id;
+    enum mode_id       mode;
     ULONG              block_size;
     gnutls_cipher_hd_t handle;
     UCHAR             *secret;
@@ -858,6 +865,7 @@ struct key
 {
     struct object  hdr;
     enum alg_id    alg_id;
+    enum mode_id   mode;
     ULONG          block_size;
     CCCryptorRef   ref_encrypt;
     CCCryptorRef   ref_decrypt;
@@ -868,6 +876,7 @@ struct key
 struct key
 {
     struct object hdr;
+    enum mode_id  mode;
     ULONG         block_size;
 };
 #endif
@@ -923,6 +932,7 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     memcpy( buffer, secret, secret_len );
 
     key->alg_id     = alg->id;
+    key->mode       = alg->mode;
     key->handle     = 0;        /* initialized on first use */
     key->secret     = buffer;
     key->secret_len = secret_len;
@@ -935,9 +945,13 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
     switch (key->alg_id)
     {
     case ALG_ID_AES:
-        FIXME( "handle block size and chaining mode\n" );
-        return GNUTLS_CIPHER_AES_128_CBC;
-
+        WARN( "handle block size\n" );
+        switch (key->mode)
+        {
+            case MODE_ID_GCM: return GNUTLS_CIPHER_AES_128_GCM;
+            case MODE_ID_CBC:
+            default:          return GNUTLS_CIPHER_AES_128_CBC;
+        }
     default:
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return GNUTLS_CIPHER_UNKNOWN;
@@ -1019,6 +1033,14 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     switch (alg->id)
     {
     case ALG_ID_AES:
+        switch (alg->mode)
+        {
+            case MODE_ID_CBC:
+                break;
+            default:
+                FIXME( "mode %u not supported\n", alg->mode );
+                return STATUS_NOT_SUPPORTED;
+        }
         break;
 
     default:
@@ -1031,6 +1053,7 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     memcpy( buffer, secret, secret_len );
 
     key->alg_id      = alg->id;
+    key->mode        = alg->mode;
     key->ref_encrypt = NULL;        /* initialized on first use */
     key->ref_decrypt = NULL;
     key->secret      = buffer;
@@ -1260,15 +1283,35 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
            padding, iv, iv_len, output, output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (padding)
-    {
-        FIXME( "padding info not implemented\n" );
-        return STATUS_NOT_IMPLEMENTED;
-    }
     if (flags & ~BCRYPT_BLOCK_PADDING)
     {
         FIXME( "flags %08x not implemented\n", flags );
         return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (key->mode == MODE_ID_GCM)
+    {
+        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+
+        if (!auth_info) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
+        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
+        if (auth_info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG)
+            FIXME( "call chaining not implemented\n" );
+
+        if ((status = key_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+            return status;
+
+        *ret_len = input_len;
+        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
+        if (!output) return STATUS_SUCCESS;
+        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+        if ((status = key_encrypt( key, input, input_len, output, output_len )))
+            return status;
+
+        return STATUS_SUCCESS;
     }
 
     if ((status = key_set_params( key, iv, iv_len ))) return status;
