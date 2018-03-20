@@ -20,6 +20,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdio.h>
+
 #include "d3dx9_private.h"
 #include "d3dcompiler.h"
 
@@ -161,6 +163,10 @@ struct d3dx9_base_effect
     DWORD flags;
 
     ULONG64 version_counter;
+
+    struct wine_rb_tree param_tree;
+    char *full_name_tmp;
+    unsigned int full_name_tmp_size;
 };
 
 struct ID3DXEffectImpl
@@ -205,8 +211,8 @@ struct ID3DXEffectCompilerImpl
     struct d3dx9_base_effect base_effect;
 };
 
-static struct d3dx_parameter *get_annotation_by_name(UINT count, struct d3dx_parameter *parameters,
-        const char *name);
+static struct d3dx_parameter *get_annotation_by_name(struct d3dx9_base_effect *base,
+        unsigned int count, struct d3dx_parameter *parameters, const char *name);
 static HRESULT d3dx9_parse_state(struct d3dx9_base_effect *base, struct d3dx_state *state,
         const char *data, const char **ptr, struct d3dx_object *objects);
 static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child);
@@ -682,6 +688,8 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
 
     TRACE("base %p.\n", base);
 
+    heap_free(base->full_name_tmp);
+
     if (base->parameters)
     {
         for (i = 0; i < base->parameter_count; ++i)
@@ -814,7 +822,8 @@ static void set_matrix_transpose(struct d3dx_parameter *param, const D3DXMATRIX 
     }
 }
 
-static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_parameter *parameter, const char *name)
+static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx9_base_effect *base,
+        struct d3dx_parameter *parameter, const char *name)
 {
     UINT element;
     struct d3dx_parameter *temp_parameter;
@@ -835,7 +844,7 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
         switch (*part++)
         {
             case '.':
-                return get_parameter_by_name(NULL, temp_parameter, part);
+                return get_parameter_by_name(base, temp_parameter, part);
 
             case '\0':
                 TRACE("Returning parameter %p\n", temp_parameter);
@@ -851,8 +860,8 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
     return NULL;
 }
 
-static struct d3dx_parameter *get_annotation_by_name(UINT count, struct d3dx_parameter *annotations,
-        const char *name)
+static struct d3dx_parameter *get_annotation_by_name(struct d3dx9_base_effect *base,
+        unsigned int count, struct d3dx_parameter *annotations, const char *name)
 {
     UINT i, length;
     struct d3dx_parameter *temp_parameter;
@@ -879,10 +888,10 @@ static struct d3dx_parameter *get_annotation_by_name(UINT count, struct d3dx_par
             switch (*part++)
             {
                 case '.':
-                    return get_parameter_by_name(NULL, temp_parameter, part);
+                    return get_parameter_by_name(base, temp_parameter, part);
 
                 case '[':
-                    return get_parameter_element_by_name(temp_parameter, part);
+                    return get_parameter_element_by_name(base, temp_parameter, part);
 
                 default:
                     FIXME("Unhandled case \"%c\"\n", *--part);
@@ -898,15 +907,57 @@ static struct d3dx_parameter *get_annotation_by_name(UINT count, struct d3dx_par
 struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
         struct d3dx_parameter *parameter, const char *name)
 {
-    UINT i, count, length;
     struct d3dx_parameter *temp_parameter;
+    unsigned int name_len, param_name_len;
+    unsigned int i, count, length;
+    struct wine_rb_entry *entry;
+    unsigned int full_name_size;
     const char *part;
+    char *full_name;
 
     TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
 
     if (!name || !*name) return NULL;
 
+    if (!parameter)
+    {
+        if ((entry = wine_rb_get(&base->param_tree, name)))
+            return WINE_RB_ENTRY_VALUE(entry, struct d3dx_parameter, rb_entry);
+        return NULL;
+    }
+
+    /* Pass / technique annotations are not in the parameters tree. */
+    if (parameter->full_name)
+    {
+        name_len = strlen(name);
+        param_name_len = strlen(parameter->full_name);
+        full_name_size = name_len + param_name_len + 2;
+        if (base->full_name_tmp_size < full_name_size)
+        {
+            if (!(full_name = heap_realloc(base->full_name_tmp, full_name_size)))
+            {
+                ERR("Out of memory.\n");
+                return NULL;
+            }
+            base->full_name_tmp = full_name;
+            base->full_name_tmp_size = full_name_size;
+        }
+        else
+        {
+            full_name = base->full_name_tmp;
+        }
+        memcpy(full_name, parameter->full_name, param_name_len);
+        full_name[param_name_len] = '.';
+        memcpy(full_name + param_name_len + 1, name, name_len);
+        full_name[param_name_len + 1 + name_len] = 0;
+
+        if ((entry = wine_rb_get(&base->param_tree, full_name)))
+            return WINE_RB_ENTRY_VALUE(entry, struct d3dx_parameter, rb_entry);
+        return NULL;
+    }
+
     count = parameter ? parameter->member_count : base->parameter_count;
+
     length = strcspn( name, "[.@" );
     part = name + length;
 
@@ -925,18 +976,18 @@ struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
             switch (*part++)
             {
                 case '.':
-                    return get_parameter_by_name(NULL, temp_parameter, part);
+                    return get_parameter_by_name(base, temp_parameter, part);
 
                 case '@':
                 {
                     struct d3dx_top_level_parameter *top_param
                             = top_level_parameter_from_parameter(temp_parameter);
 
-                    return parameter ? NULL : get_annotation_by_name(top_param->annotation_count,
+                    return parameter ? NULL : get_annotation_by_name(base, top_param->annotation_count,
                             top_param->annotations, part);
                 }
                 case '[':
-                    return get_parameter_element_by_name(temp_parameter, part);
+                    return get_parameter_element_by_name(base, temp_parameter, part);
 
                 default:
                     FIXME("Unhandled case \"%c\"\n", *--part);
@@ -1460,7 +1511,7 @@ static D3DXHANDLE d3dx9_base_effect_get_annotation_by_name(struct d3dx9_base_eff
 
     annotation_count = get_annotation_from_object(base, object, &annotations);
 
-    annotation = get_annotation_by_name(annotation_count, annotations, name);
+    annotation = get_annotation_by_name(base, annotation_count, annotations, name);
     if (annotation)
     {
         TRACE("Returning parameter %p\n", annotation);
@@ -5436,6 +5487,83 @@ static void param_set_magic_number(struct d3dx_parameter *param)
     memcpy(param->magic_string, parameter_magic_string, sizeof(parameter_magic_string));
 }
 
+static int param_rb_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const char *name = key;
+    struct d3dx_parameter *param = WINE_RB_ENTRY_VALUE(entry, struct d3dx_parameter, rb_entry);
+
+    return strcmp(name, param->full_name);
+}
+
+static void add_param_to_tree(struct d3dx9_base_effect *base, struct d3dx_parameter *param,
+        struct d3dx_parameter *parent, char separator, unsigned int element)
+{
+    const char *parent_name = parent ? parent->full_name : NULL;
+    unsigned int i;
+
+    TRACE("Adding parameter %p (%s - parent %p, element %u) to the rbtree.\n",
+            param, debugstr_a(param->name), parent, element);
+
+    if (parent_name)
+    {
+        unsigned int parent_name_len = strlen(parent_name);
+        unsigned int name_len = strlen(param->name);
+        unsigned int part_str_len;
+        unsigned int len;
+        char part_str[16];
+
+        if (separator == '[')
+        {
+            sprintf(part_str, "[%u]", element);
+            part_str_len = strlen(part_str);
+            name_len = 0;
+        }
+        else
+        {
+            part_str[0] = separator;
+            part_str[1] = 0;
+            part_str_len = 1;
+        }
+        len = parent_name_len + part_str_len + name_len + 1;
+
+        if (!(param->full_name = heap_alloc(len)))
+        {
+            ERR("Out of memory.\n");
+            return;
+        }
+
+        memcpy(param->full_name, parent_name, parent_name_len);
+        memcpy(param->full_name + parent_name_len, part_str, part_str_len);
+        memcpy(param->full_name + parent_name_len + part_str_len, param->name, name_len);
+        param->full_name[len - 1] = 0;
+    }
+    else
+    {
+        unsigned int len = strlen(param->name) + 1;
+
+        if (!(param->full_name = heap_alloc(len)))
+        {
+            ERR("Out of memory.\n");
+            return;
+        }
+
+        memcpy(param->full_name, param->name, len);
+    }
+    TRACE("Full name is %s.\n", param->full_name);
+    wine_rb_put(&base->param_tree, param->full_name, &param->rb_entry);
+
+    if (is_top_level_parameter(param))
+        for (i = 0; i < param->top_level_param->annotation_count; ++i)
+            add_param_to_tree(base, &param->top_level_param->annotations[i], param, '@', 0);
+
+    if (param->element_count)
+        for (i = 0; i < param->element_count; ++i)
+            add_param_to_tree(base, &param->members[i], param, '[', i);
+    else
+        for (i = 0; i < param->member_count; ++i)
+            add_param_to_tree(base, &param->members[i], param, '.', 0);
+}
+
 static HRESULT d3dx9_parse_effect_typedef(struct d3dx9_base_effect *base, struct d3dx_parameter *param,
 	const char *data, const char **ptr, struct d3dx_parameter *parent, UINT flags)
 {
@@ -6281,6 +6409,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
         goto err_out;
     }
 
+    wine_rb_init(&base->param_tree, param_rb_compare);
     if (base->parameter_count)
     {
         base->parameters = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -6303,6 +6432,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
             }
             walk_parameter_tree(&base->parameters[i].param, param_set_top_level_param,
                 &base->parameters[i]);
+            add_param_to_tree(base, &base->parameters[i].param, NULL, 0, 0);
         }
     }
 

@@ -24,6 +24,8 @@
 
 #define NONAMELESSUNION
 #include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/rbtree.h"
 
 #define COBJMACROS
 #include "d3dx9.h"
@@ -278,6 +280,13 @@ struct d3dx_param_eval
     ULONG64 *version_counter;
 };
 
+struct param_rb_entry
+{
+    struct wine_rb_entry entry;
+    char *full_name;
+    struct d3dx_parameter *param;
+};
+
 struct d3dx_shared_data;
 struct d3dx_top_level_parameter;
 
@@ -300,6 +309,9 @@ struct d3dx_parameter
 
     struct d3dx_parameter *members;
     char *semantic;
+
+    char *full_name;
+    struct wine_rb_entry rb_entry;
 };
 
 struct d3dx_top_level_parameter
