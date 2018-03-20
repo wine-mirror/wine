@@ -944,6 +944,13 @@ MSVCP_bool __cdecl MSVCP__uncaught_exception(void)
     return __uncaught_exception();
 }
 
+#if _MSVCP_VER >= 140
+int __cdecl __uncaught_exceptions(void)
+{
+    return *UCRTBASE___processing_throw();
+}
+#endif
+
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
 #define EXCEPTION_VTABLE(name,funcs) __ASM_VTABLE(name,funcs)
 #else
