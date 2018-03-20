@@ -116,7 +116,7 @@ static void COMDLG32_DumpSBSPFlags(UINT uflags)
         };
 #undef FE
         TRACE("SBSP Flags: %08x =", uflags);
-	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
+	for (i = 0; i < ARRAY_SIZE(flags); i++)
 	    if (flags[i].mask & uflags)
 		TRACE("%s ", flags[i].name);
 	TRACE("\n");
@@ -847,7 +847,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBr
 		if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
 		{
 		    WCHAR szSave[16];
-		    LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, szSave, sizeof(szSave)/sizeof(WCHAR));
+		    LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, szSave, ARRAY_SIZE(szSave));
 		    SetDlgItemTextW(fodInfos->ShellInfos.hwndOwner, IDOK, szSave);
 		}
             }

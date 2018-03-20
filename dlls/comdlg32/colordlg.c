@@ -402,7 +402,7 @@ static int CC_CheckDigitsInEdit( HWND hwnd, int maxval )
  long editpos;
  char buffer[30];
 
- GetWindowTextA(hwnd, buffer, sizeof(buffer));
+ GetWindowTextA(hwnd, buffer, ARRAY_SIZE(buffer));
  m = strlen(buffer);
  result = 0;
 

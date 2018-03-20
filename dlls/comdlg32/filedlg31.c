@@ -106,7 +106,7 @@ static void FD31_StripEditControl(HWND hwnd)
 {
     WCHAR temp[BUFFILE], *cp;
 
-    GetDlgItemTextW( hwnd, edt1, temp, sizeof(temp)/sizeof(WCHAR));
+    GetDlgItemTextW( hwnd, edt1, temp, ARRAY_SIZE(temp));
     cp = strrchrW(temp, '\\');
     if (cp != NULL) {
 	strcpyW(temp, cp+1);
@@ -532,7 +532,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
         *pBeginFileName = 0;
         SetDlgItemTextW( hWnd, edt1, pBeginFileName + 1 );
 
-        lstrcpynW(tmpstr2, pBeginFileName + 1, sizeof(tmpstr2)/sizeof(WCHAR) );
+        lstrcpynW(tmpstr2, pBeginFileName + 1, ARRAY_SIZE(tmpstr2));
         /* Should we MessageBox() if this fails? */
         if (!FD31_ScanDir(lfs->ofnW, hWnd, path))
         {
@@ -563,9 +563,9 @@ static LRESULT FD31_Validate( const FD31_DATA *lfs, LPCWSTR path, UINT control, 
 
     /* get current file name */
     if (path)
-        lstrcpynW(filename, path, sizeof(filename)/sizeof(WCHAR));
+        lstrcpynW(filename, path, ARRAY_SIZE(filename));
     else
-        GetDlgItemTextW( hWnd, edt1, filename, sizeof(filename)/sizeof(WCHAR));
+        GetDlgItemTextW( hWnd, edt1, filename, ARRAY_SIZE(filename));
 
     TRACE("got filename = %s\n", debugstr_w(filename));
     /* if we did not click in file list to get there */
@@ -784,8 +784,7 @@ static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, 
         WCHAR buf[16];
         LPWSTR title_tmp;
         int len;
-        LoadStringW(COMDLG32_hInstance, open ? IDS_OPEN_FILE : IDS_SAVE_AS,
-                    buf, sizeof(buf)/sizeof(WCHAR));
+        LoadStringW(COMDLG32_hInstance, open ? IDS_OPEN_FILE : IDS_SAVE_AS, buf, ARRAY_SIZE(buf));
         len = lstrlenW(buf)+1;
         title_tmp = heap_alloc(len * sizeof(WCHAR));
         memcpy(title_tmp, buf, len * sizeof(WCHAR));
