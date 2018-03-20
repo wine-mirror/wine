@@ -3223,6 +3223,25 @@ DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
 }
 
 /******************************************************************
+ *    ConvertLengthToIpv4Mask (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertLengthToIpv4Mask(ULONG mask_len, ULONG *mask)
+{
+    if (mask_len > 32)
+    {
+        *mask = INADDR_NONE;
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    if (mask_len == 0)
+        *mask = 0;
+    else
+        *mask = htonl(~0u << (32 - mask_len));
+
+    return NO_ERROR;
+}
+
+/******************************************************************
  *    if_nametoindex (IPHLPAPI.@)
  */
 IF_INDEX WINAPI IPHLP_if_nametoindex(const char *name)
