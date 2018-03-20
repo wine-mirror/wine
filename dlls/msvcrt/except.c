@@ -432,23 +432,24 @@ void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
 /*********************************************************************
  *  __CxxRegisterExceptionObject (MSVCRT.@)
  */
-BOOL CDECL __CxxRegisterExceptionObject(EXCEPTION_RECORD **rec, cxx_frame_info *frame_info)
+BOOL CDECL __CxxRegisterExceptionObject(EXCEPTION_POINTERS *ep, cxx_frame_info *frame_info)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
-    TRACE("(%p, %p)\n", rec, frame_info);
+    TRACE("(%p, %p)\n", ep, frame_info);
 
-    if (!rec || !*rec)
+    if (!ep || !ep->ExceptionRecord)
     {
         frame_info->rec = (void*)-1;
-        frame_info->unk = (void*)-1;
+        frame_info->context = (void*)-1;
         return TRUE;
     }
 
     frame_info->rec = data->exc_record;
-    frame_info->unk = 0;
-    data->exc_record = *rec;
-    _CreateFrameInfo(&frame_info->frame_info, (void*)(*rec)->ExceptionInformation[1]);
+    frame_info->context = data->ctx_record;
+    data->exc_record = ep->ExceptionRecord;
+    data->ctx_record = ep->ContextRecord;
+    _CreateFrameInfo(&frame_info->frame_info, (void*)ep->ExceptionRecord->ExceptionInformation[1]);
     return TRUE;
 }
 
@@ -469,6 +470,7 @@ void CDECL __CxxUnregisterExceptionObject(cxx_frame_info *frame_info, BOOL in_us
             && _IsExceptionObjectToBeDestroyed((void*)data->exc_record->ExceptionInformation[1]))
         __DestructExceptionObject(data->exc_record);
     data->exc_record = frame_info->rec;
+    data->ctx_record = frame_info->context;
 }
 
 struct __std_exception_data {
@@ -515,6 +517,15 @@ void** CDECL __current_exception(void)
 {
     TRACE("()\n");
     return (void**)&msvcrt_get_thread_data()->exc_record;
+}
+
+/*********************************************************************
+ *  __current_exception_context (UCRTBASE.@)
+ */
+void** CDECL __current_exception_context(void)
+{
+    TRACE("()\n");
+    return (void**)&msvcrt_get_thread_data()->ctx_record;
 }
 
 #endif /* _MSVCR_VER>=140 */

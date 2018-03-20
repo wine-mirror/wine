@@ -214,11 +214,11 @@ typedef struct
 {
     frame_info frame_info;
     EXCEPTION_RECORD *rec;
-    void *unk;
+    CONTEXT *context;
 } cxx_frame_info;
 
 frame_info* __cdecl _CreateFrameInfo(frame_info *fi, void *obj);
-BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_RECORD**, cxx_frame_info*);
+BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_POINTERS*, cxx_frame_info*);
 void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
 void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 
@@ -259,6 +259,7 @@ struct __thread_data {
     void                           *unk6[3];
     int                             unk7;
     EXCEPTION_RECORD               *exc_record;
+    CONTEXT                        *ctx_record;
     frame_info                     *frame_info_head;
     void                           *unk8[6];
     LCID                            cached_lcid;

@@ -34,7 +34,7 @@
 @ cdecl __RTtypeid(ptr) ucrtbase.__RTtypeid
 @ stub __TypeMatch
 @ cdecl __current_exception() ucrtbase.__current_exception
-@ stub __current_exception_context
+@ cdecl __current_exception_context() ucrtbase.__current_exception_context
 @ stub __dcrt_get_wide_environment_from_os
 @ stub __dcrt_initial_narrow_environment
 @ stub __intrinsic_abnormal_termination
