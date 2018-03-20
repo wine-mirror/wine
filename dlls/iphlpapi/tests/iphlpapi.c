@@ -96,6 +96,7 @@ static DWORD (WINAPI *pConvertInterfaceLuidToNameW)(const NET_LUID*,WCHAR*,SIZE_
 static DWORD (WINAPI *pConvertInterfaceLuidToNameA)(const NET_LUID*,char*,SIZE_T);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
+static DWORD (WINAPI *pConvertLengthToIpv4Mask)(ULONG,ULONG*);
 
 static PCHAR (WINAPI *pif_indextoname)(NET_IFINDEX,PCHAR);
 static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
@@ -149,6 +150,7 @@ static void loadIPHlpApi(void)
     pConvertInterfaceLuidToNameW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToNameW");
     pConvertInterfaceNameToLuidA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidA");
     pConvertInterfaceNameToLuidW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidW");
+    pConvertLengthToIpv4Mask = (void *)GetProcAddress(hLibrary, "ConvertLengthToIpv4Mask");
     pif_indextoname = (void *)GetProcAddress(hLibrary, "if_indextoname");
     pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
   }
@@ -2174,6 +2176,39 @@ static void test_GetUnicastIpAddressTable(void)
     pFreeMibTable(table);
 }
 
+static void test_ConvertLengthToIpv4Mask(void)
+{
+    DWORD ret;
+    DWORD n;
+    ULONG mask;
+    ULONG expected;
+
+    if (!pConvertLengthToIpv4Mask)
+    {
+        win_skip( "ConvertLengthToIpv4Mask not available\n" );
+        return;
+    }
+
+    for (n = 0; n <= 32; n++)
+    {
+        mask = 0xdeadbeef;
+        if (n > 0)
+            expected = htonl( ~0u << (32 - n) );
+        else
+            expected = 0;
+
+        ret = pConvertLengthToIpv4Mask( n, &mask );
+        ok( ret == NO_ERROR, "ConvertLengthToIpv4Mask returned 0x%08x, expected 0x%08x\n", ret, NO_ERROR );
+        ok( mask == expected, "ConvertLengthToIpv4Mask mask value 0x%08x, expected 0x%08x\n", mask, expected );
+    }
+
+    /* Testing for out of range. In this case both mask and return are changed to indicate error. */
+    mask = 0xdeadbeef;
+    ret = pConvertLengthToIpv4Mask( 33, &mask );
+    ok( ret == ERROR_INVALID_PARAMETER, "ConvertLengthToIpv4Mask returned 0x%08x, expected 0x%08x\n", ret, ERROR_INVALID_PARAMETER );
+    ok( mask == INADDR_NONE, "ConvertLengthToIpv4Mask mask value 0x%08x, expected 0x%08x\n", mask, INADDR_NONE );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2201,6 +2236,7 @@ START_TEST(iphlpapi)
     test_GetIfTable2Ex();
     test_GetUnicastIpAddressEntry();
     test_GetUnicastIpAddressTable();
+    test_ConvertLengthToIpv4Mask();
     freeIPHlpApi();
   }
 }

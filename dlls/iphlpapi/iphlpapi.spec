@@ -23,7 +23,7 @@
 @ stdcall ConvertInterfaceNameToLuidW( wstr ptr )
 #@ stub ConvertInterfacePhysicalAddressToLuid
 #@ stub ConvertIpv4MaskToLength
-#@ stub ConvertLengthToIpv4Mask
+@ stdcall ConvertLengthToIpv4Mask( long ptr )
 #@ stub ConvertRemoteInterfaceAliasToLuid
 #@ stub ConvertRemoteInterfaceGuidToLuid
 #@ stub ConvertRemoteInterfaceIndexToLuid
