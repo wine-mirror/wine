@@ -679,32 +679,6 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, LPCWSTR prop, UCHAR *bu
     }
 }
 
-NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
-{
-    struct object *object = handle;
-
-    TRACE( "%p, %s, %p, %u, %08x\n", handle, debugstr_w(prop), value, size, flags );
-
-    if (!object) return STATUS_INVALID_HANDLE;
-
-    switch (object->magic)
-    {
-    case MAGIC_ALG:
-    {
-        struct algorithm *alg = (struct algorithm *)object;
-        return set_alg_property( alg, prop, value, size, flags );
-    }
-    case MAGIC_KEY:
-    {
-        FIXME( "keys not implemented yet\n" );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-    default:
-        WARN( "unknown magic %08x\n", object->magic );
-        return STATUS_INVALID_HANDLE;
-    }
-}
-
 NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDLE *handle, UCHAR *object, ULONG objectlen,
                                   UCHAR *secret, ULONG secretlen, ULONG flags )
 {
@@ -954,6 +928,31 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+    {
+        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+        {
+            key->mode = MODE_ID_CBC;
+            return STATUS_SUCCESS;
+        }
+        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM, size ))
+        {
+            key->mode = MODE_ID_GCM;
+            return STATUS_SUCCESS;
+        }
+        else
+        {
+            FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+
+    FIXME( "unsupported key property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
 {
     switch (key->alg_id)
@@ -1089,6 +1088,12 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 {
     CCCryptorStatus status;
@@ -1166,6 +1171,12 @@ static NTSTATUS key_destroy( struct key *key )
 }
 #else
 static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1476,6 +1487,32 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     }
 
     return status;
+}
+
+NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    struct object *object = handle;
+
+    TRACE( "%p, %s, %p, %u, %08x\n", handle, debugstr_w(prop), value, size, flags );
+
+    if (!object) return STATUS_INVALID_HANDLE;
+
+    switch (object->magic)
+    {
+    case MAGIC_ALG:
+    {
+        struct algorithm *alg = (struct algorithm *)object;
+        return set_alg_property( alg, prop, value, size, flags );
+    }
+    case MAGIC_KEY:
+    {
+        struct key *key = (struct key *)object;
+        return set_key_property( key, prop, value, size, flags );
+    }
+    default:
+        WARN( "unknown magic %08x\n", object->magic );
+        return STATUS_INVALID_HANDLE;
+    }
 }
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )

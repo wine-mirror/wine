@@ -525,6 +525,10 @@ static void test_BCryptGenerateSymmetricKey(void)
                             sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    ret = pBCryptSetProperty(key, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC,
+                             sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_NOT_SUPPORTED) /* < Win 8 */, "got %08x\n", ret);
+
     size = 0xdeadbeef;
     ret = pBCryptEncrypt(key, NULL, 0, NULL, NULL, 0, NULL, 0, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
