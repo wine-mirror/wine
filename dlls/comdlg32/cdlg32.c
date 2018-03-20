@@ -32,6 +32,7 @@
 #include "commdlg.h"
 #include "cderr.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -128,16 +129,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
  *		Success: Pointer to a heap block
  *		Failure: null
  */
-LPVOID COMDLG32_AllocMem(
-	int size	/* [in] Block size to allocate */
-) {
-        LPVOID ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-        if(!ptr)
-        {
-        	COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-                return NULL;
-        }
-        return ptr;
+void *COMDLG32_AllocMem(int size)
+{
+    void *ptr = heap_alloc_zero(size);
+
+    if (!ptr)
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+        return NULL;
+    }
+
+    return ptr;
 }
 
 

@@ -32,6 +32,7 @@
 #include "commdlg.h"
 #include "dlgs.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "cderr.h"
 #include "cdlg.h"
@@ -1151,11 +1152,11 @@ static LRESULT CFn_WMDestroy(HWND hwnd, LPCHOOSEFONTW lpcfw)
     if((lpcfw->Flags & CF_USESTYLE) && lpcfw->lpszStyle) {
         len = WideCharToMultiByte(CP_ACP, 0, lpcfw->lpszStyle, -1, NULL, 0, 0, 0);
         WideCharToMultiByte(CP_ACP, 0, lpcfw->lpszStyle, -1, lpcfa->lpszStyle, len, 0, 0);
-        HeapFree(GetProcessHeap(), 0, lpcfw->lpszStyle);
+        heap_free(lpcfw->lpszStyle);
     }
 
-    HeapFree(GetProcessHeap(), 0, lpcfw->lpLogFont);
-    HeapFree(GetProcessHeap(), 0, lpcfw);
+    heap_free(lpcfw->lpLogFont);
+    heap_free(lpcfw);
     SetPropW(hwnd, strWineFontData, 0);
 
     return TRUE;
@@ -1217,16 +1218,16 @@ static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, 
         lpcfa=(LPCHOOSEFONTA)lParam;
         SetPropW(hDlg, strWineFontData_a, (HANDLE)lParam);
 
-        lpcfw = HeapAlloc(GetProcessHeap(), 0, sizeof(CHOOSEFONTW));
+        lpcfw = heap_alloc(sizeof(*lpcfw));
         memcpy(lpcfw, lpcfa, sizeof(CHOOSEFONTA));
-        lpcfw->lpLogFont = HeapAlloc(GetProcessHeap(), 0, sizeof(LOGFONTW));
+        lpcfw->lpLogFont = heap_alloc(sizeof(*lpcfw->lpLogFont));
         memcpy(lpcfw->lpLogFont, lpcfa->lpLogFont, sizeof(LOGFONTA));
         MultiByteToWideChar(CP_ACP, 0, lpcfa->lpLogFont->lfFaceName,
                             LF_FACESIZE, lpcfw->lpLogFont->lfFaceName, LF_FACESIZE);
 
         if((lpcfa->Flags & CF_USESTYLE) && lpcfa->lpszStyle)  {
             len = MultiByteToWideChar(CP_ACP, 0, lpcfa->lpszStyle, -1, NULL, 0);
-            lpcfw->lpszStyle = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            lpcfw->lpszStyle = heap_alloc(len * sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, lpcfa->lpszStyle, -1, lpcfw->lpszStyle, len);
         }
 
