@@ -1331,9 +1331,13 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
               SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETIMAGELIST, 0, 0);
               ImageList_Destroy(himl);
           }
-          RemovePropW(hwnd, filedlg_info_propnameW);
           return FALSE;
       }
+
+    case WM_NCDESTROY:
+        RemovePropW(hwnd, filedlg_info_propnameW);
+        return 0;
+
     case WM_NOTIFY:
     {
 	LPNMHDR lpnmh = (LPNMHDR)lParam;
