@@ -293,7 +293,7 @@ int CDECL _abnormal_termination(void)
  */
 BOOL CDECL MSVCRT___uncaught_exception(void)
 {
-    return FALSE;
+    return msvcrt_get_thread_data()->processing_throw != 0;
 }
 
 #if _MSVCR_VER>=70 && _MSVCR_VER<=71
