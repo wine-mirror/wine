@@ -84,8 +84,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 OFN_NODEREFERENCELINKS | OFN_NOREADONLYRETURN |\
 OFN_NOTESTFILECREATE /*| OFN_USEMONIKERS*/)
 
-#define IsHooked(fodInfos) \
-	((fodInfos->ofnInfos->Flags & OFN_ENABLEHOOK) && fodInfos->ofnInfos->lpfnHook)
 /***********************************************************************
  * Data structure and global variables
  */
@@ -182,6 +180,11 @@ static const WCHAR filedlg_info_propnameW[] = {'F','i','l','e','O','p','e','n','
 FileOpenDlgInfos *get_filedlg_infoptr(HWND hwnd)
 {
     return GetPropW(hwnd, filedlg_info_propnameW);
+}
+
+static BOOL is_dialog_hooked(const FileOpenDlgInfos *info)
+{
+    return (info->ofnInfos->Flags & OFN_ENABLEHOOK) && info->ofnInfos->lpfnHook;
 }
 
 /***********************************************************************
@@ -307,7 +310,7 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
     }
 
     /* old style hook messages */
-    if (IsHooked(fodInfos))
+    if (is_dialog_hooked(fodInfos))
     {
       fodInfos->HookMsg.fileokstring = RegisterWindowMessageW(FILEOKSTRINGW);
       fodInfos->HookMsg.lbselchstring = RegisterWindowMessageW(LBSELCHSTRINGW);
@@ -824,15 +827,15 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       }
       if (fodInfos->unicode)
           hChildDlg = CreateDialogIndirectParamW(hinst, template, hwnd,
-              IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
+              is_dialog_hooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
               (LPARAM)fodInfos->ofnInfos);
       else
           hChildDlg = CreateDialogIndirectParamA(hinst, template, hwnd,
-              IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
+              is_dialog_hooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
               (LPARAM)fodInfos->ofnInfos);
       return hChildDlg;
     }
-    else if( IsHooked(fodInfos))
+    else if (is_dialog_hooked(fodInfos))
     {
       RECT rectHwnd;
       struct  {
@@ -2014,7 +2017,7 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd)
 static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
 {
     /* ask the hook if we can close */
-    if(IsHooked(fodInfos))
+    if (is_dialog_hooked(fodInfos))
     {
         LRESULT retval = 0;
 
