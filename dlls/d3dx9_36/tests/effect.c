@@ -7368,6 +7368,123 @@ if (hr == D3D_OK)
     DestroyWindow(window);
 }
 
+static unsigned int get_texture_refcount(IDirect3DTexture9 *iface)
+{
+    IDirect3DTexture9_AddRef(iface);
+    return IDirect3DTexture9_Release(iface);
+}
+
+static void test_refcount(void)
+{
+    IDirect3DTexture9 *texture, *cur_texture, *managed_texture, *sysmem_texture;
+    unsigned int passes_count;
+    IDirect3DDevice9 *device;
+    ID3DXEffect *effect;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(device = create_device(&window)))
+        return;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob,
+            sizeof(test_effect_preshader_effect_blob), NULL, NULL,
+            D3DXFX_DONOTSAVESTATE, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Failed to create effect, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Failed to set texture parameter, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, D3DXFX_DONOTSAVESTATE);
+    ok(hr == D3D_OK, "Begin() failed, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "BeginPass() failed, hr %#x.\n", hr);
+
+    IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
+    ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
+    IDirect3DTexture9_Release(cur_texture);
+
+    IDirect3DDevice9_SetTexture(device, 0, NULL);
+    effect->lpVtbl->CommitChanges(effect);
+
+    IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
+    ok(cur_texture == NULL, "Unexpected current texture %p.\n", cur_texture);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "EndPass() failed, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "BeginPass() failed, hr %#x.\n", hr);
+
+    IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
+    ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
+    IDirect3DTexture9_Release(cur_texture);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "EndPass() failed, hr %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "End() failed, hr %#x.\n", hr);
+
+    IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
+    ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
+    IDirect3DTexture9_Release(cur_texture);
+    refcount = get_texture_refcount(texture);
+    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+
+    hr = effect->lpVtbl->OnLostDevice(effect);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    refcount = get_texture_refcount(texture);
+    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED,
+            &managed_texture, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)managed_texture);
+
+    refcount = get_texture_refcount(managed_texture);
+    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    hr = effect->lpVtbl->OnLostDevice(effect);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    refcount = get_texture_refcount(managed_texture);
+    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM,
+            &sysmem_texture, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)sysmem_texture);
+
+    refcount = get_texture_refcount(managed_texture);
+    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    IDirect3DTexture9_Release(managed_texture);
+    refcount = get_texture_refcount(sysmem_texture);
+    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    hr = effect->lpVtbl->OnLostDevice(effect);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    refcount = get_texture_refcount(sysmem_texture);
+    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = get_texture_refcount(sysmem_texture);
+    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    IDirect3DTexture9_Release(sysmem_texture);
+
+    IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
+    ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
+    IDirect3DTexture9_Release(cur_texture);
+    refcount = get_texture_refcount(texture);
+    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    IDirect3DTexture9_Release(texture);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(effect)
 {
     IDirect3DDevice9 *device;
@@ -7404,4 +7521,5 @@ START_TEST(effect)
     test_effect_unsupported_shader();
     test_effect_null_shader();
     test_effect_clone();
+    test_refcount();
 }
