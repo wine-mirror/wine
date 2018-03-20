@@ -131,39 +131,8 @@ typedef struct tagLookInInfo
  */
 
 /* Combo box macros */
-#define CBAddString(hwnd,str) \
-    SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)(str));
-
-#define CBInsertString(hwnd,str,pos) \
-    SendMessageW(hwnd, CB_INSERTSTRING, (WPARAM)(pos), (LPARAM)(str));
-
-#define CBDeleteString(hwnd,pos) \
-    SendMessageW(hwnd, CB_DELETESTRING, (WPARAM)(pos), 0);
-
-#define CBSetItemDataPtr(hwnd,iItemId,dataPtr) \
-    SendMessageW(hwnd, CB_SETITEMDATA, (WPARAM)(iItemId), (LPARAM)(dataPtr));
-
 #define CBGetItemDataPtr(hwnd,iItemId) \
     SendMessageW(hwnd, CB_GETITEMDATA, (WPARAM)(iItemId), 0)
-
-#define CBGetLBText(hwnd,iItemId,str) \
-    SendMessageW(hwnd, CB_GETLBTEXT, (WPARAM)(iItemId), (LPARAM)(str));
-
-#define CBGetCurSel(hwnd) \
-    SendMessageW(hwnd, CB_GETCURSEL, 0, 0);
-
-#define CBSetCurSel(hwnd,pos) \
-    SendMessageW(hwnd, CB_SETCURSEL, (WPARAM)(pos), 0);
-
-#define CBGetCount(hwnd) \
-    SendMessageW(hwnd, CB_GETCOUNT, 0, 0);
-#define CBShowDropDown(hwnd,show) \
-    SendMessageW(hwnd, CB_SHOWDROPDOWN, (WPARAM)(show), 0);
-#define CBSetItemHeight(hwnd,index,height) \
-    SendMessageW(hwnd, CB_SETITEMHEIGHT, (WPARAM)(index), (LPARAM)(height));
-
-#define CBSetExtendedUI(hwnd,flag) \
-    SendMessageW(hwnd, CB_SETEXTENDEDUI, (WPARAM)(flag), 0)
 
 static const char LookInInfosStr[] = "LookInInfos"; /* LOOKIN combo box property */
 static SIZE MemDialogSize = { 0, 0}; /* keep size of the (resizable) dialog */
@@ -2575,7 +2544,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
         /* set the filter cb to the extension when possible */
         if(-1 < (iPos = FILEDLG95_FILETYPE_SearchExt(fodInfos->DlgInfos.hwndFileTypeCB, lpszTemp)))
-        CBSetCurSel(fodInfos->DlgInfos.hwndFileTypeCB, iPos);
+        SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_SETCURSEL, iPos, 0);
       }
       /* fall through */
     case ONOPEN_BROWSE:   /* browse to the highest folder we could bind to */
@@ -3004,8 +2973,9 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       lstrcpyW(lpstrExt,lpstrPos);
 
       /* Add the item at the end of the combo */
-      CBAddString(fodInfos->DlgInfos.hwndFileTypeCB, fodInfos->customfilter);
-      CBSetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, nFilters, lpstrExt);
+      SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_ADDSTRING, 0, (LPARAM)fodInfos->customfilter);
+      SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_SETITEMDATA, nFilters, (LPARAM)lpstrExt);
+
       nFilters++;
   }
   if(fodInfos->filter)
@@ -3026,7 +2996,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       lpstrDisplay = lpstrPos;
       lpstrPos += lstrlenW(lpstrPos) + 1;
 
-      CBAddString(fodInfos->DlgInfos.hwndFileTypeCB, lpstrDisplay);
+      SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_ADDSTRING, 0, (LPARAM)lpstrDisplay);
 
       nFilters++;
 
@@ -3036,7 +3006,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       lpstrPos += lstrlenW(lpstrPos) + 1;
 
       /* Add the item at the end of the combo */
-      CBSetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, nFilters-1, lpstrExt);
+      SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_SETITEMDATA, nFilters - 1, (LPARAM)lpstrExt);
 
       /* malformed filters are added anyway... */
       if (!*lpstrExt) break;
@@ -3066,7 +3036,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       nFilterIndexCB--;
 
     /* Set the current index selection. */
-    CBSetCurSel(fodInfos->DlgInfos.hwndFileTypeCB, nFilterIndexCB);
+    SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_SETCURSEL, nFilterIndexCB, 0);
 
     /* Get the corresponding text string from the combo box. */
     lpstrFilter = (LPWSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,
@@ -3105,7 +3075,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
       LPWSTR lpstrFilter;
 
       /* Get the current item of the filetype combo box */
-      int iItem = CBGetCurSel(fodInfos->DlgInfos.hwndFileTypeCB);
+      int iItem = SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_GETCURSEL, 0, 0);
 
       /* set the current filter index */
       fodInfos->ofnInfos->nFilterIndex = iItem +
@@ -3141,7 +3111,9 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
  */
 static int FILEDLG95_FILETYPE_SearchExt(HWND hwnd,LPCWSTR lpstrExt)
 {
-  int i, iCount = CBGetCount(hwnd);
+  int i, iCount;
+
+  iCount = SendMessageW(hwnd, CB_GETCOUNT, 0, 0);
 
   TRACE("%s\n", debugstr_w(lpstrExt));
 
@@ -3165,7 +3137,9 @@ static void FILEDLG95_FILETYPE_Clean(HWND hwnd)
 {
   FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
   int iPos;
-  int iCount = CBGetCount(fodInfos->DlgInfos.hwndFileTypeCB);
+  int iCount;
+
+  iCount = SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_GETCOUNT, 0, 0);
 
   TRACE("\n");
 
@@ -3175,7 +3149,7 @@ static void FILEDLG95_FILETYPE_Clean(HWND hwnd)
     for(iPos = iCount-1;iPos>=0;iPos--)
     {
       heap_free((void *)CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,iPos));
-      CBDeleteString(fodInfos->DlgInfos.hwndFileTypeCB,iPos);
+      SendMessageW(fodInfos->DlgInfos.hwndFileTypeCB, CB_DELETESTRING, iPos, 0);
     }
   }
   /* Current filter */
@@ -3229,11 +3203,11 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   ReleaseDC( hwndCombo, hdc );
 
   /* set item height for both text field and listbox */
-  CBSetItemHeight( hwndCombo, -1, max( tm.tmHeight, GetSystemMetrics(SM_CYSMICON) ));
-  CBSetItemHeight( hwndCombo, 0, max( tm.tmHeight, GetSystemMetrics(SM_CYSMICON) ));
+  SendMessageW(hwndCombo, CB_SETITEMHEIGHT, -1, max(tm.tmHeight, GetSystemMetrics(SM_CYSMICON)));
+  SendMessageW(hwndCombo, CB_SETITEMHEIGHT, 0, max(tm.tmHeight, GetSystemMetrics(SM_CYSMICON)));
 
   /* Turn on the extended UI for the combo box like Windows does */
-  CBSetExtendedUI(hwndCombo, TRUE);
+  SendMessageW(hwndCombo, CB_SETEXTENDEDUI, TRUE, 0);
 
   /* Initialise data of Desktop folder */
   SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidlTmp);
@@ -3399,7 +3373,7 @@ static BOOL FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode)
       LPSFOLDER tmpFolder;
       int iItem;
 
-      iItem = CBGetCurSel(fodInfos->DlgInfos.hwndLookInCB);
+      iItem = SendMessageW(fodInfos->DlgInfos.hwndLookInCB, CB_GETCURSEL, 0, 0);
 
       if( iItem == CB_ERR) return FALSE;
 
@@ -3477,15 +3451,15 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
     /* Add the item at the end of the list */
     if(iInsertId < 0)
     {
-      iItemID = CBAddString(hwnd,sfi.szDisplayName);
+      iItemID = SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)sfi.szDisplayName);
     }
     /* Insert the item at the iInsertId position*/
     else
     {
-      iItemID = CBInsertString(hwnd,sfi.szDisplayName,iInsertId);
+      iItemID = SendMessageW(hwnd, CB_INSERTSTRING, iInsertId, (LPARAM)sfi.szDisplayName);
     }
 
-    CBSetItemDataPtr(hwnd,iItemID,tmpFolder);
+    SendMessageW(hwnd, CB_SETITEMDATA, iItemID, (LPARAM)tmpFolder);
     return iItemID;
   }
 
@@ -3561,7 +3535,7 @@ int FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl)
     }
   }
 
-  CBSetCurSel(hwnd,iItemPos);
+  SendMessageW(hwnd, CB_SETCURSEL, iItemPos, 0);
   liInfos->uSelectedItem = iItemPos;
 
   return 0;
@@ -3588,7 +3562,7 @@ static int FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd)
     SFOLDER *tmpFolder = (LPSFOLDER) CBGetItemDataPtr(hwnd,iItemPos);
     COMDLG32_SHFree(tmpFolder->pidlItem);
     heap_free(tmpFolder);
-    CBDeleteString(hwnd,iItemPos);
+    SendMessageW(hwnd, CB_DELETESTRING, iItemPos, 0);
     liInfos->iMaxIndentation--;
 
     return iItemPos;
@@ -3606,7 +3580,9 @@ static int FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd)
 static int FILEDLG95_LOOKIN_SearchItem(HWND hwnd,WPARAM searchArg,int iSearchMethod)
 {
   int i = 0;
-  int iCount = CBGetCount(hwnd);
+  int iCount;
+
+  iCount = SendMessageW(hwnd, CB_GETCOUNT, 0, 0);
 
   TRACE("0x%08lx 0x%x\n",searchArg, iSearchMethod);
 
@@ -3635,8 +3611,9 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
 {
     FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
     LookInInfos *liInfos = GetPropA(fodInfos->DlgInfos.hwndLookInCB,LookInInfosStr);
-    int iPos;
-    int iCount = CBGetCount(fodInfos->DlgInfos.hwndLookInCB);
+    int iPos, iCount;
+
+    iCount = SendMessageW(fodInfos->DlgInfos.hwndLookInCB, CB_GETCOUNT, 0, 0);
 
     TRACE("\n");
 
@@ -3648,7 +3625,7 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
         SFOLDER *tmpFolder = (LPSFOLDER) CBGetItemDataPtr(fodInfos->DlgInfos.hwndLookInCB,iPos);
         COMDLG32_SHFree(tmpFolder->pidlItem);
         heap_free(tmpFolder);
-        CBDeleteString(fodInfos->DlgInfos.hwndLookInCB,iPos);
+        SendMessageW(fodInfos->DlgInfos.hwndLookInCB, CB_DELETESTRING, iPos, 0);
       }
     }
 
