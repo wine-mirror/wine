@@ -4328,13 +4328,65 @@ static HRESULT WINAPI ID3DXEffectImpl_GetDevice(ID3DXEffect *iface, struct IDire
     return S_OK;
 }
 
+static BOOL param_on_lost_device(void *data, struct d3dx_parameter *param)
+{
+    struct IDirect3DVolumeTexture9 *volume_texture;
+    struct IDirect3DCubeTexture9 *cube_texture;
+    struct IDirect3DTexture9 *texture;
+    D3DSURFACE_DESC surface_desc;
+    D3DVOLUME_DESC volume_desc;
+
+    if (param->class == D3DXPC_OBJECT && !param->element_count)
+    {
+        switch (param->type)
+        {
+            case D3DXPT_TEXTURE:
+            case D3DXPT_TEXTURE1D:
+            case D3DXPT_TEXTURE2D:
+                texture = *(IDirect3DTexture9 **)param->data;
+                if (!texture)
+                    return FALSE;
+                IDirect3DTexture9_GetLevelDesc(texture, 0, &surface_desc);
+                if (surface_desc.Pool != D3DPOOL_DEFAULT)
+                    return FALSE;
+                break;
+            case D3DXPT_TEXTURE3D:
+                volume_texture = *(IDirect3DVolumeTexture9 **)param->data;
+                if (!volume_texture)
+                    return FALSE;
+                IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &volume_desc);
+                if (volume_desc.Pool != D3DPOOL_DEFAULT)
+                    return FALSE;
+                break;
+            case D3DXPT_TEXTURECUBE:
+                cube_texture = *(IDirect3DCubeTexture9 **)param->data;
+                if (!cube_texture)
+                    return FALSE;
+                IDirect3DTexture9_GetLevelDesc(cube_texture, 0, &surface_desc);
+                if (surface_desc.Pool != D3DPOOL_DEFAULT)
+                    return FALSE;
+                break;
+            default:
+                return FALSE;
+        }
+        IUnknown_Release(*(IUnknown **)param->data);
+        *(IUnknown **)param->data = NULL;
+    }
+    return FALSE;
+}
+
 static HRESULT WINAPI ID3DXEffectImpl_OnLostDevice(ID3DXEffect* iface)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx9_base_effect *base = &effect->base_effect;
+    unsigned int i;
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("iface %p.\n", iface);
 
-    return E_NOTIMPL;
+    for (i = 0; i < base->parameter_count; ++i)
+        walk_parameter_tree(&base->parameters[i].param, param_on_lost_device, NULL);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_OnResetDevice(ID3DXEffect* iface)
