@@ -1231,7 +1231,7 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_OnRedirectVerifyCallback(nsI
             ERR("AddRequest failed: %08x\n", nsres);
     }
 
-    if(This->bsc->is_doc_channel) {
+    if(This->bsc->is_doc_channel && This->bsc->bsc.window && This->bsc->bsc.window->base.outer_window) {
         IUri *uri = nsuri_get_uri(This->nschannel->uri);
 
         if(uri) {
