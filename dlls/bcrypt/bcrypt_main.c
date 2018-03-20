@@ -1361,15 +1361,33 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
            padding, iv, iv_len, output, output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (padding)
-    {
-        FIXME( "padding info not implemented\n" );
-        return STATUS_NOT_IMPLEMENTED;
-    }
     if (flags & ~BCRYPT_BLOCK_PADDING)
     {
         FIXME( "flags %08x not supported\n", flags );
         return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (key->mode == MODE_ID_GCM)
+    {
+        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+
+        if (!auth_info) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
+        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
+
+        if ((status = key_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+            return status;
+
+        *ret_len = input_len;
+        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
+        if (!output) return STATUS_SUCCESS;
+        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+        if ((status = key_decrypt( key, input, input_len, output, output_len )))
+            return status;
+
+        return STATUS_SUCCESS;
     }
 
     if ((status = key_set_params( key, iv, iv_len ))) return status;

@@ -969,16 +969,16 @@ static void test_BCryptDecrypt(void)
     memcpy(ivbuf, iv, sizeof(iv));
     memset(plaintext, 0, sizeof(plaintext));
     ret = pBCryptDecrypt(key, ciphertext4, 32, &auth_info, ivbuf, 16, plaintext, 32, &size, 0);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    todo_wine ok(size == 32, "got %u\n", size);
-    todo_wine ok(!memcmp(plaintext, expected3, sizeof(expected3)), "wrong data\n");
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(plaintext, expected3, sizeof(expected3)), "wrong data\n");
 
     /* test with wrong tag */
     memcpy(ivbuf, iv, sizeof(iv));
     auth_info.pbTag = iv; /* wrong tag */
     ret = pBCryptDecrypt(key, ciphertext4, 32, &auth_info, ivbuf, 16, plaintext, 32, &size, 0);
     todo_wine ok(ret == STATUS_AUTH_TAG_MISMATCH, "got %08x\n", ret);
-    todo_wine ok(size == 32, "got %u\n", size);
+    ok(size == 32, "got %u\n", size);
 
     ret = pBCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
