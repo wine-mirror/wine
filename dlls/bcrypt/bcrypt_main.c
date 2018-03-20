@@ -50,6 +50,9 @@ static HINSTANCE instance;
 #if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+/* Not present in gnutls version < 3.0 */
+static int (*pgnutls_cipher_tag)(gnutls_cipher_hd_t handle, void * tag, size_t tag_size);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_cipher_decrypt2);
@@ -68,6 +71,11 @@ MAKE_FUNCPTR(gnutls_perror);
 #define GNUTLS_CIPHER_AES_128_GCM 93
 #define GNUTLS_CIPHER_AES_256_GCM 94
 #endif
+
+static int compat_gnutls_cipher_tag(gnutls_cipher_hd_t handle, void * tag, size_t tag_size)
+{
+    return GNUTLS_E_UNKNOWN_CIPHER_TYPE;
+}
 
 static void gnutls_log( int level, const char *msg )
 {
@@ -101,6 +109,12 @@ static BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
     LOAD_FUNCPTR(gnutls_perror)
 #undef LOAD_FUNCPTR
+
+    if (!(pgnutls_cipher_tag = wine_dlsym( libgnutls_handle, "gnutls_cipher_tag", NULL, 0 )))
+    {
+        WARN("gnutls_cipher_tag not found\n");
+        pgnutls_cipher_tag = compat_gnutls_cipher_tag;
+    }
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
     {
@@ -1018,6 +1032,19 @@ static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_le
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_get_tag( struct key *key, UCHAR *tag, ULONG len )
+{
+    int ret;
+
+    if ((ret = pgnutls_cipher_tag( key->handle, tag, len )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_destroy( struct key *key )
 {
     if (key->handle) pgnutls_cipher_deinit( key->handle );
@@ -1123,6 +1150,12 @@ static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_le
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_get_tag( struct key *key, UCHAR *tag, ULONG len )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS key_destroy( struct key *key )
 {
     if (key->ref_encrypt) CCCryptorRelease( key->ref_encrypt );
@@ -1153,6 +1186,12 @@ static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_le
 
 static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
                              ULONG output_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_get_tag( struct key *key, UCHAR *tag, ULONG len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1311,7 +1350,7 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         if ((status = key_encrypt( key, input, input_len, output, output_len )))
             return status;
 
-        return STATUS_SUCCESS;
+        return key_get_tag( key, auth_info->pbTag, auth_info->cbTag );
     }
 
     if ((status = key_set_params( key, iv, iv_len ))) return status;
@@ -1370,6 +1409,7 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     if (key->mode == MODE_ID_GCM)
     {
         BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+        UCHAR tag[16];
 
         if (!auth_info) return STATUS_INVALID_PARAMETER;
         if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
@@ -1386,6 +1426,11 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
 
         if ((status = key_decrypt( key, input, input_len, output, output_len )))
             return status;
+
+        if ((status = key_get_tag( key, tag, sizeof(tag) )))
+            return status;
+        if (memcmp( tag, auth_info->pbTag, auth_info->cbTag ))
+            return STATUS_AUTH_TAG_MISMATCH;
 
         return STATUS_SUCCESS;
     }
