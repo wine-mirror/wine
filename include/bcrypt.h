@@ -61,6 +61,8 @@ typedef LONG NTSTATUS;
 #define BCRYPT_OPAQUE_KEY_BLOB   (const WCHAR []){'O','p','a','q','u','e','K','e','y','B','l','o','b',0}
 #define BCRYPT_KEY_DATA_BLOB     (const WCHAR []){'K','e','y','D','a','t','a','B','l','o','b',0}
 #define BCRYPT_AES_WRAP_KEY_BLOB (const WCHAR []){'R','f','c','3','5','6','5','K','e','y','W','r','a','p','B','l','o','b',0}
+#define BCRYPT_ECCPUBLIC_BLOB    (const WCHAR []){'E','C','C','P','U','B','L','I','C','B','L','O','B',0}
+#define BCRYPT_ECCPRIVATE_BLOB   (const WCHAR []){'E','C','C','P','R','I','V','A','T','E','B','L','O','B',0}
 
 #define MS_PRIMITIVE_PROVIDER (const WCHAR [])\
     {'M','i','c','r','o','s','o','f','t',' ','P','r','i','m','i','t','i','v','e',' ','P','r','o','v','i','d','e','r',0}
@@ -76,6 +78,9 @@ typedef LONG NTSTATUS;
 #define BCRYPT_SHA256_ALGORITHM     (const WCHAR []){'S','H','A','2','5','6',0}
 #define BCRYPT_SHA384_ALGORITHM     (const WCHAR []){'S','H','A','3','8','4',0}
 #define BCRYPT_SHA512_ALGORITHM     (const WCHAR []){'S','H','A','5','1','2',0}
+#define BCRYPT_ECDSA_P256_ALGORITHM (const WCHAR []){'E','C','D','S','A','_','P','2','5','6',0}
+#define BCRYPT_ECDSA_P384_ALGORITHM (const WCHAR []){'E','C','D','S','A','_','P','3','8','4',0}
+#define BCRYPT_ECDSA_P521_ALGORITHM (const WCHAR []){'E','C','D','S','A','_','P','5','2','1',0}
 
 #define BCRYPT_CHAIN_MODE_NA        (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','N','/','A',0}
 #define BCRYPT_CHAIN_MODE_CBC       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','C','B','C',0}
@@ -83,6 +88,13 @@ typedef LONG NTSTATUS;
 #define BCRYPT_CHAIN_MODE_CFB       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','C','F','B',0}
 #define BCRYPT_CHAIN_MODE_CCM       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','C','C','M',0}
 #define BCRYPT_CHAIN_MODE_GCM       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','G','C','M',0}
+
+#define BCRYPT_ECDSA_PUBLIC_P256_MAGIC  0x31534345
+#define BCRYPT_ECDSA_PRIVATE_P256_MAGIC 0x32534345
+#define BCRYPT_ECDSA_PUBLIC_P384_MAGIC  0x33534345
+#define BCRYPT_ECDSA_PRIVATE_P384_MAGIC 0x34534345
+#define BCRYPT_ECDSA_PUBLIC_P521_MAGIC  0x35534345
+#define BCRYPT_ECDSA_PRIVATE_P521_MAGIC 0x36534345
 
 typedef struct _BCRYPT_ALGORITHM_IDENTIFIER
 {
@@ -114,6 +126,23 @@ typedef struct _BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
     ULONGLONG cbData;
     ULONG dwFlags;
 } BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO, *PBCRYPT_AUTHENTICATED_CIPHER_MODE_INFO;
+
+typedef struct _BCRYPT_ECCKEY_BLOB
+{
+    ULONG dwMagic;
+    ULONG cbKey;
+} BCRYPT_ECCKEY_BLOB, *PBCRYPT_ECCKEY_BLOB;
+
+typedef struct _BCRYPT_PKCS1_PADDING_INFO
+{
+    LPCWSTR pszAlgId;
+} BCRYPT_PKCS1_PADDING_INFO;
+
+#define BCRYPT_PAD_NONE                     0x00000001
+#define BCRYPT_PAD_PKCS1                    0x00000002
+#define BCRYPT_PAD_OAEP                     0x00000004
+#define BCRYPT_PAD_PSS                      0x00000008
+#define BCRYPT_PAD_PKCS1_OPTIONAL_HASH_OID  0x00000010
 
 #define BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_VERSION 1
 
