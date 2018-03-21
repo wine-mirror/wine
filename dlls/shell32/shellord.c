@@ -2133,31 +2133,3 @@ BOOL WINAPI LinkWindow_UnregisterClass(void)
 void WINAPI SHFlushSFCache(void)
 {
 }
-
-/*************************************************************************
- *              SHGetImageList (SHELL32.727)
- *
- * Returns a copy of a shell image list.
- *
- * NOTES
- *   Windows XP features 4 sizes of image list, and Vista 5. Wine currently
- *   only supports the traditional small and large image lists, so requests
- *   for the others will currently fail.
- */
-HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
-{
-    HIMAGELIST hLarge, hSmall;
-    HIMAGELIST hNew;
-
-    /* Wine currently only maintains large and small image lists */
-    if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL) && (iImageList != SHIL_SYSSMALL))
-    {
-        FIXME("Unsupported image list %i requested\n", iImageList);
-        return E_FAIL;
-    }
-
-    Shell_GetImageLists(&hLarge, &hSmall);
-    hNew = (iImageList == SHIL_LARGE) ? hLarge : hSmall;
-
-    return HIMAGELIST_QueryInterface(hNew, riid, ppv);
-}
