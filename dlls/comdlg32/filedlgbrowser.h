@@ -93,6 +93,7 @@ typedef struct
     } HookMsg;
 
     BOOL ole_initialized;
+    LPITEMIDLIST places[5];
 } FileOpenDlgInfos;
 
 /***********************************************************************

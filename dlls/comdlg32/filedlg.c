@@ -121,9 +121,11 @@ typedef struct tagLookInInfo
 /* Undefined windows message sent by CreateViewObject*/
 #define WM_GETISHELLBROWSER  WM_USER+7
 
-#define TBPLACES_CMDID_DESKTOP       0xa065
-#define TBPLACES_CMDID_MYDOCS        0xa066
-#define TBPLACES_CMDID_MYCOMPUTER    0xa067
+#define TBPLACES_CMDID_PLACE0    0xa064
+#define TBPLACES_CMDID_PLACE1    0xa065
+#define TBPLACES_CMDID_PLACE2    0xa066
+#define TBPLACES_CMDID_PLACE3    0xa067
+#define TBPLACES_CMDID_PLACE4    0xa068
 
 /* NOTE
  * Those macros exist in windowsx.h. However, you can't really use them since
@@ -214,11 +216,117 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
 static BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
 
+static BOOL get_config_key_as_dword(HKEY hkey, const WCHAR *name, DWORD *value)
+{
+    DWORD type, data, size;
+
+    size = sizeof(data);
+    if (hkey && !RegQueryValueExW(hkey, name, 0, &type, (BYTE *)&data, &size))
+    {
+        *value = data;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL get_config_key_dword(HKEY hkey, const WCHAR *name, DWORD *value)
+{
+    DWORD type, data, size;
+
+    size = sizeof(data);
+    if (hkey && !RegQueryValueExW(hkey, name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD)
+    {
+        *value = data;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL get_config_key_string(HKEY hkey, const WCHAR *name, WCHAR **value)
+{
+    DWORD type, size;
+    WCHAR *str;
+
+    if (hkey && !RegQueryValueExW(hkey, name, 0, &type, NULL, &size))
+    {
+        if (type != REG_SZ && type != REG_EXPAND_SZ)
+            return FALSE;
+    }
+
+    str = heap_alloc(size);
+    if (RegQueryValueExW(hkey, name, 0, &type, (BYTE *)str, &size))
+    {
+        heap_free(str);
+        return FALSE;
+    }
+
+    *value = str;
+    return TRUE;
+}
+
 static BOOL is_places_bar_enabled(const FileOpenDlgInfos *fodInfos)
 {
-    return (fodInfos->ofnInfos->lStructSize == sizeof(*fodInfos->ofnInfos) &&
-            !(fodInfos->ofnInfos->FlagsEx & OFN_EX_NOPLACESBAR) &&
-             (fodInfos->ofnInfos->Flags & OFN_EXPLORER));
+    static const WCHAR noplacesbarW[] = {'N','o','P','l','a','c','e','s','B','a','r',0};
+    DWORD value;
+    HKEY hkey;
+
+    if (fodInfos->ofnInfos->lStructSize != sizeof(*fodInfos->ofnInfos) ||
+            (fodInfos->ofnInfos->FlagsEx & OFN_EX_NOPLACESBAR) ||
+           !(fodInfos->ofnInfos->Flags & OFN_EXPLORER))
+    {
+        return FALSE;
+    }
+
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Comdlg32", &hkey))
+        return TRUE;
+
+    value = 0;
+    get_config_key_as_dword(hkey, noplacesbarW, &value);
+    RegCloseKey(hkey);
+    return value == 0;
+}
+
+static void filedlg_collect_places_pidls(FileOpenDlgInfos *fodInfos)
+{
+    static const int default_places[] =
+    {
+        CSIDL_DESKTOP,
+        CSIDL_MYDOCUMENTS,
+        CSIDL_DRIVES,
+    };
+    unsigned int i;
+    HKEY hkey;
+
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Comdlg32\\Placesbar",
+            &hkey))
+    {
+        for (i = 0; i < ARRAY_SIZE(fodInfos->places); i++)
+        {
+            static const WCHAR placeW[] = {'P','l','a','c','e','%','d',0};
+            WCHAR nameW[8];
+            DWORD value;
+            WCHAR *str;
+
+            sprintfW(nameW, placeW, i);
+            if (get_config_key_dword(hkey, nameW, &value))
+                SHGetSpecialFolderLocation(NULL, value, &fodInfos->places[i]);
+            else if (get_config_key_string(hkey, nameW, &str))
+            {
+                SHParseDisplayName(str, NULL, &fodInfos->places[i], 0, NULL);
+                heap_free(str);
+            }
+        }
+
+        /* FIXME: eliminate duplicates. */
+
+        RegCloseKey(hkey);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(default_places); i++)
+        SHGetSpecialFolderLocation(NULL, default_places[i], &fodInfos->places[i]);
 }
 
 /***********************************************************************
@@ -434,6 +542,7 @@ static void init_filedlg_infoA(OPENFILENAMEA *ofn, FileOpenDlgInfos *info)
 static BOOL GetFileDialog95(FileOpenDlgInfos *info, UINT dlg_type)
 {
     WCHAR *current_dir = NULL;
+    unsigned int i;
     BOOL ret;
 
     /* save current directory */
@@ -472,6 +581,10 @@ static BOOL GetFileDialog95(FileOpenDlgInfos *info, UINT dlg_type)
 
     heap_free(info->filename);
     heap_free(info->initdir);
+
+    for (i = 0; i < ARRAY_SIZE(info->places); i++)
+        ILFree(info->places[i]);
+
     return ret;
 }
 
@@ -1477,17 +1590,6 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
   if (is_places_bar_enabled(fodInfos))
   {
-      static const struct bar_place_descr
-      {
-          int csidl;
-          int cmdid;
-      }
-      default_places[] =
-      {
-          { CSIDL_DESKTOP,     TBPLACES_CMDID_DESKTOP },
-          { CSIDL_MYDOCUMENTS, TBPLACES_CMDID_MYDOCS },
-          { CSIDL_DRIVES,      TBPLACES_CMDID_MYCOMPUTER },
-      };
       TBBUTTON tb = { 0 };
       HIMAGELIST himl;
       RECT rect;
@@ -1498,26 +1600,28 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
       cx = rect.right - rect.left;
 
       SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETBUTTONWIDTH, 0, MAKELPARAM(cx, cx));
-
       himl = ImageList_Create(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), ILC_COLOR32, 4, 1);
-      for (i = 0; i < sizeof(default_places)/sizeof(default_places[0]); i++)
+
+      filedlg_collect_places_pidls(fodInfos);
+      for (i = 0; i < ARRAY_SIZE(fodInfos->places); i++)
       {
-          ITEMIDLIST *pidl;
+          int index;
 
-          SHGetSpecialFolderLocation(NULL, default_places[i].csidl, &pidl);
+          if (!fodInfos->places[i])
+              continue;
+
           memset(&fileinfo, 0, sizeof(fileinfo));
-          SHGetFileInfoW((const WCHAR *)pidl, 0, &fileinfo, sizeof(fileinfo),
+          SHGetFileInfoW((const WCHAR *)fodInfos->places[i], 0, &fileinfo, sizeof(fileinfo),
               SHGFI_PIDL | SHGFI_DISPLAYNAME | SHGFI_ICON);
-          ImageList_AddIcon(himl, fileinfo.hIcon);
+          index = ImageList_AddIcon(himl, fileinfo.hIcon);
 
-          tb.iBitmap = i;
+          tb.iBitmap = index;
           tb.iString = (INT_PTR)fileinfo.szDisplayName;
           tb.fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
-          tb.idCommand = default_places[i].cmdid;
+          tb.idCommand = TBPLACES_CMDID_PLACE0 + i;
           SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_ADDBUTTONSW, 1, (LPARAM)&tb);
 
           DestroyIcon(fileinfo.hIcon);
-          CoTaskMemFree(pidl);
       }
 
       SendDlgItemMessageW(hwnd, IDC_TOOLBARPLACES, TB_SETIMAGELIST, 0, (LPARAM)himl);
@@ -1869,20 +1973,15 @@ void FILEDLG95_Clean(HWND hwnd)
 
 
 /***********************************************************************
- * Browse to special folder
+ * Browse to arbitrary pidl
  */
-static void filedlg_browse_to_specialfolder(const FileOpenDlgInfos *info, int csidl)
+static void filedlg_browse_to_pidl(const FileOpenDlgInfos *info, LPITEMIDLIST pidl)
 {
-    LPITEMIDLIST pidl;
+    TRACE("%p, %p\n", info->ShellInfos.hwndOwner, pidl);
 
-    TRACE("%p, %d\n", info->ShellInfos.hwndOwner, csidl);
-
-    SHGetSpecialFolderLocation(0, csidl, &pidl);
     IShellBrowser_BrowseObject(info->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
     if (info->ofnInfos->Flags & OFN_EXPLORER)
         SendCustomDlgNotificationMessage(info->ShellInfos.hwndOwner, CDN_FOLDERCHANGE);
-
-    COMDLG32_SHFree(pidl);
 }
 
 /***********************************************************************
@@ -1894,9 +1993,9 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam)
 {
   FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
   WORD wNotifyCode = HIWORD(wParam); /* notification code */
-  WORD wID = LOWORD(wParam);         /* item, control, or accelerator identifier */
+  WORD id = LOWORD(wParam);         /* item, control, or accelerator identifier */
 
-  switch(wID)
+  switch (id)
   {
     /* OK button */
   case IDOK:
@@ -1935,16 +2034,22 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam)
     break;
 
   case FCIDM_TB_DESKTOP:
-  case TBPLACES_CMDID_DESKTOP:
-    filedlg_browse_to_specialfolder(fodInfos, CSIDL_DESKTOP);
-    break;
+  {
+    LPITEMIDLIST pidl;
 
-  case TBPLACES_CMDID_MYDOCS:
-    filedlg_browse_to_specialfolder(fodInfos, CSIDL_MYDOCUMENTS);
+    SHGetSpecialFolderLocation(0, CSIDL_DESKTOP, &pidl);
+    filedlg_browse_to_pidl(fodInfos, pidl);
+    COMDLG32_SHFree(pidl);
     break;
+  }
 
-  case TBPLACES_CMDID_MYCOMPUTER:
-    filedlg_browse_to_specialfolder(fodInfos, CSIDL_DRIVES);
+  /* Places bar */
+  case TBPLACES_CMDID_PLACE0:
+  case TBPLACES_CMDID_PLACE1:
+  case TBPLACES_CMDID_PLACE2:
+  case TBPLACES_CMDID_PLACE3:
+  case TBPLACES_CMDID_PLACE4:
+    filedlg_browse_to_pidl(fodInfos, fodInfos->places[id - TBPLACES_CMDID_PLACE0]);
     break;
 
   case edt1:
