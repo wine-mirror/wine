@@ -2306,6 +2306,18 @@ void WINAPI ObfDereferenceObject( void *obj )
     ObDereferenceObject( obj );
 }
 
+/***********************************************************************
+ *           ObRegisterCallbacks (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION *callBack, void **handle)
+{
+    FIXME( "stub: %p %p\n", callBack, handle );
+
+    if(handle)
+        *handle = UlongToHandle(0xdeadbeaf);
+
+    return STATUS_SUCCESS;
+}
 
 /***********************************************************************
  *           IoGetAttachedDeviceReference   (NTOSKRNL.EXE.@)

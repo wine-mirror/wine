@@ -817,6 +817,7 @@
 @ stdcall ObReferenceObjectByName(ptr long ptr long ptr long ptr ptr)
 @ stdcall ObReferenceObjectByPointer(ptr long ptr long)
 @ stub ObReferenceSecurityDescriptor
+@ stdcall ObRegisterCallbacks(ptr ptr)
 @ stub ObReleaseObjectSecurity
 @ stub ObSetHandleAttributes
 @ stub ObSetSecurityDescriptorInfo
