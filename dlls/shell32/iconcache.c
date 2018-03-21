@@ -61,7 +61,7 @@ typedef struct
 
 static HDPA sic_hdpa;
 static INIT_ONCE sic_init_once = INIT_ONCE_STATIC_INIT;
-static HIMAGELIST shell_imagelists[SHIL_SMALL+1];
+static HIMAGELIST shell_imagelists[SHIL_EXTRALARGE+1];
 
 static CRITICAL_SECTION SHELL32_SicCS;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -347,7 +347,7 @@ static INT SIC_IconAppend (const WCHAR *sourcefile, INT src_index, HICON *hicons
 
 static BOOL get_imagelist_icon_size(int list, SIZE *size)
 {
-    if (list < SHIL_LARGE || list > SHIL_SMALL) return FALSE;
+    if (list < 0 || list >= ARRAY_SIZE(shell_imagelists)) return FALSE;
 
     return ImageList_GetIconSize( shell_imagelists[list], &size->cx, &size->cy );
 }
@@ -360,7 +360,7 @@ static BOOL get_imagelist_icon_size(int list, SIZE *size)
  */
 static INT SIC_LoadIcon (const WCHAR *sourcefile, INT index, DWORD flags)
 {
-    HICON hicons[SHIL_SMALL+1] = { 0 };
+    HICON hicons[ARRAY_SIZE(shell_imagelists)] = { 0 };
     HICON hshortcuts[ARRAY_SIZE(hicons)] = { 0 };
     unsigned int i;
     SIZE size;
@@ -431,59 +431,61 @@ static int get_shell_icon_size(void)
  */
 static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context )
 {
-        HICON hicons[SHIL_SMALL+1];
-	int		cx_small, cy_small;
-	int		cx_large, cy_large;
-	unsigned int i;
+    HICON hicons[ARRAY_SIZE(shell_imagelists)];
+    SIZE sizes[ARRAY_SIZE(shell_imagelists)];
+    BOOL failed = FALSE;
+    unsigned int i;
 
-        if (!IsProcessDPIAware())
-        {
-            cx_large = cy_large = get_shell_icon_size();
-            cx_small = GetSystemMetrics( SM_CXSMICON );
-            cy_small = GetSystemMetrics( SM_CYSMICON );
-        }
-        else
-        {
-            cx_large = GetSystemMetrics( SM_CXICON );
-            cy_large = GetSystemMetrics( SM_CYICON );
-            cx_small = cx_large / 2;
-            cy_small = cy_large / 2;
-        }
+    if (!IsProcessDPIAware())
+    {
+        sizes[SHIL_LARGE].cx = sizes[SHIL_LARGE].cy = get_shell_icon_size();
+        sizes[SHIL_SMALL].cx = GetSystemMetrics( SM_CXSMICON );
+        sizes[SHIL_SMALL].cy = GetSystemMetrics( SM_CYSMICON );
+    }
+    else
+    {
+        sizes[SHIL_LARGE].cx = GetSystemMetrics( SM_CXICON );
+        sizes[SHIL_LARGE].cy = GetSystemMetrics( SM_CYICON );
+        sizes[SHIL_SMALL].cx = sizes[SHIL_LARGE].cx / 2;
+        sizes[SHIL_SMALL].cy = sizes[SHIL_LARGE].cy / 2;
+    }
 
-        TRACE("large %dx%d small %dx%d\n", cx_large, cy_large, cx_small, cx_small);
+    sizes[SHIL_EXTRALARGE].cx = (GetSystemMetrics( SM_CXICON ) * 3) / 2;
+    sizes[SHIL_EXTRALARGE].cy = (GetSystemMetrics( SM_CYICON ) * 3) / 2;
 
-	sic_hdpa = DPA_Create(16);
+    TRACE("large %dx%d small %dx%d\n", sizes[SHIL_LARGE].cx, sizes[SHIL_LARGE].cy, sizes[SHIL_SMALL].cx, sizes[SHIL_SMALL].cy);
 
-	if (!sic_hdpa)
-	{
-	  return(FALSE);
-	}
+    sic_hdpa = DPA_Create(16);
+    if (!sic_hdpa)
+        return(FALSE);
 
-        shell_imagelists[SHIL_SMALL] = ImageList_Create(cx_small, cy_small, ILC_COLOR32 | ILC_MASK, 0, 0x20);
-        shell_imagelists[SHIL_LARGE] = ImageList_Create(cx_large, cy_large, ILC_COLOR32 | ILC_MASK, 0, 0x20);
-
-        for (i = 0; i < ARRAY_SIZE(shell_imagelists); i++)
-            ImageList_SetBkColor(shell_imagelists[i], CLR_NONE);
+    for (i = 0; i < ARRAY_SIZE(shell_imagelists); i++)
+    {
+        shell_imagelists[i] = ImageList_Create(sizes[i].cx, sizes[i].cy, ILC_COLOR32 | ILC_MASK, 0, 0x20);
+        ImageList_SetBkColor(shell_imagelists[i], CLR_NONE);
 
         /* Load the document icon, which is used as the default if an icon isn't found. */
-        hicons[SHIL_SMALL] = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
-                                IMAGE_ICON, cx_small, cy_small, LR_SHARED);
-        hicons[SHIL_LARGE] = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
-                                IMAGE_ICON, cx_large, cy_large, LR_SHARED);
-
-        if (!hicons[SHIL_SMALL] || !hicons[SHIL_LARGE])
+        if (!(hicons[i] = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
+            IMAGE_ICON, sizes[i].cx, sizes[i].cy, LR_SHARED)))
         {
-          FIXME("Failed to load IDI_SHELL_DOCUMENT icon!\n");
-          return FALSE;
+            failed = TRUE;
         }
+    }
 
-        SIC_IconAppend (swShell32Name, IDI_SHELL_DOCUMENT-1, hicons, 0);
-        SIC_IconAppend (swShell32Name, -IDI_SHELL_DOCUMENT, hicons, 0);
+    if (failed)
+    {
+        FIXME("Failed to load IDI_SHELL_DOCUMENT icon!\n");
+        return FALSE;
+    }
+
+    SIC_IconAppend(swShell32Name, IDI_SHELL_DOCUMENT - 1, hicons, 0);
+    SIC_IconAppend(swShell32Name, -IDI_SHELL_DOCUMENT, hicons, 0);
 
     TRACE("small list=%p, large list=%p\n", shell_imagelists[SHIL_SMALL], shell_imagelists[SHIL_LARGE]);
 
     return TRUE;
 }
+
 /*************************************************************************
  * SIC_Destroy
  *
@@ -1035,8 +1037,7 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
  */
 HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
 {
-    /* Wine currently only maintains large and small image lists */
-    if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL) && (iImageList != SHIL_SYSSMALL))
+    if (iImageList < 0 || iImageList > SHIL_SYSSMALL)
     {
         FIXME("Unsupported image list %i requested\n", iImageList);
         return E_FAIL;
