@@ -1426,9 +1426,9 @@
 @ cdecl -private _purecall() msvcrt._purecall
 @ varargs -private _snprintf(ptr long str) msvcrt._snprintf
 @ varargs -private _snwprintf(ptr long wstr) msvcrt._snwprintf
-@ cdecl -private _stricmp(str str)
+@ cdecl -private _stricmp(str str) NTOSKRNL__stricmp
 @ cdecl -private _strlwr(str) msvcrt._strlwr
-@ cdecl -private _strnicmp(str str long) _strnicmp
+@ cdecl -private _strnicmp(str str long) NTOSKRNL__strnicmp
 @ cdecl -private _strnset(str long long) msvcrt._strnset
 @ cdecl -private _strrev(str) msvcrt._strrev
 @ cdecl -private _strset(str long) msvcrt._strset
