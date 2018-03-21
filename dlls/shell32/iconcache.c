@@ -61,7 +61,7 @@ typedef struct
 
 static HDPA sic_hdpa;
 static INIT_ONCE sic_init_once = INIT_ONCE_STATIC_INIT;
-static HIMAGELIST shell_imagelists[SHIL_SYSSMALL+1];
+static HIMAGELIST shell_imagelists[SHIL_LAST+1];
 
 static CRITICAL_SECTION SHELL32_SicCS;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -454,6 +454,7 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
     sizes[SHIL_EXTRALARGE].cy = (GetSystemMetrics( SM_CYICON ) * 3) / 2;
     sizes[SHIL_SYSSMALL].cx = GetSystemMetrics( SM_CXSMICON );
     sizes[SHIL_SYSSMALL].cy = GetSystemMetrics( SM_CYSMICON );
+    sizes[SHIL_JUMBO].cx = sizes[SHIL_JUMBO].cy = 256;
 
     TRACE("large %dx%d small %dx%d\n", sizes[SHIL_LARGE].cx, sizes[SHIL_LARGE].cy, sizes[SHIL_SMALL].cx, sizes[SHIL_SMALL].cy);
 
@@ -1039,11 +1040,10 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
  */
 HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
 {
-    if (iImageList < 0 || iImageList > SHIL_SYSSMALL)
-    {
-        FIXME("Unsupported image list %i requested\n", iImageList);
+    TRACE("(%d, %s, %p)\n", iImageList, debugstr_guid(riid), ppv);
+
+    if (iImageList < 0 || iImageList > SHIL_LAST)
         return E_FAIL;
-    }
 
     InitOnceExecuteOnce( &sic_init_once, SIC_Initialize, NULL, NULL );
     return HIMAGELIST_QueryInterface(shell_imagelists[iImageList], riid, ppv);
