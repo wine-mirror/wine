@@ -533,6 +533,7 @@ const struct vulkan_funcs *get_vulkan_driver(UINT version)
 
 const struct vulkan_funcs *get_vulkan_driver(UINT version)
 {
+    ERR("Wine was built without Vulkan support.\n");
     return NULL;
 }
 
