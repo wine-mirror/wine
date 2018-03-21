@@ -19,7 +19,23 @@
 #ifndef __NTIFS_H__
 #define __NTIFS_H__
 
+#include "ntddk.h"
+
 typedef struct _EX_PUSH_LOCK EX_PUSH_LOCK, *PEX_PUSH_LOCK;
+
+typedef enum _FS_FILTER_SECTION_SYNC_TYPE
+{
+    SyncTypeOther = 0,
+    SyncTypeCreateSection
+} FS_FILTER_SECTION_SYNC_TYPE, *PFS_FILTER_SECTION_SYNC_TYPE;
+
+typedef struct _FS_FILTER_SECTION_SYNC_OUTPUT
+{
+    ULONG StructureSize;
+    ULONG SizeReturned;
+    ULONG Flags;
+    ULONG DesiredReadAlignment;
+} FS_FILTER_SECTION_SYNC_OUTPUT, *PFS_FILTER_SECTION_SYNC_OUTPUT;
 
 typedef struct _KQUEUE
 {
@@ -29,6 +45,7 @@ typedef struct _KQUEUE
   ULONG MaximumCount;
   LIST_ENTRY ThreadListHead;
 } KQUEUE, *PKQUEUE, *RESTRICTED_POINTER PRKQUEUE;
+
 
 NTSTATUS WINAPI ObQueryNameString(PVOID,POBJECT_NAME_INFORMATION,ULONG,PULONG);
 
