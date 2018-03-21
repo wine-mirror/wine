@@ -19,6 +19,8 @@
 #include "wine/heap.h"
 #include "wine/unicode.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 typedef enum {
     ADDON_GECKO,
     ADDON_MONO

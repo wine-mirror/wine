@@ -161,7 +161,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
     APPINFO *info = NULL;
     LPWSTR iconPtr;
 
-    sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+    sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
 
     for (i = 0; RegEnumKeyExW(root, i, subKeyName, &sizeOfSubKeyName, NULL,
         NULL, NULL, NULL) != ERROR_NO_MORE_ITEMS; ++i)
@@ -172,7 +172,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             && dwType == REG_DWORD && value == 1)
         {
             RegCloseKey(hkeyApp);
-            sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+            sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
             continue;
         }
         displen = 0;
@@ -197,7 +197,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             else
             {
                 RegCloseKey(hkeyApp);
-                sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+                sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
                 continue;
             }
 
@@ -308,7 +308,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
         }
 
         RegCloseKey(hkeyApp);
-        sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+        sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
     }
 
     return TRUE;
@@ -501,7 +501,7 @@ static void UninstallProgram(int id, DWORD button)
     BOOL res;
 
     LoadStringW(hInst, IDS_UNINSTALL_FAILED, sUninstallFailed,
-        sizeof(sUninstallFailed) / sizeof(sUninstallFailed[0]));
+        ARRAY_SIZE(sUninstallFailed));
 
     LIST_FOR_EACH_ENTRY( iter, &app_list, APPINFO, entry )
     {
@@ -617,7 +617,7 @@ static INT_PTR CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, L
 
                     /* Load our "not specified" string */
                     LoadStringW(hInst, IDS_NOT_SPECIFIED, notfound,
-                        sizeof(notfound) / sizeof(notfound[0]));
+                        ARRAY_SIZE(notfound));
 
                     /* Update the data for items already read into the structure */
                     SetInfoDialogText(NULL, iter->publisher, notfound, hWnd,
@@ -712,7 +712,7 @@ static BOOL AddListViewColumns(HWND hWnd)
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;
 
     /* Add the columns */
-    for (i = 0; i < sizeof(columns) / sizeof(columns[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(columns); i++)
     {
         lvc.iSubItem = i;
         lvc.pszText = buf;
@@ -721,7 +721,7 @@ static BOOL AddListViewColumns(HWND hWnd)
         lvc.cx = columns[i].width;
         lvc.fmt = columns[i].fmt;
 
-        LoadStringW(hInst, columns[i].title, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInst, columns[i].title, buf, ARRAY_SIZE(buf));
 
         if (ListView_InsertColumnW(hWnd, i, &lvc) == -1)
             return FALSE;
@@ -938,10 +938,10 @@ static void StartApplet(HWND hWnd)
     WCHAR tab_title[MAX_STRING_LEN], app_title[MAX_STRING_LEN];
 
     /* Load the strings we will use */
-    LoadStringW(hInst, IDS_TAB1_TITLE, tab_title, sizeof(tab_title) / sizeof(tab_title[0]));
-    LoadStringW(hInst, IDS_CPL_TITLE, app_title, sizeof(app_title) / sizeof(app_title[0]));
-    LoadStringW(hInst, IDS_REMOVE, btnRemove, sizeof(btnRemove) / sizeof(btnRemove[0]));
-    LoadStringW(hInst, IDS_MODIFY_REMOVE, btnModifyRemove, sizeof(btnModifyRemove) / sizeof(btnModifyRemove[0]));
+    LoadStringW(hInst, IDS_TAB1_TITLE, tab_title, ARRAY_SIZE(tab_title));
+    LoadStringW(hInst, IDS_CPL_TITLE, app_title, ARRAY_SIZE(app_title));
+    LoadStringW(hInst, IDS_REMOVE, btnRemove, ARRAY_SIZE(btnRemove));
+    LoadStringW(hInst, IDS_MODIFY_REMOVE, btnModifyRemove, ARRAY_SIZE(btnModifyRemove));
 
     /* Fill out the PROPSHEETPAGE */
     psp.dwSize = sizeof (PROPSHEETPAGEW);
