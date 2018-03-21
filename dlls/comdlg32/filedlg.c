@@ -1048,7 +1048,7 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
             break;
 
         case CDM_GETFOLDERIDLIST:
-            retval = COMDLG32_PIDL_ILGetSize(fodInfos->ShellInfos.pidlAbsCurrent);
+            retval = ILGetSize(fodInfos->ShellInfos.pidlAbsCurrent);
             if (retval <= wParam)
                 memcpy((void*)lParam, fodInfos->ShellInfos.pidlAbsCurrent, retval);
             break;
@@ -1806,19 +1806,20 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
       if (!handledPath && (win2000plus || win98plus)) {
           fodInfos->initdir = heap_alloc(MAX_PATH * sizeof(WCHAR));
 
-          if(!COMDLG32_SHGetFolderPathW(hwnd, CSIDL_PERSONAL, 0, 0, fodInfos->initdir))
+          if (SHGetFolderPathW(hwnd, CSIDL_PERSONAL, 0, 0, fodInfos->initdir) == S_OK)
           {
-            if(!COMDLG32_SHGetFolderPathW(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, fodInfos->initdir))
-            {
-                /* last fallback */
-                GetCurrentDirectoryW(MAX_PATH, fodInfos->initdir);
-                TRACE("No personal or desktop dir, using cwd as failsafe: %s\n", debugstr_w(fodInfos->initdir));
-            } else {
+              if (SHGetFolderPathW(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, fodInfos->initdir) == S_OK)
+              {
+                  /* last fallback */
+                  GetCurrentDirectoryW(MAX_PATH, fodInfos->initdir);
+                  TRACE("No personal or desktop dir, using cwd as failsafe: %s\n", debugstr_w(fodInfos->initdir));
+              }
+              else
                 TRACE("No personal dir, using desktop instead: %s\n", debugstr_w(fodInfos->initdir));
-            }
-          } else {
-            TRACE("No initial dir specified, using personal files dir of %s\n", debugstr_w(fodInfos->initdir));
           }
+          else
+              TRACE("No initial dir specified, using personal files dir of %s\n", debugstr_w(fodInfos->initdir));
+
           handledPath = TRUE;
       } else if (!handledPath) {
           fodInfos->initdir = heap_alloc(MAX_PATH * sizeof(WCHAR));
@@ -1954,8 +1955,7 @@ static LRESULT FILEDLG95_FillControls(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* Browse to the initial directory */
   IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser,pidlItemId, SBSP_ABSOLUTE);
 
-  /* Free pidlItem memory */
-  COMDLG32_SHFree(pidlItemId);
+  ILFree(pidlItemId);
 
   return TRUE;
 }
@@ -2039,7 +2039,7 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam)
 
     SHGetSpecialFolderLocation(0, CSIDL_DESKTOP, &pidl);
     filedlg_browse_to_pidl(fodInfos, pidl);
-    COMDLG32_SHFree(pidl);
+    ILFree(pidl);
     break;
   }
 
@@ -2179,7 +2179,7 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
 
       /* move to the next file in the list of files */
       lpstrTemp += lstrlenW(lpstrTemp) + 1;
-      COMDLG32_SHFree(pidl);
+      ILFree(pidl);
     }
   }
 
@@ -2510,7 +2510,7 @@ int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
                 nOpenAction = ONOPEN_OPEN;
                 break;
             }
-            COMDLG32_SHFree(pidl);
+            ILFree(pidl);
             pidl = NULL;
         }
         else if (!(flags & OFN_NOVALIDATE))
@@ -2542,7 +2542,7 @@ int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
             break;
         }
     }
-    if(pidl) COMDLG32_SHFree(pidl);
+    ILFree(pidl);
 
     return nOpenAction;
 }
@@ -2661,7 +2661,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           LPITEMIDLIST pidlCurrent;
           IPersistFolder2_GetCurFolder(ppf2, &pidlCurrent);
           IPersistFolder2_Release(ppf2);
-	  if( ! COMDLG32_PIDL_ILIsEqual(pidlCurrent, fodInfos->ShellInfos.pidlAbsCurrent))
+          if (!ILIsEqual(pidlCurrent, fodInfos->ShellInfos.pidlAbsCurrent))
 	  {
             if (SUCCEEDED(IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE))
                 && fodInfos->ofnInfos->Flags & OFN_EXPLORER)
@@ -2675,7 +2675,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             if (fodInfos->Shell.FOIShellView)
               IShellView_Refresh(fodInfos->Shell.FOIShellView);
 	  }
-          COMDLG32_SHFree(pidlCurrent);
+          ILFree(pidlCurrent);
           if (filename_is_edit( fodInfos ))
               SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, -1);
           else
@@ -3033,7 +3033,7 @@ static void FILEDLG95_SHELL_Clean(HWND hwnd)
 
     TRACE("\n");
 
-    COMDLG32_SHFree(fodInfos->ShellInfos.pidlAbsCurrent);
+    ILFree(fodInfos->ShellInfos.pidlAbsCurrent);
 
     /* clean Shell interfaces */
     if (fodInfos->Shell.FOIShellView)
@@ -3317,7 +3317,7 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   /* Initialise data of Desktop folder */
   SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidlTmp);
   FILEDLG95_LOOKIN_AddItem(hwndCombo, pidlTmp,LISTEND);
-  COMDLG32_SHFree(pidlTmp);
+  ILFree(pidlTmp);
 
   SHGetSpecialFolderLocation(0,CSIDL_DRIVES,&pidlDrives);
 
@@ -3336,7 +3336,7 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
 	if (!FILEDLG95_unixfs_is_rooted_at_desktop()) 
 	{
 	  /* special handling for CSIDL_DRIVES */
-	  if (COMDLG32_PIDL_ILIsEqual(pidlTmp, pidlDrives))
+	  if (ILIsEqual(pidlTmp, pidlDrives))
 	  {
 	    if(SUCCEEDED(IShellFolder_BindToObject(psfRoot, pidlTmp, NULL, &IID_IShellFolder, (LPVOID*)&psfDrives)))
 	    {
@@ -3345,10 +3345,10 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
 	      {
 	        while (S_OK == IEnumIDList_Next(lpeDrives, 1, &pidlTmp1, NULL))
 	        {
-	          pidlAbsTmp = COMDLG32_PIDL_ILCombine(pidlTmp, pidlTmp1);
+	          pidlAbsTmp = ILCombine(pidlTmp, pidlTmp1);
 	          FILEDLG95_LOOKIN_AddItem(hwndCombo, pidlAbsTmp,LISTEND);
-	          COMDLG32_SHFree(pidlAbsTmp);
-	          COMDLG32_SHFree(pidlTmp1);
+	          ILFree(pidlAbsTmp);
+	          ILFree(pidlTmp1);
 	        }
 	        IEnumIDList_Release(lpeDrives);
 	      }
@@ -3357,14 +3357,14 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
 	  }
 	}
 
-        COMDLG32_SHFree(pidlTmp);
+        ILFree(pidlTmp);
       }
       IEnumIDList_Release(lpeRoot);
     }
     IShellFolder_Release(psfRoot);
   }
 
-  COMDLG32_SHFree(pidlDrives);
+  ILFree(pidlDrives);
 }
 
 /***********************************************************************
@@ -3528,12 +3528,12 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
 
   /* Calculate the indentation of the item in the lookin*/
   pidlNext = pidl;
-  while( (pidlNext=COMDLG32_PIDL_ILGetNext(pidlNext)) )
+  while ((pidlNext = ILGetNext(pidlNext)))
   {
     tmpFolder->m_iIndent++;
   }
 
-  tmpFolder->pidlItem = COMDLG32_PIDL_ILClone(pidl);
+  tmpFolder->pidlItem = ILClone(pidl);
 
   if(tmpFolder->m_iIndent > liInfos->iMaxIndentation)
     liInfos->iMaxIndentation = tmpFolder->m_iIndent;
@@ -3568,7 +3568,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
     return iItemID;
   }
 
-  COMDLG32_SHFree( tmpFolder->pidlItem );
+  ILFree( tmpFolder->pidlItem );
   heap_free( tmpFolder );
   return -1;
 
@@ -3597,8 +3597,7 @@ static int FILEDLG95_LOOKIN_InsertItemAfterParent(HWND hwnd,LPITEMIDLIST pidl)
     iParentPos = FILEDLG95_LOOKIN_InsertItemAfterParent(hwnd,pidlParent);
   }
 
-  /* Free pidlParent memory */
-  COMDLG32_SHFree(pidlParent);
+  ILFree(pidlParent);
 
   return FILEDLG95_LOOKIN_AddItem(hwnd,pidl,iParentPos + 1);
 }
@@ -3665,7 +3664,7 @@ static int FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd)
   if((iItemPos = FILEDLG95_LOOKIN_SearchItem(hwnd,liInfos->iMaxIndentation,SEARCH_EXP)) >=0)
   {
     SFOLDER *tmpFolder = (LPSFOLDER) CBGetItemDataPtr(hwnd,iItemPos);
-    COMDLG32_SHFree(tmpFolder->pidlItem);
+    ILFree(tmpFolder->pidlItem);
     heap_free(tmpFolder);
     SendMessageW(hwnd, CB_DELETESTRING, iItemPos, 0);
     liInfos->iMaxIndentation--;
@@ -3697,7 +3696,7 @@ static int FILEDLG95_LOOKIN_SearchItem(HWND hwnd,WPARAM searchArg,int iSearchMet
     {
       LPSFOLDER tmpFolder = (LPSFOLDER) CBGetItemDataPtr(hwnd,i);
 
-      if(iSearchMethod == SEARCH_PIDL && COMDLG32_PIDL_ILIsEqual((LPITEMIDLIST)searchArg,tmpFolder->pidlItem))
+      if (iSearchMethod == SEARCH_PIDL && ILIsEqual((LPITEMIDLIST)searchArg, tmpFolder->pidlItem))
         return i;
       if(iSearchMethod == SEARCH_EXP && tmpFolder->m_iIndent == (int)searchArg)
         return i;
@@ -3728,7 +3727,7 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
       for(iPos = iCount-1;iPos>=0;iPos--)
       {
         SFOLDER *tmpFolder = (LPSFOLDER) CBGetItemDataPtr(fodInfos->DlgInfos.hwndLookInCB,iPos);
-        COMDLG32_SHFree(tmpFolder->pidlItem);
+        ILFree(tmpFolder->pidlItem);
         heap_free(tmpFolder);
         SendMessageW(fodInfos->DlgInfos.hwndLookInCB, CB_DELETESTRING, iPos, 0);
       }
@@ -3845,7 +3844,7 @@ static HRESULT COMDLG32_StrRetToStrNW (LPWSTR dest, DWORD len, LPSTRRET src, con
 	{
 	  case STRRET_WSTR:
 	    lstrcpynW(dest, src->u.pOleStr, len);
-	    COMDLG32_SHFree(src->u.pOleStr);
+	    CoTaskMemFree(src->u.pOleStr);
 	    break;
 
 	  case STRRET_CSTR:
@@ -3939,7 +3938,7 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex)
       LPIDA cida = GlobalLock(medium.u.hGlobal);
       if(nPidlIndex <= cida->cidl)
       {
-        pidl = COMDLG32_PIDL_ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[nPidlIndex]]));
+        pidl = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[nPidlIndex]]));
       }
       COMCTL32_ReleaseStgMedium(medium);
     }
@@ -4050,8 +4049,8 @@ LPITEMIDLIST GetParentPidl(LPITEMIDLIST pidl)
 
   TRACE("%p\n", pidl);
 
-  pidlParent = COMDLG32_PIDL_ILClone(pidl);
-  COMDLG32_PIDL_ILRemoveLastID(pidlParent);
+  pidlParent = ILClone(pidl);
+  ILRemoveLastID(pidlParent);
 
   return pidlParent;
 }
@@ -4131,7 +4130,7 @@ static BOOL BrowseSelectedFolder(HWND hwnd)
           if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
               SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
       }
-      COMDLG32_SHFree( pidlSelection );
+      ILFree( pidlSelection );
   }
 
   return bBrowseSelFolder;

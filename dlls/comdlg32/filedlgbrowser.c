@@ -40,6 +40,7 @@
 #include "shlguid.h"
 #include "servprov.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -155,7 +156,7 @@ static BOOL COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITE
 	{
 	  case STRRET_WSTR:
             lstrcpynW(dest, src->u.pOleStr, len);
-	    COMDLG32_SHFree(src->u.pOleStr);
+	    CoTaskMemFree(src->u.pOleStr);
 	    break;
 
 	  case STRRET_CSTR:
@@ -194,7 +195,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwndOwner);
     IShellBrowserImpl *sb;
 
-    sb = COMDLG32_SHAlloc(sizeof(IShellBrowserImpl));
+    sb = heap_alloc(sizeof(*sb));
 
     /* Initialisation of the member variables */
     sb->ref=1;
@@ -267,10 +268,8 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     TRACE("(%p,%u)\n", This, ref + 1);
 
     if (!ref)
-    {
-      COMDLG32_SHFree(This);
-      TRACE("-- destroyed\n");
-    }
+        heap_free(This);
+
     return ref;
 }
 
@@ -363,7 +362,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 	    return hRes;
         }
         /* create an absolute pidl */
-        pidlTmp = COMDLG32_PIDL_ILCombine(fodInfos->ShellInfos.pidlAbsCurrent, pidl);
+        pidlTmp = ILCombine(fodInfos->ShellInfos.pidlAbsCurrent, pidl);
     }
     else if(wFlags & SBSP_PARENT)
     {
@@ -375,7 +374,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     else /* SBSP_ABSOLUTE is 0x0000 */
     {
         /* An absolute pidl (relative from the desktop) */
-        pidlTmp =  COMDLG32_PIDL_ILClone(pidl);
+        pidlTmp = ILClone(pidl);
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
 
@@ -387,10 +386,10 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     /* If the pidl to browse to is equal to the actual pidl ...
        do nothing and pretend you did it*/
-    if(COMDLG32_PIDL_ILIsEqual(pidlTmp,fodInfos->ShellInfos.pidlAbsCurrent))
+    if (ILIsEqual(pidlTmp, fodInfos->ShellInfos.pidlAbsCurrent))
     {
         IShellFolder_Release(psfTmp);
-	COMDLG32_SHFree(pidlTmp);
+        ILFree(pidlTmp);
         TRACE("keep current folder\n");
         return NOERROR;
     }
@@ -430,7 +429,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     fodInfos->Shell.FOIShellFolder = psfTmp;
 
     /* Release old pidlAbsCurrent and update its value */
-    COMDLG32_SHFree(fodInfos->ShellInfos.pidlAbsCurrent);
+    ILFree(fodInfos->ShellInfos.pidlAbsCurrent);
     fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
 
     COMDLG32_UpdateCurrentDir(fodInfos);
@@ -784,8 +783,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDl
          hRes = S_OK;
 	}
 
-        /* Free memory used by pidl */
-        COMDLG32_SHFree(pidl);
+        ILFree(pidl);
 
         return hRes;
     }
