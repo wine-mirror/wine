@@ -2320,6 +2320,14 @@ NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION *callBack, void **
 }
 
 /***********************************************************************
+ *           ObUnRegisterCallbacks (NTOSKRNL.EXE.@)
+ */
+void WINAPI ObUnRegisterCallbacks(void *handle)
+{
+    FIXME( "stub: %p\n", handle );
+}
+
+/***********************************************************************
  *           IoGetAttachedDeviceReference   (NTOSKRNL.EXE.@)
  */
 DEVICE_OBJECT* WINAPI IoGetAttachedDeviceReference( DEVICE_OBJECT *device )

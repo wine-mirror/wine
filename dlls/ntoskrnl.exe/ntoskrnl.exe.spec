@@ -822,6 +822,7 @@
 @ stub ObSetHandleAttributes
 @ stub ObSetSecurityDescriptorInfo
 @ stub ObSetSecurityObjectByPointer
+@ stdcall ObUnRegisterCallbacks(ptr)
 @ stub PfxFindPrefix
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
