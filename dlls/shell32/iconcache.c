@@ -61,7 +61,7 @@ typedef struct
 
 static HDPA sic_hdpa;
 static INIT_ONCE sic_init_once = INIT_ONCE_STATIC_INIT;
-static HIMAGELIST shell_imagelists[SHIL_EXTRALARGE+1];
+static HIMAGELIST shell_imagelists[SHIL_SYSSMALL+1];
 
 static CRITICAL_SECTION SHELL32_SicCS;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -452,6 +452,8 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
 
     sizes[SHIL_EXTRALARGE].cx = (GetSystemMetrics( SM_CXICON ) * 3) / 2;
     sizes[SHIL_EXTRALARGE].cy = (GetSystemMetrics( SM_CYICON ) * 3) / 2;
+    sizes[SHIL_SYSSMALL].cx = GetSystemMetrics( SM_CXSMICON );
+    sizes[SHIL_SYSSMALL].cy = GetSystemMetrics( SM_CYSMICON );
 
     TRACE("large %dx%d small %dx%d\n", sizes[SHIL_LARGE].cx, sizes[SHIL_LARGE].cy, sizes[SHIL_SMALL].cx, sizes[SHIL_SMALL].cy);
 
@@ -1044,9 +1046,5 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
     }
 
     InitOnceExecuteOnce( &sic_init_once, SIC_Initialize, NULL, NULL );
-
-    if (iImageList == SHIL_SYSSMALL)
-        iImageList = SHIL_SMALL;
-
     return HIMAGELIST_QueryInterface(shell_imagelists[iImageList], riid, ppv);
 }
