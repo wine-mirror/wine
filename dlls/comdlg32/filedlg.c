@@ -1443,13 +1443,13 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
   if (fodInfos->unicode)
       fodInfos->DlgInfos.hwndTB = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
-          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
+          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | TBSTYLE_FLAT | CCS_NODIVIDER | CCS_NORESIZE,
           rectTB.left, rectTB.top,
           rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
           hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
   else
       fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
-          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
+          WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS | TBSTYLE_FLAT | CCS_NODIVIDER | CCS_NORESIZE,
           rectTB.left, rectTB.top,
           rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
           hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
