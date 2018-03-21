@@ -91,7 +91,7 @@ extern HRESULT IcnsEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDE
 extern HRESULT TgaDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 
 extern HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
-    UINT stride, UINT datasize, BYTE *bits,
+    UINT stride, UINT datasize, void *view, UINT offset,
     REFWICPixelFormatGUID pixelFormat, WICBitmapCreateCacheOption option,
     IWICBitmap **ppIBitmap) DECLSPEC_HIDDEN;
 extern HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler) DECLSPEC_HIDDEN;
