@@ -805,6 +805,7 @@
 @ stdcall ObDereferenceObject(ptr)
 @ stub ObDereferenceSecurityDescriptor
 @ stub ObFindHandleForObject
+@ stdcall ObGetFilterVersion()
 @ stub ObGetObjectSecurity
 @ stub ObInsertObject
 @ stub ObLogSecurityDescriptor

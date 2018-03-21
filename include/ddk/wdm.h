@@ -1429,6 +1429,7 @@ static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
 }
 
 void      WINAPI ObDereferenceObject(void*);
+USHORT    WINAPI ObGetFilterVersion(void);
 NTSTATUS  WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION*, void**);
 NTSTATUS  WINAPI ObReferenceObjectByHandle(HANDLE,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE,PVOID*,POBJECT_HANDLE_INFORMATION);
 NTSTATUS  WINAPI ObReferenceObjectByName(UNICODE_STRING*,ULONG,ACCESS_STATE*,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE,void*,void**);

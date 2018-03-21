@@ -2328,6 +2328,16 @@ void WINAPI ObUnRegisterCallbacks(void *handle)
 }
 
 /***********************************************************************
+ *           ObGetFilterVersion (NTOSKRNL.EXE.@)
+ */
+USHORT WINAPI ObGetFilterVersion(void)
+{
+    FIXME( "stub:\n" );
+
+    return OB_FLT_REGISTRATION_VERSION;
+}
+
+/***********************************************************************
  *           IoGetAttachedDeviceReference   (NTOSKRNL.EXE.@)
  */
 DEVICE_OBJECT* WINAPI IoGetAttachedDeviceReference( DEVICE_OBJECT *device )
