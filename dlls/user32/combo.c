@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * TODO:
- *   - ComboBox_[GS]etMinVisible()
- *   - CB_GETMINVISIBLE, CB_SETMINVISIBLE
  *   - CB_SETTOPINDEX
  */
 
