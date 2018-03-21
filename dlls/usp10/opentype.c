@@ -2705,86 +2705,57 @@ static LoadedLanguage *usp10_script_get_language(LoadedScript *script, OPENTYPE_
     return NULL;
 }
 
-static void GSUB_initialize_language_cache(LoadedScript *script)
-{
-    const OT_Script *table;
-    DWORD offset;
-    SIZE_T i;
-
-    if (!(table = script->table[USP10_SCRIPT_TABLE_GSUB]))
-        return;
-
-    if ((offset = GET_BE_WORD(table->DefaultLangSys)))
-    {
-        script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
-        script->default_language.gsub_table = (const BYTE *)table + offset;
-    }
-
-    if (!(script->language_count = GET_BE_WORD(table->LangSysCount)))
-        return;
-
-    TRACE("Deflang %p, LangCount %lu.\n", script->default_language.gsub_table, script->language_count);
-
-    if (!usp10_array_reserve((void **)&script->languages, &script->languages_size,
-            script->language_count, sizeof(*script->languages)))
-    {
-        ERR("Failed to grow languages array.\n");
-        return;
-    }
-
-    for (i = 0; i < script->language_count; ++i)
-    {
-        script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0],
-                table->LangSysRecord[i].LangSysTag[1],
-                table->LangSysRecord[i].LangSysTag[2],
-                table->LangSysRecord[i].LangSysTag[3]);
-        script->languages[i].gsub_table = (const BYTE *)table + GET_BE_WORD(table->LangSysRecord[i].LangSys);
-    }
-}
-
-static void GPOS_expand_language_cache(LoadedScript *script)
+static void usp10_script_add_language_list(LoadedScript *script,
+        enum usp10_language_table table, const OT_Script *list)
 {
     SIZE_T initial_count, count, i;
     LoadedLanguage *language;
-    const OT_Script *table;
     OPENTYPE_TAG tag;
     DWORD offset;
 
-    if (!(table = script->table[USP10_SCRIPT_TABLE_GPOS]))
+    TRACE("script %p, table %#x, list %p.\n", script, table, list);
+
+    if ((offset = GET_BE_WORD(list->DefaultLangSys)))
+    {
+        script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
+        script->default_language.table[table] = (const BYTE *)list + offset;
+        TRACE("Default language %p.\n", script->default_language.table[table]);
+    }
+
+    if (!(count = GET_BE_WORD(list->LangSysCount)))
         return;
 
-    if ((offset = GET_BE_WORD(table->DefaultLangSys)))
-        script->default_language.gpos_table = (const BYTE *)table + offset;
-
-    if (!(count = GET_BE_WORD(table->LangSysCount)))
-        return;
-
-    TRACE("Deflang %p, LangCount %lu.\n", script->default_language.gpos_table, count);
+    TRACE("Adding %lu languages.\n", count);
 
     initial_count = script->language_count;
     for (i = 0; i < count; ++i)
     {
-        tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0],
-                table->LangSysRecord[i].LangSysTag[1],
-                table->LangSysRecord[i].LangSysTag[2],
-                table->LangSysRecord[i].LangSysTag[3]);
+        tag = MS_MAKE_TAG(list->LangSysRecord[i].LangSysTag[0],
+                list->LangSysRecord[i].LangSysTag[1],
+                list->LangSysRecord[i].LangSysTag[2],
+                list->LangSysRecord[i].LangSysTag[3]);
 
         if (!(initial_count && (language = usp10_script_get_language(script, tag)))
                 && !(language = usp10_script_add_language(script, tag)))
             return;
 
-        language->gpos_table = (const BYTE *)table + GET_BE_WORD(table->LangSysRecord[i].LangSys);
+        language->table[table] = (const BYTE *)list + GET_BE_WORD(list->LangSysRecord[i].LangSys);
     }
 }
 
 static void _initialize_language_cache(LoadedScript *script)
 {
-    if (!script->languages_initialized)
-    {
-        GSUB_initialize_language_cache(script);
-        GPOS_expand_language_cache(script);
-        script->languages_initialized = TRUE;
-    }
+    const OT_Script *list;
+
+    if (script->languages_initialized)
+        return;
+
+    if ((list = script->table[USP10_SCRIPT_TABLE_GSUB]))
+        usp10_script_add_language_list(script, USP10_LANGUAGE_TABLE_GSUB, list);
+    if ((list = script->table[USP10_SCRIPT_TABLE_GPOS]))
+        usp10_script_add_language_list(script, USP10_LANGUAGE_TABLE_GPOS, list);
+
+    script->languages_initialized = TRUE;
 }
 
 HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags)
@@ -2823,7 +2794,7 @@ HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, 
         }
     }
 
-    if (script->default_language.gsub_table)
+    if (script->default_language.table[USP10_LANGUAGE_TABLE_GSUB])
     {
         if (i < cMaxTags)
             pLanguageTags[i] = script->default_language.tag;
@@ -2888,13 +2859,13 @@ static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language
     if (language->features_initialized)
         return;
 
-    if ((lang = language->gsub_table))
+    if ((lang = language->table[USP10_LANGUAGE_TABLE_GSUB]))
     {
         feature_list = (const OT_FeatureList *)((const BYTE *)gsub_header + GET_BE_WORD(gsub_header->FeatureList));
         usp10_language_add_feature_list(language, FEATURE_GSUB_TABLE, lang, feature_list);
     }
 
-    if ((lang = language->gpos_table))
+    if ((lang = language->table[USP10_LANGUAGE_TABLE_GPOS]))
     {
         feature_list = (const OT_FeatureList *)((const BYTE *)gpos_header + GET_BE_WORD(gpos_header->FeatureList));
         usp10_language_add_feature_list(language, FEATURE_GPOS_TABLE, lang, feature_list);
@@ -2906,9 +2877,9 @@ static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language
 HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, char tableType, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
 {
     int i;
+    LoadedLanguage *language;
     LoadedScript *script;
     HRESULT rc = S_OK;
-    LoadedLanguage *language = NULL;
 
     _initialize_script_cache(psc);
     if (!(script = usp10_script_cache_get_script(psc, script_tag)))
@@ -2922,9 +2893,9 @@ HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, O
 
     _initialize_language_cache(script);
 
-    if ((script->default_language.gsub_table || script->default_language.gpos_table) && script->default_language.tag == language_tag)
-        language = &script->default_language;
-    else
+    language = &script->default_language;
+    if (language->tag != language_tag || (!language->table[USP10_LANGUAGE_TABLE_GSUB]
+            && !language->table[USP10_LANGUAGE_TABLE_GPOS]))
         language = usp10_script_get_language(script, language_tag);
 
     if (!language)

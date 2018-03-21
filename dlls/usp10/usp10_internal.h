@@ -152,10 +152,16 @@ typedef struct {
     WORD *lookups;
 } LoadedFeature;
 
+enum usp10_language_table
+{
+    USP10_LANGUAGE_TABLE_GSUB = 0,
+    USP10_LANGUAGE_TABLE_GPOS,
+    USP10_LANGUAGE_TABLE_COUNT
+};
+
 typedef struct {
     OPENTYPE_TAG tag;
-    const void *gsub_table;
-    const void *gpos_table;
+    const void *table[USP10_LANGUAGE_TABLE_COUNT];
     BOOL features_initialized;
     INT feature_count;
     LoadedFeature *features;
