@@ -516,6 +516,11 @@ static void test_BCryptGenerateSymmetricKey(void)
     ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    key = (void *)0xdeadbeef;
+    ret = pBCryptGenerateSymmetricKey(NULL, &key, NULL, 0, secret, sizeof(secret), 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+    ok(key == (void *)0xdeadbeef, "got %p\n", key);
+
     key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
@@ -551,8 +556,10 @@ static void test_BCryptGenerateSymmetricKey(void)
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected[i], "%u: %02x != %02x\n", i, ciphertext[i], expected[i]);
 
+    key2 = (void *)0xdeadbeef;
     ret = pBCryptDuplicateKey(NULL, &key2, NULL, 0, 0);
     ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+    ok(key2 == (void *)0xdeadbeef, "got %p\n", key2);
 
     if (0) /* crashes on some Windows versions */
     {
@@ -660,9 +667,11 @@ static void test_BCryptEncrypt(void)
     ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(key != NULL, "key not set\n");
 
     /* input size is a multiple of block size */
     size = 0;
@@ -771,9 +780,11 @@ static void test_BCryptEncrypt(void)
     ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(key != NULL, "key not set\n");
 
     memset(&auth_info, 0, sizeof(auth_info));
     auth_info.cbSize = sizeof(auth_info);
@@ -913,9 +924,11 @@ static void test_BCryptDecrypt(void)
     ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(key != NULL, "key not set\n");
 
     /* input size is a multiple of block size */
     size = 0;
@@ -1012,9 +1025,11 @@ static void test_BCryptDecrypt(void)
     ret = BCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR*)BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(key != NULL, "key not set\n");
 
     memset(&auth_info, 0, sizeof(auth_info));
     auth_info.cbSize = sizeof(auth_info);
