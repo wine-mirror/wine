@@ -117,6 +117,7 @@ char* CDECL MSVCRT__strlwr(char *str)
  */
 int CDECL MSVCRT__strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     char *ptr = str;
 
     if (!str || !len)
@@ -138,10 +139,27 @@ int CDECL MSVCRT__strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t loca
         return MSVCRT_EINVAL;
     }
 
-    while (*str)
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
     {
-        *str = MSVCRT__toupper_l((unsigned char)*str, locale);
-        str++;
+        while (*str)
+        {
+            if (*str >= 'a' && *str <= 'z')
+                *str -= 'a' - 'A';
+            str++;
+        }
+    }
+    else
+    {
+        while (*str)
+        {
+            *str = MSVCRT__toupper_l((unsigned char)*str, locale);
+            str++;
+        }
     }
 
     return 0;
