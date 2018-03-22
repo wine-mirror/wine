@@ -37,9 +37,9 @@
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
-#ifdef SONAME_LIBVULKAN
-
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
+
+#ifdef SONAME_LIBVULKAN
 
 typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
