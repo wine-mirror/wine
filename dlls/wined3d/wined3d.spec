@@ -281,7 +281,7 @@
 @ cdecl wined3d_swapchain_get_desc(ptr ptr)
 @ cdecl wined3d_swapchain_get_raster_status(ptr ptr)
 @ cdecl wined3d_swapchain_incref(ptr)
-@ cdecl wined3d_swapchain_present(ptr ptr ptr ptr long)
+@ cdecl wined3d_swapchain_present(ptr ptr ptr ptr long long)
 @ cdecl wined3d_swapchain_resize_buffers(ptr long long long long long long)
 @ cdecl wined3d_swapchain_resize_target(ptr ptr)
 @ cdecl wined3d_swapchain_set_fullscreen(ptr ptr ptr)

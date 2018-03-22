@@ -94,6 +94,7 @@ struct wined3d_cs_present
     struct wined3d_swapchain *swapchain;
     RECT src_rect;
     RECT dst_rect;
+    unsigned int swap_interval;
     DWORD flags;
 };
 
@@ -453,6 +454,12 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
+    if (swapchain->desc.swap_interval != op->swap_interval)
+    {
+        swapchain->desc.swap_interval = op->swap_interval;
+        swapchain_update_swap_interval(swapchain);
+    }
+
     swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->flags);
 
     wined3d_resource_release(&swapchain->front_buffer->resource);
@@ -465,7 +472,8 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
-        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override, DWORD flags)
+        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
+        unsigned int swap_interval, DWORD flags)
 {
     struct wined3d_cs_present *op;
     unsigned int i;
@@ -477,6 +485,7 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->swapchain = swapchain;
     op->src_rect = *src_rect;
     op->dst_rect = *dst_rect;
+    op->swap_interval = swap_interval;
     op->flags = flags;
 
     pending = InterlockedIncrement(&cs->pending_presents);
