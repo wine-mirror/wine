@@ -153,6 +153,7 @@ SOURCES = \
 	ddk/compstui.h \
 	ddk/csq.h \
 	ddk/d3dkmthk.h \
+	ddk/fltkernel.h \
 	ddk/hidclass.h \
 	ddk/hidpi.h \
 	ddk/hidport.h \

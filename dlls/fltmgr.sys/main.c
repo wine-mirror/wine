@@ -25,9 +25,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "ddk/ntddk.h"
-#include "ddk/ntifs.h"
-#include "ddk/wdm.h"
+#include "ddk/fltkernel.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fltmgr);
