@@ -876,6 +876,7 @@ static ULONG get_block_size( struct algorithm *alg )
     get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
     return ret;
 }
+
 static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
 {
     if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
@@ -895,6 +896,24 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    UCHAR *buffer;
+
+    if (!(buffer = heap_alloc( key_orig->secret_len ))) return STATUS_NO_MEMORY;
+    memcpy( buffer, key_orig->secret, key_orig->secret_len );
+
+    memset( key_copy, 0, sizeof(*key_copy) );
+    key_copy->hdr           = key_orig->hdr;
+    key_copy->alg_id        = key_orig->alg_id;
+    key_copy->mode          = key_orig->mode;
+    key_copy->block_size    = key_orig->block_size;
+    key_copy->secret        = buffer;
+    key_copy->secret_len    = key_orig->secret_len;
+
+    return STATUS_SUCCESS;
 }
 #endif
 
@@ -1182,6 +1201,12 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 {
     ERR( "support for keys not available at build time\n" );
@@ -1308,6 +1333,30 @@ NTSTATUS WINAPI BCryptExportKey(BCRYPT_KEY_HANDLE export_key, BCRYPT_KEY_HANDLE 
     }
 
     return key_export( key, type, output, output_len, size );
+}
+
+NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy,
+                                    UCHAR *object, ULONG object_len, ULONG flags )
+{
+    struct key *key_orig = handle;
+    struct key *key_copy;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %p, %u, %08x\n", handle, handle_copy, object, object_len, flags );
+    if (object) FIXME( "ignoring object buffer\n" );
+
+    if (!key_orig || key_orig->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (!handle_copy) return STATUS_INVALID_PARAMETER;
+    if (!(key_copy = heap_alloc( sizeof(*key_copy) ))) return STATUS_NO_MEMORY;
+
+    if ((status = key_duplicate( key_orig, key_copy )))
+    {
+        heap_free( key_copy );
+        return status;
+    }
+
+    *handle_copy = key_copy;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptDestroyKey( BCRYPT_KEY_HANDLE handle )
