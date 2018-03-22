@@ -4038,13 +4038,45 @@ done:
     return ret;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect* iface, D3DXHANDLE technique, D3DXHANDLE* next_technique)
+static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect *iface,
+        D3DXHANDLE technique, D3DXHANDLE *next_technique)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx9_base_effect *base = &effect->base_effect;
+    struct d3dx_technique *prev_tech, *tech;
+    unsigned int i;
 
-    FIXME("(%p)->(%p, %p): stub\n", This, technique, next_technique);
+    TRACE("iface %p, technique %p, next_technique %p.\n", iface, technique, next_technique);
 
-    return E_NOTIMPL;
+    if (technique)
+    {
+        if (!(prev_tech = get_valid_technique(base, technique)))
+            return D3DERR_INVALIDCALL;
+
+        for (i = 0; i < base->technique_count; ++i)
+        {
+            tech = &base->techniques[i];
+            if (tech == prev_tech)
+                break;
+        }
+    }
+    else
+    {
+        i = 0;
+    }
+
+    for (++i; i < base->technique_count; ++i)
+    {
+        tech = &base->techniques[i];
+        if (SUCCEEDED(ID3DXEffectImpl_ValidateTechnique(iface, get_technique_handle(tech))))
+        {
+            *next_technique = get_technique_handle(tech);
+            return D3D_OK;
+        }
+    }
+
+    *next_technique = get_technique_handle(&base->techniques[0]);
+    return S_FALSE;
 }
 
 static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_func param_func,
