@@ -52,3 +52,10 @@ NTSTATUS WINAPI FltRegisterFilter( PDRIVER_OBJECT driver, const FLT_REGISTRATION
 
     return STATUS_SUCCESS;
 }
+
+NTSTATUS WINAPI FltStartFiltering( PFLT_FILTER filter )
+{
+    FIXME( "(%p): stub\n", filter );
+
+    return STATUS_SUCCESS;
+}

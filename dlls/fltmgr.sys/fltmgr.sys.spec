@@ -150,7 +150,7 @@
 @ stub FltSetStreamHandleContext
 @ stub FltSetVolumeContext
 @ stub FltSetVolumeInformation
-@ stub FltStartFiltering
+@ stdcall FltStartFiltering(ptr)
 @ stub FltSupportsFileContexts
 @ stub FltSupportsStreamContexts
 @ stub FltSupportsStreamHandleContexts
