@@ -45,6 +45,7 @@ static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID 
                                       ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptDecrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
                                       ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptDestroyKey)(BCRYPT_KEY_HANDLE);
 static NTSTATUS (WINAPI *pBCryptImportKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *,
                                            PUCHAR, ULONG, PUCHAR, ULONG, ULONG);
@@ -503,7 +504,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     static UCHAR expected[] =
         {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79};
     BCRYPT_ALG_HANDLE aes;
-    BCRYPT_KEY_HANDLE key;
+    BCRYPT_KEY_HANDLE key, key2;
     UCHAR *buf, ciphertext[16], plaintext[16], ivbuf[16];
     ULONG size, len, i;
     NTSTATUS ret;
@@ -549,6 +550,35 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected[i], "%u: %02x != %02x\n", i, ciphertext[i], expected[i]);
+
+    ret = pBCryptDuplicateKey(NULL, &key2, NULL, 0, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
+    if (0) /* crashes on some Windows versions */
+    {
+        ret = pBCryptDuplicateKey(key, NULL, NULL, 0, 0);
+        ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    }
+
+    key2 = (void *)0xdeadbeef;
+    ret = pBCryptDuplicateKey(key, &key2, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER), "got %08x\n", ret);
+
+    if (ret == STATUS_SUCCESS)
+    {
+        size = 0;
+        memcpy(ivbuf, iv, sizeof(iv));
+        memset(ciphertext, 0, sizeof(ciphertext));
+        ret = pBCryptEncrypt(key2, data, 16, NULL, ivbuf, 16, ciphertext, 16, &size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        ok(size == 16, "got %u\n", size);
+        ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
+        for (i = 0; i < 16; i++)
+            ok(ciphertext[i] == expected[i], "%u: %02x != %02x\n", i, ciphertext[i], expected[i]);
+
+        ret = pBCryptDestroyKey(key2);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    }
 
     size = 0xdeadbeef;
     ret = pBCryptDecrypt(key, NULL, 0, NULL, NULL, 0, NULL, 0, &size, 0);
@@ -1063,6 +1093,7 @@ START_TEST(bcrypt)
     pBCryptGenerateSymmetricKey = (void *)GetProcAddress(module, "BCryptGenerateSymmetricKey");
     pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
     pBCryptDecrypt = (void *)GetProcAddress(module, "BCryptDecrypt");
+    pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
     pBCryptDestroyKey = (void *)GetProcAddress(module, "BCryptDestroyKey");
     pBCryptImportKey = (void *)GetProcAddress(module, "BCryptImportKey");
     pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
