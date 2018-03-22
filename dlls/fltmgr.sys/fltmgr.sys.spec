@@ -128,7 +128,7 @@
 @ stub FltReadFile
 @ stub FltReferenceContext
 @ stub FltReferenceFileNameInformation
-@ stub FltRegisterFilter
+@ stdcall FltRegisterFilter(ptr ptr ptr)
 @ stub FltReissueSynchronousIo
 @ stub FltReleaseContext
 @ stub FltReleaseContexts

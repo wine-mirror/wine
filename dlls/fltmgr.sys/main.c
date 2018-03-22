@@ -42,3 +42,13 @@ void WINAPI FltInitializePushLock( EX_PUSH_LOCK *lock )
 {
     FIXME( "(%p): stub\n", lock );
 }
+
+NTSTATUS WINAPI FltRegisterFilter( PDRIVER_OBJECT driver, const FLT_REGISTRATION *reg, PFLT_FILTER *filter )
+{
+    FIXME( "(%p,%p,%p): stub\n", driver, reg, filter );
+
+    if(filter)
+        *filter = UlongToHandle(0xdeadbeaf);
+
+    return STATUS_SUCCESS;
+}
