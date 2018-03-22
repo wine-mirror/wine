@@ -897,7 +897,7 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
     func = wine_vk_get_instance_proc_addr(name);
     if (func)
     {
-        WARN("Returning instance function '%s'.\n", debugstr_a(name));
+        WARN("Returning instance function %s.\n", debugstr_a(name));
         return func;
     }
 
@@ -932,7 +932,7 @@ static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance,
     }
     if (!instance)
     {
-        FIXME("Global function '%s' not found\n", debugstr_a(name));
+        FIXME("Global function %s not found.\n", debugstr_a(name));
         return NULL;
     }
 
@@ -943,7 +943,7 @@ static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance,
     func = wine_vk_get_device_proc_addr(name);
     if (func) return func;
 
-    FIXME("Unsupported device or instance function: '%s'\n", debugstr_a(name));
+    FIXME("Unsupported device or instance function: %s.\n", debugstr_a(name));
     return NULL;
 }
 
