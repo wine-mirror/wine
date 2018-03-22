@@ -610,7 +610,9 @@ static void test_BCryptGenerateSymmetricKey(void)
 static void test_BCryptEncrypt(void)
 {
     static UCHAR nonce[] =
-        {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60};
+        {0x10,0x20,0x30,0x40,0x50,0x60,0x10,0x20,0x30,0x40,0x50,0x60};
+    static UCHAR auth_data[] =
+        {0x60,0x50,0x40,0x30,0x20,0x10,0x60,0x50,0x40,0x30,0x20,0x10};
     static UCHAR secret[] =
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
     static UCHAR iv[] =
@@ -636,6 +638,8 @@ static void test_BCryptEncrypt(void)
         {0x89,0xb3,0x92,0x00,0x39,0x20,0x09,0xb4,0x6a,0xd6,0xaf,0xca,0x4b,0x5b,0xfd,0xd0};
     static UCHAR expected_tag2[] =
         {0x9a,0x92,0x32,0x2c,0x61,0x2a,0xae,0xef,0x66,0x2a,0xfb,0x55,0xe9,0x48,0xdf,0xbd};
+    static UCHAR expected_tag3[] =
+        {0x17,0x9d,0xc0,0x7a,0xf0,0xcf,0xaa,0xd5,0x1c,0x11,0xc4,0x4b,0xd6,0xa3,0x3e,0x77};
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO auth_info;
     UCHAR *buf, ciphertext[48], ivbuf[16], tag[16];
     BCRYPT_AUTH_TAG_LENGTHS_STRUCT tag_length;
@@ -809,6 +813,24 @@ static void test_BCryptEncrypt(void)
     for (i = 0; i < 16; i++)
         ok(tag[i] == expected_tag2[i], "%u: %02x != %02x\n", i, tag[i], expected_tag2[i]);
 
+    /* test with auth data */
+    auth_info.pbAuthData = auth_data;
+    auth_info.cbAuthData = sizeof(auth_data);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0xff, sizeof(ciphertext));
+    memset(tag, 0xff, sizeof(tag));
+    ret = pBCryptEncrypt(key, data2, 32, &auth_info, ivbuf, 16, ciphertext, 32, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected4, sizeof(expected4)), "wrong data\n");
+    ok(!memcmp(tag, expected_tag3, sizeof(expected_tag3)), "wrong tag\n");
+    for (i = 0; i < 32; i++)
+        ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
+    for (i = 0; i < 16; i++)
+        ok(tag[i] == expected_tag3[i], "%u: %02x != %02x\n", i, tag[i], expected_tag3[i]);
+
     /* test with padding */
     memcpy(ivbuf, iv, sizeof(iv));
     memset(ciphertext, 0, sizeof(ciphertext));
@@ -831,7 +853,9 @@ static void test_BCryptEncrypt(void)
 static void test_BCryptDecrypt(void)
 {
     static UCHAR nonce[] =
-        {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60};
+        {0x10,0x20,0x30,0x40,0x50,0x60,0x10,0x20,0x30,0x40,0x50,0x60};
+    static UCHAR auth_data[] =
+        {0x60,0x50,0x40,0x30,0x20,0x10,0x60,0x50,0x40,0x30,0x20,0x10};
     static UCHAR secret[] =
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
     static UCHAR iv[] =
@@ -858,6 +882,8 @@ static void test_BCryptDecrypt(void)
          0x86,0x64,0xc3,0xfe,0xa3,0x07,0x61,0xf8,0x16,0xc9,0x78,0x7f,0xe7,0xb1,0xc4,0x94};
     static UCHAR tag[] =
         {0x89,0xb3,0x92,0x00,0x39,0x20,0x09,0xb4,0x6a,0xd6,0xaf,0xca,0x4b,0x5b,0xfd,0xd0};
+    static UCHAR tag2[] =
+        {0x17,0x9d,0xc0,0x7a,0xf0,0xcf,0xaa,0xd5,0x1c,0x11,0xc4,0x4b,0xd6,0xa3,0x3e,0x77};
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO auth_info;
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     BCRYPT_ALG_HANDLE aes;
@@ -999,6 +1025,20 @@ static void test_BCryptDecrypt(void)
     auth_info.cbTag = sizeof(tag);
 
     /* input size is a multiple of block size */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(plaintext, 0, sizeof(plaintext));
+    ret = pBCryptDecrypt(key, ciphertext4, 32, &auth_info, ivbuf, 16, plaintext, 32, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(plaintext, expected3, sizeof(expected3)), "wrong data\n");
+
+    /* test with auth data */
+    auth_info.pbAuthData = auth_data;
+    auth_info.cbAuthData = sizeof(auth_data);
+    auth_info.pbTag = tag2;
+    auth_info.cbTag = sizeof(tag2);
+
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
     memset(plaintext, 0, sizeof(plaintext));
