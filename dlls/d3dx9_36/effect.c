@@ -6664,8 +6664,10 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
 #endif
     unsigned int i, j;
 
-    TRACE("base %p, data %p, data_size %lu, effect %p, pool %p, skip_constants %s.\n",
-            base, data, data_size, effect, pool, debugstr_a(skip_constants_string));
+    TRACE("base %p, data %p, data_size %lu, defines %p, include %p, eflags %#x, errors %p, "
+            "effect %p, pool %p, skip_constants %s.\n",
+            base, data, data_size, defines, include, eflags, errors, effect, pool,
+            debugstr_a(skip_constants_string));
 
     base->effect = effect;
     base->pool = pool;
@@ -7041,9 +7043,11 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, cons
         const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants, DWORD flags,
         struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
 {
-    void *buffer;
+    struct d3dx_include_from_file include_from_file;
+    const void *buffer;
+    unsigned int size;
+    char *filename_a;
     HRESULT ret;
-    DWORD size;
 
     TRACE("device %p, srcfile %s, defines %p, include %p, skipconstants %s, "
             "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
@@ -7053,14 +7057,33 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, cons
     if (!device || !srcfile)
         return D3DERR_INVALIDCALL;
 
-    ret = map_view_of_file(srcfile, &buffer, &size);
+    if (!include)
+    {
+        include_from_file.ID3DXInclude_iface.lpVtbl = &d3dx_include_from_file_vtbl;
+        include = &include_from_file.ID3DXInclude_iface;
+    }
 
+    size = WideCharToMultiByte(CP_ACP, 0, srcfile, -1, NULL, 0, NULL, NULL);
+    filename_a = heap_alloc(size);
+    if (!filename_a)
+        return E_OUTOFMEMORY;
+    WideCharToMultiByte(CP_ACP, 0, srcfile, -1, filename_a, size, NULL, NULL);
+
+    EnterCriticalSection(&from_file_mutex);
+    ret = ID3DXInclude_Open(include, D3DXINC_LOCAL, filename_a, NULL, &buffer, &size);
     if (FAILED(ret))
+    {
+        LeaveCriticalSection(&from_file_mutex);
+        heap_free(filename_a);
         return D3DXERR_INVALIDDATA;
+    }
 
-    ret = D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool, effect, compilationerrors);
-    UnmapViewOfFile(buffer);
+    ret = D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool,
+            effect, compilationerrors);
 
+    ID3DXInclude_Close(include, buffer);
+    LeaveCriticalSection(&from_file_mutex);
+    heap_free(filename_a);
     return ret;
 }
 

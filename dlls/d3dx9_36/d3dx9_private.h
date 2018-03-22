@@ -69,6 +69,14 @@ struct pixel_format_desc {
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
+struct d3dx_include_from_file
+{
+    ID3DXInclude ID3DXInclude_iface;
+};
+
+extern CRITICAL_SECTION from_file_mutex DECLSPEC_HIDDEN;
+extern const struct ID3DXIncludeVtbl d3dx_include_from_file_vtbl DECLSPEC_HIDDEN;
+
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
 {
     if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
