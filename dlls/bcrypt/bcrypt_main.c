@@ -52,6 +52,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* Not present in gnutls version < 3.0 */
 static int (*pgnutls_cipher_tag)(gnutls_cipher_hd_t handle, void * tag, size_t tag_size);
+static int (*pgnutls_cipher_add_auth)(gnutls_cipher_hd_t handle, const void *ptext, size_t ptext_size);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -72,7 +73,12 @@ MAKE_FUNCPTR(gnutls_perror);
 #define GNUTLS_CIPHER_AES_256_GCM 94
 #endif
 
-static int compat_gnutls_cipher_tag(gnutls_cipher_hd_t handle, void * tag, size_t tag_size)
+static int compat_gnutls_cipher_tag(gnutls_cipher_hd_t handle, void *tag, size_t tag_size)
+{
+    return GNUTLS_E_UNKNOWN_CIPHER_TYPE;
+}
+
+static int compat_gnutls_cipher_add_auth(gnutls_cipher_hd_t handle, const void *ptext, size_t ptext_size)
 {
     return GNUTLS_E_UNKNOWN_CIPHER_TYPE;
 }
@@ -114,6 +120,11 @@ static BOOL gnutls_initialize(void)
     {
         WARN("gnutls_cipher_tag not found\n");
         pgnutls_cipher_tag = compat_gnutls_cipher_tag;
+    }
+    if (!(pgnutls_cipher_add_auth = wine_dlsym( libgnutls_handle, "gnutls_cipher_add_auth", NULL, 0 )))
+    {
+        WARN("gnutls_cipher_add_auth not found\n");
+        pgnutls_cipher_add_auth = compat_gnutls_cipher_add_auth;
     }
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
@@ -1022,6 +1033,19 @@ static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
+{
+    int ret;
+
+    if ((ret = pgnutls_cipher_add_auth( key->handle, auth_data, len )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
                              ULONG output_len )
 {
@@ -1146,6 +1170,12 @@ static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
                              ULONG output_len  )
 {
@@ -1208,6 +1238,12 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
 }
 
 static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1407,6 +1443,8 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         if (!output) return STATUS_SUCCESS;
         if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
+        if (auth_info->pbAuthData && (status = key_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
+            return status;
         if ((status = key_encrypt( key, input, input_len, output, output_len )))
             return status;
 
@@ -1484,6 +1522,8 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         if (!output) return STATUS_SUCCESS;
         if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
+        if (auth_info->pbAuthData && (status = key_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
+            return status;
         if ((status = key_decrypt( key, input, input_len, output, output_len )))
             return status;
 
