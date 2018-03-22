@@ -2818,14 +2818,9 @@ static void usp10_language_add_feature_list(LoadedLanguage *language, char table
 
     TRACE("table_type %#x, %u features.\n", table_type, count);
 
-    if (!count)
+    if (!count || !usp10_array_reserve((void **)&language->features, &language->features_size,
+            language->feature_count + count, sizeof(*language->features)))
         return;
-
-    if (!language->feature_count)
-        language->features = heap_alloc(count * sizeof(*language->features));
-    else
-        language->features = HeapReAlloc(GetProcessHeap(), 0, language->features,
-                (language->feature_count + count) * sizeof(*language->features));
 
     for (i = 0; i < count; ++i)
     {

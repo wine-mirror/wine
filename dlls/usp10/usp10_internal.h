@@ -163,8 +163,9 @@ typedef struct {
     OPENTYPE_TAG tag;
     const void *table[USP10_LANGUAGE_TABLE_COUNT];
     BOOL features_initialized;
-    INT feature_count;
     LoadedFeature *features;
+    SIZE_T features_size;
+    SIZE_T feature_count;
 } LoadedLanguage;
 
 enum usp10_script_table
