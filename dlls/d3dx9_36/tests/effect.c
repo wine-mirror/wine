@@ -189,6 +189,63 @@ static IDirect3DDevice9 *create_device(HWND *window)
     return device;
 }
 
+static char temp_path[MAX_PATH];
+
+static BOOL create_file(const char *filename, const char *data, const unsigned int size, char *out_path)
+{
+    DWORD written;
+    HANDLE hfile;
+    char path[MAX_PATH];
+
+    if (!*temp_path)
+        GetTempPathA(sizeof(temp_path), temp_path);
+
+    strcpy(path, temp_path);
+    strcat(path, filename);
+    hfile = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (WriteFile(hfile, data, size, &written, NULL))
+    {
+        CloseHandle(hfile);
+
+        if (out_path)
+            strcpy(out_path, path);
+        return TRUE;
+    }
+
+    CloseHandle(hfile);
+    return FALSE;
+}
+
+static void delete_file(const char *filename)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, filename);
+    DeleteFileA(path);
+}
+
+static BOOL create_directory(const char *name)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, name);
+    return CreateDirectoryA(path, NULL);
+}
+
+static void delete_directory(const char *name)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, name);
+    RemoveDirectoryA(path);
+}
+
 static const char effect_desc[] =
 "Technique\n"
 "{\n"
@@ -7485,6 +7542,296 @@ static void test_refcount(void)
     DestroyWindow(window);
 }
 
+static HRESULT WINAPI d3dxinclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
+    static const char include1[] =
+        "float4 light;\n"
+        "float4x4 mat;\n"
+        "float4 color;\n"
+        "\n"
+        "struct vs_input\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float3 normal : NORMAL;\n"
+        "};\n"
+        "\n"
+        "struct vs_output\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float4 diffuse : COLOR;\n"
+        "};\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "\n"
+        "vs_output vs_main(const vs_input v)\n"
+        "{\n"
+        "    vs_output o;\n"
+        "    const float4 scaled_color = 0.5 * color;\n"
+        "\n"
+        "    o.position = mul(v.position, mat);\n"
+        "    o.diffuse = dot((float3)light, v.normal) * scaled_color;\n"
+        "\n"
+        "    return o;\n"
+        "}\n";
+    static const char effect2[] =
+        "#include \"include\\include2.h\"\n"
+        "\n"
+        "technique t\n"
+        "{\n"
+        "    pass p\n"
+        "    {\n"
+        "        VertexShader = compile vs_2_0 vs_main();\n"
+        "    }\n"
+        "}\n";
+    char *buffer;
+
+    trace("filename %s.\n", filename);
+    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+
+    if (!strcmp(filename, "effect2.fx"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(effect2));
+        memcpy(buffer, effect2, sizeof(effect2));
+        *bytes = sizeof(effect2);
+        ok(!parent_data, "Unexpected parent_data value.\n");
+    }
+    else if (!strcmp(filename, "include1.h"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include1));
+        memcpy(buffer, include1, sizeof(include1));
+        *bytes = sizeof(include1);
+        ok(!strncmp(parent_data, include2, strlen(include2)), "Unexpected parent_data value.\n");
+    }
+    else if (!strcmp(filename, "include\\include2.h"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
+        memcpy(buffer, include2, sizeof(include2));
+        *bytes = sizeof(include2);
+        todo_wine ok(parent_data && !strncmp(parent_data, effect2, strlen(effect2)),
+                "unexpected parent_data value.\n");
+    }
+    else
+    {
+        ok(0, "Unexpected #include for file %s.\n", filename);
+        return D3DERR_INVALIDCALL;
+    }
+    *data = buffer;
+    return S_OK;
+}
+
+static HRESULT WINAPI d3dxinclude_close(ID3DXInclude *iface, const void *data)
+{
+    HeapFree(GetProcessHeap(), 0, (void *)data);
+    return S_OK;
+}
+
+static const struct ID3DXIncludeVtbl d3dxinclude_vtbl =
+{
+    d3dxinclude_open,
+    d3dxinclude_close
+};
+
+struct d3dxinclude
+{
+    ID3DXInclude ID3DXInclude_iface;
+};
+
+static void test_create_effect_from_file(void)
+{
+    static const char effect1[] =
+        "float4 light;\n"
+        "float4x4 mat;\n"
+        "float4 color;\n"
+        "\n"
+        "struct vs_input\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float3 normal : NORMAL;\n"
+        "};\n"
+        "\n"
+        "struct vs_output\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float4 diffuse : COLOR;\n"
+        "};\n"
+        "\n"
+        "vs_output vs_main(const vs_input v)\n"
+        "{\n"
+        "    vs_output o;\n"
+        "    const float4 scaled_color = 0.5 * color;\n"
+        "\n"
+        "    o.position = mul(v.position, mat);\n"
+        "    o.diffuse = dot((float3)light, v.normal) * scaled_color;\n"
+        "\n"
+        "    return o;\n"
+        "}\n"
+        "\n"
+        "technique t\n"
+        "{\n"
+        "    pass p\n"
+        "    {\n"
+        "        VertexShader = compile vs_2_0 vs_main();\n"
+        "    }\n"
+        "}\n";
+    static const char include1[] =
+        "float4 light;\n"
+        "float4x4 mat;\n"
+        "float4 color;\n"
+        "\n"
+        "struct vs_input\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float3 normal : NORMAL;\n"
+        "};\n"
+        "\n"
+        "struct vs_output\n"
+        "{\n"
+        "    float4 position : POSITION;\n"
+        "    float4 diffuse : COLOR;\n"
+        "};\n";
+    static const char include1_wrong[] =
+        "#error \"wrong include\"\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "\n"
+        "vs_output vs_main(const vs_input v)\n"
+        "{\n"
+        "    vs_output o;\n"
+        "    const float4 scaled_color = 0.5 * color;\n"
+        "\n"
+        "    o.position = mul(v.position, mat);\n"
+        "    o.diffuse = dot((float3)light, v.normal) * scaled_color;\n"
+        "\n"
+        "    return o;\n"
+        "}\n";
+    static const char effect2[] =
+        "#include \"include\\include2.h\"\n"
+        "\n"
+        "technique t\n"
+        "{\n"
+        "    pass p\n"
+        "    {\n"
+        "        VertexShader = compile vs_2_0 vs_main();\n"
+        "    }\n"
+        "}\n";
+    static const WCHAR effect1_filename_w[] = {'e','f','f','e','c','t','1','.','f','x',0};
+    static const WCHAR effect2_filename_w[] = {'e','f','f','e','c','t','2','.','f','x',0};
+    WCHAR effect_path_w[MAX_PATH], filename_w[MAX_PATH];
+    char effect_path[MAX_PATH], filename[MAX_PATH];
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    unsigned int filename_size;
+    struct d3dxinclude include;
+    IDirect3DDevice9 *device;
+    ID3DXBuffer *messages;
+    ID3DXEffect *effect;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Failed to create window.\n");
+        return;
+    }
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object.\n");
+        DestroyWindow(window);
+        return;
+    }
+    present_parameters.Windowed = TRUE;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    if (!create_file("effect1.fx", effect1, sizeof(effect1) - 1, filename))
+    {
+        skip("Couldn't create temporary file, skipping test.\n");
+        return;
+    }
+
+    filename_size = strlen(filename);
+    filename_size -= sizeof("effect1.fx") - 1;
+    memcpy(effect_path, filename, filename_size);
+    effect_path[filename_size] = 0;
+    MultiByteToWideChar(CP_ACP, 0, effect_path, -1, effect_path_w, sizeof(effect_path_w));
+
+    create_directory("include");
+    create_file("effect2.fx", effect2, sizeof(effect2) - 1, NULL);
+    create_file("include\\include1.h", include1, sizeof(include1) - 1, NULL);
+    create_file("include\\include2.h", include2, sizeof(include2) - 1, NULL);
+    create_file("include1.h", include1_wrong, sizeof(include1_wrong) - 1, NULL);
+
+    lstrcpyW(filename_w, effect_path_w);
+    lstrcatW(filename_w, effect1_filename_w);
+    effect = NULL;
+    messages = NULL;
+    hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
+            0, NULL, &effect, &messages);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    if (messages)
+    {
+        trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if (effect)
+        effect->lpVtbl->Release(effect);
+
+    lstrcpyW(filename_w, effect_path_w);
+    lstrcatW(filename_w, effect2_filename_w);
+    effect = NULL;
+    messages = NULL;
+    /* This is apparently broken on native, it ends up using the wrong include. */
+    hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
+            0, NULL, &effect, &messages);
+    todo_wine ok(hr == E_FAIL, "Unexpected error, hr %#x.\n", hr);
+    if (messages)
+    {
+        trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if (effect)
+        effect->lpVtbl->Release(effect);
+
+    delete_file("effect1.fx");
+    delete_file("effect2.fx");
+    delete_file("include\\include1.h");
+    delete_file("include\\include2.h");
+    delete_file("include2.h");
+    delete_directory("include");
+
+    lstrcpyW(filename_w, effect2_filename_w);
+    effect = NULL;
+    messages = NULL;
+    include.ID3DXInclude_iface.lpVtbl = &d3dxinclude_vtbl;
+    /* This is actually broken in native d3dx9 (manually tried multiple
+     * versions, all are affected). For reference, the message printed below
+     * is "ID3DXEffectCompiler: There were no techniques" */
+    hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, &include.ID3DXInclude_iface, NULL,
+            0, NULL, &effect, &messages);
+    todo_wine ok(hr == E_FAIL, "D3DXInclude test failed with error %#x.\n", hr);
+    if (messages)
+    {
+        trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(effect)
 {
     IDirect3DDevice9 *device;
@@ -7522,4 +7869,5 @@ START_TEST(effect)
     test_effect_null_shader();
     test_effect_clone();
     test_refcount();
+    test_create_effect_from_file();
 }
