@@ -158,6 +158,6 @@
 @ stub FltUninitializeFileLock
 @ stub FltUninitializeOplock
 @ stub FltUnloadFilter
-@ stub FltUnregisterFilter
+@ stdcall FltUnregisterFilter(ptr)
 @ stub FltUntagFile
 @ stub FltWriteFile

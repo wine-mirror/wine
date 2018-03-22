@@ -59,3 +59,8 @@ NTSTATUS WINAPI FltStartFiltering( PFLT_FILTER filter )
 
     return STATUS_SUCCESS;
 }
+
+void WINAPI FltUnregisterFilter( PFLT_FILTER filter )
+{
+    FIXME( "(%p): stub\n", filter );
+}
