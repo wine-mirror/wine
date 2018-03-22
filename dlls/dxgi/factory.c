@@ -333,7 +333,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     wined3d_desc.auto_depth_stencil_format = 0;
     wined3d_desc.flags = wined3d_swapchain_flags_from_dxgi(swapchain_desc->Flags);
     wined3d_desc.refresh_rate = fullscreen_desc ? dxgi_rational_to_uint(&fullscreen_desc->RefreshRate) : 0;
-    wined3d_desc.swap_interval = WINED3D_SWAP_INTERVAL_DEFAULT;
     wined3d_desc.auto_restore_display_mode = TRUE;
 
     hr = IWineDXGIDevice_create_swapchain(dxgi_device, &wined3d_desc, FALSE, &wined3d_swapchain);
