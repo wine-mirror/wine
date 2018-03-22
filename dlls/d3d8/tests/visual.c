@@ -196,6 +196,45 @@ static D3DCOLOR get_surface_color(IDirect3DSurface8 *surface, UINT x, UINT y)
     return color;
 }
 
+static void check_rect(struct surface_readback *rb, RECT r, const char *message)
+{
+    LONG x_coords[2][2] =
+    {
+        {r.left - 1, r.left + 1},
+        {r.right + 1, r.right - 1},
+    };
+    LONG y_coords[2][2] =
+    {
+        {r.top - 1, r.top + 1},
+        {r.bottom + 1, r.bottom - 1}
+    };
+    unsigned int i, j, x_side, y_side;
+    DWORD color;
+    LONG x, y;
+
+    for (i = 0; i < 2; ++i)
+    {
+        for (j = 0; j < 2; ++j)
+        {
+            for (x_side = 0; x_side < 2; ++x_side)
+            {
+                for (y_side = 0; y_side < 2; ++y_side)
+                {
+                    DWORD expected = (x_side == 1 && y_side == 1) ? 0xffffffff : 0xff000000;
+
+                    x = x_coords[i][x_side];
+                    y = y_coords[j][y_side];
+                    if (x < 0 || x >= 640 || y < 0 || y >= 480)
+                        continue;
+                    color = get_readback_color(rb, x, y);
+                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x.\n",
+                            message, x, y, color, expected);
+                }
+            }
+        }
+    }
+}
+
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -10132,6 +10171,122 @@ done:
     DestroyWindow(window);
 }
 
+static void test_viewport(void)
+{
+    static const struct
+    {
+        D3DVIEWPORT8 vp;
+        RECT expected_rect;
+        const char *message;
+    }
+    tests[] =
+    {
+        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
+        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
+        {{  0,   0, 1280,  960}, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
+        {{  0,   0, 2000, 1600}, {-10, -10, -10, -10}, "Viewport (0, 0) - (2000, 1600)"},
+        {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
+        {{  0,   0, 8192, 8192}, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
+    };
+    static const struct vec3 quad[] =
+    {
+        {-1.5f, -0.5f, 0.1f},
+        {-1.5f,  0.5f, 0.1f},
+        { 0.5f, -0.5f, 0.1f},
+        { 0.5f,  0.5f, 0.1f},
+    };
+    static const struct vec2 rt_sizes[] =
+    {
+        {640, 480}, {1280, 960}, {320, 240}, {800, 600},
+    };
+    struct surface_readback rb;
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *rt;
+    unsigned int i, j;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable depth test, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+    /* This crashes on Windows. */
+    /* hr = IDirect3DDevice8_SetViewport(device, NULL); */
+
+    for (i = 0; i < sizeof(rt_sizes) / sizeof(rt_sizes[0]); ++i)
+    {
+        if (i)
+        {
+            hr = IDirect3DDevice8_CreateRenderTarget(device, rt_sizes[i].x, rt_sizes[i].y,
+                    D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, TRUE, &rt);
+            ok(SUCCEEDED(hr), "Failed to create render target, hr %#x (i %u).\n", hr, i);
+            hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x (i %u).\n", hr, i);
+        }
+        else
+        {
+            hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &rt);
+            ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+        }
+
+        for (j = 0; j < sizeof(tests) / sizeof(tests[0]); ++j)
+        {
+            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 1.0f, 0);
+            ok(SUCCEEDED(hr), "Failed to clear, hr %#x (i %u, j %u).\n", hr, i, j);
+
+            hr = IDirect3DDevice8_SetViewport(device, &tests[j].vp);
+            if (tests[j].vp.X + tests[j].vp.Width > rt_sizes[i].x
+                    || tests[j].vp.Y + tests[j].vp.Height > rt_sizes[i].y)
+            {
+                ok(hr == D3DERR_INVALIDCALL,
+                        "Setting the viewport returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                continue;
+            }
+            else
+            {
+                ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            }
+
+            hr = IDirect3DDevice8_BeginScene(device);
+            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+            ok(SUCCEEDED(hr), "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x (i %u, j %u).\n", hr, i, j);
+
+            get_rt_readback(rt, &rb);
+            check_rect(&rb, tests[j].expected_rect, tests[j].message);
+            release_surface_readback(&rb);
+        }
+
+        IDirect3DSurface8_Release(rt);
+    }
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -10204,4 +10359,5 @@ START_TEST(visual)
     test_backbuffer_resize();
     test_drawindexedprimitiveup();
     test_map_synchronisation();
+    test_viewport();
 }
