@@ -647,6 +647,9 @@ static void test_BCryptEncrypt(void)
         {0x9a,0x92,0x32,0x2c,0x61,0x2a,0xae,0xef,0x66,0x2a,0xfb,0x55,0xe9,0x48,0xdf,0xbd};
     static UCHAR expected_tag3[] =
         {0x17,0x9d,0xc0,0x7a,0xf0,0xcf,0xaa,0xd5,0x1c,0x11,0xc4,0x4b,0xd6,0xa3,0x3e,0x77};
+    static UCHAR expected_tag4[] =
+        {0x4c,0x42,0x83,0x9e,0x8d,0x40,0xf1,0x19,0xd6,0x2b,0x1c,0x66,0x03,0x2b,0x39,0x63};
+
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO auth_info;
     UCHAR *buf, ciphertext[48], ivbuf[16], tag[16];
     BCRYPT_AUTH_TAG_LENGTHS_STRUCT tag_length;
@@ -841,6 +844,21 @@ static void test_BCryptEncrypt(void)
         ok(ciphertext[i] == expected4[i], "%u: %02x != %02x\n", i, ciphertext[i], expected4[i]);
     for (i = 0; i < 16; i++)
         ok(tag[i] == expected_tag3[i], "%u: %02x != %02x\n", i, tag[i], expected_tag3[i]);
+
+    memset(tag, 0xff, sizeof(tag));
+    ret = pBCryptEncrypt(key, data2, 0, &auth_info, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!size, "got %u\n", size);
+    for (i = 0; i < 16; i++)
+        ok(tag[i] == 0xff, "%u: %02x != %02x\n", i, tag[i], 0xff);
+
+    memset(tag, 0xff, sizeof(tag));
+    ret = pBCryptEncrypt(key, NULL, 0, &auth_info, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!size, "got %u\n", size);
+    ok(!memcmp(tag, expected_tag4, sizeof(expected_tag4)), "wrong tag\n");
+    for (i = 0; i < 16; i++)
+        ok(tag[i] == expected_tag4[i], "%u: %02x != %02x\n", i, tag[i], expected_tag4[i]);
 
     /* test with padding */
     memcpy(ivbuf, iv, sizeof(iv));
