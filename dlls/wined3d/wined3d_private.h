@@ -395,7 +395,6 @@ struct wined3d_settings
     char *logo;
     unsigned int multisample_textures;
     unsigned int sample_count;
-    BOOL strict_draw_ordering;
     BOOL check_float_constants;
     unsigned int max_sm_vs;
     unsigned int max_sm_hs;
