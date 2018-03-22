@@ -7832,6 +7832,93 @@ static void test_create_effect_from_file(void)
     DestroyWindow(window);
 }
 
+static void test_effect_find_next_valid_technique(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+    D3DXTECHNIQUE_DESC desc;
+    ID3DXEffect *effect;
+    IDirect3D9 *d3d;
+    D3DXHANDLE tech;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Failed to create window.\n");
+        return;
+    }
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object.\n");
+        DestroyWindow(window);
+        return;
+    }
+    present_parameters.Windowed = TRUE;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
+            NULL, NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
+
+    effect->lpVtbl->SetInt(effect, "i", 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    tech = (D3DXHANDLE)0xdeadbeef;
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
+    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->SetInt(effect, "i", 0);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, "nope", &tech);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(effect)
 {
     IDirect3DDevice9 *device;
@@ -7870,4 +7957,5 @@ START_TEST(effect)
     test_effect_clone();
     test_refcount();
     test_create_effect_from_file();
+    test_effect_find_next_valid_technique();
 }
