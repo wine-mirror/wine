@@ -803,6 +803,7 @@
 @ stub RtlPropertySetNameToGuid
 @ stub RtlProtectHeap
 @ stdcall RtlPushFrame(ptr)
+@ stdcall RtlQueryActivationContextApplicationSettings(long ptr wstr wstr ptr long ptr)
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stdcall RtlQueryDepthSList(ptr)
 @ stdcall RtlQueryDynamicTimeZoneInformation(ptr)
