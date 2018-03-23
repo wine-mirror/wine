@@ -2837,7 +2837,7 @@ static void usp10_language_add_feature_list(LoadedLanguage *language, char table
         loaded_feature->tableType = table_type;
         loaded_feature->feature = feature;
         loaded_feature->lookup_count = GET_BE_WORD(feature->LookupCount);
-        loaded_feature->lookups = heap_alloc(loaded_feature->lookup_count * sizeof(*loaded_feature->lookups));
+        loaded_feature->lookups = heap_calloc(loaded_feature->lookup_count, sizeof(*loaded_feature->lookups));
         for (j = 0; j < loaded_feature->lookup_count; ++j)
             loaded_feature->lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
     }
