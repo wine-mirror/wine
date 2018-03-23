@@ -2009,7 +2009,13 @@ static void test_GetIfTable2Ex(void)
     pFreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( 2, &table );
+    ret = pGetIfTable2Ex( MibIfTableNormalWithoutStatistics, &table );
+    ok( ret == NO_ERROR || broken(ret == ERROR_INVALID_PARAMETER), "got %u\n", ret );
+    ok( table != NULL || broken(!table), "table not set\n" );
+    pFreeMibTable( table );
+
+    table = NULL;
+    ret = pGetIfTable2Ex( 3, &table );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
     ok( !table, "table should not be set\n" );
     pFreeMibTable( table );

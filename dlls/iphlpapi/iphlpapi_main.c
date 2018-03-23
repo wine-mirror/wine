@@ -1862,7 +1862,7 @@ DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 
     TRACE( "level %u, table %p\n", level, table );
 
-    if (!table || level > MibIfTableRaw)
+    if (!table || level > MibIfTableNormalWithoutStatistics)
         return ERROR_INVALID_PARAMETER;
 
     if (level != MibIfTableNormal)

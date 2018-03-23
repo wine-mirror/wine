@@ -24,7 +24,8 @@
 typedef enum _MIB_IF_TABLE_LEVEL
 {
     MibIfTableNormal,
-    MibIfTableRaw
+    MibIfTableRaw,
+    MibIfTableNormalWithoutStatistics,
 } MIB_IF_TABLE_LEVEL, *PMIB_IF_TABLE_LEVEL;
 
 typedef enum _MIB_NOTIFICATION_TYPE
