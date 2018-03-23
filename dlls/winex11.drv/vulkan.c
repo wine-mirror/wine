@@ -368,8 +368,7 @@ static void X11DRV_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapcha
 static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties* properties)
 {
-    VkResult res;
-    unsigned int i, num_copies;
+    unsigned int i;
 
     TRACE("layer_name %p, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
 
@@ -382,37 +381,18 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
 
     if (!properties)
     {
-        /* When properties is NULL, we need to return the number of extensions
-         * supported. For now report 0 until we add some e.g.
-         * VK_KHR_win32_surface. Long-term this needs to be an intersection
-         * between what the native library supports and what thunks we have.
-         */
         *count = winex11_vk_instance_extensions_count;
         return VK_SUCCESS;
     }
 
-    if (*count < winex11_vk_instance_extensions_count)
+    *count = min(*count, winex11_vk_instance_extensions_count);
+    for (i = 0; i < *count; i++)
     {
-        /* Incomplete is a type of success used to signal the application
-         * that not all devices got copied.
-         */
-        num_copies = *count;
-        res = VK_INCOMPLETE;
-    }
-    else
-    {
-        num_copies = winex11_vk_instance_extensions_count;
-        res = VK_SUCCESS;
+        properties[i] = winex11_vk_instance_extensions[i];
     }
 
-    for (i = 0; i < num_copies; i++)
-    {
-        memcpy(&properties[i], &winex11_vk_instance_extensions[i], sizeof(*properties));
-    }
-    *count = num_copies;
-
-    TRACE("Result %d, extensions copied %u\n", res, num_copies);
-    return res;
+    TRACE("Returning %u extensions.\n", *count);
+    return *count < winex11_vk_instance_extensions_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 static void * X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
