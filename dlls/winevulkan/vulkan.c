@@ -191,14 +191,12 @@ static BOOL wine_vk_init(void)
  * This function takes care of extensions handled at winevulkan layer, a Wine graphics
  * driver is responsible for handling e.g. surface extensions.
  */
-static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
+static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
         VkInstanceCreateInfo *dst)
 {
     unsigned int i;
 
-    dst->sType = src->sType;
-    dst->flags = src->flags;
-    dst->pApplicationInfo = src->pApplicationInfo;
+    *dst = *src;
 
     if (dst->pApplicationInfo)
     {
@@ -231,7 +229,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
                     break;
 
                 default:
-                    FIXME("Application requested a linked structure of type %d\n", header->sType);
+                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
             }
         }
     }
@@ -244,17 +242,11 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    /* TODO: convert non-WSI win32 extensions here to host specific ones. */
-    dst->ppEnabledExtensionNames = src->ppEnabledExtensionNames;
-    dst->enabledExtensionCount = src->enabledExtensionCount;
-
     TRACE("Enabled extensions: %u\n", dst->enabledExtensionCount);
     for (i = 0; i < dst->enabledExtensionCount; i++)
     {
         TRACE("Extension %u: %s\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
     }
-
-    return VK_SUCCESS;
 }
 
 /* Helper function which stores wrapped physical devices in the instance object. */
@@ -633,12 +625,7 @@ static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to convert instance create info, res=%d\n", res);
-        goto err;
-    }
+    wine_vk_instance_convert_create_info(create_info, &create_info_host);
 
     res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
     if (res != VK_SUCCESS)
