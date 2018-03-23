@@ -133,24 +133,24 @@ static BOOL wine_vk_init(void)
 
     if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0))) return FALSE;
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
-LOAD_FUNCPTR(vkAcquireNextImageKHR)
-LOAD_FUNCPTR(vkCreateInstance)
-LOAD_FUNCPTR(vkCreateSwapchainKHR)
-LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
-LOAD_FUNCPTR(vkDestroyInstance)
-LOAD_FUNCPTR(vkDestroySurfaceKHR)
-LOAD_FUNCPTR(vkDestroySwapchainKHR)
-LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties)
-LOAD_FUNCPTR(vkGetDeviceProcAddr)
-LOAD_FUNCPTR(vkGetInstanceProcAddr)
-LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
-LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR)
-LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR)
-LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR)
-LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR)
-LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
-LOAD_FUNCPTR(vkQueuePresentKHR)
+#define LOAD_FUNCPTR(f) if ((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
+    LOAD_FUNCPTR(vkAcquireNextImageKHR)
+    LOAD_FUNCPTR(vkCreateInstance)
+    LOAD_FUNCPTR(vkCreateSwapchainKHR)
+    LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
+    LOAD_FUNCPTR(vkDestroyInstance)
+    LOAD_FUNCPTR(vkDestroySurfaceKHR)
+    LOAD_FUNCPTR(vkDestroySwapchainKHR)
+    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties)
+    LOAD_FUNCPTR(vkGetDeviceProcAddr)
+    LOAD_FUNCPTR(vkGetInstanceProcAddr)
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR)
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR)
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR)
+    LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR)
+    LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
+    LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
 
     wine_vk_load_instance_extensions();
