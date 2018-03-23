@@ -194,9 +194,21 @@ static BOOL wine_vk_init(void)
 static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
         VkInstanceCreateInfo *dst)
 {
+    unsigned int i;
+
     dst->sType = src->sType;
     dst->flags = src->flags;
     dst->pApplicationInfo = src->pApplicationInfo;
+
+    if (dst->pApplicationInfo)
+    {
+        const VkApplicationInfo *app_info = dst->pApplicationInfo;
+        TRACE("Application name %s, application version %#x\n",
+                debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
+        TRACE("Engine name %s, engine version %#x\n", debugstr_a(app_info->pEngineName),
+                 app_info->engineVersion);
+        TRACE("API version %#x\n", app_info->apiVersion);
+    }
 
     /* Application and loader can pass in a chain of extensions through pNext.
      * We can't blindly pass these through as often these contain callbacks or
@@ -235,6 +247,12 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     /* TODO: convert non-WSI win32 extensions here to host specific ones. */
     dst->ppEnabledExtensionNames = src->ppEnabledExtensionNames;
     dst->enabledExtensionCount = src->enabledExtensionCount;
+
+    TRACE("Enabled extensions: %u\n", dst->enabledExtensionCount);
+    for (i = 0; i < dst->enabledExtensionCount; i++)
+    {
+        TRACE("Extension %u: %s\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
+    }
 
     return VK_SUCCESS;
 }
