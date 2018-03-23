@@ -464,6 +464,11 @@ struct entity
             WCHAR *clsid;
             WCHAR *version;
         } clrsurrogate;
+        struct
+        {
+            WCHAR *name;
+            WCHAR *value;
+        } settings;
     } u;
 };
 
@@ -546,6 +551,7 @@ struct actctx_loader
 
 static const WCHAR asmv1W[] = {'a','s','m','v','1',':',0};
 static const WCHAR asmv2W[] = {'a','s','m','v','2',':',0};
+static const WCHAR asmv3W[] = {'a','s','m','v','3',':',0};
 static const WCHAR assemblyW[] = {'a','s','s','e','m','b','l','y',0};
 static const WCHAR assemblyIdentityW[] = {'a','s','s','e','m','b','l','y','I','d','e','n','t','i','t','y',0};
 static const WCHAR bindingRedirectW[] = {'b','i','n','d','i','n','g','R','e','d','i','r','e','c','t',0};
@@ -635,6 +641,18 @@ static const WCHAR requestedExecutionLevelW[] = {'r','e','q','u','e','s','t','e'
 static const WCHAR requestedPrivilegesW[] = {'r','e','q','u','e','s','t','e','d','P','r','i','v','i','l','e','g','e','s',0};
 static const WCHAR securityW[] = {'s','e','c','u','r','i','t','y',0};
 static const WCHAR trustInfoW[] = {'t','r','u','s','t','I','n','f','o',0};
+static const WCHAR windowsSettingsW[] = {'w','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+static const WCHAR autoElevateW[] = {'a','u','t','o','E','l','e','v','a','t','e',0};
+static const WCHAR disableThemingW[] = {'d','i','s','a','b','l','e','T','h','e','m','i','n','g',0};
+static const WCHAR disableWindowFilteringW[] = {'d','i','s','a','b','l','e','W','i','n','d','o','w','F','i','l','t','e','r','i','n','g',0};
+static const WCHAR dpiAwareW[] = {'d','p','i','A','w','a','r','e',0};
+static const WCHAR dpiAwarenessW[] = {'d','p','i','A','w','a','r','e','n','e','s','s',0};
+static const WCHAR gdiScalingW[] = {'g','d','i','S','c','a','l','i','n','g',0};
+static const WCHAR highResolutionScrollingAwareW[] = {'h','i','g','h','R','e','s','o','l','u','t','i','o','n','S','c','r','o','l','l','i','n','g','A','w','a','r','e',0};
+static const WCHAR longPathAwareW[] = {'l','o','n','g','P','a','t','h','A','w','a','r','e',0};
+static const WCHAR magicFutureSettingW[] = {'m','a','g','i','c','F','u','t','u','r','e','S','e','t','t','i','n','g',0};
+static const WCHAR printerDriverIsolationW[] = {'p','r','i','n','t','e','r','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n',0};
+static const WCHAR ultraHighResolutionScrollingAwareW[] = {'u','l','t','r','a','H','i','g','h','R','e','s','o','l','u','t','i','o','n','S','c','r','o','l','l','i','n','g','A','w','a','r','e',0};
 
 struct olemisc_entry
 {
@@ -898,6 +916,10 @@ static void free_entity_array(struct entity_array *array)
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.name);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.clsid);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.version);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.settings.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.settings.value);
             break;
         default:
             FIXME("Unknown entity kind %d\n", entity->kind);
@@ -2337,6 +2359,107 @@ static BOOL parse_compatibility_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
     return ret;
 }
 
+static BOOL parse_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl,
+                                 xmlstr_t *parent )
+{
+    xmlstr_t elem, content, attr_name, attr_value;
+    BOOL end = FALSE, ret = TRUE, error = FALSE;
+    struct entity *entity;
+
+    while (next_xml_attr( xmlbuf, &attr_name, &attr_value, &error, &end ))
+    {
+        if (xmlstr_cmp( &attr_name, xmlnsW )) continue;
+        WARN( "unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value) );
+    }
+
+    if (error) return FALSE;
+    if (end) return TRUE;
+
+    if (!parse_text_content( xmlbuf, &content )) return FALSE;
+    TRACE( "got %s %s\n", debugstr_xmlstr(parent), debugstr_xmlstr(&content) );
+
+    entity = add_entity( &assembly->entities, ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS );
+    if (!entity) return FALSE;
+    entity->u.settings.name = xmlstrdupW( parent );
+    entity->u.settings.value = xmlstrdupW( &content );
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end( &elem, entity->u.settings.name ))
+        {
+            ret = parse_end_element( xmlbuf );
+            break;
+        }
+        else
+        {
+            WARN( "unknown elem %s\n", debugstr_xmlstr(&elem) );
+            ret = parse_unknown_elem( xmlbuf, &elem );
+        }
+    }
+    return ret;
+}
+
+static BOOL parse_windows_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
+                                         struct actctx_loader *acl )
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem( xmlbuf, &elem )))
+    {
+        if (xmlstr_cmp_end( &elem, windowsSettingsW ))
+        {
+            ret = parse_end_element( xmlbuf );
+            break;
+        }
+        else if (xmlstr_cmp( &elem, autoElevateW ) ||
+                 xmlstr_cmp( &elem, disableThemingW ) ||
+                 xmlstr_cmp( &elem, disableWindowFilteringW ) ||
+                 xmlstr_cmp( &elem, dpiAwareW ) ||
+                 xmlstr_cmp( &elem, dpiAwarenessW ) ||
+                 xmlstr_cmp( &elem, gdiScalingW ) ||
+                 xmlstr_cmp( &elem, highResolutionScrollingAwareW ) ||
+                 xmlstr_cmp( &elem, longPathAwareW ) ||
+                 xmlstr_cmp( &elem, magicFutureSettingW ) ||
+                 xmlstr_cmp( &elem, printerDriverIsolationW ) ||
+                 xmlstr_cmp( &elem, ultraHighResolutionScrollingAwareW ))
+        {
+            ret = parse_settings_elem( xmlbuf, assembly, acl, &elem );
+        }
+        else
+        {
+            WARN( "unknown elem %s\n", debugstr_xmlstr(&elem) );
+            ret = parse_unknown_elem( xmlbuf, &elem );
+        }
+    }
+    return ret;
+}
+
+static BOOL parse_application_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem( xmlbuf, &elem )))
+    {
+        if (xmlstr_cmp_end( &elem, applicationW ))
+        {
+            ret = parse_end_element( xmlbuf );
+            break;
+        }
+        else if (xmlstr_cmp( &elem, windowsSettingsW ))
+        {
+            ret = parse_windows_settings_elem( xmlbuf, assembly, acl );
+        }
+        else
+        {
+            WARN( "unknown elem %s\n", debugstr_xmlstr(&elem) );
+            ret = parse_unknown_elem( xmlbuf, &elem );
+        }
+    }
+    return ret;
+}
+
 static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
 {
     static const WCHAR levelW[] = {'l','e','v','e','l',0};
@@ -2597,6 +2720,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xml_elem_cmp(&elem, compatibilityW, compatibilityNSW))
         {
             ret = parse_compatibility_elem(xmlbuf, assembly, acl);
+        }
+        else if (xml_elem_cmp(&elem, applicationW, asmv3W))
+        {
+            ret = parse_application_elem(xmlbuf, assembly, acl);
         }
         else
         {
