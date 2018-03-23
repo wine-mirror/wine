@@ -98,6 +98,52 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
     return queues;
 }
 
+/* Helper function to convert win32 VkDeviceCreateInfo to host compatible. */
+static void wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
+        VkDeviceCreateInfo *dst)
+{
+    unsigned int i;
+
+    *dst = *src;
+
+    /* Application and loader can pass in a chain of extensions through pNext.
+     * We can't blindly pass these through as often these contain callbacks or
+     * they can even be pass structures for loader / ICD internal use. For now
+     * we ignore everything in pNext chain, but we print FIXMEs.
+     */
+    if (src->pNext)
+    {
+        const struct wine_vk_structure_header *header;
+
+        for (header = src->pNext; header; header = header->pNext)
+        {
+            switch (header->sType)
+            {
+                case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
+                    /* Used for loader to ICD communication. Ignore to not confuse
+                     * host loader.
+                     */
+                    break;
+
+                default:
+                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
+            }
+        }
+    }
+    /* For now don't support anything. */
+    dst->pNext = NULL;
+
+    /* Should be filtered out by loader as ICDs don't support layers. */
+    dst->enabledLayerCount = 0;
+    dst->ppEnabledLayerNames = NULL;
+
+    TRACE("Enabled extensions: %u\n", dst->enabledExtensionCount);
+    for (i = 0; i < dst->enabledExtensionCount; i++)
+    {
+        TRACE("Extension %u: %s\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
+    }
+}
+
 /* Helper function used for freeing a device structure. This function supports full
  * and partial object cleanups and can thus be used for vkCreateDevice failures.
  */
@@ -469,8 +515,9 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         const VkDeviceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkDevice *device)
 {
-    struct VkDevice_T *object = NULL;
+    VkDeviceCreateInfo create_info_host;
     uint32_t max_queue_families;
+    struct VkDevice_T *object;
     VkResult res;
     unsigned int i;
 
@@ -485,11 +532,10 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    /* At least for now we can directly pass create_info through. All extensions we report
-     * should be compatible. In addition the loader is supposed to sanitize values e.g. layers.
-     */
+    wine_vk_device_convert_create_info(create_info, &create_info_host);
+
     res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
-            create_info, NULL /* allocator */, &object->device);
+            &create_info_host, NULL /* allocator */, &object->device);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create device\n");
@@ -524,10 +570,10 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         goto err;
     }
 
-    for (i = 0; i < create_info->queueCreateInfoCount; i++)
+    for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
     {
-        uint32_t family_index = create_info->pQueueCreateInfos[i].queueFamilyIndex;
-        uint32_t queue_count = create_info->pQueueCreateInfos[i].queueCount;
+        uint32_t family_index = create_info_host.pQueueCreateInfos[i].queueFamilyIndex;
+        uint32_t queue_count = create_info_host.pQueueCreateInfos[i].queueCount;
 
         TRACE("queueFamilyIndex %u, queueCount %u\n", family_index, queue_count);
 
