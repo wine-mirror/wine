@@ -50,6 +50,8 @@ static NTSTATUS (WINAPI *pBCryptDestroyKey)(BCRYPT_KEY_HANDLE);
 static NTSTATUS (WINAPI *pBCryptImportKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *,
                                            PUCHAR, ULONG, PUCHAR, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptImportKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptVerifySignature)(BCRYPT_KEY_HANDLE, VOID *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG);
 
 static void test_BCryptGenRandom(void)
 {
@@ -1433,6 +1435,66 @@ static void test_key_import_export(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static BYTE eccPubkey[] =
+{
+    /* X */
+    0x3b, 0x3c, 0x34, 0xc8, 0x3f, 0x15, 0xea, 0x02, 0x68, 0x46, 0x69, 0xdf, 0x0c, 0xa6, 0xee, 0x7a,
+    0xd9, 0x82, 0x08, 0x9b, 0x37, 0x53, 0x42, 0xf3, 0x13, 0x63, 0xda, 0x65, 0x79, 0xe8, 0x04, 0x9e,
+    /* Y */
+    0x8c, 0x77, 0xc4, 0x33, 0x77, 0xd9, 0x5a, 0x7f, 0x60, 0x7b, 0x98, 0xce, 0xf3, 0x96, 0x56, 0xd6,
+    0xb5, 0x8d, 0x87, 0x7a, 0x00, 0x2b, 0xf3, 0x70, 0xb3, 0x90, 0x73, 0xa0, 0x56, 0x06, 0x3b, 0x22,
+};
+static BYTE certHash[] =
+{
+    0x28, 0x19, 0x0f, 0x15, 0x6d, 0x75, 0xcc, 0xcf, 0x62, 0xf1, 0x5e, 0xe6, 0x8a, 0xc3, 0xf0, 0x5d,
+    0x89, 0x28, 0x2d, 0x48, 0xd8, 0x73, 0x7c, 0x05, 0x05, 0x8e, 0xbc, 0xce, 0x28, 0xb7, 0xba, 0xc9,
+};
+static BYTE certSignature[] =
+{
+    /* r */
+    0xd7, 0x29, 0xce, 0x5a, 0xef, 0x74, 0x85, 0xd1, 0x18, 0x5f, 0x6e, 0xf1, 0xba, 0x53, 0xd4, 0xcd,
+    0xdd, 0xe0, 0x5d, 0xf1, 0x5e, 0x48, 0x51, 0xea, 0x63, 0xc0, 0xe8, 0xe2, 0xf6, 0xfa, 0x4c, 0xaf,
+    /* s */
+    0xe3, 0x94, 0x15, 0x3b, 0x6c, 0x71, 0x6e, 0x44, 0x22, 0xcb, 0xa0, 0x88, 0xcd, 0x0a, 0x5a, 0x50,
+    0x29, 0x7c, 0x5c, 0xd6, 0x6c, 0xd2, 0xe0, 0x7f, 0xcd, 0x02, 0x92, 0x21, 0x4c, 0x2c, 0x92, 0xee,
+};
+
+static void test_ECDSA(void)
+{
+    BYTE buffer[sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPubkey)];
+    BCRYPT_ECCKEY_BLOB *ecckey = (void *)buffer;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    BCRYPT_KEY_HANDLE key = NULL;
+    NTSTATUS status;
+
+    status = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
+    if (status)
+    {
+        skip("Failed to open ECDSA provider: %08x, skipping test\n", status);
+        return;
+    }
+
+    ecckey->dwMagic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+    memcpy(ecckey + 1, eccPubkey, sizeof(eccPubkey));
+
+    ecckey->cbKey = 2;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, sizeof(buffer), 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    ecckey->cbKey = sizeof(eccPubkey) / 2;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, sizeof(buffer), 0);
+    ok(!status, "BCryptImportKeyPair failed: %08x\n", status);
+
+    status = pBCryptVerifySignature(key, NULL, certHash, sizeof(certHash) - 1, certSignature, sizeof(certSignature), 0);
+    ok(status == STATUS_INVALID_SIGNATURE, "Expected STATUS_INVALID_SIGNATURE, got %08x\n", status);
+
+    status = pBCryptVerifySignature(key, NULL, certHash, sizeof(certHash), certSignature, sizeof(certSignature), 0);
+    ok(!status, "BCryptVerifySignature failed: %08x\n", status);
+
+    pBCryptDestroyKey(key);
+    pBCryptCloseAlgorithmProvider(alg, 0);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -1463,6 +1525,8 @@ START_TEST(bcrypt)
     pBCryptDestroyKey = (void *)GetProcAddress(module, "BCryptDestroyKey");
     pBCryptImportKey = (void *)GetProcAddress(module, "BCryptImportKey");
     pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
+    pBCryptImportKeyPair = (void *)GetProcAddress(module, "BCryptImportKeyPair");
+    pBCryptVerifySignature = (void *)GetProcAddress(module, "BCryptVerifySignature");
 
     test_BCryptGenRandom();
     test_BCryptGetFipsAlgorithmMode();
@@ -1473,6 +1537,7 @@ START_TEST(bcrypt)
     test_BCryptEncrypt();
     test_BCryptDecrypt();
     test_key_import_export();
+    test_ECDSA();
 
     if (pBCryptHash) /* >= Win 10 */
         test_BcryptHash();
