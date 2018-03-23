@@ -975,23 +975,23 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkWaitForFences)
 
 #define ALL_VK_INSTANCE_FUNCS() \
-    USE_VK_FUNC(vkCreateDevice)\
-    USE_VK_FUNC(vkEnumerateDeviceExtensionProperties)\
-    USE_VK_FUNC(vkEnumerateDeviceLayerProperties)\
-    USE_VK_FUNC(vkEnumeratePhysicalDevices)\
-    USE_VK_FUNC(vkGetPhysicalDeviceFeatures)\
-    USE_VK_FUNC(vkGetPhysicalDeviceFeatures2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties)\
-    USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties2KHR)\
-    USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties)\
+    USE_VK_FUNC(vkCreateDevice) \
+    USE_VK_FUNC(vkEnumerateDeviceExtensionProperties) \
+    USE_VK_FUNC(vkEnumerateDeviceLayerProperties) \
+    USE_VK_FUNC(vkEnumeratePhysicalDevices) \
+    USE_VK_FUNC(vkGetPhysicalDeviceFeatures) \
+    USE_VK_FUNC(vkGetPhysicalDeviceFeatures2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceQueueFamilyProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties) \
     USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties2KHR)
 
 #endif /* __WINE_VULKAN_THUNKS_H */

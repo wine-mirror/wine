@@ -2315,7 +2315,7 @@ void *wine_vk_get_device_proc_addr(const char *name)
     {
         if (strcmp(vk_device_dispatch_table[i].name, name) == 0)
         {
-            TRACE("Found name=%s in device table\n", name);
+            TRACE("Found name=%s in device table\n", debugstr_a(name));
             return vk_device_dispatch_table[i].func;
         }
     }
@@ -2329,7 +2329,7 @@ void *wine_vk_get_instance_proc_addr(const char *name)
     {
         if (strcmp(vk_instance_dispatch_table[i].name, name) == 0)
         {
-            TRACE("Found name=%s in instance table\n", name);
+            TRACE("Found name=%s in instance table\n", debugstr_a(name));
             return vk_instance_dispatch_table[i].func;
         }
     }
@@ -2369,7 +2369,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_viewport_swizzle",
 };
 
-static const char *vk_instance_extensions[] =
+static const char * const vk_instance_extensions[] =
 {
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",

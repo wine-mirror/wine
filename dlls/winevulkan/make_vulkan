@@ -1787,7 +1787,7 @@ class VkGenerator(object):
         f.write("    {\n")
         f.write("        if (strcmp(vk_device_dispatch_table[i].name, name) == 0)\n")
         f.write("        {\n")
-        f.write("            TRACE(\"Found name=%s in device table\\n\", name);\n")
+        f.write("            TRACE(\"Found name=%s in device table\\n\", debugstr_a(name));\n")
         f.write("            return vk_device_dispatch_table[i].func;\n")
         f.write("        }\n")
         f.write("    }\n")
@@ -1801,7 +1801,7 @@ class VkGenerator(object):
         f.write("    {\n")
         f.write("        if (strcmp(vk_instance_dispatch_table[i].name, name) == 0)\n")
         f.write("        {\n")
-        f.write("            TRACE(\"Found name=%s in instance table\\n\", name);\n")
+        f.write("            TRACE(\"Found name=%s in instance table\\n\", debugstr_a(name));\n")
         f.write("            return vk_instance_dispatch_table[i].func;\n")
         f.write("        }\n")
         f.write("    }\n")
@@ -1818,7 +1818,7 @@ class VkGenerator(object):
         f.write("};\n\n")
 
         # Create array of instance extensions.
-        f.write("static const char *vk_instance_extensions[] =\n{\n")
+        f.write("static const char * const vk_instance_extensions[] =\n{\n")
         for ext in self.registry.extensions:
             if ext["type"] != "instance":
                 continue
@@ -1950,7 +1950,7 @@ class VkGenerator(object):
                 f.write("    USE_VK_FUNC({0})".format(vk_func.name))
                 first = False
             else:
-                f.write("\\\n    USE_VK_FUNC({0})".format(vk_func.name))
+                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
         f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
