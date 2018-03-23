@@ -225,6 +225,7 @@ enum alg_id
 
 enum mode_id
 {
+    MODE_ID_ECB,
     MODE_ID_CBC,
     MODE_ID_GCM
 };
@@ -574,8 +575,9 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
             const WCHAR *mode;
             switch (alg->mode)
             {
-                case MODE_ID_GCM: mode = BCRYPT_CHAIN_MODE_GCM; break;
+                case MODE_ID_ECB: mode = BCRYPT_CHAIN_MODE_ECB; break;
                 case MODE_ID_CBC: mode = BCRYPT_CHAIN_MODE_CBC; break;
+                case MODE_ID_GCM: mode = BCRYPT_CHAIN_MODE_GCM; break;
                 default: return STATUS_NOT_IMPLEMENTED;
             }
 
@@ -628,7 +630,12 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
     case ALG_ID_AES:
         if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
         {
-            if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+            if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+            {
+                alg->mode = MODE_ID_ECB;
+                return STATUS_SUCCESS;
+            }
+            else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
             {
                 alg->mode = MODE_ID_CBC;
                 return STATUS_SUCCESS;
@@ -962,7 +969,12 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
 {
     if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
     {
-        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+        {
+            key->mode = MODE_ID_ECB;
+            return STATUS_SUCCESS;
+        }
+        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
         {
             key->mode = MODE_ID_CBC;
             return STATUS_SUCCESS;
@@ -992,6 +1004,7 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
         switch (key->mode)
         {
             case MODE_ID_GCM: return GNUTLS_CIPHER_AES_128_GCM;
+            case MODE_ID_ECB: /* can be emulated with CBC + empty IV */
             case MODE_ID_CBC:
             default:          return GNUTLS_CIPHER_AES_128_CBC;
         }
@@ -1104,6 +1117,7 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
     case ALG_ID_AES:
         switch (alg->mode)
         {
+            case MODE_ID_ECB:
             case MODE_ID_CBC:
                 break;
             default:
@@ -1133,13 +1147,47 @@ static NTSTATUS key_init( struct key *key, struct algorithm *alg, const UCHAR *s
 
 static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
-    FIXME( "not implemented on Mac\n" );
+    if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+    {
+        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+        {
+            key->mode = MODE_ID_ECB;
+            return STATUS_SUCCESS;
+        }
+        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+        {
+            key->mode = MODE_ID_CBC;
+            return STATUS_SUCCESS;
+        }
+        else
+        {
+            FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+
+    FIXME( "unsupported key property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static CCMode get_cryptor_mode( struct key *key )
+{
+    switch (key->mode)
+    {
+    case MODE_ID_ECB: return kCCModeECB;
+    case MODE_ID_CBC: return kCCModeCBC;
+    default:
+        FIXME( "unsupported mode %u\n", key->mode );
+        return 0;
+    }
 }
 
 static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 {
     CCCryptorStatus status;
+    CCMode mode;
+
+    if (!(mode = get_cryptor_mode( key ))) return STATUS_NOT_SUPPORTED;
 
     if (key->ref_encrypt)
     {
@@ -1152,14 +1200,14 @@ static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
         key->ref_decrypt = NULL;
     }
 
-    if ((status = CCCryptorCreateWithMode( kCCEncrypt, kCCModeCBC, kCCAlgorithmAES128, ccNoPadding, iv,
-                                           key->secret, key->secret_len, NULL, 0, 0, 0, &key->ref_encrypt )) != kCCSuccess)
+    if ((status = CCCryptorCreateWithMode( kCCEncrypt, mode, kCCAlgorithmAES128, ccNoPadding, iv, key->secret,
+                                           key->secret_len, NULL, 0, 0, 0, &key->ref_encrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
     }
-    if ((status = CCCryptorCreateWithMode( kCCDecrypt, kCCModeCBC, kCCAlgorithmAES128, ccNoPadding, iv,
-                                           key->secret, key->secret_len, NULL, 0, 0, 0, &key->ref_decrypt )) != kCCSuccess)
+    if ((status = CCCryptorCreateWithMode( kCCDecrypt, mode, kCCAlgorithmAES128, ccNoPadding, iv, key->secret,
+                                           key->secret_len, NULL, 0, 0, 0, &key->ref_decrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         CCCryptorRelease( key->ref_encrypt );
@@ -1462,12 +1510,14 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
 
     if (!output) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+    if (key->mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
 
     src = input;
     dst = output;
     while (bytes_left >= key->block_size)
     {
         if ((status = key_encrypt( key, src, key->block_size, dst, key->block_size ))) return status;
+        if (key->mode == MODE_ID_ECB && (status = key_set_params( key, NULL, 0 ))) return status;
         bytes_left -= key->block_size;
         src += key->block_size;
         dst += key->block_size;
@@ -1547,14 +1597,16 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         if (input_len < key->block_size) return STATUS_BUFFER_TOO_SMALL;
         bytes_left -= key->block_size;
     }
-    else if (output_len < *ret_len)
-        return STATUS_BUFFER_TOO_SMALL;
+    else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+    if (key->mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
 
     src = input;
     dst = output;
     while (bytes_left >= key->block_size)
     {
         if ((status = key_decrypt( key, src, key->block_size, dst, key->block_size ))) return status;
+        if (key->mode == MODE_ID_ECB && (status = key_set_params( key, NULL, 0 ))) return status;
         bytes_left -= key->block_size;
         src += key->block_size;
         dst += key->block_size;
