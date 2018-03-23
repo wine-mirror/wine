@@ -2641,12 +2641,6 @@ enum wined3d_projection_type
     WINED3D_PROJECTION_COUNT4  = 2
 };
 
-enum dst_arg
-{
-    resultreg    = 0,
-    tempreg      = 1
-};
-
 /*****************************************************************************
  * Fixed function pipeline replacements
  */
@@ -2665,7 +2659,7 @@ struct texture_stage_op
 
     struct color_fixup_desc color_fixup;
     unsigned                tex_type : 3;
-    unsigned                dst : 1;
+    unsigned                tmp_dst : 1;
     unsigned                projected : 2;
     unsigned                padding : 10;
 };
