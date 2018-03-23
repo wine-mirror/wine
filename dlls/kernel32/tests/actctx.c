@@ -38,6 +38,7 @@ static BOOL   (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWS
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static BOOL   (WINAPI *pIsDebuggerPresent)(void);
 static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T*);
+static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWSTR,SIZE_T,SIZE_T*);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pFindActCtxSectionGuid)(DWORD,const GUID*,ULONG,const GUID*,PACTCTX_SECTION_KEYED_DATA);
 static BOOL   (WINAPI *pZombifyActCtx)(HANDLE);
@@ -455,6 +456,16 @@ static const char compat_manifest_other_guid[] =
 "           <supportedOS Id=\"{12345566-1111-2222-3333-444444444444}\" />"
 "       </application>"
 "   </compatibility>"
+"</assembly>";
+
+static const char settings_manifest[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"   <assemblyIdentity version=\"1.0.0.0\"  name=\"Wine.Test\" type=\"win32\"></assemblyIdentity>"
+"   <application xmlns=\"urn:schemas-microsoft-com:asm.v3\">"
+"       <windowsSettings>"
+"           <dpiAware xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">true</dpiAware>"
+"       </windowsSettings>"
+"   </application>"
 "</assembly>";
 
 DEFINE_GUID(VISTA_COMPAT_GUID,      0xe2011457, 0x1546, 0x43c5, 0xa5, 0xfe, 0x00, 0x8d, 0xee, 0xe3, 0xd3, 0xf0);
@@ -2695,6 +2706,7 @@ static BOOL init_funcs(void)
     X(ReleaseActCtx);
     X(FindActCtxSectionGuid);
     X(ZombifyActCtx);
+    pQueryActCtxSettingsW = (void *)GetProcAddress( hLibrary, "QueryActCtxSettingsW" );
 
     hLibrary = GetModuleHandleA("ntdll.dll");
     X(RtlFindActivationContextSectionString);
@@ -2949,6 +2961,81 @@ static void test_compatibility(void)
     }
 }
 
+static void test_settings(void)
+{
+    static const WCHAR dpiAwareW[] = {'d','p','i','A','w','a','r','e',0};
+    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+    static const WCHAR trueW[] = {'t','r','u','e',0};
+    static const WCHAR namespaceW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','0','5','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+    WCHAR buffer[80];
+    SIZE_T size;
+    HANDLE handle;
+    BOOL ret;
+
+    if (!pQueryActCtxSettingsW)
+    {
+        win_skip( "QueryActCtxSettingsW is missing\n" );
+        return;
+    }
+    create_manifest_file( "manifest_settings.manifest", settings_manifest, -1, NULL, NULL );
+    handle = test_create("manifest_settings.manifest");
+    ok( handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError() );
+    DeleteFileA( "manifest_settings.manifest" );
+
+    SetLastError( 0xdeadbeef );
+    ret = pQueryActCtxSettingsW( 1, handle, NULL, dpiAwareW, buffer, 80, &size );
+    ok( !ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pQueryActCtxSettingsW( 0, handle, dummyW, dpiAwareW, buffer, 80, &size );
+    ok( !ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, 80, &size );
+    ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == lstrlenW( buffer ) + 1, "wrong len %lu\n", size );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dummyW, buffer, 80, &size );
+    ok( !ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_SXS_KEY_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    ok( buffer[0] == 0xcccc, "got %s\n", wine_dbgstr_w(buffer) );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, namespaceW, dpiAwareW, buffer, 80, &size );
+    ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, namespaceW, dpiAwareW, buffer, lstrlenW(trueW) + 1, &size );
+    ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, lstrlenW(trueW), &size );
+    ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, lstrlenW(trueW) - 1, &size );
+    ok( !ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+    ok( buffer[0] == 0xcccc, "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    pReleaseActCtx(handle);
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -2975,4 +3062,5 @@ START_TEST(actctx)
     test_ZombifyActCtx();
     run_child_process();
     test_compatibility();
+    test_settings();
 }
