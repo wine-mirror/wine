@@ -77,6 +77,7 @@ static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevi
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
+static void *X11DRV_get_vk_device_proc_addr(const char *name);
 static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name);
 
 static struct VkExtensionProperties *winex11_vk_instance_extensions = NULL;
@@ -397,9 +398,15 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
     return *count < winex11_vk_instance_extensions_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-static void * X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
+static void *X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
 {
+    void *proc_addr;
+
     TRACE("%p, %s\n", device, debugstr_a(name));
+
+    if ((proc_addr = X11DRV_get_vk_device_proc_addr(name)))
+        return proc_addr;
+
     return pvkGetDeviceProcAddr(device, name);
 }
 
@@ -543,6 +550,35 @@ static void *get_vulkan_driver_instance_proc_addr(const struct vulkan_funcs *vul
 static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name)
 {
     return get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name);
+}
+
+static void *get_vulkan_driver_device_proc_addr(const struct vulkan_funcs *vulkan_funcs,
+        const char *name)
+{
+    if (!name || name[0] != 'v' || name[1] != 'k')
+        return NULL;
+
+    name += 2;
+
+    if (!strcmp(name, "AcquireNextImageKHR"))
+        return vulkan_funcs->p_vkAcquireNextImageKHR;
+    if (!strcmp(name, "CreateSwapchainKHR"))
+        return vulkan_funcs->p_vkCreateSwapchainKHR;
+    if (!strcmp(name, "DestroySwapchainKHR"))
+        return vulkan_funcs->p_vkDestroySwapchainKHR;
+    if (!strcmp(name, "GetDeviceProcAddr"))
+        return vulkan_funcs->p_vkGetDeviceProcAddr;
+    if (!strcmp(name, "GetSwapchainImagesKHR"))
+        return vulkan_funcs->p_vkGetSwapchainImagesKHR;
+    if (!strcmp(name, "QueuePresentKHR"))
+        return vulkan_funcs->p_vkQueuePresentKHR;
+
+    return NULL;
+}
+
+static void *X11DRV_get_vk_device_proc_addr(const char *name)
+{
+    return get_vulkan_driver_device_proc_addr(&vulkan_funcs, name);
 }
 
 const struct vulkan_funcs *get_vulkan_driver(UINT version)
