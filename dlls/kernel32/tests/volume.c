@@ -772,6 +772,10 @@ static void test_GetVolumePathNameA(void)
             "s:omefile", "S:\\" /* win2k, winxp */, sizeof(volume_path),
             ERROR_FILE_NOT_FOUND, NO_ERROR
         },
+        { /* test 42: a reasonable forward slash path that is guaranteed to exist */
+            "C:/windows/system32", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
     };
     BOOL ret, success;
     DWORD error;

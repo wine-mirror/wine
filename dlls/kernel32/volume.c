@@ -1693,6 +1693,10 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
         return FALSE;
     }
     strcpyW( volumenameW, filename );
+
+    /* Normalize path */
+    for (c = volumenameW; *c; c++) if (*c == '/') *c = '\\';
+
     stop_pos = 0;
     /* stop searching slashes early for NT-type and nearly NT-type paths */
     if (strncmpW(ntprefixW, filename, strlenW(ntprefixW)) == 0)
@@ -1776,13 +1780,9 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 
     if (last_pos + 1 <= buflen)
     {
-        WCHAR *p;
         memcpy(volumepathname, filename, last_pos * sizeof(WCHAR));
         if (last_pos + 2 <= buflen) volumepathname[last_pos++] = '\\';
         volumepathname[last_pos] = '\0';
-
-        /* Normalize path */
-        for (p = volumepathname; *p; p++) if (*p == '/') *p = '\\';
 
         /* DOS-style paths always return upper-case drive letters */
         if (volumepathname[1] == ':')
