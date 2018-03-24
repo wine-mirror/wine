@@ -12,17 +12,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCommandBufferAllocateInfo_win_to_host(const VkCommandBufferAllocateInfo *in, VkCommandBufferAllocateInfo_host *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->commandPool = in->commandPool;
-    out->level = in->level;
-    out->commandBufferCount = in->commandBufferCount;
-}
-
 static inline void convert_VkDescriptorSetAllocateInfo_win_to_host(const VkDescriptorSetAllocateInfo *in, VkDescriptorSetAllocateInfo_host *out)
 {
     if (!in) return;

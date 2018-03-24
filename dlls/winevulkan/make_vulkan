@@ -1710,9 +1710,8 @@ class VkGenerator(object):
 
             conversions = func.get_conversions()
             for conv in conversions:
-                # Pull in any conversions for vulkan_thunks.c. Driver conversions we
-                # handle manually in vulkan.c if needed.
-                if not func.is_driver_func():
+                # Pull in any conversions for vulkan_thunks.c.
+                if func.needs_thunk():
                     # Append if we don't already have this conversion.
                     if not any(c == conv for c in self.conversions):
                         self.conversions.append(conv)
