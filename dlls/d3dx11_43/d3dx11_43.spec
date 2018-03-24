@@ -20,8 +20,8 @@
 @ stub D3DX11CreateShaderResourceViewFromMemory(ptr ptr long ptr ptr ptr ptr)
 @ stub D3DX11CreateShaderResourceViewFromResourceA
 @ stub D3DX11CreateShaderResourceViewFromResourceW
-@ stub D3DX11CreateTextureFromFileA
-@ stub D3DX11CreateTextureFromFileW
+@ stdcall D3DX11CreateTextureFromFileA(ptr str ptr ptr ptr ptr)
+@ stdcall D3DX11CreateTextureFromFileW(ptr wstr ptr ptr ptr ptr)
 @ stdcall D3DX11CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
 @ stub D3DX11CreateTextureFromResourceA
 @ stub D3DX11CreateTextureFromResourceW
