@@ -1760,20 +1760,12 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in device dispatch table".format(vk_func.name))
-                continue
-
             f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
         for vk_func in self.registry.instance_funcs:
             if not vk_func.is_required():
-                continue
-
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in instance dispatch table".format(vk_func.name))
                 continue
 
             f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
