@@ -35,6 +35,26 @@ HRESULT WINAPI D3DX11CreateShaderResourceViewFromMemory(ID3D11Device *device, co
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DX11CreateTextureFromFileA(ID3D11Device *device, const char *filename,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture,
+        HRESULT *hresult)
+{
+    FIXME("device %p, filename %s, load_info %p, pump %p, texture %p, hresult %p stub.\n",
+            device, debugstr_a(filename), load_info, pump, texture, hresult);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX11CreateTextureFromFileW(ID3D11Device *device, const WCHAR *filename,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture,
+        HRESULT *hresult)
+{
+    FIXME("device %p, filename %s, load_info %p, pump %p, texture %p, hresult %p stub.\n",
+            device, debugstr_w(filename), load_info, pump, texture, hresult);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *data,
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11Resource **texture, HRESULT *hresult)
