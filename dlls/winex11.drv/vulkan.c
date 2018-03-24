@@ -77,6 +77,8 @@ static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevi
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
+static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name);
+
 static struct VkExtensionProperties *winex11_vk_instance_extensions = NULL;
 static unsigned int winex11_vk_instance_extensions_count = 0;
 
@@ -401,9 +403,15 @@ static void * X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
     return pvkGetDeviceProcAddr(device, name);
 }
 
-static void * X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
+static void *X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
+    void *proc_addr;
+
     TRACE("%p, %s\n", instance, debugstr_a(name));
+
+    if ((proc_addr = X11DRV_get_vk_instance_proc_addr(instance, name)))
+        return proc_addr;
+
     return pvkGetInstanceProcAddr(instance, name);
 }
 
@@ -473,7 +481,6 @@ static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *
     return pvkQueuePresentKHR(queue, present_info);
 }
 
-
 static const struct vulkan_funcs vulkan_funcs =
 {
     X11DRV_vkAcquireNextImageKHR,
@@ -492,8 +499,51 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkGetPhysicalDeviceSurfaceSupportKHR,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     X11DRV_vkGetSwapchainImagesKHR,
-    X11DRV_vkQueuePresentKHR
+    X11DRV_vkQueuePresentKHR,
 };
+
+static void *get_vulkan_driver_instance_proc_addr(const struct vulkan_funcs *vulkan_funcs,
+        VkInstance instance, const char *name)
+{
+    if (!name || name[0] != 'v' || name[1] != 'k')
+        return NULL;
+
+    name += 2;
+
+    if (!strcmp(name, "CreateInstance"))
+        return vulkan_funcs->p_vkCreateInstance;
+    if (!strcmp(name, "EnumerateInstanceExtensionProperties"))
+        return vulkan_funcs->p_vkEnumerateInstanceExtensionProperties;
+
+    if (!instance)
+        return NULL;
+
+    if (!strcmp(name, "CreateWin32SurfaceKHR"))
+        return vulkan_funcs->p_vkCreateWin32SurfaceKHR;
+    if (!strcmp(name, "DestroyInstance"))
+        return vulkan_funcs->p_vkDestroyInstance;
+    if (!strcmp(name, "DestroySurfaceKHR"))
+        return vulkan_funcs->p_vkDestroySurfaceKHR;
+    if (!strcmp(name, "GetInstanceProcAddr"))
+        return vulkan_funcs->p_vkGetInstanceProcAddr;
+    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilitiesKHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
+    if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR;
+    if (!strcmp(name, "GetPhysicalDeviceSurfaceSupportKHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR;
+    if (!strcmp(name, "GetPhysicalDeviceWin32PresentationSupportKHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+
+    return NULL;
+}
+
+static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name)
+{
+    return get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name);
+}
 
 const struct vulkan_funcs *get_vulkan_driver(UINT version)
 {
