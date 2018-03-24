@@ -656,6 +656,7 @@ GpStatus WINGDIPAPI GdipGetPenMiterLimit(GpPen*,REAL*);
 GpStatus WINGDIPAPI GdipGetPenStartCap(GpPen*,GpLineCap*);
 GpStatus WINGDIPAPI GdipGetPenUnit(GpPen*,GpUnit*);
 GpStatus WINGDIPAPI GdipGetPenWidth(GpPen*,REAL*);
+GpStatus WINGDIPAPI GdipTranslatePenTransform(GpPen*,REAL,REAL,GpMatrixOrder);
 
 /* Region */
 GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *, GpRegion **);
