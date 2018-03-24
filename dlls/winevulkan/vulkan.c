@@ -421,17 +421,6 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
     heap_free(instance);
 }
 
-VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
-        uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *image_index)
-{
-    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %p\n", device, wine_dbgstr_longlong(swapchain),
-            wine_dbgstr_longlong(timeout), wine_dbgstr_longlong(semaphore),
-            wine_dbgstr_longlong(fence), image_index);
-
-    return vk_funcs->p_vkAcquireNextImageKHR(device->device, swapchain, timeout,
-            semaphore, fence, image_index);
-}
-
 VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
         const VkCommandBufferAllocateInfo *allocate_info, VkCommandBuffer *buffers)
 {
@@ -660,72 +649,6 @@ err:
     return res;
 }
 
-#if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchainCreateInfoKHR *in,
-        VkSwapchainCreateInfoKHR_host *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->flags = in->flags;
-    out->surface = in->surface;
-    out->minImageCount = in->minImageCount;
-    out->imageFormat = in->imageFormat;
-    out->imageColorSpace = in->imageColorSpace;
-    out->imageExtent = in->imageExtent;
-    out->imageArrayLayers = in->imageArrayLayers;
-    out->imageUsage = in->imageUsage;
-    out->imageSharingMode = in->imageSharingMode;
-    out->queueFamilyIndexCount = in->queueFamilyIndexCount;
-    out->pQueueFamilyIndices = in->pQueueFamilyIndices;
-    out->preTransform = in->preTransform;
-    out->compositeAlpha = in->compositeAlpha;
-    out->presentMode = in->presentMode;
-    out->clipped = in->clipped;
-    out->oldSwapchain = in->oldSwapchain;
-}
-#endif
-
-VkResult WINAPI wine_vkCreateSwapchainKHR(VkDevice device,
-        const VkSwapchainCreateInfoKHR *create_info,
-        const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain)
-{
-#if defined(USE_STRUCT_CONVERSION)
-    VkSwapchainCreateInfoKHR_host create_info_host;
-    TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-
-    convert_VkSwapchainCreateInfoKHR_win_to_host(create_info, &create_info_host);
-
-    /* Wine graphics driver only uses structs in host format. */
-    return vk_funcs->p_vkCreateSwapchainKHR(device->device,
-            (VkSwapchainCreateInfoKHR *)&create_info_host, allocator, swapchain);
-#else
-    TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-
-    return vk_funcs->p_vkCreateSwapchainKHR(device->device, create_info, allocator, swapchain);
-#endif
-}
-
-VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance,
-        const VkWin32SurfaceCreateInfoKHR *create_info,
-        const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface)
-{
-    TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-
-    return vk_funcs->p_vkCreateWin32SurfaceKHR(instance->instance, create_info,
-            NULL /* allocator */, surface);
-}
-
 void WINAPI wine_vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
 {
     TRACE("%p %p\n", device, allocator);
@@ -744,28 +667,6 @@ void WINAPI wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallba
         FIXME("Support allocation allocators\n");
 
     wine_vk_instance_free(instance);
-}
-
-void WINAPI wine_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
-        const VkAllocationCallbacks *allocator)
-{
-    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(surface), allocator);
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-
-    vk_funcs->p_vkDestroySurfaceKHR(instance->instance, surface, NULL /* allocator */);
-}
-
-void WINAPI wine_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
-        const VkAllocationCallbacks *allocator)
-{
-    TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-
-    vk_funcs->p_vkDestroySwapchainKHR(device->device, swapchain, NULL /* allocator */);
 }
 
 VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev,
@@ -992,60 +893,6 @@ static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance,
 
     FIXME("Unsupported device or instance function: %s.\n", debugstr_a(name));
     return NULL;
-}
-
-VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice phys_dev,
-        VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *capabilities)
-{
-    TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
-    return vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->phys_dev,
-            surface, capabilities);
-}
-
-VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice phys_dev,
-        VkSurfaceKHR surface, uint32_t *format_count, VkSurfaceFormatKHR *formats)
-{
-    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), format_count, formats);
-    return vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev->phys_dev,
-            surface, format_count, formats);
-}
-
-VkResult WINAPI wine_vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice phys_dev,
-        VkSurfaceKHR surface, uint32_t *mode_count, VkPresentModeKHR *modes)
-{
-    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), mode_count, modes);
-    return vk_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR(phys_dev->phys_dev,
-            surface, mode_count, modes);
-}
-
-VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice phys_dev,
-        uint32_t queue_family_index, VkSurfaceKHR surface, VkBool32 *supported)
-{
-    TRACE("%p, %u, 0x%s, %p\n", phys_dev, queue_family_index, wine_dbgstr_longlong(surface), supported);
-    return vk_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR(phys_dev->phys_dev,
-            queue_family_index, surface, supported);
-}
-
-VkBool32 WINAPI wine_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
-        uint32_t queue_family_index)
-{
-    TRACE("%p %u\n", phys_dev, queue_family_index);
-    return vk_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(phys_dev->phys_dev,
-            queue_family_index);
-}
-
-VkResult WINAPI wine_vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain,
-        uint32_t *image_count, VkImage *images)
-{
-    TRACE("%p, 0x%s %p %p\n", device, wine_dbgstr_longlong(swapchain), image_count, images);
-    return vk_funcs->p_vkGetSwapchainImagesKHR(device->device, swapchain,
-            image_count, images);
-}
-
-VkResult WINAPI wine_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
-{
-    TRACE("%p, %p\n", queue, present_info);
-    return vk_funcs->p_vkQueuePresentKHR(queue->queue, present_info);
 }
 
 void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *name)

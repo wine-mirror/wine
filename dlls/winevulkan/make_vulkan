@@ -141,22 +141,22 @@ FUNCTION_OVERRIDES = {
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_swapchain
-    "vkAcquireNextImageKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkCreateSwapchainKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkDestroySwapchainKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkGetSwapchainImagesKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkQueuePresentKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkAcquireNextImageKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
 }
 
 
