@@ -127,7 +127,7 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
-    "vkDestroyInstance" : {"dispatch" : True, "driver" : True, "thunk" : False },
+    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : False },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
 
@@ -136,27 +136,27 @@ FUNCTION_OVERRIDES = {
     "vkCmdExecuteCommands" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
-    "vkGetDeviceProcAddr" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : False},
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkDestroySurfaceKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
 
     # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkCreateWin32SurfaceKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
 
     # VK_KHR_swapchain
-    "vkAcquireNextImageKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
-    "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : False},
+    "vkAcquireNextImageKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkCreateSwapchainKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkDestroySwapchainKHR" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkGetSwapchainImagesKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkQueuePresentKHR": {"dispatch" : False, "driver" : True, "thunk" : False},
 }
 
 
@@ -1876,7 +1876,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+            if not vk_func.needs_dispatch():
                 LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
                 continue
 
@@ -1896,7 +1896,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+            if not vk_func.needs_dispatch():
                 LOGGER.debug("skipping {0} in vulkan_instance_funcs".format(vk_func.name))
                 continue
 
@@ -1916,7 +1916,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+            if not vk_func.needs_dispatch():
                 LOGGER.debug("skipping {0} in ALL_VK_DEVICE_FUNCS".format(vk_func.name))
                 continue
 
@@ -1933,7 +1933,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            if not vk_func.needs_dispatch() or vk_func.is_driver_func():
+            if not vk_func.needs_dispatch():
                 LOGGER.debug("skipping {0} in ALL_VK_INSTANCE_FUNCS".format(vk_func.name))
                 continue
 
