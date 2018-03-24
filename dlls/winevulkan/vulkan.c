@@ -46,11 +46,100 @@ struct wine_vk_structure_header
 };
 
 static void *wine_vk_get_global_proc_addr(const char *name);
-static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
-        VkPhysicalDevice phys_dev_host);
-static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev);
 
 static const struct vulkan_funcs *vk_funcs = NULL;
+
+static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
+{
+    if (!phys_dev)
+        return;
+
+    heap_free(phys_dev->properties);
+    heap_free(phys_dev);
+}
+
+static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
+        VkPhysicalDevice phys_dev)
+{
+    struct VkPhysicalDevice_T *object;
+    uint32_t num_host_properties, num_properties = 0;
+    VkExtensionProperties *host_properties = NULL;
+    VkResult res;
+    unsigned int i, j;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return NULL;
+
+    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    object->instance = instance;
+    object->phys_dev = phys_dev;
+
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+            NULL, &num_host_properties, NULL);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to enumerate device extensions, res=%d\n", res);
+        goto err;
+    }
+
+    host_properties = heap_calloc(num_host_properties, sizeof(*host_properties));
+    if (!host_properties)
+    {
+        ERR("Failed to allocate memory for device properties!\n");
+        goto err;
+    }
+
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+            NULL, &num_host_properties, host_properties);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to enumerate device extensions, res=%d\n", res);
+        goto err;
+    }
+
+    /* Count list of extensions for which we have an implementation.
+     * TODO: perform translation for platform specific extensions.
+     */
+    for (i = 0; i < num_host_properties; i++)
+    {
+        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
+        {
+            TRACE("Enabling extension '%s' for physical device %p\n", host_properties[i].extensionName, object);
+            num_properties++;
+        }
+        else
+        {
+            TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
+        }
+    }
+
+    TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
+
+    object->properties = heap_calloc(num_properties, sizeof(*object->properties));
+    if (!object->properties)
+    {
+        ERR("Failed to allocate memory for device properties!\n");
+        goto err;
+    }
+
+    for (i = 0, j = 0; i < num_host_properties; i++)
+    {
+        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
+        {
+            memcpy(&object->properties[j], &host_properties[i], sizeof(*object->properties));
+            j++;
+        }
+    }
+    object->num_properties = num_properties;
+
+    heap_free(host_properties);
+    return object;
+
+err:
+    wine_vk_physical_device_free(object);
+    heap_free(host_properties);
+    return NULL;
+}
 
 /* Helper function for release command buffers. */
 static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPool pool,
@@ -330,99 +419,6 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
         vk_funcs->p_vkDestroyInstance(instance->instance, NULL /* allocator */);
 
     heap_free(instance);
-}
-
-static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
-        VkPhysicalDevice phys_dev)
-{
-    struct VkPhysicalDevice_T *object;
-    uint32_t num_host_properties, num_properties = 0;
-    VkExtensionProperties *host_properties = NULL;
-    VkResult res;
-    unsigned int i, j;
-
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
-        return NULL;
-
-    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
-    object->instance = instance;
-    object->phys_dev = phys_dev;
-
-    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
-            NULL, &num_host_properties, NULL);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
-    }
-
-    host_properties = heap_calloc(num_host_properties, sizeof(*host_properties));
-    if (!host_properties)
-    {
-        ERR("Failed to allocate memory for device properties!\n");
-        goto err;
-    }
-
-    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
-            NULL, &num_host_properties, host_properties);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
-    }
-
-    /* Count list of extensions for which we have an implementation.
-     * TODO: perform translation for platform specific extensions.
-     */
-    for (i = 0; i < num_host_properties; i++)
-    {
-        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            TRACE("Enabling extension '%s' for physical device %p\n", host_properties[i].extensionName, object);
-            num_properties++;
-        }
-        else
-        {
-            TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
-        }
-    }
-
-    TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
-
-    object->properties = heap_calloc(num_properties, sizeof(*object->properties));
-    if (!object->properties)
-    {
-        ERR("Failed to allocate memory for device properties!\n");
-        goto err;
-    }
-
-    for (i = 0, j = 0; i < num_host_properties; i++)
-    {
-        if (wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            memcpy(&object->properties[j], &host_properties[i], sizeof(*object->properties));
-            j++;
-        }
-    }
-    object->num_properties = num_properties;
-
-    heap_free(host_properties);
-    return object;
-
-err:
-    wine_vk_physical_device_free(object);
-    heap_free(host_properties);
-    return NULL;
-}
-
-static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
-{
-    if (!phys_dev)
-        return;
-
-    heap_free(phys_dev->properties);
-    heap_free(phys_dev);
 }
 
 VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
