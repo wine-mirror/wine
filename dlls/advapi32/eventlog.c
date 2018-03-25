@@ -830,7 +830,9 @@ BOOLEAN WINAPI EventProviderEnabled( REGHANDLE handle, UCHAR level, ULONGLONG ke
  */
 ULONG WINAPI EventActivityIdControl(ULONG code, GUID *guid)
 {
-    FIXME("0x%x, %p: stub\n", code, guid);
+    static int once;
+
+    if (!once++) FIXME("0x%x, %p: stub\n", code, guid);
     return ERROR_SUCCESS;
 }
 
