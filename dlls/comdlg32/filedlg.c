@@ -158,6 +158,11 @@ static BOOL is_dialog_hooked(const FileOpenDlgInfos *info)
     return (info->ofnInfos->Flags & OFN_ENABLEHOOK) && info->ofnInfos->lpfnHook;
 }
 
+static BOOL filedialog_is_readonly_hidden(const FileOpenDlgInfos *info)
+{
+    return (info->ofnInfos->Flags & OFN_HIDEREADONLY) || (info->DlgInfos.dwDlgProp & FODPROP_SAVEDLG);
+}
+
 /***********************************************************************
  * Prototypes
  */
@@ -1838,7 +1843,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   }
 
   /* Must the open as read only check box be hidden? */
-  if(fodInfos->ofnInfos->Flags & OFN_HIDEREADONLY)
+  if (filedialog_is_readonly_hidden(fodInfos))
   {
     ShowWindow(GetDlgItem(hwnd,IDC_OPENREADONLY),SW_HIDE);
     EnableWindow(GetDlgItem(hwnd, IDC_OPENREADONLY), FALSE);
@@ -1882,7 +1887,7 @@ static LRESULT FILEDLG95_ResizeControls(HWND hwnd, WPARAM wParam, LPARAM lParam)
     UINT flags = SWP_NOACTIVATE;
 
     ArrangeCtrlPositions(fodInfos->DlgInfos.hwndCustomDlg, hwnd,
-        (fodInfos->ofnInfos->Flags & (OFN_HIDEREADONLY | OFN_SHOWHELP)) == OFN_HIDEREADONLY);
+        filedialog_is_readonly_hidden(fodInfos) && !(fodInfos->ofnInfos->Flags & OFN_SHOWHELP));
 
     /* resize the custom dialog to the parent size */
     if (fodInfos->ofnInfos->Flags & (OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE))
@@ -1903,7 +1908,7 @@ static LRESULT FILEDLG95_ResizeControls(HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* Resize the height; if opened as read-only, checkbox and help button are
      * hidden and we are not using a custom template nor a customDialog
      */
-    if ( (fodInfos->ofnInfos->Flags & OFN_HIDEREADONLY) &&
+    if (filedialog_is_readonly_hidden(fodInfos) &&
                 (!(fodInfos->ofnInfos->Flags &
                    (OFN_SHOWHELP|OFN_ENABLETEMPLATE|OFN_ENABLETEMPLATEHANDLE))))
     {
