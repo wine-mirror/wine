@@ -2456,6 +2456,20 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [self setAutodisplay:NO];
     }
 
+    - (void) setFrame:(NSRect)frameRect display:(BOOL)flag
+    {
+        if (flag)
+            [self setAutodisplay:YES];
+        [super setFrame:frameRect display:flag];
+    }
+
+    - (void) setFrame:(NSRect)frameRect display:(BOOL)displayFlag animate:(BOOL)animateFlag
+    {
+        if (displayFlag)
+            [self setAutodisplay:YES];
+        [super setFrame:frameRect display:displayFlag animate:animateFlag];
+    }
+
     - (void) windowDidDrawContent
     {
         if (!drawnSinceShown)
