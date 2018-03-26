@@ -2964,6 +2964,15 @@ BOOL WINAPI IsProcessDPIAware(void)
 }
 
 /**********************************************************************
+ *              SetThreadDpiAwarenessContext   (USER32.@)
+ */
+DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
+{
+    FIXME("(%p): stub\n", context);
+    return NULL;
+}
+
+/**********************************************************************
  *              GetAutoRotationState [USER32.@]
  */
 BOOL WINAPI GetAutoRotationState( AR_STATE *state )
