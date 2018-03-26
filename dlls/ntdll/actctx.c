@@ -114,6 +114,7 @@ typedef struct
 {
     const WCHAR        *ptr;
     const WCHAR        *end;
+    BOOL                error;
 } xmlbuf_t;
 
 struct file_info
@@ -1176,40 +1177,44 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
     }
 }
 
-static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *error, BOOL *end)
+static BOOL set_error( xmlbuf_t *xmlbuf )
+{
+    xmlbuf->error = TRUE;
+    return FALSE;
+}
+
+static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *end)
 {
     const WCHAR* ptr;
 
-    *error = TRUE;
+    if (xmlbuf->error) return FALSE;
 
     while (xmlbuf->ptr < xmlbuf->end && isxmlspace(*xmlbuf->ptr))
         xmlbuf->ptr++;
 
-    if (xmlbuf->ptr == xmlbuf->end) return FALSE;
+    if (xmlbuf->ptr == xmlbuf->end) return set_error( xmlbuf );
 
     if (*xmlbuf->ptr == '/')
     {
         xmlbuf->ptr++;
         if (xmlbuf->ptr == xmlbuf->end || *xmlbuf->ptr != '>')
-            return FALSE;
+            return set_error( xmlbuf );
 
         xmlbuf->ptr++;
         *end = TRUE;
-        *error = FALSE;
         return FALSE;
     }
 
     if (*xmlbuf->ptr == '>')
     {
         xmlbuf->ptr++;
-        *error = FALSE;
         return FALSE;
     }
 
     ptr = xmlbuf->ptr;
     while (ptr < xmlbuf->end && *ptr != '=' && *ptr != '>' && !isxmlspace(*ptr)) ptr++;
 
-    if (ptr == xmlbuf->end) return FALSE;
+    if (ptr == xmlbuf->end) return set_error( xmlbuf );
 
     attr->name.ptr = xmlbuf->ptr;
     attr->name.len = ptr-xmlbuf->ptr;
@@ -1217,39 +1222,39 @@ static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *error, 
 
     /* skip spaces before '=' */
     while (ptr < xmlbuf->end && *ptr != '=' && isxmlspace(*ptr)) ptr++;
-    if (ptr == xmlbuf->end || *ptr != '=') return FALSE;
+    if (ptr == xmlbuf->end || *ptr != '=') return set_error( xmlbuf );
 
     /* skip '=' itself */
     ptr++;
-    if (ptr == xmlbuf->end) return FALSE;
+    if (ptr == xmlbuf->end) return set_error( xmlbuf );
 
     /* skip spaces after '=' */
     while (ptr < xmlbuf->end && *ptr != '"' && *ptr != '\'' && isxmlspace(*ptr)) ptr++;
 
-    if (ptr == xmlbuf->end || (*ptr != '"' && *ptr != '\'')) return FALSE;
+    if (ptr == xmlbuf->end || (*ptr != '"' && *ptr != '\'')) return set_error( xmlbuf );
 
     attr->value.ptr = ++ptr;
-    if (ptr == xmlbuf->end) return FALSE;
+    if (ptr == xmlbuf->end) return set_error( xmlbuf );
 
     ptr = memchrW(ptr, ptr[-1], xmlbuf->end - ptr);
     if (!ptr)
     {
         xmlbuf->ptr = xmlbuf->end;
-        return FALSE;
+        return set_error( xmlbuf );
     }
 
     attr->value.len = ptr - attr->value.ptr;
     xmlbuf->ptr = ptr + 1;
+    if (xmlbuf->ptr != xmlbuf->end) return TRUE;
 
-    if (xmlbuf->ptr == xmlbuf->end) return FALSE;
-
-    *error = FALSE;
-    return TRUE;
+    return set_error( xmlbuf );
 }
 
 static BOOL next_xml_elem(xmlbuf_t *xmlbuf, struct xml_elem *elem)
 {
     const WCHAR* ptr;
+
+    if (xmlbuf->error) return FALSE;
 
     for (;;)
     {
@@ -1257,7 +1262,7 @@ static BOOL next_xml_elem(xmlbuf_t *xmlbuf, struct xml_elem *elem)
         if (!ptr)
         {
             xmlbuf->ptr = xmlbuf->end;
-            return FALSE;
+            return set_error( xmlbuf );
         }
         ptr++;
         if (ptr + 3 < xmlbuf->end && ptr[0] == '!' && ptr[1] == '-' && ptr[2] == '-') /* skip comment */
@@ -1268,7 +1273,7 @@ static BOOL next_xml_elem(xmlbuf_t *xmlbuf, struct xml_elem *elem)
             if (ptr + 3 > xmlbuf->end)
             {
                 xmlbuf->ptr = xmlbuf->end;
-                return FALSE;
+                return set_error( xmlbuf );
             }
             xmlbuf->ptr = ptr + 3;
         }
@@ -1282,7 +1287,9 @@ static BOOL next_xml_elem(xmlbuf_t *xmlbuf, struct xml_elem *elem)
     elem->name.ptr = xmlbuf->ptr;
     elem->name.len = ptr - xmlbuf->ptr;
     xmlbuf->ptr = ptr;
-    return xmlbuf->ptr != xmlbuf->end;
+    if (xmlbuf->ptr != xmlbuf->end) return TRUE;
+
+    return set_error( xmlbuf );
 }
 
 static BOOL parse_xml_header(xmlbuf_t* xmlbuf)
@@ -1303,9 +1310,11 @@ static BOOL parse_xml_header(xmlbuf_t* xmlbuf)
 
 static BOOL parse_text_content(xmlbuf_t* xmlbuf, xmlstr_t* content)
 {
-    const WCHAR *ptr = memchrW(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
+    const WCHAR *ptr;
 
-    if (!ptr) return FALSE;
+    if (xmlbuf->error) return FALSE;
+
+    if (!(ptr = memchrW(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr))) return set_error( xmlbuf );
 
     content->ptr = xmlbuf->ptr;
     content->len = ptr - xmlbuf->ptr;
@@ -1355,88 +1364,86 @@ static BOOL parse_expect_elem(xmlbuf_t* xmlbuf, const WCHAR* name, const WCHAR *
     return FALSE;
 }
 
-static BOOL parse_expect_no_attr(xmlbuf_t* xmlbuf, BOOL* end)
+static void parse_expect_no_attr(xmlbuf_t* xmlbuf, BOOL* end)
 {
     struct xml_attr attr;
-    BOOL        error;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, end))
+    while (next_xml_attr(xmlbuf, &attr, end))
     {
         WARN("unexpected attr %s\n", debugstr_xml_attr(&attr));
     }
-    return !error;
 }
 
-static BOOL parse_end_element(xmlbuf_t *xmlbuf)
+static void parse_end_element(xmlbuf_t *xmlbuf)
 {
     BOOL end = FALSE;
-    return parse_expect_no_attr(xmlbuf, &end) && !end;
+    parse_expect_no_attr(xmlbuf, &end);
+    if (end) set_error( xmlbuf );
 }
 
-static BOOL parse_expect_end_elem(xmlbuf_t *xmlbuf, const WCHAR *name, const WCHAR *namespace)
+static void parse_expect_end_elem(xmlbuf_t *xmlbuf, const WCHAR *name, const WCHAR *namespace)
 {
     struct xml_elem elem;
-    if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
+    if (!next_xml_elem(xmlbuf, &elem)) return;
     if (!xml_elem_cmp_end(&elem, name, namespace))
     {
         FIXME( "unexpected element %s\n", debugstr_xml_elem(&elem) );
-        return FALSE;
+        set_error( xmlbuf );
     }
-    return parse_end_element(xmlbuf);
+    parse_end_element(xmlbuf);
 }
 
-static BOOL parse_unknown_elem(xmlbuf_t *xmlbuf, const struct xml_elem *unknown_elem)
+static void parse_unknown_elem(xmlbuf_t *xmlbuf, const struct xml_elem *unknown_elem)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL end = FALSE, error, ret = TRUE;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end));
-    if(error || end) return end;
+    while (next_xml_attr(xmlbuf, &attr, &end));
+    if (end) return;
 
-    while(ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if(*elem.name.ptr == '/' && elem.name.len - 1 == unknown_elem->name.len &&
            !strncmpW(elem.name.ptr+1, unknown_elem->name.ptr, unknown_elem->name.len))
             break;
         else
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
     }
-
-    return ret && parse_end_element(xmlbuf);
+    parse_end_element(xmlbuf);
 }
 
-static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* actctx,
+static void parse_assembly_identity_elem(xmlbuf_t *xmlbuf, ACTIVATION_CONTEXT *actctx,
                                          struct assembly_identity* ai)
 {
     struct xml_attr attr;
-    BOOL        end = FALSE, error;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(ai->name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(ai->name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, typeW))
         {
-            if (!(ai->type = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(ai->type = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, versionW))
         {
-            if (!parse_version(&attr.value, &ai->version)) return FALSE;
+            if (!parse_version(&attr.value, &ai->version)) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, processorArchitectureW))
         {
-            if (!(ai->arch = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(ai->arch = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, publicKeyTokenW))
         {
-            if (!(ai->public_key = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(ai->public_key = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, languageW))
         {
-            if (!(ai->language = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(ai->language = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else
         {
@@ -1447,8 +1454,7 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
     TRACE( "name=%s version=%s arch=%s\n",
            debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
 
-    if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, assemblyIdentityW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, assemblyIdentityW, asmv1W);
 }
 
 static enum comclass_threadingmodel parse_com_class_threadingmodel(xmlstr_t *value)
@@ -1545,41 +1551,45 @@ static BOOL com_class_add_progid(const xmlstr_t *progid, struct entity *entity)
     return TRUE;
 }
 
-static BOOL parse_com_class_progid(xmlbuf_t* xmlbuf, struct entity *entity)
+static void parse_com_class_progid(xmlbuf_t *xmlbuf, struct entity *entity)
 {
     xmlstr_t content;
     BOOL end = FALSE;
 
-    if (!parse_expect_no_attr(xmlbuf, &end) || end || !parse_text_content(xmlbuf, &content))
-        return FALSE;
+    parse_expect_no_attr(xmlbuf, &end);
+    if (end) set_error( xmlbuf );
+    if (!parse_text_content(xmlbuf, &content)) return;
 
-    if (!com_class_add_progid(&content, entity)) return FALSE;
-    return parse_expect_end_elem(xmlbuf, progidW, asmv1W);
+    if (!com_class_add_progid(&content, entity)) set_error( xmlbuf );
+    parse_expect_end_elem(xmlbuf, progidW, asmv1W);
 }
 
-static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader *acl)
+static void parse_com_class_elem(xmlbuf_t *xmlbuf, struct dll_redirect *dll, struct actctx_loader *acl)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL ret = TRUE, end = FALSE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)))
-        return FALSE;
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, clsidW))
         {
-            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, progidW))
         {
-            if (!(entity->u.comclass.progid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.progid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, tlbidW))
         {
-            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, threadingmodelW))
         {
@@ -1615,36 +1625,32 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, str
         }
     }
 
-    if (error) return FALSE;
-
     acl->actctx->sections |= SERVERREDIRECT_SECTION;
     if (entity->u.comclass.progid)
         acl->actctx->sections |= PROGIDREDIRECT_SECTION;
 
-    if (end) return TRUE;
+    if (end) return;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, comClassW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, progidW))
         {
-            ret = parse_com_class_progid(xmlbuf, entity);
+            parse_com_class_progid(xmlbuf, entity);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
 
     if (entity->u.comclass.progids.num)
         acl->actctx->sections |= PROGIDREDIRECT_SECTION;
-
-    return ret;
 }
 
 static BOOL parse_nummethods(const xmlstr_t *str, struct entity *entity)
@@ -1667,38 +1673,41 @@ static BOOL parse_nummethods(const xmlstr_t *str, struct entity *entity)
     return TRUE;
 }
 
-static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader* acl)
+static void parse_cominterface_proxy_stub_elem(xmlbuf_t *xmlbuf, struct dll_redirect *dll, struct actctx_loader *acl)
 {
     struct xml_attr attr;
-    BOOL        end = FALSE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION)))
-        return FALSE;
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, iidW))
         {
-            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, baseInterfaceW))
         {
-            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr.value))) set_error( xmlbuf );
             entity->u.ifaceps.mask |= BaseIface;
         }
         else if (xml_attr_cmp(&attr, nummethodsW))
         {
-            if (!(parse_nummethods(&attr.value, entity))) return FALSE;
+            if (!(parse_nummethods(&attr.value, entity))) set_error( xmlbuf );
             entity->u.ifaceps.mask |= NumMethods;
         }
         else if (xml_attr_cmp(&attr, tlbidW))
         {
-            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         /* not used */
         else if (xml_attr_cmp(&attr, proxyStubClsid32W) || xml_attr_cmp(&attr, threadingmodelW))
@@ -1710,11 +1719,8 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
         }
     }
 
-    if (error) return FALSE;
     acl->actctx->sections |= IFACEREDIRECT_SECTION;
-    if (end) return TRUE;
-
-    return parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW, asmv1W);
 }
 
 static BOOL parse_typelib_flags(const xmlstr_t *value, struct entity *entity)
@@ -1783,32 +1789,35 @@ error:
     return FALSE;
 }
 
-static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader* acl)
+static void parse_typelib_elem(xmlbuf_t *xmlbuf, struct dll_redirect *dll, struct actctx_loader *acl)
 {
     struct xml_attr attr;
-    BOOL        end = FALSE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION)))
-        return FALSE;
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, tlbidW))
         {
-            if (!(entity->u.typelib.tlbid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.typelib.tlbid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, versionW))
         {
-            if (!parse_typelib_version(&attr.value, entity)) return FALSE;
+            if (!parse_typelib_version(&attr.value, entity)) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, helpdirW))
         {
-            if (!(entity->u.typelib.helpdir = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.typelib.helpdir = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, flagsW))
         {
-            if (!parse_typelib_flags(&attr.value, entity)) return FALSE;
+            if (!parse_typelib_flags(&attr.value, entity)) set_error( xmlbuf );
         }
         else
         {
@@ -1816,13 +1825,8 @@ static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struc
         }
     }
 
-    if (error) return FALSE;
-
     acl->actctx->sections |= TLIBREDIRECT_SECTION;
-
-    if (end) return TRUE;
-
-    return parse_expect_end_elem(xmlbuf, typelibW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, typelibW, asmv1W);
 }
 
 static inline int aligned_string_len(int len)
@@ -1840,26 +1844,28 @@ static int get_assembly_version(struct assembly *assembly, WCHAR *ret)
     return sprintfW(ret, fmtW, ver->major, ver->minor, ver->build, ver->revision);
 }
 
-static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, struct actctx_loader* acl)
+static void parse_window_class_elem(xmlbuf_t *xmlbuf, struct dll_redirect *dll, struct actctx_loader *acl)
 {
     struct xml_elem elem;
     struct xml_attr attr;
     xmlstr_t content;
-    BOOL end = FALSE, ret = TRUE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION)))
-        return FALSE;
-
+    {
+        set_error( xmlbuf );
+        return;
+    }
     entity->u.class.versioned = TRUE;
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, versionedW))
         {
             if (xmlstr_cmpi(&attr.value, noW))
                 entity->u.class.versioned = FALSE;
             else if (!xmlstr_cmpi(&attr.value, yesW))
-               return FALSE;
+                set_error( xmlbuf );
         }
         else
         {
@@ -1867,37 +1873,34 @@ static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll, 
         }
     }
 
-    if (error || end) return end;
+    if (end) return;
 
-    if (!parse_text_content(xmlbuf, &content)) return FALSE;
-
-    if (!(entity->u.class.name = xmlstrdupW(&content))) return FALSE;
+    if (!parse_text_content(xmlbuf, &content)) return;
+    if (!(entity->u.class.name = xmlstrdupW(&content))) set_error( xmlbuf );
 
     acl->actctx->sections |= WINDOWCLASS_SECTION;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, windowClassW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_binding_redirect_elem(xmlbuf_t* xmlbuf)
+static void parse_binding_redirect_elem(xmlbuf_t *xmlbuf)
 {
     struct xml_attr attr;
-    BOOL        end = FALSE, error;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, oldVersionW))
         {
@@ -1913,83 +1916,80 @@ static BOOL parse_binding_redirect_elem(xmlbuf_t* xmlbuf)
         }
     }
 
-    if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, bindingRedirectW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, bindingRedirectW, asmv1W);
 }
 
-static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
+static void parse_description_elem(xmlbuf_t *xmlbuf)
 {
     struct xml_elem elem;
     struct xml_attr attr;
     xmlstr_t content;
-    BOOL        end = FALSE, ret = TRUE, error = FALSE;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
         WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
 
-    if (error) return FALSE;
-    if (end) return TRUE;
-
-    if (!parse_text_content(xmlbuf, &content))
-        return FALSE;
+    if (end) return;
+    if (!parse_text_content(xmlbuf, &content)) return;
 
     TRACE("Got description %s\n", debugstr_xmlstr(&content));
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, descriptionW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
+static void parse_com_interface_external_proxy_stub_elem(xmlbuf_t *xmlbuf,
                                                          struct assembly* assembly,
                                                          struct actctx_loader* acl)
 {
     struct xml_attr attr;
-    BOOL                end = FALSE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
-    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION);
-    if (!entity) return FALSE;
+    if (!(entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION)))
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, iidW))
         {
-            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.iid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, baseInterfaceW))
         {
-            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.base = xmlstrdupW(&attr.value))) set_error( xmlbuf );
             entity->u.ifaceps.mask |= BaseIface;
         }
         else if (xml_attr_cmp(&attr, nummethodsW))
         {
-            if (!(parse_nummethods(&attr.value, entity))) return FALSE;
+            if (!(parse_nummethods(&attr.value, entity))) set_error( xmlbuf );
             entity->u.ifaceps.mask |= NumMethods;
         }
         else if (xml_attr_cmp(&attr, proxyStubClsid32W))
         {
-            if (!(entity->u.ifaceps.ps32 = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.ps32 = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, tlbidW))
         {
-            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else
         {
@@ -1997,40 +1997,40 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
         }
     }
 
-    if (error) return FALSE;
     acl->actctx->sections |= IFACEREDIRECT_SECTION;
-    if (end) return TRUE;
-
-    return parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW, asmv1W);
 }
 
-static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+static void parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL        end = FALSE, error, ret = TRUE;
+    BOOL end = FALSE;
     struct entity*      entity;
 
-    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
-    if (!entity) return FALSE;
+    if (!(entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)))
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(entity->u.comclass.name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, clsidW))
         {
-            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, progidW))
         {
-            if (!(entity->u.comclass.progid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.progid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, tlbidW))
         {
-            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.tlbid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, threadingmodelW))
         {
@@ -2038,7 +2038,7 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, st
         }
         else if (xml_attr_cmp(&attr, runtimeVersionW))
         {
-            if (!(entity->u.comclass.version = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.comclass.version = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else
         {
@@ -2046,58 +2046,58 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, st
         }
     }
 
-    if (error) return FALSE;
     acl->actctx->sections |= SERVERREDIRECT_SECTION;
     if (entity->u.comclass.progid)
         acl->actctx->sections |= PROGIDREDIRECT_SECTION;
-    if (end) return TRUE;
+    if (end) return;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, clrClassW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, progidW))
         {
-            ret = parse_com_class_progid(xmlbuf, entity);
+            parse_com_class_progid(xmlbuf, entity);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
 
     if (entity->u.comclass.progids.num)
         acl->actctx->sections |= PROGIDREDIRECT_SECTION;
-
-    return ret;
 }
 
-static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+static void parse_clr_surrogate_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
 {
     struct xml_attr attr;
-    BOOL        end = FALSE, error;
+    BOOL end = FALSE;
     struct entity*      entity;
 
-    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES);
-    if (!entity) return FALSE;
+    if (!(entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES)))
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(entity->u.clrsurrogate.name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.clrsurrogate.name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, clsidW))
         {
-            if (!(entity->u.clrsurrogate.clsid = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.clrsurrogate.clsid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, runtimeVersionW))
         {
-            if (!(entity->u.clrsurrogate.version = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(entity->u.clrsurrogate.version = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else
         {
@@ -2105,75 +2105,70 @@ static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
         }
     }
 
-    if (error) return FALSE;
     acl->actctx->sections |= CLRSURROGATES_SECTION;
-    if (end) return TRUE;
-
-    return parse_expect_end_elem(xmlbuf, clrSurrogateW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, clrSurrogateW, asmv1W);
 }
 
-static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl, BOOL optional)
+static void parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl, BOOL optional)
 {
     struct xml_elem elem;
     struct xml_attr attr;
     struct assembly_identity    ai;
-    BOOL                        end = FALSE, error = FALSE, ret = TRUE, delayed = FALSE;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    memset(&ai, 0, sizeof(ai));
+    ai.optional = optional;
+
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         static const WCHAR allowDelayedBindingW[] = {'a','l','l','o','w','D','e','l','a','y','e','d','B','i','n','d','i','n','g',0};
         static const WCHAR trueW[] = {'t','r','u','e',0};
 
         if (xml_attr_cmp(&attr, allowDelayedBindingW))
-            delayed = xmlstr_cmp(&attr.value, trueW);
+            ai.delayed = xmlstr_cmp(&attr.value, trueW);
         else
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
     }
 
-    if (error || end) return end;
+    if (end) return;
 
-    memset(&ai, 0, sizeof(ai));
-    ai.optional = optional;
-    ai.delayed = delayed;
+    if (parse_expect_elem(xmlbuf, assemblyIdentityW, asmv1W))
+        parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai);
 
-    if (!parse_expect_elem(xmlbuf, assemblyIdentityW, asmv1W) ||
-        !parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai))
-        return FALSE;
+    if (xmlbuf->error) return;
 
     TRACE( "adding name=%s version=%s arch=%s\n",
            debugstr_w(ai.name), debugstr_version(&ai.version), debugstr_w(ai.arch) );
 
     /* store the newly found identity for later loading */
-    if (!add_dependent_assembly_id(acl, &ai)) return FALSE;
+    if (!add_dependent_assembly_id(acl, &ai)) set_error( xmlbuf );
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, dependentAssemblyW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, bindingRedirectW))
         {
-            ret = parse_binding_redirect_elem(xmlbuf);
+            parse_binding_redirect_elem(xmlbuf);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
+static void parse_dependency_elem(xmlbuf_t *xmlbuf, struct actctx_loader *acl)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL end = FALSE, ret = TRUE, error, optional = FALSE;
+    BOOL end = FALSE, optional = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, optionalW))
         {
@@ -2186,62 +2181,64 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
         }
     }
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, dependencyW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, dependentAssemblyW))
         {
-            ret = parse_dependent_assembly_elem(xmlbuf, acl, optional);
+            parse_dependent_assembly_elem(xmlbuf, acl, optional);
         }
         else
         {
             WARN("unknown element %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_noinherit_elem(xmlbuf_t* xmlbuf)
+static void parse_noinherit_elem(xmlbuf_t* xmlbuf)
 {
     BOOL end = FALSE;
 
-    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
-    return end || parse_expect_end_elem(xmlbuf, noInheritW, asmv1W);
+    parse_expect_no_attr(xmlbuf, &end);
+    if (!end) parse_expect_end_elem(xmlbuf, noInheritW, asmv1W);
 }
 
-static BOOL parse_noinheritable_elem(xmlbuf_t* xmlbuf)
+static void parse_noinheritable_elem(xmlbuf_t* xmlbuf)
 {
     BOOL end = FALSE;
 
-    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
-    return end || parse_expect_end_elem(xmlbuf, noInheritableW, asmv1W);
+    parse_expect_no_attr(xmlbuf, &end);
+    if (!end) parse_expect_end_elem(xmlbuf, noInheritableW, asmv1W);
 }
 
-static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader* acl)
+static void parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader* acl)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL        end = FALSE, error, ret = TRUE;
+    BOOL end = FALSE;
     struct dll_redirect* dll;
 
-    if (!(dll = add_dll_redirect(assembly))) return FALSE;
+    if (!(dll = add_dll_redirect(assembly)))
+    {
+        set_error( xmlbuf );
+        return;
+    }
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, nameW))
         {
-            if (!(dll->name = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(dll->name = xmlstrdupW(&attr.value))) set_error( xmlbuf );
             TRACE("name=%s\n", debugstr_xmlstr(&attr.value));
         }
         else if (xml_attr_cmp(&attr, hashW))
         {
-            if (!(dll->hash = xmlstrdupW(&attr.value))) return FALSE;
+            if (!(dll->hash = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
         else if (xml_attr_cmp(&attr, hashalgW))
         {
@@ -2255,56 +2252,54 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct 
         }
     }
 
-    if (error || !dll->name) return FALSE;
+    if (!dll->name) set_error( xmlbuf );
 
     acl->actctx->sections |= DLLREDIRECT_SECTION;
 
-    if (end) return TRUE;
+    if (end) return;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, fileW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, comClassW))
         {
-            ret = parse_com_class_elem(xmlbuf, dll, acl);
+            parse_com_class_elem(xmlbuf, dll, acl);
         }
         else if (xmlstr_cmp(&elem.name, comInterfaceProxyStubW))
         {
-            ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll, acl);
+            parse_cominterface_proxy_stub_elem(xmlbuf, dll, acl);
         }
         else if (xml_elem_cmp(&elem, hashW, asmv2W))
         {
             WARN("asmv2:hash (undocumented) not supported\n");
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
         else if (xmlstr_cmp(&elem.name, typelibW))
         {
-            ret = parse_typelib_elem(xmlbuf, dll, acl);
+            parse_typelib_elem(xmlbuf, dll, acl);
         }
         else if (xmlstr_cmp(&elem.name, windowClassW))
         {
-            ret = parse_window_class_elem(xmlbuf, dll, acl);
+            parse_window_class_elem(xmlbuf, dll, acl);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem( xmlbuf, &elem );
+            parse_unknown_elem( xmlbuf, &elem );
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_supportedos_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+static void parse_supportedos_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
 {
     struct xml_attr attr;
-    BOOL end = FALSE, error;
+    BOOL end = FALSE;
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, IdW))
         {
@@ -2316,7 +2311,11 @@ static BOOL parse_supportedos_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, 
             str.Length = str.MaximumLength = (USHORT)attr.value.len * sizeof(WCHAR);
             if (RtlGUIDFromString(&str, &compat_id) == STATUS_SUCCESS)
             {
-                if (!(compat = add_compat_context(assembly))) return FALSE;
+                if (!(compat = add_compat_context(assembly)))
+                {
+                    set_error( xmlbuf );
+                    return;
+                }
                 compat->Type = ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS;
                 compat->Id = compat_id;
             }
@@ -2331,118 +2330,111 @@ static BOOL parse_supportedos_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, 
         }
     }
 
-    if (error) return FALSE;
-    if (end) return TRUE;
-
-    return parse_expect_end_elem(xmlbuf, supportedOSW, asmv1W);
+    if (!end) parse_expect_end_elem(xmlbuf, supportedOSW, asmv1W);
 }
 
-static BOOL parse_compatibility_application_elem(xmlbuf_t* xmlbuf, struct assembly* assembly,
+static void parse_compatibility_application_elem(xmlbuf_t *xmlbuf, struct assembly *assembly,
                                                  struct actctx_loader* acl)
 {
-    BOOL ret = TRUE;
     struct xml_elem elem;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, applicationW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, supportedOSW))
         {
-            ret = parse_supportedos_elem(xmlbuf, assembly, acl);
+            parse_supportedos_elem(xmlbuf, assembly, acl);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_compatibility_elem(xmlbuf_t* xmlbuf, struct assembly* assembly,
+static void parse_compatibility_elem(xmlbuf_t *xmlbuf, struct assembly *assembly,
                                      struct actctx_loader* acl)
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end(&elem, compatibilityW))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xmlstr_cmp(&elem.name, applicationW))
         {
-            ret = parse_compatibility_application_elem(xmlbuf, assembly, acl);
+            parse_compatibility_application_elem(xmlbuf, assembly, acl);
         }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-    return ret;
 }
 
-static BOOL parse_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl,
+static void parse_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl,
                                  struct xml_elem *parent )
 {
     struct xml_elem elem;
     struct xml_attr attr;
     xmlstr_t content;
-    BOOL end = FALSE, ret = TRUE, error = FALSE;
+    BOOL end = FALSE;
     struct entity *entity;
 
-    while (next_xml_attr( xmlbuf, &attr, &error, &end ))
+    while (next_xml_attr( xmlbuf, &attr, &end ))
     {
         if (xmlstr_cmp( &attr.name, xmlnsW )) continue;
         WARN( "unknown attr %s\n", debugstr_xml_attr(&attr) );
     }
 
-    if (error) return FALSE;
-    if (end) return TRUE;
+    if (end) return;
 
-    if (!parse_text_content( xmlbuf, &content )) return FALSE;
+    if (!parse_text_content( xmlbuf, &content )) return;
     TRACE( "got %s %s\n", debugstr_xmlstr(&parent->name), debugstr_xmlstr(&content) );
 
     entity = add_entity( &assembly->entities, ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS );
-    if (!entity) return FALSE;
+    if (!entity)
+    {
+        set_error( xmlbuf );
+        return;
+    }
     entity->u.settings.name = xmlstrdupW( &parent->name );
     entity->u.settings.value = xmlstrdupW( &content );
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xmlstr_cmp_end( &elem, entity->u.settings.name ))
         {
-            ret = parse_end_element( xmlbuf );
+            parse_end_element( xmlbuf );
             break;
         }
         else
         {
             WARN( "unknown elem %s\n", debugstr_xml_elem(&elem) );
-            ret = parse_unknown_elem( xmlbuf, &elem );
+            parse_unknown_elem( xmlbuf, &elem );
         }
     }
-    return ret;
 }
 
-static BOOL parse_windows_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
+static void parse_windows_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
                                          struct actctx_loader *acl )
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem( xmlbuf, &elem )))
+    while (next_xml_elem( xmlbuf, &elem ))
     {
         if (xmlstr_cmp_end( &elem, windowsSettingsW ))
         {
-            ret = parse_end_element( xmlbuf );
+            parse_end_element( xmlbuf );
             break;
         }
         else if (xmlstr_cmp( &elem.name, autoElevateW ) ||
@@ -2457,43 +2449,41 @@ static BOOL parse_windows_settings_elem( xmlbuf_t *xmlbuf, struct assembly *asse
                  xmlstr_cmp( &elem.name, printerDriverIsolationW ) ||
                  xmlstr_cmp( &elem.name, ultraHighResolutionScrollingAwareW ))
         {
-            ret = parse_settings_elem( xmlbuf, assembly, acl, &elem );
+            parse_settings_elem( xmlbuf, assembly, acl, &elem );
         }
         else
         {
             WARN( "unknown elem %s\n", debugstr_xml_elem(&elem) );
-            ret = parse_unknown_elem( xmlbuf, &elem );
+            parse_unknown_elem( xmlbuf, &elem );
         }
     }
-    return ret;
 }
 
-static BOOL parse_application_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+static void parse_application_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem( xmlbuf, &elem )))
+    while (next_xml_elem( xmlbuf, &elem ))
     {
         if (xmlstr_cmp_end( &elem, applicationW ))
         {
-            ret = parse_end_element( xmlbuf );
+            parse_end_element( xmlbuf );
             break;
         }
         else if (xmlstr_cmp( &elem.name, windowsSettingsW ))
         {
-            ret = parse_windows_settings_elem( xmlbuf, assembly, acl );
+            parse_windows_settings_elem( xmlbuf, assembly, acl );
         }
         else
         {
             WARN( "unknown elem %s\n", debugstr_xml_elem(&elem) );
-            ret = parse_unknown_elem( xmlbuf, &elem );
+            parse_unknown_elem( xmlbuf, &elem );
         }
     }
-    return ret;
 }
 
-static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+static void parse_requested_execution_level_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
+                                                  struct actctx_loader *acl )
 {
     static const WCHAR levelW[] = {'l','e','v','e','l',0};
     static const WCHAR asInvokerW[] = {'a','s','I','n','v','o','k','e','r',0};
@@ -2505,13 +2495,12 @@ static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assemb
 
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL end = FALSE, ret = TRUE, error;
+    BOOL end = FALSE;
 
     /* Multiple requestedExecutionLevel elements are not supported. */
-    if (assembly->run_level != ACTCTX_RUN_LEVEL_UNSPECIFIED)
-        return FALSE;
+    if (assembly->run_level != ACTCTX_RUN_LEVEL_UNSPECIFIED) set_error( xmlbuf );
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, levelW))
         {
@@ -2537,109 +2526,98 @@ static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assemb
             FIXME("unknown attr %s\n", debugstr_xml_attr(&attr));
     }
 
-    if (error) return FALSE;
-    if (end) return TRUE;
+    if (end) return;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xml_elem_cmp_end(&elem, requestedExecutionLevelW, asmv2W))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else
         {
             WARN("unknown element %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_requested_privileges_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+static void parse_requested_privileges_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
+                                             struct actctx_loader *acl )
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xml_elem_cmp_end(&elem, requestedPrivilegesW, asmv2W))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xml_elem_cmp(&elem, requestedExecutionLevelW, asmv2W))
-            ret = parse_requested_execution_level_elem(xmlbuf, assembly, acl);
+            parse_requested_execution_level_elem(xmlbuf, assembly, acl);
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_security_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+static void parse_security_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xml_elem_cmp_end(&elem, securityW, asmv2W))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xml_elem_cmp(&elem, requestedPrivilegesW, asmv2W))
-            ret = parse_requested_privileges_elem(xmlbuf, assembly, acl);
+            parse_requested_privileges_elem(xmlbuf, assembly, acl);
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_trust_info_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+static void parse_trust_info_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
 {
     struct xml_elem elem;
-    BOOL ret = TRUE;
 
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xml_elem_cmp_end(&elem, trustInfoW, asmv2W))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
         }
         else if (xml_elem_cmp(&elem, securityW, asmv2W))
-            ret = parse_security_elem(xmlbuf, assembly, acl);
+            parse_security_elem(xmlbuf, assembly, acl);
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
     }
-
-    return ret;
 }
 
-static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
+static void parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                                 struct assembly* assembly,
                                 struct assembly_identity* expected_ai)
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL        end = FALSE, error, version = FALSE, xmlns = FALSE, ret = TRUE;
+    BOOL end = FALSE, version = FALSE, xmlns = FALSE;
 
     TRACE("(%p)\n", xmlbuf);
 
-    while (next_xml_attr(xmlbuf, &attr, &error, &end))
+    while (next_xml_attr(xmlbuf, &attr, &end))
     {
         if (xml_attr_cmp(&attr, manifestVersionW))
         {
@@ -2647,7 +2625,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
             if (!xmlstr_cmp(&attr.value, v10W))
             {
                 FIXME("wrong version %s\n", debugstr_xmlstr(&attr.value));
-                return FALSE;
+                break;
             }
             version = TRUE;
         }
@@ -2658,7 +2636,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                 !xmlstr_cmp(&attr.value, manifestv3W))
             {
                 FIXME("wrong namespace %s\n", debugstr_xmlstr(&attr.value));
-                return FALSE;
+                break;
             }
             xmlns = TRUE;
         }
@@ -2668,66 +2646,62 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         }
     }
 
-    if (error || end || !xmlns || !version) return FALSE;
-    if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
-
-    if (assembly->type == APPLICATION_MANIFEST && xmlstr_cmp(&elem.name, noInheritW))
+    if (end || !xmlns || !version)
     {
-        if (!parse_noinherit_elem(xmlbuf) || !next_xml_elem(xmlbuf, &elem))
-            return FALSE;
-        assembly->no_inherit = TRUE;
+        set_error( xmlbuf );
+        return;
     }
 
-    if (xml_elem_cmp(&elem, noInheritableW, asmv1W))
-    {
-        if (!parse_noinheritable_elem(xmlbuf) || !next_xml_elem(xmlbuf, &elem))
-            return FALSE;
-    }
-    else if ((assembly->type == ASSEMBLY_MANIFEST || assembly->type == ASSEMBLY_SHARED_MANIFEST) &&
-             assembly->no_inherit)
-        return FALSE;
-
-    while (ret)
+    while (next_xml_elem(xmlbuf, &elem))
     {
         if (xml_elem_cmp_end(&elem, assemblyW, asmv1W))
         {
-            ret = parse_end_element(xmlbuf);
+            parse_end_element(xmlbuf);
             break;
+        }
+        else if (assembly->type == APPLICATION_MANIFEST && xmlstr_cmp(&elem.name, noInheritW))
+        {
+            parse_noinherit_elem(xmlbuf);
+            assembly->no_inherit = TRUE;
+        }
+        else if (xml_elem_cmp(&elem, noInheritableW, asmv1W))
+        {
+            parse_noinheritable_elem(xmlbuf);
         }
         else if (xml_elem_cmp(&elem, descriptionW, asmv1W))
         {
-            ret = parse_description_elem(xmlbuf);
+            parse_description_elem(xmlbuf);
         }
         else if (xml_elem_cmp(&elem, comInterfaceExternalProxyStubW, asmv1W))
         {
-            ret = parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly, acl);
+            parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, dependencyW, asmv1W))
         {
-            ret = parse_dependency_elem(xmlbuf, acl);
+            parse_dependency_elem(xmlbuf, acl);
         }
         else if (xml_elem_cmp(&elem, fileW, asmv1W))
         {
-            ret = parse_file_elem(xmlbuf, assembly, acl);
+            parse_file_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, clrClassW, asmv1W))
         {
-            ret = parse_clr_class_elem(xmlbuf, assembly, acl);
+            parse_clr_class_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, clrSurrogateW, asmv1W))
         {
-            ret = parse_clr_surrogate_elem(xmlbuf, assembly, acl);
+            parse_clr_surrogate_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, trustInfoW, asmv2W) ||
                  xml_elem_cmp(&elem, trustInfoW, asmv1W))
         {
-            ret = parse_trust_info_elem(xmlbuf, assembly, acl);
+            parse_trust_info_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, assemblyIdentityW, asmv1W))
         {
-            if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id)) return FALSE;
+            parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id);
 
-            if (expected_ai)
+            if (!xmlbuf->error && expected_ai)
             {
                 /* FIXME: more tests */
                 if (assembly->type == ASSEMBLY_MANIFEST &&
@@ -2738,7 +2712,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                           expected_ai->version.build, expected_ai->version.revision,
                           assembly->id.version.major, assembly->id.version.minor,
                           assembly->id.version.build, assembly->id.version.revision);
-                    ret = FALSE;
+                    set_error( xmlbuf );
                 }
                 else if (assembly->type == ASSEMBLY_SHARED_MANIFEST &&
                          (assembly->id.version.major != expected_ai->version.major ||
@@ -2748,33 +2722,38 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                            assembly->id.version.revision < expected_ai->version.revision)))
                 {
                     FIXME("wrong version for shared assembly manifest\n");
-                    ret = FALSE;
+                    set_error( xmlbuf );
                 }
             }
         }
         else if (xml_elem_cmp(&elem, compatibilityW, compatibilityNSW))
         {
-            ret = parse_compatibility_elem(xmlbuf, assembly, acl);
+            parse_compatibility_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, applicationW, asmv3W))
         {
-            ret = parse_application_elem(xmlbuf, assembly, acl);
+            parse_application_elem(xmlbuf, assembly, acl);
         }
         else
         {
             WARN("unknown element %s\n", debugstr_xml_elem(&elem));
-            ret = parse_unknown_elem(xmlbuf, &elem);
+            parse_unknown_elem(xmlbuf, &elem);
         }
-        if (ret) ret = next_xml_elem(xmlbuf, &elem);
     }
 
-    return ret;
+    if ((assembly->type == ASSEMBLY_MANIFEST || assembly->type == ASSEMBLY_SHARED_MANIFEST) &&
+        assembly->no_inherit)
+    {
+        set_error( xmlbuf );
+    }
 }
 
 static NTSTATUS parse_manifest_buffer( struct actctx_loader* acl, struct assembly *assembly,
                                        struct assembly_identity* ai, xmlbuf_t *xmlbuf )
 {
     struct xml_elem elem;
+
+    xmlbuf->error = FALSE;
 
     if (!next_xml_elem(xmlbuf, &elem)) return STATUS_SXS_CANT_GEN_ACTCTX;
 
@@ -2788,7 +2767,8 @@ static NTSTATUS parse_manifest_buffer( struct actctx_loader* acl, struct assembl
         return STATUS_SXS_CANT_GEN_ACTCTX;
     }
 
-    if (!parse_assembly_elem(xmlbuf, acl, assembly, ai))
+    parse_assembly_elem(xmlbuf, acl, assembly, ai);
+    if (xmlbuf->error)
     {
         FIXME("failed to parse manifest %s\n", debugstr_w(assembly->manifest.info) );
         return STATUS_SXS_CANT_GEN_ACTCTX;
