@@ -63,6 +63,8 @@ typedef LONG NTSTATUS;
 #define BCRYPT_AES_WRAP_KEY_BLOB (const WCHAR []){'R','f','c','3','5','6','5','K','e','y','W','r','a','p','B','l','o','b',0}
 #define BCRYPT_ECCPUBLIC_BLOB    (const WCHAR []){'E','C','C','P','U','B','L','I','C','B','L','O','B',0}
 #define BCRYPT_ECCPRIVATE_BLOB   (const WCHAR []){'E','C','C','P','R','I','V','A','T','E','B','L','O','B',0}
+#define BCRYPT_RSAPUBLIC_BLOB    (const WCHAR []){'R','S','A','P','U','B','L','I','C','B','L','O','B',0}
+#define BCRYPT_RSAPRIVATE_BLOB   (const WCHAR []){'R','S','A','P','R','I','V','A','T','E','B','L','O','B',0}
 
 #define MS_PRIMITIVE_PROVIDER (const WCHAR [])\
     {'M','i','c','r','o','s','o','f','t',' ','P','r','i','m','i','t','i','v','e',' ','P','r','o','v','i','d','e','r',0}
@@ -74,6 +76,7 @@ typedef LONG NTSTATUS;
 #define BCRYPT_MD4_ALGORITHM        (const WCHAR []){'M','D','4',0}
 #define BCRYPT_MD5_ALGORITHM        (const WCHAR []){'M','D','5',0}
 #define BCRYPT_RNG_ALGORITHM        (const WCHAR []){'R','N','G',0}
+#define BCRYPT_RSA_ALGORITHM        (const WCHAR []){'R','S','A',0}
 #define BCRYPT_SHA1_ALGORITHM       (const WCHAR []){'S','H','A','1',0}
 #define BCRYPT_SHA256_ALGORITHM     (const WCHAR []){'S','H','A','2','5','6',0}
 #define BCRYPT_SHA384_ALGORITHM     (const WCHAR []){'S','H','A','3','8','4',0}
@@ -132,6 +135,20 @@ typedef struct _BCRYPT_ECCKEY_BLOB
     ULONG dwMagic;
     ULONG cbKey;
 } BCRYPT_ECCKEY_BLOB, *PBCRYPT_ECCKEY_BLOB;
+
+#define BCRYPT_RSAPUBLIC_MAGIC      0x31415352
+#define BCRYPT_RSAPRIVATE_MAGIC     0x32415352
+#define BCRYPT_RSAFULLPRIVATE_MAGIC 0x33415352
+
+typedef struct _BCRYPT_RSAKEY_BLOB
+{
+    ULONG Magic;
+    ULONG BitLength;
+    ULONG cbPublicExp;
+    ULONG cbModulus;
+    ULONG cbPrime1;
+    ULONG cbPrime2;
+} BCRYPT_RSAKEY_BLOB;
 
 typedef struct _BCRYPT_PKCS1_PADDING_INFO
 {
