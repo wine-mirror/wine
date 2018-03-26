@@ -888,7 +888,7 @@
 @ extern __badioinfo MSVCRT___badioinfo
 @ cdecl __clean_type_info_names_internal(ptr)
 @ cdecl -arch=i386 __control87_2(long long ptr ptr)
-@ stub __create_locale
+@ cdecl __create_locale(long str) MSVCRT__create_locale
 @ stub -arch=win64 __crtCaptureCurrentContext
 @ stub -arch=win64 __crtCapturePreviousContext
 @ cdecl __crtCompareStringA(long long str long str long)

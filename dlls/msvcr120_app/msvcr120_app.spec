@@ -882,7 +882,7 @@
 @ extern __badioinfo msvcr120.__badioinfo
 @ cdecl __clean_type_info_names_internal(ptr) msvcr120.__clean_type_info_names_internal
 @ cdecl -arch=i386 __control87_2(long long ptr ptr) msvcr120.__control87_2
-@ stub __create_locale
+@ cdecl __create_locale(long str) msvcr120.__create_locale
 @ stub -arch=win64 __crtCaptureCurrentContext
 @ stub -arch=win64 __crtCapturePreviousContext
 @ stub __crtCloseWinRTThreadHandle
