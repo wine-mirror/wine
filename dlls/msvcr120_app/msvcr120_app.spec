@@ -903,7 +903,7 @@
 @ cdecl __dstbias() msvcr120.__dstbias
 @ cdecl __fpecode() msvcr120.__fpecode
 @ cdecl __free_locale(ptr) msvcr120.__free_locale
-@ stub __get_current_locale
+@ cdecl __get_current_locale() msvcr120.__get_current_locale
 @ stub __get_flsindex
 @ stub __get_tlsindex
 @ cdecl __getmainargs(ptr ptr ptr long ptr) msvcr120.__getmainargs
