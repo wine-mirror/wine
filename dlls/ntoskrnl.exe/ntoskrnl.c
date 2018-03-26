@@ -3316,3 +3316,33 @@ INT __cdecl NTOSKRNL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
 {
     return strncmpW( str1, str2, n );
 }
+
+
+#ifdef __x86_64__
+/**************************************************************************
+ *		__chkstk (NTOSKRNL.@)
+ *
+ * Supposed to touch all the stack pages, but we shouldn't need that.
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "ret" );
+
+#elif defined(__i386__)
+/**************************************************************************
+ *           _chkstk   (NTOSKRNL.@)
+ */
+__ASM_STDCALL_FUNC( _chkstk, 0,
+                   "negl %eax\n\t"
+                   "addl %esp,%eax\n\t"
+                   "xchgl %esp,%eax\n\t"
+                   "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
+                   "movl %eax,0(%esp)\n\t"
+                   "ret" )
+#elif defined(__arm__)
+/**************************************************************************
+ *		__chkstk (NTDLL.@)
+ *
+ * Incoming r4 contains words to allocate, converting to bytes then return
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
+                             "bx lr" )
+#endif
