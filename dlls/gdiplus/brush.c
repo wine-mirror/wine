@@ -1686,6 +1686,18 @@ GpStatus WINGDIPAPI GdipSetPathGradientGammaCorrection(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathGradientPath(GpPathGradient *grad, GDIPCONST GpPath *path)
+{
+    static int calls;
+
+    TRACE("(%p, %p)\n", grad, path);
+
+    if (!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient *grad,
     REAL focus, REAL scale)
 {
