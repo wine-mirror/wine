@@ -1069,6 +1069,14 @@ int CDECL MSVCRT_atoi(const char *str)
 #endif
 
 /******************************************************************
+ *      _atoi64_l (MSVCRT.@)
+ */
+__int64 CDECL MSVCRT__atoi64_l(const char *str, MSVCRT__locale_t locale)
+{
+    return MSVCRT_strtoi64_l(str, NULL, 10, locale);
+}
+
+/******************************************************************
  *      _atol_l (MSVCRT.@)
  */
 MSVCRT_long CDECL MSVCRT__atol_l(const char *str, MSVCRT__locale_t locale)
