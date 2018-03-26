@@ -2426,6 +2426,59 @@ static void test_prot_fault(void)
     }
 }
 
+static LONG CALLBACK dpe_handler(EXCEPTION_POINTERS *info)
+{
+    EXCEPTION_RECORD *rec = info->ExceptionRecord;
+    DWORD old_prot;
+
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    got_exception++;
+
+    ok(rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION,
+        "got %#x\n", rec->ExceptionCode);
+    ok(rec->NumberParameters == 2, "got %u params\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT,
+        "got %#lx\n", rec->ExceptionInformation[0]);
+    ok((void *)rec->ExceptionInformation[1] == code_mem,
+        "got %p\n", (void *)rec->ExceptionInformation[1]);
+
+    VirtualProtect(code_mem, 1, PAGE_EXECUTE_READWRITE, &old_prot);
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void test_dpe_exceptions(void)
+{
+    static const BYTE ret[] = {0xc3};
+    DWORD (CDECL *func)(void) = code_mem;
+    DWORD old_prot;
+    void *handler;
+
+    memcpy(code_mem, ret, sizeof(ret));
+
+    handler = pRtlAddVectoredExceptionHandler(TRUE, &dpe_handler);
+    ok(!!handler, "RtlAddVectoredExceptionHandler failed\n");
+
+    VirtualProtect(code_mem, 1, PAGE_NOACCESS, &old_prot);
+
+    got_exception = 0;
+    func();
+    ok(got_exception == 1, "got %u exceptions\n", got_exception);
+
+    VirtualProtect(code_mem, 1, old_prot, &old_prot);
+
+    VirtualProtect(code_mem, 1, PAGE_READWRITE, &old_prot);
+
+    got_exception = 0;
+    func();
+    ok(got_exception == 1, "got %u exceptions\n", got_exception);
+
+    VirtualProtect(code_mem, 1, old_prot, &old_prot);
+
+    pRtlRemoveVectoredExceptionHandler(handler);
+}
+
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -3021,6 +3074,7 @@ START_TEST(exception)
     test___C_specific_handler();
     test_restore_context();
     test_prot_fault();
+    test_dpe_exceptions();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
