@@ -1401,6 +1401,7 @@
 @ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwYieldExecution() NtYieldExecution
+@ stdcall -private -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl -private -arch=i386 _CIcos() msvcrt._CIcos
 @ cdecl -private -arch=i386 _CIsin() msvcrt._CIsin
 @ cdecl -private -arch=i386 _CIsqrt() msvcrt._CIsqrt
@@ -1416,6 +1417,7 @@
 @ stub _aulldvrm
 @ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64)
 @ stdcall -private -arch=i386 -ret64 _aullshr(int64 long)
+@ stdcall -private -arch=i386 -norelay _chkstk()
 @ cdecl -private -arch=i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
 @ cdecl -private -arch=i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
 @ cdecl -private -arch=i386 _global_unwind2(ptr) msvcrt._global_unwind2
