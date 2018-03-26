@@ -1008,7 +1008,7 @@
 @ cdecl -ret64 _atoi64(str) msvcr120._atoi64
 @ stub _atoi64_l
 @ cdecl _atoi_l(str ptr) msvcr120._atoi_l
-@ stub _atol_l
+@ cdecl _atol_l(str ptr) msvcr120._atol_l
 @ cdecl _atoldbl(ptr str) msvcr120._atoldbl
 @ stub _atoldbl_l
 @ cdecl -ret64 _atoll_l(str ptr) msvcr120._atoll_l

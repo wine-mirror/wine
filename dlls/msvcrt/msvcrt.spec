@@ -334,7 +334,7 @@
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64
 # stub -ret64 _atoi64_l(str ptr)
 @ cdecl _atoi_l(str ptr) MSVCRT__atoi_l
-# stub _atol_l(str ptr)
+@ cdecl _atol_l(str ptr) MSVCRT__atol_l
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 # stub _atoldbl_l(ptr str ptr)
 @ cdecl _beep(long long) MSVCRT__beep
