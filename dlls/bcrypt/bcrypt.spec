@@ -32,7 +32,7 @@
 @ stdcall BCryptHash(ptr ptr long ptr long ptr long)
 @ stdcall BCryptHashData(ptr ptr long long)
 @ stdcall BCryptImportKey(ptr ptr wstr ptr ptr long ptr long long)
-@ stub BCryptImportKeyPair
+@ stdcall BCryptImportKeyPair(ptr ptr wstr ptr ptr long long)
 @ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long)
 @ stub BCryptQueryContextConfiguration
 @ stub BCryptQueryContextFunctionConfiguration
@@ -50,7 +50,7 @@
 @ stub BCryptSignHash
 @ stub BCryptUnregisterConfigChangeNotify
 @ stdcall BCryptUnregisterProvider(wstr)
-@ stub BCryptVerifySignature
+@ stdcall BCryptVerifySignature(ptr ptr ptr long ptr long long)
 @ stub GetAsymmetricEncryptionInterface
 @ stub GetCipherInterface
 @ stub GetHashInterface
