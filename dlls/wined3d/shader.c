@@ -3685,8 +3685,6 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
 
     shader->load_local_constsF = shader->lconst_inf_or_nan;
 
-    wined3d_cs_init_object(shader->device->cs, wined3d_shader_init_object, shader);
-
     return hr;
 }
 
@@ -4118,6 +4116,8 @@ HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const stru
         return hr;
     }
 
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
+
     TRACE("Created compute shader %p.\n", object);
     *shader = object;
 
@@ -4142,6 +4142,8 @@ HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const stru
         heap_free(object);
         return hr;
     }
+
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
 
     TRACE("Created domain shader %p.\n", object);
     *shader = object;
@@ -4169,6 +4171,8 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const stru
         return hr;
     }
 
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
+
     TRACE("Created geometry shader %p.\n", object);
     *shader = object;
 
@@ -4193,6 +4197,8 @@ HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const stru
         heap_free(object);
         return hr;
     }
+
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
 
     TRACE("Created hull shader %p.\n", object);
     *shader = object;
@@ -4219,6 +4225,8 @@ HRESULT CDECL wined3d_shader_create_ps(struct wined3d_device *device, const stru
         return hr;
     }
 
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
+
     TRACE("Created pixel shader %p.\n", object);
     *shader = object;
 
@@ -4243,6 +4251,8 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const stru
         heap_free(object);
         return hr;
     }
+
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
 
     TRACE("Created vertex shader %p.\n", object);
     *shader = object;
