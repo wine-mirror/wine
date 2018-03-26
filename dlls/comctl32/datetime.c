@@ -598,8 +598,7 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
     }
 }
 
-static void
-DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *width)
+static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count)
 {
     /* fields are a fixed width, determined by the largest possible string */
     /* presumably, these widths should be language dependent */
@@ -613,13 +612,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
     LPCWSTR bufptr;
     SIZE size;
 
-    TRACE ("%d,%d\n", infoPtr->nrFields, count);
-    if (count>infoPtr->nrFields || count < 0) {
-	WARN ("buffer overrun, have %d want %d\n", infoPtr->nrFields, count);
-	return;
-    }
-
-    if (!infoPtr->fieldspec) return;
+    if (!infoPtr->fieldspec) return 0;
 
     spec = infoPtr->fieldspec[count];
     if (spec & DT_STRING) {
@@ -709,8 +702,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
 		        break;
 		    }
 		}
-		*width = cx;
-		return;
+		return cx;
 	    }
 	    case ONELETTERAMPM:
 	        bufptr = fld_am1;
@@ -724,7 +716,7 @@ DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHO
         }
     }
     GetTextExtentPoint32W (hdc, bufptr, strlenW(bufptr), &size);
-    *width = size.cx;
+    return size.cx;
 }
 
 static void 
@@ -738,7 +730,6 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
         RECT *rcDraw = &infoPtr->rcDraw;
         SIZE size;
         COLORREF oldTextColor;
-        SHORT fieldWidth = 0;
         HFONT oldFont = SelectObject (hdc, infoPtr->hFont);
         INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
         WCHAR txt[80];
@@ -752,10 +743,9 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
         for (i = 0; i < infoPtr->nrFields; i++) {
             DATETIME_ReturnTxt (infoPtr, i, txt, ARRAY_SIZE(txt));
             GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
-            DATETIME_ReturnFieldWidth (infoPtr, hdc, i, &fieldWidth);
             field = &infoPtr->fieldRect[i];
             field->left   = prevright;
-            field->right  = prevright + fieldWidth;
+            field->right  = prevright + DATETIME_GetFieldWidth (infoPtr, hdc, i);
             field->top    = rcDraw->top;
             field->bottom = rcDraw->bottom;
             prevright = field->right;
@@ -1458,7 +1448,6 @@ static BOOL DATETIME_GetIdealSize(DATETIME_INFO *infoPtr, SIZE *size)
 {
     SIZE field_size;
     RECT rect;
-    SHORT width;
     WCHAR txt[80];
     HDC hdc;
     HFONT oldFont;
@@ -1477,8 +1466,7 @@ static BOOL DATETIME_GetIdealSize(DATETIME_INFO *infoPtr, SIZE *size)
     /* Get text font width */
     for (i = 0; i < infoPtr->nrFields; i++)
     {
-        DATETIME_ReturnFieldWidth(infoPtr, hdc, i, &width);
-        size->cx += width;
+        size->cx += DATETIME_GetFieldWidth(infoPtr, hdc, i);
     }
 
     SelectObject(hdc, oldFont);
