@@ -102,6 +102,7 @@ typedef struct
 struct xml_elem
 {
     xmlstr_t            name;
+    xmlstr_t            ns;
 };
 
 struct xml_attr
@@ -561,6 +562,8 @@ struct actctx_loader
     unsigned int              allocated_dependencies;
 };
 
+static const xmlstr_t empty_xmlstr;
+
 static const WCHAR asmv1W[] = {'a','s','m','v','1',':',0};
 static const WCHAR asmv2W[] = {'a','s','m','v','2',':',0};
 static const WCHAR asmv3W[] = {'a','s','m','v','3',':',0};
@@ -746,13 +749,19 @@ static BOOL xml_attr_cmp( const struct xml_attr *attr, const WCHAR *str )
     return xmlstr_cmp( &attr->name, str );
 }
 
+static BOOL xml_name_cmp( const struct xml_elem *elem1, const struct xml_elem *elem2 )
+{
+    return (elem1->name.len == elem2->name.len &&
+            elem1->ns.len == elem2->ns.len &&
+            !strncmpW( elem1->name.ptr, elem2->name.ptr, elem1->name.len ) &&
+            !strncmpW( elem1->ns.ptr, elem2->ns.ptr, elem1->ns.len ));
+}
+
 static inline BOOL xml_elem_cmp(const struct xml_elem *elem, const WCHAR *str, const WCHAR *namespace)
 {
-    UINT len = strlenW( namespace );
-
-    if (!strncmpW(elem->name.ptr, str, elem->name.len) && !str[elem->name.len]) return TRUE;
-    return (elem->name.len > len && !strncmpW(elem->name.ptr, namespace, len) &&
-            !strncmpW(elem->name.ptr + len, str, elem->name.len - len) && !str[elem->name.len - len]);
+    return (!strncmpW(elem->name.ptr, str, elem->name.len) && !str[elem->name.len] &&
+            (!elem->ns.len ||
+             (!strncmpW(elem->ns.ptr, namespace, elem->ns.len) && namespace[elem->ns.len] == ':')));
 }
 
 static inline BOOL isxmlspace( WCHAR ch )
@@ -767,7 +776,8 @@ static inline const char* debugstr_xmlstr(const xmlstr_t* str)
 
 static inline const char *debugstr_xml_elem( const struct xml_elem *elem )
 {
-    return wine_dbg_sprintf( "%s", debugstr_wn( elem->name.ptr, elem->name.len ));
+    return wine_dbg_sprintf( "%s ns %s", debugstr_wn( elem->name.ptr, elem->name.len ),
+                             debugstr_wn( elem->ns.ptr, elem->ns.len ));
 }
 
 static inline const char *debugstr_xml_attr( const struct xml_attr *attr )
@@ -1232,6 +1242,26 @@ static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *end)
     return set_error( xmlbuf );
 }
 
+static void read_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem )
+{
+    const WCHAR* ptr = xmlbuf->ptr;
+
+    elem->ns = empty_xmlstr;
+    elem->name.ptr = ptr;
+    while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>' && *ptr != '/')
+    {
+        if (*ptr == ':')
+        {
+            elem->ns.ptr = elem->name.ptr;
+            elem->ns.len = ptr - elem->ns.ptr;
+            elem->name.ptr = ptr + 1;
+        }
+        ptr++;
+    }
+    elem->name.len = ptr - elem->name.ptr;
+    xmlbuf->ptr = ptr;
+}
+
 static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct xml_elem *parent )
 {
     const WCHAR* ptr;
@@ -1263,23 +1293,23 @@ static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct
     }
 
     xmlbuf->ptr = ptr;
-    while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>' && (*ptr != '/' || ptr == xmlbuf->ptr))
-        ptr++;
-
     /* check for element terminating the parent element */
-    if (*xmlbuf->ptr == '/' &&
-        ptr - xmlbuf->ptr == parent->name.len + 1 &&
-        !strncmpW( xmlbuf->ptr + 1, parent->name.ptr, parent->name.len ))
+    if (ptr < xmlbuf->end && *ptr == '/')
     {
-        while (ptr < xmlbuf->end && isxmlspace(*ptr)) ptr++;
-        if (ptr == xmlbuf->end || *ptr != '>') return set_error( xmlbuf );
-        xmlbuf->ptr = ptr + 1;
+        xmlbuf->ptr++;
+        read_xml_elem( xmlbuf, elem );
+        if (!xml_name_cmp( elem, parent ))
+        {
+            ERR( "wrong closing element %s for %s\n",
+                 debugstr_xmlstr(&elem->name), debugstr_xmlstr(&parent->name ));
+            return set_error( xmlbuf );
+        }
+        while (xmlbuf->ptr < xmlbuf->end && isxmlspace(*xmlbuf->ptr)) xmlbuf->ptr++;
+        if (xmlbuf->ptr == xmlbuf->end || *xmlbuf->ptr++ != '>') return set_error( xmlbuf );
         return FALSE;
     }
 
-    elem->name.ptr = xmlbuf->ptr;
-    elem->name.len = ptr - xmlbuf->ptr;
-    xmlbuf->ptr = ptr;
+    read_xml_elem( xmlbuf, elem );
     if (xmlbuf->ptr != xmlbuf->end) return TRUE;
 
     return set_error( xmlbuf );
