@@ -505,8 +505,8 @@ static void Publish_tests(void)
     LPWSTR publisherIdW = NULL;
     messageStorage *msgStorage;
     WSADATA wsaData;
-    BOOL messageOK;
-    BOOL hello_message_seen = FALSE;
+    BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
+    BOOL metadata_version_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
@@ -597,9 +597,10 @@ static void Publish_tests(void)
         messageOK = FALSE;
 
         hello_message_seen = (strstr(msg, "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Hello</wsa:Action>") != NULL);
-        messageOK = hello_message_seen && (strstr(msg, endpointReferenceString) != NULL);
-        messageOK = messageOK && (strstr(msg, "<wsd:AppSequence InstanceId=\"1\" MessageNumber=\"1\"></wsd:AppSequence>") != NULL);
-        messageOK = messageOK && (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
+        endpoint_reference_seen = (strstr(msg, endpointReferenceString) != NULL);
+        app_sequence_seen = (strstr(msg, "<wsd:AppSequence InstanceId=\"1\" MessageNumber=\"1\"></wsd:AppSequence>") != NULL);
+        metadata_version_seen = (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
+        messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen;
 
         if (messageOK) break;
     }
@@ -612,6 +613,9 @@ static void Publish_tests(void)
     heap_free(msgStorage);
 
     ok(hello_message_seen == TRUE, "Hello message not received\n");
+    todo_wine ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
+    todo_wine ok(app_sequence_seen == TRUE, "AppSequence not received\n");
+    todo_wine ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
     todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
 
 after_publish_test:
