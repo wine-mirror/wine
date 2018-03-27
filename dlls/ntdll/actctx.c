@@ -486,6 +486,7 @@ struct entity
         {
             WCHAR *name;
             WCHAR *value;
+            WCHAR *ns;
         } settings;
     } u;
 };
@@ -954,6 +955,7 @@ static void free_entity_array(struct entity_array *array)
         case ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.settings.name);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.settings.value);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.settings.ns);
             break;
         default:
             FIXME("Unknown entity kind %d\n", entity->kind);
@@ -2441,6 +2443,7 @@ static void parse_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly, st
     }
     entity->u.settings.name = xmlstrdupW( &parent->name );
     entity->u.settings.value = xmlstrdupW( &content );
+    entity->u.settings.ns = xmlstrdupW( &parent->ns );
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
@@ -4891,7 +4894,7 @@ static NTSTATUS find_guid(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
     return STATUS_SUCCESS;
 }
 
-static const WCHAR *find_app_settings( ACTIVATION_CONTEXT *actctx, const WCHAR *settings )
+static const WCHAR *find_app_settings( ACTIVATION_CONTEXT *actctx, const WCHAR *settings, const WCHAR *ns )
 {
     unsigned int i, j;
 
@@ -4902,7 +4905,8 @@ static const WCHAR *find_app_settings( ACTIVATION_CONTEXT *actctx, const WCHAR *
         {
             struct entity *entity = &assembly->entities.base[j];
             if (entity->kind == ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS &&
-                !strcmpW( entity->u.settings.name, settings ))
+                !strcmpW( entity->u.settings.name, settings ) &&
+                !strcmpW( entity->u.settings.ns, ns ))
                 return entity->u.settings.value;
         }
     }
@@ -5551,7 +5555,6 @@ NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDL
                                                               const WCHAR *settings, WCHAR *buffer,
                                                               SIZE_T size, SIZE_T *written )
 {
-    static const WCHAR namespaceW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0',0};
     ACTIVATION_CONTEXT *actctx = check_actctx( handle );
     const WCHAR *res;
 
@@ -5561,16 +5564,20 @@ NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDL
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (ns && strncmpW( ns, namespaceW, strlenW(namespaceW) ))
+    if (ns)
     {
-        WARN( "unknown namespace %s\n", debugstr_w(ns) );
-        return STATUS_INVALID_PARAMETER;
+        if (strcmpW( ns, windowsSettings2005NSW ) &&
+            strcmpW( ns, windowsSettings2011NSW ) &&
+            strcmpW( ns, windowsSettings2016NSW ) &&
+            strcmpW( ns, windowsSettings2017NSW ))
+            return STATUS_INVALID_PARAMETER;
     }
+    else ns = windowsSettings2005NSW;
 
     if (!handle) handle = process_actctx;
     if (!(actctx = check_actctx( handle ))) return STATUS_INVALID_PARAMETER;
 
-    if (!(res = find_app_settings( actctx, settings ))) return STATUS_SXS_KEY_NOT_FOUND;
+    if (!(res = find_app_settings( actctx, settings, ns ))) return STATUS_SXS_KEY_NOT_FOUND;
 
     if (written) *written = strlenW(res) + 1;
     if (size < strlenW(res)) return STATUS_BUFFER_TOO_SMALL;
