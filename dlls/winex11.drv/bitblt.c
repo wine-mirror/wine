@@ -1588,6 +1588,7 @@ static inline UINT get_color_component( UINT color, UINT mask )
     return (color * mask / 255) << shift;
 }
 
+#ifdef HAVE_LIBXSHAPE
 static inline void flush_rgn_data( HRGN rgn, RGNDATA *data )
 {
     HRGN tmp = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
@@ -1609,6 +1610,7 @@ static inline void add_row( HRGN rgn, RGNDATA *data, int x, int y, int len )
     if (data->rdh.nCount * sizeof(RECT) > data->rdh.nRgnSize - sizeof(RECT))
         flush_rgn_data( rgn, data );
 }
+#endif
 
 /***********************************************************************
  *           update_surface_region
