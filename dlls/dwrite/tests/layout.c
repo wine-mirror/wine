@@ -635,7 +635,7 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
 
         ok(emsize == metrics.designUnitsPerEm, "Unexpected font size %f\n", emsize);
         /* Expected height is in design units, allow some absolute difference from it. Seems to only happen on Vista */
-        ok(abs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f, family %s\n",
+        ok(fabs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f, family %s\n",
                 metrics.capHeight, underline->runHeight, wine_dbgstr_w(ctxt->familyW));
 
         IDWriteFontFace_Release(fontface);
