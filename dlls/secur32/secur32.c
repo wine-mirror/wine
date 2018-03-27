@@ -921,7 +921,9 @@ BOOLEAN WINAPI GetComputerObjectNameA(
     BOOLEAN rc;
     LPWSTR bufferW = NULL;
     ULONG sizeW = *nSize;
+
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
+
     if (lpNameBuffer) {
         bufferW = heap_alloc(sizeW * sizeof(WCHAR));
         if (bufferW == NULL) {
@@ -952,6 +954,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     PPOLICY_DNS_DOMAIN_INFO domainInfo;
     NTSTATUS ntStatus;
     BOOLEAN status;
+
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
 
     if (NameFormat == NameUnknown)
@@ -1000,8 +1003,13 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                     {
                         WCHAR bs[] = { '\\', 0 };
                         WCHAR ds[] = { '$', 0 };
-                        lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
-                        lstrcatW(lpNameBuffer, bs);
+                        if (domainInfo->Name.Buffer)
+                        {
+                            lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
+                            lstrcatW(lpNameBuffer, bs);
+                        }
+                        else
+                            *lpNameBuffer = 0;
                         lstrcatW(lpNameBuffer, name);
                         lstrcatW(lpNameBuffer, ds);
                         status = TRUE;
@@ -1038,13 +1046,18 @@ BOOLEAN WINAPI GetComputerObjectNameW(
             }
 
             len = strlenW(cnW) + size + 1 + strlenW(ComputersW) + 1 + strlenW(dcW);
-            suffix = strrchrW(domainInfo->DnsDomainName.Buffer, '.');
-            if (suffix)
+            if (domainInfo->DnsDomainName.Buffer)
             {
-                *suffix++ = 0;
-                len += 1 + strlenW(dcW) + strlenW(suffix);
+                suffix = strrchrW(domainInfo->DnsDomainName.Buffer, '.');
+                if (suffix)
+                {
+                    *suffix++ = 0;
+                    len += 1 + strlenW(dcW) + strlenW(suffix);
+                }
+                len += strlenW(domainInfo->DnsDomainName.Buffer);
             }
-            len += strlenW(domainInfo->DnsDomainName.Buffer);
+            else
+                suffix = NULL;
 
             if (lpNameBuffer && *nSize > len)
             {
@@ -1052,14 +1065,17 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                 lstrcatW(lpNameBuffer, name);
                 lstrcatW(lpNameBuffer, commaW);
                 lstrcatW(lpNameBuffer, ComputersW);
-                lstrcatW(lpNameBuffer, commaW);
-                lstrcatW(lpNameBuffer, dcW);
-                lstrcatW(lpNameBuffer, domainInfo->DnsDomainName.Buffer);
-                if (suffix)
+                if (domainInfo->DnsDomainName.Buffer)
                 {
                     lstrcatW(lpNameBuffer, commaW);
                     lstrcatW(lpNameBuffer, dcW);
-                    lstrcatW(lpNameBuffer, suffix);
+                    lstrcatW(lpNameBuffer, domainInfo->DnsDomainName.Buffer);
+                    if (suffix)
+                    {
+                        lstrcatW(lpNameBuffer, commaW);
+                        lstrcatW(lpNameBuffer, dcW);
+                        lstrcatW(lpNameBuffer, suffix);
+                    }
                 }
                 status = TRUE;
             }
