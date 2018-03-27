@@ -1787,6 +1787,18 @@ static void test_XMLHTTP(void)
     SysFreeString(str);
 
     IXMLHttpRequest_Release(xhr);
+
+    /* invalid host */
+    xhr = create_xhr();
+
+    test_open(xhr, "GET", "http://invalid.host.test.winehq.org/test/path", S_OK);
+
+    V_VT(&varbody) = VT_EMPTY;
+    hr = IXMLHttpRequest_send(xhr, varbody);
+    todo_wine
+    ok(hr == INET_E_RESOURCE_NOT_FOUND, "send to invalid host returned %#x.\n", hr);
+
+    IXMLHttpRequest_Release(xhr);
     free_bstrs();
 }
 
@@ -1817,6 +1829,18 @@ static void test_server_xhr(void)
     ok(hr == S_OK, "get_responseText failed: %08x\n", hr);
     ok(!strcmp_wa(response, xmltestbodyA), "got %s\n", wine_dbgstr_w(response));
     SysFreeString(response);
+
+    IServerXMLHTTPRequest_Release(xhr);
+
+    /* invalid host */
+    xhr = create_server_xhr();
+
+    test_server_open(xhr, "GET", "http://invalid.host.test.winehq.org/test/path", S_OK);
+
+    V_VT(&body) = VT_EMPTY;
+    hr = IServerXMLHTTPRequest_send(xhr, body);
+    todo_wine
+    ok(hr == WININET_E_NAME_NOT_RESOLVED, "send to invalid host returned %#x.\n", hr);
 
     IServerXMLHTTPRequest_Release(xhr);
     free_bstrs();
