@@ -39,6 +39,7 @@
 #define SEND_PORT           "3702"
 
 static const char *publisherId = "urn:uuid:3AE5617D-790F-408A-9374-359A77F924A3";
+static const char *sequenceId = "urn:uuid:b14de351-72fc-4453-96f9-e58b0c9faf38";
 
 #define MAX_CACHED_MESSAGES     5
 #define MAX_LISTENING_THREADS  20
@@ -501,8 +502,8 @@ static void Publish_tests(void)
     IWSDiscoveryPublisher *publisher = NULL;
     IWSDiscoveryPublisherNotify *sink1 = NULL, *sink2 = NULL;
     IWSDiscoveryPublisherNotifyImpl *sink1Impl = NULL, *sink2Impl = NULL;
-    char endpointReferenceString[MAX_PATH];
-    LPWSTR publisherIdW = NULL;
+    char endpointReferenceString[MAX_PATH], app_sequence_string[MAX_PATH];
+    LPWSTR publisherIdW = NULL, sequenceIdW = NULL;
     messageStorage *msgStorage;
     WSADATA wsaData;
     BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
@@ -557,6 +558,9 @@ static void Publish_tests(void)
     publisherIdW = utf8_to_wide(publisherId);
     if (publisherIdW == NULL) goto after_publish_test;
 
+    sequenceIdW = utf8_to_wide(sequenceId);
+    if (sequenceIdW == NULL) goto after_publish_test;
+
     msgStorage = heap_alloc_zero(sizeof(messageStorage));
     if (msgStorage == NULL) goto after_publish_test;
 
@@ -570,7 +574,7 @@ static void Publish_tests(void)
     ok(ret == TRUE, "Unable to listen on IPv4 addresses (ret == %d)\n", ret);
 
     /* Publish the service */
-    rc = IWSDiscoveryPublisher_Publish(publisher, publisherIdW, 1, 1, 1, NULL, NULL, NULL, NULL);
+    rc = IWSDiscoveryPublisher_Publish(publisher, publisherIdW, 1, 1, 1, sequenceIdW, NULL, NULL, NULL);
     ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
     /* Wait up to 2 seconds for messages to be received */
@@ -587,6 +591,8 @@ static void Publish_tests(void)
     ok(msgStorage->messageCount >= 1, "No messages received\n");
 
     sprintf(endpointReferenceString, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address></wsa:EndpointReference>", publisherId);
+    sprintf(app_sequence_string, "<wsd:AppSequence InstanceId=\"1\" SequenceId=\"%s\" MessageNumber=\"1\"></wsd:AppSequence>",
+        sequenceId);
 
     messageOK = FALSE;
 
@@ -598,7 +604,7 @@ static void Publish_tests(void)
 
         hello_message_seen = (strstr(msg, "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Hello</wsa:Action>") != NULL);
         endpoint_reference_seen = (strstr(msg, endpointReferenceString) != NULL);
-        app_sequence_seen = (strstr(msg, "<wsd:AppSequence InstanceId=\"1\" MessageNumber=\"1\"></wsd:AppSequence>") != NULL);
+        app_sequence_seen = (strstr(msg, app_sequence_string) != NULL);
         metadata_version_seen = (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
         messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen;
 
@@ -621,6 +627,7 @@ static void Publish_tests(void)
 after_publish_test:
 
     if (publisherIdW != NULL) heap_free(publisherIdW);
+    if (sequenceIdW != NULL) heap_free(sequenceIdW);
 
     ref = IWSDiscoveryPublisher_Release(publisher);
     ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);

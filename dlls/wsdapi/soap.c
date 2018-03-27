@@ -71,6 +71,7 @@ static const WCHAR relatesToString[] = { 'R','e','l','a','t','e','s','T','o', 0 
 static const WCHAR appSequenceString[] = { 'A','p','p','S','e','q','u','e','n','c','e', 0 };
 static const WCHAR instanceIdString[] = { 'I','n','s','t','a','n','c','e','I','d', 0 };
 static const WCHAR messageNumberString[] = { 'M','e','s','s','a','g','e','N','u','m','b','e','r', 0 };
+static const WCHAR sequenceIdString[] = { 'S','e','q','u','e','n','c','e','I','d', 0 };
 static const WCHAR emptyString[] = { 0 };
 
 struct discovered_namespace
@@ -437,6 +438,25 @@ static BOOL add_ulonglong_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT 
     return TRUE;
 }
 
+static BOOL add_string_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
+    LPCWSTR value)
+{
+    WSDXML_ATTRIBUTE *attribute = add_attribute(xml_context, parent, ns_uri, name);
+
+    if (attribute == NULL)
+        return FALSE;
+
+    attribute->Value = duplicate_string(attribute, value);
+
+    if (attribute->Value == NULL)
+    {
+        remove_attribute(parent, attribute);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *discovered_ns)
 {
     struct discovered_namespace *ns;
@@ -499,11 +519,16 @@ static WSDXML_ELEMENT *create_soap_header_xml_elements(IWSDXMLContext *xml_conte
     if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, instanceIdString, min(UINT_MAX,
         header->AppSequence->InstanceId))) goto cleanup;
 
+    /* SequenceID attribute */
+    if (header->AppSequence->SequenceId != NULL)
+    {
+        if (!add_string_attribute(xml_context, app_sequence_element, NULL, sequenceIdString, header->AppSequence->SequenceId))
+            goto cleanup;
+    }
+
     /* MessageNumber attribute */
     if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, messageNumberString, min(UINT_MAX,
         header->AppSequence->MessageNumber))) goto cleanup;
-
-    /* TODO: SequenceID attribute */
 
     /* </d:AppSequence> */
 
