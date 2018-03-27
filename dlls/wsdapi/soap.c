@@ -69,6 +69,8 @@ static const WCHAR messageIdString[] = { 'M','e','s','s','a','g','e','I','D', 0 
 static const WCHAR toString[] = { 'T','o', 0 };
 static const WCHAR relatesToString[] = { 'R','e','l','a','t','e','s','T','o', 0 };
 static const WCHAR appSequenceString[] = { 'A','p','p','S','e','q','u','e','n','c','e', 0 };
+static const WCHAR instanceIdString[] = { 'I','n','s','t','a','n','c','e','I','d', 0 };
+static const WCHAR messageNumberString[] = { 'M','e','s','s','a','g','e','N','u','m','b','e','r', 0 };
 static const WCHAR emptyString[] = { 0 };
 
 struct discovered_namespace
@@ -318,6 +320,123 @@ static void populate_soap_header(WSD_SOAP_HEADER *header, LPCWSTR to, LPCWSTR ac
     /* TODO: Implement RelatesTo, ReplyTo, From, FaultTo */
 }
 
+#define MAX_ULONGLONG_STRING_SIZE    25
+
+static LPWSTR ulonglong_to_string(void *parent, ULONGLONG value)
+{
+    WCHAR formatString[] = { '%','I','6','4','u', 0 };
+    LPWSTR ret;
+
+    ret = WSDAllocateLinkedMemory(parent, MAX_ULONGLONG_STRING_SIZE * sizeof(WCHAR));
+
+    if (ret == NULL)
+        return NULL;
+
+    wsprintfW(ret, formatString, value);
+    return ret;
+}
+
+static WSDXML_ATTRIBUTE *add_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name)
+{
+    WSDXML_ATTRIBUTE *attribute, *cur_attrib;
+    WSDXML_NAME *name_obj = NULL;
+
+    if (ns_uri == NULL)
+    {
+        name_obj = WSDAllocateLinkedMemory(NULL, sizeof(WSDXML_NAME));
+        name_obj->LocalName = duplicate_string(name_obj, name);
+        name_obj->Space = NULL;
+    }
+    else
+    {
+        if (FAILED(IWSDXMLContext_AddNameToNamespace(xml_context, ns_uri, name, &name_obj)))
+            return NULL;
+    }
+
+    attribute = WSDAllocateLinkedMemory(parent, sizeof(WSDXML_ATTRIBUTE));
+
+    if (attribute == NULL)
+    {
+        WSDFreeLinkedMemory(name_obj);
+        return NULL;
+    }
+
+    attribute->Element = parent;
+    attribute->Name = name_obj;
+    attribute->Next = NULL;
+    attribute->Value = NULL;
+
+    if (name_obj != NULL)
+        WSDAttachLinkedMemory(attribute, name_obj);
+
+    if (parent->FirstAttribute == NULL)
+    {
+        /* Make this the first attribute of the parent */
+        parent->FirstAttribute = attribute;
+    }
+    else
+    {
+        /* Find the last attribute and add this as the next one */
+        cur_attrib = parent->FirstAttribute;
+
+        while (cur_attrib->Next != NULL)
+        {
+            cur_attrib = cur_attrib->Next;
+        }
+
+        cur_attrib->Next = attribute;
+    }
+
+    return attribute;
+}
+
+static void remove_attribute(WSDXML_ELEMENT *parent, WSDXML_ATTRIBUTE *attribute)
+{
+    WSDXML_ATTRIBUTE *cur_attrib;
+
+    /* Find the last attribute and add this as the next one */
+    cur_attrib = parent->FirstAttribute;
+
+    if (cur_attrib == attribute)
+        parent->FirstAttribute = cur_attrib->Next;
+    else
+    {
+        while (cur_attrib != NULL)
+        {
+            /* Is our attribute the next attribute? */
+            if (cur_attrib->Next == attribute)
+            {
+                /* Remove it from the list */
+                cur_attrib->Next = attribute->Next;
+                break;
+            }
+
+            cur_attrib = cur_attrib->Next;
+        }
+    }
+
+    WSDFreeLinkedMemory(attribute);
+}
+
+static BOOL add_ulonglong_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
+    ULONGLONG value)
+{
+    WSDXML_ATTRIBUTE *attribute = add_attribute(xml_context, parent, ns_uri, name);
+
+    if (attribute == NULL)
+        return FALSE;
+
+    attribute->Value = ulonglong_to_string(attribute, value);
+
+    if (attribute->Value == NULL)
+    {
+        remove_attribute(parent, attribute);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *discovered_ns)
 {
     struct discovered_namespace *ns;
@@ -376,9 +495,13 @@ static WSDXML_ELEMENT *create_soap_header_xml_elements(IWSDXMLContext *xml_conte
     app_sequence_element = add_child_element(xml_context, header_element, discoveryNsUri, appSequenceString, emptyString);
     if (app_sequence_element == NULL) goto cleanup;
 
-    /* TODO: InstanceId attribute */
+    /* InstanceId attribute */
+    if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, instanceIdString, min(UINT_MAX,
+        header->AppSequence->InstanceId))) goto cleanup;
 
-    /* TODO: MessageNumber attribute */
+    /* MessageNumber attribute */
+    if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, messageNumberString, min(UINT_MAX,
+        header->AppSequence->MessageNumber))) goto cleanup;
 
     /* TODO: SequenceID attribute */
 
