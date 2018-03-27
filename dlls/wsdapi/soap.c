@@ -130,18 +130,71 @@ static inline void free_xml_string(WS_XML_STRING *value)
     heap_free(value);
 }
 
-static BOOL write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
+static HRESULT write_xml_attribute(WSDXML_ATTRIBUTE *attribute, WS_XML_WRITER *writer)
 {
     WS_XML_STRING *local_name = NULL, *element_ns = NULL, *ns_prefix = NULL;
     WS_XML_UTF16_TEXT utf16_text;
+    HRESULT ret = E_OUTOFMEMORY;
+    int text_len;
+
+    if (attribute == NULL)
+        return S_OK;
+
+    /* Start the attribute */
+    local_name = populate_xml_string(attribute->Name->LocalName);
+    if (local_name == NULL) goto cleanup;
+
+    if (attribute->Name->Space == NULL)
+    {
+        element_ns = populate_xml_string(emptyString);
+        if (element_ns == NULL) goto cleanup;
+
+        ns_prefix = NULL;
+    }
+    else
+    {
+        element_ns = populate_xml_string(attribute->Name->Space->Uri);
+        if (element_ns == NULL) goto cleanup;
+
+        ns_prefix = populate_xml_string(attribute->Name->Space->PreferredPrefix);
+        if (ns_prefix == NULL) goto cleanup;
+    }
+
+    ret = WsWriteStartAttribute(writer, ns_prefix, local_name, element_ns, FALSE, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    text_len = lstrlenW(attribute->Value);
+
+    utf16_text.text.textType = WS_XML_TEXT_TYPE_UTF16;
+    utf16_text.bytes = (BYTE *)attribute->Value;
+    utf16_text.byteCount = min(WSD_MAX_TEXT_LENGTH, text_len) * sizeof(WCHAR);
+
+    ret = WsWriteText(writer, (WS_XML_TEXT *)&utf16_text, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = WsWriteEndAttribute(writer, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+cleanup:
+    free_xml_string(local_name);
+    free_xml_string(element_ns);
+    free_xml_string(ns_prefix);
+
+    return ret;
+}
+
+static HRESULT write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
+{
+    WS_XML_STRING *local_name = NULL, *element_ns = NULL, *ns_prefix = NULL;
+    WSDXML_ATTRIBUTE *current_attribute;
+    WS_XML_UTF16_TEXT utf16_text;
     WSDXML_NODE *current_child;
     WSDXML_TEXT *node_as_text;
-    BOOL retVal = FALSE;
     int text_len;
-    HRESULT ret;
+    HRESULT ret = E_OUTOFMEMORY;
 
     if (element == NULL)
-        return TRUE;
+        return S_OK;
 
     /* Start the element */
     local_name = populate_xml_string(element->Name->LocalName);
@@ -156,7 +209,15 @@ static BOOL write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
     ret = WsWriteStartElement(writer, ns_prefix, local_name, element_ns, NULL);
     if (FAILED(ret)) goto cleanup;
 
-    /* TODO: Write attributes */
+    /* Write attributes */
+    current_attribute = element->FirstAttribute;
+
+    while (current_attribute != NULL)
+    {
+        ret = write_xml_attribute(current_attribute, writer);
+        if (FAILED(ret)) goto cleanup;
+        current_attribute = current_attribute->Next;
+    }
 
     /* Write child elements */
     current_child = element->FirstChild;
@@ -165,7 +226,8 @@ static BOOL write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
     {
         if (current_child->Type == ElementType)
         {
-            if (!write_xml_element((WSDXML_ELEMENT *)current_child, writer)) goto cleanup;
+            ret = write_xml_element((WSDXML_ELEMENT *)current_child, writer);
+            if (FAILED(ret)) goto cleanup;
         }
         else if (current_child->Type == TextType)
         {
@@ -185,16 +247,13 @@ static BOOL write_xml_element(WSDXML_ELEMENT *element, WS_XML_WRITER *writer)
 
     /* End the element */
     ret = WsWriteEndElement(writer, NULL);
-    if (FAILED(ret)) goto cleanup;
-
-    retVal = TRUE;
 
 cleanup:
     free_xml_string(local_name);
     free_xml_string(element_ns);
     free_xml_string(ns_prefix);
 
-    return retVal;
+    return ret;
 }
 
 static WSDXML_ELEMENT *add_child_element(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri,
@@ -410,7 +469,8 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
     tmp_uri = NULL;
 
     /* Write the header */
-    if (!write_xml_element(header_element, writer)) goto cleanup;
+    ret = write_xml_element(header_element, writer);
+    if (FAILED(ret)) goto cleanup;
 
     ret = WsWriteEndElement(writer, NULL);
     if (FAILED(ret)) goto cleanup;
