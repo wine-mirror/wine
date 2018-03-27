@@ -93,6 +93,8 @@ typedef enum tagOLEMISC
     OLEMISC_SUPPORTSMULTILEVELUNDO       = 0x200000
 } OLEMISC;
 
+#define MAX_NAMESPACES 64
+
 typedef struct
 {
     const WCHAR        *ptr;
@@ -103,6 +105,7 @@ struct xml_elem
 {
     xmlstr_t            name;
     xmlstr_t            ns;
+    int                 ns_pos;
 };
 
 struct xml_attr
@@ -115,6 +118,8 @@ typedef struct
 {
     const WCHAR        *ptr;
     const WCHAR        *end;
+    struct xml_attr     namespaces[MAX_NAMESPACES];
+    int                 ns_pos;
     BOOL                error;
 } xmlbuf_t;
 
@@ -564,9 +569,9 @@ struct actctx_loader
 
 static const xmlstr_t empty_xmlstr;
 
-static const WCHAR asmv1W[] = {'a','s','m','v','1',':',0};
-static const WCHAR asmv2W[] = {'a','s','m','v','2',':',0};
-static const WCHAR asmv3W[] = {'a','s','m','v','3',':',0};
+static const WCHAR asmv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
+static const WCHAR asmv2W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','2',0};
+static const WCHAR asmv3W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','3',0};
 static const WCHAR assemblyW[] = {'a','s','s','e','m','b','l','y',0};
 static const WCHAR assemblyIdentityW[] = {'a','s','s','e','m','b','l','y','I','d','e','n','t','i','t','y',0};
 static const WCHAR bindingRedirectW[] = {'b','i','n','d','i','n','g','R','e','d','i','r','e','c','t',0};
@@ -660,6 +665,10 @@ static const WCHAR windowsSettingsW[] = {'w','i','n','d','o','w','s','S','e','t'
 static const WCHAR autoElevateW[] = {'a','u','t','o','E','l','e','v','a','t','e',0};
 static const WCHAR disableThemingW[] = {'d','i','s','a','b','l','e','T','h','e','m','i','n','g',0};
 static const WCHAR disableWindowFilteringW[] = {'d','i','s','a','b','l','e','W','i','n','d','o','w','F','i','l','t','e','r','i','n','g',0};
+static const WCHAR windowsSettings2005NSW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','0','5','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+static const WCHAR windowsSettings2011NSW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','1','1','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+static const WCHAR windowsSettings2016NSW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','1','6','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+static const WCHAR windowsSettings2017NSW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','1','7','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
 static const WCHAR dpiAwareW[] = {'d','p','i','A','w','a','r','e',0};
 static const WCHAR dpiAwarenessW[] = {'d','p','i','A','w','a','r','e','n','e','s','s',0};
 static const WCHAR gdiScalingW[] = {'g','d','i','S','c','a','l','i','n','g',0};
@@ -702,10 +711,6 @@ static const struct olemisc_entry olemisc_values[] =
 };
 
 static const WCHAR xmlW[] = {'?','x','m','l',0};
-static const WCHAR manifestv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
-static const WCHAR manifestv2W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','2',0};
-static const WCHAR manifestv3W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','3',0};
-
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
 static const WCHAR version_formatW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
 static const WCHAR wildcardW[] = {'*',0};
@@ -759,9 +764,18 @@ static BOOL xml_name_cmp( const struct xml_elem *elem1, const struct xml_elem *e
 
 static inline BOOL xml_elem_cmp(const struct xml_elem *elem, const WCHAR *str, const WCHAR *namespace)
 {
-    return (!strncmpW(elem->name.ptr, str, elem->name.len) && !str[elem->name.len] &&
-            (!elem->ns.len ||
-             (!strncmpW(elem->ns.ptr, namespace, elem->ns.len) && namespace[elem->ns.len] == ':')));
+    if (!xmlstr_cmp( &elem->name, str )) return FALSE;
+    if (xmlstr_cmp( &elem->ns, namespace )) return TRUE;
+    if (!strcmpW( namespace, asmv1W ))
+    {
+        if (xmlstr_cmp( &elem->ns, asmv2W )) return TRUE;
+        if (xmlstr_cmp( &elem->ns, asmv3W )) return TRUE;
+    }
+    else if (!strcmpW( namespace, asmv2W ))
+    {
+        if (xmlstr_cmp( &elem->ns, asmv3W )) return TRUE;
+    }
+    return FALSE;
 }
 
 static inline BOOL isxmlspace( WCHAR ch )
@@ -1175,6 +1189,49 @@ static BOOL set_error( xmlbuf_t *xmlbuf )
     return FALSE;
 }
 
+static BOOL is_xmlns_attr( const struct xml_attr *attr )
+{
+    const int len = strlenW( xmlnsW );
+    if (attr->name.len < len) return FALSE;
+    if (strncmpW( attr->name.ptr, xmlnsW, len )) return FALSE;
+    return (attr->name.len == len || attr->name.ptr[len] == ':');
+}
+
+static void push_xmlns( xmlbuf_t *xmlbuf, const struct xml_attr *attr )
+{
+    const int len = strlenW( xmlnsW );
+    struct xml_attr *ns;
+
+    if (xmlbuf->ns_pos == MAX_NAMESPACES - 1)
+    {
+        FIXME( "too many namespaces in manifest\n" );
+        set_error( xmlbuf );
+        return;
+    }
+    ns = &xmlbuf->namespaces[xmlbuf->ns_pos++];
+    ns->value = attr->value;
+    if (attr->name.len > len)
+    {
+        ns->name.ptr = attr->name.ptr + len + 1;
+        ns->name.len = attr->name.len - len - 1;
+    }
+    else ns->name = empty_xmlstr;
+}
+
+static xmlstr_t find_xmlns( xmlbuf_t *xmlbuf, const xmlstr_t *name )
+{
+    int i;
+
+    for (i = xmlbuf->ns_pos - 1; i >= 0; i--)
+    {
+        if (xmlbuf->namespaces[i].name.len == name->len &&
+            !strncmpW( xmlbuf->namespaces[i].name.ptr, name->ptr, name->len ))
+            return xmlbuf->namespaces[i].value;
+    }
+    if (xmlbuf->ns_pos) WARN( "namespace %s not found\n", debugstr_xmlstr( name ));
+    return empty_xmlstr;
+}
+
 static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *end)
 {
     const WCHAR* ptr;
@@ -1265,6 +1322,11 @@ static void read_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem )
 static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct xml_elem *parent )
 {
     const WCHAR* ptr;
+    struct xml_attr attr;
+    xmlbuf_t attr_buf;
+    BOOL end = FALSE;
+
+    xmlbuf->ns_pos = parent->ns_pos;  /* restore namespace stack to parent state */
 
     if (xmlbuf->error) return FALSE;
 
@@ -1298,6 +1360,7 @@ static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct
     {
         xmlbuf->ptr++;
         read_xml_elem( xmlbuf, elem );
+        elem->ns = find_xmlns( xmlbuf, &elem->ns );
         if (!xml_name_cmp( elem, parent ))
         {
             ERR( "wrong closing element %s for %s\n",
@@ -1310,6 +1373,16 @@ static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct
     }
 
     read_xml_elem( xmlbuf, elem );
+
+    /* parse namespace attributes */
+    attr_buf = *xmlbuf;
+    while (next_xml_attr( &attr_buf, &attr, &end ))
+    {
+        if (is_xmlns_attr( &attr )) push_xmlns( xmlbuf, &attr );
+    }
+    elem->ns = find_xmlns( xmlbuf, &elem->ns );
+    elem->ns_pos = xmlbuf->ns_pos;
+
     if (xmlbuf->ptr != xmlbuf->end) return TRUE;
 
     return set_error( xmlbuf );
@@ -1384,7 +1457,7 @@ static void parse_expect_no_attr(xmlbuf_t* xmlbuf, BOOL* end)
 
     while (next_xml_attr(xmlbuf, &attr, end))
     {
-        WARN("unexpected attr %s\n", debugstr_xml_attr(&attr));
+        if (!is_xmlns_attr( &attr )) WARN("unexpected attr %s\n", debugstr_xml_attr(&attr));
     }
 }
 
@@ -1444,7 +1517,7 @@ static void parse_assembly_identity_elem(xmlbuf_t *xmlbuf, ACTIVATION_CONTEXT *a
         {
             if (!(ai->language = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1619,7 +1692,7 @@ static void parse_com_class_elem( xmlbuf_t *xmlbuf, struct dll_redirect *dll, st
         {
             /* not stored */
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1633,7 +1706,7 @@ static void parse_com_class_elem( xmlbuf_t *xmlbuf, struct dll_redirect *dll, st
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, progidW))
+        if (xml_elem_cmp(&elem, progidW, asmv1W))
         {
             parse_com_class_progid(xmlbuf, entity, &elem);
         }
@@ -1709,7 +1782,7 @@ static void parse_cominterface_proxy_stub_elem( xmlbuf_t *xmlbuf, struct dll_red
         else if (xml_attr_cmp(&attr, proxyStubClsid32W) || xml_attr_cmp(&attr, threadingmodelW))
         {
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1816,7 +1889,7 @@ static void parse_typelib_elem( xmlbuf_t *xmlbuf, struct dll_redirect *dll,
         {
             if (!parse_typelib_flags(&attr.value, entity)) set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1865,7 +1938,7 @@ static void parse_window_class_elem( xmlbuf_t *xmlbuf, struct dll_redirect *dll,
             else if (!xmlstr_cmpi(&attr.value, yesW))
                 set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1900,7 +1973,7 @@ static void parse_binding_redirect_elem( xmlbuf_t *xmlbuf, const struct xml_elem
         {
             FIXME("Not stored yet %s\n", debugstr_xml_attr(&attr));
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -1917,7 +1990,9 @@ static void parse_description_elem( xmlbuf_t *xmlbuf, const struct xml_elem *par
     BOOL end = FALSE;
 
     while (next_xml_attr(xmlbuf, &attr, &end))
-        WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
+    {
+        if (!is_xmlns_attr( &attr )) WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
+    }
 
     if (end) return;
     if (!parse_text_content(xmlbuf, &content)) return;
@@ -1974,7 +2049,7 @@ static void parse_com_interface_external_proxy_stub_elem(xmlbuf_t *xmlbuf,
         {
             if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2025,7 +2100,7 @@ static void parse_clr_class_elem( xmlbuf_t* xmlbuf, struct assembly* assembly,
         {
             if (!(entity->u.comclass.version = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2038,7 +2113,7 @@ static void parse_clr_class_elem( xmlbuf_t* xmlbuf, struct assembly* assembly,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, progidW))
+        if (xml_elem_cmp(&elem, progidW, asmv1W))
         {
             parse_com_class_progid(xmlbuf, entity, &elem);
         }
@@ -2080,7 +2155,7 @@ static void parse_clr_surrogate_elem( xmlbuf_t *xmlbuf, struct assembly *assembl
         {
             if (!(entity->u.clrsurrogate.version = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2108,7 +2183,7 @@ static void parse_dependent_assembly_elem( xmlbuf_t *xmlbuf, struct actctx_loade
 
         if (xml_attr_cmp(&attr, allowDelayedBindingW))
             ai.delayed = xmlstr_cmp(&attr.value, trueW);
-        else
+        else if (!is_xmlns_attr( &attr ))
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
     }
 
@@ -2124,7 +2199,7 @@ static void parse_dependent_assembly_elem( xmlbuf_t *xmlbuf, struct actctx_loade
                    debugstr_w(ai.name), debugstr_version(&ai.version), debugstr_w(ai.arch) );
             if (!add_dependent_assembly_id(acl, &ai)) set_error( xmlbuf );
         }
-        else if (xmlstr_cmp(&elem.name, bindingRedirectW))
+        else if (xml_elem_cmp(&elem, bindingRedirectW, asmv1W))
         {
             parse_binding_redirect_elem(xmlbuf, &elem);
         }
@@ -2151,7 +2226,7 @@ static void parse_dependency_elem( xmlbuf_t *xmlbuf, struct actctx_loader *acl,
             optional = xmlstr_cmpi( &attr.value, yesW );
             TRACE("optional=%s\n", debugstr_xmlstr(&attr.value));
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2159,7 +2234,7 @@ static void parse_dependency_elem( xmlbuf_t *xmlbuf, struct actctx_loader *acl,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, dependentAssemblyW))
+        if (xml_elem_cmp(&elem, dependentAssemblyW, asmv1W))
         {
             parse_dependent_assembly_elem(xmlbuf, acl, &elem, optional);
         }
@@ -2218,7 +2293,7 @@ static void parse_file_elem( xmlbuf_t* xmlbuf, struct assembly* assembly,
             if (!xmlstr_cmpi(&attr.value, sha1W))
                 FIXME("hashalg should be SHA1, got %s\n", debugstr_xmlstr(&attr.value));
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2232,11 +2307,11 @@ static void parse_file_elem( xmlbuf_t* xmlbuf, struct assembly* assembly,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, comClassW))
+        if (xml_elem_cmp(&elem, comClassW, asmv1W))
         {
             parse_com_class_elem(xmlbuf, dll, acl, &elem);
         }
-        else if (xmlstr_cmp(&elem.name, comInterfaceProxyStubW))
+        else if (xml_elem_cmp(&elem, comInterfaceProxyStubW, asmv1W))
         {
             parse_cominterface_proxy_stub_elem(xmlbuf, dll, acl, &elem);
         }
@@ -2245,11 +2320,11 @@ static void parse_file_elem( xmlbuf_t* xmlbuf, struct assembly* assembly,
             WARN("asmv2:hash (undocumented) not supported\n");
             parse_unknown_elem(xmlbuf, &elem);
         }
-        else if (xmlstr_cmp(&elem.name, typelibW))
+        else if (xml_elem_cmp(&elem, typelibW, asmv1W))
         {
             parse_typelib_elem(xmlbuf, dll, acl, &elem);
         }
-        else if (xmlstr_cmp(&elem.name, windowClassW))
+        else if (xml_elem_cmp(&elem, windowClassW, asmv1W))
         {
             parse_window_class_elem(xmlbuf, dll, acl, &elem);
         }
@@ -2292,7 +2367,7 @@ static void parse_supportedos_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
                 WARN("Invalid guid %s\n", debugstr_xmlstr(&attr.value));
             }
         }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
@@ -2308,7 +2383,7 @@ static void parse_compatibility_application_elem(xmlbuf_t *xmlbuf, struct assemb
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, supportedOSW))
+        if (xml_elem_cmp(&elem, supportedOSW, compatibilityNSW))
         {
             parse_supportedos_elem(xmlbuf, assembly, acl, &elem);
         }
@@ -2327,7 +2402,7 @@ static void parse_compatibility_elem(xmlbuf_t *xmlbuf, struct assembly *assembly
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xmlstr_cmp(&elem.name, applicationW))
+        if (xml_elem_cmp(&elem, applicationW, compatibilityNSW))
         {
             parse_compatibility_application_elem(xmlbuf, assembly, acl, &elem);
         }
@@ -2350,8 +2425,7 @@ static void parse_settings_elem( xmlbuf_t *xmlbuf, struct assembly *assembly, st
 
     while (next_xml_attr( xmlbuf, &attr, &end ))
     {
-        if (xmlstr_cmp( &attr.name, xmlnsW )) continue;
-        WARN( "unknown attr %s\n", debugstr_xml_attr(&attr) );
+        if (!is_xmlns_attr( &attr )) WARN( "unknown attr %s\n", debugstr_xml_attr(&attr) );
     }
 
     if (end) return;
@@ -2382,17 +2456,17 @@ static void parse_windows_settings_elem( xmlbuf_t *xmlbuf, struct assembly *asse
 
     while (next_xml_elem( xmlbuf, &elem, parent ))
     {
-        if (xmlstr_cmp( &elem.name, autoElevateW ) ||
-            xmlstr_cmp( &elem.name, disableThemingW ) ||
-            xmlstr_cmp( &elem.name, disableWindowFilteringW ) ||
-            xmlstr_cmp( &elem.name, dpiAwareW ) ||
-            xmlstr_cmp( &elem.name, dpiAwarenessW ) ||
-            xmlstr_cmp( &elem.name, gdiScalingW ) ||
-            xmlstr_cmp( &elem.name, highResolutionScrollingAwareW ) ||
-            xmlstr_cmp( &elem.name, longPathAwareW ) ||
-            xmlstr_cmp( &elem.name, magicFutureSettingW ) ||
-            xmlstr_cmp( &elem.name, printerDriverIsolationW ) ||
-            xmlstr_cmp( &elem.name, ultraHighResolutionScrollingAwareW ))
+        if (xml_elem_cmp( &elem, autoElevateW, windowsSettings2005NSW ) ||
+            xml_elem_cmp( &elem, disableThemingW, windowsSettings2005NSW ) ||
+            xml_elem_cmp( &elem, disableWindowFilteringW, windowsSettings2011NSW ) ||
+            xml_elem_cmp( &elem, dpiAwareW, windowsSettings2005NSW ) ||
+            xml_elem_cmp( &elem, dpiAwarenessW, windowsSettings2016NSW ) ||
+            xml_elem_cmp( &elem, gdiScalingW, windowsSettings2017NSW ) ||
+            xml_elem_cmp( &elem, highResolutionScrollingAwareW, windowsSettings2017NSW ) ||
+            xml_elem_cmp( &elem, longPathAwareW, windowsSettings2016NSW ) ||
+            xml_elem_cmp( &elem, magicFutureSettingW, windowsSettings2017NSW ) ||
+            xml_elem_cmp( &elem, printerDriverIsolationW, windowsSettings2011NSW ) ||
+            xml_elem_cmp( &elem, ultraHighResolutionScrollingAwareW, windowsSettings2017NSW ))
         {
             parse_settings_elem( xmlbuf, assembly, acl, &elem );
         }
@@ -2411,7 +2485,7 @@ static void parse_application_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
 
     while (next_xml_elem( xmlbuf, &elem, parent ))
     {
-        if (xmlstr_cmp( &elem.name, windowsSettingsW ))
+        if (xml_elem_cmp( &elem, windowsSettingsW, asmv3W ))
         {
             parse_windows_settings_elem( xmlbuf, assembly, acl, &elem );
         }
@@ -2463,8 +2537,8 @@ static void parse_requested_execution_level_elem( xmlbuf_t *xmlbuf, struct assem
             else
                 FIXME("unknown uiAccess value: %s\n", debugstr_xmlstr(&attr.value));
         }
-        else
-            FIXME("unknown attr %s\n", debugstr_xml_attr(&attr));
+        else if (!is_xmlns_attr( &attr ))
+            WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
     }
 
     if (end) return;
@@ -2483,8 +2557,10 @@ static void parse_requested_privileges_elem( xmlbuf_t *xmlbuf, struct assembly *
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xml_elem_cmp(&elem, requestedExecutionLevelW, asmv2W))
+        if (xml_elem_cmp(&elem, requestedExecutionLevelW, asmv1W))
+        {
             parse_requested_execution_level_elem(xmlbuf, assembly, acl, &elem);
+        }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
@@ -2500,8 +2576,10 @@ static void parse_security_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xml_elem_cmp(&elem, requestedPrivilegesW, asmv2W))
+        if (xml_elem_cmp(&elem, requestedPrivilegesW, asmv1W))
+        {
             parse_requested_privileges_elem(xmlbuf, assembly, acl, &elem);
+        }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
@@ -2517,8 +2595,10 @@ static void parse_trust_info_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (xml_elem_cmp(&elem, securityW, asmv2W))
+        if (xml_elem_cmp(&elem, securityW, asmv1W))
+        {
             parse_security_elem(xmlbuf, assembly, acl, &elem);
+        }
         else
         {
             WARN("unknown elem %s\n", debugstr_xml_elem(&elem));
@@ -2533,7 +2613,7 @@ static void parse_assembly_elem( xmlbuf_t *xmlbuf, struct assembly* assembly,
 {
     struct xml_elem elem;
     struct xml_attr attr;
-    BOOL end = FALSE, version = FALSE, xmlns = FALSE;
+    BOOL end = FALSE, version = FALSE;
 
     TRACE("(%p)\n", xmlbuf);
 
@@ -2549,24 +2629,13 @@ static void parse_assembly_elem( xmlbuf_t *xmlbuf, struct assembly* assembly,
             }
             version = TRUE;
         }
-        else if (xml_attr_cmp(&attr, xmlnsW))
-        {
-            if (!xmlstr_cmp(&attr.value, manifestv1W) &&
-                !xmlstr_cmp(&attr.value, manifestv2W) &&
-                !xmlstr_cmp(&attr.value, manifestv3W))
-            {
-                FIXME("wrong namespace %s\n", debugstr_xmlstr(&attr.value));
-                break;
-            }
-            xmlns = TRUE;
-        }
-        else
+        else if (!is_xmlns_attr( &attr ))
         {
             WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
         }
     }
 
-    if (end || !xmlns || !version)
+    if (end || !version)
     {
         set_error( xmlbuf );
         return;
@@ -2574,7 +2643,7 @@ static void parse_assembly_elem( xmlbuf_t *xmlbuf, struct assembly* assembly,
 
     while (next_xml_elem(xmlbuf, &elem, parent))
     {
-        if (assembly->type == APPLICATION_MANIFEST && xmlstr_cmp(&elem.name, noInheritW))
+        if (assembly->type == APPLICATION_MANIFEST && xml_elem_cmp(&elem, noInheritW, asmv1W))
         {
             parse_noinherit_elem(xmlbuf, &elem);
             assembly->no_inherit = TRUE;
@@ -2607,8 +2676,7 @@ static void parse_assembly_elem( xmlbuf_t *xmlbuf, struct assembly* assembly,
         {
             parse_clr_surrogate_elem(xmlbuf, assembly, acl, &elem);
         }
-        else if (xml_elem_cmp(&elem, trustInfoW, asmv2W) ||
-                 xml_elem_cmp(&elem, trustInfoW, asmv1W))
+        else if (xml_elem_cmp(&elem, trustInfoW, asmv1W))
         {
             parse_trust_info_elem(xmlbuf, assembly, acl, &elem);
         }
@@ -2670,6 +2738,7 @@ static NTSTATUS parse_manifest_buffer( struct actctx_loader* acl, struct assembl
     struct xml_elem parent = {};
 
     xmlbuf->error = FALSE;
+    xmlbuf->ns_pos = 0;
 
     if (!next_xml_elem(xmlbuf, &elem, &parent)) return STATUS_SXS_CANT_GEN_ACTCTX;
 
