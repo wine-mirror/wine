@@ -158,12 +158,14 @@ todo_wine
     ret = setlocale(LC_ALL, "csy");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Czech_Czech Republic.1250"), "ret = %s\n", ret);
+        ok(!strcmp(ret, "Czech_Czech Republic.1250")
+        || !strcmp(ret, "Czech_Czechia.1250"), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "czech");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Czech_Czech Republic.1250"), "ret = %s\n", ret);
+        ok(!strcmp(ret, "Czech_Czech Republic.1250")
+        || !strcmp(ret, "Czech_Czechia.1250"), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "dan");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
