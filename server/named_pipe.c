@@ -356,13 +356,12 @@ static void wake_message( struct pipe_message *message )
     struct async *async = message->async;
 
     message->async = NULL;
+    if (!async) return;
+
     message->iosb->status = STATUS_SUCCESS;
     message->iosb->result = message->iosb->in_size;
-    if (async)
-    {
-        async_terminate( async, message->iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
-        release_object( async );
-    }
+    async_terminate( async, message->iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
+    release_object( async );
 }
 
 static void free_message( struct pipe_message *message )
@@ -768,7 +767,7 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
         else
         {
             avail += message->iosb->in_size - message->read_pos;
-            if (message->iosb->status == STATUS_PENDING && (avail <= reader->buffer_size || !message->iosb->in_size))
+            if (message->async && (avail <= reader->buffer_size || !message->iosb->in_size))
                 wake_message( message );
         }
     }
