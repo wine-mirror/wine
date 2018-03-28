@@ -28,6 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *, uint32_t *, VkExtensionProperties *);
+PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance, const char *);
 
 VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
@@ -52,8 +53,18 @@ VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count,
 
 PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
-    FIXME("stub: %p %s\n", instance, debugstr_a(name));
-    return NULL;
+    TRACE("%p %s\n", instance, debugstr_a(name));
+
+    if (!strcmp(name, "vkEnumerateInstanceExtensionProperties"))
+        return (PFN_vkVoidFunction)vkEnumerateInstanceExtensionProperties;
+
+    if (!strcmp(name, "vkEnumerateInstanceLayerProperties"))
+        return (PFN_vkVoidFunction)vkEnumerateInstanceLayerProperties;
+
+    if (!strcmp(name, "vkGetInstanceProcAddr"))
+        return (PFN_vkVoidFunction)vkGetInstanceProcAddr;
+
+    return wine_vkGetInstanceProcAddr(instance, name);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
