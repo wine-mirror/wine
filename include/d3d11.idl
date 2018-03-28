@@ -32,6 +32,9 @@ interface ID3D11ClassLinkage;
 interface ID3D11Resource;
 interface ID3D11VideoProcessorInputView;
 
+cpp_quote("#ifndef _D3D11_CONSTANTS")
+cpp_quote("#define _D3D11_CONSTANTS")
+
 const UINT D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT      = 14;
 const UINT D3D11_COMMONSHADER_CONSTANT_BUFFER_COMPONENTS          = 4;
 const UINT D3D11_COMMONSHADER_CONSTANT_BUFFER_COMPONENT_BIT_COUNT = 32;
@@ -255,9 +258,6 @@ const UINT D3D11_STANDARD_VECTOR_SIZE                             = 4;
 const UINT D3D11_STANDARD_VERTEX_ELEMENT_COUNT                    = 32;
 const UINT D3D11_STANDARD_VERTEX_TOTAL_COMPONENT_COUNT            = 64;
 
-cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
-cpp_quote("struct CD3D11_DEFAULT {};")
-cpp_quote("extern const DECLSPEC_SELECTANY CD3D11_DEFAULT D3D11_DEFAULT;")
 cpp_quote("#endif")
 
 cpp_quote("#ifndef _D3D11_1_CONSTANTS")
@@ -268,6 +268,11 @@ cpp_quote("#endif")
 cpp_quote("#ifndef _D3D11_2_CONSTANTS")
 cpp_quote("#define _D3D11_2_CONSTANTS")
 const UINT D3D11_2_TILED_RESOURCE_TILE_SIZE_IN_BYTES = 0x10000;
+cpp_quote("#endif")
+
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_DEFAULT {};")
+cpp_quote("extern const DECLSPEC_SELECTANY CD3D11_DEFAULT D3D11_DEFAULT;")
 cpp_quote("#endif")
 
 typedef enum D3D11_BLEND
