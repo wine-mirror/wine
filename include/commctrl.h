@@ -1093,6 +1093,14 @@ typedef struct tagNMBCHOTITEM
 #define BS_COMMANDLINK          0x0000000E
 #define BS_DEFCOMMANDLINK       0x0000000F
 
+/* Button macros */
+#define Button_SetNote(button, note)  \
+  (BOOL)SNDMSG(button, BCM_SETNOTE, 0, (LPARAM)(note))
+#define Button_GetNote(button, buffer, size)  \
+  (BOOL)SNDMSG(button, BCM_GETNOTE, (WPARAM)(size), (LPARAM)(buffer))
+#define Button_GetNoteLength(button)  \
+  (LRESULT)SNDMSG(button, BCM_GETNOTELENGTH, 0, 0)
+
 /* Toolbar */
 
 #define TOOLBARCLASSNAMEA       "ToolbarWindow32"
