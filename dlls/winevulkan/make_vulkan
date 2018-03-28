@@ -65,6 +65,7 @@ LOGGER.addHandler(logging.StreamHandler())
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
 WINE_VULKAN_DRIVER_H = "../../include/wine/vulkan_driver.h"
+WINE_VULKAN_LOADER_SPEC = "../vulkan-1/vulkan-1.spec"
 WINE_VULKAN_SPEC = "winevulkan.spec"
 WINE_VULKAN_THUNKS_C = "vulkan_thunks.c"
 WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
@@ -570,18 +571,26 @@ class VkFunction(object):
 
         return body
 
-    def spec(self, prefix=None):
+    def spec(self, prefix=None, symbol=None):
         """ Generate spec file entry for this function.
 
         Args
             prefix (str, optional): prefix to prepend to entry point name.
+            symbol (str, optional): allows to override function name implementing entry point.
         """
 
+        spec = ""
         params = " ".join([p.spec() for p in self.params])
         if prefix is not None:
-            return "@ stdcall {0}{1}({2})\n".format(prefix, self.name, params)
+            spec += "@ stdcall {0}{1}({2})".format(prefix, self.name, params)
         else:
-            return "@ stdcall {0}({1})\n".format(self.name, params)
+            spec += "@ stdcall {0}({1})".format(self.name, params)
+
+        if symbol is not None:
+            spec += " " + symbol
+
+        spec += "\n"
+        return spec
 
     def stub(self, call_conv=None, prefix=None):
         stub = self.prototype(call_conv=call_conv, prefix=prefix)
@@ -2136,6 +2145,26 @@ class VkGenerator(object):
             else:
                 f.write("@ stub {0}\n".format(func.name))
 
+    def generate_vulkan_loader_spec(self, f):
+        f.write("# Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n\n")
+
+        # Export symbols for all Vulkan Core functions.
+        for func in self.registry.funcs.values():
+            if not func.is_core_func():
+                continue
+
+            # We support all Core functions except for VK_KHR_display* APIs.
+            # Create stubs for unsupported Core functions.
+            if func.is_required():
+                # Global functions need a custom implementation, except for
+                # vkCreateInstance, which we can just forward.
+                if func.is_global_func() and func.name != "vkCreateInstance":
+                    f.write(func.spec())
+                else:
+                    f.write(func.spec(symbol="winevulkan.wine_" + func.name))
+            else:
+                f.write("@ stub {0}\n".format(func.name))
+
 
 class VkRegistry(object):
     def __init__(self, reg_filename):
@@ -2520,6 +2549,9 @@ def main():
 
     with open(WINE_VULKAN_SPEC, "w") as f:
         generator.generate_vulkan_spec(f)
+
+    with open(WINE_VULKAN_LOADER_SPEC, "w") as f:
+        generator.generate_vulkan_loader_spec(f)
 
 if __name__ == "__main__":
     main()
