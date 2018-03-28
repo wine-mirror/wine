@@ -900,6 +900,61 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     return 1;
 }
 
+static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
+{
+    struct pipe_message *message;
+    struct iosb *iosb;
+
+    if ((pipe_end->flags & (NAMED_PIPE_MESSAGE_STREAM_WRITE | NAMED_PIPE_MESSAGE_STREAM_READ))
+        != (NAMED_PIPE_MESSAGE_STREAM_WRITE | NAMED_PIPE_MESSAGE_STREAM_READ))
+    {
+        set_error( STATUS_INVALID_READ_MODE );
+        return 0;
+    }
+
+    if (!pipe_end->connection)
+    {
+        set_error( STATUS_PIPE_BROKEN );
+        return 0;
+    }
+
+    /* not allowed if we already have read data buffered */
+    if (!list_empty( &pipe_end->message_queue ))
+    {
+        set_error( STATUS_PIPE_BUSY );
+        return 0;
+    }
+
+    iosb = async_get_iosb( async );
+    /* ignore output buffer copy transferred because of METHOD_NEITHER */
+    iosb->in_size -= iosb->out_size;
+    /* transaction never blocks on write, so just queue a message without async */
+    message = queue_message( pipe_end->connection, iosb );
+    release_object( iosb );
+    if (!message) return 0;
+    reselect_read_queue( pipe_end->connection );
+
+    queue_async( &pipe_end->read_q, async );
+    reselect_read_queue( pipe_end );
+    set_error( STATUS_PENDING );
+    return 1;
+}
+
+static int pipe_end_ioctl( struct pipe_end *pipe_end, ioctl_code_t code, struct async *async )
+{
+    switch(code)
+    {
+    case FSCTL_PIPE_PEEK:
+        return pipe_end_peek( pipe_end );
+
+    case FSCTL_PIPE_TRANSCEIVE:
+        return pipe_end_transceive( pipe_end, async );
+
+    default:
+        return default_fd_ioctl( pipe_end->fd, code, async );
+    }
+}
+
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct pipe_server *server = get_fd_user( fd );
@@ -955,11 +1010,8 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         }
         return 1;
 
-    case FSCTL_PIPE_PEEK:
-        return pipe_end_peek( &server->pipe_end );
-
     default:
-        return default_fd_ioctl( fd, code, async );
+        return pipe_end_ioctl( &server->pipe_end, code, async );
     }
 }
 
@@ -973,11 +1025,8 @@ static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         set_error( STATUS_ILLEGAL_FUNCTION );
         return 0;
 
-    case FSCTL_PIPE_PEEK:
-        return pipe_end_peek( &client->pipe_end );
-
     default:
-        return default_fd_ioctl( fd, code, async );
+        return pipe_end_ioctl( &client->pipe_end, code, async );
     }
 }
 
