@@ -70,7 +70,7 @@ DEFINE_EXPECT(GetWindowContext);
 DEFINE_EXPECT(ShowObject);
 DEFINE_EXPECT(OnShowWindow_FALSE);
 
-static const WCHAR mp4file[] = {'a','v','.','m','p','4',0};
+static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
 static inline WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -942,8 +942,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(hres == S_FALSE, "get_currentMedia SUCCEEDED\n");
     ok(media == NULL, "media != NULL\n");
 
-    filename = SysAllocString(load_resource(mp4file));
-
+    filename = SysAllocString(load_resource(mp3file));
 
     SET_EXPECT(GetContainer);
     SET_EXPECT(Invoke_USERMODE);
@@ -1039,6 +1038,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 
     IWMPSettings_Release(settings);
     IWMPPlayer_Release(player);
+    DeleteFileW(filename);
     SysFreeString(filename);
 }
 

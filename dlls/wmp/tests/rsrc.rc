@@ -18,5 +18,6 @@
 
 #include "windef.h"
 
-/* @makedep: av.mp4 */
-av.mp4 RCDATA "av.mp4"
+/* ffmpeg -ar 48000 -t 60 -f s16le -acodec pcm_s16le -ac 2 -i /dev/zero -acodec libmp3lame -aq 4 output.mp3 */
+/* @makedep: test.mp3 */
+test.mp3 RCDATA "test.mp3"

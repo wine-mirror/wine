@@ -22,6 +22,7 @@
 #include "wine/heap.h"
 #include "wine/unicode.h"
 #include "ole2.h"
+#include "dshow.h"
 #include "wmp.h"
 
 typedef struct {
@@ -70,11 +71,16 @@ struct WindowsMediaPlayer {
     ConnectionPoint *wmpocx;
 
     IWMPMedia *wmpmedia;
+
+    /* DirectShow stuff */
+    IGraphBuilder* filter_graph;
+    IMediaControl* media_control;
 };
 
 void init_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 void destroy_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
-IWMPMedia* create_media_from_url(BSTR url);
+WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface) DECLSPEC_HIDDEN;
+HRESULT create_media_from_url(BSTR url, IWMPMedia **ppMedia) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 

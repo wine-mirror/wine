@@ -19,6 +19,7 @@
 #include "wmp_private.h"
 
 #include "wine/debug.h"
+#include <nserror.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
@@ -119,12 +120,20 @@ static HRESULT WINAPI WMPPlayer4_put_URL(IWMPPlayer4 *iface, BSTR url)
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
     IWMPMedia *media;
+    HRESULT hres;
     TRACE("(%p)->(%s)\n", This, debugstr_w(url));
     if(url == NULL) {
         return E_POINTER;
     }
-    media = create_media_from_url(url);
-    return IWMPPlayer4_put_currentMedia(iface, media);
+    hres = create_media_from_url(url, &media);
+    if (SUCCEEDED(hres)) {
+        hres = IWMPPlayer4_put_currentMedia(iface, media);
+        IWMPMedia_Release(media); /* put will addref */
+    }
+    if (SUCCEEDED(hres) && This->auto_start) {
+        hres = IWMPControls_play(&This->IWMPControls_iface);
+    }
+    return hres;
 }
 
 static HRESULT WINAPI WMPPlayer4_get_openState(IWMPPlayer4 *iface, WMPOpenState *pwmpos)
@@ -1357,16 +1366,60 @@ static HRESULT WINAPI WMPControls_get_isAvailable(IWMPControls *iface, BSTR bstr
 
 static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
 {
+    HRESULT hres = S_OK;
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    WMPMedia *media;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->wmpmedia) {
+        return NS_S_WMPCORE_COMMAND_NOT_AVAILABLE;
+    }
+
+    media = unsafe_impl_from_IWMPMedia(This->wmpmedia);
+    if (!media) {
+        FIXME("No support for non-builtin IWMPMedia implementations\n");
+        return E_INVALIDARG;
+    }
+
+    if (!This->filter_graph) {
+        hres = CoCreateInstance(&CLSID_FilterGraph,
+                NULL,
+                CLSCTX_INPROC_SERVER,
+                &IID_IGraphBuilder,
+                (void **)&This->filter_graph);
+        if (SUCCEEDED(hres))
+            hres = IGraphBuilder_RenderFile(This->filter_graph, media->url, NULL);
+        if (SUCCEEDED(hres))
+            hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaControl,
+                    (void**)&This->media_control);
+    }
+
+    if (SUCCEEDED(hres))
+        hres = IMediaControl_Run(This->media_control);
+
+    if (hres == S_FALSE) {
+        hres = S_OK; /* S_FALSE will mean that graph is transitioning and that is fine */
+    }
+    return hres;
 }
 
 static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
 {
+    HRESULT hres = S_OK;
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    if (!This->filter_graph) {
+        return NS_S_WMPCORE_COMMAND_NOT_AVAILABLE;
+    }
+    if (This->media_control) {
+        hres = IMediaControl_Stop(This->media_control);
+        IMediaControl_Release(This->media_control);
+    }
+    IGraphBuilder_Release(This->filter_graph);
+    This->filter_graph = NULL;
+    This->media_control = NULL;
+    return hres;
 }
 
 static HRESULT WINAPI WMPControls_pause(IWMPControls *iface)
@@ -1741,16 +1794,36 @@ void init_player(WindowsMediaPlayer *wmp)
 
 void destroy_player(WindowsMediaPlayer *wmp)
 {
+    IWMPControls_stop(&wmp->IWMPControls_iface);
     if(wmp->wmpmedia)
         IWMPMedia_Release(wmp->wmpmedia);
 }
 
-IWMPMedia* create_media_from_url(BSTR url){
+WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface)
+{
+    if (iface->lpVtbl == &WMPMediaVtbl) {
+        return CONTAINING_RECORD(iface, WMPMedia, IWMPMedia_iface);
+    }
+    return NULL;
+}
 
+HRESULT create_media_from_url(BSTR url, IWMPMedia **ppMedia)
+{
     WMPMedia *media = heap_alloc_zero(sizeof(WMPMedia));
+
+    if (!media) {
+        return E_OUTOFMEMORY;
+    }
+
     media->IWMPMedia_iface.lpVtbl = &WMPMediaVtbl;
     media->url = heap_strdupW(url);
     media->ref = 1;
 
-    return &media->IWMPMedia_iface;
+    if (media->url) {
+        *ppMedia = &media->IWMPMedia_iface;
+
+        return S_OK;
+    }
+    IWMPMedia_Release(&media->IWMPMedia_iface);
+    return E_OUTOFMEMORY;
 }
