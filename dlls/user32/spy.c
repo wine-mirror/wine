@@ -490,13 +490,30 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ENTERSIZEMOVE",         /* 0x0231 */
     "WM_EXITSIZEMOVE",          /* 0x0232 */
     "WM_DROPFILES",             /* 0x0233 */
-    "WM_MDIREFRESHMENU", NULL, NULL, NULL,
-    /* 0x0238*/
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_MDIREFRESHMENU",        /* 0x0234 */
+    NULL, NULL, NULL,
+    "WM_POINTERDEVICECHANGE",   /* 0x0238 */
+    "WM_POINTERDEVICEINRANGE",  /* 0x0239 */
+    "WM_POINTERDEVICEOUTOFRANGE", /* 0x023a */
+    NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0240 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_TOUCH",                 /* 0x0240 */
+    "WM_NCPOINTERUPDATE",       /* 0x0241 */
+    "WM_NCPOINTERDOWN",         /* 0x0242 */
+    "WM_NCPOINTERUP",           /* 0x0243 */
+    NULL,
+    "WM_POINTERUPDATE",         /* 0x0245 */
+    "WM_POINTERDOWN",           /* 0x0246 */
+    "WM_POINTERUP",             /* 0x0247 */
+    NULL,
+    "WM_POINTERENTER",          /* 0x0249 */
+    "WM_POINTERLEAVE",          /* 0x024a */
+    "WM_POINTERACTIVATE",       /* 0x024b */
+    "WM_POINTERCAPTURECHANGED", /* 0x024c */
+    "WM_TOUCHHITTESTING",       /* 0x024d */
+    "WM_POINTERWHEEL",          /* 0x024e */
+    "WM_POINTERHWHEEL",         /* 0x024f */
 
     /* 0x0250 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -569,7 +586,13 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_TABLET_FIRST+31",       /* 0x02de */
     "WM_TABLET_LAST",           /* 0x02df */
 
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_DPICHANGED",            /* 0x02e0 */
+    NULL,
+    "WM_DPICHANGED_BEFOREPARENT",/* 0x02e2 */
+    "WM_DPICHANGED_AFTERPARENT",/* 0x02e3 */
+    "WM_GETDPISCALEDSIZE",      /* 0x02e4 */
+    NULL, NULL, NULL,
+
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,

@@ -530,8 +530,6 @@
 #define WM_MDICASCADE          0x0227
 #define WM_MDIICONARRANGE      0x0228
 #define WM_MDIGETACTIVE        0x0229
-#define WM_MDISETMENU          0x0230
-#define WM_MDIREFRESHMENU      0x0234
 
 /* D&D messages */
 #define WM_DROPOBJECT          0x022A /* DDK / Win16 */
@@ -541,11 +539,34 @@
 #define WM_DRAGSELECT          0x022E /* DDK / Win16 */
 #define WM_DRAGMOVE            0x022F /* DDK / Win16 */
 
+#define WM_MDISETMENU          0x0230
 #define WM_ENTERSIZEMOVE       0x0231
 #define WM_EXITSIZEMOVE        0x0232
 #define WM_DROPFILES           0x0233
+#define WM_MDIREFRESHMENU      0x0234
+
+#define WM_POINTERDEVICECHANGE     0x0238
+#define WM_POINTERDEVICEINRANGE    0x0239
+#define WM_POINTERDEVICEOUTOFRANGE 0x023a
 
 #define WM_TOUCH               0x0240
+#define WM_NCPOINTERUPDATE     0x0241
+#define WM_NCPOINTERDOWN       0x0242
+#define WM_NCPOINTERUP         0x0243
+#define WM_POINTERUPDATE       0x0245
+#define WM_POINTERDOWN         0x0246
+#define WM_POINTERUP           0x0247
+#define WM_POINTERENTER        0x0249
+#define WM_POINTERLEAVE        0x024a
+#define WM_POINTERACTIVATE     0x024b
+#define WM_POINTERCAPTURECHANGED 0x024c
+#define WM_TOUCHHITTESTING     0x024d
+#define WM_POINTERWHEEL        0x024e
+#define WM_POINTERHWHEEL       0x024f
+
+#define WM_POINTERROUTEDTO     0x0251
+#define WM_POINTERROUTEDAWAY   0x0252
+#define WM_POINTERROUTEDRELEASED 0x0253
 
 /* Win32 4.0 messages for IME */
 #define WM_IME_SETCONTEXT      0x0281
@@ -570,6 +591,11 @@
 
 #define WM_TABLET_FIRST        0x02c0
 #define WM_TABLET_LAST         0x02df
+
+#define WM_DPICHANGED          0x02e0
+#define WM_DPICHANGED_BEFOREPARENT 0x02e2
+#define WM_DPICHANGED_AFTERPARENT  0x02e3
+#define WM_GETDPISCALEDSIZE    0x02e4
 
 /* Clipboard command messages */
 #define WM_CUT                 0x0300
