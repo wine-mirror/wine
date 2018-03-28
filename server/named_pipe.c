@@ -351,6 +351,18 @@ static void set_server_state( struct pipe_server *server, enum pipe_state state 
 }
 
 
+static struct pipe_message *queue_message( struct pipe_end *pipe_end, struct iosb *iosb )
+{
+    struct pipe_message *message;
+
+    if (!(message = mem_alloc( sizeof(*message) ))) return NULL;
+    message->iosb = (struct iosb *)grab_object( iosb );
+    message->async = NULL;
+    message->read_pos = 0;
+    list_add_tail( &pipe_end->message_queue, &message->entry );
+    return message;
+}
+
 static void wake_message( struct pipe_message *message )
 {
     struct async *async = message->async;
@@ -794,26 +806,26 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
 
 static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
-    struct pipe_end *write_end = get_fd_user( fd );
-    struct pipe_end *read_end = write_end->connection;
+    struct pipe_end *pipe_end = get_fd_user( fd );
     struct pipe_message *message;
+    struct iosb *iosb;
 
-    if (!read_end)
+    if (!pipe_end->connection)
     {
         set_error( STATUS_PIPE_DISCONNECTED );
         return 0;
     }
 
-    if (!(write_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && !get_req_data_size()) return 1;
+    if (!(pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && !get_req_data_size()) return 1;
 
-    if (!(message = mem_alloc( sizeof(*message) ))) return 0;
+    iosb = async_get_iosb( async );
+    message = queue_message( pipe_end->connection, iosb );
+    release_object( iosb );
+    if (!message) return 0;
+
     message->async = (struct async *)grab_object( async );
-    message->iosb = async_get_iosb( async );
-    message->read_pos = 0;
-    list_add_tail( &read_end->message_queue, &message->entry );
-
-    queue_async( &write_end->write_q, async );
-    reselect_write_queue( write_end );
+    queue_async( &pipe_end->write_q, async );
+    reselect_write_queue( pipe_end );
     set_error( STATUS_PENDING );
     return 1;
 }
