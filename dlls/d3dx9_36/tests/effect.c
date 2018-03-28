@@ -7832,6 +7832,38 @@ static void test_create_effect_from_file(void)
     DestroyWindow(window);
 }
 
+#if 0
+technique tech0
+{
+    pass p0
+    {
+        LightEnable[0] = FALSE;
+        FogEnable = FALSE;
+    }
+}
+technique tech1
+{
+    pass p0
+    {
+        LightEnable[0] = TRUE;
+        FogEnable = TRUE;
+    }
+}
+#endif
+static const DWORD test_two_techniques_blob[] =
+{
+    0xfeff0901, 0x000000ac, 0x00000000, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000001, 0x00000001, 0x00000003, 0x00003070, 0x00000006, 0x68636574, 0x00000030,
+    0x00000001, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000001, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000003, 0x00003070, 0x00000006, 0x68636574, 0x00000031, 0x00000000, 0x00000002, 0x00000002,
+    0x00000001, 0x0000004c, 0x00000000, 0x00000001, 0x00000044, 0x00000000, 0x00000002, 0x00000091,
+    0x00000000, 0x00000008, 0x00000004, 0x0000000e, 0x00000000, 0x00000028, 0x00000024, 0x000000a0,
+    0x00000000, 0x00000001, 0x00000098, 0x00000000, 0x00000002, 0x00000091, 0x00000000, 0x0000005c,
+    0x00000058, 0x0000000e, 0x00000000, 0x0000007c, 0x00000078, 0x00000000, 0x00000000,
+};
+
 static void test_effect_find_next_valid_technique(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -7867,6 +7899,30 @@ static void test_effect_find_next_valid_technique(void)
         DestroyWindow(window);
         return;
     }
+
+    hr = D3DXCreateEffectEx(device, test_two_techniques_blob, sizeof(test_two_techniques_blob),
+            NULL, NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
+
+    hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
+    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
+
+    effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);

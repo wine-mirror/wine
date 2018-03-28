@@ -4048,7 +4048,10 @@ static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect *iface,
         {
             tech = &base->techniques[i];
             if (tech == prev_tech)
+            {
+                ++i;
                 break;
+            }
         }
     }
     else
@@ -4056,7 +4059,7 @@ static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect *iface,
         i = 0;
     }
 
-    for (++i; i < base->technique_count; ++i)
+    for (; i < base->technique_count; ++i)
     {
         tech = &base->techniques[i];
         if (SUCCEEDED(ID3DXEffectImpl_ValidateTechnique(iface, get_technique_handle(tech))))
