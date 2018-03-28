@@ -27,11 +27,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *, uint32_t *, VkExtensionProperties *);
+
 VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
-    FIXME("stub: %p %p %p\n", layer_name, count, properties);
-    return VK_ERROR_OUT_OF_HOST_MEMORY;
+    TRACE("%p %p %p\n", layer_name, count, properties);
+
+    if (layer_name)
+        return VK_ERROR_LAYER_NOT_PRESENT;
+
+    return wine_vkEnumerateInstanceExtensionProperties(NULL, count, properties);
 }
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count,
