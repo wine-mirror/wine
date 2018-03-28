@@ -1715,29 +1715,41 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
 
 /***********************************************************************
  *           TransactNamedPipe   (KERNEL32.@)
- *
- * BUGS
- *  should be done as a single operation in the wineserver or kernel
  */
 BOOL WINAPI TransactNamedPipe(
     HANDLE handle, LPVOID write_buf, DWORD write_size, LPVOID read_buf,
     DWORD read_size, LPDWORD bytes_read, LPOVERLAPPED overlapped)
 {
-    BOOL r;
-    DWORD count;
+    IO_STATUS_BLOCK default_iosb, *iosb = &default_iosb;
+    HANDLE event = NULL;
+    void *cvalue = NULL;
+    NTSTATUS status;
 
-    TRACE("%p %p %d %p %d %p %p\n",
-          handle, write_buf, write_size, read_buf,
+    TRACE("%p %p %u %p %u %p %p\n", handle, write_buf, write_size, read_buf,
           read_size, bytes_read, overlapped);
 
     if (overlapped)
-        FIXME("Doesn't support overlapped operation as yet\n");
+    {
+        event = overlapped->hEvent;
+        iosb = (IO_STATUS_BLOCK *)overlapped;
+        if (((ULONG_PTR)event & 1) == 0) cvalue = overlapped;
+    }
+    else
+    {
+        iosb->Information = 0;
+    }
 
-    r = WriteFile(handle, write_buf, write_size, &count, NULL);
-    if (r)
-        r = ReadFile(handle, read_buf, read_size, bytes_read, NULL);
+    status = NtFsControlFile(handle, event, NULL, cvalue, iosb, FSCTL_PIPE_TRANSCEIVE,
+                             write_buf, write_size, read_buf, read_size);
 
-    return r;
+    if (bytes_read) *bytes_read = overlapped && status ? 0 : iosb->Information;
+
+    if (status)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************

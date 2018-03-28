@@ -3011,6 +3011,44 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     test_flush_done(flush_thread);
 }
 
+#define overlapped_transact(a,b,c,d,e,f) _overlapped_transact(__LINE__,a,b,c,d,e,f)
+static void _overlapped_transact(unsigned line, HANDLE caller, void *write_buf, DWORD write_size,
+                                 void *read_buf, DWORD read_size, OVERLAPPED *overlapped)
+{
+    BOOL res;
+
+    memset(overlapped, 0, sizeof(*overlapped));
+    overlapped->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = TransactNamedPipe(caller, write_buf, write_size, read_buf, read_size, NULL, overlapped);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_IO_PENDING,
+       "TransactNamedPipe returned: %x(%u)\n", res, GetLastError());
+}
+
+#define overlapped_transact_failure(a,b,c,d,e,f) _overlapped_transact_failure(__LINE__,a,b,c,d,e,f)
+static void _overlapped_transact_failure(unsigned line, HANDLE caller, void *write_buf, DWORD write_size,
+                                         void *read_buf, DWORD read_size, DWORD expected_error)
+{
+    OVERLAPPED overlapped;
+    BOOL res;
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = TransactNamedPipe(caller, write_buf, write_size, read_buf, read_size, NULL, &overlapped);
+    ok_(__FILE__,line)(!res, "TransactNamedPipe succeeded\n");
+
+    if (GetLastError() == ERROR_IO_PENDING) /* win8+ */
+    {
+        _test_overlapped_failure(line, caller, &overlapped, expected_error);
+    }
+    else
+    {
+        ok_(__FILE__,line)(GetLastError() == expected_error,
+                           "TransactNamedPipe returned error %u, expected %u\n",
+                           GetLastError(), expected_error);
+        CloseHandle(overlapped.hEvent);
+    }
+}
+
 static void child_process_write_pipe(HANDLE pipe)
 {
     OVERLAPPED overlapped;
@@ -3146,6 +3184,105 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     CloseHandle(client);
 }
 
+static void test_transact(HANDLE caller, HANDLE callee, DWORD write_buf_size, DWORD read_buf_size)
+{
+    OVERLAPPED overlapped, overlapped2, read_overlapped, write_overlapped;
+    char buf[10000], read_buf[10000];
+
+    memset(buf, 0xaa, sizeof(buf));
+
+    /* simple transact call */
+    overlapped_transact(caller, (BYTE*)"abc", 3, read_buf, 100, &overlapped);
+    overlapped_write_sync(callee, (BYTE*)"test", 4);
+    test_overlapped_result(caller, &overlapped, 4, FALSE);
+    ok(!memcmp(read_buf, "test", 4), "unexpected read_buf\n");
+    overlapped_read_sync(callee, read_buf, 1000, 3, FALSE);
+    ok(!memcmp(read_buf, "abc", 3), "unexpected read_buf\n");
+
+    /* transact fails if there is already data in read buffer */
+    overlapped_write_sync(callee, buf, 1);
+    overlapped_transact_failure(caller, buf, 2, read_buf, 1, ERROR_PIPE_BUSY);
+    overlapped_read_sync(caller, read_buf, 1000, 1, FALSE);
+
+    /* transact doesn't block on write */
+    overlapped_write_async(caller, buf, write_buf_size+2000, &write_overlapped);
+    overlapped_transact(caller, buf, 2, read_buf, 1, &overlapped);
+    test_not_signaled(overlapped.hEvent);
+    overlapped_write_sync(callee, buf, 1);
+    test_overlapped_result(caller, &overlapped, 1, FALSE);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), write_buf_size+2000, FALSE);
+    test_overlapped_result(caller, &write_overlapped, write_buf_size+2000, FALSE);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), 2, FALSE);
+
+    /* transact with already pending read */
+    overlapped_read_async(callee, read_buf, 10, &read_overlapped);
+    overlapped_transact(caller, buf, 5, read_buf, 6, &overlapped);
+    test_overlapped_result(callee, &read_overlapped, 5, FALSE);
+    test_not_signaled(overlapped.hEvent);
+    overlapped_write_sync(callee, buf, 10);
+    test_overlapped_result(caller, &overlapped, 6, TRUE);
+    overlapped_read_sync(caller, read_buf, sizeof(read_buf), 4, FALSE);
+
+    /* 0-size messages */
+    overlapped_transact(caller, buf, 5, read_buf, 0, &overlapped);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), 5, FALSE);
+    overlapped_write_sync(callee, buf, 0);
+    test_overlapped_result(caller, &overlapped, 0, FALSE);
+
+    overlapped_transact(caller, buf, 0, read_buf, 0, &overlapped);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), 0, FALSE);
+    test_not_signaled(overlapped.hEvent);
+    overlapped_write_sync(callee, buf, 0);
+    test_overlapped_result(caller, &overlapped, 0, FALSE);
+
+    /* reply transact with another transact */
+    overlapped_transact(caller, buf, 3, read_buf, 100, &overlapped);
+    overlapped_read_sync(callee, read_buf, 1000, 3, FALSE);
+    overlapped_transact(callee, buf, 4, read_buf, 100, &overlapped2);
+    test_overlapped_result(caller, &overlapped, 4, FALSE);
+    overlapped_write_sync(caller, buf, 1);
+    test_overlapped_result(caller, &overlapped2, 1, FALSE);
+
+    if (!pCancelIoEx) return;
+
+    /* cancel keeps written data */
+    overlapped_write_async(caller, buf, write_buf_size+2000, &write_overlapped);
+    overlapped_transact(caller, buf, 2, read_buf, 1, &overlapped);
+    test_not_signaled(overlapped.hEvent);
+    cancel_overlapped(caller, &overlapped);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), write_buf_size+2000, FALSE);
+    test_overlapped_result(caller, &write_overlapped, write_buf_size+2000, FALSE);
+    overlapped_read_sync(callee, read_buf, sizeof(read_buf), 2, FALSE);
+}
+
+static void test_TransactNamedPipe(void)
+{
+    HANDLE client, server;
+    BYTE buf[10];
+
+    create_overlapped_pipe(PIPE_TYPE_BYTE, &client, &server);
+    overlapped_transact_failure(client, buf, 2, buf, 1, ERROR_BAD_PIPE);
+    CloseHandle(client);
+    CloseHandle(server);
+
+    create_overlapped_pipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE, &client, &server);
+    overlapped_transact_failure(client, buf, 2, buf, 1, ERROR_BAD_PIPE);
+    CloseHandle(client);
+    CloseHandle(server);
+
+    trace("testing server->client transaction...\n");
+    create_overlapped_pipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, &client, &server);
+    test_transact(server, client, 5000, 6000);
+    CloseHandle(client);
+    CloseHandle(server);
+
+    trace("testing client->server transaction...\n");
+    create_overlapped_pipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, &client, &server);
+    test_transact(client, server, 6000, 5000);
+    CloseHandle(client);
+    CloseHandle(server);
+}
+
 START_TEST(pipe)
 {
     char **argv;
@@ -3186,4 +3323,5 @@ START_TEST(pipe)
     test_overlapped_transport(TRUE, FALSE);
     test_overlapped_transport(TRUE, TRUE);
     test_overlapped_transport(FALSE, FALSE);
+    test_TransactNamedPipe();
 }
