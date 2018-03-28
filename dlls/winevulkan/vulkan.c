@@ -589,7 +589,7 @@ err:
     return res;
 }
 
-static VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
     struct VkInstance_T *object = NULL;
@@ -714,7 +714,7 @@ VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_
     return res;
 }
 
-static VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
     VkResult res;
@@ -861,7 +861,7 @@ void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index,
     *queue = &device->queues[family_index][queue_index];
 }
 
-static PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)
+PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     void *func;
 

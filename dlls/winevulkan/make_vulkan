@@ -65,6 +65,7 @@ LOGGER.addHandler(logging.StreamHandler())
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
 WINE_VULKAN_DRIVER_H = "../../include/wine/vulkan_driver.h"
+WINE_VULKAN_SPEC = "winevulkan.spec"
 WINE_VULKAN_THUNKS_C = "vulkan_thunks.c"
 WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 
@@ -104,6 +105,16 @@ BLACKLISTED_EXTENSIONS = [
     "VK_KHR_external_semaphore_capabilities",
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_NV_external_memory_win32"
+]
+
+# The Vulkan loader provides entry-points for core functionality and important
+# extensions. Based on vulkan-1.def this amounts to WSI extensions on 1.0.51.
+CORE_EXTENSIONS = [
+    "VK_KHR_display",
+    "VK_KHR_display_swapchain",
+    "VK_KHR_surface",
+    "VK_KHR_swapchain",
+    "VK_KHR_win32_surface"
 ]
 
 # Functions part of our winevulkan graphics driver interface.
@@ -372,6 +383,20 @@ class VkFunction(object):
 
         return conversions
 
+    def is_core_func(self):
+        """ Returns whether the function is a Vulkan core function.
+        Core functions are APIs defined by the Vulkan spec to be part of the
+        Core API as well as several KHR WSI extensions.
+        """
+
+        if self.extension is None:
+            return True
+
+        if self.extension in CORE_EXTENSIONS:
+            return True
+
+        return False
+
     def is_device_func(self):
         # If none of the other, it must be a device function
         return not self.is_global_func() and not self.is_instance_func()
@@ -544,6 +569,19 @@ class VkFunction(object):
             body += "    return result;\n"
 
         return body
+
+    def spec(self, prefix=None):
+        """ Generate spec file entry for this function.
+
+        Args
+            prefix (str, optional): prefix to prepend to entry point name.
+        """
+
+        params = " ".join([p.spec() for p in self.params])
+        if prefix is not None:
+            return "@ stdcall {0}{1}({2})\n".format(prefix, self.name, params)
+        else:
+            return "@ stdcall {0}({1})\n".format(self.name, params)
 
     def stub(self, call_conv=None, prefix=None):
         stub = self.prototype(call_conv=call_conv, prefix=prefix)
@@ -1290,6 +1328,26 @@ class VkParam(object):
     def needs_output_conversion(self):
         return self.output_conv is not None
 
+    def spec(self):
+        """ Generate spec file entry for this parameter. """
+
+        if self.type_info["category"] in ["bitmask", "enum"]:
+            return "long"
+        if self.is_pointer() and self.type == "char":
+            return "str"
+        if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
+            return "ptr"
+        if self.is_handle() and not self.is_dispatchable():
+            return "int64"
+        if self.type == "float":
+            return "float"
+        if self.type in ["int", "int32_t", "size_t", "uint32_t", "VkBool32"]:
+            return "long"
+        if self.type in ["uint64_t", "VkDeviceSize"]:
+            return "int64"
+
+        LOGGER.error("Unhandled spec conversion for type: {0}".format(self.type))
+
     def variable(self, conv=False):
         """ Returns 'glue' code during generation of a function call on how to access the variable.
         This function handles various scenarios such as 'unwrapping' if dispatchable objects and
@@ -1753,7 +1811,10 @@ class VkGenerator(object):
             if not vk_func.needs_thunk():
                 continue
 
-            f.write("static " + vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+            # Exports symbols for Core functions.
+            if not vk_func.is_core_func():
+                f.write("static ")
+            f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
@@ -1863,7 +1924,10 @@ class VkGenerator(object):
             if not vk_func.is_required() or vk_func.is_global_func() or vk_func.needs_thunk():
                 continue
 
-            f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_", postfix="DECLSPEC_HIDDEN")))
+            if vk_func.is_core_func():
+                f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_")))
+            else:
+                f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_", postfix="DECLSPEC_HIDDEN")))
         f.write("\n")
 
         for struct in self.host_structs:
@@ -2051,6 +2115,27 @@ class VkGenerator(object):
         f.write("extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version);\n\n")
         f.write("#endif /* __WINE_VULKAN_DRIVER_H */\n")
 
+    def generate_vulkan_spec(self, f):
+        f.write("# Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n\n")
+        f.write("@ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
+        f.write("@ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
+
+        # Export symbols for all Vulkan Core functions.
+        for func in self.registry.funcs.values():
+            if not func.is_core_func():
+                continue
+
+            # Not an ICD level function.
+            if func.name == "vkEnumerateInstanceLayerProperties":
+                continue
+
+            # We support all Core functions except for VK_KHR_display* APIs.
+            # Create stubs for unsupported Core functions.
+            if func.is_required():
+                f.write(func.spec(prefix="wine_"))
+            else:
+                f.write("@ stub {0}\n".format(func.name))
+
 
 class VkRegistry(object):
     def __init__(self, reg_filename):
@@ -2191,6 +2276,13 @@ class VkRegistry(object):
         for ext in exts:
             ext_name = ext.attrib["name"]
 
+            # Set extension name on any functions calls part of this extension as we
+            # were not aware of the name during initial parsing.
+            commands = ext.findall("require/command")
+            for command in commands:
+                cmd_name = command.attrib["name"]
+                self.funcs[cmd_name].extension = ext_name
+
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":
                 LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
@@ -2257,19 +2349,11 @@ class VkRegistry(object):
             ext_info = {"name" : ext_name, "type" : ext_type}
             extensions.append(ext_info)
 
-            commands = ext.findall("require/command")
-            if not commands:
-                continue
-
             # Pull in any commands we need. We infer types to pull in from the command
             # as well.
             for command in commands:
                 cmd_name = command.attrib["name"]
                 self._mark_command_required(cmd_name)
-
-                # Set extension name on the function call as we were not aware of the
-                # name during initial parsing.
-                self.funcs[cmd_name].extension = ext_name
 
         # Sort in alphabetical order.
         self.extensions = sorted(extensions, key=lambda ext: ext["name"])
@@ -2433,6 +2517,9 @@ def main():
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
         generator.generate_thunks_c(f, "wine_")
+
+    with open(WINE_VULKAN_SPEC, "w") as f:
+        generator.generate_vulkan_spec(f)
 
 if __name__ == "__main__":
     main()
