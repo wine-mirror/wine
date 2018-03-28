@@ -1696,7 +1696,7 @@ static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Co
     int offset = 0;
     int cWalk;
 
-    for (cWalk = 0; cWalk < *pcChars; cWalk++)
+    for (cWalk = 0; cWalk < *pcChars; cWalk += 2)
     {
         for (i = 0; consonants[i].output!= 0x0; i++)
         {
@@ -1721,7 +1721,6 @@ static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Co
                 break;
             }
         }
-        cWalk++;
     }
 }
 
