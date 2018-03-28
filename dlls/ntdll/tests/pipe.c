@@ -1109,6 +1109,35 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     CloseHandle(event);
 }
 
+static void test_transceive(void)
+{
+    IO_STATUS_BLOCK iosb;
+    HANDLE caller, callee;
+    HANDLE event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    char buffer[128];
+    DWORD written;
+    BOOL ret;
+    NTSTATUS status;
+
+    if (!create_pipe_pair( &caller, &callee, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+                           PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096 )) return;
+
+    status = NtFsControlFile( caller, event, NULL, NULL, &iosb, FSCTL_PIPE_TRANSCEIVE,
+                              (BYTE*)"test", 4, buffer, sizeof(buffer) );
+    ok( status == STATUS_PENDING, "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) returned %x\n", status);
+    ok( !is_signaled( event ), "event is signaled\n" );
+
+    ret = WriteFile( callee, buffer, 2, &written, NULL );
+    ok(ret && written == 2, "WriteFile error %d\n", GetLastError());
+
+    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+    ok( iosb.Information == 2, "wrong info %lu\n", iosb.Information );
+    ok( is_signaled( event ), "event is not signaled\n" );
+
+    CloseHandle( caller );
+    CloseHandle( callee );
+}
+
 static void test_volume_info(void)
 {
     FILE_FS_DEVICE_INFORMATION *device_info;
@@ -1464,6 +1493,7 @@ START_TEST(pipe)
     trace("starting message read in message mode server -> client\n");
     read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
 
+    test_transceive();
     test_volume_info();
     test_file_info();
     test_security_info();
