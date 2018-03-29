@@ -47,7 +47,7 @@ struct wine_vk_structure_header
 
 static void *wine_vk_get_global_proc_addr(const char *name);
 
-static const struct vulkan_funcs *vk_funcs = NULL;
+static const struct vulkan_funcs *vk_funcs;
 
 static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
 {
@@ -261,17 +261,17 @@ static void wine_vk_device_free(struct VkDevice_T *device)
 
 static BOOL wine_vk_init(void)
 {
-    HDC hdc = GetDC(0);
+    HDC hdc;
 
-    vk_funcs =  __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    hdc = GetDC(0);
+    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    ReleaseDC(0, hdc);
     if (!vk_funcs)
     {
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-        ReleaseDC(0, hdc);
         return FALSE;
     }
 
-    ReleaseDC(0, hdc);
     return TRUE;
 }
 
