@@ -2373,7 +2373,7 @@ LSTATUS WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     err = GetLastError();
-    GetFullPathNameW( file, sizeof(buffer)/sizeof(WCHAR), buffer, &nameW );
+    GetFullPathNameW( file, ARRAY_SIZE( buffer ), buffer, &nameW );
 
     for (;;)
     {
@@ -2708,7 +2708,7 @@ LSTATUS WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
     }
     else {
         WCHAR compName[MAX_COMPUTERNAME_LENGTH + 1];
-        DWORD len = sizeof(compName) / sizeof(WCHAR);
+        DWORD len = ARRAY_SIZE( compName );
 
         /* MSDN says lpMachineName must start with \\ : not so */
         if( lpMachineName[0] == '\\' &&  lpMachineName[1] == '\\')
