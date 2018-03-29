@@ -771,9 +771,9 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                     SID sid;
                     DWORD sid_subauthority[3];
                 } domain_sid;
-                WCHAR domain_name[MAX_COMPUTERNAME_LENGTH + 1];
-                WCHAR dns_domain_name[MAX_COMPUTERNAME_LENGTH + 1];
-                WCHAR dns_forest_name[MAX_COMPUTERNAME_LENGTH + 1];
+                WCHAR domain_name[256];
+                WCHAR dns_domain_name[256];
+                WCHAR dns_forest_name[256];
             } *xdi;
             struct
             {
@@ -785,7 +785,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
             xdi = heap_alloc_zero(sizeof(*xdi));
             if (!xdi) return STATUS_NO_MEMORY;
 
-            dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+            dwSize = 256;
             if (GetComputerNameExW(ComputerNamePhysicalDnsDomain, xdi->domain_name, &dwSize))
             {
                 WCHAR *dot;
@@ -799,7 +799,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
                 TRACE("setting Name to %s\n", debugstr_w(xdi->info.Name.Buffer));
             }
 
-            dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+            dwSize = 256;
             if (GetComputerNameExW(ComputerNameDnsDomain, xdi->dns_domain_name, &dwSize))
             {
                 xdi->info.DnsDomainName.Buffer = xdi->dns_domain_name;
