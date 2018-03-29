@@ -2381,6 +2381,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 INT WINAPI GetSystemMetrics( INT index )
 {
     NONCLIENTMETRICSW ncm;
+    MINIMIZEDMETRICS mm;
+    ICONMETRICSW im;
     UINT ret;
     HDC hdc;
 
@@ -2399,10 +2401,13 @@ INT WINAPI GetSystemMetrics( INT index )
         return ret;
     case SM_CXVSCROLL:
     case SM_CYHSCROLL:
-        get_entry( &entry_SCROLLWIDTH, 0, &ret );
-        return max( 8, ret );
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iScrollWidth;
     case SM_CYCAPTION:
-        return GetSystemMetrics( SM_CYSIZE ) + 1;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iCaptionHeight + 1;
     case SM_CXBORDER:
     case SM_CYBORDER:
         /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry */
@@ -2414,8 +2419,9 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CXHTHUMB:
     case SM_CYVSCROLL:
     case SM_CXHSCROLL:
-        get_entry( &entry_SCROLLHEIGHT, 0, &ret );
-        return max( 8, ret );
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iScrollHeight;
     case SM_CXICON:
     case SM_CYICON:
         return MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
@@ -2426,7 +2432,9 @@ INT WINAPI GetSystemMetrics( INT index )
         if (ret >= 48) return 48;
         return 32;
     case SM_CYMENU:
-        return GetSystemMetrics(SM_CYMENUSIZE) + 1;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iMenuHeight + 1;
     case SM_CXFULLSCREEN:
         /* see the remark for SM_CXMAXIMIZED, at least this formulation is
          * correct */
@@ -2459,18 +2467,21 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYMIN:
         return GetSystemMetrics( SM_CYCAPTION) + 2 * GetSystemMetrics( SM_CYFRAME);
     case SM_CXSIZE:
-        get_entry( &entry_CAPTIONWIDTH, 0, &ret );
-        return max( 8, ret );
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iCaptionWidth;
     case SM_CYSIZE:
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
         return ncm.iCaptionHeight;
     case SM_CXFRAME:
-        get_entry( &entry_BORDER, 0, &ret );
-        return GetSystemMetrics(SM_CXDLGFRAME) + max( 1, ret );
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return GetSystemMetrics(SM_CXDLGFRAME) + ncm.iBorderWidth;
     case SM_CYFRAME:
-        get_entry( &entry_BORDER, 0, &ret );
-        return GetSystemMetrics(SM_CYDLGFRAME) + max( 1, ret );
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return GetSystemMetrics(SM_CYDLGFRAME) + ncm.iBorderWidth;
     case SM_CXMINTRACK:
         return GetSystemMetrics(SM_CXMIN);
     case SM_CYMINTRACK:
@@ -2482,13 +2493,15 @@ INT WINAPI GetSystemMetrics( INT index )
         get_entry( &entry_DOUBLECLKHEIGHT, 0, &ret );
         return ret;
     case SM_CXICONSPACING:
-        get_entry( &entry_ICONHORIZONTALSPACING, 0, &ret );
-        return ret;
+        im.cbSize = sizeof(im);
+        SystemParametersInfoW( SPI_GETICONMETRICS, sizeof(im), &im, 0 );
+        return im.iHorzSpacing;
     case SM_CYICONSPACING:
-        get_entry( &entry_ICONVERTICALSPACING, 0, &ret );
-        return ret;
+        im.cbSize = sizeof(im);
+        SystemParametersInfoW( SPI_GETICONMETRICS, sizeof(im), &im, 0 );
+        return im.iVertSpacing;
     case SM_MENUDROPALIGNMENT:
-        get_entry( &entry_MENUDROPALIGNMENT, 0, &ret );
+        SystemParametersInfoW( SPI_GETMENUDROPALIGNMENT, 0, &ret, 0 );
         return ret;
     case SM_PENWINDOWS:
         return 0;
@@ -2507,38 +2520,48 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYEDGE:
         return GetSystemMetrics(SM_CYBORDER) + 1;
     case SM_CXMINSPACING:
-        get_entry( &entry_MINHORZGAP, 0, &ret );
-        return GetSystemMetrics(SM_CXMINIMIZED) + max( 0, (INT)ret );
+        mm.cbSize = sizeof(mm);
+        SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(mm), &mm, 0 );
+        return GetSystemMetrics(SM_CXMINIMIZED) + mm.iHorzGap;
     case SM_CYMINSPACING:
-        get_entry( &entry_MINVERTGAP, 0, &ret );
-        return GetSystemMetrics(SM_CYMINIMIZED) + max( 0, (INT)ret );
+        mm.cbSize = sizeof(mm);
+        SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(mm), &mm, 0 );
+        return GetSystemMetrics(SM_CYMINIMIZED) + mm.iVertGap;
     case SM_CXSMICON:
     case SM_CYSMICON:
         return MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ) & ~1;
     case SM_CYSMCAPTION:
-        return GetSystemMetrics(SM_CYSMSIZE) + 1;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iSmCaptionHeight + 1;
     case SM_CXSMSIZE:
-        get_entry( &entry_SMCAPTIONWIDTH, 0, &ret );
-        return ret;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iSmCaptionWidth;
     case SM_CYSMSIZE:
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
         return ncm.iSmCaptionHeight;
     case SM_CXMENUSIZE:
-        get_entry( &entry_MENUWIDTH, 0, &ret );
-        return ret;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iMenuWidth;
     case SM_CYMENUSIZE:
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
         return ncm.iMenuHeight;
     case SM_ARRANGE:
-        get_entry( &entry_MINARRANGE, 0, &ret );
-        return ret & 0x0f;
+        mm.cbSize = sizeof(mm);
+        SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(mm), &mm, 0 );
+        return mm.iArrange;
     case SM_CXMINIMIZED:
-        get_entry( &entry_MINWIDTH, 0, &ret );
-        return max( 0, (INT)ret ) + 6;
+        mm.cbSize = sizeof(mm);
+        SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(mm), &mm, 0 );
+        return mm.iWidth + 6;
     case SM_CYMINIMIZED:
-        return GetSystemMetrics( SM_CYSIZE ) + 6;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iCaptionHeight + 6;
     case SM_CXMAXTRACK:
         return GetSystemMetrics(SM_CXVIRTUALSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXTRACK:
