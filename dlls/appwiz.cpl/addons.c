@@ -171,7 +171,7 @@ static void set_status(DWORD id)
     HWND status = GetDlgItem(install_dialog, ID_DWL_STATUS);
     WCHAR buf[64];
 
-    LoadStringW(hInst, id, buf, sizeof(buf)/sizeof(WCHAR));
+    LoadStringW(hInst, id, buf, ARRAY_SIZE(buf));
     SendMessageW(status, WM_SETTEXT, 0, (LPARAM)buf);
 }
 
@@ -514,7 +514,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     }else {
         WCHAR message[256];
 
-        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
+        if(LoadStringW(hInst, IDS_INVALID_SHA, message, ARRAY_SIZE(message)))
             MessageBoxW(NULL, message, NULL, MB_ICONERROR);
     }
 

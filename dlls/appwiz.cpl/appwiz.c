@@ -450,10 +450,10 @@ static void InstallProgram(HWND hWnd)
     WCHAR FilterBufferW[MAX_PATH];
     WCHAR FileNameBufferW[MAX_PATH];
 
-    LoadStringW(hInst, IDS_CPL_TITLE, titleW, sizeof(titleW)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_FILTER_INSTALLS, filter_installs, sizeof(filter_installs)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_FILTER_PROGRAMS, filter_programs, sizeof(filter_programs)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_FILTER_ALL, filter_all, sizeof(filter_all)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_CPL_TITLE, titleW, ARRAY_SIZE(titleW));
+    LoadStringW(hInst, IDS_FILTER_INSTALLS, filter_installs, ARRAY_SIZE(filter_installs));
+    LoadStringW(hInst, IDS_FILTER_PROGRAMS, filter_programs, ARRAY_SIZE(filter_programs));
+    LoadStringW(hInst, IDS_FILTER_ALL, filter_all, ARRAY_SIZE(filter_all));
 
     snprintfW( FilterBufferW, MAX_PATH, filters, filter_installs, 0, 0,
                filter_programs, 0, 0, filter_all, 0, 0 );
