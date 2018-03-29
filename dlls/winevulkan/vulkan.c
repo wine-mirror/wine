@@ -54,7 +54,7 @@ static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
     if (!phys_dev)
         return;
 
-    heap_free(phys_dev->properties);
+    heap_free(phys_dev->extensions);
     heap_free(phys_dev);
 }
 
@@ -115,10 +115,9 @@ static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstanc
 
     TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
 
-    object->properties = heap_calloc(num_properties, sizeof(*object->properties));
-    if (!object->properties)
+    if (!(object->extensions = heap_calloc(num_properties, sizeof(*object->extensions))))
     {
-        ERR("Failed to allocate memory for device properties!\n");
+        ERR("Failed to allocate memory for device extensions!\n");
         goto err;
     }
 
@@ -126,11 +125,11 @@ static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstanc
     {
         if (wine_vk_device_extension_supported(host_properties[i].extensionName))
         {
-            memcpy(&object->properties[j], &host_properties[i], sizeof(*object->properties));
+            object->extensions[j] = host_properties[i];
             j++;
         }
     }
-    object->num_properties = num_properties;
+    object->extension_count = num_properties;
 
     heap_free(host_properties);
     return object;
@@ -672,9 +671,6 @@ void WINAPI wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallba
 VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev,
         const char *layer_name, uint32_t *count, VkExtensionProperties *properties)
 {
-    VkResult res;
-    unsigned int i, num_copies;
-
     TRACE("%p, %p, %p, %p\n", phys_dev, layer_name, count, properties);
 
     /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
@@ -686,32 +682,15 @@ VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_
 
     if (!properties)
     {
-        *count = phys_dev->num_properties;
+        *count = phys_dev->extension_count;
         return VK_SUCCESS;
     }
 
-    if (*count < phys_dev->num_properties)
-    {
-        /* Incomplete is a type of success used to signal the application
-         * that not all devices got copied.
-         */
-        num_copies = *count;
-        res = VK_INCOMPLETE;
-    }
-    else
-    {
-        num_copies = phys_dev->num_properties;
-        res = VK_SUCCESS;
-    }
+    *count = min(*count, phys_dev->extension_count);
+    memcpy(properties, phys_dev->extensions, *count * sizeof(*properties));
 
-    for (i = 0; i < num_copies; i++)
-    {
-        memcpy(&properties[i], &phys_dev->properties[i], sizeof(phys_dev->properties[i]));
-    }
-    *count = num_copies;
-
-    TRACE("Result %d, extensions copied %u\n", res, num_copies);
-    return res;
+    TRACE("Returning %u extensions.\n", *count);
+    return *count < phys_dev->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,

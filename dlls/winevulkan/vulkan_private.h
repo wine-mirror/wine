@@ -86,8 +86,8 @@ struct VkPhysicalDevice_T
     struct wine_vk_base base;
     struct VkInstance_T *instance; /* parent */
 
-    uint32_t num_properties;
-    VkExtensionProperties *properties;
+    uint32_t extension_count;
+    VkExtensionProperties *extensions;
 
     VkPhysicalDevice phys_dev; /* native physical device */
 };
