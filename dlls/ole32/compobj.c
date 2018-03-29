@@ -717,6 +717,23 @@ static inline BOOL apartment_is_model(const APARTMENT *apt, DWORD model)
     return (apt->multi_threaded == !(model & COINIT_APARTMENTTHREADED));
 }
 
+/* gets the multi-threaded apartment if it exists. The caller must
+ * release the reference from the apartment as soon as the apartment pointer
+ * is no longer required. */
+static APARTMENT *apartment_find_mta(void)
+{
+    APARTMENT *apt;
+
+    EnterCriticalSection(&csApartment);
+
+    if ((apt = MTA))
+        apartment_addref(apt);
+
+    LeaveCriticalSection(&csApartment);
+
+    return apt;
+}
+
 static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
 {
     list_remove(&curClass->entry);
@@ -1292,31 +1309,6 @@ static APARTMENT *apartment_findmain(void)
 
     LeaveCriticalSection(&csApartment);
 
-    return result;
-}
-
-/* gets the multi-threaded apartment if it exists. The caller must
- * release the reference from the apartment as soon as the apartment pointer
- * is no longer required. */
-static APARTMENT *apartment_find_multi_threaded(void)
-{
-    APARTMENT *result = NULL;
-    struct list *cursor;
-
-    EnterCriticalSection(&csApartment);
-
-    LIST_FOR_EACH( cursor, &apts )
-    {
-        struct apartment *apt = LIST_ENTRY( cursor, struct apartment, entry );
-        if (apt->multi_threaded)
-        {
-            result = apt;
-            apartment_addref(result);
-            break;
-        }
-    }
-
-    LeaveCriticalSection(&csApartment);
     return result;
 }
 
@@ -3000,7 +2992,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
     if (!(apt = COM_CurrentApt()))
     {
-        if (!(apt = apartment_find_multi_threaded()))
+        if (!(apt = apartment_find_mta()))
         {
             ERR("apartment not initialised\n");
             return CO_E_NOTINITIALIZED;
@@ -3300,7 +3292,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(
 
     if (!(apt = COM_CurrentApt()))
     {
-        if (!(apt = apartment_find_multi_threaded()))
+        if (!(apt = apartment_find_mta()))
         {
             ERR("apartment not initialised\n");
             return CO_E_NOTINITIALIZED;
@@ -5007,7 +4999,7 @@ HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
     if (!info->apt)
     {
         APARTMENT *apt;
-        if (!(apt = apartment_find_multi_threaded()))
+        if (!(apt = apartment_find_mta()))
         {
             ERR("apartment not initialised\n");
             return CO_E_NOTINITIALIZED;
