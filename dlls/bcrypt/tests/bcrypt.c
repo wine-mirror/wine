@@ -1393,7 +1393,7 @@ static void test_BCryptDecrypt(void)
 static void test_key_import_export(void)
 {
     UCHAR buffer1[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16];
-    UCHAR buffer2[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16];
+    UCHAR buffer2[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16], *buf;
     BCRYPT_KEY_DATA_BLOB_HEADER *key_data1 = (void*)buffer1;
     BCRYPT_ALG_HANDLE aes;
     BCRYPT_KEY_HANDLE key;
@@ -1408,6 +1408,7 @@ static void test_key_import_export(void)
     key_data1->cbKeyData = 16;
     memset(&key_data1[1], 0x11, 16);
 
+    key = NULL;
     ret = pBCryptImportKey(aes, NULL, BCRYPT_KEY_DATA_BLOB, &key, NULL, 0, buffer1, sizeof(buffer1), 0);
     ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER) /* vista */, "got %08x\n", ret);
     if (ret == STATUS_INVALID_PARAMETER)
@@ -1415,11 +1416,12 @@ static void test_key_import_export(void)
         win_skip("broken BCryptImportKey\n");
         return;
     }
+    ok(key != NULL, "key not set\n");
 
     size = 0;
-    ret = pBCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, 1, &size, 0);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, 0, &size, 0);
     ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
-    ok(size == sizeof(buffer2), "Got %u\n", size);
+    ok(size == sizeof(buffer2), "got %u\n", size);
 
     size = 0;
     memset(buffer2, 0xff, sizeof(buffer2));
@@ -1427,6 +1429,25 @@ static void test_key_import_export(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(size == sizeof(buffer2), "Got %u\n", size);
     ok(!memcmp(buffer1, buffer2, sizeof(buffer1)), "Expected exported key to match imported key\n");
+
+    /* opaque blob */
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_OPAQUE_KEY_BLOB, buffer2, 0, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size > 0, "got zero\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_OPAQUE_KEY_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptDestroyKey(key);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    key = NULL;
+    ret = pBCryptImportKey(aes, NULL, BCRYPT_OPAQUE_KEY_BLOB, &key, NULL, 0, buf, size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(key != NULL, "key not set\n");
+    HeapFree(GetProcessHeap(), 0, buf);
 
     ret = pBCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);

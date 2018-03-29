@@ -1018,6 +1018,40 @@ static ULONG get_block_size( struct algorithm *alg )
     return ret;
 }
 
+static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
+                            ULONG object_len, UCHAR *input, ULONG input_len )
+{
+    ULONG len;
+
+    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
+    {
+        BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)input;
+
+        if (input_len < sizeof(BCRYPT_KEY_DATA_BLOB_HEADER)) return STATUS_BUFFER_TOO_SMALL;
+        if (header->dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC) return STATUS_INVALID_PARAMETER;
+        if (header->dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
+        {
+            FIXME( "unknown key data blob version %u\n", header->dwVersion );
+            return STATUS_INVALID_PARAMETER;
+        }
+        len = header->cbKeyData;
+        if (len + sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) > input_len) return STATUS_INVALID_PARAMETER;
+
+        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, (UCHAR *)&header[1], len, 0 );
+    }
+    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    {
+        if (input_len < sizeof(len)) return STATUS_BUFFER_TOO_SMALL;
+        len = *(ULONG *)input;
+        if (len + sizeof(len) > input_len) return STATUS_INVALID_PARAMETER;
+
+        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, input + sizeof(len), len, 0 );
+    }
+
+    FIXME( "unsupported key type %s\n", debugstr_w(type) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
 {
     if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
@@ -1032,6 +1066,17 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         header->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
         header->cbKeyData = key->u.s.secret_len;
         memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    {
+        ULONG len, req_size = sizeof(len) + key->u.s.secret_len;
+
+        *size = req_size;
+        if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
+
+        *(ULONG *)output = key->u.s.secret_len;
+        memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
 
@@ -1829,13 +1874,20 @@ static NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *ha
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS key_destroy( struct key *key )
+static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
+                            ULONG object_len, UCHAR *input, ULONG input_len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_destroy( struct key *key )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1880,9 +1932,9 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptImportKey(BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE decrypt_key, LPCWSTR type,
-                                BCRYPT_KEY_HANDLE *key, PUCHAR object, ULONG object_len, PUCHAR input,
-                                ULONG input_len, ULONG flags)
+NTSTATUS WINAPI BCryptImportKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE decrypt_key, LPCWSTR type,
+                                 BCRYPT_KEY_HANDLE *key, PUCHAR object, ULONG object_len, PUCHAR input,
+                                 ULONG input_len, ULONG flags )
 {
     struct algorithm *alg = algorithm;
 
@@ -1894,50 +1946,27 @@ NTSTATUS WINAPI BCryptImportKey(BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE d
 
     if (decrypt_key)
     {
-        FIXME("Decrypting of key not yet supported\n");
-        return STATUS_NO_MEMORY;
+        FIXME( "decryption of key not yet supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!strcmpW(type, BCRYPT_KEY_DATA_BLOB))
-    {
-        BCRYPT_KEY_DATA_BLOB_HEADER *key_header = (BCRYPT_KEY_DATA_BLOB_HEADER*)input;
-
-        if (input_len < sizeof(BCRYPT_KEY_DATA_BLOB_HEADER))
-            return STATUS_BUFFER_TOO_SMALL;
-
-        if (key_header->dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC)
-            return STATUS_INVALID_PARAMETER;
-
-        if (key_header->dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
-        {
-            FIXME("Unknown key data blob version: %d\n", key_header->dwVersion);
-            return STATUS_INVALID_PARAMETER;
-        }
-
-        if (key_header->cbKeyData + sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) > input_len)
-            return STATUS_INVALID_PARAMETER;
-
-        return BCryptGenerateSymmetricKey(algorithm, key, object, object_len, (UCHAR*)&key_header[1], key_header->cbKeyData, 0);
-    }
-
-    FIXME("Unsupported key type: %s\n", debugstr_w(type));
-    return STATUS_INVALID_PARAMETER;
+    return key_import( algorithm, type, key, object, object_len, input, input_len );
 }
 
-NTSTATUS WINAPI BCryptExportKey(BCRYPT_KEY_HANDLE export_key, BCRYPT_KEY_HANDLE encrypt_key, LPCWSTR type,
-                                PUCHAR output, ULONG output_len, ULONG *size, ULONG flags)
+NTSTATUS WINAPI BCryptExportKey( BCRYPT_KEY_HANDLE export_key, BCRYPT_KEY_HANDLE encrypt_key, LPCWSTR type,
+                                 PUCHAR output, ULONG output_len, ULONG *size, ULONG flags )
 {
     struct key *key = export_key;
 
     TRACE("%p, %p, %s, %p, %u, %p, %u\n", key, encrypt_key, debugstr_w(type), output, output_len, size, flags);
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (!output || !output_len || !size) return STATUS_INVALID_PARAMETER;
+    if (!output || !type || !size) return STATUS_INVALID_PARAMETER;
 
     if (encrypt_key)
     {
-        FIXME("Encryption of key not yet supported\n");
-        return STATUS_NO_MEMORY;
+        FIXME( "encryption of key not yet supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
     }
 
     return key_export( key, type, output, output_len, size );
