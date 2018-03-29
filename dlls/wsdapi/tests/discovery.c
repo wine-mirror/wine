@@ -507,11 +507,18 @@ static void Publish_tests(void)
     messageStorage *msgStorage;
     WSADATA wsaData;
     BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
-    BOOL metadata_version_seen = FALSE;
+    BOOL metadata_version_seen = FALSE, any_header_seen = FALSE, wine_ns_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
     char *msg;
+    WSDXML_ELEMENT *header_any_element;
+    WSDXML_NAME header_any_name;
+    WSDXML_NAMESPACE ns;
+    WCHAR header_any_name_text[] = {'B','e','e','r',0};
+    static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
+    static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
+    static const WCHAR prefix[] = {'w','i','n','e',0};
 
     rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
     ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
@@ -573,8 +580,22 @@ static void Publish_tests(void)
     ret = start_listening_on_all_addresses(msgStorage, AF_INET);
     ok(ret == TRUE, "Unable to listen on IPv4 addresses (ret == %d)\n", ret);
 
+    /* Create "any" elements for header */
+    ns.Uri = uri;
+    ns.PreferredPrefix = prefix;
+
+    header_any_name.LocalName = header_any_name_text;
+    header_any_name.Space = &ns;
+
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, header_any_text, &header_any_element);
+    ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
     /* Publish the service */
-    rc = IWSDiscoveryPublisher_Publish(publisher, publisherIdW, 1, 1, 1, sequenceIdW, NULL, NULL, NULL);
+    rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, NULL, NULL, NULL,
+        header_any_element, NULL, NULL, NULL, NULL);
+
+    WSDFreeLinkedMemory(header_any_element);
+
     ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
     /* Wait up to 2 seconds for messages to be received */
@@ -606,7 +627,10 @@ static void Publish_tests(void)
         endpoint_reference_seen = (strstr(msg, endpointReferenceString) != NULL);
         app_sequence_seen = (strstr(msg, app_sequence_string) != NULL);
         metadata_version_seen = (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
-        messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen;
+        any_header_seen = (strstr(msg, "<wine:Beer>PublishTest</wine:Beer>") != NULL);
+        wine_ns_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\"") != NULL);
+        messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen &&
+            any_header_seen && wine_ns_seen;
 
         if (messageOK) break;
     }
@@ -623,6 +647,8 @@ static void Publish_tests(void)
     ok(app_sequence_seen == TRUE, "AppSequence not received\n");
     todo_wine ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
     todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
+    todo_wine ok(any_header_seen == TRUE, "Custom header not received\n");
+    todo_wine ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
 
 after_publish_test:
 
