@@ -531,8 +531,9 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
             &create_info_host, NULL /* allocator */, &object->device);
     if (res != VK_SUCCESS)
     {
-        ERR("Failed to create device\n");
-        goto err;
+        ERR("Failed to create device.\n");
+        wine_vk_device_free(object);
+        return res;
     }
 
     object->phys_dev = phys_dev;
@@ -559,8 +560,8 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     object->queues = heap_calloc(max_queue_families, sizeof(*object->queues));
     if (!object->queues)
     {
-        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-        goto err;
+        wine_vk_device_free(object);
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
@@ -573,18 +574,14 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index, queue_count);
         if (!object->queues[family_index])
         {
-            res = VK_ERROR_OUT_OF_HOST_MEMORY;
             ERR("Failed to allocate memory for queues\n");
-            goto err;
+            wine_vk_device_free(object);
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
     }
 
     *device = object;
     return VK_SUCCESS;
-
-err:
-    wine_vk_device_free(object);
-    return res;
 }
 
 VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
