@@ -2955,6 +2955,15 @@ UINT WINAPI GetDpiForSystem(void)
     return display_dpi;
 }
 
+/***********************************************************************
+ *              GetDpiForWindow   (USER32.@)
+ */
+UINT WINAPI GetDpiForWindow( HWND hwnd )
+{
+    FIXME( "stub: %p\n", hwnd );
+    return GetDpiForSystem();
+}
+
 /**********************************************************************
  *              SetThreadDpiAwarenessContext   (USER32.@)
  */

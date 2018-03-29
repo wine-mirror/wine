@@ -293,6 +293,7 @@
 @ stdcall GetDlgItemTextW(long long ptr long)
 @ stdcall GetDoubleClickTime()
 @ stdcall GetDpiForSystem()
+@ stdcall GetDpiForWindow(long)
 @ stdcall GetFocus()
 @ stdcall GetForegroundWindow()
 @ stdcall GetGestureConfig(long long long ptr ptr long)
