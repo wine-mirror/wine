@@ -596,12 +596,10 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         ERR("Failed to allocate memory for instance\n");
-        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-        goto err;
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
@@ -611,7 +609,8 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
-        goto err;
+        wine_vk_instance_free(object);
+        return res;
     }
 
     /* Load all instance functions we are aware of. Note the loader takes care
@@ -625,23 +624,20 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     /* Cache physical devices for vkEnumeratePhysicalDevices within the instance as
      * each vkPhysicalDevice is a dispatchable object, which means we need to wrap
-     * the native physical device and present those the application.
+     * the native physical devices and present those to the application.
      * Cleanup happens as part of wine_vkDestroyInstance.
      */
     res = wine_vk_instance_load_physical_devices(object);
     if (res != VK_SUCCESS)
     {
-        ERR("Failed to cache physical devices, res=%d\n", res);
-        goto err;
+        ERR("Failed to load physical devices, res=%d\n", res);
+        wine_vk_instance_free(object);
+        return res;
     }
 
     *instance = object;
     TRACE("Done, instance=%p native_instance=%p\n", object, object->instance);
     return VK_SUCCESS;
-
-err:
-    wine_vk_instance_free(object);
-    return res;
 }
 
 void WINAPI wine_vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
