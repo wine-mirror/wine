@@ -1641,7 +1641,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   else if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
       WCHAR buf[64];
-      LoadStringW(COMDLG32_hInstance, IDS_SAVE_AS, buf, sizeof(buf)/sizeof(WCHAR));
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_AS, buf, ARRAY_SIZE(buf));
       SetWindowTextW(hwnd, buf);
   }
 
@@ -1860,9 +1860,9 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
       WCHAR buf[16];
-      LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, buf, sizeof(buf)/sizeof(WCHAR));
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_BUTTON, buf, ARRAY_SIZE(buf));
       SetDlgItemTextW(hwnd, IDOK, buf);
-      LoadStringW(COMDLG32_hInstance, IDS_SAVE_IN, buf, sizeof(buf)/sizeof(WCHAR));
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_IN, buf, ARRAY_SIZE(buf));
       SetDlgItemTextW(hwnd, IDC_LOOKINSTATIC, buf);
   }
 
@@ -2322,7 +2322,8 @@ static void FILEDLG95_MRU_save_filename(LPCWSTR filename)
     HKEY hkey;
 
     /* get the current executable's name */
-    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path)/sizeof(module_path[0]))) {
+    if (!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, ARRAY_SIZE(module_path)))
+    {
         WARN("GotModuleFileName failed: %d\n", GetLastError());
         return;
     }
@@ -2409,7 +2410,8 @@ static void FILEDLG95_MRU_load_filename(LPWSTR stored_path)
     WCHAR module_path[MAX_PATH], *module_name;
 
     /* get the current executable's name */
-    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path)/sizeof(module_path[0]))) {
+    if (!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, ARRAY_SIZE(module_path)))
+    {
         WARN("GotModuleFileName failed: %d\n", GetLastError());
         return;
     }
@@ -2428,10 +2430,10 @@ void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
   WCHAR strMsgTitle[MAX_PATH];
   WCHAR strMsgText [MAX_PATH];
   if (idCaption)
-    LoadStringW(COMDLG32_hInstance, idCaption, strMsgTitle, sizeof(strMsgTitle)/sizeof(WCHAR));
+    LoadStringW(COMDLG32_hInstance, idCaption, strMsgTitle, ARRAY_SIZE(strMsgTitle));
   else
     strMsgTitle[0] = '\0';
-  LoadStringW(COMDLG32_hInstance, idText, strMsgText, sizeof(strMsgText)/sizeof(WCHAR));
+  LoadStringW(COMDLG32_hInstance, idText, strMsgText, ARRAY_SIZE(strMsgText));
   MessageBoxW(hwnd,strMsgText, strMsgTitle, MB_OK | MB_ICONHAND);
 }
 
@@ -4128,7 +4130,7 @@ static BOOL BrowseSelectedFolder(HWND hwnd)
                          pidlSelection, SBSP_RELATIVE ) ) )
           {
                WCHAR buf[64];
-               LoadStringW( COMDLG32_hInstance, IDS_PATHNOTEXISTING, buf, sizeof(buf)/sizeof(WCHAR) );
+               LoadStringW( COMDLG32_hInstance, IDS_PATHNOTEXISTING, buf, ARRAY_SIZE(buf));
                MessageBoxW( hwnd, buf, fodInfos->title, MB_OK | MB_ICONEXCLAMATION );
           }
           bBrowseSelFolder = TRUE;
