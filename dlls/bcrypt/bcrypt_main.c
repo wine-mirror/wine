@@ -989,23 +989,13 @@ struct key
     } u;
 };
 #else
-struct key_symmetric
-{
-    enum mode_id  mode;
-    ULONG         block_size;
-};
-
 struct key
 {
     struct object hdr;
-    union
-    {
-        struct key_symmetric  s;
-    } u;
 };
 #endif
 
-#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
 static inline BOOL key_is_symmetric( struct key *key )
 {
     return alg_props[key->alg_id].symmetric;
@@ -1018,104 +1008,6 @@ static ULONG get_block_size( struct algorithm *alg )
     return ret;
 }
 
-static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
-                            ULONG object_len, UCHAR *input, ULONG input_len )
-{
-    ULONG len;
-
-    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
-    {
-        BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)input;
-
-        if (input_len < sizeof(BCRYPT_KEY_DATA_BLOB_HEADER)) return STATUS_BUFFER_TOO_SMALL;
-        if (header->dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC) return STATUS_INVALID_PARAMETER;
-        if (header->dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
-        {
-            FIXME( "unknown key data blob version %u\n", header->dwVersion );
-            return STATUS_INVALID_PARAMETER;
-        }
-        len = header->cbKeyData;
-        if (len + sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) > input_len) return STATUS_INVALID_PARAMETER;
-
-        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, (UCHAR *)&header[1], len, 0 );
-    }
-    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
-    {
-        if (input_len < sizeof(len)) return STATUS_BUFFER_TOO_SMALL;
-        len = *(ULONG *)input;
-        if (len + sizeof(len) > input_len) return STATUS_INVALID_PARAMETER;
-
-        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, input + sizeof(len), len, 0 );
-    }
-
-    FIXME( "unsupported key type %s\n", debugstr_w(type) );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
-{
-    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
-    {
-        BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)output;
-        ULONG req_size = sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + key->u.s.secret_len;
-
-        *size = req_size;
-        if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
-
-        header->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
-        header->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
-        header->cbKeyData = key->u.s.secret_len;
-        memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
-        return STATUS_SUCCESS;
-    }
-    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
-    {
-        ULONG len, req_size = sizeof(len) + key->u.s.secret_len;
-
-        *size = req_size;
-        if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
-
-        *(ULONG *)output = key->u.s.secret_len;
-        memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
-        return STATUS_SUCCESS;
-    }
-
-    FIXME( "unsupported key type %s\n", debugstr_w(type) );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
-{
-    UCHAR *buffer;
-
-    memset( key_copy, 0, sizeof(*key_copy) );
-    key_copy->hdr    = key_orig->hdr;
-    key_copy->alg_id = key_orig->alg_id;
-
-    if (key_is_symmetric( key_orig ))
-    {
-        if (!(buffer = heap_alloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
-        memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
-
-        key_copy->u.s.mode       = key_orig->u.s.mode;
-        key_copy->u.s.block_size = key_orig->u.s.block_size;
-        key_copy->u.s.secret     = buffer;
-        key_copy->u.s.secret_len = key_orig->u.s.secret_len;
-    }
-    else
-    {
-        if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
-        memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
-
-        key_copy->u.a.pubkey     = buffer;
-        key_copy->u.a.pubkey_len = key_orig->u.a.pubkey_len;
-    }
-
-    return STATUS_SUCCESS;
-}
-#endif
-
-#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
 static NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
 {
     UCHAR *buffer;
@@ -1645,6 +1537,18 @@ static NTSTATUS key_destroy( struct key *key )
     return STATUS_SUCCESS;
 }
 #elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+static inline BOOL key_is_symmetric( struct key *key )
+{
+    return alg_props[key->alg_id].symmetric;
+}
+
+static ULONG get_block_size( struct algorithm *alg )
+{
+    ULONG ret = 0, size = sizeof(ret);
+    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
+    return ret;
+}
+
 static NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
 {
     UCHAR *buffer;
@@ -1835,38 +1739,6 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
-{
-    ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
-{
-    ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
-                                       ULONG output_len  )
-{
-    ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
-                                       ULONG output_len )
-{
-    ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
-{
-    ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULONG hash_len,
                                        UCHAR *signature, ULONG signature_len, DWORD flags )
 {
@@ -1899,10 +1771,342 @@ static inline BOOL key_is_symmetric( struct key *key )
     return FALSE;
 }
 
-static NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, const UCHAR *pubkey, ULONG pubkey_len )
+static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
+                                 ULONG input_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
+#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
+                            ULONG object_len, UCHAR *input, ULONG input_len )
+{
+    ULONG len;
+
+    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
+    {
+        BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)input;
+
+        if (input_len < sizeof(BCRYPT_KEY_DATA_BLOB_HEADER)) return STATUS_BUFFER_TOO_SMALL;
+        if (header->dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC) return STATUS_INVALID_PARAMETER;
+        if (header->dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
+        {
+            FIXME( "unknown key data blob version %u\n", header->dwVersion );
+            return STATUS_INVALID_PARAMETER;
+        }
+        len = header->cbKeyData;
+        if (len + sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) > input_len) return STATUS_INVALID_PARAMETER;
+
+        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, (UCHAR *)&header[1], len, 0 );
+    }
+    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    {
+        if (input_len < sizeof(len)) return STATUS_BUFFER_TOO_SMALL;
+        len = *(ULONG *)input;
+        if (len + sizeof(len) > input_len) return STATUS_INVALID_PARAMETER;
+
+        return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, input + sizeof(len), len, 0 );
+    }
+
+    FIXME( "unsupported key type %s\n", debugstr_w(type) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
+{
+    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
+    {
+        BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)output;
+        ULONG req_size = sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + key->u.s.secret_len;
+
+        *size = req_size;
+        if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
+
+        header->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
+        header->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
+        header->cbKeyData = key->u.s.secret_len;
+        memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    {
+        ULONG len, req_size = sizeof(len) + key->u.s.secret_len;
+
+        *size = req_size;
+        if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
+
+        *(ULONG *)output = key->u.s.secret_len;
+        memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
+        return STATUS_SUCCESS;
+    }
+
+    FIXME( "unsupported key type %s\n", debugstr_w(type) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    UCHAR *buffer;
+
+    memset( key_copy, 0, sizeof(*key_copy) );
+    key_copy->hdr    = key_orig->hdr;
+    key_copy->alg_id = key_orig->alg_id;
+
+    if (key_is_symmetric( key_orig ))
+    {
+        if (!(buffer = heap_alloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
+        memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
+
+        key_copy->u.s.mode       = key_orig->u.s.mode;
+        key_copy->u.s.block_size = key_orig->u.s.block_size;
+        key_copy->u.s.secret     = buffer;
+        key_copy->u.s.secret_len = key_orig->u.s.secret_len;
+    }
+    else
+    {
+        if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
+        memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
+
+        key_copy->u.a.pubkey     = buffer;
+        key_copy->u.a.pubkey_len = key_orig->u.a.pubkey_len;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    ULONG bytes_left = input_len;
+    UCHAR *buf, *src, *dst;
+    NTSTATUS status;
+
+    if (key->u.s.mode == MODE_ID_GCM)
+    {
+        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+
+        if (!auth_info) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
+        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
+        if (auth_info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG)
+            FIXME( "call chaining not implemented\n" );
+
+        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+            return status;
+
+        *ret_len = input_len;
+        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
+        if (input && !output) return STATUS_SUCCESS;
+        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+        if ((status = key_symmetric_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
+            return status;
+        if ((status = key_symmetric_encrypt( key, input, input_len, output, output_len ))) return status;
+
+        return key_symmetric_get_tag( key, auth_info->pbTag, auth_info->cbTag );
+    }
+
+    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
+    *ret_len = input_len;
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+        *ret_len = (input_len + key->u.s.block_size) & ~(key->u.s.block_size - 1);
+    else if (input_len & (key->u.s.block_size - 1))
+        return STATUS_INVALID_BUFFER_SIZE;
+
+    if (!output) return STATUS_SUCCESS;
+    if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+
+    src = input;
+    dst = output;
+    while (bytes_left >= key->u.s.block_size)
+    {
+        if ((status = key_symmetric_encrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
+            return status;
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
+        bytes_left -= key->u.s.block_size;
+        src += key->u.s.block_size;
+        dst += key->u.s.block_size;
+    }
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
+        memcpy( buf, src, bytes_left );
+        memset( buf + bytes_left, key->u.s.block_size - bytes_left, key->u.s.block_size - bytes_left );
+        status = key_symmetric_encrypt( key, buf, key->u.s.block_size, dst, key->u.s.block_size );
+        heap_free( buf );
+    }
+
+    return status;
+}
+
+static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    ULONG bytes_left = input_len;
+    UCHAR *buf, *src, *dst;
+    NTSTATUS status;
+
+    if (key->u.s.mode == MODE_ID_GCM)
+    {
+        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+        UCHAR tag[16];
+
+        if (!auth_info) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
+        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
+
+        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+            return status;
+
+        *ret_len = input_len;
+        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
+        if (!output) return STATUS_SUCCESS;
+        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+        if ((status = key_symmetric_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
+            return status;
+        if ((status = key_symmetric_decrypt( key, input, input_len, output, output_len ))) return status;
+
+        if ((status = key_symmetric_get_tag( key, tag, sizeof(tag) ))) return status;
+        if (memcmp( tag, auth_info->pbTag, auth_info->cbTag )) return STATUS_AUTH_TAG_MISMATCH;
+
+        return STATUS_SUCCESS;
+    }
+
+    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
+
+    *ret_len = input_len;
+
+    if (input_len & (key->u.s.block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
+    if (!output) return STATUS_SUCCESS;
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (output_len + key->u.s.block_size < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+        if (input_len < key->u.s.block_size) return STATUS_BUFFER_TOO_SMALL;
+        bytes_left -= key->u.s.block_size;
+    }
+    else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+
+    src = input;
+    dst = output;
+    while (bytes_left >= key->u.s.block_size)
+    {
+        if ((status = key_symmetric_decrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
+            return status;
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
+        bytes_left -= key->u.s.block_size;
+        src += key->u.s.block_size;
+        dst += key->u.s.block_size;
+    }
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
+        status = key_symmetric_decrypt( key, src, key->u.s.block_size, buf, key->u.s.block_size );
+        if (!status && buf[ key->u.s.block_size - 1 ] <= key->u.s.block_size)
+        {
+            *ret_len -= buf[ key->u.s.block_size - 1 ];
+            if (output_len < *ret_len) status = STATUS_BUFFER_TOO_SMALL;
+            else memcpy( dst, buf, key->u.s.block_size - buf[ key->u.s.block_size - 1 ] );
+        }
+        else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
+        heap_free( buf );
+    }
+
+    return status;
+}
+
+static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
+                                 ULONG input_len )
+{
+    struct key *key;
+    NTSTATUS status;
+
+    if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
+    {
+        BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
+        DWORD key_size, magic;
+
+        if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
+
+        switch (alg->id)
+        {
+        case ALG_ID_ECDSA_P256:
+            key_size = 32;
+            magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+            break;
+
+        case ALG_ID_ECDSA_P384:
+            key_size = 48;
+            magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
+            break;
+
+        default:
+            FIXME( "algorithm %u does not yet support importing blob of type %s\n", alg->id, debugstr_w(type) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if (ecc_blob->dwMagic != magic) return STATUS_NOT_SUPPORTED;
+        if (ecc_blob->cbKey != key_size) return STATUS_INVALID_PARAMETER;
+
+        if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+        if ((status = key_asymmetric_init( key, alg, (BYTE *)ecc_blob, sizeof(*ecc_blob) + ecc_blob->cbKey * 2 )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
+    {
+        BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
+        ULONG size;
+
+        if (input_len < sizeof(*rsa_blob)) return STATUS_INVALID_PARAMETER;
+        if (alg->id != ALG_ID_RSA || rsa_blob->Magic != BCRYPT_RSAPUBLIC_MAGIC) return STATUS_NOT_SUPPORTED;
+
+        if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+
+        size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
+        if ((status = key_asymmetric_init( key, alg, (BYTE *)rsa_blob, size )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+
+    FIXME( "unsupported key type %s\n", debugstr_w(type) );
+    return STATUS_NOT_SUPPORTED;
 }
 #endif
 
@@ -2000,8 +2204,6 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HAN
                                      BCRYPT_KEY_HANDLE *ret_key, UCHAR *input, ULONG input_len, ULONG flags )
 {
     struct algorithm *alg = algorithm;
-    NTSTATUS status;
-    struct key *key;
 
     TRACE( "%p, %p, %s, %p, %p, %u, %08x\n", algorithm, decrypt_key, debugstr_w(type), ret_key, input,
            input_len, flags );
@@ -2014,68 +2216,7 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HAN
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
-    {
-        BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
-        DWORD key_size, magic;
-
-        if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
-
-        switch (alg->id)
-        {
-        case ALG_ID_ECDSA_P256:
-            key_size = 32;
-            magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
-            break;
-
-        case ALG_ID_ECDSA_P384:
-            key_size = 48;
-            magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
-            break;
-
-        default:
-            FIXME( "algorithm %u does not yet support importing blob of type %s\n", alg->id, debugstr_w(type) );
-            return STATUS_NOT_SUPPORTED;
-        }
-
-        if (ecc_blob->dwMagic != magic) return STATUS_NOT_SUPPORTED;
-        if (ecc_blob->cbKey != key_size) return STATUS_INVALID_PARAMETER;
-
-        if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-        if ((status = key_asymmetric_init( key, alg, (BYTE *)ecc_blob, sizeof(*ecc_blob) + ecc_blob->cbKey * 2 )))
-        {
-            heap_free( key );
-            return status;
-        }
-
-        *ret_key = key;
-        return STATUS_SUCCESS;
-    }
-    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
-    {
-        BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
-        ULONG size;
-
-        if (input_len < sizeof(*rsa_blob)) return STATUS_INVALID_PARAMETER;
-        if (alg->id != ALG_ID_RSA || rsa_blob->Magic != BCRYPT_RSAPUBLIC_MAGIC) return STATUS_NOT_SUPPORTED;
-
-        if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
-        size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
-        if ((status = key_asymmetric_init( key, alg, (BYTE *)rsa_blob, size )))
-        {
-            heap_free( key );
-            return status;
-        }
-
-        *ret_key = key;
-        return STATUS_SUCCESS;
-    }
-
-    FIXME( "unsupported key type %s\n", debugstr_w(type) );
-    return STATUS_NOT_SUPPORTED;
+    return key_import_pair( alg, type, ret_key, input, input_len );
 }
 
 NTSTATUS WINAPI BCryptVerifySignature( BCRYPT_KEY_HANDLE handle, void *padding, UCHAR *hash, ULONG hash_len,
@@ -2102,17 +2243,13 @@ NTSTATUS WINAPI BCryptDestroyKey( BCRYPT_KEY_HANDLE handle )
     return key_destroy( key );
 }
 
-NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len,
-                               void *padding, UCHAR *iv, ULONG iv_len, UCHAR *output,
-                               ULONG output_len, ULONG *ret_len, ULONG flags )
+NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                               ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     struct key *key = handle;
-    ULONG bytes_left = input_len;
-    UCHAR *buf, *src, *dst;
-    NTSTATUS status;
 
-    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
-           padding, iv, iv_len, output, output_len, ret_len, flags );
+    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len, padding, iv, iv_len, output,
+           output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
     if (!key_is_symmetric( key ))
@@ -2126,79 +2263,16 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (key->u.s.mode == MODE_ID_GCM)
-    {
-        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
-
-        if (!auth_info) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
-        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
-        if (auth_info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG)
-            FIXME( "call chaining not implemented\n" );
-
-        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
-            return status;
-
-        *ret_len = input_len;
-        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
-        if (input && !output) return STATUS_SUCCESS;
-        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-
-        if ((status = key_symmetric_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
-            return status;
-        if ((status = key_symmetric_encrypt( key, input, input_len, output, output_len ))) return status;
-
-        return key_symmetric_get_tag( key, auth_info->pbTag, auth_info->cbTag );
-    }
-
-    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
-    *ret_len = input_len;
-
-    if (flags & BCRYPT_BLOCK_PADDING)
-        *ret_len = (input_len + key->u.s.block_size) & ~(key->u.s.block_size - 1);
-    else if (input_len & (key->u.s.block_size - 1))
-        return STATUS_INVALID_BUFFER_SIZE;
-
-    if (!output) return STATUS_SUCCESS;
-    if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
-
-    src = input;
-    dst = output;
-    while (bytes_left >= key->u.s.block_size)
-    {
-        if ((status = key_symmetric_encrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
-            return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
-        bytes_left -= key->u.s.block_size;
-        src += key->u.s.block_size;
-        dst += key->u.s.block_size;
-    }
-
-    if (flags & BCRYPT_BLOCK_PADDING)
-    {
-        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
-        memcpy( buf, src, bytes_left );
-        memset( buf + bytes_left, key->u.s.block_size - bytes_left, key->u.s.block_size - bytes_left );
-        status = key_symmetric_encrypt( key, buf, key->u.s.block_size, dst, key->u.s.block_size );
-        heap_free( buf );
-    }
-
-    return status;
+    return key_encrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
 }
 
-NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len,
-                               void *padding, UCHAR *iv, ULONG iv_len, UCHAR *output,
-                               ULONG output_len, ULONG *ret_len, ULONG flags )
+NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                               ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     struct key *key = handle;
-    ULONG bytes_left = input_len;
-    UCHAR *buf, *src, *dst;
-    NTSTATUS status;
 
-    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
-           padding, iv, iv_len, output, output_len, ret_len, flags );
+    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len, padding, iv, iv_len, output,
+           output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
     if (!key_is_symmetric( key ))
@@ -2212,77 +2286,7 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (key->u.s.mode == MODE_ID_GCM)
-    {
-        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
-        UCHAR tag[16];
-
-        if (!auth_info) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
-        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
-
-        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
-            return status;
-
-        *ret_len = input_len;
-        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
-        if (!output) return STATUS_SUCCESS;
-        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-
-        if ((status = key_symmetric_set_auth_data( key, auth_info->pbAuthData, auth_info->cbAuthData )))
-            return status;
-        if ((status = key_symmetric_decrypt( key, input, input_len, output, output_len ))) return status;
-
-        if ((status = key_symmetric_get_tag( key, tag, sizeof(tag) ))) return status;
-        if (memcmp( tag, auth_info->pbTag, auth_info->cbTag )) return STATUS_AUTH_TAG_MISMATCH;
-
-        return STATUS_SUCCESS;
-    }
-
-    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
-
-    *ret_len = input_len;
-
-    if (input_len & (key->u.s.block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
-    if (!output) return STATUS_SUCCESS;
-    if (flags & BCRYPT_BLOCK_PADDING)
-    {
-        if (output_len + key->u.s.block_size < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-        if (input_len < key->u.s.block_size) return STATUS_BUFFER_TOO_SMALL;
-        bytes_left -= key->u.s.block_size;
-    }
-    else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-
-    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
-
-    src = input;
-    dst = output;
-    while (bytes_left >= key->u.s.block_size)
-    {
-        if ((status = key_symmetric_decrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
-            return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
-        bytes_left -= key->u.s.block_size;
-        src += key->u.s.block_size;
-        dst += key->u.s.block_size;
-    }
-
-    if (flags & BCRYPT_BLOCK_PADDING)
-    {
-        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
-        status = key_symmetric_decrypt( key, src, key->u.s.block_size, buf, key->u.s.block_size );
-        if (!status && buf[ key->u.s.block_size - 1 ] <= key->u.s.block_size)
-        {
-            *ret_len -= buf[ key->u.s.block_size - 1 ];
-            if (output_len < *ret_len) status = STATUS_BUFFER_TOO_SMALL;
-            else memcpy( dst, buf, key->u.s.block_size - buf[ key->u.s.block_size - 1 ] );
-        }
-        else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
-        heap_free( buf );
-    }
-
-    return status;
+    return key_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
 }
 
 NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
