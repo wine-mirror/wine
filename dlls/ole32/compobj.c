@@ -1162,9 +1162,17 @@ DWORD apartment_release(struct apartment *apt)
 
     ret = InterlockedDecrement(&apt->refs);
     TRACE("%s: after = %d\n", wine_dbgstr_longlong(apt->oxid), ret);
+
+    if (apt->being_destroyed)
+    {
+        LeaveCriticalSection(&csApartment);
+        return ret;
+    }
+
     /* destruction stuff that needs to happen under csApartment CS */
     if (ret == 0)
     {
+        apt->being_destroyed = TRUE;
         if (apt == MTA) MTA = NULL;
         else if (apt == MainApartment) MainApartment = NULL;
         list_remove(&apt->entry);
@@ -2981,7 +2989,6 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
     IUnknown *regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     APARTMENT  *apt;
-    BOOL release_apt = FALSE;
 
     TRACE("CLSID: %s,IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 
@@ -2990,14 +2997,15 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
     *ppv = NULL;
 
-    if (!(apt = COM_CurrentApt()))
+    if ((apt = COM_CurrentApt()))
+        apartment_addref(apt);
+    else
     {
         if (!(apt = apartment_find_mta()))
         {
             ERR("apartment not initialised\n");
             return CO_E_NOTINITIALIZED;
         }
-        release_apt = TRUE;
     }
 
     if (pServerInfo) {
@@ -3009,7 +3017,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
     {
         if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler))
         {
-            if (release_apt) apartment_release(apt);
+            apartment_release(apt);
             return FTMarshalCF_Create(iid, ppv);
         }
         if (IsEqualCLSID(rclsid, &CLSID_GlobalOptions))
@@ -3035,7 +3043,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
             hres = get_inproc_class_object(apt, &clsreg, &comclass->clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             ReleaseActCtx(data.hActCtx);
-            if (release_apt) apartment_release(apt);
+            apartment_release(apt);
             return hres;
         }
     }
@@ -3056,7 +3064,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
        * is good since we are not returning it in the "out" parameter.
        */
       IUnknown_Release(regClassObject);
-      if (release_apt) apartment_release(apt);
+      apartment_release(apt);
       return hres;
     }
 
@@ -3091,7 +3099,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
          * other types */
         if (SUCCEEDED(hres))
         {
-            if (release_apt) apartment_release(apt);
+            apartment_release(apt);
             return hres;
         }
     }
@@ -3127,11 +3135,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
          * other types */
         if (SUCCEEDED(hres))
         {
-            if (release_apt) apartment_release(apt);
+            apartment_release(apt);
             return hres;
         }
     }
-    if (release_apt) apartment_release(apt);
+    apartment_release(apt);
 
     /* Next try out of process */
     if (CLSCTX_LOCAL_SERVER & dwClsContext)
