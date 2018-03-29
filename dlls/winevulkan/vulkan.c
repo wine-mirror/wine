@@ -555,7 +555,7 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     phys_dev->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(phys_dev->phys_dev,
             &max_queue_families, NULL);
     object->max_queue_families = max_queue_families;
-    TRACE("Max queue families: %d\n", object->max_queue_families);
+    TRACE("Max queue families: %u\n", object->max_queue_families);
 
     object->queues = heap_calloc(max_queue_families, sizeof(*object->queues));
     if (!object->queues)

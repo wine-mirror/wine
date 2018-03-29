@@ -1141,10 +1141,8 @@ class VkParam(object):
         if self.is_static_array() or self.is_pointer():
             self.format_str = "%p"
         else:
-            if self.type_info["category"] == "bitmask":
+            if self.type_info["category"] in ["bitmask", "enum"]:
                 self.format_str = "%#x"
-            elif self.type_info["category"] == "enum":
-                self.format_str = "%d"
             elif self.is_handle():
                 # We use uint64_t for non-dispatchable handles as opposed to pointers
                 # for dispatchable handles.
