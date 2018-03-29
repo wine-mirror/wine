@@ -47,7 +47,7 @@ interface IWiaDevMgr : IUnknown
         [in] HWND hwndParent,
         [in] LONG lDeviceType,
         [in] LONG lFlags,
-        [in, out] BSTR *pbstrDeviceID,
+        [in, out, unique] BSTR *pbstrDeviceID,
         [retval, out] IWiaItem **ppItemRoot);
 
     HRESULT SelectDeviceDlgID(
