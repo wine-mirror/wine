@@ -3,6 +3,7 @@
  *
  * Copyright 2005 Hans Leidekker
  * Copyright 2009 Owen Rudge for CodeWeavers
+ * Copyright 2016 Jeremy White for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #define COBJMACROS
 
@@ -35,6 +37,151 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemapi);
+
+static WCHAR *strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        if ((ret = malloc(len * sizeof(WCHAR))))
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+    return ret;
+}
+
+struct args
+{
+    unsigned int count;
+    char **argv;
+};
+
+static void add_argument(struct args *args, const char *arg)
+{
+    args->argv = realloc(args->argv, (args->count + 2) * sizeof(char *));
+    args->argv[args->count++] = strdup(arg);
+    args->argv[args->count + 1] = NULL;
+}
+
+static void add_target(struct args *args, ULONG class, const char *address)
+{
+    static const char smtp[] = "smtp:";
+
+    if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+        address += sizeof(smtp) - 1;
+
+    switch (class)
+    {
+        case MAPI_ORIG:
+            TRACE("From: %s\n (unused)", debugstr_a(address));
+            break;
+
+        case MAPI_TO:
+            TRACE("To: %s\n", debugstr_a(address));
+            add_argument(args, address);
+            break;
+
+        case MAPI_CC:
+            TRACE("CC: %s\n", debugstr_a(address));
+            add_argument(args, "--cc");
+            add_argument(args, address);
+            break;
+
+        case MAPI_BCC:
+            TRACE("BCC: %s\n", debugstr_a(address));
+            add_argument(args, "--bcc");
+            add_argument(args, address);
+            break;
+
+        default:
+            TRACE("Unknown recipient class: %ld\n", class);
+    }
+}
+
+static void add_file(struct args *args, const char *path)
+{
+    char *unixpath;
+    WCHAR *pathW;
+
+    pathW = strdupAtoW(path);
+
+    unixpath = wine_get_unix_file_name(pathW);
+    if (unixpath)
+    {
+        add_argument(args, "--attach");
+        add_argument(args, unixpath);
+        HeapFree(GetProcessHeap(), 0, unixpath);
+    }
+    else
+    {
+        ERR("Cannot find unix path of '%s'; not attaching.\n", debugstr_w(pathW));
+    }
+
+    free(pathW);
+}
+
+/* xdg-email fails if given arguments which are only whitespace.
+ * Skip the arguments in that case. */
+static bool is_non_empty(const char *s)
+{
+    if (!s)
+        return false;
+    while (isspace(*s))
+        ++s;
+    return *s != 0;
+}
+
+static bool send_mail_xdg(lpMapiMessage message)
+{
+    struct args args = {0};
+    bool ret;
+
+    add_argument(&args, "xdg-email");
+
+    if (message->lpOriginator)
+        TRACE("From: %s (unused)\n", debugstr_a(message->lpOriginator->lpszAddress));
+
+    for (ULONG i = 0; i < message->nRecipCount; i++)
+    {
+        if (message->lpRecips[i].lpszAddress)
+            add_target(&args, message->lpRecips[i].ulRecipClass, message->lpRecips[i].lpszAddress);
+        else
+            FIXME("Name resolution and entry identifiers not supported\n");
+    }
+
+    for (ULONG i = 0; i < message->nFileCount; i++)
+    {
+        TRACE("File Path: %s, name %s\n", debugstr_a(message->lpFiles[i].lpszPathName),
+                debugstr_a(message->lpFiles[i].lpszFileName));
+        add_file(&args, message->lpFiles[i].lpszPathName);
+    }
+
+    if (is_non_empty(message->lpszSubject))
+    {
+        TRACE("Subject: %s\n", debugstr_a(message->lpszSubject));
+        add_argument(&args, "--subject");
+        add_argument(&args, message->lpszSubject);
+    }
+
+    if (is_non_empty(message->lpszNoteText))
+    {
+        TRACE("Body: %s\n", debugstr_a(message->lpszNoteText));
+        add_argument(&args, "--body");
+        add_argument(&args, message->lpszNoteText);
+    }
+
+    TRACE("Command line:");
+    for (ULONG i = 0; i < args.count; i++)
+        TRACE(" %s", debugstr_a(args.argv[i]));
+    TRACE("\n");
+
+    ret = !__wine_unix_spawnvp(args.argv, TRUE);
+
+    for (unsigned int i = 0; i < args.count; ++i)
+        free(args.argv[i]);
+    free(args.argv);
+    return ret;
+}
 
 /* Escapes a string for use in mailto: URL */
 static char *escape_string(char *in, char *empty_string)
@@ -67,25 +214,7 @@ static char *escape_string(char *in, char *empty_string)
     return escaped ? escaped : empty_string;
 }
 
-/**************************************************************************
- *  MAPISendMail
- *
- * Send a message using a native mail client.
- *
- * PARAMS
- *  session  [I] Handle to a MAPI session.
- *  uiparam  [I] Parent window handle.
- *  message  [I] Pointer to a MAPIMessage structure.
- *  flags    [I] Flags.
- *  reserved [I] Reserved, pass 0.
- *
- * RETURNS
- *  Success: SUCCESS_SUCCESS
- *  Failure: MAPI_E_FAILURE
- *
- */
-ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
-    lpMapiMessage message, FLAGS flags, ULONG reserved)
+static ULONG send_mail_winebrowser(lpMapiMessage message)
 {
     ULONG ret = MAPI_E_FAILURE;
     unsigned int i, to_count = 0, cc_count = 0, bcc_count = 0;
@@ -101,20 +230,8 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     HRESULT res;
     DWORD size;
 
-    TRACE("(0x%08Ix 0x%08Ix %p 0x%08lx 0x%08lx)\n", session, uiparam,
-           message, flags, reserved);
-
-    if (!message)
-        return MAPI_E_FAILURE;
-
     for (i = 0; i < message->nRecipCount; i++)
     {
-        if (!message->lpRecips)
-        {
-            WARN("No recipients found\n");
-            return MAPI_E_FAILURE;
-        }
-
         address = message->lpRecips[i].lpszAddress;
 
         if (address)
@@ -287,6 +404,21 @@ exit:
         HeapFree(GetProcessHeap(), 0, body);
 
     return ret;
+}
+
+ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
+        lpMapiMessage message, FLAGS flags, ULONG reserved)
+{
+    TRACE("session %#Ix, uiparam %#Ix, message %p, flags %#lx, reserved %#lx.\n",
+            session, uiparam, message, flags, reserved);
+
+    if (!message || (message->nRecipCount && !message->lpRecips))
+        return MAPI_E_FAILURE;
+
+    if (send_mail_xdg(message))
+        return SUCCESS_SUCCESS;
+
+    return send_mail_winebrowser(message);
 }
 
 ULONG WINAPI MAPISendDocuments(ULONG_PTR uiparam, LPSTR delim, LPSTR paths,
