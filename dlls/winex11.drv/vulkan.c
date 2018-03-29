@@ -134,7 +134,11 @@ static BOOL wine_vk_init(void)
     if (init_done) return (vulkan_handle != NULL);
     init_done = TRUE;
 
-    if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0))) return FALSE;
+    if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0)))
+    {
+        ERR("Failed to load %s\n", SONAME_LIBVULKAN);
+        return FALSE;
+    }
 
 #define LOAD_FUNCPTR(f) if ((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
     LOAD_FUNCPTR(vkAcquireNextImageKHR)
