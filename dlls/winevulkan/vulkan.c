@@ -580,6 +580,8 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         }
     }
 
+    object->quirks = phys_dev->instance->quirks;
+
     *device = object;
     return VK_SUCCESS;
 }
@@ -587,8 +589,9 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
-    struct VkInstance_T *object = NULL;
     VkInstanceCreateInfo create_info_host;
+    const VkApplicationInfo *app_info;
+    struct VkInstance_T *object;
     VkResult res;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
@@ -633,6 +636,13 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         ERR("Failed to load physical devices, res=%d\n", res);
         wine_vk_instance_free(object);
         return res;
+    }
+
+    if ((app_info = create_info->pApplicationInfo) && app_info->pApplicationName)
+    {
+        if (!strcmp(app_info->pApplicationName, "DOOM")
+                || !strcmp(app_info->pApplicationName, "Wolfenstein II The New Colossus"))
+            object->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
     *instance = object;
@@ -808,13 +818,12 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
      * subdevice objects. The games don't actually use the function pointers and if they
      * did, they would crash as VkInstance / VkPhysicalDevice parameters need unwrapping.
      * Khronos clarified behavior in the Vulkan spec and expects drivers to get updated,
-     * however it would require both driver and game fixes. Since it are major titles
-     * it is not clear what will happen. At least for now we need the hack below.
+     * however it would require both driver and game fixes.
      * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
      * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
      */
-    func = wine_vk_get_instance_proc_addr(name);
-    if (func)
+    if (device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR
+            && (func = wine_vk_get_instance_proc_addr(name)))
     {
         WARN("Returning instance function %s.\n", debugstr_a(name));
         return func;

@@ -34,6 +34,8 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+#define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
+
 struct vulkan_func
 {
     const char *name;
@@ -70,6 +72,8 @@ struct VkDevice_T
     struct VkQueue_T **queues;
 
     VkDevice device; /* native device */
+
+    unsigned int quirks;
 };
 
 struct VkInstance_T
@@ -84,6 +88,8 @@ struct VkInstance_T
     struct VkPhysicalDevice_T **phys_devs;
 
     VkInstance instance; /* native instance */
+
+    unsigned int quirks;
 };
 
 struct VkPhysicalDevice_T
