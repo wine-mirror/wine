@@ -80,50 +80,9 @@ static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 static void *X11DRV_get_vk_device_proc_addr(const char *name);
 static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name);
 
-static struct VkExtensionProperties *winex11_vk_instance_extensions = NULL;
-static unsigned int winex11_vk_instance_extensions_count = 0;
-
-static void wine_vk_load_instance_extensions(void)
+static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
-    uint32_t num_properties;
-    VkExtensionProperties *properties;
-    unsigned int i;
-
-    pvkEnumerateInstanceExtensionProperties(NULL, &num_properties, NULL);
-
-    properties = heap_calloc(num_properties, sizeof(*properties));
-    if (!properties)
-        return;
-
-    /* We will return the same number of instance extensions reported by the host back to
-     * winevulkan. Along the way we may replace xlib extensions with their win32 equivalents.
-     * Winevulkan will perform more detailed filtering as it knows whether it has thunks
-     * for a particular extension.
-     */
-    pvkEnumerateInstanceExtensionProperties(NULL, &num_properties, properties);
-    for (i = 0; i < num_properties; i++)
-    {
-        /* For now the only x11 extension we need to fixup. Long-term we may need an array. */
-        if (!strcmp(properties[i].extensionName, "VK_KHR_xlib_surface"))
-        {
-            TRACE("Substituting VK_KHR_xlib_surface for VK_KHR_win32_surface\n");
-
-            memset(properties[i].extensionName, 0, sizeof(properties[i].extensionName));
-            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName), "VK_KHR_win32_surface");
-            properties[i].specVersion = 6; /* Revision as of 4/24/2017 */
-        }
-
-        TRACE("Loaded extension: %s\n", properties[i].extensionName);
-    }
-
-    winex11_vk_instance_extensions = properties;
-    winex11_vk_instance_extensions_count = num_properties;
-}
-
-/* Helper function to convert VkSurfaceKHR (uint64_t) to a surface pointer. */
-static inline struct wine_vk_surface * surface_from_handle(VkSurfaceKHR handle)
-{
-    return ((struct wine_vk_surface *)(uintptr_t)handle);
+    return (struct wine_vk_surface *)(uintptr_t)handle;
 }
 
 static BOOL wine_vk_init(void)
@@ -159,8 +118,6 @@ static BOOL wine_vk_init(void)
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
     LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
-
-    wine_vk_load_instance_extensions();
 
     return TRUE;
 }
@@ -376,6 +333,7 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
         uint32_t *count, VkExtensionProperties* properties)
 {
     unsigned int i;
+    VkResult res;
 
     TRACE("layer_name %p, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
 
@@ -386,20 +344,29 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
-    if (!properties)
-    {
-        *count = winex11_vk_instance_extensions_count;
-        return VK_SUCCESS;
-    }
+    /* We will return the same number of instance extensions reported by the host back to
+     * winevulkan. Along the way we may replace xlib extensions with their win32 equivalents.
+     * Winevulkan will perform more detailed filtering as it knows whether it has thunks
+     * for a particular extension.
+     */
+    res = pvkEnumerateInstanceExtensionProperties(layer_name, count, properties);
+    if (!properties || res < 0)
+        return res;
 
-    *count = min(*count, winex11_vk_instance_extensions_count);
     for (i = 0; i < *count; i++)
     {
-        properties[i] = winex11_vk_instance_extensions[i];
+        /* For now the only x11 extension we need to fixup. Long-term we may need an array. */
+        if (!strcmp(properties[i].extensionName, "VK_KHR_xlib_surface"))
+        {
+            TRACE("Substituting VK_KHR_xlib_surface for VK_KHR_win32_surface\n");
+
+            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName), "VK_KHR_win32_surface");
+            properties[i].specVersion = 6; /* Revision as of 4/24/2017 */
+        }
     }
 
     TRACE("Returning %u extensions.\n", *count);
-    return *count < winex11_vk_instance_extensions_count ? VK_INCOMPLETE : VK_SUCCESS;
+    return res;
 }
 
 static void *X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
