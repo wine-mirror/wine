@@ -549,7 +549,7 @@ static void test_button_messages(void)
     hfont2 = CreateFontIndirectA(&logfont);
     ok(hfont2 != NULL, "Failed to create Tahoma font\n");
 
-    for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(button); i++)
     {
         HFONT prevfont, hfont;
         MSG msg;
