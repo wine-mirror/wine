@@ -4660,7 +4660,8 @@ static void test_GetGeoInfo(void)
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoA(344, GEO_ISO2, NULL, 0, 0);
     ok(ret == 0, "got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == 0xdeadbeef /* Win10 */), "got %d\n", GetLastError());
 
     ret = pGetGeoInfoA(203, GEO_ISO2, NULL, 0, 0);
     ok(ret == 3, "got %d\n", ret);
