@@ -625,19 +625,6 @@ void release_display_dc( HDC hdc )
     LeaveCriticalSection( &display_dc_section );
 }
 
-static inline int get_display_dpi(void)
-{
-    static int display_dpi;
-    HDC hdc;
-    if (!display_dpi)
-    {
-        hdc = get_display_dc();
-        display_dpi = GetDeviceCaps( hdc, LOGPIXELSY );
-        release_display_dc( hdc );
-    }
-    return display_dpi;
-}
-
 static INT CALLBACK real_fontname_proc(const LOGFONTW *lf, const TEXTMETRICW *ntm, DWORD type, LPARAM lparam)
 {
     const ENUMLOGFONTW *elf = (const ENUMLOGFONTW *)lf;
@@ -768,7 +755,7 @@ static BOOL get_twips_entry( union sysparam_all_entry *entry, UINT int_param, vo
              *       Technical Reference to the Windows 2000 Registry ->
              *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
              */
-            if (val < 0) val = (-val * get_display_dpi() + 720) / 1440;
+            if (val < 0) val = (-val * GetDpiForSystem() + 720) / 1440;
             entry->uint.val = val;
         }
     }
@@ -952,13 +939,13 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
         {
         case sizeof(font):
             if (font.lfHeight > 0) /* positive height value means points ( inch/72 ) */
-                font.lfHeight = -MulDiv( font.lfHeight, get_display_dpi(), 72 );
+                font.lfHeight = -MulDiv( font.lfHeight, GetDpiForSystem(), 72 );
             entry->font.val = font;
             break;
         case sizeof(LOGFONT16): /* win9x-winME format */
             SYSPARAMS_LogFont16To32W( (LOGFONT16 *)&font, &entry->font.val );
             if (entry->font.val.lfHeight > 0)
-                entry->font.val.lfHeight = -MulDiv( entry->font.val.lfHeight, get_display_dpi(), 72 );
+                entry->font.val.lfHeight = -MulDiv( entry->font.val.lfHeight, GetDpiForSystem(), 72 );
             break;
         default:
             WARN( "Unknown format in key %s value %s\n",
@@ -1509,9 +1496,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_entry( &entry_ICONHORIZONTALSPACING, uiParam, pvParam );
         else
         {
-            int min_val = 32;
-            if (IsProcessDPIAware())
-                min_val = MulDiv( min_val, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
+            int min_val = MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
             ret = set_entry( &entry_ICONHORIZONTALSPACING, max( min_val, uiParam ), pvParam, fWinIni );
         }
         break;
@@ -1552,9 +1537,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_entry( &entry_ICONVERTICALSPACING, uiParam, pvParam );
         else
         {
-            int min_val = 32;
-            if (IsProcessDPIAware())
-                min_val = MulDiv( min_val, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
+            int min_val = MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
             ret = set_entry( &entry_ICONVERTICALSPACING, max( min_val, uiParam ), pvParam, fWinIni );
         }
         break;
@@ -2435,18 +2418,12 @@ INT WINAPI GetSystemMetrics( INT index )
         return max( 8, ret );
     case SM_CXICON:
     case SM_CYICON:
-        ret = 32;
-        if (IsProcessDPIAware())
-            ret = MulDiv( ret, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
-        return ret;
+        return MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     case SM_CXCURSOR:
     case SM_CYCURSOR:
-        if (IsProcessDPIAware())
-        {
-            ret = MulDiv( 32, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
-            if (ret >= 64) return 64;
-            if (ret >= 48) return 48;
-        }
+        ret = MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+        if (ret >= 64) return 64;
+        if (ret >= 48) return 48;
         return 32;
     case SM_CYMENU:
         return GetSystemMetrics(SM_CYMENUSIZE) + 1;
@@ -2537,10 +2514,7 @@ INT WINAPI GetSystemMetrics( INT index )
         return GetSystemMetrics(SM_CYMINIMIZED) + max( 0, (INT)ret );
     case SM_CXSMICON:
     case SM_CYSMICON:
-        ret = 16;
-        if (IsProcessDPIAware())
-            ret = MulDiv( ret, get_display_dpi(), USER_DEFAULT_SCREEN_DPI ) & ~1;
-        return ret;
+        return MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ) & ~1;
     case SM_CYSMCAPTION:
         return GetSystemMetrics(SM_CYSMSIZE) + 1;
     case SM_CXSMSIZE:
@@ -2961,6 +2935,24 @@ BOOL WINAPI IsProcessDPIAware(void)
 {
     TRACE("returning TRUE\n");
     return TRUE;
+}
+
+/***********************************************************************
+ *              GetDpiForSystem   (USER32.@)
+ */
+UINT WINAPI GetDpiForSystem(void)
+{
+    static int display_dpi;
+
+    if (!IsProcessDPIAware()) return USER_DEFAULT_SCREEN_DPI;
+
+    if (!display_dpi)
+    {
+        HDC hdc = get_display_dc();
+        display_dpi = GetDeviceCaps( hdc, LOGPIXELSY );
+        release_display_dc( hdc );
+    }
+    return display_dpi;
 }
 
 /**********************************************************************
