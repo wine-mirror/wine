@@ -805,13 +805,13 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
     unsigned    ret = SE_ERR_NOASSOC;
     BOOL unicode = !(GetVersion() & 0x80000000);
 
-    if (strlenW(key) + 1 > sizeof(regkey) / sizeof(regkey[0]))
+    if (strlenW(key) + 1 > ARRAY_SIZE(regkey))
     {
         FIXME("input parameter %s larger than buffer\n", debugstr_w(key));
         return 2;
     }
     strcpyW(regkey, key);
-    endkeyLen = sizeof(regkey) / sizeof(regkey[0]) - (endkey - regkey);
+    endkeyLen = ARRAY_SIZE(regkey) - (endkey - regkey);
     if (strlenW(wApplication) + 1 > endkeyLen)
     {
         FIXME("endkey %s overruns buffer\n", debugstr_w(wApplication));
@@ -830,7 +830,7 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         /* Get application command from start string and find filename of application */
         if (*start == '"')
         {
-            if (strlenW(start + 1) + 1 > sizeof(command) / sizeof(command[0]))
+            if (strlenW(start + 1) + 1 > ARRAY_SIZE(command))
             {
                 FIXME("size of input parameter %s larger than buffer\n",
                       debugstr_w(start + 1));
@@ -839,7 +839,7 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
             strcpyW(command, start+1);
             if ((ptr = strchrW(command, '"')))
                 *ptr = 0;
-            ret = SearchPathW(NULL, command, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr);
+            ret = SearchPathW(NULL, command, wszExe, ARRAY_SIZE(fullpath), fullpath, &ptr);
         }
         else
         {
@@ -850,11 +850,11 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
                 int idx = space-start;
                 memcpy(command, start, idx*sizeof(WCHAR));
                 command[idx] = '\0';
-                if ((ret = SearchPathW(NULL, command, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr)))
+                if ((ret = SearchPathW(NULL, command, wszExe, ARRAY_SIZE(fullpath), fullpath, &ptr)))
                     break;
             }
             if (!ret)
-                ret = SearchPathW(NULL, start, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr);
+                ret = SearchPathW(NULL, start, wszExe, ARRAY_SIZE(fullpath), fullpath, &ptr);
         }
 
         if (!ret)
@@ -862,7 +862,7 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
             ERR("Unable to find application path for command %s\n", debugstr_w(start));
             return ERROR_ACCESS_DENIED;
         }
-        if (strlenW(ptr) + 1 > sizeof(app) / sizeof(app[0]))
+        if (strlenW(ptr) + 1 > ARRAY_SIZE(app))
         {
             FIXME("size of found path %s larger than buffer\n", debugstr_w(ptr));
             return 2;
@@ -940,8 +940,8 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         }
     }
 
-    SHELL_ArgifyW(static_res, sizeof(static_res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline, &resultLen);
-    if (resultLen > sizeof(static_res)/sizeof(WCHAR))
+    SHELL_ArgifyW(static_res, ARRAY_SIZE(static_res), exec, lpFile, pidl, szCommandline, &resultLen);
+    if (resultLen > ARRAY_SIZE(static_res))
     {
         res = dynamic_res = heap_alloc(resultLen * sizeof(WCHAR));
         SHELL_ArgifyW(dynamic_res, resultLen, exec, lpFile, pidl, szCommandline, NULL);
@@ -1010,11 +1010,11 @@ static UINT_PTR execute_from_key(LPCWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWST
 
         /* Is there a replace() function anywhere? */
         cmdlen /= sizeof(WCHAR);
-	if (cmdlen >= sizeof(cmd)/sizeof(WCHAR))
-	    cmdlen = sizeof(cmd)/sizeof(WCHAR)-1;
+        if (cmdlen >= ARRAY_SIZE(cmd))
+            cmdlen = ARRAY_SIZE(cmd) - 1;
         cmd[cmdlen] = '\0';
-        SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen);
-        if (resultLen > sizeof(param)/sizeof(WCHAR))
+        SHELL_ArgifyW(param, ARRAY_SIZE(param), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen);
+        if (resultLen > ARRAY_SIZE(param))
             ERR("Argify buffer not large enough, truncating\n");
     }
 
@@ -1101,7 +1101,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
 
     if (lpDirectory)
     {
-        GetCurrentDirectoryW(sizeof(old_dir)/sizeof(WCHAR), old_dir);
+        GetCurrentDirectoryW(ARRAY_SIZE(old_dir), old_dir);
         SetCurrentDirectoryW(lpDirectory);
     }
 
@@ -1352,7 +1352,7 @@ static LONG ShellExecute_FromContextMenu( LPSHELLEXECUTEINFOW sei )
         i = 0;
         while ( 1 )
         {
-            r = RegEnumKeyW( hkeycm, i++, szguid, sizeof(szguid)/sizeof(szguid[0]) );
+            r = RegEnumKeyW( hkeycm, i++, szguid, ARRAY_SIZE(szguid));
             if ( r != ERROR_SUCCESS )
                 break;
 
@@ -1401,7 +1401,7 @@ static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEI
     TRACE("SEE_MASK_CLASSNAME->%s, doc->%s\n", debugstr_w(execCmd), debugstr_w(wszApplicationName));
 
     wcmd[0] = '\0';
-    done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), execCmd, wszApplicationName, psei->lpIDList, NULL, &resultLen);
+    done = SHELL_ArgifyW(wcmd, ARRAY_SIZE(wcmd), execCmd, wszApplicationName, psei->lpIDList, NULL, &resultLen);
     if (!done && wszApplicationName[0])
     {
         strcatW(wcmd, wSpace);
@@ -1414,7 +1414,7 @@ static UINT_PTR SHELL_execute_class( LPCWSTR wszApplicationName, LPSHELLEXECUTEI
         else
             strcatW(wcmd, wszApplicationName);
     }
-    if (resultLen > sizeof(wcmd)/sizeof(WCHAR))
+    if (resultLen > ARRAY_SIZE(wcmd))
         ERR("Argify buffer not large enough... truncating\n");
     return execfunc(wcmd, NULL, FALSE, psei, psei_out);
   }
@@ -1437,7 +1437,7 @@ static void SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameter
     WCHAR buffer[MAX_PATH];
 
     /* last chance to translate IDList: now also allow CLSID paths */
-    if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, sizeof(buffer)/sizeof(WCHAR)))) {
+    if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, ARRAY_SIZE(buffer)))) {
         if (buffer[0]==':' && buffer[1]==':') {
             /* open shell folder for the specified class GUID */
             if (strlenW(buffer) + 1 > parametersLen)
@@ -1550,9 +1550,9 @@ static void do_error_dialog( UINT_PTR retval, HWND hwnd )
     int error_code=GetLastError();
 
     if (retval == SE_ERR_NOASSOC)
-        LoadStringW(shell32_hInstance, IDS_SHLEXEC_NOASSOC, msg, sizeof(msg)/sizeof(WCHAR));
+        LoadStringW(shell32_hInstance, IDS_SHLEXEC_NOASSOC, msg, ARRAY_SIZE(msg));
     else
-        FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, msg, sizeof(msg)/sizeof(WCHAR), NULL);
+        FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error_code, 0, msg, ARRAY_SIZE(msg), NULL);
 
     MessageBoxW(hwnd, msg, NULL, MB_ICONERROR);
 }
@@ -1572,8 +1572,8 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     WCHAR parametersBuffer[1024], dirBuffer[MAX_PATH], wcmdBuffer[1024];
     WCHAR *wszApplicationName, *wszParameters, *wszDir, *wcmd;
     DWORD dwApplicationNameLen = MAX_PATH+2;
-    DWORD parametersLen = sizeof(parametersBuffer) / sizeof(WCHAR);
-    DWORD wcmdLen = sizeof(wcmdBuffer) / sizeof(WCHAR);
+    DWORD parametersLen = ARRAY_SIZE(parametersBuffer);
+    DWORD wcmdLen = ARRAY_SIZE(wcmdBuffer);
     DWORD len;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR *env;
@@ -1632,7 +1632,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     if (sei_tmp.lpDirectory)
     {
         len = lstrlenW(sei_tmp.lpDirectory) + 1;
-        if (len > sizeof(dirBuffer) / sizeof(WCHAR))
+        if (len > ARRAY_SIZE(dirBuffer))
             wszDir = heap_alloc(len * sizeof(WCHAR));
 	strcpyW(wszDir, sei_tmp.lpDirectory);
     }

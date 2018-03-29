@@ -327,7 +327,7 @@ static BOOL CreateMyCompEnumList(IEnumIDListImpl *list, DWORD dwFlags)
                     DWORD size;
                     LONG r;
 
-                    size = sizeof(iid) / sizeof(iid[0]);
+                    size = ARRAY_SIZE(iid);
                     r = RegEnumKeyExW(hkey, i, iid, &size, 0, NULL, NULL, NULL);
                     if (ERROR_SUCCESS == r)
                     {
@@ -700,8 +700,8 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
                 static const WCHAR wszCloseBracket[] = {')',0};
                 WCHAR wszDrive[32 /* label */ + 6 /* ' (C:)'\0 */] = {0};
 
-                GetVolumeInformationW (pszPath, wszDrive, sizeof(wszDrive)/sizeof(wszDrive[0]) - 5,
-                        NULL, NULL, NULL, NULL, 0);
+                GetVolumeInformationW (pszPath, wszDrive, ARRAY_SIZE(wszDrive) - 5, NULL, NULL,
+                        NULL, NULL, 0);
                 strcatW (wszDrive, wszOpenBracket);
                 lstrcpynW (wszDrive + strlenW(wszDrive), pszPath, 3);
                 strcatW (wszDrive, wszCloseBracket);

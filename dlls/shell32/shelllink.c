@@ -2088,7 +2088,7 @@ static HRESULT ShellLink_SetAdvertiseInfo(IShellLinkImpl *This, LPCWSTR str)
 
 static BOOL ShellLink_GetVolumeInfo(LPCWSTR path, volume_info *volume)
 {
-    const int label_sz = sizeof volume->label/sizeof volume->label[0];
+    const int label_sz = ARRAY_SIZE(volume->label);
     WCHAR drive[] = { path[0], ':', '\\', 0 };
     BOOL r;
 

@@ -221,7 +221,7 @@ noicon:
     if (data->uFlags & NIF_MESSAGE)
         data->uCallbackMessage = nid->uCallbackMessage;
     if (data->uFlags & NIF_TIP)
-        lstrcpynW( data->szTip, nid->szTip, sizeof(data->szTip)/sizeof(WCHAR) );
+        lstrcpynW( data->szTip, nid->szTip, ARRAY_SIZE(data->szTip));
     if (data->uFlags & NIF_STATE)
     {
         data->dwState     = nid->dwState;
