@@ -4720,7 +4720,7 @@ static void test_GetGeoInfo(void)
 
     /* try invalid type value */
     SetLastError(0xdeadbeef);
-    ret = pGetGeoInfoA(203, GEO_CURRENCYSYMBOL + 1, NULL, 0, 0);
+    ret = pGetGeoInfoA(203, GEO_ID + 1, NULL, 0, 0);
     ok(ret == 0, "got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_FLAGS, "got %d\n", GetLastError());
 }
