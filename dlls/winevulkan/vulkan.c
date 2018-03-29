@@ -341,7 +341,7 @@ static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src
 static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *instance)
 {
     VkResult res;
-    struct VkPhysicalDevice_T **tmp_phys_devs = NULL;
+    struct VkPhysicalDevice_T **tmp_phys_devs;
     uint32_t num_phys_devs = 0;
     unsigned int i;
 
@@ -362,13 +362,16 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
 
     res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->instance, &num_phys_devs, tmp_phys_devs);
     if (res != VK_SUCCESS)
-        goto err;
+    {
+        heap_free(tmp_phys_devs);
+        return res;
+    }
 
     instance->phys_devs = heap_calloc(num_phys_devs, sizeof(*instance->phys_devs));
     if (!instance->phys_devs)
     {
-        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-        goto err;
+        heap_free(tmp_phys_devs);
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     /* Wrap each native physical device handle into a dispatchable object for the ICD loader. */
@@ -378,8 +381,8 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
         if (!phys_dev)
         {
             ERR("Unable to allocate memory for physical device!\n");
-            res = VK_ERROR_OUT_OF_HOST_MEMORY;
-            goto err;
+            heap_free(tmp_phys_devs);
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
 
         instance->phys_devs[i] = phys_dev;
@@ -389,10 +392,6 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
 
     heap_free(tmp_phys_devs);
     return VK_SUCCESS;
-
-err:
-    heap_free(tmp_phys_devs);
-    return res;
 }
 
 /* Helper function used for freeing an instance structure. This function supports full
