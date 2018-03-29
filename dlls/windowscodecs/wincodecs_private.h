@@ -124,6 +124,7 @@ extern HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
                                   IPropertyBag2 **property) DECLSPEC_HIDDEN;
 
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo) DECLSPEC_HIDDEN;
+extern void ReleaseComponentInfos(void) DECLSPEC_HIDDEN;
 extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown) DECLSPEC_HIDDEN;
 
 typedef struct BmpDecoder BmpDecoder;

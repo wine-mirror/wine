@@ -33,6 +33,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -60,6 +61,7 @@ typedef struct {
     IWICComponentInfo IWICComponentInfo_iface;
     LONG ref;
     CLSID clsid;
+    struct wine_rb_entry entry;
 } ComponentInfo;
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
@@ -1923,8 +1925,26 @@ static const struct category categories[] = {
     {0}
 };
 
+static int ComponentInfo_Compare(const void *key, const struct wine_rb_entry *entry)
+{
+    ComponentInfo *info = WINE_RB_ENTRY_VALUE(entry, ComponentInfo, entry);
+    return memcmp(key, &info->clsid, sizeof(info->clsid));
+}
+
+static struct wine_rb_tree component_info_cache = { ComponentInfo_Compare };
+
+static CRITICAL_SECTION component_info_cache_cs;
+static CRITICAL_SECTION_DEBUG component_info_cache_cs_dbg =
+{
+    0, 0, &component_info_cache_cs,
+    { &component_info_cache_cs_dbg.ProcessLocksList, &component_info_cache_cs_dbg.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": component_info_cache") }
+};
+static CRITICAL_SECTION component_info_cache_cs = { &component_info_cache_cs_dbg, -1, 0, 0, 0, 0 };
+
 HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
 {
+    struct wine_rb_entry *cache_entry;
     ComponentInfo *info;
     HKEY clsidkey;
     HKEY classkey;
@@ -1936,9 +1956,23 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
     BOOL found = FALSE;
     HRESULT hr;
 
+    EnterCriticalSection(&component_info_cache_cs);
+
+    cache_entry = wine_rb_get(&component_info_cache, clsid);
+    if(cache_entry)
+    {
+        info = WINE_RB_ENTRY_VALUE(cache_entry, ComponentInfo, entry);
+        IWICComponentInfo_AddRef(*ppIInfo = &info->IWICComponentInfo_iface);
+        LeaveCriticalSection(&component_info_cache_cs);
+        return S_OK;
+    }
+
     res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, KEY_READ, &clsidkey);
     if (res != ERROR_SUCCESS)
+    {
+        LeaveCriticalSection(&component_info_cache_cs);
         return HRESULT_FROM_WIN32(res);
+    }
 
     for (category=categories; category->type; category++)
     {
@@ -1980,8 +2014,19 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
     RegCloseKey(clsidkey);
 
     if (SUCCEEDED(hr))
-        *ppIInfo = &info->IWICComponentInfo_iface;
+    {
+        wine_rb_put(&component_info_cache, clsid, &info->entry);
+        IWICComponentInfo_AddRef(*ppIInfo = &info->IWICComponentInfo_iface);
+    }
+    LeaveCriticalSection(&component_info_cache_cs);
     return hr;
+}
+
+void ReleaseComponentInfos(void)
+{
+    ComponentInfo *info, *next_info;
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(info, next_info, &component_info_cache, ComponentInfo, entry)
+        IWICComponentInfo_Release(&info->IWICComponentInfo_iface);
 }
 
 typedef struct {
