@@ -3,18 +3,6 @@
 #ifndef __WINE_VULKAN_THUNKS_H
 #define __WINE_VULKAN_THUNKS_H
 
-/* Perform vulkan struct conversion on 32-bit x86 platforms. */
-#if defined(__i386__)
-#define USE_STRUCT_CONVERSION
-#endif
-
-/* For use by vk_icdGetInstanceProcAddr / vkGetInstanceProcAddr */
-void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
-void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
-
-BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
-BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
-
 /* Functions for which we have custom implementations outside of the thunks. */
 VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo *pAllocateInfo, VkCommandBuffer *pCommandBuffers);
 void WINAPI wine_vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCount, const VkCommandBuffer *pCommandBuffers);

@@ -20,6 +20,11 @@
 #ifndef __WINE_VULKAN_PRIVATE_H
 #define __WINE_VULKAN_PRIVATE_H
 
+/* Perform vulkan struct conversion on 32-bit x86 platforms. */
+#if defined(__i386__)
+#define USE_STRUCT_CONVERSION
+#endif
+
 #include "vulkan_thunks.h"
 
 /* Magic value defined by Vulkan ICD / Loader spec */
@@ -98,5 +103,11 @@ struct VkQueue_T
     VkDevice device; /* parent */
     VkQueue queue; /* native queue */
 };
+
+void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
+void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
+
+BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
+BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_VULKAN_PRIVATE_H */
