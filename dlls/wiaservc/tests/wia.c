@@ -25,6 +25,8 @@
 #include "objbase.h"
 #include "initguid.h"
 #include "wia_lh.h"
+#include "sti.h"
+#include "wiadef.h"
 
 #include "wine/test.h"
 
@@ -54,6 +56,19 @@ todo_wine
     IEnumWIA_DEV_INFO_Release(devenum);
 }
 
+static void test_SelectDeviceDlg(void)
+{
+    HRESULT hr;
+    IWiaItem *root;
+    hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, NULL);
+todo_wine
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, &root);
+todo_wine
+    ok(hr == S_OK || hr == WIA_S_NO_DEVICE_AVAILABLE, "got 0x%08x\n", hr);
+}
+
 START_TEST(wia)
 {
     HRESULT hr;
@@ -68,6 +83,7 @@ START_TEST(wia)
     }
 
     test_EnumDeviceInfo();
+    test_SelectDeviceDlg();
 
     IWiaDevMgr_Release(devmanager);
     CoUninitialize();
