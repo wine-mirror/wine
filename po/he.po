@@ -9465,6 +9465,66 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "ישנה לפחות בעיית אבטחה אחת שלא צוינה עם אישור זה."
 
+#: winineterror.mc:26
+msgid "The request has timed out.\n"
+msgstr ""
+
+#: winineterror.mc:31
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "An internal error has occurred.\n"
+msgstr "אירעה שגיאת מדפסת."
+
+#: winineterror.mc:36
+#, fuzzy
+msgid "The URL is invalid.\n"
+msgstr "התאריך על האישור שגוי."
+
+#: winineterror.mc:41
+msgid "The URL scheme could not be recognized or is not supported.\n"
+msgstr ""
+
+#: winineterror.mc:46
+#, fuzzy
+msgid "The server name could not be resolved.\n"
+msgstr "לא ניתן למצוא את שם המשתמש.\n"
+
+#: winineterror.mc:51
+#, fuzzy
+msgid "The requested operation is invalid.\n"
+msgstr "התאריך על האישור שגוי."
+
+#: winineterror.mc:56
+msgid ""
+"The operation was canceled, usually because the handle on which the request "
+"was operating was closed before the operation completed.\n"
+msgstr ""
+
+#: winineterror.mc:61
+#, fuzzy
+msgid "The requested item could not be located.\n"
+msgstr "לא ניתן להוסיף את הפרופיל.\n"
+
+#: winineterror.mc:66
+#, fuzzy
+#| msgid "Can't connect to the LDAP server"
+msgid "The attempt to connect to the server failed.\n"
+msgstr "לא ניתן להתחבר לשרת ה־LDAP"
+
+#: winineterror.mc:71
+msgid "The connection with the server has been terminated.\n"
+msgstr ""
+
+#: winineterror.mc:76
+msgid ""
+"SSL certificate date that was received from the server is bad. The "
+"certificate is expired.\n"
+msgstr ""
+
+#: winineterror.mc:81
+msgid "SSL certificate common name (host name field) is incorrect.\n"
+msgstr ""
+
 #: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr ""

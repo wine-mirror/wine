@@ -9291,6 +9291,72 @@ msgstr ""
 "Legalább egy nem meghatározott biztonsági probléma van ezzel a "
 "tanusítvánnyal."
 
+#: winineterror.mc:26
+#, fuzzy
+#| msgid "Service request timeout.\n"
+msgid "The request has timed out.\n"
+msgstr "Szervíz kérési időtúllépés.\n"
+
+#: winineterror.mc:31
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "An internal error has occurred.\n"
+msgstr "Nyomtatási hiba történt."
+
+#: winineterror.mc:36
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "The URL is invalid.\n"
+msgstr "Útvonal nem valós.\n"
+
+#: winineterror.mc:41
+msgid "The URL scheme could not be recognized or is not supported.\n"
+msgstr ""
+
+#: winineterror.mc:46
+#, fuzzy
+#| msgid "The username could not be found.\n"
+msgid "The server name could not be resolved.\n"
+msgstr "A felhasználónév nem található!.\n"
+
+#: winineterror.mc:51
+#, fuzzy
+#| msgid "The user profile is invalid.\n"
+msgid "The requested operation is invalid.\n"
+msgstr "A felhasználói profil érvénytelen.\n"
+
+#: winineterror.mc:56
+msgid ""
+"The operation was canceled, usually because the handle on which the request "
+"was operating was closed before the operation completed.\n"
+msgstr ""
+
+#: winineterror.mc:61
+#, fuzzy
+#| msgid "The profile could not be added.\n"
+msgid "The requested item could not be located.\n"
+msgstr "A profilt nem lehet hozzáadni!.\n"
+
+#: winineterror.mc:66
+#, fuzzy
+#| msgid "Can't connect to the LDAP server"
+msgid "The attempt to connect to the server failed.\n"
+msgstr "Nem tudok csatlakozni az LDAP kiszolgálóhoz"
+
+#: winineterror.mc:71
+msgid "The connection with the server has been terminated.\n"
+msgstr ""
+
+#: winineterror.mc:76
+msgid ""
+"SSL certificate date that was received from the server is bad. The "
+"certificate is expired.\n"
+msgstr ""
+
+#: winineterror.mc:81
+msgid "SSL certificate common name (host name field) is incorrect.\n"
+msgstr ""
+
 #: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "A megadott parancs végrehajtódott."

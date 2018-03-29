@@ -9026,6 +9026,72 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "证书至少带有一个不明安全问题。"
 
+#: winineterror.mc:26
+#, fuzzy
+#| msgid "Service request timeout.\n"
+msgid "The request has timed out.\n"
+msgstr "服务请求超时。\n"
+
+#: winineterror.mc:31
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "An internal error has occurred.\n"
+msgstr "打印机错误。"
+
+#: winineterror.mc:36
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "The URL is invalid.\n"
+msgstr "路径无效。\n"
+
+#: winineterror.mc:41
+msgid "The URL scheme could not be recognized or is not supported.\n"
+msgstr ""
+
+#: winineterror.mc:46
+#, fuzzy
+#| msgid "The username could not be found.\n"
+msgid "The server name could not be resolved.\n"
+msgstr "找不到用户名。\n"
+
+#: winineterror.mc:51
+#, fuzzy
+#| msgid "The user profile is invalid.\n"
+msgid "The requested operation is invalid.\n"
+msgstr "无效用户档案。\n"
+
+#: winineterror.mc:56
+msgid ""
+"The operation was canceled, usually because the handle on which the request "
+"was operating was closed before the operation completed.\n"
+msgstr ""
+
+#: winineterror.mc:61
+#, fuzzy
+#| msgid "The profile could not be added.\n"
+msgid "The requested item could not be located.\n"
+msgstr "无法添加该档案。\n"
+
+#: winineterror.mc:66
+#, fuzzy
+#| msgid "Can't connect to the LDAP server"
+msgid "The attempt to connect to the server failed.\n"
+msgstr "无法连接到 LDAP 服务器"
+
+#: winineterror.mc:71
+msgid "The connection with the server has been terminated.\n"
+msgstr ""
+
+#: winineterror.mc:76
+msgid ""
+"SSL certificate date that was received from the server is bad. The "
+"certificate is expired.\n"
+msgstr ""
+
+#: winineterror.mc:81
+msgid "SSL certificate common name (host name field) is incorrect.\n"
+msgstr ""
+
 #: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "已执行指定的命令。"

@@ -9096,6 +9096,72 @@ msgid ""
 msgstr ""
 "Tässä varmenteessa on ainakin yksi määrittelemätön turvallisuusongelma."
 
+#: winineterror.mc:26
+#, fuzzy
+#| msgid "Service request timeout.\n"
+msgid "The request has timed out.\n"
+msgstr "Palvelupyyntö aikakatkaistu.\n"
+
+#: winineterror.mc:31
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "An internal error has occurred.\n"
+msgstr "Tulostinvirhe."
+
+#: winineterror.mc:36
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "The URL is invalid.\n"
+msgstr "Polku on viallinen.\n"
+
+#: winineterror.mc:41
+msgid "The URL scheme could not be recognized or is not supported.\n"
+msgstr ""
+
+#: winineterror.mc:46
+#, fuzzy
+#| msgid "The username could not be found.\n"
+msgid "The server name could not be resolved.\n"
+msgstr "Käyttäjänimeä ei löytynyt.\n"
+
+#: winineterror.mc:51
+#, fuzzy
+#| msgid "The user profile is invalid.\n"
+msgid "The requested operation is invalid.\n"
+msgstr "Käyttäjäprofiili on viallinen.\n"
+
+#: winineterror.mc:56
+msgid ""
+"The operation was canceled, usually because the handle on which the request "
+"was operating was closed before the operation completed.\n"
+msgstr ""
+
+#: winineterror.mc:61
+#, fuzzy
+#| msgid "The profile could not be added.\n"
+msgid "The requested item could not be located.\n"
+msgstr "Profiilia ei voitu lisätä.\n"
+
+#: winineterror.mc:66
+#, fuzzy
+#| msgid "Can't connect to the LDAP server"
+msgid "The attempt to connect to the server failed.\n"
+msgstr "Ei voida yhdistää LDAP-palvelimeen"
+
+#: winineterror.mc:71
+msgid "The connection with the server has been terminated.\n"
+msgstr ""
+
+#: winineterror.mc:76
+msgid ""
+"SSL certificate date that was received from the server is bad. The "
+"certificate is expired.\n"
+msgstr ""
+
+#: winineterror.mc:81
+msgid "SSL certificate common name (host name field) is incorrect.\n"
+msgstr ""
+
 #: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Määritelty komento suoritettiin."

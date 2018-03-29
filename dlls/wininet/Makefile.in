@@ -17,3 +17,6 @@ C_SRCS = \
 	utility.c
 
 RC_SRCS = wininet.rc
+
+MC_SRCS = \
+	winineterror.mc
