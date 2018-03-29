@@ -1755,7 +1755,7 @@ static void test_reg_query_value(void)
 
     /* unicode - try size in WCHARS */
     SetLastError(0xdeadbeef);
-    size = sizeof(valW) / sizeof(WCHAR);
+    size = ARRAY_SIZE(valW);
     ret = RegQueryValueW(subkey, NULL, valW, &size);
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
@@ -2010,7 +2010,7 @@ static void test_reg_query_info(void)
     lstrcpyW(expectbufferW, subkey_classW);
     ok(!memcmp(classbufferW, expectbufferW, sizeof(classbufferW)),
        "classbufferW = %s, expected %s\n",
-       wine_dbgstr_wn(classbufferW, sizeof(classbufferW) / sizeof(WCHAR)), wine_dbgstr_w(expectbufferW));
+       wine_dbgstr_wn(classbufferW, ARRAY_SIZE(classbufferW)), wine_dbgstr_w(expectbufferW));
 
     memset(classbufferW, 0x55, sizeof(classbufferW));
     classlen = 0xdeadbeef;
@@ -2021,7 +2021,7 @@ static void test_reg_query_info(void)
     lstrcpyW(expectbufferW, subkey_classW);
     ok(!memcmp(classbufferW, expectbufferW, sizeof(classbufferW)),
        "classbufferW = %s, expected %s\n",
-       wine_dbgstr_wn(classbufferW, sizeof(classbufferW) / sizeof(WCHAR)), wine_dbgstr_w(expectbufferW));
+       wine_dbgstr_wn(classbufferW, ARRAY_SIZE(classbufferW)), wine_dbgstr_w(expectbufferW));
 
     RegDeleteKeyA(subsubkey, "");
     RegCloseKey(subsubkey);
