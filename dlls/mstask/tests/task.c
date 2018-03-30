@@ -496,6 +496,39 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     return;
 }
 
+static void test_GetFlags(void)
+{
+    BOOL setup;
+    HRESULT hr;
+    DWORD flags;
+
+    setup = setup_task();
+    ok(setup, "Failed to setup test_task\n");
+    if (!setup)
+    {
+        skip("Failed to create task. Skipping tests.\n");
+        return;
+    }
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetFlags(test_task, NULL);
+
+    flags = 0xdeadbeef;
+    hr = ITask_GetFlags(test_task, &flags);
+    ok(hr == S_OK, "GetFlags error %#x\n", hr);
+    ok(flags == 0, "got %#x\n", flags);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetTaskFlags(test_task, NULL);
+
+    flags = 0xdeadbeef;
+    hr = ITask_GetTaskFlags(test_task, &flags);
+    ok(hr == S_OK, "GetTaskFlags error %#x\n", hr);
+    ok(flags == 0, "got %#x\n", flags);
+
+    cleanup_task();
+}
+
 START_TEST(task)
 {
     CoInitialize(NULL);
@@ -505,5 +538,6 @@ START_TEST(task)
     test_SetComment_GetComment();
     test_SetMaxRunTime_GetMaxRunTime();
     test_SetAccountInformation_GetAccountInformation();
+    test_GetFlags();
     CoUninitialize();
 }

@@ -373,12 +373,11 @@ static HRESULT WINAPI MSTASK_ITask_SetFlags(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetFlags(
-        ITask* iface,
-        DWORD *pdwFlags)
+static HRESULT WINAPI MSTASK_ITask_GetFlags(ITask *iface, DWORD *flags)
 {
-    FIXME("(%p, %p): stub\n", iface, pdwFlags);
-    return E_NOTIMPL;
+    FIXME("(%p, %p): stub\n", iface, flags);
+    *flags = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetAccountInformation(
@@ -588,12 +587,11 @@ static HRESULT WINAPI MSTASK_ITask_SetTaskFlags(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetTaskFlags(
-        ITask* iface,
-        DWORD *pdwFlags)
+static HRESULT WINAPI MSTASK_ITask_GetTaskFlags(ITask *iface, DWORD *flags)
 {
-    FIXME("(%p, %p): stub\n", iface, pdwFlags);
-    return E_NOTIMPL;
+    FIXME("(%p, %p): stub\n", iface, flags);
+    *flags = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetMaxRunTime(
