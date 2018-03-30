@@ -37,8 +37,8 @@ typedef struct
     IPersistFile IPersistFile_iface;
     LONG ref;
     ITaskDefinition *task;
+    IExecAction *action;
     LPWSTR task_name;
-    LPWSTR applicationName;
     LPWSTR parameters;
     LPWSTR comment;
     DWORD maxRunTime;
@@ -58,6 +58,8 @@ static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
+    if (This->action)
+        IExecAction_Release(This->action);
     ITaskDefinition_Release(This->task);
     HeapFree(GetProcessHeap(), 0, This->task_name);
     HeapFree(GetProcessHeap(), 0, This->accountName);
@@ -427,73 +429,68 @@ static HRESULT WINAPI MSTASK_ITask_GetAccountInformation(
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_ITask_SetApplicationName(
-        ITask* iface,
-        LPCWSTR pwszApplicationName)
+static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appname)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
-    LPWSTR tmp_name;
+    DWORD len;
 
-    TRACE("(%p, %s)\n", iface, debugstr_w(pwszApplicationName));
+    TRACE("(%p, %s)\n", iface, debugstr_w(appname));
 
     /* Empty application name */
-    if (pwszApplicationName[0] == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This->applicationName);
-        This->applicationName = NULL;
-        return S_OK;
-    }
+    if (!appname || !appname[0])
+        return IExecAction_put_Path(This->action, NULL);
 
     /* Attempt to set pwszApplicationName to a path resolved application name */
-    n = SearchPathW(NULL, pwszApplicationName, NULL, 0, NULL, NULL);
-    if (n)
+    len = SearchPathW(NULL, appname, NULL, 0, NULL, NULL);
+    if (len)
     {
-        tmp_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+        LPWSTR tmp_name;
+        HRESULT hr;
+
+        tmp_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!tmp_name)
             return E_OUTOFMEMORY;
-        n = SearchPathW(NULL, pwszApplicationName, NULL, n, tmp_name, NULL);
-        if (n)
-        {
-            HeapFree(GetProcessHeap(), 0, This->applicationName);
-            This->applicationName = tmp_name;
-            return S_OK;
-        }
+        len = SearchPathW(NULL, appname, NULL, len, tmp_name, NULL);
+        if (len)
+            hr = IExecAction_put_Path(This->action, tmp_name);
         else
-            HeapFree(GetProcessHeap(), 0, tmp_name);
+            hr = HRESULT_FROM_WIN32(GetLastError());
+
+        HeapFree(GetProcessHeap(), 0, tmp_name);
+        return hr;
     }
 
-    /* If unable to path resolve name, simply set to pwszApplicationName */
-    n = (lstrlenW(pwszApplicationName) + 1);
-    tmp_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
-    if (!tmp_name)
-        return E_OUTOFMEMORY;
-    lstrcpyW(tmp_name, pwszApplicationName);
-    HeapFree(GetProcessHeap(), 0, This->applicationName);
-    This->applicationName = tmp_name;
-    return S_OK;
+    /* If unable to path resolve name, simply set to appname */
+    return IExecAction_put_Path(This->action, (BSTR)appname);
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetApplicationName(
-        ITask* iface,
-        LPWSTR *ppwszApplicationName)
+static HRESULT WINAPI MSTASK_ITask_GetApplicationName(ITask *iface, LPWSTR *appname)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
+    BSTR path;
+    DWORD len;
 
-    TRACE("(%p, %p)\n", iface, ppwszApplicationName);
+    TRACE("(%p, %p)\n", iface, appname);
 
-    n = This->applicationName ? lstrlenW(This->applicationName) + 1 : 1;
-    *ppwszApplicationName = CoTaskMemAlloc(n * sizeof(WCHAR));
-    if (!*ppwszApplicationName)
-        return E_OUTOFMEMORY;
+    hr = IExecAction_get_Path(This->action, &path);
+    if (hr != S_OK) return hr;
 
-    if (!This->applicationName)
-        *ppwszApplicationName[0] = 0;
+    len = path ? lstrlenW(path) + 1 : 1;
+    *appname = CoTaskMemAlloc(len * sizeof(WCHAR));
+    if (*appname)
+    {
+        if (!path)
+            *appname[0] = 0;
+        else
+            lstrcpyW(*appname, path);
+        hr = S_OK;
+    }
     else
-        lstrcpyW(*ppwszApplicationName, This->applicationName);
+        hr =  E_OUTOFMEMORY;
 
-    return S_OK;
+    SysFreeString(path);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetParameters(
@@ -767,6 +764,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
 {
     TaskImpl *This;
     ITaskDefinition *taskdef;
+    IActionCollection *actions;
     HRESULT hr;
 
     TRACE("(%s, %p)\n", debugstr_w(task_name), task);
@@ -786,7 +784,6 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->ref = 1;
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
-    This->applicationName = NULL;
     This->parameters = NULL;
     This->comment = NULL;
     This->accountName = NULL;
@@ -794,7 +791,20 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
 
-    *task = &This->ITask_iface;
-    InterlockedIncrement(&dll_ref);
-    return S_OK;
+    hr = ITaskDefinition_get_Actions(This->task, &actions);
+    if (hr == S_OK)
+    {
+        hr = IActionCollection_Create(actions, TASK_ACTION_EXEC, (IAction **)&This->action);
+        IActionCollection_Release(actions);
+        if (hr == S_OK)
+        {
+            *task = &This->ITask_iface;
+            InterlockedIncrement(&dll_ref);
+            return S_OK;
+        }
+    }
+
+    ITaskDefinition_Release(This->task);
+    ITask_Release(&This->ITask_iface);
+    return hr;
 }
