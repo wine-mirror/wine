@@ -39,7 +39,6 @@ typedef struct
     ITaskDefinition *task;
     IExecAction *action;
     LPWSTR task_name;
-    LPWSTR comment;
     DWORD maxRunTime;
     LPWSTR accountName;
 } TaskImpl;
@@ -62,7 +61,6 @@ static void TaskDestructor(TaskImpl *This)
     ITaskDefinition_Release(This->task);
     HeapFree(GetProcessHeap(), 0, This->task_name);
     HeapFree(GetProcessHeap(), 0, This->accountName);
-    HeapFree(GetProcessHeap(), 0, This->comment);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
 }
@@ -247,56 +245,45 @@ static HRESULT WINAPI MSTASK_ITask_GetExitCode(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_SetComment(
-        ITask* iface,
-        LPCWSTR pwszComment)
+static HRESULT WINAPI MSTASK_ITask_SetComment(ITask *iface, LPCWSTR comment)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
-    LPWSTR tmp_comment;
 
-    TRACE("(%p, %s)\n", iface, debugstr_w(pwszComment));
+    TRACE("(%p, %s)\n", iface, debugstr_w(comment));
 
-    /* Empty comment */
-    if (pwszComment[0] == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This->comment);
-        This->comment = NULL;
-        return S_OK;
-    }
+    if (!comment || !comment[0])
+        comment = NULL;
 
-    /* Set to pwszComment */
-    n = (lstrlenW(pwszComment) + 1);
-    tmp_comment = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
-    if (!tmp_comment)
-        return E_OUTOFMEMORY;
-    lstrcpyW(tmp_comment, pwszComment);
-    HeapFree(GetProcessHeap(), 0, This->comment);
-    This->comment = tmp_comment;
-
-    return S_OK;
+    return IExecAction_put_Id(This->action, (BSTR)comment);
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetComment(
-        ITask* iface,
-        LPWSTR *ppwszComment)
+static HRESULT WINAPI MSTASK_ITask_GetComment(ITask *iface, LPWSTR *comment)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
+    BSTR id;
+    DWORD len;
 
-    TRACE("(%p, %p)\n", iface, ppwszComment);
+    TRACE("(%p, %p)\n", iface, comment);
 
-    n = This->comment ? lstrlenW(This->comment) + 1 : 1;
-    *ppwszComment = CoTaskMemAlloc(n * sizeof(WCHAR));
-    if (!*ppwszComment)
-        return E_OUTOFMEMORY;
+    hr = IExecAction_get_Id(This->action, &id);
+    if (hr != S_OK) return hr;
 
-    if (!This->comment)
-        *ppwszComment[0] = 0;
+    len = id ? lstrlenW(id) + 1 : 1;
+    *comment = CoTaskMemAlloc(len * sizeof(WCHAR));
+    if (*comment)
+    {
+        if (!id)
+            *comment[0] = 0;
+        else
+            lstrcpyW(*comment, id);
+        hr = S_OK;
+    }
     else
-        lstrcpyW(*ppwszComment, This->comment);
+        hr =  E_OUTOFMEMORY;
 
-    return S_OK;
+    SysFreeString(id);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetCreator(
@@ -798,7 +785,6 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->ref = 1;
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
-    This->comment = NULL;
     This->accountName = NULL;
 
     /* Default time is 3 days = 259200000 ms */
