@@ -535,18 +535,6 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
             ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                "should have 1\n",ref);
 
-            temp_buffer=NULL;
-            rc=IDirectSound3DBuffer_QueryInterface(*dsbo,
-                                                   &IID_IDirectSoundBuffer,
-                                                   (LPVOID *)&temp_buffer);
-            ok(rc==DS_OK && temp_buffer!=NULL,
-               "IDirectSound3DBuffer_QueryInterface() failed: %08x\n", rc);
-            ok(temp_buffer==*dsbo,"COM interface broken: %p != %p\n",
-               temp_buffer,*dsbo);
-            ref=IDirectSoundBuffer_Release(temp_buffer);
-            ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
-               "should have 1\n",ref);
-
             ref=IDirectSoundBuffer_Release(*dsbo);
             ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                "should have 0\n",ref);
@@ -1193,6 +1181,8 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
     if (rc==DS_OK && primary!=NULL) {
         LPDIRECTSOUND3DLISTENER listener=NULL;
         LPDIRECTSOUNDBUFFER temp_buffer=NULL;
+        IKsPropertySet *propset;
+
         rc=IDirectSoundBuffer_QueryInterface(primary,
             &IID_IDirectSound3DListener,(void **)&listener);
         ok(rc==DS_OK && listener!=NULL,"IDirectSoundBuffer_QueryInterface() "
@@ -1231,11 +1221,10 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
 
                 temp_buffer = NULL;
                 rc = IDirectSound3DListener_QueryInterface(listener, &IID_IKsPropertySet,
-                        (void **)&temp_buffer);
-                ok(rc==DS_OK && temp_buffer!=NULL,
+                        (void **)&propset);
+                ok(rc == DS_OK && propset != NULL,
                         "IDirectSound3DListener_QueryInterface didn't handle IKsPropertySet: ret = %08x\n", rc);
-                if(temp_buffer)
-                    IKsPropertySet_Release(temp_buffer);
+                IKsPropertySet_Release(propset);
             }
 
             /* Testing the reference counting */
@@ -1244,12 +1233,11 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                "references, should have 0\n",ref);
         }
 
-        temp_buffer = NULL;
-        rc = IDirectSoundBuffer_QueryInterface(primary, &IID_IKsPropertySet, (void **)&temp_buffer);
-        ok(rc==DS_OK && temp_buffer!=NULL,
+        propset = NULL;
+        rc = IDirectSoundBuffer_QueryInterface(primary, &IID_IKsPropertySet, (void **)&propset);
+        ok(rc == DS_OK && propset != NULL,
                 "IDirectSoundBuffer_QueryInterface didn't handle IKsPropertySet on primary buffer: ret = %08x\n", rc);
-        if(temp_buffer)
-            IKsPropertySet_Release(temp_buffer);
+        IKsPropertySet_Release(propset);
 
         /* Testing the reference counting */
         ref=IDirectSoundBuffer_Release(primary);

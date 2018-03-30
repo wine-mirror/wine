@@ -371,17 +371,6 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
             ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
                "should have 1\n",ref);
 
-            temp_buffer=NULL;
-            rc=IDirectSound3DBuffer_QueryInterface(*dsbo, &IID_IDirectSoundBuffer,
-                                                   (LPVOID *)&temp_buffer);
-            ok(rc==DS_OK && temp_buffer!=NULL,
-               "IDirectSound3DBuffer_QueryInterface() failed: %08x\n", rc);
-            ok(temp_buffer==*dsbo,"COM interface broken: %p != %p\n",
-               temp_buffer,*dsbo);
-            ref=IDirectSoundBuffer_Release(temp_buffer);
-            ok(ref==1,"IDirectSoundBuffer_Release() has %d references, "
-               "should have 1\n",ref);
-
             ref=IDirectSoundBuffer_Release(*dsbo);
             ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                "should have 0\n",ref);

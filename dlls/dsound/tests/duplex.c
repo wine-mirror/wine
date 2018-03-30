@@ -49,7 +49,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
     rc=IDirectSoundFullDuplex_QueryInterface(dsfdo,&IID_IUnknown,(LPVOID*)&unknown);
     ok(rc==DS_OK,"IDirectSoundFullDuplex_QueryInterface(IID_IUnknown) failed: %08x\n", rc);
     if (rc==DS_OK) {
-        ref=IDirectSoundFullDuplex_Release(unknown);
+        ref = IUnknown_Release(unknown);
         ok(ref==0, "IDirectSoundFullDuplex_Release() has %d references, "
            "should have 0\n", ref);
     }
@@ -94,7 +94,7 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
        "failed: %08x\n",rc);
     if (rc==DS_OK) {
         ok(dsfdo==dsfd, "different interfaces\n");
-        ref=IDirectSound8_Release(dsfd);
+        ref=IDirectSoundFullDuplex_Release(dsfd);
         ok(ref==1, "IDirectSoundFullDuplex_Release() has %d references, should have 1\n", ref);
     }
 
@@ -319,7 +319,7 @@ static void test_COM(void)
     ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
     refcount = IDirectSoundFullDuplex_AddRef(dsfd);
     ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
-    hr = IDirectSoundCapture_QueryInterface(ds8, &IID_IUnknown, (void**)&unk8);
+    hr = IDirectSound8_QueryInterface(ds8, &IID_IUnknown, (void**)&unk8);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
     ok(unk == unk8,
             "Got different IUnknown when QI'ing IDirectSoundFullDuplex and IDirectSoundCapture\n");

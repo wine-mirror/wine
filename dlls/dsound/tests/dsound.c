@@ -30,6 +30,7 @@
 
 #include "wine/test.h"
 #include "mmsystem.h"
+#define COBJMACROS
 #include "dsound.h"
 #include "dsconf.h"
 #include "initguid.h"
@@ -61,7 +62,7 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
     rc=IDirectSound_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
     ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IUnknown) failed: %08x\n", rc);
     if (rc==DS_OK)
-        IDirectSound_Release(unknown);
+        IUnknown_Release(unknown);
 
     rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
     ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IDirectSound) failed: %08x\n", rc);
@@ -337,7 +338,7 @@ static HRESULT test_dsound(LPGUID lpGuid)
            "buffer %08x\n",rc);
         if (rc==DS_OK && secondary!=NULL) {
             LPDIRECTSOUND3DBUFFER buffer3d;
-            rc=IDirectSound_QueryInterface(secondary, &IID_IDirectSound3DBuffer,
+            rc = IDirectSoundBuffer_QueryInterface(secondary, &IID_IDirectSound3DBuffer,
                                            (void **)&buffer3d);
             ok(rc==DS_OK && buffer3d!=NULL,"IDirectSound_QueryInterface() "
                "failed: %08x\n",rc);
