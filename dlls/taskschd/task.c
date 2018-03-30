@@ -1679,6 +1679,7 @@ typedef struct
     WCHAR *path;
     WCHAR *directory;
     WCHAR *args;
+    WCHAR *id;
 } ExecAction;
 
 static inline ExecAction *impl_from_IExecAction(IExecAction *iface)
@@ -1703,6 +1704,7 @@ static ULONG WINAPI ExecAction_Release(IExecAction *iface)
         heap_free(action->path);
         heap_free(action->directory);
         heap_free(action->args);
+        heap_free(action->id);
         heap_free(action);
     }
 
@@ -1759,14 +1761,30 @@ static HRESULT WINAPI ExecAction_Invoke(IExecAction *iface, DISPID dispid, REFII
 
 static HRESULT WINAPI ExecAction_get_Id(IExecAction *iface, BSTR *id)
 {
-    FIXME("%p,%p: stub\n", iface, id);
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+
+    TRACE("%p,%p\n", iface, id);
+
+    if (!id) return E_POINTER;
+
+    if (!action->id) *id = NULL;
+    else if (!(*id = SysAllocString(action->id))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ExecAction_put_Id(IExecAction *iface, BSTR id)
 {
-    FIXME("%p,%s: stub\n", iface, debugstr_w(id));
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+    WCHAR *str = NULL;
+
+    TRACE("%p,%s\n", iface, debugstr_w(id));
+
+    if (id && !(str = heap_strdupW((id)))) return E_OUTOFMEMORY;
+    heap_free(action->id);
+    action->id = str;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ExecAction_get_Type(IExecAction *iface, TASK_ACTION_TYPE *type)
@@ -1896,6 +1914,7 @@ static HRESULT ExecAction_create(IExecAction **obj)
     action->path = NULL;
     action->directory = NULL;
     action->args = NULL;
+    action->id = NULL;
 
     *obj = &action->IExecAction_iface;
 

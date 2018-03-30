@@ -1306,12 +1306,13 @@ static void create_action(ITaskDefinition *taskdef)
     static WCHAR task1_exe[] = { 't','a','s','k','1','.','e','x','e',0 };
     static WCHAR workdir[] = { 'w','o','r','k','d','i','r',0 };
     static WCHAR args[] = { 'a','r','g','u','m','e','n','s',0 };
+    static WCHAR comment[] = { 'c','o','m','m','e','n','t',0 };
     HRESULT hr;
     IActionCollection *actions;
     IAction *action;
     IExecAction *exec_action;
     TASK_ACTION_TYPE type;
-    BSTR path;
+    BSTR path, str;
 
     hr = ITaskDefinition_get_Actions(taskdef, NULL);
     ok(hr == E_POINTER, "got %#x\n", hr);
@@ -1384,7 +1385,7 @@ static void create_action(ITaskDefinition *taskdef)
     ok(hr == S_OK, "put_Arguments error %#x\n", hr);
 
     hr = IExecAction_put_Arguments(exec_action, args);
-    ok(hr == S_OK, "put_WorkingDirectory error %#x\n", hr);
+    ok(hr == S_OK, "put_Arguments error %#x\n", hr);
 
     path = NULL;
     hr = IExecAction_get_Arguments(exec_action, &path);
@@ -1392,6 +1393,25 @@ static void create_action(ITaskDefinition *taskdef)
     ok(path != NULL, "args not set\n");
     ok(!lstrcmpW(path, args), "got %s\n", wine_dbgstr_w(path));
     SysFreeString(path);
+
+
+    str = (BSTR)0xdeadbeef;
+    hr = IExecAction_get_Id(exec_action, &str);
+    ok(hr == S_OK, "get_Id error %#x\n", hr);
+    ok(str == NULL, "id should be NULL\n");
+
+    hr = IExecAction_put_Id(exec_action, NULL);
+    ok(hr == S_OK, "put_Id error %#x\n", hr);
+
+    hr = IExecAction_put_Id(exec_action, comment);
+    ok(hr == S_OK, "put_Id error %#x\n", hr);
+
+    str = NULL;
+    hr = IExecAction_get_Id(exec_action, &str);
+    ok(hr == S_OK, "get_Id error %#x\n", hr);
+    ok(str != NULL, "should not be NULL\n");
+    ok(!lstrcmpW(str, comment), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     IExecAction_Release(exec_action);
     IAction_Release(action);
