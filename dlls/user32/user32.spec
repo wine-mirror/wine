@@ -253,6 +253,7 @@
 @ stdcall GetAppCompatFlags2(long)
 @ stdcall GetAsyncKeyState(long)
 @ stdcall GetAutoRotationState(ptr)
+@ stdcall GetAwarenessFromDpiAwarenessContext(long)
 @ stdcall GetCapture()
 @ stdcall GetCaretBlinkTime()
 @ stdcall GetCaretPos(ptr)
