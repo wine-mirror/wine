@@ -1208,7 +1208,7 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
                 device->pwfx->nBlockAlign, device->pwfx->wBitsPerSample,
                 device->pwfx->cbSize);
 
-        IDirectSoundBuffer_AddRef(&dsb->IDirectSoundBuffer8_iface);
+        IDirectSoundBuffer8_AddRef(&dsb->IDirectSoundBuffer8_iface);
 	*ppdsb = dsb;
 	return S_OK;
 }

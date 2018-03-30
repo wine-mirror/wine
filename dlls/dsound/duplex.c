@@ -202,7 +202,7 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(IDirectSoundFullDupl
             TRUE);
     if (SUCCEEDED(hr)) {
         IUnknown_QueryInterface(This->ds8_unk, &IID_IDirectSound8, (void**)&ds8);
-        hr = IDirectSound_Initialize(ds8, render_dev);
+        hr = IDirectSound8_Initialize(ds8, render_dev);
     }
     if (hr != DS_OK) {
         WARN("Creating/initializing IDirectSound8 failed\n");

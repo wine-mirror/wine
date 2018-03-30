@@ -129,7 +129,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(IDirectSoundNotify *
 
     TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj);
 
-    return IDirectSoundCaptureBuffer_QueryInterface(&This->IDirectSoundCaptureBuffer8_iface, riid, ppobj);
+    return IDirectSoundCaptureBuffer8_QueryInterface(&This->IDirectSoundCaptureBuffer8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(IDirectSoundNotify *iface)
@@ -811,7 +811,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         This->thread = CreateThread(NULL, 0, DSOUND_capture_thread, This, 0, NULL);
     }
 
-    IDirectSoundCaptureBuffer_AddRef(&This->IDirectSoundCaptureBuffer8_iface);
+    IDirectSoundCaptureBuffer8_AddRef(&This->IDirectSoundCaptureBuffer8_iface);
     *ppobj = This;
 
     TRACE("returning DS_OK\n");

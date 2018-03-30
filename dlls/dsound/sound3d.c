@@ -730,7 +730,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(IDirectSound3DLi
 
         TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppobj);
 
-        return IDirectSoundBuffer_QueryInterface(&This->IDirectSoundBuffer8_iface, riid, ppobj);
+        return IDirectSoundBuffer8_QueryInterface(&This->IDirectSoundBuffer8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(IDirectSound3DListener *iface)

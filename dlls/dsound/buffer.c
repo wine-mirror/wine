@@ -1229,7 +1229,7 @@ static HRESULT WINAPI IKsPropertySetImpl_QueryInterface(IKsPropertySet *iface, R
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
-    return IDirectSoundBuffer_QueryInterface(&This->IDirectSoundBuffer8_iface, riid, ppobj);
+    return IDirectSoundBuffer8_QueryInterface(&This->IDirectSoundBuffer8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IKsPropertySetImpl_AddRef(IKsPropertySet *iface)
