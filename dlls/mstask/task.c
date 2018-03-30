@@ -39,7 +39,6 @@ typedef struct
     ITaskDefinition *task;
     IExecAction *action;
     LPWSTR task_name;
-    LPWSTR parameters;
     LPWSTR comment;
     DWORD maxRunTime;
     LPWSTR accountName;
@@ -64,7 +63,6 @@ static void TaskDestructor(TaskImpl *This)
     HeapFree(GetProcessHeap(), 0, This->task_name);
     HeapFree(GetProcessHeap(), 0, This->accountName);
     HeapFree(GetProcessHeap(), 0, This->comment);
-    HeapFree(GetProcessHeap(), 0, This->parameters);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
 }
@@ -493,55 +491,46 @@ static HRESULT WINAPI MSTASK_ITask_GetApplicationName(ITask *iface, LPWSTR *appn
     return hr;
 }
 
-static HRESULT WINAPI MSTASK_ITask_SetParameters(
-        ITask* iface,
-        LPCWSTR pwszParameters)
+static HRESULT WINAPI MSTASK_ITask_SetParameters(ITask *iface, LPCWSTR params)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
-    LPWSTR tmp_parameters;
 
-    TRACE("(%p, %s)\n", iface, debugstr_w(pwszParameters));
+    TRACE("(%p, %s)\n", iface, debugstr_w(params));
 
     /* Empty parameter list */
-    if (pwszParameters[0] == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This->parameters);
-        This->parameters = NULL;
-        return S_OK;
-    }
+    if (!params || !params[0])
+        params = NULL;
 
-    /* Set to pwszParameters */
-    n = (lstrlenW(pwszParameters) + 1);
-    tmp_parameters = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
-    if (!tmp_parameters)
-        return E_OUTOFMEMORY;
-    lstrcpyW(tmp_parameters, pwszParameters);
-    HeapFree(GetProcessHeap(), 0, This->parameters);
-    This->parameters = tmp_parameters;
-    return S_OK;
+    return IExecAction_put_Arguments(This->action, (BSTR)params);
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetParameters(
-        ITask* iface,
-        LPWSTR *ppwszParameters)
+static HRESULT WINAPI MSTASK_ITask_GetParameters(ITask *iface, LPWSTR *params)
 {
-    DWORD n;
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
+    BSTR args;
+    DWORD len;
 
-    TRACE("(%p, %p)\n", iface, ppwszParameters);
+    TRACE("(%p, %p)\n", iface, params);
 
-    n = This->parameters ? lstrlenW(This->parameters) + 1 : 1;
-    *ppwszParameters = CoTaskMemAlloc(n * sizeof(WCHAR));
-    if (!*ppwszParameters)
-        return E_OUTOFMEMORY;
+    hr = IExecAction_get_Arguments(This->action, &args);
+    if (hr != S_OK) return hr;
 
-    if (!This->parameters)
-        *ppwszParameters[0] = 0;
+    len = args ? lstrlenW(args) + 1 : 1;
+    *params = CoTaskMemAlloc(len * sizeof(WCHAR));
+    if (*params)
+    {
+        if (!args)
+            *params[0] = 0;
+        else
+            lstrcpyW(*params, args);
+        hr = S_OK;
+    }
     else
-        lstrcpyW(*ppwszParameters, This->parameters);
+        hr =  E_OUTOFMEMORY;
 
-    return S_OK;
+    SysFreeString(args);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetWorkingDirectory(
@@ -784,7 +773,6 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->ref = 1;
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
-    This->parameters = NULL;
     This->comment = NULL;
     This->accountName = NULL;
 
