@@ -90,6 +90,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(button);
 typedef struct _BUTTON_INFO
 {
     HWND        hwnd;
+    HWND        parent;
     LONG        state;
     HFONT       font;
     WCHAR      *note;
@@ -342,6 +343,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         infoPtr = heap_alloc_zero( sizeof(*infoPtr) );
         SetWindowLongPtrW( hWnd, 0, (LONG_PTR)infoPtr );
         infoPtr->hwnd = hWnd;
+        infoPtr->parent = GetParent(hWnd);
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 
     case WM_NCDESTROY:

@@ -979,6 +979,62 @@ static void register_parent_class(void)
     RegisterClassA(&cls);
 }
 
+static void test_button_data(void)
+{
+    static const DWORD styles[] =
+    {
+        BS_PUSHBUTTON,
+        BS_DEFPUSHBUTTON,
+        BS_CHECKBOX,
+        BS_AUTOCHECKBOX,
+        BS_RADIOBUTTON,
+        BS_3STATE,
+        BS_AUTO3STATE,
+        BS_GROUPBOX,
+        BS_USERBUTTON,
+        BS_AUTORADIOBUTTON,
+        BS_OWNERDRAW,
+        BS_SPLITBUTTON,
+        BS_DEFSPLITBUTTON,
+        BS_COMMANDLINK,
+        BS_DEFCOMMANDLINK,
+    };
+
+    struct button_desc
+    {
+        HWND self;
+        HWND parent;
+    };
+    unsigned int i;
+    HWND parent;
+
+    parent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                             100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(parent != 0, "Failed to create parent window\n");
+
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        struct button_desc *desc;
+        HWND hwnd;
+
+        hwnd = create_button(styles[i], parent);
+        ok(hwnd != NULL, "Failed to create a button.\n");
+
+        desc = (void *)GetWindowLongPtrA(hwnd, 0);
+        ok(desc != NULL, "Expected window data.\n");
+
+        if (desc)
+        {
+            ok(desc->self == hwnd, "Unexpected 'self' field.\n");
+            ok(desc->parent == parent, "Unexpected 'parent' field.\n");
+        }
+
+        DestroyWindow(hwnd);
+    }
+
+    DestroyWindow(parent);
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -995,6 +1051,7 @@ START_TEST(button)
     test_button_class();
     test_button_messages();
     test_note();
+    test_button_data();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
