@@ -2943,6 +2943,15 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 }
 
 /***********************************************************************
+ *              AreDpiAwarenessContextsEqual   (USER32.@)
+ */
+BOOL WINAPI AreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT ctx1, DPI_AWARENESS_CONTEXT ctx2 )
+{
+    if (!IsValidDpiAwarenessContext( ctx1 )) return FALSE;
+    return ctx1 == ctx2;
+}
+
+/***********************************************************************
  *              GetAwarenessFromDpiAwarenessContext   (USER32.@)
  */
 DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )

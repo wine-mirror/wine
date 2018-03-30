@@ -9,6 +9,7 @@
 @ stdcall AnyPopup()
 @ stdcall AppendMenuA(long long long ptr)
 @ stdcall AppendMenuW(long long long ptr)
+@ stdcall AreDpiAwarenessContextsEqual(long long)
 @ stdcall ArrangeIconicWindows(long)
 @ stdcall AttachThreadInput(long long long)
 @ stdcall BeginDeferWindowPos(long)
