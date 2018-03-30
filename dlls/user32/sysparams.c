@@ -2942,6 +2942,28 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
     return USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }
 
+
+static DPI_AWARENESS_CONTEXT dpi_awareness;
+
+/**********************************************************************
+ *              SetProcessDpiAwarenessContext   (USER32.@)
+ */
+BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
+{
+    if (!IsValidDpiAwarenessContext( context ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (InterlockedCompareExchangePointer( (void **)&dpi_awareness, context, NULL ))
+    {
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+    TRACE( "set to %p\n", context );
+    return TRUE;
+}
+
 /***********************************************************************
  *              AreDpiAwarenessContextsEqual   (USER32.@)
  */
@@ -2980,6 +3002,7 @@ BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 BOOL WINAPI SetProcessDPIAware(void)
 {
     TRACE("\n");
+    InterlockedCompareExchangePointer( (void **)&dpi_awareness, DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, NULL );
     return TRUE;
 }
 
@@ -2988,8 +3011,8 @@ BOOL WINAPI SetProcessDPIAware(void)
  */
 BOOL WINAPI IsProcessDPIAware(void)
 {
-    TRACE("returning TRUE\n");
-    return TRUE;
+    /* FIXME: should default to FALSE when not set */
+    return dpi_awareness != DPI_AWARENESS_CONTEXT_UNAWARE;
 }
 
 /***********************************************************************

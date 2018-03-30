@@ -41,6 +41,7 @@
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDPIAware)(void);
+static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -2995,6 +2996,30 @@ static void test_dpi_aware(void)
         return;
     }
 
+    if (pSetProcessDpiAwarenessContext)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pSetProcessDpiAwarenessContext( NULL );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)-5 );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        ok( ret, "got %d\n", ret );
+        SetLastError( 0xdeadbeef );
+        ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+        ret = pIsProcessDPIAware();
+        ok(ret, "got %d\n", ret);
+    }
+
     ret = pSetProcessDPIAware();
     ok(ret, "got %d\n", ret);
 
@@ -3019,6 +3044,7 @@ START_TEST(sysparams)
     pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
     pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
+    pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
