@@ -533,20 +533,45 @@ static HRESULT WINAPI MSTASK_ITask_GetParameters(ITask *iface, LPWSTR *params)
     return hr;
 }
 
-static HRESULT WINAPI MSTASK_ITask_SetWorkingDirectory(
-        ITask* iface,
-        LPCWSTR pwszWorkingDirectory)
+static HRESULT WINAPI MSTASK_ITask_SetWorkingDirectory(ITask * iface, LPCWSTR workdir)
 {
-    FIXME("(%p, %s): stub\n", iface, debugstr_w(pwszWorkingDirectory));
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %s)\n", iface, debugstr_w(workdir));
+
+    if (!workdir || !workdir[0])
+        workdir = NULL;
+
+    return IExecAction_put_WorkingDirectory(This->action, (BSTR)workdir);
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetWorkingDirectory(
-        ITask* iface,
-        LPWSTR *ppwszWorkingDirectory)
+static HRESULT WINAPI MSTASK_ITask_GetWorkingDirectory(ITask *iface, LPWSTR *workdir)
 {
-    FIXME("(%p, %p): stub\n", iface, ppwszWorkingDirectory);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
+    BSTR dir;
+    DWORD len;
+
+    TRACE("(%p, %p)\n", iface, workdir);
+
+    hr = IExecAction_get_WorkingDirectory(This->action, &dir);
+    if (hr != S_OK) return hr;
+
+    len = dir ? lstrlenW(dir) + 1 : 1;
+    *workdir = CoTaskMemAlloc(len * sizeof(WCHAR));
+    if (*workdir)
+    {
+        if (!dir)
+            *workdir[0] = 0;
+        else
+            lstrcpyW(*workdir, dir);
+        hr = S_OK;
+    }
+    else
+        hr =  E_OUTOFMEMORY;
+
+    SysFreeString(dir);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetPriority(
