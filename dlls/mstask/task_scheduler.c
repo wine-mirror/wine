@@ -37,7 +37,6 @@ typedef struct
     ITaskScheduler ITaskScheduler_iface;
     LONG ref;
     ITaskService *service;
-    ITaskFolder *root;
 } TaskSchedulerImpl;
 
 typedef struct
@@ -59,7 +58,6 @@ static inline EnumWorkItemsImpl *impl_from_IEnumWorkItems(IEnumWorkItems *iface)
 static void TaskSchedulerDestructor(TaskSchedulerImpl *This)
 {
     TRACE("%p\n", This);
-    ITaskFolder_Release(This->root);
     ITaskService_Release(This->service);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
@@ -308,7 +306,7 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_NewWorkItem(
     if (!IsEqualGUID(riid, &IID_ITask))
         return E_NOINTERFACE;
 
-    return TaskConstructor(This->root, task_name, (ITask **)task, TRUE);
+    return TaskConstructor(This->service, task_name, (ITask **)task);
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(
@@ -349,7 +347,6 @@ HRESULT TaskSchedulerConstructor(LPVOID *ppObj)
 {
     TaskSchedulerImpl *This;
     ITaskService *service;
-    ITaskFolder *root;
     VARIANT v_null;
     HRESULT hr;
 
@@ -366,24 +363,15 @@ HRESULT TaskSchedulerConstructor(LPVOID *ppObj)
         return hr;
     }
 
-    hr = ITaskService_GetFolder(service, NULL, &root);
-    if (hr != S_OK)
-    {
-        ITaskService_Release(service);
-        return hr;
-    }
-
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
     {
-        ITaskFolder_Release(root);
         ITaskService_Release(service);
         return E_OUTOFMEMORY;
     }
 
     This->ITaskScheduler_iface.lpVtbl = &MSTASK_ITaskSchedulerVtbl;
     This->service = service;
-    This->root = root;
     This->ref = 1;
 
     *ppObj = &This->ITaskScheduler_iface;

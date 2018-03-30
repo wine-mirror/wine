@@ -36,7 +36,8 @@ typedef struct
     ITask ITask_iface;
     IPersistFile IPersistFile_iface;
     LONG ref;
-    IRegisteredTask *regtask;
+    ITaskDefinition *task;
+    LPWSTR task_name;
     LPWSTR applicationName;
     LPWSTR parameters;
     LPWSTR comment;
@@ -57,6 +58,8 @@ static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
+    ITaskDefinition_Release(This->task);
+    HeapFree(GetProcessHeap(), 0, This->task_name);
     HeapFree(GetProcessHeap(), 0, This->accountName);
     HeapFree(GetProcessHeap(), 0, This->comment);
     HeapFree(GetProcessHeap(), 0, This->parameters);
@@ -762,49 +765,29 @@ static const IPersistFileVtbl MSTASK_IPersistFileVtbl =
     MSTASK_IPersistFile_GetCurFile
 };
 
-HRESULT TaskConstructor(ITaskFolder *folder, const WCHAR *task_name, ITask **task, BOOL create)
+HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **task)
 {
     TaskImpl *This;
-    IRegisteredTask *regtask;
-    BSTR bstr;
+    ITaskDefinition *taskdef;
     HRESULT hr;
 
     TRACE("(%s, %p)\n", debugstr_w(task_name), task);
 
-    bstr = SysAllocString(task_name);
-    if (!bstr) return E_OUTOFMEMORY;
-
-    if (create)
-    {
-        static const char xml_tmplate[] =
-            "<?xml version=\"1.0\"?>\n"
-            "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
-            "</Task>\n";
-        WCHAR xmlW[sizeof(xml_tmplate)];
-        VARIANT v_null;
-
-        MultiByteToWideChar(CP_ACP, 0, xml_tmplate, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
-
-        V_VT(&v_null) = VT_NULL;
-        hr = ITaskFolder_RegisterTask(folder, bstr, xmlW, TASK_CREATE | TASK_UPDATE,
-                                      v_null, v_null, TASK_LOGON_NONE, v_null, &regtask);
-    }
-    else
-        hr = ITaskFolder_GetTask(folder, bstr, &regtask);
-    SysFreeString(bstr);
+    hr = ITaskService_NewTask(service, 0, &taskdef);
     if (hr != S_OK) return hr;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
     {
-        IRegisteredTask_Release(regtask);
+        ITaskDefinition_Release(taskdef);
         return E_OUTOFMEMORY;
     }
 
     This->ITask_iface.lpVtbl = &MSTASK_ITaskVtbl;
     This->IPersistFile_iface.lpVtbl = &MSTASK_IPersistFileVtbl;
     This->ref = 1;
-    This->regtask = regtask;
+    This->task = taskdef;
+    This->task_name = heap_strdupW(task_name);
     This->applicationName = NULL;
     This->parameters = NULL;
     This->comment = NULL;

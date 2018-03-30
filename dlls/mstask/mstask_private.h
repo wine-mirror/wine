@@ -19,6 +19,9 @@
 #ifndef __MSTASK_PRIVATE_H__
 #define __MSTASK_PRIVATE_H__
 
+#include "wine/heap.h"
+#include "wine/unicode.h"
+
 extern LONG dll_ref DECLSPEC_HIDDEN;
 
 typedef struct ClassFactoryImpl ClassFactoryImpl;
@@ -26,6 +29,16 @@ extern ClassFactoryImpl MSTASK_ClassFactory DECLSPEC_HIDDEN;
 
 extern HRESULT TaskTriggerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
 extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
-extern HRESULT TaskConstructor(ITaskFolder *folder, const WCHAR *task_name, ITask **task, BOOL create) DECLSPEC_HIDDEN;
+extern HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **task) DECLSPEC_HIDDEN;
+
+static inline WCHAR *heap_strdupW(const WCHAR *src)
+{
+    WCHAR *dst;
+    unsigned len;
+    if (!src) return NULL;
+    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
+    return dst;
+}
 
 #endif /* __MSTASK_PRIVATE_H__ */
