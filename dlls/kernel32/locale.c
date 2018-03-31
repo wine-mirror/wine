@@ -2821,7 +2821,11 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
 LANGID WINAPI SetThreadUILanguage( LANGID langid )
 {
     TRACE("(0x%04x) stub - returning success\n", langid);
-    return langid;
+
+    if (!langid)
+        return GetThreadUILanguage();
+    else
+        return langid;
 }
 
 /******************************************************************************

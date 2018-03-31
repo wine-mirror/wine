@@ -5344,7 +5344,7 @@ static void test_SetThreadUILanguage(void)
     }
 
     res = pSetThreadUILanguage(0);
-    todo_wine ok(res == pGetThreadUILanguage(), "expected %d got %d\n", pGetThreadUILanguage(), res);
+    ok(res == pGetThreadUILanguage(), "expected %d got %d\n", pGetThreadUILanguage(), res);
 
     res = pSetThreadUILanguage(MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN));
     ok(res == MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN),
