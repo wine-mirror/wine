@@ -38,6 +38,7 @@
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -377,6 +378,12 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
     return ret;
 }
 
+static LONG WINAPI invalid_handle_exception_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+    return (rec->ExceptionCode == EXCEPTION_INVALID_HANDLE) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH;
+}
+
 /* Everquest 2 / Pirates of the Burning Sea hooks NtClose, so we need a wrapper */
 NTSTATUS close_handle( HANDLE handle )
 {
@@ -390,6 +397,25 @@ NTSTATUS close_handle( HANDLE handle )
     }
     SERVER_END_REQ;
     if (fd != -1) close( fd );
+
+    if (ret == STATUS_INVALID_HANDLE && handle && NtCurrentTeb()->Peb->BeingDebugged)
+    {
+        __TRY
+        {
+            EXCEPTION_RECORD record;
+            record.ExceptionCode    = EXCEPTION_INVALID_HANDLE;
+            record.ExceptionFlags   = 0;
+            record.ExceptionRecord  = NULL;
+            record.ExceptionAddress = NULL;
+            record.NumberParameters = 0;
+            RtlRaiseException( &record );
+        }
+        __EXCEPT(invalid_handle_exception_handler)
+        {
+        }
+        __ENDTRY
+    }
+
     return ret;
 }
 
