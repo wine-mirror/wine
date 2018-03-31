@@ -726,6 +726,92 @@ static void test_waveout(void)
     IParseDisplayName_Release(parser);
 }
 
+static void test_wavein(void)
+{
+    static const WCHAR waveinidW[] = {'W','a','v','e','I','n','I','d',0};
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    IMoniker *mon;
+    WCHAR endpoint[200];
+    WCHAR buffer[200];
+    WAVEINCAPSW caps;
+    MMRESULT mmr;
+    int count, i;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
+
+    count = waveInGetNumDevs();
+
+    for (i = 0; i < count; i++)
+    {
+        waveInGetDevCapsW(i, &caps, sizeof(caps));
+
+        lstrcpyW(buffer, deviceW);
+        lstrcatW(buffer, cmW);
+        StringFromGUID2(&CLSID_AudioInputDeviceCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+        lstrcatW(buffer, backslashW);
+        lstrcatW(buffer, caps.szPname);
+
+        mon = check_display_name(parser, buffer);
+
+        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+        ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+        VariantInit(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        {
+            IPropertyBag_Release(prop_bag);
+            IMoniker_Release(mon);
+
+            /* Win8+ uses the endpoint GUID instead of the device name */
+            mmr = waveInMessage((HWAVEIN)(DWORD_PTR) i, DRV_QUERYFUNCTIONINSTANCEID,
+                                (DWORD_PTR) endpoint, sizeof(endpoint));
+            ok(!mmr, "waveInMessage failed: %u\n", mmr);
+
+            lstrcpyW(buffer, deviceW);
+            lstrcatW(buffer, cmW);
+            StringFromGUID2(&CLSID_AudioInputDeviceCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+            lstrcatW(buffer, backslashW);
+            lstrcatW(buffer, waveW);
+            lstrcatW(buffer, strchrW(endpoint, '}') + 2);
+
+            mon = check_display_name(parser, buffer);
+
+            hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+            ok(hr == S_OK, "BindToStorage failed: %#x\n", hr);
+
+            hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        }
+        ok(hr == S_OK, "Read failed: %#x\n", hr);
+
+        ok(!strncmpW(caps.szPname, V_BSTR(&var), lstrlenW(caps.szPname)), "expected %s, got %s\n",
+            wine_dbgstr_w(caps.szPname), wine_dbgstr_w(V_BSTR(&var)));
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, clsidW, &var, NULL);
+        ok(hr == S_OK, "Read failed: %#x\n", hr);
+
+        StringFromGUID2(&CLSID_AudioRecord, buffer, CHARS_IN_GUID);
+        ok(!lstrcmpW(buffer, V_BSTR(&var)), "expected %s, got %s\n",
+            wine_dbgstr_w(buffer), wine_dbgstr_w(V_BSTR(&var)));
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, waveinidW, &var, NULL);
+        ok(hr == S_OK, "Read failed: %#x\n", hr);
+
+        ok(V_I4(&var) == i, "expected %d, got %d\n", i, V_I4(&var));
+
+        IPropertyBag_Release(prop_bag);
+        IMoniker_Release(mon);
+    }
+
+    IParseDisplayName_Release(parser);
+}
+
 START_TEST(devenum)
 {
     IBindCtx *bind_ctx = NULL;
@@ -752,6 +838,7 @@ START_TEST(devenum)
     hr = DirectSoundEnumerateW(test_dsound, NULL);
     ok(hr == S_OK, "got %#x\n", hr);
     test_waveout();
+    test_wavein();
 
     CoUninitialize();
 }

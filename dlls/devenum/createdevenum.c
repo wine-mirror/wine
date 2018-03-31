@@ -52,7 +52,6 @@ static const WCHAR wszDirection[] = {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR wszIsRendered[] = {'I','s','R','e','n','d','e','r','e','d',0};
 static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
-static const WCHAR wszWaveInID[] = {'W','a','v','e','I','n','I','D',0};
 static const WCHAR wszFilterData[] = {'F','i','l','t','e','r','D','a','t','a',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
@@ -673,6 +672,72 @@ cleanup:
     }
 }
 
+static void register_wavein_devices(void)
+{
+    static const WCHAR waveinidW[] = {'W','a','v','e','I','n','I','d',0};
+    IPropertyBag *prop_bag = NULL;
+    REGFILTER2 rgf = {0};
+    WCHAR clsid[CHARS_IN_GUID];
+    IMoniker *mon = NULL;
+    WAVEINCAPSW caps;
+    int i, count;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
+    if (FAILED(hr)) return;
+
+    count = waveInGetNumDevs();
+
+    for (i = 0; i < count; i++)
+    {
+        waveInGetDevCapsW(i, &caps, sizeof(caps));
+
+        V_VT(&var) = VT_BSTR;
+
+        V_BSTR(&var) = SysAllocString(caps.szPname);
+        if (!(V_BSTR(&var)))
+            goto cleanup;
+
+        hr = register_codec(&CLSID_AudioInputDeviceCategory, V_BSTR(&var), &mon);
+        if (FAILED(hr)) goto cleanup;
+
+        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+        if (FAILED(hr)) goto cleanup;
+
+        /* write friendly name */
+        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write clsid */
+        V_VT(&var) = VT_BSTR;
+        StringFromGUID2(&CLSID_AudioRecord, clsid, CHARS_IN_GUID);
+        if (!(V_BSTR(&var) = SysAllocString(clsid)))
+            goto cleanup;
+        hr = IPropertyBag_Write(prop_bag, clsid_keyname, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write filter data */
+        rgf.dwVersion = 2;
+        rgf.dwMerit = MERIT_DO_NOT_USE;
+
+        write_filter_data(prop_bag, &rgf);
+
+        /* write WaveInId */
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = i;
+        hr = IPropertyBag_Write(prop_bag, waveinidW, &var);
+        if (FAILED(hr)) goto cleanup;
+
+cleanup:
+        VariantClear(&var);
+        if (prop_bag) IPropertyBag_Release(prop_bag);
+        if (mon) IMoniker_Release(mon);
+    }
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -696,6 +761,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     hr = DirectSoundEnumerateW(&register_dsound_devices, NULL);
     if (FAILED(hr)) return hr;
     register_waveout_devices();
+    register_wavein_devices();
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -832,72 +898,9 @@ static HRESULT register_codecs(void)
     if (SUCCEEDED(res))
     {
         UINT i;
-	WAVEINCAPSW wicaps;
         MIDIOUTCAPSW mocaps;
         REGPINTYPES * pTypes;
         IPropertyBag * pPropBag = NULL;
-
-        numDevs = waveInGetNumDevs();
-
-        res = DEVENUM_CreateAMCategoryKey(&CLSID_AudioInputDeviceCategory);
-        if (FAILED(res)) /* can't register any devices in this category */
-            numDevs = 0;
-
-	rfp2.dwFlags = REG_PINFLAG_B_OUTPUT;
-        for (i = 0; i < numDevs; i++)
-        {
-            if (waveInGetDevCapsW(i, &wicaps, sizeof(WAVEINCAPSW))
-                == MMSYSERR_NOERROR)
-            {
-                IMoniker * pMoniker = NULL;
-
-                rfp2.nMediaTypes = 1;
-                pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
-                if (!pTypes)
-                {
-                    IFilterMapper2_Release(pMapper);
-                    return E_OUTOFMEMORY;
-                }
-
-                /* FIXME: Not sure if these are correct */
-                pTypes[0].clsMajorType = &MEDIATYPE_Audio;
-                pTypes[0].clsMinorType = &MEDIASUBTYPE_PCM;
-
-                rfp2.lpMediaType = pTypes;
-
-                res = IFilterMapper2_RegisterFilter(pMapper,
-		                              &CLSID_AudioRecord,
-					      wicaps.szPname,
-					      &pMoniker,
-					      &CLSID_AudioInputDeviceCategory,
-					      wicaps.szPname,
-					      &rf2);
-
-
-                if (pMoniker) {
-                    VARIANT var;
-
-                    V_VT(&var) = VT_I4;
-                    V_I4(&var) = i;
-                    res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
-                    if (SUCCEEDED(res))
-                        res = IPropertyBag_Write(pPropBag, wszWaveInID, &var);
-                    else
-                        pPropBag = NULL;
-
-                    V_VT(&var) = VT_LPWSTR;
-                    V_BSTR(&var) = wicaps.szPname;
-                    if (SUCCEEDED(res))
-                        res = IPropertyBag_Write(pPropBag, wszFriendlyName, &var);
-
-                    if (pPropBag)
-                        IPropertyBag_Release(pPropBag);
-                    IMoniker_Release(pMoniker);
-                }
-
-                CoTaskMemFree(pTypes);
-	    }
-	}
 
 	numDevs = midiOutGetNumDevs();
 
