@@ -104,6 +104,8 @@ static BOOL (WINAPI *pGetUserPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*
 static WCHAR (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 static INT (WINAPI *pGetNumberFormatEx)(LPCWSTR, DWORD, LPCWSTR, const NUMBERFMTW *, LPWSTR, int);
 static INT (WINAPI *pFindNLSStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT, LPINT, LPNLSVERSIONINFO, LPVOID, LPARAM);
+static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
+static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 
 static void InitFunctionPointers(void)
 {
@@ -137,6 +139,8 @@ static void InitFunctionPointers(void)
   X(GetUserPreferredUILanguages);
   X(GetNumberFormatEx);
   X(FindNLSStringEx);
+  X(SetThreadUILanguage);
+  X(GetThreadUILanguage);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -5444,6 +5448,28 @@ static void test_FindNLSStringEx(void)
     }
 }
 
+static void test_SetThreadUILanguage(void)
+{
+    LANGID res;
+
+    if (!pGetThreadUILanguage)
+    {
+        win_skip("GetThreadUILanguage isn't implemented, skipping SetThreadUILanguage tests for version < Vista\n");
+        return;   /* BTW SetThreadUILanguage is present on winxp/2003 but doesn`t set the LANGID anyway when tested */
+    }
+
+    res = pSetThreadUILanguage(0);
+    todo_wine ok(res == pGetThreadUILanguage(), "expected %d got %d\n", pGetThreadUILanguage(), res);
+
+    res = pSetThreadUILanguage(MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN));
+    ok(res == MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN),
+    "expected %d got %d\n", MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN), res);
+
+    res = pSetThreadUILanguage(0);
+    todo_wine ok(res == MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN),
+    "expected %d got %d\n", MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN), res);
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -5491,6 +5517,7 @@ START_TEST(locale)
   test_GetThreadPreferredUILanguages();
   test_GetUserPreferredUILanguages();
   test_FindNLSStringEx();
+  test_SetThreadUILanguage();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
