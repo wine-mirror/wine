@@ -106,28 +106,6 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
     return 1; /* non-heap based object */
 }
 
-static HKEY open_special_category_key(const CLSID *clsid, BOOL create)
-{
-    WCHAR key_name[sizeof(wszActiveMovieKey)/sizeof(WCHAR) + CHARS_IN_GUID-1];
-    HKEY ret;
-    LONG res;
-
-    strcpyW(key_name, wszActiveMovieKey);
-    if (!StringFromGUID2(clsid, key_name + sizeof(wszActiveMovieKey)/sizeof(WCHAR)-1, CHARS_IN_GUID))
-        return NULL;
-
-    if(create)
-        res = RegCreateKeyW(HKEY_CURRENT_USER, key_name, &ret);
-    else
-        res = RegOpenKeyExW(HKEY_CURRENT_USER, key_name, 0, KEY_READ, &ret);
-    if (res != ERROR_SUCCESS) {
-        WARN("Could not open %s\n", debugstr_w(key_name));
-        return NULL;
-    }
-
-    return ret;
-}
-
 static HRESULT register_codec(const CLSID *class, const WCHAR *name, IMoniker **ret)
 {
     static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','c','m',':',0};
@@ -817,6 +795,96 @@ cleanup:
     }
 }
 
+static void register_vfw_codecs(void)
+{
+    static const WCHAR fcchandlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
+    REGFILTERPINS2 rgpins[2] = {};
+    IPropertyBag *prop_bag = NULL;
+    REGPINTYPES rgtypes[2];
+    REGFILTER2 rgf;
+    WCHAR clsid[CHARS_IN_GUID];
+    IMoniker *mon = NULL;
+    GUID typeguid;
+    ICINFO info;
+    VARIANT var;
+    HRESULT hr;
+    int i = 0;
+    HIC hic;
+
+    hr = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
+    if (FAILED(hr)) return;
+
+    while (ICInfo(ICTYPE_VIDEO, i++, &info))
+    {
+        WCHAR name[5] = {LOBYTE(LOWORD(info.fccHandler)), HIBYTE(LOWORD(info.fccHandler)),
+                         LOBYTE(HIWORD(info.fccHandler)), HIBYTE(HIWORD(info.fccHandler))};
+
+        hic = ICOpen(ICTYPE_VIDEO, info.fccHandler, ICMODE_QUERY);
+        ICGetInfo(hic, &info, sizeof(info));
+        ICClose(hic);
+
+        V_VT(&var) = VT_BSTR;
+
+        V_BSTR(&var) = SysAllocString(name);
+        if (!(V_BSTR(&var)))
+            goto cleanup;
+
+        hr = register_codec(&CLSID_VideoCompressorCategory, V_BSTR(&var), &mon);
+        if (FAILED(hr)) goto cleanup;
+
+        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+        if (FAILED(hr)) goto cleanup;
+
+        /* write WaveInId */
+        hr = IPropertyBag_Write(prop_bag, fcchandlerW, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write friendly name */
+        V_VT(&var) = VT_BSTR;
+        if (!(V_BSTR(&var) = SysAllocString(info.szDescription)))
+            goto cleanup;
+
+        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write clsid */
+        V_VT(&var) = VT_BSTR;
+        StringFromGUID2(&CLSID_AVICo, clsid, CHARS_IN_GUID);
+        if (!(V_BSTR(&var) = SysAllocString(clsid)))
+            goto cleanup;
+        hr = IPropertyBag_Write(prop_bag, clsid_keyname, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write filter data */
+        rgf.dwVersion = 2;
+        rgf.dwMerit = MERIT_DO_NOT_USE;
+        rgf.u.s2.cPins2 = 2;
+        rgf.u.s2.rgPins2 = rgpins;
+        rgpins[0].dwFlags = 0;
+        rgpins[0].nMediaTypes = 1;
+        rgpins[0].lpMediaType = &rgtypes[0];
+        rgtypes[0].clsMajorType = &MEDIATYPE_Video;
+        typeguid = MEDIASUBTYPE_PCM;
+        typeguid.Data1 = info.fccHandler;
+        rgtypes[0].clsMinorType = &typeguid;
+        rgpins[1].dwFlags = REG_PINFLAG_B_OUTPUT;
+        rgpins[1].nMediaTypes = 1;
+        rgpins[1].lpMediaType = &rgtypes[1];
+        rgtypes[1].clsMajorType = &MEDIATYPE_Video;
+        rgtypes[1].clsMinorType = &GUID_NULL;
+
+        write_filter_data(prop_bag, &rgf);
+
+cleanup:
+        VariantClear(&var);
+        if (prop_bag) IPropertyBag_Release(prop_bag);
+        if (mon) IMoniker_Release(mon);
+    }
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -842,6 +910,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     register_waveout_devices();
     register_wavein_devices();
     register_midiout_devices();
+    register_vfw_codecs();
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -892,44 +961,6 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
         ERR("Failed to create key HKEY_CURRENT_USER\\%s\n", debugstr_w(wszRegKey));
 
     return res;
-}
-
-static void register_vfw_codecs(void)
-{
-    WCHAR avico_clsid_str[CHARS_IN_GUID];
-    HKEY basekey, key;
-    ICINFO icinfo;
-    DWORD i, res;
-
-    static const WCHAR CLSIDW[] = {'C','L','S','I','D',0};
-    static const WCHAR FccHandlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
-    static const WCHAR FriendlyNameW[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
-
-    StringFromGUID2(&CLSID_AVICo, avico_clsid_str, sizeof(avico_clsid_str)/sizeof(WCHAR));
-
-    basekey = open_special_category_key(&CLSID_VideoCompressorCategory, TRUE);
-    if(!basekey) {
-        ERR("Could not create key\n");
-        return;
-    }
-
-    for(i=0; ICInfo(FCC('v','i','d','c'), i, &icinfo); i++) {
-        WCHAR fcc_str[5] = {LOBYTE(LOWORD(icinfo.fccHandler)), HIBYTE(LOWORD(icinfo.fccHandler)),
-                            LOBYTE(HIWORD(icinfo.fccHandler)), HIBYTE(HIWORD(icinfo.fccHandler))};
-
-        res = RegCreateKeyW(basekey, fcc_str, &key);
-        if(res != ERROR_SUCCESS)
-            continue;
-
-        RegSetValueExW(key, CLSIDW, 0, REG_SZ, (const BYTE*)avico_clsid_str, sizeof(avico_clsid_str));
-        RegSetValueExW(key, FccHandlerW, 0, REG_SZ, (const BYTE*)fcc_str, sizeof(fcc_str));
-        RegSetValueExW(key, FriendlyNameW, 0, REG_SZ, (const BYTE*)icinfo.szName, (strlenW(icinfo.szName)+1)*sizeof(WCHAR));
-        /* FIXME: Set ClassManagerFlags and FilterData values */
-
-        RegCloseKey(key);
-    }
-
-    RegCloseKey(basekey);
 }
 
 static HRESULT register_codecs(void)
@@ -1036,8 +1067,6 @@ static HRESULT register_codecs(void)
 
     if (pMapper)
         IFilterMapper2_Release(pMapper);
-
-    register_vfw_codecs();
 
     return res;
 }
