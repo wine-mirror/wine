@@ -2948,10 +2948,6 @@ msgstr ""
 "Hinweis: Der private Schlüssel des Zertifikats kann nicht exportiert werden."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Standard WaveOut-Gerät"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut-Gerät"
 

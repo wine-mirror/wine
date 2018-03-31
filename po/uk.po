@@ -2944,10 +2944,6 @@ msgstr ""
 "Увага: Приватний ключ для цього сертифікату не може бути експортований."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Звуковий пристрій виводу за замовчуванням"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi за замовчуванням"
 

@@ -2885,10 +2885,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Poznámka: Soukromou část klíče tohoto certifikátu nelze exportovat."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Standardní zařízení WaveOut"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Standardní zařízení MidiOut"
 

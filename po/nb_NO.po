@@ -2947,10 +2947,6 @@ msgstr ""
 "Merk: Den private nøkkelen for dette sertifikatet kan ikke eksporteres."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Standard enhet for lydavspilling"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Standard enhet for MIDI-avspilling"
 

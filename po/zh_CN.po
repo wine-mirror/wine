@@ -2894,10 +2894,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意：证书的私钥不可导出。"
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "默认 WaveOut 设备"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "默认 MidiOut 设备"
 

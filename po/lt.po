@@ -2945,10 +2945,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Numatytasis „WaveOut“ įrenginys"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Numatytasis „MidiOut“ įrenginys"
 

@@ -2933,10 +2933,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "ملاحظة : لا يمكن تصدير المفتاح الخاص لهذه الشهادة."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "الجهاز الافتراضي لإخراج الموجات"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "الجهاز الافتراضي لإخراج النوطات"
 

@@ -2943,10 +2943,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Obs: Den privata nyckeln för detta certifikat kan inte exporteras."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Förvald WaveOut-enhet"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Förvald MidiOut-enhet"
 

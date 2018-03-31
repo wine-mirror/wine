@@ -2963,10 +2963,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Note : la clé privée de ce certificat n'est pas exportable."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Périphérique WaveOut par défaut"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 

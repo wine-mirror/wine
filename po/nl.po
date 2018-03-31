@@ -2970,10 +2970,6 @@ msgstr ""
 "worden."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Standaardapparaat WaveOut"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Standaardapparaat MidiOut"
 

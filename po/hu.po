@@ -2976,10 +2976,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsok nem exportálhatóak."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Alapértelmezett WaveOut eszköz"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Alapértelmezett MidiOut eszköz"
 

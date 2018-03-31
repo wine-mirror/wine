@@ -2935,11 +2935,6 @@ msgstr "לתשומת לבך: המפתח הפרטי לאישור זה אינו נ
 
 #: devenum.rc:33
 #, fuzzy
-msgid "Default WaveOut Device"
-msgstr "התקן ה־WaveOut כבררת מחדל"
-
-#: devenum.rc:34
-#, fuzzy
 msgid "Default MidiOut Device"
 msgstr "התקן ה־MidiOut כבררת מחדל"
 

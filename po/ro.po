@@ -2933,10 +2933,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Notă: Cheia privată pentru acest certificat nu este exportabilă."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Dispozitiv WaveOut implicit"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Dispozitiv MidiOut implicit"
 

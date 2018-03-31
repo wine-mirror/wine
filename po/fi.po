@@ -2936,10 +2936,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Huomio: Tämän varmenteen yksityistä avainta ei voi viedä."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "WaveOut-oletuslaite"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "MidiOut-oletuslaite"
 

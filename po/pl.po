@@ -2959,10 +2959,6 @@ msgstr ""
 "eksportu."
 
 #: devenum.rc:33
-msgid "Default WaveOut Device"
-msgstr "Standardowe urządzenie WaveOut"
-
-#: devenum.rc:34
 msgid "Default MidiOut Device"
 msgstr "Standardowe urządzenie Device"
 
