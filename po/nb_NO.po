@@ -2946,10 +2946,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 "Merk: Den private nøkkelen for dette sertifikatet kan ikke eksporteres."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Standard enhet for MIDI-avspilling"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Oppsett av enheter"

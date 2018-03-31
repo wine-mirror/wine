@@ -2985,10 +2985,6 @@ msgstr "Nota: impossibile aprire la chiave privata per questo certificato."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: la chiave privata per questo certificato non è esportabile."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Dispositivo MidiOut predefinito"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Configura unità"

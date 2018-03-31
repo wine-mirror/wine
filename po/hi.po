@@ -2855,10 +2855,6 @@ msgstr ""
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr ""
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr ""

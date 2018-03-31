@@ -2935,10 +2935,6 @@ msgstr "Huomio: Varmenteen yksityistä avainta ei voitu avata."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Huomio: Tämän varmenteen yksityistä avainta ei voi viedä."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "MidiOut-oletuslaite"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Laitteiden asetukset"

@@ -2961,10 +2961,6 @@ msgstr "Bemærk: Privatnøglen for dette certifikat kunne ikke blive åbnet."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Bemærk: Den private nøgle for dette certifikat kan ikke eksporteres."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Standard MidiOut Enhed"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Konfigurér enheder"

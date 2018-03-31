@@ -97,10 +97,3 @@ static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
 static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
 
 extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
-
-/**********************************************************************
- * Resource IDs
- */
-#define IDS_DEVENUM_MIDEFAULT 10
-#define IDS_DEVENUM_KSDEFAULT 11
-#define IDS_DEVENUM_KS        12

@@ -2975,10 +2975,6 @@ msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsot nem lehet megnyitn
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsok nem exportálhatóak."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Alapértelmezett MidiOut eszköz"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Eszközbeállí&tás"

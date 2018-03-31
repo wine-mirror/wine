@@ -2958,10 +2958,6 @@ msgstr "Nota: No s'ha pogut obrir la clau privada d'aquest certificat."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: La clau privada d'aquest certificat no és exportable."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Dispositiu de MidiOut per defecte"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Configura dispositius"

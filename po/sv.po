@@ -2942,10 +2942,6 @@ msgstr "Obs: Den privata nyckeln för detta certifikat kunde inte öppnas."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Obs: Den privata nyckeln för detta certifikat kan inte exporteras."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Förvald MidiOut-enhet"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Konfigurera enheter"

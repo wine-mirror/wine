@@ -2947,10 +2947,6 @@ msgstr "Примечание: открыть закрытый ключ этог�
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Примечание: закрытый ключ этого сертификата не экспортируемый."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Устройство вывода MIDI по умолчанию"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Настроить устройства"

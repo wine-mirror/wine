@@ -2935,10 +2935,6 @@ msgstr "注意: この証明書の秘密鍵を開けません。"
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意: この証明書の秘密鍵はエクスポートできません。"
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "デフォルト MidiOut デバイス"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "デバイスの設定"

@@ -2884,10 +2884,6 @@ msgstr "Upozornění: soukromý klíč tohoto certifikátu nemohl být otevřen.
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Poznámka: Soukromou část klíče tohoto certifikátu nelze exportovat."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Standardní zařízení MidiOut"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Nastavit zařízení"

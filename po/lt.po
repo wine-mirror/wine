@@ -2944,10 +2944,6 @@ msgstr "Pastaba: nepavyko atverti privačiojo rakto šiam liudijimui."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Numatytasis „MidiOut“ įrenginys"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Įtaisų konfigūravimas"

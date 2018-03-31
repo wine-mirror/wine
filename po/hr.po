@@ -2935,10 +2935,6 @@ msgstr "Napomena: Privatan ključ za ovaj certifikat se nije mogao otvoriti."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Napomena: Privatan ključ za ovaj certifikat se ne može izvesti."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Podrazumijevani MidiOut uređaj"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Konfiguriraj uređaje"

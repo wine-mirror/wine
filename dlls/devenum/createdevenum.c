@@ -738,6 +738,85 @@ cleanup:
     }
 }
 
+static void register_midiout_devices(void)
+{
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',' ','M','i','d','i','O','u','t',' ','D','e','v','i','c','e',0};
+    static const WCHAR midioutidW[] = {'M','i','d','i','O','u','t','I','d',0};
+    IPropertyBag *prop_bag = NULL;
+    REGFILTERPINS2 rgpins = {0};
+    REGPINTYPES rgtypes = {0};
+    REGFILTER2 rgf = {0};
+    WCHAR clsid[CHARS_IN_GUID];
+    IMoniker *mon = NULL;
+    MIDIOUTCAPSW caps;
+    int i, count;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
+    if (FAILED(hr)) return;
+
+    count = midiOutGetNumDevs();
+
+    for (i = -1; i < count; i++)
+    {
+        midiOutGetDevCapsW(i, &caps, sizeof(caps));
+
+        V_VT(&var) = VT_BSTR;
+
+        if (i == -1)    /* MIDI_MAPPER */
+            V_BSTR(&var) = SysAllocString(defaultW);
+        else
+            V_BSTR(&var) = SysAllocString(caps.szPname);
+        if (!(V_BSTR(&var)))
+            goto cleanup;
+
+        hr = register_codec(&CLSID_MidiRendererCategory, V_BSTR(&var), &mon);
+        if (FAILED(hr)) goto cleanup;
+
+        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+        if (FAILED(hr)) goto cleanup;
+
+        /* write friendly name */
+        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write clsid */
+        V_VT(&var) = VT_BSTR;
+        StringFromGUID2(&CLSID_AVIMIDIRender, clsid, CHARS_IN_GUID);
+        if (!(V_BSTR(&var) = SysAllocString(clsid)))
+            goto cleanup;
+        hr = IPropertyBag_Write(prop_bag, clsid_keyname, &var);
+        if (FAILED(hr)) goto cleanup;
+        VariantClear(&var);
+
+        /* write filter data */
+        rgf.dwVersion = 2;
+        rgf.dwMerit = (i == -1) ? MERIT_PREFERRED : MERIT_DO_NOT_USE;
+        rgf.u.s2.cPins2 = 1;
+        rgf.u.s2.rgPins2 = &rgpins;
+        rgpins.dwFlags = REG_PINFLAG_B_RENDERER;
+        rgpins.nMediaTypes = 1;
+        rgpins.lpMediaType = &rgtypes;
+        rgtypes.clsMajorType = &MEDIATYPE_Midi;
+        rgtypes.clsMinorType = &MEDIASUBTYPE_NULL;
+
+        write_filter_data(prop_bag, &rgf);
+
+        /* write MidiOutId */
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = i;
+        hr = IPropertyBag_Write(prop_bag, midioutidW, &var);
+        if (FAILED(hr)) goto cleanup;
+
+cleanup:
+        VariantClear(&var);
+        if (prop_bag) IPropertyBag_Release(prop_bag);
+        if (mon) IMoniker_Release(mon);
+    }
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -762,6 +841,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     if (FAILED(hr)) return hr;
     register_waveout_devices();
     register_wavein_devices();
+    register_midiout_devices();
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -857,7 +937,6 @@ static HRESULT register_codecs(void)
     HRESULT res;
     WCHAR class[CHARS_IN_GUID];
     DWORD iDefaultDevice = -1;
-    UINT numDevs;
     IFilterMapper2 * pMapper = NULL;
     REGFILTER2 rf2;
     REGFILTERPINS2 rfp2;
@@ -898,60 +977,9 @@ static HRESULT register_codecs(void)
     if (SUCCEEDED(res))
     {
         UINT i;
-        MIDIOUTCAPSW mocaps;
         REGPINTYPES * pTypes;
         IPropertyBag * pPropBag = NULL;
 
-	numDevs = midiOutGetNumDevs();
-
-        res = DEVENUM_CreateAMCategoryKey(&CLSID_MidiRendererCategory);
-        if (FAILED(res)) /* can't register any devices in this category */
-            numDevs = 0;
-
-	rfp2.dwFlags = REG_PINFLAG_B_RENDERER;
-	for (i = 0; i < numDevs; i++)
-	{
-	    if (midiOutGetDevCapsW(i, &mocaps, sizeof(MIDIOUTCAPSW))
-	        == MMSYSERR_NOERROR)
-	    {
-                IMoniker * pMoniker = NULL;
-
-                rfp2.nMediaTypes = 1;
-                pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
-                if (!pTypes)
-                {
-                    IFilterMapper2_Release(pMapper);
-                    return E_OUTOFMEMORY;
-                }
-
-                /* FIXME: Not sure if these are correct */
-                pTypes[0].clsMajorType = &MEDIATYPE_Midi;
-                pTypes[0].clsMinorType = &MEDIASUBTYPE_None;
-
-                rfp2.lpMediaType = pTypes;
-
-                res = IFilterMapper2_RegisterFilter(pMapper,
-		                              &CLSID_AVIMIDIRender,
-					      mocaps.szPname,
-					      &pMoniker,
-					      &CLSID_MidiRendererCategory,
-					      mocaps.szPname,
-					      &rf2);
-
-                /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */
-		/* Native version sets MidiOutId */
-
-		if (pMoniker)
-		    IMoniker_Release(pMoniker);
-
-		if (i == iDefaultDevice)
-		{
-		    FIXME("Default device\n");
-		}
-
-                CoTaskMemFree(pTypes);
-	    }
-	}
         res = DEVENUM_CreateAMCategoryKey(&CLSID_VideoInputDeviceCategory);
         if (SUCCEEDED(res))
             for (i = 0; i < 10; i++)

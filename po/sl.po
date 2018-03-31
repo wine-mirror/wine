@@ -2979,10 +2979,6 @@ msgstr "Opomba: zasebnega ključa ni mogoče odpreti."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Opomba: zasebnega ključa za to potrdilo ni mogoče izvoziti."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Privzeta naprava MidiOut"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Nastavi naprave"

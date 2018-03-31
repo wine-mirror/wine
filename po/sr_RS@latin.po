@@ -3014,10 +3014,6 @@ msgstr ""
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Podrazumevani MidiOut uređaj"
-
 #: dinput.rc:43
 #, fuzzy
 msgid "Configure Devices"

@@ -2893,10 +2893,6 @@ msgstr "注意：无法打开该证书的私钥。"
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意：证书的私钥不可导出。"
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "默认 MidiOut 设备"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "配置设备"

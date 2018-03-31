@@ -2905,10 +2905,6 @@ msgstr "註記：用於這個憑證的私鑰無法開啟。"
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "註記：用於這個憑證的私鑰不可匯出。"
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "預設 MidiOut 裝置"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "裝置設定"

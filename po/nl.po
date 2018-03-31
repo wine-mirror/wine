@@ -2969,10 +2969,6 @@ msgstr ""
 "Noot: De persoonlijke sleutel voor dit certificaat kan niet geëxporteerd "
 "worden."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Standaardapparaat MidiOut"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Configureer apparaten"

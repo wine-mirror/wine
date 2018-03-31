@@ -2943,10 +2943,6 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 "Увага: Приватний ключ для цього сертифікату не може бути експортований."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Пристрій виводу Midi за замовчуванням"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Налаштувати пристрої"

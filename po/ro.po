@@ -2932,10 +2932,6 @@ msgstr "Notă: Cheia privată pentru acest certificat nu a putut fi deschisă."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Notă: Cheia privată pentru acest certificat nu este exportabilă."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Dispozitiv MidiOut implicit"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Configurare dispozitive"

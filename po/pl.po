@@ -2958,10 +2958,6 @@ msgstr ""
 "Uwaga: Klucz prywatny dla tego certyfikatu jest oznaczony jako nie do "
 "eksportu."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Standardowe urządzenie Device"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Ustawienia urządzeń"

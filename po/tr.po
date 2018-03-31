@@ -2942,10 +2942,6 @@ msgstr "Not: Bu sertifika için özel anahtar açılamaz."
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Not: Bu sertifika için özel anahtar aktarılamaz."
 
-#: devenum.rc:33
-msgid "Default MidiOut Device"
-msgstr "Varsayılan MidiOut Aygıtı"
-
 #: dinput.rc:43
 msgid "Configure Devices"
 msgstr "Aygıtları Yapılandır"
