@@ -1082,8 +1082,7 @@ static INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                 SetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT2), info->szOtherStuff );
                 GetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT3),
                                 template, ARRAY_SIZE(template) );
-                MultiByteToWideChar( CP_UTF8, 0, wine_get_build_id(), -1,
-                                     version, ARRAY_SIZE(template) );
+                MultiByteToWideChar( CP_UTF8, 0, wine_get_build_id(), -1, version, ARRAY_SIZE(version) );
                 sprintfW( buffer, template, version );
                 SetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT3), buffer );
                 hWndCtl = GetDlgItem(hWnd, IDC_ABOUT_LISTBOX);
