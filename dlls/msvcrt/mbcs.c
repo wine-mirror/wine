@@ -2011,13 +2011,12 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
     {
         if (_ismbblead(*p))
         {
-            for (q = set; *q; q++)
+            for (q = set; *q; q += 2)
             {
                 if (!q[1])
                     break;
                 if ((*p == *q) &&  (p[1] == q[1]))
                     break;
-                q++;
             }
             if (!q[0] || !q[1]) break;
         }
@@ -2043,13 +2042,12 @@ unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* 
     {
         if (_ismbblead(*p))
         {
-            for (q = set; *q; q++)
+            for (q = set; *q; q += 2)
             {
                 if (!q[1])
                     break;
                 if ((*p == *q) &&  (p[1] == q[1]))
                     break;
-                q++;
             }
             if (!q[0] || !q[1]) break;
         }
