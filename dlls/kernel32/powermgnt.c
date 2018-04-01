@@ -73,6 +73,16 @@ BOOL WINAPI RequestWakeupLatency(LATENCY_TIME latency)
 }
 
 /***********************************************************************
+ *           RequestDeviceWakeup      (KERNEL32.@)
+ */
+BOOL WINAPI RequestDeviceWakeup(HANDLE device)
+{
+    FIXME("(%p): stub\n", device);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           SetSystemPowerState      (KERNEL32.@)
  */
 BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
