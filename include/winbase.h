@@ -2521,6 +2521,7 @@ WINBASEAPI BOOL        WINAPI RemoveDirectoryW(LPCWSTR);
 #define                       RemoveDirectory WINELIB_NAME_AW(RemoveDirectory)
 WINADVAPI  BOOL        WINAPI ReportEventA(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCSTR *,LPVOID);
 WINADVAPI  BOOL        WINAPI ReportEventW(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCWSTR *,LPVOID);
+WINBASEAPI BOOL        WINAPI RequestDeviceWakeup(HANDLE);
 WINBASEAPI BOOL        WINAPI RequestWakeupLatency(LATENCY_TIME latency);
 #define                       ReportEvent WINELIB_NAME_AW(ReportEvent)
 WINBASEAPI BOOL        WINAPI ResetEvent(HANDLE);
