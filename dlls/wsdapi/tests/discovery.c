@@ -260,7 +260,7 @@ static void start_listening(messageStorage *msgStorage, const char *multicastAdd
 
 cleanup:
     closesocket(s);
-    if (parameter != NULL) heap_free(parameter);
+    heap_free(parameter);
 
 cleanup_addresses:
     freeaddrinfo(multicastAddr);
@@ -309,7 +309,7 @@ static BOOL start_listening_on_all_addresses(messageStorage *msgStorage, ULONG f
     ret = TRUE;
 
 cleanup:
-    if (adapterAddresses != NULL) heap_free(adapterAddresses);
+    heap_free(adapterAddresses);
     return ret;
 }
 
@@ -626,8 +626,8 @@ static void Publish_tests(void)
 
 after_publish_test:
 
-    if (publisherIdW != NULL) heap_free(publisherIdW);
-    if (sequenceIdW != NULL) heap_free(sequenceIdW);
+    heap_free(publisherIdW);
+    heap_free(sequenceIdW);
 
     ref = IWSDiscoveryPublisher_Release(publisher);
     ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
