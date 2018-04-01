@@ -2029,6 +2029,22 @@ void ReleaseComponentInfos(void)
         IWICComponentInfo_Release(&info->IWICComponentInfo_iface);
 }
 
+HRESULT get_decoder_info(const CLSID *clsid, IWICBitmapDecoderInfo **info)
+{
+    IWICComponentInfo *compinfo;
+    HRESULT hr;
+
+    hr = CreateComponentInfo(clsid, &compinfo);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICComponentInfo_QueryInterface(compinfo, &IID_IWICBitmapDecoderInfo,
+        (void **)info);
+
+    IWICComponentInfo_Release(compinfo);
+
+    return hr;
+}
+
 typedef struct {
     IEnumUnknown IEnumUnknown_iface;
     LONG ref;
