@@ -334,7 +334,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
                                               UINT wFlags)
 {
     HRESULT hRes;
-    IShellFolder *psfTmp;
+    IShellFolder *folder;
     IShellView *psvTmp;
     FileOpenDlgInfos *fodInfos;
     LPITEMIDLIST pidlTmp;
@@ -355,8 +355,8 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     {
 
         /* SBSP_RELATIVE  A relative pidl (relative from the current folder) */
-        if(FAILED(hRes = IShellFolder_BindToObject(fodInfos->Shell.FOIShellFolder,
-             pidl, NULL, &IID_IShellFolder, (LPVOID *)&psfTmp)))
+        if (FAILED(hRes = IShellFolder_BindToObject(fodInfos->Shell.FOIShellFolder,
+             pidl, NULL, &IID_IShellFolder, (void **)&folder)))
         {
             ERR("bind to object failed\n");
 	    return hRes;
@@ -368,30 +368,30 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     {
         /* Browse the parent folder (ignores the pidl) */
         pidlTmp = GetParentPidl(fodInfos->ShellInfos.pidlAbsCurrent);
-        psfTmp = GetShellFolderFromPidl(pidlTmp);
-
+        folder = GetShellFolderFromPidl(pidlTmp);
     }
     else /* SBSP_ABSOLUTE is 0x0000 */
     {
         /* An absolute pidl (relative from the desktop) */
         pidlTmp = ILClone(pidl);
-        psfTmp = GetShellFolderFromPidl(pidlTmp);
+        folder = GetShellFolderFromPidl(pidlTmp);
     }
 
-    if(!psfTmp)
+    if (!folder)
     {
-      ERR("could not browse to folder\n");
-      return E_FAIL;
+        ERR("could not browse to folder\n");
+        ILFree(pidlTmp);
+        return E_FAIL;
     }
 
     /* If the pidl to browse to is equal to the actual pidl ...
        do nothing and pretend you did it*/
     if (ILIsEqual(pidlTmp, fodInfos->ShellInfos.pidlAbsCurrent))
     {
-        IShellFolder_Release(psfTmp);
+        IShellFolder_Release(folder);
         ILFree(pidlTmp);
         TRACE("keep current folder\n");
-        return NOERROR;
+        return S_OK;
     }
 
     /* Release the current DataObject */
@@ -403,8 +403,13 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     /* Create the associated view */
     TRACE("create view object\n");
-    if(FAILED(hRes = IShellFolder_CreateViewObject(psfTmp, fodInfos->ShellInfos.hwndOwner,
-           &IID_IShellView, (LPVOID *)&psvTmp))) goto error;
+    if (FAILED(hRes = IShellFolder_CreateViewObject(folder, fodInfos->ShellInfos.hwndOwner,
+           &IID_IShellView, (void **)&psvTmp)))
+    {
+        IShellFolder_Release(folder);
+        ILFree(pidlTmp);
+        return hRes;
+    }
 
     /* Check if listview has focus */
     bViewHasFocus = IsChild(fodInfos->ShellInfos.hwndView,GetFocus());
@@ -426,7 +431,7 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     /* Release old FOIShellFolder and update its value */
     if (fodInfos->Shell.FOIShellFolder)
       IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
-    fodInfos->Shell.FOIShellFolder = psfTmp;
+    fodInfos->Shell.FOIShellFolder = folder;
 
     /* Release old pidlAbsCurrent and update its value */
     ILFree(fodInfos->ShellInfos.pidlAbsCurrent);
@@ -439,9 +444,13 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     /* Create the window */
     TRACE("create view window\n");
-    if(FAILED(hRes = IShellView_CreateViewWindow(psvTmp, NULL,
-         &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
-         &rectView, &hwndView))) goto error;
+    if (FAILED(hRes = IShellView_CreateViewWindow(psvTmp, NULL,
+            &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
+            &rectView, &hwndView)))
+    {
+        WARN("Failed to create view window, hr %#x.\n", hRes);
+        return hRes;
+    }
 
     fodInfos->ShellInfos.hwndView = hwndView;
 
@@ -460,9 +469,6 @@ static HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     if (bViewHasFocus)
       SetFocus(fodInfos->ShellInfos.hwndView);
 
-    return hRes;
-error:
-    ERR("Failed with error 0x%08x\n", hRes);
     return hRes;
 }
 
