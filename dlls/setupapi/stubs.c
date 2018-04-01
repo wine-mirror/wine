@@ -180,8 +180,9 @@ CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW( PULONG  pulLen, PCWSTR  pszFilter,
 DWORD WINAPI CM_Get_Parent(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags)
 {
     FIXME("%p 0x%08x 0x%08x stub\n", pdnDevInst, dnDevInst, ulFlags);
-    *pdnDevInst = dnDevInst;
-    return CR_SUCCESS;
+    if(pdnDevInst)
+        *pdnDevInst = 0;
+    return CR_NO_SUCH_DEVNODE;
 }
 
 /***********************************************************************
