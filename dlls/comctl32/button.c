@@ -91,6 +91,7 @@ typedef struct _BUTTON_INFO
 {
     HWND        hwnd;
     HWND        parent;
+    LONG        style;
     LONG        state;
     HFONT       font;
     WCHAR      *note;
@@ -340,11 +341,16 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
     case WM_NCCREATE:
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
+
         infoPtr = heap_alloc_zero( sizeof(*infoPtr) );
         SetWindowLongPtrW( hWnd, 0, (LONG_PTR)infoPtr );
         infoPtr->hwnd = hWnd;
-        infoPtr->parent = GetParent(hWnd);
+        infoPtr->parent = cs->hwndParent;
+        infoPtr->style = cs->style;
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+    }
 
     case WM_NCDESTROY:
         SetWindowLongPtrW( hWnd, 0, 0 );

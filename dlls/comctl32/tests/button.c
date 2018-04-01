@@ -1004,6 +1004,7 @@ static void test_button_data(void)
     {
         HWND self;
         HWND parent;
+        LONG style;
     };
     unsigned int i;
     HWND parent;
@@ -1027,6 +1028,7 @@ static void test_button_data(void)
         {
             ok(desc->self == hwnd, "Unexpected 'self' field.\n");
             ok(desc->parent == parent, "Unexpected 'parent' field.\n");
+            ok(desc->style == (WS_CHILD | BS_NOTIFY | styles[i]), "Unexpected 'style' field.\n");
         }
 
         DestroyWindow(hwnd);
