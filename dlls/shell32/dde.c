@@ -184,7 +184,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         CreateDirectoryW(path, NULL);
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
-        if (last_group) heap_free(last_group);
+        heap_free(last_group);
         last_group = path;
     }
     else if (!strcmpiW(command, delete_groupW))
@@ -224,7 +224,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
-        if (last_group) heap_free(last_group);
+        heap_free(last_group);
         last_group = path;
     }
     else if (!strcmpiW(command, add_itemW))
