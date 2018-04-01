@@ -1300,7 +1300,6 @@ static struct sysparam_rgb_entry system_colors[] =
     RGB_ENTRY( COLOR_MENUBAR, RGB(212, 208, 200) )
 #undef RGB_ENTRY
 };
-#define NUM_SYS_COLORS (sizeof(system_colors) / sizeof(system_colors[0]))
 
 /* entries that are initialized by default in the registry */
 static union sysparam_all_entry * const default_entries[] =
@@ -2690,7 +2689,8 @@ COLORREF WINAPI DECLSPEC_HOTPATCH GetSysColor( INT nIndex )
 {
     COLORREF ret = 0;
 
-    if (nIndex >= 0 && nIndex < NUM_SYS_COLORS) get_entry( &system_colors[nIndex], 0, &ret );
+    if (nIndex >= 0 && nIndex < ARRAY_SIZE( system_colors ))
+        get_entry( &system_colors[nIndex], 0, &ret );
     return ret;
 }
 
@@ -2705,7 +2705,7 @@ BOOL WINAPI SetSysColors( INT count, const INT *colors, const COLORREF *values )
     if (IS_INTRESOURCE(colors)) return FALSE; /* stupid app passes a color instead of an array */
 
     for (i = 0; i < count; i++)
-        if (colors[i] >= 0 && colors[i] <= NUM_SYS_COLORS)
+        if (colors[i] >= 0 && colors[i] <= ARRAY_SIZE( system_colors ))
             set_entry( &system_colors[colors[i]], values[i], 0, 0 );
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
@@ -2735,7 +2735,7 @@ DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes
  */
 HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
 {
-    if (index < 0 || index >= NUM_SYS_COLORS) return 0;
+    if (index < 0 || index >= ARRAY_SIZE( system_colors )) return 0;
 
     if (!system_colors[index].brush)
     {
@@ -2757,7 +2757,7 @@ HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
 HPEN SYSCOLOR_GetPen( INT index )
 {
     /* We can assert here, because this function is internal to Wine */
-    assert (0 <= index && index < NUM_SYS_COLORS);
+    assert (0 <= index && index < ARRAY_SIZE( system_colors ));
 
     if (!system_colors[index].pen)
     {
