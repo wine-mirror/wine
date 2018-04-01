@@ -127,8 +127,7 @@ static inline void free_xml_string(WS_XML_STRING *value)
     if (value == NULL)
         return;
 
-    if (value->bytes != NULL)
-        heap_free(value->bytes);
+    heap_free(value->bytes);
 
     heap_free(value);
 }

@@ -215,7 +215,7 @@ BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_delay, U
     ret = TRUE;
 
 cleanup:
-    if (adapter_addresses != NULL) heap_free(adapter_addresses);
+    heap_free(adapter_addresses);
 
     return ret;
 }
