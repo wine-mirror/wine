@@ -150,7 +150,7 @@ static BOOL is_comctl32_class( const WCHAR *name )
         {'t','o','o','l','t','i','p','s','_','c','l','a','s','s','3','2',0},
     };
 
-    int min = 0, max = (sizeof(classesW) / sizeof(classesW[0])) - 1;
+    int min = 0, max = ARRAY_SIZE( classesW ) - 1;
 
     while (min <= max)
     {
@@ -171,7 +171,7 @@ static BOOL is_builtin_class( const WCHAR *name )
         {'S','c','r','o','l','l','b','a','r',0},
     };
 
-    int min = 0, max = (sizeof(classesW) / sizeof(classesW[0])) - 1;
+    int min = 0, max = ARRAY_SIZE( classesW ) - 1;
 
     while (min <= max)
     {
@@ -473,7 +473,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
         strcpyW( classPtr->name, name );
         classPtr->basename += basename_offset;
     }
-    else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, sizeof(classPtr->name)/sizeof(WCHAR) );
+    else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, ARRAY_SIZE( classPtr->name ));
 
     SERVER_START_REQ( create_class )
     {
@@ -1125,7 +1125,7 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         if (!set_server_info( hwnd, offset, newval, size )) break;
         retval = class->atomName;
         class->atomName = newval;
-        GlobalGetAtomNameW( newval, class->name, sizeof(class->name)/sizeof(WCHAR) );
+        GlobalGetAtomNameW( newval, class->name, ARRAY_SIZE( class->name ));
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1166,7 +1166,7 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
     DWORD len;
 
     if (count <= 0) return 0;
-    if (!GetClassNameW( hwnd, tmpbuf, sizeof(tmpbuf)/sizeof(WCHAR) )) return 0;
+    if (!GetClassNameW( hwnd, tmpbuf, ARRAY_SIZE( tmpbuf ))) return 0;
     RtlUnicodeToMultiByteN( buffer, count - 1, &len, tmpbuf, strlenW(tmpbuf) * sizeof(WCHAR) );
     buffer[len] = 0;
     return len;
@@ -1299,7 +1299,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
     if (!IS_INTRESOURCE(name))
     {
         WCHAR nameW[MAX_ATOM_LEN + 1];
-        if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW)/sizeof(WCHAR) ))
+        if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE( nameW )))
             return FALSE;
         classPtr = CLASS_FindClass( nameW, hInstance );
     }

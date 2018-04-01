@@ -960,7 +960,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM wParam )
         {
             dlgCode = SendMessageW( hwndControl, WM_GETDLGCODE, 0, 0 );
             if ( (dlgCode & (DLGC_BUTTON | DLGC_STATIC)) &&
-                 GetWindowTextW( hwndControl, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+                 GetWindowTextW( hwndControl, buffer, ARRAY_SIZE( buffer )))
             {
                 /* find the accelerator key */
                 LPWSTR p = buffer - 2;
@@ -1868,7 +1868,7 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
     if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
         WCHAR temp[MAX_PATH];
-        GetCurrentDirectoryW( sizeof(temp)/sizeof(WCHAR), temp );
+        GetCurrentDirectoryW( ARRAY_SIZE( temp ), temp );
         CharLowerW( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
         SetDlgItemTextW( hDlg, idStatic, temp );

@@ -343,7 +343,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
         if (!str)
         {
-            if (!GetWindowTextW( hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
+            if (!GetWindowTextW( hwnd, text, ARRAY_SIZE( text ))) text[0] = 0;
             str = text;
         }
         rc.left += 2;
@@ -953,7 +953,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
         }
     }
 
-    if (GetWindowTextW( hwnd, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+    if (GetWindowTextW( hwnd, buffer, ARRAY_SIZE( buffer )))
     {
         NONCLIENTMETRICSW nclm;
         HFONT hFont, hOldFont;

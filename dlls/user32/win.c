@@ -1748,7 +1748,7 @@ HWND WINAPI DECLSPEC_HOTPATCH CreateWindowExA( DWORD exStyle, LPCSTR className,
     if (!IS_INTRESOURCE(className))
     {
         WCHAR bufferW[256];
-        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) ))
+        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, ARRAY_SIZE( bufferW )))
             return 0;
         return wow_handlers.create_window( (CREATESTRUCTW *)&cs, bufferW, instance, FALSE );
     }
@@ -2024,7 +2024,7 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR tit
     if (!IS_INTRESOURCE(className))
     {
         WCHAR classW[256];
-        if (MultiByteToWideChar( CP_ACP, 0, className, -1, classW, sizeof(classW)/sizeof(WCHAR) ))
+        if (MultiByteToWideChar( CP_ACP, 0, className, -1, classW, ARRAY_SIZE( classW )))
             hwnd = FindWindowExW( parent, child, classW, titleW );
     }
     else

@@ -1383,7 +1383,7 @@ void SYSPARAMS_Init(void)
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
     {
-        for (i = 0; i < sizeof(default_entries)/sizeof(default_entries[0]); i++)
+        for (i = 0; i < ARRAY_SIZE( default_entries ); i++)
             default_entries[i]->hdr.init( default_entries[i] );
     }
 }
@@ -2251,9 +2251,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
 	WCHAR buffer[256];
 	if (pvParam)
-            if (!MultiByteToWideChar( CP_ACP, 0, pvParam, -1, buffer,
-                                      sizeof(buffer)/sizeof(WCHAR) ))
-                buffer[sizeof(buffer)/sizeof(WCHAR)-1] = 0;
+            if (!MultiByteToWideChar( CP_ACP, 0, pvParam, -1, buffer, ARRAY_SIZE( buffer )))
+                buffer[ARRAY_SIZE(buffer)-1] = 0;
 	ret = SystemParametersInfoW( uiAction, uiParam, pvParam ? buffer : NULL, fuWinIni );
 	break;
     }

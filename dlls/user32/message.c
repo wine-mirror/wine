@@ -2312,7 +2312,7 @@ static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *
         rawinput->data.mouse.usFlags           = MOUSE_MOVE_RELATIVE;
         rawinput->data.mouse.u.s.usButtonFlags = 0;
         rawinput->data.mouse.u.s.usButtonData  = 0;
-        for (i = 1; i < sizeof(button_flags) / sizeof(*button_flags); ++i)
+        for (i = 1; i < ARRAY_SIZE(button_flags); ++i)
         {
             if (msg_data->flags & (1 << i))
                 rawinput->data.mouse.u.s.usButtonFlags |= button_flags[i];
@@ -3902,7 +3902,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     }
 
     GetKeyboardState( state );
-    len = ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, sizeof(wp)/sizeof(WCHAR), 0);
+    len = ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, ARRAY_SIZE(wp), 0);
     if (len == -1)
     {
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;

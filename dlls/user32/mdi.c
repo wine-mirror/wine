@@ -437,7 +437,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 
             if (visible == MDI_MOREWINDOWSLIMIT)
             {
-                LoadStringW(user32_module, IDS_MDI_MOREWINDOWS, buf, sizeof(buf)/sizeof(WCHAR));
+                LoadStringW(user32_module, IDS_MDI_MOREWINDOWS, buf, ARRAY_SIZE(buf));
                 AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
                 break;
             }
@@ -453,7 +453,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
             buf[0] = '&';
             buf[1] = '0' + visible;
             buf[2] = ' ';
-            InternalGetWindowText(ci->child[i], buf + 3, sizeof(buf)/sizeof(WCHAR) - 3);
+            InternalGetWindowText(ci->child[i], buf + 3, ARRAY_SIZE(buf) - 3);
             TRACE("Adding %p, id %u %s\n", ci->child[i], id, debugstr_w(buf));
             AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
 
@@ -979,7 +979,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, BOOL repaint, LPCWSTR
 
     if (!lpTitle && !ci->frameTitle)  /* first time around, get title from the frame window */
     {
-        GetWindowTextW( frame, lpBuffer, sizeof(lpBuffer)/sizeof(WCHAR) );
+        GetWindowTextW( frame, lpBuffer, ARRAY_SIZE( lpBuffer ));
         lpTitle = lpBuffer;
     }
 
@@ -1910,7 +1910,7 @@ static INT_PTR WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wPara
            {
                WCHAR buffer[MDI_MAXTITLELENGTH];
 
-               if (!InternalGetWindowText( ci->child[i], buffer, sizeof(buffer)/sizeof(WCHAR) ))
+               if (!InternalGetWindowText(ci->child[i], buffer, ARRAY_SIZE(buffer)))
                    continue;
                SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)buffer );
                SendMessageW(hListBox, LB_SETITEMDATA, i, (LPARAM)ci->child[i] );

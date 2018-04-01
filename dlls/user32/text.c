@@ -970,7 +970,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     do
     {
-	len = sizeof(line)/sizeof(line[0]);
+        len = ARRAY_SIZE(line);
 	if (invert_y)
             last_line = !(flags & DT_NOCLIP) && y - ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) < rect->bottom;
 	else

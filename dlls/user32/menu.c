@@ -5510,7 +5510,7 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
                   hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
 
     if (!(count = CopyAcceleratorTableW( hAccel, NULL, 0 ))) return 0;
-    if (count > sizeof(data)/sizeof(data[0]))
+    if (count > ARRAY_SIZE( data ))
     {
         if (!(ptr = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*ptr) ))) return 0;
     }

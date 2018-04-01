@@ -294,7 +294,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     /* Position the buttons */
     bpos = (wwidth - (bw + bspace) * buttons + bspace) / 2;
-    for (buttons = i = 0; i < (sizeof(buttonOrder) / sizeof(buttonOrder[0])); i++) {
+    for (buttons = i = 0; i < ARRAY_SIZE(buttonOrder); i++) {
 
 	/* Convert the button order to ID* value to order for the buttons */
 	hItem = GetDlgItem(hwnd, buttonOrder[i]);

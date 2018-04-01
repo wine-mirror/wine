@@ -2127,7 +2127,7 @@ const char *SPY_GetClassLongOffsetName( INT offset )
 {
     INT index;
     if (offset < 0 && offset % 2 == 0 && ((index = -(offset + 8) / 2) <
-	sizeof(ClassLongOffsetNames) / sizeof(*ClassLongOffsetNames)))
+        ARRAY_SIZE(ClassLongOffsetNames)))
     {
         return ClassLongOffsetNames[index];
     }
@@ -2148,7 +2148,7 @@ static void SPY_GetClassName( SPY_INSTANCE *sp_e )
         strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
     }
     else {
-        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, ARRAY_SIZE(sp_e->wnd_class));
     }
 }
 
@@ -2223,12 +2223,12 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 
     SPY_GetClassName( sp_e );
 
-    len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, sizeof(sp_e->wnd_name)/sizeof(WCHAR));
+    len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, ARRAY_SIZE(sp_e->wnd_name));
     if(!len) /* get class name */
     {
         LPWSTR dst = sp_e->wnd_name;
         LPWSTR src = sp_e->wnd_class;
-        int n = sizeof(sp_e->wnd_name)/sizeof(WCHAR) - 3;
+        int n = ARRAY_SIZE(sp_e->wnd_name) - 3;
         *dst++ = '{';
         while ((n-- > 0) && *src) *dst++ = *src++;
         *dst++ = '}';
@@ -2537,8 +2537,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     if (pnmh->code == NM_CUSTOMDRAW) {
                         /* save and restore error code over the next call */
                         save_error = GetLastError();
-                        GetClassNameW(pnmh->hwndFrom, from_class,
-                                      sizeof(from_class)/sizeof(WCHAR));
+                        GetClassNameW(pnmh->hwndFrom, from_class, ARRAY_SIZE(from_class));
                         SetLastError(save_error);
                         if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
                             dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
