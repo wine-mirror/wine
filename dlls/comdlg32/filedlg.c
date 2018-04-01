@@ -312,14 +312,21 @@ static void filedlg_collect_places_pidls(FileOpenDlgInfos *fodInfos)
             static const WCHAR placeW[] = {'P','l','a','c','e','%','d',0};
             WCHAR nameW[8];
             DWORD value;
+            HRESULT hr;
             WCHAR *str;
 
             sprintfW(nameW, placeW, i);
             if (get_config_key_dword(hkey, nameW, &value))
-                SHGetSpecialFolderLocation(NULL, value, &fodInfos->places[i]);
+            {
+                hr = SHGetSpecialFolderLocation(NULL, value, &fodInfos->places[i]);
+                if (FAILED(hr))
+                    WARN("Unrecognized special folder %u.\n", value);
+            }
             else if (get_config_key_string(hkey, nameW, &str))
             {
-                SHParseDisplayName(str, NULL, &fodInfos->places[i], 0, NULL);
+                hr = SHParseDisplayName(str, NULL, &fodInfos->places[i], 0, NULL);
+                if (FAILED(hr))
+                    WARN("Failed to parse custom places location, %s.\n", debugstr_w(str));
                 heap_free(str);
             }
         }
