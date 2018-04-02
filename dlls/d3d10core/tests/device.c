@@ -1310,6 +1310,87 @@ static void test_device_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_texture1d(void)
+{
+    ULONG refcount, expected_refcount;
+    ID3D10Device *device, *tmp;
+    D3D10_TEXTURE1D_DESC desc;
+    ID3D10Texture1D *texture;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    desc.Width = 512;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    expected_refcount = get_refcount(device) + 1;
+    hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    refcount = get_refcount(device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Texture1D_GetDevice(texture, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount(device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
+
+    ID3D10Texture1D_Release(texture);
+
+    desc.MipLevels = 0;
+    expected_refcount = get_refcount(device) + 1;
+    hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    refcount = get_refcount(device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Texture1D_GetDevice(texture, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount(device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
+
+    check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    ID3D10Texture1D_Release(texture);
+
+    desc.MipLevels = 1;
+    desc.ArraySize = 2;
+    hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+
+    check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    ID3D10Texture1D_Release(texture);
+
+    for (i = 0; i < 4; ++i)
+    {
+        desc.ArraySize = i;
+        desc.Format = DXGI_FORMAT_R32G32B32A32_TYPELESS;
+        desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+        desc.MiscFlags = 0;
+        hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, (ID3D10Texture1D **)&texture);
+        todo_wine_if(!i)
+            ok(hr == (i ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (SUCCEEDED(hr))
+            ID3D10Texture1D_Release(texture);
+    }
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_create_texture2d(void)
 {
     ULONG refcount, expected_refcount;
@@ -14935,6 +15016,7 @@ START_TEST(device)
 
     test_feature_level();
     test_device_interfaces();
+    test_create_texture1d();
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();
