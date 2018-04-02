@@ -360,7 +360,21 @@ static void STDMETHODCALLTYPE d3d10_texture1d_Unmap(ID3D10Texture1D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture1d_GetDesc(ID3D10Texture1D *iface, D3D10_TEXTURE1D_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_texture1d *texture = impl_from_ID3D10Texture1D(iface);
+    D3D11_TEXTURE1D_DESC d3d11_desc;
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    d3d11_texture1d_GetDesc(&texture->ID3D11Texture1D_iface, &d3d11_desc);
+
+    desc->Width = d3d11_desc.Width;
+    desc->MipLevels = d3d11_desc.MipLevels;
+    desc->ArraySize = d3d11_desc.ArraySize;
+    desc->Format = d3d11_desc.Format;
+    desc->Usage = d3d10_usage_from_d3d11_usage(d3d11_desc.Usage);
+    desc->BindFlags = d3d10_bind_flags_from_d3d11_bind_flags(d3d11_desc.BindFlags);
+    desc->CPUAccessFlags = d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(d3d11_desc.CPUAccessFlags);
+    desc->MiscFlags = d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(d3d11_desc.MiscFlags);
 }
 
 static const struct ID3D10Texture1DVtbl d3d10_texture1d_vtbl =

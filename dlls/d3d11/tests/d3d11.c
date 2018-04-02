@@ -1992,6 +1992,7 @@ static void test_texture1d_interfaces(void)
     for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const struct test *current = &desc_conversion_tests[i];
+        D3D10_TEXTURE1D_DESC d3d10_desc;
         ID3D10Device *d3d10_device;
 
         desc.Width = 512;
@@ -2028,6 +2029,23 @@ static void test_texture1d_interfaces(void)
             if (SUCCEEDED(hr)) ID3D10Texture1D_Release(d3d10_texture);
             continue;
         }
+
+        ID3D10Texture1D_GetDesc(d3d10_texture, &d3d10_desc);
+
+        ok(d3d10_desc.Width == desc.Width,
+                "Test %u: Got unexpected Width %u.\n", i, d3d10_desc.Width);
+        ok(d3d10_desc.MipLevels == desc.MipLevels,
+                "Test %u: Got unexpected MipLevels %u.\n", i, d3d10_desc.MipLevels);
+        ok(d3d10_desc.ArraySize == desc.ArraySize,
+                "Test %u: Got unexpected ArraySize %u.\n", i, d3d10_desc.ArraySize);
+        ok(d3d10_desc.Format == desc.Format,
+                "Test %u: Got unexpected Format %u.\n", i, d3d10_desc.Format);
+        ok(d3d10_desc.BindFlags == current->expected_bind_flags,
+                "Test %u: Got unexpected BindFlags %#x.\n", i, d3d10_desc.BindFlags);
+        ok(d3d10_desc.CPUAccessFlags == desc.CPUAccessFlags,
+                "Test %u: Got unexpected CPUAccessFlags %#x.\n", i, d3d10_desc.CPUAccessFlags);
+        ok(d3d10_desc.MiscFlags == current->expected_misc_flags,
+                "Test %u: Got unexpected MiscFlags %#x.\n", i, d3d10_desc.MiscFlags);
 
         d3d10_device = (ID3D10Device *)0xdeadbeef;
         ID3D10Texture1D_GetDevice(d3d10_texture, &d3d10_device);
