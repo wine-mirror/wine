@@ -219,10 +219,22 @@ static const WCHAR *get_default_desktop(void)
 static void dpiaware_init(void)
 {
     WCHAR buffer[256];
+    DWORD option;
     static const WCHAR dpiAwareW[] = {'d','p','i','A','w','a','r','e',0};
     static const WCHAR dpiAwarenessW[] = {'d','p','i','A','w','a','r','e','n','e','s','s',0};
     static const WCHAR namespace2005W[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','0','5','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
     static const WCHAR namespace2016W[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','S','M','I','/','2','0','1','6','/','W','i','n','d','o','w','s','S','e','t','t','i','n','g','s',0};
+
+    if (!LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
+                                            dpiAwarenessW, REG_DWORD, &option, sizeof(option), NULL ))
+    {
+        TRACE( "got option %x\n", option );
+        if (option <= 2)
+        {
+            SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)option );
+            return;
+        }
+    }
 
     if (QueryActCtxSettingsW( 0, NULL, namespace2016W, dpiAwarenessW, buffer, ARRAY_SIZE(buffer), NULL ))
     {
