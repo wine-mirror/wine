@@ -956,7 +956,10 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
 
     if ((exports = RtlImageDirectoryEntryToData( imp->ldr.BaseAddress, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
-        proc = find_named_export( imp->ldr.BaseAddress, exports, exp_size, "_CorExeMain", -1, load_path );
+    {
+        const char *name = (wm->ldr.Flags & LDR_IMAGE_IS_DLL) ? "_CorDllMain" : "_CorExeMain";
+        proc = find_named_export( imp->ldr.BaseAddress, exports, exp_size, name, -1, load_path );
+    }
     if (!proc) return STATUS_PROCEDURE_NOT_FOUND;
     *entry = proc;
     return STATUS_SUCCESS;
@@ -1929,7 +1932,11 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
         ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
          nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE))
     {
-        if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS)
+        if (wm->ldr.Flags & LDR_COR_ILONLY)
+            status = fixup_imports_ilonly( wm, load_path, &wm->ldr.EntryPoint );
+        else
+            status = fixup_imports( wm, load_path );
+        if (status != STATUS_SUCCESS)
         {
             /* the module has only be inserted in the load & memory order lists */
             RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
