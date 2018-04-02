@@ -2764,9 +2764,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBuffer(ID3D11Device *iface, 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture1D(ID3D11Device *iface,
         const D3D11_TEXTURE1D_DESC *desc, const D3D11_SUBRESOURCE_DATA *data, ID3D11Texture1D **texture)
 {
-    FIXME("iface %p, desc %p, data %p, texture %p stub!\n", iface, desc, data, texture);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_texture1d *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
+
+    if (FAILED(hr = d3d_texture1d_create(device, desc, data, &object)))
+        return hr;
+
+    *texture = &object->ID3D11Texture1D_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture2D(ID3D11Device *iface,

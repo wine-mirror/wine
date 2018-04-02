@@ -112,6 +112,21 @@ void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
 HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
 
+/* ID3D11Texture1D, ID3D10Texture1D */
+struct d3d_texture1d
+{
+    ID3D11Texture1D ID3D11Texture1D_iface;
+    ID3D10Texture1D ID3D10Texture1D_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    D3D11_TEXTURE1D_DESC desc;
+    ID3D11Device *device;
+};
+
+HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture1d **texture) DECLSPEC_HIDDEN;
+
 /* ID3D11Texture2D, ID3D10Texture2D */
 struct d3d_texture2d
 {
