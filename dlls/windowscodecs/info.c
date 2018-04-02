@@ -1502,6 +1502,8 @@ typedef struct
 {
     ComponentInfo base;
     HKEY classkey;
+    GUID *container_formats;
+    UINT container_count;
 } MetadataReaderInfo;
 
 static inline MetadataReaderInfo *impl_from_IWICMetadataReaderInfo(IWICMetadataReaderInfo *iface)
@@ -1554,6 +1556,7 @@ static ULONG WINAPI MetadataReaderInfo_Release(IWICMetadataReaderInfo *iface)
     if (!ref)
     {
         RegCloseKey(This->classkey);
+        heap_free(This->container_formats);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -1654,10 +1657,20 @@ static HRESULT WINAPI MetadataReaderInfo_GetContainerFormats(IWICMetadataReaderI
     UINT length, GUID *formats, UINT *actual_length)
 {
     MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+
     TRACE("(%p,%u,%p,%p)\n", iface, length, formats, actual_length);
 
-    return ComponentInfo_GetGuidList(This->classkey, containers_keyname, length,
-        formats, actual_length);
+    if (!actual_length)
+        return E_INVALIDARG;
+
+    *actual_length = This->container_count;
+    if (formats)
+    {
+        if (This->container_count && length < This->container_count)
+            return WINCODEC_ERR_INSUFFICIENTBUFFER;
+        memcpy(formats, This->container_formats, This->container_count);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetDeviceManufacturer(IWICMetadataReaderInfo *iface,
@@ -1915,11 +1928,36 @@ static const IWICMetadataReaderInfoVtbl MetadataReaderInfo_Vtbl = {
     MetadataReaderInfo_CreateInstance
 };
 
+static BOOL read_metadata_info(MetadataReaderInfo *info)
+{
+    UINT format_count;
+    GUID *formats;
+    HRESULT hr;
+
+    hr = ComponentInfo_GetGuidList(info->classkey, containers_keyname, 0, NULL, &format_count);
+    if (FAILED(hr)) return TRUE;
+
+    formats = heap_calloc(format_count, sizeof(*formats));
+    if (!formats) return FALSE;
+
+    hr = ComponentInfo_GetGuidList(info->classkey, containers_keyname, format_count, formats,
+                                   &format_count);
+    if (FAILED(hr))
+    {
+        heap_free(formats);
+        return FALSE;
+    }
+
+    info->container_formats = formats;
+    info->container_count = format_count;
+    return TRUE;
+}
+
 static HRESULT MetadataReaderInfo_Constructor(HKEY classkey, REFCLSID clsid, ComponentInfo **info)
 {
     MetadataReaderInfo *This;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc_zero(sizeof(*This));
     if (!This)
     {
         RegCloseKey(classkey);
@@ -1930,6 +1968,12 @@ static HRESULT MetadataReaderInfo_Constructor(HKEY classkey, REFCLSID clsid, Com
     This->base.ref = 1;
     This->classkey = classkey;
     This->base.clsid = *clsid;
+
+    if (!read_metadata_info(This))
+    {
+        IWICComponentInfo_Release(&This->base.IWICComponentInfo_iface);
+        return WINCODEC_ERR_COMPONENTNOTFOUND;
+    }
 
     *info = &This->base;
     return S_OK;
