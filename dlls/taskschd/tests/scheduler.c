@@ -1602,6 +1602,13 @@ todo_wine
     ok(hr == S_OK, "get_Description error %#x\n", hr);
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
+    hr = IRegistrationInfo_put_Description(reginfo, NULL);
+    ok(hr == S_OK, "put_Description error %#x\n", hr);
+    bstr = (BSTR)0xdeadbeef;
+    hr = IRegistrationInfo_get_Description(reginfo, &bstr);
+    ok(hr == S_OK, "get_Description error %#x\n", hr);
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
     ok(hr == S_OK, "get_Author error %#x\n", hr);
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
