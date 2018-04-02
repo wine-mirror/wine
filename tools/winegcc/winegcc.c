@@ -1136,13 +1136,13 @@ static void build(struct options* opts)
     default:
         if (opts->image_base)
         {
-            if (!try_link(opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
-                strarray_add(link_args, "-Wl,-z,max-page-size=0x1000");
             if (!try_link(opts->prefix, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)))
                 strarray_add(link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base));
             else
                 prelink = PRELINK;
         }
+        if (!try_link(opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
+            strarray_add(link_args, "-Wl,-z,max-page-size=0x1000");
         break;
     }
 
