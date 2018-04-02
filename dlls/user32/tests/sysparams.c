@@ -44,6 +44,7 @@ static BOOL (WINAPI *pSetProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
 static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
@@ -3067,6 +3068,63 @@ static void test_dpi_aware(void)
     test_GetSystemMetrics();
 }
 
+static void test_window_dpi(void)
+{
+    DPI_AWARENESS_CONTEXT context, orig;
+    DPI_AWARENESS awareness;
+    HWND hwnd;
+
+    if (!pGetWindowDpiAwarenessContext)
+    {
+        win_skip( "GetWindowDpiAwarenessContext not supported\n" );
+        return;
+    }
+    orig = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
+                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    ok( hwnd != 0, "failed to create window\n" );
+    context = GetWindowDpiAwarenessContext( hwnd );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
+    DestroyWindow( hwnd );
+
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
+                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    ok( hwnd != 0, "failed to create window\n" );
+    context = GetWindowDpiAwarenessContext( hwnd );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
+    DestroyWindow( hwnd );
+
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
+                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    ok( hwnd != 0, "failed to create window\n" );
+    context = GetWindowDpiAwarenessContext( hwnd );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+    DestroyWindow( hwnd );
+
+    SetLastError( 0xdeadbeef );
+    context = GetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
+    ok( !context, "got %p\n", context );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    context = GetWindowDpiAwarenessContext( GetDesktopWindow() );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    SetLastError( 0xdeadbeef );
+    context = GetWindowDpiAwarenessContext( GetDesktopWindow() );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+
+    pSetThreadDpiAwarenessContext( orig );
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -3084,6 +3142,7 @@ START_TEST(sysparams)
     pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
     pGetThreadDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetThreadDpiAwarenessContext");
     pSetThreadDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetThreadDpiAwarenessContext");
+    pGetWindowDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetWindowDpiAwarenessContext");
     pGetAwarenessFromDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetAwarenessFromDpiAwarenessContext");
 
     hInstance = GetModuleHandleA( NULL );
@@ -3136,4 +3195,5 @@ START_TEST(sysparams)
     ReleaseDC( 0, hdc);
 
     test_dpi_aware();
+    test_window_dpi();
 }

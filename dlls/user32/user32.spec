@@ -394,6 +394,7 @@
 @ stdcall GetWindowContextHelpId(long)
 @ stdcall GetWindowDC(long)
 @ stdcall GetWindowDisplayAffinity(long ptr)
+@ stdcall GetWindowDpiAwarenessContext(long)
 @ stdcall GetWindowInfo(long ptr)
 @ stdcall GetWindowLongA(long long)
 @ stdcall -arch=win64 GetWindowLongPtrA(long long)
