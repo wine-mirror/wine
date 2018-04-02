@@ -2859,11 +2859,13 @@ struct wined3d_state
 
 struct wined3d_dummy_textures
 {
+    GLuint tex_1d;
     GLuint tex_2d;
     GLuint tex_rect;
     GLuint tex_3d;
     GLuint tex_cube;
     GLuint tex_cube_array;
+    GLuint tex_1d_array;
     GLuint tex_2d_array;
     GLuint tex_buffer;
     GLuint tex_2d_ms;

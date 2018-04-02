@@ -2576,6 +2576,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     sampler_type = "samplerCube";
                 break;
 
+            case WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY:
+                if (shadow_sampler)
+                    sampler_type = "sampler1DArrayShadow";
+                else
+                    sampler_type = "sampler1DArray";
+                break;
+
             case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
                 if (shadow_sampler)
                     sampler_type = "sampler2DArrayShadow";

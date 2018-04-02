@@ -144,7 +144,8 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
         gl_info->fbo_ops.glFramebufferTexture(fbo_target, attachment,
                 resource->object, resource->level);
     }
-    else if (resource->target == GL_TEXTURE_2D_ARRAY || resource->target == GL_TEXTURE_3D)
+    else if (resource->target == GL_TEXTURE_1D_ARRAY || resource->target == GL_TEXTURE_2D_ARRAY
+            || resource->target == GL_TEXTURE_3D)
     {
         if (!gl_info->fbo_ops.glFramebufferTextureLayer)
         {
@@ -154,6 +155,11 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
 
         gl_info->fbo_ops.glFramebufferTextureLayer(fbo_target, attachment,
                 resource->object, resource->level, resource->layer);
+    }
+    else if (resource->target == GL_TEXTURE_1D)
+    {
+        gl_info->fbo_ops.glFramebufferTexture1D(fbo_target, attachment,
+                resource->target, resource->object, resource->level);
     }
     else
     {
@@ -242,6 +248,8 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
     }
     texture_type[] =
     {
+        {GL_TEXTURE_1D,                   GL_TEXTURE_BINDING_1D,                   "1d",          WINED3D_GL_EXT_NONE},
+        {GL_TEXTURE_1D_ARRAY,             GL_TEXTURE_BINDING_1D_ARRAY,             "1d-array",    EXT_TEXTURE_ARRAY},
         {GL_TEXTURE_2D,                   GL_TEXTURE_BINDING_2D,                   "2d",          WINED3D_GL_EXT_NONE},
         {GL_TEXTURE_RECTANGLE_ARB,        GL_TEXTURE_BINDING_RECTANGLE_ARB,        "rectangle",   ARB_TEXTURE_RECTANGLE},
         {GL_TEXTURE_2D_ARRAY,             GL_TEXTURE_BINDING_2D_ARRAY,             "2d-array" ,   EXT_TEXTURE_ARRAY},
@@ -1742,6 +1750,7 @@ void context_bind_dummy_textures(const struct wined3d_device *device, const stru
     {
         GL_EXTCALL(glActiveTexture(GL_TEXTURE0 + i));
 
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, textures->tex_1d);
         gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, textures->tex_2d);
 
         if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
@@ -1757,7 +1766,10 @@ void context_bind_dummy_textures(const struct wined3d_device *device, const stru
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, textures->tex_cube_array);
 
         if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        {
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D_ARRAY, textures->tex_1d_array);
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, textures->tex_2d_array);
+        }
 
         if (gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_BUFFER, textures->tex_buffer);
@@ -2490,6 +2502,12 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
         {
             case GL_NONE:
                 /* nothing to do */
+                break;
+            case GL_TEXTURE_1D:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, textures->tex_1d);
+                break;
+            case GL_TEXTURE_1D_ARRAY:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D_ARRAY, textures->tex_1d_array);
                 break;
             case GL_TEXTURE_2D:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, textures->tex_2d);
