@@ -34,6 +34,7 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -214,6 +215,9 @@ static HRESULT ComponentInfo_GetGuidList(HKEY classkey, LPCWSTR subkeyname,
 typedef struct {
     ComponentInfo base;
     HKEY classkey;
+    WICBitmapPattern *patterns;
+    UINT pattern_count;
+    UINT patterns_size;
 } BitmapDecoderInfo;
 
 static inline BitmapDecoderInfo *impl_from_IWICBitmapDecoderInfo(IWICBitmapDecoderInfo *iface)
@@ -266,6 +270,7 @@ static ULONG WINAPI BitmapDecoderInfo_Release(IWICBitmapDecoderInfo *iface)
     if (ref == 0)
     {
         RegCloseKey(This->classkey);
+        heap_free(This->patterns);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -450,96 +455,20 @@ static HRESULT WINAPI BitmapDecoderInfo_GetPatterns(IWICBitmapDecoderInfo *iface
     UINT cbSizePatterns, WICBitmapPattern *pPatterns, UINT *pcPatterns, UINT *pcbPatternsActual)
 {
     BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
-    UINT pattern_count=0, patterns_size=0;
-    WCHAR subkeyname[11];
-    LONG res;
-    HKEY patternskey, patternkey;
-    static const WCHAR uintformatW[] = {'%','u',0};
-    static const WCHAR patternsW[] = {'P','a','t','t','e','r','n','s',0};
-    static const WCHAR positionW[] = {'P','o','s','i','t','i','o','n',0};
-    static const WCHAR lengthW[] = {'L','e','n','g','t','h',0};
-    static const WCHAR patternW[] = {'P','a','t','t','e','r','n',0};
-    static const WCHAR maskW[] = {'M','a','s','k',0};
-    static const WCHAR endofstreamW[] = {'E','n','d','O','f','S','t','r','e','a','m',0};
-    HRESULT hr=S_OK;
-    UINT i;
-    BYTE *bPatterns=(BYTE*)pPatterns;
-    DWORD length, valuesize;
 
     TRACE("(%p,%i,%p,%p,%p)\n", iface, cbSizePatterns, pPatterns, pcPatterns, pcbPatternsActual);
 
-    res = RegOpenKeyExW(This->classkey, patternsW, 0, KEY_READ, &patternskey);
-    if (res != ERROR_SUCCESS) return HRESULT_FROM_WIN32(res);
+    if (!pcPatterns || !pcbPatternsActual) return E_INVALIDARG;
 
-    res = RegQueryInfoKeyW(patternskey, NULL, NULL, NULL, &pattern_count, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    if (res == ERROR_SUCCESS)
+    *pcPatterns = This->pattern_count;
+    *pcbPatternsActual = This->patterns_size;
+    if (pPatterns)
     {
-        patterns_size = pattern_count * sizeof(WICBitmapPattern);
-
-        for (i=0; i<pattern_count; i++)
-        {
-            snprintfW(subkeyname, 11, uintformatW, i);
-            res = RegOpenKeyExW(patternskey, subkeyname, 0, KEY_READ, &patternkey);
-            if (res == ERROR_SUCCESS)
-            {
-                valuesize = sizeof(ULONG);
-                res = RegGetValueW(patternkey, NULL, lengthW, RRF_RT_DWORD, NULL,
-                    &length, &valuesize);
-                patterns_size += length*2;
-
-                if ((cbSizePatterns >= patterns_size) && (res == ERROR_SUCCESS))
-                {
-                    pPatterns[i].Length = length;
-
-                    pPatterns[i].EndOfStream = 0;
-                    valuesize = sizeof(BOOL);
-                    RegGetValueW(patternkey, NULL, endofstreamW, RRF_RT_DWORD, NULL,
-                        &pPatterns[i].EndOfStream, &valuesize);
-
-                    pPatterns[i].Position.QuadPart = 0;
-                    valuesize = sizeof(ULARGE_INTEGER);
-                    res = RegGetValueW(patternkey, NULL, positionW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
-                        &pPatterns[i].Position, &valuesize);
-
-                    if (res == ERROR_SUCCESS)
-                    {
-                        pPatterns[i].Pattern = bPatterns+patterns_size-length*2;
-                        valuesize = length;
-                        res = RegGetValueW(patternkey, NULL, patternW, RRF_RT_REG_BINARY, NULL,
-                            pPatterns[i].Pattern, &valuesize);
-                    }
-
-                    if (res == ERROR_SUCCESS)
-                    {
-                        pPatterns[i].Mask = bPatterns+patterns_size-length;
-                        valuesize = length;
-                        res = RegGetValueW(patternkey, NULL, maskW, RRF_RT_REG_BINARY, NULL,
-                            pPatterns[i].Mask, &valuesize);
-                    }
-                }
-
-                RegCloseKey(patternkey);
-            }
-            if (res != ERROR_SUCCESS)
-            {
-                hr = HRESULT_FROM_WIN32(res);
-                break;
-            }
-        }
+        if (This->patterns_size && cbSizePatterns < This->patterns_size)
+            return WINCODEC_ERR_INSUFFICIENTBUFFER;
+        memcpy(pPatterns, This->patterns, This->patterns_size);
     }
-    else hr = HRESULT_FROM_WIN32(res);
-
-    RegCloseKey(patternskey);
-
-    if (hr == S_OK)
-    {
-        *pcPatterns = pattern_count;
-        *pcbPatternsActual = patterns_size;
-        if (pPatterns && cbSizePatterns < patterns_size)
-            hr = WINCODEC_ERR_INSUFFICIENTBUFFER;
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *iface,
@@ -658,11 +587,121 @@ static const IWICBitmapDecoderInfoVtbl BitmapDecoderInfo_Vtbl = {
     BitmapDecoderInfo_CreateInstance
 };
 
+static void read_bitmap_patterns(BitmapDecoderInfo *info)
+{
+    UINT pattern_count=0, patterns_size=0;
+    WCHAR subkeyname[11];
+    LONG res;
+    HKEY patternskey, patternkey;
+    static const WCHAR uintformatW[] = {'%','u',0};
+    static const WCHAR patternsW[] = {'P','a','t','t','e','r','n','s',0};
+    static const WCHAR positionW[] = {'P','o','s','i','t','i','o','n',0};
+    static const WCHAR lengthW[] = {'L','e','n','g','t','h',0};
+    static const WCHAR patternW[] = {'P','a','t','t','e','r','n',0};
+    static const WCHAR maskW[] = {'M','a','s','k',0};
+    static const WCHAR endofstreamW[] = {'E','n','d','O','f','S','t','r','e','a','m',0};
+    UINT i;
+    WICBitmapPattern *patterns;
+    BYTE *patterns_ptr;
+    DWORD length, valuesize;
+
+    res = RegOpenKeyExW(info->classkey, patternsW, 0, KEY_READ, &patternskey);
+    if (res != ERROR_SUCCESS) return;
+
+    res = RegQueryInfoKeyW(patternskey, NULL, NULL, NULL, &pattern_count, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (res != ERROR_SUCCESS)
+    {
+        RegCloseKey(patternskey);
+        return;
+    }
+
+    patterns_size = pattern_count * sizeof(WICBitmapPattern);
+    patterns = heap_alloc(patterns_size);
+    if (!patterns)
+    {
+        RegCloseKey(patternskey);
+        return;
+    }
+
+    for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
+    {
+        snprintfW(subkeyname, 11, uintformatW, i);
+        res = RegOpenKeyExW(patternskey, subkeyname, 0, KEY_READ, &patternkey);
+        if (res != ERROR_SUCCESS) break;
+
+        valuesize = sizeof(ULONG);
+        res = RegGetValueW(patternkey, NULL, lengthW, RRF_RT_DWORD, NULL, &length, &valuesize);
+        if (res == ERROR_SUCCESS)
+        {
+            patterns_size += length*2;
+            patterns[i].Length = length;
+
+            valuesize = sizeof(BOOL);
+            res = RegGetValueW(patternkey, NULL, endofstreamW, RRF_RT_DWORD, NULL,
+                               &patterns[i].EndOfStream, &valuesize);
+            if (res) patterns[i].EndOfStream = 0;
+
+            patterns[i].Position.QuadPart = 0;
+            valuesize = sizeof(ULARGE_INTEGER);
+            res = RegGetValueW(patternkey, NULL, positionW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
+                               &patterns[i].Position, &valuesize);
+        }
+
+        RegCloseKey(patternkey);
+    }
+
+    if (res != ERROR_SUCCESS || !(patterns_ptr = heap_realloc(patterns, patterns_size)))
+    {
+        heap_free(patterns);
+        RegCloseKey(patternskey);
+        return;
+    }
+    patterns = (WICBitmapPattern*)patterns_ptr;
+    patterns_ptr += pattern_count * sizeof(*patterns);
+
+    for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
+    {
+        snprintfW(subkeyname, 11, uintformatW, i);
+        res = RegOpenKeyExW(patternskey, subkeyname, 0, KEY_READ, &patternkey);
+        if (res != ERROR_SUCCESS) break;
+
+        length = patterns[i].Length;
+        patterns[i].Pattern = patterns_ptr;
+        valuesize = length;
+        res = RegGetValueW(patternkey, NULL, patternW, RRF_RT_REG_BINARY, NULL,
+                           patterns[i].Pattern, &valuesize);
+        patterns_ptr += length;
+
+        if (res == ERROR_SUCCESS)
+        {
+            patterns[i].Mask = patterns_ptr;
+            valuesize = length;
+            res = RegGetValueW(patternkey, NULL, maskW, RRF_RT_REG_BINARY, NULL,
+                               patterns[i].Mask, &valuesize);
+            patterns_ptr += length;
+        }
+
+        RegCloseKey(patternkey);
+    }
+
+    RegCloseKey(patternskey);
+
+    if (res != ERROR_SUCCESS)
+    {
+        heap_free(patterns);
+        return;
+    }
+
+    info->pattern_count = pattern_count;
+    info->patterns_size = patterns_size;
+    info->patterns = patterns;
+}
+
 static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, ComponentInfo **ret)
 {
     BitmapDecoderInfo *This;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapDecoderInfo));
+    This = heap_alloc_zero(sizeof(BitmapDecoderInfo));
     if (!This)
     {
         RegCloseKey(classkey);
@@ -673,6 +712,8 @@ static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, Comp
     This->base.ref = 1;
     This->classkey = classkey;
     This->base.clsid = *clsid;
+
+    read_bitmap_patterns(This);
 
     *ret = &This->base;
     return S_OK;
