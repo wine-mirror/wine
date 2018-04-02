@@ -1351,6 +1351,7 @@ static void test_create_texture1d(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
 
+    check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
     ID3D10Texture1D_Release(texture);
 
     desc.MipLevels = 0;
@@ -1388,6 +1389,123 @@ static void test_create_texture1d(void)
         ok(hr == (i ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (SUCCEEDED(hr))
             ID3D10Texture1D_Release(texture);
+    }
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_texture1d_interfaces(void)
+{
+    ID3D11Texture1D *d3d11_texture;
+    D3D10_TEXTURE1D_DESC desc;
+    ID3D10Texture1D *texture;
+    ID3D10Device *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct test
+    {
+        UINT bind_flags;
+        UINT misc_flags;
+        UINT expected_bind_flags;
+        UINT expected_misc_flags;
+    }
+    desc_conversion_tests[] =
+    {
+        {
+            D3D10_BIND_SHADER_RESOURCE, 0,
+            D3D11_BIND_SHADER_RESOURCE, 0
+        },
+        {
+            0, D3D10_RESOURCE_MISC_SHARED,
+            0, D3D11_RESOURCE_MISC_SHARED
+        },
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    desc.Width = 512;
+    desc.MipLevels = 0;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    hr = check_interface(texture, &IID_ID3D11Texture1D, TRUE, TRUE); /* Not available on all Windows versions. */
+    ID3D10Texture1D_Release(texture);
+    if (FAILED(hr))
+    {
+        win_skip("1D textures do not implement ID3D11Texture1D, skipping tests.\n");
+        ID3D10Device_Release(device);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
+    {
+        const struct test *current = &desc_conversion_tests[i];
+        D3D11_TEXTURE1D_DESC d3d11_desc;
+        ID3D11Device *d3d11_device;
+
+        desc.Width = 512;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = current->bind_flags;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = current->misc_flags;
+
+        hr = ID3D10Device_CreateTexture1D(device, &desc, NULL, &texture);
+        /* Shared resources are not supported by REF and WARP devices. */
+        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY),
+                "Test %u: Failed to create a 1d texture, hr %#x.\n", i, hr);
+        if (FAILED(hr))
+        {
+            win_skip("Failed to create ID3D10Texture1D, skipping test %u.\n", i);
+            continue;
+        }
+
+        check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
+        hr = ID3D10Texture1D_QueryInterface(texture, &IID_ID3D11Texture1D, (void **)&d3d11_texture);
+        ok(SUCCEEDED(hr), "Test %u: Texture should implement ID3D11Texture1D.\n", i);
+        ID3D10Texture1D_Release(texture);
+
+        ID3D11Texture1D_GetDesc(d3d11_texture, &d3d11_desc);
+
+        ok(d3d11_desc.Width == desc.Width,
+                "Test %u: Got unexpected Width %u.\n", i, d3d11_desc.Width);
+        ok(d3d11_desc.MipLevels == desc.MipLevels,
+                "Test %u: Got unexpected MipLevels %u.\n", i, d3d11_desc.MipLevels);
+        ok(d3d11_desc.ArraySize == desc.ArraySize,
+                "Test %u: Got unexpected ArraySize %u.\n", i, d3d11_desc.ArraySize);
+        ok(d3d11_desc.Format == desc.Format,
+                "Test %u: Got unexpected Format %u.\n", i, d3d11_desc.Format);
+        ok(d3d11_desc.Usage == (D3D11_USAGE)desc.Usage,
+                "Test %u: Got unexpected Usage %u.\n", i, d3d11_desc.Usage);
+        ok(d3d11_desc.BindFlags == current->expected_bind_flags,
+                "Test %u: Got unexpected BindFlags %#x.\n", i, d3d11_desc.BindFlags);
+        ok(d3d11_desc.CPUAccessFlags == desc.CPUAccessFlags,
+                "Test %u: Got unexpected CPUAccessFlags %#x.\n", i, d3d11_desc.CPUAccessFlags);
+        ok(d3d11_desc.MiscFlags == current->expected_misc_flags,
+                "Test %u: Got unexpected MiscFlags %#x.\n", i, d3d11_desc.MiscFlags);
+
+        d3d11_device = NULL;
+        ID3D11Texture1D_GetDevice(d3d11_texture, &d3d11_device);
+        ok(!!d3d11_device, "Test %u: Got NULL, expected device pointer.\n", i);
+        ID3D11Device_Release(d3d11_device);
+
+        ID3D11Texture1D_Release(d3d11_texture);
     }
 
     refcount = ID3D10Device_Release(device);
@@ -15542,6 +15660,7 @@ START_TEST(device)
     test_feature_level();
     test_device_interfaces();
     test_create_texture1d();
+    test_texture1d_interfaces();
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();

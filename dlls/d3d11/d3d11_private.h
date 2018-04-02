@@ -120,6 +120,7 @@ struct d3d_texture1d
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    IUnknown *dxgi_surface;
     struct wined3d_texture *wined3d_texture;
     D3D11_TEXTURE1D_DESC desc;
     ID3D11Device *device;
