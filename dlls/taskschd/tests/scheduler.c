@@ -1428,6 +1428,7 @@ static void test_TaskDefinition(void)
         "    <Version>1.0</Version>\n"
         "    <Date>2018-04-02T11:22:33</Date>\n"
         "    <Documentation>doc</Documentation>\n"
+        "    <URI>uri</URI>\n"
         "  </RegistrationInfo>\n"
         "  <Settings>\n"
         "    <Enabled>false</Enabled>\n"
@@ -1511,6 +1512,7 @@ static void test_TaskDefinition(void)
     static const WCHAR versionW[] = { '1','.','0',0 };
     static const WCHAR dateW[] = { '2','0','1','8','-','0','4','-','0','2','T','1','1',':','2','2',':','3','3',0 };
     static const WCHAR docW[] = { 'd','o','c',0 };
+    static const WCHAR uriW[] = { 'u','r','i',0 };
     static WCHAR Task1[] = { '"','T','a','s','k','1','"',0 };
     static struct settings def_settings = { { 0 }, { 'P','T','7','2','H',0 }, { 0 },
         0, 7, TASK_INSTANCES_IGNORE_NEW, TASK_COMPATIBILITY_V2, VARIANT_TRUE, VARIANT_TRUE,
@@ -1663,7 +1665,15 @@ todo_wine
 
     hr = IRegistrationInfo_get_URI(reginfo, &bstr);
     ok(hr == S_OK, "get_URI error %#x\n", hr);
+    ok(!lstrcmpW(bstr, uriW), "expected %s, got %s\n", wine_dbgstr_w(uriW), wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegistrationInfo_put_URI(reginfo, NULL);
+    ok(hr == S_OK, "put_URI error %#x\n", hr);
+    bstr = (BSTR)0xdeadbeef;
+    hr = IRegistrationInfo_get_URI(reginfo, &bstr);
+    ok(hr == S_OK, "get_URI error %#x\n", hr);
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+
     hr = IRegistrationInfo_get_Source(reginfo, &bstr);
     ok(hr == S_OK, "get_Source error %#x\n", hr);
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
