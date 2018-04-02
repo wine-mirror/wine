@@ -3042,12 +3042,31 @@ UINT WINAPI GetDpiForWindow( HWND hwnd )
 }
 
 /**********************************************************************
+ *              GetThreadDpiAwarenessContext   (USER32.@)
+ */
+DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
+{
+    struct user_thread_info *info = get_user_thread_info();
+
+    if (info->dpi_awareness) return info->dpi_awareness;
+    if (dpi_awareness) return dpi_awareness;
+    return DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;  /* FIXME: should default to unaware */
+}
+
+/**********************************************************************
  *              SetThreadDpiAwarenessContext   (USER32.@)
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    FIXME("(%p): stub\n", context);
-    return NULL;
+    DPI_AWARENESS_CONTEXT prev = GetThreadDpiAwarenessContext();
+
+    if (!IsValidDpiAwarenessContext( context ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    get_user_thread_info()->dpi_awareness = context;
+    return prev;
 }
 
 /**********************************************************************

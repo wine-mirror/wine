@@ -379,6 +379,7 @@
 @ stdcall GetTabbedTextExtentW(long wstr long long ptr)
 @ stdcall GetTaskmanWindow ()
 @ stdcall GetThreadDesktop(long)
+@ stdcall GetThreadDpiAwarenessContext()
 @ stdcall GetTitleBarInfo(long ptr)
 @ stdcall GetTopWindow(long)
 @ stdcall GetTouchInputInfo(long long ptr long)
