@@ -1498,13 +1498,32 @@ static HRESULT PixelFormatInfo_Constructor(HKEY classkey, REFCLSID clsid, Compon
     return S_OK;
 }
 
+struct metadata_container
+{
+    WICMetadataPattern *patterns;
+    UINT pattern_count;
+    UINT patterns_size;
+};
+
 typedef struct
 {
     ComponentInfo base;
     HKEY classkey;
     GUID *container_formats;
+    struct metadata_container *containers;
     UINT container_count;
 } MetadataReaderInfo;
+
+struct metadata_container *get_metadata_container(MetadataReaderInfo *info, const GUID *guid)
+{
+    unsigned i;
+
+    for (i = 0; i < info->container_count; i++)
+        if (IsEqualGUID(info->container_formats + i, guid))
+            return info->containers + i;
+
+    return NULL;
+}
 
 static inline MetadataReaderInfo *impl_from_IWICMetadataReaderInfo(IWICMetadataReaderInfo *iface)
 {
@@ -1555,7 +1574,11 @@ static ULONG WINAPI MetadataReaderInfo_Release(IWICMetadataReaderInfo *iface)
 
     if (!ref)
     {
+        unsigned i;
         RegCloseKey(This->classkey);
+        for (i = 0; i < This->container_count; i++)
+            heap_free(This->containers[i].patterns);
+        heap_free(This->containers);
         heap_free(This->container_formats);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -1711,114 +1734,27 @@ static HRESULT WINAPI MetadataReaderInfo_DoesRequireFixedSize(IWICMetadataReader
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetPatterns(IWICMetadataReaderInfo *iface,
-    REFGUID container, UINT length, WICMetadataPattern *patterns, UINT *count, UINT *actual_length)
+    REFGUID container_guid, UINT length, WICMetadataPattern *patterns, UINT *count, UINT *actual_length)
 {
     MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
-    HRESULT hr=S_OK;
-    LONG res;
-    UINT pattern_count=0, patterns_size=0;
-    DWORD valuesize, patternsize;
-    BYTE *bPatterns=(BYTE*)patterns;
-    HKEY containers_key, guid_key, pattern_key;
-    WCHAR subkeyname[11];
-    WCHAR guidkeyname[39];
-    int i;
-    static const WCHAR uintformatW[] = {'%','u',0};
-    static const WCHAR patternW[] = {'P','a','t','t','e','r','n',0};
-    static const WCHAR positionW[] = {'P','o','s','i','t','i','o','n',0};
-    static const WCHAR maskW[] = {'M','a','s','k',0};
-    static const WCHAR dataoffsetW[] = {'D','a','t','a','O','f','f','s','e','t',0};
+    struct metadata_container *container;
 
-    TRACE("(%p,%s,%u,%p,%p,%p)\n", iface, debugstr_guid(container), length, patterns, count, actual_length);
+    TRACE("(%p,%s,%u,%p,%p,%p)\n", iface, debugstr_guid(container_guid), length, patterns, count, actual_length);
 
-    if (!actual_length || !container) return E_INVALIDARG;
+    if (!actual_length || !container_guid) return E_INVALIDARG;
 
-    res = RegOpenKeyExW(This->classkey, containers_keyname, 0, KEY_READ, &containers_key);
-    if (res == ERROR_SUCCESS)
+    if (!(container = get_metadata_container(This, container_guid)))
+        return WINCODEC_ERR_COMPONENTNOTFOUND;
+
+    *count = container->pattern_count;
+    *actual_length = container->patterns_size;
+    if (patterns)
     {
-        StringFromGUID2(container, guidkeyname, 39);
-
-        res = RegOpenKeyExW(containers_key, guidkeyname, 0, KEY_READ, &guid_key);
-        if (res == ERROR_FILE_NOT_FOUND) hr = WINCODEC_ERR_COMPONENTNOTFOUND;
-        else if (res != ERROR_SUCCESS) hr = HRESULT_FROM_WIN32(res);
-
-        RegCloseKey(containers_key);
+        if (container->patterns_size && length < container->patterns_size)
+            return WINCODEC_ERR_INSUFFICIENTBUFFER;
+        memcpy(patterns, container->patterns, container->patterns_size);
     }
-    else if (res == ERROR_FILE_NOT_FOUND) hr = WINCODEC_ERR_COMPONENTNOTFOUND;
-    else hr = HRESULT_FROM_WIN32(res);
-
-    if (SUCCEEDED(hr))
-    {
-        res = RegQueryInfoKeyW(guid_key, NULL, NULL, NULL, &pattern_count, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-        if (res != ERROR_SUCCESS) hr = HRESULT_FROM_WIN32(res);
-
-        if (SUCCEEDED(hr))
-        {
-            patterns_size = pattern_count * sizeof(WICMetadataPattern);
-
-            for (i=0; i<pattern_count; i++)
-            {
-                snprintfW(subkeyname, 11, uintformatW, i);
-                res = RegOpenKeyExW(guid_key, subkeyname, 0, KEY_READ, &pattern_key);
-                if (res == ERROR_SUCCESS)
-                {
-                    res = RegGetValueW(pattern_key, NULL, patternW, RRF_RT_REG_BINARY, NULL,
-                        NULL, &patternsize);
-                    patterns_size += patternsize*2;
-
-                    if ((length >= patterns_size) && (res == ERROR_SUCCESS))
-                    {
-                        patterns[i].Length = patternsize;
-
-                        patterns[i].DataOffset.QuadPart = 0;
-                        valuesize = sizeof(ULARGE_INTEGER);
-                        RegGetValueW(pattern_key, NULL, dataoffsetW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
-                            &patterns[i].DataOffset, &valuesize);
-
-                        patterns[i].Position.QuadPart = 0;
-                        valuesize = sizeof(ULARGE_INTEGER);
-                        res = RegGetValueW(pattern_key, NULL, positionW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
-                            &patterns[i].Position, &valuesize);
-
-                        if (res == ERROR_SUCCESS)
-                        {
-                            patterns[i].Pattern = bPatterns+patterns_size-patternsize*2;
-                            valuesize = patternsize;
-                            res = RegGetValueW(pattern_key, NULL, patternW, RRF_RT_REG_BINARY, NULL,
-                                patterns[i].Pattern, &valuesize);
-                        }
-
-                        if (res == ERROR_SUCCESS)
-                        {
-                            patterns[i].Mask = bPatterns+patterns_size-patternsize;
-                            valuesize = patternsize;
-                            res = RegGetValueW(pattern_key, NULL, maskW, RRF_RT_REG_BINARY, NULL,
-                                patterns[i].Mask, &valuesize);
-                        }
-                    }
-
-                    RegCloseKey(pattern_key);
-                }
-                if (res != ERROR_SUCCESS)
-                {
-                    hr = HRESULT_FROM_WIN32(res);
-                    break;
-                }
-            }
-        }
-
-        RegCloseKey(guid_key);
-    }
-
-    if (hr == S_OK)
-    {
-        *count = pattern_count;
-        *actual_length = patterns_size;
-        if (patterns && length < patterns_size)
-            hr = WINCODEC_ERR_INSUFFICIENTBUFFER;
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI MetadataReaderInfo_MatchesPattern(IWICMetadataReaderInfo *iface,
@@ -1928,6 +1864,120 @@ static const IWICMetadataReaderInfoVtbl MetadataReaderInfo_Vtbl = {
     MetadataReaderInfo_CreateInstance
 };
 
+static void read_metadata_patterns(MetadataReaderInfo *info, GUID *container_guid,
+                                   struct metadata_container *container)
+{
+    UINT pattern_count=0, patterns_size=0;
+    WCHAR subkeyname[11], guidkeyname[39];
+    LONG res;
+    HKEY containers_key, guid_key, patternkey;
+    static const WCHAR uintformatW[] = {'%','u',0};
+    static const WCHAR patternW[] = {'P','a','t','t','e','r','n',0};
+    static const WCHAR positionW[] = {'P','o','s','i','t','i','o','n',0};
+    static const WCHAR maskW[] = {'M','a','s','k',0};
+    static const WCHAR dataoffsetW[] = {'D','a','t','a','O','f','f','s','e','t',0};
+    UINT i;
+    WICMetadataPattern *patterns;
+    BYTE *patterns_ptr;
+    DWORD length, valuesize;
+
+    res = RegOpenKeyExW(info->classkey, containers_keyname, 0, KEY_READ, &containers_key);
+    if (res != ERROR_SUCCESS) return;
+
+    StringFromGUID2(container_guid, guidkeyname, 39);
+    res = RegOpenKeyExW(containers_key, guidkeyname, 0, KEY_READ, &guid_key);
+    RegCloseKey(containers_key);
+    if (res != ERROR_SUCCESS) return;
+
+    res = RegQueryInfoKeyW(guid_key, NULL, NULL, NULL, &pattern_count,
+                           NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (res != ERROR_SUCCESS)
+    {
+        RegCloseKey(guid_key);
+        return;
+    }
+
+    patterns_size = pattern_count * sizeof(WICMetadataPattern);
+    patterns = heap_alloc(patterns_size);
+    if (!patterns)
+    {
+        RegCloseKey(guid_key);
+        return;
+    }
+
+    for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
+    {
+        snprintfW(subkeyname, 11, uintformatW, i);
+        res = RegOpenKeyExW(guid_key, subkeyname, 0, KEY_READ, &patternkey);
+        if (res != ERROR_SUCCESS) break;
+
+        res = RegGetValueW(patternkey, NULL, patternW, RRF_RT_REG_BINARY, NULL, NULL, &length);
+        if (res == ERROR_SUCCESS)
+        {
+            patterns_size += length*2;
+            patterns[i].Length = length;
+
+            valuesize = sizeof(DWORD64);
+            res = RegGetValueW(patternkey, NULL, dataoffsetW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
+                               &patterns[i].DataOffset, &valuesize);
+            if (res) patterns[i].DataOffset.QuadPart = 0;
+
+            patterns[i].Position.QuadPart = 0;
+            valuesize = sizeof(DWORD64);
+            res = RegGetValueW(patternkey, NULL, positionW, RRF_RT_DWORD|RRF_RT_QWORD, NULL,
+                               &patterns[i].Position, &valuesize);
+        }
+
+        RegCloseKey(patternkey);
+    }
+
+    if (res != ERROR_SUCCESS || !(patterns_ptr = heap_realloc(patterns, patterns_size)))
+    {
+        heap_free(patterns);
+        RegCloseKey(guid_key);
+        return;
+    }
+    patterns = (WICMetadataPattern*)patterns_ptr;
+    patterns_ptr += pattern_count * sizeof(*patterns);
+
+    for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
+    {
+        snprintfW(subkeyname, 11, uintformatW, i);
+        res = RegOpenKeyExW(guid_key, subkeyname, 0, KEY_READ, &patternkey);
+        if (res != ERROR_SUCCESS) break;
+
+        length = patterns[i].Length;
+        patterns[i].Pattern = patterns_ptr;
+        valuesize = length;
+        res = RegGetValueW(patternkey, NULL, patternW, RRF_RT_REG_BINARY, NULL,
+                           patterns[i].Pattern, &valuesize);
+        patterns_ptr += length;
+
+        if (res == ERROR_SUCCESS)
+        {
+            patterns[i].Mask = patterns_ptr;
+            valuesize = length;
+            res = RegGetValueW(patternkey, NULL, maskW, RRF_RT_REG_BINARY, NULL,
+                               patterns[i].Mask, &valuesize);
+            patterns_ptr += length;
+        }
+
+        RegCloseKey(patternkey);
+    }
+
+    RegCloseKey(guid_key);
+
+    if (res != ERROR_SUCCESS)
+    {
+        heap_free(patterns);
+        return;
+    }
+
+    container->pattern_count = pattern_count;
+    container->patterns_size = patterns_size;
+    container->patterns = patterns;
+}
+
 static BOOL read_metadata_info(MetadataReaderInfo *info)
 {
     UINT format_count;
@@ -1950,6 +2000,18 @@ static BOOL read_metadata_info(MetadataReaderInfo *info)
 
     info->container_formats = formats;
     info->container_count = format_count;
+
+    if (format_count)
+    {
+        unsigned i;
+
+        info->containers = heap_calloc(format_count, sizeof(*info->containers));
+        if (!info->containers) return FALSE;
+
+        for (i = 0; i < format_count; i++)
+            read_metadata_patterns(info, info->container_formats + i, info->containers + i);
+    }
+
     return TRUE;
 }
 
