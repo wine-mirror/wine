@@ -689,15 +689,14 @@ static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *ifac
 static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *iface, BSTR doc)
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+    WCHAR *str = NULL;
 
     TRACE("%p,%s\n", iface, debugstr_w(doc));
 
-    if (!doc) return E_INVALIDARG;
-
+    if (doc && !(str = heap_strdupW(doc))) return E_OUTOFMEMORY;
     heap_free(reginfo->documentation);
-    reginfo->documentation = heap_strdupW(doc);
-    /* FIXME: update XML on the server side */
-    return reginfo->documentation ? S_OK : E_OUTOFMEMORY;
+    reginfo->documentation = str;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_XmlText(IRegistrationInfo *iface, BSTR *xml)
@@ -3330,6 +3329,12 @@ static HRESULT read_registration_info(IXmlReader *reader, IRegistrationInfo *inf
                 hr = read_text_value(reader, &value);
                 if (hr == S_OK)
                     IRegistrationInfo_put_Date(info, value);
+            }
+            else if (!lstrcmpW(name, Documentation))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    IRegistrationInfo_put_Documentation(info, value);
             }
             else
                 FIXME("unhandled RegistrationInfo element %s\n", debugstr_w(name));
