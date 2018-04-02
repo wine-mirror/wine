@@ -767,15 +767,14 @@ static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR
 static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR source)
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+    WCHAR *str = NULL;
 
     TRACE("%p,%s\n", iface, debugstr_w(source));
 
-    if (!source) return E_INVALIDARG;
-
+    if (source && !(str = heap_strdupW(source))) return E_OUTOFMEMORY;
     heap_free(reginfo->source);
-    reginfo->source = heap_strdupW(source);
-    /* FIXME: update XML on the server side */
-    return reginfo->source ? S_OK : E_OUTOFMEMORY;
+    reginfo->source = str;
+    return S_OK;
 }
 
 static const IRegistrationInfoVtbl RegistrationInfo_vtbl =
@@ -3340,6 +3339,12 @@ static HRESULT read_registration_info(IXmlReader *reader, IRegistrationInfo *inf
                 hr = read_text_value(reader, &value);
                 if (hr == S_OK)
                     IRegistrationInfo_put_URI(info, value);
+            }
+            else if (!lstrcmpW(name, Source))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    IRegistrationInfo_put_Source(info, value);
             }
             else
                 FIXME("unhandled RegistrationInfo element %s\n", debugstr_w(name));
