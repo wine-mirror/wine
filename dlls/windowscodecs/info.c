@@ -474,8 +474,7 @@ static HRESULT WINAPI BitmapDecoderInfo_GetPatterns(IWICBitmapDecoderInfo *iface
 static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *iface,
     IStream *pIStream, BOOL *pfMatches)
 {
-    WICBitmapPattern *patterns;
-    UINT pattern_count=0, patterns_size=0;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
     HRESULT hr;
     UINT i;
     ULONG pos;
@@ -486,22 +485,13 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
 
     TRACE("(%p,%p,%p)\n", iface, pIStream, pfMatches);
 
-    hr = BitmapDecoderInfo_GetPatterns(iface, 0, NULL, &pattern_count, &patterns_size);
-    if (FAILED(hr)) return hr;
-
-    patterns = HeapAlloc(GetProcessHeap(), 0, patterns_size);
-    if (!patterns) return E_OUTOFMEMORY;
-
-    hr = BitmapDecoderInfo_GetPatterns(iface, patterns_size, patterns, &pattern_count, &patterns_size);
-    if (FAILED(hr)) goto end;
-
-    for (i=0; i<pattern_count; i++)
+    for (i=0; i < This->pattern_count; i++)
     {
-        if (datasize < patterns[i].Length)
+        if (datasize < This->patterns[i].Length)
         {
             HeapFree(GetProcessHeap(), 0, data);
-            datasize = patterns[i].Length;
-            data = HeapAlloc(GetProcessHeap(), 0, patterns[i].Length);
+            datasize = This->patterns[i].Length;
+            data = HeapAlloc(GetProcessHeap(), 0, This->patterns[i].Length);
             if (!data)
             {
                 hr = E_OUTOFMEMORY;
@@ -509,25 +499,25 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
             }
         }
 
-        if (patterns[i].EndOfStream)
-            seekpos.QuadPart = -patterns[i].Position.QuadPart;
+        if (This->patterns[i].EndOfStream)
+            seekpos.QuadPart = -This->patterns[i].Position.QuadPart;
         else
-            seekpos.QuadPart = patterns[i].Position.QuadPart;
-        hr = IStream_Seek(pIStream, seekpos, patterns[i].EndOfStream ? STREAM_SEEK_END : STREAM_SEEK_SET, NULL);
+            seekpos.QuadPart = This->patterns[i].Position.QuadPart;
+        hr = IStream_Seek(pIStream, seekpos, This->patterns[i].EndOfStream ? STREAM_SEEK_END : STREAM_SEEK_SET, NULL);
         if (hr == STG_E_INVALIDFUNCTION) continue; /* before start of stream */
         if (FAILED(hr)) break;
 
-        hr = IStream_Read(pIStream, data, patterns[i].Length, &bytesread);
-        if (hr == S_FALSE || (hr == S_OK && bytesread != patterns[i].Length)) /* past end of stream */
+        hr = IStream_Read(pIStream, data, This->patterns[i].Length, &bytesread);
+        if (hr == S_FALSE || (hr == S_OK && bytesread != This->patterns[i].Length)) /* past end of stream */
             continue;
         if (FAILED(hr)) break;
 
-        for (pos=0; pos<patterns[i].Length; pos++)
+        for (pos=0; pos < This->patterns[i].Length; pos++)
         {
-            if ((data[pos] & patterns[i].Mask[pos]) != patterns[i].Pattern[pos])
+            if ((data[pos] & This->patterns[i].Mask[pos]) != This->patterns[i].Pattern[pos])
                 break;
         }
-        if (pos == patterns[i].Length) /* matches pattern */
+        if (pos == This->patterns[i].Length) /* matches pattern */
         {
             hr = S_OK;
             *pfMatches = TRUE;
@@ -535,16 +525,13 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
         }
     }
 
-    if (i == pattern_count) /* does not match any pattern */
+    if (i == This->pattern_count) /* does not match any pattern */
     {
         hr = S_OK;
         *pfMatches = FALSE;
     }
 
-end:
-    HeapFree(GetProcessHeap(), 0, patterns);
     HeapFree(GetProcessHeap(), 0, data);
-
     return hr;
 }
 
