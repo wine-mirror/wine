@@ -608,15 +608,14 @@ static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR
 static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR author)
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+    WCHAR *str = NULL;
 
     TRACE("%p,%s\n", iface, debugstr_w(author));
 
-    if (!author) return E_INVALIDARG;
-
+    if (author && !(str = heap_strdupW(author))) return E_OUTOFMEMORY;
     heap_free(reginfo->author);
-    reginfo->author = heap_strdupW(author);
-    /* FIXME: update XML on the server side */
-    return reginfo->author ? S_OK : E_OUTOFMEMORY;
+    reginfo->author = str;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BSTR *version)

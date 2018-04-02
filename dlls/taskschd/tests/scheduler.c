@@ -1424,6 +1424,7 @@ static void test_TaskDefinition(void)
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo>\n"
         "    <Description>\"Task1\"</Description>\n"
+        "    <Author>author</Author>\n"
         "  </RegistrationInfo>\n"
         "  <Settings>\n"
         "    <Enabled>false</Enabled>\n"
@@ -1503,6 +1504,7 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
+    static const WCHAR authorW[] = { 'a','u','t','h','o','r',0 };
     static WCHAR Task1[] = { '"','T','a','s','k','1','"',0 };
     static struct settings def_settings = { { 0 }, { 'P','T','7','2','H',0 }, { 0 },
         0, 7, TASK_INSTANCES_IGNORE_NEW, TASK_COMPATIBILITY_V2, VARIANT_TRUE, VARIANT_TRUE,
@@ -1611,7 +1613,15 @@ todo_wine
 
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
     ok(hr == S_OK, "get_Author error %#x\n", hr);
+    ok(!lstrcmpW(bstr, authorW), "expected %s, got %s\n", wine_dbgstr_w(authorW), wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegistrationInfo_put_Author(reginfo, NULL);
+    ok(hr == S_OK, "put_Author error %#x\n", hr);
+    bstr = (BSTR)0xdeadbeef;
+    hr = IRegistrationInfo_get_Author(reginfo, &bstr);
+    ok(hr == S_OK, "get_Author error %#x\n", hr);
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+
     hr = IRegistrationInfo_get_Version(reginfo, &bstr);
     ok(hr == S_OK, "get_Version error %#x\n", hr);
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
