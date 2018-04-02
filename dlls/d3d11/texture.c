@@ -355,7 +355,13 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture1d_Map(ID3D10Texture1D *iface, UIN
 
 static void STDMETHODCALLTYPE d3d10_texture1d_Unmap(ID3D10Texture1D *iface, UINT sub_resource_idx)
 {
-    FIXME("iface %p, sub_resource_idx %u stub!\n", iface, sub_resource_idx);
+    struct d3d_texture1d *texture = impl_from_ID3D10Texture1D(iface);
+
+    TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
+
+    wined3d_mutex_lock();
+    wined3d_resource_unmap(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_texture1d_GetDesc(ID3D10Texture1D *iface, D3D10_TEXTURE1D_DESC *desc)
