@@ -347,10 +347,25 @@ static UINT STDMETHODCALLTYPE d3d10_texture1d_GetEvictionPriority(ID3D10Texture1
 static HRESULT STDMETHODCALLTYPE d3d10_texture1d_Map(ID3D10Texture1D *iface, UINT sub_resource_idx,
         D3D10_MAP map_type, UINT map_flags, void **data)
 {
-    FIXME("iface %p, sub_resource_idx %u, map_type %u, map_flags %#x, data %p stub!\n",
+    struct d3d_texture1d *texture = impl_from_ID3D10Texture1D(iface);
+    struct wined3d_map_desc wined3d_map_desc;
+    HRESULT hr;
+
+    TRACE("iface %p, sub_resource_idx %u, map_type %u, map_flags %#x, data %p.\n",
             iface, sub_resource_idx, map_type, map_flags, data);
 
-    return E_NOTIMPL;
+    if (map_flags)
+        FIXME("Ignoring map_flags %#x.\n", map_flags);
+
+    wined3d_mutex_lock();
+    if (SUCCEEDED(hr = wined3d_resource_map(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx,
+            &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
+    {
+        *data = wined3d_map_desc.data;
+    }
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d10_texture1d_Unmap(ID3D10Texture1D *iface, UINT sub_resource_idx)
