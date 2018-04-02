@@ -713,6 +713,10 @@ struct wined3d_resource *wined3d_resource_from_d3d11_resource(ID3D11Resource *re
             return wined3d_buffer_get_resource(unsafe_impl_from_ID3D11Buffer(
                     (ID3D11Buffer *)resource)->wined3d_buffer);
 
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+            return wined3d_texture_get_resource(unsafe_impl_from_ID3D11Texture1D(
+                    (ID3D11Texture1D *)resource)->wined3d_texture);
+
         case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
             return wined3d_texture_get_resource(unsafe_impl_from_ID3D11Texture2D(
                     (ID3D11Texture2D *)resource)->wined3d_texture);
@@ -738,6 +742,10 @@ struct wined3d_resource *wined3d_resource_from_d3d10_resource(ID3D10Resource *re
         case D3D10_RESOURCE_DIMENSION_BUFFER:
             return wined3d_buffer_get_resource(unsafe_impl_from_ID3D10Buffer(
                     (ID3D10Buffer *)resource)->wined3d_buffer);
+
+        case D3D10_RESOURCE_DIMENSION_TEXTURE1D:
+            return wined3d_texture_get_resource(unsafe_impl_from_ID3D10Texture1D(
+                    (ID3D10Texture1D *)resource)->wined3d_texture);
 
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
             return wined3d_texture_get_resource(unsafe_impl_from_ID3D10Texture2D(
