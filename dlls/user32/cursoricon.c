@@ -873,6 +873,7 @@ static BOOL CURSORICON_GetResIconEntry( LPCVOID dir, DWORD size, int n,
     *width = icon->bWidth;
     *height = icon->bHeight;
     *bits = resdir->idEntries[n].wBitCount;
+    if (!*width && !*height && have_libpng()) *width = *height = 256;
     return TRUE;
 }
 
