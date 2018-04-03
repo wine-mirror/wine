@@ -33,6 +33,7 @@
 
 /* We only want host compatible structures and don't need alignment. */
 #define WINE_VK_ALIGN(x)
+#define VK_NO_PROTOTYPES
 
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"

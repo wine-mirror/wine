@@ -23,10 +23,6 @@
 #include "winbase.h"
 #include "winuser.h"
 
-#include "wine/debug.h"
-#include "wine/heap.h"
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
 #include "vulkan_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);

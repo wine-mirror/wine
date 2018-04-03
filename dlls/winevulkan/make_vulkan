@@ -1792,10 +1792,6 @@ class VkGenerator(object):
         f.write("#include \"config.h\"\n")
         f.write("#include \"wine/port.h\"\n\n")
 
-        f.write("#include \"wine/debug.h\"\n")
-        f.write("#include \"wine/heap.h\"\n")
-        f.write("#include \"wine/vulkan.h\"\n")
-        f.write("#include \"wine/vulkan_driver.h\"\n")
         f.write("#include \"vulkan_private.h\"\n\n")
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
@@ -2071,6 +2067,7 @@ class VkGenerator(object):
             LOGGER.debug("Generating struct: {0}".format(struct.name))
             f.write(struct.definition(align=True))
 
+        f.write("#ifndef VK_NO_PROTOTYPES\n")
         for func in self.registry.funcs.values():
             if not func.is_required():
                 LOGGER.debug("Skipping API definition for: {0}".format(func.name))
@@ -2078,7 +2075,7 @@ class VkGenerator(object):
 
             LOGGER.debug("Generating API definition for: {0}".format(func.name))
             f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL")))
-        f.write("\n")
+        f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#endif /* __WINE_VULKAN_H */\n")
 

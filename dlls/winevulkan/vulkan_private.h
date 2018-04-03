@@ -25,6 +25,12 @@
 #define USE_STRUCT_CONVERSION
 #endif
 
+#include "wine/debug.h"
+#include "wine/heap.h"
+#define VK_NO_PROTOTYPES
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
+
 #include "vulkan_thunks.h"
 
 /* Magic value defined by Vulkan ICD / Loader spec */

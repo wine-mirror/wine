@@ -23,6 +23,7 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
+#define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
