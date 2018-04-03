@@ -409,6 +409,13 @@ static BITMAPINFO *load_png(const char *png_data, DWORD *size)
 
 #else /* SONAME_LIBPNG */
 
+static BOOL have_libpng(void)
+{
+    static int warned;
+    if (!warned++) WARN( "PNG support not compiled in\n" );
+    return FALSE;
+}
+
 static BOOL get_png_info(const void *png_data, DWORD size, int *width, int *height, int *bpp)
 {
     return FALSE;
@@ -997,7 +1004,11 @@ static BOOL CURSORICON_GetFileEntry( LPCVOID dir, DWORD size, int n,
     info = (const BITMAPINFOHEADER *)((const char *)dir + entry->dwDIBOffset);
 
     if (info->biSize == PNG_SIGN)
-        return get_png_info(info, size, width, height, bits);
+    {
+        if (have_libpng()) return get_png_info(info, size, width, height, bits);
+        *width = *height = *bits = 0;
+        return TRUE;
+    }
 
     if (info->biSize != sizeof(BITMAPCOREHEADER))
     {
