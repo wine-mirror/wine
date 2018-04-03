@@ -2,6 +2,7 @@ EXTRADEFS = -D_USER32_ -D_WINABLE_
 MODULE    = user32.dll
 IMPORTLIB = user32
 IMPORTS   = gdi32 version advapi32
+EXTRAINCL = $(PNG_CFLAGS)
 DELAYIMPORTS = imm32 usp10
 
 C_SRCS = \
