@@ -360,8 +360,9 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
         {
             TRACE("Substituting VK_KHR_xlib_surface for VK_KHR_win32_surface\n");
 
-            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName), "VK_KHR_win32_surface");
-            properties[i].specVersion = 6; /* Revision as of 4/24/2017 */
+            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName),
+                    VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+            properties[i].specVersion = VK_KHR_WIN32_SURFACE_SPEC_VERSION;
         }
     }
 
