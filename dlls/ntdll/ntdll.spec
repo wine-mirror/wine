@@ -1337,7 +1337,7 @@
 @ cdecl -private __iscsymf(long) NTDLL___iscsymf
 @ cdecl -private __toascii(long) NTDLL___toascii
 @ stdcall -arch=i386 -ret64 _alldiv(int64 int64)
-# @ stub _alldvrm
+@ stdcall -arch=i386 -norelay _alldvrm(int64 int64)
 @ stdcall -arch=i386 -ret64 _allmul(int64 int64)
 @ stdcall -arch=i386 -norelay _alloca_probe()
 @ stdcall -arch=i386 -ret64 _allrem(int64 int64)
@@ -1345,7 +1345,7 @@
 @ stdcall -arch=i386 -ret64 _allshr(int64 long)
 @ cdecl -private -ret64 _atoi64(str)
 @ stdcall -arch=i386 -ret64 _aulldiv(int64 int64)
-# @ stub _aulldvrm
+@ stdcall -arch=i386 -norelay _aulldvrm(int64 int64)
 @ stdcall -arch=i386 -ret64 _aullrem(int64 int64)
 @ stdcall -arch=i386 -ret64 _aullshr(int64 long)
 @ stdcall -private -arch=i386 -norelay _chkstk()
