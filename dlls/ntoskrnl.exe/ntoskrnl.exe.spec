@@ -1,4 +1,4 @@
-@ stub ExAcquireFastMutexUnsafe
+@ stdcall -norelay ExAcquireFastMutexUnsafe(ptr)
 @ stub ExAcquireRundownProtection
 @ stub ExAcquireRundownProtectionEx
 @ stub ExInitializeRundownProtection
@@ -8,7 +8,7 @@
 @ stub ExInterlockedPopEntrySList
 @ stub ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
-@ stub ExReleaseFastMutexUnsafe
+@ stdcall -norelay ExReleaseFastMutexUnsafe(ptr)
 @ stub ExReleaseResourceLite
 @ stub ExReleaseRundownProtection
 @ stub ExReleaseRundownProtectionEx

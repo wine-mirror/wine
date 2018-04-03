@@ -1367,12 +1367,14 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
 #define SYMBOLIC_LINK_QUERY             0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
+void      WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX);
 PVOID     WINAPI ExAllocatePool(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithTag(POOL_TYPE,SIZE_T,ULONG);
 PVOID     WINAPI ExAllocatePoolWithQuotaTag(POOL_TYPE,SIZE_T,ULONG);
 void      WINAPI ExFreePool(PVOID);
 void      WINAPI ExFreePoolWithTag(PVOID,ULONG);
+void      WINAPI ExReleaseFastMutexUnsafe(PFAST_MUTEX);
 
 NTSTATUS  WINAPI IoAllocateDriverObjectExtension(PDRIVER_OBJECT,PVOID,ULONG,PVOID*);
 PVOID     WINAPI IoAllocateErrorLogEntry(PVOID,UCHAR);
