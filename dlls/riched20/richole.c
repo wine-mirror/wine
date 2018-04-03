@@ -4455,6 +4455,8 @@ static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG value)
 static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **font)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, font);
 
@@ -4464,12 +4466,16 @@ static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **f
     if (!font)
         return E_INVALIDARG;
 
-    return create_textfont((ITextRange*)me, NULL, font);
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    hr = create_textfont(range, NULL, font);
+    ITextRange_Release(range);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *font)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
 
     TRACE("(%p)->(%p)\n", This, font);
 
@@ -4479,13 +4485,17 @@ static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *fo
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    textrange_set_font((ITextRange*)me, font);
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    textrange_set_font(range, font);
+    ITextRange_Release(range);
     return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetPara(ITextSelection *me, ITextPara **para)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, para);
 
@@ -4495,7 +4505,10 @@ static HRESULT WINAPI ITextSelection_fnGetPara(ITextSelection *me, ITextPara **p
     if (!para)
         return E_INVALIDARG;
 
-    return create_textpara((ITextRange*)me, para);
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    hr = create_textpara(range, para);
+    ITextRange_Release(range);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnSetPara(ITextSelection *me, ITextPara *para)
@@ -4560,13 +4573,18 @@ static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)
 static HRESULT WINAPI ITextSelection_fnExpand(ITextSelection *me, LONG unit, LONG *delta)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
+    HRESULT hr;
 
     TRACE("(%p)->(%d %p)\n", This, unit, delta);
 
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    return textrange_expand((ITextRange*)me, unit, delta);
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    hr = textrange_expand(range, unit, delta);
+    ITextRange_Release(range);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetIndex(ITextSelection *me, LONG unit, LONG *index)
