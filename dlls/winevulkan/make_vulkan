@@ -2354,7 +2354,7 @@ class VkRegistry(object):
                     enum.add(VkEnumValue(enum_elem.attrib["name"], value))
 
                 elif "value" in enum_elem.keys():
-                    # For now skip, it mostly contains extension name and version info.
+                    self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
                     continue
                 else:
                     # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
