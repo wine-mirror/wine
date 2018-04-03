@@ -594,6 +594,8 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
  */
 static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    static const char *reg_names[16] = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
+                                         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" };
     int prefix, segprefix, prefixlen, len, long_op, long_addr, rex;
     BYTE *instr;
 
@@ -635,20 +637,33 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         case 0x67:
             long_addr = !long_addr;  /* addr size prefix */
             break;
+        case 0x40:  /* rex */
+        case 0x41:
+        case 0x42:
+        case 0x43:
+        case 0x44:
+        case 0x45:
+        case 0x46:
+        case 0x47:
+        case 0x48:
+        case 0x49:
+        case 0x4a:
+        case 0x4b:
+        case 0x4c:
+        case 0x4d:
+        case 0x4e:
+        case 0x4f:
+            rex = *instr;
+            break;
         case 0xf0:  /* lock */
-        break;
+            break;
         case 0xf2:  /* repne */
-        break;
+            break;
         case 0xf3:  /* repe */
             break;
         default:
             prefix = 0;  /* no more prefixes */
             break;
-        }
-        if (*instr >= 0x40 && *instr < 0x50)  /* rex */
-        {
-            rex = *instr;
-            prefix = TRUE;
         }
         if (prefix)
         {
@@ -664,6 +679,84 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     case 0x0f: /* extended instruction */
         switch(instr[1])
         {
+        case 0x20: /* mov crX, Rd */
+        {
+            int reg = REGMODRM_REG( instr[2], rex );
+            int rm = REGMODRM_RM( instr[2], rex );
+            DWORD64 *data = get_int_reg( context, rm );
+            TRACE( "mov cr%u,%s at %lx\n", reg, reg_names[rm], context->Rip );
+            switch (reg)
+            {
+            case 0: *data = 0x10; break; /* FIXME: set more bits ? */
+            case 2: *data = 0; break;
+            case 3: *data = 0; break;
+            case 4: *data = 0; break;
+            case 8: *data = 0; break;
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 3;
+            return ExceptionContinueExecution;
+        }
+        case 0x21: /* mov drX, Rd */
+        {
+            int reg = REGMODRM_REG( instr[2], rex );
+            int rm = REGMODRM_RM( instr[2], rex );
+            DWORD64 *data = get_int_reg( context, rm );
+            TRACE( "mov dr%u,%s at %lx\n", reg, reg_names[rm], context->Rip );
+            switch (reg)
+            {
+            case 0: *data = context->Dr0; break;
+            case 1: *data = context->Dr1; break;
+            case 2: *data = context->Dr2; break;
+            case 3: *data = context->Dr3; break;
+            case 4:  /* dr4 and dr5 are obsolete aliases for dr6 and dr7 */
+            case 6: *data = context->Dr6; break;
+            case 5:
+            case 7: *data = 0x400; break;
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 3;
+            return ExceptionContinueExecution;
+        }
+        case 0x22: /* mov Rd, crX */
+        {
+            int reg = REGMODRM_REG( instr[2], rex );
+            int rm = REGMODRM_RM( instr[2], rex );
+            DWORD64 *data = get_int_reg( context, rm );
+            TRACE( "mov %s,cr%u at %lx, %s=%lx\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
+            switch (reg)
+            {
+            case 0: break;
+            case 2: break;
+            case 3: break;
+            case 4: break;
+            case 8: break;
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 3;
+            return ExceptionContinueExecution;
+        }
+        case 0x23: /* mov Rd, drX */
+        {
+            int reg = REGMODRM_REG( instr[2], rex );
+            int rm = REGMODRM_RM( instr[2], rex );
+            DWORD64 *data = get_int_reg( context, rm );
+            TRACE( "mov %s,dr%u at %lx, %s=%lx\n", reg_names[rm], reg, context->Rip, reg_names[rm], *data );
+            switch (reg)
+            {
+            case 0: context->Dr0 = *data; break;
+            case 1: context->Dr1 = *data; break;
+            case 2: context->Dr2 = *data; break;
+            case 3: context->Dr3 = *data; break;
+            case 4:  /* dr4 and dr5 are obsolete aliases for dr6 and dr7 */
+            case 6: context->Dr6 = *data; break;
+            case 5:
+            case 7: context->Dr7 = *data; break;
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 3;
+            return ExceptionContinueExecution;
+        }
         case 0xb6: /* movzx Eb, Gv */
         case 0xb7: /* movzx Ew, Gv */
         {
@@ -738,8 +831,9 @@ LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
     CONTEXT *context = ptrs->ContextRecord;
 
-    if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
-        record->ExceptionInformation[0] == EXCEPTION_READ_FAULT)
+    if (record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION ||
+        (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+         record->ExceptionInformation[0] == EXCEPTION_READ_FAULT))
     {
         if (emulate_instruction( record, context ) == ExceptionContinueExecution)
         {
