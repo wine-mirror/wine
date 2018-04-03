@@ -627,6 +627,43 @@ LONGLONG WINAPI _allshr( LONGLONG a, LONG b )
 }
 
 /******************************************************************************
+ *        _alldvrm   (NTDLL.@)
+ *
+ * Divide two 64 bit integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to divide a by.
+ *
+ * RETURNS
+ *  Returns the quotient of a and b in edx:eax.
+ *  Returns the remainder of a and b in ebx:ecx.
+ */
+__ASM_STDCALL_FUNC( _alldvrm, 16,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "pushl 20(%ebp)\n\t"
+                    "pushl 16(%ebp)\n\t"
+                    "pushl 12(%ebp)\n\t"
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("_allrem") "\n\t"
+                    "movl %edx,%ebx\n\t"
+                    "pushl %eax\n\t"
+                    "pushl 20(%ebp)\n\t"
+                    "pushl 16(%ebp)\n\t"
+                    "pushl 12(%ebp)\n\t"
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("_alldiv") "\n\t"
+                    "popl %ecx\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
+                    "ret $16" )
+
+/******************************************************************************
  *        _aullrem   (NTDLL.@)
  *
  * Calculate the remainder after dividing two 64 bit unsigned integers.
@@ -659,5 +696,42 @@ ULONGLONG WINAPI _aullshr( ULONGLONG a, LONG b )
 {
     return a >> b;
 }
+
+/******************************************************************************
+ *        _aulldvrm   (NTDLL.@)
+ *
+ * Divide two 64 bit unsigned integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to divide a by.
+ *
+ * RETURNS
+ *  Returns the quotient of a and b in edx:eax.
+ *  Returns the remainder of a and b in ebx:ecx.
+ */
+__ASM_STDCALL_FUNC( _aulldvrm, 16,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "pushl 20(%ebp)\n\t"
+                    "pushl 16(%ebp)\n\t"
+                    "pushl 12(%ebp)\n\t"
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("_aullrem") "\n\t"
+                    "movl %edx,%ebx\n\t"
+                    "pushl %eax\n\t"
+                    "pushl 20(%ebp)\n\t"
+                    "pushl 16(%ebp)\n\t"
+                    "pushl 12(%ebp)\n\t"
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("_aulldiv") "\n\t"
+                    "popl %ecx\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
+                    "ret $16" )
 
 #endif  /* __i386__ */
