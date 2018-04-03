@@ -444,13 +444,13 @@ class VkFunction(object):
     def needs_thunk(self):
         return self.thunk_needed
 
-    def pfn(self, call_conv=None, conv=False):
+    def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
 
-        if call_conv is not None:
-            pfn = "{0} ({1} *p_{2})(".format(self.type, call_conv, self.name)
+        if call_conv:
+            pfn = "{0} ({1} *{2}_{3})(".format(self.type, call_conv, prefix, self.name)
         else:
-            pfn = "{0} (*p_{1})(".format(self.type, self.name)
+            pfn = "{0} (*{1}_{2})(".format(self.type, prefix, self.name)
 
         for i, param in enumerate(self.params):
             if param.const:
@@ -2066,6 +2066,14 @@ class VkGenerator(object):
         for struct in structs:
             LOGGER.debug("Generating struct: {0}".format(struct.name))
             f.write(struct.definition(align=True))
+
+        for func in self.registry.funcs.values():
+            if not func.is_required():
+                LOGGER.debug("Skipping PFN definition for: {0}".format(func.name))
+                continue
+
+            f.write("typedef {0};\n".format(func.pfn(prefix="PFN", call_conv="VKAPI_PTR")))
+        f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
         for func in self.registry.funcs.values():
