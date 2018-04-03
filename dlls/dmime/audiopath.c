@@ -114,7 +114,7 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
 
     if (ref == 0) {
         if (This->pDSBuffer)
-            IDirectSoundBuffer8_Release(This->pDSBuffer);
+            IDirectSoundBuffer_Release(This->pDSBuffer);
         This->pPerf = NULL;
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -140,7 +140,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
                   IsEqualIID (iidInterface, &IID_IDirectSoundBuffer)  ||
                   IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8) ||
                   IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
-                  return IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, iidInterface, ppObject);
+                  return IDirectSoundBuffer_QueryInterface(This->pDSBuffer, iidInterface, ppObject);
               }
 
               WARN("Unsupported interface %s\n", debugstr_dmguid(iidInterface));
@@ -151,7 +151,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
 
 	case DMUS_PATH_PRIMARY_BUFFER: {
 	  if (IsEqualIID (iidInterface, &IID_IDirectSound3DListener)) {
-	    IDirectSoundBuffer8_QueryInterface (This->pPrimary, &IID_IDirectSound3DListener, ppObject);
+            IDirectSoundBuffer_QueryInterface(This->pPrimary, &IID_IDirectSound3DListener, ppObject);
 	    return S_OK;
 	  } else {
 	    FIXME("bad iid...\n");
