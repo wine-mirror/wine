@@ -3310,6 +3310,64 @@ static void test_ITextSelection_GetDuplicate(void)
   ITextRange_Release(range);
 }
 
+#define RESET_RANGE(range,start,end) \
+  _reset_range(range, start, end, __LINE__)
+static void _reset_range(ITextRange *range, LONG start, LONG end, int line)
+{
+  HRESULT hr;
+
+  hr = ITextRange_SetStart(range, start);
+  ok_(__FILE__,line)(hr == S_OK, "SetStart failed: 0x%08x\n", hr);
+  hr = ITextRange_SetEnd(range, end);
+  ok_(__FILE__,line)(hr == S_OK, "SetEnd failed: 0x%08x\n", hr);
+}
+
+#define CHECK_RANGE(range,expected_start,expected_end) \
+  _check_range(range, expected_start, expected_end, __LINE__)
+static void _check_range(ITextRange* range, LONG expected_start, LONG expected_end, int line)
+{
+  HRESULT hr;
+  LONG value;
+
+  hr = ITextRange_GetStart(range, &value);
+  ok_(__FILE__,line)(hr == S_OK, "GetStart failed: 0x%08x\n", hr);
+  ok_(__FILE__,line)(value == expected_start, "Expected start %d got %d\n",
+                     expected_start, value);
+  hr = ITextRange_GetEnd(range, &value);
+  ok_(__FILE__,line)(hr == S_OK, "GetEnd failed: 0x%08x\n", hr);
+  ok_(__FILE__,line)(value == expected_end, "Expected end %d got %d\n",
+                     expected_end, value);
+}
+
+#define RESET_SELECTION(selection,start,end) \
+  _reset_selection(selection, start, end, __LINE__)
+static void _reset_selection(ITextSelection *selection, LONG start, LONG end, int line)
+{
+  HRESULT hr;
+
+  hr = ITextSelection_SetStart(selection, start);
+  ok_(__FILE__,line)(hr == S_OK, "SetStart failed: 0x%08x\n", hr);
+  hr = ITextSelection_SetEnd(selection, end);
+  ok_(__FILE__,line)(hr == S_OK, "SetEnd failed: 0x%08x\n", hr);
+}
+
+#define CHECK_SELECTION(selection,expected_start,expected_end) \
+  _check_selection(selection, expected_start, expected_end, __LINE__)
+static void _check_selection(ITextSelection *selection, LONG expected_start, LONG expected_end, int line)
+{
+  HRESULT hr;
+  LONG value;
+
+  hr = ITextSelection_GetStart(selection, &value);
+  ok_(__FILE__,line)(hr == S_OK, "GetStart failed: 0x%08x\n", hr);
+  ok_(__FILE__,line)(value == expected_start, "Expected start %d got %d\n",
+                     expected_start, value);
+  hr = ITextSelection_GetEnd(selection, &value);
+  ok_(__FILE__,line)(hr == S_OK, "GetEnd failed: 0x%08x\n", hr);
+  ok_(__FILE__,line)(value == expected_end, "Expected end %d got %d\n",
+                     expected_end, value);
+}
+
 static void test_Expand(void)
 {
   static const char test_text1[] = "TestSomeText";
@@ -3330,53 +3388,26 @@ static void test_Expand(void)
 
   hr = ITextRange_Expand(range, tomStory, NULL);
   ok(hr == S_OK, "got 0x%08x\n", hr);
-  hr = ITextRange_GetStart(range, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 0, "got %d\n", value);
-  hr = ITextRange_GetEnd(range, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 13, "got %d\n", value);
+  CHECK_RANGE(range, 0, 13);
 
   hr = ITextSelection_Expand(selection, tomStory, NULL);
   ok(hr == S_OK, "got 0x%08x\n", hr);
-  hr = ITextSelection_GetStart(selection, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 0, "got %d\n", value);
-  hr = ITextSelection_GetEnd(selection, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 13, "got %d\n", value);
+  CHECK_SELECTION(selection, 0, 13);
 
-  hr = ITextRange_SetStart(range, 1);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  hr = ITextRange_SetEnd(range, 2);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-
-  hr = ITextSelection_SetStart(selection, 1);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  hr = ITextSelection_SetEnd(selection, 2);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
+  RESET_RANGE(range, 1, 2);
+  RESET_SELECTION(selection, 1, 2);
 
   value = 0;
   hr = ITextRange_Expand(range, tomStory, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value == 12, "got %d\n", value);
-  hr = ITextRange_GetStart(range, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 0, "got %d\n", value);
-  hr = ITextRange_GetEnd(range, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 13, "got %d\n", value);
+  CHECK_RANGE(range, 0, 13);
 
   value = 0;
   hr = ITextSelection_Expand(selection, tomStory, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value == 12, "got %d\n", value);
-  hr = ITextSelection_GetStart(selection, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 0, "got %d\n", value);
-  hr = ITextSelection_GetEnd(selection, &value);
-  ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == 13, "got %d\n", value);
+  CHECK_SELECTION(selection, 0, 13);
 
   release_interfaces(&hwnd, &reole, &doc, NULL);
 
