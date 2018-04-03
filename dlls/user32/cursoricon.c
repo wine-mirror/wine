@@ -144,42 +144,42 @@ MAKE_FUNCPTR(png_set_gray_to_rgb);
 MAKE_FUNCPTR(png_set_read_fn);
 #undef MAKE_FUNCPTR
 
-static BOOL load_libpng(void)
-{
-    USER_Lock();
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
-    if (!libpng_handle && (libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)) != NULL)
+static BOOL WINAPI load_libpng( INIT_ONCE *once, void *param, void **context )
+{
+    if (!(libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)))
     {
+        WARN( "failed to load %s\n", SONAME_LIBPNG );
+        return TRUE;
+    }
 #define LOAD_FUNCPTR(f) \
     if ((p##f = wine_dlsym(libpng_handle, #f, NULL, 0)) == NULL) \
     { \
+        WARN( "%s not found in %s\n", #f, SONAME_LIBPNG ); \
         libpng_handle = NULL; \
-        USER_Unlock(); \
-        return FALSE; \
+        return TRUE; \
     }
-        LOAD_FUNCPTR(png_create_read_struct);
-        LOAD_FUNCPTR(png_create_info_struct);
-        LOAD_FUNCPTR(png_destroy_read_struct);
-        LOAD_FUNCPTR(png_error);
-        LOAD_FUNCPTR(png_get_bit_depth);
-        LOAD_FUNCPTR(png_get_color_type);
-        LOAD_FUNCPTR(png_get_error_ptr);
-        LOAD_FUNCPTR(png_get_image_height);
-        LOAD_FUNCPTR(png_get_image_width);
-        LOAD_FUNCPTR(png_get_io_ptr);
-        LOAD_FUNCPTR(png_read_image);
-        LOAD_FUNCPTR(png_read_info);
-        LOAD_FUNCPTR(png_read_update_info);
-        LOAD_FUNCPTR(png_set_bgr);
-        LOAD_FUNCPTR(png_set_crc_action);
-        LOAD_FUNCPTR(png_set_error_fn);
-        LOAD_FUNCPTR(png_set_expand);
-        LOAD_FUNCPTR(png_set_gray_to_rgb);
-        LOAD_FUNCPTR(png_set_read_fn);
+    LOAD_FUNCPTR(png_create_read_struct);
+    LOAD_FUNCPTR(png_create_info_struct);
+    LOAD_FUNCPTR(png_destroy_read_struct);
+    LOAD_FUNCPTR(png_error);
+    LOAD_FUNCPTR(png_get_bit_depth);
+    LOAD_FUNCPTR(png_get_color_type);
+    LOAD_FUNCPTR(png_get_error_ptr);
+    LOAD_FUNCPTR(png_get_image_height);
+    LOAD_FUNCPTR(png_get_image_width);
+    LOAD_FUNCPTR(png_get_io_ptr);
+    LOAD_FUNCPTR(png_read_image);
+    LOAD_FUNCPTR(png_read_info);
+    LOAD_FUNCPTR(png_read_update_info);
+    LOAD_FUNCPTR(png_set_bgr);
+    LOAD_FUNCPTR(png_set_crc_action);
+    LOAD_FUNCPTR(png_set_error_fn);
+    LOAD_FUNCPTR(png_set_expand);
+    LOAD_FUNCPTR(png_set_gray_to_rgb);
+    LOAD_FUNCPTR(png_set_read_fn);
 #undef LOAD_FUNCPTR
-    }
-
-    USER_Unlock();
     return TRUE;
 }
 
@@ -233,6 +233,11 @@ static unsigned be_uint(unsigned val)
     return (u.c[0] << 24) | (u.c[1] << 16) | (u.c[2] << 8) | u.c[3];
 }
 
+static BOOL have_libpng(void)
+{
+    return InitOnceExecuteOnce( &init_once, load_libpng, NULL, NULL ) && libpng_handle;
+}
+
 static BOOL get_png_info(const void *png_data, DWORD size, int *width, int *height, int *bpp)
 {
     static const char png_sig[8] = { 0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a };
@@ -271,7 +276,7 @@ static BITMAPINFO *load_png(const char *png_data, DWORD *size)
     if (!get_png_info(png_data, *size, &width, &height, &bpp))
         return NULL;
 
-    if (!load_libpng()) return NULL;
+    if (!have_libpng()) return NULL;
 
     png.buffer = png_data;
     png.size = *size;
