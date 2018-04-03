@@ -96,6 +96,7 @@ typedef struct _BUTTON_INFO
     HFONT       font;
     WCHAR      *note;
     INT         note_length;
+    DWORD       image_type; /* IMAGE_BITMAP or IMAGE_ICON */
     union
     {
         HICON   icon;
@@ -718,18 +719,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	break;
 
     case BM_SETIMAGE:
-        /* Check that image format matches button style */
-        switch (style & (BS_BITMAP|BS_ICON))
-        {
-        case BS_BITMAP:
-            if (wParam != IMAGE_BITMAP) return 0;
-            break;
-        case BS_ICON:
-            if (wParam != IMAGE_ICON) return 0;
-            break;
-        default:
-            return 0;
-        }
+        infoPtr->image_type = (DWORD)wParam;
         oldHbitmap = infoPtr->u.image;
         infoPtr->u.image = (HANDLE)lParam;
 	InvalidateRect( hWnd, NULL, FALSE );
@@ -802,61 +792,50 @@ static UINT BUTTON_CalcLabelRect(const BUTTON_INFO *infoPtr, HDC hdc, RECT *rc)
 {
    LONG style = GetWindowLongW( infoPtr->hwnd, GWL_STYLE );
    LONG ex_style = GetWindowLongW( infoPtr->hwnd, GWL_EXSTYLE );
-   WCHAR *text;
+   WCHAR *text = get_button_text(infoPtr);
    ICONINFO    iconInfo;
-   BITMAP      bm;
+   BITMAP      bm = { 0 };
    UINT        dtStyle = BUTTON_BStoDT( style, ex_style );
    RECT        r = *rc;
    INT         n;
 
    /* Calculate label rectangle according to label type */
-   switch (style & (BS_ICON|BS_BITMAP))
+   /* FIXME: Doesn't support showing both image and text yet */
+   if (infoPtr->u.image)
    {
-      case BS_TEXT:
-      {
-          HFONT hFont, hPrevFont = 0;
+       if (infoPtr->image_type == IMAGE_ICON)
+       {
+           GetIconInfo(infoPtr->u.icon, &iconInfo);
+           GetObjectW(iconInfo.hbmColor, sizeof(bm), &bm);
+           DeleteObject(iconInfo.hbmColor);
+           DeleteObject(iconInfo.hbmMask);
+       }
+       else if (infoPtr->image_type == IMAGE_BITMAP)
+       {
+           GetObjectW(infoPtr->u.bitmap, sizeof(bm), &bm);
+       }
 
-          if (!(text = get_button_text( infoPtr ))) goto empty_rect;
-          if (!text[0])
-          {
-              heap_free( text );
-              goto empty_rect;
-          }
-
-          if ((hFont = infoPtr->font)) hPrevFont = SelectObject( hdc, hFont );
-          DrawTextW(hdc, text, -1, &r, dtStyle | DT_CALCRECT);
-          if (hPrevFont) SelectObject( hdc, hPrevFont );
-          heap_free( text );
-          break;
-      }
-
-      case BS_ICON:
-         if (!GetIconInfo(infoPtr->u.icon, &iconInfo))
-            goto empty_rect;
-
-         GetObjectW (iconInfo.hbmColor, sizeof(BITMAP), &bm);
-
-         r.right  = r.left + bm.bmWidth;
-         r.bottom = r.top  + bm.bmHeight;
-
-         DeleteObject(iconInfo.hbmColor);
-         DeleteObject(iconInfo.hbmMask);
-         break;
-
-      case BS_BITMAP:
-         if (!GetObjectW( infoPtr->u.bitmap, sizeof(BITMAP), &bm))
-            goto empty_rect;
-
-         r.right  = r.left + bm.bmWidth;
-         r.bottom = r.top  + bm.bmHeight;
-         break;
-
-      default:
-      empty_rect:
-         rc->right = r.left;
-         rc->bottom = r.top;
-         return (UINT)-1;
+       r.right = r.left + bm.bmWidth;
+       r.bottom = r.top + bm.bmHeight;
    }
+   else if (text && text[0])
+   {
+       HFONT hFont, hPrevFont = 0;
+
+       if ((hFont = infoPtr->font)) hPrevFont = SelectObject(hdc, hFont);
+       DrawTextW(hdc, text, -1, &r, dtStyle | DT_CALCRECT);
+       if (hPrevFont) SelectObject(hdc, hPrevFont);
+   }
+
+   if ((infoPtr->u.image && bm.bmWidth == 0 && bm.bmHeight == 0)
+       || (text == NULL || text[0] == '\0'))
+   {
+       rc->right = r.left;
+       rc->bottom = r.top;
+       heap_free(text);
+       return (UINT)-1;
+   }
+   heap_free(text);
 
    /* Position label inside bounding rectangle according to
     * alignment flags. (calculated rect is always left-top aligned).
@@ -934,28 +913,30 @@ static void BUTTON_DrawLabel(const BUTTON_INFO *infoPtr, HDC hdc, UINT dtFlags, 
       flags |= DSS_MONO;
    }
 
-   switch (style & (BS_ICON|BS_BITMAP))
+   /* FIXME: Support drawing label with both image and text */
+   if (infoPtr->u.image != 0)
    {
-      case BS_TEXT:
-         /* DST_COMPLEX -- is 0 */
-         lpOutputProc = BUTTON_DrawTextCallback;
-         if (!(text = get_button_text( infoPtr ))) return;
-         lp = (LPARAM)text;
-         wp = dtFlags;
-         break;
-
-      case BS_ICON:
-         flags |= DST_ICON;
-         lp = (LPARAM)infoPtr->u.icon;
-         break;
-
-      case BS_BITMAP:
-         flags |= DST_BITMAP;
-         lp = (LPARAM)infoPtr->u.bitmap;
-         break;
-
-      default:
-         return;
+       switch (infoPtr->image_type)
+       {
+       case IMAGE_ICON:
+           flags |= DST_ICON;
+           lp = (LPARAM)infoPtr->u.icon;
+           break;
+       case IMAGE_BITMAP:
+           flags |= DST_BITMAP;
+           lp = (LPARAM)infoPtr->u.bitmap;
+           break;
+       default:
+           return;
+       }
+   }
+   else
+   {
+       /* DST_COMPLEX -- is 0 */
+       lpOutputProc = BUTTON_DrawTextCallback;
+       if (!(text = get_button_text(infoPtr))) return;
+       lp = (LPARAM)text;
+       wp = dtFlags;
    }
 
    DrawStateW(hdc, hbr, lpOutputProc, lp, wp, rc->left, rc->top,
