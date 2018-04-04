@@ -3468,3 +3468,13 @@ void WINAPI ExfUnblockPushLock( EX_PUSH_LOCK *lock, PEX_PUSH_LOCK_WAIT_BLOCK blo
 {
     FIXME( "stub: %p, %p\n", lock, block );
 }
+
+/*********************************************************************
+ *           PsGetProcessId    (NTOSKRNL.@)
+ */
+HANDLE WINAPI PsGetProcessId(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+
+    return 0;
+}
