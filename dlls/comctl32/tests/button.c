@@ -33,6 +33,8 @@
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
+static HIMAGELIST(WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static int(WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
 
 /****************** button message test *************************/
 #define ID_BUTTON 0x000e
@@ -77,6 +79,11 @@ static void init_functions(void)
     MAKEFUNC_ORD(RemoveWindowSubclass, 412);
     MAKEFUNC_ORD(DefSubclassProc, 413);
 #undef MAKEFUNC_ORD
+
+#define X(f) p##f = (void *)GetProcAddress(hmod, #f);
+    X(ImageList_Create);
+    X(ImageList_Add);
+#undef X
 }
 
 /* try to make sure pending X events have been processed before continuing */
@@ -1270,6 +1277,84 @@ static void test_button_data(void)
     DestroyWindow(parent);
 }
 
+static void test_get_set_imagelist(void)
+{
+    HWND hwnd;
+    HIMAGELIST himl;
+    BUTTON_IMAGELIST biml = {0};
+    HDC hdc;
+    HBITMAP hbmp;
+    INT width = 16;
+    INT height = 16;
+    INT index;
+    DWORD type;
+    BOOL ret;
+
+    hdc = GetDC(0);
+    hbmp = CreateCompatibleBitmap(hdc, width, height);
+    ok(hbmp != NULL, "Expect hbmp not null\n");
+
+    himl = pImageList_Create(width, height, ILC_COLOR, 1, 0);
+    ok(himl != NULL, "Expect himl not null\n");
+    index = pImageList_Add(himl, hbmp, NULL);
+    ok(index == 0, "Expect index == 0\n");
+    DeleteObject(hbmp);
+    ReleaseDC(0, hdc);
+
+    for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
+    {
+        hwnd = create_button(type, NULL);
+        ok(hwnd != NULL, "Expect hwnd not null\n");
+
+        /* Get imagelist when imagelist is unset yet */
+        ret = SendMessageA(hwnd, BCM_GETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_GETIMAGELIST return true\n");
+        ok(biml.himl == 0 && IsRectEmpty(&biml.margin) && biml.uAlign == 0,
+           "Expect BUTTON_IMAGELIST is empty\n");
+
+        /* Set imagelist with himl null */
+        biml.himl = 0;
+        biml.uAlign = BUTTON_IMAGELIST_ALIGN_CENTER;
+        ret = SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret || broken(!ret), /* xp or 2003 */
+           "Expect BCM_SETIMAGELIST return true\n");
+
+        /* Set imagelist with uAlign invalid */
+        biml.himl = himl;
+        biml.uAlign = -1;
+        ret = SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_SETIMAGELIST return true\n");
+
+        /* Successful get and set imagelist */
+        biml.himl = himl;
+        biml.uAlign = BUTTON_IMAGELIST_ALIGN_CENTER;
+        ret = SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_SETIMAGELIST return true\n");
+        ret = SendMessageA(hwnd, BCM_GETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_GETIMAGELIST return true\n");
+        ok(biml.himl == himl, "Expect himl to be same\n");
+        ok(biml.uAlign == BUTTON_IMAGELIST_ALIGN_CENTER, "Expect uAlign to be %x\n",
+           BUTTON_IMAGELIST_ALIGN_CENTER);
+
+        /* BCM_SETIMAGELIST null pointer handling */
+        ret = SendMessageA(hwnd, BCM_SETIMAGELIST, 0, 0);
+        ok(!ret, "Expect BCM_SETIMAGELIST return false\n");
+        ret = SendMessageA(hwnd, BCM_GETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_GETIMAGELIST return true\n");
+        ok(biml.himl == himl, "Expect himl to be same\n");
+
+        /* BCM_GETIMAGELIST null pointer handling */
+        biml.himl = himl;
+        biml.uAlign = BUTTON_IMAGELIST_ALIGN_CENTER;
+        ret = SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+        ok(ret, "Expect BCM_SETIMAGELIST return true\n");
+        ret = SendMessageA(hwnd, BCM_GETIMAGELIST, 0, 0);
+        ok(!ret, "Expect BCM_GETIMAGELIST return false\n");
+
+        DestroyWindow(hwnd);
+    }
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -1288,6 +1373,7 @@ START_TEST(button)
     test_note();
     test_button_data();
     test_bm_get_set_image();
+    test_get_set_imagelist();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

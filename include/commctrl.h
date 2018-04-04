@@ -1100,6 +1100,10 @@ typedef struct tagNMBCHOTITEM
   (BOOL)SNDMSG(button, BCM_GETNOTE, (WPARAM)(size), (LPARAM)(buffer))
 #define Button_GetNoteLength(button)  \
   (LRESULT)SNDMSG(button, BCM_GETNOTELENGTH, 0, 0)
+#define Button_GetImageList(button, image_list)  \
+  (BOOL)SNDMSG(button, BCM_GETIMAGELIST, 0, (LPARAM)(image_list))
+#define Button_SetImageList(button, image_list)  \
+  (BOOL)SNDMSG(button, BCM_SETIMAGELIST, 0, (LPARAM)(image_list))
 
 /* Toolbar */
 
