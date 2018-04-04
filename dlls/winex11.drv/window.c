@@ -2632,7 +2632,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     if (!surface || !EqualRect( &surface->rect, &rect ))
     {
         data->surface = create_surface( data->whole_window, &data->vis, &rect,
-                                        color_key, !data->embedded );
+                                        color_key, data->use_alpha );
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
