@@ -1169,8 +1169,16 @@ start_header:
 	    /* do nothing, skip bytes */
 	    break;
 	case MEVT_LONGMSG:
-	    midiOutLongMsg(lpMidiStrm->hDevice, lpMidiStrm->lpMidiHdr, MEVT_EVENTPARM(me->dwEvent));
-	    break;
+        {
+            MIDIHDR mh;
+            memset(&mh, 0, sizeof(mh));
+            mh.lpData = (LPSTR)me->dwParms;
+            mh.dwBufferLength = MEVT_EVENTPARM(me->dwEvent);
+            midiOutPrepareHeader(lpMidiStrm->hDevice, &mh, sizeof(mh));
+            midiOutLongMsg(lpMidiStrm->hDevice, &mh, sizeof(mh));
+            midiOutUnprepareHeader(lpMidiStrm->hDevice, &mh, sizeof(mh));
+            break;
+        }
 	case MEVT_NOP:
 	    break;
 	case MEVT_SHORTMSG:

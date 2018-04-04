@@ -819,7 +819,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         e->dwEvent = MEVT_F_LONG | sizeof(SysEx_volume_off);
         memcpy(&e->dwParms[0], SysEx_volume_off, sizeof(SysEx_volume_off));
         p += sizeof(MIDISHORTEVENT) + ROUNDUP4(sizeof(SysEx_volume_off));
-        /* Note On (FIXME: we shouldn't hear this voice due to volume settings) */
+        /* Note On (We can't hear this voice due to volume settings) */
         e = (MIDIEVENT *)p;
         e->dwEvent = MEVT_F_SHORT | 0x6F4593; /* note #69 */
         p += sizeof(MIDISHORTEVENT);
