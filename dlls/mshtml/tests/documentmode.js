@@ -116,6 +116,20 @@ function test_javascript() {
             ok(!(func in obj), func + " found in " + obj);
     }
 
+    function test_parses(code, expect) {
+        var success;
+        try {
+            eval(code);
+            success = true;
+        }catch(e) {
+            success = false;
+        }
+        if(expect)
+            ok(success === true, code + " did not parse");
+        else
+            ok(success === false, code + " parsed");
+    }
+
     var v = document.documentMode;
 
     test_exposed("ScriptEngineMajorVersion", g, true);
@@ -124,6 +138,10 @@ function test_javascript() {
     test_exposed("now", Date, true);
     test_exposed("isArray", Array, v >= 9);
     test_exposed("indexOf", Array.prototype, v >= 9);
+
+    test_parses("if(false) { o.default; }", v >= 9);
+    test_parses("if(false) { o.with; }", v >= 9);
+    test_parses("if(false) { o.if; }", v >= 9);
 
     next_test();
 }

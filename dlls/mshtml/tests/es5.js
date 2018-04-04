@@ -73,8 +73,49 @@ function test_isArray() {
     next_test();
 }
 
+function test_identifier_keywords() {
+    var o = {
+        if: 1,
+        default: 2,
+        function: 3,
+        break: true,
+        case: true,
+        catch: true,
+        continue: true,
+        delete: true,
+        do: true,
+        else: true,
+        finally: true,
+        for: true,
+        in: true,
+        instanceof: true,
+        new: true,
+        return: true,
+        switch: true,
+        throw: true,
+        try: true,
+        typeof: true,
+        var: true,
+        void: true,
+        while: true,
+        with: true,
+        true: true,
+        false: true,
+        null: true,
+        this: true
+    };
+    function ro() { return o; };
+
+    ok(o.if === 1, "o.if = " + o.if);
+    ok(ro().default === 2, "ro().default = " + ro().default);
+    ok(o.false === true, "o.false = " + o.false);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_indexOf,
-    test_isArray
+    test_isArray,
+    test_identifier_keywords
 ];

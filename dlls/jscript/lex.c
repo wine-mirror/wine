@@ -135,7 +135,7 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lva
         return 1;
 
     if(lval)
-        *lval = ctx->ptr;
+        *lval = word;
     ctx->ptr = p1;
     return 0;
 }
