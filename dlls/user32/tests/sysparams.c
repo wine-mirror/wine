@@ -3083,7 +3083,7 @@ static void test_window_dpi(void)
     hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
                           WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
     ok( hwnd != 0, "failed to create window\n" );
-    context = GetWindowDpiAwarenessContext( hwnd );
+    context = pGetWindowDpiAwarenessContext( hwnd );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
     DestroyWindow( hwnd );
@@ -3092,7 +3092,7 @@ static void test_window_dpi(void)
     hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
                           WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
     ok( hwnd != 0, "failed to create window\n" );
-    context = GetWindowDpiAwarenessContext( hwnd );
+    context = pGetWindowDpiAwarenessContext( hwnd );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
     DestroyWindow( hwnd );
@@ -3101,24 +3101,24 @@ static void test_window_dpi(void)
     hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
                           WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
     ok( hwnd != 0, "failed to create window\n" );
-    context = GetWindowDpiAwarenessContext( hwnd );
+    context = pGetWindowDpiAwarenessContext( hwnd );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
     DestroyWindow( hwnd );
 
     SetLastError( 0xdeadbeef );
-    context = GetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
+    context = pGetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
     ok( !context, "got %p\n", context );
     ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
-    context = GetWindowDpiAwarenessContext( GetDesktopWindow() );
+    context = pGetWindowDpiAwarenessContext( GetDesktopWindow() );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
 
     pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
     SetLastError( 0xdeadbeef );
-    context = GetWindowDpiAwarenessContext( GetDesktopWindow() );
+    context = pGetWindowDpiAwarenessContext( GetDesktopWindow() );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
 
