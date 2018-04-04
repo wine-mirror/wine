@@ -32,7 +32,7 @@
 #define GET_SHORT(buffer, i)\
   (((BYTE)((buffer)[(i)]) + 0x100 * (signed char)((buffer)[(i)+1])))
 #define PUT_SHORT(buffer, i, s)\
-  (((buffer)[(i)] = (s) & 0xff, (buffer)[(i)+1] = ((s) >> 8) & 0xff))
+  (((buffer)[(i)] = (BYTE)((s) & 0xff), (buffer)[(i)+1] = (BYTE)(((s) >> 8) & 0xff)))
 
 static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, HLOCAL*, INT*);
 static HLOCAL GRPFILE_ScanGroup(LPCSTR, INT, LPCSTR, BOOL);
