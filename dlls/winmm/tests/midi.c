@@ -256,6 +256,17 @@ static void test_midi_mci(HWND hwnd)
     if(!err) ok(!strcmp(buf, "false"), "capability can record is %s\n", buf);
 }
 
+static BYTE SysEx_reset[] = {
+    0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7 /* GM System ON */
+};
+static BYTE SysEx_volume_off[] = {
+    0xF0, 0x7F, 0x7F, 0x04, 0x01, 0x00, 0x00, 0xF7
+};
+static BYTE SysEx_volume_full[] = {
+    0xF0, 0x7F, 0x7F, 0x04, 0x01, 0x00, 0x7F, 0xF7
+};
+static BOOL found_fluidsynth;
+const static char fluidsynth_prefix[] = "Synth input port ";
 
 static void test_midiOut_device(UINT udev, HWND hwnd)
 {
@@ -415,6 +426,59 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         test_notification(hwnd, "midiOutClose", 0, WHATEVER);
     }
     test_notification(hwnd, "midiOut over", 0, WHATEVER);
+    if (!strncmp(capsA.szPname, fluidsynth_prefix, strlen(fluidsynth_prefix)) ||
+        (udev == MIDIMAPPER && found_fluidsynth)) {
+        found_fluidsynth = TRUE;
+        skip("FluidSynth (at least 1.1.6) doesn't support desired System Exclusive message.\n");
+        return;
+    }
+
+    rc = midiOutOpen(&hm, udev, 0, (DWORD_PTR)0, CALLBACK_NULL);
+    ok(!rc, "midiOutOpen(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.lpData = (LPSTR)SysEx_reset;
+    mhdr.dwBufferLength = sizeof(SysEx_reset);
+    rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutPrepareHeader rc=%s\n", mmsys_error(rc));
+    rc = midiOutLongMsg(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
+    rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+    Sleep(60);
+
+    mhdr.lpData = (LPSTR)SysEx_volume_off;
+    mhdr.dwBufferLength = sizeof(SysEx_volume_off);
+    rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutPrepareHeader rc=%s\n", mmsys_error(rc));
+    rc = midiOutLongMsg(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
+    rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+
+    {
+        DWORD e = 0x006F4593; /* velocity 111, note #69, channel 4 */
+        trace("ShortMsg type %x (muted)\n", LOBYTE(LOWORD(e)));
+        rc = midiOutShortMsg(hm, e);
+        ok(!rc, "midiOutShortMsg rc=%s\n", mmsys_error(rc));
+        /* FIXME (for MIDI Mapper): we shouldn't hear this voice due to volume settings */
+        if (!rc) Sleep(200);
+
+        rc = midiOutShortMsg(hm, 0x00004593); /* velocity 0 */
+        ok(!rc, "midiOutShortMsg rc=%s\n", mmsys_error(rc));
+    }
+
+    mhdr.lpData = (LPSTR)SysEx_volume_full;
+    mhdr.dwBufferLength = sizeof(SysEx_volume_full);
+    rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutPrepareHeader rc=%s\n", mmsys_error(rc));
+    rc = midiOutLongMsg(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
+    rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+
+    rc = midiOutClose(hm);
+    ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
 }
 
 static void test_position(HMIDISTRM hm, UINT typein, UINT typeout)
