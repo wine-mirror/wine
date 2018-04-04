@@ -319,7 +319,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
-    RECT rect;
+    RECT rect, rc;
     POINT pt[2], *points;
     int width, height, count;
     BOOL ret = TRUE;
@@ -370,8 +370,10 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         return FALSE;
     }
 
-    if (pdev->brush.style != BS_NULL && extra_lines > 0 &&
-        !(interior = CreatePolygonRgn( points, count, WINDING )))
+    if (pdev->brush.style != BS_NULL &&
+        extra_lines > 0 &&
+        get_dib_rect( &pdev->dib, &rc ) &&
+        !(interior = create_polypolygon_region( points, &count, 1, WINDING, &rc )))
     {
         HeapFree( GetProcessHeap(), 0, points );
         if (outline) DeleteObject( outline );
@@ -1246,6 +1248,7 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
     DWORD total, i, pos;
+    RECT rc;
     BOOL ret = TRUE;
     POINT pt_buf[32];
     POINT *points = pt_buf;
@@ -1266,7 +1269,8 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     lp_to_dp( dc, points, total );
 
     if (pdev->brush.style != BS_NULL &&
-        !(interior = CreatePolyPolygonRgn( points, counts, polygons, dc->polyFillMode )))
+        get_dib_rect( &pdev->dib, &rc ) &&
+        !(interior = create_polypolygon_region( points, counts, polygons, dc->polyFillMode, &rc )))
     {
         ret = FALSE;
         goto done;
