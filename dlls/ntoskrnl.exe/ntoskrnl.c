@@ -3435,3 +3435,21 @@ __ASM_STDCALL_FUNC( _chkstk, 0,
 __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
                              "bx lr" )
 #endif
+
+/*********************************************************************
+ *           PsAcquireProcessExitSynchronization    (NTOSKRNL.@)
+*/
+NTSTATUS WINAPI PsAcquireProcessExitSynchronization(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/*********************************************************************
+ *           PsReleaseProcessExitSynchronization    (NTOSKRNL.@)
+ */
+void WINAPI PsReleaseProcessExitSynchronization(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+}

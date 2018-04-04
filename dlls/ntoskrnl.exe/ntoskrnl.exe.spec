@@ -844,6 +844,7 @@
 @ stub PoUnregisterSystemState
 @ stdcall ProbeForRead(ptr long long)
 @ stdcall ProbeForWrite(ptr long long)
+@ stdcall PsAcquireProcessExitSynchronization(ptr)
 @ stub PsAssignImpersonationToken
 @ stub PsChargePoolQuota
 @ stub PsChargeProcessNonPagedPoolQuota
@@ -905,6 +906,7 @@
 @ stub PsProcessType
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken
+@ stdcall PsReleaseProcessExitSynchronization(ptr)
 @ stdcall PsRemoveCreateThreadNotifyRoutine(ptr)
 @ stdcall PsRemoveLoadImageNotifyRoutine(ptr)
 @ stub PsRestoreImpersonation
