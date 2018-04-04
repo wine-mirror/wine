@@ -765,7 +765,7 @@ static HRESULT WINAPI TextStoreACPSink_OnSelectionChange(ITextStoreACPSink *ifac
 {
     Context *This = impl_from_ITextStoreACPSink(iface);
     FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI TextStoreACPSink_OnLayoutChange(ITextStoreACPSink *iface,
