@@ -3453,3 +3453,18 @@ void WINAPI PsReleaseProcessExitSynchronization(PEPROCESS process)
 {
     FIXME("stub: %p\n", process);
 }
+
+typedef struct _EX_PUSH_LOCK_WAIT_BLOCK *PEX_PUSH_LOCK_WAIT_BLOCK;
+/*********************************************************************
+ *           ExfUnblockPushLock    (NTOSKRNL.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( ExfUnblockPushLock )
+void WINAPI DECLSPEC_HIDDEN __regs_ExfUnblockPushLock( EX_PUSH_LOCK *lock,
+                                                       PEX_PUSH_LOCK_WAIT_BLOCK block)
+#else
+void WINAPI ExfUnblockPushLock( EX_PUSH_LOCK *lock, PEX_PUSH_LOCK_WAIT_BLOCK block )
+#endif
+{
+    FIXME( "stub: %p, %p\n", lock, block );
+}

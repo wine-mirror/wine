@@ -133,6 +133,7 @@
 @ stub ExEnumHandleTable
 @ stub ExEventObjectType
 @ stub ExExtendZone
+@ stdcall -norelay ExfUnblockPushLock(ptr ptr)
 @ stdcall ExFreePool(ptr)
 @ stdcall ExFreePoolWithTag(ptr long)
 @ stub ExFreeToPagedLookasideList
