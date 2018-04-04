@@ -1582,9 +1582,9 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
      */
     retvalue = hwndCtrl;
     hwnd = hwndCtrl;
-    while (hwndNext = GetWindow (hwnd, GW_HWNDNEXT),
-           1)
+    while (1)
     {
+        hwndNext = GetWindow (hwnd, GW_HWNDNEXT);
         while (!hwndNext)
         {
             /* Climb out until there is a next sibling of the ancestor or we
