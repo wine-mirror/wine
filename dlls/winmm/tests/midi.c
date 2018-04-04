@@ -541,6 +541,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         MIDIPROPTEMPO tempo;
         MIDIPROPTIMEDIV tdiv;
     } midiprop;
+    MIDIOUTCAPSA capsA;
 
     if (hwnd)
         rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
@@ -776,6 +777,78 @@ static void test_midiStream(UINT udev, HWND hwnd)
         rc = midiStreamClose(hm);
         ok(!rc, "midiStreamClose rc=%s\n", mmsys_error(rc));
     }
+
+    rc = midiOutGetDevCapsA((UINT_PTR)udev, &capsA, sizeof(capsA));
+    ok(!rc, "midiOutGetDevCaps(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    if (!strncmp(capsA.szPname, fluidsynth_prefix, strlen(fluidsynth_prefix)) ||
+        (udev == MIDIMAPPER && found_fluidsynth)) {
+        found_fluidsynth = TRUE;
+        skip("FluidSynth (at least 1.1.6) doesn't support desired System Exclusive message.\n");
+        return;
+    }
+
+#define ROUNDUP4(n) (((n) + 3) & ~3)
+    hm = NULL;
+    rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)0, (DWORD_PTR)0, CALLBACK_NULL);
+    ok(!rc, "midiOutOpen(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    midiprop.tdiv.cbStruct  = sizeof(midiprop.tdiv);
+    midiprop.tdiv.dwTimeDiv = 480;
+    rc = midiStreamProperty(hm, (LPBYTE)&midiprop, MIDIPROP_TIMEDIV | MIDIPROP_SET);
+    ok(!rc, "midiStreamProperty(TimeDiv) rc=%s\n", mmsys_error(rc));
+
+    rc = midiStreamRestart(hm);
+    ok(!rc, "midiStreamRestart rc=%s\n", mmsys_error(rc));
+
+    memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.dwBufferLength = sizeof(MIDISHORTEVENT) * 5 + ROUNDUP4(sizeof(SysEx_reset)) +
+        ROUNDUP4(sizeof(SysEx_volume_off)) + ROUNDUP4(sizeof(SysEx_volume_full));
+    mhdr.lpData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mhdr.dwBufferLength);
+    ok(mhdr.lpData!=NULL, "No %d bytes of memory!\n", mhdr.dwBufferLength);
+    if (mhdr.lpData) {
+        MIDIEVENT *e;
+        char *p = mhdr.lpData;
+        /* GM System ON */
+        e = (MIDIEVENT *)p;
+        e->dwEvent = MEVT_F_LONG | sizeof(SysEx_reset);
+        memcpy(&e->dwParms[0], SysEx_reset, sizeof(SysEx_reset));
+        p += sizeof(MIDISHORTEVENT) + ROUNDUP4(sizeof(SysEx_reset));
+        /* Master volume: off */
+        e = (MIDIEVENT *)p;
+        e->dwDeltaTime = 96;
+        e->dwEvent = MEVT_F_LONG | sizeof(SysEx_volume_off);
+        memcpy(&e->dwParms[0], SysEx_volume_off, sizeof(SysEx_volume_off));
+        p += sizeof(MIDISHORTEVENT) + ROUNDUP4(sizeof(SysEx_volume_off));
+        /* Note On (FIXME: we shouldn't hear this voice due to volume settings) */
+        e = (MIDIEVENT *)p;
+        e->dwEvent = MEVT_F_SHORT | 0x6F4593; /* note #69 */
+        p += sizeof(MIDISHORTEVENT);
+        /* Note Off */
+        e = (MIDIEVENT *)p;
+        e->dwDeltaTime = 240;
+        e->dwEvent = MEVT_F_SHORT | 0x004593; /* velocity 0 */
+        p += sizeof(MIDISHORTEVENT);
+        /* Master volume: full */
+        e = (MIDIEVENT *)p;
+        e->dwEvent = MEVT_F_LONG | sizeof(SysEx_volume_full);
+        memcpy(&e->dwParms[0], SysEx_volume_full, sizeof(SysEx_volume_full));
+        p += sizeof(MIDISHORTEVENT) + ROUNDUP4(sizeof(SysEx_volume_full));
+        mhdr.dwBytesRecorded = (DWORD)(p - mhdr.lpData);
+#undef ROUNDUP4
+
+        rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiOutPrepareHeader rc=%s\n", mmsys_error(rc));
+
+        rc = playStream(hm, &mhdr);
+        ok(!rc, "midiStreamOut rc=%s\n", mmsys_error(rc));
+
+        rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+
+        HeapFree(GetProcessHeap(), 0, mhdr.lpData);
+    }
+    rc = midiStreamClose(hm);
+    ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
 }
 
 static BOOL scan_subkeys(HKEY parent, const LPCSTR *sub_keys)
