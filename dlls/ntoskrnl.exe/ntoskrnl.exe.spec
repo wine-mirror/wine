@@ -808,6 +808,7 @@
 @ stub ObFindHandleForObject
 @ stdcall ObGetFilterVersion()
 @ stub ObGetObjectSecurity
+@ stdcall ObGetObjectType(ptr)
 @ stub ObInsertObject
 @ stub ObLogSecurityDescriptor
 @ stub ObMakeTemporaryObject

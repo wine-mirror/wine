@@ -2370,6 +2370,16 @@ USHORT WINAPI ObGetFilterVersion(void)
 }
 
 /***********************************************************************
+ *           ObGetObjectType (NTOSKRNL.EXE.@)
+ */
+POBJECT_TYPE WINAPI ObGetObjectType(void *object)
+{
+    FIXME("stub: %p\n", object);
+
+    return NULL;
+}
+
+/***********************************************************************
  *           IoGetAttachedDeviceReference   (NTOSKRNL.EXE.@)
  */
 DEVICE_OBJECT* WINAPI IoGetAttachedDeviceReference( DEVICE_OBJECT *device )
