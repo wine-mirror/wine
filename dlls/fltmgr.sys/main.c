@@ -64,3 +64,18 @@ void WINAPI FltUnregisterFilter( PFLT_FILTER filter )
 {
     FIXME( "(%p): stub\n", filter );
 }
+
+void* WINAPI FltGetRoutineAddress(LPCSTR name)
+{
+    static const WCHAR fltmgrW[] = {'f','l','t','m','g','r','.','s','y','s',0};
+    HMODULE mod = GetModuleHandleW(fltmgrW);
+    void *func;
+
+    func = GetProcAddress(mod, name);
+    if (func)
+        TRACE( "%s -> %p\n", debugstr_a(name), func );
+    else
+        FIXME( "%s not found\n", debugstr_a(name) );
+
+    return func;
+}

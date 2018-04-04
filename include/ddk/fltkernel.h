@@ -654,6 +654,7 @@ typedef struct _FLT_REGISTRATION
 } FLT_REGISTRATION, *PFLT_REGISTRATION;
 
 
+void*    WINAPI FltGetRoutineAddress(LPCSTR name);
 NTSTATUS WINAPI FltRegisterFilter(PDRIVER_OBJECT, const FLT_REGISTRATION *, PFLT_FILTER *);
 NTSTATUS WINAPI FltStartFiltering(PFLT_FILTER);
 void     WINAPI FltUnregisterFilter(PFLT_FILTER);

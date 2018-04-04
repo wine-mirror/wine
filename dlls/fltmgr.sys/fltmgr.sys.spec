@@ -79,7 +79,7 @@
 @ stub FltGetLowerInstance
 @ stub FltGetRequestorProcess
 @ stub FltGetRequestorProcessId
-@ stub FltGetRoutineAddress
+@ stdcall FltGetRoutineAddress(str)
 @ stub FltGetStreamContext
 @ stub FltGetStreamHandleContext
 @ stub FltGetSwappedBufferMdlAddress
