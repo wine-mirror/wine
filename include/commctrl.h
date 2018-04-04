@@ -1104,6 +1104,10 @@ typedef struct tagNMBCHOTITEM
   (BOOL)SNDMSG(button, BCM_GETIMAGELIST, 0, (LPARAM)(image_list))
 #define Button_SetImageList(button, image_list)  \
   (BOOL)SNDMSG(button, BCM_SETIMAGELIST, 0, (LPARAM)(image_list))
+#define Button_GetTextMargin(button, margin)  \
+  (BOOL)SNDMSG(button, BCM_GETTEXTMARGIN, 0, (LPARAM)(margin))
+#define Button_SetTextMargin(button, margin)  \
+  (BOOL)SNDMSG(button, BCM_SETTEXTMARGIN, 0, (LPARAM)(margin))
 
 /* Toolbar */
 

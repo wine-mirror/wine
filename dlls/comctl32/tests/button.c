@@ -1355,6 +1355,54 @@ static void test_get_set_imagelist(void)
     }
 }
 
+static void test_get_set_textmargin(void)
+{
+    HWND hwnd;
+    RECT margin_in;
+    RECT margin_out;
+    BOOL ret;
+    DWORD type;
+
+    margin_in.top = 1;
+    margin_in.left = 2;
+    margin_in.right = 3;
+    margin_in.bottom = 4;
+    for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
+    {
+        hwnd = create_button(type, NULL);
+        ok(hwnd != NULL, "Expect hwnd not null\n");
+
+        /* Get text margin when it is unset */
+        ret = SendMessageA(hwnd, BCM_GETTEXTMARGIN, 0, (LPARAM)&margin_out);
+        ok(ret, "Expect ret to be true\n");
+        ok(IsRectEmpty(&margin_out), "Expect margin empty\n");
+
+        /* Successful get and set text margin */
+        ret = SendMessageA(hwnd, BCM_SETTEXTMARGIN, 0, (LPARAM)&margin_in);
+        ok(ret, "Expect ret to be true\n");
+        SetRectEmpty(&margin_out);
+        ret = SendMessageA(hwnd, BCM_GETTEXTMARGIN, 0, (LPARAM)&margin_out);
+        ok(ret, "Expect ret to be true\n");
+        ok(EqualRect(&margin_in, &margin_out), "Expect margins to be equal\n");
+
+        /* BCM_SETTEXTMARGIN null pointer handling */
+        ret = SendMessageA(hwnd, BCM_SETTEXTMARGIN, 0, 0);
+        ok(!ret, "Expect ret to be false\n");
+        SetRectEmpty(&margin_out);
+        ret = SendMessageA(hwnd, BCM_GETTEXTMARGIN, 0, (LPARAM)&margin_out);
+        ok(ret, "Expect ret to be true\n");
+        ok(EqualRect(&margin_in, &margin_out), "Expect margins to be equal\n");
+
+        /* BCM_GETTEXTMARGIN null pointer handling */
+        ret = SendMessageA(hwnd, BCM_SETTEXTMARGIN, 0, (LPARAM)&margin_in);
+        ok(ret, "Expect ret to be true\n");
+        ret = SendMessageA(hwnd, BCM_GETTEXTMARGIN, 0, 0);
+        ok(!ret, "Expect ret to be true\n");
+
+        DestroyWindow(hwnd);
+    }
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -1374,6 +1422,7 @@ START_TEST(button)
     test_button_data();
     test_bm_get_set_image();
     test_get_set_imagelist();
+    test_get_set_textmargin();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

@@ -29,8 +29,6 @@
  *  - WM_NCCREATE: Turns any BS_OWNERDRAW button into a BS_PUSHBUTTON button.
  *  - WM_SYSKEYUP
  *  - BCM_GETIDEALSIZE
- *  - BCM_GETTEXTMARGIN
- *  - BCM_SETTEXTMARGIN
  *
  *  Notifications
  *  - BCN_HOTITEMCHANGE
@@ -45,8 +43,6 @@
  *  Structures/Macros/Definitions
  *  - NMBCHOTITEM
  *  - Button_GetIdealSize
- *  - Button_GetTextMargin
- *  - Button_SetTextMargin
  */
 
 #include <stdarg.h>
@@ -93,6 +89,7 @@ typedef struct _BUTTON_INFO
     INT              note_length;
     DWORD            image_type; /* IMAGE_BITMAP or IMAGE_ICON */
     BUTTON_IMAGELIST imagelist;
+    RECT             text_margin;
     union
     {
         HICON   icon;
@@ -784,6 +781,26 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             InvalidateRect( hWnd, NULL, FALSE );
         }
         break;
+
+    case BCM_SETTEXTMARGIN:
+    {
+        RECT *text_margin = (RECT *)lParam;
+
+        if (!text_margin) return FALSE;
+
+        infoPtr->text_margin = *text_margin;
+        return TRUE;
+    }
+
+    case BCM_GETTEXTMARGIN:
+    {
+        RECT *text_margin = (RECT *)lParam;
+
+        if (!text_margin) return FALSE;
+
+        *text_margin = infoPtr->text_margin;
+        return TRUE;
+    }
 
     case WM_NCHITTEST:
         if(btn_type == BS_GROUPBOX) return HTTRANSPARENT;
