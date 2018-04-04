@@ -2537,16 +2537,24 @@ static void REGION_computeWAET( struct list *AET, struct list *WETE )
 }
 
 /***********************************************************************
- *     REGION_InsertionSort
+ *     next_scanline
  *
- *     Just a simple insertion sort to sort the Active Edge Table.
- *
+ * Update the Active Edge Table for the next scan line and sort it again.
  */
-static BOOL REGION_InsertionSort( struct list *AET )
+static inline BOOL next_scanline( struct list *AET, int y )
 {
     struct edge_table_entry *active, *next, *insert;
     BOOL changed = FALSE;
 
+    LIST_FOR_EACH_ENTRY_SAFE( active, next, AET, struct edge_table_entry, entry )
+    {
+        if (active->ymax == y)  /* leaving this edge */
+        {
+            list_remove( &active->entry );
+            changed = TRUE;
+        }
+        else bres_incr_polygon( &active->bres );
+    }
     LIST_FOR_EACH_ENTRY_SAFE( active, next, AET, struct edge_table_entry, entry )
     {
         LIST_FOR_EACH_ENTRY( insert, AET, struct edge_table_entry, entry )
@@ -2581,66 +2589,13 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
 
 
 /***********************************************************************
- *     REGION_PtsToRegion
- *
- *     Create an array of rectangles from a list of points.
- */
-static WINEREGION *REGION_PtsToRegion( const POINT *pts, unsigned int size )
-{
-    int cur_band = 0, prev_band = 0;
-    RECT *extents;
-    WINEREGION *reg;
-
-    if (!(reg = alloc_region( size / 2 ))) return NULL;
-
-    extents = &reg->extents;
-    extents->left = LARGE_COORDINATE,  extents->right = SMALL_COORDINATE;
-
-    /* the loop uses 2 points per iteration */
-    for (; size > 0; pts += 2, size -= 2)
-    {
-        if (pts[0].x == pts[1].x)
-            continue;
-
-        if (reg->numRects && pts[0].y != reg->rects[cur_band].top)
-        {
-            prev_band = REGION_Coalesce( reg, prev_band, cur_band );
-            cur_band = reg->numRects;
-        }
-
-        add_rect( reg, pts[0].x, pts[0].y, pts[1].x, pts[1].y + 1 );
-        if (pts[0].x < extents->left)
-            extents->left = pts[0].x;
-        if (pts[1].x > extents->right)
-            extents->right = pts[1].x;
-    }
-
-    if (reg->numRects) {
-        REGION_Coalesce( reg, prev_band, cur_band );
-        extents->top = reg->rects[0].top;
-        extents->bottom = reg->rects[reg->numRects-1].bottom;
-    } else {
-	extents->left = 0;
-	extents->top = 0;
-	extents->right = 0;
-	extents->bottom = 0;
-    }
-    REGION_compact( reg );
-
-    return reg;
-}
-
-/* Number of points in the first point buffer.  Must be an even number. */
-#define NUMPTSTOBUFFER 200
-
-/***********************************************************************
  *           CreatePolyPolygonRgn    (GDI32.@)
  */
 HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 		      INT nbpolygons, INT mode)
 {
     HRGN hrgn = 0;
-    WINEREGION *obj;
+    WINEREGION *obj = NULL;
     INT y;                           /* current scanline        */
     struct list WETE, *pWETE;        /* Winding Edge Table */
     ScanLineList *pSLL;              /* current scanLineList    */
@@ -2648,11 +2603,10 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     struct list AET;                 /* header for AET     */
     EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
     ScanLineListBlock SLLBlock;      /* header for scanlinelist */
-    BOOL fixWAET = FALSE;
-    POINT buffer[NUMPTSTOBUFFER], *points = buffer;
-    struct edge_table_entry *active, *next;
-    unsigned int nb_points, pos = 0;
-    INT poly, total;
+    struct edge_table_entry *active;
+    unsigned int nb_points;
+    int cur_band = 0, prev_band = 0;
+    INT i, poly, total, first = 1;
 
     TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
 
@@ -2677,11 +2631,9 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 	return 0;
 
     if (!(nb_points = REGION_CreateEdgeTable(Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock))) goto done;
-    if (nb_points > NUMPTSTOBUFFER)
-    {
-        if (nb_points > INT_MAX / sizeof(*points)) goto done;
-        if (!(points = HeapAlloc( GetProcessHeap(), 0, nb_points * sizeof(*points) ))) goto done;
-    }
+    if (!(obj = alloc_region( nb_points / 2 )))
+        goto done;
+
     list_init( &AET );
     pSLL = ET.scanlines.next;
     if (mode != WINDING) {
@@ -2698,18 +2650,28 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                 pSLL = pSLL->next;
             }
 
-            LIST_FOR_EACH_ENTRY_SAFE( active, next, &AET, struct edge_table_entry, entry )
+            LIST_FOR_EACH_ENTRY( active, &AET, struct edge_table_entry, entry )
             {
-                points[pos].x = active->bres.minor_axis;
-                points[pos].y = y;
-                pos++;
-
-                if (active->ymax == y)  /* leaving this edge */
-                    list_remove( &active->entry );
-                else
-                    bres_incr_polygon( &active->bres );
+                if (first)
+                {
+                    obj->rects[obj->numRects].left = active->bres.minor_axis;
+                    obj->rects[obj->numRects].top = y;
+                }
+                else if (obj->rects[obj->numRects].left != active->bres.minor_axis)
+                {
+                    obj->rects[obj->numRects].right = active->bres.minor_axis;
+                    obj->rects[obj->numRects].bottom = y + 1;
+                    obj->numRects++;
+                }
+                first = !first;
             }
-            REGION_InsertionSort(&AET);
+            next_scanline( &AET, y );
+
+            if (obj->numRects)
+            {
+                prev_band = REGION_Coalesce( obj, prev_band, cur_band );
+                cur_band = obj->numRects;
+            }
         }
     }
     else {
@@ -2731,47 +2693,64 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
             /*
              *  for each active edge
              */
-            LIST_FOR_EACH_ENTRY_SAFE( active, next, &AET, struct edge_table_entry, entry )
+            LIST_FOR_EACH_ENTRY( active, &AET, struct edge_table_entry, entry )
             {
                 /*
                  *  add to the buffer only those edges that
                  *  are in the Winding active edge table.
                  */
                 if (pWETE == &active->winding_entry) {
-                    points[pos].x = active->bres.minor_axis;
-                    points[pos].y = y;
-                    pos++;
+                    if (first)
+                    {
+                        obj->rects[obj->numRects].left = active->bres.minor_axis;
+                        obj->rects[obj->numRects].top = y;
+                    }
+                    else if (obj->rects[obj->numRects].left != active->bres.minor_axis)
+                    {
+                        obj->rects[obj->numRects].right = active->bres.minor_axis;
+                        obj->rects[obj->numRects].bottom = y + 1;
+                        obj->numRects++;
+                    }
+                    first = !first;
                     pWETE = list_next( &WETE, pWETE );
                 }
-                if (active->ymax == y)  /* leaving this edge */
-                {
-                    list_remove( &active->entry );
-                    fixWAET = TRUE;
-                }
-                else
-                    bres_incr_polygon( &active->bres );
             }
 
             /*
              *  recompute the winding active edge table if
              *  we just resorted or have exited an edge.
              */
-            if (REGION_InsertionSort(&AET) || fixWAET) {
-                REGION_computeWAET( &AET, &WETE );
-                fixWAET = FALSE;
+            if (next_scanline( &AET, y )) REGION_computeWAET( &AET, &WETE );
+
+            if (obj->numRects)
+            {
+                prev_band = REGION_Coalesce( obj, prev_band, cur_band );
+                cur_band = obj->numRects;
             }
         }
     }
 
-    assert( pos == nb_points );
+    assert( obj->numRects <= nb_points / 2 );
 
-    if (!(obj = REGION_PtsToRegion( points, pos ))) goto done;
+    if (obj->numRects)
+    {
+        obj->extents.left = INT_MAX;
+        obj->extents.right = INT_MIN;
+        obj->extents.top = obj->rects[0].top;
+        obj->extents.bottom = obj->rects[obj->numRects-1].bottom;
+        for (i = 0; i < obj->numRects; i++)
+        {
+            obj->extents.left = min( obj->extents.left, obj->rects[i].left );
+            obj->extents.right = max( obj->extents.right, obj->rects[i].right );
+        }
+    }
+    REGION_compact( obj );
+
     if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
         free_region( obj );
 
 done:
     REGION_FreeStorage(SLLBlock.next);
-    if (points != buffer) HeapFree( GetProcessHeap(), 0, points );
     HeapFree( GetProcessHeap(), 0, pETEs );
     return hrgn;
 }
