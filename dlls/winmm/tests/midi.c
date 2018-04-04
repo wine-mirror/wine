@@ -461,7 +461,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         trace("ShortMsg type %x (muted)\n", LOBYTE(LOWORD(e)));
         rc = midiOutShortMsg(hm, e);
         ok(!rc, "midiOutShortMsg rc=%s\n", mmsys_error(rc));
-        /* FIXME (for MIDI Mapper): we shouldn't hear this voice due to volume settings */
+        /* We can't hear this voice due to volume settings */
         if (!rc) Sleep(200);
 
         rc = midiOutShortMsg(hm, 0x00004593); /* velocity 0 */

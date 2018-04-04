@@ -283,13 +283,25 @@ static DWORD modOpen(DWORD_PTR *lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     if (MIDIMAP_LoadSettings(mom))
     {
+	UINT chn;
 	*lpdwUser = (DWORD_PTR)mom;
 	mom->self = mom;
-
 	mom->wCbFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 	mom->midiDesc = *lpDesc;
-	MIDIMAP_NotifyClient(mom, MOM_OPEN, 0L, 0L);
 
+	for (chn = 0; chn < 16; chn++)
+	{
+	    if (mom->ChannelMap[chn]->loaded) continue;
+	    if (midiOutOpen(&mom->ChannelMap[chn]->hMidi, mom->ChannelMap[chn]->uDevID,
+			    0L, 0L, CALLBACK_NULL) == MMSYSERR_NOERROR)
+		mom->ChannelMap[chn]->loaded = 1;
+	    else
+		mom->ChannelMap[chn]->loaded = -1;
+	    /* FIXME: should load here the IDF midi data... and allow channel and
+	     * patch mappings
+	     */
+	}
+	MIDIMAP_NotifyClient(mom, MOM_OPEN, 0L, 0L);
 	return MMSYSERR_NOERROR;
     }
     HeapFree(GetProcessHeap(), 0, mom);
@@ -381,17 +393,6 @@ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
     case 0xC0:
     case 0xD0:
     case 0xE0:
-	if (mom->ChannelMap[chn]->loaded == 0)
-	{
-	    if (midiOutOpen(&mom->ChannelMap[chn]->hMidi, mom->ChannelMap[chn]->uDevID,
-			    0L, 0L, CALLBACK_NULL) == MMSYSERR_NOERROR)
-		mom->ChannelMap[chn]->loaded = 1;
-	    else
-		mom->ChannelMap[chn]->loaded = -1;
-	    /* FIXME: should load here the IDF midi data... and allow channel and
-	     * patch mappings
-	     */
-	}
 	if (mom->ChannelMap[chn]->loaded > 0)
 	{
 	    /* change channel */
