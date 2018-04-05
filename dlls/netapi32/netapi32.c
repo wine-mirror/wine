@@ -1204,7 +1204,7 @@ NET_API_STATUS WINAPI NetApiBufferAllocate(DWORD ByteCount, LPVOID* Buffer)
 NET_API_STATUS WINAPI NetApiBufferFree(LPVOID Buffer)
 {
     TRACE("(%p)\n", Buffer);
-    HeapFree(GetProcessHeap(), 0, Buffer);
+    MIDL_user_free(Buffer);
     return NERR_Success;
 }
 
