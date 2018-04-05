@@ -11247,6 +11247,132 @@ static void test_enum_surfaces(void)
     IDirectDraw_Release(ddraw);
 }
 
+static void test_execute_data(void)
+{
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DDevice *device;
+    IDirectDraw *ddraw;
+    HWND window;
+    HRESULT hr;
+    D3DEXECUTEDATA exec_data;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    memset(&exec_data, 0, sizeof(exec_data));
+
+    /* Success case. */
+    exec_data.dwSize = sizeof(exec_data);
+    exec_data.dwVertexCount = 3;
+    exec_data.dwInstructionOffset = 3 * sizeof(D3DVERTEX);
+    exec_data.dwInstructionLength = 10;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+
+    /* dwSize is checked against the expected struct size. */
+    exec_data.dwSize = sizeof(exec_data) - 1;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    exec_data.dwSize = sizeof(exec_data) + 1;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* The rest of the data is not checked for plausibility. */
+    exec_data.dwSize = sizeof(exec_data);
+    exec_data.dwVertexCount = 0;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwVertexCount = exec_desc.dwBufferSize / sizeof(D3DVERTEX) - 1;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwVertexCount = exec_desc.dwBufferSize / sizeof(D3DVERTEX);
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwVertexCount = exec_desc.dwBufferSize / sizeof(D3DVERTEX) + 1;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwVertexCount = 999999;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwInstructionOffset = 999999 * sizeof(D3DVERTEX);
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+    exec_data.dwInstructionLength = 10240;
+    hr = IDirect3DExecuteBuffer_SetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to set execute data, hr %#x.\n", hr);
+
+    /* The input structure is not modified. */
+    ok(exec_data.dwSize == sizeof(exec_data), "Got unexpected struct size %u\n",
+            exec_data.dwSize);
+    ok(exec_data.dwVertexCount == 999999, "Got unexpected vertex count %u\n",
+            exec_data.dwVertexCount);
+    ok(exec_data.dwInstructionOffset == 999999 * sizeof(D3DVERTEX), "Got unexpected instruction offset %u\n",
+            exec_data.dwInstructionOffset);
+    ok(exec_data.dwInstructionLength == 10240, "Got unexpected instruction length %u\n",
+            exec_data.dwInstructionLength);
+
+    /* No validation in GetExecuteData. */
+    memset(&exec_data, 0, sizeof(exec_data));
+    exec_desc.dwSize = sizeof(exec_desc);
+    hr = IDirect3DExecuteBuffer_GetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to get execute data, hr %#x.\n", hr);
+
+    ok(exec_data.dwSize == sizeof(exec_data), "Got unexpected struct size %u\n",
+            exec_data.dwSize);
+    ok(exec_data.dwVertexCount == 999999, "Got unexpected vertex count %u\n",
+            exec_data.dwVertexCount);
+    ok(exec_data.dwInstructionOffset == 999999 * sizeof(D3DVERTEX), "Got unexpected instruction offset %u\n",
+            exec_data.dwInstructionOffset);
+    ok(exec_data.dwInstructionLength == 10240, "Got unexpected instruction length %u\n",
+            exec_data.dwInstructionLength);
+
+    memset(&exec_data, 0xaa, sizeof(exec_data));
+    exec_desc.dwSize = sizeof(exec_desc) - 1;
+    hr = IDirect3DExecuteBuffer_GetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to get execute data, hr %#x.\n", hr);
+    ok(exec_data.dwSize == sizeof(exec_data), "Got unexpected struct size %u\n",
+       exec_data.dwSize);
+    ok(exec_data.dwVertexCount == 999999, "Got unexpected vertex count %u\n",
+       exec_data.dwVertexCount);
+    ok(exec_data.dwInstructionOffset == 999999 * sizeof(D3DVERTEX), "Got unexpected instruction offset %u\n",
+       exec_data.dwInstructionOffset);
+    ok(exec_data.dwInstructionLength == 10240, "Got unexpected instruction length %u\n",
+       exec_data.dwInstructionLength);
+
+    exec_desc.dwSize = 0;
+    hr = IDirect3DExecuteBuffer_GetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to get execute data, hr %#x.\n", hr);
+    exec_desc.dwSize = sizeof(exec_desc) + 1;
+    hr = IDirect3DExecuteBuffer_GetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to get execute data, hr %#x.\n", hr);
+    exec_desc.dwSize = ~0U;
+    hr = IDirect3DExecuteBuffer_GetExecuteData(execute_buffer, &exec_data);
+    ok(SUCCEEDED(hr), "Failed to get execute data, hr %#x.\n", hr);
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DDevice_Release(device);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -11348,4 +11474,5 @@ START_TEST(ddraw1)
     test_depth_readback();
     test_clear();
     test_enum_surfaces();
+    test_execute_data();
 }
