@@ -798,4 +798,42 @@ int __cdecl _fpieee_flt(ULONG exception_code, EXCEPTION_POINTERS *ep,
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+#if _MSVCR_VER>=110 && _MSVCR_VER<=120
+/*********************************************************************
+ *  __crtCapturePreviousContext (MSVCR110.@)
+ */
+void __cdecl get_prev_context(CONTEXT *ctx, DWORD64 rip)
+{
+    ULONG64 frame, image_base;
+    RUNTIME_FUNCTION *rf;
+    void *data;
+
+    TRACE("(%p)\n", ctx);
+
+    ctx->Rip = rip;
+    ctx->Rsp += 3*8; /* Rip, Rcx, return address */
+
+    rf = RtlLookupFunctionEntry(ctx->Rip, &image_base, NULL);
+    if(!rf) {
+        FIXME("RtlLookupFunctionEntry failed\n");
+        return;
+    }
+
+    RtlVirtualUnwind(UNW_FLAG_NHANDLER, image_base, ctx->Rip,
+            rf, ctx, &data, &frame, NULL);
+}
+
+__ASM_GLOBAL_FUNC( __crtCapturePreviousContext,
+        "pushq (%rsp)\n\t" /* save Rip */
+        __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+        "pushq %rcx\n\t"
+        __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+        "call " __ASM_NAME("RtlCaptureContext") "\n\t"
+        "popq %rcx\n\t"
+        __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+        "popq %rdx\n\t"
+        __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+        "jmp " __ASM_NAME("get_prev_context") );
+#endif
+
 #endif  /* __x86_64__ */

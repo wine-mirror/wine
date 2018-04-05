@@ -884,7 +884,7 @@
 @ cdecl -arch=i386 __control87_2(long long ptr ptr) msvcr120.__control87_2
 @ cdecl __create_locale(long str) msvcr120.__create_locale
 @ cdecl -arch=win64 -norelay __crtCaptureCurrentContext(ptr) msvcr120.__crtCaptureCurrentContext
-@ stub -arch=win64 __crtCapturePreviousContext
+@ cdecl -arch=x86_64 -norelay __crtCapturePreviousContext(ptr) msvcr120.__crtCapturePreviousContext
 @ stub __crtCloseWinRTThreadHandle
 @ cdecl __crtCompareStringA(long long str long str long) msvcr120.__crtCompareStringA
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcr120.__crtCompareStringW
