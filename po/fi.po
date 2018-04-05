@@ -9097,70 +9097,60 @@ msgstr ""
 "Tässä varmenteessa on ainakin yksi määrittelemätön turvallisuusongelma."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Palvelupyyntö aikakatkaistu.\n"
+msgstr "Pyyntö on aikakatkaistu.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Tulostinvirhe."
+msgstr "On tapahtunut sisäinen virhe.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Polku on viallinen.\n"
+msgstr "URL on viallinen.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL-skeemaa ei tunnistettu, tai sitä ei tueta.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Käyttäjänimeä ei löytynyt.\n"
+msgstr "Palvelimen nimeä ei voitu jäsentää.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Käyttäjäprofiili on viallinen.\n"
+msgstr "Pyydetty toimenpide ei kelpaa.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"Toimenpide keskeytettiin. Tämä johtuu yleensä siitä, että pyynnön "
+"käsittelemä kahva suljettiin ennen toimenpiteen valmistumista.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Profiilia ei voitu lisätä.\n"
+msgstr "Pyydettyä kohdetta ei löytynyt.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Ei voida yhdistää LDAP-palvelimeen"
+msgstr "Yritys yhdistää palvelimeen epäonnistui.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Yhteys palvelimeen on katkaistu.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"Palvelimen lähettämän SSL-sertifikaatin päiväys ei kelpaa. Sertifikaatti on "
+"vanhentunut.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL-sertifikaatin yleinen nimi (CN, palvelimen nimi) ei kelpaa.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
