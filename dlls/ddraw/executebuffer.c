@@ -601,6 +601,7 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
     struct wined3d_map_desc map_desc;
     struct wined3d_box box = {0};
     HRESULT hr;
+    DWORD buf_size = buffer->desc.dwBufferSize, copy_size;
 
     TRACE("iface %p, data %p.\n", iface, data);
 
@@ -648,7 +649,7 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
         buffer->src_vertex_pos = 0;
     }
 
-    if (data->dwVertexCount)
+    if (data->dwVertexCount && (!buf_size || data->dwVertexOffset < buf_size))
     {
         box.left = buffer->src_vertex_pos * sizeof(D3DVERTEX);
         box.right = box.left + data->dwVertexCount * sizeof(D3DVERTEX);
@@ -657,8 +658,11 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
         if (FAILED(hr))
             return hr;
 
-        memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset,
-                data->dwVertexCount * sizeof(D3DVERTEX));
+        copy_size = data->dwVertexCount * sizeof(D3DVERTEX);
+        if (buf_size)
+            copy_size = min(copy_size, buf_size - data->dwVertexOffset);
+
+        memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset, copy_size);
 
         wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0);
     }
