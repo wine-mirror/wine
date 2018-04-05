@@ -144,12 +144,10 @@ static void test_setlocale(void)
         || broken(!strcmp(ret, "Chinese_Taiwan.950")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "Chinese_China.936");
-todo_wine
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
     {
         trace("Chinese_China.936=%s\n", ret);
-todo_wine
         ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936") /* Vista - Win7 */
         || !strcmp(ret, "Chinese (Simplified)_China.936") /* Win8 - Win10 */
         || broken(!strcmp(ret, "Chinese_People's Republic of China.936")), "ret = %s\n", ret);

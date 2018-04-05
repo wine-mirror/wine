@@ -249,6 +249,9 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage)
     if(!search.search_country[0] && !search.search_codepage[0])
         remap_synonym(search.search_language);
 
+    if(!strcasecmp(search.search_country, "China"))
+        strcpy(search.search_country, "People's Republic of China");
+
     EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
             (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
             (LONG_PTR)&search);
