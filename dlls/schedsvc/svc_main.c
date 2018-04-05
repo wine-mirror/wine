@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winsvc.h"
 #include "rpc.h"
+#include "atsvc.h"
 #include "schrpc.h"
 #include "wine/debug.h"
 
@@ -123,22 +124,38 @@ static RPC_BINDING_VECTOR *sched_bindings;
 
 static RPC_STATUS RPC_init(void)
 {
-    WCHAR transport[] = SCHEDSVC_TRANSPORT;
+    static WCHAR ncacn_npW[] = { 'n','c','a','c','n','_','n','p',0 };
+    static WCHAR endpoint_npW[] = { '\\','p','i','p','e','\\','a','t','s','v','c',0 };
+    static WCHAR ncalrpcW[] = { 'n','c','a','l','r','p','c',0 };
+    static WCHAR endpoint_lrpcW[] = { 'a','t','s','v','c',0 };
     RPC_STATUS status;
 
-    TRACE("using %s\n", debugstr_w(transport));
+    status = RpcServerRegisterIf(ITaskSchedulerService_v1_0_s_ifspec, NULL, NULL);
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcServerRegisterIf error %#x\n", status);
+        return status;
+    }
 
-    status = RpcServerUseProtseqEpW(transport, 0, NULL, NULL);
+    status = RpcServerRegisterIf(atsvc_v1_0_s_ifspec, NULL, NULL);
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcServerRegisterIf error %#x\n", status);
+        RpcServerUnregisterIf(ITaskSchedulerService_v1_0_s_ifspec, NULL, FALSE);
+        return status;
+    }
+
+    status = RpcServerUseProtseqEpW(ncacn_npW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT, endpoint_npW, NULL);
     if (status != RPC_S_OK)
     {
         ERR("RpcServerUseProtseqEp error %#x\n", status);
         return status;
     }
 
-    status = RpcServerRegisterIf(ITaskSchedulerService_v1_0_s_ifspec, 0, 0);
+    status = RpcServerUseProtseqEpW(ncalrpcW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT, endpoint_lrpcW, NULL);
     if (status != RPC_S_OK)
     {
-        ERR("RpcServerRegisterIf error %#x\n", status);
+        ERR("RpcServerUseProtseqEp error %#x\n", status);
         return status;
     }
 
@@ -150,6 +167,13 @@ static RPC_STATUS RPC_init(void)
     }
 
     status = RpcEpRegisterW(ITaskSchedulerService_v1_0_s_ifspec, sched_bindings, NULL, NULL);
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcEpRegister error %#x\n", status);
+        return status;
+    }
+
+    status = RpcEpRegisterW(atsvc_v1_0_s_ifspec, sched_bindings, NULL, NULL);
     if (status != RPC_S_OK)
     {
         ERR("RpcEpRegister error %#x\n", status);
@@ -169,8 +193,10 @@ static void RPC_finish(void)
 {
     RpcMgmtStopServerListening(NULL);
     RpcEpUnregister(ITaskSchedulerService_v1_0_s_ifspec, sched_bindings, NULL);
+    RpcEpUnregister(atsvc_v1_0_s_ifspec, sched_bindings, NULL);
     RpcBindingVectorFree(&sched_bindings);
-    RpcServerUnregisterIf(NULL, NULL, FALSE);
+    RpcServerUnregisterIf(ITaskSchedulerService_v1_0_s_ifspec, NULL, FALSE);
+    RpcServerUnregisterIf(atsvc_v1_0_s_ifspec, NULL, FALSE);
 }
 
 void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)

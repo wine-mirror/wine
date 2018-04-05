@@ -2,7 +2,10 @@ MODULE    = schedsvc.dll
 IMPORTS   = rpcrt4 advapi32 ole32
 
 C_SRCS = \
+	atsvc.c \
 	schedsvc.c \
 	svc_main.c
 
-IDL_SRCS = schrpc.idl
+IDL_SRCS = \
+	atsvc.idl \
+	schrpc.idl
