@@ -1154,10 +1154,20 @@ NET_API_STATUS WINAPI NetScheduleJobDel(LPCWSTR server, DWORD minjobid, DWORD ma
 NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD prefmaxsize, LPDWORD entriesread,
                                          LPDWORD totalentries, LPDWORD resumehandle)
 {
-    FIXME("stub (%s, %p, %d, %p, %p, %p)\n", debugstr_w(server), bufptr, prefmaxsize, entriesread, totalentries, resumehandle);
-    *entriesread = 0;
-    *totalentries = 0;
-    return NERR_Success;
+    AT_ENUM_CONTAINER container;
+    NET_API_STATUS ret;
+
+    TRACE("(%s, %p, %u, %p, %p, %p)\n", debugstr_w(server), bufptr, prefmaxsize, entriesread, totalentries, resumehandle);
+
+    container.EntriesRead = 0;
+    container.Buffer = NULL;
+    ret = NetrJobEnum(server, &container, prefmaxsize, totalentries, resumehandle);
+    if (ret == ERROR_SUCCESS)
+    {
+        *bufptr = (LPBYTE)container.Buffer;
+        *entriesread = container.EntriesRead;
+    }
+    return ret;
 }
 
 NET_API_STATUS WINAPI NetUseGetInfo(LMSTR server, LMSTR name, DWORD level, LPBYTE *bufptr)
