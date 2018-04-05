@@ -1170,6 +1170,12 @@ NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD p
     return ret;
 }
 
+NET_API_STATUS WINAPI NetScheduleJobGetInfo(LPCWSTR server, DWORD jobid, LPBYTE *bufptr)
+{
+    TRACE("(%s, %u, %p)\n", debugstr_w(server), jobid, bufptr);
+    return NetrJobGetInfo(server, jobid, (LPAT_INFO *)bufptr);
+}
+
 NET_API_STATUS WINAPI NetUseGetInfo(LMSTR server, LMSTR name, DWORD level, LPBYTE *bufptr)
 {
     FIXME("stub (%p, %p, %d, %p)\n", server, name, level, bufptr);

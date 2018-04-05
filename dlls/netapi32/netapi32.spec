@@ -171,7 +171,7 @@
 @ stdcall NetScheduleJobAdd(wstr ptr ptr)
 @ stdcall NetScheduleJobDel(wstr long long)
 @ stdcall NetScheduleJobEnum(wstr ptr long ptr ptr ptr)
-@ stub NetScheduleJobGetInfo
+@ stdcall NetScheduleJobGetInfo(wstr long ptr)
 @ stub NetServerComputerNameAdd
 @ stub NetServerComputerNameDel
 @ stdcall NetServerDiskEnum(wstr long ptr long ptr ptr ptr)
