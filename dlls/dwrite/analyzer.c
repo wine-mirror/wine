@@ -1140,7 +1140,7 @@ static void analyzer_dump_user_features(DWRITE_TYPOGRAPHIC_FEATURES const **feat
     if (!TRACE_ON(dwrite) || !features)
         return;
 
-    for (i = 0, start = 0; i < feature_ranges; i++, start += feature_range_lengths[i]) {
+    for (i = 0, start = 0; i < feature_ranges; start += feature_range_lengths[i++]) {
         TRACE("feature range [%u,%u)\n", start, start + feature_range_lengths[i]);
         for (j = 0; j < features[i]->featureCount; j++)
             TRACE("feature %s, parameter %u\n", debugstr_an((char *)&features[i]->features[j].nameTag, 4),
