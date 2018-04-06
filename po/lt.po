@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-02-26 22:09+0300\n"
+"PO-Revision-Date: 2018-04-06 08:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9105,70 +9105,59 @@ msgid ""
 msgstr "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Baigėsi tarnybos užklausos laikas.\n"
+msgstr "Baigėsi užklausos laikas.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Įvyko spausdintuvo klaida."
+msgstr "Įvyko vidinė klaida.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Neteisingas kelias.\n"
+msgstr "Neteisingas URL.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL schema neatpažinta arba nepalaikoma.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Naudotojo vardas nerastas.\n"
+msgstr "Nepavyko nustatyti serverio vardo.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Naudotojo profilis netinkamas.\n"
+msgstr "Užklausta operacija netinkama.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"Operacija nutraukta, paprastai todėl, kad rodyklė su kuria dirbo užklausa "
+"buvo uždaryta prieš pasibaigiant operacijai.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Profilis nepridėtas.\n"
+msgstr "Užklaustas elementas nerastas.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Nepavyko prisijungti prie LDAP serverio"
+msgstr "Bandymas prisijungti prie serverio nepavyko.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Susijungimas su serveriu buvo nutrauktas.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"SSL liudijimo data gauta iš serverio yra bloga. Liudijimas nebegalioja.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL liudijimo vardas (serverio vardo laukas) neteisingas.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
@@ -12949,7 +12938,7 @@ msgstr ""
 
 #: taskkill.rc:38
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Procesas, kurio PID %1!u!, priverstinai nutrauktas.\n"
+msgstr "Procesas su PID %1!u! priverstinai nutrauktas.\n"
 
 #: taskkill.rc:39
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
