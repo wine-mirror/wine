@@ -2637,7 +2637,7 @@ static DWORD WINAPI notify_thread(void *user)
 {
     DWORD err;
     notify_data *data = user;
-    SC_RPC_NOTIFY_PARAMS_LIST *list;
+    SC_RPC_NOTIFY_PARAMS_LIST *list = NULL;
     SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *cparams;
     BOOL dummy;
 
