@@ -2231,7 +2231,11 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
                                            POBJECT_HANDLE_INFORMATION info)
 {
     FIXME( "stub: %p %x %p %d %p %p\n", obj, access, type, mode, ptr, info);
-    return STATUS_NOT_IMPLEMENTED;
+
+    if(ptr)
+        *ptr = UlongToHandle(0xdeadbeaf);
+
+    return STATUS_SUCCESS;
 }
 
  /***********************************************************************
