@@ -2608,7 +2608,7 @@ BOOLEAN WINAPI Ke386SetIoAccessMap(ULONG flag, PVOID buffer)
 PKEVENT WINAPI IoCreateSynchronizationEvent(PUNICODE_STRING name, PHANDLE handle)
 {
     FIXME("(%p %p) stub\n", name, handle);
-    return NULL;
+    return (KEVENT *)0xdeadbeaf;
 }
 
 /*****************************************************
