@@ -253,7 +253,7 @@ static LONG WINAPI debug_exception_handler( EXCEPTION_POINTERS *eptr )
  *
  *  Nothing.
  */
-void WINAPI OutputDebugStringA( LPCSTR str )
+void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
 {
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
@@ -364,7 +364,7 @@ void WINAPI OutputDebugStringA( LPCSTR str )
  *
  *  Nothing.
  */
-void WINAPI OutputDebugStringW( LPCWSTR str )
+void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
 {
     UNICODE_STRING strW;
     STRING strA;
