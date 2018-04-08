@@ -27,6 +27,7 @@
 #include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
+#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
@@ -44,6 +45,22 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #ifndef PCAP_SRC_IFLOCAL
 #define PCAP_SRC_IFLOCAL        3
 #endif
+
+static inline WCHAR *heap_strdupAtoW(const char *str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = heap_alloc(len*sizeof(WCHAR));
+        if(ret)
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
 
 void CDECL wine_pcap_breakloop(pcap_t *p)
 {
@@ -340,4 +357,31 @@ int CDECL wine_wsockinit(void)
     TRACE("()\n");
     if (WSAStartup(MAKEWORD(1,1), &wsadata)) return -1;
     return 0;
+}
+
+pcap_dumper_t* CDECL wine_pcap_dump_open(pcap_t *p, const char *fname)
+{
+    pcap_dumper_t *dumper;
+    WCHAR *fnameW = heap_strdupAtoW(fname);
+    char *unix_path;
+
+    TRACE("(%p %s)\n", p, debugstr_a(fname));
+
+    unix_path = wine_get_unix_file_name(fnameW);
+    heap_free(fnameW);
+    if(!unix_path)
+        return NULL;
+
+    TRACE("unix_path %s\n", debugstr_a(unix_path));
+
+    dumper = pcap_dump_open(p, unix_path);
+    heap_free(unix_path);
+
+    return dumper;
+}
+
+void CDECL wine_pcap_dump(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
+{
+    TRACE("(%p %p %p)\n", user, h, sp);
+    return pcap_dump(user, h, sp);
 }
