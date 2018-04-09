@@ -806,8 +806,10 @@ static RPC_STATUS RPCRT4_stop_listen(BOOL auto_listen)
 
   if (stop_listen) {
     RpcServerProtseq *cps;
+    EnterCriticalSection(&server_cs);
     LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
       RPCRT4_sync_with_server_thread(cps);
+    LeaveCriticalSection(&server_cs);
   }
 
   if (!auto_listen)
