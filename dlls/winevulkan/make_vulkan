@@ -124,12 +124,12 @@ CORE_EXTENSIONS = [
 DRIVER_VERSION = 3
 
 # Table of functions for which we have a special implementation.
-# This are regular device / instance functions for which we need
-# to more work compared to a regular thunk  or because they are
+# These are regular device / instance functions for which we need
+# to do more work compared to a regular thunk or because they are
 # part of the driver interface.
 # - dispatch set whether we need a function pointer in the device
 #   / instance dispatch table.
-# - driver sets whether the api is part of the driver interface.
+# - driver sets whether the API is part of the driver interface.
 # - thunk sets whether to create a thunk in vulkan_thunks.c.
 FUNCTION_OVERRIDES = {
     # Global functions
@@ -1199,7 +1199,7 @@ class VkParam(object):
         else:
             proto += " " + self.name
 
-        # Allows appeninding something to the variable name useful for
+        # Allows appending something to the variable name useful for
         # win32 to host conversion.
         if postfix is not None:
             proto += postfix
@@ -1371,7 +1371,7 @@ class VkParam(object):
             return "NULL"
 
         # Dispatchable objects wrap the native handle. For thunk generation we
-        # need to pass the native handle to the native vulkan calls.
+        # need to pass the native handle to the native Vulkan calls.
         if self.is_dispatchable():
             return "{0}->{1}".format(self.name, self.handle.native_handle())
         elif conv and self.needs_conversion():
@@ -2250,7 +2250,7 @@ class VkRegistry(object):
             funcs[func.name] = func
 
         # To make life easy for the code generation, separate all function
-        # calls out in the 3 types of vulkan functions: device, global and instance.
+        # calls out in the 3 types of Vulkan functions: device, global and instance.
         device_funcs = []
         global_funcs = []
         instance_funcs = []
@@ -2474,7 +2474,7 @@ class VkRegistry(object):
             if type_info["category"] in ["struct", "union"]:
                 # We store unions among structs as some structs depend
                 # on unions. The types are very similar in parsing and
-                # generation anyway. The official vulkan scripts use
+                # generation anyway. The official Vulkan scripts use
                 # a similar kind of hack.
                 struct = VkStruct.from_xml(t)
                 structs.append(struct)
