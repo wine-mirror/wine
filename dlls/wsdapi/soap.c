@@ -258,31 +258,32 @@ cleanup:
     return ret;
 }
 
-static WSDXML_ELEMENT *add_child_element(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri,
-    LPCWSTR name, LPCWSTR text)
+static HRESULT add_child_element(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri,
+    LPCWSTR name, LPCWSTR text, WSDXML_ELEMENT **out)
 {
     WSDXML_ELEMENT *element_obj;
     WSDXML_NAME *name_obj;
+    HRESULT ret;
 
-    if (FAILED(IWSDXMLContext_AddNameToNamespace(xml_context, ns_uri, name, &name_obj)))
-        return NULL;
+    ret = IWSDXMLContext_AddNameToNamespace(xml_context, ns_uri, name, &name_obj);
+    if (FAILED(ret)) return ret;
 
-    if (FAILED(WSDXMLBuildAnyForSingleElement(name_obj, text, &element_obj)))
-    {
-        WSDFreeLinkedMemory(name_obj);
-        return NULL;
-    }
-
+    ret = WSDXMLBuildAnyForSingleElement(name_obj, text, &element_obj);
     WSDFreeLinkedMemory(name_obj);
 
+    if (FAILED(ret)) return ret;
+
     /* Add the element as a child - this will link the element's memory allocation to the parent's */
-    if (FAILED(WSDXMLAddChild(parent, element_obj)))
+    ret = WSDXMLAddChild(parent, element_obj);
+
+    if (FAILED(ret))
     {
         WSDFreeLinkedMemory(element_obj);
-        return NULL;
+        return ret;
     }
 
-    return element_obj;
+    *out = element_obj;
+    return ret;
 }
 
 static BOOL create_guid(LPWSTR buffer)
@@ -418,42 +419,42 @@ static void remove_attribute(WSDXML_ELEMENT *parent, WSDXML_ATTRIBUTE *attribute
     WSDFreeLinkedMemory(attribute);
 }
 
-static BOOL add_ulonglong_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
+static HRESULT add_ulonglong_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
     ULONGLONG value)
 {
     WSDXML_ATTRIBUTE *attribute = add_attribute(xml_context, parent, ns_uri, name);
 
     if (attribute == NULL)
-        return FALSE;
+        return E_FAIL;
 
     attribute->Value = ulonglong_to_string(attribute, value);
 
     if (attribute->Value == NULL)
     {
         remove_attribute(parent, attribute);
-        return FALSE;
+        return E_FAIL;
     }
 
-    return TRUE;
+    return S_OK;
 }
 
-static BOOL add_string_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
+static HRESULT add_string_attribute(IWSDXMLContext *xml_context, WSDXML_ELEMENT *parent, LPCWSTR ns_uri, LPCWSTR name,
     LPCWSTR value)
 {
     WSDXML_ATTRIBUTE *attribute = add_attribute(xml_context, parent, ns_uri, name);
 
     if (attribute == NULL)
-        return FALSE;
+        return E_FAIL;
 
     attribute->Value = duplicate_string(attribute, value);
 
     if (attribute->Value == NULL)
     {
         remove_attribute(parent, attribute);
-        return FALSE;
+        return E_FAIL;
     }
 
-    return TRUE;
+    return S_OK;
 }
 
 static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *discovered_ns)
@@ -481,53 +482,62 @@ static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *
     return TRUE;
 }
 
-static WSDXML_ELEMENT *create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header)
+static HRESULT create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header,
+    WSDXML_ELEMENT **out_element)
 {
-    WSDXML_ELEMENT *header_element = NULL, *app_sequence_element = NULL;
+    WSDXML_ELEMENT *header_element = NULL, *app_sequence_element = NULL, *temp_element;
     WSDXML_NAME *header_name = NULL;
+    HRESULT ret;
 
     /* <s:Header> */
-    if (FAILED(IWSDXMLContext_AddNameToNamespace(xml_context, envelopeNsUri, headerString, &header_name))) goto cleanup;
-    if (FAILED(WSDXMLBuildAnyForSingleElement(header_name, NULL, &header_element))) goto cleanup;
+    ret = IWSDXMLContext_AddNameToNamespace(xml_context, envelopeNsUri, headerString, &header_name);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = WSDXMLBuildAnyForSingleElement(header_name, NULL, &header_element);
+    if (FAILED(ret)) goto cleanup;
+
     WSDFreeLinkedMemory(header_name);
 
     /* <a:Action> */
-    if (add_child_element(xml_context, header_element, addressingNsUri, actionString, header->Action) == NULL)
-        goto cleanup;
+    ret = add_child_element(xml_context, header_element, addressingNsUri, actionString, header->Action, &temp_element);
+    if (FAILED(ret)) goto cleanup;
 
     /* <a:MessageId> */
-    if (add_child_element(xml_context, header_element, addressingNsUri, messageIdString, header->MessageID) == NULL)
-        goto cleanup;
+    ret = add_child_element(xml_context, header_element, addressingNsUri, messageIdString, header->MessageID, &temp_element);
+    if (FAILED(ret)) goto cleanup;
 
     /* <a:To> */
-    if (add_child_element(xml_context, header_element, addressingNsUri, toString, header->To) == NULL)
-        goto cleanup;
+    ret = add_child_element(xml_context, header_element, addressingNsUri, toString, header->To, &temp_element);
+    if (FAILED(ret)) goto cleanup;
 
     /* <a:RelatesTo> */
     if (header->RelatesTo.MessageID != NULL)
     {
-        if (add_child_element(xml_context, header_element, addressingNsUri, relatesToString,
-            header->RelatesTo.MessageID) == NULL) goto cleanup;
+        ret = add_child_element(xml_context, header_element, addressingNsUri, relatesToString,
+            header->RelatesTo.MessageID, &temp_element);
+        if (FAILED(ret)) goto cleanup;
     }
 
     /* <d:AppSequence> */
-    app_sequence_element = add_child_element(xml_context, header_element, discoveryNsUri, appSequenceString, emptyString);
-    if (app_sequence_element == NULL) goto cleanup;
+    ret = add_child_element(xml_context, header_element, discoveryNsUri, appSequenceString, emptyString, &app_sequence_element);
+    if (FAILED(ret)) goto cleanup;
 
     /* InstanceId attribute */
-    if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, instanceIdString, min(UINT_MAX,
-        header->AppSequence->InstanceId))) goto cleanup;
+    ret = add_ulonglong_attribute(xml_context, app_sequence_element, NULL, instanceIdString, min(UINT_MAX,
+        header->AppSequence->InstanceId));
+    if (FAILED(ret)) goto cleanup;
 
     /* SequenceID attribute */
     if (header->AppSequence->SequenceId != NULL)
     {
-        if (!add_string_attribute(xml_context, app_sequence_element, NULL, sequenceIdString, header->AppSequence->SequenceId))
-            goto cleanup;
+        ret = add_string_attribute(xml_context, app_sequence_element, NULL, sequenceIdString, header->AppSequence->SequenceId);
+        if (FAILED(ret)) goto cleanup;
     }
 
     /* MessageNumber attribute */
-    if (!add_ulonglong_attribute(xml_context, app_sequence_element, NULL, messageNumberString, min(UINT_MAX,
-        header->AppSequence->MessageNumber))) goto cleanup;
+    ret = add_ulonglong_attribute(xml_context, app_sequence_element, NULL, messageNumberString, min(UINT_MAX,
+        header->AppSequence->MessageNumber));
+    if (FAILED(ret)) goto cleanup;
 
     /* </d:AppSequence> */
 
@@ -535,13 +545,14 @@ static WSDXML_ELEMENT *create_soap_header_xml_elements(IWSDXMLContext *xml_conte
 
     /* </s:Header> */
 
-    return header_element;
+    *out_element = header_element;
+    return ret;
 
 cleanup:
     if (header_name != NULL) WSDFreeLinkedMemory(header_name);
     WSDXMLCleanupElement(header_element);
 
-    return NULL;
+    return ret;
 }
 
 static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header, WSDXML_ELEMENT *body_element,
@@ -591,8 +602,8 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
     if (FAILED(ret)) goto cleanup;
 
     /* Create the header XML elements */
-    header_element = create_soap_header_xml_elements(xml_context, header);
-    if (header_element == NULL) goto cleanup;
+    ret = create_soap_header_xml_elements(xml_context, header, &header_element);
+    if (FAILED(ret)) goto cleanup;
 
     /* <s:Envelope> */
     ret = WsWriteStartElement(writer, actual_envelope_prefix, &envelope, envelope_uri_xmlstr, NULL);
