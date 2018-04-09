@@ -580,7 +580,6 @@ static LRESULT WINAPI subpopuplocked_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam
 
 static void test_subpopup_locked_by_menu(void)
 {
-    DWORD gle;
     BOOL ret;
     HMENU hmenu, hsubmenu;
     MENUINFO mi = { sizeof( MENUINFO)};
@@ -613,44 +612,32 @@ static void test_subpopup_locked_by_menu(void)
     ok( ret , "GetMenuInfo returned 0 with error %d\n", GetLastError());
     ret = IsMenu( hsubmenu);
     ok( ret , "Menu handle is not valid\n");
-    SetLastError( 0xdeadbeef);
+
     ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
-    if( ret == (itemid & 0xffff)) {
-        win_skip("not on 16 bit menu subsystem\n");
-        DestroyMenu( hsubmenu);
-    } else {
-        gle = GetLastError();
-        ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, gle);
-        ok( gle == 0 ||
-                broken( gle == 0xdeadbeef), /* win2k0 */
-                "Last error is %d\n", gle);
-        /* then destroy the sub-popup */
-        ret = DestroyMenu( hsubmenu);
-        ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
-        /* and repeat the tests */
-        mii.fMask = MIIM_SUBMENU;
-        ret = GetMenuItemInfoA( hmenu, 0, TRUE, &mii);
-        ok( ret, "GetMenuItemInfo failed error %d\n", GetLastError());
-        /* GetMenuInfo fails now */
-        ok( mii.hSubMenu == hsubmenu, "submenu is %p\n", mii.hSubMenu);
-        mi.fMask |= MIM_STYLE;
-        ret = GetMenuInfo( hsubmenu, &mi);
-        ok( !ret , "GetMenuInfo should have failed\n");
-        /* IsMenu says it is not */
-        ret = IsMenu( hsubmenu);
-        ok( !ret , "Menu handle should be invalid\n");
-        /* but TrackPopupMenu still works! */
-        SetLastError( 0xdeadbeef);
-        ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
-        gle = GetLastError();
-        todo_wine {
-            ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, gle);
-        }
-        ok( gle == 0 ||
-            broken(gle == 0xdeadbeef) || /* wow64 */
-            broken(gle == ERROR_INVALID_PARAMETER), /* win2k0 */
-            "Last error is %d\n", gle);
+    ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, GetLastError());
+
+    /* then destroy the sub-popup */
+    ret = DestroyMenu( hsubmenu);
+    ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
+    /* and repeat the tests */
+    mii.fMask = MIIM_SUBMENU;
+    ret = GetMenuItemInfoA( hmenu, 0, TRUE, &mii);
+    ok( ret, "GetMenuItemInfo failed error %d\n", GetLastError());
+    /* GetMenuInfo fails now */
+    ok( mii.hSubMenu == hsubmenu, "submenu is %p\n", mii.hSubMenu);
+    mi.fMask |= MIM_STYLE;
+    ret = GetMenuInfo( hsubmenu, &mi);
+    ok( !ret , "GetMenuInfo should have failed\n");
+    /* IsMenu says it is not */
+    ret = IsMenu( hsubmenu);
+    ok( !ret , "Menu handle should be invalid\n");
+
+    /* but TrackPopupMenu still works! */
+    ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+    todo_wine {
+        ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, GetLastError());
     }
+
     /* clean up */
     DestroyMenu( hmenu);
     DestroyWindow(hwnd);
@@ -1083,15 +1070,9 @@ static void test_menu_add_string( void )
     ok (GetMenuStringA( hmenu, 0, strback, 99, MF_BYPOSITION), "GetMenuString on ownerdraw entry failed\n");
     ok (!strcmp( strback, "Dummy string" ), "Menu text from Ansi version incorrect\n");
 
-    SetLastError(0xdeadbeef);
     ret = GetMenuStringW( hmenu, 0, strbackW, 99, MF_BYPOSITION );
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        win_skip("GetMenuStringW is not implemented\n");
-    else
-    {
-        ok (ret, "GetMenuStringW on ownerdraw entry failed\n");
-        ok (!lstrcmpW( strbackW, expectedString ), "Menu text from Unicode version incorrect\n");
-    }
+    ok (ret, "GetMenuStringW on ownerdraw entry failed\n");
+    ok (!lstrcmpW( strbackW, expectedString ), "Menu text from Unicode version incorrect\n");
 
     /* Just try some invalid parameter tests */
     SetLastError(0xdeadbeef);
@@ -1159,12 +1140,8 @@ static void test_menu_add_string( void )
     ok (rc, "InsertMenuItem failed\n");
     ok (!GetMenuStringA( hmenu, 0, NULL, 0, MF_BYPOSITION),
             "GetMenuString on ownerdraw entry succeeded.\n");
-    SetLastError(0xdeadbeef);
     ret = GetMenuStringW( hmenu, 0, NULL, 0, MF_BYPOSITION);
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        win_skip("GetMenuStringW is not implemented\n");
-    else
-        ok (!ret, "GetMenuStringW on ownerdraw entry succeeded.\n");
+    ok (!ret, "GetMenuStringW on ownerdraw entry succeeded.\n");
 
     DestroyMenu( hmenu );
 }
