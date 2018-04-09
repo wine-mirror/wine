@@ -647,8 +647,8 @@ static void Publish_tests(void)
     ok(app_sequence_seen == TRUE, "AppSequence not received\n");
     todo_wine ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
     todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
-    todo_wine ok(any_header_seen == TRUE, "Custom header not received\n");
-    todo_wine ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
+    ok(any_header_seen == TRUE, "Custom header not received\n");
+    ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
 
 after_publish_test:
 

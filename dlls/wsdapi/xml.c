@@ -63,7 +63,7 @@ static WSDXML_NAMESPACE *duplicate_namespace(void *parentMemoryBlock, WSDXML_NAM
     return newNs;
 }
 
-static WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name)
+WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name)
 {
     WSDXML_NAME *dup;
 

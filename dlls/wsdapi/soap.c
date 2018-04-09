@@ -482,8 +482,91 @@ static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *
     return TRUE;
 }
 
+static HRESULT duplicate_element(WSDXML_ELEMENT *parent, const WSDXML_ELEMENT *node, struct list *namespaces)
+{
+    WSDXML_ATTRIBUTE *cur_attribute, *new_attribute, *last_attribute = NULL;
+    WSDXML_ELEMENT *new_element;
+    WSDXML_TEXT *text_node;
+    WSDXML_NODE *cur_node;
+    HRESULT ret;
+
+    /* First record the namespace in the discovered namespaces list */
+    if (!add_discovered_namespace(namespaces, node->Name->Space))
+        return E_FAIL;
+
+    ret = WSDXMLBuildAnyForSingleElement(node->Name, NULL, &new_element);
+    if (FAILED(ret)) return ret;
+
+    /* Duplicate the nodes */
+    cur_node = node->FirstChild;
+
+    while (cur_node != NULL)
+    {
+        if (cur_node->Type == ElementType)
+        {
+            ret = duplicate_element(new_element, (WSDXML_ELEMENT *)cur_node, namespaces);
+            if (FAILED(ret)) goto cleanup;
+        }
+        else if (cur_node->Type == TextType)
+        {
+            text_node = WSDAllocateLinkedMemory(new_element, sizeof(WSDXML_TEXT));
+            if (text_node == NULL) goto failed;
+
+            text_node->Node.Next = NULL;
+            text_node->Node.Type = TextType;
+            text_node->Text = duplicate_string(text_node, ((WSDXML_TEXT *)cur_node)->Text);
+
+            if (text_node->Text == NULL) goto failed;
+
+            ret = WSDXMLAddChild(new_element, (WSDXML_ELEMENT *)text_node);
+            if (FAILED(ret)) goto cleanup;
+        }
+
+        cur_node = cur_node->Next;
+    }
+
+    /* Duplicate the attributes */
+    cur_attribute = node->FirstAttribute;
+
+    while (cur_attribute != NULL)
+    {
+        if ((cur_attribute->Name->Space != NULL) && (!add_discovered_namespace(namespaces, cur_attribute->Name->Space)))
+            goto failed;
+
+        new_attribute = WSDAllocateLinkedMemory(new_element, sizeof(WSDXML_ATTRIBUTE));
+        if (new_attribute == NULL) goto failed;
+
+        new_attribute->Element = new_element;
+        new_attribute->Name = duplicate_name(new_attribute, cur_attribute->Name);
+        new_attribute->Value = duplicate_string(new_attribute, cur_attribute->Value);
+        new_attribute->Next = NULL;
+
+        if ((new_attribute->Name == NULL) || (new_attribute->Value == NULL)) goto failed;
+
+        if (last_attribute == NULL)
+            new_element->FirstAttribute = new_attribute;
+        else
+            last_attribute->Next = new_attribute;
+
+        last_attribute = new_attribute;
+        cur_attribute = cur_attribute->Next;
+    }
+
+    ret = WSDXMLAddChild(parent, new_element);
+    if (FAILED(ret)) goto cleanup;
+
+    return ret;
+
+failed:
+    ret = E_FAIL;
+
+cleanup:
+    WSDXMLCleanupElement(new_element);
+    return ret;
+}
+
 static HRESULT create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_SOAP_HEADER *header,
-    WSDXML_ELEMENT **out_element)
+    struct list *discovered_namespaces, WSDXML_ELEMENT **out_element)
 {
     WSDXML_ELEMENT *header_element = NULL, *app_sequence_element = NULL, *temp_element;
     WSDXML_NAME *header_name = NULL;
@@ -541,7 +624,12 @@ static HRESULT create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_
 
     /* </d:AppSequence> */
 
-    /* TODO: Write any headers */
+    /* Write any headers */
+    if (header->AnyHeaders != NULL)
+    {
+        ret = duplicate_element(header_element, header->AnyHeaders, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
 
     /* </s:Header> */
 
@@ -602,7 +690,7 @@ static HRESULT create_soap_envelope(IWSDXMLContext *xml_context, WSD_SOAP_HEADER
     if (FAILED(ret)) goto cleanup;
 
     /* Create the header XML elements */
-    ret = create_soap_header_xml_elements(xml_context, header, &header_element);
+    ret = create_soap_header_xml_elements(xml_context, header, discovered_namespaces, &header_element);
     if (FAILED(ret)) goto cleanup;
 
     /* <s:Envelope> */

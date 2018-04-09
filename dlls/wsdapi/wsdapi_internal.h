@@ -65,5 +65,6 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
 /* xml.c */
 
 LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value);
+WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name);
 
 #endif
