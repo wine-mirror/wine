@@ -64,7 +64,7 @@ struct wine_vk_base
 struct VkCommandBuffer_T
 {
     struct wine_vk_base base;
-    VkDevice device; /* parent */
+    struct VkDevice_T *device; /* parent */
     VkCommandBuffer command_buffer; /* native command buffer */
 };
 
@@ -72,7 +72,6 @@ struct VkDevice_T
 {
     struct wine_vk_base base;
     struct vulkan_device_funcs funcs;
-    struct VkPhysicalDevice_T *phys_dev; /* parent */
 
     uint32_t max_queue_families;
     struct VkQueue_T **queues;
@@ -112,7 +111,7 @@ struct VkPhysicalDevice_T
 struct VkQueue_T
 {
     struct wine_vk_base base;
-    VkDevice device; /* parent */
+    struct VkDevice_T *device; /* parent */
     VkQueue queue; /* native queue */
 };
 

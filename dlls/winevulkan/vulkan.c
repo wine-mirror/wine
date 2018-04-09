@@ -532,8 +532,6 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         return res;
     }
 
-    object->phys_dev = phys_dev;
-
     /* Just load all function pointers we are aware off. The loader takes care of filtering.
      * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
      * as functions pass through fewer dispatch tables within the loader.
