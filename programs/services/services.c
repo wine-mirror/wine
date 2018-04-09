@@ -361,7 +361,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
 
     scmdatabase_unlock(db);
     qsort(services_list, size, sizeof(services_list[0]), compare_tags);
-    while (!scmdatabase_lock_startup(db)) Sleep(10);
+    scmdatabase_lock_startup(db, INFINITE);
 
     for (i = 0; i < size; i++)
     {
@@ -619,9 +619,18 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
     return ERROR_SUCCESS;
 }
 
-BOOL scmdatabase_lock_startup(struct scmdatabase *db)
+BOOL scmdatabase_lock_startup(struct scmdatabase *db, int timeout)
 {
-    return !InterlockedCompareExchange(&db->service_start_lock, TRUE, FALSE);
+    while (InterlockedCompareExchange(&db->service_start_lock, TRUE, FALSE))
+    {
+        if (timeout != INFINITE)
+        {
+            timeout -= 10;
+            if (timeout <= 0) return FALSE;
+        }
+        Sleep(10);
+    }
+    return TRUE;
 }
 
 void scmdatabase_unlock_startup(struct scmdatabase *db)
