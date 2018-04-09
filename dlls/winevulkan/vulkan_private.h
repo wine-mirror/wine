@@ -72,11 +72,10 @@ struct VkDevice_T
 {
     struct wine_vk_base base;
     struct vulkan_device_funcs funcs;
-
-    uint32_t max_queue_families;
-    struct VkQueue_T **queues;
-
     VkDevice device; /* native device */
+
+    struct VkQueue_T **queues;
+    uint32_t max_queue_families;
 
     unsigned int quirks;
 };
@@ -85,14 +84,13 @@ struct VkInstance_T
 {
     struct wine_vk_base base;
     struct vulkan_instance_funcs funcs;
+    VkInstance instance; /* native instance */
 
     /* We cache devices as we need to wrap them as they are
      * dispatchable objects.
      */
-    uint32_t num_phys_devs;
     struct VkPhysicalDevice_T **phys_devs;
-
-    VkInstance instance; /* native instance */
+    uint32_t num_phys_devs;
 
     unsigned int quirks;
 };
@@ -101,11 +99,10 @@ struct VkPhysicalDevice_T
 {
     struct wine_vk_base base;
     struct VkInstance_T *instance; /* parent */
-
-    uint32_t extension_count;
-    VkExtensionProperties *extensions;
-
     VkPhysicalDevice phys_dev; /* native physical device */
+
+    VkExtensionProperties *extensions;
+    uint32_t extension_count;
 };
 
 struct VkQueue_T
