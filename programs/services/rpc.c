@@ -1212,7 +1212,7 @@ DWORD __cdecl svcctl_StartServiceW(
     if (service->service_entry->config.dwStartType == SERVICE_DISABLED)
         return ERROR_SERVICE_DISABLED;
 
-    if (!scmdatabase_lock_startup(service->service_entry->db))
+    if (!scmdatabase_lock_startup(service->service_entry->db, 3000))
         return ERROR_SERVICE_DATABASE_LOCKED;
 
     err = service_start(service->service_entry, dwNumServiceArgs, lpServiceArgVectors);
@@ -1374,7 +1374,7 @@ DWORD __cdecl svcctl_LockServiceDatabase(
     if ((err = validate_scm_handle(hSCManager, SC_MANAGER_LOCK, &manager)) != ERROR_SUCCESS)
         return err;
 
-    if (!scmdatabase_lock_startup(manager->db))
+    if (!scmdatabase_lock_startup(manager->db, 0))
         return ERROR_SERVICE_DATABASE_LOCKED;
 
     lock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
