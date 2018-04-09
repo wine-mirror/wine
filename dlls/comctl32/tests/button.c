@@ -563,8 +563,8 @@ static void test_button_messages(void)
         DWORD style, state;
         HDC hdc;
 
-        trace("%d: button test sequence\n", i);
         hwnd = create_button(button[i].style, parent);
+        ok(hwnd != NULL, "Failed to create a button.\n");
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
         style &= ~(WS_CHILD | BS_NOTIFY);
