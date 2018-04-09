@@ -22,6 +22,9 @@
 *UIConstraints: *PageSize Executive *InputSlot Envelope
 *UIConstraints: *PageSize Letter *InputSlot Envelope
 *UIConstraints: *PageSize Legal *InputSlot Envelope
+*UIConstraints: *PageSize A0 *InputSlot Envelope
+*UIConstraints: *PageSize A1 *InputSlot Envelope
+*UIConstraints: *PageSize A2 *InputSlot Envelope
 *UIConstraints: *PageSize A3 *InputSlot Envelope
 *UIConstraints: *PageSize A4 *InputSlot Envelope
 *UIConstraints: *PageSize A5 *InputSlot Envelope
@@ -33,6 +36,9 @@
 *PageSize Letter/Letter:	"<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
 *PageSize Legal/Legal:		"<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
 *PageSize Executive/Executive:	"<</PageSize[522 756]/ImagingBBox null>>setpagedevice"
+*PageSize A0/A0:		"<</PageSize[2384 3370]/ImagingBBox null>>setpagedevice"
+*PageSize A1/A1:		"<</PageSize[1684 2384]/ImagingBBox null>>setpagedevice"
+*PageSize A2/A2:		"<</PageSize[1191 1684]/ImagingBBox null>>setpagedevice"
 *PageSize A3/A3:               "<</PageSize[842 1191]/ImagingBBox null>>setpagedevice"
 *PageSize A4/A4:		"<</PageSize[595 842]/ImagingBBox null>>setpagedevice"
 *PageSize A5/A5:		"<</PageSize[420 595]/ImagingBBox null>>setpagedevice"
@@ -50,6 +56,9 @@
 *PageRegion Letter/Letter:	"<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
 *PageRegion Legal/Legal:	"<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
 *PageRegion Executive/Executive: "<</PageSize[522 756]/ImagingBBox null>>setpagedevice"
+*PageRegion A0/A0:		"<</PageSize[2384 3370]/ImagingBBox null>>setpagedevice"
+*PageRegion A1/A1:		"<</PageSize[1684 2384]/ImagingBBox null>>setpagedevice"
+*PageRegion A2/A2:		"<</PageSize[1191 1684]/ImagingBBox null>>setpagedevice"
 *PageRegion A3/A3:             "<</PageSize[842 1191]/ImagingBBox null>>setpagedevice"
 *PageRegion A4/A4:		"<</PageSize[595 842]/ImagingBBox null>>setpagedevice"
 *PageRegion A5/A5:		"<</PageSize[421 595]/ImagingBBox null>>setpagedevice"
@@ -65,6 +74,9 @@
 *ImageableArea Letter/US Letter:	"18 18 594 774"
 *ImageableArea Legal/US Legal:		"18 18 594 990"
 *ImageableArea Executive/Executive:	"18 18 504 738"
+*ImageableArea A0/A0:			"12 12 2372 3358"
+*ImageableArea A1/A1:			"12 12 1672 2372"
+*ImageableArea A2/A2:			"12 12 1179 1672"
 *ImageableArea A3/A3:			"12 12 830 1179"
 *ImageableArea A4/A4:			"18 18 577 824"
 *ImageableArea A5/A5:			"18 36 403 559"
@@ -79,6 +91,9 @@
 *PaperDimension Letter/Letter:		"612 792"
 *PaperDimension Legal/Legal:		"612 1008"
 *PaperDimension Executive/Executive:	"522 756"
+*PaperDimension A0/A0:			"2384 3370"
+*PaperDimension A1/A1:			"1684 2384"
+*PaperDimension A2/A2:			"1191 1684"
 *PaperDimension A3/A3:			"842 1191"
 *PaperDimension A4/A4:			"595 842"
 *PaperDimension A5/A5:			"421 595"
