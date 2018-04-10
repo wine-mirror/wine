@@ -734,6 +734,19 @@ static APARTMENT *apartment_find_mta(void)
     return apt;
 }
 
+/* Return the current apartment if it exists, or, failing that, the MTA. Caller
+ * must free the returned apartment in either case. */
+static APARTMENT *apartment_get_current_or_mta(void)
+{
+    APARTMENT *apt = COM_CurrentApt();
+    if (apt)
+    {
+        apartment_addref(apt);
+        return apt;
+    }
+    return apartment_find_mta();
+}
+
 static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
 {
     list_remove(&curClass->entry);
@@ -2997,15 +3010,10 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
     *ppv = NULL;
 
-    if ((apt = COM_CurrentApt()))
-        apartment_addref(apt);
-    else
+    if (!(apt = apartment_get_current_or_mta()))
     {
-        if (!(apt = apartment_find_mta()))
-        {
-            ERR("apartment not initialised\n");
-            return CO_E_NOTINITIALIZED;
-        }
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
     }
 
     if (pServerInfo) {
@@ -3298,15 +3306,12 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(
     if(FAILED(hres))
         clsid = *rclsid;
 
-    if (!(apt = COM_CurrentApt()))
+    if (!(apt = apartment_get_current_or_mta()))
     {
-        if (!(apt = apartment_find_mta()))
-        {
-            ERR("apartment not initialised\n");
-            return CO_E_NOTINITIALIZED;
-        }
-        apartment_release(apt);
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
     }
+    apartment_release(apt);
 
     /*
      * The Standard Global Interface Table (GIT) object is a process-wide singleton.
@@ -4998,22 +5003,19 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
 HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
 {
     struct oletls *info = COM_CurrentInfo();
+    APARTMENT *apt;
 
     TRACE("(%p)\n", token);
 
     if (!info)
         return E_OUTOFMEMORY;
 
-    if (!info->apt)
+    if (!(apt = apartment_get_current_or_mta()))
     {
-        APARTMENT *apt;
-        if (!(apt = apartment_find_mta()))
-        {
-            ERR("apartment not initialised\n");
-            return CO_E_NOTINITIALIZED;
-        }
-        apartment_release(apt);
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
     }
+    apartment_release(apt);
 
     if (!token)
         return E_POINTER;
