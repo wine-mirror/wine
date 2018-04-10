@@ -400,3 +400,14 @@ void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp)
 {
     ConnectionPoint_Destroy(wmp->wmpocx);
 }
+
+void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams)
+{
+    DWORD i;
+
+    for(i=0; i<This->sinks_size; i++) {
+        if(This->sinks[i])
+            IDispatch_Invoke(This->sinks[i], dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                    DISPATCH_METHOD, dispparams, NULL, NULL, NULL);
+    }
+}

@@ -706,6 +706,7 @@ SOURCES = \
 	wmium.h \
 	wmiutils.idl \
 	wmp.idl \
+	wmpids.h \
 	wmsbuffer.idl \
 	wmsdk.h \
 	wmsdkidl.idl \

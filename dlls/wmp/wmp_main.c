@@ -25,6 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
 HINSTANCE wmp_instance;
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {

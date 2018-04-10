@@ -20,8 +20,25 @@
 
 #include "wine/debug.h"
 #include <nserror.h>
+#include "wmpids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
+
+static void update_state(WindowsMediaPlayer *wmp, LONG type, LONG state)
+{
+    DISPPARAMS dispparams;
+    VARIANTARG params[1];
+
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = params;
+
+    V_VT(params) = VT_UI4;
+    V_UI4(params) = state;
+
+    call_sink(wmp->wmpocx, type, &dispparams);
+}
 
 static inline WMPMedia *impl_from_IWMPMedia(IWMPMedia *iface)
 {
@@ -125,14 +142,21 @@ static HRESULT WINAPI WMPPlayer4_put_URL(IWMPPlayer4 *iface, BSTR url)
     if(url == NULL) {
         return E_POINTER;
     }
+
     hres = create_media_from_url(url, &media);
+
     if (SUCCEEDED(hres)) {
+        update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
         hres = IWMPPlayer4_put_currentMedia(iface, media);
         IWMPMedia_Release(media); /* put will addref */
     }
-    if (SUCCEEDED(hres) && This->auto_start) {
-        hres = IWMPControls_play(&This->IWMPControls_iface);
+    if (SUCCEEDED(hres)) {
+        update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsReady);
+        if (This->auto_start == VARIANT_TRUE) {
+            hres = IWMPControls_play(&This->IWMPControls_iface);
+        }
     }
+
     return hres;
 }
 
@@ -191,9 +215,13 @@ static HRESULT WINAPI WMPPlayer4_put_currentMedia(IWMPPlayer4 *iface, IWMPMedia 
     if(pMedia == NULL) {
         return E_POINTER;
     }
+    update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistChanging);
     if(This->wmpmedia != NULL) {
         IWMPMedia_Release(This->wmpmedia);
     }
+    update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistChanged);
+    update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
+
     This->wmpmedia = pMedia;
     IWMPMedia_AddRef(This->wmpmedia);
     return S_OK;
@@ -1388,12 +1416,18 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
                 CLSCTX_INPROC_SERVER,
                 &IID_IGraphBuilder,
                 (void **)&This->filter_graph);
+        update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposOpeningUnknownURL);
+
         if (SUCCEEDED(hres))
             hres = IGraphBuilder_RenderFile(This->filter_graph, media->url, NULL);
         if (SUCCEEDED(hres))
             hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaControl,
                     (void**)&This->media_control);
+        if (SUCCEEDED(hres))
+            update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposMediaOpen);
     }
+
+    update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
 
     if (SUCCEEDED(hres))
         hres = IMediaControl_Run(This->media_control);
@@ -1401,6 +1435,13 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
     if (hres == S_FALSE) {
         hres = S_OK; /* S_FALSE will mean that graph is transitioning and that is fine */
     }
+
+    if (SUCCEEDED(hres)) {
+        update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsPlaying);
+    } else {
+        update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsUndefined);
+    }
+
     return hres;
 }
 
@@ -1419,6 +1460,8 @@ static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
     IGraphBuilder_Release(This->filter_graph);
     This->filter_graph = NULL;
     This->media_control = NULL;
+    update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
+    update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsStopped);
     return hres;
 }
 
