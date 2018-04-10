@@ -3396,6 +3396,33 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
             return S_OK;
         }
 
+        case D3D11_FEATURE_D3D11_OPTIONS:
+        {
+            D3D11_FEATURE_DATA_D3D11_OPTIONS *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            FIXME("Returning fake Options support data.\n");
+            options->OutputMergerLogicOp = FALSE;
+            options->UAVOnlyRenderingForcedSampleCount = FALSE;
+            options->DiscardAPIsSeenByDriver = FALSE;
+            options->FlagsForUpdateAndCopySeenByDriver = FALSE;
+            options->ClearView = FALSE;
+            options->CopyWithOverlap = FALSE;
+            options->ConstantBufferPartialUpdate = FALSE;
+            options->ConstantBufferOffsetting = FALSE;
+            options->MapNoOverwriteOnDynamicConstantBuffer = FALSE;
+            options->MapNoOverwriteOnDynamicBufferSRV = FALSE;
+            options->MultisampleRTVWithForcedSampleCountOne = FALSE;
+            options->SAD4ShaderInstructions = FALSE;
+            options->ExtendedDoublesShaderInstructions = FALSE;
+            options->ExtendedResourceSharing = FALSE;
+            return S_OK;
+        }
+
         case D3D11_FEATURE_D3D11_OPTIONS1:
         {
             D3D11_FEATURE_DATA_D3D11_OPTIONS1 *options = feature_support_data;
