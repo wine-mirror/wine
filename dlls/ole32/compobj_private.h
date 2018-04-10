@@ -200,7 +200,7 @@ void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const
 void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
 HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **manager, IRpcStubBuffer **stub,
                                  IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
-HRESULT start_apartment_remote_unknown(void) DECLSPEC_HIDDEN;
+HRESULT start_apartment_remote_unknown(APARTMENT *apt) DECLSPEC_HIDDEN;
 
 HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags) DECLSPEC_HIDDEN;
 

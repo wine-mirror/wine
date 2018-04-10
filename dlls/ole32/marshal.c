@@ -1225,11 +1225,11 @@ StdMarshalImpl_MarshalInterface(
     STDOBJREF             stdobjref;
     ULONG                 res;
     HRESULT               hres;
-    APARTMENT            *apt = COM_CurrentApt();
+    APARTMENT *apt;
 
     TRACE("(...,%s,...)\n", debugstr_guid(riid));
 
-    if (!apt)
+    if (!(apt = apartment_get_current_or_mta()))
     {
         ERR("Apartment not initialized\n");
         return CO_E_NOTINITIALIZED;
@@ -1239,6 +1239,7 @@ StdMarshalImpl_MarshalInterface(
     RPC_StartRemoting(apt);
 
     hres = marshal_object(apt, &stdobjref, riid, pv, dest_context, dest_context_data, mshlflags);
+    apartment_release(apt);
     if (hres != S_OK)
     {
         ERR("Failed to create ifstub, hres=0x%x\n", hres);

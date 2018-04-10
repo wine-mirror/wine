@@ -1648,7 +1648,7 @@ void RPC_StartRemoting(struct apartment *apt)
 
         /* FIXME: move remote unknown exporting into this function */
     }
-    start_apartment_remote_unknown();
+    start_apartment_remote_unknown(apt);
 }
 
 

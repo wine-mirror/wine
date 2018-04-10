@@ -3475,10 +3475,34 @@ static DWORD CALLBACK implicit_mta_use_proc(void *param)
     return 0;
 }
 
+struct implicit_mta_marshal_data
+{
+    IStream *stream;
+    HANDLE start;
+    HANDLE stop;
+};
+
+static DWORD CALLBACK implicit_mta_marshal_proc(void *param)
+{
+    struct implicit_mta_marshal_data *data = param;
+    HRESULT hr;
+
+    hr = CoMarshalInterface(data->stream, &IID_IClassFactory,
+        (IUnknown *)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    SetEvent(data->start);
+
+    ok(!WaitForSingleObject(data->stop, 1000), "wait failed\n");
+    return 0;
+}
+
 static void test_implicit_mta(void)
 {
+    struct implicit_mta_marshal_data data;
     HANDLE host_thread, thread;
     IClassFactory *cf;
+    IUnknown *proxy;
     IStream *stream;
     HRESULT hr;
     DWORD tid;
@@ -3528,6 +3552,32 @@ static void test_implicit_mta(void)
     ok_last_release_closes(TRUE);
 
     end_host_object(tid, host_thread);
+
+    /* Thirdly: we can marshal an object from the implicit MTA and then
+     * unmarshal it into the real one. */
+    data.start = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.stop  = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    thread = CreateThread(NULL, 0, implicit_mta_marshal_proc, &data, 0, NULL);
+    ok(!WaitForSingleObject(data.start, 1000), "wait failed\n");
+
+    IStream_Seek(data.stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.stream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IUnknown_Release(proxy);
+
+    SetEvent(data.stop);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    CloseHandle(thread);
+
+    IStream_Release(data.stream);
 
     CoUninitialize();
 }
