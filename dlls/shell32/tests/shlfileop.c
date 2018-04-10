@@ -56,25 +56,6 @@ static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00ae,'\0','\0'};
     /* "c:\®" can be used in all codepages */
     /* Double-null termination needed for pFrom field of SHFILEOPSTRUCT */
 
-static HMODULE hshell32;
-static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
-static int (WINAPI *pSHCreateDirectoryExW)(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
-static int (WINAPI *pSHFileOperationW)(LPSHFILEOPSTRUCTW);
-static DWORD_PTR (WINAPI *pSHGetFileInfoW)(LPCWSTR, DWORD , SHFILEINFOW*, UINT, UINT);
-static int (WINAPI *pSHPathPrepareForWriteA)(HWND, IUnknown*, LPCSTR, DWORD);
-static int (WINAPI *pSHPathPrepareForWriteW)(HWND, IUnknown*, LPCWSTR, DWORD);
-
-static void InitFunctionPointers(void)
-{
-    hshell32 = GetModuleHandleA("shell32.dll");
-    pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
-    pSHCreateDirectoryExW = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExW");
-    pSHFileOperationW = (void*)GetProcAddress(hshell32, "SHFileOperationW");
-    pSHGetFileInfoW = (void*)GetProcAddress(hshell32, "SHGetFileInfoW");
-    pSHPathPrepareForWriteA = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteA");
-    pSHPathPrepareForWriteW = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteW");
-}
-
 /* creates a file with the specified name for tests */
 static void createTestFile(const CHAR *name)
 {
@@ -192,6 +173,7 @@ static void test_get_file_info(void)
     SHFILEINFOA shfi, shfi2;
     SHFILEINFOW shfiw;
     char notepad[MAX_PATH];
+    HANDLE unset_icon;
 
     /* Test whether fields of SHFILEINFOA are always cleared */
     memset(&shfi, 0xcf, sizeof(shfi));
@@ -207,23 +189,15 @@ static void test_get_file_info(void)
        broken(shfi.dwAttributes != 0xcfcfcfcf), /* NT4 doesn't clear but sets this field */
        "SHGetFileInfoA('' | 0) should not clear dwAttributes\n");
 
-    if (pSHGetFileInfoW)
-    {
-        HANDLE unset_icon;
-        /* Test whether fields of SHFILEINFOW are always cleared */
-        memset(&shfiw, 0xcf, sizeof(shfiw));
-        memset(&unset_icon, 0xcf, sizeof(unset_icon));
-        rc=pSHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
-        ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
-        ok(shfiw.hIcon == unset_icon, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
-        ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
-        ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
-        ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
-        ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
-    }
-    else
-        win_skip("SHGetFileInfoW is not available\n");
-
+    memset(&shfiw, 0xcf, sizeof(shfiw));
+    memset(&unset_icon, 0xcf, sizeof(unset_icon));
+    rc = SHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
+    ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
+    ok(shfiw.hIcon == unset_icon, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
+    ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
+    ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
+    ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
+    ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
 
     /* Test some flag combinations that MSDN claims are not allowed,
      * but which work anyway
@@ -392,22 +366,9 @@ static void test_get_file_info_iconlist(void)
        "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL), unexpected dwAttributes\n");
     /* Don't release hSysImageList here (and in similar places below) because of the broken reference behaviour of XP and 2003. */
 
-    if (!pSHGetFileInfoW)
-    {
-        win_skip("SHGetFileInfoW is not available\n");
-        ILFree(pidList);
-        return;
-    }
-
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST) pSHGetFileInfoW((const WCHAR *)pidList, 0,
-            &shInfow, sizeof(shInfow),
-	    SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
-    if (!hSysImageList)
-    {
-        win_skip("SHGetFileInfoW is not implemented\n");
-        return;
-    }
+    hSysImageList = (HIMAGELIST) SHGetFileInfoW((const WCHAR *)pidList, 0,
+        &shInfow, sizeof(shInfow), SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
     ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
     todo_wine ok(shInfow.hIcon == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
     ok(shInfow.szTypeName[0] == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
@@ -418,7 +379,7 @@ static void test_get_file_info_iconlist(void)
 
     /* Various suposidly invalid flag testing */
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -427,7 +388,7 @@ static void test_get_file_info_iconlist(void)
        "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, " SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -436,7 +397,7 @@ static void test_get_file_info_iconlist(void)
     todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
     ok(hr != 0, "SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -445,7 +406,7 @@ static void test_get_file_info_iconlist(void)
     todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
     ok(hSysImageList == (HIMAGELIST)large_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -454,28 +415,28 @@ static void test_get_file_info_iconlist(void)
        "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_OPENICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, "SHGFI_OPENICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, "SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, "SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|
         SHGFI_ATTRIBUTES);
     ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
@@ -483,7 +444,7 @@ static void test_get_file_info_iconlist(void)
     ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|
         SHGFI_EXETYPE);
     todo_wine ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
@@ -493,21 +454,21 @@ static void test_get_file_info_iconlist(void)
        "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
         SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE);
     todo_wine ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
         SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_ATTRIBUTES);
     ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_ATTRIBUTES Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|
         SHGFI_ATTRIBUTES);
     ok(hSysImageList == (HIMAGELIST)large_list, "got %p expect %p\n", hSysImageList, large_list);
@@ -516,7 +477,7 @@ static void test_get_file_info_iconlist(void)
     ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
         SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE);
     todo_wine ok(hSysImageList == (HIMAGELIST)large_list, "got %p expect %p\n", hSysImageList, large_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -525,21 +486,21 @@ static void test_get_file_info_iconlist(void)
        "unexpected dwAttributes\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
         SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE);
     todo_wine ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hr = SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
         SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_ATTRIBUTES);
     ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_ATTRIBUTES Failed\n");
     todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
     ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_SHELLICONSIZE|SHGFI_ICON);
     ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -547,7 +508,7 @@ static void test_get_file_info_iconlist(void)
     DestroyIcon( shInfow.hIcon );
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+    hSysImageList = (HIMAGELIST)SHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SHELLICONSIZE|SHGFI_ICON);
     ok(hSysImageList == (HIMAGELIST)large_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
@@ -2339,22 +2300,16 @@ static void test_sh_create_dir(void)
     CHAR path[MAX_PATH];
     int ret;
 
-    if(!pSHCreateDirectoryExA)
-    {
-        win_skip("skipping SHCreateDirectoryExA tests\n");
-        return;
-    }
-
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
-    ret = pSHCreateDirectoryExA(NULL, path, NULL);
+    ret = SHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory recursively, ret = %d\n", ret);
     ok(file_exists("testdir2"), "The first directory is not created\n");
     ok(file_exists("testdir2\\test4.txt"), "The second directory is not created\n");
 
-    ret = pSHCreateDirectoryExA(NULL, path, NULL);
+    ret = SHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
 
-    ret = pSHCreateDirectoryExA(NULL, "c:\\testdir3", NULL);
+    ret = SHCreateDirectoryExA(NULL, "c:\\testdir3", NULL);
     ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory, ret = %d\n", ret);
     ok(file_exists("c:\\testdir3"), "The directory is not created\n");
 }
@@ -2366,43 +2321,37 @@ static void test_sh_path_prepare(void)
     CHAR UNICODE_PATH_A[MAX_PATH];
     BOOL UsedDefaultChar;
 
-    if(!pSHPathPrepareForWriteA)
-    {
-	win_skip("skipping SHPathPrepareForWriteA tests\n");
-	return;
-    }
-
     /* directory exists, SHPPFW_NONE */
     set_curr_dir_path(path, "testdir2\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
 
     /* directory exists, SHPPFW_IGNOREFILENAME */
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
 
     /* directory exists, SHPPFW_DIRCREATE */
     set_curr_dir_path(path, "testdir2\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
 
     /* directory exists, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE */
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
     ok(!file_exists("nonexistent\\"), "nonexistent\\ exists but shouldn't\n");
 
     /* file exists, SHPPFW_NONE */
     set_curr_dir_path(path, "test1.txt\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
        res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
        "Unexpected result : 0x%08x\n", res);
 
     /* file exists, SHPPFW_DIRCREATE */
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
        res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
@@ -2410,52 +2359,46 @@ static void test_sh_path_prepare(void)
 
     /* file exists, SHPPFW_NONE, trailing \ */
     set_curr_dir_path(path, "test1.txt\\\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_DIRECTORY) ||
        res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* WinMe */
        res == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), /* Vista */
        "Unexpected result : 0x%08x\n", res);
 
     /* relative path exists, SHPPFW_DIRCREATE */
-    res = pSHPathPrepareForWriteA(0, 0, ".\\testdir2", SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, ".\\testdir2", SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
 
     /* relative path doesn't exist, SHPPFW_DIRCREATE -- Windows does not create the directory in this case */
-    res = pSHPathPrepareForWriteA(0, 0, ".\\testdir2\\test4.txt", SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, ".\\testdir2\\test4.txt", SHPPFW_DIRCREATE);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
     ok(!file_exists(".\\testdir2\\test4.txt\\"), ".\\testdir2\\test4.txt\\ exists but shouldn't\n");
 
     /* directory doesn't exist, SHPPFW_NONE */
     set_curr_dir_path(path, "nonexistent\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
 
     /* directory doesn't exist, SHPPFW_IGNOREFILENAME */
     set_curr_dir_path(path, "nonexistent\\notreal\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == 0x%08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
     ok(!file_exists("nonexistent\\notreal"), "nonexistent\\notreal exists but shouldn't\n");
     ok(!file_exists("nonexistent\\"), "nonexistent\\ exists but shouldn't\n");
 
     /* directory doesn't exist, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE */
     set_curr_dir_path(path, "testdir2\\test4.txt\\\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_IGNOREFILENAME|SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
     ok(file_exists("testdir2\\test4.txt\\"), "testdir2\\test4.txt doesn't exist but should\n");
 
     /* nested directory doesn't exist, SHPPFW_DIRCREATE */
     set_curr_dir_path(path, "nonexistent\\notreal\0");
-    res = pSHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteA(0, 0, path, SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == 0x%08x, expected S_OK\n", res);
     ok(file_exists("nonexistent\\notreal"), "nonexistent\\notreal doesn't exist but should\n");
 
     /* SHPPFW_ASKDIRCREATE, SHPPFW_NOWRITECHECK, and SHPPFW_MEDIACHECKONLY are untested */
-
-    if(!pSHPathPrepareForWriteW)
-    {
-        win_skip("Skipping SHPathPrepareForWriteW tests\n");
-        return;
-    }
 
     SetLastError(0xdeadbeef);
     UsedDefaultChar = FALSE;
@@ -2472,22 +2415,22 @@ static void test_sh_path_prepare(void)
 
     /* unicode directory doesn't exist, SHPPFW_NONE */
     RemoveDirectoryA(UNICODE_PATH_A);
-    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
+    res = SHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
     ok(res == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "res == %08x, expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)\n", res);
     ok(!file_exists(UNICODE_PATH_A), "unicode path was created but shouldn't be\n");
     RemoveDirectoryA(UNICODE_PATH_A);
 
     /* unicode directory doesn't exist, SHPPFW_DIRCREATE */
-    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
     ok(res == S_OK, "res == %08x, expected S_OK\n", res);
     ok(file_exists(UNICODE_PATH_A), "unicode path should've been created\n");
 
     /* unicode directory exists, SHPPFW_NONE */
-    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
+    res = SHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_NONE);
     ok(res == S_OK, "ret == %08x, expected S_OK\n", res);
 
     /* unicode directory exists, SHPPFW_DIRCREATE */
-    res = pSHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
+    res = SHPathPrepareForWriteW(0, 0, UNICODE_PATH, SHPPFW_DIRCREATE);
     ok(res == S_OK, "ret == %08x, expected S_OK\n", res);
     RemoveDirectoryA(UNICODE_PATH_A);
 }
@@ -2555,12 +2498,6 @@ static void test_unicode(void)
     HANDLE file;
     static const WCHAR UNICODE_PATH_TO[] = {'c',':','\\',0x00ae,0x00ae,'\0'};
 
-    if (!pSHFileOperationW)
-    {
-        skip("SHFileOperationW() is missing\n");
-        return;
-    }
-
     shfoW.hwnd = NULL;
     shfoW.wFunc = FO_DELETE;
     shfoW.pFrom = UNICODE_PATH;
@@ -2590,7 +2527,7 @@ static void test_unicode(void)
 
     /* Try to delete a file with unicode filename */
     ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
-    ret = pSHFileOperationW(&shfoW);
+    ret = SHFileOperationW(&shfoW);
     ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
 
@@ -2598,31 +2535,25 @@ static void test_unicode(void)
     createTestFileW(UNICODE_PATH);
     shfoW.fFlags |= FOF_ALLOWUNDO;
     ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
-    ret = pSHFileOperationW(&shfoW);
+    ret = SHFileOperationW(&shfoW);
     ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
 
-    if(!pSHCreateDirectoryExW)
-    {
-        skip("Skipping SHCreateDirectoryExW tests\n");
-        return;
-    }
-
     /* Try to delete a directory with unicode filename */
-    ret = pSHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
+    ret = SHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
     ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
     ok(file_existsW(UNICODE_PATH), "The directory is not created\n");
     shfoW.fFlags &= ~FOF_ALLOWUNDO;
-    ret = pSHFileOperationW(&shfoW);
+    ret = SHFileOperationW(&shfoW);
     ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
 
     /* Try to trash a directory with unicode filename */
-    ret = pSHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
+    ret = SHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
     ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
     ok(file_existsW(UNICODE_PATH), "The directory was not created\n");
     shfoW.fFlags |= FOF_ALLOWUNDO;
-    ret = pSHFileOperationW(&shfoW);
+    ret = SHFileOperationW(&shfoW);
     ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
     ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
 
@@ -2707,8 +2638,6 @@ static BOOL is_old_shell32(void)
 
 START_TEST(shlfileop)
 {
-    InitFunctionPointers();
-
     clean_after_shfo_tests();
 
     init_shfo_tests();
