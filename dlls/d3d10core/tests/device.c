@@ -17,12 +17,13 @@
  */
 
 #include <assert.h>
+#include <limits.h>
+#include <math.h>
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
 #include "wine/heap.h"
 #include "wine/test.h"
-#include <limits.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -1075,6 +1076,8 @@ struct d3d10core_test_context
 
     ID3D10InputLayout *input_layout;
     ID3D10VertexShader *vs;
+    const DWORD *vs_code;
+    ID3D10Buffer *vs_cb;
     ID3D10Buffer *vb;
 
     ID3D10PixelShader *ps;
@@ -1135,6 +1138,8 @@ static void release_test_context_(unsigned int line, struct d3d10core_test_conte
         ID3D10InputLayout_Release(context->input_layout);
     if (context->vs)
         ID3D10VertexShader_Release(context->vs);
+    if (context->vs_cb)
+        ID3D10Buffer_Release(context->vs_cb);
     if (context->vb)
         ID3D10Buffer_Release(context->vb);
     if (context->ps)
@@ -1151,12 +1156,14 @@ static void release_test_context_(unsigned int line, struct d3d10core_test_conte
     ok_(__FILE__, line)(!ref, "Device has %u references left.\n", ref);
 }
 
-#define draw_quad(c) draw_quad_(__LINE__, c)
-static void draw_quad_(unsigned int line, struct d3d10core_test_context *context)
+#define draw_quad(context) draw_quad_vs_(__LINE__, context, NULL, 0)
+#define draw_quad_vs(a, b, c) draw_quad_vs_(__LINE__, a, b, c)
+static void draw_quad_vs_(unsigned int line, struct d3d10core_test_context *context,
+        const DWORD *vs_code, size_t vs_code_size)
 {
     static const D3D10_INPUT_ELEMENT_DESC default_layout_desc[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
     static const DWORD default_vs_code[] =
     {
@@ -1174,26 +1181,40 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
         0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
         0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
-    static const struct vec2 quad[] =
+    static const struct vec3 quad[] =
     {
-        {-1.0f, -1.0f},
-        {-1.0f,  1.0f},
-        { 1.0f, -1.0f},
-        { 1.0f,  1.0f},
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
     };
 
     ID3D10Device *device = context->device;
     unsigned int stride, offset;
     HRESULT hr;
 
+    if (!vs_code)
+    {
+        vs_code = default_vs_code;
+        vs_code_size = sizeof(default_vs_code);
+    }
+
     if (!context->input_layout)
     {
         hr = ID3D10Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
-                default_vs_code, sizeof(default_vs_code), &context->input_layout);
+                vs_code, vs_code_size, &context->input_layout);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    }
 
-        hr = ID3D10Device_CreateVertexShader(device, default_vs_code, sizeof(default_vs_code), &context->vs);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    if (context->vs_code != vs_code)
+    {
+        if (context->vs)
+            ID3D10VertexShader_Release(context->vs);
+
+        hr = ID3D10Device_CreateVertexShader(device, vs_code, vs_code_size, &context->vs);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+
+        context->vs_code = vs_code;
     }
 
     if (!context->vb)
@@ -1209,8 +1230,45 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
     ID3D10Device_Draw(context->device, 4, 0);
 }
 
-#define draw_color_quad(c, color) draw_color_quad_(__LINE__, c, color)
-static void draw_color_quad_(unsigned int line, struct d3d10core_test_context *context, const struct vec4 *color)
+#define draw_quad_z(context, z) draw_quad_z_(__LINE__, context, z)
+static void draw_quad_z_(unsigned int line, struct d3d10core_test_context *context, float z)
+{
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float depth;
+
+        void main(float4 in_position : POSITION, out float4 out_position : SV_Position)
+        {
+            out_position = in_position;
+            out_position.z = depth;
+        }
+#endif
+        0x43425844, 0x22d7ff76, 0xd53b167c, 0x1b49ccf1, 0xbebfec39, 0x00000001, 0x00000100, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000b0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x52444853, 0x00000064, 0x00010040,
+        0x00000019, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005f, 0x001010b2, 0x00000000,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x05000036, 0x001020b2, 0x00000000, 0x00101c46,
+        0x00000000, 0x06000036, 0x00102042, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
+    };
+
+    struct vec4 data = {z};
+
+    if (!context->vs_cb)
+        context->vs_cb = create_buffer(context->device, D3D10_BIND_CONSTANT_BUFFER, sizeof(data), NULL);
+
+    ID3D10Device_UpdateSubresource(context->device, (ID3D10Resource *)context->vs_cb, 0, NULL, &data, 0, 0);
+
+    ID3D10Device_VSSetConstantBuffers(context->device, 0, 1, &context->vs_cb);
+    draw_quad_vs_(__LINE__, context, vs_code, sizeof(vs_code));
+}
+
+#define draw_color_quad(a, b) draw_color_quad_(__LINE__, a, b, NULL, 0)
+#define draw_color_quad_vs(a, b, c, d) draw_color_quad_(__LINE__, a, b, c, d)
+static void draw_color_quad_(unsigned int line, struct d3d10core_test_context *context,
+        const struct vec4 *color, const DWORD *vs_code, unsigned int vs_code_size)
 {
     static const DWORD ps_color_code[] =
     {
@@ -1247,7 +1305,7 @@ static void draw_color_quad_(unsigned int line, struct d3d10core_test_context *c
 
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)context->ps_cb, 0, NULL, color, 0, 0);
 
-    draw_quad_(line, context);
+    draw_quad_vs_(line, context, vs_code, vs_code_size);
 }
 
 static void test_feature_level(void)
@@ -9526,8 +9584,6 @@ float4 main(const ps_in v) : SV_TARGET
     colors_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(colors), &colors);
     index_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
 
-    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
@@ -9542,7 +9598,7 @@ float4 main(const ps_in v) : SV_TARGET
         index[0] = test_data[i].index;
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)index_cb, 0, NULL, index, 0, 0);
 
-        draw_quad(&test_context);
+        draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
         color = get_texture_color(test_context.backbuffer, 319, 239);
         ok(compare_color(color, test_data[i].expected, 1),
                 "Got unexpected color 0x%08x for index %d.\n", color, test_data[i].index);
@@ -9650,9 +9706,6 @@ static void test_vs_input_relative_addressing(void)
     offset = 0;
     ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
     ID3D10Device_PSSetShader(device, ps);
@@ -9662,7 +9715,7 @@ static void test_vs_input_relative_addressing(void)
         *index = i;
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, index, 0, 0);
         ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-        draw_quad(&test_context);
+        draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
         check_texture_color(test_context.backbuffer, colors[i], 1);
     }
 
@@ -12045,12 +12098,12 @@ static void test_face_culling(void)
         0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x00004002, 0x00000000, 0x00000000, 0x3f800000,
         0x3f800000, 0x0100003e,
     };
-    static const struct vec2 ccw_quad[] =
+    static const struct vec3 ccw_quad[] =
     {
-        {-1.0f,  1.0f},
-        {-1.0f, -1.0f},
-        { 1.0f,  1.0f},
-        { 1.0f, -1.0f},
+        {-1.0f,  1.0f, 0.0f},
+        {-1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
     };
     static const struct
     {
@@ -12680,12 +12733,12 @@ static void test_stencil_separate(void)
 
     static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
     static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
-    static const struct vec2 ccw_quad[] =
+    static const struct vec3 ccw_quad[] =
     {
-        {-1.0f, -1.0f},
-        { 1.0f, -1.0f},
-        {-1.0f,  1.0f},
-        { 1.0f,  1.0f},
+        {-1.0f, -1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
     };
 
     if (!init_test_context(&test_context))
@@ -14284,6 +14337,295 @@ static void test_stream_output_resume(void)
     release_test_context(&test_context);
 }
 
+static void test_depth_bias(void)
+{
+    struct vec3 vertices[] =
+    {
+        {-1.0f, -1.0f, 0.5f},
+        {-1.0f,  1.0f, 0.5f},
+        { 1.0f, -1.0f, 0.5f},
+        { 1.0f,  1.0f, 0.5f},
+    };
+    struct d3d10core_test_context test_context;
+    D3D10_RASTERIZER_DESC rasterizer_desc;
+    struct swapchain_desc swapchain_desc;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    double m, r, bias, depth, data;
+    struct resource_readback rb;
+    ID3D10DepthStencilView *dsv;
+    unsigned int expected_value;
+    ID3D10RasterizerState *rs;
+    ID3D10Texture2D *texture;
+    unsigned int format_idx;
+    unsigned int x, y, i, j;
+    unsigned int shift = 0;
+    ID3D10Device *device;
+    float *depth_values;
+    DXGI_FORMAT format;
+    const UINT32 *u32;
+    const UINT16 *u16;
+    UINT32 u32_value;
+    HRESULT hr;
+
+    static const struct
+    {
+        float z;
+        float exponent;
+    }
+    quads[] =
+    {
+        {0.125f, -3.0f},
+        {0.250f, -2.0f},
+        {0.500f, -1.0f},
+        {1.000f,  0.0f},
+    };
+    static const int bias_tests[] =
+    {
+        -10000, -1000, -100, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 200, 500, 1000, 10000,
+    };
+    static const float quad_slopes[] =
+    {
+        0.0f, 0.5f, 1.0f
+    };
+    static const float slope_scaled_bias_tests[] =
+    {
+        0.0f, 0.5f, 1.0f, 2.0f, 128.0f, 1000.0f, 10000.0f,
+    };
+    static const DXGI_FORMAT formats[] =
+    {
+        DXGI_FORMAT_D32_FLOAT,
+        DXGI_FORMAT_D24_UNORM_S8_UINT,
+        DXGI_FORMAT_D16_UNORM,
+    };
+
+    swapchain_desc.windowed = TRUE;
+    swapchain_desc.buffer_count = 1;
+    swapchain_desc.width = 200;
+    swapchain_desc.height = 200;
+    swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.flags = 0;
+    if (!init_test_context_ext(&test_context, &swapchain_desc))
+        return;
+
+    device = test_context.device;
+
+    memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_NONE;
+    rasterizer_desc.FrontCounterClockwise = FALSE;
+    rasterizer_desc.DepthBias = 0;
+    rasterizer_desc.DepthBiasClamp = 0.0f;
+    rasterizer_desc.SlopeScaledDepthBias = 0.0f;
+    rasterizer_desc.DepthClipEnable = TRUE;
+
+    depth_values = heap_calloc(swapchain_desc.height, sizeof(*depth_values));
+    ok(!!depth_values, "Failed to allocate memory.\n");
+
+    for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
+    {
+        format = formats[format_idx];
+
+        ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+        texture_desc.Format = format;
+        texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &dsv);
+        ok(SUCCEEDED(hr), "Failed to create render depth stencil view, hr %#x.\n", hr);
+        ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, dsv);
+        ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0);
+        draw_quad_z(&test_context, 1.0f);
+        switch (format)
+        {
+            case DXGI_FORMAT_D32_FLOAT:
+                check_texture_float(texture, 1.0f, 0);
+                break;
+            case DXGI_FORMAT_D24_UNORM_S8_UINT:
+                /* FIXME: Depth/stencil byte order is reversed in wined3d. */
+                shift = get_texture_color(texture, 0, 0) == 0xffffff ? 0 : 8;
+                todo_wine
+                check_texture_color(texture, 0xffffff, 1);
+                break;
+            case DXGI_FORMAT_D16_UNORM:
+                get_texture_readback(texture, 0, &rb);
+                for (y = 0; y < texture_desc.Height; ++y)
+                {
+                    for (x = 0; x < texture_desc.Width; ++x)
+                    {
+                        u16 = get_readback_data(&rb, x, y, sizeof(*u16));
+                        ok(*u16 == 0xffff, "Got unexpected value %#x.\n", *u16);
+                    }
+                }
+                release_resource_readback(&rb);
+                break;
+            default:
+                trace("Unhandled format %#x.\n", format);
+                break;
+        }
+        draw_quad(&test_context);
+
+        /* DepthBias */
+        for (i = 0; i < ARRAY_SIZE(quads); ++i)
+        {
+            for (j = 0; j < ARRAY_SIZE(vertices); ++j)
+                vertices[j].z = quads[i].z;
+            ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)test_context.vb,
+                    0, NULL, vertices, 0, 0);
+
+            for (j = 0; j < ARRAY_SIZE(bias_tests); ++j)
+            {
+                rasterizer_desc.DepthBias = bias_tests[j];
+                ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
+                ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+                ID3D10Device_RSSetState(device, rs);
+                ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+                draw_quad(&test_context);
+                switch (format)
+                {
+                    case DXGI_FORMAT_D32_FLOAT:
+                        bias = rasterizer_desc.DepthBias * pow(2.0f, quads[i].exponent - 23.0f);
+                        depth = min(max(0.0f, quads[i].z + bias), 1.0f);
+
+                        check_texture_float(texture, depth, 2);
+                        break;
+                    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+                        r = 1.0f / 16777215.0f;
+                        bias = rasterizer_desc.DepthBias * r;
+                        depth = min(max(0.0f, quads[i].z + bias), 1.0f);
+
+                        get_texture_readback(texture, 0, &rb);
+                        for (y = 0; y < texture_desc.Height; ++y)
+                        {
+                            expected_value = depth * 16777215.0f + 0.5f;
+                            for (x = 0; x < texture_desc.Width; ++x)
+                            {
+                                u32 = get_readback_data(&rb, x, y, sizeof(*u32));
+                                u32_value = *u32 >> shift;
+                                ok(abs(u32_value - expected_value) <= 1,
+                                        "Got value %#x (%.8e), expected %#x (%.8e).\n",
+                                        u32_value, u32_value / 16777215.0f,
+                                        expected_value, expected_value / 16777215.0f);
+                            }
+                        }
+                        release_resource_readback(&rb);
+                        break;
+                    case DXGI_FORMAT_D16_UNORM:
+                        r = 1.0f / 65535.0f;
+                        bias = rasterizer_desc.DepthBias * r;
+                        depth = min(max(0.0f, quads[i].z + bias), 1.0f);
+
+                        get_texture_readback(texture, 0, &rb);
+                        for (y = 0; y < texture_desc.Height; ++y)
+                        {
+                            expected_value = depth * 65535.0f + 0.5f;
+                            for (x = 0; x < texture_desc.Width; ++x)
+                            {
+                                u16 = get_readback_data(&rb, x, y, sizeof(*u16));
+                                ok(abs(*u16 - expected_value) <= 1,
+                                        "Got value %#x (%.8e), expected %#x (%.8e).\n",
+                                        *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
+                            }
+                        }
+                        release_resource_readback(&rb);
+                        break;
+                    default:
+                        break;
+                }
+                ID3D10RasterizerState_Release(rs);
+            }
+        }
+
+        /* SlopeScaledDepthBias */
+        rasterizer_desc.DepthBias = 0;
+        for (i = 0; i < ARRAY_SIZE(quad_slopes); ++i)
+        {
+            for (j = 0; j < ARRAY_SIZE(vertices); ++j)
+                vertices[j].z = j == 1 || j == 3 ? 0.0f : quad_slopes[i];
+            ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)test_context.vb,
+                    0, NULL, vertices, 0, 0);
+
+            ID3D10Device_RSSetState(device, NULL);
+            ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+            draw_quad(&test_context);
+            get_texture_readback(texture, 0, &rb);
+            for (y = 0; y < texture_desc.Height; ++y)
+            {
+                switch (format)
+                {
+                    case DXGI_FORMAT_D32_FLOAT:
+                        depth_values[y] = get_readback_float(&rb, 0, y);
+                        break;
+                    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+                        u32 = get_readback_data(&rb, 0, y, sizeof(*u32));
+                        u32_value = *u32 >> shift;
+                        depth_values[y] = u32_value / 16777215.0f;
+                        break;
+                    case DXGI_FORMAT_D16_UNORM:
+                        u16 = get_readback_data(&rb, 0, y, sizeof(*u16));
+                        depth_values[y] = *u16 / 65535.0f;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            release_resource_readback(&rb);
+
+            for (j = 0; j < ARRAY_SIZE(slope_scaled_bias_tests); ++j)
+            {
+                rasterizer_desc.SlopeScaledDepthBias = slope_scaled_bias_tests[j];
+                ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
+                ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+                ID3D10Device_RSSetState(device, rs);
+                ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+                draw_quad(&test_context);
+
+                m = quad_slopes[i] / texture_desc.Height;
+                bias = rasterizer_desc.SlopeScaledDepthBias * m;
+                get_texture_readback(texture, 0, &rb);
+                for (y = 0; y < texture_desc.Height; ++y)
+                {
+                    depth = min(max(0.0f, depth_values[y] + bias), 1.0f);
+                    switch (format)
+                    {
+                        case DXGI_FORMAT_D32_FLOAT:
+                            data = get_readback_float(&rb, 0, y);
+                            ok(compare_float(data, depth, 64),
+                                    "Got depth %.8e, expected %.8e.\n", data, depth);
+                            break;
+                        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+                            u32 = get_readback_data(&rb, 0, y, sizeof(*u32));
+                            u32_value = *u32 >> shift;
+                            expected_value = depth * 16777215.0f + 0.5f;
+                            ok(abs(u32_value - expected_value) <= 3,
+                                    "Got value %#x (%.8e), expected %#x (%.8e).\n",
+                                    u32_value, u32_value / 16777215.0f,
+                                    expected_value, expected_value / 16777215.0f);
+                            break;
+                        case DXGI_FORMAT_D16_UNORM:
+                            u16 = get_readback_data(&rb, 0, y, sizeof(*u16));
+                            expected_value = depth * 65535.0f + 0.5f;
+                            ok(abs(*u16 - expected_value) <= 1,
+                                    "Got value %#x (%.8e), expected %#x (%.8e).\n",
+                                    *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                release_resource_readback(&rb);
+                ID3D10RasterizerState_Release(rs);
+            }
+        }
+
+        ID3D10Texture2D_Release(texture);
+        ID3D10DepthStencilView_Release(dsv);
+    }
+
+    heap_free(depth_values);
+    release_test_context(&test_context);
+}
+
 static void test_format_compatibility(void)
 {
     ID3D10Texture2D *dst_texture, *src_texture;
@@ -14691,9 +15033,6 @@ static void test_clip_distance(void)
     offset = 0;
     ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     memset(&cb_data, 0, sizeof(cb_data));
     cb_data.tessellation_factor = 1.0f;
     vs_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
@@ -14703,7 +15042,7 @@ static void test_clip_distance(void)
 
     /* vertex shader */
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     check_clip_distance(&test_context, vb);
@@ -14729,10 +15068,6 @@ static void test_clip_distance(void)
     /* multiple clip distances */
     ID3D10Device_GSSetShader(device, NULL);
 
-    ID3D10VertexShader_Release(test_context.vs);
-    hr = ID3D10Device_CreateVertexShader(device, vs_multiple_code, sizeof(vs_multiple_code), &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     cb_data.use_constant = FALSE;
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
 
@@ -14740,7 +15075,7 @@ static void test_clip_distance(void)
         vertices[i].clip_distance0 = 1.0f;
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     for (i = 0; i < ARRAY_SIZE(vertices); ++i)
@@ -14750,7 +15085,7 @@ static void test_clip_distance(void)
     }
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     get_texture_readback(test_context.backbuffer, 0, &rb);
     SetRect(&rect, 0, 0, 320, 240);
     check_readback_data_color(&rb, &rect, 0xff00ff00, 1);
@@ -14765,7 +15100,7 @@ static void test_clip_distance(void)
     cb_data.clip_distance1 = 0.0f;
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     ID3D10GeometryShader_Release(gs);
@@ -14913,11 +15248,8 @@ static void test_combined_clip_and_cull_distances(void)
     offset = 0;
     ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     for (i = 0; i < ARRAY_SIZE(vertices->cull_distance); ++i)
@@ -14933,7 +15265,7 @@ static void test_combined_clip_and_cull_distances(void)
             ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
 
             ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-            draw_color_quad(&test_context, &green);
+            draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
 
             for (k = 0; k < ARRAY_SIZE(expected_color); ++k)
                 expected_color[k] = test->triangle_visible[k] ? 0xff00ff00 : 0xffffffff;
@@ -14964,7 +15296,7 @@ static void test_combined_clip_and_cull_distances(void)
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
 
         ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-        draw_color_quad(&test_context, &green);
+        draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
         check_texture_color(test_context.backbuffer, 0xffffffff, 1);
 
         for (j = 0; j < ARRAY_SIZE(vertices); ++j)
@@ -14974,7 +15306,7 @@ static void test_combined_clip_and_cull_distances(void)
     memset(vertices, 0, sizeof(vertices));
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     ID3D10Buffer_Release(vb);
@@ -15757,6 +16089,7 @@ START_TEST(device)
     test_geometry_shader();
     test_stream_output();
     test_stream_output_resume();
+    test_depth_bias();
     test_format_compatibility();
     test_clip_distance();
     test_combined_clip_and_cull_distances();
