@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-03-01 21:15+0300\n"
+"PO-Revision-Date: 2018-04-10 10:53+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -9107,70 +9107,59 @@ msgstr ""
 "С этим сертификатам связана минимум одна неизвестная проблема безопасности."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Таймаут запроса к службе.\n"
+msgstr "Таймаут запроса.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Произошла ошибка принтера."
+msgstr "Произошла внутренняя ошибка.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Неверный путь.\n"
+msgstr "Неверный URL.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL схема неизвестна или не поддерживается.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Имя пользователя не найдено.\n"
+msgstr "Неизвестное имя сервера.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Неверный профиль пользователя.\n"
+msgstr "Неверная операция.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"Операция была отменена, вероятно из-за того, что дескриптор, с которым "
+"работал запрос, был закрыт до завершения операции.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Невозможно добавить профиль.\n"
+msgstr "Запрошенный элемент не найден.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Невозможно подключиться к LDAP серверу"
+msgstr "Не удалось подключиться к серверу.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Подключение к серверу было разорвано.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"Сервер вернул некорректную дату для SSL сертификата. Сертификат просрочен.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "CN-имя SSL сертификата (имя хоста) неверно.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
