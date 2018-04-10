@@ -2998,14 +2998,36 @@ static void test_CoWaitForMultipleHandles(void)
     ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(thread);
 
+    CoUninitialize();
+
+    /* If COM was not initialized, messages are neither pumped nor peeked at */
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "got %#x\n", hr);
+    success = MsgWaitForMultipleObjectsEx(0, NULL, 2, QS_ALLPOSTMESSAGE, MWMO_ALERTABLE);
+    ok(success == 0, "MsgWaitForMultipleObjects returned %x\n", success);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "PeekMessage failed: %u\n", GetLastError());
+
+    /* same in an MTA */
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "got %#x\n", hr);
+    success = MsgWaitForMultipleObjectsEx(0, NULL, 2, QS_ALLPOSTMESSAGE, MWMO_ALERTABLE);
+    ok(success == 0, "MsgWaitForMultipleObjects returned %x\n", success);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "PeekMessage failed: %u\n", GetLastError());
+
+    CoUninitialize();
+
     CloseHandle(handles[0]);
     CloseHandle(handles[1]);
     DestroyWindow(hWnd);
 
     success = UnregisterClassA(cls_name, GetModuleHandleA(0));
     ok(success, "UnregisterClass failed %u\n", GetLastError());
-
-    CoUninitialize();
 }
 
 static void test_CoGetMalloc(void)
