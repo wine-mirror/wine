@@ -736,7 +736,7 @@ static APARTMENT *apartment_find_mta(void)
 
 /* Return the current apartment if it exists, or, failing that, the MTA. Caller
  * must free the returned apartment in either case. */
-static APARTMENT *apartment_get_current_or_mta(void)
+APARTMENT *apartment_get_current_or_mta(void)
 {
     APARTMENT *apt = COM_CurrentApt();
     if (apt)

@@ -212,7 +212,7 @@ void    RPC_StartRemoting(struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info,
                                 DWORD dest_context, void *dest_context_data,
-                                IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
+                                IRpcChannelBuffer **chan, APARTMENT *apt) DECLSPEC_HIDDEN;
 HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
 void    RPC_ExecuteCall(struct dispatch_params *params) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
@@ -248,6 +248,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
 HWND apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
 void leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
+APARTMENT *apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
 
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */

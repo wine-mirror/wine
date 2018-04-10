@@ -3419,6 +3419,119 @@ static void test_manualresetevent(void)
     ok(!ref, "Got nonzero ref: %d\n", ref);
 }
 
+static DWORD CALLBACK implicit_mta_unmarshal_proc(void *param)
+{
+    IStream *stream = param;
+    IClassFactory *cf;
+    IUnknown *proxy;
+    HRESULT hr;
+
+    IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(stream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IUnknown_Release(proxy);
+
+    /* But if we initialize an STA in this apartment, it becomes the wrong one. */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok(hr == RPC_E_WRONG_THREAD, "got %#x\n", hr);
+
+    CoUninitialize();
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    IClassFactory_Release(cf);
+
+    ok_no_locks();
+    ok_zero_external_conn();
+    ok_last_release_closes(TRUE);
+    return 0;
+}
+
+static DWORD CALLBACK implicit_mta_use_proc(void *param)
+{
+    IClassFactory *cf = param;
+    IUnknown *proxy;
+    HRESULT hr;
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IUnknown_Release(proxy);
+
+    /* But if we initialize an STA in this apartment, it becomes the wrong one. */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok(hr == RPC_E_WRONG_THREAD, "got %#x\n", hr);
+
+    CoUninitialize();
+    return 0;
+}
+
+static void test_implicit_mta(void)
+{
+    HANDLE host_thread, thread;
+    IClassFactory *cf;
+    IStream *stream;
+    HRESULT hr;
+    DWORD tid;
+
+    cLocks = 0;
+    external_connections = 0;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    /* Firstly: we can unmarshal and use an object while in the implicit MTA. */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(stream, &IID_IClassFactory, (IUnknown *)&Test_ClassFactory, MSHLFLAGS_NORMAL, &host_thread);
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    thread = CreateThread(NULL, 0, implicit_mta_unmarshal_proc, stream, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    CloseHandle(thread);
+
+    IStream_Release(stream);
+    end_host_object(tid, host_thread);
+
+    /* Secondly: we can unmarshal an object into the real MTA and then use it
+     * from the implicit MTA. */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(stream, &IID_IClassFactory, (IUnknown *)&Test_ClassFactory, MSHLFLAGS_NORMAL, &host_thread);
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(stream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    thread = CreateThread(NULL, 0, implicit_mta_use_proc, cf, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    CloseHandle(thread);
+
+    IClassFactory_Release(cf);
+    IStream_Release(stream);
+
+    ok_no_locks();
+    ok_non_zero_external_conn();
+    ok_last_release_closes(TRUE);
+
+    end_host_object(tid, host_thread);
+
+    CoUninitialize();
+}
+
 static const char *debugstr_iid(REFIID riid)
 {
     static char name[256];
@@ -3765,6 +3878,7 @@ START_TEST(marshal)
     register_test_window();
 
     test_cocreateinstance_proxy();
+    test_implicit_mta();
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
