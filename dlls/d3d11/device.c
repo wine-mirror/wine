@@ -3396,6 +3396,23 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
             return S_OK;
         }
 
+        case D3D11_FEATURE_D3D11_OPTIONS1:
+        {
+            D3D11_FEATURE_DATA_D3D11_OPTIONS1 *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            FIXME("Returning fake Options1 support data.\n");
+            options->TiledResourcesTier = D3D11_TILED_RESOURCES_NOT_SUPPORTED;
+            options->MinMaxFiltering = FALSE;
+            options->ClearViewAlsoSupportsDepthOnlyFormats = FALSE;
+            options->MapOnDefaultBuffers = FALSE;
+            return S_OK;
+        }
+
         default:
             FIXME("Unhandled feature %#x.\n", feature);
             return E_NOTIMPL;
