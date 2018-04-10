@@ -1003,12 +1003,14 @@ static BOOL is_d3d11_interface_available(ID3D10Device *device)
 struct swapchain_desc
 {
     BOOL windowed;
-    UINT buffer_count;
+    unsigned int buffer_count;
+    unsigned int width, height;
     DXGI_SWAP_EFFECT swap_effect;
     DWORD flags;
 };
 
-static IDXGISwapChain *create_swapchain(ID3D10Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
+static IDXGISwapChain *create_swapchain(ID3D10Device *device, HWND window,
+        const struct swapchain_desc *swapchain_desc)
 {
     IDXGISwapChain *swapchain;
     DXGI_SWAP_CHAIN_DESC dxgi_desc;
@@ -1047,6 +1049,10 @@ static IDXGISwapChain *create_swapchain(ID3D10Device *device, HWND window, const
         dxgi_desc.Windowed = swapchain_desc->windowed;
         dxgi_desc.SwapEffect = swapchain_desc->swap_effect;
         dxgi_desc.BufferCount = swapchain_desc->buffer_count;
+        if (swapchain_desc->width)
+            dxgi_desc.BufferDesc.Width = swapchain_desc->width;
+        if (swapchain_desc->height)
+            dxgi_desc.BufferDesc.Height = swapchain_desc->height;
 
         if (swapchain_desc->flags & SWAPCHAIN_FLAG_SHADER_INPUT)
             dxgi_desc.BufferUsage |= DXGI_USAGE_SHADER_INPUT;
@@ -1075,9 +1081,12 @@ struct d3d10core_test_context
     ID3D10Buffer *ps_cb;
 };
 
-#define init_test_context(c) init_test_context_(__LINE__, c)
-static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context *context)
+#define init_test_context(a) init_test_context_(__LINE__, a, NULL)
+#define init_test_context_ext(a, b) init_test_context_(__LINE__, a, b)
+static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context *context,
+        const struct swapchain_desc *swapchain_desc)
 {
+    unsigned int rt_width, rt_height;
     D3D10_VIEWPORT vp;
     HRESULT hr;
     RECT rect;
@@ -1089,11 +1098,14 @@ static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context 
         skip_(__FILE__, line)("Failed to create device.\n");
         return FALSE;
     }
-    SetRect(&rect, 0, 0, 640, 480);
+
+    rt_width = swapchain_desc && swapchain_desc->width ? swapchain_desc->width : 640;
+    rt_height = swapchain_desc && swapchain_desc->height ? swapchain_desc->height : 480;
+    SetRect(&rect, 0, 0, rt_width, rt_height);
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
     context->window = CreateWindowA("static", "d3d10core_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
-    context->swapchain = create_swapchain(context->device, context->window, NULL);
+    context->swapchain = create_swapchain(context->device, context->window, swapchain_desc);
     hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D10Texture2D, (void **)&context->backbuffer);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
@@ -1105,8 +1117,8 @@ static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context 
 
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
-    vp.Width = 640;
-    vp.Height = 480;
+    vp.Width = rt_width;
+    vp.Height = rt_height;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     ID3D10Device_RSSetViewports(context->device, 1, &vp);
@@ -9861,6 +9873,7 @@ static void test_swapchain_flip(void)
     window = CreateWindowA("static", "d3d10core_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     desc.buffer_count = 3;
+    desc.width = desc.height = 0;
     desc.swap_effect = DXGI_SWAP_EFFECT_SEQUENTIAL;
     desc.windowed = TRUE;
     desc.flags = SWAPCHAIN_FLAG_SHADER_INPUT;
