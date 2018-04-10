@@ -25855,6 +25855,196 @@ static void test_unbound_multisample_texture(void)
     release_test_context(&test_context);
 }
 
+static void test_multiple_viewports(void)
+{
+    struct
+    {
+        unsigned int draw_id;
+        unsigned int padding[3];
+    } constant;
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture2D *texture;
+    ID3D11GeometryShader *gs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    ID3D11Buffer *cb;
+    HRESULT hr;
+
+    static const DWORD gs_code[] =
+    {
+#if 0
+        struct gs_in
+        {
+            float4 pos : SV_Position;
+        };
+
+        struct gs_out
+        {
+            float4 pos    : SV_Position;
+            uint viewport : SV_ViewportArrayIndex;
+        };
+
+        [maxvertexcount(6)]
+        void main(triangle gs_in vin[3], inout TriangleStream<gs_out> vout)
+        {
+            gs_out o;
+            for (uint instance_id = 0; instance_id < 2; ++instance_id)
+            {
+                o.viewport = instance_id;
+                for (uint i = 0; i < 3; ++i)
+                {
+                    o.pos = vin[i].pos;
+                    vout.Append(o);
+                }
+                vout.RestartStrip();
+            }
+        }
+#endif
+        0x43425844, 0xabbb660f, 0x0729bf23, 0x14a9a104, 0x1b454917, 0x00000001, 0x0000021c, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000c4, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000005c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000005, 0x00000001, 0x00000001, 0x00000e01,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x565f5653, 0x70776569, 0x4174726f, 0x79617272, 0x65646e49,
+        0xabab0078, 0x52444853, 0x00000150, 0x00020040, 0x00000054, 0x05000061, 0x002010f2, 0x00000003,
+        0x00000000, 0x00000001, 0x02000068, 0x00000001, 0x0100185d, 0x0100285c, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x04000067, 0x00102012, 0x00000001, 0x00000005, 0x0200005e, 0x00000006,
+        0x05000036, 0x00100012, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100022,
+        0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000002, 0x03040003, 0x0010001a, 0x00000000,
+        0x05000036, 0x00100022, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100042,
+        0x00000000, 0x0010001a, 0x00000000, 0x00004001, 0x00000003, 0x03040003, 0x0010002a, 0x00000000,
+        0x07000036, 0x001020f2, 0x00000000, 0x00a01e46, 0x0010001a, 0x00000000, 0x00000000, 0x05000036,
+        0x00102012, 0x00000001, 0x0010000a, 0x00000000, 0x01000013, 0x0700001e, 0x00100022, 0x00000000,
+        0x0010001a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x01000009, 0x0700001e, 0x00100012,
+        0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        uint draw_id;
+
+        float4 main(in float4 pos : SV_Position,
+                in uint viewport : SV_ViewportArrayIndex) : SV_Target
+        {
+            return float4(viewport, draw_id, 0, 0);
+        }
+#endif
+        0x43425844, 0x77334c0f, 0x5df3ca7a, 0xc53c00db, 0x3e6e5750, 0x00000001, 0x00000150, 0x00000003,
+        0x0000002c, 0x00000090, 0x000000c4, 0x4e475349, 0x0000005c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000005,
+        0x00000001, 0x00000001, 0x00000101, 0x505f5653, 0x7469736f, 0x006e6f69, 0x565f5653, 0x70776569,
+        0x4174726f, 0x79617272, 0x65646e49, 0xabab0078, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261,
+        0xabab0074, 0x52444853, 0x00000084, 0x00000040, 0x00000021, 0x04000059, 0x00208e46, 0x00000000,
+        0x00000001, 0x04000864, 0x00101012, 0x00000001, 0x00000005, 0x03000065, 0x001020f2, 0x00000000,
+        0x05000056, 0x00102012, 0x00000000, 0x0010100a, 0x00000001, 0x06000056, 0x00102022, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000000, 0x08000036, 0x001020c2, 0x00000000, 0x00004002, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const struct vec4 expected_values[] =
+    {
+        {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 2.0f}, {0.5f, 0.5f}, {0.5f, 0.5f},
+    };
+    static const float clear_color[] = {0.5f, 0.5f, 0.0f, 0.0f};
+    D3D11_VIEWPORT vp[2];
+    RECT rect;
+    int width;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    memset(&constant, 0, sizeof(constant));
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    hr = ID3D11Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), NULL, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    texture_desc.Width = 32;
+    texture_desc.Height = 32;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    width = texture_desc.Width / 2;
+
+    vp[0].TopLeftX = 0.0f;
+    vp[0].TopLeftY = 0.0f;
+    vp[0].Width = width;
+    vp[0].Height = texture_desc.Height;
+    vp[0].MinDepth = 0.0f;
+    vp[0].MaxDepth = 1.0f;
+
+    vp[1] = vp[0];
+    vp[1].TopLeftX = width;
+    vp[1].Width = width;
+    ID3D11DeviceContext_RSSetViewports(context, 2, vp);
+
+    constant.draw_id = 0;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    constant.draw_id = 1;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+
+    SetRect(&rect, 0, 0, width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[0], 1);
+    SetRect(&rect, width, 0, 2 * width - 1, texture_desc.Height - 1);
+todo_wine
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[1], 1);
+
+    /* One viewport. */
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, clear_color);
+    ID3D11DeviceContext_RSSetViewports(context, 1, vp);
+    constant.draw_id = 2;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    SetRect(&rect, 0, 0, width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[2], 1);
+    SetRect(&rect, width, 0, 2 * width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[3], 1);
+
+    /* Reset viewports. */
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, clear_color);
+    ID3D11DeviceContext_RSSetViewports(context, 0, NULL);
+    constant.draw_id = 3;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+todo_wine
+    check_texture_sub_resource_vec4(texture, 0, NULL, &expected_values[4], 1);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(texture);
+
+    ID3D11Buffer_Release(cb);
+    ID3D11GeometryShader_Release(gs);
+    ID3D11PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -25988,4 +26178,5 @@ START_TEST(d3d11)
     test_generate_mips();
     test_alpha_to_coverage();
     test_unbound_multisample_texture();
+    test_multiple_viewports();
 }
