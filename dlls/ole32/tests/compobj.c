@@ -3701,6 +3701,8 @@ static DWORD CALLBACK implicit_mta_proc(void *param)
     IComThreadingInfo *threading_info;
     ULONG_PTR token;
     IUnknown *unk;
+    DWORD cookie;
+    CLSID clsid;
     HRESULT hr;
 
     test_apt_type(APTTYPE_MTA, APTTYPEQUALIFIER_IMPLICIT_MTA, TRUE, TRUE);
@@ -3719,6 +3721,28 @@ static DWORD CALLBACK implicit_mta_proc(void *param)
 
     hr = CoGetContextToken(&token);
     ok_ole_success(hr, "CoGetContextToken");
+
+    hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
+    ok_ole_success(hr, "CoRegisterPSClsid");
+
+    hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+    ok_ole_success(hr, "CoGetPSClsid");
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    hr = CoRegisterMessageFilter(NULL, NULL);
+    ok(hr == CO_E_NOT_SUPPORTED, "got %#x\n", hr);
+
+    hr = CoLockObjectExternal((IUnknown *)&Test_Unknown, TRUE, TRUE);
+    ok_ole_success(hr, "CoLockObjectExternal");
+
+    hr = CoDisconnectObject((IUnknown *)&Test_Unknown, 0);
+    ok_ole_success(hr, "CoDisconnectObject");
 
     return 0;
 }

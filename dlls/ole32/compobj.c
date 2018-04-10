@@ -1089,8 +1089,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoRevokeClassObject(
 
   TRACE("(%08x)\n",dwRegister);
 
-  apt = COM_CurrentApt();
-  if (!apt)
+  if (!(apt = apartment_get_current_or_mta()))
   {
     ERR("COM was not initialized\n");
     return CO_E_NOTINITIALIZED;
@@ -1121,7 +1120,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoRevokeClassObject(
   }
 
   LeaveCriticalSection( &csRegisteredClassList );
-
+  apartment_release(apt);
   return hr;
 }
 
@@ -2072,9 +2071,11 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
         return hr;
     }
 
-    apt = COM_CurrentApt();
-    if (!apt)
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
+    }
 
     manager = get_stub_manager_from_object(apt, lpUnk, FALSE);
     if (manager) {
@@ -2089,6 +2090,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
      * not found, making apps think that the object was disconnected, when
      * it actually wasn't */
 
+    apartment_release(apt);
     return S_OK;
 }
 
@@ -2596,7 +2598,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     static const WCHAR wszInterface[] = {'I','n','t','e','r','f','a','c','e','\\',0};
     static const WCHAR wszPSC[] = {'\\','P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
     WCHAR path[ARRAYSIZE(wszInterface) - 1 + CHARS_IN_GUID - 1 + ARRAYSIZE(wszPSC)];
-    APARTMENT *apt = COM_CurrentApt();
+    APARTMENT *apt;
     struct registered_psclsid *registered_psclsid;
     ACTCTX_SECTION_KEYED_DATA data;
     HRESULT hr;
@@ -2605,11 +2607,12 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
 
     TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
 
-    if (!apt)
+    if (!(apt = apartment_get_current_or_mta()))
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
     }
+    apartment_release(apt);
 
     if (!pclsid)
         return E_INVALIDARG;
@@ -2680,16 +2683,17 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
  */
 HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
 {
-    APARTMENT *apt = COM_CurrentApt();
+    APARTMENT *apt;
     struct registered_psclsid *registered_psclsid;
 
     TRACE("(%s, %s)\n", debugstr_guid(riid), debugstr_guid(rclsid));
 
-    if (!apt)
+    if (!(apt = apartment_get_current_or_mta()))
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
     }
+    apartment_release(apt);
 
     EnterCriticalSection(&cs_registered_psclsid_list);
 
@@ -2815,8 +2819,7 @@ HRESULT WINAPI CoRegisterClassObject(
   if ( (lpdwRegister==0) || (pUnk==0) )
     return E_INVALIDARG;
 
-  apt = COM_CurrentApt();
-  if (!apt)
+  if (!(apt = apartment_get_current_or_mta()))
   {
       ERR("COM was not initialized\n");
       return CO_E_NOTINITIALIZED;
@@ -2839,16 +2842,21 @@ HRESULT WINAPI CoRegisterClassObject(
       if (dwClsContext & CLSCTX_LOCAL_SERVER)
         hr = CoLockObjectExternal(foundObject, TRUE, FALSE);
       IUnknown_Release(foundObject);
+      apartment_release(apt);
       return hr;
     }
     IUnknown_Release(foundObject);
     ERR("object already registered for class %s\n", debugstr_guid(rclsid));
+    apartment_release(apt);
     return CO_E_OBJISREG;
   }
 
   newClass = HeapAlloc(GetProcessHeap(), 0, sizeof(RegisteredClass));
   if ( newClass == NULL )
+  {
+    apartment_release(apt);
     return E_OUTOFMEMORY;
+  }
 
   newClass->classIdentifier = *rclsid;
   newClass->apartment_id    = apt->oxid;
@@ -2877,7 +2885,10 @@ HRESULT WINAPI CoRegisterClassObject(
 
       hr = get_local_server_stream(apt, &marshal_stream);
       if(FAILED(hr))
+      {
+          apartment_release(apt);
           return hr;
+      }
 
       hr = RPC_StartLocalServer(&newClass->classIdentifier,
                                 marshal_stream,
@@ -2885,6 +2896,7 @@ HRESULT WINAPI CoRegisterClassObject(
                                 &newClass->RpcRegistration);
       IStream_Release(marshal_stream);
   }
+  apartment_release(apt);
   return S_OK;
 }
 
@@ -3645,8 +3657,11 @@ HRESULT WINAPI CoLockObjectExternal(
     TRACE("pUnk=%p, fLock=%s, fLastUnlockReleases=%s\n",
           pUnk, fLock ? "TRUE" : "FALSE", fLastUnlockReleases ? "TRUE" : "FALSE");
 
-    apt = COM_CurrentApt();
-    if (!apt) return CO_E_NOTINITIALIZED;
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
 
     stubmgr = get_stub_manager_from_object(apt, pUnk, fLock);
     if (!stubmgr)
@@ -3655,6 +3670,7 @@ HRESULT WINAPI CoLockObjectExternal(
         /* Note: native is pretty broken here because it just silently
          * fails, without returning an appropriate error code, making apps
          * think that the object was disconnected, when it actually wasn't */
+        apartment_release(apt);
         return S_OK;
     }
 
@@ -3664,6 +3680,7 @@ HRESULT WINAPI CoLockObjectExternal(
         stub_manager_ext_release(stubmgr, 1, FALSE, fLastUnlockReleases);
 
     stub_manager_int_release(stubmgr);
+    apartment_release(apt);
     return S_OK;
 }
 
