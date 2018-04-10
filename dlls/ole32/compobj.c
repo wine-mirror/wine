@@ -5108,8 +5108,9 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
 {
     struct oletls *info = COM_CurrentInfo();
+    APARTMENT *apt;
 
-    FIXME("(%p, %p): semi-stub\n", type, qualifier);
+    TRACE("(%p, %p)\n", type, qualifier);
 
     if (!type || !qualifier)
         return E_INVALIDARG;
@@ -5127,6 +5128,13 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
         *type = APTTYPE_STA;
 
     *qualifier = APTTYPEQUALIFIER_NONE;
+
+    if (!info->apt && (apt = apartment_find_mta()))
+    {
+        apartment_release(apt);
+        *type = APTTYPE_MTA;
+        *qualifier = APTTYPEQUALIFIER_IMPLICIT_MTA;
+    }
 
     return info->apt ? S_OK : CO_E_NOTINITIALIZED;
 }
