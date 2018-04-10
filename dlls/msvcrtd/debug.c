@@ -25,8 +25,6 @@
 #define  _DEBUG
 #include "crtdbg.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
-
 int _crtAssertBusy = -1;
 int _crtBreakAlloc = -1;
 int _crtDbgFlag = 0;
@@ -38,43 +36,6 @@ typedef unsigned long MSVCRT_size_t;
 #endif
 
 extern int _callnewh(MSVCRT_size_t);
-
-/*********************************************************************
- *		??2@YAPAXIHPBDH@Z (MSVCRTD.@)
- */
-void * CDECL MSVCRTD_operator_new_dbg(MSVCRT_size_t nSize, int nBlockUse,
-                                      const char *szFileName, int nLine)
-{
-    void *retval = NULL;
-
-    TRACE("(%lu, %d, '%s', %d)\n", nSize, nBlockUse, szFileName, nLine);
-
-    switch(_BLOCK_TYPE(nBlockUse))
-    {
-    case _NORMAL_BLOCK:
-        break;
-    case _CLIENT_BLOCK:
-        FIXME("Unimplemented case for nBlockUse = _CLIENT_BLOCK\n");
-        return NULL;
-    case _FREE_BLOCK:
-        FIXME("Native code throws an exception here\n");
-        return NULL;
-    case _CRT_BLOCK:
-    case _IGNORE_BLOCK:
-        ERR("Not allowed nBlockUse value: %d\n", _BLOCK_TYPE(nBlockUse));
-        return NULL;
-    default:
-        ERR("Unknown nBlockUse value: %d\n", _BLOCK_TYPE(nBlockUse));
-        return NULL;
-    }
-
-    retval = HeapAlloc(GetProcessHeap(), 0, nSize);
-
-    if (!retval)
-        _callnewh(nSize);
-
-    return retval;
-}
 
 /*********************************************************************
  *		_CrtSetDumpClient (MSVCRTD.@)
