@@ -1843,6 +1843,7 @@ static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *stg )
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, cursor2, &This->cache_list, DataCacheEntry, entry )
         DataCacheEntry_Destroy( This, entry );
+    This->clsid = CLSID_NULL;
 
     ReadClassStg( stg, &clsid );
     hr = create_automatic_entry( This, &clsid );
