@@ -3010,9 +3010,13 @@ static void test_dpi_aware(void)
         ULONG_PTR i;
 
         context = pGetThreadDpiAwarenessContext();
+        todo_wine
+        ok( context == (DPI_AWARENESS_CONTEXT)0x10, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         todo_wine
         ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
+        todo_wine
+        ok( !pIsProcessDPIAware(), "already aware\n" );
         SetLastError( 0xdeadbeef );
         ret = pSetProcessDpiAwarenessContext( NULL );
         ok( !ret, "got %d\n", ret );
@@ -3023,6 +3027,7 @@ static void test_dpi_aware(void)
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
         ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
         ok( ret, "got %d\n", ret );
+        ok( pIsProcessDPIAware(), "not aware\n" );
         SetLastError( 0xdeadbeef );
         ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
         ok( !ret, "got %d\n", ret );
@@ -3051,6 +3056,7 @@ static void test_dpi_aware(void)
         ret = pIsProcessDPIAware();
         ok(ret, "got %d\n", ret);
         context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
         SetLastError( 0xdeadbeef );
@@ -3062,20 +3068,43 @@ static void test_dpi_aware(void)
         ok( !context, "got %p\n", context );
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
         context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x80000011, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
+        ok( !pIsProcessDPIAware(), "still aware\n" );
         context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x10, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
         context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x10, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
         context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x12, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
         context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x12, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+        ok( pIsProcessDPIAware(), "not aware\n" );
+        context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
+        context = pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000010 );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
+        context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
+        context = pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000011 );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x80000011, "wrong context %p\n", context );
+        context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
+        context = pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x12 );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x80000011, "wrong context %p\n", context );
+        context = pSetThreadDpiAwarenessContext( context );
+        ok( context == (DPI_AWARENESS_CONTEXT)0x12, "wrong context %p\n", context );
+        context = pGetThreadDpiAwarenessContext();
+        ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
         for (i = 0; i < 0x100; i++)
         {
             awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
@@ -3124,7 +3153,7 @@ static void test_dpi_aware(void)
             }
         }
     }
-    else win_skip( "SetProcessDPIAware not supported\n" );
+    else win_skip( "SetProcessDpiAwarenessContext not supported\n" );
 
     ret = pSetProcessDPIAware();
     ok(ret, "got %d\n", ret);

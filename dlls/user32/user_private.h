@@ -169,7 +169,7 @@ struct wm_char_mapping_data
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
 {
-    DPI_AWARENESS_CONTEXT         dpi_awareness;          /* DPI awareness context */
+    DPI_AWARENESS                 dpi_awareness;          /* DPI awareness */
     HANDLE                        server_queue;           /* Handle to server-side queue */
     DWORD                         wake_mask;              /* Current queue wake mask */
     DWORD                         changed_mask;           /* Current queue changed mask */

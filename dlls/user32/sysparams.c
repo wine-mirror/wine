@@ -2942,19 +2942,22 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 }
 
 
-static DPI_AWARENESS_CONTEXT dpi_awareness;
+static DPI_AWARENESS dpi_awareness;
 
 /**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    if (!IsValidDpiAwarenessContext( context ))
+    DPI_AWARENESS val = GetAwarenessFromDpiAwarenessContext( context );
+
+    if (val == DPI_AWARENESS_INVALID)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (InterlockedCompareExchangePointer( (void **)&dpi_awareness, context, NULL ))
+    val |= 0x10;  /* avoid 0 value */
+    if (InterlockedCompareExchange( &dpi_awareness, val, 0 ))
     {
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
@@ -2973,7 +2976,7 @@ BOOL WINAPI GetProcessDpiAwarenessInternal( HANDLE process, DPI_AWARENESS *aware
         WARN( "not supported on other process %p\n", process );
         *awareness = DPI_AWARENESS_UNAWARE;
     }
-    else *awareness = GetAwarenessFromDpiAwarenessContext( dpi_awareness );
+    else *awareness = dpi_awareness & 3;
     return TRUE;
 }
 
@@ -3041,7 +3044,7 @@ BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 BOOL WINAPI SetProcessDPIAware(void)
 {
     TRACE("\n");
-    InterlockedCompareExchangePointer( (void **)&dpi_awareness, DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, NULL );
+    InterlockedCompareExchange( &dpi_awareness, 0x11, 0 );
     return TRUE;
 }
 
@@ -3050,8 +3053,7 @@ BOOL WINAPI SetProcessDPIAware(void)
  */
 BOOL WINAPI IsProcessDPIAware(void)
 {
-    /* FIXME: should default to FALSE when not set */
-    return dpi_awareness != DPI_AWARENESS_CONTEXT_UNAWARE;
+    return GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ) != DPI_AWARENESS_UNAWARE;
 }
 
 /***********************************************************************
@@ -3088,9 +3090,9 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
 {
     struct user_thread_info *info = get_user_thread_info();
 
-    if (info->dpi_awareness) return info->dpi_awareness;
-    if (dpi_awareness) return dpi_awareness;
-    return DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;  /* FIXME: should default to unaware */
+    if (info->dpi_awareness) return ULongToHandle( info->dpi_awareness );
+    if (dpi_awareness) return ULongToHandle( dpi_awareness );
+    return (DPI_AWARENESS_CONTEXT)(0x10 | DPI_AWARENESS_SYSTEM_AWARE);  /* FIXME: should default to unaware */
 }
 
 /**********************************************************************
@@ -3098,15 +3100,23 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    DPI_AWARENESS_CONTEXT prev = GetThreadDpiAwarenessContext();
+    struct user_thread_info *info = get_user_thread_info();
+    DPI_AWARENESS prev, val = GetAwarenessFromDpiAwarenessContext( context );
 
-    if (!IsValidDpiAwarenessContext( context ))
+    if (val == DPI_AWARENESS_INVALID)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    get_user_thread_info()->dpi_awareness = context;
-    return prev;
+    if (!(prev = info->dpi_awareness))
+    {
+        prev = dpi_awareness;
+        if (!prev) prev = 0x10 | DPI_AWARENESS_UNAWARE;
+        prev |= 0x80000000;  /* restore to process default */
+    }
+    if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
+    else info->dpi_awareness = val | 0x10;
+    return ULongToHandle( prev );
 }
 
 /**********************************************************************
