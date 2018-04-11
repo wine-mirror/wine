@@ -3086,7 +3086,7 @@ static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
 
     *server = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
                                PIPE_WAIT | mode, 1, 5000, 6000, NMPWAIT_USE_DEFAULT_WAIT, NULL);
-    ok(&server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    ok(*server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
     test_signaled(*server);
 
     memset(&overlapped, 0, sizeof(overlapped));
@@ -3097,7 +3097,7 @@ static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
     test_not_signaled(overlapped.hEvent);
 
     *client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, &sec_attr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(*server != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(*client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
     res = SetNamedPipeHandleState(*client, &read_mode, NULL, NULL);
     ok(res, "SetNamedPipeHandleState failed: %u\n", GetLastError());
