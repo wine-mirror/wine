@@ -80,6 +80,7 @@ function test_window_props() {
 
     var v = document.documentMode;
 
+    test_exposed("postMessage", true);
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
@@ -136,6 +137,7 @@ function test_javascript() {
 
     test_exposed("JSON", g, v >= 8);
     test_exposed("now", Date, true);
+    test_exposed("toISOString", Date.prototype, v >= 9);
     test_exposed("isArray", Array, v >= 9);
     test_exposed("indexOf", Array.prototype, v >= 9);
 

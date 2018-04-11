@@ -27,6 +27,40 @@ function test_date_now() {
     next_test();
 }
 
+function test_toISOString() {
+    var s;
+
+    function expect(date, expected) {
+        var s = date.toISOString();
+        ok(s === expected, "toISOString returned " + s + " expected " + expected);
+    }
+
+    function expect_exception(func) {
+        try {
+            func();
+        }catch(e) {
+            return;
+        }
+        ok(false, "expected exception");
+    }
+
+    expect(new Date(0), "1970-01-01T00:00:00.000Z");
+    expect(new Date(0xdeadbeef), "1970-02-13T05:45:28.559Z");
+    expect(new Date(10928309128301), "2316-04-22T01:25:28.301Z");
+    expect(new Date(-1), "1969-12-31T23:59:59.999Z");
+    expect(new Date(-62167219200000), "0000-01-01T00:00:00.000Z");
+    expect(new Date(-62167219200001), "-000001-12-31T23:59:59.999Z");
+    expect(new Date(-6216721920000100), "-195031-12-03T23:59:59.900Z");
+    expect(new Date(1092830912830100), "+036600-06-07T22:27:10.100Z");
+
+    trace("" + 0xdeadbeef);
+
+    expect_exception(function() { new Date(NaN).toISOString(); });
+    expect_exception(function() { new Date(31494784780800001).toISOString(); });
+
+    next_test();
+}
+
 function test_indexOf() {
     function expect(array, args, exr) {
         var r = Array.prototype.indexOf.apply(array, args);
@@ -115,6 +149,7 @@ function test_identifier_keywords() {
 
 var tests = [
     test_date_now,
+    test_toISOString,
     test_indexOf,
     test_isArray,
     test_identifier_keywords
