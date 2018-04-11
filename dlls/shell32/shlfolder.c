@@ -607,11 +607,11 @@ HRESULT WINAPI SHOpenFolderAndSelectItems( PCIDLIST_ABSOLUTE pidlFolder, UINT ci
 /***********************************************************************
  *  SHGetSetFolderCustomSettings
  *
- *   Only in XP (up to SP2) and Server 2003
+ *   Only Unicode above Server 2003
  */
-HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, LPCSTR path, DWORD flag )
+HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, PCWSTR path, DWORD flag )
 {
-    FIXME("%p %s 0x%x: stub\n", fcs, path, flag);
+    FIXME("%p %s 0x%x: stub\n", fcs, debugstr_w(path), flag);
     return E_NOTIMPL;
 }
 

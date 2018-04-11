@@ -1475,6 +1475,21 @@ int WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 /****************************************************************************
 * SHGetSetFolderCustomSettings API
 */
+
+#define FCS_READ       0x00000001
+#define FCS_FORCEWRITE 0x00000002
+#define FCS_WRITE      (FCS_READ | FCS_FORCEWRITE)
+
+#define FCS_FLAG_DRAGDROP    0x00000002
+
+#define FCSM_VIEWID          0x00000001
+#define FCSM_WEBVIEWTEMPLATE 0x00000002
+#define FCSM_INFOTIP         0x00000004
+#define FCSM_CLSID           0x00000008
+#define FCSM_ICONFILE        0x00000010
+#define FCSM_LOGO            0x00000020
+#define FCSM_FLAGS           0x00000040
+
 typedef struct {
     DWORD dwSize;
     DWORD dwMask;
@@ -1493,7 +1508,7 @@ typedef struct {
     DWORD cchLogo;
 } SHFOLDERCUSTOMSETTINGS, *LPSHFOLDERCUSTOMSETTINGS;
 
-HRESULT WINAPI SHGetSetFolderCustomSettings(LPSHFOLDERCUSTOMSETTINGS pfcs, LPCSTR pszPath, DWORD dwReadWrite);
+HRESULT WINAPI SHGetSetFolderCustomSettings(LPSHFOLDERCUSTOMSETTINGS pfcs, PCWSTR pszPath, DWORD dwReadWrite);
 
 /****************************************************************************
 * SHGetSpecialFolderLocation API
