@@ -46,15 +46,14 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 
 HRESULT WINAPI GetProcessDpiAwareness(HANDLE process, PROCESS_DPI_AWARENESS *value)
 {
-    FIXME("(%p, %p): stub\n", process, value);
-    if (value) *value = PROCESS_DPI_UNAWARE;
-    return S_OK;
+    if (GetProcessDpiAwarenessInternal( process, (DPI_AWARENESS *)value )) return S_OK;
+    return HRESULT_FROM_WIN32( GetLastError() );
 }
 
 HRESULT WINAPI SetProcessDpiAwareness(PROCESS_DPI_AWARENESS value)
 {
-    FIXME("(%u): stub\n", value);
-    return E_NOTIMPL;
+    if (SetProcessDpiAwarenessInternal( value )) return S_OK;
+    return HRESULT_FROM_WIN32( GetLastError() );
 }
 
 HRESULT WINAPI GetDpiForMonitor(HMONITOR monitor, MONITOR_DPI_TYPE type, UINT *x, UINT *y)
