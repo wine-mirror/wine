@@ -5745,6 +5745,10 @@ static unsigned char *union_arm_marshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
                   pStubMsg->Buffer = saved_buffer + 4;
                 }
                 break;
+            case RPC_FC_IP:
+                /* must be dereferenced first */
+                m(pStubMsg, *(unsigned char **)pMemory, desc);
+                break;
             default:
                 m(pStubMsg, pMemory, desc);
             }
@@ -5814,6 +5818,10 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                   pStubMsg->Buffer = saved_buffer + 4;
                 }
                 break;
+            case RPC_FC_IP:
+                /* must be dereferenced first */
+                m(pStubMsg, *(unsigned char ***)ppMemory, desc, fMustAlloc);
+                break;
             default:
                 m(pStubMsg, ppMemory, desc, fMustAlloc);
             }
@@ -5867,6 +5875,10 @@ static void union_arm_buffer_size(PMIDL_STUB_MESSAGE pStubMsg,
                     pStubMsg->PointerLength = pStubMsg->BufferLength;
                     pStubMsg->BufferLength = saved_buffer_length;
                 }
+                break;
+            case RPC_FC_IP:
+                /* must be dereferenced first */
+                m(pStubMsg, *(unsigned char **)pMemory, desc);
                 break;
             default:
                 m(pStubMsg, pMemory, desc);
@@ -5954,6 +5966,10 @@ static void union_arm_free(PMIDL_STUB_MESSAGE pStubMsg,
             case RPC_FC_OP:
             case RPC_FC_FP:
                 PointerFree(pStubMsg, *(unsigned char **)pMemory, desc);
+                break;
+            case RPC_FC_IP:
+                /* must be dereferenced first */
+                m(pStubMsg, *(unsigned char **)pMemory, desc);
                 break;
             default:
                 m(pStubMsg, pMemory, desc);

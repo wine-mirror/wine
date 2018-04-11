@@ -844,6 +844,15 @@ void __cdecl s_stop(void)
   }
 }
 
+void __cdecl s_ip_test(ipu_t *a)
+{
+    STATSTG st;
+    HRESULT hr;
+
+    hr = IStream_Stat(a->tagged_union.stream, &st, STATFLAG_NONAME);
+    ok(hr == S_OK, "got %#x\n", hr);
+}
+
 static void
 make_cmdline(char buffer[MAX_PATH], const char *test)
 {
@@ -1044,6 +1053,8 @@ union_tests(void)
   encu_t eu;
   unencu_t uneu;
   sun_t su;
+  ipu_t ipu;
+  LONG ref;
   int i;
 
   su.s = SUN_I;
@@ -1084,6 +1095,15 @@ union_tests(void)
   eue.t = E2;
   eue.tagged_union.f2 = 10.0;
   ok(square_encue(&eue) == 100.0, "RPC square_encue\n");
+
+  CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+  CreateStreamOnHGlobal(NULL, TRUE, &ipu.tagged_union.stream);
+  ip_test(&ipu);
+  ref = IStream_Release(ipu.tagged_union.stream);
+  ok(!ref, "got %u refs\n", ref);
+
+  CoUninitialize();
 }
 
 static test_list_t *
@@ -1701,6 +1721,9 @@ server(void)
   RPC_STATUS status, iptcp_status, np_status, ncalrpc_status;
   DWORD ret;
 
+  /* needed for tests involving interface pointers */
+  CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
   iptcp_status = RpcServerUseProtseqEpA(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %d\n", iptcp_status);
 
@@ -1766,6 +1789,8 @@ server(void)
 
   CloseHandle(stop_event);
   stop_event = NULL;
+
+  CoUninitialize();
 }
 
 static DWORD WINAPI listen_test_client_thread(void *binding)
