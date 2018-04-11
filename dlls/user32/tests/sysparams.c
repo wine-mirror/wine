@@ -44,6 +44,7 @@ static BOOL (WINAPI *pSetProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static BOOL (WINAPI *pGetProcessDpiAwarenessInternal)(HANDLE,DPI_AWARENESS*);
 static BOOL (WINAPI *pSetProcessDpiAwarenessInternal)(DPI_AWARENESS);
+static UINT (WINAPI *pGetDpiForSystem)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
@@ -198,6 +199,13 @@ static DWORD get_real_dpi(void)
 {
     DWORD dpi;
 
+    if (pSetThreadDpiAwarenessContext)
+    {
+        DPI_AWARENESS_CONTEXT context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        dpi = pGetDpiForSystem();
+        pSetThreadDpiAwarenessContext( context );
+        return dpi;
+    }
     if (get_reg_dword(HKEY_CURRENT_USER, "Control Panel\\Desktop", "LogPixels", &dpi))
         return dpi;
     if (get_reg_dword(HKEY_CURRENT_CONFIG, "Software\\Fonts", "LogPixels", &dpi))
@@ -3008,6 +3016,8 @@ static void test_dpi_aware(void)
         DPI_AWARENESS awareness;
         DPI_AWARENESS_CONTEXT context;
         ULONG_PTR i;
+        UINT dpi;
+        HDC hdc = GetDC( 0 );
 
         context = pGetThreadDpiAwarenessContext();
         todo_wine
@@ -3017,6 +3027,12 @@ static void test_dpi_aware(void)
         ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
         todo_wine
         ok( !pIsProcessDPIAware(), "already aware\n" );
+        dpi = pGetDpiForSystem();
+        todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
+        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
+        dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+        todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
+        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
         SetLastError( 0xdeadbeef );
         ret = pSetProcessDpiAwarenessContext( NULL );
         ok( !ret, "got %d\n", ret );
@@ -3028,6 +3044,7 @@ static void test_dpi_aware(void)
         ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
         ok( ret, "got %d\n", ret );
         ok( pIsProcessDPIAware(), "not aware\n" );
+        real_dpi = pGetDpiForSystem();
         SetLastError( 0xdeadbeef );
         ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
         ok( !ret, "got %d\n", ret );
@@ -3071,6 +3088,11 @@ static void test_dpi_aware(void)
         ok( context == (DPI_AWARENESS_CONTEXT)0x80000011, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
+        dpi = pGetDpiForSystem();
+        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
+        dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+        todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
+        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
         ok( !pIsProcessDPIAware(), "still aware\n" );
         context = pGetThreadDpiAwarenessContext();
         ok( context == (DPI_AWARENESS_CONTEXT)0x10, "wrong context %p\n", context );
@@ -3080,6 +3102,10 @@ static void test_dpi_aware(void)
         ok( context == (DPI_AWARENESS_CONTEXT)0x10, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
+        dpi = pGetDpiForSystem();
+        ok( dpi == real_dpi, "wrong dpi %u/%u\n", dpi, real_dpi );
+        dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+        ok( dpi == real_dpi, "wrong dpi %u\n", dpi );
         context = pGetThreadDpiAwarenessContext();
         ok( context == (DPI_AWARENESS_CONTEXT)0x12, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
@@ -3088,6 +3114,10 @@ static void test_dpi_aware(void)
         ok( context == (DPI_AWARENESS_CONTEXT)0x12, "wrong context %p\n", context );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+        dpi = pGetDpiForSystem();
+        ok( dpi == real_dpi, "wrong dpi %u/%u\n", dpi, real_dpi );
+        dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+        ok( dpi == real_dpi, "wrong dpi %u\n", dpi );
         ok( pIsProcessDPIAware(), "not aware\n" );
         context = pGetThreadDpiAwarenessContext();
         ok( context == (DPI_AWARENESS_CONTEXT)0x11, "wrong context %p\n", context );
@@ -3152,6 +3182,7 @@ static void test_dpi_aware(void)
                 break;
             }
         }
+        ReleaseDC( 0, hdc );
     }
     else win_skip( "SetProcessDpiAwarenessContext not supported\n" );
 
@@ -3161,6 +3192,7 @@ static void test_dpi_aware(void)
     ret = pIsProcessDPIAware();
     ok(ret, "got %d\n", ret);
 
+    if (pGetDpiForSystem) real_dpi = pGetDpiForSystem();
     dpi = real_dpi;
     test_GetSystemMetrics();
 }
@@ -3236,6 +3268,7 @@ START_TEST(sysparams)
     pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
     pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
+    pGetDpiForSystem = (void*)GetProcAddress(hdll, "GetDpiForSystem");
     pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
     pGetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "GetProcessDpiAwarenessInternal");
     pSetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessInternal");
