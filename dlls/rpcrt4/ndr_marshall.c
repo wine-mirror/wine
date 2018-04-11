@@ -5753,7 +5753,8 @@ static unsigned char *union_arm_marshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
                 m(pStubMsg, pMemory, desc);
             }
         }
-        else FIXME("no marshaller for embedded type %02x\n", *desc);
+        else if (*desc)
+            FIXME("no marshaller for embedded type %02x\n", *desc);
     }
     return NULL;
 }
@@ -5826,7 +5827,8 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                 m(pStubMsg, ppMemory, desc, fMustAlloc);
             }
         }
-        else FIXME("no marshaller for embedded type %02x\n", *desc);
+        else if (*desc)
+            FIXME("no marshaller for embedded type %02x\n", *desc);
     }
     return NULL;
 }
@@ -5884,7 +5886,8 @@ static void union_arm_buffer_size(PMIDL_STUB_MESSAGE pStubMsg,
                 m(pStubMsg, pMemory, desc);
             }
         }
-        else FIXME("no buffersizer for embedded type %02x\n", *desc);
+        else if (*desc)
+            FIXME("no buffersizer for embedded type %02x\n", *desc);
     }
 }
 
@@ -5932,7 +5935,8 @@ static ULONG union_arm_memory_size(PMIDL_STUB_MESSAGE pStubMsg,
                 return m(pStubMsg, desc);
             }
         }
-        else FIXME("no marshaller for embedded type %02x\n", *desc);
+        else if (*desc)
+            FIXME("no marshaller for embedded type %02x\n", *desc);
     }
 
     TRACE("size %d\n", size);
