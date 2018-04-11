@@ -40,6 +40,7 @@
 #include "thread.h"
 #include "request.h"
 #include "security.h"
+#include "process.h"
 
 enum pipe_state
 {
@@ -66,6 +67,8 @@ struct pipe_end
     struct fd           *fd;         /* pipe file descriptor */
     unsigned int         flags;      /* pipe flags */
     struct pipe_end     *connection; /* the other end of the pipe */
+    process_id_t         client_pid; /* process that created the client */
+    process_id_t         server_pid; /* process that created the server */
     data_size_t          buffer_size;/* size of buffered data that doesn't block caller */
     struct list          message_queue;
     struct async_queue   read_q;     /* read queue */
@@ -940,10 +943,45 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     return 1;
 }
 
+static int pipe_end_get_connection_attribute( struct pipe_end *pipe_end )
+{
+    const char *attr = get_req_data();
+    data_size_t value_size, attr_size = get_req_data_size();
+    void *value;
+
+    if (attr_size == sizeof("ClientProcessId") && !memcmp( attr, "ClientProcessId", attr_size ))
+    {
+        value = &pipe_end->client_pid;
+        value_size = sizeof(pipe_end->client_pid);
+    }
+    else if (attr_size == sizeof("ServerProcessId") && !memcmp( attr, "ServerProcessId", attr_size ))
+    {
+        value = &pipe_end->server_pid;
+        value_size = sizeof(pipe_end->server_pid);
+    }
+    else
+    {
+        set_error( STATUS_ILLEGAL_FUNCTION );
+        return 0;
+    }
+
+    if (get_reply_max_size() < value_size)
+    {
+        set_error( STATUS_INFO_LENGTH_MISMATCH );
+        return 0;
+    }
+
+    set_reply_data( value, value_size );
+    return 1;
+}
+
 static int pipe_end_ioctl( struct pipe_end *pipe_end, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
+    case FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE:
+        return pipe_end_get_connection_attribute( pipe_end );
+
     case FSCTL_PIPE_PEEK:
         return pipe_end_peek( pipe_end );
 
@@ -1062,6 +1100,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->options = options;
     init_pipe_end( &server->pipe_end, pipe_flags, pipe->insize );
+    server->pipe_end.server_pid = get_process_id( current->process );
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -1087,6 +1126,7 @@ static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int 
     client->server = NULL;
     client->flags = flags;
     init_pipe_end( &client->pipe_end, pipe_flags, buffer_size );
+    client->pipe_end.client_pid = get_process_id( current->process );
 
     client->pipe_end.fd = alloc_pseudo_fd( &pipe_client_fd_ops, &client->pipe_end.obj, options );
     if (!client->pipe_end.fd)
@@ -1169,6 +1209,8 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         client->server = server;
         server->pipe_end.connection = &client->pipe_end;
         client->pipe_end.connection = &server->pipe_end;
+        server->pipe_end.client_pid = client->pipe_end.client_pid;
+        client->pipe_end.server_pid = server->pipe_end.server_pid;
     }
     release_object( server );
     return &client->pipe_end.obj;

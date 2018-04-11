@@ -727,12 +727,12 @@
 # @ stub GetNamedPipeAttribute
 # @ stub GetNamedPipeClientComputerNameA
 # @ stub GetNamedPipeClientComputerNameW
-# @ stub GetNamedPipeClientProcessId
+@ stdcall GetNamedPipeClientProcessId(long ptr)
 # @ stub GetNamedPipeClientSessionId
 @ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr str long)
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long)
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
-# @ stub GetNamedPipeServerProcessId
+@ stdcall GetNamedPipeServerProcessId(long ptr)
 # @ stub GetNamedPipeServerSessionId
 @ stdcall GetNativeSystemInfo(ptr)
 @ stdcall -arch=x86_64 GetNextUmsListItem(ptr)

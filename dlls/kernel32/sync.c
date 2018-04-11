@@ -1787,6 +1787,46 @@ BOOL WINAPI GetNamedPipeInfo(
 }
 
 /***********************************************************************
+ *           GetNamedPipeClientProcessId  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeClientProcessId( HANDLE pipe, ULONG *id )
+{
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    TRACE( "%p %p\n", pipe, id );
+
+    status = NtFsControlFile( pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE,
+                              (void *)"ClientProcessId", sizeof("ClientProcessId"), id, sizeof(*id) );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetNamedPipeServerProcessId  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeServerProcessId( HANDLE pipe, ULONG *id )
+{
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    TRACE( "%p, %p\n", pipe, id );
+
+    status = NtFsControlFile( pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE,
+                              (void *)"ServerProcessId", sizeof("ServerProcessId"), id, sizeof(*id) );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *           GetNamedPipeHandleStateA  (KERNEL32.@)
  */
 BOOL WINAPI GetNamedPipeHandleStateA(
