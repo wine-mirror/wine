@@ -203,6 +203,7 @@
 @ stdcall EditWndProc(long long long long) EditWndProcA
 @ stdcall EmptyClipboard()
 @ stdcall EnableMenuItem(long long long)
+@ stdcall EnableMouseInPointer(long)
 @ stdcall EnableScrollBar(long long long)
 @ stdcall EnableWindow(long long)
 @ stdcall EndDeferWindowPos(long)

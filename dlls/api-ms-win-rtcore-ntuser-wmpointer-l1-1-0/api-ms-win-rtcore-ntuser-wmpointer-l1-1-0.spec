@@ -1,4 +1,4 @@
-@ stub EnableMouseInPointer
+@ stdcall EnableMouseInPointer(long) user32.EnableMouseInPointer
 @ stub GetCurrentInputMessageSource
 @ stub GetPointerCursorId
 @ stub GetPointerDevice

@@ -1514,3 +1514,14 @@ int WINAPI GetMouseMovePointsEx(UINT size, LPMOUSEMOVEPOINT ptin, LPMOUSEMOVEPOI
     SetLastError(ERROR_POINT_NOT_FOUND);
     return -1;
 }
+
+/***********************************************************************
+ *		EnableMouseInPointer (USER32.@)
+ */
+BOOL WINAPI EnableMouseInPointer(BOOL enable)
+{
+    FIXME("(%#x) stub\n", enable);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
