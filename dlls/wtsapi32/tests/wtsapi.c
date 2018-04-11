@@ -90,7 +90,23 @@ static void test_WTSEnumerateProcessesW(void)
     WTSFreeMemory(info);
 }
 
+static void test_WTSQuerySessionInformationW(void)
+{
+    BOOL ret;
+    WCHAR *buf;
+    DWORD count;
+
+    count = 0;
+    buf = NULL;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf, &count);
+    ok(ret, "got %u\n", GetLastError());
+    ok(buf != NULL, "buf not set\n");
+    ok(count == (lstrlenW(buf) + 1) * sizeof(WCHAR), "got %u\n", count);
+    WTSFreeMemory(buf);
+}
+
 START_TEST (wtsapi)
 {
     test_WTSEnumerateProcessesW();
+    test_WTSQuerySessionInformationW();
 }
