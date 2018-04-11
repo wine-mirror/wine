@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wtsapi32.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wtsapi);
 
@@ -168,9 +169,7 @@ BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
  */
 void WINAPI WTSFreeMemory(PVOID pMemory)
 {
-    static int once;
-
-    if (!once++) FIXME("Stub %p\n", pMemory);
+    heap_free(pMemory);
 }
 
 /************************************************************

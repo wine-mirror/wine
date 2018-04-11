@@ -47,21 +47,21 @@ static void test_WTSEnumerateProcessesW(void)
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 1, 1, &info, &count);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
-    if (info) WTSFreeMemory(info);
+    WTSFreeMemory(info);
 
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 0, &info, &count);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
-    if (info) WTSFreeMemory(info);
+    WTSFreeMemory(info);
 
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 2, &info, &count);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
-    if (info) WTSFreeMemory(info);
+    WTSFreeMemory(info);
 
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, NULL, &count);
@@ -73,7 +73,7 @@ static void test_WTSEnumerateProcessesW(void)
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &info, NULL);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
-    if (info) WTSFreeMemory(info);
+    WTSFreeMemory(info);
 
     count = 0;
     info = NULL;
@@ -87,7 +87,7 @@ static void test_WTSEnumerateProcessesW(void)
     }
     todo_wine
     ok(found || broken(!ret), "process name %s not found\n", wine_dbgstr_w(pname));
-    if (info) WTSFreeMemory(info);
+    WTSFreeMemory(info);
 }
 
 START_TEST (wtsapi)
