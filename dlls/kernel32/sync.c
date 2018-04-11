@@ -1827,6 +1827,30 @@ BOOL WINAPI GetNamedPipeServerProcessId( HANDLE pipe, ULONG *id )
 }
 
 /***********************************************************************
+ *           GetNamedPipeClientSessionId  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeClientSessionId( HANDLE pipe, ULONG *id )
+{
+    FIXME( "%p, %p\n", pipe, id );
+
+    if (!id) return FALSE;
+    *id = NtCurrentTeb()->Peb->SessionId;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetNamedPipeServerSessionId  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeServerSessionId( HANDLE pipe, ULONG *id )
+{
+    FIXME( "%p, %p\n", pipe, id );
+
+    if (!id) return FALSE;
+    *id = NtCurrentTeb()->Peb->SessionId;
+    return TRUE;
+}
+
+/***********************************************************************
  *           GetNamedPipeHandleStateA  (KERNEL32.@)
  */
 BOOL WINAPI GetNamedPipeHandleStateA(
