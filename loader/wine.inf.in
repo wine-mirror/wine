@@ -2580,6 +2580,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,inf,
 10,logs,
 10,temp,
+11,catroot,
 11,mui,
 11,tasks,
 11,spool\drivers\color,
