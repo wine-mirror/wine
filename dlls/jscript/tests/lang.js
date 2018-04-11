@@ -48,6 +48,9 @@ tmp = 07777777777777777777777;
 ok(typeof(tmp) === "number" && tmp > 0xffffffff, "tmp = " + tmp);
 tmp = 07777777779777777777777;
 ok(typeof(tmp) === "number" && tmp > 0xffffffff, "tmp = " + tmp);
+ok(0xffffffff === 4294967295, "0xffffffff = " + 0xffffffff);
+tmp = 0x10000000000000000000000000000000000000000000000000000000000000000;
+ok(tmp === Math.pow(2, 256), "0x1000...00 != 2^256");
 
 ok(1 !== 2, "1 !== 2 is false");
 ok(null !== undefined, "null !== undefined is false");
