@@ -547,6 +547,30 @@ static HRESULT open_pres_stream( IStorage *stg, int stream_number, IStream **stm
     return IStorage_OpenStream( stg, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
 }
 
+static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
+{
+    METAFILEPICT *pict;
+    HRESULT hr = E_FAIL;
+    UINT size;
+    void *bits;
+
+    if (!(pict = GlobalLock( data ))) return hr;
+
+    size = GetMetaFileBitsEx( pict->hMF, 0, NULL );
+    if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        GetMetaFileBitsEx( pict->hMF, size, bits );
+        med->u.hEnhMetaFile = SetWinMetaFileBits( size, bits, NULL, pict );
+        HeapFree( GetProcessHeap(), 0, bits );
+        med->tymed = TYMED_ENHMF;
+        med->pUnkForRelease = NULL;
+        hr = S_OK;
+    }
+
+    GlobalUnlock( data );
+    return hr;
+}
+
 static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
 {
     HRESULT hr;
@@ -704,6 +728,60 @@ fail:
 
 }
 
+static HRESULT load_emf( DataCacheEntry *cache_entry, IStream *stm )
+{
+    HRESULT hr;
+
+    if (cache_entry->load_stream_num != STREAM_NUMBER_CONTENTS)
+    {
+        STGMEDIUM stgmed;
+
+        hr = load_mf_pict( cache_entry, stm );
+        if (SUCCEEDED( hr ))
+        {
+            hr = synthesize_emf( cache_entry->stgmedium.u.hMetaFilePict, &stgmed );
+            ReleaseStgMedium( &cache_entry->stgmedium );
+        }
+        if (SUCCEEDED( hr ))
+            cache_entry->stgmedium = stgmed;
+    }
+    else
+    {
+        STATSTG stat;
+        BYTE *data;
+        ULONG read, size_bits;
+
+        hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
+
+        if (SUCCEEDED( hr ))
+        {
+            data = HeapAlloc( GetProcessHeap(), 0, stat.cbSize.u.LowPart );
+            if (!data) return E_OUTOFMEMORY;
+
+            hr = IStream_Read( stm, data, stat.cbSize.u.LowPart, &read );
+            if (hr != S_OK)
+            {
+                HeapFree( GetProcessHeap(), 0, data );
+                return hr;
+            }
+
+            if (read <= sizeof(DWORD) + sizeof(ENHMETAHEADER))
+            {
+                HeapFree( GetProcessHeap(), 0, data );
+                return E_FAIL;
+            }
+            size_bits = read - sizeof(DWORD) - sizeof(ENHMETAHEADER);
+            cache_entry->stgmedium.u.hEnhMetaFile = SetEnhMetaFileBits( size_bits, data + (read - size_bits) );
+            cache_entry->stgmedium.tymed = TYMED_ENHMF;
+            cache_entry->stgmedium.pUnkForRelease = NULL;
+
+            HeapFree( GetProcessHeap(), 0, data );
+        }
+    }
+
+    return hr;
+}
+
 /************************************************************************
  * DataCacheEntry_LoadData
  *
@@ -734,6 +812,10 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *cache_entry, IStorage *st
 
     case CF_DIB:
         hr = load_dib( cache_entry, stm );
+        break;
+
+    case CF_ENHMETAFILE:
+        hr = load_emf( cache_entry, stm );
         break;
 
     default:
@@ -1115,30 +1197,6 @@ static HRESULT synthesize_bitmap( HGLOBAL dib, STGMEDIUM *med )
         hr = S_OK;
     }
     ReleaseDC( 0, hdc );
-    return hr;
-}
-
-static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
-{
-    METAFILEPICT *pict;
-    HRESULT hr = E_FAIL;
-    UINT size;
-    void *bits;
-
-    if (!(pict = GlobalLock( data ))) return hr;
-
-    size = GetMetaFileBitsEx( pict->hMF, 0, NULL );
-    if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
-    {
-        GetMetaFileBitsEx( pict->hMF, size, bits );
-        med->u.hEnhMetaFile = SetWinMetaFileBits( size, bits, NULL, pict );
-        HeapFree( GetProcessHeap(), 0, bits );
-        med->tymed = TYMED_ENHMF;
-        med->pUnkForRelease = NULL;
-        hr = S_OK;
-    }
-
-    GlobalUnlock( data );
     return hr;
 }
 
