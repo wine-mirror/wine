@@ -2999,8 +2999,9 @@ BOOL WINAPI SetProcessDpiAwarenessInternal( DPI_AWARENESS awareness )
  */
 BOOL WINAPI AreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT ctx1, DPI_AWARENESS_CONTEXT ctx2 )
 {
-    if (!IsValidDpiAwarenessContext( ctx1 )) return FALSE;
-    return ctx1 == ctx2;
+    DPI_AWARENESS aware1 = GetAwarenessFromDpiAwarenessContext( ctx1 );
+    DPI_AWARENESS aware2 = GetAwarenessFromDpiAwarenessContext( ctx2 );
+    return aware1 != DPI_AWARENESS_INVALID && aware1 == aware2;
 }
 
 /***********************************************************************
@@ -3008,11 +3009,22 @@ BOOL WINAPI AreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT ctx1, DPI_AWAREN
  */
 DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    if (context == DPI_AWARENESS_CONTEXT_UNAWARE) return DPI_AWARENESS_UNAWARE;
-    if (context == DPI_AWARENESS_CONTEXT_SYSTEM_AWARE) return DPI_AWARENESS_SYSTEM_AWARE;
-    if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) return DPI_AWARENESS_PER_MONITOR_AWARE;
-    if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) return DPI_AWARENESS_PER_MONITOR_AWARE;
-    return DPI_AWARENESS_INVALID;
+    switch ((ULONG_PTR)context)
+    {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x80000010:
+    case 0x80000011:
+    case 0x80000012:
+        return (ULONG_PTR)context & 3;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
+        return ~(ULONG_PTR)context;
+    default:
+        return DPI_AWARENESS_INVALID;
+    }
 }
 
 /***********************************************************************
@@ -3020,10 +3032,7 @@ DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT 
  */
 BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    return (context == DPI_AWARENESS_CONTEXT_UNAWARE ||
-            context == DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ||
-            context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ||
-            context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    return GetAwarenessFromDpiAwarenessContext( context ) != DPI_AWARENESS_INVALID;
 }
 
 /***********************************************************************

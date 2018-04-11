@@ -48,6 +48,7 @@ static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
 static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -3006,6 +3007,7 @@ static void test_dpi_aware(void)
     {
         DPI_AWARENESS awareness;
         DPI_AWARENESS_CONTEXT context;
+        ULONG_PTR i;
 
         context = pGetThreadDpiAwarenessContext();
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
@@ -3074,6 +3076,53 @@ static void test_dpi_aware(void)
         context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+        for (i = 0; i < 0x100; i++)
+        {
+            awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
+            switch (i)
+            {
+            case 0x10:
+            case 0x11:
+            case 0x12:
+                ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i, awareness );
+                ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i ), "%lx: not valid\n", i );
+                break;
+            default:
+                ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i, awareness );
+                ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i ), "%lx: valid\n", i );
+                break;
+            }
+            awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
+            switch (i)
+            {
+            case 0x10:
+            case 0x11:
+            case 0x12:
+                ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i | 0x80000000, awareness );
+                ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) ),
+                    "%lx: not valid\n", i | 0x80000000 );
+                break;
+            default:
+                ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i | 0x80000000, awareness );
+                ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) ),
+                    "%lx: valid\n", i | 0x80000000 );
+                break;
+            }
+            awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
+            switch (~i)
+            {
+            case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
+            case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
+            case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
+                ok( awareness == i, "%lx: wrong value %u\n", ~i, awareness );
+                ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%lx: not valid\n", ~i );
+                break;
+            default:
+                ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", ~i, awareness );
+                ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%lx: valid\n", ~i );
+                break;
+            }
+        }
     }
     else win_skip( "SetProcessDPIAware not supported\n" );
 
@@ -3165,6 +3214,7 @@ START_TEST(sysparams)
     pSetThreadDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetThreadDpiAwarenessContext");
     pGetWindowDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetWindowDpiAwarenessContext");
     pGetAwarenessFromDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetAwarenessFromDpiAwarenessContext");
+    pIsValidDpiAwarenessContext = (void*)GetProcAddress(hdll, "IsValidDpiAwarenessContext");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
