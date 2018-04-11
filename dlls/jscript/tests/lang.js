@@ -632,6 +632,12 @@ tmp = 10;
 ok((tmp |= 0x10) === 26, "tmp(10) |= 0x10 !== 26");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp |= 10) = " + getVT(tmp));
 
+tmp = (123 * Math.pow(2,32) + 2) | 0;
+ok(tmp === 2, "123*2^32+2 | 0 = " + tmp);
+
+tmp = (-123 * Math.pow(2,32) + 2) | 0;
+ok(tmp === 2, "123*2^32+2 | 0 = " + tmp);
+
 tmp = 3 & 5;
 ok(tmp === 1, "3 & 5 !== 1");
 ok(getVT(tmp) === "VT_I4", "getVT(3|5) = " + getVT(tmp));
