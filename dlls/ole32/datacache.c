@@ -570,6 +570,17 @@ static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
     GlobalUnlock( data );
     return hr;
 }
+#include <pshpack2.h>
+struct meta_placeable
+{
+    DWORD key;
+    WORD hwmf;
+    WORD bounding_box[4];
+    WORD inch;
+    DWORD reserved;
+    WORD checksum;
+};
+#include <poppack.h>
 
 static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
 {
@@ -583,25 +594,26 @@ static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
     CLIPFORMAT clipformat;
     static const LARGE_INTEGER offset_zero;
     ULONG read;
-
-    if (cache_entry->load_stream_num == STREAM_NUMBER_CONTENTS)
-    {
-        FIXME( "Unimplemented for CONTENTS stream\n" );
-        return E_FAIL;
-    }
+    struct meta_placeable mf_place;
 
     hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
     if (FAILED( hr )) return hr;
 
-    hr = read_clipformat( stm, &clipformat );
-    if (FAILED( hr )) return hr;
-
-    hr = IStream_Read( stm, &header, sizeof(header), &read );
-    if (hr != S_OK || read != sizeof(header)) return E_FAIL;
+    if (cache_entry->load_stream_num != STREAM_NUMBER_CONTENTS)
+    {
+        hr = read_clipformat( stm, &clipformat );
+        if (hr != S_OK) return hr;
+        hr = IStream_Read( stm, &header, sizeof(header), &read );
+        if (hr != S_OK) return hr;
+    }
+    else
+    {
+        hr = IStream_Read( stm, &mf_place, sizeof(mf_place), &read );
+        if (hr != S_OK) return hr;
+    }
 
     hr = IStream_Seek( stm, offset_zero, STREAM_SEEK_CUR, &current_pos );
     if (FAILED( hr )) return hr;
-
     stat.cbSize.QuadPart -= current_pos.QuadPart;
 
     hmfpict = GlobalAlloc( GMEM_MOVEABLE, sizeof(METAFILEPICT) );
@@ -616,14 +628,23 @@ static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
     }
 
     hr = IStream_Read( stm, bits, stat.cbSize.u.LowPart, &read );
-    if (hr != S_OK || read != stat.cbSize.u.LowPart) hr = E_FAIL;
 
     if (SUCCEEDED( hr ))
     {
-        /* FIXME: get this from the stream */
         mfpict->mm = MM_ANISOTROPIC;
-        mfpict->xExt = header.dwObjectExtentX;
-        mfpict->yExt = header.dwObjectExtentY;
+        /* FIXME: get this from the stream */
+        if (cache_entry->load_stream_num != STREAM_NUMBER_CONTENTS)
+        {
+            mfpict->xExt = header.dwObjectExtentX;
+            mfpict->yExt = header.dwObjectExtentY;
+        }
+        else
+        {
+            mfpict->xExt = ((mf_place.bounding_box[2] - mf_place.bounding_box[0])
+                            * 2540) / mf_place.inch;
+            mfpict->yExt = ((mf_place.bounding_box[3] - mf_place.bounding_box[1])
+                            * 2540) / mf_place.inch;
+        }
         mfpict->hMF = SetMetaFileBitsEx( stat.cbSize.u.LowPart, bits );
         if (!mfpict->hMF)
             hr = E_FAIL;
@@ -911,18 +932,6 @@ end:
     if (bmi) GlobalUnlock(entry->stgmedium.u.hGlobal);
     return hr;
 }
-
-#include <pshpack2.h>
-struct meta_placeable
-{
-    DWORD key;
-    WORD hwmf;
-    WORD bounding_box[4];
-    WORD inch;
-    DWORD reserved;
-    WORD checksum;
-};
-#include <poppack.h>
 
 static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream)
 {
