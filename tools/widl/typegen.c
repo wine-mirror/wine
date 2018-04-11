@@ -3248,6 +3248,7 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
     unsigned int nbranch = 0;
     type_t *deftype = NULL;
     short nodeftype = 0xffff;
+    unsigned int dummy;
     var_t *f;
 
     if (processed(type) &&
@@ -3256,9 +3257,9 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
 
     guard_rec(type);
 
-    size = type_memsize(type);
-
     fields = type_union_get_cases(type);
+
+    size = union_memsize(fields, &dummy);
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
     {
