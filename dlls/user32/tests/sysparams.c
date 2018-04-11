@@ -42,6 +42,8 @@ static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD,
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static BOOL (WINAPI *pGetProcessDpiAwarenessInternal)(HANDLE,DPI_AWARENESS*);
+static BOOL (WINAPI *pSetProcessDpiAwarenessInternal)(DPI_AWARENESS);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
@@ -3027,6 +3029,23 @@ static void test_dpi_aware(void)
         ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
         ok( !ret, "got %d\n", ret );
         ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+
+        ret = pSetProcessDpiAwarenessInternal( DPI_AWARENESS_INVALID );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ret = pSetProcessDpiAwarenessInternal( DPI_AWARENESS_UNAWARE );
+        ok( !ret, "got %d\n", ret );
+        ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError() );
+        ret = pGetProcessDpiAwarenessInternal( 0, &awareness );
+        ok( ret, "got %d\n", ret );
+        ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong value %d\n", awareness );
+        ret = pGetProcessDpiAwarenessInternal( GetCurrentProcess(), &awareness );
+        ok( ret, "got %d\n", ret );
+        ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong value %d\n", awareness );
+        ret = pGetProcessDpiAwarenessInternal( (HANDLE)0xdeadbeef, &awareness );
+        ok( ret, "got %d\n", ret );
+        ok( awareness == DPI_AWARENESS_UNAWARE, "wrong value %d\n", awareness );
+
         ret = pIsProcessDPIAware();
         ok(ret, "got %d\n", ret);
         context = pGetThreadDpiAwarenessContext();
@@ -3140,6 +3159,8 @@ START_TEST(sysparams)
     pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
     pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
+    pGetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "GetProcessDpiAwarenessInternal");
+    pSetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessInternal");
     pGetThreadDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetThreadDpiAwarenessContext");
     pSetThreadDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetThreadDpiAwarenessContext");
     pGetWindowDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetWindowDpiAwarenessContext");

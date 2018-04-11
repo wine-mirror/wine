@@ -2963,6 +2963,37 @@ BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
     return TRUE;
 }
 
+/**********************************************************************
+ *              GetProcessDpiAwarenessInternal   (USER32.@)
+ */
+BOOL WINAPI GetProcessDpiAwarenessInternal( HANDLE process, DPI_AWARENESS *awareness )
+{
+    if (process && process != GetCurrentProcess())
+    {
+        WARN( "not supported on other process %p\n", process );
+        *awareness = DPI_AWARENESS_UNAWARE;
+    }
+    else *awareness = GetAwarenessFromDpiAwarenessContext( dpi_awareness );
+    return TRUE;
+}
+
+/**********************************************************************
+ *              SetProcessDpiAwarenessInternal   (USER32.@)
+ */
+BOOL WINAPI SetProcessDpiAwarenessInternal( DPI_AWARENESS awareness )
+{
+    static const DPI_AWARENESS_CONTEXT contexts[3] = { DPI_AWARENESS_CONTEXT_UNAWARE,
+                                                       DPI_AWARENESS_CONTEXT_SYSTEM_AWARE,
+                                                       DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE };
+
+    if (awareness < DPI_AWARENESS_UNAWARE || awareness > DPI_AWARENESS_PER_MONITOR_AWARE)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return SetProcessDpiAwarenessContext( contexts[awareness] );
+}
+
 /***********************************************************************
  *              AreDpiAwarenessContextsEqual   (USER32.@)
  */
