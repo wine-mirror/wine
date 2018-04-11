@@ -647,48 +647,61 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
 {
     HRESULT hr;
     STATSTG stat;
-    void *dib;
+    BYTE *dib;
     HGLOBAL hglobal;
     ULONG read, info_size, bi_size;
     BITMAPFILEHEADER file;
     BITMAPINFOHEADER *info;
-
-    if (cache_entry->load_stream_num != STREAM_NUMBER_CONTENTS)
-    {
-        FIXME( "Unimplemented for presentation stream\n" );
-        return E_FAIL;
-    }
+    CLIPFORMAT cf;
+    PresentationDataHeader pres;
+    ULARGE_INTEGER current_pos;
+    static const LARGE_INTEGER offset_zero;
 
     hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
     if (FAILED( hr )) return hr;
 
-    if (stat.cbSize.QuadPart < sizeof(file) + sizeof(DWORD)) return E_FAIL;
-    hr = IStream_Read( stm, &file, sizeof(file), &read );
-    if (hr != S_OK || read != sizeof(file)) return E_FAIL;
-    stat.cbSize.QuadPart -= sizeof(file);
+    if (cache_entry->load_stream_num != STREAM_NUMBER_CONTENTS)
+    {
+        hr = read_clipformat( stm, &cf );
+        if (hr != S_OK) return hr;
+        hr = IStream_Read( stm, &pres, sizeof(pres), &read );
+        if (hr != S_OK) return hr;
+    }
+    else
+    {
+        hr = IStream_Read( stm, &file, sizeof(BITMAPFILEHEADER), &read );
+        if (hr != S_OK) return hr;
+    }
+
+    hr = IStream_Seek( stm, offset_zero, STREAM_SEEK_CUR, &current_pos );
+    if (FAILED( hr )) return hr;
+    stat.cbSize.QuadPart -= current_pos.QuadPart;
 
     hglobal = GlobalAlloc( GMEM_MOVEABLE, stat.cbSize.u.LowPart );
     if (!hglobal) return E_OUTOFMEMORY;
     dib = GlobalLock( hglobal );
 
+    /* read first DWORD of BITMAPINFOHEADER */
     hr = IStream_Read( stm, dib, sizeof(DWORD), &read );
-    if (hr != S_OK || read != sizeof(DWORD)) goto fail;
+    if (hr != S_OK) goto fail;
     bi_size = *(DWORD *)dib;
     if (stat.cbSize.QuadPart < bi_size) goto fail;
 
-    hr = IStream_Read( stm, (char *)dib + sizeof(DWORD), bi_size - sizeof(DWORD), &read );
-    if (hr != S_OK || read != bi_size - sizeof(DWORD)) goto fail;
+    /* read rest of BITMAPINFOHEADER */
+    hr = IStream_Read( stm, dib + sizeof(DWORD), bi_size - sizeof(DWORD), &read );
+    if (hr != S_OK) goto fail;
 
-    info_size = bitmap_info_size( dib, DIB_RGB_COLORS );
+    info_size = bitmap_info_size( (BITMAPINFO *)dib, DIB_RGB_COLORS );
     if (stat.cbSize.QuadPart < info_size) goto fail;
     if (info_size > bi_size)
     {
-        hr = IStream_Read( stm, (char *)dib + bi_size, info_size - bi_size, &read );
-        if (hr != S_OK || read != info_size - bi_size) goto fail;
+        hr = IStream_Read( stm, dib + bi_size, info_size - bi_size, &read );
+        if (hr != S_OK) goto fail;
     }
     stat.cbSize.QuadPart -= info_size;
 
-    if (file.bfOffBits)
+    /* set Stream pointer to beginning of bitmap bits */
+    if (cache_entry->load_stream_num == STREAM_NUMBER_CONTENTS && file.bfOffBits)
     {
         LARGE_INTEGER skip;
 
@@ -699,8 +712,8 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
         stat.cbSize.QuadPart -= skip.QuadPart;
     }
 
-    hr = IStream_Read( stm, (char *)dib + info_size, stat.cbSize.u.LowPart, &read );
-    if (hr != S_OK || read != stat.cbSize.QuadPart) goto fail;
+    hr = IStream_Read( stm, dib + info_size, stat.cbSize.u.LowPart, &read );
+    if (hr != S_OK) goto fail;
 
     if (bi_size >= sizeof(*info))
     {
@@ -719,12 +732,12 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
     cache_entry->stgmedium.tymed = TYMED_HGLOBAL;
     cache_entry->stgmedium.u.hGlobal = hglobal;
 
-    return S_OK;
+    return hr;
 
 fail:
     GlobalUnlock( hglobal );
     GlobalFree( hglobal );
-    return E_FAIL;
+    return hr;
 
 }
 
