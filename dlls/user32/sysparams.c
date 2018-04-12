@@ -612,6 +612,31 @@ static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
     return init_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
 }
 
+static DWORD get_reg_dword( HKEY base, const WCHAR *key_name, const WCHAR *value_name )
+{
+    HKEY key;
+    DWORD type, ret = 0, size = sizeof(ret);
+
+    if (RegOpenKeyW( base, key_name, &key )) return 0;
+    if (RegQueryValueExW( key, value_name, NULL, &type, (void *)&ret, &size ) || type != REG_DWORD)
+        ret = 0;
+    RegCloseKey( key );
+    return ret;
+}
+
+/* get the system dpi from the registry */
+static UINT get_system_dpi(void)
+{
+    static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
+    static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+    DWORD dpi;
+
+    if ((dpi = get_reg_dword( HKEY_CURRENT_USER, dpi_key_name, dpi_value_name ))) return dpi;
+    if ((dpi = get_reg_dword( HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name ))) return dpi;
+    return USER_DEFAULT_SCREEN_DPI;
+}
+
 HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
@@ -3065,12 +3090,7 @@ UINT WINAPI GetDpiForSystem(void)
 
     if (!IsProcessDPIAware()) return USER_DEFAULT_SCREEN_DPI;
 
-    if (!display_dpi)
-    {
-        HDC hdc = get_display_dc();
-        display_dpi = GetDeviceCaps( hdc, LOGPIXELSY );
-        release_display_dc( hdc );
-    }
+    if (!display_dpi) display_dpi = get_system_dpi();
     return display_dpi;
 }
 
