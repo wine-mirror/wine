@@ -3985,8 +3985,6 @@ static void test_lighting(void)
     ok(SUCCEEDED(hr), "Failed to set view transformation, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transformation, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable zbuffer, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -4352,8 +4350,6 @@ static void test_specular_lighting(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -10298,8 +10294,6 @@ static void test_texcoordindex(void)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTexture(device, 1, texture2);
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
     ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -10481,8 +10475,6 @@ static void test_colorkey_precision(void)
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
@@ -11634,8 +11626,6 @@ static void test_color_clamping(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable Z test, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -11644,8 +11634,6 @@ static void test_color_clamping(void)
     ok(SUCCEEDED(hr), "Failed to disable stencil test, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
     ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_TEXTUREFACTOR, 0xff404040);
     ok(SUCCEEDED(hr), "Failed to set texture factor, hr %#x.\n", hr);
@@ -12241,8 +12229,6 @@ static void test_edge_antialiasing_blending(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable Z test, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -12251,8 +12237,6 @@ static void test_edge_antialiasing_blending(void)
     ok(SUCCEEDED(hr), "Failed to disable stencil test, hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
     ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable blending, hr %#x.\n", hr);
@@ -14215,9 +14199,6 @@ static void test_map_synchronisation(void)
     hr = IDirect3DVertexBuffer_Unlock(buffer);
     ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
-
     /* Initial draw to initialise states, compile shaders, etc. */
     hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
@@ -14375,9 +14356,6 @@ static void test_depth_readback(void)
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
 
     ds = get_depth_stencil(device);
     hr = IDirectDrawSurface4_DeleteAttachedSurface(rt, 0, ds);

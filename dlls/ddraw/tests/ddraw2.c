@@ -6924,8 +6924,6 @@ static void test_lighting(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable zbuffer, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -7286,8 +7284,6 @@ static void test_specular_lighting(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
@@ -10624,18 +10620,12 @@ static void test_edge_antialiasing_blending(void)
     ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable Z test, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_STENCILENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable stencil test, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
     ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable blending, hr %#x.\n", hr);
@@ -12264,9 +12254,6 @@ static void test_depth_readback(void)
     viewport_set_background(device, viewport, blue_background);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
 
     ds = get_depth_stencil(device);
     hr = IDirectDrawSurface_DeleteAttachedSurface(rt, 0, ds);

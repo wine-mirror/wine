@@ -5952,7 +5952,6 @@ static void test_lighting(void)
     emit_set_ts(&ptr, D3DTRANSFORMSTATE_WORLD, world_handle);
     emit_set_ts(&ptr, D3DTRANSFORMSTATE_VIEW, view_handle);
     emit_set_ts(&ptr, D3DTRANSFORMSTATE_PROJECTION, proj_handle);
-    emit_set_rs(&ptr, D3DRENDERSTATE_CLIPPING, FALSE);
     emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
     emit_set_rs(&ptr, D3DRENDERSTATE_FOGENABLE, FALSE);
     emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
@@ -8327,7 +8326,6 @@ static void test_shademode(void)
         quad = tests[i].primtype == D3DPT_TRIANGLESTRIP ? quad_strip : quad_list;
         memcpy(exec_desc.lpData, quad, sizeof(quad_strip));
         ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad_strip);
-        emit_set_rs(&ptr, D3DRENDERSTATE_CLIPPING, FALSE);
         emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
         emit_set_rs(&ptr, D3DRENDERSTATE_FOGENABLE, FALSE);
         emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
