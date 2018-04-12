@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-15 16:20+0200\n"
+"PO-Revision-Date: 2018-04-12 17:02+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -6666,7 +6666,7 @@ msgstr "У з'єднанні відмовлено.\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
-msgstr ""
+msgstr "Відсутній підпис файла.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -9183,67 +9183,57 @@ msgstr "Існує принаймні одна невизначена пробл
 
 #: winineterror.mc:26
 msgid "The request has timed out.\n"
-msgstr ""
+msgstr "Зупинка запиту.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Виникла помилка принтера."
+msgstr "Виникла внутрішня помилка.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Невірний шлях.\n"
+msgstr "Невірна URL-адреса.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "Схема URL-адреси не може бути розпізнана або не підтримується.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Ім'я користувача не знайдено.\n"
+msgstr "Не вдається встановити ім'я сервера.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Невірний профіль користувача.\n"
+msgstr "Запитана операція невірна.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"Операція була скасована. Як правило, таке трапляється, тому що індекс, до "
+"якого був запит, був закритий до закінчення операції.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Профіль не може бути доданий.\n"
+msgstr "Не вдається знайти запитаний елемент.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Неможливо підключитись до LDAP сервера"
+msgstr "Помилка спроби підключення до сервера.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "З'єднання з сервером було припинено.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
-msgstr ""
+msgstr "Строк дії сертифіката SSL, надісланого сервером, закінчився.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "Загальне ім'я сертифіката SSL (поле імені сервера) невірне.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
