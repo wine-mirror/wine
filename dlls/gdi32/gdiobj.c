@@ -641,6 +641,24 @@ DWORD get_dpi(void)
     return 0;
 }
 
+/******************************************************************************
+ *              get_system_dpi
+ *
+ * Get the system DPI, based on the DPI awareness mode.
+ */
+DWORD get_system_dpi(void)
+{
+    static UINT (WINAPI *pGetDpiForSystem)(void);
+
+    if (!pGetDpiForSystem)
+    {
+        static const WCHAR user32W[] = {'u','s','e','r','3','2','.','d','l','l',0};
+        HMODULE user = GetModuleHandleW( user32W );
+        if (user) pGetDpiForSystem = (void *)GetProcAddress( user, "GetDpiForSystem" );
+    }
+    return pGetDpiForSystem ? pGetDpiForSystem() : 96;
+}
+
 static HFONT create_scaled_font( const LOGFONTW *deffont )
 {
     LOGFONTW lf;

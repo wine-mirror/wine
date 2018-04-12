@@ -298,7 +298,6 @@ static BOOL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffe
 
 static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
-    static int screen_dpi;
     int bpp;
 
     switch (cap)
@@ -351,9 +350,7 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case SHADEBLENDCAPS:  return 0;
     case COLORMGMTCAPS:   return 0;
     case LOGPIXELSX:
-    case LOGPIXELSY:
-        if (!screen_dpi && !(screen_dpi = get_dpi())) screen_dpi = 96;
-        return screen_dpi;
+    case LOGPIXELSY:      return get_system_dpi();
     case NUMCOLORS:
         bpp = GetDeviceCaps( dev->hdc, BITSPIXEL );
         return (bpp > 8) ? -1 : (1 << bpp);

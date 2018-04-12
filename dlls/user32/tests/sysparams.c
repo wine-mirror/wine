@@ -3091,7 +3091,6 @@ static void test_dpi_aware(void)
         dpi = pGetDpiForSystem();
         ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
         dpi = GetDeviceCaps( hdc, LOGPIXELSX );
-        todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
         ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
         ok( !pIsProcessDPIAware(), "still aware\n" );
         context = pGetThreadDpiAwarenessContext();
