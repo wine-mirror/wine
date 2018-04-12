@@ -108,6 +108,7 @@ static const LOGPEN DCPen     = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
 #define NB_STOCK_OBJECTS (STOCK_LAST+2)
 
 static HGDIOBJ stock_objects[NB_STOCK_OBJECTS];
+static HGDIOBJ scaled_stock_objects[NB_STOCK_OBJECTS];
 
 static CRITICAL_SECTION gdi_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -662,7 +663,6 @@ DWORD get_system_dpi(void)
 static HFONT create_scaled_font( const LOGFONTW *deffont )
 {
     LOGFONTW lf;
-    LONG height;
     static DWORD dpi;
 
     if (!dpi)
@@ -672,9 +672,7 @@ static HFONT create_scaled_font( const LOGFONTW *deffont )
     }
 
     lf = *deffont;
-    height = abs(lf.lfHeight) * dpi / 96;
-    lf.lfHeight = deffont->lfHeight < 0 ? -height : height;
-
+    lf.lfHeight = MulDiv( lf.lfHeight, dpi, 96 );
     return CreateFontIndirectW( &lf );
 }
 
@@ -716,10 +714,15 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     /* language-dependent stock fonts */
     deffonts = get_default_fonts(get_default_charset());
-    stock_objects[SYSTEM_FONT]         = create_scaled_font( &deffonts->SystemFont );
-    stock_objects[DEVICE_DEFAULT_FONT] = create_scaled_font( &deffonts->DeviceDefaultFont );
+    stock_objects[SYSTEM_FONT]         = CreateFontIndirectW( &deffonts->SystemFont );
+    stock_objects[DEVICE_DEFAULT_FONT] = CreateFontIndirectW( &deffonts->DeviceDefaultFont );
     stock_objects[SYSTEM_FIXED_FONT]   = CreateFontIndirectW( &deffonts->SystemFixedFont );
-    stock_objects[DEFAULT_GUI_FONT]    = create_scaled_font( &deffonts->DefaultGuiFont );
+    stock_objects[DEFAULT_GUI_FONT]    = CreateFontIndirectW( &deffonts->DefaultGuiFont );
+
+    scaled_stock_objects[OEM_FIXED_FONT]    = create_scaled_font( &OEMFixedFont );
+    scaled_stock_objects[SYSTEM_FONT]       = create_scaled_font( &deffonts->SystemFont );
+    scaled_stock_objects[SYSTEM_FIXED_FONT] = create_scaled_font( &deffonts->SystemFixedFont );
+    scaled_stock_objects[DEFAULT_GUI_FONT]  = create_scaled_font( &deffonts->DefaultGuiFont );
 
     stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
     stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
@@ -727,15 +730,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < NB_STOCK_OBJECTS; i++)
     {
-        if (!stock_objects[i])
-        {
-            if (i == 9) continue;  /* there's no stock object 9 */
-            ERR( "could not create stock object %d\n", i );
-            return FALSE;
-        }
-        __wine_make_gdi_object_system( stock_objects[i], TRUE );
+        if (stock_objects[i]) __wine_make_gdi_object_system( stock_objects[i], TRUE );
+        if (scaled_stock_objects[i]) __wine_make_gdi_object_system( scaled_stock_objects[i], TRUE );
     }
-
     return TRUE;
 }
 
@@ -1061,11 +1058,17 @@ void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
  */
 HGDIOBJ WINAPI GetStockObject( INT obj )
 {
-    HGDIOBJ ret;
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
-    ret = stock_objects[obj];
-    TRACE("returning %p\n", ret );
-    return ret;
+    switch (obj)
+    {
+    case OEM_FIXED_FONT:
+    case SYSTEM_FONT:
+    case SYSTEM_FIXED_FONT:
+    case DEFAULT_GUI_FONT:
+        if (get_system_dpi() != 96) return scaled_stock_objects[obj];
+        break;
+    }
+    return stock_objects[obj];
 }
 
 

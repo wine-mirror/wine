@@ -3001,6 +3001,50 @@ static void test_GetSysColorBrush(void)
         win_skip("COLOR_MENUBAR unsupported\n");
 }
 
+static void test_dpi_stock_objects( HDC hdc )
+{
+    DPI_AWARENESS_CONTEXT context;
+    HGDIOBJ obj[STOCK_LAST + 1], obj2[STOCK_LAST + 1];
+    LOGFONTW lf, lf2;
+    UINT i, dpi;
+
+    context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+    ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
+    ok( !pIsProcessDPIAware(), "not aware\n" );
+    for (i = 0; i <= STOCK_LAST; i++) obj[i] = GetStockObject( i );
+
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    dpi = GetDeviceCaps( hdc, LOGPIXELSX );
+    ok( dpi == real_dpi, "wrong dpi %u\n", dpi );
+    ok( pIsProcessDPIAware(), "not aware\n" );
+    for (i = 0; i <= STOCK_LAST; i++) obj2[i] = GetStockObject( i );
+
+    for (i = 0; i <= STOCK_LAST; i++)
+    {
+        switch (i)
+        {
+        case OEM_FIXED_FONT:
+        case SYSTEM_FIXED_FONT:
+            ok( obj[i] != obj2[i], "%u: same object\n", i );
+            break;
+        case SYSTEM_FONT:
+        case DEFAULT_GUI_FONT:
+            ok( obj[i] != obj2[i], "%u: same object\n", i );
+            GetObjectW( obj[i], sizeof(lf), &lf );
+            GetObjectW( obj2[i], sizeof(lf2), &lf2 );
+            ok( lf.lfHeight == MulDiv( lf2.lfHeight, USER_DEFAULT_SCREEN_DPI, real_dpi ),
+                "%u: wrong height %d / %d\n", i, lf.lfHeight, lf2.lfHeight );
+            break;
+        default:
+            ok( obj[i] == obj2[i], "%u: different object\n", i );
+            break;
+        }
+    }
+
+    pSetThreadDpiAwarenessContext( context );
+}
+
 static void test_dpi_aware(void)
 {
     BOOL ret;
@@ -3181,6 +3225,7 @@ static void test_dpi_aware(void)
                 break;
             }
         }
+        if (real_dpi != USER_DEFAULT_SCREEN_DPI) test_dpi_stock_objects( hdc );
         ReleaseDC( 0, hdc );
     }
     else win_skip( "SetProcessDpiAwarenessContext not supported\n" );
