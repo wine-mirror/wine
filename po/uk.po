@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-15 16:20+0200\n"
+"PO-Revision-Date: 2018-04-12 17:02+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -6682,7 +6682,7 @@ msgstr "У з'єднанні відмовлено.\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
-msgstr ""
+msgstr "Відсутній підпис файла.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
