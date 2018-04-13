@@ -53,7 +53,6 @@ static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
 static int dpi, real_dpi;
-static BOOL iswin9x;
 
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
@@ -634,30 +633,17 @@ static BOOL run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
     BOOL rc;
     INT mi[3];
     static int aw_turn = 0;
-    static BOOL w_implemented = TRUE;
 
     char buf[20];
     int i;
 
     aw_turn++;
     rc = FALSE;
-    if ((aw_turn % 2!=0) && (w_implemented))
-    {
-        /* call unicode on odd (non even) calls */ 
-        SetLastError(0xdeadbeef);
+    SetLastError(0xdeadbeef);
+    if (aw_turn % 2)  /* call unicode on odd (non even) calls */
         rc=SystemParametersInfoW( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        if (rc == FALSE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        {
-            w_implemented = FALSE;
-            trace("SystemParametersInfoW not supported on this platform\n");
-        }
-    }
-
-    if ((aw_turn % 2==0) || (!w_implemented))
-    {
-        /* call ascii version on even calls or if unicode is not available */
+    else
         rc=SystemParametersInfoA( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    }
     if (!test_error_msg(rc,"SPI_SETMOUSE")) return FALSE;
 
     ok(rc, "SystemParametersInfo: rc=%d err=%d\n", rc, GetLastError());
@@ -676,15 +662,12 @@ static BOOL run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
            "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
     }
 
-    if (w_implemented)
-    { 
-        rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
-        ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
-        for (i = 0; i < 3; i++)
-        {
-            ok(mi[i] == curr_val[i],
-               "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
-        }
+    rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
+    ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
+    for (i = 0; i < 3; i++)
+    {
+        ok(mi[i] == curr_val[i],
+           "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
     }
 
     if (0)
@@ -860,15 +843,10 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     if ( old_border == 7 || old_border == 20 )
         old_border = 1;
 
-    /* The SPI_SETBORDER seems to be buggy on Win9x/ME (looks like you need to
-     * do it twice to make the intended change). So skip parts of the tests on
-     * those platforms */
-    if( !iswin9x) {
-        /* win2k3 fails if you set the same border twice, or if size is 0 */
-        if (!test_setborder(2,  1, dpi)) return;
-        test_setborder(1,  1, dpi);
-        test_setborder(3,  1, dpi);
-    }
+    /* win2k3 fails if you set the same border twice, or if size is 0 */
+    if (!test_setborder(2,  1, dpi)) return;
+    test_setborder(1,  1, dpi);
+    test_setborder(3,  1, dpi);
     if (!test_setborder(1, 0, dpi)) return;
     test_setborder(0, 0, dpi);
     test_setborder(3, 0, dpi);
@@ -1175,8 +1153,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         if( regval != vals[i])
             regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1,
                     SPI_SETICONTITLEWRAP_VALNAME, dpi);
-        ok( regval == vals[i] || broken(regval == -1), /* win9x */
-                "wrong value in registry %d, expected %d\n", regval, vals[i] );
+        ok( regval == vals[i], "wrong value in registry %d, expected %d\n", regval, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
         ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
@@ -1768,10 +1745,10 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
         return;
    /* check some registry values */ 
     regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
-    ok( regval==im_orig.iHorzSpacing || broken(regval == -1), /* nt4 */
+    ok( regval==im_orig.iHorzSpacing,
         "wrong value in registry %d, expected %d\n", regval, im_orig.iHorzSpacing);
     regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
-    ok( regval==im_orig.iVertSpacing || broken(regval == -1), /* nt4 */
+    ok( regval==im_orig.iVertSpacing,
         "wrong value in registry %d, expected %d\n", regval, im_orig.iVertSpacing);
     regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2, SPI_SETICONTITLEWRAP_VALNAME, dpi);
     if( regval != im_orig.iTitleWrap)
@@ -1929,7 +1906,6 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     trace("testing SPI_{GET,SET}SHOWSOUNDS\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &old_b, 0 );
-    /* SPI_{GET,SET}SHOWSOUNDS is completely broken on Win9x */
     if (!test_error_msg(rc,"SPI_{GET,SET}SHOWSOUNDS"))
         return;
 
@@ -2036,7 +2012,6 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}FONTSMOOTHING\n");
-    if( iswin9x) return; /* 95/98/ME don't seem to implement this fully */ 
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETFONTSMOOTHING, 0, &old_b, 0 );
     if (!test_error_msg(rc,"SPI_{GET,SET}FONTSMOOTHING"))
@@ -2139,9 +2114,7 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
         v = 0xdeadbeef;
         rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &v, 0 );
         ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
-        ok(v == vals[i] ||
-           broken(v == (0xdead0000 | vals[i])) ||  /* win98 only sets the low word */
-           v == 0, /* win2k3 */
+        ok(v == vals[i] || v == 0, /* win2k3 */
            "SPI_GETLOWPOWERACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
@@ -2179,9 +2152,7 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
         v = 0xdeadbeef;
         rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &v, 0 );
         ok(rc, "%d: rc=%d err=%d\n", i, rc, GetLastError());
-        ok(v == vals[i] ||
-           broken(v == (0xdead0000 | vals[i])) ||  /* win98 only sets the low word */
-           v == 0, /* win2k3 */
+        ok(v == vals[i] || v == 0, /* win2k3 */
            "SPI_GETPOWEROFFACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
@@ -2234,12 +2205,9 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
     trace("testing SPI_{GET,SET}MOUSEHOVERWIDTH\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERWIDTH, 0, &old_width, 0 );
-    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-    * what MSDN states (Verified on Win98SE)
-    */
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERWIDTH"))
         return;
-    
+
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
         UINT v;
@@ -2274,12 +2242,9 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
     trace("testing SPI_{GET,SET}MOUSEHOVERHEIGHT\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERHEIGHT, 0, &old_height, 0 );
-    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-     * what MSDN states (Verified on Win98SE)
-     */
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERHEIGHT"))
         return;
-    
+
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
         UINT v;
@@ -2318,12 +2283,9 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
     trace("testing SPI_{GET,SET}MOUSEHOVERTIME\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERTIME, 0, &old_time, 0 );
-    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-     * what MSDN states (Verified on Win98SE)
-     */    
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERTIME"))
         return;
-    
+
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
         UINT v;
@@ -2473,9 +2435,6 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
     trace("testing SPI_{GET,SET}DESKWALLPAPER\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA(SPI_GETDESKWALLPAPER, 260, oldval, 0);
-    /* SPI_{GET,SET}DESKWALLPAPER is completely broken on Win9x and
-     * unimplemented on NT4
-     */
     if (!test_error_msg(rc,"SPI_{GET,SET}DESKWALLPAPER"))
         return;
 
@@ -2947,13 +2906,11 @@ static void test_EnumDisplaySettings(void)
     DWORD num;
 
     memset(&devmode, 0, sizeof(devmode));
-    /* Win95 doesn't handle ENUM_CURRENT_SETTINGS correctly */
     EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &devmode);
 
     hdc = GetDC(0);
     val = GetDeviceCaps(hdc, BITSPIXEL);
-    ok(devmode.dmBitsPerPel == val ||
-        broken(devmode.dmDeviceName[0] == 0), /* Win95 */
+    ok(devmode.dmBitsPerPel == val,
         "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
         val, devmode.dmBitsPerPel);
 
@@ -3330,7 +3287,6 @@ START_TEST(sysparams)
     real_dpi = get_real_dpi();
     trace("dpi %d real_dpi %d\n", dpi, real_dpi);
     ReleaseDC( 0, hdc);
-    iswin9x = GetVersion() & 0x80000000;
 
     /* This test requires interactivity, if we don't have it, give up */
     if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&
