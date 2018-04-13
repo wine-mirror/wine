@@ -50,6 +50,7 @@ static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENE
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
 static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static INT (WINAPI *pGetSystemMetricsForDpi)(INT,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 
 static BOOL strict;
@@ -1468,6 +1469,18 @@ static int get_tmheight( LOGFONTA *plf, int flag)
     HFONT hfont = CreateFontIndirectA( plf);
     hfont = SelectObject( hdc, hfont);
     GetTextMetricsA( hdc, &tm);
+    hfont = SelectObject( hdc, hfont);
+    ReleaseDC( 0, hdc );
+    return tm.tmHeight + (flag ? tm.tmExternalLeading : 0);
+}
+
+static int get_tmheightW( LOGFONTW *plf, int flag)
+{
+    TEXTMETRICW tm;
+    HDC hdc = GetDC(0);
+    HFONT hfont = CreateFontIndirectW( plf);
+    hfont = SelectObject( hdc, hfont);
+    GetTextMetricsW( hdc, &tm);
     hfont = SelectObject( hdc, hfont);
     ReleaseDC( 0, hdc );
     return tm.tmHeight + (flag ? tm.tmExternalLeading : 0);
@@ -2934,6 +2947,73 @@ static void test_metrics_for_dpi( int custom_dpi )
     ret = pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, sizeof(ncm2), &ncm2, FALSE, custom_dpi );
     ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
 
+    for (i = 0; i < 92; i++)
+    {
+        int ret1 = GetSystemMetrics( i );
+        int ret2 = pGetSystemMetricsForDpi( i, custom_dpi );
+        switch (i)
+        {
+        case SM_CXVSCROLL:
+        case SM_CYHSCROLL:
+        case SM_CYVTHUMB:
+        case SM_CXHTHUMB:
+        case SM_CXICON:
+        case SM_CYICON:
+        case SM_CYVSCROLL:
+        case SM_CXHSCROLL:
+        case SM_CYSIZE:
+        case SM_CXICONSPACING:
+        case SM_CYICONSPACING:
+        case SM_CXSMSIZE:
+        case SM_CYSMSIZE:
+        case SM_CYMENUSIZE:
+            ok( ret1 == MulDiv( ret2, dpi, custom_dpi ), "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        case SM_CXSIZE:
+            ok( ret1 == ncm1.iCaptionWidth && ret2 == ncm2.iCaptionWidth,
+                "%u: wrong value %u vs %u caption %u vs %u\n",
+                i, ret1, ret2, ncm1.iCaptionWidth, ncm2.iCaptionWidth );
+            break;
+        case SM_CXCURSOR:
+        case SM_CYCURSOR:
+            val = MulDiv( 32, custom_dpi, USER_DEFAULT_SCREEN_DPI );
+            if (val < 48) val = 32;
+            else if (val < 64) val = 48;
+            else val = 64;
+            ok( val == ret2, "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        case SM_CYCAPTION:
+        case SM_CYSMCAPTION:
+        case SM_CYMENU:
+            ok( ret1 - 1 == MulDiv( ret2 - 1, dpi, custom_dpi ), "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        case SM_CXMENUSIZE:
+            ok( ret1 / 8 == MulDiv( ret2, dpi, custom_dpi ) / 8, "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        case SM_CXFRAME:
+        case SM_CYFRAME:
+            ok( ret1 == ncm1.iBorderWidth + 3 && ret2 == ncm2.iBorderWidth + 3,
+                "%u: wrong value %u vs %u borders %u+%u vs %u+%u\n", i, ret1, ret2,
+                ncm1.iBorderWidth, ncm1.iPaddedBorderWidth, ncm2.iBorderWidth, ncm2.iPaddedBorderWidth );
+            break;
+        case SM_CXSMICON:
+        case SM_CYSMICON:
+            ok( ret1 == (MulDiv( 16, dpi, USER_DEFAULT_SCREEN_DPI ) & ~1) &&
+                ret2 == (MulDiv( 16, custom_dpi, USER_DEFAULT_SCREEN_DPI ) & ~1),
+                "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        case SM_CXMENUCHECK:
+        case SM_CYMENUCHECK:
+            ok( ret1 == ((get_tmheightW( &ncm1.lfMenuFont, 1 ) - 1) | 1) &&
+                ret2 == ((get_tmheightW( &ncm2.lfMenuFont, 1 ) - 1) | 1),
+                "%u: wrong value %u vs %u font %u vs %u\n", i, ret1, ret2,
+                get_tmheightW( &ncm1.lfMenuFont, 1 ), get_tmheightW( &ncm2.lfMenuFont, 1 ));
+            break;
+        default:
+            ok( ret1 == ret2, "%u: wrong value %u vs %u\n", i, ret1, ret2 );
+            break;
+        }
+    }
     im1.cbSize = sizeof(im1);
     ret = SystemParametersInfoW( SPI_GETICONMETRICS, sizeof(im1), &im1, FALSE );
     ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
@@ -3376,6 +3456,7 @@ START_TEST(sysparams)
     pGetWindowDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetWindowDpiAwarenessContext");
     pGetAwarenessFromDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetAwarenessFromDpiAwarenessContext");
     pIsValidDpiAwarenessContext = (void*)GetProcAddress(hdll, "IsValidDpiAwarenessContext");
+    pGetSystemMetricsForDpi = (void*)GetProcAddress(hdll, "GetSystemMetricsForDpi");
     pSystemParametersInfoForDpi = (void*)GetProcAddress(hdll, "SystemParametersInfoForDpi");
 
     hInstance = GetModuleHandleA( NULL );

@@ -377,6 +377,7 @@
 @ stdcall GetSysColorBrush(long)
 @ stdcall GetSystemMenu(long long)
 @ stdcall GetSystemMetrics(long)
+@ stdcall GetSystemMetricsForDpi(long long)
 @ stdcall GetTabbedTextExtentA(long str long long ptr)
 @ stdcall GetTabbedTextExtentW(long wstr long long ptr)
 @ stdcall GetTaskmanWindow ()

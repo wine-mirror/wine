@@ -2539,10 +2539,10 @@ INT WINAPI GetSystemMetrics( INT index )
         return ncm.iScrollHeight;
     case SM_CXICON:
     case SM_CYICON:
-        return MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+        return map_to_dpi( 32, GetDpiForSystem() );
     case SM_CXCURSOR:
     case SM_CYCURSOR:
-        ret = MulDiv( 32, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+        ret = map_to_dpi( 32, GetDpiForSystem() );
         if (ret >= 64) return 64;
         if (ret >= 48) return 48;
         return 32;
@@ -2644,7 +2644,7 @@ INT WINAPI GetSystemMetrics( INT index )
         return GetSystemMetrics(SM_CYMINIMIZED) + mm.iVertGap;
     case SM_CXSMICON:
     case SM_CYSMICON:
-        return MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ) & ~1;
+        return map_to_dpi( 16, GetDpiForSystem() ) & ~1;
     case SM_CYSMCAPTION:
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
@@ -2757,6 +2757,112 @@ INT WINAPI GetSystemMetrics( INT index )
         return SM_CMETRICS;
     default:
         return 0;
+    }
+}
+
+
+/***********************************************************************
+ *		GetSystemMetricsForDpi (USER32.@)
+ */
+INT WINAPI GetSystemMetricsForDpi( INT index, UINT dpi )
+{
+    NONCLIENTMETRICSW ncm;
+    ICONMETRICSW im;
+    UINT ret;
+    HDC hdc;
+
+    /* some metrics are dynamic */
+    switch (index)
+    {
+    case SM_CXVSCROLL:
+    case SM_CYHSCROLL:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iScrollWidth;
+    case SM_CYCAPTION:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iCaptionHeight + 1;
+    case SM_CYVTHUMB:
+    case SM_CXHTHUMB:
+    case SM_CYVSCROLL:
+    case SM_CXHSCROLL:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iScrollHeight;
+    case SM_CXICON:
+    case SM_CYICON:
+        return map_to_dpi( 32, dpi );
+    case SM_CXCURSOR:
+    case SM_CYCURSOR:
+        ret = map_to_dpi( 32, dpi );
+        if (ret >= 64) return 64;
+        if (ret >= 48) return 48;
+        return 32;
+    case SM_CYMENU:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iMenuHeight + 1;
+    case SM_CXSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iCaptionWidth;
+    case SM_CYSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iCaptionHeight;
+    case SM_CXFRAME:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return GetSystemMetricsForDpi( SM_CXDLGFRAME, dpi ) + ncm.iBorderWidth;
+    case SM_CYFRAME:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return GetSystemMetricsForDpi( SM_CYDLGFRAME, dpi ) + ncm.iBorderWidth;
+    case SM_CXICONSPACING:
+        im.cbSize = sizeof(im);
+        SystemParametersInfoForDpi( SPI_GETICONMETRICS, sizeof(im), &im, 0, dpi );
+        return im.iHorzSpacing;
+    case SM_CYICONSPACING:
+        im.cbSize = sizeof(im);
+        SystemParametersInfoForDpi( SPI_GETICONMETRICS, sizeof(im), &im, 0, dpi );
+        return im.iVertSpacing;
+    case SM_CXSMICON:
+    case SM_CYSMICON:
+        return map_to_dpi( 16, dpi ) & ~1;
+    case SM_CYSMCAPTION:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iSmCaptionHeight + 1;
+    case SM_CXSMSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iSmCaptionWidth;
+    case SM_CYSMSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iSmCaptionHeight;
+    case SM_CXMENUSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iMenuWidth;
+    case SM_CYMENUSIZE:
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        return ncm.iMenuHeight;
+    case SM_CXMENUCHECK:
+    case SM_CYMENUCHECK:
+    {
+        TEXTMETRICW tm;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+        hdc = get_display_dc();
+        get_text_metr_size( hdc, &ncm.lfMenuFont, &tm, NULL);
+        release_display_dc( hdc );
+        return tm.tmHeight <= 0 ? 13 : ((tm.tmHeight + tm.tmExternalLeading - 1) | 1);
+    }
+    default:
+        return GetSystemMetrics( index );
     }
 }
 

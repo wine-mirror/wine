@@ -3762,6 +3762,7 @@ WINUSERAPI HBRUSH      WINAPI GetSysColorBrush(INT);
 #define                       GetSysModalWindow() ((HWND)0)
 WINUSERAPI HMENU       WINAPI GetSystemMenu(HWND,BOOL);
 WINUSERAPI INT         WINAPI GetSystemMetrics(INT);
+WINUSERAPI INT         WINAPI GetSystemMetricsForDpi(INT,UINT);
 WINUSERAPI DWORD       WINAPI GetTabbedTextExtentA(HDC,LPCSTR,INT,INT,const INT*);
 WINUSERAPI DWORD       WINAPI GetTabbedTextExtentW(HDC,LPCWSTR,INT,INT,const INT*);
 #define                       GetTabbedTextExtent WINELIB_NAME_AW(GetTabbedTextExtent)
