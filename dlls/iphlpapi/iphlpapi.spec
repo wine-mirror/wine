@@ -102,7 +102,7 @@
 #@ stub GetIpErrorString
 #@ stub GetIpForwardEntry2
 @ stdcall GetIpForwardTable( ptr ptr long )
-#@ stub GetIpForwardTable2
+@ stdcall GetIpForwardTable2( long ptr )
 @ stub GetIpForwardTableFromStack
 #@ stub GetIpInterfaceEntry
 #@ stub GetIpInterfaceTable

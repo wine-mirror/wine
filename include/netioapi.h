@@ -21,6 +21,10 @@
 
 #include <ntddndis.h>
 
+#ifndef ANY_SIZE
+#define ANY_SIZE 1
+#endif
+
 typedef enum _MIB_IF_TABLE_LEVEL
 {
     MibIfTableNormal,
@@ -157,6 +161,37 @@ typedef struct _MIB_UNICASTIPADDRESS_TABLE
     ULONG NumEntries;
     MIB_UNICASTIPADDRESS_ROW Table[1];
 } MIB_UNICASTIPADDRESS_TABLE, *PMIB_UNICASTIPADDRESS_TABLE;
+
+typedef struct _IP_ADDRESS_PREFIX
+{
+    SOCKADDR_INET Prefix;
+    UINT8         PrefixLength;
+} IP_ADDRESS_PREFIX, *PIP_ADDRESS_PREFIX;
+
+typedef struct _MIB_IPFORWARD_ROW2
+{
+    NET_LUID          InterfaceLuid;
+    NET_IFINDEX       InterfaceIndex;
+    IP_ADDRESS_PREFIX DestinationPrefix;
+    SOCKADDR_INET     NextHop;
+    UCHAR             SitePrefixLength;
+    ULONG             ValidLifetime;
+    ULONG             PreferredLifetime;
+    ULONG             Metric;
+    NL_ROUTE_PROTOCOL Protocol;
+    BOOLEAN           Loopback;
+    BOOLEAN           AutoconfigureAddress;
+    BOOLEAN           Publish;
+    BOOLEAN           Immortal;
+    ULONG             Age;
+    NL_ROUTE_ORIGIN   Origin;
+} MIB_IPFORWARD_ROW2, *PMIB_IPFORWARD_ROW2;
+
+typedef struct _MIB_IPFORWARD_TABLE2
+{
+    ULONG              NumEntries;
+    MIB_IPFORWARD_ROW2 Table[ANY_SIZE];
+} MIB_IPFORWARD_TABLE2, *PMIB_IPFORWARD_TABLE2;
 
 typedef VOID (WINAPI *PIPINTERFACE_CHANGE_CALLBACK)(PVOID, PMIB_IPINTERFACE_ROW,
                                                     MIB_NOTIFICATION_TYPE);

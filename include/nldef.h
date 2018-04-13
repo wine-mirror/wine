@@ -28,6 +28,15 @@ typedef enum
     IpPrefixOriginUnchanged = 16,
 } NL_PREFIX_ORIGIN;
 
+typedef enum _NL_ROUTE_ORIGIN
+{
+    NlroManual,
+    NlroWellKnown,
+    NlroDHCP,
+    NlroRouterAdvertisement,
+    Nlro6to4,
+} NL_ROUTE_ORIGIN, *PNL_ROUTE_ORIGIN;
+
 typedef enum
 {
     IpSuffixOriginOther = 0,

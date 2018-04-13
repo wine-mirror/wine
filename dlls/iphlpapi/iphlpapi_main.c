@@ -3264,3 +3264,14 @@ PCHAR WINAPI IPHLP_if_indextoname(NET_IFINDEX index, PCHAR name)
 
     return getInterfaceNameByIndex(index, name);
 }
+
+/******************************************************************
+ *    GetIpForwardTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpForwardTable2(ADDRESS_FAMILY family, PMIB_IPFORWARD_TABLE2 *table)
+{
+    static int once;
+
+    if (!once++) FIXME("(%u %p): stub\n", family, table);
+    return ERROR_NOT_SUPPORTED;
+}
