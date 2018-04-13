@@ -1379,8 +1379,8 @@ static LONG WINAPI
 IRichEditOle_fnGetObjectCount(IRichEditOle *me)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
-    FIXME("stub %p\n",This);
-    return 0;
+    TRACE("(%p)\n",This);
+    return list_count(&This->editor->reobj_list);
 }
 
 static HRESULT WINAPI
