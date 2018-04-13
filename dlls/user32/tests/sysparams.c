@@ -2710,8 +2710,10 @@ static void test_GetSystemMetrics( void)
 
     ncm.cbSize = sizeof(ncm); /* Vista added padding */
     SetLastError(0xdeadbeef);
+    ncm.iPaddedBorderWidth = 0xcccc;
     rc = SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
     ok(rc || broken(!rc) /* before Vista */, "SystemParametersInfoA failed\n");
+    if (rc) ok( ncm.iPaddedBorderWidth == 0, "wrong iPaddedBorderWidth %u\n", ncm.iPaddedBorderWidth );
 
     minim.cbSize = sizeof( minim);
     ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth);

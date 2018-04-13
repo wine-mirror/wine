@@ -1616,10 +1616,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_GETNONCLIENTMETRICS:
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
+        int padded_border;
 
         if (!pvParam) return FALSE;
 
         ret = get_entry( &entry_BORDER, 0, &lpnm->iBorderWidth ) &&
+              get_entry( &entry_PADDEDBORDERWIDTH, 0, &padded_border ) &&
               get_entry( &entry_SCROLLWIDTH, 0, &lpnm->iScrollWidth ) &&
               get_entry( &entry_SCROLLHEIGHT, 0, &lpnm->iScrollHeight ) &&
               get_entry( &entry_CAPTIONWIDTH, 0, &lpnm->iCaptionWidth ) &&
@@ -1633,19 +1635,22 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
               get_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont ) &&
               get_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont ) &&
               get_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont );
-        if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-            ret = get_entry( &entry_PADDEDBORDERWIDTH, 0, &lpnm->iPaddedBorderWidth );
+        lpnm->iBorderWidth += padded_border;
+        if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW)) lpnm->iPaddedBorderWidth = 0;
         normalize_nonclientmetrics( lpnm );
         break;
     }
     case SPI_SETNONCLIENTMETRICS:
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
+        int padded_border;
 
         if (lpnm && (lpnm->cbSize == sizeof(NONCLIENTMETRICSW) ||
                      lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth)))
         {
-            ret = set_entry( &entry_BORDER, lpnm->iBorderWidth, NULL, fWinIni ) &&
+            get_entry( &entry_PADDEDBORDERWIDTH, 0, &padded_border );
+
+            ret = set_entry( &entry_BORDER, lpnm->iBorderWidth - padded_border, NULL, fWinIni ) &&
                   set_entry( &entry_SCROLLWIDTH, lpnm->iScrollWidth, NULL, fWinIni ) &&
                   set_entry( &entry_SCROLLHEIGHT, lpnm->iScrollHeight, NULL, fWinIni ) &&
                   set_entry( &entry_CAPTIONWIDTH, lpnm->iCaptionWidth, NULL, fWinIni ) &&
@@ -1659,9 +1664,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                   set_entry( &entry_SMCAPTIONLOGFONT, 0, &lpnm->lfSmCaptionFont, fWinIni ) &&
                   set_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont, fWinIni ) &&
                   set_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont, fWinIni );
-
-            if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-                set_entry( &entry_PADDEDBORDERWIDTH, lpnm->iPaddedBorderWidth, NULL, fWinIni );
         }
         break;
     }
