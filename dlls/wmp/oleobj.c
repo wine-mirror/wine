@@ -899,18 +899,20 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
 
     wmp->ref = 1;
 
-    init_player(wmp);
+    if (init_player(wmp)) {
+        ConnectionPointContainer_Init(wmp);
+        hdc = GetDC(0);
+        dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+        dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+        ReleaseDC(0, hdc);
 
-    ConnectionPointContainer_Init(wmp);
-    hdc = GetDC(0);
-    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
-    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
-    ReleaseDC(0, hdc);
+        wmp->extent.cx = MulDiv(192, 2540, dpi_x);
+        wmp->extent.cy = MulDiv(192, 2540, dpi_y);
 
-    wmp->extent.cx = MulDiv(192, 2540, dpi_x);
-    wmp->extent.cy = MulDiv(192, 2540, dpi_y);
-
-    hres = IOleObject_QueryInterface(&wmp->IOleObject_iface, riid, ppv);
+        hres = IOleObject_QueryInterface(&wmp->IOleObject_iface, riid, ppv);
+    } else {
+        hres = E_FAIL;
+    }
     IOleObject_Release(&wmp->IOleObject_iface);
     return hres;
 }

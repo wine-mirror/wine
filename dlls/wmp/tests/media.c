@@ -40,16 +40,15 @@
         called_ ## kind |= (1 << index); \
     }while(0)
 
-#define CHECK_CALLED(kind, index) \
+#define CLEAR_CALLED(kind, index) \
     do { \
-        ok(called_ ## kind & (1 << index), "expected " #kind ", %d\n", index); \
         expect_ ## kind &= ~(1 << index); \
         called_ ## kind &= ~(1 << index); \
     }while(0)
 
-#define CHECK_CALLED_OR_BROKEN(kind, index) \
+#define CHECK_CALLED(kind, index) \
     do { \
-        ok(called_ ## kind & (1 << index) || broken(1), "expected " #kind ", %d\n", index); \
+        ok(called_ ## kind & (1 << index), "expected " #kind ", %d\n", index); \
         expect_ ## kind &= ~(1 << index); \
         called_ ## kind &= ~(1 << index); \
     }while(0)
@@ -65,9 +64,11 @@ DEFINE_EXPECT(PLAYSTATE);
 DEFINE_EXPECT(OPENSTATE);
 
 static HANDLE playing_event;
+static HANDLE completed_event;
 static DWORD main_thread_id;
 
 static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
+static const WCHAR mp3file1s[] = {'t','e','s','t','1','s','.','m','p','3',0};
 static inline WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -151,6 +152,8 @@ static HRESULT WINAPI WMPOCXEvents_Invoke(IDispatch *iface, DISPID dispIdMember,
             CHECK_EXPECT(PLAYSTATE, V_UI4(pDispParams->rgvarg));
             if (V_UI4(pDispParams->rgvarg) == wmppsPlaying) {
                 SetEvent(playing_event);
+            } else if (V_UI4(pDispParams->rgvarg) == wmppsMediaEnded) {
+                SetEvent(completed_event);
             }
             if (winetest_debug > 1)
                 trace("DISPID_WMPCOREEVENT_PLAYSTATECHANGE, %d\n", V_UI4(pDispParams->rgvarg));
@@ -208,18 +211,16 @@ static HRESULT pump_messages(DWORD timeout, DWORD count, const HANDLE *handles) 
     return res;
 }
 
-static void test_wmp(void)
+static void test_completion_event(void)
 {
     DWORD res = 0;
     IWMPPlayer4 *player4;
-    IWMPControls *controls;
     HRESULT hres;
     BSTR filename;
     IConnectionPointContainer *container;
     IConnectionPoint *point;
     IOleObject *oleobj;
     static DWORD dw = 100;
-    IWMPSettings *settings;
 
     hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
     if(hres == REGDB_E_CLASSNOTREG) {
@@ -232,6 +233,86 @@ static void test_wmp(void)
     ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
+    IConnectionPointContainer_Release(container);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+
+    hres = IConnectionPoint_Advise(point, (IUnknown*)&WMPOCXEvents, &dw);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
+    ok(hres == S_OK, "Could not get IWMPPlayer4 iface: %08x\n", hres);
+
+    filename = SysAllocString(load_resource(mp3file1s));
+
+    SET_EXPECT(OPENSTATE, wmposPlaylistChanging);
+    SET_EXPECT(OPENSTATE, wmposPlaylistOpenNoMedia);
+    SET_EXPECT(OPENSTATE, wmposPlaylistChanged);
+    SET_EXPECT(OPENSTATE, wmposOpeningUnknownURL);
+    SET_EXPECT(OPENSTATE, wmposMediaOpen);
+    SET_EXPECT(OPENSTATE, wmposMediaOpening);
+    SET_EXPECT(PLAYSTATE, wmppsPlaying);
+    SET_EXPECT(PLAYSTATE, wmppsMediaEnded);
+    SET_EXPECT(PLAYSTATE, wmppsStopped);
+    SET_EXPECT(PLAYSTATE, wmppsTransitioning);
+    /* following two are sent on vistau64 vms only */
+    SET_EXPECT(OPENSTATE, wmposMediaChanging);
+    SET_EXPECT(PLAYSTATE, wmppsReady);
+    hres = IWMPPlayer4_put_URL(player4, filename);
+    ok(hres == S_OK, "IWMPPlayer4_put_URL failed: %08x\n", hres);
+    res = pump_messages(3000, 1, &completed_event);
+    ok(res == WAIT_OBJECT_0, "Timed out while waiting for media to complete\n");
+
+    /* following two are sent on vistau64 vms only */
+    CLEAR_CALLED(OPENSTATE, wmposMediaChanging);
+    CLEAR_CALLED(PLAYSTATE, wmppsReady);
+
+    CHECK_CALLED(OPENSTATE, wmposPlaylistChanging);
+    CHECK_CALLED(OPENSTATE, wmposPlaylistChanged);
+    CHECK_CALLED(OPENSTATE, wmposPlaylistOpenNoMedia);
+    CHECK_CALLED(PLAYSTATE, wmppsTransitioning);
+    CHECK_CALLED(OPENSTATE, wmposOpeningUnknownURL);
+    CHECK_CALLED(OPENSTATE, wmposMediaOpen);
+    CHECK_CALLED(PLAYSTATE, wmppsPlaying);
+    CHECK_CALLED(PLAYSTATE, wmppsMediaEnded);
+    CHECK_CALLED(PLAYSTATE, wmppsStopped);
+    /* MediaOpening happens only on xp, 2003 */
+    CLEAR_CALLED(OPENSTATE, wmposMediaOpening);
+
+    hres = IConnectionPoint_Unadvise(point, dw);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+
+    IConnectionPoint_Release(point);
+    IWMPPlayer4_Release(player4);
+    IOleObject_Release(oleobj);
+    DeleteFileW(filename);
+    SysFreeString(filename);
+}
+
+static BOOL test_wmp(void)
+{
+    DWORD res = 0;
+    IWMPPlayer4 *player4;
+    IWMPControls *controls;
+    HRESULT hres;
+    BSTR filename;
+    IConnectionPointContainer *container;
+    IConnectionPoint *point;
+    IOleObject *oleobj;
+    static DWORD dw = 100;
+    IWMPSettings *settings;
+    BOOL test_ran = TRUE;
+
+    hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
+    if(hres == REGDB_E_CLASSNOTREG) {
+        win_skip("CLSID_WindowsMediaPlayer not registered\n");
+        return FALSE;
+    }
+    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
     IConnectionPointContainer_Release(container);
@@ -277,9 +358,10 @@ static void test_wmp(void)
 
     SET_EXPECT(OPENSTATE, wmposOpeningUnknownURL);
     SET_EXPECT(OPENSTATE, wmposMediaOpen);
-    SET_EXPECT(OPENSTATE, wmposMediaOpening);
     SET_EXPECT(PLAYSTATE, wmppsPlaying);
     SET_EXPECT(PLAYSTATE, wmppsTransitioning);
+    /* MediaOpening happens only on xp, 2003 */
+    SET_EXPECT(OPENSTATE, wmposMediaOpening);
     hres = IWMPControls_play(controls);
     ok(hres == S_OK, "IWMPControls_play failed: %08x\n", hres);
     res = pump_messages(5000, 1, &playing_event);
@@ -288,14 +370,15 @@ static void test_wmp(void)
         /* This happens on Vista Ultimate 64 vms
          * I have been unable to find out source of this behaviour */
         win_skip("Failed to transition media to playing state.\n");
+        test_ran = FALSE;
         goto playback_skip;
     }
     CHECK_CALLED(OPENSTATE, wmposOpeningUnknownURL);
     CHECK_CALLED(OPENSTATE, wmposMediaOpen);
-    /* MediaOpening happens only on xp, 2003 */
-    todo_wine CHECK_CALLED_OR_BROKEN(OPENSTATE, wmposMediaOpening);
     CHECK_CALLED(PLAYSTATE, wmppsPlaying);
     CHECK_CALLED(PLAYSTATE, wmppsTransitioning);
+    /* MediaOpening happens only on xp, 2003 */
+    CLEAR_CALLED(OPENSTATE, wmposMediaOpening);
 
     SET_EXPECT(PLAYSTATE, wmppsStopped);
     /* The following happens on wine only since we close media on stop */
@@ -331,6 +414,8 @@ playback_skip:
     IOleObject_Release(oleobj);
     DeleteFileW(filename);
     SysFreeString(filename);
+
+    return test_ran;
 }
 
 START_TEST(media)
@@ -339,9 +424,15 @@ START_TEST(media)
 
     main_thread_id = GetCurrentThreadId();
     playing_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    test_wmp();
+    completed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (test_wmp()) {
+        test_completion_event();
+    } else {
+        win_skip("Failed to play media\n");
+    }
 
     CloseHandle(playing_event);
+    CloseHandle(completed_event);
 
     CoUninitialize();
 }

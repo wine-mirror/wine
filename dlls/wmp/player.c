@@ -24,6 +24,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
+static ATOM player_msg_class;
+static INIT_ONCE class_init_once;
+static UINT WM_WMPEVENT;
+static const WCHAR WMPmessageW[] = {'_', 'W', 'M', 'P', 'M','e','s','s','a','g','e',0};
+
+
 static void update_state(WindowsMediaPlayer *wmp, LONG type, LONG state)
 {
     DISPPARAMS dispparams;
@@ -212,18 +218,20 @@ static HRESULT WINAPI WMPPlayer4_put_currentMedia(IWMPPlayer4 *iface, IWMPMedia 
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
     TRACE("(%p)->(%p)\n", This, pMedia);
+
     if(pMedia == NULL) {
         return E_POINTER;
     }
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistChanging);
     if(This->wmpmedia != NULL) {
+        IWMPControls_stop(&This->IWMPControls_iface);
         IWMPMedia_Release(This->wmpmedia);
     }
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistChanged);
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
 
+    IWMPMedia_AddRef(pMedia);
     This->wmpmedia = pMedia;
-    IWMPMedia_AddRef(This->wmpmedia);
     return S_OK;
 }
 
@@ -1425,6 +1433,20 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
                     (void**)&This->media_control);
         if (SUCCEEDED(hres))
             update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposMediaOpen);
+        if (SUCCEEDED(hres))
+            hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaEvent,
+                    (void**)&This->media_event);
+        if (SUCCEEDED(hres))
+        {
+            IMediaEventEx *media_event_ex = NULL;
+            hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaEventEx,
+                    (void**)&media_event_ex);
+            if (SUCCEEDED(hres)) {
+                hres = IMediaEventEx_SetNotifyWindow(media_event_ex, (OAHWND)This->msg_window,
+                        WM_WMPEVENT, (LONG_PTR)This);
+                IMediaEventEx_Release(media_event_ex);
+            }
+        }
     }
 
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
@@ -1457,9 +1479,15 @@ static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
         hres = IMediaControl_Stop(This->media_control);
         IMediaControl_Release(This->media_control);
     }
+    if (This->media_event) {
+        IMediaEvent_Release(This->media_event);
+    }
+
     IGraphBuilder_Release(This->filter_graph);
     This->filter_graph = NULL;
     This->media_control = NULL;
+    This->media_event = NULL;
+
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsStopped);
     return hres;
@@ -1823,8 +1851,66 @@ static const IWMPMediaVtbl WMPMediaVtbl = {
     WMPMedia_isReadOnlyItem
 };
 
-void init_player(WindowsMediaPlayer *wmp)
+static LRESULT WINAPI player_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg == WM_WMPEVENT && wParam == 0) {
+        WindowsMediaPlayer *wmp = (WindowsMediaPlayer*)lParam;
+        LONG event_code;
+        LONG_PTR p1, p2;
+        HRESULT hr;
+        if (wmp->media_event) {
+            do {
+                hr = IMediaEvent_GetEvent(wmp->media_event, &event_code, &p1, &p2, 0);
+                if (SUCCEEDED(hr)) {
+                    TRACE("got event_code = 0x%02x\n", event_code);
+                    IMediaEvent_FreeEventParams(wmp->media_event, event_code, p1, p2);
+                    /* For now we only handle EC_COMPLETE */
+                    if (event_code == EC_COMPLETE) {
+                        update_state(wmp, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsMediaEnded);
+                        update_state(wmp, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
+                        update_state(wmp, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsStopped);
+                    }
+                }
+            } while (hr == S_OK);
+        } else {
+            FIXME("Got event from quartz when interfaces are already released\n");
+        }
+    }
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+static BOOL WINAPI register_player_msg_class(INIT_ONCE *once, void *param, void **context) {
+    static WNDCLASSEXW wndclass = {
+        sizeof(wndclass), CS_DBLCLKS, player_wnd_proc, 0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        WMPmessageW, NULL
+    };
+
+    wndclass.hInstance = wmp_instance;
+    player_msg_class = RegisterClassExW(&wndclass);
+    WM_WMPEVENT= RegisterWindowMessageW(WMPmessageW);
+    return TRUE;
+}
+
+void unregister_player_msg_class(void) {
+    if(player_msg_class)
+        UnregisterClassW(MAKEINTRESOURCEW(player_msg_class), wmp_instance);
+}
+
+BOOL init_player(WindowsMediaPlayer *wmp)
+{
+    InitOnceExecuteOnce(&class_init_once, register_player_msg_class, NULL, NULL);
+    wmp->msg_window = CreateWindowW( MAKEINTRESOURCEW(player_msg_class), NULL, 0, 0,
+            0, 0, 0, HWND_MESSAGE, 0, wmp_instance, wmp );
+    if (!wmp->msg_window) {
+        ERR("Failed to create message window, GetLastError: %d\n", GetLastError());
+        return FALSE;
+    }
+    if (!WM_WMPEVENT) {
+        ERR("Failed to register window message, GetLastError: %d\n", GetLastError());
+        return FALSE;
+    }
+
     wmp->IWMPPlayer4_iface.lpVtbl = &WMPPlayer4Vtbl;
     wmp->IWMPPlayer_iface.lpVtbl = &WMPPlayerVtbl;
     wmp->IWMPSettings_iface.lpVtbl = &WMPSettingsVtbl;
@@ -1833,6 +1919,7 @@ void init_player(WindowsMediaPlayer *wmp)
 
     wmp->invoke_urls = VARIANT_TRUE;
     wmp->auto_start = VARIANT_TRUE;
+    return TRUE;
 }
 
 void destroy_player(WindowsMediaPlayer *wmp)
@@ -1840,6 +1927,7 @@ void destroy_player(WindowsMediaPlayer *wmp)
     IWMPControls_stop(&wmp->IWMPControls_iface);
     if(wmp->wmpmedia)
         IWMPMedia_Release(wmp->wmpmedia);
+    DestroyWindow(wmp->msg_window);
 }
 
 WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface)
