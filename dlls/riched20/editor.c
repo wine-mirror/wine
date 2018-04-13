@@ -3113,6 +3113,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->wheel_remain = 0;
 
   list_init( &ed->style_list );
+  list_init( &ed->reobj_list );
   OleInitialize(NULL);
 
   return ed;

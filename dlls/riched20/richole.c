@@ -5284,11 +5284,11 @@ void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
   ENHMETAHEADER emh;
 
   assert(run->nFlags & MERF_GRAPHICS);
-  assert(run->ole_obj);
+  assert(run->reobj);
 
-  if (run->ole_obj->sizel.cx != 0 || run->ole_obj->sizel.cy != 0)
+  if (run->reobj->obj.sizel.cx != 0 || run->reobj->obj.sizel.cy != 0)
   {
-    convert_sizel(c, &run->ole_obj->sizel, pSize);
+    convert_sizel(c, &run->reobj->obj.sizel, pSize);
     if (c->editor->nZoomNumerator != 0)
     {
       pSize->cx = MulDiv(pSize->cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
@@ -5297,13 +5297,13 @@ void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
     return;
   }
 
-  if (!run->ole_obj->poleobj)
+  if (!run->reobj->obj.poleobj)
   {
     pSize->cx = pSize->cy = 0;
     return;
   }
 
-  if (IOleObject_QueryInterface(run->ole_obj->poleobj, &IID_IDataObject, (void**)&ido) != S_OK)
+  if (IOleObject_QueryInterface(run->reobj->obj.poleobj, &IID_IDataObject, (void**)&ido) != S_OK)
   {
       FIXME("Query Interface IID_IDataObject failed!\n");
       pSize->cx = pSize->cy = 0;
@@ -5366,13 +5366,13 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
   RECT          rc;
 
   assert(run->nFlags & MERF_GRAPHICS);
-  assert(run->ole_obj);
-  if (IOleObject_QueryInterface(run->ole_obj->poleobj, &IID_IDataObject, (void**)&ido) != S_OK)
+  assert(run->reobj);
+  if (IOleObject_QueryInterface(run->reobj->obj.poleobj, &IID_IDataObject, (void**)&ido) != S_OK)
   {
     FIXME("Couldn't get interface\n");
     return;
   }
-  has_size = run->ole_obj->sizel.cx != 0 || run->ole_obj->sizel.cy != 0;
+  has_size = run->reobj->obj.sizel.cx != 0 || run->reobj->obj.sizel.cy != 0;
   fmt.cfFormat = CF_BITMAP;
   fmt.ptd = NULL;
   fmt.dwAspect = DVASPECT_CONTENT;
@@ -5399,7 +5399,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
     old_bm = SelectObject(hMemDC, stgm.u.hBitmap);
     if (has_size)
     {
-      convert_sizel(c, &run->ole_obj->sizel, &sz);
+      convert_sizel(c, &run->reobj->obj.sizel, &sz);
     } else {
       sz.cx = dibsect.dsBm.bmWidth;
       sz.cy = dibsect.dsBm.bmHeight;
@@ -5419,7 +5419,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
     GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
     if (has_size)
     {
-      convert_sizel(c, &run->ole_obj->sizel, &sz);
+      convert_sizel(c, &run->reobj->obj.sizel, &sz);
     } else {
       sz.cx = emh.rclBounds.right - emh.rclBounds.left;
       sz.cy = emh.rclBounds.bottom - emh.rclBounds.top;
@@ -5447,12 +5447,12 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
     PatBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy, DSTINVERT);
 }
 
-void ME_DeleteReObject(REOBJECT* reo)
+void ME_DeleteReObject(struct re_object *reobj)
 {
-    if (reo->poleobj)   IOleObject_Release(reo->poleobj);
-    if (reo->pstg)      IStorage_Release(reo->pstg);
-    if (reo->polesite)  IOleClientSite_Release(reo->polesite);
-    heap_free(reo);
+    if (reobj->obj.poleobj)   IOleObject_Release(reobj->obj.poleobj);
+    if (reobj->obj.pstg)      IStorage_Release(reobj->obj.pstg);
+    if (reobj->obj.polesite)  IOleClientSite_Release(reobj->obj.polesite);
+    heap_free(reobj);
 }
 
 void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src)

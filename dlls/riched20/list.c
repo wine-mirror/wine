@@ -169,7 +169,11 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item)
 
   if (item->type==diRun)
   {
-    if (item->member.run.ole_obj) ME_DeleteReObject(item->member.run.ole_obj);
+    if (item->member.run.reobj)
+    {
+      list_remove(&item->member.run.reobj->entry);
+      ME_DeleteReObject(item->member.run.reobj);
+    }
     heap_free( item->member.run.glyphs );
     heap_free( item->member.run.clusters );
     ME_ReleaseStyle(item->member.run.style);
