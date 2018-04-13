@@ -1508,6 +1508,7 @@ enable_slc
 enable_snmpapi
 enable_softpub
 enable_spoolss
+enable_srclient
 enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
@@ -19001,6 +19002,7 @@ wine_fn_config_makefile dlls/softpub enable_softpub
 wine_fn_config_makefile dlls/sound.drv16 enable_win16
 wine_fn_config_makefile dlls/spoolss enable_spoolss
 wine_fn_config_makefile dlls/spoolss/tests enable_tests
+wine_fn_config_makefile dlls/srclient enable_srclient
 wine_fn_config_makefile dlls/sspicli enable_sspicli
 wine_fn_config_makefile dlls/stdole2.tlb enable_stdole2_tlb
 wine_fn_config_makefile dlls/stdole32.tlb enable_stdole32_tlb
