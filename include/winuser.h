@@ -4129,6 +4129,7 @@ WINUSERAPI VOID        WINAPI SwitchToThisWindow(HWND,BOOL);
 WINUSERAPI BOOL        WINAPI SystemParametersInfoA(UINT,UINT,LPVOID,UINT);
 WINUSERAPI BOOL        WINAPI SystemParametersInfoW(UINT,UINT,LPVOID,UINT);
 #define                       SystemParametersInfo WINELIB_NAME_AW(SystemParametersInfo)
+WINUSERAPI BOOL        WINAPI SystemParametersInfoForDpi(UINT,UINT,void*,UINT,UINT);
 WINUSERAPI LONG        WINAPI TabbedTextOutA(HDC,INT,INT,LPCSTR,INT,INT,const INT*,INT);
 WINUSERAPI LONG        WINAPI TabbedTextOutW(HDC,INT,INT,LPCWSTR,INT,INT,const INT*,INT);
 #define                       TabbedTextOut WINELIB_NAME_AW(TabbedTextOut)

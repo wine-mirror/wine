@@ -50,6 +50,7 @@ static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENE
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
 static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -1507,7 +1508,6 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     Ncmorig.iMenuHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_MENUHEIGHT_VALNAME, dpi);
     /* test registry entries */
     TEST_NONCLIENTMETRICS_REG( Ncmorig);
-    Ncmorig.lfCaptionFont.lfHeight = MulDiv( Ncmorig.lfCaptionFont.lfHeight, real_dpi, dpi );
 
     /* make small changes */
     Ncmnew = Ncmstart;
@@ -2900,6 +2900,98 @@ static void test_GetSystemMetrics( void)
     DeleteDC(hdc);
 }
 
+static void compare_font( const LOGFONTW *lf1, const LOGFONTW *lf2, int dpi, int custom_dpi, int line )
+{
+    ok_(__FILE__,line)( lf1->lfHeight == MulDiv( lf2->lfHeight, dpi, custom_dpi ),
+                        "wrong lfHeight %d vs %d\n", lf1->lfHeight, lf2->lfHeight );
+    ok_(__FILE__,line)( abs( lf1->lfWidth - MulDiv( lf2->lfWidth, dpi, custom_dpi )) <= 1,
+                        "wrong lfWidth %d vs %d\n", lf1->lfWidth, lf2->lfWidth );
+    ok_(__FILE__,line)( !memcmp( &lf1->lfEscapement, &lf2->lfEscapement,
+                                 offsetof( LOGFONTW, lfFaceName ) - offsetof( LOGFONTW, lfEscapement )),
+                        "font differs\n" );
+    ok_(__FILE__,line)( !lstrcmpW( lf1->lfFaceName, lf2->lfFaceName ), "wrong face name %s vs %s\n",
+                        wine_dbgstr_w( lf1->lfFaceName ), wine_dbgstr_w( lf2->lfFaceName ));
+}
+
+static void test_metrics_for_dpi( int custom_dpi )
+{
+    int i, val;
+    NONCLIENTMETRICSW ncm1, ncm2;
+    ICONMETRICSW im1, im2;
+    LOGFONTW lf1, lf2;
+    BOOL ret;
+
+    if (!pSystemParametersInfoForDpi)
+    {
+        win_skip( "custom dpi metrics not supported\n" );
+        return;
+    }
+
+    ncm1.cbSize = sizeof(ncm1);
+    ret = SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, sizeof(ncm1), &ncm1, FALSE );
+    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    ncm2.cbSize = sizeof(ncm2);
+    ret = pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, sizeof(ncm2), &ncm2, FALSE, custom_dpi );
+    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+
+    im1.cbSize = sizeof(im1);
+    ret = SystemParametersInfoW( SPI_GETICONMETRICS, sizeof(im1), &im1, FALSE );
+    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    im2.cbSize = sizeof(im2);
+    ret = pSystemParametersInfoForDpi( SPI_GETICONMETRICS, sizeof(im2), &im2, FALSE, custom_dpi );
+    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+    ok( im1.iHorzSpacing == MulDiv( im2.iHorzSpacing, dpi, custom_dpi ), "wrong iHorzSpacing %u vs %u\n",
+        im1.iHorzSpacing, im2.iHorzSpacing );
+    ok( im1.iVertSpacing == MulDiv( im2.iVertSpacing, dpi, custom_dpi ), "wrong iVertSpacing %u vs %u\n",
+        im1.iVertSpacing, im2.iVertSpacing );
+    ok( im1.iTitleWrap == im2.iTitleWrap, "wrong iTitleWrap %u vs %u\n",
+        im1.iTitleWrap, im2.iTitleWrap );
+    compare_font( &im1.lfFont, &im2.lfFont, dpi, custom_dpi, __LINE__ );
+
+    ret = SystemParametersInfoW( SPI_GETICONTITLELOGFONT, sizeof(lf1), &lf1, FALSE );
+    ok( ret, "SystemParametersInfoW failed err %u\n", GetLastError() );
+    ret = pSystemParametersInfoForDpi( SPI_GETICONTITLELOGFONT, sizeof(lf2), &lf2, FALSE, custom_dpi );
+    ok( ret, "SystemParametersInfoForDpi failed err %u\n", GetLastError() );
+    compare_font( &lf1, &lf2, dpi, custom_dpi, __LINE__ );
+
+    /* on high-dpi iPaddedBorderWidth is used in addition to iBorderWidth */
+    ok( ncm1.iBorderWidth + ncm1.iPaddedBorderWidth == MulDiv( ncm2.iBorderWidth + ncm2.iPaddedBorderWidth, dpi, custom_dpi ),
+        "wrong iBorderWidth %u+%u vs %u+%u\n",
+        ncm1.iBorderWidth, ncm1.iPaddedBorderWidth, ncm2.iBorderWidth, ncm2.iPaddedBorderWidth );
+    ok( ncm1.iScrollWidth == MulDiv( ncm2.iScrollWidth, dpi, custom_dpi ),
+        "wrong iScrollWidth %u vs %u\n", ncm1.iScrollWidth, ncm2.iScrollWidth );
+    ok( ncm1.iScrollHeight == MulDiv( ncm2.iScrollHeight, dpi, custom_dpi ),
+        "wrong iScrollHeight %u vs %u\n", ncm1.iScrollHeight, ncm2.iScrollHeight );
+    ok( ((ncm1.iCaptionWidth + 1) & ~1) == ((MulDiv( ncm2.iCaptionWidth, dpi, custom_dpi ) + 1) & ~1),
+        "wrong iCaptionWidth %u vs %u\n", ncm1.iCaptionWidth, ncm2.iCaptionWidth );
+    ok( ncm1.iCaptionHeight == MulDiv( ncm2.iCaptionHeight, dpi, custom_dpi ),
+        "wrong iCaptionHeight %u vs %u\n", ncm1.iCaptionHeight, ncm2.iCaptionHeight );
+    compare_font( &ncm1.lfCaptionFont, &ncm2.lfCaptionFont, dpi, custom_dpi, __LINE__ );
+    ok( ncm1.iSmCaptionHeight == MulDiv( ncm2.iSmCaptionHeight, dpi, custom_dpi ),
+        "wrong iSmCaptionHeight %u vs %u\n", ncm1.iSmCaptionHeight, ncm2.iSmCaptionHeight );
+    compare_font( &ncm1.lfSmCaptionFont, &ncm2.lfSmCaptionFont, dpi, custom_dpi, __LINE__ );
+    ok( ncm1.iMenuHeight == MulDiv( ncm2.iMenuHeight, dpi, custom_dpi ),
+        "wrong iMenuHeight %u vs %u\n", ncm1.iMenuHeight, ncm2.iMenuHeight );
+    /* iSmCaptionWidth and iMenuWidth apparently need to be multiples of 8 */
+    ok( ncm1.iSmCaptionWidth / 8 == MulDiv( ncm2.iSmCaptionWidth, dpi, custom_dpi ) / 8,
+        "wrong iSmCaptionWidth %u vs %u\n", ncm1.iSmCaptionWidth, ncm2.iSmCaptionWidth );
+    ok( ncm1.iMenuWidth / 8 == MulDiv( ncm2.iMenuWidth, dpi, custom_dpi ) / 8,
+        "wrong iMenuWidth %u vs %u\n", ncm1.iMenuWidth, ncm2.iMenuWidth );
+    compare_font( &ncm1.lfMenuFont, &ncm2.lfMenuFont, dpi, custom_dpi, __LINE__ );
+    compare_font( &ncm1.lfStatusFont, &ncm2.lfStatusFont, dpi, custom_dpi, __LINE__ );
+    compare_font( &ncm1.lfMessageFont, &ncm2.lfMessageFont, dpi, custom_dpi, __LINE__ );
+
+    for (i = 1; i < 120; i++)
+    {
+        if (i == SPI_GETICONTITLELOGFONT || i == SPI_GETNONCLIENTMETRICS || i == SPI_GETICONMETRICS)
+            continue;
+        SetLastError( 0xdeadbeef );
+        ret = pSystemParametersInfoForDpi( i, 0, &val, 0, custom_dpi );
+        ok( !ret, "%u: SystemParametersInfoForDpi succeeded\n", i );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "%u: wrong error %u\n", i, GetLastError() );
+    }
+}
+
 static void test_EnumDisplaySettings(void)
 {
     DEVMODEA devmode;
@@ -3199,6 +3291,8 @@ static void test_dpi_aware(void)
     if (pGetDpiForSystem) real_dpi = pGetDpiForSystem();
     dpi = real_dpi;
     test_GetSystemMetrics();
+    test_metrics_for_dpi( 96 );
+    test_metrics_for_dpi( 192 );
 }
 
 static void test_window_dpi(void)
@@ -3282,6 +3376,7 @@ START_TEST(sysparams)
     pGetWindowDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetWindowDpiAwarenessContext");
     pGetAwarenessFromDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetAwarenessFromDpiAwarenessContext");
     pIsValidDpiAwarenessContext = (void*)GetProcAddress(hdll, "IsValidDpiAwarenessContext");
+    pSystemParametersInfoForDpi = (void*)GetProcAddress(hdll, "SystemParametersInfoForDpi");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
@@ -3300,7 +3395,7 @@ START_TEST(sysparams)
 
     trace("testing GetSystemMetrics with your current desktop settings\n");
     test_GetSystemMetrics( );
-    trace("testing EnumDisplaySettings vs GetDeviceCaps\n");
+    test_metrics_for_dpi( 192 );
     test_EnumDisplaySettings( );
     test_GetSysColorBrush( );
 
