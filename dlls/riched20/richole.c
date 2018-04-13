@@ -1371,8 +1371,38 @@ IRichEditOle_fnGetObject(IRichEditOle *me, LONG iob,
                REOBJECT *lpreobject, DWORD dwFlags)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    struct re_object *reobj = NULL;
+    LONG count = 0;
+
+    TRACE("(%p)->(%x, %p, %x)\n", This, iob, lpreobject, dwFlags);
+
+    if (!lpreobject || !lpreobject->cbStruct)
+        return E_INVALIDARG;
+
+    if (iob == REO_IOB_USE_CP)
+    {
+        ME_Cursor cursor;
+
+        TRACE("character offset: %d\n", lpreobject->cp);
+        ME_CursorFromCharOfs(This->editor, lpreobject->cp, &cursor);
+        if (!cursor.pRun->member.run.reobj)
+            return E_INVALIDARG;
+        else
+            reobj = cursor.pRun->member.run.reobj;
+    }
+    else
+    {
+        if (iob > IRichEditOle_GetObjectCount(me))
+            return E_INVALIDARG;
+        LIST_FOR_EACH_ENTRY(reobj, &This->editor->reobj_list, struct re_object, entry)
+        {
+            if (count == iob)
+                break;
+            count++;
+        }
+    }
+    ME_CopyReObject(lpreobject, &reobj->obj, dwFlags);
+    return S_OK;
 }
 
 static LONG WINAPI
@@ -5455,13 +5485,28 @@ void ME_DeleteReObject(struct re_object *reobj)
     heap_free(reobj);
 }
 
-void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src)
+void ME_CopyReObject(REOBJECT *dst, const REOBJECT *src, DWORD flags)
 {
     *dst = *src;
+    dst->poleobj = NULL;
+    dst->pstg = NULL;
+    dst->polesite = NULL;
 
-    if (dst->poleobj)   IOleObject_AddRef(dst->poleobj);
-    if (dst->pstg)      IStorage_AddRef(dst->pstg);
-    if (dst->polesite)  IOleClientSite_AddRef(dst->polesite);
+    if ((flags & REO_GETOBJ_POLEOBJ) && src->poleobj)
+    {
+        dst->poleobj = src->poleobj;
+        IOleObject_AddRef(dst->poleobj);
+    }
+    if ((flags & REO_GETOBJ_PSTG) && src->pstg)
+    {
+        dst->pstg = src->pstg;
+        IStorage_AddRef(dst->pstg);
+    }
+    if ((flags & REO_GETOBJ_POLESITE) && src->polesite)
+    {
+        dst->polesite = src->polesite;
+        IOleClientSite_AddRef(dst->polesite);
+    }
 }
 
 void ME_GetITextDocumentInterface(IRichEditOle *iface, LPVOID *ppvObj)

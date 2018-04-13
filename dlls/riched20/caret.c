@@ -480,7 +480,7 @@ static struct re_object* create_re_object(const REOBJECT *reo)
     WARN("Fail to allocate re_object.\n");
     return NULL;
   }
-  ME_CopyReObject(&reobj->obj, reo);
+  ME_CopyReObject(&reobj->obj, reo, REO_GETOBJ_ALL_INTERFACES);
   return reobj;
 }
 
