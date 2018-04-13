@@ -54,7 +54,6 @@ static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static BOOL strict;
 static int dpi, real_dpi;
 static BOOL iswin9x;
-static HDC hdc;
 
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
@@ -1443,21 +1442,21 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     ok(rc, "***warning*** failed to restore the original value: rc=%d err=%d\n", rc, GetLastError());
 }
 
-#define test_reg_metric( KEY, VAL, val) \
-{   INT regval;\
+#define test_reg_metric( KEY, VAL, val) do { \
+    INT regval;\
     regval = metricfromreg( KEY, VAL, dpi);\
     ok( regval==val, "wrong value \"%s\" in registry %d, expected %d\n", VAL, regval, val);\
-}
- 
-#define test_reg_metric2( KEY1, KEY2, VAL, val) \
-{   INT regval;\
+} while(0)
+
+#define test_reg_metric2( KEY1, KEY2, VAL, val) do { \
+    INT regval;\
     regval = metricfromreg( KEY1, VAL, dpi);\
     if( regval != val) regval = metricfromreg( KEY2, VAL, dpi);\
     ok( regval==val, "wrong value \"%s\" in registry %d, expected %d\n", VAL, regval, val);\
-}
+} while(0)
 
-#define test_reg_font( KEY, VAL, LF) \
-{   LOGFONTA lfreg;\
+#define test_reg_font( KEY, VAL, LF) do { \
+    LOGFONTA lfreg;\
     lffromreg( KEY, VAL, &lfreg);\
     ok( (lfreg.lfHeight < 0 ? (LF).lfHeight == MulDiv( lfreg.lfHeight, dpi, real_dpi ) : \
                 MulDiv( -(LF).lfHeight , 72, dpi) == lfreg.lfHeight )&&\
@@ -1465,9 +1464,9 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
         (LF).lfWeight == lfreg.lfWeight &&\
         !strcmp( (LF).lfFaceName, lfreg.lfFaceName)\
         , "wrong value \"%s\" in registry %d, %d\n", VAL, (LF).lfHeight, lfreg.lfHeight);\
-}
+} while(0)
 
-#define TEST_NONCLIENTMETRICS_REG( ncm) \
+#define TEST_NONCLIENTMETRICS_REG( ncm) do { \
 /*FIXME: test_reg_metric2( SPI_SETBORDER_REGKEY2, SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, (ncm).iBorderWidth);*/\
 test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLWIDTH_VALNAME, (ncm).iScrollWidth);\
 test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLHEIGHT_VALNAME, (ncm).iScrollHeight);\
@@ -1481,16 +1480,18 @@ test_reg_font( SPI_METRIC_REGKEY, SPI_MENUFONT_VALNAME, (ncm).lfMenuFont);\
 test_reg_font( SPI_METRIC_REGKEY, SPI_CAPTIONFONT_VALNAME, (ncm).lfCaptionFont);\
 test_reg_font( SPI_METRIC_REGKEY, SPI_SMCAPTIONFONT_VALNAME, (ncm).lfSmCaptionFont);\
 test_reg_font( SPI_METRIC_REGKEY, SPI_STATUSFONT_VALNAME, (ncm).lfStatusFont);\
-test_reg_font( SPI_METRIC_REGKEY, SPI_MESSAGEFONT_VALNAME, (ncm).lfMessageFont);
+test_reg_font( SPI_METRIC_REGKEY, SPI_MESSAGEFONT_VALNAME, (ncm).lfMessageFont); } while(0)
 
 /* get text metric height value for the specified logfont */
 static int get_tmheight( LOGFONTA *plf, int flag)
 {
     TEXTMETRICA tm;
+    HDC hdc = GetDC(0);
     HFONT hfont = CreateFontIndirectA( plf);
     hfont = SelectObject( hdc, hfont);
     GetTextMetricsA( hdc, &tm);
     hfont = SelectObject( hdc, hfont);
+    ReleaseDC( 0, hdc );
     return tm.tmHeight + (flag ? tm.tmExternalLeading : 0);
 }
 
@@ -1528,7 +1529,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     Ncmorig.iSmCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_SMCAPTIONHEIGHT_VALNAME, dpi);
     Ncmorig.iMenuHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_MENUHEIGHT_VALNAME, dpi);
     /* test registry entries */
-    TEST_NONCLIENTMETRICS_REG( Ncmorig)
+    TEST_NONCLIENTMETRICS_REG( Ncmorig);
     Ncmorig.lfCaptionFont.lfHeight = MulDiv( Ncmorig.lfCaptionFont.lfHeight, real_dpi, dpi );
 
     /* make small changes */
@@ -1567,7 +1568,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSA), &Ncmcur, FALSE );
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
     /* test registry entries */
-    TEST_NONCLIENTMETRICS_REG( Ncmcur)
+    TEST_NONCLIENTMETRICS_REG( Ncmcur );
     /* test the system metrics with these settings */
     test_GetSystemMetrics();
     /* now for something invalid: increase the {menu|caption|smcaption} fonts
@@ -1587,7 +1588,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
     test_change_message( SPI_SETNONCLIENTMETRICS, 1 );
     /* raw values are in registry */
-    TEST_NONCLIENTMETRICS_REG( Ncmnew)
+    TEST_NONCLIENTMETRICS_REG( Ncmnew );
     /* get them back */
     rc=SystemParametersInfoA( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSA), &Ncmcur, FALSE );
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
@@ -3304,6 +3305,7 @@ START_TEST(sysparams)
     char** argv;
     WNDCLASSA wc;
     MSG msg;
+    HDC hdc;
     HANDLE hThread;
     DWORD dwThreadId;
     HANDLE hInstance, hdll;
@@ -3327,6 +3329,7 @@ START_TEST(sysparams)
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
     real_dpi = get_real_dpi();
     trace("dpi %d real_dpi %d\n", dpi, real_dpi);
+    ReleaseDC( 0, hdc);
     iswin9x = GetVersion() & 0x80000000;
 
     /* This test requires interactivity, if we don't have it, give up */
@@ -3369,7 +3372,6 @@ START_TEST(sysparams)
         TranslateMessage( &msg );
         DispatchMessageA( &msg );
     }
-    ReleaseDC( 0, hdc);
 
     test_dpi_aware();
     test_window_dpi();
