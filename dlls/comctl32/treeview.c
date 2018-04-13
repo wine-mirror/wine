@@ -1125,8 +1125,10 @@ TREEVIEW_DoSetItemT(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     if (tvItem->mask & TVIF_TEXT)
     {
         item->textWidth = 0; /* force width recalculation */
-	if (tvItem->pszText != LPSTR_TEXTCALLBACKW && tvItem->pszText != NULL) /* covers != TEXTCALLBACKA too, and undocumented: pszText of NULL also means TEXTCALLBACK */
-	{
+
+        /* Covers != TEXTCALLBACKA too, and undocumented: pszText of NULL also means TEXTCALLBACK */
+        if (tvItem->pszText != LPSTR_TEXTCALLBACKW && tvItem->pszText != NULL)
+        {
             int len;
             LPWSTR newText;
             if (isW)
@@ -1134,12 +1136,14 @@ TREEVIEW_DoSetItemT(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
             else
                 len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)tvItem->pszText, -1, NULL, 0);
 
-            newText  = heap_realloc(item->pszText, len * sizeof(WCHAR));
+            /* Allocate new block to make pointer comparison in item_changed() work. */
+            newText = heap_alloc(len * sizeof(WCHAR));
 
             if (newText == NULL) return FALSE;
 
             callbackClear |= TVIF_TEXT;
 
+            heap_free(item->pszText);
             item->pszText = newText;
             item->cchTextMax = len;
             if (isW)
@@ -2199,7 +2203,7 @@ TREEVIEW_SetItemT(TREEVIEW_INFO *infoPtr, const TVITEMEXW *tvItem, BOOL isW)
     if (!TREEVIEW_ValidItem(infoPtr, item))
 	return FALSE;
 
-    /* store the original item values */
+    /* Store the original item values. Text buffer will be freed in TREEVIEW_DoSetItemT() below. */
     originalItem = *item;
 
     if (!TREEVIEW_DoSetItemT(infoPtr, item, tvItem, isW))
