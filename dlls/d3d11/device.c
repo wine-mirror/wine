@@ -979,7 +979,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11Devic
     wined3d_vp.max_z = viewports[0].MaxDepth;
 
     wined3d_mutex_lock();
-    wined3d_device_set_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_device_set_viewports(device->wined3d_device, 1, &wined3d_vp);
     wined3d_mutex_unlock();
 }
 
@@ -4167,7 +4167,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,
     wined3d_vp.max_z = viewports[0].MaxDepth;
 
     wined3d_mutex_lock();
-    wined3d_device_set_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_device_set_viewports(device->wined3d_device, 1, &wined3d_vp);
     wined3d_mutex_unlock();
 }
 
