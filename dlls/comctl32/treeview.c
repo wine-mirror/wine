@@ -2641,7 +2641,9 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 
             ImageList_DrawEx(infoPtr->himlNormal, imageIndex, hdc,
                          item->imageOffset, centery - infoPtr->normalImageHeight / 2,
-                         0, 0, infoPtr->clrBk, item->state & TVIS_CUT ? GETBKCOLOR(infoPtr->clrBk) : CLR_DEFAULT,
+                         0, 0,
+                         TREEVIEW_IsFullRowSelect(infoPtr) ? nmcdhdr.clrTextBk : infoPtr->clrBk,
+                         item->state & TVIS_CUT ? GETBKCOLOR(infoPtr->clrBk) : CLR_DEFAULT,
                          style);
 	}
     }
