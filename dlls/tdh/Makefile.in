@@ -2,3 +2,5 @@ MODULE    = tdh.dll
 
 C_SRCS = \
 	tdh_main.c
+
+RC_SRCS = version.rc
