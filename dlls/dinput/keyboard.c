@@ -86,7 +86,8 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
         wparam != WM_SYSKEYDOWN && wparam != WM_SYSKEYUP)
         return 0;
 
-    TRACE("(%p) %ld,%ld\n", iface, wparam, lparam);
+    TRACE("(%p) wp %08lx, lp %08lx, vk %02x, scan %02x\n",
+          iface, wparam, lparam, hook->vkCode, hook->scanCode);
 
     switch (hook->vkCode)
     {
