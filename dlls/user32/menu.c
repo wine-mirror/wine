@@ -165,8 +165,6 @@ typedef struct
 #define STATE_MASK (~TYPE_MASK)
 #define MENUITEMINFO_STATE_MASK (STATE_MASK & ~(MF_BYPOSITION | MF_MOUSESELECT))
 
-#define WIN_ALLOWED_MENU(style) ((style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-
 static SIZE     menucharsize;
 static UINT     ODitemheight; /* default owner drawn item height */      
 
@@ -181,6 +179,11 @@ static BOOL fEndMenu = FALSE;
 DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
 
 static BOOL SetMenuItemInfo_common( MENUITEM *, const MENUITEMINFOW *, BOOL);
+
+static BOOL is_win_menu_disallowed(HWND hwnd)
+{
+    return (GetWindowLongW(hwnd, GWL_STYLE) & (WS_CHILD | WS_POPUP)) == WS_CHILD;
+}
 
 /*********************************************************************
  * menu class descriptor
@@ -3442,7 +3445,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 
     /* find window that has a menu */
 
-    while (!WIN_ALLOWED_MENU(GetWindowLongW( hwnd, GWL_STYLE )))
+    while (is_win_menu_disallowed(hwnd))
         if (!(hwnd = GetAncestor( hwnd, GA_PARENT ))) return;
 
     /* check if we have to track a system menu */
@@ -4375,7 +4378,7 @@ BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
         WARN("hMenu %p is not a menu handle\n", hMenu);
         return FALSE;
     }
-    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+    if (is_win_menu_disallowed(hWnd))
         return FALSE;
 
     hWnd = WIN_GetFullHandle( hWnd );
@@ -4432,7 +4435,7 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
 
     if (!IsWindow( hWnd ))
         return FALSE;
-    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+    if (is_win_menu_disallowed(hWnd))
         return TRUE;
 
     if ((hMenu = GetMenu( hWnd )))
