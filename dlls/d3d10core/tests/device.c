@@ -5473,12 +5473,11 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
     for (i = 0; i < D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
-        todo_wine_if(!i)
-            ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
-                    && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
-                    "Got unexpected viewport {%d, %d, %u, %u, %.8e, %.8e} in slot %u.\n",
-                    tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
-                    tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
+        ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
+                && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
+                "Got unexpected viewport {%d, %d, %u, %u, %.8e, %.8e} in slot %u.\n",
+                tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
+                tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
     }
     ID3D10Device_RSGetState(device, &tmp_rs_state);
     ok(!tmp_rs_state, "Got unexpected rasterizer state %p.\n", tmp_rs_state);
@@ -16191,6 +16190,7 @@ static void test_multiple_viewports(void)
         unsigned int draw_id;
         unsigned int padding[3];
     } constant;
+    D3D10_VIEWPORT vp[D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE + 1];
     struct d3d10core_test_context test_context;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10RenderTargetView *rtv;
@@ -16277,7 +16277,7 @@ static void test_multiple_viewports(void)
         {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 2.0f}, {0.5f, 0.5f}, {0.5f, 0.5f},
     };
     static const float clear_color[] = {0.5f, 0.5f, 0.0f, 0.0f};
-    D3D10_VIEWPORT vp[2];
+    unsigned int count, i;
     RECT rect;
     int width;
 
@@ -16340,7 +16340,6 @@ static void test_multiple_viewports(void)
     SetRect(&rect, 0, 0, width - 1, texture_desc.Height - 1);
     check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[0], 1);
     SetRect(&rect, width, 0, 2 * width - 1, texture_desc.Height - 1);
-todo_wine
     check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[1], 1);
 
     /* One viewport. */
@@ -16360,8 +16359,29 @@ todo_wine
     constant.draw_id = 3;
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
     draw_quad(&test_context);
-todo_wine
     check_texture_sub_resource_vec4(texture, 0, NULL, &expected_values[4], 1);
+
+    /* Viewport count exceeding maximum value. */
+    ID3D10Device_RSSetViewports(device, 1, vp);
+
+    vp[0].TopLeftX = 1.0f;
+    vp[0].TopLeftY = 0.0f;
+    vp[0].Width = width;
+    vp[0].Height = texture_desc.Height;
+    vp[0].MinDepth = 0.0f;
+    vp[0].MaxDepth = 1.0f;
+    for (i = 1; i < ARRAY_SIZE(vp); ++i)
+    {
+        vp[i] = vp[0];
+    }
+    ID3D10Device_RSSetViewports(device, ARRAY_SIZE(vp), vp);
+
+    count = ARRAY_SIZE(vp);
+    memset(vp, 0, sizeof(vp));
+    ID3D10Device_RSGetViewports(device, &count, vp);
+todo_wine
+    ok(count == 1, "Unexpected viewport count %d.\n", count);
+    ok(vp[0].TopLeftX == 0.0f && vp[0].Width == width, "Unexpected viewport.\n");
 
     ID3D10RenderTargetView_Release(rtv);
     ID3D10Texture2D_Release(texture);
