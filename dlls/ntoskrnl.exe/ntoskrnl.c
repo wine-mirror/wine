@@ -1679,6 +1679,20 @@ PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLI
     return InterlockedPushEntrySList( list, entry );
 }
 
+/***********************************************************************
+ *           ExInterlockedPushEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL3_ENTRYPOINT
+DEFINE_FASTCALL3_ENTRYPOINT( NTOSKRNL_ExInterlockedPushEntrySList )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_ExInterlockedPushEntrySList( PSLIST_HEADER list,
+                                                                               PSLIST_ENTRY entry,
+                                                                               PKSPIN_LOCK lock )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_ExInterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry, PKSPIN_LOCK lock )
+#endif
+{
+    return InterlockedPushEntrySList( list, entry );
+}
 
 /***********************************************************************
  *           ExAllocatePool   (NTOSKRNL.EXE.@)

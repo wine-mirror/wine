@@ -6,7 +6,7 @@
 @ stub ExInterlockedCompareExchange64
 @ stub ExInterlockedFlushSList
 @ stdcall -norelay ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
-@ stub ExInterlockedPushEntrySList
+@ stdcall -norelay ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
 @ stdcall -norelay ExReleaseFastMutexUnsafe(ptr)
 @ stub ExReleaseResourceLite
