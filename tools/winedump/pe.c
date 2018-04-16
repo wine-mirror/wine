@@ -1205,10 +1205,10 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il)
     }
 }
 
-static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset)
+static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset, DWORD thunk_rva)
 {
     const IMAGE_IMPORT_BY_NAME* iibn;
-    for (; il->u1.Ordinal; il++)
+    for (; il->u1.Ordinal; il++, thunk_rva += sizeof(DWORD))
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
             printf("  %4u  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
@@ -1218,7 +1218,7 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset)
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
+                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, thunk_rva);
         }
     }
 }
@@ -1258,7 +1258,7 @@ static	void	dump_dir_imported_functions(void)
             if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                 dump_image_thunk_data64((const IMAGE_THUNK_DATA64*)il);
             else
-                dump_image_thunk_data32(il, 0);
+                dump_image_thunk_data32(il, 0, importDesc->FirstThunk);
             printf("\n");
         }
 	importDesc++;
@@ -1331,6 +1331,7 @@ static void dump_dir_delay_imported_functions(void)
         printf("  grAttrs %08x offset %08lx %s\n", importDesc->Attributes.AllAttributes, Offset(importDesc),
                (const char *)RVA(importDesc->DllNameRVA - offset, sizeof(DWORD)));
         printf("  Hint/Name Table: %08x\n", importDesc->ImportNameTableRVA);
+        printf("  Address Table:   %08x\n", importDesc->ImportAddressTableRVA);
         printf("  TimeDateStamp:   %08X (%s)\n",
                importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 
@@ -1345,7 +1346,7 @@ static void dump_dir_delay_imported_functions(void)
             if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                 dump_image_thunk_data64((const IMAGE_THUNK_DATA64 *)il);
             else
-                dump_image_thunk_data32(il, offset);
+                dump_image_thunk_data32(il, offset, importDesc->ImportAddressTableRVA);
             printf("\n");
         }
         importDesc++;
