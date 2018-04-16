@@ -961,25 +961,26 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11Devic
         UINT viewport_count, const D3D11_VIEWPORT *viewports)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
-    struct wined3d_viewport wined3d_vp;
+    struct wined3d_viewport wined3d_vp[WINED3D_MAX_VIEWPORTS];
+    unsigned int i;
 
     TRACE("iface %p, viewport_count %u, viewports %p.\n", iface, viewport_count, viewports);
 
-    if (viewport_count > 1)
-        FIXME("Multiple viewports not implemented.\n");
-
-    if (!viewport_count)
+    if (viewport_count > ARRAY_SIZE(wined3d_vp))
         return;
 
-    wined3d_vp.x = viewports[0].TopLeftX;
-    wined3d_vp.y = viewports[0].TopLeftY;
-    wined3d_vp.width = viewports[0].Width;
-    wined3d_vp.height = viewports[0].Height;
-    wined3d_vp.min_z = viewports[0].MinDepth;
-    wined3d_vp.max_z = viewports[0].MaxDepth;
+    for (i = 0; i < viewport_count; ++i)
+    {
+        wined3d_vp[i].x = viewports[i].TopLeftX;
+        wined3d_vp[i].y = viewports[i].TopLeftY;
+        wined3d_vp[i].width = viewports[i].Width;
+        wined3d_vp[i].height = viewports[i].Height;
+        wined3d_vp[i].min_z = viewports[i].MinDepth;
+        wined3d_vp[i].max_z = viewports[i].MaxDepth;
+    }
 
     wined3d_mutex_lock();
-    wined3d_device_set_viewports(device->wined3d_device, 1, &wined3d_vp);
+    wined3d_device_set_viewports(device->wined3d_device, viewport_count, wined3d_vp);
     wined3d_mutex_unlock();
 }
 
