@@ -507,7 +507,7 @@ static void Publish_tests(void)
     messageStorage *msgStorage;
     WSADATA wsaData;
     BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
-    BOOL metadata_version_seen = FALSE, any_header_seen = FALSE, wine_ns_seen = FALSE;
+    BOOL metadata_version_seen = FALSE, any_header_seen = FALSE, wine_ns_seen = FALSE, body_hello_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
@@ -629,8 +629,9 @@ static void Publish_tests(void)
         metadata_version_seen = (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
         any_header_seen = (strstr(msg, "<wine:Beer>PublishTest</wine:Beer>") != NULL);
         wine_ns_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\"") != NULL);
+        body_hello_seen = (strstr(msg, "<soap:Body><wsd:Hello") != NULL);
         messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen &&
-            any_header_seen && wine_ns_seen;
+            any_header_seen && wine_ns_seen && body_hello_seen;
 
         if (messageOK) break;
     }
@@ -649,6 +650,7 @@ static void Publish_tests(void)
     todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
     ok(any_header_seen == TRUE, "Custom header not received\n");
     ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
+    ok(body_hello_seen == TRUE, "Body and Hello elements not received\n");
 
 after_publish_test:
 
