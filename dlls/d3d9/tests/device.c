@@ -11638,6 +11638,7 @@ static void test_check_device_format(void)
 
     D3DFORMAT adapter_format, format;
     BOOL render_target_supported;
+    D3DDEVTYPE device_type;
     unsigned int i, j;
     IDirect3D9 *d3d;
     HRESULT hr;
@@ -11658,6 +11659,22 @@ static void test_check_device_format(void)
         hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
                 D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8);
         ok(FAILED(hr), "Got unexpected hr %#x.\n", hr);
+    }
+
+    for (device_type = D3DDEVTYPE_HAL; device_type <  D3DDEVTYPE_NULLREF; ++device_type)
+    {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_SURFACE, D3DFMT_X8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
     }
 
     hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
