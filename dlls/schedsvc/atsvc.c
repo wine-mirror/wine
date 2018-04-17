@@ -367,11 +367,67 @@ DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jo
     return ERROR_NOT_SUPPORTED;
 }
 
+static void free_container(AT_ENUM_CONTAINER *container)
+{
+    DWORD i;
+
+    for (i = 0; i < container->EntriesRead; i++)
+        heap_free(container->Buffer[i].Command);
+
+    heap_free(container->Buffer);
+}
+
 DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container,
                           DWORD max_length, DWORD *total, DWORD *resume)
 {
-    FIXME("%s,%p,%u,%p,%p: stub\n", debugstr_w(server_name), container, max_length, total, resume);
-    return ERROR_NOT_SUPPORTED;
+    DWORD allocated;
+    struct job_t *job;
+
+    TRACE("%s,%p,%u,%p,%p\n", debugstr_w(server_name), container, max_length, total, resume);
+
+    *total = 0;
+    *resume = 0;
+    container->EntriesRead = 0;
+
+    allocated = 64;
+    container->Buffer = heap_alloc(allocated * sizeof(AT_ENUM));
+    if (!container->Buffer) return ERROR_NOT_ENOUGH_MEMORY;
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if (container->EntriesRead >= max_length)
+        {
+            *resume = container->EntriesRead;
+            break;
+        }
+
+        if (allocated <= container->EntriesRead)
+        {
+            AT_ENUM *new_buffer;
+
+            allocated *= 2;
+            new_buffer = heap_realloc(container->Buffer, allocated * sizeof(AT_ENUM));
+            if (!new_buffer)
+            {
+                free_container(container);
+                LeaveCriticalSection(&at_job_list_section);
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+            container->Buffer = new_buffer;
+        }
+
+        container->Buffer[container->EntriesRead] = job->info;
+        container->Buffer[container->EntriesRead].Command = heap_strdupW(job->info.Command);
+        container->EntriesRead++;
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+
+    *total = container->EntriesRead;
+
+    return ERROR_SUCCESS;
 }
 
 DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **info)
