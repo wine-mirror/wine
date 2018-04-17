@@ -69,6 +69,8 @@ static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
 static BOOL (WINAPI *pGetWindowDisplayAffinity)(HWND hwnd, DWORD *affinity);
 static BOOL (WINAPI *pSetWindowDisplayAffinity)(HWND hwnd, DWORD affinity);
+static BOOL (WINAPI *pAdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
+static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
@@ -1051,6 +1053,39 @@ static void wine_AdjustWindowRectEx( RECT *rect, LONG style, BOOL menu, LONG exS
             rect->right += GetSystemMetrics(SM_CXVSCROLL);
     }
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
+}
+
+static void wine_AdjustWindowRectExForDpi( RECT *rect, LONG style, BOOL menu, LONG exStyle, UINT dpi )
+{
+    NONCLIENTMETRICSW ncm;
+    int adjust = 0;
+
+    ncm.cbSize = sizeof(ncm);
+    pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
+        adjust = 1; /* for the outer frame always present */
+    else if ((exStyle & WS_EX_DLGMODALFRAME) || (style & (WS_THICKFRAME|WS_DLGFRAME)))
+        adjust = 2; /* outer */
+
+    if (style & WS_THICKFRAME) adjust += ncm.iBorderWidth + ncm.iPaddedBorderWidth;
+
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || (exStyle & WS_EX_DLGMODALFRAME))
+        adjust++; /* The other border */
+
+    InflateRect (rect, adjust, adjust);
+
+    if ((style & WS_CAPTION) == WS_CAPTION)
+    {
+        if (exStyle & WS_EX_TOOLWINDOW)
+            rect->top -= ncm.iSmCaptionHeight + 1;
+        else
+            rect->top -= ncm.iCaptionHeight + 1;
+    }
+    if (menu) rect->top -= ncm.iMenuHeight + 1;
+
+    if (exStyle & WS_EX_CLIENTEDGE)
+        InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
 }
 
 static void test_nonclient_area(HWND hwnd)
@@ -5282,8 +5317,15 @@ static void test_AWR_flags(void)
             rect2 = rect;
             AdjustWindowRectEx( &rect, style, FALSE, exstyle );
             wine_AdjustWindowRectEx( &rect2, style, FALSE, exstyle );
-            ok( EqualRect( &rect, &rect2 ), "rects do not match: win %s wine %s\n",
-                wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &rect2 ));
+            ok( EqualRect( &rect, &rect2 ), "%08x %08x rects do not match: win %s wine %s\n",
+                style, exstyle, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &rect2 ));
+            if (pAdjustWindowRectExForDpi)
+            {
+                pAdjustWindowRectExForDpi( &rect, style, FALSE, exstyle, 192 );
+                wine_AdjustWindowRectExForDpi( &rect2, style, FALSE, exstyle, 192 );
+                ok( EqualRect( &rect, &rect2 ), "%08x %08x rects do not match: win %s wine %s\n",
+                    style, exstyle, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &rect2 ));
+            }
         }
     }
 }
@@ -10521,6 +10563,8 @@ START_TEST(win)
     pMirrorRgn = (void *)GetProcAddress( gdi32, "MirrorRgn" );
     pGetWindowDisplayAffinity = (void *)GetProcAddress( user32, "GetWindowDisplayAffinity" );
     pSetWindowDisplayAffinity = (void *)GetProcAddress( user32, "SetWindowDisplayAffinity" );
+    pAdjustWindowRectExForDpi = (void *)GetProcAddress( user32, "AdjustWindowRectExForDpi" );
+    pSystemParametersInfoForDpi = (void *)GetProcAddress( user32, "SystemParametersInfoForDpi" );
 
     if (argc==4 && !strcmp(argv[2], "create_children"))
     {

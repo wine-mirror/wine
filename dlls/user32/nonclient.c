@@ -323,7 +323,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL
     SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
 
     adjust_window_rect( rect, style, menu, exStyle, &ncm );
+    return TRUE;
+}
 
+
+/***********************************************************************
+ *		AdjustWindowRectExForDpi (USER32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style, BOOL menu,
+                                                        DWORD exStyle, UINT dpi )
+{
+    NONCLIENTMETRICSW ncm;
+
+    if (style & WS_MINIMIZE) return TRUE;
+
+    TRACE("(%s) %08x %d %08x %u\n", wine_dbgstr_rect(rect), style, menu, exStyle, dpi );
+
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+
+    adjust_window_rect( rect, style, menu, exStyle, &ncm );
     return TRUE;
 }
 

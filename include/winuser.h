@@ -3369,6 +3369,7 @@ WINUSERAPI HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
 WINUSERAPI BOOL        WINAPI AddClipboardFormatListener(HWND);
 WINUSERAPI BOOL        WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
 WINUSERAPI BOOL        WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+WINUSERAPI BOOL        WINAPI AdjustWindowRectExForDpi(RECT*,DWORD,BOOL,DWORD,UINT);
 WINUSERAPI BOOL        WINAPI AllowSetForegroundWindow(DWORD);
 WINUSERAPI BOOL        WINAPI AnimateWindow(HWND,DWORD,DWORD);
 #define                       AnsiLowerA CharLowerA

@@ -2,6 +2,7 @@
 @ stdcall AddClipboardFormatListener(long)
 @ stdcall AdjustWindowRect(ptr long long)
 @ stdcall AdjustWindowRectEx(ptr long long long)
+@ stdcall AdjustWindowRectExForDpi(ptr long long long long)
 @ stdcall AlignRects(ptr long long long)
 # @ stub AllowForegroundActivation
 @ stdcall AllowSetForegroundWindow (long)
