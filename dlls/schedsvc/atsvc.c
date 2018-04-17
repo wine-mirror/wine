@@ -327,6 +327,180 @@ void add_job(const WCHAR *name)
     }
 }
 
+static BOOL write_signature(HANDLE hfile)
+{
+    struct
+    {
+        USHORT SignatureVersion;
+        USHORT ClientVersion;
+        BYTE md5[64];
+    } signature;
+    DWORD size;
+
+    signature.SignatureVersion = 0x0001;
+    signature.ClientVersion = 0x0001;
+    memset(&signature.md5, 0, sizeof(signature.md5));
+
+    return WriteFile(hfile, &signature, sizeof(signature), &size, NULL);
+}
+
+static BOOL write_reserved_data(HANDLE hfile)
+{
+    static const struct
+    {
+        USHORT size;
+        BYTE data[8];
+    } user = { 8, { 0xff,0x0f,0x1d,0,0,0,0,0 } };
+    DWORD size;
+
+    return WriteFile(hfile, &user, sizeof(user), &size, NULL);
+}
+
+static BOOL write_trigger(HANDLE hfile, const AT_INFO *info)
+{
+    USHORT count;
+    DWORD size;
+    SYSTEMTIME st;
+    TASK_TRIGGER trigger;
+
+    count = 1;
+    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
+        return FALSE;
+
+    GetSystemTime(&st);
+    if (!(info->Flags & JOB_ADD_CURRENT_DATE))
+    {
+        /* FIXME: parse AT_INFO */
+    }
+
+    trigger.cbTriggerSize = sizeof(trigger);
+    trigger.Reserved1 = 0;
+    trigger.wBeginYear = st.wYear;
+    trigger.wBeginMonth = st.wMonth;
+    trigger.wBeginDay = st.wDay;
+    trigger.wEndYear = st.wYear;
+    trigger.wEndMonth = st.wMonth;
+    trigger.wEndDay = st.wDay;
+    trigger.wStartHour = st.wHour;
+    trigger.wStartMinute = st.wMinute;
+    trigger.MinutesDuration = 0;
+    trigger.MinutesInterval = 0;
+    /* FIXME */
+    trigger.rgFlags = TASK_TRIGGER_FLAG_HAS_END_DATE;
+    trigger.TriggerType = TASK_TIME_TRIGGER_MONTHLYDATE;
+    trigger.Type.MonthlyDate.rgfDays = 0;
+    trigger.Type.MonthlyDate.rgfMonths = 0xffff;
+    trigger.Reserved2 = 0;
+    trigger.wRandomMinutesInterval = 0;
+
+    return WriteFile(hfile, &trigger, sizeof(trigger), &size, NULL);
+}
+
+static BOOL write_unicode_string(HANDLE hfile, const WCHAR *str)
+{
+    USHORT count;
+    DWORD size;
+
+    count = str ? (lstrlenW(str) + 1) : 0;
+    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
+        return FALSE;
+
+    if (!str) return TRUE;
+
+    count *= sizeof(WCHAR);
+    return WriteFile(hfile, str, count, &size, NULL);
+}
+
+static BOOL create_job(const WCHAR *job_name, const AT_INFO *info)
+{
+    static WCHAR authorW[] = { 'W','i','n','e',0 };
+    static WCHAR commentW[] = { 'C','r','e','a','t','e','d',' ','b','y',' ','W','i','n','e',0 };
+    FIXDLEN_DATA fixed;
+    USHORT word;
+    HANDLE hfile;
+    DWORD size, ver;
+    BOOL ret = FALSE;
+
+    TRACE("trying to create job %s\n", debugstr_w(job_name));
+    hfile = CreateFileW(job_name, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    ver = GetVersion();
+    fixed.product_version = MAKEWORD(ver >> 8, ver);
+    fixed.file_version = 0x0001;
+    UuidCreate(&fixed.uuid);
+    fixed.name_size_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
+    fixed.trigger_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
+    fixed.trigger_offset += sizeof(USHORT) + (lstrlenW(info->Command) + 1) * sizeof(WCHAR); /* Application Name */
+    fixed.trigger_offset += sizeof(USHORT); /* Parameters */
+    fixed.trigger_offset += sizeof(USHORT); /* Working Directory */
+    fixed.trigger_offset += sizeof(USHORT) + (lstrlenW(authorW) + 1) * sizeof(WCHAR); /* Author */
+    fixed.trigger_offset += sizeof(USHORT) + (lstrlenW(commentW) + 1) * sizeof(WCHAR); /* Comment */
+    fixed.trigger_offset += sizeof(USHORT); /* User Data */
+    fixed.trigger_offset += 10; /* Reserved Data */
+    fixed.error_retry_count = 0;
+    fixed.error_retry_interval = 0;
+    fixed.idle_deadline = 60;
+    fixed.idle_wait = 10;
+    fixed.priority = NORMAL_PRIORITY_CLASS;
+    fixed.maximum_runtime = 259200000;
+    fixed.exit_code = 0;
+    fixed.status = SCHED_S_TASK_HAS_NOT_RUN;
+    fixed.flags = TASK_FLAG_DELETE_WHEN_DONE;
+    if (!(info->Flags & JOB_NONINTERACTIVE))
+        fixed.flags |= TASK_FLAG_INTERACTIVE;
+    /* FIXME: add other flags */
+    memset(&fixed.last_runtime, 0, sizeof(fixed.last_runtime));
+
+    if (!WriteFile(hfile, &fixed, sizeof(fixed), &size, NULL))
+        goto failed;
+
+    /* Instance Count */
+    word = 0;
+    if (!WriteFile(hfile, &word, sizeof(word), &size, NULL))
+        goto failed;
+    /* Application Name */
+    if (!write_unicode_string(hfile, info->Command))
+        goto failed;
+    /* Parameters */
+    if (!write_unicode_string(hfile, NULL))
+        goto failed;
+    /* Working Directory */
+    if (!write_unicode_string(hfile, NULL))
+        goto failed;
+    /* Author */
+    if (!write_unicode_string(hfile, authorW))
+        goto failed;
+    /* Comment */
+    if (!write_unicode_string(hfile, commentW))
+        goto failed;
+
+    /* User Data */
+    word = 0;
+    if (!WriteFile(hfile, &word, sizeof(word), &size, NULL))
+        goto failed;
+
+    /* Reserved Data */
+    if (!write_reserved_data(hfile))
+        goto failed;
+
+    /* Trigegrs */
+    if (!write_trigger(hfile, info))
+        goto failed;
+
+    /* Signature */
+    if (!write_signature(hfile))
+        goto failed;
+
+    ret = TRUE;
+
+failed:
+    CloseHandle(hfile);
+    if (!ret) DeleteFileW(job_name);
+    return ret;
+}
+
 static struct job_t *find_job(DWORD jobid, const WCHAR *name)
 {
     struct job_t *job;
@@ -357,8 +531,60 @@ void remove_job(const WCHAR *name)
 
 DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
 {
-    FIXME("%s,%p,%p: stub\n", debugstr_w(server_name), info, jobid);
-    return ERROR_NOT_SUPPORTED;
+    WCHAR windir[MAX_PATH];
+
+    TRACE("%s,%p,%p\n", debugstr_w(server_name), info, jobid);
+
+    GetWindowsDirectoryW(windir, MAX_PATH);
+
+    for (;;)
+    {
+        static const WCHAR fmtW[] = { '\\','T','a','s','k','s','\\','A','t','%','u','.','j','o','b',0 };
+        WCHAR task_name[MAX_PATH], name[32];
+
+        strcpyW(task_name, windir);
+        sprintfW(name, fmtW, current_jobid);
+        strcatW(task_name, name);
+        if (create_job(task_name, info))
+        {
+            struct job_t *job;
+            int i;
+
+            for (i = 0; i < 5; i++)
+            {
+                EnterCriticalSection(&at_job_list_section);
+                job = find_job(0, task_name);
+                LeaveCriticalSection(&at_job_list_section);
+
+                if (job)
+                {
+                    *jobid = job->info.JobId;
+                    break;
+                }
+
+                Sleep(50);
+            }
+
+            if (!job)
+            {
+                ERR("couldn't find just created job %s\n", debugstr_w(task_name));
+                return ERROR_FILE_NOT_FOUND;
+            }
+
+            break;
+        }
+
+        if (GetLastError() != ERROR_FILE_EXISTS)
+        {
+
+            TRACE("create_job error %u\n", GetLastError());
+            return GetLastError();
+        }
+
+        InterlockedIncrement(&current_jobid);
+    }
+
+    return ERROR_SUCCESS;
 }
 
 DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jobid)

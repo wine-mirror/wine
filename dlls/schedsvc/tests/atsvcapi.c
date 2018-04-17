@@ -91,7 +91,6 @@ START_TEST(atsvcapi)
         win_skip("NetrJobAdd: Access denied, skipping the tests\n");
         goto skip_tests;
     }
-todo_wine
     ok(ret == ERROR_SUCCESS || broken(ret == ERROR_NOT_SUPPORTED) /* Win8+ */, "NetrJobAdd error %u\n", ret);
     if (ret == ERROR_NOT_SUPPORTED)
     {
