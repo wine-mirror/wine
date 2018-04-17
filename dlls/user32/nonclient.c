@@ -55,54 +55,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
     (((exStyle) & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == \
      WS_EX_STATICEDGE)
 
-#define HAS_ANYFRAME(style,exStyle) \
-    (((style) & (WS_THICKFRAME | WS_DLGFRAME | WS_BORDER)) || \
-     ((exStyle) & WS_EX_DLGMODALFRAME) || \
-     !((style) & (WS_CHILD | WS_POPUP)))
-
 #define HAS_MENU(hwnd,style)  ((((style) & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
 
 
-/******************************************************************************
- * NC_AdjustRectOuter
- *
- * Computes the size of the "outside" parts of the window based on the
- * parameters of the client area.
- *
- * PARAMS
- *     LPRECT  rect
- *     DWORD  style
- *     BOOL  menu
- *     DWORD  exStyle
- *
- * NOTES
- *     "Outer" parts of a window means the whole window frame, caption and
- *     menu bar. It does not include "inner" parts of the frame like client
- *     edge, static edge or scroll bars.
- *
- *****************************************************************************/
-
-static void
-NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
+static void adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD exStyle, NONCLIENTMETRICSW *ncm )
 {
-    int adjust;
+    int adjust = 0;
 
-    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
-        WS_EX_STATICEDGE)
-    {
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
         adjust = 1; /* for the outer frame always present */
-    }
-    else
-    {
-        adjust = 0;
-        if ((exStyle & WS_EX_DLGMODALFRAME) ||
-            (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
-    }
+    else if ((exStyle & WS_EX_DLGMODALFRAME) || (style & (WS_THICKFRAME|WS_DLGFRAME)))
+        adjust = 2; /* outer */
+
     if (style & WS_THICKFRAME)
-        adjust +=  ( GetSystemMetrics (SM_CXFRAME)
-                   - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
-    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
-        (exStyle & WS_EX_DLGMODALFRAME))
+        adjust += ncm->iBorderWidth + ncm->iPaddedBorderWidth; /* The resize border */
+
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || (exStyle & WS_EX_DLGMODALFRAME))
         adjust++; /* The other border */
 
     InflateRect (rect, adjust, adjust);
@@ -110,48 +78,15 @@ NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
     if ((style & WS_CAPTION) == WS_CAPTION)
     {
         if (exStyle & WS_EX_TOOLWINDOW)
-            rect->top -= GetSystemMetrics(SM_CYSMCAPTION);
+            rect->top -= ncm->iSmCaptionHeight + 1;
         else
-            rect->top -= GetSystemMetrics(SM_CYCAPTION);
+            rect->top -= ncm->iCaptionHeight + 1;
     }
-    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU);
-}
+    if (menu) rect->top -= ncm->iMenuHeight + 1;
 
-
-/******************************************************************************
- * NC_AdjustRectInner
- *
- * Computes the size of the "inside" part of the window based on the
- * parameters of the client area.
- *
- * PARAMS
- *     LPRECT   rect
- *     DWORD    style
- *     DWORD    exStyle
- *
- * NOTES
- *     "Inner" part of a window means the window frame inside of the flat
- *     window frame. It includes the client edge, the static edge and the
- *     scroll bars.
- *
- *****************************************************************************/
-
-static void
-NC_AdjustRectInner (LPRECT rect, DWORD style, DWORD exStyle)
-{
     if (exStyle & WS_EX_CLIENTEDGE)
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
-
-    if (style & WS_VSCROLL)
-    {
-        if((exStyle & WS_EX_LEFTSCROLLBAR) != 0)
-            rect->left  -= GetSystemMetrics(SM_CXVSCROLL);
-        else
-            rect->right += GetSystemMetrics(SM_CXVSCROLL);
-    }
-    if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
 }
-
 
 
 static HICON NC_IconForWindow( HWND hwnd )
@@ -378,13 +313,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( LPRECT rect, DWORD style, BOOL m
  */
 BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
+    NONCLIENTMETRICSW ncm;
+
     if (style & WS_MINIMIZE) return TRUE;
-    style &= ~(WS_HSCROLL | WS_VSCROLL);
 
     TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
 
-    NC_AdjustRectOuter( rect, style, menu, exStyle );
-    NC_AdjustRectInner( rect, style, exStyle );
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+
+    adjust_window_rect( rect, style, menu, exStyle, &ncm );
 
     return TRUE;
 }
@@ -411,7 +349,7 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
 
     if (!(style & WS_MINIMIZE))
     {
-        NC_AdjustRectOuter( &tmpRect, style, FALSE, exStyle );
+        AdjustWindowRectEx( &tmpRect, style, FALSE, exStyle & ~WS_EX_CLIENTEDGE);
 
         winRect->left   -= tmpRect.left;
         winRect->top    -= tmpRect.top;

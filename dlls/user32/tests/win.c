@@ -1014,23 +1014,19 @@ static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyl
 /* reimplement it to check that the Wine algorithm gives the correct result */
 static void wine_AdjustWindowRectEx( RECT *rect, LONG style, BOOL menu, LONG exStyle )
 {
-    int adjust;
+    NONCLIENTMETRICSW ncm;
+    int adjust = 0;
 
-    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
-        WS_EX_STATICEDGE)
-    {
+    ncm.cbSize = offsetof( NONCLIENTMETRICSW, iPaddedBorderWidth );
+    SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
         adjust = 1; /* for the outer frame always present */
-    }
-    else
-    {
-        adjust = 0;
-        if ((exStyle & WS_EX_DLGMODALFRAME) ||
-            (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
-    }
-    if (style & WS_THICKFRAME)
-        adjust += GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXDLGFRAME); /* The resize border */
-    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
-        (exStyle & WS_EX_DLGMODALFRAME))
+    else if ((exStyle & WS_EX_DLGMODALFRAME) || (style & (WS_THICKFRAME|WS_DLGFRAME)))
+        adjust = 2; /* outer */
+
+    if (style & WS_THICKFRAME) adjust += ncm.iBorderWidth; /* The resize border */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || (exStyle & WS_EX_DLGMODALFRAME))
         adjust++; /* The other border */
 
     InflateRect (rect, adjust, adjust);
@@ -1038,11 +1034,11 @@ static void wine_AdjustWindowRectEx( RECT *rect, LONG style, BOOL menu, LONG exS
     if ((style & WS_CAPTION) == WS_CAPTION)
     {
         if (exStyle & WS_EX_TOOLWINDOW)
-            rect->top -= GetSystemMetrics(SM_CYSMCAPTION);
+            rect->top -= ncm.iSmCaptionHeight + 1;
         else
-            rect->top -= GetSystemMetrics(SM_CYCAPTION);
+            rect->top -= ncm.iCaptionHeight + 1;
     }
-    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU);
+    if (menu) rect->top -= ncm.iMenuHeight + 1;
 
     if (exStyle & WS_EX_CLIENTEDGE)
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
