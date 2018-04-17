@@ -376,6 +376,30 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
 
 DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **info)
 {
-    FIXME("%s,%u,%p: stub\n", debugstr_w(server_name), jobid, info);
-    return ERROR_NOT_SUPPORTED;
+    struct job_t *job;
+    DWORD ret = ERROR_SUCCESS;
+
+    TRACE("%s,%u,%p\n", debugstr_w(server_name), jobid, info);
+
+    EnterCriticalSection(&at_job_list_section);
+
+    job = find_job(jobid, NULL);
+    if (job)
+    {
+        AT_INFO *info_ret = heap_alloc(sizeof(*info_ret));
+        if (!info_ret)
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+        else
+        {
+            info_ret->JobTime = job->info.JobTime;
+            info_ret->DaysOfMonth = job->info.DaysOfMonth;
+            info_ret->DaysOfWeek = job->info.DaysOfWeek;
+            info_ret->Flags = job->info.Flags;
+            info_ret->Command = heap_strdupW(job->info.Command);
+            *info = info_ret;
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+    return ret;
 }
