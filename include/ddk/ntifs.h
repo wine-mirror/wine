@@ -46,6 +46,88 @@ typedef struct _KQUEUE
   LIST_ENTRY ThreadListHead;
 } KQUEUE, *PKQUEUE, *RESTRICTED_POINTER PRKQUEUE;
 
+typedef enum _FS_FILTER_STREAM_FO_NOTIFICATION_TYPE
+{
+    NotifyTypeCreate  = 0,
+    NotifyTypeRetired
+} FS_FILTER_STREAM_FO_NOTIFICATION_TYPE, *PFS_FILTER_STREAM_FO_NOTIFICATION_TYPE;
+
+typedef union _FS_FILTER_PARAMETERS
+{
+    struct
+    {
+        PLARGE_INTEGER EndingOffset;
+        PERESOURCE    *ResourceToRelease;
+    } AcquireForModifiedPageWriter;
+
+    struct
+    {
+        PERESOURCE ResourceToRelease;
+    } ReleaseForModifiedPageWriter;
+
+    struct
+    {
+        FS_FILTER_SECTION_SYNC_TYPE    SyncType;
+        ULONG                          PageProtection;
+        PFS_FILTER_SECTION_SYNC_OUTPUT OutputInformation;
+    } AcquireForSectionSynchronization;
+
+    struct
+    {
+        FS_FILTER_STREAM_FO_NOTIFICATION_TYPE NotificationType;
+        BOOLEAN POINTER_ALIGNMENT             SafeToRecurse;
+    } NotifyStreamFileObject;
+
+    struct
+    {
+        PIRP                   Irp;
+        void                  *FileInformation;
+        PULONG                 Length;
+        FILE_INFORMATION_CLASS FileInformationClass;
+        NTSTATUS               CompletionStatus;
+    } QueryOpen;
+
+    struct
+    {
+        void *Argument1;
+        void *Argument2;
+        void *Argument3;
+        void *Argument4;
+        void *Argument5;
+    } Others;
+
+} FS_FILTER_PARAMETERS, *PFS_FILTER_PARAMETERS;
+
+typedef struct _FS_FILTER_CALLBACK_DATA
+{
+    ULONG                  SizeOfFsFilterCallbackData;
+    UCHAR                  Operation;
+    UCHAR                  Reserved;
+    struct _DEVICE_OBJECT *DeviceObject;
+    struct _FILE_OBJECT   *FileObject;
+    FS_FILTER_PARAMETERS   Parameters;
+} FS_FILTER_CALLBACK_DATA, *PFS_FILTER_CALLBACK_DATA;
+
+typedef NTSTATUS (WINAPI *PFS_FILTER_CALLBACK)(PFS_FILTER_CALLBACK_DATA, void **);
+typedef void     (WINAPI *PFS_FILTER_COMPLETION_CALLBACK)(PFS_FILTER_CALLBACK_DATA, NTSTATUS, void *context);
+
+typedef struct _FS_FILTER_CALLBACKS
+{
+    ULONG SizeOfFsFilterCallbacks;
+    ULONG Reserved;
+    PFS_FILTER_CALLBACK            PreAcquireForSectionSynchronization;
+    PFS_FILTER_COMPLETION_CALLBACK PostAcquireForSectionSynchronization;
+    PFS_FILTER_CALLBACK            PreReleaseForSectionSynchronization;
+    PFS_FILTER_COMPLETION_CALLBACK PostReleaseForSectionSynchronization;
+    PFS_FILTER_CALLBACK            PreAcquireForCcFlush;
+    PFS_FILTER_COMPLETION_CALLBACK PostAcquireForCcFlush;
+    PFS_FILTER_CALLBACK            PreReleaseForCcFlush;
+    PFS_FILTER_COMPLETION_CALLBACK PostReleaseForCcFlush;
+    PFS_FILTER_CALLBACK            PreAcquireForModifiedPageWriter;
+    PFS_FILTER_COMPLETION_CALLBACK PostAcquireForModifiedPageWriter;
+    PFS_FILTER_CALLBACK            PreReleaseForModifiedPageWriter;
+    PFS_FILTER_COMPLETION_CALLBACK PostReleaseForModifiedPageWriter;
+} FS_FILTER_CALLBACKS, *PFS_FILTER_CALLBACKS;
 
 NTSTATUS WINAPI ObQueryNameString(PVOID,POBJECT_NAME_INFORMATION,ULONG,PULONG);
 

@@ -3516,3 +3516,12 @@ HANDLE WINAPI PsGetProcessId(PEPROCESS process)
 
     return 0;
 }
+
+/*********************************************************************
+ *           FsRtlRegisterFileSystemFilterCallbacks    (NTOSKRNL.@)
+ */
+NTSTATUS WINAPI FsRtlRegisterFileSystemFilterCallbacks( DRIVER_OBJECT *object, PFS_FILTER_CALLBACKS callbacks)
+{
+    FIXME("stub: %p %p\n", object, callbacks);
+    return STATUS_NOT_IMPLEMENTED;
+}

@@ -273,7 +273,7 @@
 @ stub FsRtlPrepareMdlWriteDev
 @ stub FsRtlPrivateLock
 @ stub FsRtlProcessFileLock
-@ stub FsRtlRegisterFileSystemFilterCallbacks
+@ stdcall FsRtlRegisterFileSystemFilterCallbacks(ptr ptr)
 @ stdcall FsRtlRegisterUncProvider(ptr ptr long)
 @ stub FsRtlReleaseFile
 @ stub FsRtlRemoveLargeMcbEntry
