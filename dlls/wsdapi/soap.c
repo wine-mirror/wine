@@ -512,6 +512,7 @@ static HRESULT duplicate_element(WSDXML_ELEMENT *parent, const WSDXML_ELEMENT *n
             text_node = WSDAllocateLinkedMemory(new_element, sizeof(WSDXML_TEXT));
             if (text_node == NULL) goto failed;
 
+            text_node->Node.Parent = NULL;
             text_node->Node.Next = NULL;
             text_node->Node.Type = TextType;
             text_node->Text = duplicate_string(text_node, ((WSDXML_TEXT *)cur_node)->Text);
