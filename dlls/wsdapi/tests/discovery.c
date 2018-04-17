@@ -508,15 +508,17 @@ static void Publish_tests(void)
     WSADATA wsaData;
     BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
     BOOL metadata_version_seen = FALSE, any_header_seen = FALSE, wine_ns_seen = FALSE, body_hello_seen = FALSE;
+    BOOL any_body_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
     char *msg;
-    WSDXML_ELEMENT *header_any_element;
+    WSDXML_ELEMENT *header_any_element, *body_any_element;
     WSDXML_NAME header_any_name;
     WSDXML_NAMESPACE ns;
     WCHAR header_any_name_text[] = {'B','e','e','r',0};
     static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
+    static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'w','i','n','e',0};
 
@@ -590,11 +592,15 @@ static void Publish_tests(void)
     rc = WSDXMLBuildAnyForSingleElement(&header_any_name, header_any_text, &header_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, body_any_text, &body_any_element);
+    ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
     /* Publish the service */
     rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, NULL, NULL, NULL,
-        header_any_element, NULL, NULL, NULL, NULL);
+        header_any_element, NULL, NULL, NULL, body_any_element);
 
     WSDFreeLinkedMemory(header_any_element);
+    WSDFreeLinkedMemory(body_any_element);
 
     ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
@@ -630,8 +636,9 @@ static void Publish_tests(void)
         any_header_seen = (strstr(msg, "<wine:Beer>PublishTest</wine:Beer>") != NULL);
         wine_ns_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\"") != NULL);
         body_hello_seen = (strstr(msg, "<soap:Body><wsd:Hello") != NULL);
+        any_body_seen = (strstr(msg, "<wine:Beer>BodyTest</wine:Beer>") != NULL);
         messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen &&
-            any_header_seen && wine_ns_seen && body_hello_seen;
+            any_header_seen && wine_ns_seen && body_hello_seen && any_body_seen;
 
         if (messageOK) break;
     }
@@ -651,6 +658,7 @@ static void Publish_tests(void)
     ok(any_header_seen == TRUE, "Custom header not received\n");
     ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
     ok(body_hello_seen == TRUE, "Body and Hello elements not received\n");
+    ok(any_body_seen == TRUE, "Custom body element not received\n");
 
 after_publish_test:
 
