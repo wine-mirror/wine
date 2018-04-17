@@ -363,8 +363,35 @@ DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
 
 DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jobid)
 {
-    FIXME("%s,%u,%u: stub\n", debugstr_w(server_name), min_jobid, max_jobid);
-    return ERROR_NOT_SUPPORTED;
+    DWORD jobid, ret = ERROR_FILE_NOT_FOUND;
+
+    TRACE("%s,%u,%u\n", debugstr_w(server_name), min_jobid, max_jobid);
+
+    EnterCriticalSection(&at_job_list_section);
+
+    for (jobid = min_jobid; jobid <= max_jobid; jobid++)
+    {
+        struct job_t *job = find_job(jobid, NULL);
+
+        if (!job)
+        {
+            TRACE("job %u not found\n", jobid);
+            ret = ERROR_FILE_NOT_FOUND;
+            break;
+        }
+
+        TRACE("deleting job %s\n", debugstr_w(job->name));
+        if (!DeleteFileW(job->name))
+        {
+            ret = GetLastError();
+            break;
+        }
+
+        ret = ERROR_SUCCESS;
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+    return ret;
 }
 
 static void free_container(AT_ENUM_CONTAINER *container)
