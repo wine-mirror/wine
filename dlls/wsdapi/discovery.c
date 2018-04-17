@@ -25,6 +25,7 @@
 
 #include "wsdapi_internal.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "guiddef.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
@@ -332,6 +333,7 @@ static const IWSDiscoveryPublisherVtbl publisher_vtbl =
 HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscoveryPublisher **ppPublisher)
 {
     IWSDiscoveryPublisherImpl *obj;
+    HRESULT ret;
 
     TRACE("(%p, %p)\n", pContext, ppPublisher);
 
@@ -356,17 +358,29 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
 
     if (pContext == NULL)
     {
-        if (FAILED(WSDXMLCreateContext(&obj->xmlContext)))
+        ret = WSDXMLCreateContext(&obj->xmlContext);
+
+        if (FAILED(ret))
         {
             WARN("Unable to create XML context\n");
-            HeapFree (GetProcessHeap(), 0, obj);
-            return E_OUTOFMEMORY;
+            heap_free(obj);
+            return ret;
         }
     }
     else
     {
         obj->xmlContext = pContext;
         IWSDXMLContext_AddRef(pContext);
+    }
+
+    ret = register_namespaces(obj->xmlContext);
+
+    if (FAILED(ret))
+    {
+        WARN("Unable to register default namespaces\n");
+        heap_free(obj);
+
+        return ret;
     }
 
     list_init(&obj->notificationSinks);

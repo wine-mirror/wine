@@ -286,6 +286,19 @@ static HRESULT add_child_element(IWSDXMLContext *xml_context, WSDXML_ELEMENT *pa
     return ret;
 }
 
+HRESULT register_namespaces(IWSDXMLContext *xml_context)
+{
+    HRESULT ret;
+
+    ret = IWSDXMLContext_AddNamespace(xml_context, addressingNsUri, addressingPrefix, NULL);
+    if (FAILED(ret)) return ret;
+
+    ret = IWSDXMLContext_AddNamespace(xml_context, discoveryNsUri, discoveryPrefix, NULL);
+    if (FAILED(ret)) return ret;
+
+    return IWSDXMLContext_AddNamespace(xml_context, envelopeNsUri, envelopePrefix, NULL);
+}
+
 static BOOL create_guid(LPWSTR buffer)
 {
     const WCHAR formatString[] = { 'u','r','n',':','u','u','i','d',':','%','s', 0 };
