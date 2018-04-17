@@ -327,6 +327,34 @@ void add_job(const WCHAR *name)
     }
 }
 
+static struct job_t *find_job(DWORD jobid, const WCHAR *name)
+{
+    struct job_t *job;
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if ((name && !lstrcmpiW(job->name, name)) || job->info.JobId == jobid)
+            return job;
+    }
+
+    return NULL;
+}
+
+void remove_job(const WCHAR *name)
+{
+    struct job_t *job;
+
+    EnterCriticalSection(&at_job_list_section);
+    job = find_job(0, name);
+    if (job)
+    {
+        list_remove(&job->entry);
+        heap_free(job->name);
+        heap_free(job);
+    }
+    LeaveCriticalSection(&at_job_list_section);
+}
+
 DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
 {
     FIXME("%s,%p,%p: stub\n", debugstr_w(server_name), info, jobid);

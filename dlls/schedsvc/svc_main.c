@@ -91,6 +91,14 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             add_job(path);
             break;
 
+        case FILE_ACTION_REMOVED:
+            TRACE("FILE_ACTION_REMOVED %s\n", debugstr_w(info.data.FileName));
+            GetWindowsDirectoryW(path, MAX_PATH);
+            lstrcatW(path, tasksW);
+            lstrcatW(path, info.data.FileName);
+            remove_job(path);
+            break;
+
         default:
             FIXME("%s: action %#x not handled\n", debugstr_w(info.data.FileName), info.data.Action);
             break;
