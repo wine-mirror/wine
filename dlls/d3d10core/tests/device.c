@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #define COBJMACROS
@@ -8094,6 +8095,127 @@ static void test_private_data(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = ID3D10Device_Release(test_object);
     ok(!refcount, "Test object has %u references left.\n", refcount);
+}
+
+static void test_state_refcounting(void)
+{
+    ID3D10RasterizerState *rasterizer_state, *tmp_rasterizer_state;
+    D3D10_RASTERIZER_DESC rasterizer_desc;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_QUERY_DESC predicate_desc;
+    D3D10_SAMPLER_DESC sampler_desc;
+    ID3D10ShaderResourceView *srv;
+    ID3D10RenderTargetView *rtv;
+    ID3D10SamplerState *sampler;
+    ID3D10Predicate *predicate;
+    ID3D10Texture2D *texture;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    /* ID3D10SamplerState */
+    memset(&sampler_desc, 0, sizeof(sampler_desc));
+    sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D10_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressV = D3D10_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.MaxLOD = FLT_MAX;
+    hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+
+    refcount = get_refcount(sampler);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ID3D10Device_PSSetSamplers(device, 0, 1, &sampler);
+    refcount = ID3D10SamplerState_Release(sampler);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    sampler = NULL;
+    ID3D10Device_PSGetSamplers(device, 0, 1, &sampler);
+    todo_wine ok(!sampler, "Got unexpected pointer %p, expected NULL.\n", sampler);
+    if (sampler)
+        ID3D10SamplerState_Release(sampler);
+
+    /* ID3D10RasterizerState */
+    memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_BACK;
+    rasterizer_desc.DepthClipEnable = TRUE;
+    hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D10Device_RSSetState(device, rasterizer_state);
+    refcount = ID3D10RasterizerState_Release(rasterizer_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ID3D10Device_RSGetState(device, &tmp_rasterizer_state);
+    ok(tmp_rasterizer_state == rasterizer_state, "Got rasterizer state %p, expected %p.\n",
+            tmp_rasterizer_state, rasterizer_state);
+    refcount = ID3D10RasterizerState_Release(tmp_rasterizer_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    /* ID3D10ShaderResourceView */
+    memset(&texture_desc, 0, sizeof(texture_desc));
+    texture_desc.Width = 32;
+    texture_desc.Height = 32;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ID3D10Texture2D_Release(texture);
+
+    ID3D10Device_PSSetShaderResources(device, 0, 1, &srv);
+    refcount = ID3D10ShaderResourceView_Release(srv);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    srv = NULL;
+    ID3D10Device_PSGetShaderResources(device, 0, 1, &srv);
+    todo_wine ok(!srv, "Got unexpected pointer %p, expected NULL.\n", srv);
+    if (srv)
+        ID3D10ShaderResourceView_Release(srv);
+
+    /* ID3D10RenderTargetView */
+    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D10Texture2D_Release(texture);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+    refcount = ID3D10RenderTargetView_Release(rtv);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    rtv = NULL;
+    ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
+    todo_wine ok(!rtv, "Got unexpected pointer %p, expected NULL.\n", rtv);
+    if (rtv)
+        ID3D10RenderTargetView_Release(rtv);
+
+    /* ID3D10Predicate */
+    predicate_desc.Query = D3D10_QUERY_OCCLUSION_PREDICATE;
+    predicate_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreatePredicate(device, &predicate_desc, &predicate);
+    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+
+    ID3D10Device_SetPredication(device, predicate, TRUE);
+    refcount = ID3D10Predicate_Release(predicate);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    predicate = NULL;
+    ID3D10Device_GetPredication(device, &predicate, NULL);
+    todo_wine ok(!predicate, "Got unexpected pointer %p, expected NULL.\n", predicate);
+    if (predicate)
+        ID3D10Predicate_Release(predicate);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 static void test_il_append_aligned(void)
@@ -16299,6 +16421,7 @@ START_TEST(device)
     test_depth_stencil_sampling();
     test_multiple_render_targets();
     test_private_data();
+    test_state_refcounting();
     test_il_append_aligned();
     test_instance_id();
     test_fragment_coords();
