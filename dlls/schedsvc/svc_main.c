@@ -36,6 +36,66 @@ static const WCHAR scheduleW[] = {'S','c','h','e','d','u','l','e',0};
 static SERVICE_STATUS_HANDLE schedsvc_handle;
 static HANDLE done_event;
 
+static DWORD WINAPI tasks_monitor_thread(void *arg)
+{
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    WCHAR path[MAX_PATH];
+    HANDLE htasks;
+    OVERLAPPED ov;
+
+    TRACE("Starting...\n");
+
+    GetWindowsDirectoryW(path, MAX_PATH);
+    lstrcatW(path, tasksW);
+
+    htasks = CreateFileW(path, FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
+    if (htasks == INVALID_HANDLE_VALUE) return -1;
+
+    memset(&ov, 0, sizeof(ov));
+    ov.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    for (;;)
+    {
+        struct
+        {
+            FILE_NOTIFY_INFORMATION data;
+            WCHAR name_buffer[MAX_PATH];
+        } info;
+        HANDLE events[2];
+        DWORD ret;
+
+        /* the buffer must be DWORD aligned */
+        C_ASSERT(!(sizeof(info) & 3));
+
+        memset(&info, 0, sizeof(info));
+
+        ret = ReadDirectoryChangesW(htasks, &info, sizeof(info), FALSE,
+                                    FILE_NOTIFY_CHANGE_FILE_NAME, NULL, &ov, NULL);
+        if (!ret) break;
+
+        events[0] = done_event;
+        events[1] = ov.hEvent;
+
+        ret = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        if (ret == WAIT_OBJECT_0) break;
+
+        switch (info.data.Action)
+        {
+        default:
+            FIXME("%s: action %#x not handled\n", debugstr_w(info.data.FileName), info.data.Action);
+            break;
+        }
+    }
+
+    CloseHandle(ov.hEvent);
+    CloseHandle(htasks);
+
+    TRACE("Finished.\n");
+
+    return 0;
+}
+
 void schedsvc_auto_start(void)
 {
     static DWORD start_type;
@@ -201,6 +261,9 @@ static void RPC_finish(void)
 
 void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 {
+    HANDLE thread;
+    DWORD tid;
+
     TRACE("starting Task Scheduler Service\n");
 
     schedsvc_handle = RegisterServiceCtrlHandlerW(scheduleW, schedsvc_handler);
@@ -210,14 +273,16 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
         return;
     }
 
-    done_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-
     schedsvc_update_status(SERVICE_START_PENDING);
 
-    if (RPC_init() == RPC_S_OK)
+    done_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    thread = CreateThread(NULL, 0, tasks_monitor_thread, NULL, 0, &tid);
+
+    if (thread && RPC_init() == RPC_S_OK)
     {
         schedsvc_update_status(SERVICE_RUNNING);
-        WaitForSingleObject(done_event, INFINITE);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
         RPC_finish();
     }
 
