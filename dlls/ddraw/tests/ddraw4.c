@@ -266,6 +266,45 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface4 *surface, UINT x, UINT y)
     return color;
 }
 
+static void check_rect(IDirectDrawSurface4 *surface, RECT r, const char *message)
+{
+    LONG x_coords[2][2] =
+    {
+        {r.left - 1, r.left + 1},
+        {r.right + 1, r.right - 1},
+    };
+    LONG y_coords[2][2] =
+    {
+        {r.top - 1, r.top + 1},
+        {r.bottom + 1, r.bottom - 1}
+    };
+    unsigned int i, j, x_side, y_side;
+    DWORD color;
+    LONG x, y;
+
+    for (i = 0; i < 2; ++i)
+    {
+        for (j = 0; j < 2; ++j)
+        {
+            for (x_side = 0; x_side < 2; ++x_side)
+            {
+                for (y_side = 0; y_side < 2; ++y_side)
+                {
+                    DWORD expected = (x_side == 1 && y_side == 1) ? 0x00ffffff : 0x00000000;
+
+                    x = x_coords[i][x_side];
+                    y = y_coords[j][y_side];
+                    if (x < 0 || x >= 640 || y < 0 || y >= 480)
+                        continue;
+                    color = get_surface_color(surface, x, y);
+                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
+                            message, x, y, color, expected);
+                }
+            }
+        }
+    }
+}
+
 static HRESULT CALLBACK enum_z_fmt(DDPIXELFORMAT *format, void *ctx)
 {
     DDPIXELFORMAT *z_fmt = ctx;
@@ -365,7 +404,7 @@ static IDirect3DDevice3 *create_device(HWND window, DWORD coop_level)
         return NULL;
     }
 
-    hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
+    hr = IDirectDrawSurface4_AddAttachedSurface(surface, ds);
     ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
     IDirectDrawSurface4_Release(ds);
     if (FAILED(hr))
@@ -1491,7 +1530,7 @@ static ULONG get_refcount(IUnknown *test_iface)
     return IUnknown_Release(test_iface);
 }
 
-static void test_viewport(void)
+static void test_viewport_object(void)
 {
     IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
@@ -12212,9 +12251,9 @@ static void test_edge_antialiasing_blending(void)
     ok(hr == D3D_OK, "Creating the offscreen render target failed, hr %#x.\n", hr);
 
     ds = get_depth_stencil(device);
-    hr = IDirectDrawSurface_AddAttachedSurface(offscreen, ds);
+    hr = IDirectDrawSurface4_AddAttachedSurface(offscreen, ds);
     todo_wine ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
-    IDirectDrawSurface_Release(ds);
+    IDirectDrawSurface4_Release(ds);
 
     hr = IDirect3DDevice3_SetRenderTarget(device, offscreen, 0);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
@@ -12333,7 +12372,7 @@ static void test_edge_antialiasing_blending(void)
     ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
 
     IDirectDrawSurface4_Release(offscreen);
-    IDirectDraw3_Release(ddraw);
+    IDirectDraw4_Release(ddraw);
     destroy_viewport(device, viewport);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -14729,6 +14768,195 @@ static void test_enum_surfaces(void)
     IDirectDraw4_Release(ddraw);
 }
 
+static void test_viewport(void)
+{
+    static struct
+    {
+        D3DVIEWPORT7 vp;
+        RECT expected_rect;
+        const char *message;
+    }
+    tests[] =
+    {
+        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
+        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
+        {{  0,   0, 1280,  960}, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
+        {{  0,   0, 2000, 1600}, {  0, 400, 639, 479}, "Viewport (0, 0) - (2000, 1600)"},
+        {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
+        {{  0,   0, 8192, 8192}, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
+    };
+    static const struct vec2 rt_sizes[] =
+    {
+        {640, 480}, {1280, 960}, {320, 240}, {800, 600},
+    };
+    static D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    static struct vec3 quad[] =
+    {
+        {-1.5f, -0.5f, 0.1f},
+        {-1.5f,  0.5f, 0.1f},
+        { 0.5f, -0.5f, 0.1f},
+        { 0.5f,  0.5f, 0.1f},
+    };
+    IDirect3DViewport3 *viewport, *full_viewport;
+    IDirectDrawSurface4 *rt, *ds;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice3 *device;
+    BOOL expected_failure;
+    IDirectDraw4 *ddraw;
+    DDPIXELFORMAT z_fmt;
+    D3DRECT clear_rect;
+    unsigned int i, j;
+    IDirect3D3 *d3d;
+    D3DVIEWPORT2 vp;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable depth test, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat);
+    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+
+    ds = get_depth_stencil(device);
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(ds, &surface_desc);
+    z_fmt = U4(surface_desc).ddpfPixelFormat;
+
+    for (i = 0; i < ARRAY_SIZE(rt_sizes); ++i)
+    {
+        if (i)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+            surface_desc.dwWidth = rt_sizes[i].x;
+            surface_desc.dwHeight = rt_sizes[i].y;
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &rt, NULL);
+            ok(SUCCEEDED(hr), "Failed to create render target, hr %#x (i %u).\n", hr, i);
+
+            surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+            U4(surface_desc).ddpfPixelFormat = z_fmt;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+            ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x (i %u).\n", hr, i);
+            hr = IDirectDrawSurface4_AddAttachedSurface(rt, ds);
+            ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x (i %u).\n", hr, i);
+
+            hr = IDirect3DDevice3_SetRenderTarget(device, rt, 0);
+            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+        }
+        else
+        {
+            hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+            ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+        }
+
+        full_viewport = create_viewport(device, 0, 0, rt_sizes[i].x, rt_sizes[i].y);
+
+        U1(clear_rect).x1 = U2(clear_rect).y1 = 0;
+        U3(clear_rect).x2 = rt_sizes[i].x;
+        U4(clear_rect).y2 = rt_sizes[i].y;
+
+        for (j = 0; j < ARRAY_SIZE(tests); ++j)
+        {
+            expected_failure = tests[j].vp.dwX + tests[j].vp.dwWidth > rt_sizes[i].x
+                    || tests[j].vp.dwY + tests[j].vp.dwHeight > rt_sizes[i].y;
+
+            hr = IDirect3DViewport3_Clear2(full_viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xff000000, 0.0f, 0);
+            ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+
+            hr = IDirect3D3_CreateViewport(d3d, &viewport, NULL);
+            ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DViewport3_SetViewport2(viewport, NULL);
+            ok(hr == E_INVALIDARG, "Setting NULL viewport data returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            memset(&vp, 0, sizeof(vp));
+            vp.dwSize = sizeof(vp);
+            vp.dwX = tests[j].vp.dwX;
+            vp.dwY = tests[j].vp.dwY;
+            vp.dwWidth = tests[j].vp.dwWidth;
+            vp.dwHeight = tests[j].vp.dwHeight;
+            vp.dvClipX = -1.0f;
+            vp.dvClipY = 1.0f;
+            vp.dvClipWidth = 2.0f;
+            vp.dvClipHeight = 2.0f;
+            vp.dvMinZ = 0.0f;
+            vp.dvMaxZ = 1.0f;
+            hr = IDirect3DViewport3_SetViewport2(viewport, &vp);
+            ok(hr == D3DERR_VIEWPORTHASNODEVICE,
+                    "Setting viewport data returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice3_AddViewport(device, viewport);
+            ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DViewport3_SetViewport2(viewport, &vp);
+            if (expected_failure)
+                ok(hr == E_INVALIDARG,
+                        "Setting viewport data returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            else
+                ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x (i %u, j %u).\n", hr, i, j);
+
+            hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+            ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            if (expected_failure)
+            {
+                destroy_viewport(device, viewport);
+                continue;
+            }
+
+            hr = IDirect3DDevice3_BeginScene(device);
+            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
+            ok(SUCCEEDED(hr), "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice3_EndScene(device);
+            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x (i %u, j %u).\n", hr, i, j);
+
+            check_rect(rt, tests[j].expected_rect, tests[j].message);
+
+            destroy_viewport(device, viewport);
+        }
+
+        destroy_viewport(device, full_viewport);
+
+        hr = IDirectDrawSurface4_DeleteAttachedSurface(rt, 0, ds);
+        ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x (i %u).\n", hr, i);
+        IDirectDrawSurface4_Release(ds);
+
+        IDirectDrawSurface4_Release(rt);
+    }
+
+    refcount = IDirect3DDevice3_Release(device);
+    IDirect3D3_Release(d3d);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -14775,7 +15003,7 @@ START_TEST(ddraw4)
     test_coop_level_threaded();
     test_depth_blit();
     test_texture_load_ckey();
-    test_viewport();
+    test_viewport_object();
     test_zenable();
     test_ck_rgba();
     test_ck_default();
@@ -14853,4 +15081,5 @@ START_TEST(ddraw4)
     test_depth_readback();
     test_clear();
     test_enum_surfaces();
+    test_viewport();
 }
