@@ -2107,7 +2107,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11Devic
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_device_get_viewports(device->wined3d_device, NULL, &wined3d_vp);
     wined3d_mutex_unlock();
 
     viewports[0].TopLeftX = wined3d_vp.x;
@@ -4909,7 +4909,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device1 *iface,
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_device_get_viewports(device->wined3d_device, NULL, &wined3d_vp);
     wined3d_mutex_unlock();
 
     viewports[0].TopLeftX = wined3d_vp.x;
