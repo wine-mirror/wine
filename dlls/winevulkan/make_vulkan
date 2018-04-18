@@ -576,7 +576,7 @@ class VkFunction(object):
 
         Args
             prefix (str, optional): prefix to prepend to entry point name.
-            symbol (str, optional): allows to override function name implementing entry point.
+            symbol (str, optional): allows overriding the name of the function implementing the entry point.
         """
 
         spec = ""
