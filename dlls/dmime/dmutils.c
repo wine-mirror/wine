@@ -45,7 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmfile);
 
-HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) {
 
   switch (pChunk->fccID) {
   case DMUS_FOURCC_GUID_CHUNK: {
