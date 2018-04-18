@@ -778,6 +778,46 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
     filetime->dwHighDateTime = (DWORD)(secs >> 32);
 }
 
+/***********************************************************************
+ *		TIMEZONE_InitRegistry
+ *
+ * Update registry contents on startup if the user timezone has changed.
+ * This simulates the action of the Windows control panel.
+ */
+void TIMEZONE_InitRegistry(void)
+{
+    static const WCHAR timezoneInformationW[] = {
+        'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'T','i','m','e','Z','o','n','e','I','n','f','o','r','m','a','t','i','o','n','\0'
+    };
+    static const WCHAR standardNameW[] = {'S','t','a','n','d','a','r','d','N','a','m','e','\0'};
+    static const WCHAR timezoneKeyNameW[] = {'T','i','m','e','Z','o','n','e','K','e','y','N','a','m','e','\0'};
+    DYNAMIC_TIME_ZONE_INFORMATION tzinfo;
+    UNICODE_STRING name;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE hkey;
+    DWORD tzid;
+
+    tzid = GetDynamicTimeZoneInformation(&tzinfo);
+    if (tzid == TIME_ZONE_ID_INVALID) return;
+
+    RtlInitUnicodeString(&name, timezoneInformationW);
+    InitializeObjectAttributes(&attr, &name, 0, 0, NULL);
+    if (NtCreateKey(&hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL) != STATUS_SUCCESS) return;
+
+    RtlInitUnicodeString(&name, standardNameW);
+    NtSetValueKey(hkey, &name, 0, REG_SZ, tzinfo.StandardName,
+                  (strlenW(tzinfo.StandardName) + 1) * sizeof(WCHAR));
+
+    RtlInitUnicodeString(&name, timezoneKeyNameW);
+    NtSetValueKey(hkey, &name, 0, REG_SZ, tzinfo.TimeZoneKeyName,
+                  (strlenW(tzinfo.TimeZoneKeyName) + 1) * sizeof(WCHAR));
+
+    NtClose( hkey );
+}
+
 /*********************************************************************
  *	GetProcessTimes				(KERNEL32.@)
  *
