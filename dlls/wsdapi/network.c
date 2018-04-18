@@ -98,7 +98,7 @@ static DWORD WINAPI sending_thread(LPVOID lpParam)
     return 0;
 }
 
-BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_delay, ULONG family)
+static BOOL send_udp_multicast_of_type(char *data, int length, int max_initial_delay, ULONG family)
 {
     IP_ADAPTER_ADDRESSES *adapter_addresses = NULL, *adapter_addr;
     static const struct in6_addr i_addr_zero;
