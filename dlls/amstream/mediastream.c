@@ -19,7 +19,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 
 #include <stdarg.h>
