@@ -5612,7 +5612,7 @@ static void test_NormalizeString(void)
 
     todo_wine {
         dstlen = pNormalizeString( NormalizationD, ptest->str, -1, dst, 1 );
-        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Should have failed with ERROR_INSUFFICIENT_BUFFER");
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Should have failed with ERROR_INSUFFICIENT_BUFFER\n");
     }
 
     /*
