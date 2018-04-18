@@ -1620,3 +1620,56 @@ int CDECL _get_daylight(int *hours)
 }
 
 #endif /* _MSVCR_VER >= 80 */
+
+#if _MSVCR_VER >= 140
+
+#define TIME_UTC 1
+
+struct _timespec32
+{
+    MSVCRT___time32_t tv_sec;
+    LONG tv_nsec;
+};
+
+struct _timespec64
+{
+    MSVCRT___time64_t tv_sec;
+    LONG tv_nsec;
+};
+
+/*********************************************************************
+ * _timespec64_get (UCRTBASE.@)
+ */
+int CDECL _timespec64_get(struct _timespec64 *ts, int base)
+{
+    ULONGLONG time;
+    FILETIME ft;
+
+    if(!MSVCRT_CHECK_PMT(ts != NULL)) return 0;
+    if(base != TIME_UTC) return 0;
+
+    GetSystemTimePreciseAsFileTime(&ft);
+    time = ((ULONGLONG)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+
+    ts->tv_sec = time / TICKSPERSEC - SECS_1601_TO_1970;
+    ts->tv_nsec = time % TICKSPERSEC * 100;
+    return base;
+}
+
+/*********************************************************************
+ * _timespec32_get (UCRTBASE.@)
+ */
+int CDECL _timespec32_get(struct _timespec32 *ts, int base)
+{
+    struct _timespec64 ts64;
+
+    if(_timespec64_get(&ts64, base) != base)
+        return 0;
+    if(ts64.tv_sec != (MSVCRT___time32_t)ts64.tv_sec)
+        return 0;
+
+    ts->tv_sec = ts64.tv_sec;
+    ts->tv_nsec = ts64.tv_nsec;
+    return base;
+}
+#endif /* _MSVCR_VER >= 140 */
