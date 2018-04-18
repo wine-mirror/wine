@@ -1514,7 +1514,7 @@ typedef struct
     UINT container_count;
 } MetadataReaderInfo;
 
-struct metadata_container *get_metadata_container(MetadataReaderInfo *info, const GUID *guid)
+static struct metadata_container *get_metadata_container(MetadataReaderInfo *info, const GUID *guid)
 {
     unsigned i;
 
