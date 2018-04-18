@@ -4346,6 +4346,24 @@ static HRESULT read_next_node( struct reader *reader )
     return WS_E_INVALID_FORMAT;
 }
 
+struct reader_pos
+{
+    struct node *node;
+    ULONG        attr;
+};
+
+static void save_reader_position( const struct reader *reader, struct reader_pos *pos )
+{
+    pos->node = reader->current;
+    pos->attr = reader->current_attr;
+}
+
+static void restore_reader_position( struct reader *reader, const struct reader_pos *pos )
+{
+    reader->current      = pos->node;
+    reader->current_attr = pos->attr;
+}
+
 static HRESULT get_text( struct reader *reader, WS_TYPE_MAPPING mapping, const WS_XML_STRING *localname,
                          const WS_XML_STRING *ns, const WS_XML_TEXT **ret, BOOL *found )
 {
@@ -4364,16 +4382,19 @@ static HRESULT get_text( struct reader *reader, WS_TYPE_MAPPING mapping, const W
         *found = TRUE;
         if (localname)
         {
+            struct reader_pos pos;
             HRESULT hr;
+
             if (!match_element( reader->current, localname, ns ))
             {
                 *found = FALSE;
                 return S_OK;
             }
+            save_reader_position( reader, &pos );
             if ((hr = read_next_node( reader )) != S_OK) return hr;
             if (node_type( reader->current ) != WS_XML_NODE_TYPE_TEXT)
             {
-                if (!move_to_parent_element( &reader->current )) return WS_E_INVALID_FORMAT;
+                restore_reader_position( reader, &pos );
                 *found = FALSE;
                 return S_OK;
             }
@@ -6021,8 +6042,7 @@ static HRESULT read_type_next_node( struct reader *reader )
 static HRESULT read_type_next_element_node( struct reader *reader, const WS_XML_STRING *localname,
                                             const WS_XML_STRING *ns )
 {
-    struct node *node;
-    ULONG attr;
+    struct reader_pos pos;
     HRESULT hr;
 
     if (!localname) return S_OK; /* assume reader is already correctly positioned */
@@ -6034,14 +6054,10 @@ static HRESULT read_type_next_element_node( struct reader *reader, const WS_XML_
     }
     if (match_element( reader->current, localname, ns )) return S_OK;
 
-    node = reader->current;
-    attr = reader->current_attr;
-
+    save_reader_position( reader, &pos );
     if ((hr = read_type_next_node( reader )) != S_OK) return hr;
     if (match_element( reader->current, localname, ns )) return S_OK;
-
-    reader->current = node;
-    reader->current_attr = attr;
+    restore_reader_position( reader, &pos );
 
     return WS_E_INVALID_FORMAT;
 }
@@ -6166,55 +6182,37 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
 
 static HRESULT read_type_field( struct reader *, const WS_FIELD_DESCRIPTION *, WS_HEAP *, char *, ULONG );
 
-static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_READ_OPTION option,
-                                WS_HEAP *heap, void *ret, ULONG size )
+static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_HEAP *heap, void *ret,
+                                ULONG size, BOOL *found )
 {
-    BOOL found = FALSE;
+    struct reader_pos pos;
     HRESULT hr;
     ULONG i;
 
-    switch (option)
-    {
-    case WS_READ_REQUIRED_VALUE:
-    case WS_READ_NILLABLE_VALUE:
-        if (size != desc->size) return E_INVALIDARG;
-        break;
+    if (size != desc->size) return E_INVALIDARG;
 
-    default:
-        return E_INVALIDARG;
-    }
-
+    save_reader_position( reader, &pos );
     if ((hr = read_type_next_node( reader )) != S_OK) return hr;
-    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return WS_E_INVALID_FORMAT;
+
     for (i = 0; i < desc->fieldCount; i++)
     {
-        if ((found = match_element( reader->current, desc->fields[i]->field.localName, desc->fields[i]->field.ns )))
+        if ((*found = match_element( reader->current, desc->fields[i]->field.localName, desc->fields[i]->field.ns )))
             break;
     }
 
-    if (!found) *(int *)((char *)ret + desc->enumOffset) = desc->noneEnumValue;
+    if (!*found)
+    {
+        *(int *)((char *)ret + desc->enumOffset) = desc->noneEnumValue;
+        restore_reader_position( reader, &pos );
+    }
     else
     {
         ULONG offset = desc->fields[i]->field.offset;
-        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) == S_OK)
-            *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
+        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) != S_OK) return hr;
+        *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
     }
 
-    switch (option)
-    {
-    case WS_READ_NILLABLE_VALUE:
-        if (!found) move_to_parent_element( &reader->current );
-        break;
-
-    case WS_READ_REQUIRED_VALUE:
-        if (!found) hr = WS_E_INVALID_FORMAT;
-        break;
-
-    default:
-        return E_INVALIDARG;
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT read_type( struct reader *, WS_TYPE_MAPPING, WS_TYPE, const WS_XML_STRING *,
@@ -6251,17 +6249,28 @@ static HRESULT read_type_array( struct reader *reader, const WS_FIELD_DESCRIPTIO
         }
 
         if (desc->type == WS_UNION_TYPE)
-            hr = read_type_union( reader, desc->typeDescription, option, heap, buf + offset, item_size );
+        {
+            BOOL found;
+            hr = read_type_union( reader, desc->typeDescription, heap, buf + offset, item_size, &found );
+            if (hr != S_OK)
+            {
+                ws_free( heap, buf, nb_allocated * item_size );
+                return hr;
+            }
+            if (!found) break;
+        }
         else
+        {
             hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->itemLocalName, desc->itemNs,
                             desc->typeDescription, option, heap, buf + offset, item_size );
-
-        if (hr == WS_E_INVALID_FORMAT) break;
-        if (hr != S_OK)
-        {
-            ws_free( heap, buf, nb_allocated * item_size );
-            return hr;
+            if (hr == WS_E_INVALID_FORMAT) break;
+            if (hr != S_OK)
+            {
+                ws_free( heap, buf, nb_allocated * item_size );
+                return hr;
+            }
         }
+
         offset += item_size;
         nb_items++;
     }
@@ -6338,11 +6347,13 @@ static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTIO
         break;
 
     case WS_ELEMENT_CHOICE_FIELD_MAPPING:
+    {
+        BOOL found;
         if (desc->type != WS_UNION_TYPE || !desc->typeDescription ||
             (desc->options & (WS_FIELD_POINTER|WS_FIELD_NILLABLE))) return E_INVALIDARG;
-        hr = read_type_union( reader, desc->typeDescription, option, heap, ptr, size );
+        hr = read_type_union( reader, desc->typeDescription, heap, ptr, size, &found );
         break;
-
+    }
     case WS_REPEATING_ELEMENT_FIELD_MAPPING:
     case WS_REPEATING_ELEMENT_CHOICE_FIELD_MAPPING:
     {
