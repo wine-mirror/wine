@@ -3577,7 +3577,7 @@ static void output_subdirs( struct makefile *make )
     }
     if (winetest_deps.count)
     {
-        output( "programs/winetest:" );
+        output( "buildtests programs/winetest:" );
         output_filenames( winetest_deps );
         output( "\n" );
         output( "check test:" );
@@ -3588,6 +3588,7 @@ static void output_subdirs( struct makefile *make )
             strarray_add( &make->phony_targets, target );
         }
         output( "\n" );
+        strarray_add( &make->phony_targets, "buildtests" );
         strarray_add( &make->phony_targets, "check" );
         strarray_add( &make->phony_targets, "test" );
     }
