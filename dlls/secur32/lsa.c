@@ -105,7 +105,14 @@ NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
 
 NTSTATUS WINAPI LsaDeregisterLogonProcess(HANDLE LsaHandle)
 {
-    FIXME("%p stub\n", LsaHandle);
+    struct lsa_connection *lsa_conn = (struct lsa_connection *)LsaHandle;
+
+    TRACE("%p\n", LsaHandle);
+
+    if (!lsa_conn || lsa_conn->magic != LSA_MAGIC) return STATUS_INVALID_HANDLE;
+    lsa_conn->magic = 0;
+    heap_free(lsa_conn);
+
     return STATUS_SUCCESS;
 }
 
