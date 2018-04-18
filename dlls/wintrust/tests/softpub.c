@@ -1946,6 +1946,14 @@ static void test_pe_image_hash(void)
     DeleteFileW(path);
 }
 
+static void test_WTHelperGetProvCertFromChain(void)
+{
+    CRYPT_PROVIDER_CERT *cert;
+
+    cert = WTHelperGetProvCertFromChain(NULL, 0);
+    ok(!cert, "got certificate\n");
+}
+
 START_TEST(softpub)
 {
     InitFunctionPtrs();
@@ -1954,6 +1962,7 @@ START_TEST(softpub)
     test_wintrust();
     test_wintrust_digest();
     test_get_known_usages();
+    test_WTHelperGetProvCertFromChain();
     test_multiple_signatures();
     test_pe_image_hash();
 }
