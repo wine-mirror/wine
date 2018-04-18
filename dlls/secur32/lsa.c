@@ -88,18 +88,34 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
     return STATUS_INVALID_PARAMETER;
 }
 
+struct lsa_connection *alloc_lsa_connection(void)
+{
+    struct lsa_connection *ret;
+    if (!(ret = heap_alloc(sizeof(*ret)))) return NULL;
+    ret->magic = LSA_MAGIC;
+    return ret;
+}
+
 NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
 {
     struct lsa_connection *lsa_conn;
 
     TRACE("%p\n", LsaHandle);
 
-    lsa_conn = heap_alloc(sizeof(*lsa_conn));
-    if (!lsa_conn) return STATUS_NO_MEMORY;
-
-    lsa_conn->magic = LSA_MAGIC;
+    if (!(lsa_conn = alloc_lsa_connection())) return STATUS_NO_MEMORY;
     *LsaHandle = lsa_conn;
+    return STATUS_SUCCESS;
+}
 
+NTSTATUS WINAPI LsaRegisterLogonProcess(PLSA_STRING LogonProcessName,
+        PHANDLE LsaHandle, PLSA_OPERATIONAL_MODE SecurityMode)
+{
+    struct lsa_connection *lsa_conn;
+
+    FIXME("%s %p %p stub\n", debugstr_as(LogonProcessName), LsaHandle, SecurityMode);
+
+    if (!(lsa_conn = alloc_lsa_connection())) return STATUS_NO_MEMORY;
+    *LsaHandle = lsa_conn;
     return STATUS_SUCCESS;
 }
 
@@ -922,11 +938,4 @@ NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE lsa_handle,
     }
 
     return STATUS_UNSUCCESSFUL; /* FIXME */
-}
-
-NTSTATUS WINAPI LsaRegisterLogonProcess(PLSA_STRING LogonProcessName,
-        PHANDLE LsaHandle, PLSA_OPERATIONAL_MODE SecurityMode)
-{
-    FIXME("%p %p %p stub\n", LogonProcessName, LsaHandle, SecurityMode);
-    return STATUS_SUCCESS;
 }
