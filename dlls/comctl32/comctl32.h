@@ -276,6 +276,5 @@ LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME *secon
 extern void THEMING_Initialize(void) DECLSPEC_HIDDEN;
 extern void THEMING_Uninitialize(void) DECLSPEC_HIDDEN;
 extern LRESULT THEMING_CallOriginalClass(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
-extern void THEMING_SetSubclassData(HWND, ULONG_PTR) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_COMCTL32_H */
