@@ -1972,8 +1972,8 @@
 @ cdecl _tempnam(str str) MSVCRT__tempnam
 @ cdecl _time32(ptr) MSVCRT__time32
 @ cdecl _time64(ptr) MSVCRT__time64
-@ stub _timespec32_get
-@ stub _timespec64_get
+@ cdecl _timespec32_get(ptr long)
+@ cdecl _timespec64_get(ptr long)
 @ cdecl _tolower(long) MSVCRT__tolower
 @ cdecl _tolower_l(long ptr) MSVCRT__tolower_l
 @ cdecl _toupper(long) MSVCRT__toupper

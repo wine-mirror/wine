@@ -47,8 +47,8 @@
 @ cdecl _strtime_s(ptr long) ucrtbase._strtime_s
 @ cdecl _time32(ptr) ucrtbase._time32
 @ cdecl _time64(ptr) ucrtbase._time64
-@ stub _timespec32_get
-@ stub _timespec64_get
+@ cdecl _timespec32_get(ptr long) ucrtbase._timespec32_get
+@ cdecl _timespec64_get(ptr long) ucrtbase._timespec64_get
 @ cdecl _tzset() ucrtbase._tzset
 @ cdecl _utime32(str ptr) ucrtbase._utime32
 @ cdecl _utime64(str ptr) ucrtbase._utime64
