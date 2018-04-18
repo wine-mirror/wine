@@ -89,7 +89,7 @@ typedef struct
 #include "poppack.h"
 
 #if 0
-static void dumpIcoDirEnty ( LPicoICONDIRENTRY entry )
+static void dumpIcoDirEntry ( LPicoICONDIRENTRY entry )
 {
 	TRACE("width = 0x%08x height = 0x%08x\n", entry->bWidth, entry->bHeight);
 	TRACE("colors = 0x%08x planes = 0x%08x\n", entry->bColorCount, entry->wPlanes);
