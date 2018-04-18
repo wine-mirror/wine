@@ -7314,6 +7314,42 @@ static void test_GetExplicitEntriesFromAclW(void)
     HeapFree(GetProcessHeap(), 0, old_acl);
 }
 
+static void test_BuildSecurityDescriptorW(void)
+{
+    SECURITY_DESCRIPTOR old_sd, *new_sd, *rel_sd;
+    ULONG new_sd_size;
+    DWORD buf_size;
+    char buf[1024];
+    BOOL success;
+    DWORD ret;
+
+    InitializeSecurityDescriptor(&old_sd, SECURITY_DESCRIPTOR_REVISION);
+
+    buf_size = sizeof(buf);
+    rel_sd = (SECURITY_DESCRIPTOR *)buf;
+    success = MakeSelfRelativeSD(&old_sd, rel_sd, &buf_size);
+    ok(success, "MakeSelfRelativeSD failed with %u\n", GetLastError());
+
+    new_sd = NULL;
+    new_sd_size = 0;
+    ret = BuildSecurityDescriptorW(NULL, NULL, 0, NULL, 0, NULL, NULL, &new_sd_size, (void **)&new_sd);
+    ok(ret == ERROR_SUCCESS, "BuildSecurityDescriptor failed with %u\n", ret);
+    ok(new_sd != NULL, "expected new_sd != NULL\n");
+    LocalFree(new_sd);
+
+    new_sd = (void *)0xdeadbeef;
+    ret = BuildSecurityDescriptorW(NULL, NULL, 0, NULL, 0, NULL, &old_sd, &new_sd_size, (void **)&new_sd);
+    ok(ret == ERROR_INVALID_SECURITY_DESCR, "expected ERROR_INVALID_SECURITY_DESCR, got %u\n", ret);
+    ok(new_sd == (void *)0xdeadbeef, "expected new_sd == 0xdeadbeef, got %p\n", new_sd);
+
+    new_sd = NULL;
+    new_sd_size = 0;
+    ret = BuildSecurityDescriptorW(NULL, NULL, 0, NULL, 0, NULL, rel_sd, &new_sd_size, (void **)&new_sd);
+    ok(ret == ERROR_SUCCESS, "BuildSecurityDescriptor failed with %u\n", ret);
+    ok(new_sd != NULL, "expected new_sd != NULL\n");
+    LocalFree(new_sd);
+}
+
 START_TEST(security)
 {
     init();
@@ -7368,6 +7404,7 @@ START_TEST(security)
     test_maximum_allowed();
     test_token_label();
     test_GetExplicitEntriesFromAclW();
+    test_BuildSecurityDescriptorW();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
