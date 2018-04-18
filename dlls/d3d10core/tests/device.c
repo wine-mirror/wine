@@ -4934,7 +4934,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
                 "Got unexpected scissor rect %s in slot %u.\n", wine_dbgstr_rect(&tmp_rect[i]), i);
     }
     ID3D10Device_RSGetViewports(device, &count, NULL);
-    todo_wine ok(!count, "Got unexpected viewport count %u.\n", count);
+    ok(!count, "Got unexpected viewport count %u.\n", count);
     memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
     count = D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
@@ -5329,7 +5329,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
                 "Got unexpected scissor rect %s in slot %u.\n", wine_dbgstr_rect(&tmp_rect[i]), i);
     }
     ID3D10Device_RSGetViewports(device, &count, NULL);
-    todo_wine ok(count == D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+    ok(count == D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
             "Got unexpected viewport count %u.\n", count);
     memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
@@ -5467,7 +5467,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
                     wine_dbgstr_rect(&tmp_rect[i]), i);
     }
     ID3D10Device_RSGetViewports(device, &count, NULL);
-    todo_wine ok(!count, "Got unexpected viewport count %u.\n", count);
+    ok(!count, "Got unexpected viewport count %u.\n", count);
     memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
     count = D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
@@ -16330,6 +16330,10 @@ static void test_multiple_viewports(void)
     vp[1].Width = width;
     ID3D10Device_RSSetViewports(device, 2, vp);
 
+    count = ARRAY_SIZE(vp);
+    ID3D10Device_RSGetViewports(device, &count, vp);
+    ok(count == 2, "Unexpected viewport count %d.\n", count);
+
     constant.draw_id = 0;
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
     draw_quad(&test_context);
@@ -16379,7 +16383,6 @@ static void test_multiple_viewports(void)
     count = ARRAY_SIZE(vp);
     memset(vp, 0, sizeof(vp));
     ID3D10Device_RSGetViewports(device, &count, vp);
-todo_wine
     ok(count == 1, "Unexpected viewport count %d.\n", count);
     ok(vp[0].TopLeftX == 0.0f && vp[0].Width == width, "Unexpected viewport.\n");
 
