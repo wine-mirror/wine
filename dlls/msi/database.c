@@ -1906,10 +1906,9 @@ MSIDBSTATE WINAPI MsiGetDatabaseState( MSIHANDLE handle )
     return ret;
 }
 
-HRESULT __cdecl remote_DatabaseIsTablePersistent(MSIHANDLE db, LPCWSTR table, MSICONDITION *persistent)
+MSICONDITION __cdecl remote_DatabaseIsTablePersistent(MSIHANDLE db, LPCWSTR table)
 {
-    *persistent = MsiDatabaseIsTablePersistentW(db, table);
-    return S_OK;
+    return MsiDatabaseIsTablePersistentW(db, table);
 }
 
 HRESULT __cdecl remote_DatabaseGetPrimaryKeys(MSIHANDLE db, LPCWSTR table, MSIHANDLE *keys)
