@@ -922,8 +922,6 @@ void init_node_cc(void) DECLSPEC_HIDDEN;
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
 
-HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*) DECLSPEC_HIDDEN;
-
 void call_property_onchanged(ConnectionPointContainer*,DISPID) DECLSPEC_HIDDEN;
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*) DECLSPEC_HIDDEN;
 

@@ -39,7 +39,7 @@ static const WCHAR yesW[] = {'y','e','s',0};
 static const WCHAR noW[] = {'n','o',0};
 static const WCHAR pxW[] = {'p','x',0};
 
-HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
+static HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
     mozIDOMWindowProxy *mozwindow;
     HTMLOuterWindow *window;
