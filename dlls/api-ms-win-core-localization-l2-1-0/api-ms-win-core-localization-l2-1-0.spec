@@ -7,6 +7,6 @@
 @ stdcall EnumSystemCodePagesW(ptr long) kernel32.EnumSystemCodePagesW
 @ stdcall EnumTimeFormatsEx(ptr wstr long long) kernel32.EnumTimeFormatsEx
 @ stdcall EnumTimeFormatsW(ptr long long) kernel32.EnumTimeFormatsW
-@ stub GetCurrencyFormatEx
+@ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long) kernel32.GetCurrencyFormatEx
 @ stdcall GetCurrencyFormatW(long long str ptr str long) kernel32.GetCurrencyFormatW
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx

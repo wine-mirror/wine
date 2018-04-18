@@ -1756,6 +1756,19 @@ error:
   return 0;
 }
 
+/***********************************************************************
+ *            GetCurrencyFormatEx (KERNEL32.@)
+ */
+int WINAPI GetCurrencyFormatEx(LPCWSTR localename, DWORD flags, LPCWSTR value,
+                                const CURRENCYFMTW *format, LPWSTR str, int len)
+{
+    TRACE("(%s,0x%08x,%s,%p,%p,%d)\n", debugstr_w(localename), flags,
+            debugstr_w(value), format, str, len);
+
+    return GetCurrencyFormatW( LocaleNameToLCID(localename, 0), flags, value, format, str, len);
+}
+
+
 /* FIXME: Everything below here needs to move somewhere else along with the
  *        other EnumXXX functions, when a method for storing resources for
  *        alternate calendars is determined.
