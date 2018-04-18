@@ -8615,7 +8615,7 @@ static void test_device_caps(void)
             | D3DCAPS2_CANMANAGERESOURCE | D3DCAPS2_DYNAMICTEXTURES | D3DCAPS2_FULLSCREENGAMMA
             | D3DCAPS2_NO2DDURING3DSCENE | D3DCAPS2_RESERVED)),
             "Caps2 field has unexpected flags %#x.\n", caps.Caps2);
-    /* Nvidia returns that 0x400 flag, which is is probably Vista+
+    /* Nvidia returns that 0x400 flag, which is probably Vista+
      * D3DCAPS3_DXVAHD from d3d9caps.h */
     /* AMD doesn't filter all the ddraw / d3d9 caps. Consider that behavior
      * broken. */
