@@ -924,7 +924,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, IStream *strea
                         return hr;
                 break;
             case FOURCC_RIFF:
-                FIXME("Loading of embedded RIFF form %s", debugstr_fourcc(chunk.type));
+                FIXME("Loading of embedded RIFF form %s\n", debugstr_fourcc(chunk.type));
                 break;
         }
     }
