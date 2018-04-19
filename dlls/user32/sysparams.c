@@ -3313,8 +3313,21 @@ BOOL WINAPI GetDpiForMonitorInternal( HMONITOR monitor, UINT type, UINT *x, UINT
  */
 UINT WINAPI GetDpiForWindow( HWND hwnd )
 {
-    FIXME( "stub: %p\n", hwnd );
-    return GetDpiForSystem();
+    UINT dpi;
+
+    switch (GetAwarenessFromDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd )))
+    {
+    case DPI_AWARENESS_UNAWARE:
+        return USER_DEFAULT_SCREEN_DPI;
+    case DPI_AWARENESS_SYSTEM_AWARE:
+        return get_system_dpi();
+    case DPI_AWARENESS_PER_MONITOR_AWARE:
+        GetDpiForMonitorInternal( MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY ),
+                                  0 /* MDT_EFFECTIVE_DPI */, &dpi, NULL );
+        return dpi;
+    default:
+        return 0;
+    }
 }
 
 /**********************************************************************
