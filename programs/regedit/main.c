@@ -62,7 +62,7 @@ const WCHAR strClipboardFormat[] = {'T','O','D','O',':',' ','S','E','T',' ','C',
 
 #define MAX_LOADSTRING  100
 WCHAR szTitle[MAX_LOADSTRING];
-const WCHAR szFrameClass[] = {'R','E','G','E','D','I','T','_','F','R','A','M','E',0};
+const WCHAR szFrameClass[] = {'R','e','g','E','d','i','t','_','R','e','g','E','d','i','t',0};
 const WCHAR szChildClass[] = {'R','E','G','E','D','I','T',0};
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
