@@ -508,6 +508,7 @@
 @ stdcall LockWindowUpdate(long)
 @ stdcall LockWorkStation()
 @ stdcall LogicalToPhysicalPoint(long ptr)
+@ stdcall LogicalToPhysicalPointForPerMonitorDPI(long ptr)
 @ stdcall LookupIconIdFromDirectory(ptr long)
 @ stdcall LookupIconIdFromDirectoryEx(ptr long long long long)
 @ stub MBToWCSEx
@@ -559,6 +560,7 @@
 @ stdcall PeekMessageA(ptr long long long long)
 @ stdcall PeekMessageW(ptr long long long long)
 @ stdcall PhysicalToLogicalPoint(long ptr)
+@ stdcall PhysicalToLogicalPointForPerMonitorDPI(long ptr)
 @ stub PlaySoundEvent
 @ stdcall PostMessageA(long long long long)
 @ stdcall PostMessageW(long long long long)

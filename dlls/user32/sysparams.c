@@ -3367,6 +3367,43 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
 }
 
 /**********************************************************************
+ *              LogicalToPhysicalPointForPerMonitorDPI   (USER32.@)
+ */
+BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
+{
+    UINT system_dpi = get_system_dpi();
+    UINT dpi = GetDpiForWindow( hwnd );
+    RECT rect;
+
+    GetWindowRect( hwnd, &rect );
+    if (pt->x < rect.left || pt->y < rect.top || pt->x > rect.right || pt->y > rect.bottom) return FALSE;
+    pt->x = MulDiv( pt->x, system_dpi, dpi );
+    pt->y = MulDiv( pt->y, system_dpi, dpi );
+    return TRUE;
+}
+
+/**********************************************************************
+ *              PhysicalToLogicalPointForPerMonitorDPI   (USER32.@)
+ */
+BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
+{
+    DPI_AWARENESS_CONTEXT context;
+    UINT system_dpi = get_system_dpi();
+    UINT dpi = GetDpiForWindow( hwnd );
+    RECT rect;
+
+    /* get window rect in physical coords */
+    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    GetWindowRect( hwnd, &rect );
+    SetThreadDpiAwarenessContext( context );
+
+    if (pt->x < rect.left || pt->y < rect.top || pt->x > rect.right || pt->y > rect.bottom) return FALSE;
+    pt->x = MulDiv( pt->x, dpi, system_dpi );
+    pt->y = MulDiv( pt->y, dpi, system_dpi );
+    return TRUE;
+}
+
+/**********************************************************************
  *              GetAutoRotationState [USER32.@]
  */
 BOOL WINAPI GetAutoRotationState( AR_STATE *state )

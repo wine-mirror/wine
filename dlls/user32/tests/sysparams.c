@@ -45,6 +45,7 @@ static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static BOOL (WINAPI *pGetProcessDpiAwarenessInternal)(HANDLE,DPI_AWARENESS*);
 static BOOL (WINAPI *pSetProcessDpiAwarenessInternal)(DPI_AWARENESS);
 static UINT (WINAPI *pGetDpiForSystem)(void);
+static UINT (WINAPI *pGetDpiForWindow)(HWND);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
@@ -52,6 +53,8 @@ static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENES
 static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static INT (WINAPI *pGetSystemMetricsForDpi)(INT,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
+static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
+static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -3177,6 +3180,140 @@ static void test_dpi_stock_objects( HDC hdc )
     pSetThreadDpiAwarenessContext( context );
 }
 
+static void scale_rect_dpi( RECT *rect, UINT src_dpi, UINT target_dpi )
+{
+    rect->left = MulDiv( rect->left, target_dpi, src_dpi );
+    rect->top = MulDiv( rect->top, target_dpi, src_dpi );
+    rect->right = MulDiv( rect->right, target_dpi, src_dpi );
+    rect->bottom = MulDiv( rect->bottom, target_dpi, src_dpi );
+}
+
+static void test_dpi_mapping(void)
+{
+    HWND hwnd;
+    UINT win_dpi;
+    POINT point;
+    BOOL ret, todo;
+    RECT rect, orig, client, expect;
+    ULONG_PTR i, j;
+    DPI_AWARENESS_CONTEXT context = pGetThreadDpiAwarenessContext();
+
+    if (!pLogicalToPhysicalPointForPerMonitorDPI)
+    {
+        win_skip( "LogicalToPhysicalPointForPerMonitorDPI not supported\n" );
+        return;
+    }
+    for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
+    {
+        pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
+        hwnd = CreateWindowA( "SysParamsTestClass", "test", WS_OVERLAPPEDWINDOW,
+                              193, 177, 295, 303, 0, 0, GetModuleHandleA(0), NULL );
+        ok( hwnd != 0, "creating window failed err %u\n", GetLastError());
+        GetWindowRect( hwnd, &orig );
+        GetClientRect( hwnd, &client );
+        for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
+        {
+            pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+            GetWindowRect( hwnd, &rect );
+            expect = orig;
+            todo = (real_dpi != USER_DEFAULT_SCREEN_DPI);
+            if (i == DPI_AWARENESS_UNAWARE && j != DPI_AWARENESS_UNAWARE)
+                scale_rect_dpi( &expect, USER_DEFAULT_SCREEN_DPI, real_dpi );
+            else if (i != DPI_AWARENESS_UNAWARE && j == DPI_AWARENESS_UNAWARE)
+                scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+            else
+                todo = FALSE;
+            todo_wine_if (todo)
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong window rect %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            GetClientRect( hwnd, &rect );
+            expect = client;
+            MapWindowPoints( hwnd, 0, (POINT *)&expect, 2 );
+            if (i == DPI_AWARENESS_UNAWARE && j != DPI_AWARENESS_UNAWARE)
+                scale_rect_dpi( &expect, USER_DEFAULT_SCREEN_DPI, real_dpi );
+            else if (i != DPI_AWARENESS_UNAWARE && j == DPI_AWARENESS_UNAWARE)
+                scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+            MapWindowPoints( 0, hwnd, (POINT *)&expect, 2 );
+            OffsetRect( &expect, -expect.left, -expect.top );
+            todo_wine_if (todo)
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong client rect %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            win_dpi = pGetDpiForWindow( hwnd );
+            if (i == DPI_AWARENESS_UNAWARE)
+                ok( win_dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", win_dpi );
+            else if (i == DPI_AWARENESS_SYSTEM_AWARE)
+                ok( win_dpi == real_dpi, "wrong dpi %u / %u\n", win_dpi, real_dpi );
+            point.x = 373;
+            point.y = 377;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            ok( point.x == MulDiv( 373, real_dpi, win_dpi ) &&
+                point.y == MulDiv( 377, real_dpi, win_dpi ),
+                "%lu/%lu: wrong pos %d,%d dpi %u\n", i, j, point.x, point.y, win_dpi );
+            point.x = 405;
+            point.y = 423;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+            ok( point.x == MulDiv( 405, win_dpi, real_dpi ) &&
+                point.y == MulDiv( 423, win_dpi, real_dpi ),
+                "%lu/%lu: wrong pos %d,%d dpi %u\n", i, j, point.x, point.y, win_dpi );
+            /* point outside the window fails, but note that Windows (wrongly) checks against the
+             * window rect transformed relative to the thread's awareness */
+            GetWindowRect( hwnd, &rect );
+            point.x = rect.left - 1;
+            point.y = rect.top;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x++;
+            point.y--;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.y++;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            point.x = rect.right;
+            point.y = rect.bottom + 1;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x++;
+            point.y--;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x--;
+            ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: LogicalToPhysicalPointForPerMonitorDPI failed\n", i, j );
+            /* get physical window rect */
+            pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            GetWindowRect( hwnd, &rect );
+            pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+            point.x = rect.left - 1;
+            point.y = rect.top;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x++;
+            point.y--;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.y++;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+            point.x = rect.right;
+            point.y = rect.bottom + 1;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x++;
+            point.y--;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( !ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI succeeded\n", i, j );
+            point.x--;
+            ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &point );
+            ok( ret, "%lu/%lu: PhysicalToLogicalPointForPerMonitorDPI failed\n", i, j );
+        }
+        DestroyWindow( hwnd );
+    }
+    pSetThreadDpiAwarenessContext( context );
+}
+
 static void test_dpi_aware(void)
 {
     BOOL ret;
@@ -3373,6 +3510,7 @@ static void test_dpi_aware(void)
     test_GetSystemMetrics();
     test_metrics_for_dpi( 96 );
     test_metrics_for_dpi( 192 );
+    test_dpi_mapping();
 }
 
 static void test_window_dpi(void)
@@ -3448,6 +3586,7 @@ START_TEST(sysparams)
     pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
     pGetDpiForSystem = (void*)GetProcAddress(hdll, "GetDpiForSystem");
+    pGetDpiForWindow = (void*)GetProcAddress(hdll, "GetDpiForWindow");
     pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
     pGetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "GetProcessDpiAwarenessInternal");
     pSetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessInternal");
@@ -3458,6 +3597,8 @@ START_TEST(sysparams)
     pIsValidDpiAwarenessContext = (void*)GetProcAddress(hdll, "IsValidDpiAwarenessContext");
     pGetSystemMetricsForDpi = (void*)GetProcAddress(hdll, "GetSystemMetricsForDpi");
     pSystemParametersInfoForDpi = (void*)GetProcAddress(hdll, "SystemParametersInfoForDpi");
+    pLogicalToPhysicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "LogicalToPhysicalPointForPerMonitorDPI");
+    pPhysicalToLogicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "PhysicalToLogicalPointForPerMonitorDPI");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);

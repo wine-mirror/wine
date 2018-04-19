@@ -3896,6 +3896,7 @@ WINUSERAPI INT         WINAPI LoadStringA(HINSTANCE,UINT,LPSTR,INT);
 WINUSERAPI INT         WINAPI LoadStringW(HINSTANCE,UINT,LPWSTR,INT);
 #define                       LoadString WINELIB_NAME_AW(LoadString)
 WINUSERAPI BOOL        WINAPI LogicalToPhysicalPoint(HWND,POINT*);
+WINUSERAPI BOOL        WINAPI LogicalToPhysicalPointForPerMonitorDPI(HWND,POINT*);
 WINUSERAPI BOOL        WINAPI LockSetForegroundWindow(UINT);
 WINUSERAPI BOOL        WINAPI LockWindowUpdate(HWND);
 WINUSERAPI BOOL        WINAPI LockWorkStation(void);
@@ -3951,6 +3952,7 @@ WINUSERAPI BOOL        WINAPI PeekMessageA(LPMSG,HWND,UINT,UINT,UINT);
 WINUSERAPI BOOL        WINAPI PeekMessageW(LPMSG,HWND,UINT,UINT,UINT);
 #define                       PeekMessage WINELIB_NAME_AW(PeekMessage)
 WINUSERAPI BOOL        WINAPI PhysicalToLogicalPoint(HWND,POINT*);
+WINUSERAPI BOOL        WINAPI PhysicalToLogicalPointForPerMonitorDPI(HWND,POINT*);
 #define                       PostAppMessageA(thread,msg,wparam,lparam) PostThreadMessageA((DWORD)(thread),msg,wparam,lparam)
 #define                       PostAppMessageW(thread,msg,wparam,lparam) PostThreadMessageW((DWORD)(thread),msg,wparam,lparam)
 #define                       PostAppMessage WINELIB_NAME_AW(PostAppMessage)
