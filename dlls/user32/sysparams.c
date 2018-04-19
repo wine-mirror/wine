@@ -630,11 +630,17 @@ static UINT get_system_dpi(void)
     static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
     static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
     static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
-    DWORD dpi;
+    static UINT system_dpi;
+    UINT dpi;
 
-    if ((dpi = get_reg_dword( HKEY_CURRENT_USER, dpi_key_name, dpi_value_name ))) return dpi;
-    if ((dpi = get_reg_dword( HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name ))) return dpi;
-    return USER_DEFAULT_SCREEN_DPI;
+    if (!system_dpi)
+    {
+        if (!(dpi = get_reg_dword( HKEY_CURRENT_USER, dpi_key_name, dpi_value_name )) &&
+            !(dpi = get_reg_dword( HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name )))
+            dpi = USER_DEFAULT_SCREEN_DPI;
+        system_dpi = dpi;
+    }
+    return system_dpi;
 }
 
 HDC get_display_dc(void)
@@ -3284,12 +3290,22 @@ BOOL WINAPI IsProcessDPIAware(void)
  */
 UINT WINAPI GetDpiForSystem(void)
 {
-    static int display_dpi;
-
     if (!IsProcessDPIAware()) return USER_DEFAULT_SCREEN_DPI;
+    return get_system_dpi();
+}
 
-    if (!display_dpi) display_dpi = get_system_dpi();
-    return display_dpi;
+/***********************************************************************
+ *              GetDpiForMonitorInternal   (USER32.@)
+ */
+BOOL WINAPI GetDpiForMonitorInternal( HMONITOR monitor, UINT type, UINT *x, UINT *y )
+{
+    UINT dpi = get_system_dpi();
+
+    WARN( "(%p, %u, %p, %p): semi-stub\n", monitor, type, x, y );
+
+    if (x) *x = dpi;
+    if (y) *y = dpi;
+    return TRUE;
 }
 
 /***********************************************************************

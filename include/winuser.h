@@ -3678,6 +3678,7 @@ WINUSERAPI UINT        WINAPI GetDlgItemTextA(HWND,INT,LPSTR,INT);
 WINUSERAPI UINT        WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,INT);
 #define                       GetDlgItemText WINELIB_NAME_AW(GetDlgItemText)
 WINUSERAPI UINT        WINAPI GetDoubleClickTime(void);
+WINUSERAPI BOOL        WINAPI GetDpiForMonitorInternal(HMONITOR,UINT,UINT*,UINT*);
 WINUSERAPI UINT        WINAPI GetDpiForWindow(HWND);
 WINUSERAPI UINT        WINAPI GetDpiForSystem(void);
 WINUSERAPI HWND        WINAPI GetFocus(void);
