@@ -42,6 +42,8 @@ typedef struct {
     LONG ref;
 
     WCHAR *url;
+
+    DOUBLE duration;
 } WMPMedia;
 
 struct WindowsMediaPlayer {
@@ -76,6 +78,7 @@ struct WindowsMediaPlayer {
     IGraphBuilder* filter_graph;
     IMediaControl* media_control;
     IMediaEvent* media_event;
+    IMediaSeeking* media_seeking;
 
     /* Async event notification */
     HWND msg_window;

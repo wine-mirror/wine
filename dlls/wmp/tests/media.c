@@ -303,6 +303,11 @@ static BOOL test_wmp(void)
     static DWORD dw = 100;
     IWMPSettings *settings;
     BOOL test_ran = TRUE;
+    DOUBLE duration;
+    VARIANT_BOOL vbool;
+    IWMPMedia *media;
+    static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
+    BSTR bstrcurrentPosition = SysAllocString(currentPosition);
 
     hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
     if(hres == REGDB_E_CLASSNOTREG) {
@@ -338,6 +343,10 @@ static BOOL test_wmp(void)
     ok(hres == S_OK, "get_controls failed: %08x\n", hres);
     ok(controls != NULL, "controls = NULL\n");
 
+    hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
+    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
+    ok(vbool == VARIANT_FALSE, "unexpected value\n");
+
     hres = IWMPControls_play(controls);
     ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_play is available: %08x\n", hres);
 
@@ -364,7 +373,7 @@ static BOOL test_wmp(void)
     SET_EXPECT(OPENSTATE, wmposMediaOpening);
     hres = IWMPControls_play(controls);
     ok(hres == S_OK, "IWMPControls_play failed: %08x\n", hres);
-    res = pump_messages(5000, 1, &playing_event);
+    res = pump_messages(1000, 1, &playing_event);
     ok(res == WAIT_OBJECT_0 || broken(res == WAIT_TIMEOUT), "Timed out while waiting for media to become ready\n");
     if (res == WAIT_TIMEOUT) {
         /* This happens on Vista Ultimate 64 vms
@@ -379,6 +388,33 @@ static BOOL test_wmp(void)
     CHECK_CALLED(PLAYSTATE, wmppsTransitioning);
     /* MediaOpening happens only on xp, 2003 */
     CLEAR_CALLED(OPENSTATE, wmposMediaOpening);
+
+    hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
+    ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
+    ok(vbool == VARIANT_TRUE, "unexpected value\n");
+
+    duration = 0.0;
+    hres = IWMPControls_get_currentPosition(controls, &duration);
+    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
+    ok((int)duration == 0, "unexpected value %f\n", duration);
+
+    duration = 1.1;
+    hres = IWMPControls_put_currentPosition(controls, duration);
+    ok(hres == S_OK, "IWMPControls_put_currentPosition failed: %08x\n", hres);
+
+    duration = 0.0;
+    hres = IWMPControls_get_currentPosition(controls, &duration);
+    ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
+    /* builtin quartz does not handle this currently and resets to 0.0, works
+     * with native quartz */
+    todo_wine ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
+
+    hres = IWMPPlayer4_get_currentMedia(player4, &media);
+    ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08x\n", hres);
+    hres = IWMPMedia_get_duration(media, &duration);
+    ok(hres == S_OK, "IWMPMedia_get_duration failed: %08x\n", hres);
+    ok(round(duration) == 3, "unexpected value: %f\n", duration);
+    IWMPMedia_Release(media);
 
     SET_EXPECT(PLAYSTATE, wmppsStopped);
     /* The following happens on wine only since we close media on stop */
@@ -414,6 +450,7 @@ playback_skip:
     IOleObject_Release(oleobj);
     DeleteFileW(filename);
     SysFreeString(filename);
+    SysFreeString(bstrcurrentPosition);
 
     return test_ran;
 }

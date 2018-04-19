@@ -1396,8 +1396,21 @@ static HRESULT WINAPI WMPControls_Invoke(IWMPControls *iface, DISPID dispIdMembe
 static HRESULT WINAPI WMPControls_get_isAvailable(IWMPControls *iface, BSTR bstrItem, VARIANT_BOOL *pIsAvailable)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(bstrItem));
-    return E_NOTIMPL;
+    static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrItem), pIsAvailable);
+    if (!This->filter_graph) {
+        *pIsAvailable = VARIANT_FALSE;
+    } else if (strcmpW(currentPosition, bstrItem) == 0) {
+        DWORD capabilities;
+        IMediaSeeking_GetCapabilities(This->media_seeking, &capabilities);
+        *pIsAvailable = (capabilities & AM_SEEKING_CanSeekAbsolute) ?
+            VARIANT_TRUE : VARIANT_FALSE;
+    } else {
+        FIXME("%s not implemented\n", debugstr_w(bstrItem));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
@@ -1429,10 +1442,15 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
         if (SUCCEEDED(hres))
             hres = IGraphBuilder_RenderFile(This->filter_graph, media->url, NULL);
         if (SUCCEEDED(hres))
+            update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposMediaOpen);
+        if (SUCCEEDED(hres))
             hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaControl,
                     (void**)&This->media_control);
         if (SUCCEEDED(hres))
-            update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposMediaOpen);
+            hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaSeeking,
+                    (void**)&This->media_seeking);
+        if (SUCCEEDED(hres))
+            hres = IMediaSeeking_SetTimeFormat(This->media_seeking, &TIME_FORMAT_MEDIA_TIME);
         if (SUCCEEDED(hres))
             hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IMediaEvent,
                     (void**)&This->media_event);
@@ -1459,7 +1477,10 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
     }
 
     if (SUCCEEDED(hres)) {
+        LONGLONG duration;
         update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsPlaying);
+        if (SUCCEEDED(IMediaSeeking_GetDuration(This->media_seeking, &duration)))
+            media->duration = (DOUBLE)duration / 10000000.0f;
     } else {
         update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsUndefined);
     }
@@ -1482,11 +1503,14 @@ static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
     if (This->media_event) {
         IMediaEvent_Release(This->media_event);
     }
-
+    if (This->media_seeking) {
+        IMediaSeeking_Release(This->media_seeking);
+    }
     IGraphBuilder_Release(This->filter_graph);
     This->filter_graph = NULL;
     This->media_control = NULL;
     This->media_event = NULL;
+    This->media_seeking = NULL;
 
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsStopped);
@@ -1517,15 +1541,33 @@ static HRESULT WINAPI WMPControls_fastReverse(IWMPControls *iface)
 static HRESULT WINAPI WMPControls_get_currentPosition(IWMPControls *iface, DOUBLE *pdCurrentPosition)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    FIXME("(%p)->(%p)\n", This, pdCurrentPosition);
-    return E_NOTIMPL;
+    HRESULT hres;
+    LONGLONG currentPosition;
+
+    TRACE("(%p)->(%p)\n", This, pdCurrentPosition);
+    if (!This->media_seeking)
+        return S_FALSE;
+
+    hres = IMediaSeeking_GetCurrentPosition(This->media_seeking, &currentPosition);
+    *pdCurrentPosition = (DOUBLE) currentPosition / 10000000.0f;
+    TRACE("hres: %d, pos: %f\n", hres, *pdCurrentPosition);
+    return hres;
 }
 
 static HRESULT WINAPI WMPControls_put_currentPosition(IWMPControls *iface, DOUBLE dCurrentPosition)
 {
+    LONGLONG Current;
+    HRESULT hres;
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    FIXME("(%p)->(%f)\n", This, dCurrentPosition);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%f)\n", This, dCurrentPosition);
+    if (!This->media_seeking)
+        return S_FALSE;
+
+    Current = 10000000 * dCurrentPosition;
+    hres = IMediaSeeking_SetPositions(This->media_seeking, &Current,
+            AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+
+    return hres;
 }
 
 static HRESULT WINAPI WMPControls_get_currentPositionString(IWMPControls *iface, BSTR *pbstrCurrentPosition)
@@ -1762,9 +1804,12 @@ static HRESULT WINAPI WMPMedia_getMarkerName(IWMPMedia *iface, LONG MarkerNum, B
 
 static HRESULT WINAPI WMPMedia_get_duration(IWMPMedia *iface, DOUBLE *pDuration)
 {
+    /* MSDN: If this property is used with a media item other than the one
+     * specified in Player.currentMedia, it may not contain a valid value. */
     WMPMedia *This = impl_from_IWMPMedia(iface);
-    FIXME("(%p)->(%p)\n", This, pDuration);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pDuration);
+    *pDuration = This->duration;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPMedia_get_durationString(IWMPMedia *iface, BSTR *pbstrDuration)
