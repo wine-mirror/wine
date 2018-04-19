@@ -33,6 +33,7 @@
 #include "winreg.h"
 
 #include "undocshell.h"
+#include "shell32_main.h"
 
 #include "wine/debug.h"
 
@@ -154,7 +155,25 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
  */
 HRESULT WINAPI SHCreateSessionKey(REGSAM access, HKEY *hkey)
 {
-    FIXME("stub: %d %p\n", access, hkey);
-    *hkey = NULL;
-    return E_NOTIMPL;
+    static const WCHAR session_format[] = {
+                'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                'E','x','p','l','o','r','e','r','\\','S','e','s','s','i','o','n','I','n','f','o','\\','%','u',0};
+    DWORD session, ret;
+    WCHAR str[ARRAY_SIZE(session_format) + 16];
+
+    if (hkey)
+        *hkey = NULL;
+
+    if (!access)
+        return E_ACCESSDENIED;
+
+    if (!ProcessIdToSessionId(GetCurrentProcessId(), &session))
+        return E_INVALIDARG;
+
+    sprintfW(str, session_format, session);
+    TRACE("using session key %s\n", debugstr_w(str));
+
+    ret = RegCreateKeyExW(HKEY_CURRENT_USER, str, 0, NULL, REG_OPTION_VOLATILE, access, NULL, hkey, NULL);
+    return HRESULT_FROM_WIN32( ret );
 }
