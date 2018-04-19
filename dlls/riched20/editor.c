@@ -3005,19 +3005,12 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
 {
   CHARRANGE selrange;
   HMENU menu;
-  int seltype = 0;
+  int seltype;
+
   if(!editor->lpOleCallback || !editor->hWnd)
     return FALSE;
   ME_GetSelectionOfs(editor, &selrange.cpMin, &selrange.cpMax);
-  if(selrange.cpMin == selrange.cpMax)
-    seltype |= SEL_EMPTY;
-  else
-  {
-    /* FIXME: Handle objects */
-    seltype |= SEL_TEXT;
-    if(selrange.cpMax-selrange.cpMin > 1)
-      seltype |= SEL_MULTICHAR;
-  }
+  seltype = ME_GetSelectionType(editor);
   if(SUCCEEDED(IRichEditOleCallback_GetContextMenu(editor->lpOleCallback, seltype, NULL, &selrange, &menu)))
   {
     TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, editor->hwndParent, NULL);
