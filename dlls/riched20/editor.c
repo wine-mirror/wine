@@ -90,7 +90,7 @@
   + EM_REPLACESEL (proper style?) ANSI&Unicode
   + EM_SCROLL
   + EM_SCROLLCARET
-  - EM_SELECTIONTYPE
+  + EM_SELECTIONTYPE
   - EM_SETBIDIOPTIONS 3.0
   + EM_SETBKGNDCOLOR
   + EM_SETCHARFORMAT (partly done, no ANSI)
@@ -2960,6 +2960,47 @@ static void ME_SetDefaultFormatRect(ME_TextEditor *editor)
   editor->rcFormat.right -= 1;
 }
 
+static LONG ME_GetSelectionType(ME_TextEditor *editor)
+{
+    LONG sel_type = SEL_EMPTY;
+    LONG start, end;
+
+    ME_GetSelectionOfs(editor, &start, &end);
+    if (start == end)
+        sel_type = SEL_EMPTY;
+    else
+    {
+        LONG object_count = 0, character_count = 0;
+        int i;
+
+        for (i = 0; i < end - start; i++)
+        {
+            ME_Cursor cursor;
+
+            ME_CursorFromCharOfs(editor, start + i, &cursor);
+            if (cursor.pRun->member.run.reobj)
+                object_count++;
+            else
+                character_count++;
+            if (character_count >= 2 && object_count >= 2)
+                return (SEL_TEXT | SEL_MULTICHAR | SEL_OBJECT | SEL_MULTIOBJECT);
+        }
+        if (character_count)
+        {
+            sel_type |= SEL_TEXT;
+            if (character_count >= 2)
+                sel_type |= SEL_MULTICHAR;
+        }
+        if (object_count)
+        {
+            sel_type |= SEL_OBJECT;
+            if (object_count >= 2)
+                sel_type |= SEL_MULTIOBJECT;
+        }
+    }
+    return sel_type;
+}
+
 static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
 {
   CHARRANGE selrange;
@@ -3498,7 +3539,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
@@ -3814,6 +3854,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_UpdateRepaint(editor, FALSE);
     return len;
   }
+  case EM_SELECTIONTYPE:
+    return ME_GetSelectionType(editor);
   case EM_SETBKGNDCOLOR:
   {
     LRESULT lColor;
