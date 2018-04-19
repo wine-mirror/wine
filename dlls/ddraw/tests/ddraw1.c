@@ -33,6 +33,11 @@ static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+struct vec2
+{
+    float x, y;
+};
+
 struct vec4
 {
     float x, y, z, w;
@@ -261,6 +266,45 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
     ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 
     return color;
+}
+
+static void check_rect(IDirectDrawSurface *surface, RECT r, const char *message)
+{
+    LONG x_coords[2][2] =
+    {
+        {r.left - 1, r.left + 1},
+        {r.right + 1, r.right - 1},
+    };
+    LONG y_coords[2][2] =
+    {
+        {r.top - 1, r.top + 1},
+        {r.bottom + 1, r.bottom - 1}
+    };
+    unsigned int i, j, x_side, y_side;
+    DWORD color;
+    LONG x, y;
+
+    for (i = 0; i < 2; ++i)
+    {
+        for (j = 0; j < 2; ++j)
+        {
+            for (x_side = 0; x_side < 2; ++x_side)
+            {
+                for (y_side = 0; y_side < 2; ++y_side)
+                {
+                    DWORD expected = (x_side == 1 && y_side == 1) ? 0x00ffffff : 0x00000000;
+
+                    x = x_coords[i][x_side];
+                    y = y_coords[j][y_side];
+                    if (x < 0 || x >= 640 || y < 0 || y >= 480)
+                        continue;
+                    color = get_surface_color(surface, x, y);
+                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
+                            message, x, y, color, expected);
+                }
+            }
+        }
+    }
 }
 
 static void emit_process_vertices(void **ptr, DWORD flags, WORD base_idx, DWORD vertex_count)
@@ -1165,7 +1209,7 @@ static ULONG get_refcount(IUnknown *test_iface)
     return IUnknown_Release(test_iface);
 }
 
-static void test_viewport(void)
+static void test_viewport_object(void)
 {
     IDirectDraw *ddraw;
     IDirect3D *d3d;
@@ -11371,6 +11415,180 @@ static void test_execute_data(void)
     DestroyWindow(window);
 }
 
+static void test_viewport(void)
+{
+    static struct
+    {
+        D3DVIEWPORT7 vp;
+        RECT expected_rect;
+        const char *message;
+    }
+    tests[] =
+    {
+        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "(0, 0) - (640, 480) viewport"},
+        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "(0, 0) - (320, 240) viewport"},
+        {{  0,   0, 1280,  960}, {-10, -10,  -1,  -1}, "(0, 0) - (1280, 960) viewport"},
+        {{  0,   0, 2000, 1600}, {-10, -10,  -1,  -1}, "(0, 0) - (2000, 1600) viewport"},
+        {{100, 100,  640,  480}, {-10, -10,  -1,  -1}, "(100, 100) - (640, 480) viewport"},
+        {{  0,   0, 8192, 8192}, {-10, -10,  -1,  -1}, "(0, 0) - (8192, 8192) viewport"},
+    };
+    static D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.5f}, {-0.5f}, {0.1f}, 0, {0xffffffff}},
+        {{-1.5f}, { 0.5f}, {0.1f}, 0, {0xffffffff}},
+        {{ 0.5f}, {-0.5f}, {0.1f}, 0, {0xffffffff}},
+        {{ 0.5f}, { 0.5f}, {0.1f}, 0, {0xffffffff}},
+    };
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DViewport *viewport, *full_viewport;
+    IDirect3DExecuteBuffer *execute_buffer;
+    IDirect3DMaterial *black_background;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw *ddraw;
+    D3DRECT clear_rect;
+    UINT inst_length;
+    unsigned int j;
+    IDirect3D *d3d;
+    D3DVIEWPORT vp;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
+
+    black_background = create_diffuse_material(device, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
+    ok(SUCCEEDED(hr), "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat);
+    ok(SUCCEEDED(hr), "Setting a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
+    ok(SUCCEEDED(hr), "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat);
+    ok(SUCCEEDED(hr), "Setting a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
+    ok(SUCCEEDED(hr), "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat);
+    ok(SUCCEEDED(hr), "Setting a matrix object failed, hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, quad, sizeof(quad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_WORLD, world_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_VIEW, view_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_PROJECTION, proj_handle);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_FOGENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, 4);
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(quad);
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    full_viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, full_viewport, black_background);
+
+    U1(clear_rect).x1 = U2(clear_rect).y1 = 0;
+    U3(clear_rect).x2 = 640;
+    U4(clear_rect).y2 = 480;
+
+    for (j = 0; j < ARRAY_SIZE(tests); ++j)
+    {
+        hr = IDirect3DViewport_Clear(full_viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x (j %u).\n", hr, j);
+
+        hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
+        ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x (j %u).\n", hr, j);
+        memset(&vp, 0, sizeof(vp));
+        vp.dwSize = sizeof(vp);
+        vp.dwX = tests[j].vp.dwX;
+        vp.dwY = tests[j].vp.dwY;
+        vp.dwWidth = tests[j].vp.dwWidth;
+        vp.dwHeight = tests[j].vp.dwHeight;
+        vp.dvScaleX = tests[j].vp.dwWidth / 2.0f;
+        vp.dvScaleY = tests[j].vp.dwHeight / 2.0f;
+        vp.dvMaxX = 1.0f;
+        vp.dvMaxY = 1.0f;
+        vp.dvMinZ = 0.0f;
+        vp.dvMaxZ = 1.0f;
+        hr = IDirect3DViewport_SetViewport(viewport, &vp);
+        ok(hr == D3DERR_VIEWPORTHASNODEVICE,
+                "Setting viewport data returned unexpected hr %#x (j %u).\n", hr, j);
+        hr = IDirect3DDevice_AddViewport(device, viewport);
+        ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x (j %u).\n", hr, j);
+        hr = IDirect3DViewport_SetViewport(viewport, &vp);
+        ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x (j %u).\n", hr, j);
+
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x (j %u).\n", hr, j);
+
+        set_execute_data(execute_buffer, 4, sizeof(quad), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x (j %u).\n", hr, j);
+
+        hr = IDirect3DDevice_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x (j %u).\n", hr, j);
+
+        check_rect(rt, tests[j].expected_rect, tests[j].message);
+
+        destroy_viewport(device, viewport);
+    }
+
+    destroy_viewport(device, full_viewport);
+    IDirectDrawSurface_Release(rt);
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DDevice_DeleteMatrix(device, world_handle);
+    IDirect3DDevice_DeleteMatrix(device, view_handle);
+    IDirect3DDevice_DeleteMatrix(device, proj_handle);
+    destroy_material(black_background);
+    refcount = IDirect3DDevice_Release(device);
+    IDirect3D2_Release(d3d);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -11414,7 +11632,7 @@ START_TEST(ddraw1)
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
     test_coop_level_threaded();
-    test_viewport();
+    test_viewport_object();
     test_zenable();
     test_ck_rgba();
     test_ck_default();
@@ -11473,4 +11691,5 @@ START_TEST(ddraw1)
     test_clear();
     test_enum_surfaces();
     test_execute_data();
+    test_viewport();
 }
