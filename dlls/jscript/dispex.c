@@ -419,8 +419,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     return E_FAIL;
 }
 
-static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
-        jsval_t *r, IServiceProvider *caller)
+static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
 {
     HRESULT hres;
 
@@ -445,7 +444,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
         }
         break;
     case PROP_PROTREF:
-        hres = prop_get(This->prototype, This->prototype->props+prop->u.ref, dp, r, caller);
+        hres = prop_get(This->prototype, This->prototype->props + prop->u.ref, r);
         break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
@@ -704,7 +703,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_PROPERTYGET: {
         jsval_t r;
 
-        hres = prop_get(This, prop, pdp, &r, pspCaller);
+        hres = prop_get(This, prop, &r);
         if(SUCCEEDED(hres)) {
             hres = jsval_to_variant(r, pvarRes);
             jsval_release(r);
@@ -1005,7 +1004,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     if(SUCCEEDED(hres) && prop && prop->type!=PROP_DELETED) {
         jsval_t val;
 
-        hres = prop_get(constr, prop, NULL, &val, NULL);
+        hres = prop_get(constr, prop, &val);
         if(FAILED(hres)) {
             ERR("Could not get prototype\n");
             return hres;
@@ -1389,7 +1388,6 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
 
 HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val)
 {
-    DISPPARAMS dp = {NULL, NULL, 0, 0};
     dispex_prop_t *prop;
     HRESULT hres;
 
@@ -1402,13 +1400,12 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val)
         return S_OK;
     }
 
-    return prop_get(obj, prop, &dp, val, NULL);
+    return prop_get(obj, prop, val);
 }
 
 HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
 {
     WCHAR name[12];
-    DISPPARAMS dp = {NULL, NULL, 0, 0};
     dispex_prop_t *prop;
     HRESULT hres;
 
@@ -1425,19 +1422,18 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
         return DISP_E_UNKNOWNNAME;
     }
 
-    return prop_get(obj, prop, &dp, r, NULL);
+    return prop_get(obj, prop, r);
 }
 
 HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)
 {
-    DISPPARAMS dp  = {NULL,NULL,0,0};
     dispex_prop_t *prop;
 
     prop = get_prop(jsdisp, id);
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    return prop_get(jsdisp, prop, &dp, val, NULL);
+    return prop_get(jsdisp, prop, val);
 }
 
 HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val)
