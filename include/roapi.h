@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Martin Storsjo
+ * Copyright (C) 2016 Michael Müller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,12 +21,22 @@
 #define __WINE_ROAPI_H
 
 #include <windef.h>
+#include <activation.h>
 
 typedef enum
 {
     RO_INIT_SINGLETHREADED = 0,
     RO_INIT_MULTITHREADED  = 1,
 } RO_INIT_TYPE;
+
+DECLARE_HANDLE(APARTMENT_SHUTDOWN_REGISTRATION_COOKIE);
+
+#ifdef __cplusplus
+typedef struct {} *RO_REGISTRATION_COOKIE;
+#else
+typedef struct _RO_REGISTRATION_COOKIE *RO_REGISTRATION_COOKIE;
+#endif
+typedef HRESULT (WINAPI *PFNGETACTIVATIONFACTORY)(HSTRING, IActivationFactory **);
 
 #ifdef __cplusplus
 extern "C" {
