@@ -400,11 +400,9 @@ static HRESULT WINAPI MSTASK_ITask_SetErrorRetryInterval(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetErrorRetryInterval(
-        ITask* iface,
-        WORD *pwRetryInterval)
+static HRESULT WINAPI MSTASK_ITask_GetErrorRetryInterval(ITask *iface, WORD *interval)
 {
-    FIXME("(%p, %p): stub\n", iface, pwRetryInterval);
+    TRACE("(%p, %p)\n", iface, interval);
     return E_NOTIMPL;
 }
 

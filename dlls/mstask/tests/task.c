@@ -541,6 +541,12 @@ static void test_task_state(void)
     hr = ITask_GetErrorRetryCount(test_task, &val1);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
 
+    if (0) /* crashes under Windows */
+        hr = ITask_GetErrorRetryInterval(test_task, NULL);
+
+    hr = ITask_GetErrorRetryInterval(test_task, &val1);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+
     cleanup_task();
 }
 
