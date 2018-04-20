@@ -502,7 +502,7 @@ static void test_task_state(void)
     BOOL setup;
     HRESULT hr, status;
     DWORD flags;
-    WORD val1;
+    WORD val1, val2;
 
     setup = setup_task();
     ok(setup, "Failed to setup test_task\n");
@@ -546,6 +546,16 @@ static void test_task_state(void)
 
     hr = ITask_GetErrorRetryInterval(test_task, &val1);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetIdleWait(test_task, NULL, NULL);
+
+    val1 = 0xdead;
+    val2 = 0xbeef;
+    hr = ITask_GetIdleWait(test_task, &val1, &val2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(val1 == 10, "got %u\n", val1);
+    ok(val2 == 60, "got %u\n", val2);
 
     cleanup_task();
 }

@@ -40,6 +40,7 @@ typedef struct
     IExecAction *action;
     LPWSTR task_name;
     HRESULT status;
+    WORD idle_minutes, deadline_minutes;
     DWORD maxRunTime;
     LPWSTR accountName;
 } TaskImpl;
@@ -190,13 +191,15 @@ static HRESULT WINAPI MSTASK_ITask_SetIdleWait(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetIdleWait(
-        ITask* iface,
-        WORD *pwIdleMinutes,
-        WORD *pwDeadlineMinutes)
+static HRESULT WINAPI MSTASK_ITask_GetIdleWait(ITask *iface, WORD *idle_minutes, WORD *deadline_minutes)
 {
-    FIXME("(%p, %p, %p): stub\n", iface, pwIdleMinutes, pwDeadlineMinutes);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %p, %p): stub\n", iface, idle_minutes, deadline_minutes);
+
+    *idle_minutes = This->idle_minutes;
+    *deadline_minutes = This->deadline_minutes;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_Run(
@@ -840,6 +843,8 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
     This->status = SCHED_S_TASK_NOT_SCHEDULED;
+    This->idle_minutes = 10;
+    This->deadline_minutes = 60;
     This->accountName = NULL;
 
     /* Default time is 3 days = 259200000 ms */
