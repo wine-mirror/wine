@@ -5131,8 +5131,9 @@ struct wined3d_cs
     struct list query_poll_list;
     BOOL queries_flushed;
 
-    HANDLE event;
+    HANDLE event, present_event;
     LONG waiting_for_event;
+    LONG waiting_for_present;
     LONG pending_presents;
 };
 
