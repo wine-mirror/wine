@@ -466,7 +466,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
     return hres;
 }
 
-static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServiceProvider *caller)
+static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 {
     HRESULT hres;
 
@@ -728,7 +728,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         if(FAILED(hres))
             return hres;
 
-        hres = prop_put(This, prop, val, pspCaller);
+        hres = prop_put(This, prop, val);
         jsval_release(val);
         break;
     }
@@ -1302,7 +1302,7 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
     if(FAILED(hres))
         return hres;
 
-    return prop_put(obj, prop, val, NULL);
+    return prop_put(obj, prop, val);
 }
 
 HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1348,7 +1348,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = prop_put(jsdisp, prop, val, NULL);
+            hres = prop_put(jsdisp, prop, val);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
