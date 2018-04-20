@@ -225,12 +225,12 @@ static HRESULT WINAPI MSTASK_ITask_EditWorkItem(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetMostRecentRunTime(
-        ITask* iface,
-        SYSTEMTIME *pstLastRun)
+static HRESULT WINAPI MSTASK_ITask_GetMostRecentRunTime(ITask *iface, SYSTEMTIME *st)
 {
-    FIXME("(%p, %p): stub\n", iface, pstLastRun);
-    return E_NOTIMPL;
+    FIXME("(%p, %p): stub\n", iface, st);
+
+    memset(st, 0, sizeof(*st));
+    return SCHED_S_TASK_HAS_NOT_RUN;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)

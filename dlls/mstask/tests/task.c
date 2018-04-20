@@ -503,6 +503,7 @@ static void test_task_state(void)
     HRESULT hr, status;
     DWORD flags, val;
     WORD val1, val2;
+    SYSTEMTIME st;
 
     setup = setup_task();
     ok(setup, "Failed to setup test_task\n");
@@ -572,6 +573,19 @@ static void test_task_state(void)
     hr = ITask_GetExitCode(test_task, &val);
     ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", hr);
     ok(val == 0, "got %#x\n", val);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetMostRecentRunTime(test_task, NULL);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetMostRecentRunTime(test_task, &st);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", hr);
+    ok(st.wYear == 0, "got %u\n", st.wYear);
+    ok(st.wMonth == 0, "got %u\n", st.wMonth);
+    ok(st.wDay == 0, "got %u\n", st.wDay);
+    ok(st.wHour == 0, "got %u\n", st.wHour);
+    ok(st.wMinute == 0, "got %u\n", st.wMinute);
+    ok(st.wSecond == 0, "got %u\n", st.wSecond);
 
     cleanup_task();
 }
