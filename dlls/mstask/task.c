@@ -703,12 +703,12 @@ static ULONG WINAPI MSTASK_IPersistFile_Release(
     return ref;
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_GetClassID(
-        IPersistFile* iface,
-        CLSID *pClassID)
+static HRESULT WINAPI MSTASK_IPersistFile_GetClassID(IPersistFile *iface, CLSID *clsid)
 {
-    FIXME("(%p, %p): stub\n", iface, pClassID);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, clsid);
+
+    *clsid = CLSID_CTask;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_IsDirty(

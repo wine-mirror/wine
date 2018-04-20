@@ -278,6 +278,7 @@ static WCHAR *get_task_curfile(ITask *task)
     HRESULT hr;
     IPersistFile *pfile;
     WCHAR *curfile;
+    CLSID clsid;
 
     hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
@@ -287,6 +288,13 @@ todo_wine
     ok(hr == S_OK, "GetCurFile error %#x\n", hr);
 todo_wine
     ok(curfile && curfile[0] , "curfile should not be NULL\n");
+
+    if (0) /* crashes under Windows */
+        hr = IPersistFile_GetClassID(pfile, NULL);
+
+    hr = IPersistFile_GetClassID(pfile, &clsid);
+    ok(hr == S_OK, "GetClassID error %#x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_CTask), "got %s\n", wine_dbgstr_guid(&clsid));
 
     IPersistFile_Release(pfile);
 
