@@ -243,12 +243,12 @@ static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetExitCode(
-        ITask* iface,
-        DWORD *pdwExitCode)
+static HRESULT WINAPI MSTASK_ITask_GetExitCode(ITask *iface, DWORD *exit_code)
 {
-    FIXME("(%p, %p): stub\n", iface, pdwExitCode);
-    return E_NOTIMPL;
+    FIXME("(%p, %p): stub\n", iface, exit_code);
+
+    *exit_code = 0;
+    return SCHED_S_TASK_HAS_NOT_RUN;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetComment(ITask *iface, LPCWSTR comment)

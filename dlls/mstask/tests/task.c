@@ -565,6 +565,14 @@ static void test_task_state(void)
     ok(hr == S_OK, "got %#x\n", hr);
     ok(val == NORMAL_PRIORITY_CLASS, "got %#x\n", val);
 
+    if (0) /* crashes under Windows */
+        hr = ITask_GetExitCode(test_task, NULL);
+
+    val = 0xdeadbeef;
+    hr = ITask_GetExitCode(test_task, &val);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", hr);
+    ok(val == 0, "got %#x\n", val);
+
     cleanup_task();
 }
 
