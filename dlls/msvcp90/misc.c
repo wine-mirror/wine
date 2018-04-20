@@ -1938,3 +1938,12 @@ void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*
         throw_exception(exceptions[idx].type, exceptions[idx].msg);
 }
 #endif
+
+#if _MSVCP_VER >= 140
+/* ?_IsNonBlockingThread@_Task_impl_base@details@Concurrency@@SA_NXZ */
+MSVCP_bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
+{
+    FIXME("() stub\n");
+    return FALSE;
+}
+#endif

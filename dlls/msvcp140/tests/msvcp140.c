@@ -149,6 +149,7 @@ enum file_type {
 };
 
 static unsigned int (__cdecl *p__Thrd_id)(void);
+static MSVCP_bool (__cdecl *p__Task_impl_base__IsNonBlockingThread)(void);
 static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
 static void (__thiscall *p__ContextCallback__Assign)(_ContextCallback*, void*);
 static void (__thiscall *p__ContextCallback__CallInContext)(const _ContextCallback*, function_void_cdecl_void, MSVCP_bool);
@@ -198,6 +199,7 @@ static BOOL init(void)
     }
 
     SET(p__Thrd_id, "_Thrd_id");
+    SET(p__Task_impl_base__IsNonBlockingThread, "?_IsNonBlockingThread@_Task_impl_base@details@Concurrency@@SA_NXZ");
     SET(p__ContextCallback__IsCurrentOriginSTA, "?_IsCurrentOriginSTA@_ContextCallback@details@Concurrency@@CA_NXZ");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
@@ -274,6 +276,11 @@ static void test_thrd(void)
     ok(p__Thrd_id() == GetCurrentThreadId(),
         "expected same id, got _Thrd_id %u GetCurrentThreadId %u\n",
         p__Thrd_id(), GetCurrentThreadId());
+}
+
+static void test__Task_impl_base__IsNonBlockingThread(void)
+{
+    ok(!p__Task_impl_base__IsNonBlockingThread(), "_IsNonBlockingThread() returned true\n");
 }
 
 static struct {
@@ -1058,6 +1065,7 @@ START_TEST(msvcp140)
 {
     if(!init()) return;
     test_thrd();
+    test__Task_impl_base__IsNonBlockingThread();
     test_vbtable_size_exports();
     test_task_continuation_context();
     test__ContextCallback();
