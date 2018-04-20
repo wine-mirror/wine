@@ -1150,8 +1150,17 @@ static HRESULT WINAPI WMPNetwork_get_bufferingCount(IWMPNetwork *iface, LONG *pl
 static HRESULT WINAPI WMPNetwork_get_bufferingProgress(IWMPNetwork *iface, LONG *plBufferingProgress)
 {
     WindowsMediaPlayer *This = impl_from_IWMPNetwork(iface);
-    FIXME("(%p)->(%p)\n", This, plBufferingProgress);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, plBufferingProgress);
+    if (!This->filter_graph) {
+        return S_FALSE;
+    }
+    /* Ideally we would use IAMOpenProgress for URL reader but we don't have it in wine (yet)
+     * For file sources FileAsyncReader->Length should work
+     * */
+    FIXME("stub: Returning buffering progress 100\n");
+    *plBufferingProgress = 100;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPNetwork_get_bufferingTime(IWMPNetwork *iface, LONG *plBufferingTime)
@@ -1276,8 +1285,18 @@ static HRESULT WINAPI WMPNetwork_put_maxBandwidth(IWMPNetwork *iface, LONG lMaxB
 static HRESULT WINAPI WMPNetwork_get_downloadProgress(IWMPNetwork *iface, LONG *plDownloadProgress)
 {
     WindowsMediaPlayer *This = impl_from_IWMPNetwork(iface);
-    FIXME("(%p)->(%p)\n", This, plDownloadProgress);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, plDownloadProgress);
+    if (!This->filter_graph) {
+        return S_FALSE;
+    }
+    /* Ideally we would use IAMOpenProgress for URL reader but we don't have it in wine (yet)
+     * For file sources FileAsyncReader->Length could work or it should just be
+     * 100
+     * */
+    FIXME("stub: Returning download progress 100\n");
+    *plDownloadProgress = 100;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPNetwork_get_encodedFrameRate(IWMPNetwork *iface, LONG *plFrameRate)

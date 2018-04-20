@@ -303,8 +303,10 @@ static BOOL test_wmp(void)
     static DWORD dw = 100;
     IWMPSettings *settings;
     BOOL test_ran = TRUE;
+    IWMPNetwork *network;
     DOUBLE duration;
     VARIANT_BOOL vbool;
+    LONG progress;
     IWMPMedia *media;
     static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
     BSTR bstrcurrentPosition = SysAllocString(currentPosition);
@@ -415,6 +417,20 @@ static BOOL test_wmp(void)
     ok(hres == S_OK, "IWMPMedia_get_duration failed: %08x\n", hres);
     ok(round(duration) == 3, "unexpected value: %f\n", duration);
     IWMPMedia_Release(media);
+
+    network = NULL;
+    hres = IWMPPlayer4_get_network(player4, &network);
+    ok(hres == S_OK, "get_network failed: %08x\n", hres);
+    ok(network != NULL, "network = NULL\n");
+    progress = 0;
+    hres = IWMPNetwork_get_bufferingProgress(network, &progress);
+    ok(hres == S_OK || broken(hres == S_FALSE), "IWMPNetwork_get_bufferingProgress failed: %08x\n", hres);
+    ok(progress == 100, "unexpected value: %d\n", progress);
+    progress = 0;
+    hres = IWMPNetwork_get_downloadProgress(network, &progress);
+    ok(hres == S_OK, "IWMPNetwork_get_downloadProgress failed: %08x\n", hres);
+    ok(progress == 100, "unexpected value: %d\n", progress);
+    IWMPNetwork_Release(network);
 
     SET_EXPECT(PLAYSTATE, wmppsStopped);
     /* The following happens on wine only since we close media on stop */
