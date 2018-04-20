@@ -2148,6 +2148,16 @@ typedef struct tagCBTACTIVATESTRUCT
 } CBTACTIVATESTRUCT, *LPCBTACTIVATESTRUCT;
 
 
+typedef struct tagDROPSTRUCT
+{
+    HWND      hwndSource;
+    HWND      hwndSink;
+    DWORD     wFmt;
+    ULONG_PTR dwData;
+    POINT     ptDrop;
+    DWORD     dwControlData;
+} DROPSTRUCT, *PDROPSTRUCT, *LPDROPSTRUCT;
+
 /* modifiers for RegisterHotKey */
 #define	MOD_ALT		0x0001
 #define	MOD_CONTROL	0x0002
