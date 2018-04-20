@@ -39,6 +39,7 @@ typedef struct
     ITaskDefinition *task;
     IExecAction *action;
     LPWSTR task_name;
+    HRESULT status;
     DWORD maxRunTime;
     LPWSTR accountName;
 } TaskImpl;
@@ -229,12 +230,14 @@ static HRESULT WINAPI MSTASK_ITask_GetMostRecentRunTime(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetStatus(
-        ITask* iface,
-        HRESULT *phrStatus)
+static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)
 {
-    FIXME("(%p, %p): stub\n", iface, phrStatus);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %p)\n", iface, status);
+
+    *status = This->status;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetExitCode(
@@ -840,6 +843,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->ref = 1;
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
+    This->status = SCHED_S_TASK_NOT_SCHEDULED;
     This->accountName = NULL;
 
     /* Default time is 3 days = 259200000 ms */

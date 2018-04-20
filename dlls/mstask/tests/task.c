@@ -2,6 +2,7 @@
  * Test suite for Task interface
  *
  * Copyright (C) 2008 Google (Roy Shea)
+ * Copyright (C) 2018 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -496,10 +497,10 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     return;
 }
 
-static void test_GetFlags(void)
+static void test_task_state(void)
 {
     BOOL setup;
-    HRESULT hr;
+    HRESULT hr, status;
     DWORD flags;
 
     setup = setup_task();
@@ -526,6 +527,13 @@ static void test_GetFlags(void)
     ok(hr == S_OK, "GetTaskFlags error %#x\n", hr);
     ok(flags == 0, "got %#x\n", flags);
 
+    if (0) /* crashes under Windows */
+        hr = ITask_GetStatus(test_task, NULL);
+
+    status = 0xdeadbeef;
+    hr = ITask_GetStatus(test_task, &status);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+
     cleanup_task();
 }
 
@@ -538,6 +546,6 @@ START_TEST(task)
     test_SetComment_GetComment();
     test_SetMaxRunTime_GetMaxRunTime();
     test_SetAccountInformation_GetAccountInformation();
-    test_GetFlags();
+    test_task_state();
     CoUninitialize();
 }
