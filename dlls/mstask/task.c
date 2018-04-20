@@ -33,6 +33,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(mstask);
 
 typedef struct
 {
+    USHORT product_version;
+    USHORT file_version;
+    UUID uuid;
+    USHORT name_size_offset;
+    USHORT trigger_offset;
+    USHORT error_retry_count;
+    USHORT error_retry_interval;
+    USHORT idle_deadline;
+    USHORT idle_wait;
+    UINT priority;
+    UINT maximum_runtime;
+    UINT exit_code;
+    HRESULT status;
+    UINT flags;
+    SYSTEMTIME last_runtime;
+} FIXDLEN_DATA;
+
+typedef struct
+{
     ITask ITask_iface;
     IPersistFile IPersistFile_iface;
     LONG ref;
@@ -731,15 +750,268 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_Save(
-        IPersistFile* iface,
-        LPCOLESTR pszFileName,
-        BOOL fRemember)
+static BOOL write_signature(HANDLE hfile)
 {
-    FIXME("(%p, %p, %d): stub\n", iface, pszFileName, fRemember);
-    WARN("Returning S_OK but not writing to disk: %s %d\n",
-            debugstr_w(pszFileName), fRemember);
+    struct
+    {
+        USHORT SignatureVersion;
+        USHORT ClientVersion;
+        BYTE md5[64];
+    } signature;
+    DWORD size;
+
+    signature.SignatureVersion = 0x0001;
+    signature.ClientVersion = 0x0001;
+    memset(&signature.md5, 0, sizeof(signature.md5));
+
+    return WriteFile(hfile, &signature, sizeof(signature), &size, NULL);
+}
+
+static BOOL write_reserved_data(HANDLE hfile)
+{
+    static const struct
+    {
+        USHORT size;
+        BYTE data[8];
+    } user = { 8, { 0xff,0x0f,0x1d,0,0,0,0,0 } };
+    DWORD size;
+
+    return WriteFile(hfile, &user, sizeof(user), &size, NULL);
+}
+
+static BOOL write_user_data(HANDLE hfile, BYTE *data, WORD data_size)
+{
+    DWORD size;
+
+    if (!WriteFile(hfile, &data_size, sizeof(data_size), &size, NULL))
+        return FALSE;
+
+    if (!data_size) return TRUE;
+
+    return WriteFile(hfile, data, data_size, &size, NULL);
+}
+
+static HRESULT write_triggers(ITask *task, HANDLE hfile)
+{
+    WORD count, i;
+    DWORD size;
+    HRESULT hr;
+
+    hr = ITask_GetTriggerCount(task, &count);
+    if (hr != S_OK) return hr;
+
+    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    for (i = 0; i < count; i++)
+    {
+        ITaskTrigger *trigger;
+        TASK_TRIGGER task_trigger;
+
+        hr = ITask_GetTrigger(task, i, &trigger);
+        if (hr != S_OK) return hr;
+
+        hr = ITaskTrigger_GetTrigger(trigger, &task_trigger);
+        ITaskTrigger_Release(trigger);
+        if (hr != S_OK) return hr;
+
+        if (!WriteFile(hfile, &task_trigger, sizeof(task_trigger), &size, NULL))
+            return HRESULT_FROM_WIN32(GetLastError());
+    }
+
     return S_OK;
+}
+
+static BOOL write_unicode_string(HANDLE hfile, const WCHAR *str)
+{
+    USHORT count;
+    DWORD size;
+
+    count = str ? (lstrlenW(str) + 1) : 0;
+    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
+        return FALSE;
+
+    if (!str) return TRUE;
+
+    count *= sizeof(WCHAR);
+    return WriteFile(hfile, str, count, &size, NULL);
+}
+
+static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR name, BOOL remember)
+{
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    static const WCHAR jobW[] = { '.','j','o','b',0 };
+    static WCHAR authorW[] = { 'W','i','n','e',0 };
+    static WCHAR commentW[] = { 'C','r','e','a','t','e','d',' ','b','y',' ','W','i','n','e',0 };
+    FIXDLEN_DATA fixed;
+    WORD word, user_data_size = 0;
+    HANDLE hfile;
+    DWORD size, ver, disposition;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    ITask *task = &This->ITask_iface;
+    LPWSTR appname = NULL, params = NULL, workdir = NULL, creator = NULL, comment = NULL;
+    BYTE *user_data = NULL;
+    WCHAR task_name[MAX_PATH];
+    HRESULT hr;
+
+    TRACE("(%p, %s, %d)\n", iface, debugstr_w(name), remember);
+
+    disposition = name ? CREATE_NEW : OPEN_ALWAYS;
+
+    if (!name)
+    {
+        name = This->task_name;
+        remember = FALSE;
+    }
+    else if (strchrW(name, '.'))
+        return E_INVALIDARG;
+
+    GetWindowsDirectoryW(task_name, MAX_PATH);
+    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, name);
+    lstrcatW(task_name, jobW);
+
+    ITask_GetComment(task, &comment);
+    if (!comment) comment = commentW;
+    ITask_GetCreator(task, &creator);
+    if (!creator) creator = authorW;
+    ITask_GetApplicationName(task, &appname);
+    ITask_GetParameters(task, &params);
+    ITask_GetWorkingDirectory(task, &workdir);
+    ITask_GetWorkItemData(task, &user_data_size, &user_data);
+
+    ver = GetVersion();
+    fixed.product_version = MAKEWORD(ver >> 8, ver);
+    fixed.file_version = 0x0001;
+    CoCreateGuid(&fixed.uuid);
+    fixed.name_size_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
+    fixed.trigger_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
+    fixed.trigger_offset += sizeof(USHORT); /* Application Name */
+    if (appname)
+        fixed.trigger_offset += (lstrlenW(appname) + 1) * sizeof(WCHAR);
+    fixed.trigger_offset += sizeof(USHORT); /* Parameters */
+    if (params)
+        fixed.trigger_offset += (lstrlenW(params) + 1) * sizeof(WCHAR);
+    fixed.trigger_offset += sizeof(USHORT); /* Working Directory */
+    if (workdir)
+        fixed.trigger_offset += (lstrlenW(workdir) + 1) * sizeof(WCHAR);
+    fixed.trigger_offset += sizeof(USHORT); /* Author */
+    if (creator)
+        fixed.trigger_offset += (lstrlenW(creator) + 1) * sizeof(WCHAR);
+    fixed.trigger_offset += sizeof(USHORT); /* Comment */
+    if (comment)
+        fixed.trigger_offset += (lstrlenW(comment) + 1) * sizeof(WCHAR);
+    fixed.trigger_offset += sizeof(USHORT) + user_data_size; /* User Data */
+    fixed.trigger_offset += 10; /* Reserved Data */
+
+    fixed.error_retry_count = 0;
+    fixed.error_retry_interval = 0;
+    fixed.idle_wait = This->idle_minutes;
+    fixed.idle_deadline = This->deadline_minutes;
+    fixed.priority = This->priority;
+    fixed.maximum_runtime = This->maxRunTime;
+    fixed.exit_code = 0;
+    fixed.status = SCHED_S_TASK_HAS_NOT_RUN;
+    fixed.flags = 0;
+    memset(&fixed.last_runtime, 0, sizeof(fixed.last_runtime));
+
+    hfile = CreateFileW(task_name, GENERIC_WRITE, 0, NULL, disposition, 0, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (!WriteFile(hfile, &fixed, sizeof(fixed), &size, NULL))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* Instance Count */
+    word = 0;
+    if (!WriteFile(hfile, &word, sizeof(word), &size, NULL))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    /* Application Name */
+    if (!write_unicode_string(hfile, appname))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    /* Parameters */
+    if (!write_unicode_string(hfile, params))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    /* Working Directory */
+    if (!write_unicode_string(hfile, workdir))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    /* Author */
+    if (!write_unicode_string(hfile, creator))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    /* Comment */
+    if (!write_unicode_string(hfile, comment))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* User Data */
+    if (!write_user_data(hfile, user_data, user_data_size))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* Reserved Data */
+    if (!write_reserved_data(hfile))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* Trigegrs */
+    if (!write_triggers(hfile, task))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* Signature */
+    if (!write_signature(hfile))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    hr = S_OK;
+
+failed:
+    CoTaskMemFree(appname);
+    CoTaskMemFree(params);
+    CoTaskMemFree(workdir);
+    if (creator != authorW)
+        CoTaskMemFree(creator);
+    if (comment != commentW)
+        CoTaskMemFree(comment);
+    CoTaskMemFree(user_data);
+
+    CloseHandle(hfile);
+    if (hr != S_OK)
+        DeleteFileW(name);
+    else if (remember)
+    {
+        HeapFree(GetProcessHeap(), 0, This->task_name);
+        This->task_name = heap_strdupW(name);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_SaveCompleted(
@@ -757,7 +1029,6 @@ static HRESULT WINAPI MSTASK_IPersistFile_GetCurFile(
     FIXME("(%p, %p): stub\n", iface, ppszFileName);
     return E_NOTIMPL;
 }
-
 
 static const ITaskVtbl MSTASK_ITaskVtbl =
 {
