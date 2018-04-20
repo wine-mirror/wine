@@ -41,7 +41,7 @@ typedef struct
     LPWSTR task_name;
     HRESULT status;
     WORD idle_minutes, deadline_minutes;
-    DWORD maxRunTime;
+    DWORD priority, maxRunTime;
     LPWSTR accountName;
 } TaskImpl;
 
@@ -626,12 +626,14 @@ static HRESULT WINAPI MSTASK_ITask_SetPriority(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetPriority(
-        ITask* iface,
-        DWORD *pdwPriority)
+static HRESULT WINAPI MSTASK_ITask_GetPriority(ITask *iface, DWORD *priority)
 {
-    FIXME("(%p, %p): stub\n", iface, pdwPriority);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %p)\n", iface, priority);
+
+    *priority = This->priority;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetTaskFlags(
@@ -845,6 +847,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **t
     This->status = SCHED_S_TASK_NOT_SCHEDULED;
     This->idle_minutes = 10;
     This->deadline_minutes = 60;
+    This->priority = NORMAL_PRIORITY_CLASS;
     This->accountName = NULL;
 
     /* Default time is 3 days = 259200000 ms */

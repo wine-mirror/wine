@@ -501,7 +501,7 @@ static void test_task_state(void)
 {
     BOOL setup;
     HRESULT hr, status;
-    DWORD flags;
+    DWORD flags, val;
     WORD val1, val2;
 
     setup = setup_task();
@@ -556,6 +556,14 @@ static void test_task_state(void)
     ok(hr == S_OK, "got %#x\n", hr);
     ok(val1 == 10, "got %u\n", val1);
     ok(val2 == 60, "got %u\n", val2);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetPriority(test_task, NULL);
+
+    val = 0xdeadbeef;
+    hr = ITask_GetPriority(test_task, &val);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(val == NORMAL_PRIORITY_CLASS, "got %#x\n", val);
 
     cleanup_task();
 }
