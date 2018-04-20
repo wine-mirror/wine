@@ -958,15 +958,27 @@ static HRESULT WINAPI WMPSettings_put_balance(IWMPSettings *iface, LONG v)
 static HRESULT WINAPI WMPSettings_get_volume(IWMPSettings *iface, LONG *p)
 {
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    if (!p)
+        return E_POINTER;
+    *p = This->volume;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPSettings_put_volume(IWMPSettings *iface, LONG v)
 {
+    HRESULT hres;
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, v);
+    This->volume = v;
+    if (!This->filter_graph) {
+        hres = S_OK;
+    } else {
+        /* IBasicAudio -   [-10000, 0], wmp - [0, 100] */
+        v = 10000 * v / 100 - 10000;
+        hres = IBasicAudio_put_Volume(This->basic_audio, v);
+    }
+    return hres;
 }
 
 static HRESULT WINAPI WMPSettings_getMode(IWMPSettings *iface, BSTR mode, VARIANT_BOOL *p)
@@ -1484,6 +1496,10 @@ static HRESULT WINAPI WMPControls_play(IWMPControls *iface)
                 IMediaEventEx_Release(media_event_ex);
             }
         }
+        if (SUCCEEDED(hres))
+            hres = IGraphBuilder_QueryInterface(This->filter_graph, &IID_IBasicAudio, (void**)&This->basic_audio);
+        if (SUCCEEDED(hres))
+            hres = IWMPSettings_put_volume(&This->IWMPSettings_iface, This->volume);
     }
 
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsTransitioning);
@@ -1525,11 +1541,15 @@ static HRESULT WINAPI WMPControls_stop(IWMPControls *iface)
     if (This->media_seeking) {
         IMediaSeeking_Release(This->media_seeking);
     }
+    if (This->basic_audio) {
+        IBasicAudio_Release(This->basic_audio);
+    }
     IGraphBuilder_Release(This->filter_graph);
     This->filter_graph = NULL;
     This->media_control = NULL;
     This->media_event = NULL;
     This->media_seeking = NULL;
+    This->basic_audio = NULL;
 
     update_state(This, DISPID_WMPCOREEVENT_OPENSTATECHANGE, wmposPlaylistOpenNoMedia);
     update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsStopped);
@@ -1983,6 +2003,7 @@ BOOL init_player(WindowsMediaPlayer *wmp)
 
     wmp->invoke_urls = VARIANT_TRUE;
     wmp->auto_start = VARIANT_TRUE;
+    wmp->volume = 100;
     return TRUE;
 }
 

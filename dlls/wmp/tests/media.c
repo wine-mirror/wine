@@ -338,7 +338,6 @@ static BOOL test_wmp(void)
 
     hres = IWMPSettings_put_autoStart(settings, VARIANT_FALSE);
     ok(hres == S_OK, "Could not put autoStart in IWMPSettings: %08x\n", hres);
-    IWMPSettings_Release(settings);
 
     controls = NULL;
     hres = IWMPPlayer4_get_controls(player4, &controls);
@@ -351,6 +350,12 @@ static BOOL test_wmp(void)
 
     hres = IWMPControls_play(controls);
     ok(hres == NS_S_WMPCORE_COMMAND_NOT_AVAILABLE, "IWMPControls_play is available: %08x\n", hres);
+
+    hres = IWMPSettings_put_volume(settings, 36);
+    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08x\n", hres);
+    hres = IWMPSettings_get_volume(settings, &progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
+    ok(progress == 36, "unexpected value: %d\n", progress);
 
     filename = SysAllocString(load_resource(mp3file));
 
@@ -460,7 +465,17 @@ playback_skip:
     hres = IConnectionPoint_Unadvise(point, dw);
     ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
 
+    hres = IWMPSettings_get_volume(settings, &progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
+    ok(progress == 36, "unexpected value: %d\n", progress);
+    hres = IWMPSettings_put_volume(settings, 99);
+    ok(hres == S_OK, "IWMPSettings_put_volume failed: %08x\n", hres);
+    hres = IWMPSettings_get_volume(settings, &progress);
+    ok(hres == S_OK, "IWMPSettings_get_volume failed: %08x\n", hres);
+    ok(progress == 99, "unexpected value: %d\n", progress);
+
     IConnectionPoint_Release(point);
+    IWMPSettings_Release(settings);
     IWMPControls_Release(controls);
     IWMPPlayer4_Release(player4);
     IOleObject_Release(oleobj);
