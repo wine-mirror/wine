@@ -386,11 +386,9 @@ static HRESULT WINAPI MSTASK_ITask_SetErrorRetryCount(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetErrorRetryCount(
-        ITask* iface,
-        WORD *pwRetryCount)
+static HRESULT WINAPI MSTASK_ITask_GetErrorRetryCount(ITask *iface, WORD *count)
 {
-    FIXME("(%p, %p): stub\n", iface, pwRetryCount);
+    TRACE("(%p, %p)\n", iface, count);
     return E_NOTIMPL;
 }
 

@@ -502,6 +502,7 @@ static void test_task_state(void)
     BOOL setup;
     HRESULT hr, status;
     DWORD flags;
+    WORD val1;
 
     setup = setup_task();
     ok(setup, "Failed to setup test_task\n");
@@ -533,6 +534,12 @@ static void test_task_state(void)
     status = 0xdeadbeef;
     hr = ITask_GetStatus(test_task, &status);
     ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetErrorRetryCount(test_task, NULL);
+
+    hr = ITask_GetErrorRetryCount(test_task, &val1);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
 
     cleanup_task();
 }
