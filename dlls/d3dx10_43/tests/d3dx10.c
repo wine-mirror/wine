@@ -526,15 +526,14 @@ float4 main(float4 color : COLOR) : SV_TARGET
                     wine_dbgstr_rect(&tmp_rect[i]), i);
     }
     ID3D10Device_RSGetViewports(device, &count, NULL);
-    todo_wine ok(count == D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+    ok(count == D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
             "Got unexpected viewport count %u.\n", count);
     memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
     count = D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
     for (i = 0; i < D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
-        todo_wine_if(i)
-            ok(tmp_viewport[i].TopLeftX == i * 3
+        ok(tmp_viewport[i].TopLeftX == i * 3
                     && tmp_viewport[i].TopLeftY == i * 4
                     && tmp_viewport[i].Width == 3
                     && tmp_viewport[i].Height == 4
