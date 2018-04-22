@@ -126,8 +126,17 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
     count = sizeof(val);
     if (!RegQueryValueExW(hConKey, wszFontSize, 0, &type, (LPBYTE)&val, &count))
     {
-        cfg->cell_height = HIWORD(val);
-        cfg->cell_width  = LOWORD(val);
+        int height = HIWORD(val);
+        int width = LOWORD(val);
+        /* A value of zero reflects the default settings */
+        if (height != 0)
+        {
+            cfg->cell_height = height;
+        }
+        if (width != 0)
+        {
+            cfg->cell_width = width;
+        }
     }
 
     count = sizeof(val);
