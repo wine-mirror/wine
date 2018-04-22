@@ -3480,7 +3480,6 @@ static void output_subdirs( struct makefile *make )
                     output( "\n" );
                     output( "\t%s -b %s -w -o $@", tools_path( make, "winebuild" ), crosstarget );
                     output_filename( "--implib" );
-                    output_filenames( target_flags );
                     output_filename( "--export" );
                     output_filename( spec_file );
                     output( "\n" );
