@@ -3679,7 +3679,7 @@ static void test_export(void)
     verify_reg(hkey, "Wine4a", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg(hkey, "Wine4b", REG_SZ, "\0\0\0\0\0\0\0", 4, 0);
     verify_reg(hkey, "Wine4c", REG_SZ, "Value", 6, 0);
-    verify_reg(hkey, "Wine4d", REG_SZ, "\0abc", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine4d", REG_SZ, "\0abc", 5, 0);
     dword = 0x100;
     verify_reg(hkey, "Wine4e", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg(hkey, "Wine4f", REG_SZ, "\0Value", 7, 0);
