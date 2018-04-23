@@ -78,6 +78,8 @@ static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
 static const WCHAR typesString[] = { 'T','y','p','e','s', 0 };
+static const WCHAR scopesString[] = { 'S','c','o','p','e','s', 0 };
+static const WCHAR xAddrsString[] = { 'X','A','d','d','r','s', 0 };
 
 struct discovered_namespace
 {
@@ -532,6 +534,33 @@ static HRESULT build_types_list(LPWSTR buffer, size_t buffer_size, const WSD_NAM
     return S_OK;
 }
 
+static HRESULT build_uri_list(LPWSTR buffer, size_t buffer_size, const WSD_URI_LIST *list)
+{
+    size_t memory_needed = 0, string_len = 0;
+    const WSD_URI_LIST *cur = list;
+    LPWSTR cur_buf_pos = buffer;
+
+    do
+    {
+        /* Calculate space needed, including trailing space */
+        string_len = lstrlenW(cur->Element);
+        memory_needed = (string_len + 1) * sizeof(WCHAR);
+
+        if (cur_buf_pos + memory_needed > buffer + buffer_size)
+            return E_INVALIDARG;
+
+        if (cur != list)
+            *cur_buf_pos++ = ' ';
+
+        memcpy(cur_buf_pos, cur->Element, memory_needed);
+        cur_buf_pos += string_len;
+
+        cur = cur->Next;
+    } while (cur != NULL);
+
+    return S_OK;
+}
+
 static HRESULT duplicate_element(WSDXML_ELEMENT *parent, const WSDXML_ELEMENT *node, struct list *namespaces)
 {
     WSDXML_ATTRIBUTE *cur_attribute, *new_attribute, *last_attribute = NULL;
@@ -910,6 +939,32 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
         if (FAILED(ret)) goto cleanup;
 
         ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, typesString, buffer, NULL);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:Scopes> */
+    if (scopes_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(hello_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_uri_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), scopes_list);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, scopesString, buffer, NULL);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:XAddrs> */
+    if (xaddrs_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(hello_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_uri_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), xaddrs_list);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, xAddrsString, buffer, NULL);
         if (FAILED(ret)) goto cleanup;
     }
 
