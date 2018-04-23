@@ -75,6 +75,8 @@ static const WCHAR sequenceIdString[] = { 'S','e','q','u','e','n','c','e','I','d
 static const WCHAR emptyString[] = { 0 };
 static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
+static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
+static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
 
 struct discovered_namespace
 {
@@ -284,7 +286,7 @@ static HRESULT add_child_element(IWSDXMLContext *xml_context, WSDXML_ELEMENT *pa
         return ret;
     }
 
-    *out = element_obj;
+    if (out != NULL) *out = element_obj;
     return ret;
 }
 
@@ -818,7 +820,7 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *hdr_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any)
 {
-    WSDXML_ELEMENT *body_element = NULL, *hello_element;
+    WSDXML_ELEMENT *body_element = NULL, *hello_element, *endpoint_reference_element;
     struct list *discoveredNamespaces = NULL;
     WSDXML_NAME *body_name = NULL;
     WSD_SOAP_HEADER soapHeader;
@@ -848,6 +850,21 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
 
     ret = add_child_element(impl->xmlContext, body_element, discoveryNsUri, helloString, NULL, &hello_element);
     if (FAILED(ret)) goto cleanup;
+
+    /* <wsa:EndpointReference>, <wsa:Address> */
+    ret = add_child_element(impl->xmlContext, hello_element, addressingNsUri, endpointReferenceString, NULL,
+        &endpoint_reference_element);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = add_child_element(impl->xmlContext, endpoint_reference_element, addressingNsUri, addressString, id, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Write any endpoint reference headers */
+    if (endpoint_ref_any != NULL)
+    {
+        ret = duplicate_element(endpoint_reference_element, endpoint_ref_any, discoveredNamespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
 
     /* Write any body elements */
     if (any != NULL)
