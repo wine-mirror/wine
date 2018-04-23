@@ -77,6 +77,7 @@ static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
+static const WCHAR typesString[] = { 'T','y','p','e','s', 0 };
 
 struct discovered_namespace
 {
@@ -499,6 +500,38 @@ static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *
     return TRUE;
 }
 
+static HRESULT build_types_list(LPWSTR buffer, size_t buffer_size, const WSD_NAME_LIST *list, struct list *namespaces)
+{
+    WCHAR format_string[] = { '%', 's', ':', '%', 's', 0 };
+    LPWSTR current_buf_pos = buffer;
+    size_t memory_needed = 0;
+    const WSD_NAME_LIST *cur = list;
+
+    do
+    {
+        /* Calculate space needed, including NULL character, colon and potential trailing space */
+        memory_needed = sizeof(WCHAR) * (lstrlenW(cur->Element->LocalName) +
+            lstrlenW(cur->Element->Space->PreferredPrefix) + 3);
+
+        if (current_buf_pos + memory_needed > buffer + buffer_size)
+            return E_INVALIDARG;
+
+        if (cur != list)
+            *current_buf_pos++ = ' ';
+
+        current_buf_pos += wsprintfW(current_buf_pos, format_string, cur->Element->Space->PreferredPrefix,
+            cur->Element->LocalName);
+
+        /* Record the namespace in the discovered namespaces list */
+        if (!add_discovered_namespace(namespaces, cur->Element->Space))
+            return E_FAIL;
+
+        cur = cur->Next;
+    } while (cur != NULL);
+
+    return S_OK;
+}
+
 static HRESULT duplicate_element(WSDXML_ELEMENT *parent, const WSDXML_ELEMENT *node, struct list *namespaces)
 {
     WSDXML_ATTRIBUTE *cur_attribute, *new_attribute, *last_attribute = NULL;
@@ -827,6 +860,7 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     WSD_APP_SEQUENCE sequence;
     WCHAR message_id[64];
     HRESULT ret = E_OUTOFMEMORY;
+    LPWSTR buffer;
 
     sequence.InstanceId = instance_id;
     sequence.MessageNumber = msg_num;
@@ -863,6 +897,19 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     if (endpoint_ref_any != NULL)
     {
         ret = duplicate_element(endpoint_reference_element, endpoint_ref_any, discoveredNamespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:Types> */
+    if (types_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(hello_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_types_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), types_list, discoveredNamespaces);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, typesString, buffer, NULL);
         if (FAILED(ret)) goto cleanup;
     }
 
