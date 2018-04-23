@@ -36,7 +36,7 @@
 # @ stub DbgUiDebugActiveProcess
 # @ stub DbgUiGetThreadDebugObject
 # @ stub DbgUiIssueRemoteBreakin
-# @ stub DbgUiRemoteBreakin
+@ stdcall DbgUiRemoteBreakin(ptr)
 # @ stub DbgUiSetThreadDebugObject
 # @ stub DbgUiStopDebugging
 @ stub DbgUiWaitStateChange
