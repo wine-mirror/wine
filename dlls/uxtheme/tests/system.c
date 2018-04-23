@@ -77,7 +77,6 @@ static void test_GetWindowTheme(void)
 {
     HTHEME    hTheme;
     HWND      hWnd;
-    BOOL    bDestroyed;
 
     SetLastError(0xdeadbeef);
     hTheme = GetWindowTheme(NULL);
@@ -89,7 +88,7 @@ static void test_GetWindowTheme(void)
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
-    if (!hWnd) return;
+    ok(hWnd != NULL, "Failed to create a test window.\n");
 
     SetLastError(0xdeadbeef);
     hTheme = GetWindowTheme(hWnd);
@@ -98,17 +97,13 @@ static void test_GetWindowTheme(void)
         "Expected 0xdeadbeef, got 0x%08x\n",
         GetLastError());
 
-    bDestroyed = DestroyWindow(hWnd);
-    if (!bDestroyed)
-        trace("Window %p couldn't be destroyed : 0x%08x\n",
-            hWnd, GetLastError());
+    DestroyWindow(hWnd);
 }
 
 static void test_SetWindowTheme(void)
 {
     HRESULT hRes;
     HWND    hWnd;
-    BOOL    bDestroyed;
 
     hRes = SetWindowTheme(NULL, NULL, NULL);
 todo_wine
@@ -116,15 +111,12 @@ todo_wine
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
-    if (!hWnd) return;
+    ok(hWnd != NULL, "Failed to create a test window.\n");
 
     hRes = SetWindowTheme(hWnd, NULL, NULL);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
 
-    bDestroyed = DestroyWindow(hWnd);
-    if (!bDestroyed)
-        trace("Window %p couldn't be destroyed : 0x%08x\n",
-            hWnd, GetLastError());
+    DestroyWindow(hWnd);
 }
 
 static void test_OpenThemeData(void)
@@ -133,7 +125,6 @@ static void test_OpenThemeData(void)
     HWND      hWnd;
     BOOL      bThemeActive;
     HRESULT   hRes;
-    BOOL      bDestroyed;
     BOOL      bTPDefined;
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
@@ -274,10 +265,7 @@ static void test_OpenThemeData(void)
             GetLastError());
     }
 
-    bDestroyed = DestroyWindow(hWnd);
-    if (!bDestroyed)
-        trace("Window %p couldn't be destroyed : 0x%08x\n",
-            hWnd, GetLastError());
+    DestroyWindow(hWnd);
 }
 
 static void test_OpenThemeDataEx(void)
@@ -285,7 +273,6 @@ static void test_OpenThemeDataEx(void)
     HTHEME    hTheme;
     HWND      hWnd;
     BOOL      bThemeActive;
-    BOOL      bDestroyed;
 
     WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
     WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
@@ -419,10 +406,7 @@ static void test_OpenThemeDataEx(void)
             "Expected ERROR_SUCCESS, got 0x%08x\n",
             GetLastError());
 
-    bDestroyed = DestroyWindow(hWnd);
-    if (!bDestroyed)
-        trace("Window %p couldn't be destroyed : 0x%08x\n",
-            hWnd, GetLastError());
+    DestroyWindow(hWnd);
 }
 
 static void test_GetCurrentThemeName(void)
