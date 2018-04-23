@@ -38,6 +38,7 @@ typedef struct fw_app
 {
     INetFwAuthorizedApplication INetFwAuthorizedApplication_iface;
     LONG refs;
+    BSTR filename;
 } fw_app;
 
 static inline fw_app *impl_from_INetFwAuthorizedApplication( INetFwAuthorizedApplication *iface )
@@ -60,6 +61,7 @@ static ULONG WINAPI fw_app_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", fw_app);
+        SysFreeString( fw_app->filename );
         HeapFree( GetProcessHeap(), 0, fw_app );
     }
     return refs;
@@ -252,7 +254,12 @@ static HRESULT WINAPI fw_app_get_ProcessImageFileName(
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
 
     FIXME("%p, %p\n", This, imageFileName);
-    return E_NOTIMPL;
+
+    if (!imageFileName)
+        return E_POINTER;
+
+    *imageFileName = SysAllocString( This->filename );
+    return *imageFileName || !This->filename ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI fw_app_put_ProcessImageFileName(
@@ -262,7 +269,13 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
 
     FIXME("%p, %s\n", This, debugstr_w(imageFileName));
-    return S_OK;
+
+    if (!imageFileName || !imageFileName[0])
+        return E_INVALIDARG;
+
+    SysFreeString( This->filename );
+    This->filename = SysAllocString( imageFileName );
+    return This->filename ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI fw_app_get_IpVersion(
@@ -385,6 +398,7 @@ HRESULT NetFwAuthorizedApplication_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     fa->INetFwAuthorizedApplication_iface.lpVtbl = &fw_app_vtbl;
     fa->refs = 1;
+    fa->filename = NULL;
 
     *ppObj = &fa->INetFwAuthorizedApplication_iface;
 
