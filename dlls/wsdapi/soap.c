@@ -80,6 +80,7 @@ static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
 static const WCHAR typesString[] = { 'T','y','p','e','s', 0 };
 static const WCHAR scopesString[] = { 'S','c','o','p','e','s', 0 };
 static const WCHAR xAddrsString[] = { 'X','A','d','d','r','s', 0 };
+static const WCHAR metadataVersionString[] = { 'M','e','t','a','d','a','t','a','V','e','r','s','i','o','n', 0 };
 
 struct discovered_namespace
 {
@@ -967,6 +968,12 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
         ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, xAddrsString, buffer, NULL);
         if (FAILED(ret)) goto cleanup;
     }
+
+    /* <wsd:MetadataVersion> */
+    ret = add_child_element(impl->xmlContext, hello_element, discoveryNsUri, metadataVersionString,
+        ulonglong_to_string(hello_element, min(UINT_MAX, metadata_ver)), NULL);
+
+    if (FAILED(ret)) goto cleanup;
 
     /* Write any body elements */
     if (any != NULL)

@@ -699,8 +699,8 @@ static void Publish_tests(void)
     ok(hello_message_seen == TRUE, "Hello message not received\n");
     ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
     ok(app_sequence_seen == TRUE, "AppSequence not received\n");
-    todo_wine ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
-    todo_wine ok(messageOK == TRUE, "Hello message metadata not received\n");
+    ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
+    ok(messageOK == TRUE, "Hello message metadata not received\n");
     ok(any_header_seen == TRUE, "Custom header not received\n");
     ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
     ok(body_hello_seen == TRUE, "Body and Hello elements not received\n");
