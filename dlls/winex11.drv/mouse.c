@@ -819,58 +819,58 @@ cleanup:
 struct system_cursors
 {
     WORD id;
-    const char *name;
+    const char *names[8];
 };
 
 static const struct system_cursors user32_cursors[] =
 {
-    { OCR_NORMAL,      "left_ptr" },
-    { OCR_IBEAM,       "xterm" },
-    { OCR_WAIT,        "watch" },
-    { OCR_CROSS,       "cross" },
-    { OCR_UP,          "center_ptr" },
-    { OCR_SIZE,        "fleur" },
-    { OCR_SIZEALL,     "fleur" },
-    { OCR_ICON,        "icon" },
-    { OCR_SIZENWSE,    "top_left_corner" },
-    { OCR_SIZENESW,    "top_right_corner" },
-    { OCR_SIZEWE,      "left_side" },
-    { OCR_SIZENS,      "top_side" },
-    { OCR_NO,          "not-allowed" },
-    { OCR_HAND,        "hand2" },
-    { OCR_APPSTARTING, "left_ptr_watch" },
-    { OCR_HELP,        "question_arrow" },
+    { OCR_NORMAL,      { "left_ptr" }},
+    { OCR_IBEAM,       { "xterm", "text" }},
+    { OCR_WAIT,        { "watch", "wait" }},
+    { OCR_CROSS,       { "cross" }},
+    { OCR_UP,          { "center_ptr" }},
+    { OCR_SIZE,        { "fleur", "size_all" }},
+    { OCR_SIZEALL,     { "fleur", "size_all" }},
+    { OCR_ICON,        { "icon" }},
+    { OCR_SIZENWSE,    { "top_left_corner", "nw-resize" }},
+    { OCR_SIZENESW,    { "top_right_corner", "ne-resize" }},
+    { OCR_SIZEWE,      { "left_side", "size_hor", "h_double_arrow", "ew-resize" }},
+    { OCR_SIZENS,      { "top_side", "size_ver", "v_double_arrow", "ns-resize" }},
+    { OCR_NO,          { "not-allowed", "forbidden", "no-drop" }},
+    { OCR_HAND,        { "hand2", "pointer", "pointing-hand" }},
+    { OCR_APPSTARTING, { "left_ptr_watch" }},
+    { OCR_HELP,        { "question_arrow", "help" }},
     { 0 }
 };
 
 static const struct system_cursors comctl32_cursors[] =
 {
-    { 102, "move" },
-    { 104, "copy" },
-    { 105, "left_ptr" },
-    { 106, "col-resize" },
-    { 107, "col-resize" },
-    { 108, "hand2" },
-    { 135, "row-resize" },
+    { 102, { "move", "dnd-move" }},
+    { 104, { "copy", "dnd-copy" }},
+    { 105, { "left_ptr" }},
+    { 106, { "col-resize", "split_v" }},
+    { 107, { "col-resize", "split_v" }},
+    { 108, { "hand2", "pointer", "pointing-hand" }},
+    { 135, { "row-resize", "split_h" }},
     { 0 }
 };
 
 static const struct system_cursors ole32_cursors[] =
 {
-    { 1, "no-drop" },
-    { 2, "move" },
-    { 3, "copy" },
-    { 4, "alias" },
+    { 1, { "no-drop", "dnd-no-drop" }},
+    { 2, { "move", "dnd-move" }},
+    { 3, { "copy", "dnd-copy" }},
+    { 4, { "alias", "dnd-link" }},
     { 0 }
 };
 
 static const struct system_cursors riched20_cursors[] =
 {
-    { 105, "hand2" },
-    { 107, "right_ptr" },
-    { 109, "copy" },
-    { 110, "move" },
-    { 111, "no-drop" },
+    { 105, { "hand2", "pointer", "pointing-hand" }},
+    { 107, { "right_ptr" }},
+    { 109, { "copy", "dnd-copy" }},
+    { 110, { "move", "dnd-move" }},
+    { 111, { "no-drop", "dnd-no-drop" }},
     { 0 }
 };
 
@@ -1004,6 +1004,7 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     Cursor cursor = 0;
     HMODULE module;
     HKEY key;
+    const char * const *names = NULL;
     WCHAR *p, name[MAX_PATH * 2], valueW[64];
     char valueA[64];
     DWORD ret;
@@ -1044,7 +1045,8 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     for (i = 0; cursors[i].id; i++)
         if (cursors[i].id == info->wResID)
         {
-            strcpy( valueA, cursors[i].name );
+            strcpy( valueA, cursors[i].names[0] );
+            names = cursors[i].names;
             break;
         }
 
@@ -1052,7 +1054,13 @@ done:
     if (valueA[0])
     {
 #ifdef SONAME_LIBXCURSOR
-        if (pXcursorLibraryLoadCursor) cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
+        if (pXcursorLibraryLoadCursor)
+        {
+            if (!names)
+                cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
+            else
+                while (*names && !cursor) cursor = pXcursorLibraryLoadCursor( gdi_display, *names++ );
+        }
 #endif
         if (!cursor)
         {
