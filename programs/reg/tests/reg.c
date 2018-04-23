@@ -4668,7 +4668,7 @@ static void test_export(void)
     err = RegQueryValueExA(hkey, "Wine4d", NULL, &type, (BYTE *)&buffer, &size);
     ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
     ok(type == REG_SZ, "got wrong type %u, expected %u\n", type, REG_SZ);
-    todo_wine ok(size == 5 || broken(size == 4) /* WinXP */, "got wrong size %u, expected 5\n", size);
+    ok(size == 5 || broken(size == 4) /* WinXP */, "got wrong size %u, expected 5\n", size);
     ok(memcmp(buffer, "\0abc", size) == 0, "got wrong data\n");
     dword = 0x100;
     verify_reg(hkey, "Wine4e", REG_DWORD, &dword, sizeof(dword), 0);
