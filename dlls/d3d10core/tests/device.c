@@ -14335,7 +14335,6 @@ static void test_stream_output(void)
     check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration), 64, TRUE);
     check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration), 0, FALSE);
 
-    todo_wine
     check_so_desc(device, vs_code, sizeof(vs_code), so_declaration, ARRAY_SIZE(so_declaration), 64, TRUE);
 
     check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, 0, 64, FALSE);
