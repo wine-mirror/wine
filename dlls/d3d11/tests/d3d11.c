@@ -22974,6 +22974,187 @@ static void test_stream_output_components(void)
     release_test_context(&test_context);
 }
 
+static void test_stream_output_vs(void)
+{
+    const D3D11_SO_DECLARATION_ENTRY *current_so_declaration;
+    struct d3d11_test_context test_context;
+    ID3D11InputLayout *input_layout;
+    ID3D11Buffer *vb, *so_buffer;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11GeometryShader *gs;
+    ID3D11VertexShader *vs;
+    ID3D11Device *device;
+    const float *result;
+    unsigned int offset;
+    unsigned int i, j;
+    HRESULT hr;
+
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct vertex
+        {
+            float4 position : POSITION;
+            float4 color0 : COLOR0;
+            float4 color1 : COLOR1;
+        };
+
+        vertex main(in vertex i)
+        {
+            return i;
+        }
+#endif
+        0x43425844, 0xa67e993e, 0x1632c139, 0x02a7725f, 0xfb0221cd, 0x00000001, 0x00000194, 0x00000003,
+        0x0000002c, 0x00000094, 0x000000fc, 0x4e475349, 0x00000060, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000059, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x00000059, 0x00000001, 0x00000000, 0x00000003, 0x00000002,
+        0x00000f0f, 0x49534f50, 0x4e4f4954, 0x4c4f4300, 0xab00524f, 0x4e47534f, 0x00000060, 0x00000003,
+        0x00000008, 0x00000050, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x00000059,
+        0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x00000059, 0x00000001, 0x00000000,
+        0x00000003, 0x00000002, 0x0000000f, 0x49534f50, 0x4e4f4954, 0x4c4f4300, 0xab00524f, 0x52444853,
+        0x00000090, 0x00010040, 0x00000024, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2,
+        0x00000001, 0x0300005f, 0x001010f2, 0x00000002, 0x03000065, 0x001020f2, 0x00000000, 0x03000065,
+        0x001020f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000002, 0x05000036, 0x001020f2, 0x00000000,
+        0x00101e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001, 0x05000036,
+        0x001020f2, 0x00000002, 0x00101e46, 0x00000002, 0x0100003e,
+    };
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR",    1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY all_so_decl[] =
+    {
+        {0, "POSITION", 0, 0, 4, 0},
+        {0, "COLOR",    0, 0, 3, 0},
+        {0, "COLOR",    1, 0, 2, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY position_so_decl[] =
+    {
+        {0, "POSITION", 0, 0, 4, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY position2_so_decl[] =
+    {
+        {0, "POSITION", 0, 0, 2, 0},
+    };
+    static const struct
+    {
+        struct vec4 position;
+        struct vec4 color0;
+        struct vec4 color1;
+    }
+    vb_data[] =
+    {
+        {{-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f, 2.0f, 3.0f, 4.0f}, {5.0f, 6.0f, 7.0f, 8.0f}},
+        {{-1.0f,  1.0f, 0.0f, 1.0f}, {9.0f, 1.1f, 1.2f, 1.3f}, {1.4f, 1.5f, 1.6f, 1.7f}},
+        {{ 1.0f, -1.0f, 0.0f, 1.0f}, {1.8f, 1.9f, 2.0f, 2.1f}, {2.2f, 2.3f, 2.4f, 2.5f}},
+        {{ 1.0f,  1.0f, 0.0f, 1.0f}, {2.5f, 2.6f, 2.7f, 2.8f}, {2.9f, 3.0f, 3.1f, 3.2f}},
+    };
+    static const unsigned int vb_stride[] = {sizeof(*vb_data)};
+    static const float expected_data[] =
+    {
+        -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 6.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f, 9.0f, 1.1f, 1.2f, 1.4f, 1.5f,
+         1.0f, -1.0f, 0.0f, 1.0f, 1.8f, 1.9f, 2.0f, 2.2f, 2.3f,
+         1.0f,  1.0f, 0.0f, 1.0f, 2.5f, 2.6f, 2.7f, 2.9f, 3.0f,
+    };
+    static const float expected_data2[] =
+    {
+        -1.0f, -1.0f, 0.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f,
+         1.0f, -1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 0.0f, 1.0f,
+    };
+    static const float expected_data3[] =
+    {
+        -1.0f, -1.0f,
+        -1.0f,  1.0f,
+         1.0f, -1.0f,
+         1.0f,  1.0f,
+    };
+    static const struct
+    {
+        const D3D11_SO_DECLARATION_ENTRY *so_declaration;
+        unsigned int so_entry_count;
+        const float *expected_data;
+        unsigned int expected_data_size;
+    }
+    tests[] =
+    {
+        {all_so_decl,       ARRAY_SIZE(all_so_decl),       expected_data,  ARRAY_SIZE(expected_data)},
+        {position_so_decl,  ARRAY_SIZE(position_so_decl),  expected_data2, ARRAY_SIZE(expected_data2)},
+        {position2_so_decl, ARRAY_SIZE(position2_so_decl), expected_data3, ARRAY_SIZE(expected_data3)},
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vb_data), vb_data);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
+
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, vb_stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+    gs = NULL;
+    current_so_declaration = NULL;
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (current_so_declaration != tests[i].so_declaration)
+        {
+            if (gs)
+                ID3D11GeometryShader_Release(gs);
+
+            hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, vs_code, sizeof(vs_code),
+                    tests[i].so_declaration, tests[i].so_entry_count, NULL, 0,
+                    D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
+            ok(hr == S_OK, "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+            ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+            current_so_declaration = tests[i].so_declaration;
+        }
+
+        offset = 0;
+        ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+
+        ID3D11DeviceContext_Draw(context, 4, 0);
+
+        get_buffer_readback(so_buffer, &rb);
+        result = rb.map_desc.pData;
+        for (j = 0; j < tests[i].expected_data_size; ++j)
+        {
+            float expected_value = tests[i].expected_data[j];
+            ok(compare_float(result[j], expected_value, 2),
+                    "Test %u: Got %.8e, expected %.8e at %u.\n",
+                    i, result[j], expected_value, j);
+        }
+        release_resource_readback(&rb);
+    }
+
+    ID3D11Buffer_Release(vb);
+    ID3D11Buffer_Release(so_buffer);
+    ID3D11VertexShader_Release(vs);
+    ID3D11GeometryShader_Release(gs);
+    ID3D11InputLayout_Release(input_layout);
+    release_test_context(&test_context);
+}
+
 static void test_gather(void)
 {
     struct
@@ -26390,6 +26571,7 @@ START_TEST(d3d11)
     test_fl10_stream_output_desc();
     test_stream_output_resume();
     test_stream_output_components();
+    test_stream_output_vs();
     test_gather();
     test_gather_c();
     test_depth_bias();
