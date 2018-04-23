@@ -508,20 +508,24 @@ static void Publish_tests(void)
     WSADATA wsaData;
     BOOL messageOK, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
     BOOL metadata_version_seen = FALSE, any_header_seen = FALSE, wine_ns_seen = FALSE, body_hello_seen = FALSE;
-    BOOL any_body_seen = FALSE;
+    BOOL any_body_seen = FALSE, types_seen = FALSE, xml_namespaces_seen = FALSE;
     int ret, i;
     HRESULT rc;
     ULONG ref;
     char *msg;
     WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element;
-    WSDXML_NAME header_any_name;
-    WSDXML_NAMESPACE ns;
+    WSDXML_NAME header_any_name, another_name;
+    WSDXML_NAMESPACE ns, ns2;
     WCHAR header_any_name_text[] = {'B','e','e','r',0};
+    WCHAR another_name_text[] = {'C','i','d','e','r',0};
     static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
     static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
     static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'w','i','n','e',0};
+    static const WCHAR uri2[] = {'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s','/',0};
+    static const WCHAR prefix2[] = {'g','r','o','g',0};
+    WSD_NAME_LIST types_list;
 
     rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
     ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
@@ -599,13 +603,27 @@ static void Publish_tests(void)
     rc = WSDXMLBuildAnyForSingleElement(&header_any_name, endpoint_any_text, &endpoint_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
+    /* Create types list */
+    ns2.Uri = uri2;
+    ns2.PreferredPrefix = prefix2;
+
+    another_name.LocalName = another_name_text;
+    another_name.Space = &ns2;
+
+    types_list.Next = malloc(sizeof(WSD_NAME_LIST));
+    types_list.Element = &another_name;
+
+    types_list.Next->Next = NULL;
+    types_list.Next->Element = &header_any_name;
+
     /* Publish the service */
-    rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, NULL, NULL, NULL,
+    rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, &types_list, NULL, NULL,
         header_any_element, NULL, NULL, endpoint_any_element, body_any_element);
 
     WSDFreeLinkedMemory(header_any_element);
     WSDFreeLinkedMemory(body_any_element);
     WSDFreeLinkedMemory(endpoint_any_element);
+    free(types_list.Next);
 
     ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
@@ -642,8 +660,10 @@ static void Publish_tests(void)
         wine_ns_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\"") != NULL);
         body_hello_seen = (strstr(msg, "<soap:Body><wsd:Hello") != NULL);
         any_body_seen = (strstr(msg, "<wine:Beer>BodyTest</wine:Beer>") != NULL);
+        types_seen = (strstr(msg, "<wsd:Types>grog:Cider wine:Beer</wsd:Types>") != NULL);
+        xml_namespaces_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\" xmlns:grog=\"http://more.tests/\"") != NULL);
         messageOK = hello_message_seen && endpoint_reference_seen && app_sequence_seen && metadata_version_seen &&
-            any_header_seen && wine_ns_seen && body_hello_seen && any_body_seen;
+            any_header_seen && wine_ns_seen && body_hello_seen && any_body_seen && types_seen && xml_namespaces_seen;
 
         if (messageOK) break;
     }
@@ -664,6 +684,8 @@ static void Publish_tests(void)
     ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
     ok(body_hello_seen == TRUE, "Body and Hello elements not received\n");
     ok(any_body_seen == TRUE, "Custom body element not received\n");
+    ok(types_seen == TRUE, "Types not received\n");
+    ok(xml_namespaces_seen == TRUE, "XML namespaces not received\n");
 
 after_publish_test:
 
