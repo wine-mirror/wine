@@ -282,7 +282,7 @@ void add_job(const WCHAR *name)
     try = 1;
     for (;;)
     {
-        file = CreateFileW(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+        file = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
         if (file == INVALID_HANDLE_VALUE)
         {
             TRACE("Failed to open %s, error %u\n", debugstr_w(name), GetLastError());
