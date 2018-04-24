@@ -850,10 +850,8 @@ static BOOL write_unicode_string(HANDLE hfile, const WCHAR *str)
     return WriteFile(hfile, str, count, &size, NULL);
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR name, BOOL remember)
+static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR task_name, BOOL remember)
 {
-    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
-    static const WCHAR jobW[] = { '.','j','o','b',0 };
     static WCHAR authorW[] = { 'W','i','n','e',0 };
     static WCHAR commentW[] = { 'C','r','e','a','t','e','d',' ','b','y',' ','W','i','n','e',0 };
     FIXDLEN_DATA fixed;
@@ -864,25 +862,17 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR na
     ITask *task = &This->ITask_iface;
     LPWSTR appname = NULL, params = NULL, workdir = NULL, creator = NULL, comment = NULL;
     BYTE *user_data = NULL;
-    WCHAR task_name[MAX_PATH];
     HRESULT hr;
 
-    TRACE("(%p, %s, %d)\n", iface, debugstr_w(name), remember);
+    TRACE("(%p, %s, %d)\n", iface, debugstr_w(task_name), remember);
 
-    disposition = name ? CREATE_NEW : OPEN_ALWAYS;
+    disposition = task_name ? CREATE_NEW : OPEN_ALWAYS;
 
-    if (!name)
+    if (!task_name)
     {
-        name = This->task_name;
+        task_name = This->task_name;
         remember = FALSE;
     }
-    else if (strchrW(name, '.'))
-        return E_INVALIDARG;
-
-    GetWindowsDirectoryW(task_name, MAX_PATH);
-    lstrcatW(task_name, tasksW);
-    lstrcatW(task_name, name);
-    lstrcatW(task_name, jobW);
 
     ITask_GetComment(task, &comment);
     if (!comment) comment = commentW;
@@ -1018,11 +1008,11 @@ failed:
 
     CloseHandle(hfile);
     if (hr != S_OK)
-        DeleteFileW(name);
+        DeleteFileW(task_name);
     else if (remember)
     {
         HeapFree(GetProcessHeap(), 0, This->task_name);
-        This->task_name = heap_strdupW(name);
+        This->task_name = heap_strdupW(task_name);
     }
     return hr;
 }
@@ -1104,14 +1094,24 @@ static const IPersistFileVtbl MSTASK_IPersistFileVtbl =
     MSTASK_IPersistFile_GetCurFile
 };
 
-HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **task)
+HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
 {
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    static const WCHAR jobW[] = { '.','j','o','b',0 };
     TaskImpl *This;
+    WCHAR task_name[MAX_PATH];
     ITaskDefinition *taskdef;
     IActionCollection *actions;
     HRESULT hr;
 
-    TRACE("(%s, %p)\n", debugstr_w(task_name), task);
+    TRACE("(%s, %p)\n", debugstr_w(name), task);
+
+    if (strchrW(name, '.')) return E_INVALIDARG;
+
+    GetWindowsDirectoryW(task_name, MAX_PATH);
+    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, name);
+    lstrcatW(task_name, jobW);
 
     hr = ITaskService_NewTask(service, 0, &taskdef);
     if (hr != S_OK) return hr;
