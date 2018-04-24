@@ -793,9 +793,10 @@ static BOOL write_user_data(HANDLE hfile, BYTE *data, WORD data_size)
 
 static HRESULT write_triggers(ITask *task, HANDLE hfile)
 {
-    WORD count, i;
+    WORD count, i, idx = 0xffff;
     DWORD size;
     HRESULT hr;
+    ITaskTrigger *trigger;
 
     hr = ITask_GetTriggerCount(task, &count);
     if (hr != S_OK) return hr;
@@ -803,9 +804,18 @@ static HRESULT write_triggers(ITask *task, HANDLE hfile)
     if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
         return HRESULT_FROM_WIN32(GetLastError());
 
+    /* Windows saves a .job with at least 1 trigger */
+    if (!count)
+    {
+        hr = ITask_CreateTrigger(task, &idx, &trigger);
+        if (hr != S_OK) return hr;
+        ITaskTrigger_Release(trigger);
+
+        count = 1;
+    }
+
     for (i = 0; i < count; i++)
     {
-        ITaskTrigger *trigger;
         TASK_TRIGGER task_trigger;
 
         hr = ITask_GetTrigger(task, i, &trigger);
@@ -813,13 +823,16 @@ static HRESULT write_triggers(ITask *task, HANDLE hfile)
 
         hr = ITaskTrigger_GetTrigger(trigger, &task_trigger);
         ITaskTrigger_Release(trigger);
-        if (hr != S_OK) return hr;
+        if (hr != S_OK) break;
 
         if (!WriteFile(hfile, &task_trigger, sizeof(task_trigger), &size, NULL))
             return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    return S_OK;
+    if (idx != 0xffff)
+        ITask_DeleteTrigger(task, idx);
+
+    return hr;
 }
 
 static BOOL write_unicode_string(HANDLE hfile, const WCHAR *str)
