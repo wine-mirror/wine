@@ -63,6 +63,7 @@ typedef struct
     DWORD priority, maxRunTime;
     LPWSTR accountName;
     DWORD trigger_count;
+    TASK_TRIGGER *trigger;
 } TaskImpl;
 
 static inline TaskImpl *impl_from_ITask(ITask *iface)
@@ -83,6 +84,7 @@ static void TaskDestructor(TaskImpl *This)
     ITaskDefinition_Release(This->task);
     HeapFree(GetProcessHeap(), 0, This->task_name);
     HeapFree(GetProcessHeap(), 0, This->accountName);
+    HeapFree(GetProcessHeap(), 0, This->trigger);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
 }
@@ -139,13 +141,34 @@ static ULONG WINAPI MSTASK_ITask_Release(
     return ref;
 }
 
-static HRESULT WINAPI MSTASK_ITask_CreateTrigger(
-        ITask* iface,
-        WORD *piNewTrigger,
-        ITaskTrigger **ppTrigger)
+static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskTrigger **task_trigger)
 {
-    TRACE("(%p, %p, %p)\n", iface, piNewTrigger, ppTrigger);
-    return TaskTriggerConstructor((LPVOID *)ppTrigger);
+    TaskImpl *This = impl_from_ITask(iface);
+    TASK_TRIGGER *new_trigger;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p)\n", iface, idx, task_trigger);
+
+    hr = TaskTriggerConstructor((void **)task_trigger);
+    if (hr != S_OK) return hr;
+
+    if (This->trigger)
+        new_trigger = heap_realloc(This->trigger, sizeof(This->trigger[0]) * (This->trigger_count + 1));
+    else
+        new_trigger = heap_alloc(sizeof(This->trigger[0]));
+    if (!new_trigger)
+    {
+        ITaskTrigger_Release(*task_trigger);
+        return E_OUTOFMEMORY;
+    }
+
+    This->trigger = new_trigger;
+
+    hr = ITaskTrigger_GetTrigger(*task_trigger, &This->trigger[This->trigger_count]);
+    if (hr == S_OK)
+        *idx = This->trigger_count++;
+
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_DeleteTrigger(
@@ -1135,6 +1158,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->priority = NORMAL_PRIORITY_CLASS;
     This->accountName = NULL;
     This->trigger_count = 0;
+    This->trigger = NULL;
 
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
