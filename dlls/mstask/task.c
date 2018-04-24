@@ -198,13 +198,24 @@ static HRESULT WINAPI MSTASK_ITask_GetTriggerCount(ITask *iface, WORD *count)
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetTrigger(
-        ITask* iface,
-        WORD iTrigger,
-        ITaskTrigger **ppTrigger)
+static HRESULT WINAPI MSTASK_ITask_GetTrigger(ITask *iface, WORD idx, ITaskTrigger **trigger)
 {
-    FIXME("(%p, %d, %p): stub\n", iface, iTrigger, ppTrigger);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
+
+    TRACE("(%p, %u, %p)\n", iface, idx, trigger);
+
+    if (idx >= This->trigger_count)
+        return SCHED_E_TRIGGER_NOT_FOUND;
+
+    hr = TaskTriggerConstructor((void **)trigger);
+    if (hr != S_OK) return hr;
+
+    hr = ITaskTrigger_SetTrigger(*trigger, &This->trigger[idx]);
+    if (hr != S_OK)
+        ITaskTrigger_Release(*trigger);
+
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetTriggerString(
