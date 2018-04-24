@@ -980,12 +980,10 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
         goto failed;
     }
 
-    /* Trigegrs */
-    if (!write_triggers(hfile, task))
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
+    /* Triggers */
+    hr = write_triggers(task, hfile);
+    if (hr != S_OK)
         goto failed;
-    }
 
     /* Signature */
     if (!write_signature(hfile))
