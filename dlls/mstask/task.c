@@ -171,12 +171,21 @@ static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskT
     return hr;
 }
 
-static HRESULT WINAPI MSTASK_ITask_DeleteTrigger(
-        ITask* iface,
-        WORD iTrigger)
+static HRESULT WINAPI MSTASK_ITask_DeleteTrigger(ITask *iface, WORD idx)
 {
-    FIXME("(%p, %d): stub\n", iface, iTrigger);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %u)\n", iface, idx);
+
+    if (idx >= This->trigger_count)
+        return SCHED_E_TRIGGER_NOT_FOUND;
+
+    This->trigger_count--;
+    memmove(&This->trigger[idx], &This->trigger[idx + 1], (This->trigger_count - idx) * sizeof(This->trigger[0]));
+    /* this shouldn't fail in practice since we're shrinking the memory block */
+    This->trigger = heap_realloc(This->trigger, sizeof(This->trigger[0]) * This->trigger_count);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetTriggerCount(ITask *iface, WORD *count)
