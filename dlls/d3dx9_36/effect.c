@@ -6590,7 +6590,7 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
     {
         TRACE("HLSL ASCII effect, trying to compile it.\n");
         hr = D3DCompile(data, data_size, NULL, defines, include,
-                "main", "fx_2_0", compile_flags, eflags, &bytecode, &temp_errors);
+                NULL, "fx_2_0", compile_flags, eflags, &bytecode, &temp_errors);
         if (FAILED(hr))
         {
             WARN("Failed to compile ASCII effect.\n");
