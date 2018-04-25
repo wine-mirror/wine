@@ -589,7 +589,7 @@ DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
 
 DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jobid)
 {
-    DWORD jobid, ret = ERROR_FILE_NOT_FOUND;
+    DWORD jobid, ret = APE_AT_ID_NOT_FOUND;
 
     TRACE("%s,%u,%u\n", debugstr_w(server_name), min_jobid, max_jobid);
 
@@ -602,7 +602,7 @@ DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jo
         if (!job)
         {
             TRACE("job %u not found\n", jobid);
-            ret = ERROR_FILE_NOT_FOUND;
+            ret = APE_AT_ID_NOT_FOUND;
             break;
         }
 

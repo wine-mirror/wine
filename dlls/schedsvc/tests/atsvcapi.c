@@ -108,6 +108,9 @@ START_TEST(atsvcapi)
     ret = NetrJobGetInfo(server_name, 0xdeadbeef, &info2);
     ok(ret == APE_AT_ID_NOT_FOUND || broken(1) /* vista and w2008 return rubbish here */, "wrong error %u\n", ret);
 
+    ret = NetrJobDel(server_name, 0xdeadbeef, 0xdeadbeef);
+    ok(ret == APE_AT_ID_NOT_FOUND, "wrong error %u\n", ret);
+
     try_count = 5;
 
     for (try = 1; try <= try_count; try++)
