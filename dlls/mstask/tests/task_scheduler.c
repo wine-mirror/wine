@@ -284,9 +284,7 @@ static WCHAR *get_task_curfile(ITask *task)
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
-todo_wine
     ok(hr == S_OK, "GetCurFile error %#x\n", hr);
-todo_wine
     ok(curfile && curfile[0] , "curfile should not be NULL\n");
 
     if (0) /* crashes under Windows */
@@ -326,7 +324,6 @@ static void test_task_storage(void)
 
     curfile = get_task_curfile(task);
     ok(!file_exists(curfile), "curfile should not exist\n");
-todo_wine
     ok(!lstrcmpW(curfile, task_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task2);
@@ -335,7 +332,6 @@ todo_wine
 
     curfile2 = get_task_curfile(task);
     ok(!file_exists(curfile2), "curfile2 should not exist\n");
-todo_wine
     ok(!lstrcmpW(curfile2, task_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile2));
 
     CoTaskMemFree(curfile);

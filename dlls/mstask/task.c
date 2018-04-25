@@ -1069,12 +1069,17 @@ static HRESULT WINAPI MSTASK_IPersistFile_SaveCompleted(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_GetCurFile(
-        IPersistFile* iface,
-        LPOLESTR *ppszFileName)
+static HRESULT WINAPI MSTASK_IPersistFile_GetCurFile(IPersistFile *iface, LPOLESTR *file_name)
 {
-    FIXME("(%p, %p): stub\n", iface, ppszFileName);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+
+    TRACE("(%p, %p)\n", iface, file_name);
+
+    *file_name = CoTaskMemAlloc((strlenW(This->task_name) + 1) * sizeof(WCHAR));
+    if (!*file_name) return E_OUTOFMEMORY;
+
+    strcpyW(*file_name, This->task_name);
+    return S_OK;
 }
 
 static const ITaskVtbl MSTASK_ITaskVtbl =
