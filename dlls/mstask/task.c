@@ -787,13 +787,290 @@ static HRESULT WINAPI MSTASK_IPersistFile_IsDirty(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_Load(
-        IPersistFile* iface,
-        LPCOLESTR pszFileName,
-        DWORD dwMode)
+static DWORD load_unicode_strings(ITask *task, BYTE *data, DWORD limit)
 {
-    FIXME("(%p, %p, 0x%08x): stub\n", iface, pszFileName, dwMode);
-    return E_NOTIMPL;
+    DWORD i, data_size = 0;
+    USHORT len;
+
+    for (i = 0; i < 5; i++)
+    {
+        if (limit < sizeof(USHORT))
+        {
+            TRACE("invalid string %u offset\n", i);
+            break;
+        }
+
+        len = *(USHORT *)data;
+        data += sizeof(USHORT);
+        data_size += sizeof(USHORT);
+        limit -= sizeof(USHORT);
+        if (limit < len * sizeof(WCHAR))
+        {
+            TRACE("invalid string %u size\n", i);
+            break;
+        }
+
+        TRACE("string %u: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
+
+        switch (i)
+        {
+        case 0:
+            ITask_SetApplicationName(task, (const WCHAR *)data);
+            break;
+        case 1:
+            ITask_SetParameters(task, (const WCHAR *)data);
+            break;
+        case 2:
+            ITask_SetWorkingDirectory(task, (const WCHAR *)data);
+            break;
+        case 3:
+            ITask_SetCreator(task, (const WCHAR *)data);
+            break;
+        case 4:
+            ITask_SetComment(task, (const WCHAR *)data);
+            break;
+        default:
+            break;
+        }
+
+        data += len * sizeof(WCHAR);
+        data_size += len * sizeof(WCHAR);
+    }
+
+    return data_size;
+}
+
+static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
+{
+    ITask *task = &This->ITask_iface;
+    HRESULT hr;
+    const FIXDLEN_DATA *fixed;
+    const SYSTEMTIME *st;
+    DWORD unicode_strings_size, data_size, triggers_size;
+    USHORT instance_count, trigger_count, i;
+    const USHORT *signature;
+    TASK_TRIGGER *task_trigger;
+
+    if (size < sizeof(*fixed))
+    {
+        TRACE("no space for FIXDLEN_DATA\n");
+        return SCHED_E_INVALID_TASK;
+    }
+
+    fixed = (const FIXDLEN_DATA *)data;
+
+    TRACE("product_version %04x\n", fixed->product_version);
+    TRACE("file_version %04x\n", fixed->file_version);
+    TRACE("uuid %s\n", wine_dbgstr_guid(&fixed->uuid));
+
+    if (fixed->file_version != 0x0001)
+        return SCHED_E_INVALID_TASK;
+
+    TRACE("name_size_offset %04x\n", fixed->name_size_offset);
+    TRACE("trigger_offset %04x\n", fixed->trigger_offset);
+    TRACE("error_retry_count %u\n", fixed->error_retry_count);
+    TRACE("error_retry_interval %u\n", fixed->error_retry_interval);
+    TRACE("idle_deadline %u\n", fixed->idle_deadline);
+    This->deadline_minutes = fixed->idle_deadline;
+    TRACE("idle_wait %u\n", fixed->idle_wait);
+    This->idle_minutes = fixed->idle_wait;
+    TRACE("priority %08x\n", fixed->priority);
+    This->priority = fixed->priority;
+    TRACE("maximum_runtime %u\n", fixed->maximum_runtime);
+    This->maxRunTime = fixed->maximum_runtime;
+    TRACE("exit_code %#x\n", fixed->exit_code);
+    TRACE("status %08x\n", fixed->status);
+    TRACE("flags %08x\n", fixed->flags);
+    st = &fixed->last_runtime;
+    TRACE("last_runtime %d/%d/%d wday %d %d:%d:%d.%03d\n",
+            st->wDay, st->wMonth, st->wYear, st->wDayOfWeek,
+            st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+
+    /* Instance Count */
+    if (size < sizeof(*fixed) + sizeof(USHORT))
+    {
+        TRACE("no space for instance count\n");
+        return SCHED_E_INVALID_TASK;
+    }
+
+    instance_count = *(const USHORT *)(data + sizeof(*fixed));
+    TRACE("instance count %u\n", instance_count);
+
+    if (fixed->name_size_offset + sizeof(USHORT) < size)
+        unicode_strings_size = load_unicode_strings(task, data + fixed->name_size_offset, size - fixed->name_size_offset);
+    else
+    {
+        TRACE("invalid name_size_offset\n");
+        return SCHED_E_INVALID_TASK;
+    }
+    TRACE("unicode strings end at %#x\n", fixed->name_size_offset + unicode_strings_size);
+
+    if (size < fixed->trigger_offset + sizeof(USHORT))
+    {
+        TRACE("no space for triggers count\n");
+        return SCHED_E_INVALID_TASK;
+    }
+    trigger_count = *(const USHORT *)(data + fixed->trigger_offset);
+    TRACE("trigger_count %u\n", trigger_count);
+    triggers_size = size - fixed->trigger_offset - sizeof(USHORT);
+    TRACE("triggers_size %u\n", triggers_size);
+    task_trigger = (TASK_TRIGGER *)(data + fixed->trigger_offset + sizeof(USHORT));
+
+    data += fixed->name_size_offset + unicode_strings_size;
+    size -= fixed->name_size_offset + unicode_strings_size;
+
+    /* User Data */
+    if (size < sizeof(USHORT))
+    {
+        TRACE("no space for user data size\n");
+        return SCHED_E_INVALID_TASK;
+    }
+
+    data_size = *(const USHORT *)data;
+    if (size < sizeof(USHORT) + data_size)
+    {
+        TRACE("no space for user data\n");
+        return SCHED_E_INVALID_TASK;
+    }
+    TRACE("User Data size %#x\n", data_size);
+    ITask_SetWorkItemData(task, data_size, data + sizeof(USHORT));
+
+    size -= sizeof(USHORT) + data_size;
+    data += sizeof(USHORT) + data_size;
+
+    /* Reserved Data */
+    if (size < sizeof(USHORT))
+    {
+        TRACE("no space for reserved data size\n");
+        return SCHED_E_INVALID_TASK;
+    }
+
+    data_size = *(const USHORT *)data;
+    if (size < sizeof(USHORT) + data_size)
+    {
+        TRACE("no space for reserved data\n");
+        return SCHED_E_INVALID_TASK;
+    }
+    TRACE("Reserved Data size %#x\n", data_size);
+
+    size -= sizeof(USHORT) + data_size;
+    data += sizeof(USHORT) + data_size;
+
+    /* Trigger Data */
+    TRACE("trigger_offset %04x, triggers end at %04x\n", fixed->trigger_offset,
+          (DWORD)(fixed->trigger_offset + sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER)));
+
+    This->trigger_count = *(const USHORT *)data;
+    TRACE("trigger_count %u\n", trigger_count);
+    task_trigger = (TASK_TRIGGER *)(data + sizeof(USHORT));
+
+    if (This->trigger_count * sizeof(TASK_TRIGGER) > triggers_size)
+    {
+        TRACE("no space for triggers data\n");
+        return SCHED_E_INVALID_TASK;
+    }
+
+    for (i = 0; i < This->trigger_count; i++)
+    {
+        ITaskTrigger *trigger;
+        WORD idx;
+
+        hr = ITask_CreateTrigger(task, &idx, &trigger);
+        if (hr != S_OK) return hr;
+
+        hr = ITaskTrigger_SetTrigger(trigger, &task_trigger[i]);
+        ITaskTrigger_Release(trigger);
+        if (hr != S_OK)
+        {
+            ITask_DeleteTrigger(task, idx);
+            return hr;
+        }
+    }
+
+    size -= sizeof(USHORT) + This->trigger_count * sizeof(TASK_TRIGGER);
+    data += sizeof(USHORT) + This->trigger_count * sizeof(TASK_TRIGGER);
+
+    if (size < 2 * sizeof(USHORT) + 64)
+    {
+        TRACE("no space for signature\n");
+        return S_OK; /* signature is optional */
+    }
+
+    signature = (const USHORT *)data;
+    TRACE("signature version %04x, client version %04x\n", signature[0], signature[1]);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR file_name, DWORD mode)
+{
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    HRESULT hr;
+    HANDLE file, mapping;
+    DWORD access, sharing, size;
+    void *data;
+
+    TRACE("(%p, %s, 0x%08x)\n", iface, debugstr_w(file_name), mode);
+
+    switch (mode & 0x000f)
+    {
+    default:
+    case STGM_READ:
+        access = GENERIC_READ;
+        break;
+    case STGM_WRITE:
+    case STGM_READWRITE:
+        access = GENERIC_READ | GENERIC_WRITE;
+        break;
+    }
+
+    switch (mode & 0x00f0)
+    {
+    default:
+    case STGM_SHARE_DENY_NONE:
+        sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+        break;
+    case STGM_SHARE_DENY_READ:
+        sharing = FILE_SHARE_WRITE;
+        break;
+    case STGM_SHARE_DENY_WRITE:
+        sharing = FILE_SHARE_READ;
+        break;
+    case STGM_SHARE_EXCLUSIVE:
+        sharing = 0;
+        break;
+    }
+
+    file = CreateFileW(file_name, access, sharing, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        TRACE("Failed to open %s, error %u\n", debugstr_w(file_name), GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    size = GetFileSize(file, NULL);
+
+    mapping = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, 0);
+    if (!mapping)
+    {
+        TRACE("Failed to create file mapping %s, error %u\n", debugstr_w(file_name), GetLastError());
+        CloseHandle(file);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    data = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+    if (data)
+    {
+        hr = load_job_data(This, data, size);
+        UnmapViewOfFile(data);
+    }
+    else
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    CloseHandle(mapping);
+    CloseHandle(file);
+
+    return hr;
 }
 
 static BOOL write_signature(HANDLE hfile)
