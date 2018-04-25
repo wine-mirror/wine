@@ -77,6 +77,7 @@ static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
+static const WCHAR referenceParametersString[] = { 'R','e','f','e','r','e','n','c','e','P','a','r','a','m','e','t','e','r','s', 0 };
 static const WCHAR typesString[] = { 'T','y','p','e','s', 0 };
 static const WCHAR scopesString[] = { 'S','c','o','p','e','s', 0 };
 static const WCHAR xAddrsString[] = { 'X','A','d','d','r','s', 0 };
@@ -883,7 +884,7 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *hdr_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any)
 {
-    WSDXML_ELEMENT *body_element = NULL, *hello_element, *endpoint_reference_element;
+    WSDXML_ELEMENT *body_element = NULL, *hello_element, *endpoint_reference_element, *ref_params_element;
     struct list *discoveredNamespaces = NULL;
     WSDXML_NAME *body_name = NULL;
     WSD_SOAP_HEADER soapHeader;
@@ -922,6 +923,17 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
 
     ret = add_child_element(impl->xmlContext, endpoint_reference_element, addressingNsUri, addressString, id, NULL);
     if (FAILED(ret)) goto cleanup;
+
+    /* Write any reference parameters */
+    if (ref_param_any != NULL)
+    {
+        ret = add_child_element(impl->xmlContext, endpoint_reference_element, addressingNsUri, referenceParametersString,
+            NULL, &ref_params_element);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = duplicate_element(ref_params_element, ref_param_any, discoveredNamespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
 
     /* Write any endpoint reference headers */
     if (endpoint_ref_any != NULL)

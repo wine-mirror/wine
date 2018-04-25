@@ -514,7 +514,7 @@ static void Publish_tests(void)
     HRESULT rc;
     ULONG ref;
     char *msg;
-    WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element;
+    WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element, *ref_param_any_element;
     WSDXML_NAME header_any_name, another_name;
     WSDXML_NAMESPACE ns, ns2;
     WCHAR header_any_name_text[] = {'B','e','e','r',0};
@@ -522,6 +522,7 @@ static void Publish_tests(void)
     static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
     static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
     static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
+    static const WCHAR ref_param_any_text[] = {'R','e','f','P','T','e','s','t',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'w','i','n','e',0};
     static const WCHAR uri2[] = {'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s','/',0};
@@ -606,6 +607,9 @@ static void Publish_tests(void)
     rc = WSDXMLBuildAnyForSingleElement(&header_any_name, endpoint_any_text, &endpoint_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, ref_param_any_text, &ref_param_any_element);
+    ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
     /* Create types list */
     ns2.Uri = uri2;
     ns2.PreferredPrefix = prefix2;
@@ -634,11 +638,12 @@ static void Publish_tests(void)
 
     /* Publish the service */
     rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, &types_list, &scopes_list,
-        &xaddrs_list, header_any_element, NULL, NULL, endpoint_any_element, body_any_element);
+        &xaddrs_list, header_any_element, ref_param_any_element, NULL, endpoint_any_element, body_any_element);
 
     WSDFreeLinkedMemory(header_any_element);
     WSDFreeLinkedMemory(body_any_element);
     WSDFreeLinkedMemory(endpoint_any_element);
+    WSDFreeLinkedMemory(ref_param_any_element);
     free(types_list.Next);
     free(scopes_list.Next);
     free(xaddrs_list.Next);
@@ -658,7 +663,10 @@ static void Publish_tests(void)
     /* Verify we've received a message */
     ok(msgStorage->messageCount >= 1, "No messages received\n");
 
-    sprintf(endpointReferenceString, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address><wine:Beer>EndPTest</wine:Beer></wsa:EndpointReference>", publisherId);
+    sprintf(endpointReferenceString, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address><wsa:ReferenceParameters>"
+        "<wine:Beer>RefPTest</wine:Beer></wsa:ReferenceParameters><wine:Beer>EndPTest</wine:Beer>"
+        "</wsa:EndpointReference>", publisherId);
+
     sprintf(app_sequence_string, "<wsd:AppSequence InstanceId=\"1\" SequenceId=\"%s\" MessageNumber=\"1\"></wsd:AppSequence>",
         sequenceId);
 
