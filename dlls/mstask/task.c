@@ -479,7 +479,7 @@ static HRESULT WINAPI MSTASK_ITask_SetFlags(
         DWORD dwFlags)
 {
     FIXME("(%p, 0x%08x): stub\n", iface, dwFlags);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetFlags(ITask *iface, DWORD *flags)
