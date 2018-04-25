@@ -268,16 +268,38 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Enum(
     return create_task_enum(tasks);
 }
 
-static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(
-        ITaskScheduler* iface,
-        LPCWSTR pwszName,
-        REFIID riid,
-        IUnknown **ppunk)
+static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(ITaskScheduler *iface,
+        LPCWSTR task_name, REFIID riid, IUnknown **unknown)
 {
-    TRACE("%p, %s, %s, %p: stub\n", iface, debugstr_w(pwszName),
-            debugstr_guid(riid), ppunk);
-    FIXME("Partial stub always returning ERROR_FILE_NOT_FOUND\n");
-    return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    ITask *task;
+    IPersistFile *pfile;
+    HRESULT hr;
+
+    TRACE("%p, %s, %s, %p\n", iface, debugstr_w(task_name), debugstr_guid(riid), unknown);
+
+    hr = ITaskScheduler_NewWorkItem(iface, task_name, &CLSID_CTask, riid, (IUnknown **)&task);
+    if (hr != S_OK) return hr;
+
+    hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
+    if (hr == S_OK)
+    {
+        WCHAR *curfile;
+
+        hr = IPersistFile_GetCurFile(pfile, &curfile);
+        if (hr == S_OK)
+        {
+            hr = IPersistFile_Load(pfile, curfile, STGM_READ | STGM_SHARE_DENY_WRITE);
+            CoTaskMemFree(curfile);
+        }
+
+        IPersistFile_Release(pfile);
+    }
+
+    if (hr == S_OK)
+        *unknown = (IUnknown *)task;
+    else
+        ITask_Release(task);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(
