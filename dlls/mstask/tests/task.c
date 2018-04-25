@@ -534,6 +534,7 @@ static void test_task_state(void)
 
     status = 0xdeadbeef;
     hr = ITask_GetStatus(test_task, &status);
+    ok(hr == S_OK, "GetStatus error %#x\n", hr);
     ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
 
     if (0) /* crashes under Windows */
