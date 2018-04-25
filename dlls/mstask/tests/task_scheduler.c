@@ -343,30 +343,23 @@ static void test_task_storage(void)
     ok(task2 == (ITask *)0xdeadbeef, "task should not be set to NULL\n");
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
-todo_wine
     ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
 
     curfile = get_task_curfile(task);
-todo_wine
     ok(file_exists(curfile), "curfile should exist\n");
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);
 
     curfile = get_task_curfile(task);
-todo_wine
     ok(file_exists(curfile), "curfile should exist\n");
 
     ITask_Release(task);
 
     task = NULL;
     hr = ITaskScheduler_Activate(scheduler, Task1, &IID_ITask, (IUnknown **)&task);
-todo_wine
     ok(hr == S_OK, "Activate error %#x\n", hr);
-todo_wine
     ok(task != NULL, "task should not be set to NULL\n");
-    if (task == NULL) goto fail;
 
     curfile2 = get_task_curfile(task);
     ok(file_exists(curfile2), "curfile2 should exist\n");
@@ -380,7 +373,6 @@ todo_wine
     CoTaskMemFree(curfile);
 
     ITask_Release(task);
-fail:
     ITaskScheduler_Release(scheduler);
 }
 

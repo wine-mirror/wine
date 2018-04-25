@@ -331,13 +331,30 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_NewWorkItem(
     return TaskConstructor(This->service, task_name, (ITask **)task);
 }
 
-static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(
-        ITaskScheduler* iface,
-        LPCWSTR pwszTaskName,
-        IScheduledWorkItem *pWorkItem)
+static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(ITaskScheduler *iface, LPCWSTR name, IScheduledWorkItem *item)
 {
-    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(pwszTaskName), pWorkItem);
-    return E_NOTIMPL;
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    static const WCHAR jobW[] = { '.','j','o','b',0 };
+    WCHAR task_name[MAX_PATH];
+    IPersistFile *pfile;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p\n", iface, debugstr_w(name), item);
+
+    if (strchrW(name, '.')) return E_INVALIDARG;
+
+    GetWindowsDirectoryW(task_name, MAX_PATH);
+    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, name);
+    lstrcatW(task_name, jobW);
+
+    hr = IScheduledWorkItem_QueryInterface(item, &IID_IPersistFile, (void **)&pfile);
+    if (hr == S_OK)
+    {
+        hr = IPersistFile_Save(pfile, task_name, TRUE);
+        IPersistFile_Release(pfile);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_IsOfType(
