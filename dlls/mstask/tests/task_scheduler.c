@@ -273,7 +273,7 @@ static void test_save_task_curfile(ITask *task)
     IPersistFile_Release(pfile);
 }
 
-static WCHAR *get_task_curfile(ITask *task)
+static WCHAR *get_task_curfile(ITask *task, BOOL should_exist, BOOL is_dirty, int line)
 {
     HRESULT hr;
     IPersistFile *pfile;
@@ -281,18 +281,28 @@ static WCHAR *get_task_curfile(ITask *task)
     CLSID clsid;
 
     hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
-    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IPersistFile_IsDirty(pfile);
+    ok_(__FILE__, line)(hr == is_dirty ? S_OK : S_FALSE, "got %#x\n", hr);
+
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
-    ok(hr == S_OK, "GetCurFile error %#x\n", hr);
-    ok(curfile && curfile[0] , "curfile should not be NULL\n");
+    ok_(__FILE__, line)(hr == S_OK, "GetCurFile error %#x\n", hr);
+    ok_(__FILE__, line)(curfile && curfile[0] , "curfile should not be NULL\n");
+
+    hr = IPersistFile_Load(pfile, curfile, STGM_READ);
+    if (should_exist)
+        ok_(__FILE__, line)(hr == S_OK, "Load error %#x\n", hr);
+    else
+        ok_(__FILE__, line)(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
 
     if (0) /* crashes under Windows */
         hr = IPersistFile_GetClassID(pfile, NULL);
 
     hr = IPersistFile_GetClassID(pfile, &clsid);
-    ok(hr == S_OK, "GetClassID error %#x\n", hr);
-    ok(IsEqualCLSID(&clsid, &CLSID_CTask), "got %s\n", wine_dbgstr_guid(&clsid));
+    ok_(__FILE__, line)(hr == S_OK, "GetClassID error %#x\n", hr);
+    ok_(__FILE__, line)(IsEqualCLSID(&clsid, &CLSID_CTask), "got %s\n", wine_dbgstr_guid(&clsid));
 
     IPersistFile_Release(pfile);
 
@@ -301,16 +311,30 @@ static WCHAR *get_task_curfile(ITask *task)
 
 static void test_task_storage(void)
 {
-    static const WCHAR Task1[] = { 'w','i','n','e','t','a','s','k',0 };
-    static const WCHAR Task1_job[] = { '\\','T','a','s','k','s','\\','w','i','n','e','t','a','s','k','.','j','o','b',0 };
-    WCHAR task_full_name[MAX_PATH];
+    static const WCHAR Task1[] = { 'w','i','n','e','t','a','s','k','1',0 };
+    static const WCHAR Task2[] = { 'w','i','n','e','t','a','s','k','2',0 };
+    static const WCHAR Task3[] = { 'w','i','n','e','t','a','s','k','3',0 };
+    static const WCHAR Task1_ext[] = { 'w','i','n','e','t','a','s','k','.','e','x','t',0 };
+    static const WCHAR Task1_job[] = { '\\','T','a','s','k','s','\\','w','i','n','e','t','a','s','k','1','.','j','o','b',0 };
+    static const WCHAR Task2_job[] = { '\\','T','a','s','k','s','\\','w','i','n','e','t','a','s','k','2','.','j','o','b',0 };
+    static const WCHAR Task3_job[] = { '\\','T','a','s','k','s','\\','w','i','n','e','t','a','s','k','3','.','j','o','b',0 };
+    WCHAR task1_full_name[MAX_PATH], task2_full_name[MAX_PATH], task3_full_name[MAX_PATH];
     HRESULT hr;
     ITaskScheduler *scheduler;
     ITask *task, *task2;
     WCHAR *curfile, *curfile2;
 
-    GetWindowsDirectoryW(task_full_name, MAX_PATH);
-    lstrcatW(task_full_name, Task1_job);
+    GetWindowsDirectoryW(task1_full_name, MAX_PATH);
+    lstrcatW(task1_full_name, Task1_job);
+    GetWindowsDirectoryW(task2_full_name, MAX_PATH);
+    lstrcatW(task2_full_name, Task2_job);
+    GetWindowsDirectoryW(task3_full_name, MAX_PATH);
+    lstrcatW(task3_full_name, Task3_job);
+
+    /* cleanup after previous runs */
+    DeleteFileW(task1_full_name);
+    DeleteFileW(task2_full_name);
+    DeleteFileW(task3_full_name);
 
     hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskScheduler, (void **)&scheduler);
     if (hr != S_OK)
@@ -319,41 +343,66 @@ static void test_task_storage(void)
         return;
     }
 
+    hr = ITaskScheduler_NewWorkItem(scheduler, Task1_ext, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
+    ok(hr == E_INVALIDARG, "wrong error %#x\n", hr);
+
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
     ok(hr == S_OK, "NewWorkItem error %#x\n", hr);
 
-    curfile = get_task_curfile(task);
+    curfile = get_task_curfile(task, FALSE, FALSE, __LINE__);
     ok(!file_exists(curfile), "curfile should not exist\n");
-    ok(!lstrcmpW(curfile, task_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+    ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+
+    hr = ITask_SetComment(task, Task1);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    curfile2 = get_task_curfile(task, FALSE, TRUE, __LINE__);
+    ok(!file_exists(curfile2), "curfile should not exist\n");
+    ok(!lstrcmpW(curfile2, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile2));
+    CoTaskMemFree(curfile2);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task2);
     ok(hr == S_OK, "NewWorkItem error %#x\n", hr);
     ok(task2 != task, "tasks should not be equal\n");
 
-    curfile2 = get_task_curfile(task);
+    curfile2 = get_task_curfile(task2, FALSE, FALSE, __LINE__);
     ok(!file_exists(curfile2), "curfile2 should not exist\n");
-    ok(!lstrcmpW(curfile2, task_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile2));
+    ok(!lstrcmpW(curfile2, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile2));
 
     CoTaskMemFree(curfile);
     CoTaskMemFree(curfile2);
+    ITask_Release(task2);
 
     task2 = (ITask *)0xdeadbeef;
     hr = ITaskScheduler_Activate(scheduler, Task1, &IID_ITask, (IUnknown **)&task2);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
     ok(task2 == (ITask *)0xdeadbeef, "task should not be set to NULL\n");
 
+    hr = ITaskScheduler_AddWorkItem(scheduler, Task2, (IScheduledWorkItem *)task);
+    ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
+    curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
+    ok(file_exists(curfile), "curfile should exist\n");
+    ok(!lstrcmpW(curfile, task2_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+
+    hr = ITaskScheduler_AddWorkItem(scheduler, Task3, (IScheduledWorkItem *)task);
+    ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
+    curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
+    ok(file_exists(curfile), "curfile should exist\n");
+    ok(!lstrcmpW(curfile, task3_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
     ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
-
-    curfile = get_task_curfile(task);
+    curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
+    ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);
 
-    curfile = get_task_curfile(task);
+    curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
 
+    CoTaskMemFree(curfile);
     ITask_Release(task);
 
     task = NULL;
@@ -361,16 +410,17 @@ static void test_task_storage(void)
     ok(hr == S_OK, "Activate error %#x\n", hr);
     ok(task != NULL, "task should not be set to NULL\n");
 
-    curfile2 = get_task_curfile(task);
-    ok(file_exists(curfile2), "curfile2 should exist\n");
-    ok(!lstrcmpW(curfile2, task_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile2));
+    curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
+    ok(file_exists(curfile), "curfile2 should exist\n");
+    ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
 
-    CoTaskMemFree(curfile2);
+    CoTaskMemFree(curfile);
 
     test_save_task_curfile(task);
 
-    DeleteFileW(curfile);
-    CoTaskMemFree(curfile);
+    DeleteFileW(task1_full_name);
+    DeleteFileW(task2_full_name);
+    DeleteFileW(task3_full_name);
 
     ITask_Release(task);
     ITaskScheduler_Release(scheduler);
