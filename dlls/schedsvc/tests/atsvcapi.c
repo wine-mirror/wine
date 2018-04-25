@@ -58,7 +58,7 @@ START_TEST(atsvcapi)
     WCHAR server_name[MAX_COMPUTERNAME_LENGTH + 1];
     PTOP_LEVEL_EXCEPTION_FILTER old_exception_filter;
     AT_ENUM_CONTAINER container;
-    AT_INFO info;
+    AT_INFO info, *info2;
     DWORD ret, i, total, start_index, jobid, try, try_count;
     BOOL found;
 
@@ -104,6 +104,10 @@ START_TEST(atsvcapi)
     test_failures = 1;
     test_skipped = 0;
 
+    info2 = NULL;
+    ret = NetrJobGetInfo(server_name, 0xdeadbeef, &info2);
+    ok(ret == APE_AT_ID_NOT_FOUND || broken(1) /* vista and w2008 return rubbish here */, "wrong error %u\n", ret);
+
     try_count = 5;
 
     for (try = 1; try <= try_count; try++)
@@ -127,8 +131,6 @@ START_TEST(atsvcapi)
 
         for (i = 0; i < container.EntriesRead; i++)
         {
-            AT_INFO *info2;
-
             trace("%u: jobid %u, command %s\n", i, container.Buffer[i].JobId, wine_dbgstr_w(container.Buffer[i].Command));
 
             if (container.Buffer[i].JobId == jobid ||

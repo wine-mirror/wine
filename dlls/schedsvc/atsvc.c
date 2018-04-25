@@ -686,7 +686,7 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
 DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **info)
 {
     struct job_t *job;
-    DWORD ret = ERROR_SUCCESS;
+    DWORD ret = APE_AT_ID_NOT_FOUND;
 
     TRACE("%s,%u,%p\n", debugstr_w(server_name), jobid, info);
 
@@ -706,6 +706,7 @@ DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **in
             info_ret->Flags = job->info.Flags;
             info_ret->Command = heap_strdupW(job->info.Command);
             *info = info_ret;
+            ret = ERROR_SUCCESS;
         }
     }
 

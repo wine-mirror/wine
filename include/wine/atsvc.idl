@@ -29,6 +29,8 @@ import "ocidl.idl";
 ]
 interface atsvc
 {
+    const DWORD APE_AT_ID_NOT_FOUND = 0x00000ede;
+
     typedef [handle] const WCHAR *ATSVC_HANDLE;
 
     typedef struct _AT_ENUM
