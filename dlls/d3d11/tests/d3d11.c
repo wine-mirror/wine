@@ -1273,6 +1273,7 @@ struct d3d11_test_context
 
     ID3D11InputLayout *input_layout;
     ID3D11VertexShader *vs;
+    const DWORD *vs_code;
     ID3D11Buffer *vs_cb;
     ID3D11Buffer *vb;
 
@@ -1351,52 +1352,16 @@ static void release_test_context_(unsigned int line, struct d3d11_test_context *
     ok_(__FILE__, line)(!ref, "Device has %u references left.\n", ref);
 }
 
-static void draw_quad_vs(unsigned int line, struct d3d11_test_context *context,
+#define draw_quad(context) draw_quad_vs_(__LINE__, context, NULL, 0)
+#define draw_quad_vs(a, b, c) draw_quad_vs_(__LINE__, a, b, c)
+static void draw_quad_vs_(unsigned int line, struct d3d11_test_context *context,
         const DWORD *vs_code, size_t vs_code_size)
 {
     static const D3D11_INPUT_ELEMENT_DESC default_layout_desc[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const struct vec3 quad[] =
-    {
-        {-1.0f, -1.0f, 0.0f},
-        {-1.0f,  1.0f, 0.0f},
-        { 1.0f, -1.0f, 0.0f},
-        { 1.0f,  1.0f, 0.0f},
-    };
-
-    ID3D11Device *device = context->device;
-    unsigned int stride, offset;
-    HRESULT hr;
-
-    if (!context->input_layout)
-    {
-        hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
-                vs_code, vs_code_size, &context->input_layout);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
-
-        hr = ID3D11Device_CreateVertexShader(device, vs_code, vs_code_size, NULL, &context->vs);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-    }
-
-    if (!context->vb)
-        context->vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
-
-    ID3D11DeviceContext_IASetInputLayout(context->immediate_context, context->input_layout);
-    ID3D11DeviceContext_IASetPrimitiveTopology(context->immediate_context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    stride = sizeof(*quad);
-    offset = 0;
-    ID3D11DeviceContext_IASetVertexBuffers(context->immediate_context, 0, 1, &context->vb, &stride, &offset);
-    ID3D11DeviceContext_VSSetShader(context->immediate_context, context->vs, NULL, 0);
-
-    ID3D11DeviceContext_Draw(context->immediate_context, 4, 0);
-}
-
-#define draw_quad(context) draw_quad_(__LINE__, context)
-static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
-{
-    static const DWORD vs_code[] =
+    static const DWORD default_vs_code[] =
     {
 #if 0
         float4 main(float4 position : POSITION) : SV_POSITION
@@ -1420,8 +1385,53 @@ static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
         0x49534f50, 0x4e4f4954, 0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
     };
+    static const struct vec3 quad[] =
+    {
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+    };
 
-    draw_quad_vs(__LINE__, context, vs_code, sizeof(vs_code));
+    ID3D11Device *device = context->device;
+    unsigned int stride, offset;
+    HRESULT hr;
+
+    if (!vs_code)
+    {
+        vs_code = default_vs_code;
+        vs_code_size = sizeof(default_vs_code);
+    }
+
+    if (!context->input_layout)
+    {
+        hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
+                vs_code, vs_code_size, &context->input_layout);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    }
+
+    if (context->vs_code != vs_code)
+    {
+        if (context->vs)
+            ID3D11VertexShader_Release(context->vs);
+
+        hr = ID3D11Device_CreateVertexShader(device, vs_code, vs_code_size, NULL, &context->vs);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+
+        context->vs_code = vs_code;
+    }
+
+    if (!context->vb)
+        context->vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+    ID3D11DeviceContext_IASetInputLayout(context->immediate_context, context->input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context->immediate_context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context->immediate_context, 0, 1, &context->vb, &stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context->immediate_context, context->vs, NULL, 0);
+
+    ID3D11DeviceContext_Draw(context->immediate_context, 4, 0);
 }
 
 #define draw_quad_z(context, z) draw_quad_z_(__LINE__, context, z)
@@ -1457,7 +1467,7 @@ static void draw_quad_z_(unsigned int line, struct d3d11_test_context *context, 
             (ID3D11Resource *)context->vs_cb, 0, NULL, &data, 0, 0);
 
     ID3D11DeviceContext_VSSetConstantBuffers(context->immediate_context, 0, 1, &context->vs_cb);
-    draw_quad_vs(__LINE__, context, vs_code, sizeof(vs_code));
+    draw_quad_vs_(__LINE__, context, vs_code, sizeof(vs_code));
 }
 
 static void set_quad_color(struct d3d11_test_context *context, const struct vec4 *color)
@@ -1466,8 +1476,10 @@ static void set_quad_color(struct d3d11_test_context *context, const struct vec4
             (ID3D11Resource *)context->ps_cb, 0, NULL, color, 0, 0);
 }
 
-#define draw_color_quad(context, color) draw_color_quad_(__LINE__, context, color)
-static void draw_color_quad_(unsigned int line, struct d3d11_test_context *context, const struct vec4 *color)
+#define draw_color_quad(a, b) draw_color_quad_(__LINE__, a, b, NULL, 0)
+#define draw_color_quad_vs(a, b, c, d) draw_color_quad_(__LINE__, a, b, c, d)
+static void draw_color_quad_(unsigned int line, struct d3d11_test_context *context,
+        const struct vec4 *color, const DWORD *vs_code, size_t vs_code_size)
 {
     static const DWORD ps_color_code[] =
     {
@@ -1509,7 +1521,7 @@ static void draw_color_quad_(unsigned int line, struct d3d11_test_context *conte
 
     set_quad_color(context, color);
 
-    draw_quad_(line, context);
+    draw_quad_vs_(line, context, vs_code, vs_code_size);
 }
 
 static void test_create_device(void)
@@ -13495,8 +13507,6 @@ float4 main(const ps_in v) : SV_TARGET
     colors_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(colors), &colors);
     index_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
 
-    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
@@ -13511,7 +13521,7 @@ float4 main(const ps_in v) : SV_TARGET
         index[0] = test_data[i].index;
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)index_cb, 0, NULL, &index, 0, 0);
 
-        draw_quad(&test_context);
+        draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
         check_texture_color(test_context.backbuffer, test_data[i].expected, 1);
     }
 
@@ -13620,9 +13630,6 @@ static void test_vs_input_relative_addressing(void)
     offset = 0;
     ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
@@ -13632,7 +13639,7 @@ static void test_vs_input_relative_addressing(void)
         *index = i;
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, index, 0, 0);
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-        draw_quad(&test_context);
+        draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
         check_texture_color(test_context.backbuffer, colors[i], 1);
     }
 
@@ -24943,9 +24950,6 @@ static void test_clip_distance(void)
     offset = 0;
     ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     memset(&cb_data, 0, sizeof(cb_data));
     cb_data.tessellation_factor = 1.0f;
     vs_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
@@ -24958,7 +24962,7 @@ static void test_clip_distance(void)
 
     /* vertex shader */
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     check_clip_distance(&test_context, vb);
@@ -25020,11 +25024,6 @@ static void test_clip_distance(void)
     ID3D11DeviceContext_DSSetShader(context, NULL, NULL, 0);
     ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
 
-    ID3D11VertexShader_Release(test_context.vs);
-    hr = ID3D11Device_CreateVertexShader(device, vs_multiple_code, sizeof(vs_multiple_code),
-            NULL, &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     cb_data.use_constant = FALSE;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
 
@@ -25032,7 +25031,7 @@ static void test_clip_distance(void)
         vertices[i].clip_distance0 = 1.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     for (i = 0; i < ARRAY_SIZE(vertices); ++i)
@@ -25042,7 +25041,7 @@ static void test_clip_distance(void)
     }
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     get_texture_readback(test_context.backbuffer, 0, &rb);
     SetRect(&rect, 0, 0, 320, 240);
     check_readback_data_color(&rb, &rect, 0xff00ff00, 1);
@@ -25057,7 +25056,7 @@ static void test_clip_distance(void)
     cb_data.clip_distance1 = 0.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_multiple_code, sizeof(vs_multiple_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     if (hs)
@@ -25212,9 +25211,6 @@ static void test_combined_clip_and_cull_distances(void)
     offset = 0;
     ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb, &stride, &offset);
 
-    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &test_context.vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
@@ -25232,7 +25228,7 @@ static void test_combined_clip_and_cull_distances(void)
             ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb, 0, NULL, vertices, 0, 0);
 
             ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-            draw_color_quad(&test_context, &green);
+            draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
 
             for (k = 0; k < ARRAY_SIZE(expected_color); ++k)
                 expected_color[k] = test->triangle_visible[k] ? 0xff00ff00 : 0xffffffff;
@@ -25263,7 +25259,7 @@ static void test_combined_clip_and_cull_distances(void)
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb, 0, NULL, vertices, 0, 0);
 
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-        draw_color_quad(&test_context, &green);
+        draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
         check_texture_color(test_context.backbuffer, 0xffffffff, 1);
 
         for (j = 0; j < ARRAY_SIZE(vertices); ++j)
@@ -25273,7 +25269,7 @@ static void test_combined_clip_and_cull_distances(void)
     memset(vertices, 0, sizeof(vertices));
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb, 0, NULL, vertices, 0, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
-    draw_color_quad(&test_context, &green);
+    draw_color_quad_vs(&test_context, &green, vs_code, sizeof(vs_code));
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
 
     ID3D11Buffer_Release(vb);
