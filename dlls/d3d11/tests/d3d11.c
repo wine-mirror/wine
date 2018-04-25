@@ -629,6 +629,21 @@ static void check_uav_desc_(unsigned int line, const D3D11_UNORDERED_ACCESS_VIEW
     }
 }
 
+static void set_viewport(ID3D11DeviceContext *context, float x, float y,
+        float width, float height, float min_depth, float max_depth)
+{
+    D3D11_VIEWPORT vp;
+
+    vp.TopLeftX = x;
+    vp.TopLeftY = y;
+    vp.Width = width;
+    vp.Height = height;
+    vp.MinDepth = min_depth;
+    vp.MaxDepth = max_depth;
+
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, 0, c, d)
 #define create_buffer_misc(a, b, c, d, e) create_buffer_(__LINE__, a, b, c, d, e)
 static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
@@ -1272,7 +1287,6 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
 {
     unsigned int rt_width, rt_height;
     struct device_desc device_desc;
-    D3D11_VIEWPORT vp;
     HRESULT hr;
     RECT rect;
 
@@ -1304,13 +1318,7 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
 
     ID3D11DeviceContext_OMSetRenderTargets(context->immediate_context, 1, &context->backbuffer_rtv, NULL);
 
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = rt_width;
-    vp.Height = rt_height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context->immediate_context, 1, &vp);
+    set_viewport(context->immediate_context, 0.0f, 0.0f, rt_width, rt_height, 0.0f, 1.0f);
 
     return TRUE;
 }
@@ -5129,7 +5137,6 @@ static void test_occlusion_query(void)
     unsigned int data_size, i;
     ID3D11Texture2D *texture;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     union
     {
         UINT64 uint;
@@ -5227,13 +5234,7 @@ static void test_occlusion_query(void)
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = texture_desc.Width;
-    vp.Height = texture_desc.Height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, texture_desc.Width, texture_desc.Height, 0.0f, 1.0f);
 
     ID3D11DeviceContext_Begin(context, query);
     for (i = 0; i < 100; i++)
@@ -5255,9 +5256,7 @@ static void test_occlusion_query(void)
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    vp.Width = 64.0f;
-    vp.Height = 64.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 64.0f, 64.0f, 0.0f, 1.0f);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
     ID3D11DeviceContext_Begin(context, query);
     draw_color_quad(&test_context, &red);
@@ -5977,7 +5976,6 @@ static void test_blend(void)
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     ID3D11Buffer *vb;
     DWORD color;
     HRESULT hr;
@@ -6143,13 +6141,7 @@ static void test_blend(void)
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &offscreen_rtv, NULL);
 
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = 128.0f;
-    vp.Height = 128.0f;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 128.0f, 128.0f, 0.0f, 1.0f);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, offscreen_rtv, red);
 
@@ -8656,7 +8648,6 @@ static void test_multiple_render_targets(void)
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     ID3D11Buffer *vb;
     ULONG refcount;
     HRESULT hr;
@@ -8775,13 +8766,7 @@ static void test_multiple_render_targets(void)
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = 640.0f;
-    vp.Height = 480.0f;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
 
     for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D11DeviceContext_ClearRenderTargetView(context, rtv[i], red);
@@ -12353,7 +12338,6 @@ static void test_swapchain_flip(void)
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     ID3D11Buffer *vb;
     ULONG refcount;
     DWORD color;
@@ -12492,13 +12476,7 @@ static void test_swapchain_flip(void)
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)offscreen, NULL, &offscreen_rtv);
     ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &offscreen_rtv, NULL);
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = 640;
-    vp.Height = 480;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
@@ -13156,12 +13134,10 @@ static void test_initial_depth_stencil_state(void)
     /* check if depth function is D3D11_COMPARISON_LESS */
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
-    vp.MinDepth = vp.MaxDepth = 0.4f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.4f, 0.4f);
     draw_color_quad(&test_context, &green);
     draw_color_quad(&test_context, &red);
-    vp.MinDepth = vp.MaxDepth = 0.6f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.6f, 0.6f);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
     check_texture_float(texture, 0.4f, 1);
@@ -13182,7 +13158,6 @@ static void test_draw_depth_only(void)
     ID3D11Texture2D *texture;
     ID3D11Device *device;
     unsigned int i, j;
-    D3D11_VIEWPORT vp;
     struct vec4 depth;
     ID3D11Buffer *cb;
     HRESULT hr;
@@ -13279,13 +13254,7 @@ static void test_draw_depth_only(void)
             depth.x = 1.0f / 16.0f * (j + 4 * i);
             ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &depth, 0, 0);
 
-            vp.TopLeftX = 160.0f * j;
-            vp.TopLeftY = 120.0f * i;
-            vp.Width = 160.0f;
-            vp.Height = 120.0f;
-            vp.MinDepth = 0.0f;
-            vp.MaxDepth = 1.0f;
-            ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+            set_viewport(context, 160.0f * j, 120.0f * i, 160.0f, 120.0f, 0.0f, 1.0f);
 
             draw_quad(&test_context);
         }
@@ -13323,7 +13292,6 @@ static void test_draw_uav_only(void)
     ID3D11Texture2D *texture;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     HRESULT hr;
 
     static const DWORD ps_code[] =
@@ -13377,10 +13345,7 @@ static void test_draw_uav_only(void)
             0, 1, &uav, NULL);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, values);
-    memset(&vp, 0, sizeof(vp));
-    vp.Width = 10.0f;
-    vp.Height = 10.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 10.0f, 10.0f, 0.0f, 0.0f);
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, values);
     draw_quad(&test_context);
     check_texture_color(texture, 100, 1);
@@ -18576,7 +18541,6 @@ static void test_atomic_instructions(void)
     ID3D11ComputeShader *cs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     unsigned int i, j;
     HRESULT hr;
 
@@ -18726,13 +18690,7 @@ static void test_atomic_instructions(void)
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)out_buffer, &uav_desc, &out_uav);
     ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
 
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = 1.0f;
-    vp.Height = 1.0f;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_atomics_code, sizeof(ps_atomics_code), NULL, &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
@@ -23996,7 +23954,6 @@ static void test_fractional_viewports(void)
     ID3D11Device *device;
     ID3D11Texture2D *rt;
     UINT offset, stride;
-    D3D11_VIEWPORT vp;
     ID3D11Buffer *vb;
     HRESULT hr;
 
@@ -24111,13 +24068,8 @@ static void test_fractional_viewports(void)
 
     for (i = 0; i < ARRAY_SIZE(viewport_offsets); ++i)
     {
-        vp.TopLeftX = viewport_offsets[i];
-        vp.TopLeftY = viewport_offsets[i];
-        vp.Width = texture_desc.Width;
-        vp.Height = texture_desc.Height;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-        ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+        set_viewport(context, viewport_offsets[i], viewport_offsets[i],
+                texture_desc.Width, texture_desc.Height, 0.0f, 1.0f);
         ID3D11DeviceContext_ClearRenderTargetView(context, rtv, white);
         ID3D11DeviceContext_Draw(context, 4, 0);
         get_texture_readback(rt, 0, &rb);
@@ -24162,7 +24114,6 @@ static void test_early_depth_stencil(void)
     ID3D11DepthStencilView *dsv;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    D3D11_VIEWPORT vp;
     HRESULT hr;
 
     static const DWORD ps_code[] =
@@ -24231,12 +24182,7 @@ static void test_early_depth_stencil(void)
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    memset(&vp, 0, sizeof(vp));
-    vp.Width = 1.0f;
-    vp.Height = 100.0f;
-    vp.MinDepth = 0.5f;
-    vp.MaxDepth = 0.5f;
-    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    set_viewport(context, 0.0f, 0.0f, 1.0f, 100.0f, 0.5f, 0.5f);
     ID3D11DeviceContext_OMSetDepthStencilState(context, depth_stencil_state, 0);
     ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context,
             1, &test_context.backbuffer_rtv, dsv, 1, 1, &uav, NULL);
