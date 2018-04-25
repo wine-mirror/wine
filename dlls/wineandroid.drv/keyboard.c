@@ -974,6 +974,7 @@ HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
 {
     ULONG_PTR layout = GetUserDefaultLCID();
     LANGID langid;
+    static int once;
 
     langid = PRIMARYLANGID(LANGIDFROMLCID( layout ));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
@@ -981,7 +982,7 @@ HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
     else
         layout |= layout << 16;
 
-    FIXME( "returning %lx\n", layout );
+    if (!once++) FIXME( "returning %lx\n", layout );
     return (HKL)layout;
 }
 
