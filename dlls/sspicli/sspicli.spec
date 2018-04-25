@@ -1,61 +1,61 @@
-@ stub AcceptSecurityContext
-@ stub AcquireCredentialsHandleA
-@ stub AcquireCredentialsHandleW
-@ stub AddCredentialsA
-@ stub AddCredentialsW
-@ stub AddSecurityPackageA
-@ stub AddSecurityPackageW
-@ stub ApplyControlToken
+@ stdcall AcceptSecurityContext(ptr ptr ptr long long ptr ptr ptr ptr) secur32.AcceptSecurityContext
+@ stdcall AcquireCredentialsHandleA(str str long ptr ptr ptr ptr ptr ptr) secur32.AcquireCredentialsHandleA
+@ stdcall AcquireCredentialsHandleW(wstr wstr long ptr ptr ptr ptr ptr ptr) secur32.AcquireCredentialsHandleW
+@ stdcall AddCredentialsA(ptr str str long ptr ptr ptr ptr) secur32.AddCredentialsA
+@ stdcall AddCredentialsW(ptr wstr wstr long ptr ptr ptr ptr) secur32.AddCredentialsW
+@ stdcall AddSecurityPackageA(str ptr) secur32.AddSecurityPackageA
+@ stdcall AddSecurityPackageW(wstr ptr) secur32.AddSecurityPackageW
+@ stdcall ApplyControlToken(ptr ptr) secur32.ApplyControlToken
 @ stub ChangeAccountPasswordA
 @ stub ChangeAccountPasswordW
-@ stub CompleteAuthToken
+@ stdcall CompleteAuthToken(ptr ptr) secur32.CompleteAuthToken
 @ stub CredMarshalTargetInfo
 @ stub CredUnmarshalTargetInfo
-@ stub DecryptMessage
-@ stub DeleteSecurityContext
+@ stdcall DecryptMessage(ptr ptr long ptr) secur32.DecryptMessage
+@ stdcall DeleteSecurityContext(ptr) secur32.DeleteSecurityContext
 @ stub DeleteSecurityPackageA
 @ stub DeleteSecurityPackageW
-@ stub EncryptMessage
-@ stub EnumerateSecurityPackagesA
-@ stub EnumerateSecurityPackagesW
-@ stub ExportSecurityContext
-@ stub FreeContextBuffer
-@ stub FreeCredentialsHandle
+@ stdcall EncryptMessage(ptr long ptr long) secur32.EncryptMessage
+@ stdcall EnumerateSecurityPackagesA(ptr ptr) secur32.EnumerateSecurityPackagesA
+@ stdcall EnumerateSecurityPackagesW(ptr ptr) secur32.EnumerateSecurityPackagesW
+@ stdcall ExportSecurityContext(ptr long ptr ptr) secur32.ExportSecurityContext
+@ stdcall FreeContextBuffer(ptr) secur32.FreeContextBuffer
+@ stdcall FreeCredentialsHandle(ptr) secur32.FreeCredentialsHandle
 @ stub GetSecurityUserInfo
-@ stub GetUserNameExA
-@ stub GetUserNameExW
-@ stub ImpersonateSecurityContext
-@ stub ImportSecurityContextA
-@ stub ImportSecurityContextW
-@ stub InitializeSecurityContextA
-@ stub InitializeSecurityContextW
-@ stub InitSecurityInterfaceA
-@ stub InitSecurityInterfaceW
+@ stdcall GetUserNameExA(long ptr ptr) secur32.GetUserNameExA
+@ stdcall GetUserNameExW(long ptr ptr) secur32.GetUserNameExW
+@ stdcall ImpersonateSecurityContext(ptr) secur32.ImpersonateSecurityContext
+@ stdcall ImportSecurityContextA(str ptr ptr ptr) secur32.ImportSecurityContextA
+@ stdcall ImportSecurityContextW(wstr ptr ptr ptr) secur32.ImportSecurityContextW
+@ stdcall InitializeSecurityContextA(ptr ptr str long long long ptr long ptr ptr ptr ptr) secur32.InitializeSecurityContextA
+@ stdcall InitializeSecurityContextW(ptr ptr wstr long long long ptr long ptr ptr ptr ptr) secur32.InitializeSecurityContextW
+@ stdcall InitSecurityInterfaceA() secur32.InitSecurityInterfaceA
+@ stdcall InitSecurityInterfaceW() secur32.InitSecurityInterfaceW
 @ stub LogonUserExExW
-@ stub LsaCallAuthenticationPackage
-@ stub LsaConnectUntrusted
-@ stub LsaDeregisterLogonProcess
-@ stub LsaEnumerateLogonSessions
-@ stub LsaFreeReturnBuffer
-@ stub LsaGetLogonSessionData
-@ stub LsaLogonUser
-@ stub LsaLookupAuthenticationPackage
-@ stub LsaRegisterLogonProcess
+@ stdcall LsaCallAuthenticationPackage(long long ptr long ptr ptr ptr) secur32.LsaCallAuthenticationPackage
+@ stdcall LsaConnectUntrusted(ptr) secur32.LsaConnectUntrusted
+@ stdcall LsaDeregisterLogonProcess(long) secur32.LsaDeregisterLogonProcess
+@ stdcall LsaEnumerateLogonSessions(ptr ptr) secur32.LsaEnumerateLogonSessions
+@ stdcall LsaFreeReturnBuffer(ptr) secur32.LsaFreeReturnBuffer
+@ stdcall LsaGetLogonSessionData(ptr ptr) secur32.LsaGetLogonSessionData
+@ stdcall LsaLogonUser(ptr ptr long long ptr long ptr ptr ptr ptr ptr ptr ptr ptr) secur32.LsaLogonUser
+@ stdcall LsaLookupAuthenticationPackage(ptr ptr ptr) secur32.LsaLookupAuthenticationPackage
+@ stdcall LsaRegisterLogonProcess(ptr ptr ptr) secur32.LsaRegisterLogonProcess
 @ stub LsaRegisterPolicyChangeNotification
 @ stub LsaUnregisterPolicyChangeNotification
-@ stub MakeSignature
-@ stub QueryContextAttributesA
+@ stdcall MakeSignature(ptr long ptr long) secur32.MakeSignature
+@ stdcall QueryContextAttributesA(ptr long ptr) secur32.QueryContextAttributesA
 @ stub QueryContextAttributesExA
 @ stub QueryContextAttributesExW
-@ stub QueryContextAttributesW
-@ stub QueryCredentialsAttributesA
+@ stdcall QueryContextAttributesW(ptr long ptr) secur32.QueryContextAttributesW
+@ stdcall QueryCredentialsAttributesA(ptr long ptr) secur32.QueryCredentialsAttributesA
 @ stub QueryCredentialsAttributesExA
 @ stub QueryCredentialsAttributesExW
-@ stub QueryCredentialsAttributesW
-@ stub QuerySecurityContextToken
-@ stub QuerySecurityPackageInfoA
-@ stub QuerySecurityPackageInfoW
-@ stub RevertSecurityContext
+@ stdcall QueryCredentialsAttributesW(ptr long ptr) secur32.QueryCredentialsAttributesW
+@ stdcall QuerySecurityContextToken(ptr ptr) secur32.QuerySecurityContextToken
+@ stdcall QuerySecurityPackageInfoA(str ptr) secur32.QuerySecurityPackageInfoA
+@ stdcall QuerySecurityPackageInfoW(wstr ptr) secur32.QuerySecurityPackageInfoW
+@ stdcall RevertSecurityContext(ptr) secur32.RevertSecurityContext
 @ stub SaslAcceptSecurityContext
 @ stub SaslEnumerateProfilesA
 @ stub SaslEnumerateProfilesW
@@ -67,7 +67,7 @@
 @ stub SaslInitializeSecurityContextA
 @ stub SaslInitializeSecurityContextW
 @ stub SaslSetContextOption
-@ stub SealMessage
+@ stdcall SealMessage(ptr long ptr long) secur32.SealMessage
 @ stub SecCacheSspiPackages
 @ stub SecDeleteUserModeContext
 @ stub SeciAllocateAndSetCallFlags
@@ -75,8 +75,8 @@
 @ stub SeciFreeCallContext
 @ stub SeciIsProtectedUser
 @ stub SecInitUserModeContext
-@ stub SetContextAttributesA
-@ stub SetContextAttributesW
+@ stdcall SetContextAttributesA(ptr long ptr long) secur32.SetContextAttributesA
+@ stdcall SetContextAttributesW(ptr long ptr long) secur32.SetContextAttributesW
 @ stub SetCredentialsAttributesA
 @ stub SetCredentialsAttributesW
 @ stub SspiCompareAuthIdentities
@@ -100,5 +100,5 @@
 @ stub SspiUnmarshalAuthIdentityInternal
 @ stub SspiValidateAuthIdentity
 @ stdcall SspiZeroAuthIdentity(ptr)
-@ stub UnsealMessage
-@ stub VerifySignature
+@ stdcall UnsealMessage(ptr ptr long ptr) secur32.UnsealMessage
+@ stdcall VerifySignature(ptr ptr long ptr) secur32.VerifySignature

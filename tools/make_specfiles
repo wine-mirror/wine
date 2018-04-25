@@ -309,6 +309,10 @@ my @dll_groups =
   "iprop",
  ],
  [
+  "secur32",
+  "sspicli",
+ ],
+ [
   "shell32",
   "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
