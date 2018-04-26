@@ -1133,9 +1133,6 @@ static HRESULT write_triggers(ITask *task, HANDLE hfile)
     hr = ITask_GetTriggerCount(task, &count);
     if (hr != S_OK) return hr;
 
-    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
-        return HRESULT_FROM_WIN32(GetLastError());
-
     /* Windows saves a .job with at least 1 trigger */
     if (!count)
     {
@@ -1145,6 +1142,9 @@ static HRESULT write_triggers(ITask *task, HANDLE hfile)
 
         count = 1;
     }
+
+    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
+        return HRESULT_FROM_WIN32(GetLastError());
 
     for (i = 0; i < count; i++)
     {
