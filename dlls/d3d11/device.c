@@ -991,14 +991,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetScissorRects(ID3D11De
 
     TRACE("iface %p, rect_count %u, rects %p.\n", iface, rect_count, rects);
 
-    if (rect_count > 1)
-        FIXME("Multiple scissor rects not implemented.\n");
-
-    if (!rect_count)
+    if (rect_count > WINED3D_MAX_VIEWPORTS)
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_set_scissor_rects(device->wined3d_device, 1, rects);
+    wined3d_device_set_scissor_rects(device->wined3d_device, rect_count, rects);
     wined3d_mutex_unlock();
 }
 
@@ -4185,14 +4182,11 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device1 *ifac
 
     TRACE("iface %p, rect_count %u, rects %p.\n", iface, rect_count, rects);
 
-    if (rect_count > 1)
-        FIXME("Multiple scissor rects not implemented.\n");
-
-    if (!rect_count)
+    if (rect_count > WINED3D_MAX_VIEWPORTS)
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_set_scissor_rects(device->wined3d_device, 1, rects);
+    wined3d_device_set_scissor_rects(device->wined3d_device, rect_count, rects);
     wined3d_mutex_unlock();
 }
 
