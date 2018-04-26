@@ -86,7 +86,7 @@ static ULONG WINAPI MSTASK_ITaskTrigger_Release(
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
         InterlockedDecrement(&dll_ref);
     }
     return ref;
@@ -288,7 +288,7 @@ HRESULT TaskTriggerConstructor(LPVOID *ppObj)
     SYSTEMTIME time;
     TRACE("(%p)\n", ppObj);
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 

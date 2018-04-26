@@ -82,10 +82,10 @@ static void TaskDestructor(TaskImpl *This)
     if (This->action)
         IExecAction_Release(This->action);
     ITaskDefinition_Release(This->task);
-    HeapFree(GetProcessHeap(), 0, This->task_name);
-    HeapFree(GetProcessHeap(), 0, This->accountName);
-    HeapFree(GetProcessHeap(), 0, This->trigger);
-    HeapFree(GetProcessHeap(), 0, This);
+    heap_free(This->task_name);
+    heap_free(This->accountName);
+    heap_free(This->trigger);
+    heap_free(This);
     InterlockedDecrement(&dll_ref);
 }
 
@@ -505,11 +505,11 @@ static HRESULT WINAPI MSTASK_ITask_SetAccountInformation(
         FIXME("Partial stub ignores passwords\n");
 
     n = (lstrlenW(pwszAccountName) + 1);
-    tmp_account_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+    tmp_account_name = heap_alloc(n * sizeof(WCHAR));
     if (!tmp_account_name)
         return E_OUTOFMEMORY;
     lstrcpyW(tmp_account_name, pwszAccountName);
-    HeapFree(GetProcessHeap(), 0, This->accountName);
+    heap_free(This->accountName);
     This->accountName = tmp_account_name;
     return S_OK;
 }
@@ -554,7 +554,7 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
         LPWSTR tmp_name;
         HRESULT hr;
 
-        tmp_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        tmp_name = heap_alloc(len * sizeof(WCHAR));
         if (!tmp_name)
             return E_OUTOFMEMORY;
         len = SearchPathW(NULL, appname, NULL, len, tmp_name, NULL);
@@ -563,7 +563,7 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
         else
             hr = HRESULT_FROM_WIN32(GetLastError());
 
-        HeapFree(GetProcessHeap(), 0, tmp_name);
+        heap_free(tmp_name);
         return hr;
     }
 
@@ -1332,7 +1332,7 @@ failed:
         DeleteFileW(task_name);
     else if (remember)
     {
-        HeapFree(GetProcessHeap(), 0, This->task_name);
+        heap_free(This->task_name);
         This->task_name = heap_strdupW(task_name);
     }
     return hr;
@@ -1442,7 +1442,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     hr = ITaskService_NewTask(service, 0, &taskdef);
     if (hr != S_OK) return hr;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if (!This)
     {
         ITaskDefinition_Release(taskdef);
