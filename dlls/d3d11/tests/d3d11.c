@@ -9808,7 +9808,7 @@ static void test_clear_state(void)
     }
 
     ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
-    todo_wine ok(!count, "Got unexpected scissor rect count %u.\n", count);
+    ok(!count, "Got unexpected scissor rect count %u.\n", count);
     memset(tmp_rect, 0x55, sizeof(tmp_rect));
     count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);
@@ -10337,7 +10337,7 @@ static void test_clear_state(void)
     ID3D11UnorderedAccessView_Release(tmp_uav[i]);
 
     ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
-    todo_wine ok(count == D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+    ok(count == D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
             "Got unexpected scissor rect count %u.\n", count);
     memset(tmp_rect, 0x55, sizeof(tmp_rect));
     ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);
@@ -10557,7 +10557,7 @@ static void test_clear_state(void)
     }
 
     ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
-    todo_wine ok(!count, "Got unexpected scissor rect count %u.\n", count);
+    ok(!count, "Got unexpected scissor rect count %u.\n", count);
     memset(tmp_rect, 0x55, sizeof(tmp_rect));
     count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);

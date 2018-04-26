@@ -2127,23 +2127,25 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
         UINT *rect_count, D3D11_RECT *rects)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    unsigned int actual_count;
 
     TRACE("iface %p, rect_count %p, rects %p.\n", iface, rect_count, rects);
 
-    if (!rects)
-    {
-        *rect_count = 1;
-        return;
-    }
-
-    if (!*rect_count)
+    if (!rect_count)
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, rects);
+    wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
-    if (*rect_count > 1)
-        memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
+
+    if (!rects)
+    {
+        *rect_count = actual_count;
+        return;
+    }
+
+    if (*rect_count > actual_count)
+        memset(&rects[actual_count], 0, (*rect_count - actual_count) * sizeof(*rects));
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShaderResources(ID3D11DeviceContext *iface,
@@ -4930,23 +4932,25 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device1 *iface,
 static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *iface, UINT *rect_count, D3D10_RECT *rects)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    unsigned int actual_count;
 
     TRACE("iface %p, rect_count %p, rects %p.\n", iface, rect_count, rects);
 
-    if (!rects)
-    {
-        *rect_count = 1;
-        return;
-    }
-
-    if (!*rect_count)
+    if (!rect_count)
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, rects);
+    wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
-    if (*rect_count > 1)
-        memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
+
+    if (!rects)
+    {
+        *rect_count = actual_count;
+        return;
+    }
+
+    if (*rect_count > actual_count)
+        memset(&rects[actual_count], 0, (*rect_count - actual_count) * sizeof(*rects));
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_GetDeviceRemovedReason(ID3D10Device1 *iface)
