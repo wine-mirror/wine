@@ -204,7 +204,7 @@ static void start_listening(messageStorage *msgStorage, const char *multicastAdd
 {
     struct addrinfo *multicastAddr = NULL, *bindAddr = NULL, *interfaceAddr = NULL;
     listenerThreadParams *parameter = NULL;
-    const DWORD receiveTimeout = 5000;
+    const DWORD receiveTimeout = 500;
     const UINT reuseAddr = 1;
     HANDLE hThread;
     SOCKET s = 0;
@@ -241,7 +241,7 @@ static void start_listening(messageStorage *msgStorage, const char *multicastAdd
     if (multicastAddr->ai_family == AF_INET6)
         ((SOCKADDR_IN6 *)multicastAddr->ai_addr)->sin6_scope_id = 0;
 
-    /* Set a 5-second receive timeout */
+    /* Set a 500ms receive timeout */
     if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&receiveTimeout, sizeof(receiveTimeout)) == SOCKET_ERROR) goto cleanup;
 
     /* Allocate memory for thread parameters */
@@ -737,6 +737,143 @@ after_publish_test:
     WSACleanup();
 }
 
+static void UnPublish_tests(void)
+{
+    IWSDiscoveryPublisher *publisher = NULL;
+    IWSDiscoveryPublisherNotify *sink1 = NULL;
+    char endpoint_reference_string[MAX_PATH], app_sequence_string[MAX_PATH];
+    LPWSTR publisherIdW = NULL, sequenceIdW = NULL;
+    messageStorage *msg_storage;
+    WSADATA wsa_data;
+    BOOL message_ok, hello_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
+    BOOL wine_ns_seen = FALSE, body_hello_seen = FALSE, any_body_seen = FALSE;
+    int ret, i;
+    HRESULT rc;
+    ULONG ref;
+    char *msg;
+    WSDXML_ELEMENT *body_any_element;
+    WSDXML_NAME body_any_name;
+    WSDXML_NAMESPACE ns;
+    WCHAR body_any_name_text[] = {'B','e','e','r',0};
+    static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
+    static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
+    static const WCHAR prefix[] = {'w','i','n','e',0};
+
+    rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
+    ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
+    ok(publisher != NULL, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: publisher == NULL\n");
+
+    rc = IWSDiscoveryPublisher_SetAddressFamily(publisher, WSDAPI_ADDRESSFAMILY_IPV4);
+    ok(rc == S_OK, "IWSDiscoveryPublisher_SetAddressFamily(WSDAPI_ADDRESSFAMILY_IPV4) failed: %08x\n", rc);
+
+    /* Create notification sink */
+    ok(create_discovery_publisher_notify(&sink1) == TRUE, "create_discovery_publisher_notify failed\n");
+    rc = IWSDiscoveryPublisher_RegisterNotificationSink(publisher, sink1);
+    ok(rc == S_OK, "IWSDiscoveryPublisher_RegisterNotificationSink failed: %08x\n", rc);
+
+    /* Set up network listener */
+    publisherIdW = utf8_to_wide(publisherId);
+    if (publisherIdW == NULL) goto after_unpublish_test;
+
+    sequenceIdW = utf8_to_wide(sequenceId);
+    if (sequenceIdW == NULL) goto after_unpublish_test;
+
+    msg_storage = heap_alloc_zero(sizeof(messageStorage));
+    if (msg_storage == NULL) goto after_unpublish_test;
+
+    msg_storage->running = TRUE;
+    InitializeCriticalSection(&msg_storage->criticalSection);
+
+    ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
+    ok(ret == 0, "WSAStartup failed (ret = %d)\n", ret);
+
+    ret = start_listening_on_all_addresses(msg_storage, AF_INET);
+    ok(ret == TRUE, "Unable to listen on IPv4 addresses (ret == %d)\n", ret);
+
+    /* Create "any" elements for header */
+    ns.Uri = uri;
+    ns.PreferredPrefix = prefix;
+
+    body_any_name.LocalName = body_any_name_text;
+    body_any_name.Space = &ns;
+
+    rc = WSDXMLBuildAnyForSingleElement(&body_any_name, body_any_text, &body_any_element);
+    ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
+    /* Unpublish the service */
+    rc = IWSDiscoveryPublisher_UnPublish(publisher, publisherIdW, 1, 1, sequenceIdW, body_any_element);
+
+    WSDFreeLinkedMemory(body_any_element);
+
+    ok(rc == S_OK, "Unpublish failed: %08x\n", rc);
+
+    /* Wait up to 2 seconds for messages to be received */
+    if (WaitForMultipleObjects(msg_storage->numThreadHandles, msg_storage->threadHandles, TRUE, 2000) == WAIT_TIMEOUT)
+    {
+        /* Wait up to 1 more second for threads to terminate */
+        msg_storage->running = FALSE;
+        WaitForMultipleObjects(msg_storage->numThreadHandles, msg_storage->threadHandles, TRUE, 1000);
+    }
+
+    DeleteCriticalSection(&msg_storage->criticalSection);
+
+    /* Verify we've received a message */
+    ok(msg_storage->messageCount >= 1, "No messages received\n");
+
+    sprintf(endpoint_reference_string, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address></wsa:EndpointReference>",
+        publisherId);
+    sprintf(app_sequence_string, "<wsd:AppSequence InstanceId=\"1\" SequenceId=\"%s\" MessageNumber=\"1\"></wsd:AppSequence>",
+        sequenceId);
+
+    message_ok = FALSE;
+
+    /* Check we're received the correct message */
+    for (i = 0; i < msg_storage->messageCount; i++)
+    {
+        msg = msg_storage->messages[i];
+        message_ok = FALSE;
+
+        hello_message_seen = (strstr(msg, "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Bye</wsa:Action>") != NULL);
+        endpoint_reference_seen = (strstr(msg, endpoint_reference_string) != NULL);
+        app_sequence_seen = (strstr(msg, app_sequence_string) != NULL);
+        wine_ns_seen = (strstr(msg, "xmlns:wine=\"http://wine.test/\"") != NULL);
+        body_hello_seen = (strstr(msg, "<soap:Body><wsd:Bye") != NULL);
+        any_body_seen = (strstr(msg, "<wine:Beer>BodyTest</wine:Beer>") != NULL);
+        message_ok = hello_message_seen && endpoint_reference_seen && app_sequence_seen && wine_ns_seen &&
+            body_hello_seen && any_body_seen;
+
+        if (message_ok) break;
+    }
+
+    for (i = 0; i < msg_storage->messageCount; i++)
+    {
+        heap_free(msg_storage->messages[i]);
+    }
+
+    heap_free(msg_storage);
+
+    ok(hello_message_seen == TRUE, "Bye message not received\n");
+    ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
+    ok(app_sequence_seen == TRUE, "AppSequence not received\n");
+    ok(message_ok == TRUE, "Bye message metadata not received\n");
+    ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
+    ok(body_hello_seen == TRUE, "Body and Bye elements not received\n");
+    ok(any_body_seen == TRUE, "Custom body element not received\n");
+
+after_unpublish_test:
+
+    heap_free(publisherIdW);
+    heap_free(sequenceIdW);
+
+    ref = IWSDiscoveryPublisher_Release(publisher);
+    ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
+
+    /* Release the sinks */
+    IWSDiscoveryPublisherNotify_Release(sink1);
+
+    WSACleanup();
+}
+
 enum firewall_op
 {
     APP_ADD,
@@ -882,6 +1019,7 @@ START_TEST(discovery)
     CreateDiscoveryPublisher_tests();
     CreateDiscoveryPublisher_XMLContext_tests();
     Publish_tests();
+    UnPublish_tests();
 
     CoUninitialize();
     if (firewall_enabled) set_firewall(APP_REMOVE);
