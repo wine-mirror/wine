@@ -62,6 +62,9 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *hdr_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any);
 
+HRESULT send_bye_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG instance_id, ULONGLONG msg_num,
+    LPCWSTR session_id, const WSDXML_ELEMENT *any);
+
 HRESULT register_namespaces(IWSDXMLContext *xml_context);
 
 /* xml.c */

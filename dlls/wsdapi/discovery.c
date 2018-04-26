@@ -195,10 +195,18 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_Publish(IWSDiscoveryPublisher *T
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_UnPublish(IWSDiscoveryPublisher *This, LPCWSTR pszId, ULONGLONG ullInstanceId, ULONGLONG ullMessageNumber,
                                                           LPCWSTR pszSessionId, const WSDXML_ELEMENT *pAny)
 {
-    FIXME("(%p, %s, %s, %s, %s, %p)\n", This, debugstr_w(pszId), wine_dbgstr_longlong(ullInstanceId), wine_dbgstr_longlong(ullMessageNumber),
-        debugstr_w(pszSessionId), pAny);
+    IWSDiscoveryPublisherImpl *impl = impl_from_IWSDiscoveryPublisher(This);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %s, %s, %s, %p)\n", This, debugstr_w(pszId), wine_dbgstr_longlong(ullInstanceId),
+        wine_dbgstr_longlong(ullMessageNumber), debugstr_w(pszSessionId), pAny);
+
+    if ((!impl->publisherStarted) || (pszId == NULL) || (lstrlenW(pszId) > WSD_MAX_TEXT_LENGTH) ||
+        ((pszSessionId != NULL) && (lstrlenW(pszSessionId) > WSD_MAX_TEXT_LENGTH)))
+    {
+        return E_INVALIDARG;
+    }
+
+    return send_bye_message(impl, pszId, ullInstanceId, ullMessageNumber, pszSessionId, pAny);
 }
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_MatchProbe(IWSDiscoveryPublisher *This, const WSD_SOAP_MESSAGE *pProbeMessage,

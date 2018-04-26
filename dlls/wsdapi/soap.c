@@ -45,6 +45,13 @@ static const WCHAR actionHello[] = {
     'd','i','s','c','o','v','e','r','y','/',
     'H','e','l','l','o', 0 };
 
+static const WCHAR actionBye[] = {
+    'h','t','t','p',':','/','/',
+    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
+    'w','s','/','2','0','0','5','/','0','4','/',
+    'd','i','s','c','o','v','e','r','y','/',
+    'B','y','e', 0 };
+
 static const WCHAR addressingNsUri[] = {
     'h','t','t','p',':','/','/',
     's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
@@ -75,6 +82,7 @@ static const WCHAR sequenceIdString[] = { 'S','e','q','u','e','n','c','e','I','d
 static const WCHAR emptyString[] = { 0 };
 static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
+static const WCHAR byeString[] = { 'B','y','e', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
 static const WCHAR referenceParametersString[] = { 'R','e','f','e','r','e','n','c','e','P','a','r','a','m','e','t','e','r','s', 0 };
@@ -1005,6 +1013,70 @@ cleanup:
     WSDFreeLinkedMemory(body_name);
     WSDFreeLinkedMemory(body_element);
     WSDFreeLinkedMemory(discoveredNamespaces);
+
+    return ret;
+}
+
+HRESULT send_bye_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG instance_id, ULONGLONG msg_num,
+    LPCWSTR session_id, const WSDXML_ELEMENT *any)
+{
+    WSDXML_ELEMENT *body_element = NULL, *bye_element, *endpoint_reference_element;
+    struct list *discovered_namespaces = NULL;
+    WSDXML_NAME *body_name = NULL;
+    WSD_SOAP_HEADER soap_header;
+    WSD_APP_SEQUENCE sequence;
+    WCHAR message_id[64];
+    HRESULT ret = E_OUTOFMEMORY;
+
+    sequence.InstanceId = instance_id;
+    sequence.MessageNumber = msg_num;
+    sequence.SequenceId = session_id;
+
+    if (!create_guid(message_id)) goto failed;
+
+    discovered_namespaces = WSDAllocateLinkedMemory(NULL, sizeof(struct list));
+    if (!discovered_namespaces) goto failed;
+
+    list_init(discovered_namespaces);
+
+    populate_soap_header(&soap_header, discoveryTo, actionBye, message_id, &sequence, NULL);
+
+    ret = IWSDXMLContext_AddNameToNamespace(impl->xmlContext, envelopeNsUri, bodyString, &body_name);
+    if (FAILED(ret)) goto cleanup;
+
+    /* <soap:Body>, <wsd:Bye> */
+    ret = WSDXMLBuildAnyForSingleElement(body_name, NULL, &body_element);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = add_child_element(impl->xmlContext, body_element, discoveryNsUri, byeString, NULL, &bye_element);
+    if (FAILED(ret)) goto cleanup;
+
+    /* <wsa:EndpointReference>, <wsa:Address> */
+    ret = add_child_element(impl->xmlContext, bye_element, addressingNsUri, endpointReferenceString, NULL,
+        &endpoint_reference_element);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = add_child_element(impl->xmlContext, endpoint_reference_element, addressingNsUri, addressString, id, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Write any body elements */
+    if (any != NULL)
+    {
+        ret = duplicate_element(bye_element, any, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* Write and send the message */
+    ret = write_and_send_message(impl, &soap_header, body_element, discovered_namespaces, NULL, 0);
+    goto cleanup;
+
+failed:
+    ret = E_OUTOFMEMORY;
+
+cleanup:
+    WSDFreeLinkedMemory(body_name);
+    WSDFreeLinkedMemory(body_element);
+    WSDFreeLinkedMemory(discovered_namespaces);
 
     return ret;
 }
