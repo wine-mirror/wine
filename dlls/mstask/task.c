@@ -968,17 +968,17 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     TRACE("trigger_offset %04x, triggers end at %04x\n", fixed->trigger_offset,
           (DWORD)(fixed->trigger_offset + sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER)));
 
-    This->trigger_count = *(const USHORT *)data;
-    TRACE("trigger_count %u\n", trigger_count);
     task_trigger = (TASK_TRIGGER *)(data + sizeof(USHORT));
 
-    if (This->trigger_count * sizeof(TASK_TRIGGER) > triggers_size)
+    if (trigger_count * sizeof(TASK_TRIGGER) > triggers_size)
     {
         TRACE("no space for triggers data\n");
         return SCHED_E_INVALID_TASK;
     }
 
-    for (i = 0; i < This->trigger_count; i++)
+    This->trigger_count = 0;
+
+    for (i = 0; i < trigger_count; i++)
     {
         ITaskTrigger *trigger;
         WORD idx;
@@ -995,8 +995,8 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
         }
     }
 
-    size -= sizeof(USHORT) + This->trigger_count * sizeof(TASK_TRIGGER);
-    data += sizeof(USHORT) + This->trigger_count * sizeof(TASK_TRIGGER);
+    size -= sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER);
+    data += sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER);
 
     if (size < 2 * sizeof(USHORT) + 64)
     {
