@@ -1490,6 +1490,7 @@ int WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 #define FCSM_LOGO            0x00000020
 #define FCSM_FLAGS           0x00000040
 
+#include <pshpack8.h>
 typedef struct {
     DWORD dwSize;
     DWORD dwMask;
@@ -1507,6 +1508,7 @@ typedef struct {
     LPWSTR pszLogo;
     DWORD cchLogo;
 } SHFOLDERCUSTOMSETTINGS, *LPSHFOLDERCUSTOMSETTINGS;
+#include <poppack.h>
 
 HRESULT WINAPI SHGetSetFolderCustomSettings(LPSHFOLDERCUSTOMSETTINGS pfcs, PCWSTR pszPath, DWORD dwReadWrite);
 
