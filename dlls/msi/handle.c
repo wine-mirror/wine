@@ -344,7 +344,7 @@ UINT WINAPI MsiCloseAllHandles(void)
     return n;
 }
 
-UINT __cdecl remote_CloseHandle(MSIHANDLE handle)
+UINT __cdecl s_remote_CloseHandle(MSIHANDLE handle)
 {
     return MsiCloseHandle(handle);
 }
