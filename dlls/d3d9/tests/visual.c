@@ -19788,9 +19788,12 @@ static void test_multisample_mismatch(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
-    /* Check depth buffer values. AMD GPUs (r500 and evergreen tested) clear the depth buffer
-     * like you'd expect in a correct framebuffer setup. Nvidia doesn't clear it, neither in
-     * the Z only clear case nor in the combined clear case. */
+    /* Check depth buffer values. AMD GPUs (r500 and evergreen tested) clear
+     * the depth buffer like you'd expect in a correct framebuffer
+     * setup. Nvidia doesn't clear it, neither in the Z only clear case nor in
+     * the combined clear case.
+     * In Wine we currently happen to allow the depth only clear case but
+     * disallow the combined one. */
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
@@ -19802,7 +19805,7 @@ static void test_multisample_mismatch(void)
     color = getPixelColor(device, 62, 240);
     ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 64, 240);
-    ok(color_match(color, 0x0000ff00, 1) || broken(color_match(color, 0x000000ff, 1)),
+    ok(color_match(color, 0x0000ff00, 1) || color_match(color, 0x000000ff, 1),
             "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 318, 240);
     ok(color_match(color, 0x0000ff00, 1) || broken(color_match(color, 0x000000ff, 1)),
@@ -23532,26 +23535,25 @@ static void test_null_format(void)
     {
         unsigned int x, y;
         D3DCOLOR color;
-        BOOL todo;
     }
     expected_colors[] =
     {
-        {200,  30, 0x0000ff00, FALSE},
-        {440,  30, 0x0000ff00, FALSE},
-        {520,  30, 0x0000ff00, FALSE},
-        {600,  30, 0x0000ff00, FALSE},
-        {200,  90, 0x00000000, FALSE},
-        {440,  90, 0x0000ff00, FALSE},
-        {520,  90, 0x0000ff00, FALSE},
-        {600,  90, 0x0000ff00, FALSE},
-        {200, 150, 0x000000ff, FALSE},
-        {440, 150, 0x000000ff, FALSE},
-        {520, 150, 0x0000ff00, FALSE},
-        {600, 150, 0x0000ff00, FALSE},
-        {200, 320, 0x000000ff, FALSE},
-        {440, 320, 0x000000ff, FALSE},
-        {520, 320, 0x00000000, TRUE},
-        {600, 320, 0x0000ff00, FALSE},
+        {200,  30, 0x0000ff00},
+        {440,  30, 0x0000ff00},
+        {520,  30, 0x0000ff00},
+        {600,  30, 0x0000ff00},
+        {200,  90, 0x00000000},
+        {440,  90, 0x0000ff00},
+        {520,  90, 0x0000ff00},
+        {600,  90, 0x0000ff00},
+        {200, 150, 0x000000ff},
+        {440, 150, 0x000000ff},
+        {520, 150, 0x0000ff00},
+        {600, 150, 0x0000ff00},
+        {200, 320, 0x000000ff},
+        {440, 320, 0x000000ff},
+        {520, 320, 0x00000000},
+        {600, 320, 0x0000ff00},
     };
     IDirect3DSurface9 *original_rt, *small_rt, *null_rt, *small_null_rt;
     IDirect3DDevice9 *device;
@@ -23672,7 +23674,7 @@ static void test_null_format(void)
     for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
-        todo_wine_if(expected_colors[i].todo) ok(color_match(color, expected_colors[i].color, 1),
+        ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
