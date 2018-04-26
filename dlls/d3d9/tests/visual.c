@@ -4706,7 +4706,7 @@ done:
     DestroyWindow(window);
 }
 
-static void check_rect(IDirect3DDevice9 *device, RECT r, const char *message)
+static void check_rect(struct surface_readback *rb, RECT r, const char *message)
 {
     LONG x_coords[2][2] =
     {
@@ -4730,9 +4730,9 @@ static void check_rect(IDirect3DDevice9 *device, RECT r, const char *message)
                 {
                     unsigned int x = x_coords[i][x_side], y = y_coords[j][y_side];
                     DWORD color;
-                    DWORD expected = (x_side == 1 && y_side == 1) ? 0x00ffffff : 0;
+                    DWORD expected = (x_side == 1 && y_side == 1) ? 0xffffffff : 0xff000000;
 
-                    color = getPixelColor(device, x, y);
+                    color = get_readback_color(rb, x, y);
                     ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
                             message, x, y, color, expected);
                 }
@@ -4776,6 +4776,8 @@ static void projected_textures_test(IDirect3DDevice9 *device,
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
     HRESULT hr;
+    IDirect3DSurface9 *backbuffer;
+    struct surface_readback rb;
 
     IDirect3DDevice9_GetDirect3D(device, &d3d);
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -4792,6 +4794,9 @@ static void projected_textures_test(IDirect3DDevice9 *device,
         hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader, &ps);
         ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
     }
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
@@ -4872,14 +4877,14 @@ static void projected_textures_test(IDirect3DDevice9 *device,
     if (vs) IDirect3DVertexShader9_Release(vs);
     if (ps) IDirect3DPixelShader9_Release(ps);
 
+    get_rt_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         if ((!tests[i].vs || vs) && (!tests[i].ps || ps))
-            check_rect(device, tests[i].rect, tests[i].message);
+            check_rect(&rb, tests[i].rect, tests[i].message);
     }
-
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+    release_surface_readback(&rb);
+    IDirect3DSurface9_Release(backbuffer);
 }
 
 static void texture_transform_flags_test(void)
