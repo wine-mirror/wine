@@ -4719,6 +4719,30 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
         {r.bottom + 1, r.bottom - 1}
     };
     unsigned int i, j, x_side, y_side;
+    DWORD color;
+    LONG x, y;
+
+    if (r.left < 0 && r.top < 0 && r.right < 0 && r.bottom < 0)
+    {
+        BOOL all_match = TRUE;
+
+        for (y = 0; y < 480; ++y)
+        {
+            for (x = 0; x < 640; ++x)
+            {
+                color = get_readback_color(rb, x, y);
+                if (color != 0xff000000)
+                {
+                    all_match = FALSE;
+                    break;
+                }
+            }
+            if (!all_match)
+                break;
+        }
+        ok(all_match, "%s: pixel (%d, %d) has color %08x.\n", message, x, y, color);
+        return;
+    }
 
     for (i = 0; i < 2; ++i)
     {
@@ -4728,12 +4752,14 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
             {
                 for (y_side = 0; y_side < 2; ++y_side)
                 {
-                    unsigned int x = x_coords[i][x_side], y = y_coords[j][y_side];
-                    DWORD color;
                     DWORD expected = (x_side == 1 && y_side == 1) ? 0xffffffff : 0xff000000;
 
+                    x = x_coords[i][x_side];
+                    y = y_coords[j][y_side];
+                    if (x < 0 || x >= 640 || y < 0 || y >= 480)
+                        continue;
                     color = get_readback_color(rb, x, y);
-                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
+                    ok(color == expected, "%s: pixel (%d, %d) has color %08x, expected %08x.\n",
                             message, x, y, color, expected);
                 }
             }
@@ -13880,24 +13906,36 @@ done:
     DestroyWindow(window);
 }
 
-static void viewport_test(void)
+static void test_viewport(void)
 {
+    static const struct
+    {
+        D3DVIEWPORT9 vp;
+        RECT expected_rect;
+        const char *message;
+    }
+    tests[] =
+    {
+        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
+        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
+        {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
+    };
+    static const struct vec3 quad[] =
+    {
+        {-1.5f, -0.5f, 0.1f},
+        {-1.5f,  0.5f, 0.1f},
+        { 0.5f, -0.5f, 0.1f},
+        { 0.5f,  0.5f, 0.1f},
+    };
+    IDirect3DSurface9 *backbuffer;
+    struct surface_readback rb;
     IDirect3DDevice9 *device;
-    BOOL draw_failed = TRUE;
-    D3DVIEWPORT9 vp;
+    BOOL draw_succeeded;
     IDirect3D9 *d3d;
+    unsigned int i;
     ULONG refcount;
-    DWORD color;
     HWND window;
     HRESULT hr;
-
-    static const float quad[] =
-    {
-        -0.5f, -0.5f, 0.1f,
-        -0.5f,  0.5f, 0.1f,
-         0.5f, -0.5f, 0.1f,
-         0.5f,  0.5f, 0.1f,
-    };
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -13908,71 +13946,47 @@ static void viewport_test(void)
         goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 1.0f, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
-
-    /* Test a viewport with Width and Height bigger than the surface dimensions
-     *
-     * TODO: Test Width < surface.width, but X + Width > surface.width
-     * TODO: Test Width < surface.width, what happens with the height?
-     *
-     * The expected behavior is that the viewport behaves like the "default"
-     * viewport with X = Y = 0, Width = surface_width, Height = surface_height,
-     * MinZ = 0.0, MaxZ = 1.0.
-     *
-     * Starting with Windows 7 the behavior among driver versions is not
-     * consistent. The SetViewport call is accepted on all drivers. Some
-     * drivers(older nvidia ones) refuse to draw and return an error. Newer
-     * nvidia drivers draw, but use the actual values in the viewport and only
-     * display the upper left part on the surface.
-     */
-    memset(&vp, 0, sizeof(vp));
-    vp.X = 0;
-    vp.Y = 0;
-    vp.Width = 10000;
-    vp.Height = 10000;
-    vp.MinZ = 0.0;
-    vp.MaxZ = 0.0;
-    hr = IDirect3DDevice9_SetViewport(device, &vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
-    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
-    draw_failed = FAILED(hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
 
-    if(!draw_failed)
+    /* This crashes on Windows. */
+    if (0)
+        hr = IDirect3DDevice9_SetViewport(device, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        color = getPixelColor(device, 158, 118);
-        ok(color == 0x00ff0000, "viewport test: (158,118) has color %08x\n", color);
-        color = getPixelColor(device, 162, 118);
-        ok(color == 0x00ff0000, "viewport test: (162,118) has color %08x\n", color);
-        color = getPixelColor(device, 158, 122);
-        ok(color == 0x00ff0000, "viewport test: (158,122) has color %08x\n", color);
-        color = getPixelColor(device, 162, 122);
-        ok(color == 0x00ffffff || broken(color == 0x00ff0000), "viewport test: (162,122) has color %08x\n", color);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
-        color = getPixelColor(device, 478, 358);
-        ok(color == 0x00ffffff || broken(color == 0x00ff0000), "viewport test: (478,358 has color %08x\n", color);
-        color = getPixelColor(device, 482, 358);
-        ok(color == 0x00ff0000, "viewport test: (482,358) has color %08x\n", color);
-        color = getPixelColor(device, 478, 362);
-        ok(color == 0x00ff0000, "viewport test: (478,362) has color %08x\n", color);
-        color = getPixelColor(device, 482, 362);
-        ok(color == 0x00ff0000, "viewport test: (482,362) has color %08x\n", color);
+        hr = IDirect3DDevice9_SetViewport(device, &tests[i].vp);
+        ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(SUCCEEDED(hr) || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+        draw_succeeded = SUCCEEDED(hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        if (draw_succeeded)
+        {
+            get_rt_readback(backbuffer, &rb);
+            check_rect(&rb, tests[i].expected_rect, tests[i].message);
+            release_surface_readback(&rb);
+        }
     }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
+    IDirect3DSurface9_Release(backbuffer);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 done:
@@ -23947,7 +23961,7 @@ START_TEST(visual)
     yuv_layout_test();
     zwriteenable_test();
     alphatest_test();
-    viewport_test();
+    test_viewport();
     test_constant_clamp_vs();
     test_compare_instructions();
     test_mova();
