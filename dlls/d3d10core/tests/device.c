@@ -7732,10 +7732,10 @@ static void test_depth_stencil_sampling(void)
 
 static void test_multiple_render_targets(void)
 {
+    ID3D10RenderTargetView *rtv[4], *tmp_rtv[4];
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10InputLayout *input_layout;
     unsigned int stride, offset, i;
-    ID3D10RenderTargetView *rtv[4];
     ID3D10Texture2D *rt[4];
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
@@ -7860,9 +7860,21 @@ static void test_multiple_render_targets(void)
 
     for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D10Device_ClearRenderTargetView(device, rtv[i], red);
-
     ID3D10Device_Draw(device, 4, 0);
+    check_texture_color(rt[0], 0xffffffff, 2);
+    check_texture_color(rt[1], 0x7f7f7f7f, 2);
+    check_texture_color(rt[2], 0x33333333, 2);
+    check_texture_color(rt[3], 0xff7f3300, 2);
 
+    for (i = 0; i < ARRAY_SIZE(rtv); ++i)
+        ID3D10Device_ClearRenderTargetView(device, rtv[i], red);
+    for (i = 0; i < ARRAY_SIZE(tmp_rtv); ++i)
+    {
+        memset(tmp_rtv, 0, sizeof(tmp_rtv));
+        tmp_rtv[i] = rtv[i];
+        ID3D10Device_OMSetRenderTargets(device, 4, tmp_rtv, NULL);
+        ID3D10Device_Draw(device, 4, 0);
+    }
     check_texture_color(rt[0], 0xffffffff, 2);
     check_texture_color(rt[1], 0x7f7f7f7f, 2);
     check_texture_color(rt[2], 0x33333333, 2);
@@ -7873,9 +7885,10 @@ static void test_multiple_render_targets(void)
     ID3D10VertexShader_Release(vs);
     ID3D10InputLayout_Release(input_layout);
     for (i = 0; i < ARRAY_SIZE(rtv); ++i)
+    {
         ID3D10RenderTargetView_Release(rtv[i]);
-    for (i = 0; i < ARRAY_SIZE(rt); ++i)
         ID3D10Texture2D_Release(rt[i]);
+    }
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
