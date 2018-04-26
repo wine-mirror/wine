@@ -64,6 +64,7 @@ typedef struct
     LPWSTR accountName;
     DWORD trigger_count;
     TASK_TRIGGER *trigger;
+    BOOL is_dirty;
 } TaskImpl;
 
 static inline TaskImpl *impl_from_ITask(ITask *iface)
@@ -332,6 +333,7 @@ static HRESULT WINAPI MSTASK_ITask_SetComment(ITask *iface, LPCWSTR comment)
     {
         hr = IRegistrationInfo_put_Description(info, (BSTR)comment);
         IRegistrationInfo_Release(info);
+        This->is_dirty = TRUE;
     }
     return hr;
 }
@@ -388,6 +390,7 @@ static HRESULT WINAPI MSTASK_ITask_SetCreator(ITask *iface, LPCWSTR creator)
     {
         hr = IRegistrationInfo_put_Author(info, (BSTR)creator);
         IRegistrationInfo_Release(info);
+        This->is_dirty = TRUE;
     }
     return hr;
 }
@@ -511,6 +514,7 @@ static HRESULT WINAPI MSTASK_ITask_SetAccountInformation(
     lstrcpyW(tmp_account_name, pwszAccountName);
     heap_free(This->accountName);
     This->accountName = tmp_account_name;
+    This->is_dirty = TRUE;
     return S_OK;
 }
 
@@ -540,6 +544,7 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
 {
     TaskImpl *This = impl_from_ITask(iface);
     DWORD len;
+    HRESULT hr;
 
     TRACE("(%p, %s)\n", iface, debugstr_w(appname));
 
@@ -552,14 +557,16 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
     if (len)
     {
         LPWSTR tmp_name;
-        HRESULT hr;
 
         tmp_name = heap_alloc(len * sizeof(WCHAR));
         if (!tmp_name)
             return E_OUTOFMEMORY;
         len = SearchPathW(NULL, appname, NULL, len, tmp_name, NULL);
         if (len)
+        {
             hr = IExecAction_put_Path(This->action, tmp_name);
+            if (hr == S_OK) This->is_dirty = TRUE;
+        }
         else
             hr = HRESULT_FROM_WIN32(GetLastError());
 
@@ -568,7 +575,9 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
     }
 
     /* If unable to path resolve name, simply set to appname */
-    return IExecAction_put_Path(This->action, (BSTR)appname);
+    hr = IExecAction_put_Path(This->action, (BSTR)appname);
+    if (hr == S_OK) This->is_dirty = TRUE;
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetApplicationName(ITask *iface, LPWSTR *appname)
@@ -603,6 +612,7 @@ static HRESULT WINAPI MSTASK_ITask_GetApplicationName(ITask *iface, LPWSTR *appn
 static HRESULT WINAPI MSTASK_ITask_SetParameters(ITask *iface, LPCWSTR params)
 {
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
 
     TRACE("(%p, %s)\n", iface, debugstr_w(params));
 
@@ -610,7 +620,9 @@ static HRESULT WINAPI MSTASK_ITask_SetParameters(ITask *iface, LPCWSTR params)
     if (!params || !params[0])
         params = NULL;
 
-    return IExecAction_put_Arguments(This->action, (BSTR)params);
+    hr = IExecAction_put_Arguments(This->action, (BSTR)params);
+    if (hr == S_OK) This->is_dirty = TRUE;
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetParameters(ITask *iface, LPWSTR *params)
@@ -645,13 +657,16 @@ static HRESULT WINAPI MSTASK_ITask_GetParameters(ITask *iface, LPWSTR *params)
 static HRESULT WINAPI MSTASK_ITask_SetWorkingDirectory(ITask * iface, LPCWSTR workdir)
 {
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr;
 
     TRACE("(%p, %s)\n", iface, debugstr_w(workdir));
 
     if (!workdir || !workdir[0])
         workdir = NULL;
 
-    return IExecAction_put_WorkingDirectory(This->action, (BSTR)workdir);
+    hr = IExecAction_put_WorkingDirectory(This->action, (BSTR)workdir);
+    if (hr == S_OK) This->is_dirty = TRUE;
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetWorkingDirectory(ITask *iface, LPWSTR *workdir)
@@ -725,6 +740,7 @@ static HRESULT WINAPI MSTASK_ITask_SetMaxRunTime(
     TRACE("(%p, %d)\n", iface, dwMaxRunTime);
 
     This->maxRunTime = dwMaxRunTime;
+    This->is_dirty = TRUE;
     return S_OK;
 }
 
@@ -772,11 +788,11 @@ static HRESULT WINAPI MSTASK_IPersistFile_GetClassID(IPersistFile *iface, CLSID 
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_IPersistFile_IsDirty(
-        IPersistFile* iface)
+static HRESULT WINAPI MSTASK_IPersistFile_IsDirty(IPersistFile *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    TRACE("(%p)\n", iface);
+    return This->is_dirty ? S_OK : S_FALSE;
 }
 
 static DWORD load_unicode_strings(ITask *task, BYTE *data, DWORD limit)
@@ -1054,6 +1070,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
     if (data)
     {
         hr = load_job_data(This, data, size);
+        if (hr == S_OK) This->is_dirty = FALSE;
         UnmapViewOfFile(data);
     }
     else
@@ -1308,6 +1325,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     }
 
     hr = S_OK;
+    This->is_dirty = FALSE;
 
 failed:
     CoTaskMemFree(appname);
@@ -1453,6 +1471,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->accountName = NULL;
     This->trigger_count = 0;
     This->trigger = NULL;
+    This->is_dirty = FALSE;
 
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
