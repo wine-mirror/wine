@@ -240,12 +240,12 @@ static HRESULT WINAPI MSTASK_ITask_GetRunTimes(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(
-        ITask* iface,
-        SYSTEMTIME *pstNextRun)
+static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *st)
 {
-    FIXME("(%p, %p): stub\n", iface, pstNextRun);
-    return E_NOTIMPL;
+    FIXME("(%p, %p): stub\n", iface, st);
+
+    memset(st, 0, sizeof(*st));
+    return SCHED_S_TASK_NO_VALID_TRIGGERS;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetIdleWait(

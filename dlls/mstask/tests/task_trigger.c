@@ -439,6 +439,44 @@ static void test_task_trigger(void)
     ok(ref == 0, "got %u\n", ref);
 }
 
+static void test_GetNextRunTime(void)
+{
+    static const WCHAR task_name[] = { 'T','e','s','t','i','n','g',0 };
+    static const SYSTEMTIME st_empty;
+    HRESULT hr;
+    ITask *task;
+    ITaskTrigger *trigger;
+    WORD idx;
+    SYSTEMTIME st;
+
+    hr = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name, &CLSID_CTask,
+                                    &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetNextRunTime(task, NULL);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == SCHED_S_TASK_NO_VALID_TRIGGERS, "got %#x\n", hr);
+    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %d/%d/%d wday %d %d:%d:%d.%03d\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+    hr = ITask_CreateTrigger(task, &idx, &trigger);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == SCHED_S_TASK_NO_VALID_TRIGGERS, "got %#x\n", hr);
+    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %d/%d/%d wday %d %d:%d:%d.%03d\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+    ITaskTrigger_Release(trigger);
+    ITask_Release(task);
+}
+
 START_TEST(task_trigger)
 {
     HRESULT hr;
@@ -451,6 +489,7 @@ START_TEST(task_trigger)
 
     test_SetTrigger_GetTrigger();
     test_task_trigger();
+    test_GetNextRunTime();
 
     ITaskScheduler_Release(test_task_scheduler);
     CoUninitialize();
