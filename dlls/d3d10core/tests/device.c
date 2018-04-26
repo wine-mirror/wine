@@ -488,6 +488,21 @@ static void check_dsv_desc_(unsigned int line, const D3D10_DEPTH_STENCIL_VIEW_DE
     }
 }
 
+static void set_viewport(ID3D10Device *device, int x, int y,
+        unsigned int width, unsigned int height, float min_depth, float max_depth)
+{
+    D3D10_VIEWPORT vp;
+
+    vp.TopLeftX = x;
+    vp.TopLeftY = y;
+    vp.Width = width;
+    vp.Height = height;
+    vp.MinDepth = min_depth;
+    vp.MaxDepth = max_depth;
+
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
 static ID3D10Buffer *create_buffer_(unsigned int line, ID3D10Device *device,
         unsigned int bind_flags, unsigned int size, const void *data)
@@ -1091,7 +1106,6 @@ static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context 
         const struct swapchain_desc *swapchain_desc)
 {
     unsigned int rt_width, rt_height;
-    D3D10_VIEWPORT vp;
     HRESULT hr;
     RECT rect;
 
@@ -1119,13 +1133,7 @@ static BOOL init_test_context_(unsigned int line, struct d3d10core_test_context 
 
     ID3D10Device_OMSetRenderTargets(context->device, 1, &context->backbuffer_rtv, NULL);
 
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = rt_width;
-    vp.Height = rt_height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D10Device_RSSetViewports(context->device, 1, &vp);
+    set_viewport(context->device, 0, 0, rt_width, rt_height, 0.0f, 1.0f);
 
     return TRUE;
 }
@@ -4289,7 +4297,6 @@ static void test_occlusion_query(void)
     unsigned int data_size, i;
     ID3D10Texture2D *texture;
     ID3D10Device *device;
-    D3D10_VIEWPORT vp;
     union
     {
         UINT64 uint;
@@ -4380,13 +4387,7 @@ static void test_occlusion_query(void)
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = texture_desc.Width;
-    vp.Height = texture_desc.Height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, 0, 0, texture_desc.Width, texture_desc.Height, 0.0f, 1.0f);
 
     ID3D10Asynchronous_Begin(query);
     for (i = 0; i < 100; i++)
@@ -5554,7 +5555,6 @@ static void test_blend(void)
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
-    D3D10_VIEWPORT vp;
     ID3D10Buffer *vb;
     DWORD color;
     HRESULT hr;
@@ -5718,13 +5718,7 @@ static void test_blend(void)
 
     ID3D10Device_OMSetRenderTargets(device, 1, &offscreen_rtv, NULL);
 
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = 128;
-    vp.Height = 128;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, 0, 0, 128, 128, 0.0f, 1.0f);
 
     ID3D10Device_ClearRenderTargetView(device, offscreen_rtv, red);
 
@@ -7746,7 +7740,6 @@ static void test_multiple_render_targets(void)
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
-    D3D10_VIEWPORT vp;
     ID3D10Buffer *vb;
     ULONG refcount;
     HRESULT hr;
@@ -7863,13 +7856,7 @@ static void test_multiple_render_targets(void)
     ID3D10Device_VSSetShader(device, vs);
     ID3D10Device_PSSetShader(device, ps);
 
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = 640;
-    vp.Height = 480;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, 0, 0, 640, 480, 0.0f, 1.0f);
 
     for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D10Device_ClearRenderTargetView(device, rtv[i], red);
@@ -9954,18 +9941,17 @@ static void test_swapchain_views(void)
 
 static void test_swapchain_flip(void)
 {
-    IDXGISwapChain *swapchain;
     ID3D10Texture2D *backbuffer_0, *backbuffer_1, *backbuffer_2, *offscreen;
-    ID3D10RenderTargetView *backbuffer_0_rtv, *offscreen_rtv;
     ID3D10ShaderResourceView *backbuffer_0_srv, *backbuffer_1_srv;
+    ID3D10RenderTargetView *backbuffer_0_rtv, *offscreen_rtv;
     D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10InputLayout *input_layout;
+    unsigned int stride, offset;
+    IDXGISwapChain *swapchain;
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
-    ID3D10InputLayout *input_layout;
-    ID3D10Buffer *vb;
-    unsigned int stride, offset;
     ID3D10Device *device;
-    D3D10_VIEWPORT vp;
+    ID3D10Buffer *vb;
     ULONG refcount;
     DWORD color;
     HWND window;
@@ -10102,13 +10088,7 @@ static void test_swapchain_flip(void)
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)offscreen, NULL, &offscreen_rtv);
     ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
     ID3D10Device_OMSetRenderTargets(device, 1, &offscreen_rtv, NULL);
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = 640;
-    vp.Height = 480;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, 0, 0, 640, 480, 0.0f, 1.0f);
 
     vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
@@ -10418,12 +10398,10 @@ static void test_initial_depth_stencil_state(void)
     /* check if depth function is D3D10_COMPARISON_LESS */
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
     ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 0.5f, 0);
-    vp.MinDepth = vp.MaxDepth = 0.4f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.4f, 0.4f);
     draw_color_quad(&test_context, &green);
     draw_color_quad(&test_context, &red);
-    vp.MinDepth = vp.MaxDepth = 0.6f;
-    ID3D10Device_RSSetViewports(device, 1, &vp);
+    set_viewport(device, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.6f, 0.6f);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
     check_texture_float(texture, 0.4f, 1);
@@ -10443,7 +10421,6 @@ static void test_draw_depth_only(void)
     ID3D10Texture2D *texture;
     ID3D10Device *device;
     unsigned int i, j;
-    D3D10_VIEWPORT vp;
     struct vec4 depth;
     ID3D10Buffer *cb;
     HRESULT hr;
@@ -10539,13 +10516,7 @@ static void test_draw_depth_only(void)
             depth.x = 1.0f / 16.0f * (j + 4 * i);
             ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &depth, 0, 0);
 
-            vp.TopLeftX = 160 * j;
-            vp.TopLeftY = 120 * i;
-            vp.Width = 160;
-            vp.Height = 120;
-            vp.MinDepth = 0.0f;
-            vp.MaxDepth = 1.0f;
-            ID3D10Device_RSSetViewports(device, 1, &vp);
+            set_viewport(device, 160 * j, 120 * i, 160, 120, 0.0f, 1.0f);
 
             draw_quad(&test_context);
         }
