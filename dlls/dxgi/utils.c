@@ -645,8 +645,6 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
     WINED3DCAPS caps;
     HRESULT hr;
 
-    FIXME("Ignoring adapter type.\n");
-
     wined3d_mutex_lock();
     hr = wined3d_get_device_caps(factory->wined3d, adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
     wined3d_mutex_unlock();
