@@ -2140,7 +2140,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rect(device->wined3d_device, rects);
+    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, rects);
     wined3d_mutex_unlock();
     if (*rect_count > 1)
         memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
@@ -4943,7 +4943,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *ifac
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rect(device->wined3d_device, rects);
+    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, rects);
     wined3d_mutex_unlock();
     if (*rect_count > 1)
         memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
