@@ -754,22 +754,14 @@ static ULONG WINAPI MSTASK_IPersistFile_AddRef(
         IPersistFile* iface)
 {
     TaskImpl *This = impl_from_IPersistFile(iface);
-    ULONG ref;
-    TRACE("\n");
-    ref = InterlockedIncrement(&This->ref);
-    return ref;
+    return ITask_AddRef(&This->ITask_iface);
 }
 
 static ULONG WINAPI MSTASK_IPersistFile_Release(
         IPersistFile* iface)
 {
     TaskImpl *This = impl_from_IPersistFile(iface);
-    ULONG ref;
-    TRACE("\n");
-    ref = InterlockedDecrement(&This->ref);
-    if (ref == 0)
-        TaskDestructor(This);
-    return ref;
+    return ITask_Release(&This->ITask_iface);
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_GetClassID(IPersistFile *iface, CLSID *clsid)
