@@ -1574,6 +1574,8 @@ Correctly ignored trailing information
 PATH=original
 PATH=try2
 PATH=try3
+------------ Testing start /W ------------
+start /W seems to really wait
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball

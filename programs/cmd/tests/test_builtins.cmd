@@ -2988,6 +2988,10 @@ path
 set path=%WINE_backup_path%
 set WINE_backup_path=
 
+echo ------------ Testing start /W ------------
+echo start /W failed to wait>foobar.txt
+start /W "" cmd /C "ping -n1 & echo start /W seems to really wait>foobar.txt"& type foobar.txt& del foobar.txt
+
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd

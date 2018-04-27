@@ -4322,7 +4322,7 @@ void WCMD_start(WCHAR *args)
     int argno;
     int have_title;
     WCHAR file[MAX_PATH];
-    WCHAR *cmdline;
+    WCHAR *cmdline, *cmdline_params;
     STARTUPINFOW st;
     PROCESS_INFORMATION pi;
 
@@ -4331,6 +4331,7 @@ void WCMD_start(WCHAR *args)
     cmdline = heap_alloc( (strlenW(file) + strlenW(args) + 8) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
     strcatW( cmdline, spaceW );
+    cmdline_params = cmdline + strlenW(cmdline);
 
     /* The start built-in has some special command-line parsing properties
      * which will be outlined here.
@@ -4382,17 +4383,17 @@ void WCMD_start(WCHAR *args)
             have_title = TRUE;
 
             /* Copy all of the cmdline processed */
-            memcpy(cmdline, args, sizeof(WCHAR) * (argN - args));
-            cmdline[argN - args] = '\0';
+            memcpy(cmdline_params, args, sizeof(WCHAR) * (argN - args));
+            cmdline_params[argN - args] = '\0';
 
             /* Add quoted title */
-            strcatW(cmdline, prefixQuote);
-            strcatW(cmdline, thisArg);
-            strcatW(cmdline, postfixQuote);
+            strcatW(cmdline_params, prefixQuote);
+            strcatW(cmdline_params, thisArg);
+            strcatW(cmdline_params, postfixQuote);
 
             /* Concatenate remaining command-line */
             thisArg = WCMD_parameter_with_delims(args, argno, &argN, TRUE, FALSE, startDelims);
-            strcatW(cmdline, argN + strlenW(thisArg));
+            strcatW(cmdline_params, argN + strlenW(thisArg));
 
             break;
         }
