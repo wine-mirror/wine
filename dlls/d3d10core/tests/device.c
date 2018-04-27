@@ -16430,10 +16430,14 @@ static void test_multiple_viewports(void)
     };
     static const struct vec4 expected_values[] =
     {
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 2.0f}, {0.5f, 0.5f}, {0.5f, 0.5f},
+        {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 2.0f}, {0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, 4.0f}, {0.5f, 0.5f}, {0.5f, 0.5f},
+        {0.0f, 5.0f}, {0.5f, 0.5f}, {1.0f, 5.0f}, {0.5f, 0.5f},
     };
     static const float clear_color[] = {0.5f, 0.5f, 0.0f, 0.0f};
+    ID3D10RasterizerState *rasterizer_state;
+    D3D10_RASTERIZER_DESC rasterizer_desc;
     unsigned int count, i;
+    D3D10_RECT rects[2];
     RECT rect;
     int width;
 
@@ -16521,6 +16525,62 @@ static void test_multiple_viewports(void)
     draw_quad(&test_context);
     check_texture_sub_resource_vec4(texture, 0, NULL, &expected_values[4], 1);
 
+    /* Two viewports, only first scissor rectangle set. */
+    memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
+    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D11_CULL_BACK;
+    rasterizer_desc.DepthClipEnable = TRUE;
+    rasterizer_desc.ScissorEnable = TRUE;
+    hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D10Device_RSSetState(device, rasterizer_state);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv, clear_color);
+    ID3D10Device_RSSetViewports(device, 2, vp);
+
+    rects[0].left = 0;
+    rects[0].top = 0;
+    rects[0].right = width;
+    rects[0].bottom = texture_desc.Height / 2;
+    memset(&rects[1], 0, sizeof(*rects));
+    ID3D10Device_RSSetScissorRects(device, 1, rects);
+    constant.draw_id = 4;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+
+    SetRect(&rect, 0, 0, width - 1, texture_desc.Height / 2 - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[5], 1);
+    SetRect(&rect, 0, texture_desc.Height / 2, width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[6], 1);
+    SetRect(&rect, width, 0, 2 * width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[7], 1);
+
+    /* Set both rectangles. */
+    rects[0].left = 0;
+    rects[0].top = 0;
+    rects[0].right = width;
+    rects[0].bottom = texture_desc.Height / 2;
+    rects[1].left = width;
+    rects[1].top = 0;
+    rects[1].right = width * 2;
+    rects[1].bottom = texture_desc.Height / 2;
+    ID3D10Device_ClearRenderTargetView(device, rtv, clear_color);
+    ID3D10Device_RSSetScissorRects(device, 2, rects);
+    constant.draw_id = 5;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+
+    SetRect(&rect, 0, 0, width - 1, texture_desc.Height / 2 - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[8], 1);
+    SetRect(&rect, 0, texture_desc.Height / 2, width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[9], 1);
+
+    SetRect(&rect, width, 0, 2 * width - 1, texture_desc.Height / 2 - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[10], 1);
+    SetRect(&rect, width, texture_desc.Height / 2, 2 * width - 1, texture_desc.Height - 1);
+    check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[11], 1);
+
     /* Viewport count exceeding maximum value. */
     ID3D10Device_RSSetViewports(device, 1, vp);
 
@@ -16542,6 +16602,7 @@ static void test_multiple_viewports(void)
     ok(count == 1, "Unexpected viewport count %d.\n", count);
     ok(vp[0].TopLeftX == 0.0f && vp[0].Width == width, "Unexpected viewport.\n");
 
+    ID3D10RasterizerState_Release(rasterizer_state);
     ID3D10RenderTargetView_Release(rtv);
     ID3D10Texture2D_Release(texture);
 
