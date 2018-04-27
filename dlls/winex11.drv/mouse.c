@@ -834,8 +834,8 @@ static const struct system_cursors user32_cursors[] =
     { OCR_ICON,        { "icon" }},
     { OCR_SIZENWSE,    { "top_left_corner", "nw-resize" }},
     { OCR_SIZENESW,    { "top_right_corner", "ne-resize" }},
-    { OCR_SIZEWE,      { "left_side", "size_hor", "h_double_arrow", "ew-resize" }},
-    { OCR_SIZENS,      { "top_side", "size_ver", "v_double_arrow", "ns-resize" }},
+    { OCR_SIZEWE,      { "h_double_arrow", "size_hor", "ew-resize" }},
+    { OCR_SIZENS,      { "v_double_arrow", "size_ver", "ns-resize" }},
     { OCR_NO,          { "not-allowed", "forbidden", "no-drop" }},
     { OCR_HAND,        { "hand2", "pointer", "pointing-hand" }},
     { OCR_APPSTARTING, { "left_ptr_watch" }},
@@ -924,6 +924,7 @@ static const struct cursor_font_fallback fallbacks[] =
     { "fleur",               XC_fleur },
     { "gobbler",             XC_gobbler },
     { "gumby",               XC_gumby },
+    { "h_double_arrow",      XC_sb_h_double_arrow },
     { "hand1",               XC_hand1 },
     { "hand2",               XC_hand2 },
     { "heart",               XC_heart },
@@ -971,6 +972,7 @@ static const struct cursor_font_fallback fallbacks[] =
     { "ul_angle",            XC_ul_angle },
     { "umbrella",            XC_umbrella },
     { "ur_angle",            XC_ur_angle },
+    { "v_double_arrow",      XC_sb_v_double_arrow },
     { "watch",               XC_watch },
     { "xterm",               XC_xterm }
 };
