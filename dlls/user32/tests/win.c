@@ -10537,6 +10537,172 @@ static void test_display_affinity( HWND win )
     SetWindowLongW(win, GWL_EXSTYLE, styleex);
 }
 
+static struct destroy_data
+{
+    HWND main_wnd;
+    HWND thread1_wnd;
+    HWND thread2_wnd;
+    HANDLE evt;
+    DWORD main_tid;
+    DWORD destroy_count;
+    DWORD ncdestroy_count;
+} destroy_data;
+
+static LRESULT WINAPI destroy_thread1_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+        ok( destroy_data.destroy_count > 0, "parent didn't get WM_DESTROY\n" );
+        PostQuitMessage(0);
+        break;
+    case WM_NCDESTROY:
+        ok( destroy_data.ncdestroy_count > 0, "parent didn't get WM_NCDESTROY\n" );
+        break;
+    }
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI destroy_thread2_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+        ok( destroy_data.destroy_count > 0, "parent didn't get WM_DESTROY\n" );
+        break;
+    case WM_NCDESTROY:
+        ok( destroy_data.ncdestroy_count > 0, "parent didn't get WM_NCDESTROY\n" );
+        ok( WaitForSingleObject(destroy_data.evt, 10000) != WAIT_TIMEOUT, "timeout\n" );
+        PostQuitMessage(0);
+        break;
+    }
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI destroy_main_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+        destroy_data.destroy_count++;
+        break;
+    case WM_NCDESTROY:
+        destroy_data.ncdestroy_count++;
+        break;
+    }
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static DWORD CALLBACK destroy_thread1(void *user)
+{
+    MSG msg;
+
+    destroy_data.thread1_wnd = CreateWindowExA(0, "destroy_test_thread1",
+            "destroy test thread", WS_CHILD, 100, 100, 100, 100,
+            destroy_data.main_wnd, 0, GetModuleHandleA(NULL), NULL);
+    ok(destroy_data.thread1_wnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    PostThreadMessageW(destroy_data.main_tid, WM_USER, 0, 0);
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+    PostThreadMessageW(destroy_data.main_tid, WM_USER + 2, 0, 0);
+    ok( WaitForSingleObject(destroy_data.evt, 10000) != WAIT_TIMEOUT, "timeout\n" );
+    ok( IsWindow( destroy_data.thread1_wnd ), "window destroyed\n" );
+    return 0;
+}
+
+static DWORD CALLBACK destroy_thread2(void *user)
+{
+    MSG msg;
+
+    destroy_data.thread2_wnd = CreateWindowExA(0, "destroy_test_thread2",
+            "destroy test thread", WS_CHILD, 100, 100, 100, 100,
+            destroy_data.main_wnd, 0, GetModuleHandleA(NULL), NULL);
+    ok(destroy_data.thread2_wnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+
+    PostThreadMessageW(destroy_data.main_tid, WM_USER + 1, 0, 0);
+    Sleep( 100 );
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+    ok( !IsWindow( destroy_data.thread2_wnd ), "window not destroyed\n" );
+    return 0;
+}
+
+static void test_destroy_quit(void)
+{
+    MSG msg;
+    WNDCLASSA wnd_classA;
+    ATOM ret;
+    HANDLE thread1, thread2;
+
+    destroy_data.main_tid = GetCurrentThreadId();
+    destroy_data.evt = CreateEventW(NULL, TRUE, FALSE, NULL);
+    destroy_data.destroy_count = 0;
+    destroy_data.ncdestroy_count = 0;
+
+    memset(&wnd_classA, 0, sizeof(wnd_classA));
+    wnd_classA.lpszClassName = "destroy_test_main";
+    wnd_classA.lpfnWndProc = destroy_main_wndproc;
+    ret = RegisterClassA(&wnd_classA);
+    ok(ret, "RegisterClass failed with error %d\n", GetLastError());
+
+    wnd_classA.lpszClassName = "destroy_test_thread1";
+    wnd_classA.lpfnWndProc = destroy_thread1_wndproc;
+    ret = RegisterClassA(&wnd_classA);
+    ok(ret, "RegisterClass failed with error %d\n", GetLastError());
+
+    wnd_classA.lpszClassName = "destroy_test_thread2";
+    wnd_classA.lpfnWndProc = destroy_thread2_wndproc;
+    ret = RegisterClassA(&wnd_classA);
+    ok(ret, "RegisterClass failed with error %d\n", GetLastError());
+
+    destroy_data.main_wnd = CreateWindowExA(0, "destroy_test_main",
+            "destroy test main", WS_OVERLAPPED | WS_CAPTION, 100, 100, 100, 100,
+            0, 0, GetModuleHandleA(NULL), NULL);
+    ok(destroy_data.main_wnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    if (!destroy_data.main_wnd)
+    {
+        CloseHandle(destroy_data.evt);
+        return;
+    }
+
+    thread1 = CreateThread(NULL, 0, destroy_thread1, 0, 0, NULL);
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        BOOL done = 0;
+        switch (msg.message)
+        {
+        case WM_USER:
+            thread2 = CreateThread(NULL, 0, destroy_thread2, 0, 0, NULL);
+            CloseHandle( thread2 );
+            break;
+        case WM_USER + 1:
+            DestroyWindow(destroy_data.main_wnd);
+            break;
+        case WM_USER + 2:
+            SetEvent(destroy_data.evt);
+            done = 1;
+            break;
+        default:
+            DispatchMessageA(&msg);
+            break;
+        }
+        if (done) break;
+    }
+
+    ok( WaitForSingleObject( thread1, 10000 ) != WAIT_TIMEOUT, "timeout" );
+    ok( !IsWindow( destroy_data.thread1_wnd ), "window not destroyed\n" );
+    CloseHandle( thread1 );
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -10692,6 +10858,7 @@ START_TEST(win)
     test_display_affinity(hwndMain);
     test_hide_window();
     test_minimize_window(hwndMain);
+    test_destroy_quit();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);

@@ -971,7 +971,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
         for (i = 0; list[i]; i++)
         {
             if (WIN_IsCurrentThread( list[i] )) WIN_DestroyWindow( list[i] );
-            else SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
+            else SendNotifyMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
         }
         HeapFree( GetProcessHeap(), 0, list );
     }
@@ -1088,7 +1088,7 @@ void destroy_thread_windows(void)
         if (!list) continue;
         for (i = 0; list[i]; i++)
             if (!WIN_IsCurrentThread( list[i] ))
-                SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
+                SendNotifyMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
         HeapFree( GetProcessHeap(), 0, list );
     }
 }
