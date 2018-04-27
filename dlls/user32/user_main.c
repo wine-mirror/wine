@@ -374,8 +374,7 @@ static void thread_detach(void)
     WDML_NotifyThreadDetach();
     USER_Driver->pThreadDetach();
 
-    if (thread_info->top_window) WIN_DestroyThreadWindows( thread_info->top_window );
-    if (thread_info->msg_window) WIN_DestroyThreadWindows( thread_info->msg_window );
+    destroy_thread_windows();
     CloseHandle( thread_info->server_queue );
     HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
     HeapFree( GetProcessHeap(), 0, thread_info->key_state );

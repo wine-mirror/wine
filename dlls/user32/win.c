@@ -287,8 +287,8 @@ static void free_window_handle( HWND hwnd )
         SERVER_START_REQ( destroy_window )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if (wine_server_call_err( req )) ptr = NULL;
-            else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
+            wine_server_call( req );
+            InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
         }
         SERVER_END_REQ;
         USER_Unlock();
@@ -1027,104 +1027,70 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
 
 /***********************************************************************
- *		destroy_thread_window
- *
- * Destroy a window upon exit of its thread.
+ *           next_thread_window
  */
-static void destroy_thread_window( HWND hwnd )
+static WND *next_thread_window( HWND *hwnd )
+{
+    struct user_object *ptr;
+    WND *win;
+    WORD index = *hwnd ? USER_HANDLE_TO_INDEX( *hwnd ) + 1 : 0;
+
+    USER_Lock();
+    while (index < NB_USER_HANDLES)
+    {
+        if (!(ptr = user_handles[index++])) continue;
+        if (ptr->type != USER_WINDOW) continue;
+        win = (WND *)ptr;
+        if (win->tid != GetCurrentThreadId()) continue;
+        *hwnd = ptr->handle;
+        return win;
+    }
+    USER_Unlock();
+    return NULL;
+}
+
+
+/***********************************************************************
+ *		destroy_thread_windows
+ *
+ * Destroy all window owned by the current thread.
+ */
+void destroy_thread_windows(void)
 {
     WND *wndPtr;
-    HWND *list;
-    HMENU menu = 0, sys_menu = 0;
-    struct window_surface *surface = NULL;
-    WORD index;
+    HWND hwnd = 0, *list;
+    HMENU menu, sys_menu;
+    struct window_surface *surface;
+    int i;
 
-    /* free child windows */
-
-    if ((list = WIN_ListChildren( hwnd )))
+    while ((wndPtr = next_thread_window( &hwnd )))
     {
-        int i;
-        for (i = 0; list[i]; i++)
-        {
-            if (WIN_IsCurrentThread( list[i] )) destroy_thread_window( list[i] );
-            else SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-    }
+        /* destroy the client-side storage */
 
-    /* destroy the client-side storage */
-
-    index = USER_HANDLE_TO_INDEX(hwnd);
-    if (index >= NB_USER_HANDLES) return;
-    USER_Lock();
-    if ((wndPtr = user_handles[index]))
-    {
-        if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) menu = (HMENU)wndPtr->wIDmenu;
+        list = WIN_ListChildren( hwnd );
+        menu = ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) ? (HMENU)wndPtr->wIDmenu : 0;
         sys_menu = wndPtr->hSysMenu;
         free_dce( wndPtr->dce, hwnd );
         surface = wndPtr->surface;
-        wndPtr->surface = NULL;
-        InterlockedCompareExchangePointer( &user_handles[index], NULL, wndPtr );
-    }
-    USER_Unlock();
+        InterlockedCompareExchangePointer( &user_handles[USER_HANDLE_TO_INDEX(hwnd)], NULL, wndPtr );
+        WIN_ReleasePtr( wndPtr );
+        HeapFree( GetProcessHeap(), 0, wndPtr );
+        if (menu) DestroyMenu( menu );
+        if (sys_menu) DestroyMenu( sys_menu );
+        if (surface)
+        {
+            register_window_surface( surface, NULL );
+            window_surface_release( surface );
+        }
 
-    HeapFree( GetProcessHeap(), 0, wndPtr );
-    if (menu) DestroyMenu( menu );
-    if (sys_menu) DestroyMenu( sys_menu );
-    if (surface)
-    {
-        register_window_surface( surface, NULL );
-        window_surface_release( surface );
-    }
-}
+        /* free child windows */
 
-
-/***********************************************************************
- *		destroy_thread_child_windows
- *
- * Destroy child windows upon exit of its thread.
- */
-static void destroy_thread_child_windows( HWND hwnd )
-{
-    HWND *list;
-    int i;
-
-    if (WIN_IsCurrentThread( hwnd ))
-    {
-        destroy_thread_window( hwnd );
-    }
-    else if ((list = WIN_ListChildren( hwnd )))
-    {
-        for (i = 0; list[i]; i++) destroy_thread_child_windows( list[i] );
+        if (!list) continue;
+        for (i = 0; list[i]; i++)
+            if (!WIN_IsCurrentThread( list[i] ))
+                SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
         HeapFree( GetProcessHeap(), 0, list );
     }
-}
-
-
-/***********************************************************************
- *           WIN_DestroyThreadWindows
- *
- * Destroy all children of 'wnd' owned by the current thread.
- */
-void WIN_DestroyThreadWindows( HWND hwnd )
-{
-    HWND *list;
-    int i;
-
-    if (!(list = WIN_ListChildren( hwnd ))) return;
-
-    /* reset owners of top-level windows */
-    for (i = 0; list[i]; i++)
-    {
-        if (!WIN_IsCurrentThread( list[i] ))
-        {
-            HWND owner = GetWindow( list[i], GW_OWNER );
-            if (owner && WIN_IsCurrentThread( owner )) WIN_SetOwner( list[i], 0 );
-        }
-    }
-
-    for (i = 0; list[i]; i++) destroy_thread_child_windows( list[i] );
-    HeapFree( GetProcessHeap(), 0, list );
 }
 
 
