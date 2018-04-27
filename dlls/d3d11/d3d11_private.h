@@ -45,14 +45,16 @@
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_AON9 MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
-#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_OSG5 MAKE_TAG('O', 'S', 'G', '5')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
+#define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 #define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
-#define TAG_AON9 MAKE_TAG('A', 'o', 'n', '9')
+#define TAG_STAT MAKE_TAG('S', 'T', 'A', 'T')
 
 struct d3d_device;
 

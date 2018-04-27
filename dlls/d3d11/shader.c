@@ -136,6 +136,10 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
             }
             break;
 
+        case TAG_RDEF:
+        case TAG_STAT:
+            break;
+
         default:
             FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
             break;
