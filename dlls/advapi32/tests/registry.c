@@ -175,9 +175,12 @@ static DWORD delete_key( HKEY hkey )
 
 static void setup_main_key(void)
 {
+    DWORD ret;
+
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main )) delete_key( hkey_main );
 
-    assert (!RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main ));
+    ret = RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main );
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 }
 
 static void check_user_privs(void)
