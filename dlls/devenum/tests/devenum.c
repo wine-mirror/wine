@@ -109,6 +109,9 @@ static void test_devenum(IBindCtx *bind_ctx)
                     }
                 }
 
+                hr = IMoniker_BindToObject(moniker, bind_ctx, NULL, &IID_IUnknown, NULL);
+                ok(hr == E_POINTER, "got %#x\n", hr);
+
                 IPropertyBag_Release(prop_bag);
                 IMoniker_Release(moniker);
             }

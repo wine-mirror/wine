@@ -409,6 +409,9 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(IMoniker *iface, IBi
 
     TRACE("(%p)->(%p, %p, %s, %p)\n", This, pbc, pmkToLeft, debugstr_guid(riidResult), ppvResult);
 
+    if (!ppvResult)
+        return E_POINTER;
+
     VariantInit(&var);
     *ppvResult = NULL;
 
