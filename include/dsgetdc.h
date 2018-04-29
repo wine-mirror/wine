@@ -86,6 +86,28 @@ typedef struct _DOMAIN_CONTROLLER_INFOW {
     LPWSTR ClientSiteName;
 } DOMAIN_CONTROLLER_INFOW, *PDOMAIN_CONTROLLER_INFOW;
 
+typedef struct _DS_DOMAIN_TRUSTSA {
+    LPSTR NetbiosDomainName;
+    LPSTR DnsDomainName;
+    ULONG Flags;
+    ULONG ParentIndex;
+    ULONG TrustType;
+    ULONG TrustAttributes;
+    PSID DomainSid;
+    GUID DomainGuid;
+} DS_DOMAIN_TRUSTSA, *PDS_DOMAIN_TRUSTSA;
+
+typedef struct _DS_DOMAIN_TRUSTSW {
+    LPWSTR NetbiosDomainName;
+    LPWSTR DnsDomainName;
+    ULONG Flags;
+    ULONG ParentIndex;
+    ULONG TrustType;
+    ULONG TrustAttributes;
+    PSID DomainSid;
+    GUID DomainGuid;
+} DS_DOMAIN_TRUSTSW, *PDS_DOMAIN_TRUSTSW;
+
 DECL_WINELIB_TYPE_AW(DOMAIN_CONTROLLER_INFO)
 
 DWORD WINAPI DsGetDcNameA(LPCSTR,LPCSTR,GUID*,LPCSTR,ULONG,PDOMAIN_CONTROLLER_INFOA*);
@@ -95,6 +117,10 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR,LPCWSTR,GUID*,LPCWSTR,ULONG,PDOMAIN_CONTROLLER
 DWORD WINAPI DsGetSiteNameA(LPCSTR ComputerName, LPSTR *SiteName);
 DWORD WINAPI DsGetSiteNameW(LPCWSTR ComputerName, LPWSTR *SiteName);
 #define     DsGetSiteName WINELIB_NAME_AW(DsGetSiteName)
+
+DWORD WINAPI DsEnumerateDomainTrustsA(LPSTR, ULONG, PDS_DOMAIN_TRUSTSA*, PULONG);
+DWORD WINAPI DsEnumerateDomainTrustsW(LPWSTR, ULONG, PDS_DOMAIN_TRUSTSW*, PULONG);
+#define      DsEnumerateDomainTrusts WINELIB_NAME_AW(DsEnumerateDomainTrusts)
 
 #ifdef __cplusplus
 }

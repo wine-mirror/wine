@@ -3,7 +3,8 @@
 @ stub DsAddressToSiteNames
 @ stub DsAddressToSiteNamesEx
 @ stub DsDeregisterDnsHostRecords
-@ stub DsEnumerateDomainTrusts
+@ stdcall DsEnumerateDomainTrustsA(str long ptr ptr)
+@ stdcall DsEnumerateDomainTrustsW(wstr long ptr ptr)
 @ stub DsGetDcClose
 @ stdcall DsGetDcNameA(str str ptr str long ptr)
 @ stdcall DsGetDcNameW(wstr wstr ptr wstr long ptr)
