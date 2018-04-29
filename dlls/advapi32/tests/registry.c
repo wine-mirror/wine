@@ -3464,9 +3464,28 @@ static void test_RegOpenCurrentUser(void)
     RegCloseKey(key);
 }
 
+struct notify_data {
+    HKEY key;
+    DWORD flags;
+    HANDLE event;
+};
+
+static DWORD WINAPI notify_change_thread(void *arg)
+{
+    struct notify_data *data = arg;
+    LONG ret;
+
+    ret = RegNotifyChangeKeyValue(data->key, TRUE,
+            REG_NOTIFY_CHANGE_NAME|data->flags, data->event, TRUE);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    return 0;
+}
+
 static void test_RegNotifyChangeKeyValue(void)
 {
+    struct notify_data data;
     HKEY key, subkey;
+    HANDLE thread;
     HANDLE event;
     DWORD dwret;
     LONG ret;
@@ -3486,6 +3505,68 @@ static void test_RegNotifyChangeKeyValue(void)
     dwret = WaitForSingleObject(event, 0);
     ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
 
+    RegDeleteKeyA(key, "SubKey");
+    RegCloseKey(key);
+
+    /* test same thread with REG_NOTIFY_THREAD_AGNOSTIC */
+    ret = RegOpenKeyA(hkey_main, "TestKey", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME|REG_NOTIFY_THREAD_AGNOSTIC,
+            event, TRUE);
+    if (ret == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("REG_NOTIFY_THREAD_AGNOSTIC is not supported\n");
+        RegCloseKey(key);
+        CloseHandle(event);
+        return;
+    }
+
+    ret = RegCreateKeyA(key, "SubKey", &subkey);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+
+    RegDeleteKeyA(key, "SubKey");
+    RegCloseKey(key);
+
+    /* test different thread without REG_NOTIFY_THREAD_AGNOSTIC */
+    ret = RegOpenKeyA(hkey_main, "TestKey", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    data.key = key;
+    data.flags = 0;
+    data.event = event;
+    thread = CreateThread(NULL, 0, notify_change_thread, &data, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    /* the thread exiting causes event to signal on Windows
+       this is worked around on Windows using REG_NOTIFY_THREAD_AGNOSTIC
+       Wine already behaves as if the flag is set */
+    dwret = WaitForSingleObject(event, 0);
+    todo_wine
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+    RegCloseKey(key);
+
+    /* test different thread with REG_NOTIFY_THREAD_AGNOSTIC */
+    ret = RegOpenKeyA(hkey_main, "TestKey", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    data.flags = REG_NOTIFY_THREAD_AGNOSTIC;
+    thread = CreateThread(NULL, 0, notify_change_thread, &data, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    ret = RegCreateKeyA(key, "SubKey", &subkey);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+
+    RegDeleteKeyA(key, "SubKey");
     RegDeleteKeyA(key, "");
     RegCloseKey(key);
     CloseHandle(event);
