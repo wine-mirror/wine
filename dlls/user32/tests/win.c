@@ -10698,7 +10698,7 @@ static void test_destroy_quit(void)
         if (done) break;
     }
 
-    ok( WaitForSingleObject( thread1, 10000 ) != WAIT_TIMEOUT, "timeout" );
+    ok( WaitForSingleObject( thread1, 10000 ) != WAIT_TIMEOUT, "timeout\n" );
     ok( !IsWindow( destroy_data.thread1_wnd ), "window not destroyed\n" );
     CloseHandle( thread1 );
 }
