@@ -1,24 +1,13 @@
-The Wine team is proud to announce that the stable release Wine 3.0
-is now available.
+The Wine maintenance release 3.0.1 is now available.
 
-This release represents a year of development effort and over 6,000
-individual changes. It contains a large number of improvements that
-are listed in the release notes below. The main highlights are:
-
-  - Direct3D 10 and 11 support.
-  - The Direct3D command stream.
-  - The Android graphics driver.
-  - Improved DirectWrite and Direct2D support.
-
-Once again, because of the annual release schedule, a number of
-features that are being worked on have been deferred to the next
-development cycle. This includes in particular Direct3D 12 and Vulkan
-support, as well as OpenGL ES support to enable Direct3D on Android.
+What's new in this release (see below for details):
+  - Various bug fixes
+  - Translation updates
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0.1.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.1.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -34,337 +23,243 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 3.0
-======================
-
-
-*** Direct3D
-
-- A significant number of Direct3D 10 and 11 features are implemented in
-  this release, including:
-  - Compute shaders.
-  - Hull and domain (tessellation) shaders.
-  - Stream output.
-  - Format capability queries.
-  - A large number of shader model 4 and 5 shader instructions.
-  - Shader model 4 and 5 interpolation modifiers.
-  - Shader model 4 and 5 clip and cull distances.
-  - Indirect draws and indirect compute dispatch.
-  - Structured buffers.
-  - Byte addressable buffers.
-  - Append and consume buffers.
-  - Unordered access view counters.
-  - Cube-map arrays.
-  - Layered rendering to 3-dimensional textures and texture arrays.
-  - Mip-map generation.
-  - Conservative depth output.
-  - Type-less (sub)resource copies.
-  - Depth bias.
-
-- The multi-threaded command stream feature serializes Direct3D rendering
-  commands from different threads into a single rendering thread. Its main
-  purpose in this release is rendering correctness, but the feature also
-  provides opportunities for future performance improvements. This feature
-  is disabled by default.
-
-- Support for OpenGL core contexts in Direct3D is improved, to the point
-  that core contexts are used by default for Direct3D 10 and 11
-  applications on AMD and Intel graphics cards. As a result, users of those
-  graphics cards in combination with Mesa OpenGL drivers should no longer
-  need to set the "MaxVersionGL" registry key to enable Direct3D 10 and 11
-  support.
-
-- The Direct3D graphics card database recognizes more graphics cards.
-
-- New HKCU\Software\Wine\Direct3D registry key:
-  - "csmt" (REG_DWORD)
-    Enable (0x1) or disable (0x0, default) the multi-threaded command
-    stream feature described above.
-
-- Deprecated HKCU\Software\Wine\Direct3D registry keys:
-  - "StrictDrawOrdering"
-    This has been superseded by the multi-threaded command stream feature.
-  - "OffscreenRenderingMode"
-    The "fbo" setting is the only remaining supported value. The
-    "backbuffer" setting, while still available, is no longer supported.
-
-- Removed HKCU\Software\Wine\Direct3D registry keys:
-  - "AlwaysOffscreen"
-    This is always enabled in this release.
-  - "MultiSampling"
-    Use the "SampleCount" (REG_DWORD) setting to force a specific
-    multi-sample anti-aliasing sample count for swapchain render targets
-    instead.
-
-
-*** Graphics
-
-- Drawing outlines of Direct2D geometry objects is implemented.
-
-- Direct2D linear and radial gradient brushes are implemented.
-
-- Direct2D compatibility with GDI is implemented.
-
-- Bounds computation of Direct2D geometry objects is implemented.
-
-- Simplification of Direct2D geometry objects is implemented.
-
-- The OpenGL extension list is updated to OpenGL version 4.6.
-
-- The system GLU library is only needed when the Nurbs renderer is used,
-  all other GLU functions are implemented internally.
-
-- Metafile playback in GdiPlus supports most of the GdiPlus-specific
-  metafile record types, in addition to the standard metafile records.
-
-- GdiPlus graphics operations take the GDI transform into account.
-
-- Encoding image formats with a palette is supported in WindowsCodecs.
-
-
-*** Android
-
-- Wine can be built as an APK package and behaves like a proper Android
-  application.
-
-- A full graphics driver is implemented. Because of restrictions of the
-  Android window management API, only full screen desktop mode is
-  supported.
-
-- A full audio driver is implemented.
-
-- OpenGL is supported, but it's limited to the OpenGL ES API that is
-  available on Android.
-
-- Direct3D is not supported yet, because it cannot run on top of OpenGL ES
-  at this point. This will be addressed during the next development cycle.
-
-
-*** Kernel
-
-- The default Windows version is set to Windows 7.
-
-- The full semantics of named pipes are implemented, including message-mode
-  pipes.
-
-- Position Independent Executables are supported, both for the Wine binary
-  itself and also when starting external binaries.
-
-- Serial and parallel port devices are created automatically, with the
-  corresponding symlinks in the dosdevices directory. The detected ports
-  can be overridden through the HKLM\Software\Wine\Ports key.
-
-- Safe DLL search mode is implemented. It is enabled by default, and can be
-  disabled by setting the "SafeDllSearchMode" value to 0 under
-  HKLM\System\CurrentControlSet\Control\Session Manager.
-
-- Safe process search mode is implemented. It is disabled by default but
-  can be requested by the application, and it can be forced by setting the
-  "SafeProcessSearchMode" value to 1 under
-  HKLM\System\CurrentControlSet\Control\Session Manager.
-
-- Asynchronous I/O performance is improved by reducing the number of server
-  calls.
-
-- Memory write watches work correctly when used concurrently with file I/O
-  on the same buffers.
-
-- Virtual memory allocations can be arbitrarily large on 64-bit platforms.
-
-
-*** User interface
-
-- The built-in mouse cursors are redesigned, and available in higher
-  resolution for high DPI screens.
-
-- The Shell Explorer, the common dialogs, and the RichEdit control properly
-  scale on high DPI screens.
-
-- The screen DPI value can be overridden by setting the "LogPixels" value
-  under HKEY_CURRENT_USER\Control Panel\Desktop.
-
-- In desktop mode, higher display resolutions with various aspect ratios
-  are supported.
-
-- The Task Dialog common control is implemented.
-
-- The Internal User Interface is supported in MSI.
-
-- Double-buffered theme painting is implemented.
-
-- The TWAIN library supports a user dialog for selecting the scanner
-  source.
-
-- Device-independent bitmaps and metafiles can be stored into the OLE Data
-  Cache.
-
-
-*** Desktop integration
-
-- The StartupWMClass field is set in generated desktop files so that they
-  can be matched to their respective Windows binary.
-
-- Clipboard changes from other X11 applications are detected through the
-  Xfixes library instead of polling.
-
-- The RichEdit control supports pasting metafiles.
-
-- The Program Manager DDE protocol for manipulating program entries and
-  groups is implemented.
-
-- The HID service for detecting Plug & Play devices is active by default.
-
-- Version 4 of the system tray notification protocol is supported on macOS.
-
-
-*** Text and fonts
-
-- Contextual glyph substitution is supported in UniScribe.
-
-- Character tables are based on version 10.0.0 of the Unicode Standard.
-
-- The Nepali and Bangla (India) locales are supported.
-
-- Font support is compatible with the new behaviors introduced in FreeType
-  version 2.8.1.
-
-
-*** DirectWrite
-
-- Trailing line trimming signs in both character and word modes is
-  supported.
-
-- Cluster wrapping mode is supported.
-
-- Uniform and proportional line spacing methods are implemented.
-
-- Oblique and bold simulation is also supported in bitmap rendering mode.
-
-- Per-factory cache is thread safe.
-
-- Overhang metrics evaluation for layouts are implemented.
-
-- In-memory font file loader is implemented and is available to
-  applications.
-
-
-*** D3DX
-
-- Support for D3DX 9 preshaders is improved.
-
-- Support for D3DX 9 application defined effect state managers
-  (ID3DXEffectStateManager) is implemented.
-
-- Using effect pools to share effect parameters between D3DX 9 effects is
-  implemented.
-
-
-*** Internet and networking
-
-- UDP/TCP listeners are implemented in Web Services.
-
-- Web Services supports the .NET Binary Format, including the string table
-  extension.
-
-- Web Services supports the .NET Message Framing Protocol.
-
-- Asynchronous support is enabled for receiving messages in Web Services.
-
-- HTML event handling is rewritten to support standard-compliant mode.
-
-- Multiple new standard-compliant HTML APIs are supported. HTML document
-  mode support is improved to preserve compatibility with documents
-  expecting legacy behavior.
-
-- The WebBrowser control supports MHTML files.
-
-- Embedding HTML documents in .NET applications is better supported.
-
-- WinHTTP correctly parses cookie attributes.
-
-
-*** Cryptography
-
-- Cryptographic hashes are implemented internally instead of relying on
-  GnuTLS.
-
-- AES encryption is supported.
-
-- The Microsoft Root Certificate 2011 is added to the list of known
-  Microsoft certificates.
-
-- The Mono and Gecko add-on packages are verified with SHA256 checksums.
-
-
-*** ARM platforms
-
-- On ARM, the floating point ABI defaults to 'softfp' for compatibility
-  with Windows binaries.  It can be changed by passing the --with-float-abi
-  flag to configure.
-
-- The Wine preloader is also used on ARM64 platforms.
-
-- Relay debugging is supported on ARM64 platforms.
-
-
-*** Built-in applications
-
-- Registry importing and exporting in RegEdit is reimplemented for better
-  compatibility. Windows 3.1 registry files can also be imported. Registry
-  files are exported to Unicode format by default.
-
-- RegEdit always shows the 64-bit view of the registry on 64-bit prefixes.
-
-- The Reg.exe registry manipulation tool supports importing and exporting
-  registry files.
-
-- The command interpreter implements the MKLINK command.
-
-- The command interpreter supports escape characters in the prompt string.
-
-- WineMine shows a confirmation dialog before resetting the best scores.
-
-
-*** Tools
-
-- The IDL compiler (widl) handles C++ aggregate returns in an
-  MSVC-compatible way.
-
-- The resource compiler (wrc) supports translating version resources
-  through the po files.
-
-- The Wine debugger (winedbg) supports printing floating point and SSE
-  register state.
-
-- All Perl scripts that parse XML use the standard XML::LibXML module.
-
-- The obsolete wineinstall tool is removed.
-
-
-*** Miscellaneous
-
-- XAudio supports float audio formats with more than 2 channels.
-
-- The Scheduler and related classes are supported in the C++ runtime.
-
-- SQL driver installation is supported in ODBC.
-
-- The ProgramData well known directory is supported.
-
-- The Mono engine is updated with upstream Mono fixes, and supports the
-  Mono profiler API version 2.
-
-- The thread id is always displayed in debug traces.
-
-
-*** New external dependencies
-
-- The krb5 library is used to implement the Kerberos Authentication
-  Package.
-
-- The XFixes library is used to receive clipboard change notifications.
-
+Bugs fixed in 3.0.1 (total 60):
+
+  23033  Tages Protection v5.x: games report "DLL not found shell.dll16.dll" (Runaway 2: The Dream Of The Turtle, ...)
+  25138  Black and White 2 demo crashes on startup (ID3DXEffect interface changes between d3dx9_xx versions)
+  32104  KwMusic: crashes during installing
+  32802  Janetter 4.1.1.0 fails to start properly and gives an error saying: "Backend server cannot init"
+  35268  64bit InstallShield installer uses 32bit typelib function offsets
+  35910  TuneUp Utilities 2014 installer crashes (API signature mismatch for NtAllocateUuids)
+  36143  Symantec Norton 360 installer reports 'This product is not compatible with this computer's current operating system' (RtlVerifyVersionInfo doesn't handle major/minor/service pack condition mask properly)
+  36718  Mindjet MindManager 14.x/15.x installer fails with 'Microsoft .NET Framework version 4.0.30319 or higher required' (builtin 'MsiNetAssemblySupport' property missing)
+  37217  wine builtin iexplore couldn't load local pages correctly in chinese named folders
+  37809  C runtime dlls can't link with uclibc (bessel functions missing)
+  37852  Sentinel HASP 'hardlock.sys' kernel driver custom imports resolver can't cope with many 'ntoskrnl.exe' functions being fowarded to 'ntdll.dll' (Minitab 16 fails to start)
+  37997  Jeskola Buzz Build 1499 (.NET 4.0 app) crashes on unimplemented function msvcp100.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z
+  38352  Multiple games need d3dx9_36.dll.D3DXComputeNormalMap (Foresight, Gamestudio Venice, GOG King Arthur Collection)
+  38838  MS Office Pro Plus 2010 reruns setup on starting any app when Windows version is Vista or later
+  39500  DRM kernel drivers used by some game demos crash on unimplemented function hal.dll.KeQueryPerformanceCounter (Secret Files: Tunguska, Sherlock Holmes vs Jack the Ripper)
+  40539  Fail to start HPDiagnosticCoreUI.exe
+  40926  Multiple games (Solus Project, Dying Light) require unimplemented function msvcp110.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z
+  41096  ResEdit Resources treeview has rendered wrongly positioned first branch
+  42170  Microsoft .NET Framework 4.6.2 offline installer does not complete, needs wevtapi.EvtNext stub
+  42468  Broken msxml text nodes escaping
+  42789  Qemu 2.9.0-rc3 crashes before displaying anything
+  43041  Multiple application installers crash due to missing message string for 0x800b0100 (TRUST_E_NOSIGNATURE) (CodeXL 2.3, RT Se7en Lite)
+  43256  Civilization V in-game font corrupted
+  43357  Stars in Shadow crashes on startup
+  43520  Magic The Gathering Online - corrupted rendering of CMYK jpegs
+  43538  x64dbg needs unimplemented function msvcp120.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z
+  43728  Magic: The Gathering Online intensive CPU usage when idle
+  43998  treeview not drawn correctly
+  44053  MobilePASS application quits with an error, needs unimplemented function bcrypt.dll.BCryptImportKey
+  44176  EverQuest crashes with unimplemented function d3dx9_43.dll.D3DXCreateKeyframedAnimationSet
+  44213  ShareHolder Finder 0.9.3.0 fails to generate unique hardware id, reports 'Error: The requested action with this object has failed.' (several 'Win32_ComputerSystemProduct' WMI class properties missing)
+  44222  Office 2010 Pro Plus reruns setup on starting any app even when Windows version is XP
+  44255  Wolf RPG Editor: Game.exe zombifies upon quit
+  44265  Options dialog triggers exception upon close in Windows Media Player 6.4
+  44270  Exception when organizing favorites in Windows Media Player 6.4 (unimplemented function shdocvw.dll.DoOrganizeFavDlg)
+  44296  Qt 5 programs fail to resolve DNS SRV records
+  44310  WritePrivateProfileString doesn't check for flush errors
+  44329  Listview does not reset returned state mask for subitems
+  44349  winedbg: stepping is broken using GDB proxy
+  44428  x64dbg needs unimplemented function msvcr120.dll.??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
+  44441  for loop reading a file strips out double quotes and then equals
+  44468  x64dbg crashes on unimplemented function msvcr120.dll.?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ
+  44473  glyph overlap in Delphi editor
+  44475  Microsoft SQL Server 2008 Express Edition installer fails install .NET assemblies into GAC
+  44482  x64dbg crashes during exit on unimplemented function msvcp120.dll.??0_Runtime_object@details@Concurrency@@QEAA@XZ
+  44492  winedbg reports unknown mode, fails to backtrace etc. in protected-mode with 64-bit wineserver
+  44501  Missing D3D11_1_UAV_SLOT_COUNT constant
+  44512  Royale Noir theme - Various: fixme:uxtheme:DrawThemeTextEx unsupported flags
+  44550  ReactOS ftp.exe: enters endless loop on CTRL-Z
+  44570  explorer.exe crashes when opening relative paths
+  44578  ShellDispatch::BrowseForFolder is not implemented
+  44616  Multiple Blizzard games need 'ntdll.NtCreateThreadEx' implementation (Diablo III v2. 6. 1. 49286+, World of Warcraft, Overwatch)
+  44626  AvP Classic 2000 (Steam) launcher crashes when attempting to start the game
+  44628  BaiduMusic needs dwmapi.DwmSetIconicThumbnail (stub)
+  44641  Sentinel HASP 'hardlock.sys' kernel driver crashes on unimplemented function ntoskrnl.exe.RtlCreateRegistryKey
+  44647  Smart Diary Suite 4 just segfaults
+  44654  EDIdEv Framework EDI Runtime installer fails due to 'sfc.SfcGetNextProtectedFile' not setting last-error code
+  44701  xinput console spam with steam
+  44717  Bermuda (Steam, Indie game) crashes due to 'msscript.ocx' 'ScriptControl_put_AllowUI' being a stub
+  44749  Sentinel HASP 'hardlock.sys' kernel driver expects ntdll.RtlCheckRegistryKey to return STATUS_SUCCESS on empty path
+
+----------------------------------------------------------------
+
+Changes since 3.0:
+
+Akihiro Sagawa (6):
+      gdi32: Fix ABC width calculations when applying transformations internally.
+      gdi32: Fix synthetic bold outline text metrics.
+      gdi32/tests: Add more text metrics tests in synthetic bold bitmap fonts.
+      gdi32: Fix text metrics in synthetic bold bitmap fonts.
+      ws2_32/tests: Add ioctlsocket(FIONREAD) tests with listening socket.
+      ws2_32: Fix ioctlsocket(FIONREAD) with listening socket.
+
+Alex Henrie (2):
+      msxml3: Remove CRs in domtext_put_data and add them in domtext_get_xml.
+      msvcrt: Compile but show an error if Bessel functions aren't available.
+
+Alexandre Julliard (5):
+      ntoskrnl: Avoid forwarding to ntdll, link directly instead.
+      urlmon/tests: Update the IP address for the WineHQ server.
+      ntdll: Avoid pushl %esp instruction in RtlUnwind prolog.
+      configure: Check the positive form of the warning options.
+      ntdll: Fix crash on nested thread exit.
+
+Alistair Leslie-Hughes (2):
+      d3dx9: Stub D3DXCreateKeyframedAnimationSet().
+      msscript: Implement IScriptControl get/set AllowUI.
+
+Andrew Eikum (1):
+      advapi32: Also wait on services without a control thread during shutdown.
+
+Andrew Wesie (1):
+      ntdll: Implement NtCreateThreadEx.
+
+Andrey Gusev (1):
+      po: Update Ukrainian translation.
+
+Anton Romanov (2):
+      ole32: Make CoWaitForMultipleHandles peek at all posted messages.
+      windowscodecs: Fix data corruption for Adobe CMYK JPEGs.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
+
+Bernhard Übelacker (1):
+      user32: Validate DIB offset in CURSORICON_GetFileEntry.
+
+Christian Costa (1):
+      wined3d: Recognize GTX 560M card with NVIDIA driver.
+
+Fabian Maurer (1):
+      cmd.exe: Parse parameters in "FOR /F" properly.
+
+Gijs Vermeulen (2):
+      compobj.dll16: Add StringFromIID.
+      ole2disp.dll16: Implement SafeArrayGet[UBound|LBound].
+
+Hans Leidekker (5):
+      dnsapi: Use default server list if passed in array is empty.
+      msi: Don't mark uncompressed global assembly files as installed until they are in the assembly cache.
+      wbemprox: Add more Win32_ComputerSystemProduct properties.
+      msi: Properly set the MsiNetAssemblySupport property.
+      bcrypt: Partial implementation of BCryptImportKey and BCryptExportKey.
+
+Henri Verbeet (2):
+      include: Add d3d11.1 and d3d11.2 constants to d3d11.idl.
+      winedbg: Handle byte-sized registers in cpu_register() and cpu_register_hex_from().
+
+Huw D. M. Davies (4):
+      oleaut32: Fix vtable offset for a SYS_WIN32 typelib loaded on WIN64.
+      winebrowser: Fix calling convention for wine_get_unix_file_name().
+      winedbg: Fix the operand order of some XMM instructions.
+      winedbg: Add cvtdq2ps and cvtps2pd opcodes.
+
+Jacek Caban (1):
+      mshtml: Use nsIDOMEvent directly to prevent default event handling in dispatch_event_object.
+
+James Woodcock (1):
+      msvcrt: Gets() should handle EOF on stdin gracefully.
+
+Julian Rüger (1):
+      po: Update German translation.
+
+Kai Krakow (1):
+      wined3d: Recognize GTX 1050 Ti card with NVIDIA driver.
+
+Kim Malmo (1):
+      po: Update Norwegian translation.
+
+Lauri Kenttä (1):
+      po: Update Finnish translation.
+
+Louis Lenders (4):
+      kernel32: Add message resource for TRUST_E_NOSIGNATURE.
+      gdiplus: Fix argument check in GdipLoadImageFromStream().
+      xinput1_3: Quiet a noisy fixme.
+      ntdll: Match NtAllocateUuids signature to Windows 2000 instead of NT4.
+
+Marcin Mikołajczak (1):
+      po: Update Polish translation.
+
+Martin Storsjo (1):
+      configure: Check for -Wno-pragma-pack.
+
+Matteo Bruni (1):
+      server: Avoid writing out of bounds in get_selector_entry().
+
+Michael Müller (6):
+      shell32: Use manual redirection for RunDLL_CallEntry16.
+      dwmapi: Add DwmSetIconicThumbnail() stub.
+      hal: Implement KeQueryPerformanceCounter.
+      wbemprox: Add FreePhysicalMemory to Win32_OperatingSystem.
+      wbemprox: Provide DeviceID, Location and PortName for printers.
+      sfc_os: Set an error code in SfcGetNextProtectedFile stub.
+
+Michael Stefaniuc (3):
+      quartz: Don't create the advise thread during the clock teardown.
+      include: Add generic HeapAlloc() wrappers.
+      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+
+Nikolay Sivov (10):
+      comctl32/listview: Always return zero state mask for subitems.
+      wevtapi: Add EvtNext() stub.
+      uxtheme: Properly initialize text drawing options.
+      shell32: Partially implement IShellDispatch::BrowseForFolder().
+      oleaut32: Don't reset property page site to NULL.
+      gdiplus/tests: Add some invalid arguments tests for GdipLoadImageFromStream().
+      kernel32/tests: Add more tests for VerifyVersionInfo().
+      comctl32/toolbar: Fix a crash when tracing special button string identifier.
+      comctl32/treeview: Fix tooltip window leak.
+      po: Update Russian translation.
+
+Paul Graham (1):
+      kernel32: Fix failure reporting in WritePrivateProfile* and add tests.
+
+Piotr Caban (8):
+      msvcp100: Add Concurrency::details::_Concurrent_queue_base_v4 class stub.
+      msvcr110: Add Concurrency::_Trace_agents function stub.
+      msvcr100: Add _NonReentrantPPLLock@details class stub.
+      user32: Fix itemData passed in ListBox WM_MEASUREITEM message.
+      user32/tests: Add listbox WM_MEASUREITEM tests.
+      comctl32: Update all items rects in TREEVIEW_RecalculateVisibleOrder.
+      msvcrt: Fix misleading indentation in gets.
+      msvcp100: Add _Runtime_object class implementation.
+
+Sebastian Lackner (2):
+      ntdll: Fix condition mask handling in RtlVerifyVersionInfo.
+      d3dx9: Adjust ID3DXEffect interface based on DLL version.
+
+Stefan Leichter (2):
+      ntdll: Fix RtlCheckRegistryKey when called with empty path.
+      ntdll: Implement RtlCreateRegistryKey.
+
+Thomas Faber (1):
+      ntdll: Handle RtlReAllocateHeap failure in com_class_add_progid (Coverity).
+
+Vijay Kiran Kamuju (1):
+      shdocvw: Add stub DoOrganizeFavDlg.
+
+Vladimir Bespalov (1):
+      winedbg: Fix enum value compilation warning.
+
+Zebediah Figura (7):
+      winedbg/gdbproxy: Replace memory read over a breakpoint with the real value.
+      server: Fix pointer arithmetic in get_selector_entry().
+      d3dx9: Add stub for D3DXComputeNormalMap.
+      explorer: Pass the full path to ParseDisplayName().
+      winegstreamer: Stop creating the filter if gstreamer fails to render.
+      ieframe: Clean up InternetExplorerManager server process.
+      winedbg: Remove a misplaced \n.
+
+Zhiyi Zhang (2):
+      urlmon: Do not canonicalize Unicode characters.
+      kernel32: Fix handling lines with only values in GetPrivateProfileSection.
 
 --
-Alexandre Julliard
-julliard@winehq.org
+Michael Stefaniuc
+mstefani@winehq.org
