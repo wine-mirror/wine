@@ -5278,7 +5278,7 @@ static void test_SHGetSetFolderCustomSettings(void)
     fcs.pszIconFile = iconpathW;
 
     hr = pSHGetSetFolderCustomSettings(&fcs, pathW, FCS_FORCEWRITE); /*creates and writes to a Desktop.ini*/
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %#x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %#x\n", hr);
 
     memset(&fcs, 0, sizeof(fcs));
     fcs.dwSize = sizeof(fcs);
@@ -5292,7 +5292,7 @@ static void test_SHGetSetFolderCustomSettings(void)
     todo_wine ok(!lstrcmpiW(iconpathW, fcs.pszIconFile), "Expected %s, got %s\n", wine_dbgstr_w(iconpathW), wine_dbgstr_w(fcs.pszIconFile));
 
     hr = pSHGetSetFolderCustomSettings(&fcs, NULL, FCS_READ);
-    todo_wine ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
 
     lstrcpyW(bufferW, pathW);
     lstrcatW(bufferW, desktop_iniW);

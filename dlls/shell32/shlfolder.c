@@ -605,14 +605,44 @@ HRESULT WINAPI SHOpenFolderAndSelectItems( PCIDLIST_ABSOLUTE pidlFolder, UINT ci
 }
 
 /***********************************************************************
- *  SHGetSetFolderCustomSettings
+ *  SHGetSetFolderCustomSettings (SHELL32.709)
  *
- *   Only Unicode above Server 2003
+ *   Only Unicode above Server 2003, writes/reads from a Desktop.ini
  */
 HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, PCWSTR path, DWORD flag )
 {
-    FIXME("%p %s 0x%x: stub\n", fcs, debugstr_w(path), flag);
-    return E_NOTIMPL;
+    static const WCHAR iconresourceW[] = {'I','c','o','n','R','e','s','o','u','r','c','e',0};
+    static const WCHAR desktop_iniW[] = {'D','e','s','k','t','o','p','.','i','n','i',0};
+    WCHAR bufferW[MAX_PATH];
+    HRESULT hr;
+
+    hr = E_FAIL;
+    bufferW[0] = 0;
+
+    if (!fcs || !path)
+        return hr;
+
+    if (flag & FCS_FORCEWRITE)
+    {
+        if (fcs->dwMask & FCSM_ICONFILE)
+        {
+            lstrcpyW(bufferW, path);
+            PathAddBackslashW(bufferW);
+            lstrcatW(bufferW, desktop_iniW);
+
+            if (WritePrivateProfileStringW(wszDotShellClassInfo, iconresourceW, fcs->pszIconFile, bufferW))
+            {
+                TRACE("Wrote an iconresource entry %s into %s\n", debugstr_w(fcs->pszIconFile), debugstr_w(bufferW));
+                hr = S_OK;
+            }
+            else
+                ERR("Failed to write (to) Desktop.ini file\n");
+        }
+    }
+    else
+        FIXME("%p %s 0x%x: stub\n", fcs, debugstr_w(path), flag);
+
+    return hr;
 }
 
 /***********************************************************************
