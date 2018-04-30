@@ -723,7 +723,7 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     return ERROR_SUCCESS;
 }
 
-static DWORD get_winedevice_binary_path(WCHAR **path, BOOL *is_wow64)
+static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCHAR **path, BOOL *is_wow64)
 {
     static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',0};
     WCHAR system_dir[MAX_PATH];
@@ -734,7 +734,7 @@ static DWORD get_winedevice_binary_path(WCHAR **path, BOOL *is_wow64)
     else if (GetBinaryTypeW(*path, &type))
         *is_wow64 = (type == SCS_32BIT_BINARY);
     else
-        return GetLastError();
+        *is_wow64 = service_entry->is_wow64;
 
     GetSystemDirectoryW(system_dir, MAX_PATH);
     HeapFree(GetProcessHeap(), 0, *path);
@@ -857,7 +857,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
         struct service_entry *winedevice_entry;
         WCHAR *group;
 
-        if ((err = get_winedevice_binary_path(&path, &is_wow64)))
+        if ((err = get_winedevice_binary_path(service_entry, &path, &is_wow64)))
         {
             service_unlock(service_entry);
             HeapFree(GetProcessHeap(), 0, path);
