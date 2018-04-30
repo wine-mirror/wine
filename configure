@@ -18882,6 +18882,7 @@ wine_fn_config_makefile dlls/ntdll/tests enable_tests
 wine_fn_config_makefile dlls/ntdsapi enable_ntdsapi
 wine_fn_config_makefile dlls/ntdsapi/tests enable_tests
 wine_fn_config_makefile dlls/ntoskrnl.exe enable_ntoskrnl_exe
+wine_fn_config_makefile dlls/ntoskrnl.exe/tests enable_tests
 wine_fn_config_makefile dlls/ntprint enable_ntprint
 wine_fn_config_makefile dlls/ntprint/tests enable_tests
 wine_fn_config_makefile dlls/objsel enable_objsel

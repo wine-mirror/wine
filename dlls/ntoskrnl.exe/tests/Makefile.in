@@ -1,0 +1,10 @@
+TESTDLL   = ntoskrnl.exe
+IMPORTS   = advapi32
+
+driver_IMPORTS = winecrt0 ntoskrnl
+driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+
+SOURCES = \
+	driver.c \
+	driver.spec \
+	ntoskrnl.c
