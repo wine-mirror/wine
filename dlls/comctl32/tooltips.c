@@ -177,15 +177,6 @@ typedef struct
 static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
-
-static inline BOOL TOOLTIPS_IsCallbackString(LPCWSTR str, BOOL isW)
-{
-    if (isW)
-      return str == LPSTR_TEXTCALLBACKW;
-    else
-      return (LPCSTR)str == LPSTR_TEXTCALLBACKA;
-}
-
 static inline UINT_PTR
 TOOLTIPS_GetTitleIconIndex(HICON hIcon)
 {
@@ -1091,7 +1082,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
             toolPtr->lpszText = ti->lpszText;
         }
         else if (ti->lpszText) {
-            if (TOOLTIPS_IsCallbackString(ti->lpszText, isW)) {
+            if (ti->lpszText == LPSTR_TEXTCALLBACKW) {
                 TRACE("add CALLBACK\n");
                 toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
             }
@@ -1674,7 +1665,7 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	toolPtr->lpszText = ti->lpszText;
     }
     else {
-	if (TOOLTIPS_IsCallbackString(ti->lpszText, isW))
+	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
 	    if ( (toolPtr->lpszText) &&
@@ -1800,7 +1791,7 @@ TOOLTIPS_UpdateTipTextT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW
 	toolPtr->lpszText = ti->lpszText;
     }
     else if (ti->lpszText) {
-	if (TOOLTIPS_IsCallbackString(ti->lpszText, isW))
+	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
 	    if ( (toolPtr->lpszText)  &&
