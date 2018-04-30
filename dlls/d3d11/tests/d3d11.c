@@ -15492,6 +15492,7 @@ static void test_check_feature_support(void)
 {
     D3D11_FEATURE_DATA_THREADING threading[2];
     D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS hwopts;
+    D3D11_FEATURE_DATA_ARCHITECTURE_INFO archinfo;
     ID3D11Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -15549,6 +15550,13 @@ static void test_check_feature_support(void)
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts));
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     trace("Compute shader support via SM4 %#x.\n", hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x);
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_ARCHITECTURE_INFO, &archinfo, sizeof(archinfo));
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_ARCHITECTURE_INFO, &archinfo, sizeof(archinfo)*2);
+    ok(hr == E_INVALIDARG /* Not available on all Windows versions but they will return E_INVALIDARG anyways. */,
+            "Got unexpected hr %#x.\n", hr);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
