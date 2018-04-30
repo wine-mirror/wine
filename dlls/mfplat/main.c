@@ -404,8 +404,15 @@ HRESULT WINAPI MFTUnregister(CLSID clsid)
  */
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
 {
+#define MF_VERSION_XP   MAKELONG( MF_API_VERSION, 1 )
+#define MF_VERSION_WIN7 MAKELONG( MF_API_VERSION, 2 )
+
     FIXME("(%u, %u): stub\n", version, flags);
-    return MF_E_BAD_STARTUP_VERSION;
+
+    if(version != MF_VERSION_XP && version != MF_VERSION_WIN7)
+        return MF_E_BAD_STARTUP_VERSION;
+
+    return S_OK;
 }
 
 /***********************************************************************
