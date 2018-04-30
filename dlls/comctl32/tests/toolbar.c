@@ -56,7 +56,6 @@ static BOOL g_ResetDispTextPtr;
 
 static const struct message ttgetdispinfo_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, TBN_GETINFOTIPA },
-    /* next line is todo, currently TTN_GETDISPINFOW is raised here */
     { WM_NOTIFY, sent|id, 0, 0, TTN_GETDISPINFOA },
     { 0 }
 };
@@ -2026,7 +2025,7 @@ static void test_tooltip(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SendMessageA(hToolbar, WM_NOTIFY, 0, (LPARAM)&nmtti);
     ok_sequence(sequences, PARENT_SEQ_INDEX, ttgetdispinfo_parent_seq,
-                "dispinfo from tooltip", TRUE);
+                "dispinfo from tooltip", FALSE);
 
     g_ResetDispTextPtr = TRUE;
     SendMessageA(hToolbar, WM_NOTIFY, 0, (LPARAM)&nmtti);

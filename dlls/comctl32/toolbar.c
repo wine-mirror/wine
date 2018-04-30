@@ -6118,6 +6118,9 @@ TOOLBAR_NCPaint (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnmtdi)
 {
     int index = TOOLBAR_GetButtonIndex(infoPtr, lpnmtdi->hdr.idFrom, FALSE);
+    NMTTDISPINFOA nmtdi;
+    unsigned int len;
+    LRESULT ret;
 
     TRACE("button index = %d\n", index);
 
@@ -6131,7 +6134,6 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
     {
         WCHAR wszBuffer[INFOTIPSIZE+1];
         NMTBGETINFOTIPW tbgit;
-        unsigned int len; /* in chars */
 
         wszBuffer[0] = '\0';
         wszBuffer[INFOTIPSIZE] = '\0';
@@ -6169,7 +6171,6 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
     {
         CHAR szBuffer[INFOTIPSIZE+1];
         NMTBGETINFOTIPA tbgit;
-        unsigned int len; /* in chars */
 
         szBuffer[0] = '\0';
         szBuffer[INFOTIPSIZE] = '\0';
@@ -6210,7 +6211,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
         !(infoPtr->buttons[index].fsStyle & BTNS_SHOWTEXT))
     {
         LPWSTR pszText = TOOLBAR_GetText(infoPtr, &infoPtr->buttons[index]);
-        unsigned int len = pszText ? strlenW(pszText) : 0;
+        len = pszText ? strlenW(pszText) : 0;
 
         TRACE("using button hidden text %s\n", debugstr_w(pszText));
 
@@ -6236,9 +6237,55 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
     TRACE("Sending tooltip notification to %p\n", infoPtr->hwndNotify);
 
-    /* last resort: send notification on to app */
-    /* FIXME: find out what is really used here */
-    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, lpnmtdi->hdr.idFrom, (LPARAM)lpnmtdi);
+    /* Last resort, forward TTN_GETDISPINFO to the app:
+
+       - NFR_UNICODE gets TTN_GETDISPINFOW, and TTN_GETDISPINFOA if -W returned no text;
+       - NFR_ANSI gets only TTN_GETDISPINFOA.
+    */
+    if (infoPtr->bUnicode)
+    {
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, lpnmtdi->hdr.idFrom, (LPARAM)lpnmtdi);
+
+        TRACE("TTN_GETDISPINFOW - got string %s\n", debugstr_w(lpnmtdi->lpszText));
+
+        if (lpnmtdi->lpszText && *lpnmtdi->lpszText)
+            return ret;
+    }
+
+    nmtdi.hdr.hwndFrom = lpnmtdi->hdr.hwndFrom;
+    nmtdi.hdr.idFrom = lpnmtdi->hdr.idFrom;
+    nmtdi.hdr.code = TTN_GETDISPINFOA;
+    nmtdi.lpszText = nmtdi.szText;
+    nmtdi.szText[0] = 0;
+    nmtdi.hinst = lpnmtdi->hinst;
+    nmtdi.uFlags = lpnmtdi->uFlags;
+    nmtdi.lParam = lpnmtdi->lParam;
+
+    ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmtdi.hdr.idFrom, (LPARAM)&nmtdi);
+
+    TRACE("TTN_GETDISPINFOA - got string %s\n", debugstr_a(nmtdi.lpszText));
+
+    if (!nmtdi.lpszText || !*nmtdi.lpszText)
+        return ret;
+
+    len = MultiByteToWideChar(CP_ACP, 0, nmtdi.lpszText, -1, NULL, 0);
+    if (len > ARRAY_SIZE(lpnmtdi->szText))
+    {
+        infoPtr->pszTooltipText = Alloc(len * sizeof(WCHAR));
+        if (infoPtr->pszTooltipText)
+        {
+            MultiByteToWideChar(CP_ACP, 0, nmtdi.lpszText, -1, infoPtr->pszTooltipText, len);
+            lpnmtdi->lpszText = infoPtr->pszTooltipText;
+            return 0;
+        }
+    }
+    else
+    {
+        MultiByteToWideChar(CP_ACP, 0, nmtdi.lpszText, -1, lpnmtdi->lpszText, ARRAY_SIZE(nmtdi.szText));
+        return 0;
+    }
+
+    return ret;
 }
 
 
