@@ -71,7 +71,7 @@ static ULONG STDMETHODCALLTYPE d3d11_buffer_AddRef(ID3D11Buffer *iface)
 
     if (refcount == 1)
     {
-        ID3D11Device_AddRef(buffer->device);
+        ID3D11Device1_AddRef(buffer->device);
         wined3d_mutex_lock();
         wined3d_buffer_incref(buffer->wined3d_buffer);
         wined3d_mutex_unlock();
@@ -89,14 +89,14 @@ static ULONG STDMETHODCALLTYPE d3d11_buffer_Release(ID3D11Buffer *iface)
 
     if (!refcount)
     {
-        ID3D11Device *device = buffer->device;
+        ID3D11Device1 *device = buffer->device;
 
         wined3d_mutex_lock();
         wined3d_buffer_decref(buffer->wined3d_buffer);
         wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
-        ID3D11Device_Release(device);
+        ID3D11Device1_Release(device);
     }
 
     return refcount;
@@ -108,7 +108,7 @@ static void STDMETHODCALLTYPE d3d11_buffer_GetDevice(ID3D11Buffer *iface, ID3D11
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = buffer->device;
+    *device = (ID3D11Device *)buffer->device;
     ID3D11Device_AddRef(*device);
 }
 
@@ -242,7 +242,7 @@ static void STDMETHODCALLTYPE d3d10_buffer_GetDevice(ID3D10Buffer *iface, ID3D10
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device_QueryInterface(buffer->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device1_QueryInterface(buffer->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface,
@@ -470,8 +470,8 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     }
     wined3d_mutex_unlock();
 
-    buffer->device = &device->ID3D11Device_iface;
-    ID3D11Device_AddRef(buffer->device);
+    buffer->device = &device->ID3D11Device1_iface;
+    ID3D11Device1_AddRef(buffer->device);
 
     return S_OK;
 }

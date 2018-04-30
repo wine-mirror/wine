@@ -5927,9 +5927,9 @@ static void test_device_context_state(void)
 {
     ID3DDeviceContextState *context_state, *previous_context_state;
     ID3D11SamplerState *sampler, *tmp_sampler;
+    ID3D11DeviceContext1 *context = NULL;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
-    ID3D11DeviceContext1 *context;
     ID3D11Device *d3d11_device;
     ID3D11Device1 *device;
     ULONG refcount;
@@ -5949,11 +5949,17 @@ static void test_device_context_state(void)
         return;
     }
 
-    check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
-    check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
+    todo_wine check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
+    todo_wine check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     ID3D11Device1_GetImmediateContext1(device, &context);
+    todo_wine ok(!!context, "Failed to get immediate context.\n");
+    if (!context)
+    {
+        ID3D11Device1_Release(device);
+        return;
+    }
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
