@@ -88,7 +88,7 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
     return STATUS_INVALID_PARAMETER;
 }
 
-struct lsa_connection *alloc_lsa_connection(void)
+static struct lsa_connection *alloc_lsa_connection(void)
 {
     struct lsa_connection *ret;
     if (!(ret = heap_alloc(sizeof(*ret)))) return NULL;
