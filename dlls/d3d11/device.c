@@ -3602,6 +3602,20 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device1 
             return S_OK;
         }
 
+        case D3D11_FEATURE_ARCHITECTURE_INFO:
+        {
+            D3D11_FEATURE_DATA_ARCHITECTURE_INFO *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            FIXME("Returning fake data architecture info.\n");
+            options->TileBasedDeferredRenderer = FALSE;
+            return S_OK;
+        }
+
         default:
             FIXME("Unhandled feature %#x.\n", feature);
             return E_NOTIMPL;
