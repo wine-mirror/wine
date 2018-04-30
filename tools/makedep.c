@@ -2823,9 +2823,11 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
 static void output_source_spec( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray imports = get_expanded_file_local_var( make, obj, "IMPORTS" );
+    struct strarray dll_flags = get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" );
     struct strarray all_libs, dep_libs = empty_strarray;
 
     if (!imports.count) imports = make->imports;
+    if (!dll_flags.count) dll_flags = make->extradllflags;
     all_libs = add_import_libs( make, &dep_libs, imports, 0 );
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
     strarray_addall( &all_libs, libs );
@@ -2848,7 +2850,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
     output_filenames( target_flags );
     output_filenames( unwind_flags );
-    output_filenames( make->extradllflags );
+    output_filenames( dll_flags );
     output_filename( "-shared" );
     output_filename( source->filename );
     output_filename( strmake( "%s.o", obj_dir_path( make, obj )));
@@ -2880,6 +2882,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
         if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
         output_filename( "--lib-suffix=.cross.a" );
+        output_filenames( dll_flags );
         output_filename( "-shared" );
         output_filename( source->filename );
         output_filename( strmake( "%s.cross.o", obj_dir_path( make, obj )));
