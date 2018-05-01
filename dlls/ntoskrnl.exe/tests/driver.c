@@ -152,6 +152,26 @@ todo_wine
     ok(current != NULL, "Expected current process to be non-NULL\n");
 }
 
+static void test_mdl_map(void)
+{
+    char buffer[20] = "test buffer";
+    void *addr;
+    MDL *mdl;
+
+    mdl = IoAllocateMdl(buffer, sizeof(buffer), FALSE, FALSE, NULL);
+    ok(mdl != NULL, "IoAllocateMdl failed\n");
+
+    MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+
+    addr = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
+todo_wine
+    ok(addr != NULL, "MmMapLockedPagesSpecifyCache failed\n");
+
+    /* MmUnmapLockedPages(addr, mdl); */
+
+    IoFreeMdl(mdl);
+}
+
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -176,6 +196,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     ZwOpenFile(&okfile, FILE_APPEND_DATA, &attr, &io, 0, 0);
 
     test_currentprocess();
+    test_mdl_map();
 
     /* print process report */
     if (test_input->winetest_debug)
