@@ -416,7 +416,7 @@
 @ cdecl -arch=win64 ?Free@Concurrency@@YAXPEAX@Z(ptr) msvcr120.?Free@Concurrency@@YAXPEAX@Z
 @ cdecl -arch=win32 ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ() msvcr120.?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ
 @ cdecl -arch=win64 ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ() msvcr120.?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ
-@ stub ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ
+@ cdecl ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ() msvcr120.?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ
 @ stub ?GetExecutionContextId@Concurrency@@YAIXZ
 @ cdecl ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ() msvcr120.?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ
 @ stub ?GetOSVersion@Concurrency@@YA?AW4OSVersion@IResourceManager@1@XZ
