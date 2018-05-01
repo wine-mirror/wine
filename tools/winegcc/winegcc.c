@@ -210,6 +210,7 @@ struct options
     const char* image_base;
     const char* section_align;
     const char* lib_suffix;
+    const char* subsystem;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -913,7 +914,19 @@ static void build(struct options* opts)
         else
         {
             strarray_add(link_args, opts->gui_app ? "-mwindows" : "-mconsole");
-            if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
+        }
+
+        if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
+        if (opts->nostartfiles) strarray_add(link_args, "-nostartfiles" );
+
+        if (opts->subsystem)
+        {
+            strarray_add(link_args, strmake("-Wl,--subsystem,%s", opts->subsystem));
+            if (!strcmp( opts->subsystem, "native" ))
+            {
+                const char *entry = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
+                strarray_add(link_args, strmake( "-Wl,--entry,%s", entry ));
+            }
         }
 
         for ( j = 0 ; j < opts->linker_args->size ; j++ )
@@ -1070,6 +1083,12 @@ static void build(struct options* opts)
         if (opts->large_address_aware) strarray_add( spec_args, "--large-address-aware" );
     }
 
+    if (opts->subsystem)
+    {
+        strarray_add(spec_args, "--subsystem");
+        strarray_add(spec_args, opts->subsystem);
+    }
+
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(spec_args, strmake("-L%s", lib_dirs->base[j]));
 
@@ -1211,19 +1230,11 @@ static void forward(int argc, char **argv, struct options* opts)
     strarray_free (args);
 }
 
-/*
- *      Linker Options
- *          object-file-name  -llibrary -nostartfiles  -nodefaultlibs
- *          -nostdlib -s  -static  -static-libgcc  -shared  -shared-libgcc
- *          -symbolic -Wl,option  -Xlinker option -u symbol
- *	    -framework name
- */
 static int is_linker_arg(const char* arg)
 {
     static const char* link_switches[] = 
     {
-	"-nostartfiles", "-nostdlib", "-s",
-	"-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
+	"-nostdlib", "-s", "-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
 	"-framework", "--coverage", "-fprofile-generate", "-fprofile-use"
     };
     unsigned int j;
@@ -1598,6 +1609,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--large-address-aware"))
                             {
                                 opts.large_address_aware = 1;
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "--subsystem") && j < Wl->size - 1)
+                            {
+                                opts.subsystem = strdup( Wl->base[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
