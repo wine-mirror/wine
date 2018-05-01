@@ -41,6 +41,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *ifa
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IDXGIDevice)
             || IsEqualGUID(riid, &IID_IDXGIDevice1)
+            || IsEqualGUID(riid, &IID_IDXGIDevice2)
             || IsEqualGUID(riid, &IID_IWineDXGIDevice))
     {
         IUnknown_AddRef(iface);
@@ -275,6 +276,31 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetMaximumFrameLatency(IWineDXGIDev
     return E_NOTIMPL;
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_device_OfferResources(IWineDXGIDevice *iface, UINT resource_count,
+        IDXGIResource * const *resources, DXGI_OFFER_RESOURCE_PRIORITY priority)
+{
+    FIXME("iface %p, resource_count %u, resources %p, priority %u stub!\n", iface, resource_count,
+        resources, priority);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_device_ReclaimResources(IWineDXGIDevice *iface, UINT resource_count,
+        IDXGIResource * const *resources, BOOL *discarded)
+{
+    FIXME("iface %p, resource_count %u, resources %p, discarded %p stub!\n", iface, resource_count,
+        resources, discarded);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_device_EnqueueSetEvent(IWineDXGIDevice *iface, HANDLE event)
+{
+    FIXME("iface %p, event %p stub!\n", iface, event);
+
+    return E_NOTIMPL;
+}
+
 /* IWineDXGIDevice methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
@@ -355,6 +381,10 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     /* IDXGIDevice1 methods */
     dxgi_device_SetMaximumFrameLatency,
     dxgi_device_GetMaximumFrameLatency,
+    /* IDXGIDevice2 methods */
+    dxgi_device_OfferResources,
+    dxgi_device_ReclaimResources,
+    dxgi_device_EnqueueSetEvent,
     /* IWineDXGIDevice methods */
     dxgi_device_create_surface,
     dxgi_device_create_swapchain,

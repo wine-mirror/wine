@@ -25,7 +25,7 @@ import "dxgi1_5.idl";
     local,
     uuid(3e1ff30b-c951-48c3-b010-0fb49f3dca71)
 ]
-interface IWineDXGIDevice : IDXGIDevice1
+interface IWineDXGIDevice : IDXGIDevice2
 {
     HRESULT create_surface(
         [in] struct wined3d_texture *wined3d_texture,
