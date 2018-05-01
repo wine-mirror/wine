@@ -37,6 +37,160 @@ static const WCHAR driver_device[] = {'\\','D','e','v','i','c','e',
 static const WCHAR driver_link[] = {'\\','D','o','s','D','e','v','i','c','e','s',
                                     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
 
+static HANDLE okfile;
+static LONG successes;
+static LONG failures;
+static LONG skipped;
+static LONG todo_successes;
+static LONG todo_failures;
+static int todo_level, todo_do_loop;
+static int running_under_wine;
+static int winetest_debug;
+static int winetest_report_success;
+
+extern int CDECL _vsnprintf(char *str, size_t len, const char *format, __ms_va_list argptr);
+
+static void kvprintf(const char *format, __ms_va_list ap)
+{
+    static char buffer[512];
+    LARGE_INTEGER offset;
+    IO_STATUS_BLOCK io;
+
+    _vsnprintf(buffer, sizeof(buffer), format, ap);
+    offset.QuadPart = -1;
+    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, strlen(buffer), &offset, NULL);
+}
+
+static void kprintf(const char *format, ...)
+{
+    __ms_va_list valist;
+
+    __ms_va_start(valist, format);
+    kvprintf(format, valist);
+    __ms_va_end(valist);
+}
+
+static void ok_(const char *file, int line, int condition, const char *msg, ...)
+{
+    const char *current_file;
+    __ms_va_list args;
+
+    if (!(current_file = strrchr(file, '/')) &&
+        !(current_file = strrchr(file, '\\')))
+        current_file = file;
+    else
+        current_file++;
+
+    __ms_va_start(args, msg);
+    if (todo_level)
+    {
+        if (condition)
+        {
+            kprintf("%s:%d: Test succeeded inside todo block: ", current_file, line);
+            kvprintf(msg, args);
+            InterlockedIncrement(&todo_failures);
+        }
+        else
+        {
+            if (winetest_debug > 0)
+            {
+                kprintf("%s:%d: Test marked todo: ", current_file, line);
+                kvprintf(msg, args);
+            }
+            InterlockedIncrement(&todo_successes);
+        }
+    }
+    else
+    {
+        if (!condition)
+        {
+            kprintf("%s:%d: Test failed: ", current_file, line);
+            kvprintf(msg, args);
+            InterlockedIncrement(&failures);
+        }
+        else
+        {
+            if (winetest_report_success)
+                kprintf("%s:%d: Test succeeded\n", current_file, line);
+            InterlockedIncrement(&successes);
+        }
+    }
+    __ms_va_end(args);
+}
+
+static void winetest_start_todo( int is_todo )
+{
+    todo_level = (todo_level << 1) | (is_todo != 0);
+    todo_do_loop=1;
+}
+
+static int winetest_loop_todo(void)
+{
+    int do_loop=todo_do_loop;
+    todo_do_loop=0;
+    return do_loop;
+}
+
+static void winetest_end_todo(void)
+{
+    todo_level >>= 1;
+}
+
+#define ok(condition, ...)  ok_(__FILE__, __LINE__, condition, __VA_ARGS__)
+#define todo_if(is_todo) for (winetest_start_todo(is_todo); \
+                              winetest_loop_todo(); \
+                              winetest_end_todo())
+#define todo_wine               todo_if(running_under_wine)
+#define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
+
+static void test_currentprocess(void)
+{
+    PEPROCESS current;
+
+    current = IoGetCurrentProcess();
+todo_wine
+    ok(current != NULL, "Expected current process to be non-NULL\n");
+}
+
+static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    void *buffer = irp->AssociatedIrp.SystemBuffer;
+    struct test_input *test_input = (struct test_input *)buffer;
+    OBJECT_ATTRIBUTES attr = {0};
+    UNICODE_STRING pathU;
+    IO_STATUS_BLOCK io;
+
+    if (!buffer)
+        return STATUS_ACCESS_VIOLATION;
+
+    if (length < sizeof(failures))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    attr.Length = sizeof(attr);
+    RtlInitUnicodeString(&pathU, test_input->path);
+    running_under_wine = test_input->running_under_wine;
+    winetest_debug = test_input->winetest_debug;
+    winetest_report_success = test_input->winetest_report_success;
+    attr.ObjectName = &pathU;
+    ZwOpenFile(&okfile, FILE_APPEND_DATA, &attr, &io, 0, 0);
+
+    test_currentprocess();
+
+    /* print process report */
+    if (test_input->winetest_debug)
+    {
+        kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+            PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
+            todo_successes, failures + todo_failures,
+            (failures + todo_failures != 1) ? "failures" : "failure", skipped );
+    }
+    ZwClose(okfile);
+    *((LONG *)buffer) = failures;
+    *info = sizeof(failures);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -70,6 +224,9 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
     {
         case IOCTL_WINETEST_BASIC_IOCTL:
             status = test_basic_ioctl(irp, stack, &irp->IoStatus.Information);
+            break;
+        case IOCTL_WINETEST_MAIN_TEST:
+            status = main_test(irp, stack, &irp->IoStatus.Information);
             break;
         default:
             break;

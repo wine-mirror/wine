@@ -20,10 +20,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include "windows.h"
 #include "winsvc.h"
 #include "winioctl.h"
+#include "winternl.h"
 #include "wine/test.h"
+#include "wine/heap.h"
 
 #include "driver.h"
 
@@ -31,6 +34,8 @@ static const char driver_name[] = "WineTestDriver";
 static const char device_path[] = "\\\\.\\WineTestDriver";
 
 static HANDLE device;
+
+static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 
 static void load_resource(const char *name, char *filename)
 {
@@ -131,6 +136,47 @@ static SC_HANDLE load_driver(char *filename)
     return service;
 }
 
+static void main_test(void)
+{
+    static const WCHAR dokW[] = {'d','o','k',0};
+    WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
+    struct test_input *test_input;
+    UNICODE_STRING pathU;
+    DWORD written, read;
+    LONG new_failures;
+    char buffer[512];
+    HANDLE okfile;
+    BOOL res;
+
+    /* Create a temporary file that the driver will write ok/trace output to. */
+    GetTempPathW(MAX_PATH, temppathW);
+    GetTempFileNameW(temppathW, dokW, 0, pathW);
+    pRtlDosPathNameToNtPathName_U( pathW, &pathU, NULL, NULL );
+
+    test_input = heap_alloc(sizeof(*test_input) + pathU.Length);
+    test_input->running_under_wine = !strcmp(winetest_platform, "wine");
+    test_input->winetest_report_success = winetest_report_success;
+    test_input->winetest_debug = winetest_debug;
+    lstrcpynW(test_input->path, pathU.Buffer, pathU.Length);
+    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input) + pathU.Length,
+                          &new_failures, sizeof(new_failures), &written, NULL);
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(written == sizeof(new_failures), "got size %x\n", written);
+
+    okfile = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(okfile != INVALID_HANDLE_VALUE, "failed to create %s: %u\n", wine_dbgstr_w(pathW), GetLastError());
+
+    /* Print the ok/trace output and then add to our failure count. */
+    do {
+        ReadFile(okfile, buffer, sizeof(buffer), &read, NULL);
+        printf("%.*s", read, buffer);
+    } while (read == sizeof(buffer));
+    winetest_add_failures(new_failures);
+
+    CloseHandle(okfile);
+    DeleteFileW(pathW);
+}
+
 static void test_basic_ioctl(void)
 {
     DWORD written;
@@ -149,10 +195,14 @@ START_TEST(ntoskrnl)
     char filename[MAX_PATH];
     SC_HANDLE service;
 
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
+
     if (!(service = load_driver(filename)))
         return;
 
     test_basic_ioctl();
+    main_test();
 
     unload_driver(service);
     ok(DeleteFileA(filename), "DeleteFile failed: %u\n", GetLastError());

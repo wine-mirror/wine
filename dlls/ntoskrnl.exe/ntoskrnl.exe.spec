@@ -1299,7 +1299,7 @@
 @ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
 @ stdcall -private ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private ZwClearEvent(long) NtClearEvent
-@ stdcall -private ZwClose(long) NtClose
+@ stdcall ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
@@ -1335,7 +1335,7 @@
 @ stdcall -private ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall -private ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
 @ stdcall -private ZwOpenEvent(ptr long ptr) NtOpenEvent
-@ stdcall -private ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
+@ stdcall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stdcall -private ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall -private ZwOpenKey(ptr long ptr) NtOpenKey
 @ stdcall -private ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
@@ -1403,7 +1403,7 @@
 @ stdcall -private ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
-@ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
+@ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwYieldExecution() NtYieldExecution
 @ stdcall -private -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl -private -arch=i386 _CIcos() msvcrt._CIcos
@@ -1439,7 +1439,7 @@
 @ cdecl -private _strrev(str) msvcrt._strrev
 @ cdecl -private _strset(str long) msvcrt._strset
 @ cdecl -private _strupr(str) msvcrt._strupr
-@ cdecl -private _vsnprintf(ptr long str ptr) msvcrt._vsnprintf
+@ cdecl _vsnprintf(ptr long str ptr) msvcrt._vsnprintf
 @ cdecl -private _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
 @ cdecl -private _wcsicmp(wstr wstr) msvcrt._wcsicmp
 @ cdecl -private _wcslwr(wstr) msvcrt._wcslwr
