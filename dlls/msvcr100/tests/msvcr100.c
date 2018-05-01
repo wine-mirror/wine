@@ -26,6 +26,8 @@
 #include <winbase.h>
 #include "wine/test.h"
 
+#include <locale.h>
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -232,6 +234,8 @@ static unsigned int (__cdecl *p_CurrentScheduler_Id)(void);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 
+static char* (__cdecl *p_setlocale)(int, const char*);
+
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
@@ -265,6 +269,7 @@ static BOOL init(void)
     SET(p_atoi, "atoi");
     SET(p__memicmp, "_memicmp");
     SET(p__memicmp_l, "_memicmp_l");
+    SET(p_setlocale, "setlocale");
 
     SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
     SET(p_CurrentScheduler_Detach, "?Detach@CurrentScheduler@Concurrency@@SAXXZ");
@@ -1052,6 +1057,14 @@ static void test__memicmp_l(void)
             "Cannot reset invalid parameter handler\n");
 }
 
+static void test_setlocale(void)
+{
+    char *ret;
+
+    ret = p_setlocale(LC_ALL, "en-US");
+    ok(!ret, "got %p\n", ret);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -1070,4 +1083,5 @@ START_TEST(msvcr100)
     test_event();
     test__memicmp();
     test__memicmp_l();
+    test_setlocale();
 }
