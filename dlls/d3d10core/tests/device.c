@@ -16750,6 +16750,77 @@ static void test_multisample_resolve(void)
     release_test_context(&test_context);
 }
 
+static void test_depth_clip(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_RASTERIZER_DESC rs_desc;
+    ID3D10DepthStencilView *dsv;
+    ID3D10RasterizerState *rs;
+    ID3D10Texture2D *texture;
+    ID3D10Device *device;
+    unsigned int count;
+    D3D10_VIEWPORT vp;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, dsv);
+
+    count = 1;
+    ID3D10Device_RSGetViewports(device, &count, &vp);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+    set_viewport(device, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.4f, 0.6f);
+    draw_quad_z(&test_context, 2.0f);
+    check_texture_float(texture, 1.0f, 1);
+    draw_quad_z(&test_context, 0.5f);
+    check_texture_float(texture, 0.5f, 1);
+    draw_quad_z(&test_context, -1.0f);
+    check_texture_float(texture, 0.5f, 1);
+
+    rs_desc.FillMode = D3D10_FILL_SOLID;
+    rs_desc.CullMode = D3D10_CULL_BACK;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = FALSE;
+    rs_desc.ScissorEnable = FALSE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    hr = ID3D10Device_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D10Device_RSSetState(device, rs);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+    set_viewport(device, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.4f, 0.6f);
+    draw_quad_z(&test_context, 2.0f);
+todo_wine
+    check_texture_float(texture, 0.6f, 1);
+    draw_quad_z(&test_context, 0.5f);
+    check_texture_float(texture, 0.5f, 1);
+    draw_quad_z(&test_context, -1.0f);
+todo_wine
+    check_texture_float(texture, 0.4f, 1);
+
+    ID3D10DepthStencilView_Release(dsv);
+    ID3D10Texture2D_Release(texture);
+    ID3D10RasterizerState_Release(rs);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     unsigned int argc, i;
@@ -16853,4 +16924,5 @@ START_TEST(device)
     test_alpha_to_coverage();
     test_multiple_viewports();
     test_multisample_resolve();
+    test_depth_clip();
 }
