@@ -3196,13 +3196,14 @@ static void test_dpi_mapping(void)
     BOOL ret, todo;
     RECT rect, orig, client, expect;
     ULONG_PTR i, j;
-    DPI_AWARENESS_CONTEXT context = pGetThreadDpiAwarenessContext();
+    DPI_AWARENESS_CONTEXT context;
 
     if (!pLogicalToPhysicalPointForPerMonitorDPI)
     {
         win_skip( "LogicalToPhysicalPointForPerMonitorDPI not supported\n" );
         return;
     }
+    context = pGetThreadDpiAwarenessContext();
     for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
     {
         pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
