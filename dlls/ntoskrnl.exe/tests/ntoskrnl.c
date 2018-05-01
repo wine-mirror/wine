@@ -104,7 +104,7 @@ static SC_HANDLE load_driver(char *filename)
 
     SetLastError(0xdeadbeef);
     ret = StartServiceA(service, 0, NULL);
-    if (!ret && GetLastError() == ERROR_DRIVER_BLOCKED)
+    if (!ret && (GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH))
     {
         /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
         skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
