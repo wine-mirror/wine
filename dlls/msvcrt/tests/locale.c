@@ -614,6 +614,9 @@ static void test_setlocale(void)
 
     ret = setlocale(LC_ALL, "English_United States.UTF8");
     ok(ret == NULL, "ret != NULL\n");
+
+    ret = setlocale(LC_ALL, "en-US");
+    ok(ret == NULL || broken (ret != NULL), "ret != NULL\n"); /* XP & 2003 */
 }
 
 static void test_crtGetStringTypeW(void)
