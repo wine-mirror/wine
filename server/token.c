@@ -158,11 +158,12 @@ static const struct object_ops token_ops =
     token_destroy              /* destroy */
 };
 
-
 static void token_dump( struct object *obj, int verbose )
 {
-    fprintf( stderr, "Security token\n" );
-    /* FIXME: dump token members */
+    struct token *token = (struct token *)obj;
+    assert( obj->ops == &token_ops );
+    fprintf( stderr, "Token id=%d.%u primary=%u impersonation level=%d\n", token->token_id.high_part,
+             token->token_id.low_part, token->primary, token->impersonation_level );
 }
 
 static unsigned int token_map_access( struct object *obj, unsigned int access )
