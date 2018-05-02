@@ -198,3 +198,23 @@ HRESULT WINAPI RoGetParameterizedTypeInstanceIID(UINT32 name_element_count, cons
     if (hiid) *hiid = INVALID_HANDLE_VALUE;
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *      RoActivateInstance (combase.@)
+ */
+HRESULT WINAPI RoActivateInstance(HSTRING classid, IInspectable **instance)
+{
+    IActivationFactory *factory;
+    HRESULT hr;
+
+    FIXME("(%p, %p): semi-stub\n", classid, instance);
+
+    hr = RoGetActivationFactory(classid, &IID_IActivationFactory, (void **)&factory);
+    if (SUCCEEDED(hr))
+    {
+        hr = IActivationFactory_ActivateInstance(factory, instance);
+        IActivationFactory_Release(factory);
+    }
+
+    return hr;
+}
