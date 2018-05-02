@@ -20,7 +20,7 @@
 @ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
-@ stub _Exit
+@ cdecl _Exit(long) MSVCRT__exit
 @ stub _FCbuild
 @ stub _FCmulcc
 @ stub _FCmulcr

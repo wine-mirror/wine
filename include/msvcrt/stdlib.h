@@ -179,6 +179,7 @@ errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
 char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
 errno_t       __cdecl _ultoa_s(__msvcrt_ulong,char*,size_t,int);
 
+void          __cdecl _Exit(int);
 void          __cdecl _exit(int);
 void          __cdecl abort(void);
 int           __cdecl abs(int);
