@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 Martin Storsjo
+ * Copyright 2016 Michael Müller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,15 +16,95 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
+#define COBJMACROS
 #include "objbase.h"
+#include "initguid.h"
 #include "roapi.h"
 #include "roparameterizediid.h"
-#include "hstring.h"
+#include "winstring.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(combase);
+
+static const char *debugstr_hstring(HSTRING hstr)
+{
+    const WCHAR *str;
+    UINT32 len;
+    if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
+    str = WindowsGetStringRawBuffer(hstr, &len);
+    return wine_dbgstr_wn(str, len);
+}
+
+static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
+{
+    static const WCHAR classkeyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s','R','u','n','t','i','m','e','\\',
+                                      'A','c','t','i','v','a','t','a','b','l','e','C','l','a','s','s','I','d',0};
+    static const WCHAR dllpathW[] = {'D','l','l','P','a','t','h',0};
+    HKEY hkey_root, hkey_class;
+    DWORD type, size;
+    HRESULT hr;
+    WCHAR *buf = NULL;
+
+    *out = NULL;
+
+    /* load class registry key */
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, classkeyW, 0, KEY_READ, &hkey_root))
+        return REGDB_E_READREGDB;
+    if (RegOpenKeyExW(hkey_root, classid, 0, KEY_READ, &hkey_class))
+    {
+        WARN("Class %s not found in registry\n", debugstr_w(classid));
+        RegCloseKey(hkey_root);
+        return REGDB_E_CLASSNOTREG;
+    }
+    RegCloseKey(hkey_root);
+
+    /* load (and expand) DllPath registry value */
+    if (RegQueryValueExW(hkey_class, dllpathW, NULL, &type, NULL, &size))
+    {
+        hr = REGDB_E_READREGDB;
+        goto done;
+    }
+    if (type != REG_SZ && type != REG_EXPAND_SZ)
+    {
+        hr = REGDB_E_READREGDB;
+        goto done;
+    }
+    if (!(buf = HeapAlloc(GetProcessHeap(), 0, size)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+    if (RegQueryValueExW(hkey_class, dllpathW, NULL, NULL, (BYTE *)buf, &size))
+    {
+        hr = REGDB_E_READREGDB;
+        goto done;
+    }
+    if (type == REG_EXPAND_SZ)
+    {
+        WCHAR *expanded;
+        DWORD len = ExpandEnvironmentStringsW(buf, NULL, 0);
+        if (!(expanded = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto done;
+        }
+        ExpandEnvironmentStringsW(buf, expanded, len);
+        HeapFree(GetProcessHeap(), 0, buf);
+        buf = expanded;
+    }
+
+    *out = buf;
+    return S_OK;
+
+done:
+    HeapFree(GetProcessHeap(), 0, buf);
+    RegCloseKey(hkey_class);
+    return hr;
+}
+
 
 /***********************************************************************
  *      RoInitialize (combase.@)
@@ -51,10 +132,58 @@ void WINAPI RoUninitialize(void)
 /***********************************************************************
  *      RoGetActivationFactory (combase.@)
  */
-HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **factory)
+HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **class_factory)
 {
-    FIXME("stub: %p %p %p\n", classid, iid, factory);
-    return E_NOTIMPL;
+    PFNGETACTIVATIONFACTORY pDllGetActivationFactory;
+    IActivationFactory *factory;
+    WCHAR *library;
+    HMODULE module;
+    HRESULT hr;
+
+    FIXME("(%s, %s, %p): semi-stub\n", debugstr_hstring(classid), debugstr_guid(iid), class_factory);
+
+    if (!iid || !class_factory)
+        return E_INVALIDARG;
+
+    hr = get_library_for_classid(WindowsGetStringRawBuffer(classid, NULL), &library);
+    if (FAILED(hr))
+    {
+        ERR("Failed to find library for %s\n", debugstr_hstring(classid));
+        return hr;
+    }
+
+    if (!(module = LoadLibraryW(library)))
+    {
+        ERR("Failed to load module %s\n", debugstr_w(library));
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto done;
+    }
+
+    if (!(pDllGetActivationFactory = (void *)GetProcAddress(module, "DllGetActivationFactory")))
+    {
+        ERR("Module %s does not implement DllGetActivationFactory\n", debugstr_w(library));
+        hr = E_FAIL;
+        goto done;
+    }
+
+    TRACE("Found library %s for class %s\n", debugstr_w(library), debugstr_hstring(classid));
+
+    hr = pDllGetActivationFactory(classid, &factory);
+    if (SUCCEEDED(hr))
+    {
+        hr = IActivationFactory_QueryInterface(factory, iid, class_factory);
+        if (SUCCEEDED(hr))
+        {
+            TRACE("Created interface %p\n", *class_factory);
+            module = NULL;
+        }
+        IActivationFactory_Release(factory);
+    }
+
+done:
+    HeapFree(GetProcessHeap(), 0, library);
+    if (module) FreeLibrary(module);
+    return hr;
 }
 
 /***********************************************************************

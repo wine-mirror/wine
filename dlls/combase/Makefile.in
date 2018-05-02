@@ -1,5 +1,5 @@
 MODULE    = combase.dll
-IMPORTS   = ole32 uuid
+IMPORTS   = advapi32 ole32 uuid
 
 C_SRCS = \
 	roapi.c \
