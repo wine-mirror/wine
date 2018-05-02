@@ -1,4 +1,4 @@
-@ stub RoActivateInstance
+@ stdcall RoActivateInstance(ptr ptr) combase.RoActivateInstance
 @ stdcall RoGetActivationFactory(ptr ptr ptr) combase.RoGetActivationFactory
 @ stub RoGetApartmentIdentifier
 @ stdcall RoInitialize(long) combase.RoInitialize

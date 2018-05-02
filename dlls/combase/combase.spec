@@ -242,7 +242,7 @@
 @ stdcall PropVariantClear(ptr) ole32.PropVariantClear
 @ stdcall PropVariantCopy(ptr ptr) ole32.PropVariantCopy
 @ stub ReleaseFuncDescs
-@ stub RoActivateInstance
+@ stdcall RoActivateInstance(ptr ptr)
 @ stub RoCaptureErrorContext
 @ stub RoClearError
 @ stub RoFailFastWithErrorContext
