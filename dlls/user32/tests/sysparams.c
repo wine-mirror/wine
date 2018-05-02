@@ -3512,11 +3512,22 @@ static void test_dpi_context(void)
     ReleaseDC( 0, hdc );
 }
 
+static LRESULT CALLBACK dpi_winproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    DPI_AWARENESS_CONTEXT ctx = pGetWindowDpiAwarenessContext( hwnd );
+    DPI_AWARENESS_CONTEXT ctx2 = pGetThreadDpiAwarenessContext();
+    ok( pGetAwarenessFromDpiAwarenessContext( ctx ) == pGetAwarenessFromDpiAwarenessContext( ctx2 ),
+        "msg %04x wrong awareness %p / %p\n", msg, ctx, ctx2 );
+    return DefWindowProcA( hwnd, msg, wp, lp );
+}
+
 static void test_dpi_window(void)
 {
     DPI_AWARENESS_CONTEXT context, orig;
     DPI_AWARENESS awareness;
+    ULONG_PTR i, j;
     HWND hwnd;
+    MSG msg = { 0, WM_USER + 1, 0, 0 };
 
     if (!pGetWindowDpiAwarenessContext)
     {
@@ -3524,31 +3535,25 @@ static void test_dpi_window(void)
         return;
     }
     orig = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
-    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
-                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
-    ok( hwnd != 0, "failed to create window\n" );
-    context = pGetWindowDpiAwarenessContext( hwnd );
-    awareness = pGetAwarenessFromDpiAwarenessContext( context );
-    ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
-    DestroyWindow( hwnd );
-
-    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
-    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
-                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
-    ok( hwnd != 0, "failed to create window\n" );
-    context = pGetWindowDpiAwarenessContext( hwnd );
-    awareness = pGetAwarenessFromDpiAwarenessContext( context );
-    ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
-    DestroyWindow( hwnd );
-
-    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    hwnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
-                          WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
-    ok( hwnd != 0, "failed to create window\n" );
-    context = pGetWindowDpiAwarenessContext( hwnd );
-    awareness = pGetAwarenessFromDpiAwarenessContext( context );
-    ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
-    DestroyWindow( hwnd );
+    for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
+    {
+        pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
+        hwnd = CreateWindowA( "DpiTestClass", "Test",
+                              WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+        ok( hwnd != 0, "failed to create window\n" );
+        context = pGetWindowDpiAwarenessContext( hwnd );
+        awareness = pGetAwarenessFromDpiAwarenessContext( context );
+        ok( awareness == i, "%lu: wrong awareness %u\n", i, awareness );
+        msg.hwnd = hwnd;
+        for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
+        {
+            pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+            SendMessageA( hwnd, WM_USER, 0, 0 );
+            DispatchMessageA( &msg );
+            CallWindowProcA( dpi_winproc, hwnd, WM_USER + 2, 0, 0 );
+        }
+        DestroyWindow( hwnd );
+    }
 
     SetLastError( 0xdeadbeef );
     context = pGetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
@@ -3633,6 +3638,9 @@ START_TEST(sysparams)
     wc.lpszMenuName = 0;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
+    RegisterClassA( &wc );
+    wc.lpszClassName = "DpiTestClass";
+    wc.lpfnWndProc = dpi_winproc;
     RegisterClassA( &wc );
 
     ghTestWnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",

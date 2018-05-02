@@ -233,6 +233,7 @@ static WPARAM map_wparam_char_WtoA( WPARAM wParam, DWORD len )
 /* call a 32-bit window procedure */
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result, void *arg )
 {
+    DPI_AWARENESS_CONTEXT context;
     WNDPROC proc = arg;
 
     USER_CheckNotLock();
@@ -241,7 +242,9 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     TRACE_(relay)( "\1Call window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     *result = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
+    SetThreadDpiAwarenessContext( context );
 
     TRACE_(relay)( "\1Ret  window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, *result );
@@ -251,6 +254,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 /* call a 32-bit dialog procedure */
 static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result, void *arg )
 {
+    DPI_AWARENESS_CONTEXT context;
     WNDPROC proc = arg;
     LRESULT ret;
 
@@ -260,8 +264,10 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     TRACE_(relay)( "\1Call dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     ret = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
     *result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+    SetThreadDpiAwarenessContext( context );
 
     TRACE_(relay)( "\1Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx result=%08lx\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, ret, *result );
