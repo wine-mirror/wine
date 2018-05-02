@@ -1669,7 +1669,7 @@ then
         [AC_CHECK_HEADERS([krb5/krb5.h])
          if test "$ac_cv_header_krb5_krb5_h" = "yes"
          then
-             WINE_CHECK_SONAME(krb5,krb5_init_context,,[KRB5_CFLAGS=""],[$KRB5_LIBS])
+             WINE_CHECK_SONAME(krb5,krb5_is_config_principal,,[KRB5_CFLAGS=""],[$KRB5_LIBS])
          else
              KRB5_CFLAGS=""
          fi])
@@ -1677,7 +1677,7 @@ else
     with_gssapi=${with_gssapi:-no}
 fi
 WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
-                 [libkrb5 ${notice_platform}development files not found, Kerberos won't be supported.])
+                 [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.])
 
 dnl **** Check for gssapi ****
 if test "x$with_gssapi" != "xno"

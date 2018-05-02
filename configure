@@ -13640,11 +13640,11 @@ LIBS="-lkrb5 $KRB5_LIBS $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char krb5_init_context ();
+char krb5_is_config_principal ();
 int
 main ()
 {
-return krb5_init_context ();
+return krb5_is_config_principal ();
   ;
   return 0;
 }
@@ -13689,9 +13689,9 @@ else
 fi
 if test "x$ac_cv_lib_soname_krb5" = "x"; then :
   case "x$with_krb5" in
-  x)   as_fn_append wine_notices "|libkrb5 ${notice_platform}development files not found, Kerberos won't be supported." ;;
+  x)   as_fn_append wine_notices "|libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "libkrb5 ${notice_platform}development files not found, Kerberos won't be supported.
+  *)   as_fn_error $? "libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.
 This is an error since --with-krb5 was requested." "$LINENO" 5 ;;
 esac
 
