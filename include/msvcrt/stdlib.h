@@ -188,6 +188,7 @@ double        __cdecl atof(const char*);
 int           __cdecl atoi(const char*);
 int           __cdecl _atoi_l(const char*,_locale_t);
 __msvcrt_long __cdecl atol(const char*);
+__int64       __cdecl atoll(const char*);
 void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__
 div_t  __cdecl div(int,int);
