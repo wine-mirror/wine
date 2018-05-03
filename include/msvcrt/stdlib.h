@@ -198,6 +198,7 @@ void          __cdecl exit(int);
 void          __cdecl free(void*);
 char*         __cdecl getenv(const char*);
 __msvcrt_long __cdecl labs(__msvcrt_long);
+__int64       __cdecl llabs(__int64);
 void*         __cdecl malloc(size_t);
 int           __cdecl mblen(const char*,size_t);
 void          __cdecl perror(const char*);
