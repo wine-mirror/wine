@@ -3484,7 +3484,7 @@ static DWORD WINAPI notify_change_thread(void *arg)
 static void test_RegNotifyChangeKeyValue(void)
 {
     struct notify_data data;
-    HKEY key, subkey;
+    HKEY key, subkey, subsubkey;
     HANDLE thread;
     HANDLE event;
     DWORD dwret;
@@ -3495,7 +3495,7 @@ static void test_RegNotifyChangeKeyValue(void)
     ret = RegCreateKeyA(hkey_main, "TestKey", &key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
-    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME, event, TRUE);
+    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME|REG_NOTIFY_CHANGE_LAST_SET, event, TRUE);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
     dwret = WaitForSingleObject(event, 0);
     ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
@@ -3505,7 +3505,47 @@ static void test_RegNotifyChangeKeyValue(void)
     dwret = WaitForSingleObject(event, 0);
     ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
 
+    /* watching deeper keys */
+    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME|REG_NOTIFY_CHANGE_LAST_SET, event, TRUE);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    ret = RegCreateKeyA(subkey, "SubKey", &subsubkey);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+
+    /* watching deeper values */
+    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME|REG_NOTIFY_CHANGE_LAST_SET, event, TRUE);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    ret = RegSetValueA(subsubkey, NULL, REG_SZ, "SubSubKeyValue", 0);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    todo_wine ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+
+    /* don't watch deeper values */
+    RegCloseKey(key);
+    ret = RegOpenKeyA(hkey_main, "TestKey", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegNotifyChangeKeyValue(key, FALSE, REG_NOTIFY_CHANGE_NAME|REG_NOTIFY_CHANGE_LAST_SET, event, TRUE);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    ret = RegSetValueA(subsubkey, NULL, REG_SZ, "SubSubKeyValueNEW", 0);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    RegDeleteKeyA(subkey, "SubKey");
     RegDeleteKeyA(key, "SubKey");
+    RegCloseKey(subsubkey);
+    RegCloseKey(subkey);
     RegCloseKey(key);
 
     /* test same thread with REG_NOTIFY_THREAD_AGNOSTIC */
