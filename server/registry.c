@@ -548,7 +548,7 @@ static void touch_key( struct key *key, unsigned int change )
     /* do notifications */
     check_notify( key, change, 1 );
     for ( k = key->parent; k; k = k->parent )
-        check_notify( k, change & ~REG_NOTIFY_CHANGE_LAST_SET, 0 );
+        check_notify( k, change, 0 );
 }
 
 /* try to grow the array of subkeys; return 1 if OK, 0 on error */

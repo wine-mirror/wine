@@ -3525,7 +3525,7 @@ static void test_RegNotifyChangeKeyValue(void)
     ret = RegSetValueA(subsubkey, NULL, REG_SZ, "SubSubKeyValue", 0);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
     dwret = WaitForSingleObject(event, 0);
-    todo_wine ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
 
     /* don't watch deeper values */
     RegCloseKey(key);
