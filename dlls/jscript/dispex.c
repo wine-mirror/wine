@@ -218,8 +218,10 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     if(builtin) {
         unsigned flags = builtin->flags;
         if(flags & PROPF_METHOD)
-            flags |= PROPF_CONFIGURABLE;
-        flags &= PROPF_ENUM | PROPF_CONST | PROPF_CONFIGURABLE;
+            flags |= PROPF_WRITABLE | PROPF_CONFIGURABLE;
+        else if(builtin->setter)
+            flags |= PROPF_WRITABLE;
+        flags &= PROPF_ENUM | PROPF_WRITABLE | PROPF_CONFIGURABLE;
         prop = alloc_prop(This, name, PROP_BUILTIN, flags);
         if(!prop)
             return E_OUTOFMEMORY;
@@ -236,7 +238,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         for(ptr = name; isdigitW(*ptr) && idx < 0x10000; ptr++)
             idx = idx*10 + (*ptr-'0');
         if(!*ptr && idx < This->builtin_info->idx_length(This)) {
-            prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? 0 : PROPF_CONST);
+            prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? PROPF_WRITABLE : 0);
             if(!prop)
                 return E_OUTOFMEMORY;
 
@@ -272,7 +274,6 @@ static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *n
         if(prop) {
             if(del) {
                 del->type = PROP_PROTREF;
-                del->flags = 0;
                 del->u.ref = prop - This->prototype->props;
                 prop = del;
             }else {
@@ -474,7 +475,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 {
     HRESULT hres;
 
-    if(prop->flags & PROPF_CONST)
+    if(!(prop->flags & PROPF_WRITABLE) && prop->type != PROP_PROTREF)
         return S_OK;
 
     switch(prop->type) {
@@ -489,7 +490,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         /* fall through */
     case PROP_PROTREF:
         prop->type = PROP_JSVAL;
-        prop->flags = PROPF_ENUM | PROPF_CONFIGURABLE;
+        prop->flags = PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE;
         prop->u.val = jsval_undefined();
         break;
     case PROP_JSVAL:
@@ -1039,7 +1040,8 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     HRESULT hres;
 
     if(flags & fdexNameEnsure)
-        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM | PROPF_CONFIGURABLE, &prop);
+        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE,
+                                &prop);
     else
         hres = find_prop_name_prot(jsdisp, string_hash(name), name, &prop);
     if(FAILED(hres))
@@ -1311,7 +1313,7 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
 
 HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, PROPF_ENUM | PROPF_CONFIGURABLE, val);
+    return jsdisp_propput(obj, name, PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1319,7 +1321,7 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = ensure_prop_name(obj, name, FALSE, PROPF_CONST, &prop);
+    hres = ensure_prop_name(obj, name, FALSE, 0, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -1328,7 +1330,7 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 
 HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, PROPF_CONFIGURABLE, val);
+    return jsdisp_propput(obj, name, PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
