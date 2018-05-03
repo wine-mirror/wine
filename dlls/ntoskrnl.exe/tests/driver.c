@@ -61,7 +61,7 @@ static void kvprintf(const char *format, __ms_va_list ap)
     ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, strlen(buffer), &offset, NULL);
 }
 
-static void kprintf(const char *format, ...)
+static void WINAPIV kprintf(const char *format, ...)
 {
     __ms_va_list valist;
 
@@ -70,7 +70,7 @@ static void kprintf(const char *format, ...)
     __ms_va_end(valist);
 }
 
-static void ok_(const char *file, int line, int condition, const char *msg, ...)
+static void WINAPIV ok_(const char *file, int line, int condition, const char *msg, ...)
 {
     const char *current_file;
     __ms_va_list args;
