@@ -2600,6 +2600,10 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
 {
     switch(option) {
+    case INTERNET_OPTION_SETTINGS_CHANGED:
+        FIXME("INTERNETOPTION_SETTINGS_CHANGED semi-stub\n");
+        collect_connections(COLLECT_CONNECTIONS);
+        return ERROR_SUCCESS;
     case INTERNET_OPTION_CALLBACK:
         WARN("Not settable option %u\n", option);
         return ERROR_INTERNET_OPTION_NOT_SETTABLE;
@@ -2652,11 +2656,6 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
         connect_timeout = *(ULONG*)buf;
         return ERROR_SUCCESS;
 
-    case INTERNET_OPTION_SETTINGS_CHANGED:
-        FIXME("INTERNETOPTION_SETTINGS_CHANGED semi-stub\n");
-        collect_connections(COLLECT_CONNECTIONS);
-        return ERROR_SUCCESS;
-
     case INTERNET_OPTION_SUPPRESS_BEHAVIOR:
         FIXME("INTERNET_OPTION_SUPPRESS_BEHAVIOR stub\n");
 
@@ -2667,7 +2666,7 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
         return ERROR_SUCCESS;
     }
 
-    return ERROR_INTERNET_INVALID_OPTION;
+    return INET_SetOption(NULL, option, buf, size);
 }
 
 /***********************************************************************
