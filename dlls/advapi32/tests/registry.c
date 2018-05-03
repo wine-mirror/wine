@@ -3567,6 +3567,7 @@ static void test_RegNotifyChangeKeyValue(void)
     ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
 
     RegDeleteKeyA(key, "SubKey");
+    RegCloseKey(subkey);
     RegCloseKey(key);
 
     /* test different thread without REG_NOTIFY_THREAD_AGNOSTIC */
@@ -3608,6 +3609,7 @@ static void test_RegNotifyChangeKeyValue(void)
 
     RegDeleteKeyA(key, "SubKey");
     RegDeleteKeyA(key, "");
+    RegCloseKey(subkey);
     RegCloseKey(key);
     CloseHandle(event);
 }
