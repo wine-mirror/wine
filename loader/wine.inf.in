@@ -135,6 +135,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
 AddService=WineHID,0,WineHIDService
+AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -151,6 +152,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
 AddService=WineHID,0,WineHIDService
+AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -167,6 +169,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
 AddService=WineHID,0,WineHIDService
+AddService=Winmgmt,0,WinmgmtService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -3317,6 +3320,14 @@ LoadOrderGroup="SpoolerGroup"
 Description="Remote desktop access"
 DisplayName="Terminal Services"
 ServiceBinary="%11%\termsv.exe"
+ServiceType=32
+StartType=3
+ErrorControl=1
+
+[WinmgmtService]
+Description="Provides access to Windows Management Instrumentation"
+DisplayName="Windows Management Instrumentation Service"
+ServiceBinary="%11%\winmgmt.exe"
 ServiceType=32
 StartType=3
 ErrorControl=1

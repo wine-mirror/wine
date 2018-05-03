@@ -1727,6 +1727,7 @@ enable_winemsibuilder
 enable_winepath
 enable_winetest
 enable_winhlp32
+enable_winmgmt
 enable_winver
 enable_wmic
 enable_wmplayer
@@ -19298,6 +19299,7 @@ wine_fn_config_makefile programs/winetest enable_winetest
 wine_fn_config_makefile programs/winevdm enable_win16
 wine_fn_config_makefile programs/winhelp.exe16 enable_win16
 wine_fn_config_makefile programs/winhlp32 enable_winhlp32
+wine_fn_config_makefile programs/winmgmt enable_winmgmt
 wine_fn_config_makefile programs/winoldap.mod16 enable_win16
 wine_fn_config_makefile programs/winver enable_winver
 wine_fn_config_makefile programs/wmic enable_wmic

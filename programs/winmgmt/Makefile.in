@@ -1,0 +1,6 @@
+MODULE    = winmgmt.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = advapi32
+
+C_SRCS = \
+	main.c
