@@ -184,7 +184,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     if(SUCCEEDED(hres))
         hres = jsdisp_propput_dontenum(&args->jsdisp, caleeW, jsval_disp(to_disp(&args->function->dispex)));
     if(SUCCEEDED(hres))
-        hres = jsdisp_propput(frame->base_scope->jsobj, argumentsW, PROPF_DONTDELETE, jsval_obj(&args->jsdisp));
+        hres = jsdisp_propput(frame->base_scope->jsobj, argumentsW, 0, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
         jsdisp_release(&args->jsdisp);
         return hres;

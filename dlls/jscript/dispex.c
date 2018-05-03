@@ -216,7 +216,11 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
 
     builtin = find_builtin_prop(This, name);
     if(builtin) {
-        prop = alloc_prop(This, name, PROP_BUILTIN, builtin->flags);
+        unsigned flags = builtin->flags;
+        if(flags & PROPF_METHOD)
+            flags |= PROPF_CONFIGURABLE;
+        flags &= PROPF_ENUM | PROPF_CONST | PROPF_CONFIGURABLE;
+        prop = alloc_prop(This, name, PROP_BUILTIN, flags);
         if(!prop)
             return E_OUTOFMEMORY;
 
@@ -485,7 +489,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         /* fall through */
     case PROP_PROTREF:
         prop->type = PROP_JSVAL;
-        prop->flags = PROPF_ENUM;
+        prop->flags = PROPF_ENUM | PROPF_CONFIGURABLE;
         prop->u.val = jsval_undefined();
         break;
     case PROP_JSVAL:
@@ -744,7 +748,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
 {
-    if(prop->flags & PROPF_DONTDELETE) {
+    if(!(prop->flags & PROPF_CONFIGURABLE)) {
         *ret = FALSE;
         return S_OK;
     }
@@ -1035,7 +1039,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     HRESULT hres;
 
     if(flags & fdexNameEnsure)
-        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM, &prop);
+        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM | PROPF_CONFIGURABLE, &prop);
     else
         hres = find_prop_name_prot(jsdisp, string_hash(name), name, &prop);
     if(FAILED(hres))
@@ -1307,7 +1311,7 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
 
 HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, PROPF_ENUM, val);
+    return jsdisp_propput(obj, name, PROPF_ENUM | PROPF_CONFIGURABLE, val);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1324,7 +1328,7 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 
 HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, 0, val);
+    return jsdisp_propput(obj, name, PROPF_CONFIGURABLE, val);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
