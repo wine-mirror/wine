@@ -221,7 +221,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
             flags |= PROPF_WRITABLE | PROPF_CONFIGURABLE;
         else if(builtin->setter)
             flags |= PROPF_WRITABLE;
-        flags &= PROPF_ENUM | PROPF_WRITABLE | PROPF_CONFIGURABLE;
+        flags &= PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE;
         prop = alloc_prop(This, name, PROP_BUILTIN, flags);
         if(!prop)
             return E_OUTOFMEMORY;
@@ -490,7 +490,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         /* fall through */
     case PROP_PROTREF:
         prop->type = PROP_JSVAL;
-        prop->flags = PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE;
+        prop->flags = PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE;
         prop->u.val = jsval_undefined();
         break;
     case PROP_JSVAL:
@@ -850,7 +850,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     }
 
     while(iter < This->props + This->prop_cnt) {
-        if(iter->name && (get_flags(This, iter) & PROPF_ENUM) && iter->type!=PROP_DELETED) {
+        if(iter->name && (get_flags(This, iter) & PROPF_ENUMERABLE) && iter->type!=PROP_DELETED) {
             *pid = prop_to_id(This, iter);
             return S_OK;
         }
@@ -1040,7 +1040,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     HRESULT hres;
 
     if(flags & fdexNameEnsure)
-        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE,
+        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                 &prop);
     else
         hres = find_prop_name_prot(jsdisp, string_hash(name), name, &prop);
@@ -1313,7 +1313,7 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
 
 HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, PROPF_ENUM | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
+    return jsdisp_propput(obj, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1611,6 +1611,6 @@ HRESULT jsdisp_is_enumerable(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = prop && (prop->flags & PROPF_ENUM) && prop->type != PROP_PROTREF;
+    *ret = prop && (prop->flags & PROPF_ENUMERABLE) && prop->type != PROP_PROTREF;
     return S_OK;
 }

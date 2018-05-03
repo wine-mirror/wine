@@ -89,7 +89,7 @@ extern HINSTANCE jscript_hinstance DECLSPEC_HIDDEN;
 
 #define PROPF_ARGMASK       0x00ff
 #define PROPF_METHOD        0x0100
-#define PROPF_ENUM          0x0200
+#define PROPF_ENUMERABLE    0x0200
 #define PROPF_CONSTR        0x0400
 #define PROPF_WRITABLE      0x0800
 #define PROPF_CONFIGURABLE  0x1000
