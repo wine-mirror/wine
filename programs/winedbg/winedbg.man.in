@@ -73,6 +73,10 @@ When in \fBgdb\fR proxy mode, the following options are available:
 started. Relevant information for starting \fBgdb\fR is printed on
 screen. This is somehow useful when not directly using \fBgdb\fR but
 some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
+.IP \fB--port\fR\ \fIport\fR
+Start the \fBgdb\fR server on the given port. If this option is not
+specified, a randomly chosen port will be used. If \fB--no-start\fR is
+specified, the port used will be printed on startup.
 .IP \fB--with-xterm\fR
 This will run \fBgdb\fR in its own xterm instead of using the current
 Unix console for textual display.

@@ -2468,10 +2468,10 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     return TRUE;
 }
 
-static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned flags)
+static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned flags, unsigned port)
 {
     int                 sock;
-    struct sockaddr_in  s_addrs;
+    struct sockaddr_in  s_addrs = {0};
     socklen_t           s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     IMAGEHLP_MODULE64   imh_mod;
@@ -2484,6 +2484,12 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
             fprintf(stderr, "Can't create socket");
         return FALSE;
     }
+
+    s_addrs.sin_family = AF_INET;
+    s_addrs.sin_addr.s_addr = INADDR_ANY;
+    s_addrs.sin_port = htons(port);
+    if (bind(sock, (struct sockaddr *)&s_addrs, sizeof(s_addrs)) == -1)
+        goto cleanup;
 
     if (listen(sock, 1) == -1 || getsockname(sock, (struct sockaddr*)&s_addrs, &s_len) == -1)
         goto cleanup;
@@ -2553,7 +2559,7 @@ cleanup:
     return ret;
 }
 
-static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
+static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
     DEBUG_EVENT         de;
     int                 i;
@@ -2586,7 +2592,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
              * and the only one of this type  */
             assert(gdbctx->process == NULL && de.dwProcessId == dbg_curr_pid);
             /* gdbctx->dwProcessId = pid; */
-            if (!gdb_startup(gdbctx, &de, flags)) return FALSE;
+            if (!gdb_startup(gdbctx, &de, flags, port)) return FALSE;
             assert(!gdbctx->in_trap);
         }
         else
@@ -2599,13 +2605,13 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
     return TRUE;
 }
 
-static int gdb_remote(unsigned flags)
+static int gdb_remote(unsigned flags, unsigned port)
 {
     struct pollfd       pollfd;
     struct gdb_context  gdbctx;
     BOOL                doLoop;
 
-    for (doLoop = gdb_init_context(&gdbctx, flags); doLoop;)
+    for (doLoop = gdb_init_context(&gdbctx, flags, port); doLoop;)
     {
         pollfd.fd = gdbctx.sock;
         pollfd.events = POLLIN;
@@ -2647,7 +2653,8 @@ static int gdb_remote(unsigned flags)
 int gdb_main(int argc, char* argv[])
 {
 #ifdef HAVE_POLL
-    unsigned gdb_flags = 0;
+    unsigned gdb_flags = 0, port = 0;
+    char *port_end;
 
     argc--; argv++;
     while (argc > 0 && argv[0][0] == '-')
@@ -2664,11 +2671,22 @@ int gdb_main(int argc, char* argv[])
             argc--; argv++;
             continue;
         }
+        if (strcmp(argv[0], "--port") == 0 && argc > 1)
+        {
+            port = strtoul(argv[1], &port_end, 10);
+            if (*port_end)
+            {
+                fprintf(stderr, "Invalid port: %s\n", argv[1]);
+                return -1;
+            }
+            argc -= 2; argv += 2;
+            continue;
+        }
         return -1;
     }
     if (dbg_active_attach(argc, argv) == start_ok ||
         dbg_active_launch(argc, argv) == start_ok)
-        return gdb_remote(gdb_flags);
+        return gdb_remote(gdb_flags, port);
 #else
     fprintf(stderr, "GdbProxy mode not supported on this platform\n");
 #endif
