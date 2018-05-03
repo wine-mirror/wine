@@ -1174,6 +1174,19 @@ static void test_InternetSetOption(void)
     ret = InternetSetOptionA(ses, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
     ok(ret == TRUE, "InternetSetOption should've succeeded\n");
 
+    ret = InternetSetOptionA(ses, INTERNET_OPTION_REFRESH, NULL, 0);
+    ok(ret == TRUE, "InternetSetOption should've succeeded\n");
+
+    SetLastError(0xdeadbeef);
+    ret = InternetSetOptionA(req, INTERNET_OPTION_REFRESH, NULL, 0);
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
+    ok(GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "GetLastError() = %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = InternetSetOptionA(con, INTERNET_OPTION_REFRESH, NULL, 0);
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
+    ok(GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "GetLastError() = %u\n", GetLastError());
+
     ret = InternetCloseHandle(req);
     ok(ret == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
     ret = InternetCloseHandle(con);

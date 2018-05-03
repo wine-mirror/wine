@@ -970,6 +970,9 @@ static DWORD APPINFO_SetOption(object_header_t *hdr, DWORD option, void *buf, DW
         heap_free(ai->agent);
         if (!(ai->agent = heap_strdupW(buf))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
+    case INTERNET_OPTION_REFRESH:
+        FIXME("INTERNET_OPTION_REFRESH\n");
+        return ERROR_SUCCESS;
     }
 
     return INET_SetOption(hdr, option, buf, size);
@@ -2611,6 +2614,8 @@ DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
     case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
         WARN("Called on global option %u\n", option);
         return ERROR_INTERNET_INVALID_OPERATION;
+    case INTERNET_OPTION_REFRESH:
+        return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
