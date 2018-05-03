@@ -68,8 +68,10 @@ static void unload_driver(SC_HANDLE service)
     ControlService(service, SERVICE_CONTROL_STOP, &status);
     while (status.dwCurrentState == SERVICE_STOP_PENDING)
     {
+        BOOL ret;
         Sleep(100);
-        ok(QueryServiceStatus(service, &status), "QueryServiceStatus failed: %u\n", GetLastError());
+        ret = QueryServiceStatus(service, &status);
+        ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
     }
     ok(status.dwCurrentState == SERVICE_STOPPED,
        "expected SERVICE_STOPPED, got %d\n", status.dwCurrentState);
@@ -121,11 +123,13 @@ static SC_HANDLE load_driver(char *filename)
     ok(ret, "StartService failed: %u\n", GetLastError());
 
     /* wait for the service to start up properly */
-    ok(QueryServiceStatus(service, &status), "QueryServiceStatus failed: %u\n", GetLastError());
+    ret = QueryServiceStatus(service, &status);
+    ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
     while (status.dwCurrentState == SERVICE_START_PENDING)
     {
         Sleep(100);
-        ok(QueryServiceStatus(service, &status), "QueryServiceStatus failed: %u\n", GetLastError());
+        ret = QueryServiceStatus(service, &status);
+        ok(ret, "QueryServiceStatus failed: %u\n", GetLastError());
     }
     ok(status.dwCurrentState == SERVICE_RUNNING,
        "expected SERVICE_RUNNING, got %d\n", status.dwCurrentState);
@@ -194,6 +198,7 @@ START_TEST(ntoskrnl)
 {
     char filename[MAX_PATH];
     SC_HANDLE service;
+    BOOL ret;
 
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
@@ -205,5 +210,6 @@ START_TEST(ntoskrnl)
     main_test();
 
     unload_driver(service);
-    ok(DeleteFileA(filename), "DeleteFile failed: %u\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
 }
