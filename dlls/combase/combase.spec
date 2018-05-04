@@ -263,7 +263,7 @@
 @ stub RoOriginateLanguageException
 @ stub RoParameterizedTypeExtraGetTypeSignature
 @ stub RoRegisterActivationFactories
-@ stub RoRegisterForApartmentShutdown
+@ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr)
 @ stub RoReportCapabilityCheckFailure
 @ stub RoReportFailedDelegate
 @ stub RoReportUnhandledError

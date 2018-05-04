@@ -232,3 +232,22 @@ HRESULT WINAPI RoGetApartmentIdentifier(UINT64 *identifier)
     *identifier = 0xdeadbeef;
     return S_OK;
 }
+
+/***********************************************************************
+ *      RoRegisterForApartmentShutdown (combase.@)
+ */
+HRESULT WINAPI RoRegisterForApartmentShutdown(IApartmentShutdown *callback,
+        UINT64 *identifier, APARTMENT_SHUTDOWN_REGISTRATION_COOKIE *cookie)
+{
+    HRESULT hr;
+
+    FIXME("(%p, %p, %p): stub\n", callback, identifier, cookie);
+
+    hr = RoGetApartmentIdentifier(identifier);
+    if (FAILED(hr))
+        return hr;
+
+    if (cookie)
+        *cookie = (void *)0xcafecafe;
+    return S_OK;
+}

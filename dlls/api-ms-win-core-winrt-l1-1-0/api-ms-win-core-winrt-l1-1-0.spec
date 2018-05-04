@@ -3,7 +3,7 @@
 @ stdcall RoGetApartmentIdentifier(ptr) combase.RoGetApartmentIdentifier
 @ stdcall RoInitialize(long) combase.RoInitialize
 @ stub RoRegisterActivationFactories
-@ stub RoRegisterForApartmentShutdown
+@ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr) combase.RoRegisterForApartmentShutdown
 @ stub RoRevokeActivationFactories
 @ stdcall RoUninitialize() combase.RoUninitialize
 @ stub RoUnregisterForApartmentShutdown
