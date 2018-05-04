@@ -665,6 +665,12 @@ static inline VfwPinImpl *impl_from_BasePin(BasePin *pin)
     return CONTAINING_RECORD(pin, VfwPinImpl, pin.pin);
 }
 
+static HRESULT WINAPI VfwPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", pin);
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI VfwPin_GetMediaType(BasePin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     VfwPinImpl *This = impl_from_BasePin(pin);
@@ -707,7 +713,7 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocato
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
-        NULL,
+        VfwPin_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         VfwPin_GetMediaTypeVersion,
         VfwPin_GetMediaType

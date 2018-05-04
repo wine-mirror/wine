@@ -310,9 +310,11 @@ HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id)
 
 HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
+    BasePin *This = impl_from_IPin(iface);
+
     TRACE("(%p)->(%p)\n", iface, pmt);
 
-    return S_OK;
+    return (This->pFuncsTable->pfnCheckMediaType(This, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
 HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
@@ -931,15 +933,6 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
 static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 {
     return IPin_EndOfStream( pin );
-}
-
-HRESULT WINAPI BaseInputPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
-{
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
-
-    return (This->pin.pFuncsTable->pfnCheckMediaType(&This->pin, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
 HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)

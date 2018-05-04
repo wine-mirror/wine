@@ -1388,6 +1388,12 @@ static ULONG WINAPI QTOutPin_Release(IPin *iface)
     return refCount;
 }
 
+static HRESULT WINAPI QTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", base);
+    return S_OK;
+}
+
 static HRESULT WINAPI QTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     QTOutPin *This = impl_QTOutPin_from_BasePin(iface);
@@ -1516,7 +1522,7 @@ static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
-        NULL,
+        QTOutPin_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         QTOutPin_GetMediaType

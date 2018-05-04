@@ -1223,6 +1223,12 @@ static const ISpecifyPropertyPagesVtbl SpecifyPropertyPagesVtbl = {
     SpecifyPropertyPages_GetPages
 };
 
+static HRESULT WINAPI AviMuxOut_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", base);
+    return S_OK;
+}
+
 static HRESULT WINAPI AviMuxOut_AttemptConnection(BasePin *base,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
@@ -1299,7 +1305,7 @@ static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
 
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     {
-        NULL,
+        AviMuxOut_CheckMediaType,
         AviMuxOut_AttemptConnection,
         AviMuxOut_GetMediaTypeVersion,
         AviMuxOut_GetMediaType

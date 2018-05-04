@@ -120,12 +120,10 @@ static HRESULT WINAPI TransformFilter_Input_Receive(BaseInputPin *This, IMediaSa
     return hr;
 }
 
-static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI TransformFilter_Output_CheckMediaType(BasePin *This, const AM_MEDIA_TYPE *pmt)
 {
-    BasePin *This = impl_BasePin_from_IPin(iface);
     TransformFilter *pTransformFilter = impl_from_IBaseFilter(This->pinInfo.pFilter);
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
-    TRACE("%p\n", iface);
 
     if (IsEqualIID(&pmt->majortype, &outpmt->majortype)
         && (IsEqualIID(&pmt->subtype, &outpmt->subtype) || IsEqualIID(&outpmt->subtype, &GUID_NULL)))
@@ -186,7 +184,7 @@ static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
 
 static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
     {
-        NULL,
+        TransformFilter_Output_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         TransformFilter_Output_GetMediaType
@@ -571,7 +569,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    BaseInputPinImpl_QueryAccept,
+    BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     TransformFilter_InputPin_EndOfStream,
@@ -593,7 +591,7 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    TransformFilter_Output_QueryAccept,
+    BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseOutputPinImpl_EndOfStream,

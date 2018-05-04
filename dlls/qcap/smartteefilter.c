@@ -499,6 +499,12 @@ static const IPinVtbl SmartTeeFilterCaptureVtbl = {
     BasePinImpl_NewSegment
 };
 
+static HRESULT WINAPI SmartTeeFilterCapture_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", base);
+    return S_OK;
+}
+
 static LONG WINAPI SmartTeeFilterCapture_GetMediaTypeVersion(BasePin *base)
 {
     SmartTeeFilter *This = impl_from_BasePin(base);
@@ -535,7 +541,7 @@ static HRESULT WINAPI SmartTeeFilterCapture_BreakConnect(BaseOutputPin *base)
 
 static const BaseOutputPinFuncTable SmartTeeFilterCaptureFuncs = {
     {
-        NULL,
+        SmartTeeFilterCapture_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         SmartTeeFilterCapture_GetMediaTypeVersion,
         SmartTeeFilterCapture_GetMediaType
@@ -592,6 +598,12 @@ static const IPinVtbl SmartTeeFilterPreviewVtbl = {
     BasePinImpl_NewSegment
 };
 
+static HRESULT WINAPI SmartTeeFilterPreview_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", base);
+    return S_OK;
+}
+
 static LONG WINAPI SmartTeeFilterPreview_GetMediaTypeVersion(BasePin *base)
 {
     SmartTeeFilter *This = impl_from_BasePin(base);
@@ -628,7 +640,7 @@ static HRESULT WINAPI SmartTeeFilterPreview_BreakConnect(BaseOutputPin *base)
 
 static const BaseOutputPinFuncTable SmartTeeFilterPreviewFuncs = {
     {
-        NULL,
+        SmartTeeFilterPreview_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         SmartTeeFilterPreview_GetMediaTypeVersion,
         SmartTeeFilterPreview_GetMediaType

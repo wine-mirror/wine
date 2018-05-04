@@ -185,7 +185,7 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    BaseInputPinImpl_QueryAccept,
+    BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseRenderer_InputPin_EndOfStream,

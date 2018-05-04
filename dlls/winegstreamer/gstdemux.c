@@ -598,13 +598,6 @@ static DWORD CALLBACK push_data(LPVOID iface)
     return 0;
 }
 
-static HRESULT WINAPI GST_OutPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
-{
-    GSTOutPin *pin = (GSTOutPin*)iface;
-    FIXME("stub %p\n", pin);
-    return S_OK;
-}
-
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
@@ -1787,6 +1780,12 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface)
     return refCount;
 }
 
+static HRESULT WINAPI GSTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+{
+    FIXME("(%p) stub\n", base);
+    return S_OK;
+}
+
 static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     GSTOutPin *This = (GSTOutPin *)iface;
@@ -1867,7 +1866,7 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    GST_OutPin_QueryAccept,
+    BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseOutputPinImpl_EndOfStream,
@@ -1878,7 +1877,7 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
-        NULL,
+        GSTOutPin_CheckMediaType,
         BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         GSTOutPin_GetMediaType
