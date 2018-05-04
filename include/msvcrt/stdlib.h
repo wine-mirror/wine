@@ -60,6 +60,11 @@ typedef struct _ldiv_t {
     __msvcrt_long rem;
 } ldiv_t;
 
+typedef struct _lldiv_t {
+    __int64 quot;
+    __int64 rem;
+} lldiv_t;
+
 
 #define _countof(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -194,6 +199,7 @@ void*         __cdecl calloc(size_t,size_t);
 div_t  __cdecl div(int,int);
 ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
+lldiv_t       __cdecl lldiv(__int64,__int64);
 void          __cdecl exit(int);
 void          __cdecl free(void*);
 char*         __cdecl getenv(const char*);
