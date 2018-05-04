@@ -2664,14 +2664,14 @@ static HRESULT WINAPI propertystore_SetValue(IPropertyStore *iface, REFPROPERTYK
 {
     IShellLinkImpl *This = impl_from_IPropertyStore(iface);
     FIXME("(%p)->(%p %p): stub\n", This, key, value);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI propertystore_Commit(IPropertyStore *iface)
 {
     IShellLinkImpl *This = impl_from_IPropertyStore(iface);
     FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IPropertyStoreVtbl propertystorevtbl = {
