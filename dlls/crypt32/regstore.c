@@ -309,7 +309,11 @@ static BOOL CRYPT_RegFlushStore(WINE_REGSTOREINFO *store, BOOL force)
     TRACE("(%p, %d)\n", store, force);
 
     if (store->dirty || force)
+    {
         ret = CRYPT_RegWriteToReg(store);
+        if (ret)
+            store->dirty = FALSE;
+    }
     else
         ret = TRUE;
     return ret;
