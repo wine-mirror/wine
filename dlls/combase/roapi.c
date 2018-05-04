@@ -251,3 +251,15 @@ HRESULT WINAPI RoRegisterForApartmentShutdown(IApartmentShutdown *callback,
         *cookie = (void *)0xcafecafe;
     return S_OK;
 }
+
+/***********************************************************************
+ *      RoGetServerActivatableClasses (combase.@)
+ */
+HRESULT WINAPI RoGetServerActivatableClasses(HSTRING name, HSTRING **classes, DWORD *count)
+{
+    FIXME("(%p, %p, %p): stub\n", name, classes, count);
+
+    if (count)
+        *count = 0;
+    return S_OK;
+}

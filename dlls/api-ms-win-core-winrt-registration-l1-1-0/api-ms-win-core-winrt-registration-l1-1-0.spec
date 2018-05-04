@@ -1,2 +1,2 @@
 @ stub RoGetActivatableClassRegistration
-@ stub RoGetServerActivatableClasses
+@ stdcall RoGetServerActivatableClasses(ptr ptr ptr) combase.RoGetServerActivatableClasses
