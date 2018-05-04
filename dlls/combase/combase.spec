@@ -250,7 +250,7 @@
 @ stub RoGetActivatableClassRegistration
 @ stdcall RoGetActivationFactory(ptr ptr ptr)
 @ stub RoGetAgileReference
-@ stub RoGetApartmentIdentifier
+@ stdcall RoGetApartmentIdentifier(ptr)
 @ stub RoGetErrorReportingFlags
 @ stub RoGetMatchingRestrictedErrorInfo
 @ stdcall RoGetParameterizedTypeInstanceIID(long ptr ptr ptr ptr)

@@ -218,3 +218,17 @@ HRESULT WINAPI RoActivateInstance(HSTRING classid, IInspectable **instance)
 
     return hr;
 }
+
+/***********************************************************************
+ *      RoGetApartmentIdentifier (combase.@)
+ */
+HRESULT WINAPI RoGetApartmentIdentifier(UINT64 *identifier)
+{
+    FIXME("(%p): stub\n", identifier);
+
+    if (!identifier)
+        return E_INVALIDARG;
+
+    *identifier = 0xdeadbeef;
+    return S_OK;
+}
