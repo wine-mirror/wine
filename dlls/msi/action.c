@@ -7853,7 +7853,11 @@ StandardActions[] =
 static UINT ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action)
 {
     UINT rc = ERROR_FUNCTION_NOT_CALLED;
+    void *cookie;
     UINT i;
+
+    if (is_wow64 && package->platform == PLATFORM_X64)
+        Wow64DisableWow64FsRedirection(&cookie);
 
     i = 0;
     while (StandardActions[i].action != NULL)
@@ -7889,6 +7893,10 @@ static UINT ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action)
         }
         i++;
     }
+
+    if (is_wow64 && package->platform == PLATFORM_X64)
+        Wow64RevertWow64FsRedirection(cookie);
+
     return rc;
 }
 
