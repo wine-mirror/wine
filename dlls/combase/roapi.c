@@ -274,3 +274,11 @@ HRESULT WINAPI RoRegisterActivationFactories(HSTRING *classes, PFNGETACTIVATIONF
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      CleanupTlsOleState (combase.@)
+ */
+void WINAPI CleanupTlsOleState(void *unknown)
+{
+    FIXME("(%p): stub\n", unknown);
+}
