@@ -718,7 +718,8 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin* iface, IPin * pRecei
     TRACE("(%p, %p)\n", pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
-    /* FIXME: call queryacceptproc */
+    if ((hr = This->pFuncsTable->base.pfnCheckMediaType(&This->pin, pmt)) != S_OK)
+        return hr;
 
     This->pin.pConnectedTo = pReceivePin;
     IPin_AddRef(pReceivePin);
