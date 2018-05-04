@@ -886,6 +886,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int prefix_offset;
     ellipsis_data ellip;
     BOOL invert_y=FALSE;
+    int ret = 0;
 
     TRACE("%s, %d, [%s] %08x\n", debugstr_wn (str, count), count,
         wine_dbgstr_rect(rect), flags);
@@ -1002,11 +1003,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                     const WCHAR *p;
                     p = str; while (p < str+len && *p != TAB) p++;
                     len_seg = p - str;
-                    if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size))
-                    {
-                        heap_free(retstr);
-                        return 0;
-                    }
+                    if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size)) goto done;
                 }
                 else
                     len_seg = len;
@@ -1015,10 +1012,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                                  ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
                                  ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
                                  rect, str, len_seg, NULL ))
-                {
-                    heap_free(retstr);
-                    return 0;
-                }
+                    goto done;
                 if (prefix_offset != -1 && prefix_offset < len_seg)
                 {
                     TEXT_DrawUnderscore (hdc, xseg, y + tm.tmAscent + 1, str, prefix_offset, (flags & DT_NOCLIP) ? NULL : rect);
@@ -1067,12 +1061,13 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         if (dtp)
             rect->right += lmargin + rmargin;
     }
-    if (retstr)
-    {
-        memcpy (str, retstr, size_retstr);
-        heap_free(retstr);
-    }
-    return y - rect->top;
+
+    if (retstr) memcpy(str, retstr, size_retstr);
+
+    ret = y - rect->top;
+done:
+    heap_free(retstr);
+    return ret;
 }
 
 /***********************************************************************
