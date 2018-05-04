@@ -78,7 +78,8 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
         memset(&info, 0, sizeof(info));
 
         ret = ReadDirectoryChangesW(htasks, &info, sizeof(info), FALSE,
-                                    FILE_NOTIFY_CHANGE_FILE_NAME, NULL, &ov, NULL);
+                                    FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE,
+                                    NULL, &ov, NULL);
         if (!ret) break;
 
         events[0] = done_event;
@@ -104,6 +105,15 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             lstrcatW(path, tasksW);
             lstrcatW(path, info.data.FileName);
             remove_job(path);
+            break;
+
+        case FILE_ACTION_MODIFIED:
+            TRACE("FILE_ACTION_MODIFIED %s\n", debugstr_w(info.data.FileName));
+
+            GetWindowsDirectoryW(path, MAX_PATH);
+            lstrcatW(path, tasksW);
+            lstrcatW(path, info.data.FileName);
+            modify_job(path);
             break;
 
         default:

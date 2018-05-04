@@ -25,6 +25,7 @@
 void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
 void add_job(const WCHAR *name) DECLSPEC_HIDDEN;
 void remove_job(const WCHAR *name) DECLSPEC_HIDDEN;
+void modify_job(const WCHAR *name) DECLSPEC_HIDDEN;
 
 static inline WCHAR *heap_strdupW(const WCHAR *src)
 {

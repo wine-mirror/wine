@@ -269,15 +269,12 @@ static BOOL load_job_data(const char *data, DWORD size, AT_ENUM *info)
     return TRUE;
 }
 
-void add_job(const WCHAR *name)
+static BOOL load_job(const WCHAR *name, AT_ENUM *info)
 {
     HANDLE file, mapping;
     DWORD size, try;
     void *data;
-    struct job_t *job;
-
-    job = heap_alloc_zero(sizeof(*job));
-    if (!job) return;
+    BOOL ret = FALSE;
 
     try = 1;
     for (;;)
@@ -304,14 +301,7 @@ void add_job(const WCHAR *name)
         data = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
         if (data)
         {
-            if (load_job_data(data, size, &job->info))
-            {
-                EnterCriticalSection(&at_job_list_section);
-                job->name = heap_strdupW(name);
-                job->info.JobId = current_jobid++;
-                list_add_tail(&at_job_list, &job->entry);
-                LeaveCriticalSection(&at_job_list_section);
-            }
+            ret = load_job_data(data, size, info);
             UnmapViewOfFile(data);
         }
 
@@ -320,11 +310,39 @@ void add_job(const WCHAR *name)
         break;
     }
 
-    if (!job->info.JobId)
+    return ret;
+}
+
+static void free_job_info(AT_ENUM *info)
+{
+    heap_free(info->Command);
+}
+
+static void free_job(struct job_t *job)
+{
+    free_job_info(&job->info);
+    heap_free(job->name);
+    heap_free(job);
+}
+
+void add_job(const WCHAR *name)
+{
+    struct job_t *job;
+
+    job = heap_alloc_zero(sizeof(*job));
+    if (!job) return;
+
+    if (!load_job(name, &job->info))
     {
-        heap_free(job->info.Command);
-        heap_free(job);
+        free_job(job);
+        return;
     }
+
+    EnterCriticalSection(&at_job_list_section);
+    job->name = heap_strdupW(name);
+    job->info.JobId = current_jobid++;
+    list_add_tail(&at_job_list, &job->entry);
+    LeaveCriticalSection(&at_job_list_section);
 }
 
 static BOOL write_signature(HANDLE hfile)
@@ -523,10 +541,30 @@ void remove_job(const WCHAR *name)
     if (job)
     {
         list_remove(&job->entry);
-        heap_free(job->name);
-        heap_free(job);
+        free_job(job);
     }
     LeaveCriticalSection(&at_job_list_section);
+}
+
+void modify_job(const WCHAR *name)
+{
+    AT_ENUM info;
+
+    if (load_job(name, &info))
+    {
+        struct job_t *job;
+
+        EnterCriticalSection(&at_job_list_section);
+        job = find_job(0, name);
+        if (job)
+        {
+            free_job_info(&job->info);
+            job->info = info;
+        }
+        else
+            free_job_info(&info);
+        LeaveCriticalSection(&at_job_list_section);
+    }
 }
 
 DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
