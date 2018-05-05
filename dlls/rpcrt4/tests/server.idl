@@ -385,6 +385,7 @@ cpp_quote("#endif")
   void authinfo_test(unsigned int protseq, int secure);
 
   void stop(void);
+  void stop_autolisten(void);
 
   typedef union ipu switch(int t)
   {

@@ -844,6 +844,14 @@ void __cdecl s_stop(void)
   }
 }
 
+void __cdecl s_stop_autolisten(void)
+{
+    RPC_STATUS status;
+    status = RpcServerUnregisterIf(NULL, NULL, FALSE);
+todo_wine
+    ok(status == RPC_S_UNKNOWN_MGR_TYPE, "got %u\n", status);
+}
+
 void __cdecl s_ip_test(ipu_t *a)
 {
     STATSTG st;
@@ -1689,6 +1697,9 @@ client(const char *test)
     authinfo_test(RPC_PROTSEQ_LRPC, 0);
 todo_wine
     test_is_server_listening(IServer_IfHandle, RPC_S_NOT_LISTENING);
+
+    stop_autolisten();
+    ok(int_return() == INT_CODE, "RPC int_return\n");
 
     ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
