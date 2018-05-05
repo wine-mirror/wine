@@ -61,7 +61,6 @@ typedef struct
     INT  fLocation;
     DWORD flags;
     BOOL bUnicode;
-    BOOL bFocussed;
     RECT rcChannel;
     RECT rcSelection;
     RECT rcThumb;
@@ -90,6 +89,7 @@ typedef struct
 
 /* Page was set with TBM_SETPAGESIZE */
 #define TB_USER_PAGE            0x00000080
+#define TB_IS_FOCUSED           0x00000100
 
 /* helper defines for TRACKBAR_DrawTic */
 #define TIC_EDGE                0x20
@@ -999,7 +999,7 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     }
 
     /* draw focus rectangle */
-    if (infoPtr->bFocussed) {
+    if (infoPtr->flags & TB_IS_FOCUSED) {
 	DrawFocusRect(hdc, &rcClient);
     }
 
@@ -1570,7 +1570,7 @@ static LRESULT
 TRACKBAR_KillFocus (TRACKBAR_INFO *infoPtr)
 {
     TRACE("\n");
-    infoPtr->bFocussed = FALSE;
+    infoPtr->flags &= ~TB_IS_FOCUSED;
     TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
@@ -1657,7 +1657,7 @@ static LRESULT
 TRACKBAR_SetFocus (TRACKBAR_INFO *infoPtr)
 {
     TRACE("\n");
-    infoPtr->bFocussed = TRUE;
+    infoPtr->flags |= TB_IS_FOCUSED;
     TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
