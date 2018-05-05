@@ -1807,6 +1807,7 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         return;
 
     var stringify_tests = [
+        [[], undefined],
         [[true], "true"],
         [[false], "false"],
         [[null], "null"],
@@ -1832,6 +1833,9 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         ok(s === stringify_tests[i][1],
            "["+i+"] stringify(" + stringify_tests[i][0] + ") returned " + s + " expected " + stringify_tests[i][1]);
     }
+
+    s = JSON.stringify();
+    ok(s === undefined, "stringify() returned " + s + " expected undefined");
 
     s = JSON.stringify(testObj);
     ok(s === undefined || s === "undefined" /* broken on some old versions */,
