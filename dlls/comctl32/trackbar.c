@@ -59,7 +59,7 @@ typedef struct
     HWND hwndBuddyLA;
     HWND hwndBuddyRB;
     INT  fLocation;
-    INT  flags;
+    DWORD flags;
     BOOL bUnicode;
     BOOL bFocussed;
     RECT rcChannel;
@@ -78,15 +78,18 @@ typedef struct
 /* Used by TRACKBAR_Refresh to find out which parts of the control
    need to be recalculated */
 
-#define TB_THUMBPOSCHANGED      1
-#define TB_THUMBSIZECHANGED     2
-#define TB_THUMBCHANGED 	(TB_THUMBPOSCHANGED | TB_THUMBSIZECHANGED)
-#define TB_SELECTIONCHANGED     4
-#define TB_DRAG_MODE            8     /* we're dragging the slider */
-#define TB_AUTO_PAGE_LEFT	16
-#define TB_AUTO_PAGE_RIGHT	32
-#define TB_AUTO_PAGE		(TB_AUTO_PAGE_LEFT | TB_AUTO_PAGE_RIGHT)
-#define TB_THUMB_HOT            64    /* mouse hovers above thumb */
+#define TB_THUMBPOSCHANGED      0x00000001
+#define TB_THUMBSIZECHANGED     0x00000002
+#define TB_THUMBCHANGED        (TB_THUMBPOSCHANGED | TB_THUMBSIZECHANGED)
+#define TB_SELECTIONCHANGED     0x00000004
+#define TB_DRAG_MODE            0x00000008     /* we're dragging the slider */
+#define TB_AUTO_PAGE_LEFT       0x00000010
+#define TB_AUTO_PAGE_RIGHT      0x00000020
+#define TB_AUTO_PAGE           (TB_AUTO_PAGE_LEFT | TB_AUTO_PAGE_RIGHT)
+#define TB_THUMB_HOT            0x00000040    /* mouse hovers above thumb */
+
+/* Page was set with TBM_SETPAGESIZE */
+#define TB_USER_PAGE            0x00000080
 
 /* helper defines for TRACKBAR_DrawTic */
 #define TIC_EDGE                0x20
@@ -1204,6 +1207,8 @@ TRACKBAR_SetPageSize (TRACKBAR_INFO *infoPtr, LONG lPageSize)
     else
         infoPtr->lPageSize = TB_DEFAULTPAGESIZE;
 
+    infoPtr->flags |= TB_USER_PAGE;
+
     return lTemp;
 }
 
@@ -1229,6 +1234,14 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
     return 0;
 }
 
+static void TRACKBAR_UpdatePageSize(TRACKBAR_INFO *infoPtr)
+{
+    if (infoPtr->flags & TB_USER_PAGE)
+        return;
+
+    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
+    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
+}
 
 static inline LRESULT
 TRACKBAR_SetRange (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG range)
@@ -1246,8 +1259,7 @@ TRACKBAR_SetRange (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG range)
     if (infoPtr->lPos > infoPtr->lRangeMax)
         infoPtr->lPos = infoPtr->lRangeMax;
 
-    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
-    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
+    TRACKBAR_UpdatePageSize(infoPtr);
 
     if (changed) {
         if (infoPtr->dwStyle & TBS_AUTOTICKS)
@@ -1273,8 +1285,7 @@ TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG lMax)
         infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
-    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
-    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
+    TRACKBAR_UpdatePageSize(infoPtr);
 
     if (changed && (infoPtr->dwStyle & TBS_AUTOTICKS))
         TRACKBAR_RecalculateTics (infoPtr);
@@ -1296,8 +1307,7 @@ TRACKBAR_SetRangeMin (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG lMin)
         infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 
-    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
-    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
+    TRACKBAR_UpdatePageSize(infoPtr);
 
     if (changed && (infoPtr->dwStyle & TBS_AUTOTICKS))
         TRACKBAR_RecalculateTics (infoPtr);
