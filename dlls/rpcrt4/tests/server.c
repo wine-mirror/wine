@@ -1680,6 +1680,19 @@ client(const char *test)
     ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
+  else if (strcmp(test, "ncalrpc_autolisten") == 0)
+  {
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+
+    run_tests();
+    authinfo_test(RPC_PROTSEQ_LRPC, 0);
+todo_wine
+    test_is_server_listening(IServer_IfHandle, RPC_S_NOT_LISTENING);
+
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
+  }
   else if (strcmp(test, "ncalrpc_secure") == 0)
   {
     ok(RPC_S_OK == RpcStringBindingComposeA(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
@@ -1789,6 +1802,19 @@ server(void)
 
   CloseHandle(stop_event);
   stop_event = NULL;
+
+  if (pRpcServerRegisterIfEx)
+  {
+    status = pRpcServerRegisterIfEx(s_IServer_v0_0_s_ifspec, NULL, NULL,
+        RPC_IF_ALLOW_CALLBACKS_WITH_NO_AUTH | RPC_IF_AUTOLISTEN,
+        RPC_C_LISTEN_MAX_CALLS_DEFAULT, NULL);
+    ok(status == RPC_S_OK, "RpcServerRegisterIf() failed: %u\n", status);
+
+    run_client("ncalrpc_autolisten");
+
+    status = RpcServerUnregisterIf(s_IServer_v0_0_s_ifspec, NULL, TRUE);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf() failed: %u\n", status);
+  }
 
   CoUninitialize();
 }
