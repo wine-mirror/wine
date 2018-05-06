@@ -5079,7 +5079,7 @@ enum wined3d_push_constants
 #else
 #define WINED3D_CS_QUEUE_SIZE           0x400000u
 #endif
-#define WINED3D_CS_SPIN_COUNT           10000000u
+#define WINED3D_CS_SPIN_COUNT           2000u
 #define WINED3D_CS_QUEUE_MASK           (WINED3D_CS_QUEUE_SIZE - 1)
 
 C_ASSERT(!(WINED3D_CS_QUEUE_SIZE & (WINED3D_CS_QUEUE_SIZE - 1)));
