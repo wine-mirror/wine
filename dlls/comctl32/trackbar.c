@@ -1196,18 +1196,30 @@ TRACKBAR_SetLineSize (TRACKBAR_INFO *infoPtr, LONG lLineSize)
     return lTemp;
 }
 
+static void TRACKBAR_UpdatePageSize(TRACKBAR_INFO *infoPtr)
+{
+    if (infoPtr->flags & TB_USER_PAGE)
+        return;
+
+    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
+    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
+}
 
 static inline LONG
 TRACKBAR_SetPageSize (TRACKBAR_INFO *infoPtr, LONG lPageSize)
 {
     LONG lTemp = infoPtr->lPageSize;
 
-    if (lPageSize != -1)
-        infoPtr->lPageSize = lPageSize;
+    if (lPageSize == -1)
+    {
+        infoPtr->flags &= ~TB_USER_PAGE;
+        TRACKBAR_UpdatePageSize(infoPtr);
+    }
     else
-        infoPtr->lPageSize = TB_DEFAULTPAGESIZE;
-
-    infoPtr->flags |= TB_USER_PAGE;
+    {
+        infoPtr->flags |= TB_USER_PAGE;
+        infoPtr->lPageSize = lPageSize;
+    }
 
     return lTemp;
 }
@@ -1232,15 +1244,6 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
     }
 
     return 0;
-}
-
-static void TRACKBAR_UpdatePageSize(TRACKBAR_INFO *infoPtr)
-{
-    if (infoPtr->flags & TB_USER_PAGE)
-        return;
-
-    infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
-    if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 }
 
 static inline LRESULT
