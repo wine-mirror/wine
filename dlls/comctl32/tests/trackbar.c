@@ -612,6 +612,17 @@ static void test_page_size(void)
     r = SendMessageA(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
     ok(r == 10, "Unexpected page size %d.\n", r);
 
+    r = SendMessageA(hWndTrackbar, TBM_SETPAGESIZE, 0, -1);
+    ok(r == 10, "Unexpected page size %d.\n", r);
+
+    r = SendMessageA(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
+    ok(r == 7, "Unexpected page size %d.\n", r);
+
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, 0, 100);
+
+    r = SendMessageA(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
+    ok(r == 19, "Unexpected page size %d.\n", r);
+
     DestroyWindow(hWndTrackbar);
 
     hWndTrackbar = create_trackbar(defaultstyle, hWndParent);
