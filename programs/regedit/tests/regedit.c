@@ -3688,7 +3688,7 @@ static void test_export(void)
     RegCloseKey(hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", embedded_null_test, TODO_REG_COMPARE), "compare_export() failed\n");
+    ok(compare_export("file.reg", embedded_null_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
