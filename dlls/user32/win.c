@@ -3014,12 +3014,13 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
  */
 HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
+    WINDOWPOS winpos;
     HWND full_handle;
     HWND old_parent = 0;
     BOOL was_visible;
     WND *wndPtr;
-    POINT pt;
     BOOL ret;
+    RECT window_rect, old_screen_rect, new_screen_rect;
 
     TRACE("(%p %p)\n", hwnd, parent);
 
@@ -3062,8 +3063,8 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     wndPtr = WIN_GetPtr( hwnd );
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
 
-    pt.x = wndPtr->rectWindow.left;
-    pt.y = wndPtr->rectWindow.top;
+    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, NULL );
+    WIN_GetRectangles( hwnd, COORDS_SCREEN, &old_screen_rect, NULL );
 
     SERVER_START_REQ( set_parent )
     {
@@ -3082,11 +3083,17 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
     USER_Driver->pSetParent( full_handle, parent, old_parent );
 
-    /* SetParent additionally needs to make hwnd the topmost window
-       in the x-order and send the expected WM_WINDOWPOSCHANGING and
-       WM_WINDOWPOSCHANGED notification messages.
-    */
-    SetWindowPos( hwnd, HWND_TOP, pt.x, pt.y, 0, 0, SWP_NOSIZE );
+    winpos.hwnd = hwnd;
+    winpos.hwndInsertAfter = HWND_TOP;
+    winpos.x = window_rect.left;
+    winpos.y = window_rect.top;
+    winpos.cx = 0;
+    winpos.cy = 0;
+    winpos.flags = SWP_NOSIZE;
+
+    WIN_GetRectangles( hwnd, COORDS_SCREEN, &new_screen_rect, NULL );
+    USER_SetWindowPos( &winpos, new_screen_rect.left - old_screen_rect.left,
+                       new_screen_rect.top - old_screen_rect.top );
 
     if (was_visible) ShowWindow( hwnd, SW_SHOW );
 

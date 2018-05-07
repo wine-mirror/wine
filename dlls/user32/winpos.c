@@ -1855,7 +1855,8 @@ done:
  *           SWP_DoNCCalcSize
  */
 static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, const RECT *old_client_rect,
-                              const RECT *new_window_rect, RECT *new_client_rect, RECT *validRects )
+                              const RECT *new_window_rect, RECT *new_client_rect, RECT *validRects,
+                              int parent_x, int parent_y )
 {
     UINT wvrFlags = 0;
 
@@ -1879,8 +1880,8 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, c
                wine_dbgstr_rect(old_window_rect), wine_dbgstr_rect(old_client_rect),
                wine_dbgstr_rect(new_window_rect), wine_dbgstr_rect(new_client_rect) );
 
-        if (new_client_rect->left != old_client_rect->left ||
-            new_client_rect->top != old_client_rect->top)
+        if (new_client_rect->left != old_client_rect->left - parent_x ||
+            new_client_rect->top != old_client_rect->top - parent_y)
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
 
         if( (new_client_rect->right - new_client_rect->left !=
@@ -1901,8 +1902,8 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, c
     else
     {
         if (!(pWinpos->flags & SWP_NOMOVE) &&
-            (new_client_rect->left != old_client_rect->left ||
-             new_client_rect->top != old_client_rect->top))
+            (new_client_rect->left != old_client_rect->left - parent_x ||
+             new_client_rect->top != old_client_rect->top - parent_y))
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
     }
 
@@ -1917,7 +1918,7 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, c
 }
 
 /* fix redundant flags and values in the WINDOWPOS structure */
-static BOOL fixup_flags( WINDOWPOS *winpos, const RECT *old_window_rect )
+static BOOL fixup_flags( WINDOWPOS *winpos, const RECT *old_window_rect, int parent_x, int parent_y )
 {
     HWND parent;
     WND *wndPtr = WIN_GetPtr( winpos->hwnd );
@@ -1955,7 +1956,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos, const RECT *old_window_rect )
         (old_window_rect->bottom - old_window_rect->top == winpos->cy))
         winpos->flags |= SWP_NOSIZE;    /* Already the right size */
 
-    if ((old_window_rect->left == winpos->x) && (old_window_rect->top == winpos->y))
+    if ((old_window_rect->left - parent_x == winpos->x) && (old_window_rect->top - parent_y == winpos->y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
     if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
@@ -2203,7 +2204,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
  *
  *     User32 internal function
  */
-BOOL USER_SetWindowPos( WINDOWPOS * winpos )
+BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
 {
     RECT old_window_rect, old_client_rect, new_window_rect, new_client_rect, valid_rects[2];
     UINT orig_flags;
@@ -2251,7 +2252,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
                                &new_window_rect, &new_client_rect )) return FALSE;
 
     /* Fix redundant flags */
-    if (!fixup_flags( winpos, &old_window_rect )) return FALSE;
+    if (!fixup_flags( winpos, &old_window_rect, parent_x, parent_y )) return FALSE;
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
@@ -2262,7 +2263,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
     /* Common operations */
 
     SWP_DoNCCalcSize( winpos, &old_window_rect, &old_client_rect,
-                      &new_window_rect, &new_client_rect, valid_rects );
+                      &new_window_rect, &new_client_rect, valid_rects, parent_x, parent_y );
 
     if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags,
                          &new_window_rect, &new_client_rect, valid_rects ))
@@ -2350,7 +2351,7 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     winpos.flags = flags;
     
     if (WIN_IsCurrentThread( hwnd ))
-        return USER_SetWindowPos(&winpos);
+        return USER_SetWindowPos( &winpos, 0, 0 );
 
     return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
@@ -2499,7 +2500,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
                winpos->cx, winpos->cy, winpos->flags);
 
         if (WIN_IsCurrentThread( winpos->hwnd ))
-            USER_SetWindowPos( winpos );
+            USER_SetWindowPos( winpos, 0, 0 );
         else
             SendMessageW( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
     }

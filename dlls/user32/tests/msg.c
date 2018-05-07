@@ -15433,7 +15433,7 @@ static void test_SetParent(void)
 
     SetParent(child, parent2);
     flush_events();
-    ok_sequence(WmSetParentSeq_1, "SetParent() visible WS_CHILD", TRUE);
+    ok_sequence(WmSetParentSeq_1, "SetParent() visible WS_CHILD", FALSE);
 
     ok(GetWindowLongA(child, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
     ok(!IsWindowVisible(child), "IsWindowVisible() should return FALSE\n");

@@ -254,7 +254,7 @@ extern void SYSPARAMS_Init(void) DECLSPEC_HIDDEN;
 extern void USER_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern BOOL USER_IsExitingThread( DWORD tid ) DECLSPEC_HIDDEN;
 
-extern BOOL USER_SetWindowPos( WINDOWPOS * winpos ) DECLSPEC_HIDDEN;
+extern BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y ) DECLSPEC_HIDDEN;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
