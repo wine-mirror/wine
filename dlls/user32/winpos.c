@@ -1651,10 +1651,10 @@ static void dump_winpos_flags(UINT flags)
 /***********************************************************************
  *           SWP_DoWinPosChanging
  */
-static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT* pNewClientRect )
+static BOOL SWP_DoWinPosChanging( WINDOWPOS *pWinpos, RECT *old_window_rect, RECT *old_client_rect,
+                                  RECT *new_window_rect, RECT *new_client_rect )
 {
     WND *wndPtr;
-    RECT window_rect, client_rect;
 
     /* Send WM_WINDOWPOSCHANGING message */
 
@@ -1667,32 +1667,32 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
 
     /* Calculate new position and size */
 
-    WIN_GetRectangles( pWinpos->hwnd, COORDS_PARENT, &window_rect, &client_rect );
-    *pNewWindowRect = window_rect;
-    *pNewClientRect = (wndPtr->dwStyle & WS_MINIMIZE) ? window_rect : client_rect;
+    WIN_GetRectangles( pWinpos->hwnd, COORDS_PARENT, old_window_rect, old_client_rect );
+    *new_window_rect = *old_window_rect;
+    *new_client_rect = (wndPtr->dwStyle & WS_MINIMIZE) ? *old_window_rect : *old_client_rect;
 
     if (!(pWinpos->flags & SWP_NOSIZE))
     {
         if (wndPtr->dwStyle & WS_MINIMIZE)
         {
-            pNewWindowRect->right  = pNewWindowRect->left + GetSystemMetrics(SM_CXICON);
-            pNewWindowRect->bottom = pNewWindowRect->top + GetSystemMetrics(SM_CYICON);
+            new_window_rect->right  = new_window_rect->left + GetSystemMetrics(SM_CXICON);
+            new_window_rect->bottom = new_window_rect->top + GetSystemMetrics(SM_CYICON);
         }
         else
         {
-            pNewWindowRect->right  = pNewWindowRect->left + pWinpos->cx;
-            pNewWindowRect->bottom = pNewWindowRect->top + pWinpos->cy;
+            new_window_rect->right  = new_window_rect->left + pWinpos->cx;
+            new_window_rect->bottom = new_window_rect->top + pWinpos->cy;
         }
     }
     if (!(pWinpos->flags & SWP_NOMOVE))
     {
-        pNewWindowRect->left    = pWinpos->x;
-        pNewWindowRect->top     = pWinpos->y;
-        pNewWindowRect->right  += pWinpos->x - window_rect.left;
-        pNewWindowRect->bottom += pWinpos->y - window_rect.top;
+        new_window_rect->left    = pWinpos->x;
+        new_window_rect->top     = pWinpos->y;
+        new_window_rect->right  += pWinpos->x - old_window_rect->left;
+        new_window_rect->bottom += pWinpos->y - old_window_rect->top;
 
-        OffsetRect( pNewClientRect, pWinpos->x - window_rect.left,
-                                    pWinpos->y - window_rect.top );
+        OffsetRect( new_client_rect, pWinpos->x - old_window_rect->left,
+                                     pWinpos->y - old_window_rect->top );
     }
     pWinpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
 
@@ -1700,8 +1700,8 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
            pWinpos->hwnd, pWinpos->hwndInsertAfter, pWinpos->x, pWinpos->y,
            pWinpos->cx, pWinpos->cy, pWinpos->flags );
     TRACE( "current %s style %08x new %s\n",
-           wine_dbgstr_rect( &window_rect ), wndPtr->dwStyle,
-           wine_dbgstr_rect( pNewWindowRect ));
+           wine_dbgstr_rect( old_window_rect ), wndPtr->dwStyle,
+           wine_dbgstr_rect( new_window_rect ));
 
     WIN_ReleasePtr( wndPtr );
     return TRUE;
@@ -1854,13 +1854,10 @@ done:
 /***********************************************************************
  *           SWP_DoNCCalcSize
  */
-static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RECT* pNewClientRect,
-                              RECT *validRects )
+static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, const RECT *old_client_rect,
+                              const RECT *new_window_rect, RECT *new_client_rect, RECT *validRects )
 {
     UINT wvrFlags = 0;
-    RECT window_rect, client_rect;
-
-    WIN_GetRectangles( pWinpos->hwnd, COORDS_PARENT, &window_rect, &client_rect );
 
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (pWinpos->flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
@@ -1868,32 +1865,32 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
         NCCALCSIZE_PARAMS params;
         WINDOWPOS winposCopy;
 
-        params.rgrc[0] = *pNewWindowRect;
-        params.rgrc[1] = window_rect;
-        params.rgrc[2] = client_rect;
+        params.rgrc[0] = *new_window_rect;
+        params.rgrc[1] = *old_window_rect;
+        params.rgrc[2] = *old_client_rect;
         params.lppos = &winposCopy;
         winposCopy = *pWinpos;
 
         wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
-        *pNewClientRect = params.rgrc[0];
+        *new_client_rect = params.rgrc[0];
 
         TRACE( "hwnd %p old win %s old client %s new win %s new client %s\n", pWinpos->hwnd,
-               wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect),
-               wine_dbgstr_rect(pNewWindowRect), wine_dbgstr_rect(pNewClientRect) );
+               wine_dbgstr_rect(old_window_rect), wine_dbgstr_rect(old_client_rect),
+               wine_dbgstr_rect(new_window_rect), wine_dbgstr_rect(new_client_rect) );
 
-        if( pNewClientRect->left != client_rect.left ||
-            pNewClientRect->top != client_rect.top )
+        if (new_client_rect->left != old_client_rect->left ||
+            new_client_rect->top != old_client_rect->top)
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
 
-        if( (pNewClientRect->right - pNewClientRect->left !=
-             client_rect.right - client_rect.left))
+        if( (new_client_rect->right - new_client_rect->left !=
+             old_client_rect->right - old_client_rect->left))
             pWinpos->flags &= ~SWP_NOCLIENTSIZE;
         else
             wvrFlags &= ~WVR_HREDRAW;
 
-        if (pNewClientRect->bottom - pNewClientRect->top !=
-             client_rect.bottom - client_rect.top)
+        if (new_client_rect->bottom - new_client_rect->top !=
+            old_client_rect->bottom - old_client_rect->top)
             pWinpos->flags &= ~SWP_NOCLIENTSIZE;
         else
             wvrFlags &= ~WVR_VREDRAW;
@@ -1904,8 +1901,8 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
     else
     {
         if (!(pWinpos->flags & SWP_NOMOVE) &&
-            (pNewClientRect->left != client_rect.left ||
-             pNewClientRect->top != client_rect.top))
+            (new_client_rect->left != old_client_rect->left ||
+             new_client_rect->top != old_client_rect->top))
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
     }
 
@@ -1914,16 +1911,15 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
         SetRectEmpty( &validRects[0] );
         SetRectEmpty( &validRects[1] );
     }
-    else get_valid_rects( &client_rect, pNewClientRect, wvrFlags, validRects );
+    else get_valid_rects( old_client_rect, new_client_rect, wvrFlags, validRects );
 
     return wvrFlags;
 }
 
 /* fix redundant flags and values in the WINDOWPOS structure */
-static BOOL fixup_flags( WINDOWPOS *winpos )
+static BOOL fixup_flags( WINDOWPOS *winpos, const RECT *old_window_rect )
 {
     HWND parent;
-    RECT window_rect;
     WND *wndPtr = WIN_GetPtr( winpos->hwnd );
     BOOL ret = TRUE;
 
@@ -1955,12 +1951,11 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         if (!(winpos->flags & SWP_SHOWWINDOW)) winpos->flags |= SWP_NOREDRAW;
     }
 
-    WIN_GetRectangles( winpos->hwnd, COORDS_PARENT, &window_rect, NULL );
-    if ((window_rect.right - window_rect.left == winpos->cx) &&
-        (window_rect.bottom - window_rect.top == winpos->cy))
+    if ((old_window_rect->right - old_window_rect->left == winpos->cx) &&
+        (old_window_rect->bottom - old_window_rect->top == winpos->cy))
         winpos->flags |= SWP_NOSIZE;    /* Already the right size */
 
-    if ((window_rect.left == winpos->x) && (window_rect.top == winpos->y))
+    if ((old_window_rect->left == winpos->x) && (old_window_rect->top == winpos->y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
     if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
@@ -2210,7 +2205,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
  */
 BOOL USER_SetWindowPos( WINDOWPOS * winpos )
 {
-    RECT newWindowRect, newClientRect, valid_rects[2];
+    RECT old_window_rect, old_client_rect, new_window_rect, new_client_rect, valid_rects[2];
     UINT orig_flags;
     
     orig_flags = winpos->flags;
@@ -2252,10 +2247,11 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
         else if (winpos->cy > 32767) winpos->cy = 32767;
     }
 
-    if (!SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect )) return FALSE;
+    if (!SWP_DoWinPosChanging( winpos, &old_window_rect, &old_client_rect,
+                               &new_window_rect, &new_client_rect )) return FALSE;
 
     /* Fix redundant flags */
-    if (!fixup_flags( winpos )) return FALSE;
+    if (!fixup_flags( winpos, &old_window_rect )) return FALSE;
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
@@ -2265,10 +2261,11 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
 
     /* Common operations */
 
-    SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect, valid_rects );
+    SWP_DoNCCalcSize( winpos, &old_window_rect, &old_client_rect,
+                      &new_window_rect, &new_client_rect, valid_rects );
 
     if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags,
-                         &newWindowRect, &newClientRect, valid_rects ))
+                         &new_window_rect, &new_client_rect, valid_rects ))
         return FALSE;
 
 
@@ -2317,10 +2314,10 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
         /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
            and always contains final window position.
          */
-        winpos->x = newWindowRect.left;
-        winpos->y = newWindowRect.top;
-        winpos->cx = newWindowRect.right - newWindowRect.left;
-        winpos->cy = newWindowRect.bottom - newWindowRect.top;
+        winpos->x  = new_window_rect.left;
+        winpos->y  = new_window_rect.top;
+        winpos->cx = new_window_rect.right - new_window_rect.left;
+        winpos->cy = new_window_rect.bottom - new_window_rect.top;
         SendMessageW( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
     }
     return TRUE;
