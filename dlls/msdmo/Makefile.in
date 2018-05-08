@@ -1,6 +1,6 @@
 MODULE    = msdmo.dll
 IMPORTLIB = msdmo
-IMPORTS   = uuid ole32 user32 advapi32
+IMPORTS   = dmoguids uuid ole32 user32 advapi32
 
 C_SRCS = \
 	dmoreg.c \

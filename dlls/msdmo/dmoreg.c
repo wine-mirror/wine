@@ -29,7 +29,6 @@
 #include "objbase.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "initguid.h"
 #include "dmo.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdmo);
