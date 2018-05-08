@@ -956,7 +956,7 @@ static	DWORD	MMSYSTEM_MidiStream_Convert(WINE_MIDIStream* lpMidiStrm, DWORD puls
     if (lpMidiStrm->dwTimeDiv == 0) {
 	FIXME("Shouldn't happen. lpMidiStrm->dwTimeDiv = 0\n");
     } else if (lpMidiStrm->dwTimeDiv > 0x8000) { /* SMPTE, unchecked FIXME? */
-	int	nf = -(char)HIBYTE(lpMidiStrm->dwTimeDiv);	/* number of frames     */
+	int	nf = 256 - HIBYTE(lpMidiStrm->dwTimeDiv);	/* number of frames     */
 	int	nsf = LOBYTE(lpMidiStrm->dwTimeDiv);		/* number of sub-frames */
 	ret = (pulse * 1000) / (nf * nsf);
     } else {
