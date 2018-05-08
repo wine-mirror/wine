@@ -546,27 +546,6 @@ void remove_job(const WCHAR *name)
     LeaveCriticalSection(&at_job_list_section);
 }
 
-void modify_job(const WCHAR *name)
-{
-    AT_ENUM info;
-
-    if (load_job(name, &info))
-    {
-        struct job_t *job;
-
-        EnterCriticalSection(&at_job_list_section);
-        job = find_job(0, name);
-        if (job)
-        {
-            free_job_info(&job->info);
-            job->info = info;
-        }
-        else
-            free_job_info(&info);
-        LeaveCriticalSection(&at_job_list_section);
-    }
-}
-
 DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
 {
     WCHAR windir[MAX_PATH];
