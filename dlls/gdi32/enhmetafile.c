@@ -2470,6 +2470,14 @@ BOOL WINAPI EnumEnhMetaFile(
     {
 	emr = (ENHMETARECORD *)((char *)emh + offset);
 
+        if (offset + 8 > emh->nBytes ||
+            offset > offset + emr->nSize ||
+            offset + emr->nSize > emh->nBytes)
+        {
+            WARN("record truncated\n");
+            break;
+        }
+
         /* In Win9x mode we update the xform if the record will produce output */
         if (hdc && IS_WIN9X() && emr_produces_output(emr->iType))
             EMF_Update_MF_Xform(hdc, info);
