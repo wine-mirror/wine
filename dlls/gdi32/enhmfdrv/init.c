@@ -528,7 +528,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
         CloseHandle( physDev->hFile );
     }
 
-    hmf = EMF_Create_HENHMETAFILE( physDev->emh, (physDev->hFile != 0) );
+    hmf = EMF_Create_HENHMETAFILE( physDev->emh, physDev->emh->nBytes, (physDev->hFile != 0) );
     physDev->emh = NULL;  /* So it won't be deleted */
     free_dc_ptr( dc );
     return hmf;
