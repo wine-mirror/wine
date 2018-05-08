@@ -4103,6 +4103,7 @@ START_TEST(protocol)
     test_com_aggregation(&CLSID_FileProtocol);
     test_com_aggregation(&CLSID_HttpProtocol);
     test_com_aggregation(&CLSID_HttpSProtocol);
+    test_com_aggregation(&CLSID_FtpProtocol);
 
     OleUninitialize();
 }
