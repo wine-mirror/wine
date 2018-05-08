@@ -437,7 +437,8 @@ msgstr "Rodyti šių &tipų failus:"
 msgid "Dri&ves:"
 msgstr "&Diskai:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Tik skaitymui"
 
@@ -2085,7 +2086,7 @@ msgstr "Pranešimo numeris="
 msgid "Notice Text="
 msgstr "Pranešimo tekstas="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "Bendrosios"
 
@@ -8492,6 +8493,64 @@ msgstr "&Atverti:"
 msgid "&Browse..."
 msgstr "&Parinkti..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Failo tipas"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Vieta:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Dydis:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Sukūrimo data"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "A&tributai:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "&Paslėptas"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Archyvuotinas"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Atverti:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "Keisti &piktogramą..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Modifikuotas"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Pask. keitimas:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Dydis"
@@ -8921,10 +8980,6 @@ msgstr "Įspėjimas apie saugumą"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Ar norite įdiegti šią programinę įrangą?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Vieta:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14863,18 +14918,6 @@ msgstr "Pask. keitimas:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "&Autoriaus teisės:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Dydis:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "&Paslėptas"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Archyvuotinas"
 
 #: winefile.rc:176
 msgid "&System"

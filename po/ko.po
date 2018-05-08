@@ -437,7 +437,8 @@ msgstr "파일 형식 목록(&T):"
 msgid "Dri&ves:"
 msgstr "드라이브(&V):"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "읽기 전용(&R)"
 
@@ -2084,7 +2085,7 @@ msgstr "인증서 시리얼 번호="
 msgid "Notice Text="
 msgstr "공지 사항="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "일반"
 
@@ -8618,6 +8619,64 @@ msgstr "열기(&O):"
 msgid "&Browse..."
 msgstr "찾기(&B)..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "파일 타입"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "위치:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "크기:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "만든 날짜"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "속성(&A):"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "숨김(&I)"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "아카이브(&A)"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "열기:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "아이콘 바꾸기(&I)..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "수정날짜"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "마지막 변화:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "크기"
@@ -9048,10 +9107,6 @@ msgstr "보안 경고"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "이 소프트웨어를 설치하기를 원합니까?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "위치:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -15281,18 +15336,6 @@ msgstr "마지막 변화:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "저작권(&Y):"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "크기:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "숨김(&I)"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "아카이브(&A)"
 
 #: winefile.rc:176
 msgid "&System"

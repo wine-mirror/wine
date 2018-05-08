@@ -455,7 +455,8 @@ msgstr "&Tipo del file:"
 msgid "Dri&ves:"
 msgstr "&Unità:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Sola lettura"
 
@@ -2104,7 +2105,7 @@ msgstr "Numero della notifica="
 msgid "Notice Text="
 msgstr "Testo della notifica="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "Generale"
 
@@ -8717,6 +8718,64 @@ msgstr "&Apri:"
 msgid "&Browse..."
 msgstr "&Naviga..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Tipo di file"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Locazione:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Dimensione:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Data di creazione"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "&Attributi:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "&Nascosto"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Archivio"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Apri:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "Cambia &icona..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Modificato"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Ultima modifica:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Dimensione"
@@ -9154,10 +9213,6 @@ msgstr "Avviso di sicurezza"
 #| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
 msgstr "Vuoi continuare comunque?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Locazione:"
 
 #: urlmon.rc:39
 #, fuzzy
@@ -15336,18 +15391,6 @@ msgstr "Ultima modifica:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "&Copyright:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Dimensione:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "&Nascosto"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Archivio"
 
 #: winefile.rc:176
 msgid "&System"

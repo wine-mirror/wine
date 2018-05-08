@@ -437,7 +437,8 @@ msgstr "Vypsat soubory &typu:"
 msgid "Dri&ves:"
 msgstr "&Diskové jednotky:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Pouze pro čtení"
 
@@ -2085,7 +2086,7 @@ msgstr "Číslo oznámení ="
 msgid "Notice Text="
 msgstr "Text oznámení ="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "Obecné"
 
@@ -8532,6 +8533,64 @@ msgstr "&Otevřít:"
 msgid "&Browse..."
 msgstr "&Procházet..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Typ souboru"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Umístění:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Velikost:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Datum vytvoření"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "&Atributy:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "Skryté"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Archiv"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Otevřít:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "Změnit &ikonu..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Změněno"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Poslední změna:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Velikost"
@@ -8967,10 +9026,6 @@ msgstr "Varování zabezpečení"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Chcete instalovat tento software?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Umístění:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14920,18 +14975,6 @@ msgstr "Poslední změna:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "Autorská práva:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Velikost:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "Skryté"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Archiv"
 
 #: winefile.rc:176
 msgid "&System"

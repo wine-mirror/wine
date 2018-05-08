@@ -441,7 +441,8 @@ msgstr "הצגת קבצים מ&סוג:"
 msgid "Dri&ves:"
 msgstr "&כוננים:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&קריאה בלבד"
 
@@ -2097,7 +2098,7 @@ msgstr ""
 msgid "Notice Text="
 msgstr ""
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "כללי"
 
@@ -8816,6 +8817,62 @@ msgstr "&פתיחה:"
 msgid "&Browse..."
 msgstr "&עיון..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+msgid "File type:"
+msgstr "סוג הקובץ"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "מיקום:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "גודל:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+msgid "Creation date:"
+msgstr "פתיחת קובץ.\n"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "מ&אפיינים:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "מו&סתר"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&ארכיון"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "פתיחה:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "החלפת ה&סמל..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "תאריך השינוי"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "שינוי אחרון:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "גודל"
@@ -9261,10 +9318,6 @@ msgstr "אזהרת אבטחה"
 #| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
 msgstr "האם ברצונך להמשיך בכל זאת?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "מיקום:"
 
 #: urlmon.rc:39
 #, fuzzy
@@ -15048,18 +15101,6 @@ msgstr "שינוי אחרון:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "&זכויות יוצרים:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "גודל:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "מו&סתר"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&ארכיון"
 
 #: winefile.rc:176
 msgid "&System"

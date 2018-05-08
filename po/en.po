@@ -437,7 +437,8 @@ msgstr "List Files of &Type:"
 msgid "Dri&ves:"
 msgstr "Dri&ves:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Read Only"
 
@@ -2082,7 +2083,7 @@ msgstr "Notice Number="
 msgid "Notice Text="
 msgstr "Notice Text="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "General"
 
@@ -8490,6 +8491,50 @@ msgstr "&Open:"
 msgid "&Browse..."
 msgstr "&Browse..."
 
+#: shell32.rc:355 shell32.rc:384
+msgid "File type:"
+msgstr "File type:"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Location:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Size:"
+
+#: shell32.rc:365 shell32.rc:398
+msgid "Creation date:"
+msgstr "Creation date:"
+
+#: shell32.rc:369 shell32.rc:406
+msgid "Attributes:"
+msgstr "Attributes:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "H&idden"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Archive"
+
+#: shell32.rc:386
+msgid "Open with:"
+msgstr "Open with:"
+
+#: shell32.rc:389
+msgid "&Change..."
+msgstr "&Change..."
+
+#: shell32.rc:400
+msgid "Last modified:"
+msgstr "Last modified:"
+
+#: shell32.rc:402
+msgid "Last accessed:"
+msgstr "Last accessed:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Size"
@@ -8919,10 +8964,6 @@ msgstr "Security Warning"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Do you want to install this software?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Location:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14857,18 +14898,6 @@ msgstr "Last Change:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "Cop&yright:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Size:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "H&idden"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Archive"
 
 #: winefile.rc:176
 msgid "&System"

@@ -439,7 +439,8 @@ msgstr "Показывать файлы &типа:"
 msgid "Dri&ves:"
 msgstr "&Диски:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Только для чтения"
 
@@ -2083,7 +2084,7 @@ msgstr "Номер уведомления="
 msgid "Notice Text="
 msgstr "Текст уведомления="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "Общие"
 
@@ -8496,6 +8497,64 @@ msgstr "&Открыть:"
 msgid "&Browse..."
 msgstr "&Обзор..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Тип файла"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Путь:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Размер:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Дата создания"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "&Свойства:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "С&крытый"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Архивный"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Открыть:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "Изменить &значок..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Изменён"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Последнее изменение:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Размер"
@@ -8922,10 +8981,6 @@ msgstr "Предупреждение о безопасности"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Хотите установить этот компонент?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Путь:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14853,18 +14908,6 @@ msgstr "Последнее изменение:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "Cop&yright:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Размер:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "С&крытый"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Архивный"
 
 #: winefile.rc:176
 msgid "&System"

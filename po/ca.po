@@ -440,7 +440,8 @@ msgstr "Llista els fitxers del &tipus:"
 msgid "Dri&ves:"
 msgstr "&Unitats:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Només lectura"
 
@@ -2087,7 +2088,7 @@ msgstr "Número d'anunci="
 msgid "Notice Text="
 msgstr "Text d'anunci="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "General"
 
@@ -8518,6 +8519,64 @@ msgstr "&Obrir:"
 msgid "&Browse..."
 msgstr "&Navega..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Tipus de fitxer"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Ubicació:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Mida:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Data de creació"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "&Atributs:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "A&magat"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Arxiu"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Obre:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "&Canvia d'icona..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Modificat"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Últim canvi:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Mida"
@@ -8954,10 +9013,6 @@ msgstr "Advertència de seguretat"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Voleu instal·lar aquest programari?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Ubicació:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14993,18 +15048,6 @@ msgstr "Últim canvi:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "&Drets d'autor:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Mida:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "A&magat"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Arxiu"
 
 #: winefile.rc:176
 msgid "&System"

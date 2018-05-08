@@ -425,7 +425,8 @@ msgstr "檔案類型(&T)："
 msgid "Dri&ves:"
 msgstr "磁碟機(&V)："
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "唯讀(&R)"
 
@@ -2072,7 +2073,7 @@ msgstr "通知數字="
 msgid "Notice Text="
 msgstr "通知文字="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "一般"
 
@@ -8571,6 +8572,64 @@ msgstr "開啟(&O):"
 msgid "&Browse..."
 msgstr "瀏覽(&B)..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "檔案類型"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "位址："
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "大小："
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "建立日期"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "屬性(&A):"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "隱藏(&I)"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "保存(&A)"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "開啟："
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "變更圖示(&I)..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "已修改"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "最後修改："
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "大小"
@@ -8999,10 +9058,6 @@ msgstr "安全警告"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "您要安裝這個軟體？"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "位址："
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -15151,18 +15206,6 @@ msgstr "最後修改："
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "著作權(&Y)："
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "大小："
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "隱藏(&I)"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "保存(&A)"
 
 #: winefile.rc:176
 msgid "&System"

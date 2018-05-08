@@ -433,7 +433,8 @@ msgstr "Показувати файли &типу:"
 msgid "Dri&ves:"
 msgstr "&Диски:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
+#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: winefile.rc:173
 msgid "&Read Only"
 msgstr "&Лише для читання"
 
@@ -2080,7 +2081,7 @@ msgstr "Номер Оповіщення="
 msgid "Notice Text="
 msgstr "Текст Оповіщення="
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
+#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr "Загальні"
 
@@ -8573,6 +8574,64 @@ msgstr "&Відкрити:"
 msgid "&Browse..."
 msgstr "&Огляд..."
 
+#: shell32.rc:355 shell32.rc:384
+#, fuzzy
+#| msgid "File type"
+msgid "File type:"
+msgstr "Тип файлу"
+
+#: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
+msgid "Location:"
+msgstr "Розміщення:"
+
+#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+msgid "Size:"
+msgstr "Розмір:"
+
+#: shell32.rc:365 shell32.rc:398
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creation date:"
+msgstr "Дата створення"
+
+#: shell32.rc:369 shell32.rc:406
+#, fuzzy
+#| msgid "&Attributes:"
+msgid "Attributes:"
+msgstr "&Властивості:"
+
+#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+msgid "H&idden"
+msgstr "Пр&ихований"
+
+#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+msgid "&Archive"
+msgstr "&Архівний"
+
+#: shell32.rc:386
+#, fuzzy
+#| msgid "Open:"
+msgid "Open with:"
+msgstr "Відкрити:"
+
+#: shell32.rc:389
+#, fuzzy
+#| msgid "Change &Icon..."
+msgid "&Change..."
+msgstr "З&мінити значок..."
+
+#: shell32.rc:400
+#, fuzzy
+#| msgid "Modified"
+msgid "Last modified:"
+msgstr "Змінено"
+
+#: shell32.rc:402
+#, fuzzy
+#| msgid "Last Change:"
+msgid "Last accessed:"
+msgstr "Останні зміни:"
+
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
 msgstr "Розмір"
@@ -9000,10 +9059,6 @@ msgstr "Попередження безпеки"
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
 msgstr "Встановити це ПЗ?"
-
-#: urlmon.rc:37 explorer.rc:32
-msgid "Location:"
-msgstr "Розміщення:"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -14939,18 +14994,6 @@ msgstr "Останні зміни:"
 #: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "Авторське право:"
-
-#: winefile.rc:170
-msgid "Size:"
-msgstr "Розмір:"
-
-#: winefile.rc:174
-msgid "H&idden"
-msgstr "Пр&ихований"
-
-#: winefile.rc:175
-msgid "&Archive"
-msgstr "&Архівний"
 
 #: winefile.rc:176
 msgid "&System"

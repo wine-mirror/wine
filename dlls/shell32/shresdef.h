@@ -152,6 +152,10 @@
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964
 
+/* Properties dialog */
+#define IDD_FILE_PROPERTIES        8
+#define IDD_FOLDER_PROPERTIES      9
+
 #define IDD_ICON                0x4300
 #define IDD_MESSAGE             0x4301
 
@@ -231,6 +235,30 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDC_RUNDLG_ICON         12297
 #define IDC_RUNDLG_EDITPATH     12298
 #define IDC_RUNDLG_LABEL        12305
+
+/* file property dialog */
+#define IDC_FPROP_ICON              13000
+#define IDC_FPROP_PATH              13001
+#define IDC_FPROP_TYPE_LABEL        13002
+#define IDC_FPROP_TYPE              13003
+#define IDC_FPROP_OPENWITH_LABEL    13004
+#define IDC_FPROP_PROG_ICON         13005
+#define IDC_FPROP_PROG_NAME         13006
+#define IDC_FPROP_PROG_CHANGE       13007
+#define IDC_FPROP_LOCATION_LABEL    13008
+#define IDC_FPROP_LOCATION          13009
+#define IDC_FPROP_SIZE_LABEL        13010
+#define IDC_FPROP_SIZE              13011
+#define IDC_FPROP_CREATED_LABEL     13012
+#define IDC_FPROP_CREATED           13013
+#define IDC_FPROP_MODIFIED_LABEL    13014
+#define IDC_FPROP_MODIFIED          13015
+#define IDC_FPROP_ACCESSED_LABEL    13016
+#define IDC_FPROP_ACCESSED          13017
+#define IDC_FPROP_ATTRIB_LABEL      13018
+#define IDC_FPROP_READONLY          13019
+#define IDC_FPROP_HIDDEN            13020
+#define IDC_FPROP_ARCHIVE           13021
 
 /* bitmaps */
 /* explorer toolbar icons
