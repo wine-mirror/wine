@@ -571,7 +571,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                 continue;
             }
 
-	    pInTypes = (DMO_PARTIAL_MEDIATYPE*) szValue;
+            pInTypes = (DMO_PARTIAL_MEDIATYPE *)szValue;
 
             TRACE("read %d intypes for %s:\n", cInTypes, debugstr_w(szKey));
             for (i = 0; i < cInTypes; i++) {
@@ -584,10 +584,10 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                 for (j = 0; j < cInTypes; j++) 
                 {
                     if (IsMediaTypeEqual(&pInTypes[j], &This->pInTypes[i]))
-		        break;
+                        break;
                 }
 
-		if (j >= cInTypes)
+                if (j >= cInTypes)
                     break;
             }
 
@@ -608,13 +608,13 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                     sizeof(szValue)/sizeof(DMO_PARTIAL_MEDIATYPE),
                     (DMO_PARTIAL_MEDIATYPE*)szValue);
 
-	    if (FAILED(hres))
+            if (FAILED(hres))
             {
                 RegCloseKey(hkey);
                 continue;
             }
 
-	    pOutTypes = (DMO_PARTIAL_MEDIATYPE*) szValue;
+            pOutTypes = (DMO_PARTIAL_MEDIATYPE *)szValue;
 
             TRACE("read %d outtypes for %s:\n", cOutTypes, debugstr_w(szKey));
             for (i = 0; i < cOutTypes; i++) {
@@ -627,10 +627,10 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                 for (j = 0; j < cOutTypes; j++) 
                 {
                     if (IsMediaTypeEqual(&pOutTypes[j], &This->pOutTypes[i]))
-		        break;
+                        break;
                 }
 
-		if (j >= cOutTypes)
+                if (j >= cOutTypes)
                     break;
             }
 
@@ -641,22 +641,22 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             }
         }
 
-	/* Media object wasn't filtered so add it to return list */
+        /* Media object wasn't filtered so add it to return list */
         Names[count] = NULL;
-	len = MAX_PATH * sizeof(WCHAR);
+        len = MAX_PATH * sizeof(WCHAR);
         ret = RegQueryValueExW(hkey, NULL, NULL, NULL, (LPBYTE)szValue, &len);
         if (ERROR_SUCCESS == ret)
-	{
+        {
             Names[count] = CoTaskMemAlloc((strlenW(szValue) + 1) * sizeof(WCHAR));
-	    if (Names[count])
+            if (Names[count])
                 strcpyW(Names[count], szValue);
-	}
+        }
         wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
         CLSIDFromString(szGuidKey, &pCLSID[count]);
 
         TRACE("found match %s %s\n", debugstr_w(szValue), debugstr_w(szNextKey));
         RegCloseKey(hkey);
-	count++;
+        count++;
     }
 
     if (pcItemsFetched) *pcItemsFetched = count;
