@@ -800,12 +800,20 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
 
         *ppv = &This->IWinInetHttpInfo_iface;
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        IWinInetHttpInfo *http_info;
+        HRESULT hres;
+
         TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
 
-        if(!This->protocol->wininet_http_info)
-            return E_NOINTERFACE;
-
-        *ppv = &This->IWinInetHttpInfo_iface;
+        /* NOTE: This violidates COM rules, but tests prove that we should do it */
+        if(This->protocol->protocol_unk) {
+            hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
+                                           (void**)&http_info);
+            if(SUCCEEDED(hres)) {
+                IWinInetHttpInfo_Release(http_info);
+                *ppv = &This->IWinInetHttpInfo_iface;
+            }
+        }
     }
 
     if(*ppv) {
@@ -1318,13 +1326,22 @@ static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD d
         void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
 {
     Binding *This = impl_from_IWinInetHttpInfo(iface);
+    IWinInetHttpInfo *http_info;
+    HRESULT hres;
+
     TRACE("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
 
-    if(!This->protocol->wininet_http_info)
+    if(!This->protocol->protocol_unk)
         return E_FAIL;
 
-    return IWinInetHttpInfo_QueryInfo(This->protocol->wininet_http_info,
-            dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
+    hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
+                                   (void**)&http_info);
+    if(FAILED(hres))
+        return E_FAIL;
+
+    hres = IWinInetHttpInfo_QueryInfo(http_info, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
+    IWinInetHttpInfo_Release(http_info);
+    return hres;
 }
 
 static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {

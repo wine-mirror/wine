@@ -334,10 +334,6 @@ static void release_protocol_handler(BindProtocol *This)
         IWinInetInfo_Release(This->wininet_info);
         This->wininet_info = NULL;
     }
-    if(This->wininet_http_info) {
-        IWinInetHttpInfo_Release(This->wininet_http_info);
-        This->wininet_http_info = NULL;
-    }
     if(This->protocol_unk) {
         IUnknown_Release(This->protocol_unk);
         This->protocol_unk = NULL;
@@ -568,7 +564,6 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     if(urlmon_protocol) {
         IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
-        IInternetProtocol_QueryInterface(protocol, &IID_IWinInetHttpInfo, (void**)&This->wininet_http_info);
     }
 
     set_binding_sink(This, pOIProtSink, pOIBindInfo);

@@ -179,7 +179,6 @@ typedef struct {
     IUnknown *protocol_unk;
     IInternetProtocol *protocol;
     IWinInetInfo *wininet_info;
-    IWinInetHttpInfo *wininet_http_info;
 
     IInternetBindInfo *bind_info;
     IInternetProtocolSink *protocol_sink;
