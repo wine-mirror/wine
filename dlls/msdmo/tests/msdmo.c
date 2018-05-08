@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "initguid.h"
+#include <stdio.h>
+#define COBJMACROS
 #include "dmo.h"
 #include "wine/test.h"
 
@@ -27,8 +28,19 @@ static const GUID GUID_unknowndmo = {0x14d99047,0x441f,0x4cd3,{0xbc,0xa8,0x3e,0x
 static const GUID GUID_unknowncategory = {0x14d99048,0x441f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
 static const GUID GUID_wmp1 = {0x13a7995e,0x7d8f,0x45b4,{0x9c,0x77,0x81,0x92,0x65,0x22,0x57,0x63}};
 
+static const char *guid_to_string(const GUID *guid)
+{
+    static char buffer[50];
+    sprintf(buffer, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            guid->Data1, guid->Data2, guid->Data3,
+            guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return buffer;
+}
+
 static void test_DMOUnregister(void)
 {
+    static char buffer[200];
     static const WCHAR testdmoW[] = {'t','e','s','t','d','m','o',0};
     HRESULT hr;
 
@@ -53,6 +65,10 @@ static void test_DMOUnregister(void)
 
     hr = DMOUnregister(&GUID_unknowndmo, &GUID_NULL);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    /* clean up category since Windows doesn't */
+    sprintf(buffer, "DirectShow\\MediaObjects\\Categories\\%s", guid_to_string(&GUID_unknowncategory));
+    RegDeleteKeyA(HKEY_CLASSES_ROOT, buffer);
 }
 
 static void test_DMOGetName(void)
@@ -70,8 +86,26 @@ static void test_DMOGetName(void)
     ok(name[0] == 'a', "got %x\n", name[0]);
 }
 
+static void test_DMOEnum(void)
+{
+    IEnumDMO *enum_dmo;
+    HRESULT hr;
+    CLSID clsid;
+    WCHAR *name;
+
+    hr = DMOEnum(&GUID_unknowncategory, 0, 0, NULL, 0, NULL, &enum_dmo);
+    ok(hr == S_OK, "DMOEnum() failed with %#x\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    todo_wine
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+
+    IEnumDMO_Release(enum_dmo);
+}
+
 START_TEST(msdmo)
 {
     test_DMOUnregister();
     test_DMOGetName();
+    test_DMOEnum();
 }

@@ -390,7 +390,6 @@ static HRESULT IEnumDMO_Constructor(
 {
     IEnumDMOImpl* lpedmo;
     HRESULT hr;
-    LONG ret;
 
     *obj = NULL;
 
@@ -405,6 +404,7 @@ static HRESULT IEnumDMO_Constructor(
     lpedmo->dwFlags = dwFlags;
     lpedmo->cInTypes = cInTypes;
     lpedmo->cOutTypes = cOutTypes;
+    lpedmo->hkey = NULL;
 
     hr = dup_partial_mediatype(pInTypes, cInTypes, &lpedmo->pInTypes);
     if (FAILED(hr))
@@ -417,8 +417,7 @@ static HRESULT IEnumDMO_Constructor(
     /* If not filtering by category enum from media objects root */
     if (IsEqualGUID(guidCategory, &GUID_NULL))
     {
-        if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_READ, &lpedmo->hkey)))
-            hr = HRESULT_FROM_WIN32(ret);
+        RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_READ, &lpedmo->hkey);
     }
     else
     {
@@ -426,8 +425,7 @@ static HRESULT IEnumDMO_Constructor(
         WCHAR szKey[MAX_PATH];
 
         wsprintfW(szKey, szCat3Fmt, szDMORootKey, szDMOCategories, GUIDToString(szguid, guidCategory));
-        if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &lpedmo->hkey)))
-            hr = HRESULT_FROM_WIN32(ret);
+        RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &lpedmo->hkey);
     }
 
 lerr:
