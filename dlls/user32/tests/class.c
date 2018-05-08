@@ -998,6 +998,7 @@ if (0) { /* crashes under XP */
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
     ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Unexpected error code %d\n", GetLastError());
     ok(wcx.cbSize == 0, "expected 0, got %u\n", wcx.cbSize);
     ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 

@@ -333,6 +333,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, B
         ULONG module_offset;
     } *wndclass;
     const WCHAR *module, *ret;
+    UNICODE_STRING name_us;
     HMODULE hmod;
 
     if (basename_offset)
@@ -345,7 +346,9 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, B
         return name;
 
     data.cbSize = sizeof(data);
-    if (!FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data))
+    RtlInitUnicodeString(&name_us, name);
+    if (RtlFindActivationContextSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
+            &name_us, &data))
         return name;
 
     wndclass = (struct wndclass_redirect_data *)data.lpData;
