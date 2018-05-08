@@ -1277,8 +1277,8 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     if (!lpMidiStrm)
 	return MMSYSERR_NOMEM;
 
-    lpMidiStrm->dwTempo = 500000;
-    lpMidiStrm->dwTimeDiv = 480; 	/* 480 is 120 quarter notes per minute *//* FIXME ??*/
+    lpMidiStrm->dwTempo = 500000;  /* micro seconds per quarter note, i.e. 120 BPM */
+    lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
     lpMidiStrm->dwPositionMS = 0;
 
     mosm.dwStreamID = (DWORD)lpMidiStrm;

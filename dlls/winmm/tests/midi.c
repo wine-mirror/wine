@@ -565,7 +565,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     midiprop.tdiv.cbStruct = sizeof(midiprop.tdiv);
     rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET|MIDIPROP_TIMEDIV);
     ok(!rc, "midiStreamProperty TIMEDIV rc=%s\n", mmsys_error(rc));
-    todo_wine ok(24==LOWORD(midiprop.tdiv.dwTimeDiv), "default stream time division %u\n", midiprop.tdiv.dwTimeDiv);
+    ok(24==LOWORD(midiprop.tdiv.dwTimeDiv), "default stream time division %u\n", midiprop.tdiv.dwTimeDiv);
 
     memset(&mhdr, 0, sizeof(mhdr));
     mhdr.dwUser   = 0x56FA552C;
