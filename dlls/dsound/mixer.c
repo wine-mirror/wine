@@ -699,7 +699,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		if (!pad_frames)
 			WARN("Probable buffer underrun\n");
 
-		hr = IAudioRenderClient_GetBuffer(device->render, frames, (void*)&buffer);
+		hr = IAudioRenderClient_GetBuffer(device->render, frames, (BYTE **)&buffer);
 		if(FAILED(hr)){
 			WARN("GetBuffer failed: %08x\n", hr);
 			LeaveCriticalSection(&device->mixlock);
