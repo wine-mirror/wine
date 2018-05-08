@@ -1107,6 +1107,7 @@ enable_atl100
 enable_atl110
 enable_atl80
 enable_atl90
+enable_atmlib
 enable_authz
 enable_avicap32
 enable_avifil32
@@ -18423,6 +18424,7 @@ wine_fn_config_makefile dlls/atl110 enable_atl110
 wine_fn_config_makefile dlls/atl80 enable_atl80
 wine_fn_config_makefile dlls/atl80/tests enable_tests
 wine_fn_config_makefile dlls/atl90 enable_atl90
+wine_fn_config_makefile dlls/atmlib enable_atmlib
 wine_fn_config_makefile dlls/authz enable_authz
 wine_fn_config_makefile dlls/avicap32 enable_avicap32
 wine_fn_config_makefile dlls/avifil32 enable_avifil32
