@@ -92,13 +92,20 @@ static void test_DMOEnum(void)
     HRESULT hr;
     CLSID clsid;
     WCHAR *name;
+    DWORD count;
 
     hr = DMOEnum(&GUID_unknowncategory, 0, 0, NULL, 0, NULL, &enum_dmo);
     ok(hr == S_OK, "DMOEnum() failed with %#x\n", hr);
 
     hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
-    todo_wine
     ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 2, &clsid, &name, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 2, &clsid, &name, &count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(count == 0, "expected 0, got %d\n", count);
 
     IEnumDMO_Release(enum_dmo);
 }

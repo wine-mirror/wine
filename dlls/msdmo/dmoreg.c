@@ -519,8 +519,11 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     TRACE("(%p)->(%d %p %p %p)\n", This, cItemsToFetch, pCLSID, Names, pcItemsFetched);
 
-    if (!pCLSID || !Names || !pcItemsFetched)
+    if (!pCLSID || !Names)
         return E_POINTER;
+
+    if (!pcItemsFetched && cItemsToFetch > 1)
+        return E_INVALIDARG;
 
     while (count < cItemsToFetch)
     {
@@ -656,8 +659,8 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 	count++;
     }
 
-    *pcItemsFetched = count;
-    if (*pcItemsFetched < cItemsToFetch)
+    if (pcItemsFetched) *pcItemsFetched = count;
+    if (count < cItemsToFetch)
         hres = S_FALSE;
 
     TRACE("<-- %i found\n",count);
