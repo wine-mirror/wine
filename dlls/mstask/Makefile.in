@@ -1,5 +1,5 @@
 MODULE    = mstask.dll
-IMPORTS   = ole32 oleaut32
+IMPORTS   = rpcrt4 ole32 oleaut32
 
 C_SRCS = \
 	factory.c \
@@ -9,4 +9,5 @@ C_SRCS = \
 	task_trigger.c
 
 IDL_SRCS = \
+	atsvc.idl \
 	mstask_local.idl
