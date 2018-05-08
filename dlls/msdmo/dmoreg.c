@@ -117,6 +117,16 @@ static LPWSTR GUIDToString(LPWSTR lpwstr, REFGUID lpcguid)
     return lpwstr;
 }
 
+static HRESULT string_to_guid(const WCHAR *string, GUID *guid)
+{
+    WCHAR buffer[39];
+    buffer[0] = '{';
+    strcpyW(buffer + 1, string);
+    buffer[37] = '}';
+    buffer[38] = 0;
+    return CLSIDFromString(buffer, guid);
+}
+
 static BOOL IsMediaTypeEqual(const DMO_PARTIAL_MEDIATYPE* mt1, const DMO_PARTIAL_MEDIATYPE* mt2)
 {
 
@@ -514,6 +524,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     UINT count = 0;
     HRESULT hres = S_OK;
     LONG ret;
+    GUID guid;
 
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
@@ -536,6 +547,9 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             hres = HRESULT_FROM_WIN32(ret);
             break;
         }
+
+        if (string_to_guid(szNextKey, &guid) != S_OK)
+            continue;
 
         TRACE("found %s\n", debugstr_w(szNextKey));
 
