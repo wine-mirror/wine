@@ -3758,6 +3758,16 @@ static void test_CreateBinding(void)
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
     CHECK_CALLED(Continue);
 
+    SET_EXPECT(Read);
+    read = 0xdeadbeef;
+    hres = IInternetProtocol_Read(protocol, expect_pv = buf, sizeof(buf), &read);
+    todo_wine
+    ok(hres == E_ABORT, "Read failed: %08x\n", hres);
+    todo_wine
+    ok(read == 0, "read = %d\n", read);
+    todo_wine
+    CHECK_NOT_CALLED(Read);
+
     hres = IInternetProtocolSink_ReportProgress(binding_sink,
             BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = emptyW);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
