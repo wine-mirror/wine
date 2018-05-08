@@ -153,6 +153,7 @@
 #define NONAMELESSUNION
 #include "ifenum.h"
 #include "ipstats.h"
+#include "iphlpapi.h"
 
 #include "wine/debug.h"
 #include "wine/server.h"

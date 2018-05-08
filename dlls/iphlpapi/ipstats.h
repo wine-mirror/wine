@@ -32,11 +32,6 @@
  */
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry) DECLSPEC_HIDDEN;
 
-DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOrder, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
-DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable, BOOL bOrder, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
-DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BOOL bOrder, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
-DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForwardTable, BOOL bOrder, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
-
 DWORD build_tcp_table(TCP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 DWORD build_udp_table(UDP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 
