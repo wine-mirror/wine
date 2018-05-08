@@ -338,6 +338,10 @@ static void release_protocol_handler(BindProtocol *This)
         IWinInetHttpInfo_Release(This->wininet_http_info);
         This->wininet_http_info = NULL;
     }
+    if(This->protocol_unk) {
+        IUnknown_Release(This->protocol_unk);
+        This->protocol_unk = NULL;
+    }
     if(This->protocol) {
         IInternetProtocol_Release(This->protocol);
         This->protocol = NULL;
@@ -499,6 +503,7 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     IServiceProvider *service_provider;
     BOOL urlmon_protocol = FALSE;
     CLSID clsid = IID_NULL;
+    IUnknown *protocol_unk = NULL;
     LPOLESTR clsid_str;
     HRESULT hres;
 
@@ -527,7 +532,6 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     if(!protocol) {
         IClassFactory *cf;
-        IUnknown *unk;
 
         hres = get_protocol_handler(pUri, &clsid, &urlmon_protocol, &cf);
         if(FAILED(hres))
@@ -538,17 +542,20 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
             IClassFactory_Release(cf);
             if(FAILED(hres))
                 return hres;
+            protocol_unk = (IUnknown*)protocol;
+            IUnknown_AddRef(protocol_unk);
         }else {
             hres = IClassFactory_CreateInstance(cf, (IUnknown*)&This->IInternetBindInfo_iface,
-                    &IID_IUnknown, (void**)&unk);
+                    &IID_IUnknown, (void**)&protocol_unk);
             IClassFactory_Release(cf);
             if(FAILED(hres))
                 return hres;
 
-            hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&protocol);
-            IUnknown_Release(unk);
-            if(FAILED(hres))
+            hres = IUnknown_QueryInterface(protocol_unk, &IID_IInternetProtocol, (void**)&protocol);
+            if(FAILED(hres)) {
+                IUnknown_Release(protocol_unk);
                 return hres;
+            }
         }
     }
 
@@ -556,6 +563,7 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_PROTOCOLCLASSID, clsid_str);
     CoTaskMemFree(clsid_str);
 
+    This->protocol_unk = protocol_unk;
     This->protocol = protocol;
 
     if(urlmon_protocol) {

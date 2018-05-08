@@ -176,6 +176,7 @@ typedef struct {
 
     LONG ref;
 
+    IUnknown *protocol_unk;
     IInternetProtocol *protocol;
     IWinInetInfo *wininet_info;
     IWinInetHttpInfo *wininet_http_info;
