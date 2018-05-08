@@ -1213,6 +1213,7 @@ enable_dmband
 enable_dmcompos
 enable_dmime
 enable_dmloader
+enable_dmoguids
 enable_dmscript
 enable_dmstyle
 enable_dmsynth
@@ -18573,6 +18574,7 @@ wine_fn_config_makefile dlls/dmime enable_dmime
 wine_fn_config_makefile dlls/dmime/tests enable_tests
 wine_fn_config_makefile dlls/dmloader enable_dmloader
 wine_fn_config_makefile dlls/dmloader/tests enable_tests
+wine_fn_config_makefile dlls/dmoguids enable_dmoguids
 wine_fn_config_makefile dlls/dmscript enable_dmscript
 wine_fn_config_makefile dlls/dmscript/tests enable_tests
 wine_fn_config_makefile dlls/dmstyle enable_dmstyle

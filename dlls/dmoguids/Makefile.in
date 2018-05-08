@@ -1,0 +1,4 @@
+MODULE    = libdmoguids.a
+
+C_SRCS = \
+	dmoguids.c
