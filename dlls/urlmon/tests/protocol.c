@@ -4101,6 +4101,8 @@ START_TEST(protocol)
     CloseHandle(event_continue_done);
 
     test_com_aggregation(&CLSID_FileProtocol);
+    test_com_aggregation(&CLSID_HttpProtocol);
+    test_com_aggregation(&CLSID_HttpSProtocol);
 
     OleUninitialize();
 }
