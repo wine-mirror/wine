@@ -82,11 +82,16 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
                                     NULL, &ov, NULL);
         if (!ret) break;
 
+        if (info.data.NextEntryOffset)
+            FIXME("got multiple entries\n");
+
         events[0] = done_event;
         events[1] = ov.hEvent;
 
         ret = WaitForMultipleObjects(2, events, FALSE, INFINITE);
         if (ret == WAIT_OBJECT_0) break;
+
+        info.data.FileName[info.data.FileNameLength/sizeof(WCHAR)] = 0;
 
         switch (info.data.Action)
         {
