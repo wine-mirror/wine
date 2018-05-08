@@ -246,11 +246,16 @@ static inline BOOL is_dib_monochrome( const BITMAPINFO* info )
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE
  */
-HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
+HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on_disk )
 {
     HENHMETAFILE hmf;
     ENHMETAFILEOBJ *metaObj;
 
+    if (filesize < sizeof(*emh))
+    {
+        WARN("File too small for emf header\n");
+        return 0;
+    }
     if (emh->iType != EMR_HEADER)
     {
         SetLastError(ERROR_INVALID_DATA);
@@ -261,6 +266,11 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
     {
         WARN("Invalid emf header type 0x%08x sig 0x%08x.\n",
              emh->iType, emh->dSignature);
+        return 0;
+    }
+    if (filesize < emh->nBytes)
+    {
+        WARN("File truncated (got %u bytes, header says %u)\n", emh->nBytes, filesize);
         return 0;
     }
 
@@ -318,14 +328,17 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
     ENHMETAHEADER *emh;
     HANDLE hMapping;
     HENHMETAFILE hemf;
+    DWORD filesize;
+
+    filesize = GetFileSize( hFile, NULL );
 
     hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
-    emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+    emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, filesize );
     CloseHandle( hMapping );
 
     if (!emh) return 0;
 
-    hemf = EMF_Create_HENHMETAFILE( emh, TRUE );
+    hemf = EMF_Create_HENHMETAFILE( emh, filesize, TRUE );
     if (!hemf)
         UnmapViewOfFile( emh );
     return hemf;
@@ -468,7 +481,7 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
     ENHMETAHEADER *emh = HeapAlloc( GetProcessHeap(), 0, bufsize );
     HENHMETAFILE hmf;
     memmove(emh, buf, bufsize);
-    hmf = EMF_Create_HENHMETAFILE( emh, FALSE );
+    hmf = EMF_Create_HENHMETAFILE( emh, bufsize, FALSE );
     if (!hmf)
         HeapFree( GetProcessHeap(), 0, emh );
     return hmf;
@@ -2562,7 +2575,7 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
     if (!file) {
         emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
-	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
+	hmfDst = EMF_Create_HENHMETAFILE( emrDst, emrSrc->nBytes, FALSE );
 	if (!hmfDst)
 		HeapFree( GetProcessHeap(), 0, emrDst );
     } else {
@@ -2604,7 +2617,7 @@ HENHMETAFILE WINAPI CopyEnhMetaFileW(
     if (!file) {
         emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
-	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
+	hmfDst = EMF_Create_HENHMETAFILE( emrDst, emrSrc->nBytes, FALSE );
 	if (!hmfDst)
 		HeapFree( GetProcessHeap(), 0, emrDst );
     } else {
