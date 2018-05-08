@@ -817,7 +817,7 @@ static void try_add_device(SDL_JoystickID index)
     if (map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
 
-    id = index;
+    id = pSDL_JoystickInstanceID(joystick);
     if (controller)
     {
         vid = VID_MICROSOFT;
@@ -846,7 +846,7 @@ static void try_add_device(SDL_JoystickID index)
     if (controller)
     {
         TRACE("Found sdl game controller %i (vid %04x, pid %04x, version %u, serial %s)\n",
-              index, vid, pid, version, debugstr_w(serial));
+              id, vid, pid, version, debugstr_w(serial));
         is_xbox_gamepad = TRUE;
     }
     else
@@ -854,14 +854,14 @@ static void try_add_device(SDL_JoystickID index)
         int button_count, axis_count;
 
         TRACE("Found sdl device %i (vid %04x, pid %04x, version %u, serial %s)\n",
-              index, vid, pid, version, debugstr_w(serial));
+              id, vid, pid, version, debugstr_w(serial));
 
         axis_count = pSDL_JoystickNumAxes(joystick);
         button_count = pSDL_JoystickNumAxes(joystick);
         is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
     }
 
-    device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid, version, 0, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL, &sdl_vtbl, sizeof(struct platform_private));
+    device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid, version, id, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL, &sdl_vtbl, sizeof(struct platform_private));
 
     if (device)
     {
@@ -885,7 +885,7 @@ static void try_add_device(SDL_JoystickID index)
     }
     else
     {
-        WARN("Ignoring device %i\n", index);
+        WARN("Ignoring device %i\n", id);
     }
 }
 
