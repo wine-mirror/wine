@@ -66,7 +66,7 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 extern HINSTANCE urlmon_instance;
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR) DECLSPEC_HIDDEN;
-HRESULT get_protocol_handler(IUri*,CLSID*,BOOL*,IClassFactory**) DECLSPEC_HIDDEN;
+HRESULT get_protocol_handler(IUri*,CLSID*,IClassFactory**) DECLSPEC_HIDDEN;
 IInternetProtocol *get_mime_filter(LPCWSTR) DECLSPEC_HIDDEN;
 BOOL is_registered_protocol(LPCWSTR) DECLSPEC_HIDDEN;
 HRESULT register_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL) DECLSPEC_HIDDEN;
@@ -178,7 +178,6 @@ typedef struct {
 
     IUnknown *protocol_unk;
     IInternetProtocol *protocol;
-    IWinInetInfo *wininet_info;
 
     IInternetBindInfo *bind_info;
     IInternetProtocolSink *protocol_sink;

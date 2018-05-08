@@ -330,10 +330,6 @@ static ULONG WINAPI BindProtocol_AddRef(IInternetProtocolEx *iface)
 
 static void release_protocol_handler(BindProtocol *This)
 {
-    if(This->wininet_info) {
-        IWinInetInfo_Release(This->wininet_info);
-        This->wininet_info = NULL;
-    }
     if(This->protocol_unk) {
         IUnknown_Release(This->protocol_unk);
         This->protocol_unk = NULL;
@@ -497,7 +493,6 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     IInternetProtocolEx *protocolex;
     IInternetPriority *priority;
     IServiceProvider *service_provider;
-    BOOL urlmon_protocol = FALSE;
     CLSID clsid = IID_NULL;
     IUnknown *protocol_unk = NULL;
     LPOLESTR clsid_str;
@@ -529,7 +524,7 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     if(!protocol) {
         IClassFactory *cf;
 
-        hres = get_protocol_handler(pUri, &clsid, &urlmon_protocol, &cf);
+        hres = get_protocol_handler(pUri, &clsid, &cf);
         if(FAILED(hres))
             return hres;
 
@@ -561,10 +556,6 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     This->protocol_unk = protocol_unk;
     This->protocol = protocol;
-
-    if(urlmon_protocol) {
-        IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
-    }
 
     set_binding_sink(This, pOIProtSink, pOIBindInfo);
 

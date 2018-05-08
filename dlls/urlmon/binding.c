@@ -792,13 +792,23 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
+        IWinInetInfo *wininet_info;
+        HRESULT hres;
+
         TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
 
         /* NOTE: This violidates COM rules, but tests prove that we should do it */
-        if(!This->protocol->wininet_info)
+        if(!This->protocol->protocol_unk)
            return E_NOINTERFACE;
 
-        *ppv = &This->IWinInetHttpInfo_iface;
+        if(This->protocol->protocol_unk) {
+            hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetInfo,
+                                           (void**)&wininet_info);
+            if(SUCCEEDED(hres)) {
+                IWinInetInfo_Release(wininet_info);
+                *ppv = &This->IWinInetHttpInfo_iface;
+            }
+        }
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         IWinInetHttpInfo *http_info;
         HRESULT hres;
@@ -1313,13 +1323,22 @@ static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD
         void *pBuffer, DWORD *pcbBuffer)
 {
     Binding *This = impl_from_IWinInetHttpInfo(iface);
+    IWinInetInfo *wininet_info;
+    HRESULT hres;
+
     TRACE("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
 
-    if(!This->protocol->wininet_info)
+    if(!This->protocol->protocol_unk)
         return E_FAIL;
 
-    return IWinInetInfo_QueryOption(This->protocol->wininet_info,
-            dwOption, pBuffer, pcbBuffer);
+    hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
+                                   (void**)&wininet_info);
+    if(FAILED(hres))
+        return E_FAIL;
+
+    hres = IWinInetInfo_QueryOption(wininet_info, dwOption, pBuffer, pcbBuffer);
+    IWinInetInfo_Release(wininet_info);
+    return hres;
 }
 
 static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
