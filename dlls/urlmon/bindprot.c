@@ -309,6 +309,11 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocolEx *iface, RE
                 IWinInetHttpInfo_Release(http_info);
             }
         }
+    }else if(This->protocol_unk) {
+        HRESULT hres;
+        hres = IUnknown_QueryInterface(This->protocol_unk, riid, ppv);
+        TRACE("(%p) aggregated handler returned %08x for %s\n", This, hres, debugstr_guid(riid));
+        return hres;
     }else {
         WARN("not supported interface %s\n", debugstr_guid(riid));
     }
