@@ -1498,6 +1498,9 @@ static IInternetBindInfoVtbl bind_info_vtbl = {
 
 static IInternetBindInfo bind_info = { &bind_info_vtbl };
 
+static IUnknown *protocol_outer;
+static ULONG protocol_outer_ref;
+
 static HRESULT WINAPI InternetPriority_QueryInterface(IInternetPriority *iface,
                                                   REFIID riid, void **ppv)
 {
@@ -1507,12 +1510,12 @@ static HRESULT WINAPI InternetPriority_QueryInterface(IInternetPriority *iface,
 
 static ULONG WINAPI InternetPriority_AddRef(IInternetPriority *iface)
 {
-    return 2;
+    return ++protocol_outer_ref;
 }
 
 static ULONG WINAPI InternetPriority_Release(IInternetPriority *iface)
 {
-    return 1;
+    return --protocol_outer_ref;
 }
 
 static HRESULT WINAPI InternetPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
@@ -1541,12 +1544,12 @@ static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
 
 static ULONG WINAPI Protocol_AddRef(IInternetProtocolEx *iface)
 {
-    return 2;
+    return ++protocol_outer_ref;
 }
 
 static ULONG WINAPI Protocol_Release(IInternetProtocolEx *iface)
 {
-    return 1;
+    return --protocol_outer_ref;
 }
 
 static HRESULT WINAPI Protocol_Abort(IInternetProtocolEx *iface, HRESULT hrReason,
@@ -1586,39 +1589,15 @@ static HRESULT WINAPI Protocol_Seek(IInternetProtocolEx *iface,
 static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
     static const IID unknown_iid = {0x7daf9908,0x8415,0x4005,{0x95,0xae, 0xbd,0x27,0xf6,0xe3,0xdc,0x00}};
+    static const IID unknown_iid2 = {0x5b7ebc0c,0xf630,0x4cea,{0x89,0xd3,0x5a,0xf0,0x38,0xed,0x05,0x5c}};
 
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
-        *ppv = iface;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
-        if(impl_protex) {
-            *ppv = iface;
-            return S_OK;
-        }
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+    /* FIXME: Why is it calling here instead of outer IUnknown? */
+    if(IsEqualGUID(riid, &IID_IInternetPriority)) {
         *ppv = &InternetPriority;
+        IInternetPriority_AddRef(&InternetPriority);
         return S_OK;
     }
-
-    if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
-        CHECK_EXPECT(QueryInterface_IWinInetInfo);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
-        CHECK_EXPECT(QueryInterface_IWinInetHttpInfo);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    if(!IsEqualGUID(riid, &unknown_iid)) /* IE10 */
+    if(!IsEqualGUID(riid, &unknown_iid) && !IsEqualGUID(riid, &unknown_iid2)) /* IE10 */
         ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -2181,6 +2160,64 @@ static const IInternetProtocolExVtbl ProtocolVtbl = {
 };
 
 static IInternetProtocolEx Protocol = { &ProtocolVtbl };
+static ULONG protocol_inner_ref;
+
+static HRESULT WINAPI ProtocolUnk_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        trace("QI(IUnknown)\n");
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
+        trace("QI(InternetProtocol)\n");
+        *ppv = &Protocol;
+    }else if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
+        trace("QI(InternetProtocolEx)\n");
+        if(!impl_protex) {
+            *ppv = NULL;
+            return E_NOINTERFACE;
+        }
+        *ppv = &Protocol;
+        return S_OK;
+    }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        trace("QI(InternetPriority)\n");
+        *ppv = &InternetPriority;
+    }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
+        trace("QI(IWinInetInfo)\n");
+        CHECK_EXPECT(QueryInterface_IWinInetInfo);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        trace("QI(IWinInetHttpInfo)\n");
+        CHECK_EXPECT(QueryInterface_IWinInetHttpInfo);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else {
+        ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ProtocolUnk_AddRef(IUnknown *iface)
+{
+    return ++protocol_inner_ref;
+}
+
+static ULONG WINAPI ProtocolUnk_Release(IUnknown *iface)
+{
+    return --protocol_inner_ref;
+}
+
+static const IUnknownVtbl ProtocolUnkVtbl = {
+    ProtocolUnk_QueryInterface,
+    ProtocolUnk_AddRef,
+    ProtocolUnk_Release
+};
+
+static IUnknown ProtocolUnk = { &ProtocolUnkVtbl };
 
 static HRESULT WINAPI MimeProtocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
@@ -2472,7 +2509,9 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(ppv != NULL, "ppv == NULL\n");
 
-    *ppv = &Protocol;
+    protocol_outer = pOuter;
+    *ppv = &ProtocolUnk;
+    IUnknown_AddRef(&ProtocolUnk);
     return S_OK;
 }
 
@@ -3658,6 +3697,7 @@ static void test_CreateBinding(void)
     hres = IInternetSession_RegisterNameSpace(session, &ClassFactory, &IID_NULL, wsz_test, 0, NULL, 0);
     ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
 
+    protocol_inner_ref = 0;
     hres = IInternetSession_CreateBinding(session, NULL, test_url, NULL, NULL, &protocol, 0);
     binding_protocol = protocol;
     ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
@@ -3702,9 +3742,13 @@ static void test_CreateBinding(void)
     SET_EXPECT(SetPriority);
     SET_EXPECT(Start);
 
+    trace("Start >\n");
     expect_hrResult = S_OK;
     hres = IInternetProtocol_Start(protocol, test_url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
+    trace("Start <\n");
+
+    ok(protocol_inner_ref == 1, "protocol_inner_ref = %u\n", protocol_inner_ref);
 
     CHECK_CALLED(QueryService_InternetProtocol);
     CHECK_CALLED(CreateInstance);
@@ -3754,6 +3798,9 @@ static void test_CreateBinding(void)
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
     CHECK_CALLED(Terminate);
 
+    ok(protocol_inner_ref == 1, "protocol_inner_ref = %u\n", protocol_inner_ref);
+    ok(protocol_outer_ref == 0, "protocol_outer_ref = %u\n", protocol_outer_ref);
+
     SET_EXPECT(Continue);
     hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
@@ -3783,6 +3830,9 @@ static void test_CreateBinding(void)
     IInternetPriority_Release(priority);
     IInternetBindInfo_Release(prot_bind_info);
     IInternetProtocol_Release(protocol);
+
+    ok(protocol_inner_ref == 0, "protocol_inner_ref = %u\n", protocol_inner_ref);
+    ok(protocol_outer_ref == 0, "protocol_outer_ref = %u\n", protocol_outer_ref);
 
     hres = IInternetSession_CreateBinding(session, NULL, test_url, NULL, NULL, &protocol, 0);
     ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
