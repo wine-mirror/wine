@@ -63,10 +63,12 @@ static void test_setlocale(void)
 
     for(i=0; i<sizeof(names)/sizeof(*names); i++) {
         ret = p_setlocale(LC_ALL, names[i]);
-        todo_wine ok(!!ret, "expected success, but got NULL\n");
-        if(ret) ok(!strcmp(ret, names[i]),
-                    "expected %s, got %s\n", names[i], ret);
+        ok(ret != NULL, "expected success, but got NULL\n");
+        ok(!strcmp(ret, names[i]), "expected %s, got %s\n", names[i], ret);
     }
+
+    ret = p_setlocale(LC_ALL, "en-us.1250");
+    ok(!ret, "setlocale(en-us.1250) succeeded (%s)\n", ret);
 
     p_setlocale(LC_ALL, "C");
 }
