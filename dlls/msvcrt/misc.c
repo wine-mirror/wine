@@ -426,7 +426,7 @@ int CDECL MSVCRT__resetstkoflw(void)
     return VirtualProtect(&stack_addr, 1, PAGE_GUARD|PAGE_READWRITE, &oldprot);
 }
 
-#if _MSVCR_VER>=80
+#if _MSVCR_VER>=80 && _MSVCR_VER<=90
 
 /*********************************************************************
  *  _decode_pointer (MSVCR80.@)
@@ -444,6 +444,9 @@ void * CDECL MSVCRT_encode_pointer(void * ptr)
     return EncodePointer(ptr);
 }
 
+#endif /* _MSVCR_VER>=80 && _MSVCR_VER<=90 */
+
+#if _MSVCR_VER>=80 && _MSVCR_VER<=100
 /*********************************************************************
  *  _encoded_null (MSVCR80.@)
  */
@@ -453,8 +456,7 @@ void * CDECL _encoded_null(void)
 
     return EncodePointer(NULL);
 }
-
-#endif /* _MSVCR_VER>=80 */
+#endif
 
 #if _MSVCR_VER>=70
 /*********************************************************************
