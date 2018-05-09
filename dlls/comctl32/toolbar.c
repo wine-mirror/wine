@@ -6248,6 +6248,9 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
         TRACE("TTN_GETDISPINFOW - got string %s\n", debugstr_w(lpnmtdi->lpszText));
 
+        if (IS_INTRESOURCE(lpnmtdi->lpszText))
+            return ret;
+
         if (lpnmtdi->lpszText && *lpnmtdi->lpszText)
             return ret;
     }
@@ -6264,6 +6267,16 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
     ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmtdi.hdr.idFrom, (LPARAM)&nmtdi);
 
     TRACE("TTN_GETDISPINFOA - got string %s\n", debugstr_a(nmtdi.lpszText));
+
+    lpnmtdi->hinst = nmtdi.hinst;
+    lpnmtdi->uFlags = nmtdi.uFlags;
+    lpnmtdi->lParam = nmtdi.lParam;
+
+    if (IS_INTRESOURCE(nmtdi.lpszText))
+    {
+        lpnmtdi->lpszText = (WCHAR *)nmtdi.lpszText;
+        return ret;
+    }
 
     if (!nmtdi.lpszText || !*nmtdi.lpszText)
         return ret;
