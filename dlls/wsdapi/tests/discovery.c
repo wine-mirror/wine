@@ -41,6 +41,17 @@
 static const char *publisherId = "urn:uuid:3AE5617D-790F-408A-9374-359A77F924A3";
 static const char *sequenceId = "urn:uuid:b14de351-72fc-4453-96f9-e58b0c9faf38";
 
+static const char testProbeMessage[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+    "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" "
+    "xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" "
+    "xmlns:wsd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
+    "xmlns:grog=\"http://more.tests/\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>"
+    "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>"
+    "<wsa:MessageID>urn:uuid:aa3eb169-9440-4eb7-9090-88402664cc6a</wsa:MessageID></soap:Header>"
+    "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types></wsd:Probe></soap:Body></soap:Envelope>";
+
+static HANDLE probe_event = NULL;
+
 #define MAX_CACHED_MESSAGES     5
 #define MAX_LISTENING_THREADS  20
 
@@ -313,6 +324,71 @@ cleanup:
     return ret;
 }
 
+static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG family)
+{
+    IP_ADAPTER_ADDRESSES *adapter_addresses = NULL, *adapter_addr;
+    static const struct in6_addr i_addr_zero;
+    struct addrinfo *multi_address;
+    ULONG bufferSize = 0;
+    LPSOCKADDR sockaddr;
+    BOOL ret = FALSE;
+    const char ttl = 8;
+    ULONG retval;
+    SOCKET s;
+
+   /* Resolve the multicast address */
+    if (family == AF_INET6)
+        multi_address = resolve_address(SEND_ADDRESS_IPV6, SEND_PORT, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    else
+        multi_address = resolve_address(SEND_ADDRESS_IPV4, SEND_PORT, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (multi_address == NULL)
+        return FALSE;
+
+    /* Get size of buffer for adapters */
+    retval = GetAdaptersAddresses(family, 0, NULL, NULL, &bufferSize);
+    if (retval != ERROR_BUFFER_OVERFLOW) goto cleanup;
+
+    adapter_addresses = (IP_ADAPTER_ADDRESSES *) heap_alloc(bufferSize);
+    if (adapter_addresses == NULL) goto cleanup;
+
+    /* Get list of adapters */
+    retval = GetAdaptersAddresses(family, 0, NULL, adapter_addresses, &bufferSize);
+    if (retval != ERROR_SUCCESS) goto cleanup;
+
+    for (adapter_addr = adapter_addresses; adapter_addr != NULL; adapter_addr = adapter_addr->Next)
+    {
+        if (adapter_addr->FirstUnicastAddress == NULL) continue;
+
+        sockaddr = adapter_addr->FirstUnicastAddress->Address.lpSockaddr;
+
+        /* Create a socket and bind to the adapter address */
+        s = socket(family, SOCK_DGRAM, IPPROTO_UDP);
+        if (s == INVALID_SOCKET) continue;
+
+        if (bind(s, sockaddr, adapter_addr->FirstUnicastAddress->Address.iSockaddrLength) == SOCKET_ERROR)
+        {
+            closesocket(s);
+            continue;
+        }
+
+        /* Set the multicast interface and TTL value */
+        setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, (char *) &i_addr_zero,
+            (family == AF_INET6) ? sizeof(struct in6_addr) : sizeof(struct in_addr));
+        setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
+
+        sendto(s, data, length, 0, (SOCKADDR *) multi_address->ai_addr, multi_address->ai_addrlen);
+        closesocket(s);
+    }
+
+    ret = TRUE;
+
+cleanup:
+    freeaddrinfo(multi_address);
+    heap_free(adapter_addresses);
+    return ret;
+}
+
 typedef struct IWSDiscoveryPublisherNotifyImpl {
     IWSDiscoveryPublisherNotify IWSDiscoveryPublisherNotify_iface;
     LONG                  ref;
@@ -375,6 +451,23 @@ static ULONG WINAPI IWSDiscoveryPublisherNotifyImpl_Release(IWSDiscoveryPublishe
 static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryPublisherNotify *This, const WSD_SOAP_MESSAGE *pSoap, IWSDMessageParameters *pMessageParameters)
 {
     trace("IWSDiscoveryPublisherNotifyImpl_ProbeHandler called (%p, %p, %p)\n", This, pSoap, pMessageParameters);
+
+    if (probe_event == NULL)
+    {
+        /* We may have received an unrelated probe on the network */
+        return S_OK;
+    }
+
+    ok(pSoap != NULL, "pSoap == NULL\n");
+    ok(pMessageParameters != NULL, "pMessageParameters == NULL\n");
+
+    if (pSoap != NULL)
+    {
+        ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
+        ok(pSoap->Header.To != NULL, "pSoap->Header.To == NULL\n");
+    }
+
+    SetEvent(probe_event);
     return S_OK;
 }
 
@@ -722,6 +815,12 @@ after_publish_test:
 
     heap_free(publisherIdW);
     heap_free(sequenceIdW);
+
+    /* Test the receiving of a probe message */
+    probe_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    ok(send_udp_multicast_of_type(testProbeMessage, sizeof(testProbeMessage) - 1, AF_INET) == TRUE, "Sending Probe message failed\n");
+    todo_wine ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
+    CloseHandle(probe_event);
 
     ref = IWSDiscoveryPublisher_Release(publisher);
     ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
