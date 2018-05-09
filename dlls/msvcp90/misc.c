@@ -1603,6 +1603,140 @@ DEFINE_RTTI_DATA0(_Runtime_object, 0, ".?AV_Runtime_object@details@Concurrency@@
 
 #endif
 
+typedef struct __Concurrent_vector_base_v4
+{
+    void* (__cdecl *allocator)(struct __Concurrent_vector_base_v4 *, MSVCP_size_t);
+    void *storage[3];
+    MSVCP_size_t first_block;
+    MSVCP_size_t early_size;
+    void **segment;
+} _Concurrent_vector_base_v4;
+
+/* ??1_Concurrent_vector_base_v4@details@Concurrency@@IAE@XZ */
+/* ??1_Concurrent_vector_base_v4@details@Concurrency@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4_dtor, 4)
+void __thiscall _Concurrent_vector_base_v4_dtor(
+        _Concurrent_vector_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z */
+/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_assign, 24)
+void __thiscall _Concurrent_vector_base_v4__Internal_assign(
+        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
+        MSVCP_size_t len, void (__cdecl *func0)(void*, MSVCP_size_t),
+        void (__cdecl *func1)(void*, const void*, MSVCP_size_t),
+        void (__cdecl *func2)(void*, const void*, MSVCP_size_t))
+{
+    FIXME("(%p %p %ld %p %p %p) stub\n", this, v, len, func0, func1, func2);
+}
+
+/* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IBEIXZ */
+/* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_capacity, 4)
+MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
+        const _Concurrent_vector_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IAEIP6AXPAXI@Z@Z */
+/* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_KP6AXPEAX_K@Z@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_clear, 8)
+MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
+        _Concurrent_vector_base_v4 *this, void (__cdecl *clear)(void*, MSVCP_size_t))
+{
+    FIXME("(%p %p) stub\n", this, clear);
+    return 0;
+}
+
+/* ?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IAEPAXIPAXP6AX0I@ZP6AX0PBXI@Z@Z */
+/* ?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KPEAXP6AX10@ZP6AX1PEBX0@Z@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_compact, 20)
+void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t len, void *v,
+        void (__cdecl *clear)(void*, MSVCP_size_t),
+        void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+{
+    FIXME("(%p %ld %p %p %p) stub\n", this, len, v, clear, copy);
+    return NULL;
+}
+
+/* ?_Internal_copy@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXPBXI@Z@Z */
+/* ?_Internal_copy@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAXPEBX1@Z@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_copy, 16)
+void __thiscall _Concurrent_vector_base_v4__Internal_copy(
+        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
+        MSVCP_size_t len, void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+{
+    FIXME("(%p %p %ld %p) stub\n", this, v, len, copy);
+}
+
+/* ?_Internal_grow_by@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
+/* ?_Internal_grow_by@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_K_K0P6AXPEAXPEBX0@Z2@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_grow_by, 20)
+MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t count, MSVCP_size_t element_size,
+        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+{
+    FIXME("(%p %ld %ld %p %p) stub\n", this, count, element_size, copy, v);
+    return 0;
+}
+
+/* ?_Internal_grow_to_at_least_with_result@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
+/* ?_Internal_grow_to_at_least_with_result@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_K_K0P6AXPEAXPEBX0@Z2@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result, 20)
+MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t count, MSVCP_size_t element_size,
+        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+{
+    FIXME("(%p %ld %ld %p %p) stub\n", this, count, element_size, copy, v);
+    return 0;
+}
+
+/* ?_Internal_push_back@_Concurrent_vector_base_v4@details@Concurrency@@IAEPAXIAAI@Z */
+/* ?_Internal_push_back@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KAEA_K@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_push_back, 12)
+void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
+       _Concurrent_vector_base_v4 *this, MSVCP_size_t len1, MSVCP_size_t *len2)
+{
+    FIXME("(%p %ld %p) stub\n", this, len1, len2);
+    return NULL;
+}
+
+/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIII@Z */
+/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_reserve, 16)
+void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t len1,
+        MSVCP_size_t len2, MSVCP_size_t len3)
+{
+    FIXME("(%p %ld %ld %ld) stub\n", this, len1, len2, len3);
+}
+
+/* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIIIP6AXPAXI@ZP6AX0PBXI@Z2@Z */
+/* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_resize, 28)
+void __thiscall _Concurrent_vector_base_v4__Internal_resize(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t len1, MSVCP_size_t len2,
+        MSVCP_size_t len3, void (__cdecl *clear)(void*, MSVCP_size_t),
+        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+{
+    FIXME("(%p %ld %ld %ld %p %p %p) stub", this, len1, len2, len3, clear, copy, v);
+}
+
+/* ?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IAEXAAV123@@Z */
+/* ?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEAV123@@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_swap, 8)
+void __thiscall _Concurrent_vector_base_v4__Internal_swap(
+        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v)
+{
+    FIXME("(%p %p) stub\n", this, v);
+}
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
