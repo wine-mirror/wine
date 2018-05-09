@@ -798,16 +798,11 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
 
         /* NOTE: This violidates COM rules, but tests prove that we should do it */
-        if(!This->protocol->protocol_unk)
-           return E_NOINTERFACE;
-
-        if(This->protocol->protocol_unk) {
-            hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetInfo,
-                                           (void**)&wininet_info);
-            if(SUCCEEDED(hres)) {
-                IWinInetInfo_Release(wininet_info);
-                *ppv = &This->IWinInetHttpInfo_iface;
-            }
+        hres = IInternetProtocolEx_QueryInterface(&This->protocol->IInternetProtocolEx_iface,
+                                                  &IID_IWinInetInfo, (void**)&wininet_info);
+        if(SUCCEEDED(hres)) {
+            IWinInetInfo_Release(wininet_info);
+            *ppv = &This->IWinInetHttpInfo_iface;
         }
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         IWinInetHttpInfo *http_info;
@@ -816,13 +811,11 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
 
         /* NOTE: This violidates COM rules, but tests prove that we should do it */
-        if(This->protocol->protocol_unk) {
-            hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
-                                           (void**)&http_info);
-            if(SUCCEEDED(hres)) {
-                IWinInetHttpInfo_Release(http_info);
-                *ppv = &This->IWinInetHttpInfo_iface;
-            }
+        hres = IInternetProtocolEx_QueryInterface(&This->protocol->IInternetProtocolEx_iface,
+                                                  &IID_IWinInetHttpInfo, (void**)&http_info);
+        if(SUCCEEDED(hres)) {
+            IWinInetHttpInfo_Release(http_info);
+            *ppv = &This->IWinInetHttpInfo_iface;
         }
     }
 
@@ -1328,11 +1321,8 @@ static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD
 
     TRACE("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
 
-    if(!This->protocol->protocol_unk)
-        return E_FAIL;
-
-    hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
-                                   (void**)&wininet_info);
+    hres = IInternetProtocolEx_QueryInterface(&This->protocol->IInternetProtocolEx_iface,
+                                              &IID_IWinInetInfo, (void**)&wininet_info);
     if(FAILED(hres))
         return E_FAIL;
 
@@ -1350,11 +1340,8 @@ static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD d
 
     TRACE("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
 
-    if(!This->protocol->protocol_unk)
-        return E_FAIL;
-
-    hres = IUnknown_QueryInterface(This->protocol->protocol_unk, &IID_IWinInetHttpInfo,
-                                   (void**)&http_info);
+    hres = IInternetProtocolEx_QueryInterface(&This->protocol->IInternetProtocolEx_iface,
+                                              &IID_IWinInetHttpInfo, (void**)&http_info);
     if(FAILED(hres))
         return E_FAIL;
 
