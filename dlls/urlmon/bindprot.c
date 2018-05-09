@@ -283,32 +283,6 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocolEx *iface, RE
     }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
         *ppv = &This->IInternetProtocolSink_iface;
-    }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
-        TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
-
-        if(This->protocol_unk) {
-            IWinInetInfo *inet_info;
-            HRESULT hres;
-
-            hres = IUnknown_QueryInterface(This->protocol_unk, &IID_IWinInetInfo, (void**)&inet_info);
-            if(SUCCEEDED(hres)) {
-                *ppv = &This->IWinInetHttpInfo_iface;
-                IWinInetInfo_Release(inet_info);
-            }
-        }
-    }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
-        TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
-
-        if(This->protocol_unk) {
-            IWinInetHttpInfo *http_info;
-            HRESULT hres;
-
-            hres = IUnknown_QueryInterface(This->protocol_unk, &IID_IWinInetHttpInfo, (void**)&http_info);
-            if(SUCCEEDED(hres)) {
-                *ppv = &This->IWinInetHttpInfo_iface;
-                IWinInetHttpInfo_Release(http_info);
-            }
-        }
     }else if(This->protocol_unk) {
         HRESULT hres;
         hres = IUnknown_QueryInterface(This->protocol_unk, riid, ppv);
@@ -1413,53 +1387,6 @@ static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
     BPInternetProtocolSink_ReportResult
 };
 
-static inline BindProtocol *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
-{
-    return CONTAINING_RECORD(iface, BindProtocol, IWinInetHttpInfo_iface);
-}
-
-static HRESULT WINAPI WinInetHttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
-{
-    BindProtocol *This = impl_from_IWinInetHttpInfo(iface);
-    return IInternetProtocolEx_QueryInterface(&This->IInternetProtocolEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI WinInetHttpInfo_AddRef(IWinInetHttpInfo *iface)
-{
-    BindProtocol *This = impl_from_IWinInetHttpInfo(iface);
-    return IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
-}
-
-static ULONG WINAPI WinInetHttpInfo_Release(IWinInetHttpInfo *iface)
-{
-    BindProtocol *This = impl_from_IWinInetHttpInfo(iface);
-    return IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
-}
-
-static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption,
-        void *pBuffer, DWORD *pcbBuffer)
-{
-    BindProtocol *This = impl_from_IWinInetHttpInfo(iface);
-    FIXME("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
-        void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
-{
-    BindProtocol *This = impl_from_IWinInetHttpInfo(iface);
-    FIXME("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
-    return E_NOTIMPL;
-}
-
-static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
-    WinInetHttpInfo_QueryInterface,
-    WinInetHttpInfo_AddRef,
-    WinInetHttpInfo_Release,
-    WinInetHttpInfo_QueryOption,
-    WinInetHttpInfo_QueryInfo
-};
-
 static inline BindProtocol *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, BindProtocol, IServiceProvider_iface);
@@ -1513,7 +1440,6 @@ HRESULT create_binding_protocol(BindProtocol **protocol)
     ret->IInternetPriority_iface.lpVtbl     = &InternetPriorityVtbl;
     ret->IServiceProvider_iface.lpVtbl      = &ServiceProviderVtbl;
     ret->IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkVtbl;
-    ret->IWinInetHttpInfo_iface.lpVtbl      = &WinInetHttpInfoVtbl;
 
     ret->default_protocol_handler.IInternetProtocol_iface.lpVtbl = &InternetProtocolHandlerVtbl;
     ret->default_protocol_handler.IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkHandlerVtbl;

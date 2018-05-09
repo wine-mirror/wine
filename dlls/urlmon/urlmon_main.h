@@ -172,7 +172,6 @@ typedef struct {
     IInternetPriority     IInternetPriority_iface;
     IServiceProvider      IServiceProvider_iface;
     IInternetProtocolSink IInternetProtocolSink_iface;
-    IWinInetHttpInfo      IWinInetHttpInfo_iface;
 
     LONG ref;
 
