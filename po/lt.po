@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-04-06 08:19+0300\n"
+"PO-Revision-Date: 2018-05-09 21:12+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8494,10 +8494,8 @@ msgid "&Browse..."
 msgstr "&Parinkti..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Failo tipas"
+msgstr "Failo tipas:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8508,16 +8506,12 @@ msgid "Size:"
 msgstr "Dydis:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Sukūrimo data"
+msgstr "Sukūrimo data:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "A&tributai:"
+msgstr "Atributai:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8528,28 +8522,20 @@ msgid "&Archive"
 msgstr "&Archyvuotinas"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Atverti:"
+msgstr "Atverti su:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Keisti &piktogramą..."
+msgstr "&Keisti..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Modifikuotas"
+msgstr "Paskutinis pakeitimas:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Pask. keitimas:"
+msgstr "Paskutinė prieiga:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
