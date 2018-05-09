@@ -14236,6 +14236,7 @@ This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
 esac
 enable_l3codeca_acm=${enable_l3codeca_acm:-no}
 fi
+test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_mp3dmod=${enable_mp3dmod:-no}
 
 if test "$ac_cv_header_AL_al_h" = "yes"
 then

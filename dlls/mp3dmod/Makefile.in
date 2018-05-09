@@ -1,5 +1,7 @@
 MODULE    = mp3dmod.dll
 IMPORTS   = dmoguids uuid wmcodecdspuuid
+EXTRAINCL = $(MPG123_CFLAGS)
+EXTRALIBS = $(MPG123_LIBS)
 
 C_SRCS = \
 	mp3dmod.c

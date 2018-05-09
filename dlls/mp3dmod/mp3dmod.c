@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <mpg123.h>
 #include "windef.h"
 #include "winbase.h"
 #define COBJMACROS
@@ -35,6 +36,7 @@ static HINSTANCE mp3dmod_instance;
 struct mp3_decoder {
     IMediaObject IMediaObject_iface;
     LONG ref;
+    mpg123_handle *mh;
 };
 
 static inline struct mp3_decoder *impl_from_IMediaObject(IMediaObject *iface)
@@ -80,6 +82,7 @@ static ULONG WINAPI MediaObject_Release(IMediaObject *iface)
 
     if (!refcount)
     {
+        mpg123_delete(This->mh);
         heap_free(This);
     }
     return refcount;
@@ -264,12 +267,16 @@ static const IMediaObjectVtbl IMediaObject_vtbl = {
 static HRESULT create_mp3_decoder(REFIID iid, void **obj)
 {
     struct mp3_decoder *This;
+    int err;
 
     if (!(This = heap_alloc(sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IMediaObject_iface.lpVtbl = &IMediaObject_vtbl;
     This->ref = 0;
+
+    mpg123_init();
+    This->mh = mpg123_new(NULL, &err);
 
     return IMediaObject_QueryInterface(&This->IMediaObject_iface, iid, obj);
 }
