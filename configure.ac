@@ -205,6 +205,13 @@ case $host in
     CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
     AC_SUBST(TARGETFLAGS,"-marm -mfloat-abi=$float_abi")
     ;;
+  aarch64*)
+    AC_MSG_CHECKING([whether $CC supports __builtin_ms_va_list])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
+                      [AC_MSG_RESULT([yes])],
+                      [AC_MSG_RESULT([no])
+                       AC_MSG_ERROR([You need clang >= 5.0 to build Wine for arm64.])])
+    ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
     ;;
