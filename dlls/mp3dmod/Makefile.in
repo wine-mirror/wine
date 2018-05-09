@@ -1,0 +1,8 @@
+MODULE    = mp3dmod.dll
+IMPORTS   = dmoguids uuid wmcodecdspuuid
+
+C_SRCS = \
+	mp3dmod.c
+
+IDL_SRCS = \
+	mp3dmod.idl
