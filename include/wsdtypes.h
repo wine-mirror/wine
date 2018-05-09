@@ -30,6 +30,8 @@ typedef struct _WSD_REFERENCE_PARAMETERS WSD_REFERENCE_PARAMETERS;
 typedef struct _WSD_REFERENCE_PROPERTIES WSD_REFERENCE_PROPERTIES;
 typedef struct _WSD_ENDPOINT_REFERENCE WSD_ENDPOINT_REFERENCE;
 typedef struct _WSD_URI_LIST WSD_URI_LIST;
+typedef struct _WSD_PROBE WSD_PROBE;
+typedef struct _WSD_SCOPES WSD_SCOPES;
 
 struct _WSD_APP_SEQUENCE
 {
@@ -94,6 +96,19 @@ struct _WSD_SOAP_MESSAGE
     WSD_SOAP_HEADER Header;
     void *Body;
     WSDXML_TYPE *BodyType;
+};
+
+struct _WSD_PROBE
+{
+    WSD_NAME_LIST *Types;
+    WSD_SCOPES *Scopes;
+    WSDXML_ELEMENT *Any;
+};
+
+struct _WSD_SCOPES
+{
+    const WCHAR *MatchBy;
+    WSD_URI_LIST *Scopes;
 };
 
 #endif
