@@ -191,6 +191,8 @@ dnl Usage: WINE_CHECK_MINGW_PROG(variable,[value-if-not-found],[path])
 dnl
 AC_DEFUN([WINE_CHECK_MINGW_PROG],
 [case "$host_cpu" in
+  aarch64*)
+    ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc" ;;
   arm*)
     ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc" ;;
   i[[3456789]]86*)
