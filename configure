@@ -1594,6 +1594,7 @@ enable_winusb
 enable_wlanapi
 enable_wldap32
 enable_wmasf
+enable_wmcodecdspuuid
 enable_wmi
 enable_wmiutils
 enable_wmp
@@ -8839,6 +8840,8 @@ CROSSTARGET=""
 if test "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     case "$host_cpu" in
+  aarch64*)
+    ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc" ;;
   arm*)
     ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc" ;;
   i[3456789]86*)
@@ -19171,6 +19174,7 @@ wine_fn_config_makefile dlls/wlanapi/tests enable_tests
 wine_fn_config_makefile dlls/wldap32 enable_wldap32
 wine_fn_config_makefile dlls/wldap32/tests enable_tests
 wine_fn_config_makefile dlls/wmasf enable_wmasf
+wine_fn_config_makefile dlls/wmcodecdspuuid enable_wmcodecdspuuid
 wine_fn_config_makefile dlls/wmi enable_wmi
 wine_fn_config_makefile dlls/wmiutils enable_wmiutils
 wine_fn_config_makefile dlls/wmiutils/tests enable_tests

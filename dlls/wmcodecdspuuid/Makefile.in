@@ -1,0 +1,4 @@
+MODULE    = libwmcodecdspuuid.a
+
+C_SRCS = \
+	wmcodecdspuuid.c
