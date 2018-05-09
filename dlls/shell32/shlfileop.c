@@ -1005,6 +1005,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
+    WCHAR *p;
     DWORD i = 0;
 
     if (!szFiles)
@@ -1038,6 +1039,8 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
             lstrcpyW(szCurFile, ptr);
             flList->feFiles[i].bFromRelative = FALSE;
         }
+
+        for (p = szCurFile; *p; p++) if (*p == '/') *p = '\\';
 
         /* parse wildcard files if they are in the filename */
         if (StrPBrkW(szCurFile, wWildcardChars))

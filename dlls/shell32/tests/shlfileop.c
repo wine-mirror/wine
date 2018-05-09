@@ -1869,6 +1869,28 @@ static void test_copy(void)
     ok(retval != ERROR_SUCCESS, "Unexpected ERROR_SUCCESS\n");
     ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+
+    /* test with / */
+    CreateDirectoryA("dir", NULL);
+    CreateDirectoryA("dir\\subdir", NULL);
+    createTestFile("dir\\subdir\\aa.txt");
+    shfo.pFrom = "dir/subdir/aa.txt\0";
+    shfo.pTo = "dir\\destdir/aa.txt\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperationA(&shfo);
+    if (dir_exists("dir\\destdir"))
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        ok(DeleteFileA("dir\\destdir\\aa.txt"), "Expected file to exist\n");
+        ok(RemoveDirectoryA("dir\\destdir"), "Expected dir to exist\n");
+    }
+    else
+    {
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* WinXp, Win2k */);
+    }
+    ok(DeleteFileA("dir\\subdir\\aa.txt"), "Expected file to exist\n");
+    ok(RemoveDirectoryA("dir\\subdir"), "Expected dir to exist\n");
+    ok(RemoveDirectoryA("dir"), "Expected dir to exist\n");
 }
 
 /* tests the FO_MOVE action */
@@ -1917,6 +1939,30 @@ static void test_move(void)
     ok(file_exists("test4.txt\\one.txt"), "file should exist\n");
     ok(file_exists("test4.txt\\nested"), "dir should exist\n");
     ok(file_exists("test4.txt\\nested\\two.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* same tests above, but with / */
+    set_curr_dir_path(from, "testdir2/*.*\0");
+    set_curr_dir_path(to, "test4.txt\0");
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_SUCCESS ||
+       broken(retval == ERROR_FILE_NOT_FOUND), /* WinXp, Win2k3 */
+       "Expected ERROR_SUCCESS, got %d\n", retval);
+    if (retval == ERROR_SUCCESS)
+    {
+        ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+        ok(dir_exists("testdir2"), "dir should not be moved\n");
+        ok(!file_exists("testdir2\\one.txt"), "file should be moved\n");
+        ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+        ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+        ok(file_exists("test4.txt\\one.txt"), "file should exist\n");
+        ok(dir_exists("test4.txt\\nested"), "dir should exist\n");
+        ok(file_exists("test4.txt\\nested\\two.txt"), "file should exist\n");
+    }
 
     clean_after_shfo_tests();
     init_shfo_tests();
