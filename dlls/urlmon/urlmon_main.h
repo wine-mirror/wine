@@ -195,7 +195,6 @@ typedef struct {
 
     BOOL reported_result;
     BOOL reported_mime;
-    BOOL from_urlmon;
     DWORD pi;
 
     DWORD bscf;
@@ -216,7 +215,7 @@ typedef struct {
     BSTR display_uri;
 }  BindProtocol;
 
-HRESULT create_binding_protocol(BOOL,BindProtocol**) DECLSPEC_HIDDEN;
+HRESULT create_binding_protocol(BindProtocol**) DECLSPEC_HIDDEN;
 void set_binding_sink(BindProtocol*,IInternetProtocolSink*,IInternetBindInfo*) DECLSPEC_HIDDEN;
 
 typedef struct {

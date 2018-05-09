@@ -1510,7 +1510,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
         ret->protocol = binding_ctx->protocol;
         IInternetProtocolEx_AddRef(&ret->protocol->IInternetProtocolEx_iface);
     }else {
-        hres = create_binding_protocol(TRUE, &ret->protocol);
+        hres = create_binding_protocol(&ret->protocol);
         if(FAILED(hres)) {
             WARN("Could not get protocol handler\n");
             IBinding_Release(&ret->IBinding_iface);

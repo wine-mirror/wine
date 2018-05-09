@@ -2402,8 +2402,8 @@ static HRESULT WINAPI ProtocolCF_CreateInstance(IClassFactory *iface, IUnknown *
     if(IsEqualGUID(&IID_IInternetProtocolInfo, riid))
         return E_NOINTERFACE;
 
-    todo_wine ok(outer != NULL, "outer == NULL\n");
-    todo_wine ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    ok(outer != NULL, "outer == NULL\n");
+    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = &Protocol;
     return S_OK;
 }

@@ -528,25 +528,16 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
         if(FAILED(hres))
             return hres;
 
-        if(This->from_urlmon) {
-            hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&protocol);
-            IClassFactory_Release(cf);
-            if(FAILED(hres))
-                return hres;
-            protocol_unk = (IUnknown*)protocol;
-            IUnknown_AddRef(protocol_unk);
-        }else {
-            hres = IClassFactory_CreateInstance(cf, (IUnknown*)&This->IInternetBindInfo_iface,
-                    &IID_IUnknown, (void**)&protocol_unk);
-            IClassFactory_Release(cf);
-            if(FAILED(hres))
-                return hres;
+        hres = IClassFactory_CreateInstance(cf, (IUnknown*)&This->IInternetBindInfo_iface,
+                &IID_IUnknown, (void**)&protocol_unk);
+        IClassFactory_Release(cf);
+        if(FAILED(hres))
+            return hres;
 
-            hres = IUnknown_QueryInterface(protocol_unk, &IID_IInternetProtocol, (void**)&protocol);
-            if(FAILED(hres)) {
-                IUnknown_Release(protocol_unk);
-                return hres;
-            }
+        hres = IUnknown_QueryInterface(protocol_unk, &IID_IInternetProtocol, (void**)&protocol);
+        if(FAILED(hres)) {
+            IUnknown_Release(protocol_unk);
+            return hres;
         }
     }
 
@@ -1508,7 +1499,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BPServiceProvider_QueryService
 };
 
-HRESULT create_binding_protocol(BOOL from_urlmon, BindProtocol **protocol)
+HRESULT create_binding_protocol(BindProtocol **protocol)
 {
     BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
 
@@ -1523,7 +1514,6 @@ HRESULT create_binding_protocol(BOOL from_urlmon, BindProtocol **protocol)
     ret->default_protocol_handler.IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkHandlerVtbl;
 
     ret->ref = 1;
-    ret->from_urlmon = from_urlmon;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
     ret->protocol_handler = &ret->default_protocol_handler.IInternetProtocol_iface;

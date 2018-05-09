@@ -439,7 +439,7 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
     if(pBC || pUnkOuter || ppUnk || dwOption)
         FIXME("Unsupported arguments\n");
 
-    hres = create_binding_protocol(FALSE, &protocol);
+    hres = create_binding_protocol(&protocol);
     if(FAILED(hres))
         return hres;
 
