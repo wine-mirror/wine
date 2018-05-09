@@ -606,7 +606,7 @@ static BOOL remainder_is_none_or_newline (int num_chars, const WCHAR *str)
  */
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                                  WCHAR *dest, int *len, int width, DWORD format,
-                                 SIZE *retsize, int last_line, WCHAR **p_retstr,
+                                 SIZE *retsize, int last_line, WCHAR *modstr,
                                  int tabwidth, int *pprefix_offset,
                                  ellipsis_data *pellip)
 {
@@ -722,7 +722,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         if (!line_fits && (format & DT_PATH_ELLIPSIS))
         {
             TEXT_PathEllipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
-                                max_seg_width, &size, *p_retstr, pellip);
+                                max_seg_width, &size, modstr, pellip);
             line_fits = (size.cx <= max_seg_width);
             ellipsified = TRUE;
         }
@@ -735,7 +735,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         {
             int before, len_ellipsis;
             TEXT_Ellipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
-                            max_seg_width, &size, *p_retstr, &before, &len_ellipsis);
+                            max_seg_width, &size, modstr, &before, &len_ellipsis);
             if (before > pellip->before)
             {
                 /* We must have done a path ellipsis too */
@@ -872,7 +872,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 {
     SIZE size;
     const WCHAR *strPtr;
-    WCHAR *retstr, *p_retstr;
+    WCHAR *retstr;
     size_t size_retstr;
     WCHAR line[MAX_BUFFER];
     int len, lh, count=i_count;
@@ -968,7 +968,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         size_retstr = 0;
         retstr = NULL;
     }
-    p_retstr = retstr;
 
     do
     {
@@ -977,7 +976,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
             last_line = !(flags & DT_NOCLIP) && y - ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) < rect->bottom;
 	else
             last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
-	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, &p_retstr, tabwidth, &prefix_offset, &ellip);
+	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, retstr, tabwidth, &prefix_offset, &ellip);
 
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
