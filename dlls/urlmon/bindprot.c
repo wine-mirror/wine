@@ -286,11 +286,11 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocolEx *iface, RE
     }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
         TRACE("(%p)->(IID_IWinInetInfo %p)\n", This, ppv);
 
-        if(This->protocol) {
+        if(This->protocol_unk) {
             IWinInetInfo *inet_info;
             HRESULT hres;
 
-            hres = IInternetProtocol_QueryInterface(This->protocol, &IID_IWinInetInfo, (void**)&inet_info);
+            hres = IUnknown_QueryInterface(This->protocol_unk, &IID_IWinInetInfo, (void**)&inet_info);
             if(SUCCEEDED(hres)) {
                 *ppv = &This->IWinInetHttpInfo_iface;
                 IWinInetInfo_Release(inet_info);
@@ -299,11 +299,11 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocolEx *iface, RE
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
 
-        if(This->protocol) {
+        if(This->protocol_unk) {
             IWinInetHttpInfo *http_info;
             HRESULT hres;
 
-            hres = IInternetProtocol_QueryInterface(This->protocol, &IID_IWinInetHttpInfo, (void**)&http_info);
+            hres = IUnknown_QueryInterface(This->protocol_unk, &IID_IWinInetHttpInfo, (void**)&http_info);
             if(SUCCEEDED(hres)) {
                 *ppv = &This->IWinInetHttpInfo_iface;
                 IWinInetHttpInfo_Release(http_info);
@@ -557,15 +557,18 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     This->protocol_unk = protocol_unk;
     This->protocol = protocol;
 
+    if(!protocol_unk)
+        protocol_unk = (IUnknown*)protocol;
+
     set_binding_sink(This, pOIProtSink, pOIBindInfo);
 
-    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    hres = IUnknown_QueryInterface(protocol_unk, &IID_IInternetPriority, (void**)&priority);
     if(SUCCEEDED(hres)) {
         IInternetPriority_SetPriority(priority, This->priority);
         IInternetPriority_Release(priority);
     }
 
-    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
+    hres = IUnknown_QueryInterface(protocol_unk, &IID_IInternetProtocolEx, (void**)&protocolex);
     if(SUCCEEDED(hres)) {
         hres = IInternetProtocolEx_StartEx(protocolex, pUri, &This->IInternetProtocolSink_iface,
                 &This->IInternetBindInfo_iface, 0, NULL);
