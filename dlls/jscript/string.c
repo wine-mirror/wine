@@ -119,12 +119,6 @@ static HRESULT String_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r
     return S_OK;
 }
 
-static HRESULT String_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
-{
-    FIXME("%p\n", jsthis);
-    return E_NOTIMPL;
-}
-
 static HRESULT stringobj_to_string(vdisp_t *jsthis, jsval_t *r)
 {
     StringInstance *string;
@@ -1539,7 +1533,7 @@ static const builtin_prop_t String_props[] = {
     {indexOfW,               String_indexOf,               PROPF_METHOD|2},
     {italicsW,               String_italics,               PROPF_METHOD},
     {lastIndexOfW,           String_lastIndexOf,           PROPF_METHOD|2},
-    {lengthW,                NULL,0,                       String_get_length, String_set_length},
+    {lengthW,                NULL,0,                       String_get_length},
     {linkW,                  String_link,                  PROPF_METHOD|1},
     {localeCompareW,         String_localeCompare,         PROPF_METHOD|1},
     {matchW,                 String_match,                 PROPF_METHOD|1},
@@ -1571,7 +1565,7 @@ static const builtin_info_t String_info = {
 };
 
 static const builtin_prop_t StringInst_props[] = {
-    {lengthW,                NULL,0,                       String_get_length, String_set_length}
+    {lengthW,                NULL,0,                       String_get_length}
 };
 
 static const builtin_info_t StringInst_info = {

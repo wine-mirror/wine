@@ -166,6 +166,7 @@ function test_getOwnPropertyDescriptor() {
     test_own_data_prop_desc(Math, "PI", false, false, false);
 
     var obj = new String();
+    test_own_data_prop_desc(obj, "length", false, false, false);
     ok(Object.getOwnPropertyDescriptor(obj, "slice") === undefined,
        "getOwnPropertyDescriptor(slice) did not return undefined");
     test_own_data_prop_desc(String.prototype, "slice", true, false, true);

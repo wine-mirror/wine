@@ -408,6 +408,12 @@ ok(str.toString() === "", "str.toString() = " + str.toString());
 var str = new String("test", "abc");
 ok(str.toString() === "test", "str.toString() = " + str.toString());
 
+str = new String("test");
+ok(str.length === 4, "str.length = " + str.length);
+str.length = 3;
+str.length = 5;
+ok(str.length === 4, "str.length = " + str.length);
+
 var strObj = new Object();
 strObj.toString = function() { return "abcd" };
 strObj.substr = String.prototype.substr;
