@@ -1285,6 +1285,7 @@ enable_ext_ms_win_security_credui_l1_1_0
 enable_ext_ms_win_security_cryptui_l1_1_0
 enable_ext_ms_win_uxtheme_themes_l1_1_0
 enable_faultrep
+enable_feclient
 enable_fltlib
 enable_fltmgr_sys
 enable_fntcache
@@ -18694,6 +18695,7 @@ wine_fn_config_makefile dlls/ext-ms-win-security-cryptui-l1-1-0 enable_ext_ms_wi
 wine_fn_config_makefile dlls/ext-ms-win-uxtheme-themes-l1-1-0 enable_ext_ms_win_uxtheme_themes_l1_1_0
 wine_fn_config_makefile dlls/faultrep enable_faultrep
 wine_fn_config_makefile dlls/faultrep/tests enable_tests
+wine_fn_config_makefile dlls/feclient enable_feclient
 wine_fn_config_makefile dlls/fltlib enable_fltlib
 wine_fn_config_makefile dlls/fltmgr.sys enable_fltmgr_sys
 wine_fn_config_makefile dlls/fntcache enable_fntcache

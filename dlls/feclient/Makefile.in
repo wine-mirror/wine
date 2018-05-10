@@ -1,0 +1,4 @@
+MODULE    = feclient.dll
+
+C_SRCS = \
+	main.c
