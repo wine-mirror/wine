@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-04-10 10:53+0300\n"
+"PO-Revision-Date: 2018-05-10 08:12+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.0.7\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -8498,10 +8498,8 @@ msgid "&Browse..."
 msgstr "&Обзор..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Тип файла"
+msgstr "Тип файла:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8512,16 +8510,12 @@ msgid "Size:"
 msgstr "Размер:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Дата создания"
+msgstr "Дата создания:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Свойства:"
+msgstr "Атрибуты:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8532,28 +8526,20 @@ msgid "&Archive"
 msgstr "&Архивный"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Открыть:"
+msgstr "Открывать в:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Изменить &значок..."
+msgstr "&Изменить..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Изменён"
+msgstr "Изменён:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Последнее изменение:"
+msgstr "Открыт:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
