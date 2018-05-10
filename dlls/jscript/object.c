@@ -138,20 +138,21 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return hres;
 
     if(is_jsdisp(jsthis)) {
+        property_desc_t prop_desc;
         const WCHAR *name_str;
-        BOOL result;
 
         name_str = jsstr_flatten(name);
-        if(name_str)
-            hres = jsdisp_is_own_prop(jsthis->u.jsdisp, name_str, &result);
-        else
-            hres = E_OUTOFMEMORY;
+        if(!name_str) {
+            jsstr_release(name);
+            return E_OUTOFMEMORY;
+        }
+
+        hres = jsdisp_get_own_property(jsthis->u.jsdisp, name_str, TRUE, &prop_desc);
         jsstr_release(name);
-        if(FAILED(hres))
+        if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME)
             return hres;
 
-        if(r)
-            *r = jsval_bool(result);
+        if(r) *r = jsval_bool(hres == S_OK);
         return S_OK;
     }
 
