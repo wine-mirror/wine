@@ -178,9 +178,9 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    property_desc_t prop_desc;
     const WCHAR *name;
     jsstr_t *name_str;
-    BOOL ret;
     HRESULT hres;
 
     TRACE("\n");
@@ -199,13 +199,13 @@ static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, W
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_is_enumerable(jsthis->u.jsdisp, name, &ret);
+    hres = jsdisp_get_own_property(jsthis->u.jsdisp, name, TRUE, &prop_desc);
     jsstr_release(name_str);
-    if(FAILED(hres))
+    if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME)
         return hres;
 
     if(r)
-        *r = jsval_bool(ret);
+        *r = jsval_bool(hres == S_OK && (prop_desc.flags & PROPF_ENUMERABLE) != 0);
     return S_OK;
 }
 

@@ -1589,19 +1589,6 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
     return hres;
 }
 
-HRESULT jsdisp_is_enumerable(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
-{
-    dispex_prop_t *prop;
-    HRESULT hres;
-
-    hres = find_prop_name(obj, string_hash(name), name, &prop);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = prop && (prop->flags & PROPF_ENUMERABLE) && prop->type != PROP_PROTREF;
-    return S_OK;
-}
-
 HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_only,
                                 property_desc_t *desc)
 {
