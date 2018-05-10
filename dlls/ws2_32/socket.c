@@ -7513,9 +7513,14 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         if (ipxptype > 0)
             set_ipx_packettype(ret, ipxptype);
 
-        /* ensure IP_DONTFRAGMENT is disabled, in Linux the global default can be enabled */
         if (unixaf == AF_INET || unixaf == AF_INET6)
-            set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, FALSE);
+        {
+            /* ensure IP_DONTFRAGMENT is disabled for SOCK_DGRAM and SOCK_RAW, enabled for SOCK_STREAM */
+            if (unixtype == SOCK_DGRAM || unixtype == SOCK_RAW) /* in Linux the global default can be enabled */
+                set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, FALSE);
+            else if (unixtype == SOCK_STREAM)
+                set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, TRUE);
+        }
 
 #ifdef IPV6_V6ONLY
         if (unixaf == AF_INET6)
