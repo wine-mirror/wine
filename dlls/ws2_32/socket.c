@@ -635,7 +635,7 @@ static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 /* function prototypes */
 static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size, int addresses, int address_length);
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
-static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe);
+static struct WS_protoent *WS_create_pe( const char *name, char **aliases, int prot );
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
 static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size);
 
@@ -6406,6 +6406,62 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 }
 
 
+static const struct { int prot; const char *names[3]; } protocols[] =
+{
+    {   0, { "ip", "IP" }},
+    {   1, { "icmp", "ICMP" }},
+    {   2, { "igmp", "IGMP" }},
+    {   3, { "ggp", "GGP" }},
+    {   6, { "tcp", "TCP" }},
+    {   8, { "egp", "EGP" }},
+    {   9, { "igp", "IGP" }},
+    {  12, { "pup", "PUP" }},
+    {  17, { "udp", "UDP" }},
+    {  20, { "hmp", "HMP" }},
+    {  22, { "xns-idp", "XNS-IDP" }},
+    {  27, { "rdp", "RDP" }},
+    {  29, { "iso-tp4", "ISO-TP4" }},
+    {  33, { "dccp", "DCCP" }},
+    {  36, { "xtp", "XTP" }},
+    {  37, { "ddp", "DDP" }},
+    {  38, { "idpr-cmtp", "IDPR-CMTP" }},
+    {  41, { "ipv6", "IPv6" }},
+    {  43, { "ipv6-route", "IPv6-Route" }},
+    {  44, { "ipv6-frag", "IPv6-Frag" }},
+    {  45, { "idrp", "IDRP" }},
+    {  46, { "rsvp", "RSVP" }},
+    {  47, { "gre", "GRE" }},
+    {  50, { "esp", "ESP" }},
+    {  51, { "ah", "AH" }},
+    {  57, { "skip", "SKIP" }},
+    {  58, { "ipv6-icmp", "IPv6-ICMP" }},
+    {  59, { "ipv6-nonxt", "IPv6-NoNxt" }},
+    {  60, { "ipv6-opts", "IPv6-Opts" }},
+    {  66, { "rvd", "RVD" }},
+    {  73, { "rspf", "RSPF" }},
+    {  81, { "vmtp", "VMTP" }},
+    {  88, { "eigrp", "EIGRP" }},
+    {  89, { "ospf", "OSPFIGP" }},
+    {  93, { "ax.25", "AX.25" }},
+    {  94, { "ipip", "IPIP" }},
+    {  97, { "etherip", "ETHERIP" }},
+    {  98, { "encap", "ENCAP" }},
+    { 103, { "pim", "PIM" }},
+    { 108, { "ipcomp", "IPCOMP" }},
+    { 112, { "vrrp", "VRRP" }},
+    { 115, { "l2tp", "L2TP" }},
+    { 124, { "isis", "ISIS" }},
+    { 132, { "sctp", "SCTP" }},
+    { 133, { "fc", "FC" }},
+    { 135, { "mobility-header", "Mobility-Header" }},
+    { 136, { "udplite", "UDPLite" }},
+    { 137, { "mpls-in-ip", "MPLS-in-IP" }},
+    { 139, { "hip", "HIP" }},
+    { 140, { "shim6", "Shim6" }},
+    { 141, { "wesp", "WESP" }},
+    { 142, { "rohc", "ROHC" }},
+};
+
 /***********************************************************************
  *		getprotobyname		(WS2_32.53)
  */
@@ -6416,16 +6472,25 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobyname(name)) != NULL )
-    {
-        retval = WS_dup_pe(proto);
-    }
-    else {
-        MESSAGE("protocol %s not found; You might want to add "
-                "this to /etc/protocols\n", debugstr_a(name) );
-        SetLastError(WSANO_DATA);
-    }
+        retval = WS_create_pe( proto->p_name, proto->p_aliases, proto->p_proto );
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    if (!retval)
+    {
+        unsigned int i;
+        for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
+        {
+            if (strcasecmp( protocols[i].names[0], name )) continue;
+            retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
+                                   protocols[i].prot );
+            break;
+        }
+    }
+    if (!retval)
+    {
+        WARN( "protocol %s not found\n", debugstr_a(name) );
+        SetLastError(WSANO_DATA);
+    }
     TRACE( "%s ret %p\n", debugstr_a(name), retval );
     return retval;
 }
@@ -6441,16 +6506,25 @@ struct WS_protoent* WINAPI WS_getprotobynumber(int number)
     struct protoent*     proto;
     EnterCriticalSection( &csWSgetXXXbyYYY );
     if( (proto = getprotobynumber(number)) != NULL )
-    {
-        retval = WS_dup_pe(proto);
-    }
-    else {
-        MESSAGE("protocol number %d not found; You might want to add "
-                "this to /etc/protocols\n", number );
-        SetLastError(WSANO_DATA);
-    }
+        retval = WS_create_pe( proto->p_name, proto->p_aliases, proto->p_proto );
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    if (!retval)
+    {
+        unsigned int i;
+        for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
+        {
+            if (protocols[i].prot != number) continue;
+            retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
+                                   protocols[i].prot );
+            break;
+        }
+    }
+    if (!retval)
+    {
+        WARN( "protocol %d not found\n", number );
+        SetLastError(WSANO_DATA);
+    }
     TRACE("%i ret %p\n", number, retval);
     return retval;
 }
@@ -7793,26 +7867,18 @@ static struct WS_hostent *WS_dup_he(const struct hostent* p_he)
 
 /* ----- protoent */
 
-static struct WS_protoent *WS_dup_pe(const struct protoent* p_pe)
+static struct WS_protoent *WS_create_pe( const char *name, char **aliases, int prot )
 {
-    char *p;
-    struct WS_protoent *p_to;
+    struct WS_protoent *ret;
+    unsigned int size = sizeof(*ret) + strlen(name) + sizeof(char *) + list_size(aliases, 0);
 
-    int size = (sizeof(*p_pe) +
-                strlen(p_pe->p_name) + 1 +
-                list_size(p_pe->p_aliases, 0));
-
-    if (!(p_to = check_buffer_pe(size))) return NULL;
-    p_to->p_proto = p_pe->p_proto;
-
-    p = (char *)(p_to + 1);
-    p_to->p_name = p;
-    strcpy(p, p_pe->p_name);
-    p += strlen(p) + 1;
-
-    p_to->p_aliases = (char **)p;
-    list_dup(p_pe->p_aliases, p_to->p_aliases, 0);
-    return p_to;
+    if (!(ret = check_buffer_pe( size ))) return NULL;
+    ret->p_proto = prot;
+    ret->p_name = (char *)(ret + 1);
+    strcpy( ret->p_name, name );
+    ret->p_aliases = (char **)ret->p_name + strlen(name) / sizeof(char *) + 1;
+    list_dup( aliases, ret->p_aliases, 0 );
+    return ret;
 }
 
 /* ----- servent */
