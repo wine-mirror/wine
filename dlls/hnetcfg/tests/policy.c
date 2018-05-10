@@ -141,7 +141,7 @@ static void test_NetFwAuthorizedApplication(void)
 
         hr = INetFwAuthorizedApplication_get_ProcessImageFileName(app, &bstr);
         ok(hr == S_OK, "got: %08x\n", hr);
-        ok(!lstrcmpW(bstr,image), "got: %s\n", wine_dbgstr_w(bstr));
+        ok(!lstrcmpiW(bstr,image), "got: %s\n", wine_dbgstr_w(bstr));
         SysFreeString( bstr );
 
         SysFreeString( image );
