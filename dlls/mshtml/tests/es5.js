@@ -179,7 +179,11 @@ function test_getOwnPropertyDescriptor() {
     test_own_data_prop_desc(obj, "arguments", false, false, false);
 
     obj = /test/;
+    test_own_data_prop_desc(obj, "global", false, false, false);
+    test_own_data_prop_desc(obj, "ignoreCase", false, false, false);
     test_own_data_prop_desc(obj, "lastIndex", true, false, false);
+    test_own_data_prop_desc(obj, "multiline", false, false, false);
+    test_own_data_prop_desc(obj, "source", false, false, false);
 
     next_test();
 }
