@@ -174,6 +174,10 @@ function test_getOwnPropertyDescriptor() {
     obj = new Array();
     test_own_data_prop_desc(obj, "length", true, false, false);
 
+    obj = new Function();
+    test_own_data_prop_desc(obj, "length", false, false, false);
+    test_own_data_prop_desc(obj, "arguments", false, false, false);
+
     obj = /test/;
     test_own_data_prop_desc(obj, "lastIndex", true, false, false);
 

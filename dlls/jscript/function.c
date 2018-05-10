@@ -358,12 +358,6 @@ static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t 
     return S_OK;
 }
 
-static HRESULT Function_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -588,9 +582,9 @@ static void Function_destructor(jsdisp_t *dispex)
 
 static const builtin_prop_t Function_props[] = {
     {applyW,                 Function_apply,                 PROPF_METHOD|2},
-    {argumentsW,             NULL, 0,                        Function_get_arguments, builtin_set_const},
+    {argumentsW,             NULL, 0,                        Function_get_arguments},
     {callW,                  Function_call,                  PROPF_METHOD|1},
-    {lengthW,                NULL, 0,                        Function_get_length,    Function_set_length},
+    {lengthW,                NULL, 0,                        Function_get_length},
     {toStringW,              Function_toString,              PROPF_METHOD}
 };
 
@@ -604,8 +598,8 @@ static const builtin_info_t Function_info = {
 };
 
 static const builtin_prop_t FunctionInst_props[] = {
-    {argumentsW,             NULL, 0,                        Function_get_arguments, builtin_set_const},
-    {lengthW,                NULL, 0,                        Function_get_length,    Function_set_length}
+    {argumentsW,             NULL, 0,                        Function_get_arguments},
+    {lengthW,                NULL, 0,                        Function_get_length}
 };
 
 static const builtin_info_t FunctionInst_info = {
