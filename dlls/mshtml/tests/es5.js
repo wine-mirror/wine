@@ -28,8 +28,6 @@ function test_date_now() {
 }
 
 function test_toISOString() {
-    var s;
-
     function expect(date, expected) {
         var s = date.toISOString();
         ok(s === expected, "toISOString returned " + s + " expected " + expected);
@@ -52,8 +50,6 @@ function test_toISOString() {
     expect(new Date(-62167219200001), "-000001-12-31T23:59:59.999Z");
     expect(new Date(-6216721920000100), "-195031-12-03T23:59:59.900Z");
     expect(new Date(1092830912830100), "+036600-06-07T22:27:10.100Z");
-
-    trace("" + 0xdeadbeef);
 
     expect_exception(function() { new Date(NaN).toISOString(); });
     expect_exception(function() { new Date(31494784780800001).toISOString(); });
@@ -147,10 +143,47 @@ function test_identifier_keywords() {
     next_test();
 }
 
+function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
+                            expected_configurable) {
+    var desc = Object.getOwnPropertyDescriptor(obj, prop);
+    ok("value" in desc, "value is not in desc");
+    ok(desc.value === obj[prop], "desc.value = " + desc.value + " expected " + obj[prop]);
+    ok(desc.writable === expected_writable, "desc(" + prop + ").writable = " + desc.writable
+       + " expected " + expected_writable);
+    ok(desc.enumerable === expected_enumerable, "desc.enumerable = " + desc.enumerable
+       + " expected " + expected_enumerable);
+    ok(desc.configurable === expected_configurable, "desc.configurable = " + desc.configurable
+       + " expected " + expected_configurable);
+}
+
+function test_getOwnPropertyDescriptor() {
+    var obj;
+
+    obj = { test: 1 };
+    test_own_data_prop_desc(obj, "test", true, true, true);
+
+    test_own_data_prop_desc(Object, "getOwnPropertyDescriptor", true, false, true);
+    test_own_data_prop_desc(Math, "PI", false, false, false);
+
+    var obj = new String();
+    ok(Object.getOwnPropertyDescriptor(obj, "slice") === undefined,
+       "getOwnPropertyDescriptor(slice) did not return undefined");
+    test_own_data_prop_desc(String.prototype, "slice", true, false, true);
+
+    obj = new Array();
+    test_own_data_prop_desc(obj, "length", true, false, false);
+
+    obj = /test/;
+    test_own_data_prop_desc(obj, "lastIndex", true, false, false);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
     test_indexOf,
     test_isArray,
-    test_identifier_keywords
+    test_identifier_keywords,
+    test_getOwnPropertyDescriptor
 ];

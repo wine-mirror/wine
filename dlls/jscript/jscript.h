@@ -50,6 +50,7 @@ typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
+typedef struct _property_desc_t property_desc_t;
 
 typedef struct {
     void **blocks;
@@ -292,6 +293,7 @@ HRESULT jsdisp_get_id(jsdisp_t*,const WCHAR*,DWORD,DISPID*) DECLSPEC_HIDDEN;
 HRESULT disp_delete(IDispatch*,DISPID,BOOL*) DECLSPEC_HIDDEN;
 HRESULT disp_delete_name(script_ctx_t*,IDispatch*,jsstr_t*,BOOL*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD) DECLSPEC_HIDDEN;
+HRESULT jsdisp_get_own_property(jsdisp_t*,const WCHAR*,BOOL,property_desc_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_is_own_prop(jsdisp_t*,const WCHAR*,BOOL*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_is_enumerable(jsdisp_t*,const WCHAR*,BOOL*) DECLSPEC_HIDDEN;
 
@@ -375,6 +377,11 @@ typedef struct {
 } JSCaller;
 
 #include "jsval.h"
+
+struct _property_desc_t {
+    unsigned flags;
+    jsval_t value;
+};
 
 typedef struct {
     EXCEPINFO ei;
