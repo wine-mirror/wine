@@ -58,6 +58,7 @@ typedef struct
     ITaskDefinition *task;
     IExecAction *action;
     LPWSTR task_name;
+    UINT flags;
     HRESULT status;
     WORD idle_minutes, deadline_minutes;
     DWORD priority, maxRunTime;
@@ -65,6 +66,7 @@ typedef struct
     DWORD trigger_count;
     TASK_TRIGGER *trigger;
     BOOL is_dirty;
+    USHORT instance_count;
 } TaskImpl;
 
 static inline TaskImpl *impl_from_ITask(ITask *iface)
@@ -855,7 +857,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     const FIXDLEN_DATA *fixed;
     const SYSTEMTIME *st;
     DWORD unicode_strings_size, data_size, triggers_size;
-    USHORT instance_count, trigger_count, i;
+    USHORT trigger_count, i;
     const USHORT *signature;
     TASK_TRIGGER *task_trigger;
 
@@ -888,7 +890,9 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     This->maxRunTime = fixed->maximum_runtime;
     TRACE("exit_code %#x\n", fixed->exit_code);
     TRACE("status %08x\n", fixed->status);
+    This->status = fixed->status;
     TRACE("flags %08x\n", fixed->flags);
+    This->flags = fixed->flags;
     st = &fixed->last_runtime;
     TRACE("last_runtime %d/%d/%d wday %d %d:%d:%d.%03d\n",
             st->wDay, st->wMonth, st->wYear, st->wDayOfWeek,
@@ -901,8 +905,8 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
         return SCHED_E_INVALID_TASK;
     }
 
-    instance_count = *(const USHORT *)(data + sizeof(*fixed));
-    TRACE("instance count %u\n", instance_count);
+    This->instance_count = *(const USHORT *)(data + sizeof(*fixed));
+    TRACE("instance count %u\n", This->instance_count);
 
     if (fixed->name_size_offset + sizeof(USHORT) < size)
         unicode_strings_size = load_unicode_strings(task, data + fixed->name_size_offset, size - fixed->name_size_offset);
@@ -1463,6 +1467,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->ref = 1;
     This->task = taskdef;
     This->task_name = heap_strdupW(task_name);
+    This->flags = 0;
     This->status = SCHED_S_TASK_NOT_SCHEDULED;
     This->idle_minutes = 10;
     This->deadline_minutes = 60;
@@ -1471,6 +1476,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->trigger_count = 0;
     This->trigger = NULL;
     This->is_dirty = FALSE;
+    This->instance_count = 0;
 
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
