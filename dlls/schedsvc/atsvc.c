@@ -60,6 +60,8 @@ struct job_t
     struct list entry;
     WCHAR *name;
     AT_ENUM info;
+    FIXDLEN_DATA data;
+    USHORT instance_count;
 };
 
 static LONG current_jobid = 1;
@@ -109,13 +111,12 @@ static DWORD load_unicode_strings(const char *data, DWORD limit, AT_ENUM *info)
     return data_size;
 }
 
-/* FIXME: read more data, currently only Command is handled */
-static BOOL load_job_data(const char *data, DWORD size, AT_ENUM *info)
+static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
 {
     const FIXDLEN_DATA *fixed;
     const SYSTEMTIME *st;
     DWORD unicode_strings_size, data_size, triggers_size;
-    USHORT instance_count, triggers_count, i;
+    USHORT triggers_count, i;
     const USHORT *signature;
     const TASK_TRIGGER *trigger;
 
@@ -128,6 +129,7 @@ static BOOL load_job_data(const char *data, DWORD size, AT_ENUM *info)
     }
 
     fixed = (const FIXDLEN_DATA *)data;
+    info->data = *fixed;
 
     TRACE("product_version %04x\n", fixed->product_version);
     TRACE("file_version %04x\n", fixed->file_version);
@@ -156,11 +158,11 @@ static BOOL load_job_data(const char *data, DWORD size, AT_ENUM *info)
         return FALSE;
     }
 
-    instance_count = *(const USHORT *)(data + sizeof(*fixed));
-    TRACE("instance count %u\n", instance_count);
+    info->instance_count = *(const USHORT *)(data + sizeof(*fixed));
+    TRACE("instance count %u\n", info->instance_count);
 
     if (fixed->name_size_offset + sizeof(USHORT) < size)
-        unicode_strings_size = load_unicode_strings(data + fixed->name_size_offset, size - fixed->name_size_offset, info);
+        unicode_strings_size = load_unicode_strings(data + fixed->name_size_offset, size - fixed->name_size_offset, &info->info);
     else
     {
         TRACE("invalid name_size_offset\n");
@@ -269,7 +271,7 @@ static BOOL load_job_data(const char *data, DWORD size, AT_ENUM *info)
     return TRUE;
 }
 
-static BOOL load_job(const WCHAR *name, AT_ENUM *info)
+static BOOL load_job(const WCHAR *name, struct job_t *info)
 {
     HANDLE file, mapping;
     DWORD size, try;
@@ -332,11 +334,16 @@ void add_job(const WCHAR *name)
     job = heap_alloc_zero(sizeof(*job));
     if (!job) return;
 
-    if (!load_job(name, &job->info))
+    if (!load_job(name, job))
     {
         free_job(job);
         return;
     }
+
+    if (job->data.flags & 0x08000000)
+        FIXME("Terminate(%s): not implemented\n", debugstr_w(job->info.Command));
+    else if (job->data.flags & 0x04000000)
+        FIXME("Run(%s): not implemented\n", debugstr_w(job->info.Command));
 
     EnterCriticalSection(&at_job_list_section);
     job->name = heap_strdupW(name);
