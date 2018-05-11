@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <mpg123.h>
 #include "windef.h"
 #include "winbase.h"
@@ -289,11 +290,76 @@ static HRESULT WINAPI MediaObject_ProcessInput(IMediaObject *iface, DWORD index,
     return S_OK;
 }
 
+static DWORD get_framesize(DMO_MEDIA_TYPE *type)
+{
+    WAVEFORMATEX *format = (WAVEFORMATEX *)type->pbFormat;
+    return 1152 * format->nBlockAlign;
+}
+
 static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
-    FIXME("(%p)->(%x, %d, %p, %p) stub!\n", iface, flags, count, buffers, status);
+    struct mp3_decoder *This = impl_from_IMediaObject(iface);
+    DWORD len, maxlen, framesize;
+    int got_data = 0;
+    size_t written;
+    HRESULT hr;
+    BYTE *data;
+    int err;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%#x, %d, %p, %p)\n", iface, flags, count, buffers, status);
+
+    if (count > 1)
+        FIXME("Multiple buffers not handled.\n");
+
+    buffers[0].dwStatus = 0;
+
+    if (!This->buffer)
+        return S_FALSE;
+
+    buffers[0].dwStatus |= DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT;
+
+    hr = IMediaBuffer_GetBufferAndLength(buffers[0].pBuffer, &data, &len);
+    if (FAILED(hr)) return hr;
+
+    hr = IMediaBuffer_GetMaxLength(buffers[0].pBuffer, &maxlen);
+    if (FAILED(hr)) return hr;
+
+    framesize = get_framesize(&This->outtype);
+
+    while (1)
+    {
+        if (maxlen - len < framesize)
+        {
+            buffers[0].dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+            break;
+        }
+
+        while ((err = mpg123_read(This->mh, data + len, framesize, &written)) == MPG123_NEW_FORMAT);
+        if (err == MPG123_NEED_MORE)
+        {
+            IMediaBuffer_Release(This->buffer);
+            This->buffer = NULL;
+            break;
+        }
+        else if (err == MPG123_ERR)
+            ERR("mpg123_read() failed: %s\n", mpg123_strerror(This->mh));
+        else if (err != MPG123_OK)
+            ERR("mpg123_read() returned %d\n", err);
+        if (written < framesize)
+            ERR("short write: %zd/%u\n", written, framesize);
+
+        got_data = 1;
+
+        len += framesize;
+        hr = IMediaBuffer_SetLength(buffers[0].pBuffer, len);
+        if (FAILED(hr)) return hr;
+    }
+
+    if (got_data)
+    {
+        return S_OK;
+    }
+    return S_FALSE;
 }
 
 static HRESULT WINAPI MediaObject_Lock(IMediaObject *iface, LONG lock)
