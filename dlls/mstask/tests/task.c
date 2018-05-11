@@ -591,6 +591,169 @@ static void test_task_state(void)
     cleanup_task();
 }
 
+static void save_job(ITask *task)
+{
+    HRESULT hr;
+    IPersistFile *pfile;
+
+    hr = ITask_QueryInterface(task, &IID_IPersistFile, (void **)&pfile);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IPersistFile_Save(pfile, NULL, FALSE);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    IPersistFile_Release(pfile);
+}
+
+static void test_Run(void)
+{
+    static const WCHAR wine_test_runW[] = { 'w','i','n','e','_','t','e','s','t','_','r','u','n',0 };
+    static const WCHAR cmdW[] = { 'c','m','d','.','e','x','e',0 };
+    ITaskScheduler *scheduler;
+    ITask *task;
+    ITaskTrigger *trigger;
+    WORD idx, i;
+    TASK_TRIGGER trigger_data;
+    SYSTEMTIME st;
+    HRESULT hr, status;
+
+    hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ITaskScheduler, (void **)&scheduler);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    /* cleanup after previous runs */
+    ITaskScheduler_Delete(scheduler, wine_test_runW);
+
+    hr = ITaskScheduler_NewWorkItem(scheduler, wine_test_runW, &CLSID_CTask,
+                                    &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = ITask_Run(task);
+    ok(hr == SCHED_E_TASK_NOT_READY, "got %#x\n", hr);
+
+    hr = ITask_Terminate(task);
+    ok(hr == SCHED_E_TASK_NOT_RUNNING, "got %#x\n", hr);
+
+    hr = ITask_GetStatus(task, &status);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+
+    save_job(task);
+
+    hr = ITask_GetStatus(task, &status);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(status == SCHED_S_TASK_NOT_SCHEDULED, "got %#x\n", status);
+
+    hr = ITask_CreateTrigger(task, &idx, &trigger);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&trigger_data, 0, sizeof(trigger_data));
+    trigger_data.cbTriggerSize = sizeof(trigger_data);
+    trigger_data.Reserved1 = 0;
+    GetLocalTime(&st);
+    trigger_data.wBeginYear = st.wYear;
+    trigger_data.wBeginMonth = st.wMonth;
+    trigger_data.wBeginDay = st.wDay;
+    trigger_data.wStartHour = st.wHour;
+    trigger_data.wStartMinute = st.wMinute;
+    trigger_data.TriggerType = TASK_TIME_TRIGGER_WEEKLY;
+    trigger_data.Type.Weekly.WeeksInterval = 1;
+    trigger_data.Type.Weekly.rgfDaysOfTheWeek = 0x7f; /* every day */
+    hr = ITaskTrigger_SetTrigger(trigger, &trigger_data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ITaskTrigger_Release(trigger);
+
+    hr = ITask_SetApplicationName(task, cmdW);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = ITask_SetParameters(task, empty);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = ITask_SetWorkingDirectory(task, empty);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    /* Save the task so that the Scheduler service would notice the changes */
+    save_job(task);
+
+    hr = ITask_GetStatus(task, &status);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", status);
+
+    hr = ITask_Run(task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    /* According to MSDN the task status doesn't update dynamically */
+    hr = ITask_GetStatus(task, &status);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(status == SCHED_S_TASK_HAS_NOT_RUN, "got %#x\n", status);
+
+    ITask_Release(task);
+
+    /* Running the process associated with the task to start up may
+     * take quite a bit a of time, and waiting for it during the test
+     * may be not the best idea.
+     *
+     * This is how it's supposed to look like in the application
+     * (the loop should be infinite):
+     */
+    for (i = 0; i < 3; i++)
+    {
+        hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
+        ok(hr == S_OK, "Activate error %#x\n", hr);
+
+        hr = ITask_GetStatus(task, &status);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        ITask_Release(task);
+
+        if (status == SCHED_S_TASK_RUNNING) break;
+
+        Sleep(100);
+    }
+
+    hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "Activate error %#x\n", hr);
+
+    hr = ITask_GetStatus(task, &status);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    if (status == SCHED_S_TASK_RUNNING)
+    {
+        hr = ITask_Terminate(task);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        ITask_Release(task);
+
+        /* Waiting for the process associated with the task to terminate
+         * may take quite a bit a of time, and waiting for it during the
+         * test is not practical.
+         *
+         * This is how it's supposed to look like in the application
+         * (the loop should be infinite):
+         */
+        for (i = 0; i < 3; i++)
+        {
+            hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
+            ok(hr == S_OK, "Activate error %#x\n", hr);
+
+            hr = ITask_GetStatus(task, &status);
+            ok(hr == S_OK, "got %#x\n", hr);
+
+            ITask_Release(task);
+
+            if (status != SCHED_S_TASK_RUNNING) break;
+
+            Sleep(100);
+        }
+    }
+    else
+        ITask_Release(task);
+
+    hr = ITaskScheduler_Delete(scheduler, wine_test_runW);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ITaskScheduler_Release(scheduler);
+}
+
 START_TEST(task)
 {
     CoInitialize(NULL);
@@ -601,5 +764,6 @@ START_TEST(task)
     test_SetMaxRunTime_GetMaxRunTime();
     test_SetAccountInformation_GetAccountInformation();
     test_task_state();
+    test_Run();
     CoUninitialize();
 }
