@@ -3638,6 +3638,24 @@ msgstr "Rozměr pole musí být konečné kladné celé číslo"
 msgid "Array object expected"
 msgstr "Očekáván objekt typu pole"
 
+#: jscript.rc:69
+msgid ""
+"'writable' attribute on the property descriptor cannot be set to 'true' on "
+"this object"
+msgstr ""
+
+#: jscript.rc:70
+msgid "Cannot redefine non-configurable property '|'"
+msgstr ""
+
+#: jscript.rc:71
+msgid "Cannot modify non-writable property '|'"
+msgstr ""
+
+#: jscript.rc:72
+msgid "Property cannot have both accessors and a value"
+msgstr ""
+
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
 msgstr ""

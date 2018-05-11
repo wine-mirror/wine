@@ -1607,6 +1607,8 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
     switch(prop->type) {
     case PROP_BUILTIN:
     case PROP_JSVAL:
+        desc->mask |= PROPF_WRITABLE;
+        desc->explicit_value = TRUE;
         if(!flags_only) {
             hres = prop_get(obj, prop, &desc->value);
             if(FAILED(hres))
@@ -1618,5 +1620,84 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
     }
 
     desc->flags = prop->flags & (PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE);
+    desc->mask |= PROPF_ENUMERABLE | PROPF_CONFIGURABLE;
+    return S_OK;
+}
+
+HRESULT jsdisp_define_property(jsdisp_t *obj, const WCHAR *name, property_desc_t *desc)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name(obj, string_hash(name), name, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    if(!prop && !(prop = alloc_prop(obj, name, PROP_DELETED, 0)))
+       return E_OUTOFMEMORY;
+
+    if(prop->type == PROP_DELETED || prop->type == PROP_PROTREF) {
+        prop->flags = desc->flags;
+        if(desc->explicit_getter || desc->explicit_setter) {
+            FIXME("accessor property\n");
+            return E_NOTIMPL;
+        }else {
+            prop->type = PROP_JSVAL;
+            if(desc->explicit_value) {
+                hres = jsval_copy(desc->value, &prop->u.val);
+                if(FAILED(hres))
+                    return hres;
+            }else {
+                prop->u.val = jsval_undefined();
+            }
+            TRACE("%s = %s\n", debugstr_w(name), debugstr_jsval(prop->u.val));
+        }
+        return S_OK;
+    }
+
+    TRACE("existing prop %s prop flags %x desc flags %x desc mask %x\n", debugstr_w(name),
+          prop->flags, desc->flags, desc->mask);
+
+    if(!(prop->flags & PROPF_CONFIGURABLE)) {
+        if(((desc->mask & PROPF_CONFIGURABLE) && (desc->flags & PROPF_CONFIGURABLE))
+           || ((desc->mask & PROPF_ENUMERABLE)
+               && ((desc->flags & PROPF_ENUMERABLE) != (prop->flags & PROPF_ENUMERABLE))))
+            return throw_type_error(obj->ctx, JS_E_NONCONFIGURABLE_REDEFINED, name);
+    }
+
+    if(desc->explicit_value || (desc->mask & PROPF_WRITABLE)) {
+        if(!(prop->flags & PROPF_CONFIGURABLE) && !(prop->flags & PROPF_WRITABLE)) {
+            if((desc->mask & PROPF_WRITABLE) && (desc->flags & PROPF_WRITABLE))
+                return throw_type_error(obj->ctx, JS_E_NONWRITABLE_MODIFIED, name);
+            if(desc->explicit_value) {
+                if(prop->type == PROP_JSVAL) {
+                    BOOL eq;
+                    hres = jsval_strict_equal(desc->value, prop->u.val, &eq);
+                    if(FAILED(hres))
+                        return hres;
+                    if(!eq)
+                        return throw_type_error(obj->ctx, JS_E_NONWRITABLE_MODIFIED, name);
+                }else {
+                    FIXME("redefinition of property type %d\n", prop->type);
+                }
+            }
+        }
+        if(desc->explicit_value) {
+            if(prop->type == PROP_JSVAL)
+                jsval_release(prop->u.val);
+            else
+                prop->type = PROP_JSVAL;
+            hres = jsval_copy(desc->value, &prop->u.val);
+            if(FAILED(hres)) {
+                prop->u.val = jsval_undefined();
+                return hres;
+            }
+        }
+    }else if(desc->explicit_getter || desc->explicit_setter) {
+        FIXME("accessor property\n");
+        return E_NOTIMPL;
+    }
+
+    prop->flags = (prop->flags & ~desc->mask) | (desc->flags & desc->mask);
     return S_OK;
 }

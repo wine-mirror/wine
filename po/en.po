@@ -3685,6 +3685,26 @@ msgstr "Array length must be a finite positive integer"
 msgid "Array object expected"
 msgstr "Array object expected"
 
+#: jscript.rc:69
+msgid ""
+"'writable' attribute on the property descriptor cannot be set to 'true' on "
+"this object"
+msgstr ""
+"'writable' attribute on the property descriptor cannot be set to 'true' on "
+"this object"
+
+#: jscript.rc:70
+msgid "Cannot redefine non-configurable property '|'"
+msgstr "Cannot redefine non-configurable property '|'"
+
+#: jscript.rc:71
+msgid "Cannot modify non-writable property '|'"
+msgstr "Cannot modify non-writable property '|'"
+
+#: jscript.rc:72
+msgid "Property cannot have both accessors and a value"
+msgstr "Property cannot have both accessors and a value"
+
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
 msgstr "Wine kernel DLL"

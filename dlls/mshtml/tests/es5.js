@@ -16,6 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var JS_E_PROP_DESC_MISMATCH = 0x800a01bd;
+var JS_E_INVALID_WRITABLE_PROP_DESC = 0x800a13ac;
+var JS_E_NONCONFIGURABLE_REDEFINED = 0x800a13d6;
+var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
+
 function test_date_now() {
     var now = Date.now();
     var time = (new Date()).getTime();
@@ -188,11 +193,103 @@ function test_getOwnPropertyDescriptor() {
     next_test();
 }
 
+function test_defineProperty() {
+    function expect_exception(func, expected_number) {
+        try {
+            func();
+        }catch(e) {
+            var n = e.number + 0x100000000; /* make it unsigned like HRESULT */
+            todo_wine_if(expected_number == JS_E_PROP_DESC_MISMATCH).
+            ok(n === expected_number, "got exception " + n.toString(16)
+               + " expected " + expected_number.toString(16));
+            ok(e.name === "TypeError", "e.name = " + e.name);
+            return;
+        }
+        ok(false, "expected exception");
+    }
+
+    var obj = new Object();
+    Object.defineProperty(obj, "test", {});
+    ok("test" in obj, "test is not in obj");
+    test_own_data_prop_desc(obj, "test", false, false, false);
+    ok(obj.test === undefined, "obj.test = " + obj.test);
+
+    Object.defineProperty(obj, "all", {writable: true, enumerable: true, configurable: true, value: 1});
+    test_own_data_prop_desc(obj, "all", true, true, true);
+    ok(obj.all === 1, "obj.test = " + obj.test);
+
+    Object.defineProperty(obj, "all", {writable: false});
+    test_own_data_prop_desc(obj, "all", false, true, true);
+    ok(obj.all === 1, "obj.test = " + obj.test);
+
+    Object.defineProperty(obj, "notConf", {writable: true, enumerable: true, configurable: false, value: 1});
+    test_own_data_prop_desc(obj, "notConf", true, true, false);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf",
+                              {writable: true, enumerable: true, configurable: true, value: 1});
+    }, JS_E_NONCONFIGURABLE_REDEFINED);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf",
+                              {writable: true, enumerable: false, configurable: false, value: 1});
+    }, JS_E_NONCONFIGURABLE_REDEFINED);
+
+    Object.defineProperty(obj, "notConf",
+                          {writable: true, enumerable: true, configurable: false, value: 2});
+    test_own_data_prop_desc(obj, "notConf", true, true, false);
+
+    Object.defineProperty(obj, "notConf", {writable: true, value: 2});
+    test_own_data_prop_desc(obj, "notConf", true, true, false);
+
+    Object.defineProperty(obj, "notConf2",
+                          {writable: false, enumerable: false, configurable: false, value: 1});
+    test_own_data_prop_desc(obj, "notConf2", false, false, false);
+    obj.notConf2 = 2;
+    ok(obj.notConf2 === 1, "obj.notConf2 = " + obj.notConf2)
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf2",
+                              {writable: false, enumerable: false, configurable: true, value: 1});
+    }, JS_E_NONCONFIGURABLE_REDEFINED);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf2",
+                              {writable: false, enumerable: true, configurable: false, value: 1});
+    }, JS_E_NONCONFIGURABLE_REDEFINED);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf2", {writable: true, value: 1});
+    }, JS_E_NONWRITABLE_MODIFIED);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "notConf2", {value: 2});
+    }, JS_E_NONWRITABLE_MODIFIED);
+
+    Object.defineProperty(obj, "notConf2",
+                          {writable: false, enumerable: false, configurable: false, value: 1});
+    test_own_data_prop_desc(obj, "notConf2", false, false, false);
+
+    Object.defineProperty(obj, "notConf2", {writable: false, value: 1});
+    test_own_data_prop_desc(obj, "notConf2", false, false, false);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "invaliddesc", {get: undefined, value: 1});
+    }, JS_E_PROP_DESC_MISMATCH);
+
+    expect_exception(function() {
+        Object.defineProperty(obj, "invaliddesc", {set: undefined, writable: true});
+    }, JS_E_INVALID_WRITABLE_PROP_DESC);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
     test_indexOf,
     test_isArray,
     test_identifier_keywords,
-    test_getOwnPropertyDescriptor
+    test_getOwnPropertyDescriptor,
+    test_defineProperty
 ];

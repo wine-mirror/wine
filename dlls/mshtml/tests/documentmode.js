@@ -143,6 +143,7 @@ function test_javascript() {
     /* FIXME: IE8 implements weird semi-functional property descriptors. */
     if(v != 8) {
         test_exposed("getOwnPropertyDescriptor", Object, v >= 8);
+        test_exposed("defineProperty", Object, v >= 8);
     }
 
     test_parses("if(false) { o.default; }", v >= 9);

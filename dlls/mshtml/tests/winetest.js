@@ -57,3 +57,7 @@ var todo_wine = {
         return external.todo_wine_ok(b,m);
     }
 };
+
+function todo_wine_if(expr) {
+    return expr ? todo_wine : { ok: ok };
+}
