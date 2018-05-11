@@ -41,6 +41,7 @@ struct mp3_decoder {
     LONG ref;
     mpg123_handle *mh;
     DMO_MEDIA_TYPE outtype;
+    IMediaBuffer *buffer;
 };
 
 static inline struct mp3_decoder *impl_from_IMediaObject(IMediaObject *iface)
@@ -256,10 +257,36 @@ static HRESULT WINAPI MediaObject_GetInputStatus(IMediaObject *iface, DWORD inde
 static HRESULT WINAPI MediaObject_ProcessInput(IMediaObject *iface, DWORD index,
     IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    FIXME("(%p)->(%d, %p, %#x, %s, %s) stub!\n", iface, index, buffer, flags,
+    struct mp3_decoder *This = impl_from_IMediaObject(iface);
+    HRESULT hr;
+    BYTE *data;
+    DWORD len;
+    int err;
+
+    TRACE("(%p)->(%d, %p, %#x, %s, %s)\n", iface, index, buffer, flags,
           wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
 
-    return E_NOTIMPL;
+    if (This->buffer)
+    {
+        ERR("Already have a buffer.\n");
+        return DMO_E_NOTACCEPTING;
+    }
+
+    IMediaBuffer_AddRef(buffer);
+    This->buffer = buffer;
+
+    hr = IMediaBuffer_GetBufferAndLength(buffer, &data, &len);
+    if (FAILED(hr))
+        return hr;
+
+    err = mpg123_feed(This->mh, data, len);
+    if (err != MPG123_OK)
+    {
+        ERR("mpg123_feed() failed: %s\n", mpg123_strerror(This->mh));
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
@@ -308,7 +335,7 @@ static HRESULT create_mp3_decoder(REFIID iid, void **obj)
     struct mp3_decoder *This;
     int err;
 
-    if (!(This = heap_alloc(sizeof(*This))))
+    if (!(This = heap_alloc_zero(sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IMediaObject_iface.lpVtbl = &IMediaObject_vtbl;
@@ -316,6 +343,7 @@ static HRESULT create_mp3_decoder(REFIID iid, void **obj)
 
     mpg123_init();
     This->mh = mpg123_new(NULL, &err);
+    mpg123_open_feed(This->mh);
     mpg123_format_none(This->mh);
 
     return IMediaObject_QueryInterface(&This->IMediaObject_iface, iid, obj);
