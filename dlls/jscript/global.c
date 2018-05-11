@@ -1087,6 +1087,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
+    unsigned const_flags = ctx->version >= SCRIPTLANGUAGEVERSION_ES5 ? 0 : PROPF_WRITABLE;
     jsdisp_t *math, *object_prototype, *constr;
     HRESULT hres;
 
@@ -1137,14 +1138,14 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_dontenum(ctx->global, undefinedW, jsval_undefined());
+    hres = jsdisp_define_data_property(ctx->global, undefinedW, const_flags, jsval_undefined());
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_dontenum(ctx->global, NaNW, jsval_number(NAN));
+    hres = jsdisp_define_data_property(ctx->global, NaNW, const_flags, jsval_number(NAN));
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_dontenum(ctx->global, InfinityW, jsval_number(INFINITY));
+    hres = jsdisp_define_data_property(ctx->global, InfinityW, const_flags, jsval_number(INFINITY));
     return hres;
 }

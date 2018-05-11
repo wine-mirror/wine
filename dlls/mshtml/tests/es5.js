@@ -284,6 +284,23 @@ function test_defineProperty() {
     next_test();
 }
 
+function test_global_properties() {
+    var o;
+
+    /* Make sure that global properties are not writable. */
+    o = NaN;
+    NaN = 1;
+    ok(isNaN(NaN), "NaN = " + NaN);
+    o = undefined;
+    undefined = 1;
+    ok(undefined === o, "NaN = " + NaN);
+    o = Infinity;
+    Infinity = 1;
+    ok(Infinity === o, "Infinity = " + NaN);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
@@ -291,5 +308,6 @@ var tests = [
     test_isArray,
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
-    test_defineProperty
+    test_defineProperty,
+    test_global_properties
 ];
