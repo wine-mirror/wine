@@ -16,7 +16,7 @@
 @ stub ATMEnumMMFonts
 @ stub ATMEnumMMFontsA
 @ stub ATMEnumMMFontsW
-@ stub ATMFinish
+@ stdcall ATMFinish()
 @ stub ATMFontAvailable
 @ stub ATMFontAvailableA
 @ stub ATMFontAvailableW

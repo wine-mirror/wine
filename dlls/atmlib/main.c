@@ -45,3 +45,9 @@ BOOL WINAPI ATMProperlyLoaded(void)
     FIXME("stub\n");
     return FALSE;
 }
+
+int WINAPI ATMFinish(void)
+{
+    FIXME("stub\n");
+    return 0;
+}
