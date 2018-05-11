@@ -79,6 +79,27 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( hInst );
 }
 
+DWORD WINAPI NetrJobAdd_wrapper(ATSVC_HANDLE server_name, LPAT_INFO info, LPDWORD jobid)
+{
+    return NetrJobAdd(server_name, info, jobid);
+}
+
+DWORD WINAPI NetrJobDel_wrapper(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jobid)
+{
+    return NetrJobDel(server_name, min_jobid, max_jobid);
+}
+
+DWORD WINAPI NetrJobEnum_wrapper(ATSVC_HANDLE server_name, LPAT_ENUM_CONTAINER container,
+                                 DWORD max_length, LPDWORD total, LPDWORD resume)
+{
+    return NetrJobEnum(server_name, container, max_length, total, resume);
+}
+
+DWORD WINAPI NetrJobGetInfo_wrapper(ATSVC_HANDLE server_name, DWORD jobid, LPAT_INFO *info)
+{
+    return NetrJobGetInfo(server_name, jobid, info);
+}
+
 DECLSPEC_HIDDEN void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
 {
     return HeapAlloc(GetProcessHeap(), 0, n);
