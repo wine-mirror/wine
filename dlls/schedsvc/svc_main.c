@@ -118,8 +118,8 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             GetWindowsDirectoryW(path, MAX_PATH);
             lstrcatW(path, tasksW);
             lstrcatW(path, info.data.FileName);
-            remove_job(info.data.FileName);
-            add_job(info.data.FileName);
+            remove_job(path);
+            add_job(path);
             break;
 
         default:
