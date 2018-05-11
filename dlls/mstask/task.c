@@ -1260,9 +1260,8 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
         goto failed;
     }
 
-    /* Instance Count */
-    word = 0;
-    if (!WriteFile(hfile, &word, sizeof(word), &size, NULL))
+    /* Instance Count: don't touch it in the client */
+    if (SetFilePointer(hfile, sizeof(word), NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER)
     {
         hr = HRESULT_FROM_WIN32(GetLastError());
         goto failed;
