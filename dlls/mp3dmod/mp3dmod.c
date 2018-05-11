@@ -127,7 +127,7 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
 {
     FIXME("(%p)->(%d, %p, %#x) stub!\n", iface, index, type, flags);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
