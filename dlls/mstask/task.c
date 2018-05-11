@@ -283,11 +283,17 @@ static HRESULT WINAPI MSTASK_ITask_Run(ITask *iface)
     return IPersistFile_Save(&This->IPersistFile_iface, NULL, FALSE);
 }
 
-static HRESULT WINAPI MSTASK_ITask_Terminate(
-        ITask* iface)
+static HRESULT WINAPI MSTASK_ITask_Terminate(ITask *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p)\n", iface);
+
+    if (!This->instance_count)
+        return SCHED_E_TASK_NOT_RUNNING;
+
+    This->flags |= 0x08000000;
+    return IPersistFile_Save(&This->IPersistFile_iface, NULL, FALSE);
 }
 
 static HRESULT WINAPI MSTASK_ITask_EditWorkItem(
