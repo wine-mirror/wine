@@ -655,7 +655,8 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         return hres;
 
     if(builtin_info)
-        hres = jsdisp_propput_const(&function->dispex, lengthW, jsval_number(function->length));
+        hres = jsdisp_define_data_property(&function->dispex, lengthW, 0,
+                                           jsval_number(function->length));
     if(SUCCEEDED(hres))
         hres = set_prototype(ctx, &function->dispex, prototype);
     if(FAILED(hres)) {

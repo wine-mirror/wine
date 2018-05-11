@@ -284,7 +284,6 @@ HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propget(jsdisp_t*,DISPID,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput(jsdisp_t*,const WCHAR*,DWORD,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propput_const(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_dontenum(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_idx(jsdisp_t*,DWORD,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,jsval_t*) DECLSPEC_HIDDEN;
@@ -295,6 +294,7 @@ HRESULT disp_delete_name(script_ctx_t*,IDispatch*,jsstr_t*,BOOL*) DECLSPEC_HIDDE
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_own_property(jsdisp_t*,const WCHAR*,BOOL,property_desc_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_define_property(jsdisp_t*,const WCHAR*,property_desc_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_define_data_property(jsdisp_t*,const WCHAR*,unsigned,jsval_t) DECLSPEC_HIDDEN;
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;

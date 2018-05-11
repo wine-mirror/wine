@@ -1701,3 +1701,9 @@ HRESULT jsdisp_define_property(jsdisp_t *obj, const WCHAR *name, property_desc_t
     prop->flags = (prop->flags & ~desc->mask) | (desc->flags & desc->mask);
     return S_OK;
 }
+
+HRESULT jsdisp_define_data_property(jsdisp_t *obj, const WCHAR *name, unsigned flags, jsval_t value)
+{
+    property_desc_t prop_desc = { flags, flags, TRUE, value };
+    return jsdisp_define_property(obj, name, &prop_desc);
+}
