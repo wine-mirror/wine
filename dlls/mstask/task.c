@@ -270,11 +270,17 @@ static HRESULT WINAPI MSTASK_ITask_GetIdleWait(ITask *iface, WORD *idle_minutes,
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_ITask_Run(
-        ITask* iface)
+static HRESULT WINAPI MSTASK_ITask_Run(ITask *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p)\n", iface);
+
+    if (This->status == SCHED_S_TASK_NOT_SCHEDULED)
+        return SCHED_E_TASK_NOT_READY;
+
+    This->flags |= 0x04000000;
+    return IPersistFile_Save(&This->IPersistFile_iface, NULL, FALSE);
 }
 
 static HRESULT WINAPI MSTASK_ITask_Terminate(
