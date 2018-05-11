@@ -1195,7 +1195,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     FIXDLEN_DATA fixed;
     WORD word, user_data_size = 0;
     HANDLE hfile;
-    DWORD size, ver, disposition;
+    DWORD size, ver, disposition, try;
     TaskImpl *This = impl_from_IPersistFile(iface);
     ITask *task = &This->ITask_iface;
     LPWSTR appname = NULL, params = NULL, workdir = NULL, creator = NULL, comment = NULL;
@@ -1258,9 +1258,15 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     fixed.flags = This->flags;
     memset(&fixed.last_runtime, 0, sizeof(fixed.last_runtime));
 
-    hfile = CreateFileW(task_name, GENERIC_WRITE, 0, NULL, disposition, 0, 0);
-    if (hfile == INVALID_HANDLE_VALUE)
-        return HRESULT_FROM_WIN32(GetLastError());
+    try = 1;
+    for (;;)
+    {
+        hfile = CreateFileW(task_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, disposition, 0, 0);
+        if (hfile != INVALID_HANDLE_VALUE) break;
+
+        if (try++ >= 3) return HRESULT_FROM_WIN32(GetLastError());
+        Sleep(100);
+    }
 
     if (!WriteFile(hfile, &fixed, sizeof(fixed), &size, NULL))
     {
