@@ -45,6 +45,7 @@
 #include "wine/unicode.h"
 #include "ntdll_misc.h"
 #include "inaddr.h"
+#include "in6addr.h"
 #include "ddk/ntddk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -899,6 +900,15 @@ NTSTATUS WINAPI RtlIpv4StringToAddressExW(const WCHAR *str, BOOLEAN strict, IN_A
 NTSTATUS WINAPI RtlIpv4StringToAddressW(const WCHAR *str, BOOLEAN strict, const WCHAR **terminator, IN_ADDR *address)
 {
     FIXME("(%s, %u, %p, %p): stub\n", debugstr_w(str), strict, terminator, address);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * RtlIpv6StringToAddressExW [NTDLL.@]
+ */
+NTSTATUS NTAPI RtlIpv6StringToAddressExW(const WCHAR *str, IN6_ADDR *address, ULONG *scope, USHORT *port)
+{
+    FIXME("(%s, %p, %p, %p): stub\n", debugstr_w(str), address, scope, port);
     return STATUS_NOT_IMPLEMENTED;
 }
 
