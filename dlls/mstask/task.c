@@ -489,8 +489,10 @@ static HRESULT WINAPI MSTASK_ITask_SetFlags(
 
 static HRESULT WINAPI MSTASK_ITask_GetFlags(ITask *iface, DWORD *flags)
 {
-    FIXME("(%p, %p): stub\n", iface, flags);
-    *flags = 0;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %p)\n", iface, flags);
+    *flags = LOWORD(This->flags);
     return S_OK;
 }
 
