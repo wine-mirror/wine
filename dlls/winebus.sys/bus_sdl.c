@@ -910,7 +910,7 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 
     if (pSDL_Init(SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC) < 0)
     {
-        ERR("Can't Init SDL\n");
+        ERR("Can't init SDL: %s\n", pSDL_GetError());
         return STATUS_UNSUCCESSFUL;
     }
 
