@@ -1252,8 +1252,10 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     fixed.priority = This->priority;
     fixed.maximum_runtime = This->maxRunTime;
     fixed.exit_code = 0;
-    fixed.status = SCHED_S_TASK_HAS_NOT_RUN;
-    fixed.flags = 0;
+    if (This->status == SCHED_S_TASK_NOT_SCHEDULED && This->trigger_count)
+        This->status = SCHED_S_TASK_HAS_NOT_RUN;
+    fixed.status = This->status;
+    fixed.flags = This->flags;
     memset(&fixed.last_runtime, 0, sizeof(fixed.last_runtime));
 
     hfile = CreateFileW(task_name, GENERIC_WRITE, 0, NULL, disposition, 0, 0);
