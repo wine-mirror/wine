@@ -302,12 +302,25 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(ITaskScheduler *iface,
     return hr;
 }
 
-static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(
-        ITaskScheduler* iface,
-        LPCWSTR pwszName)
+static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(ITaskScheduler *iface, LPCWSTR name)
 {
-    FIXME("%p, %s: stub\n", iface, debugstr_w(pwszName));
-    return E_NOTIMPL;
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    static const WCHAR jobW[] = { '.','j','o','b',0 };
+    WCHAR task_name[MAX_PATH];
+
+    TRACE("%p, %s\n", iface, debugstr_w(name));
+
+    if (strchrW(name, '.')) return E_INVALIDARG;
+
+    GetWindowsDirectoryW(task_name, MAX_PATH);
+    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, name);
+    lstrcatW(task_name, jobW);
+
+    if (!DeleteFileW(task_name))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_NewWorkItem(

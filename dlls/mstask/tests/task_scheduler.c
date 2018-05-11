@@ -249,7 +249,7 @@ static void test_save_task_curfile(ITask *task)
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
     ok(hr == S_OK, "GetCurFile error %#x\n", hr);
-    ok(curfile && curfile[0] , "curfile should not be NULL\n");
+    ok(curfile && curfile[0], "curfile should not be NULL\n");
 
     ok(file_exists(curfile), "curfile should exist\n");
 
@@ -343,6 +343,12 @@ static void test_task_storage(void)
         return;
     }
 
+    hr = ITaskScheduler_Delete(scheduler, Task1_ext);
+    ok(hr == E_INVALIDARG, "wrong error %#x\n", hr);
+
+    hr = ITaskScheduler_Delete(scheduler, Task1);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "wrong error %#x\n", hr);
+
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1_ext, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
     ok(hr == E_INVALIDARG, "wrong error %#x\n", hr);
 
@@ -418,9 +424,12 @@ static void test_task_storage(void)
 
     test_save_task_curfile(task);
 
-    DeleteFileW(task1_full_name);
-    DeleteFileW(task2_full_name);
-    DeleteFileW(task3_full_name);
+    hr = ITaskScheduler_Delete(scheduler, Task1);
+    ok(hr == S_OK, "got %#x\n", hr);
+    hr = ITaskScheduler_Delete(scheduler, Task2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    hr = ITaskScheduler_Delete(scheduler, Task3);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     ITask_Release(task);
     ITaskScheduler_Release(scheduler);
