@@ -307,7 +307,7 @@ static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)
 
     TRACE("(%p, %p)\n", iface, status);
 
-    *status = This->status;
+    *status = This->instance_count ? SCHED_S_TASK_RUNNING : This->status;
     return S_OK;
 }
 
