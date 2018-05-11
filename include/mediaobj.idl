@@ -102,6 +102,11 @@ enum _DMO_INPLACE_PROCESS_FLAGS {
     DMO_INPLACE_ZERO   = 0x00000001
 };
 
+enum _DMO_SET_TYPE_FLAGS {
+    DMO_SET_TYPEF_TEST_ONLY = 0x00000001,
+    DMO_SET_TYPEF_CLEAR     = 0x00000002,
+};
+
 /*****************************************************************************
  * IMediaObject interface
  */

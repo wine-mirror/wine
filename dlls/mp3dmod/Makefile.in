@@ -1,5 +1,5 @@
 MODULE    = mp3dmod.dll
-IMPORTS   = dmoguids uuid wmcodecdspuuid
+IMPORTS   = dmoguids msdmo uuid wmcodecdspuuid
 EXTRAINCL = $(MPG123_CFLAGS)
 EXTRALIBS = $(MPG123_LIBS)
 

@@ -22,8 +22,11 @@
 #include <mpg123.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "mmreg.h"
 #define COBJMACROS
 #include "objbase.h"
+#include "dmo.h"
 #include "rpcproxy.h"
 #include "wmcodecdsp.h"
 #include "wine/debug.h"
@@ -37,6 +40,7 @@ struct mp3_decoder {
     IMediaObject IMediaObject_iface;
     LONG ref;
     mpg123_handle *mh;
+    DMO_MEDIA_TYPE outtype;
 };
 
 static inline struct mp3_decoder *impl_from_IMediaObject(IMediaObject *iface)
@@ -132,9 +136,44 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
 
 static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("(%p)->(%d, %p, %#x) stub!\n", iface, index, type, flags);
+    struct mp3_decoder *This = impl_from_IMediaObject(iface);
+    WAVEFORMATEX *format;
+    long enc;
+    int err;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %p, %#x)\n", iface, index, type, flags);
+
+    if (flags & DMO_SET_TYPEF_CLEAR)
+    {
+        MoFreeMediaType(&This->outtype);
+        return S_OK;
+    }
+
+    format = (WAVEFORMATEX *)type->pbFormat;
+
+    if (format->wBitsPerSample == 8)
+        enc = MPG123_ENC_UNSIGNED_8;
+    else if (format->wBitsPerSample == 16)
+        enc = MPG123_ENC_SIGNED_16;
+    else
+    {
+        ERR("Cannot decode to bit depth %u.\n", format->wBitsPerSample);
+        return DMO_E_TYPE_NOT_ACCEPTED;
+    }
+
+    if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
+    {
+        err = mpg123_format(This->mh, format->nSamplesPerSec, format->nChannels, enc);
+        if (err != MPG123_OK)
+        {
+            ERR("Failed to set format: %u channels, %u samples/sec, %u bits/sample.\n",
+                format->nChannels, format->nSamplesPerSec, format->wBitsPerSample);
+            return DMO_E_TYPE_NOT_ACCEPTED;
+        }
+        MoCopyMediaType(&This->outtype, type);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
@@ -277,6 +316,7 @@ static HRESULT create_mp3_decoder(REFIID iid, void **obj)
 
     mpg123_init();
     This->mh = mpg123_new(NULL, &err);
+    mpg123_format_none(This->mh);
 
     return IMediaObject_QueryInterface(&This->IMediaObject_iface, iid, obj);
 }
