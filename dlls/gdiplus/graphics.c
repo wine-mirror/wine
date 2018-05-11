@@ -1680,9 +1680,9 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[3].X = x2 + dx;
             ptf[3].Y = y2 + dy;
 
-            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 4);
 
-            round_points(pt, ptf, 3);
+            round_points(pt, ptf, 4);
 
             Pie(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y, pt[2].x,
                 pt[2].y, pt[3].x, pt[3].y);
