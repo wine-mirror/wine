@@ -2435,6 +2435,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel, 
     LPVOID lpInfo)
 {
+    SERVICE_RPC_REQUIRED_PRIVILEGES_INFO rpc_privinfo;
     DWORD err;
 
     __TRY
@@ -2442,7 +2443,19 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         SC_RPC_CONFIG_INFOW info;
 
         info.dwInfoLevel = dwInfoLevel;
-        info.u.descr = lpInfo;
+        if (dwInfoLevel == SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO)
+        {
+            SERVICE_REQUIRED_PRIVILEGES_INFOW *privinfo = lpInfo;
+            WCHAR *p;
+
+            for (p = privinfo->pmszRequiredPrivileges; *p; p += strlenW(p) + 1);
+            rpc_privinfo.cbRequiredPrivileges =
+                (p - privinfo->pmszRequiredPrivileges + 1) * sizeof(WCHAR);
+            rpc_privinfo.pRequiredPrivileges = (BYTE *)privinfo->pmszRequiredPrivileges;
+            info.u.privinfo = &rpc_privinfo;
+        }
+        else
+            info.u.descr = lpInfo;
         err = svcctl_ChangeServiceConfig2W( hService, info );
     }
     __EXCEPT(rpc_filter)
