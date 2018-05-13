@@ -18805,6 +18805,7 @@ wine_fn_config_makefile dlls/monodebg.vxd enable_win16
 wine_fn_config_makefile dlls/mountmgr.sys enable_mountmgr_sys
 wine_fn_config_makefile dlls/mouse.drv16 enable_win16
 wine_fn_config_makefile dlls/mp3dmod enable_mp3dmod
+wine_fn_config_makefile dlls/mp3dmod/tests enable_tests
 wine_fn_config_makefile dlls/mpr enable_mpr
 wine_fn_config_makefile dlls/mpr/tests enable_tests
 wine_fn_config_makefile dlls/mprapi enable_mprapi
