@@ -43,6 +43,7 @@ struct mp3_decoder {
     mpg123_handle *mh;
     DMO_MEDIA_TYPE outtype;
     IMediaBuffer *buffer;
+    REFERENCE_TIME timestamp;
 };
 
 static inline struct mp3_decoder *impl_from_IMediaObject(IMediaObject *iface)
@@ -296,9 +297,16 @@ static DWORD get_framesize(DMO_MEDIA_TYPE *type)
     return 1152 * format->nBlockAlign;
 }
 
+static REFERENCE_TIME get_frametime(DMO_MEDIA_TYPE *type)
+{
+    WAVEFORMATEX *format = (WAVEFORMATEX *)type->pbFormat;
+    return (REFERENCE_TIME) 10000000 * 1152 / format->nSamplesPerSec;
+}
+
 static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
     struct mp3_decoder *This = impl_from_IMediaObject(iface);
+    REFERENCE_TIME time = 0, frametime;
     DWORD len, maxlen, framesize;
     int got_data = 0;
     size_t written;
@@ -325,6 +333,7 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
     if (FAILED(hr)) return hr;
 
     framesize = get_framesize(&This->outtype);
+    frametime = get_frametime(&This->outtype);
 
     while (1)
     {
@@ -353,10 +362,16 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
         len += framesize;
         hr = IMediaBuffer_SetLength(buffers[0].pBuffer, len);
         if (FAILED(hr)) return hr;
+
+        time += frametime;
     }
 
     if (got_data)
     {
+        buffers[0].dwStatus |= (DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH);
+        buffers[0].rtTimelength = time;
+        buffers[0].rtTimestamp = This->timestamp;
+        This->timestamp += time;
         return S_OK;
     }
     return S_FALSE;

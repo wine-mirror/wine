@@ -35,6 +35,11 @@ DEFINE_GUID(WMMEDIASUBTYPE_MP3, 0x00000055, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0x
 #define O_TIMELENGTH DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH
 #define O_INCOMPLETE DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE
 
+static REFERENCE_TIME samplelen(DWORD samples, int rate)
+{
+    return (REFERENCE_TIME) 10000000 * samples / rate;
+}
+
 struct test_buffer {
     IMediaBuffer IMediaBuffer_iface;
     BYTE data[5000];
@@ -149,10 +154,14 @@ static void test_convert(void)
     outbuf.maxlen = sizeof(outbuf.data);
     output.pBuffer = &outbuf.IMediaBuffer_iface;
     output.dwStatus = 0xdeadbeef;
+    output.rtTimestamp = 0xdeadbeef;
+    output.rtTimelength = 0xdeadbeef;
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(outbuf.len == 0, "got %u\n", outbuf.len);
     ok(output.dwStatus == 0, "got %#x\n", output.dwStatus);
+    ok(output.rtTimestamp == 0xdeadbeef, "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == 0xdeadbeef, "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
 
     /* write several frames of mp3 data */
     for (i = 0; i < 5; i++)
@@ -170,6 +179,8 @@ static void test_convert(void)
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(outbuf.len == 0, "got %u\n", outbuf.len);
     ok(output.dwStatus == (O_SYNCPOINT | O_INCOMPLETE), "got %#x\n", output.dwStatus);
+    ok(output.rtTimestamp == 0xdeadbeef, "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == 0xdeadbeef, "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
 
     /* implementations are inconsistent, but should write at least one frame of data */
     outbuf.len = 0;
@@ -178,14 +189,19 @@ static void test_convert(void)
     ok(hr == S_OK, "got %#x\n", hr);
     written = outbuf.len;
     ok(written > 1152 && written <= 5000, "got %u\n", written);
-todo_wine
     ok(output.dwStatus == (O_SYNCPOINT | O_TIME | O_TIMELENGTH | O_INCOMPLETE),
         "got %#x\n", output.dwStatus);
+    ok(output.rtTimestamp == 0, "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == samplelen(written, 48000),
+        "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
 
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(outbuf.len == written, "expected %u, got %u\n", written, outbuf.len);
     ok(output.dwStatus == (O_SYNCPOINT | O_INCOMPLETE), "got %#x\n", output.dwStatus);
+    ok(output.rtTimestamp == 0, "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == samplelen(written, 48000),
+        "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
 
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == DMO_E_NOTACCEPTING, "got %#x\n", hr);
@@ -198,8 +214,11 @@ todo_wine
     ok(written + outbuf.len == (1152 * 5) ||
         broken(written + outbuf.len == (1152 * 5) - 528), /* Win10 */
         "got %u, total %u\n", outbuf.len, written + outbuf.len);
-todo_wine
     ok(output.dwStatus == (O_SYNCPOINT | O_TIME | O_TIMELENGTH), "got %#x\n", output.dwStatus);
+    ok(output.rtTimestamp == samplelen(written, 48000),
+        "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == samplelen(outbuf.len, 48000),
+        "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
 
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
