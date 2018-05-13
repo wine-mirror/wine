@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-28 14:55+0100\n"
-"Last-Translator: Pavel Borecki <pavel.borecki@gmail.com>\n"
+"PO-Revision-Date: 2018-05-12 18:04+0200\n"
+"Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 2.0.7\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -1052,14 +1052,12 @@ msgid "Open File"
 msgstr "Otevřít soubor"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Nová složka"
+msgstr "Vyberte složku"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Velikost písma musí být číslo."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -2567,9 +2565,8 @@ msgid "File to Import"
 msgstr "Soubor k importu"
 
 #: cryptui.rc:74
-#, fuzzy
 msgid "Specify the file you want to import."
-msgstr "Zadejte "
+msgstr "Zadejte soubor, který chcete importovat."
 
 #: cryptui.rc:75 cryptui.rc:98
 msgid "Certificate Store"
@@ -2939,55 +2936,55 @@ msgstr "Středoevropské"
 
 #: gdi32.rc:30
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cyrilice"
 
 #: gdi32.rc:31
 msgid "Greek"
-msgstr "Řecká"
+msgstr "Řečtina"
 
 #: gdi32.rc:32
 msgid "Turkish"
-msgstr ""
+msgstr "Turečtina"
 
 #: gdi32.rc:33
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebrejština"
 
 #: gdi32.rc:34
 msgid "Arabic"
-msgstr ""
+msgstr "Arabština"
 
 #: gdi32.rc:35
 msgid "Baltic"
-msgstr ""
+msgstr "Baltí"
 
 #: gdi32.rc:36
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamština"
 
 #: gdi32.rc:37
 msgid "Thai"
-msgstr ""
+msgstr "Thajština"
 
 #: gdi32.rc:38
 msgid "Japanese"
-msgstr ""
+msgstr "Japonština"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:43
 msgid "Symbol"
@@ -2995,7 +2992,7 @@ msgstr ""
 
 #: gdi32.rc:44
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gdi32.rc:45 wldap32.rc:112
 msgid "Other"
@@ -3080,8 +3077,6 @@ msgid "&View Source"
 msgstr "&Zobrazit zdroj"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
 msgstr "&Vlastnosti"
 
@@ -3515,16 +3510,12 @@ msgid "Expected ')'"
 msgstr "Očekáváno „)“"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Identifikátor klíče subjektu"
+msgstr "Očekáván identifikátor"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Očekáváno „;“"
+msgstr "Očekáváno „=“"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3555,20 +3546,16 @@ msgid "Label not found"
 msgstr "Označení nebylo nalezeno"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Očekáváno „;“"
+msgstr "Očekáváno „@end“"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Podmíněná kompilace je vypnutá"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Očekáváno „;“"
+msgstr "Očekáváno „@“"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -4729,8 +4716,6 @@ msgid "No Unicode translation.\n"
 msgstr "Žádný překlad univerzálního kódování.\n"
 
 #: winerror.mc:1368
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "Inicializace DLL se nezdařila.\n"
 
@@ -6618,19 +6603,15 @@ msgstr "Skupinový prvek nemohl být odebrán.\n"
 
 #: winerror.mc:3738
 msgid "The username could not be found.\n"
-msgstr "Užitavelské jméno nebylo nalezeno.\n"
+msgstr "Uživatelské jméno nebylo nalezeno.\n"
 
 #: winerror.mc:3743
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "Doména neexistuje.\n"
+msgstr "Toto síťové připojení neexistuje.\n"
 
 #: winerror.mc:3748
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Spojení odmítnuto.\n"
+msgstr "Spojení zrušeno druhou stranou.\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
@@ -6744,7 +6725,7 @@ msgstr "&Typ:"
 
 #: mshtml.rc:45
 msgid "&URL:"
-msgstr ""
+msgstr "&URL:"
 
 #: mshtml.rc:34
 msgid "HTML Document"
@@ -6852,20 +6833,16 @@ msgid "Computing space requirements"
 msgstr ""
 
 #: msi.rc:96
-#, fuzzy
-#| msgid "New Folder"
 msgid "Creating folders"
-msgstr "Nová složka"
+msgstr "Probíhá vytváření složek"
 
 #: msi.rc:97
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "Vytvořit zástupce"
+msgstr "Probíhá vytváření zástupců"
 
 #: msi.rc:98
 msgid "Deleting services"
-msgstr ""
+msgstr "Odebírání služeb"
 
 #: msi.rc:99
 #, fuzzy
@@ -6884,10 +6861,8 @@ msgid "Copying network install files"
 msgstr ""
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "Probíhá kopírování souborů..."
+msgstr "Probíhá kopírování nových souborů"
 
 #: msi.rc:104
 #, fuzzy
@@ -6896,10 +6871,8 @@ msgid "Installing ODBC components"
 msgstr "Instalace součásti se nezdařila: %08x"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "Instalační služba selhala.\n"
+msgstr "Probíhá instalace nových služeb"
 
 #: msi.rc:106
 #, fuzzy
@@ -6922,10 +6895,8 @@ msgid "Migrating feature states from related applications"
 msgstr ""
 
 #: msi.rc:110
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Soubory ikon"
+msgstr "Probíhá přesun souborů"
 
 #: msi.rc:111
 #, fuzzy
@@ -6956,10 +6927,8 @@ msgid "Publishing Product Features"
 msgstr ""
 
 #: msi.rc:117
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Informace o klientovi"
+msgstr "Probíhá publikování informací o produktu"
 
 #: msi.rc:118
 msgid "Registering Class servers"
@@ -6984,10 +6953,8 @@ msgid "Registering MIME info"
 msgstr "Editor registru"
 
 #: msi.rc:123
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "Registry jsou poškozené.\n"
+msgstr "Registrující produkt"
 
 #: msi.rc:124
 msgid "Registering program identifiers"
@@ -7000,16 +6967,12 @@ msgid "Registering type libraries"
 msgstr "Knihovny typů"
 
 #: msi.rc:126
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Zdroj je zaneprázdněný.\n"
+msgstr "Registrující uživatel"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "Removing duplicated files"
-msgstr "Odst&ranit duplicity"
+msgstr "Probíhá odebírání duplicitních souborů"
 
 #: msi.rc:128 msi.rc:152
 #, fuzzy
@@ -7018,16 +6981,12 @@ msgid "Updating environment strings"
 msgstr "Aplikování nastavení písma"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "Odeb&rat aplikaci"
+msgstr "Probíhá odebírání aplikací"
 
 #: msi.rc:130
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Soubory ikon"
+msgstr "Probíhá odebírání souborů"
 
 #: msi.rc:131
 msgid "Removing folders"
@@ -7068,16 +7027,12 @@ msgid "Initializing ODBC directories"
 msgstr "Probíhá příprava; "
 
 #: msi.rc:140
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Spuštění aplikace Wordpad se nezdařilo"
+msgstr "Probíhá spouštění služeb"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "Probíhá zastavování závislé služby: %1\n"
+msgstr "Probíhá zastavování služeb"
 
 #: msi.rc:142
 msgid "Unpublishing Qualified Components"
@@ -7152,10 +7107,8 @@ msgid "Shortcut: [1]"
 msgstr ""
 
 #: msi.rc:165 msi.rc:196 msi.rc:197
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "&Zařízení:"
+msgstr "Služba: [1]"
 
 #: msi.rc:166 msi.rc:169 msi.rc:173
 msgid "File: [1],  Directory: [9],  Size: [6]"
@@ -7172,20 +7125,16 @@ msgid "File: [1], Directory: [9], Size: [6]"
 msgstr ""
 
 #: msi.rc:170
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "&Zařízení:"
+msgstr "Služba: [2]"
 
 #: msi.rc:171
 msgid "File: [1],  Dependencies: [2]"
 msgstr ""
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Aplikace"
+msgstr "Aplikace: [1]"
 
 #: msi.rc:174 msi.rc:175
 msgid "Application Context:[1], Assembly Name:[2]"
@@ -7212,10 +7161,8 @@ msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr ""
 
 #: msi.rc:181 msi.rc:202
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Pouze rozšíření"
+msgstr "Rozšíření: [1]"
 
 #: msi.rc:182 msi.rc:203
 msgid "Font: [1]"
@@ -7275,11 +7222,11 @@ msgstr ""
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Varování [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "Informace [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7314,7 +7261,7 @@ msgstr ""
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Vložte prosím disk: [2]"
 
 #: msi.rc:84
 msgid ""
@@ -7364,7 +7311,7 @@ msgstr "&Datový tok"
 
 #: msvfw32.rc:55
 msgid "kB/s"
-msgstr ""
+msgstr "kB/s"
 
 #: msvfw32.rc:28
 msgid "Full Frames (Uncompressed)"
@@ -7428,7 +7375,7 @@ msgstr "položka nabídky"
 
 #: oleacc.rc:44
 msgid "tool tip"
-msgstr ""
+msgstr "kontextová nápověda"
 
 #: oleacc.rc:45
 msgid "application"
@@ -7448,7 +7395,7 @@ msgstr "graf"
 
 #: oleacc.rc:49
 msgid "dialog"
-msgstr ""
+msgstr "dialog"
 
 #: oleacc.rc:50
 msgid "border"
@@ -7500,7 +7447,7 @@ msgstr "odkaz"
 
 #: oleacc.rc:62
 msgid "help balloon"
-msgstr ""
+msgstr "balónová nápověda"
 
 #: oleacc.rc:63
 msgid "character"
@@ -7544,11 +7491,11 @@ msgstr "Něměnný text"
 
 #: oleacc.rc:73
 msgid "text"
-msgstr ""
+msgstr "text"
 
 #: oleacc.rc:74
 msgid "push button"
-msgstr ""
+msgstr "tlačítko"
 
 #: oleacc.rc:75
 msgid "check button"
@@ -7556,11 +7503,11 @@ msgstr "zaškrtávátko"
 
 #: oleacc.rc:76
 msgid "radio button"
-msgstr ""
+msgstr "přepínač"
 
 #: oleacc.rc:77
 msgid "combo box"
-msgstr ""
+msgstr "kombinované pole"
 
 #: oleacc.rc:78
 msgid "drop down"
@@ -7635,11 +7582,9 @@ msgid "outline button"
 msgstr ""
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Normální"
+msgstr "normální"
 
 #: oleacc.rc:98
 #, fuzzy
@@ -7682,11 +7627,9 @@ msgid "mixed"
 msgstr "Smíšené"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "&Pouze pro čtení"
+msgstr "pouze pro čtení"
 
 #: oleacc.rc:105
 #, fuzzy
@@ -7948,22 +7891,16 @@ msgid "Add Control"
 msgstr "Přidat řídící prvek"
 
 #: oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Písmo..."
+msgstr "&Převést..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objekt"
+msgstr "%1 %2 &Objekt"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objekt"
+msgstr "%1 &Objekt"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8337,11 +8274,11 @@ msgstr "Posunout sem"
 
 #: shdoclc.rc:221
 msgid "Top"
-msgstr ""
+msgstr "Nahoru"
 
 #: shdoclc.rc:222
 msgid "Bottom"
-msgstr ""
+msgstr "Dolů"
 
 #: shdoclc.rc:224
 msgid "Page Up"
@@ -8353,11 +8290,11 @@ msgstr "Následující stránka"
 
 #: shdoclc.rc:227
 msgid "Scroll Up"
-msgstr ""
+msgstr "Posunout nahoru"
 
 #: shdoclc.rc:228
 msgid "Scroll Down"
-msgstr ""
+msgstr "Posunout dolů"
 
 #: shdoclc.rc:235
 msgid "Left Edge"
@@ -8377,11 +8314,11 @@ msgstr "O stránku vpravo"
 
 #: shdoclc.rc:241
 msgid "Scroll Left"
-msgstr ""
+msgstr "Posunout doleva"
 
 #: shdoclc.rc:242
 msgid "Scroll Right"
-msgstr ""
+msgstr "Posunout doprava"
 
 #: shdoclc.rc:28
 msgid "Wine Internet Explorer"
@@ -8529,10 +8466,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine je dílem:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "&Spustit..."
+msgstr "Spustit"
 
 #: shell32.rc:338
 msgid ""
@@ -8552,10 +8487,8 @@ msgid "&Browse..."
 msgstr "&Procházet..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Typ souboru"
+msgstr "Typ souboru:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8566,16 +8499,12 @@ msgid "Size:"
 msgstr "Velikost:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Datum vytvoření"
+msgstr "Datum vytvoření:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Atributy:"
+msgstr "Atributy:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8586,28 +8515,20 @@ msgid "&Archive"
 msgstr "&Archiv"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Otevřít:"
+msgstr "Otevřít pomocí:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Změnit &ikonu..."
+msgstr "&Změnit..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Změněno"
+msgstr "Poslední změna:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Poslední změna:"
+msgstr "Poslední přístup:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -8733,7 +8654,7 @@ msgstr "Historie"
 
 #: shell32.rc:215
 msgid "Program Files"
-msgstr ""
+msgstr "Program Files"
 
 #: shell32.rc:217
 msgid "My Pictures"
@@ -8741,7 +8662,7 @@ msgstr "Mé obrázky"
 
 #: shell32.rc:218
 msgid "Common Files"
-msgstr ""
+msgstr "Common Files"
 
 #: shell32.rc:219 shell32.rc:150 shell32.rc:235
 msgid "Documents"
@@ -8765,7 +8686,7 @@ msgstr "Videa"
 
 #: shell32.rc:216
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "Program Files (x86)"
 
 #: shell32.rc:224
 msgid "Contacts"
@@ -8793,7 +8714,7 @@ msgstr "Umístění"
 
 #: shell32.rc:153
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: shell32.rc:228
 msgid "Sample Music"
@@ -8912,8 +8833,6 @@ msgid "Wine Control Panel"
 msgstr "Ovládací panel Wine"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Nelze zobrazit dialog Spustit (vnitřní chyba)"
 
@@ -9019,23 +8938,21 @@ msgstr "%d bajtů"
 #: shlwapi.rc:31
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr "hod"
+msgstr " hod"
 
 #: shlwapi.rc:32
 msgctxt "time unit: minutes"
 msgid " min"
-msgstr ""
+msgstr " min"
 
 #: shlwapi.rc:33
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr "vteř"
+msgstr " vteř"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Source"
-msgstr "Nová složka"
+msgstr "Vyberte zdroj"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9132,58 +9049,44 @@ msgid "&More Windows..."
 msgstr "&Více oken..."
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Skrýt"
+msgstr "Skrýt %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Jiné"
+msgstr "Skrýt ostatní"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Rozbalit"
+msgstr "Zobrazit vše"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Ukončit %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Ukončit"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Okno"
+msgstr "Okno"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimalizovat"
+msgstr "Minimalizovat"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
 msgstr "Přiblížit"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Na celou obrazovku"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "Přenést do popředí"
+msgstr "Přenést vše do popředí"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -9194,10 +9097,8 @@ msgid "Duplex:"
 msgstr "Oboustranně:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "&Nastavit"
+msgstr "Nastavit"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -9209,7 +9110,7 @@ msgstr "Je vyžadováno ověření"
 
 #: wininet.rc:61
 msgid "Server"
-msgstr ""
+msgstr "Server"
 
 #: wininet.rc:80
 msgid "There is a problem with the certificate for this site."
@@ -9243,10 +9144,8 @@ msgstr ""
 "problém."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Vypršel časový limit požadavku služby.\n"
+msgstr "Vypršel časový limit požadavku.\n"
 
 #: winineterror.mc:31
 #, fuzzy
@@ -9255,10 +9154,8 @@ msgid "An internal error has occurred.\n"
 msgstr "Při tisku došlo k chybě."
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Neplatné zadání cesty.\n"
+msgstr "Neplatné zadání URL.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -9424,16 +9321,12 @@ msgstr ""
 "znovu."
 
 #: winmm.rc:56 winmm.rc:129
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Současné nastavení MIDI mapperu se odkazuje na MIDI zařízení nepřítomné v "
-"systému. Upravte nastavení MIDI mapperu."
+"systému."
 
 #: winmm.rc:57
 msgid ""
@@ -9583,16 +9476,12 @@ msgstr ""
 "síťové připojení průchozí."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
-"Nemohu najít požadované zařízení. Ujistěte se, že je nainstalováno, nebo že "
-"jste jeho název uvedli přesně."
+"Nemohu najít požadované zařízení. Ujistěte se, že je nainstalováno a že jste "
+"jeho název uvedli přesně."
 
 #: winmm.rc:87
 msgid ""
@@ -9889,24 +9778,20 @@ msgstr ""
 "disku nebo zda jste připojeni k síti."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Instalátor Wine Mono"
+msgstr "Mapovač zvuku Wine"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "sloupec"
+msgstr "Hlasitost"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Hlavní hlasitost"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Ztlumit"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -10255,18 +10140,12 @@ msgstr ""
 "procedurou jsou zděděny volajícím.\n"
 
 #: cmd.rc:44
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "CD <složka> je zkratkou pro CHDIR. Přenese Vás do určené složky.\n"
 
 #: cmd.rc:47
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <složka> přenese Vás do určené složky.\n"
 
@@ -10515,16 +10394,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <název_souboru> přejmenuje soubor.\n"
 
 #: cmd.rc:181
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <složka> je zkratkou pro RMDIR. Smaže zadanou podsložku.\n"
+msgstr "RD <složka> je zkratkou pro RMDIR. Smaže zadanou složku.\n"
 
 #: cmd.rc:183
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <složka> smaže podsložku.\n"
+msgstr "RMDIR <složka> smaže složku.\n"
 
 #: cmd.rc:229
 #, fuzzy
@@ -10734,7 +10609,6 @@ msgstr ""
 "příkazovému interpretu, ze kterého byl cmd spuštěn.\n"
 
 #: cmd.rc:364
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10777,9 +10651,11 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "Vestavěné příkazy CMD jsou:\n"
+"ASSOC\t\tZobrazí nebo změní asociace přípon souborů\n"
 "ATTRIB\t\tZobrazí nebo nastaví DOS-ovské souborové attributy\n"
 "CALL\t\tZavolá dávkový soubor z jiného\n"
 "CD (CHDIR)\tZmění pracovní adresář\n"
+"CHOICE\t\tČeká na stisk tlačítka z volitelného seznamu\n"
 "CLS\t\tVymaže okno terminálu\n"
 "COPY\t\tKopíruje soubory\n"
 "CTTY\t\tZmění vstupně/výstupní zařízení\n"
@@ -10787,22 +10663,29 @@ msgstr ""
 "DEL (ERASE)\tSmaže jeden nebo více souborů\n"
 "DIR\t\tVypíše obsah adresáře\n"
 "ECHO\t\tVypíše text na terminál\n"
+"ENDLOCAL\tUkončí lokalizaci změn prostředí v dávkovém souboru\n"
+"FTYPE\t\tZobrazí nebo změní příkazy pro otevření přiřazené k typům souborů\n"
 "HELP\t\tZobrazí detailní nápovědu k tématu\n"
 "MD (MKDIR)\tVytvoří adresář\n"
-"MORE\t\tDisplay output in pages\n"
+"MKLINK\tVytvoří symbolický odkaz\n"
+"MORE\t\tZobrazí výstup ve stránkách\n"
 "MOVE\t\tPřesune soubor, skupinu souborů nebo adresářový strom\n"
 "PATH\t\tNastaví nebo ukáže prohledávané cesty\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PAUSE\t\tUspí spuštění dávkového souboru\n"
+"POPD\t\tObnoví adresář na poslední uložený pomocí PUSHD\n"
 "PROMPT\t\tZmění výzvu příkazového řádku\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"PUSHD\t\tZmění adresář na nový, starý uloží\n"
 "REN (RENAME)\tPřejmenuje soubor\n"
-"RD (RMDIR)\tSmaže adresář\n"
-"SET\t\tNastaví nebo zobrazí proměnnou prostředí\n"
+"RD (RMDIR)\tSmaže podadresář\n"
+"SET\t\tNastaví nebo zobrazí proměnné prostředí\n"
+"SETLOCAL\tSpustí lokalizaci změn prostředí v dávkovém souboru\n"
+"START\t\tSpustí program nebo otevře dokument v přiřazeném programu\n"
 "TIME\t\tUkáže či nastaví systémový čas\n"
 "TITLE\t\tNastaví titulek okna běžící CMD instance\n"
 "TYPE\t\tVypíše obsah textového souboru\n"
 "VER\t\tZobrazí verzi CMD\n"
 "VOL\t\tUkáže jmenovku disku\n"
+"XCOPY\t\tZkopíruje zdrojové soubory nebo adresářové větve do cíle\n"
 "EXIT\t\tUkončí CMD\n"
 "\n"
 "Zadejte HELP <příkaz> pro podrobnější informace o některém z výše uvedených\n"
@@ -10937,7 +10820,7 @@ msgstr "Příkazový řádek Wine"
 
 #: cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:398
 msgid "More? "
@@ -11006,10 +10889,8 @@ msgid "Wine Explorer"
 msgstr "Průzkumník z Wine"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "Po spuštění"
+msgstr "Start"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -11044,7 +10925,7 @@ msgstr "%1 síťové rozhraní %2\n"
 
 #: ipconfig.rc:33
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
@@ -11099,10 +10980,8 @@ msgid "IPv6 address"
 msgstr "Adresa IP verze 6"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Nastavení systému"
+msgstr "Informace o systému"
 
 #: net.rc:30
 msgid ""
@@ -11272,15 +11151,15 @@ msgstr "Bajtů"
 
 #: netstat.rc:39
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast pakety"
 
 #: netstat.rc:40
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Non-unicast pakety"
 
 #: netstat.rc:41
 msgid "Discards"
-msgstr ""
+msgstr "Zahozeno"
 
 #: netstat.rc:42
 msgid "Errors"
@@ -11296,11 +11175,11 @@ msgstr "Statistiky TCP pro IPv4"
 
 #: netstat.rc:45
 msgid "Active Opens"
-msgstr ""
+msgstr "Aktivní otevřené"
 
 #: netstat.rc:46
 msgid "Passive Opens"
-msgstr ""
+msgstr "Pasivní otevřené"
 
 #: netstat.rc:47
 msgid "Failed Connection Attempts"
@@ -11556,15 +11435,15 @@ msgstr "„%s“ nebyl nalezen."
 
 #: notepad.rc:85
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:86
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:87
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:94
 msgid ""
@@ -11876,7 +11755,7 @@ msgstr "Rozhraní"
 
 #: oleview.rc:140
 msgid "Registry"
-msgstr ""
+msgstr "Registr"
 
 #: oleview.rc:141
 msgid "Implementation"
@@ -12188,10 +12067,8 @@ msgid ""
 msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu\n"
 
 #: reg.rc:44
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Nepodporovaný typ.\n"
+msgstr "reg: Nepodporovaný typ dat registru [%1]\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -12206,36 +12083,28 @@ msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr ""
 
 #: reg.rc:48
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Soubor již existuje. Chcete jej nahradit?"
+msgstr "Hodnota registru „%1“ již existuje. Chcete ji nahradit?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Operace registru byla přerušena\n"
 
 #: reg.rc:53 regedit.rc:239
 msgid "(Default)"
 msgstr "(výchozí)"
 
 #: reg.rc:54 regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Jste si jist(a), že chcete smazat tyto hodnoty?"
+msgstr "Opravdu chcete odstranit hodnotu registru „%1“?"
 
 #: reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Opravdu chcete smazat hodnotu „%s“?"
+msgstr "Opravdu chcete smazat všechny hodnoty registru v „%1“?"
 
 #: reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Opravdu chcete odstranit „%1“?"
+msgstr "Opravdu chcete odstranit klíč registru „%1“?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
@@ -12258,10 +12127,8 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "Chyba: Neplatný název klíče\n"
+msgstr "reg: Neplatná syntaxe. "
 
 #: reg.rc:62
 #, fuzzy
@@ -12314,10 +12181,8 @@ msgid "reg: Invalid system key [%1]\n"
 msgstr "Chyba: Neplatný název klíče\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Soubor již existuje. Chcete jej nahradit?"
+msgstr "Soubor „%1“ již existuje. Chcete jej nahradit?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12389,13 +12254,11 @@ msgstr "O &aplikaci Editor registru"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "Rozbalit"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Upravit binární data..."
+msgstr "Upravit &binární data..."
 
 #: regedit.rc:267
 msgid "Export registry"
@@ -12494,13 +12357,9 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Obsahuje příkazy pro přístup k často užívaným klíčům"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
-msgstr "Obsahuje příkazy pro zobrazení nápovědy a informacío editoru registru"
+msgstr "Obsahuje příkazy pro zobrazení nápovědy a informací o editoru registru"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -12749,8 +12608,6 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "Nebyl zadán žádný příkaz."
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Ukončí editor registru"
 
@@ -12767,8 +12624,6 @@ msgid "Shows or hides the status bar"
 msgstr "Ukáže nebo skryje stavovou lištu"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Změní pozici oddělovače mezi dvěma panely"
 
@@ -12813,10 +12668,8 @@ msgid "Adds a new binary value"
 msgstr "Přidá novou binární položku"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Přidá novou binární položku"
+msgstr "Přidá novou 32-bit položku"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12831,10 +12684,8 @@ msgid "Prints all or part of the registry"
 msgstr "Vytiskne část nebo celý registr"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Editor registru"
+msgstr "Otevře nápovědu editoru registru"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
@@ -12847,26 +12698,20 @@ msgid "Unable to query the registry value '%1'."
 msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
 #: regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Nemohu upravit klíče tohoto typu (%u)"
+msgstr "Nemohu upravit klíče tohoto typu (%1!u!)."
 
 #: regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Hodnota je příliš velká (%u)"
+msgstr "Hodnota je příliš velká (%1!u!)."
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Potvrďte smazání položky"
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Hledaný řetězec „%s“ nebyl nalezen"
+msgstr "Hledání bylo dokončeno. Řetězec „%1“ nebyl nalezen."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -12897,39 +12742,29 @@ msgid "Adds a new multi-string value"
 msgstr "Přidá novou více-řetězcovou položku"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exportuje vybranou větev registru do textového souboru"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Přidá novou řetězcovou položku"
+msgstr "Přidá novou rozšířitelnou řetězcovou položku"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Potvrďte smazání položky"
+msgstr "Potvrďte smazání klíče"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Opravdu chcete odstranit „%1“?"
+msgstr "Opravdu chcete odstranit tento klíč registru a všechny jeho podklíče?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Rozbalí nebo sbalí vybraný uzel"
 
 #: regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "K&ompletovat"
+msgstr "Sbalit"
 
 #: regsvr32.rc:32
 msgid ""
@@ -12960,10 +12795,8 @@ msgid ""
 msgstr ""
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Otevření „%1“ se nezdařilo\n"
+msgstr "regsvr32: Selhalo načtení DLL „%1“\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
@@ -13143,7 +12976,7 @@ msgstr "Uspořádat &horizontálně"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
-msgstr ""
+msgstr "Uspořádat &vertikálně"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
@@ -13247,7 +13080,7 @@ msgstr "Paměť jádra (K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
-msgstr ""
+msgstr "Popisovače"
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
@@ -13516,7 +13349,7 @@ msgstr ""
 
 #: taskmgr.rc:557
 msgid "&Handle Count"
-msgstr ""
+msgstr "Poč&et popisovačů"
 
 #: taskmgr.rc:559
 msgid "&Thread Count"
@@ -13758,11 +13591,11 @@ msgstr "Špička ve využití paměti"
 
 #: taskmgr.rc:279
 msgid "Page Faults"
-msgstr ""
+msgstr "Chyby stránkování"
 
 #: taskmgr.rc:280
 msgid "USER Objects"
-msgstr ""
+msgstr "Uživatelské objekty"
 
 #: taskmgr.rc:283
 msgid "Session ID"
@@ -13891,10 +13724,8 @@ msgid ""
 msgstr ""
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Chyba: neplatná volba „%c“.\n"
+msgstr "uninstaller: neplatná volba [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13903,6 +13734,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Odinstalátor pro aplikace Wine\n"
+"\n"
+"Odinstalace aplikací z aktuálního Wine prefixu.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -14001,8 +13836,6 @@ msgstr ""
 "celého systému nebo nastavení každé aplikace zvlášť."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "Přid&at aplikaci..."
 
@@ -14065,7 +13898,7 @@ msgstr "&Nové nastavení pro knihovnu:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "Přid&at"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -14092,8 +13925,6 @@ msgid "&Native (Windows)"
 msgstr "&Nativní (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "V&estavěná pak nativní"
 
@@ -14106,10 +13937,8 @@ msgid "Select Drive Letter"
 msgstr "Vyberte písmeno disku"
 
 #: winecfg.rc:232
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Konfigurace Wine"
+msgstr "Nastavení jednotek"
 
 #: winecfg.rc:233
 msgid ""
@@ -14120,24 +13949,18 @@ msgstr ""
 "diskových jednotek."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
 msgstr "Přid&at..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Autodetekce"
+msgstr "Aut&odetekce"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Cesta:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "Zobrazit rozšířené &možnosti"
 
@@ -14158,8 +13981,6 @@ msgid "S&erial:"
 msgstr "&Sériové číslo:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "Zo&brazit soubory s tečkou na začátku názvu"
 
@@ -14192,14 +14013,12 @@ msgid "&Test Sound"
 msgstr "O&testovat zvuk"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Konfigurace Wine"
+msgstr "Nastavení reproduktorů"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "Reproduktory:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -14242,8 +14061,6 @@ msgid "Select the Unix target directory, please."
 msgstr "Vyberte, prosím, cílový unixový adresář."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
 msgstr "Schovat rozšířené &možnosti"
 
@@ -14309,21 +14126,19 @@ msgstr "(Výchozí v systému)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Surround 5.1"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "grafika"
+msgstr "Kvadrofonní"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
@@ -14427,10 +14242,8 @@ msgid "Letter"
 msgstr "Písmeno"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Nová složka"
+msgstr "Cílová složka"
 
 #: winecfg.rc:79
 msgid ""
@@ -14587,14 +14400,10 @@ msgid "Command history"
 msgstr "Historie příkazů"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Oblast zásobníku"
+msgstr "Velikost záso&bníku:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
 msgstr "Odst&ranit duplicity"
 
@@ -14611,22 +14420,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "Uzavřít &konzoli"
+msgstr "Konzole"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Quick edit mód"
+msgstr "&Quick edit režim"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Pokročilý režim"
+msgstr "Režim vkládán&í"
 
 #: wineconsole.rc:88
 msgid "&Font"
@@ -14721,12 +14524,12 @@ msgid "Configuration error"
 msgstr "Chyba nastavení"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Zásobník obrazovky musí být větší nebo stejně velký jako zásobník okna"
+msgstr ""
+"Velikost zásobníku obrazovky musí být větší nebo stejně velká jako velikost "
+"okna."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -14884,7 +14687,7 @@ msgstr "V&ytvořit adresář..."
 
 #: winefile.rc:43
 msgid "&Disk"
-msgstr ""
+msgstr "&Disk"
 
 #: winefile.rc:44
 msgid "Connect &Network Drive..."
@@ -15116,10 +14919,8 @@ msgid "Expert"
 msgstr "Expert"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Výsledek"
+msgstr "Resetovat výsledky"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -15147,7 +14948,7 @@ msgstr "Miny"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Všechny výsledky budou ztraceny. Jste si jisti?"
 
 #: winemine.rc:30
 msgid "WineMine"
@@ -15266,10 +15067,8 @@ msgid "Error: Invalid query\n"
 msgstr "Chyba: chybný dotaz\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "Chyba: Neplatný název klíče\n"
+msgstr "Chyba: Neplatná syntaxe pro PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -15301,7 +15100,7 @@ msgstr "&Upraveno"
 
 #: wordpad.rc:60
 msgid "E&xtras"
-msgstr ""
+msgstr "D&oplňky"
 
 #: wordpad.rc:62
 msgid "Selection &info"
@@ -15321,7 +15120,7 @@ msgstr "Formát odstavce"
 
 #: wordpad.rc:66
 msgid "&Get text"
-msgstr ""
+msgstr "&Získat text"
 
 #: wordpad.rc:72 wordpad.rc:273
 msgid "&Format Bar"
@@ -15344,36 +15143,32 @@ msgid "F&ormat"
 msgstr "F&ormát"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Seznam"
+msgstr "&Seznamy"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Odrážky"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "číslo CLR"
+msgstr "Čísla"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Písmena - malá"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Písmena - velká"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Římské číslice - malé"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Římské číslice - velké"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
@@ -15548,7 +15343,7 @@ msgstr "Střed"
 
 #: wordpad.rc:167
 msgid "Text"
-msgstr ""
+msgstr "Text"
 
 #: wordpad.rc:168
 msgid "Rich text"
