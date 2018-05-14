@@ -211,6 +211,8 @@ static HRESULT WINAPI MSTASK_ITaskTrigger_GetTrigger(
 
     TRACE("(%p, %p)\n", iface, pTrigger);
 
+    if (!pTrigger) return E_INVALIDARG;
+
     /* Native implementation doesn't verify equivalent cbTriggerSize fields */
 
     /* Copy relevant fields of the structure */

@@ -139,6 +139,9 @@ static void test_SetTrigger_GetTrigger(void)
     hres = ITaskTrigger_SetTrigger(test_trigger, NULL);
     ok(hres == E_INVALIDARG, "got %#x\n", hres);
 
+    hres = ITaskTrigger_GetTrigger(test_trigger, NULL);
+    ok(hres == E_INVALIDARG, "got %#x\n", hres);
+
     /* Setup a trigger with base values for this test run */
     GetLocalTime(&time);
     empty_trigger_state.wStartHour = time.wHour;
