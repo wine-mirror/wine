@@ -1692,6 +1692,13 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             if(!custom)
                 break;
 
+            if (custom->type == CustomLineCapTypeAdjustableArrow)
+            {
+                GpAdjustableArrowCap *arrow = (GpAdjustableArrowCap *)custom;
+                if (arrow->cap.fill && arrow->height <= 0.0)
+                    break;
+            }
+
             count = custom->pathdata.Count;
             custptf = heap_alloc_zero(count * sizeof(PointF));
             custpt = heap_alloc_zero(count * sizeof(POINT));
