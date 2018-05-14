@@ -27,37 +27,6 @@
 #include "wine/test.h"
 
 static ITaskScheduler *test_task_scheduler;
-static ITask *test_task;
-static ITaskTrigger *test_trigger;
-static WORD trigger_index;
-
-static BOOL setup_trigger(void)
-{
-    HRESULT hres;
-    const WCHAR task_name[] = {'T','e','s','t','i','n','g', 0};
-
-    hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
-            &CLSID_CTask, &IID_ITask, (IUnknown**)&test_task);
-    if(hres != S_OK)
-    {
-        ITaskScheduler_Release(test_task_scheduler);
-        return FALSE;
-    }
-    hres = ITask_CreateTrigger(test_task, &trigger_index, &test_trigger);
-    if(hres != S_OK)
-    {
-        ITask_Release(test_task);
-        ITaskScheduler_Release(test_task_scheduler);
-        return FALSE;
-    }
-    return TRUE;
-}
-
-static void cleanup_trigger(void)
-{
-    ITaskTrigger_Release(test_trigger);
-    ITask_Release(test_task);
-}
 
 static BOOL compare_trigger_state(TASK_TRIGGER found_state,
         TASK_TRIGGER expected_state)
@@ -135,8 +104,11 @@ static BOOL compare_trigger_state(TASK_TRIGGER found_state,
 
 static void test_SetTrigger_GetTrigger(void)
 {
-    BOOL setup;
+    static const WCHAR task_name[] = { 'T','e','s','t','i','n','g',0 };
+    ITask *test_task;
+    ITaskTrigger *test_trigger;
     HRESULT hres;
+    WORD idx;
     TASK_TRIGGER trigger_state;
     TASK_TRIGGER empty_trigger_state = {
         sizeof(trigger_state), 0,
@@ -157,13 +129,12 @@ static void test_SetTrigger_GetTrigger(void)
     };
     SYSTEMTIME time;
 
-    setup = setup_trigger();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "got %#x\n", hres);
+
+    hres = ITask_CreateTrigger(test_task, &idx, &test_trigger);
+    ok(hres == S_OK, "got %#x\n", hres);
 
     /* Setup a trigger with base values for this test run */
     GetLocalTime(&time);
@@ -367,9 +338,8 @@ static void test_SetTrigger_GetTrigger(void)
     ok(compare_trigger_state(trigger_state, normal_trigger_state),
             "Invalid state\n");
 
-
-    cleanup_trigger();
-    return;
+    ITaskTrigger_Release(test_trigger);
+    ITask_Release(test_task);
 }
 
 static void test_task_trigger(void)
