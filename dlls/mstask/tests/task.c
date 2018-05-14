@@ -683,6 +683,43 @@ static void test_Run(void)
     ok(hr == S_OK, "got %#x\n", hr);
 }
 
+static void test_SetFlags(void)
+{
+    HRESULT hr;
+    ITask *task;
+    DWORD flags;
+
+    hr = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                    &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = ITask_SetFlags(task, 0);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = ITask_GetFlags(task, &flags);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(flags == 0, "got %#x\n", flags);
+
+    hr = ITask_SetFlags(task, 0xffffffff);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = ITask_GetFlags(task, &flags);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(flags == 0x7fff, "got %#x\n", flags);
+
+    hr = ITask_SetFlags(task, 0x9234);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = ITask_GetFlags(task, &flags);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(flags == 0x1234, "got %#x\n", flags);
+
+    ITask_Release(task);
+}
+
 START_TEST(task)
 {
     HRESULT hr;
@@ -700,6 +737,7 @@ START_TEST(task)
     test_SetAccountInformation_GetAccountInformation();
     test_task_state();
     test_Run();
+    test_SetFlags();
 
     ITaskScheduler_Release(scheduler);
     CoUninitialize();

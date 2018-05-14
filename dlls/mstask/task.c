@@ -491,11 +491,14 @@ static HRESULT WINAPI MSTASK_ITask_GetErrorRetryInterval(ITask *iface, WORD *int
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_SetFlags(
-        ITask* iface,
-        DWORD dwFlags)
+static HRESULT WINAPI MSTASK_ITask_SetFlags(ITask *iface, DWORD flags)
 {
-    FIXME("(%p, 0x%08x): stub\n", iface, dwFlags);
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, 0x%08x)\n", iface, flags);
+    This->flags &= 0xffff8000;
+    This->flags |= flags & 0x7fff;
+    This->is_dirty = TRUE;
     return S_OK;
 }
 
