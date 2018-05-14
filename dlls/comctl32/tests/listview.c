@@ -1750,6 +1750,7 @@ static void test_redraw(void)
     HDC hdc;
     BOOL res;
     DWORD r;
+    RECT rect;
 
     hwnd = create_listview_control(LVS_REPORT);
     subclass_header(hwnd);
@@ -1806,6 +1807,13 @@ static void test_redraw(void)
                 "don't forward WM_ERASEBKGND on non-CLR_NONE", FALSE);
 
     ReleaseDC(hwndparent, hdc);
+
+    /* test setting the window style to what it already was */
+    UpdateWindow(hwnd);
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE));
+    GetUpdateRect(hwnd, &rect, FALSE);
+    ok(rect.left == 0 && rect.top == 0 && rect.right == 0 && rect.bottom == 0,
+       "Expected empty update rect, got %s\n", wine_dbgstr_rect(&rect));
 
     DestroyWindow(hwnd);
 }
