@@ -103,6 +103,8 @@ static HRESULT WINAPI MSTASK_ITaskTrigger_SetTrigger(
 
     TRACE("(%p, %p)\n", iface, pTrigger);
 
+    if (!pTrigger) return E_INVALIDARG;
+
     /* Verify valid structure size */
     if (pTrigger->cbTriggerSize != sizeof(*pTrigger))
         return E_INVALIDARG;
