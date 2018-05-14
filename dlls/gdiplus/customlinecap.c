@@ -282,19 +282,43 @@ GpStatus WINGDIPAPI GdipGetCustomLineCapType(GpCustomLineCap *customCap, CustomL
 
 static void arrowcap_update_path(GpAdjustableArrowCap *cap)
 {
+    static const BYTE types_filled[] =
+    {
+        PathPointTypeStart, PathPointTypeLine, PathPointTypeLine, PathPointTypeLine | PathPointTypeCloseSubpath
+    };
+    static const BYTE types_unfilled[] =
+    {
+        PathPointTypeStart, PathPointTypeLine, PathPointTypeLine
+    };
     GpPointF *points;
 
-    assert(cap->cap.pathdata.Count == 4);
+    assert(cap->cap.pathdata.Count == 3 || cap->cap.pathdata.Count == 4);
 
     points = cap->cap.pathdata.Points;
-    points[0].X = 0.0;
-    points[0].Y = 0.0;
-    points[1].X = -cap->width / 2.0;
-    points[1].Y = -cap->height;
-    points[2].X = 0.0;
-    points[2].Y = -cap->height - cap->middle_inset;
-    points[3].X = cap->width / 2.0;
-    points[3].Y = -cap->height;
+    if (cap->cap.fill)
+    {
+        memcpy(cap->cap.pathdata.Types, types_filled, sizeof(types_filled));
+        cap->cap.pathdata.Count = 4;
+        points[0].X = -cap->width / 2.0;
+        points[0].Y = -cap->height;
+        points[1].X = 0.0;
+        points[1].Y = 0.0;
+        points[2].X = cap->width / 2.0;
+        points[2].Y = -cap->height;
+        points[3].X = 0.0;
+        points[3].Y = -cap->height - cap->middle_inset;
+    }
+    else
+    {
+        memcpy(cap->cap.pathdata.Types, types_unfilled, sizeof(types_unfilled));
+        cap->cap.pathdata.Count = 3;
+        points[0].X = -cap->width / 4.0;
+        points[0].Y = -cap->height / 2.0;
+        points[1].X = 0.0;
+        points[1].Y = 0.0;
+        points[2].X = cap->width / 4.0;
+        points[2].Y = -cap->height / 2.0;
+    }
 
     if (cap->width == 0.0)
         cap->cap.inset = 0.0;
@@ -306,7 +330,6 @@ GpStatus WINGDIPAPI GdipCreateAdjustableArrowCap(REAL height, REAL width, BOOL f
     GpAdjustableArrowCap **cap)
 {
     GpPathData pathdata;
-    BYTE types[4];
     GpStatus stat;
 
     TRACE("(%0.2f,%0.2f,%i,%p)\n", height, width, fill, cap);
@@ -314,22 +337,15 @@ GpStatus WINGDIPAPI GdipCreateAdjustableArrowCap(REAL height, REAL width, BOOL f
     if (!cap)
         return InvalidParameter;
 
-    if (!fill)
-        FIXME("Arrows without fills are not supported.\n");
-
     *cap = heap_alloc_zero(sizeof(**cap));
     if (!*cap)
         return OutOfMemory;
 
-    types[0] = PathPointTypeStart;
-    types[1] = PathPointTypeLine;
-    types[2] = PathPointTypeLine;
-    types[3] = PathPointTypeLine | PathPointTypeCloseSubpath;
-
+    /* We'll need 4 points at most. */
     pathdata.Count = 4;
     pathdata.Points = NULL;
-    pathdata.Types = types;
-    stat = init_custom_linecap(&(*cap)->cap, &pathdata, TRUE, LineCapTriangle, width != 0.0 ? height / width : 0.0);
+    pathdata.Types = NULL;
+    stat = init_custom_linecap(&(*cap)->cap, &pathdata, fill, LineCapTriangle, width != 0.0 ? height / width : 0.0);
     if (stat != Ok)
     {
         heap_free(*cap);
@@ -347,14 +363,13 @@ GpStatus WINGDIPAPI GdipCreateAdjustableArrowCap(REAL height, REAL width, BOOL f
 
 GpStatus WINGDIPAPI GdipGetAdjustableArrowCapFillState(GpAdjustableArrowCap* cap, BOOL* fill)
 {
-    static int calls;
-
     TRACE("(%p,%p)\n", cap, fill);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!cap || !fill)
+        return InvalidParameter;
 
-    return NotImplemented;
+    *fill = cap->cap.fill;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetAdjustableArrowCapHeight(GpAdjustableArrowCap* cap, REAL* height)
@@ -392,14 +407,14 @@ GpStatus WINGDIPAPI GdipGetAdjustableArrowCapWidth(GpAdjustableArrowCap* cap, RE
 
 GpStatus WINGDIPAPI GdipSetAdjustableArrowCapFillState(GpAdjustableArrowCap* cap, BOOL fill)
 {
-    static int calls;
-
     TRACE("(%p,%i)\n", cap, fill);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!cap)
+        return InvalidParameter;
 
-    return NotImplemented;
+    cap->cap.fill = fill;
+    arrowcap_update_path(cap);
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetAdjustableArrowCapHeight(GpAdjustableArrowCap* cap, REAL height)
