@@ -250,16 +250,13 @@ static void test_create_adjustable_cap(void)
     ok(stat == Ok, "Failed to create adjustable cap, %d\n", stat);
 
     stat = GdipGetAdjustableArrowCapFillState(cap, NULL);
-todo_wine
     ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
 
     ret = FALSE;
     stat = GdipGetAdjustableArrowCapFillState(cap, &ret);
-todo_wine
-{
     ok(stat == Ok, "Unexpected return code, %d\n", stat);
     ok(ret, "Unexpected fill state %d\n", ret);
-}
+
     stat = GdipGetAdjustableArrowCapHeight(cap, NULL);
     ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
 
