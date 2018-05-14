@@ -232,7 +232,7 @@ static const char HatchBrushes[][8] = {
 
 GpStatus get_hatch_data(GpHatchStyle hatchstyle, const char **result)
 {
-    if (hatchstyle < sizeof(HatchBrushes) / sizeof(HatchBrushes[0]))
+    if (hatchstyle < ARRAY_SIZE(HatchBrushes))
     {
         *result = HatchBrushes[hatchstyle];
         return Ok;
