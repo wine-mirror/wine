@@ -359,6 +359,9 @@ struct GpCustomLineCap{
 
 struct GpAdjustableArrowCap{
     GpCustomLineCap cap;
+    REAL middle_inset;
+    REAL height;
+    REAL width;
 };
 
 struct GpImage{
