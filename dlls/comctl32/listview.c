@@ -11108,14 +11108,13 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
                                  const STYLESTRUCT *lpss)
 {
-    UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
-    UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
+    UINT uNewView, uOldView;
     UINT style;
 
     TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
 
-    if (wStyleType != GWL_STYLE) return 0;
+    if (wStyleType != GWL_STYLE || lpss->styleNew == infoPtr->dwStyle) return 0;
 
     infoPtr->dwStyle = lpss->styleNew;
 
@@ -11126,6 +11125,9 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     if (((lpss->styleOld & WS_VSCROLL) != 0)&&
         ((lpss->styleNew & WS_VSCROLL) == 0))
        ShowScrollBar(infoPtr->hwndSelf, SB_VERT, FALSE);
+
+    uNewView = lpss->styleNew & LVS_TYPEMASK;
+    uOldView = lpss->styleOld & LVS_TYPEMASK;
 
     if (uNewView != uOldView)
     {
