@@ -882,6 +882,10 @@ int WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 	  if (ForFree)
 	  {
 	    retCode = SHFileOperationW(&nFileOp);
+	    /* Windows 95/98 returns S_OK for this case. */
+	    if (retCode == ERROR_ACCESS_DENIED && (GetVersion() & 0x80000000))
+	      retCode = S_OK;
+
 	    heap_free(ForFree); /* we cannot use wString, it was changed */
 	    break;
 	  }
