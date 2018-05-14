@@ -190,6 +190,11 @@ function test_getOwnPropertyDescriptor() {
     test_own_data_prop_desc(obj, "multiline", false, false, false);
     test_own_data_prop_desc(obj, "source", false, false, false);
 
+    (function() {
+        test_own_data_prop_desc(arguments, "length", true, false, true);
+        test_own_data_prop_desc(arguments, "callee", true, false, true);
+    })();
+
     next_test();
 }
 

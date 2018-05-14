@@ -180,9 +180,11 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     args->argc = frame->argc;
     args->frame = frame;
 
-    hres = jsdisp_propput_dontenum(&args->jsdisp, lengthW, jsval_number(args->argc));
+    hres = jsdisp_define_data_property(&args->jsdisp, lengthW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+                                       jsval_number(args->argc));
     if(SUCCEEDED(hres))
-        hres = jsdisp_propput_dontenum(&args->jsdisp, caleeW, jsval_disp(to_disp(&args->function->dispex)));
+        hres = jsdisp_define_data_property(&args->jsdisp, caleeW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+                                           jsval_obj(&args->function->dispex));
     if(SUCCEEDED(hres))
         hres = jsdisp_propput(frame->base_scope->jsobj, argumentsW, PROPF_WRITABLE, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
