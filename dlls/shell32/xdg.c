@@ -341,7 +341,7 @@ static int dskentry_decode(const char *value, int len, char *output)
     while (pos<len)
     {
         char c;
-        if (value[pos] == '\\' && pos<len-1)
+        if (pos<len-1 && value[pos] == '\\')
         {
             pos++;
             switch (value[pos])
