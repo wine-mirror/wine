@@ -843,7 +843,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
         }
         else
         {
-            BOOL active = [NSApp isActive];
             CGDisplayModeRef currentMode;
             NSArray* modes;
 
@@ -865,6 +864,10 @@ static NSString* WineLocalizedString(unsigned int stringID)
             modes = [self modesMatchingMode:mode forDisplay:displayID];
             if (!modes.count)
                 return FALSE;
+
+            [self transformProcessToForeground];
+
+            BOOL active = [NSApp isActive];
 
             if ([originalDisplayModes count] || displaysCapturedForFullscreen ||
                 !active || CGCaptureAllDisplays() == CGDisplayNoErr)
