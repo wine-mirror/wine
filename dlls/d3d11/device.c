@@ -2603,11 +2603,16 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion1(ID3
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource1(ID3D11DeviceContext1 *iface,
-        ID3D11Resource *resource, UINT subresource, const D3D11_BOX *box, const void *data,
-        UINT rowpitch, UINT depth_pitch, UINT flags)
+        ID3D11Resource *resource, UINT subresource_idx, const D3D11_BOX *box, const void *data,
+        UINT row_pitch, UINT depth_pitch, UINT flags)
 {
-    FIXME("iface %p, resource %p, subresource %u, box %p, data %p, rowpitch %u, depth_pitch %u, flags %#x stub!\n",
-            iface, resource, subresource, box, data, rowpitch, depth_pitch, flags);
+    TRACE("iface %p, resource %p, subresource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u, flags %#x.\n",
+            iface, resource, subresource_idx, box, data, row_pitch, depth_pitch, flags);
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    d3d11_immediate_context_UpdateSubresource(iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DiscardResource(ID3D11DeviceContext1 *iface,
