@@ -1224,12 +1224,13 @@ the_end:
  */
 MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 {
+    WINE_MIDI*		lpwm;
     WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret = 0;
 
     TRACE("(%p)!\n", hMidiStrm);
 
-    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, &lpwm))
 	return MMSYSERR_INVALHANDLE;
 
     midiStreamStop(hMidiStrm);
@@ -1244,6 +1245,9 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
         }
         CloseHandle(lpMidiStrm->hThread);
     }
+    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+                   (HDRVR)lpMidiStrm->hDevice, MM_MOM_CLOSE,
+                   lpwm->mod.dwInstance, 0, 0);
     if(!ret)
         HeapFree(GetProcessHeap(), 0, lpMidiStrm);
 
@@ -1294,7 +1298,8 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 
     lpwm->mld.uDeviceID = *lpuDeviceID;
 
-    ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD_PTR)&lpwm->mod, fdwOpen);
+    /* don't rely on midiOut callbacks */
+    ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD_PTR)&lpwm->mod, CALLBACK_NULL);
     if (ret != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMidiOut, &lpwm->mld);
 	HeapFree(GetProcessHeap(), 0, lpMidiStrm);
@@ -1320,6 +1325,10 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
+
+    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+                   (HDRVR)lpMidiStrm->hDevice, MM_MOM_OPEN,
+                   lpwm->mod.dwInstance, 0, 0);
     return ret;
 }
 

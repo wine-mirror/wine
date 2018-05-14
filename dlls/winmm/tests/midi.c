@@ -433,8 +433,12 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         return;
     }
 
-    rc = midiOutOpen(&hm, udev, 0, (DWORD_PTR)0, CALLBACK_NULL);
+    if (hwnd)
+        rc = midiOutOpen(&hm, udev, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
+    else
+        rc = midiOutOpen(&hm, udev, (DWORD_PTR)callback_func, (DWORD_PTR)MYCBINST, CALLBACK_FUNCTION);
     ok(!rc, "midiOutOpen(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    test_notification(hwnd, "midiOutOpen", MOM_OPEN, 0);
 
     memset(&mhdr, 0, sizeof(mhdr));
     mhdr.lpData = (LPSTR)SysEx_reset;
@@ -445,6 +449,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
     rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
     ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiOutLongMsg", MOM_DONE, (DWORD_PTR)&mhdr);
     Sleep(60);
 
     mhdr.lpData = (LPSTR)SysEx_volume_off;
@@ -455,6 +460,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
     rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
     ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiOutLongMsg", MOM_DONE, (DWORD_PTR)&mhdr);
 
     {
         DWORD e = 0x006F4593; /* velocity 111, note #69, channel 4 */
@@ -476,9 +482,11 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     ok(!rc, "midiOutLongMsg rc=%s\n", mmsys_error(rc));
     rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
     ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiOutLongMsg", MOM_DONE, (DWORD_PTR)&mhdr);
 
     rc = midiOutClose(hm);
     ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiOuClose", MOM_CLOSE, 0);
 }
 
 static void test_position(HMIDISTRM hm, UINT typein, UINT typeout)
@@ -789,8 +797,12 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
 #define ROUNDUP4(n) (((n) + 3) & ~3)
     hm = NULL;
-    rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)0, (DWORD_PTR)0, CALLBACK_NULL);
+    if (hwnd)
+        rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)hwnd, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
+    else
+        rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)callback_func, (DWORD_PTR)MYCBINST, CALLBACK_FUNCTION);
     ok(!rc, "midiOutOpen(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    test_notification(hwnd, "midiStreamOpen", MOM_OPEN, 0);
 
     midiprop.tdiv.cbStruct  = sizeof(midiprop.tdiv);
     midiprop.tdiv.dwTimeDiv = 480;
@@ -841,6 +853,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
         rc = playStream(hm, &mhdr);
         ok(!rc, "midiStreamOut rc=%s\n", mmsys_error(rc));
+        test_notification(hwnd, "midiStreamOut", MOM_DONE, (DWORD_PTR)&mhdr);
 
         rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
@@ -849,6 +862,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     }
     rc = midiStreamClose(hm);
     ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiStreamClose", MOM_CLOSE, 0);
 }
 
 static BOOL scan_subkeys(HKEY parent, const LPCSTR *sub_keys)
