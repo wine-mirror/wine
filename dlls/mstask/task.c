@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "objbase.h"
 #include "taskschd.h"
 #include "mstask.h"
@@ -144,15 +145,176 @@ static ULONG WINAPI MSTASK_ITask_Release(
     return ref;
 }
 
+HRESULT task_set_trigger(ITask *task, WORD idx, const TASK_TRIGGER *src)
+{
+    TaskImpl *This = impl_from_ITask(task);
+    TIME_FIELDS field_time;
+    LARGE_INTEGER sys_time;
+    TASK_TRIGGER dst;
+
+    TRACE("(%p, %u, %p)\n", task, idx, src);
+
+    if (idx >= This->trigger_count)
+        return E_FAIL;
+
+    /* Verify valid structure size */
+    if (src->cbTriggerSize != sizeof(*src))
+        return E_INVALIDARG;
+    dst.cbTriggerSize = src->cbTriggerSize;
+
+    /* Reserved field must be zero */
+    dst.Reserved1 = 0;
+
+    /* Verify and set valid start date and time */
+    memset(&field_time, 0, sizeof(field_time));
+    field_time.Year = src->wBeginYear;
+    field_time.Month = src->wBeginMonth;
+    field_time.Day = src->wBeginDay;
+    field_time.Hour = src->wStartHour;
+    field_time.Minute = src->wStartMinute;
+    if (!RtlTimeFieldsToTime(&field_time, &sys_time))
+        return E_INVALIDARG;
+    dst.wBeginYear = src->wBeginYear;
+    dst.wBeginMonth = src->wBeginMonth;
+    dst.wBeginDay = src->wBeginDay;
+    dst.wStartHour = src->wStartHour;
+    dst.wStartMinute = src->wStartMinute;
+
+    /* Verify valid end date if TASK_TRIGGER_FLAG_HAS_END_DATE flag is set */
+    if (src->rgFlags & TASK_TRIGGER_FLAG_HAS_END_DATE)
+    {
+        memset(&field_time, 0, sizeof(field_time));
+        field_time.Year = src->wEndYear;
+        field_time.Month = src->wEndMonth;
+        field_time.Day = src->wEndDay;
+        if (!RtlTimeFieldsToTime(&field_time, &sys_time))
+            return E_INVALIDARG;
+    }
+
+    /* Set valid end date independent of TASK_TRIGGER_FLAG_HAS_END_DATE flag */
+    dst.wEndYear = src->wEndYear;
+    dst.wEndMonth = src->wEndMonth;
+    dst.wEndDay = src->wEndDay;
+
+    /* Verify duration and interval pair */
+    if (src->MinutesDuration <= src->MinutesInterval && src->MinutesInterval > 0)
+        return E_INVALIDARG;
+    dst.MinutesDuration = src->MinutesDuration;
+    dst.MinutesInterval = src->MinutesInterval;
+
+    /* Copy over flags */
+    dst.rgFlags = src->rgFlags;
+
+    /* Set TriggerType dependent fields of Type union */
+    dst.TriggerType = src->TriggerType;
+    switch (src->TriggerType)
+    {
+        case TASK_TIME_TRIGGER_DAILY:
+            dst.Type.Daily.DaysInterval = src->Type.Daily.DaysInterval;
+            break;
+        case TASK_TIME_TRIGGER_WEEKLY:
+            dst.Type.Weekly.WeeksInterval = src->Type.Weekly.WeeksInterval;
+            dst.Type.Weekly.rgfDaysOfTheWeek = src->Type.Weekly.rgfDaysOfTheWeek;
+            break;
+        case TASK_TIME_TRIGGER_MONTHLYDATE:
+            dst.Type.MonthlyDate.rgfDays = src->Type.MonthlyDate.rgfDays;
+            dst.Type.MonthlyDate.rgfMonths = src->Type.MonthlyDate.rgfMonths;
+            break;
+        case TASK_TIME_TRIGGER_MONTHLYDOW:
+            dst.Type.MonthlyDOW.wWhichWeek = src->Type.MonthlyDOW.wWhichWeek;
+            dst.Type.MonthlyDOW.rgfDaysOfTheWeek = src->Type.MonthlyDOW.rgfDaysOfTheWeek;
+            dst.Type.MonthlyDOW.rgfMonths = src->Type.MonthlyDOW.rgfMonths;
+            break;
+        case TASK_TIME_TRIGGER_ONCE:
+        case TASK_EVENT_TRIGGER_ON_IDLE:
+        case TASK_EVENT_TRIGGER_AT_SYSTEMSTART:
+        case TASK_EVENT_TRIGGER_AT_LOGON:
+        default:
+            dst.Type = src->Type;
+            break;
+    }
+
+    /* Reserved field must be zero */
+    dst.Reserved2 = 0;
+
+    /* wRandomMinutesInterval not currently used and is initialized to zero */
+    dst.wRandomMinutesInterval = 0;
+
+    This->trigger[idx] = dst;
+
+    return S_OK;
+}
+
+HRESULT task_get_trigger(ITask *task, WORD idx, TASK_TRIGGER *dst)
+{
+    TaskImpl *This = impl_from_ITask(task);
+    TASK_TRIGGER *src;
+
+    TRACE("(%p, %u, %p)\n", task, idx, dst);
+
+    if (idx >= This->trigger_count)
+        return SCHED_E_TRIGGER_NOT_FOUND;
+
+    src = &This->trigger[idx];
+
+    /* Native implementation doesn't verify equivalent cbTriggerSize fields */
+
+    /* Copy relevant fields of the structure */
+    dst->cbTriggerSize = src->cbTriggerSize;
+    dst->Reserved1 = 0;
+    dst->wBeginYear = src->wBeginYear;
+    dst->wBeginMonth = src->wBeginMonth;
+    dst->wBeginDay = src->wBeginDay;
+    dst->wEndYear = src->wEndYear;
+    dst->wEndMonth = src->wEndMonth;
+    dst->wEndDay = src->wEndDay;
+    dst->wStartHour = src->wStartHour;
+    dst->wStartMinute = src->wStartMinute;
+    dst->MinutesDuration = src->MinutesDuration;
+    dst->MinutesInterval = src->MinutesInterval;
+    dst->rgFlags = src->rgFlags;
+    dst->TriggerType = src->TriggerType;
+    switch (src->TriggerType)
+    {
+        case TASK_TIME_TRIGGER_DAILY:
+            dst->Type.Daily.DaysInterval = src->Type.Daily.DaysInterval;
+            break;
+        case TASK_TIME_TRIGGER_WEEKLY:
+            dst->Type.Weekly.WeeksInterval = src->Type.Weekly.WeeksInterval;
+            dst->Type.Weekly.rgfDaysOfTheWeek = src->Type.Weekly.rgfDaysOfTheWeek;
+            break;
+        case TASK_TIME_TRIGGER_MONTHLYDATE:
+            dst->Type.MonthlyDate.rgfDays = src->Type.MonthlyDate.rgfDays;
+            dst->Type.MonthlyDate.rgfMonths = src->Type.MonthlyDate.rgfMonths;
+            break;
+        case TASK_TIME_TRIGGER_MONTHLYDOW:
+            dst->Type.MonthlyDOW.wWhichWeek = src->Type.MonthlyDOW.wWhichWeek;
+            dst->Type.MonthlyDOW.rgfDaysOfTheWeek = src->Type.MonthlyDOW.rgfDaysOfTheWeek;
+            dst->Type.MonthlyDOW.rgfMonths = src->Type.MonthlyDOW.rgfMonths;
+            break;
+        case TASK_TIME_TRIGGER_ONCE:
+        case TASK_EVENT_TRIGGER_ON_IDLE:
+        case TASK_EVENT_TRIGGER_AT_SYSTEMSTART:
+        case TASK_EVENT_TRIGGER_AT_LOGON:
+        default:
+            break;
+    }
+    dst->Reserved2 = 0;
+    dst->wRandomMinutesInterval = 0;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskTrigger **task_trigger)
 {
     TaskImpl *This = impl_from_ITask(iface);
     TASK_TRIGGER *new_trigger;
+    SYSTEMTIME time;
     HRESULT hr;
 
     TRACE("(%p, %p, %p)\n", iface, idx, task_trigger);
 
-    hr = TaskTriggerConstructor((void **)task_trigger);
+    hr = TaskTriggerConstructor(iface, This->trigger_count, task_trigger);
     if (hr != S_OK) return hr;
 
     if (This->trigger)
@@ -167,9 +329,22 @@ static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskT
 
     This->trigger = new_trigger;
 
-    hr = ITaskTrigger_GetTrigger(*task_trigger, &This->trigger[This->trigger_count]);
-    if (hr == S_OK)
-        *idx = This->trigger_count++;
+    new_trigger = &This->trigger[This->trigger_count];
+
+    /* Most fields default to zero. Initialize other fields to default values. */
+    memset(new_trigger, 0, sizeof(*new_trigger));
+    GetLocalTime(&time);
+    new_trigger->cbTriggerSize = sizeof(*new_trigger);
+    new_trigger->wBeginYear = time.wYear;
+    new_trigger->wBeginMonth = time.wMonth;
+    new_trigger->wBeginDay = time.wDay;
+    new_trigger->wStartHour = time.wHour;
+    new_trigger->wStartMinute = time.wMinute;
+    new_trigger->rgFlags = TASK_TRIGGER_FLAG_DISABLED;
+    new_trigger->TriggerType = TASK_TIME_TRIGGER_DAILY,
+    new_trigger->Type.Daily.DaysInterval = 1;
+
+    *idx = This->trigger_count++;
 
     return hr;
 }
@@ -204,21 +379,13 @@ static HRESULT WINAPI MSTASK_ITask_GetTriggerCount(ITask *iface, WORD *count)
 static HRESULT WINAPI MSTASK_ITask_GetTrigger(ITask *iface, WORD idx, ITaskTrigger **trigger)
 {
     TaskImpl *This = impl_from_ITask(iface);
-    HRESULT hr;
 
     TRACE("(%p, %u, %p)\n", iface, idx, trigger);
 
     if (idx >= This->trigger_count)
         return SCHED_E_TRIGGER_NOT_FOUND;
 
-    hr = TaskTriggerConstructor((void **)trigger);
-    if (hr != S_OK) return hr;
-
-    hr = ITaskTrigger_SetTrigger(*trigger, &This->trigger[idx]);
-    if (hr != S_OK)
-        ITaskTrigger_Release(*trigger);
-
-    return hr;
+    return TaskTriggerConstructor(iface, idx, trigger);
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetTriggerString(

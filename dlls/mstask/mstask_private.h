@@ -27,9 +27,11 @@ extern LONG dll_ref DECLSPEC_HIDDEN;
 typedef struct ClassFactoryImpl ClassFactoryImpl;
 extern ClassFactoryImpl MSTASK_ClassFactory DECLSPEC_HIDDEN;
 
-extern HRESULT TaskTriggerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
+extern HRESULT TaskTriggerConstructor(ITask *task, WORD idx, ITaskTrigger **trigger) DECLSPEC_HIDDEN;
 extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
 extern HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, ITask **task) DECLSPEC_HIDDEN;
+extern HRESULT task_set_trigger(ITask *task, WORD idx, const TASK_TRIGGER *trigger) DECLSPEC_HIDDEN;
+extern HRESULT task_get_trigger(ITask *task, WORD idx, TASK_TRIGGER *trigger) DECLSPEC_HIDDEN;
 
 static inline WCHAR *heap_strdupW(const WCHAR *src)
 {

@@ -499,14 +499,12 @@ static void test_trigger_manager(void)
     hr = ITask_CreateTrigger(task, &idx, &trigger0);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(idx == 0, "got %u\n", idx);
-todo_wine
     ok(obj_refcount(task) == 2, "got %u\n", obj_refcount(task));
 
     idx = 0xdead;
     hr = ITask_CreateTrigger(task, &idx, &trigger1);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(idx == 1, "got %u\n", idx);
-todo_wine
     ok(obj_refcount(task) == 3, "got %u\n", obj_refcount(task));
 
     count = 0xdead;
@@ -524,9 +522,7 @@ todo_wine
 
     hr = get_task_trigger(task, 0, &state);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(state.wBeginYear == 3000, "got %u\n", state.wBeginYear);
-todo_wine
     ok(state.TriggerType == TASK_TIME_TRIGGER_ONCE, "got %u\n", state.TriggerType);
 
     hr = ITaskTrigger_GetTrigger(trigger1, &state1);
@@ -539,7 +535,6 @@ todo_wine
 
     hr = get_task_trigger(task, 1, &state);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(state.wBeginYear == 2000, "got %u\n", state.wBeginYear);
     ok(state.TriggerType == TASK_TIME_TRIGGER_DAILY, "got %u\n", state.TriggerType);
 
@@ -552,14 +547,11 @@ todo_wine
 
     hr = get_task_trigger(task, 0, &state);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(state.wBeginYear == 3000, "got %u\n", state.wBeginYear);
-todo_wine
     ok(state.TriggerType == TASK_TIME_TRIGGER_ONCE, "got %u\n", state.TriggerType);
 
     hr = get_task_trigger(task, 1, &state);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(state.wBeginYear == 2000, "got %u\n", state.wBeginYear);
     ok(state.TriggerType == TASK_TIME_TRIGGER_DAILY, "got %u\n", state.TriggerType);
 
@@ -573,7 +565,6 @@ todo_wine
 
     hr = get_task_trigger(task, 0, &state);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(state.wBeginYear == 2000, "got %u\n", state.wBeginYear);
     ok(state.TriggerType == TASK_TIME_TRIGGER_DAILY, "got %u\n", state.TriggerType);
 
@@ -584,7 +575,6 @@ todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
 
     hr = ITaskTrigger_SetTrigger(trigger1, &state1);
-todo_wine
     ok(hr == E_FAIL, "got %#x\n", hr);
 
     count = 0xdead;
@@ -592,7 +582,6 @@ todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
     ok(count == 1, "got %u\n", count);
 
-todo_wine
     ok(obj_refcount(task) == 3, "got %u\n", obj_refcount(task));
 
     ref = ITaskTrigger_Release(trigger0);
