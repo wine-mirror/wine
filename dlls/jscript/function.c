@@ -672,7 +672,8 @@ static HRESULT set_constructor_prop(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_
 {
     static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
 
-    return jsdisp_propput_dontenum(prot, constructorW, jsval_obj(constr));
+    return jsdisp_define_data_property(prot, constructorW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+                                       jsval_obj(constr));
 }
 
 HRESULT create_builtin_constructor(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,

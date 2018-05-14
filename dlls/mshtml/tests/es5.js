@@ -198,6 +198,7 @@ function test_getOwnPropertyDescriptor() {
     test_own_data_prop_desc(String, "prototype", false, false, false);
     test_own_data_prop_desc(function(){}, "prototype", true, false, false);
     test_own_data_prop_desc(Function, "prototype", false, false, false);
+    test_own_data_prop_desc(String.prototype, "constructor", true, false, true);
 
     next_test();
 }

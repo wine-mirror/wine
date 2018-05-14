@@ -1316,11 +1316,6 @@ HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
     return jsdisp_propput(obj, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
 }
 
-HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
-{
-    return jsdisp_propput(obj, name, PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
-}
-
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
 {
     WCHAR buf[12];
