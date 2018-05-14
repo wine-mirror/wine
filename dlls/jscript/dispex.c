@@ -1316,18 +1316,6 @@ HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
     return jsdisp_propput(obj, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
 }
 
-HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
-{
-    dispex_prop_t *prop;
-    HRESULT hres;
-
-    hres = ensure_prop_name(obj, name, FALSE, 0, &prop);
-    if(FAILED(hres))
-        return hres;
-
-    return jsval_copy(val, &prop->u.val);
-}
-
 HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
     return jsdisp_propput(obj, name, PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
