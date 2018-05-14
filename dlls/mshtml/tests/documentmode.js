@@ -144,6 +144,7 @@ function test_javascript() {
     if(v != 8) {
         test_exposed("getOwnPropertyDescriptor", Object, v >= 8);
         test_exposed("defineProperty", Object, v >= 8);
+        test_exposed("defineProperties", Object, v >= 8);
     }
 
     test_parses("if(false) { o.default; }", v >= 9);

@@ -36,6 +36,8 @@ static const WCHAR getOwnPropertyDescriptorW[] =
     {'g','e','t','O','w','n','P','r','o','p','e','r','t','y','D','e','s','c','r','i','p','t','o','r',0};
 static const WCHAR definePropertyW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','y',0};
 
+static const WCHAR definePropertiesW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','i','e','s',0};
+
 static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','j','e','c','t',']',0};
 
 static const WCHAR configurableW[] = {'c','o','n','f','i','g','u','r','a','b','l','e',0};
@@ -447,6 +449,13 @@ static HRESULT Object_defineProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     return hres;
 }
 
+static HRESULT Object_defineProperties(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                                     unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
                                                unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -511,6 +520,7 @@ static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthi
 }
 
 static const builtin_prop_t ObjectConstr_props[] = {
+    {definePropertiesW,         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {definePropertyW,           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
     {getOwnPropertyDescriptorW, Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2}
 };
