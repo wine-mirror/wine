@@ -641,11 +641,6 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     return S_OK;
 }
 
-static inline HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prototype)
-{
-    return jsdisp_propput_dontenum(dispex, prototypeW, jsval_obj(prototype));
-}
-
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
         const builtin_info_t *builtin_info, DWORD flags, jsdisp_t *prototype, jsdisp_t **ret)
 {
@@ -660,7 +655,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         hres = jsdisp_define_data_property(&function->dispex, lengthW, 0,
                                            jsval_number(function->length));
     if(SUCCEEDED(hres))
-        hres = set_prototype(ctx, &function->dispex, prototype);
+        hres = jsdisp_define_data_property(&function->dispex, prototypeW, 0, jsval_obj(prototype));
     if(FAILED(hres)) {
         jsdisp_release(&function->dispex);
         return hres;
@@ -713,7 +708,8 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
 
     hres = create_function(ctx, NULL, PROPF_CONSTR, FALSE, NULL, &function);
     if(SUCCEEDED(hres)) {
-        hres = set_prototype(ctx, &function->dispex, prototype);
+        hres = jsdisp_define_data_property(&function->dispex, prototypeW, PROPF_WRITABLE,
+                                           jsval_obj(prototype));
         if(SUCCEEDED(hres))
             hres = set_constructor_prop(ctx, &function->dispex, prototype);
         if(FAILED(hres))
@@ -871,7 +867,7 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(SUCCEEDED(hres)) {
         constr->value_proc = FunctionConstr_value;
         constr->name = FunctionW;
-        hres = set_prototype(ctx, &constr->dispex, &prot->dispex);
+        hres = jsdisp_define_data_property(&constr->dispex, prototypeW, 0, jsval_obj(&prot->dispex));
         if(SUCCEEDED(hres))
             hres = set_constructor_prop(ctx, &constr->dispex, &prot->dispex);
         if(FAILED(hres))
