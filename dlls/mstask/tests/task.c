@@ -25,34 +25,9 @@
 #include "mstask.h"
 #include "wine/test.h"
 
-static ITaskScheduler *test_task_scheduler;
-static ITask *test_task;
+static ITaskScheduler *scheduler;
+static const WCHAR task_name[] = {'T','e','s','t','i','n','g',0};
 static const WCHAR empty[] = {0};
-
-static BOOL setup_task(void)
-{
-    HRESULT hres;
-    const WCHAR task_name[] = {'T','e','s','t','i','n','g', 0};
-
-    hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
-            &IID_ITaskScheduler, (void **) &test_task_scheduler);
-    if(hres != S_OK)
-        return FALSE;
-    hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name, &CLSID_CTask,
-            &IID_ITask, (IUnknown**)&test_task);
-    if(hres != S_OK)
-    {
-        ITaskScheduler_Release(test_task_scheduler);
-        return FALSE;
-    }
-    return TRUE;
-}
-
-static void cleanup_task(void)
-{
-    ITask_Release(test_task);
-    ITaskScheduler_Release(test_task_scheduler);
-}
 
 static LPCWSTR path_resolve_name(LPCWSTR base_name)
 {
@@ -72,7 +47,7 @@ static LPCWSTR path_resolve_name(LPCWSTR base_name)
 
 static void test_SetApplicationName_GetApplicationName(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     LPWSTR stored_name;
     LPCWSTR full_name;
@@ -82,13 +57,9 @@ static void test_SetApplicationName_GetApplicationName(void)
             'n','o','t','e','p','a','d','.','e','x','e', 0};
     const WCHAR notepad[] = {'n','o','t','e','p','a','d', 0};
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     /* Attempt getting before setting application name */
     hres = ITask_GetApplicationName(test_task, &stored_name);
@@ -176,54 +147,39 @@ static void test_SetApplicationName_GetApplicationName(void)
         CoTaskMemFree(stored_name);
     }
 
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_CreateTrigger(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     WORD trigger_index;
     ITaskTrigger *test_trigger;
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     hres = ITask_CreateTrigger(test_task, &trigger_index, &test_trigger);
     ok(hres == S_OK, "Failed to create trigger: 0x%08x\n", hres);
-    if (hres != S_OK)
-    {
-        cleanup_task();
-        return;
-    }
 
     ITaskTrigger_Release(test_trigger);
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_SetParameters_GetParameters(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     LPWSTR parameters;
     const WCHAR parameters_a[] = {'f','o','o','.','t','x','t', 0};
     const WCHAR parameters_b[] = {'f','o','o','.','t','x','t',' ',
         'b','a','r','.','t','x','t', 0};
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     /* Get parameters before setting them */
     hres = ITask_GetParameters(test_task, &parameters);
@@ -274,26 +230,21 @@ static void test_SetParameters_GetParameters(void)
         CoTaskMemFree(parameters);
     }
 
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_SetComment_GetComment(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     LPWSTR comment;
     const WCHAR comment_a[] = {'C','o','m','m','e','n','t','.', 0};
     const WCHAR comment_b[] = {'L','o','n','g','e','r',' ',
             'c','o','m','m','e','n','t','.', 0};
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     /* Get comment before setting it*/
     hres = ITask_GetComment(test_task, &comment);
@@ -344,23 +295,18 @@ static void test_SetComment_GetComment(void)
         CoTaskMemFree(comment);
     }
 
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_SetMaxRunTime_GetMaxRunTime(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     DWORD max_run_time;
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     /* Default time is 3 days:
      * 3 days * 24 hours * 60 minutes * 60 seconds * 1000 ms = 259200000 */
@@ -401,13 +347,12 @@ static void test_SetMaxRunTime_GetMaxRunTime(void)
     ok(hres == S_OK, "Failed to get max runtime: 0x%08x\n", hres);
     ok(max_run_time == INFINITE, "Expected INFINITE: %d\n", max_run_time);
 
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_SetAccountInformation_GetAccountInformation(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hres;
     LPWSTR account_name;
     const WCHAR dummy_account_name[] = {'N', 'o', 'S', 'u', 'c', 'h',
@@ -415,13 +360,9 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     const WCHAR dummy_account_name_b[] = {'N', 'o', 'S', 'u', 'c', 'h',
             'A', 'c', 'c', 'o', 'u', 'n', 't', 'B', 0};
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task.  Skipping tests.\n");
-        return;
-    }
+    hres = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                      &IID_ITask, (IUnknown **)&test_task);
+    ok(hres == S_OK, "Failed to setup test_task\n");
 
     /* Get account information before it is set */
     hres = ITask_GetAccountInformation(test_task, &account_name);
@@ -431,8 +372,7 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     if (hres == SCHED_E_NO_SECURITY_SERVICES || hres == SCHED_E_SERVICE_NOT_RUNNING)
     {
         win_skip("Security services are not supported\n");
-        cleanup_task();
-        return;
+        ITask_Release(test_task);
     }
     ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
             hres == SCHED_E_CANNOT_OPEN_TASK,
@@ -493,25 +433,20 @@ static void test_SetAccountInformation_GetAccountInformation(void)
         CoTaskMemFree(account_name);
     }
 
-    cleanup_task();
-    return;
+    ITask_Release(test_task);
 }
 
 static void test_task_state(void)
 {
-    BOOL setup;
+    ITask *test_task;
     HRESULT hr, status;
     DWORD flags, val;
     WORD val1, val2;
     SYSTEMTIME st;
 
-    setup = setup_task();
-    ok(setup, "Failed to setup test_task\n");
-    if (!setup)
-    {
-        skip("Failed to create task. Skipping tests.\n");
-        return;
-    }
+    hr = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                    &IID_ITask, (IUnknown **)&test_task);
+    ok(hr == S_OK, "Failed to setup test_task\n");
 
     if (0) /* crashes under Windows */
         hr = ITask_GetFlags(test_task, NULL);
@@ -588,7 +523,7 @@ static void test_task_state(void)
     ok(st.wMinute == 0, "got %u\n", st.wMinute);
     ok(st.wSecond == 0, "got %u\n", st.wSecond);
 
-    cleanup_task();
+    ITask_Release(test_task);
 }
 
 static void save_job(ITask *task)
@@ -609,17 +544,12 @@ static void test_Run(void)
 {
     static const WCHAR wine_test_runW[] = { 'w','i','n','e','_','t','e','s','t','_','r','u','n',0 };
     static const WCHAR cmdW[] = { 'c','m','d','.','e','x','e',0 };
-    ITaskScheduler *scheduler;
     ITask *task;
     ITaskTrigger *trigger;
     WORD idx, i;
     TASK_TRIGGER trigger_data;
     SYSTEMTIME st;
     HRESULT hr, status;
-
-    hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_ITaskScheduler, (void **)&scheduler);
-    ok(hr == S_OK, "got %#x\n", hr);
 
     /* cleanup after previous runs */
     ITaskScheduler_Delete(scheduler, wine_test_runW);
@@ -751,12 +681,17 @@ static void test_Run(void)
 
     hr = ITaskScheduler_Delete(scheduler, wine_test_runW);
     ok(hr == S_OK, "got %#x\n", hr);
-    ITaskScheduler_Release(scheduler);
 }
 
 START_TEST(task)
 {
+    HRESULT hr;
+
     CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ITaskScheduler, (void **)&scheduler);
+    ok(hr == S_OK, "failed to create task scheduler: %#x\n", hr);
+
     test_SetApplicationName_GetApplicationName();
     test_CreateTrigger();
     test_SetParameters_GetParameters();
@@ -765,5 +700,7 @@ START_TEST(task)
     test_SetAccountInformation_GetAccountInformation();
     test_task_state();
     test_Run();
+
+    ITaskScheduler_Release(scheduler);
     CoUninitialize();
 }
