@@ -4060,31 +4060,27 @@ static void test_frame_latency(void)
     }
 
     hr = IDirect3DDevice9Ex_GetMaximumFrameLatency(device, &latency);
-todo_wine {
     ok(SUCCEEDED(hr), "Failed to get max frame latency, hr %#x.\n", hr);
     ok(latency == 3, "Unexpected default max frame latency %u.\n", latency);
-}
+
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 1);
     ok(SUCCEEDED(hr), "Failed to set max frame latency, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9Ex_GetMaximumFrameLatency(device, &latency);
-todo_wine {
     ok(SUCCEEDED(hr), "Failed to get max frame latency, hr %#x.\n", hr);
     ok(latency == 1, "Unexpected max frame latency %u.\n", latency);
-}
+
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 0);
     ok(SUCCEEDED(hr), "Failed to set max frame latency, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9Ex_GetMaximumFrameLatency(device, &latency);
-todo_wine {
     ok(SUCCEEDED(hr), "Failed to get max frame latency, hr %#x.\n", hr);
     ok(latency == 3, "Unexpected default max frame latency %u.\n", latency);
-}
+
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 30);
     ok(SUCCEEDED(hr), "Failed to set max frame latency, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 31);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
 
     refcount = IDirect3DDevice9Ex_Release(device);
