@@ -901,19 +901,24 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     /* Perform the TLS handshake */
     ret = schan_imp_handshake(ctx->session);
 
+    out_buffers = &ctx->transport.out;
+    if (out_buffers->current_buffer_idx != -1)
+    {
+        SecBuffer *buffer = &out_buffers->desc->pBuffers[out_buffers->current_buffer_idx];
+        buffer->cbBuffer = out_buffers->offset;
+    }
+    else if (out_buffers->desc && out_buffers->desc->cBuffers > 0)
+    {
+        SecBuffer *buffer = &out_buffers->desc->pBuffers[0];
+        buffer->cbBuffer = 0;
+    }
+
     if(ctx->transport.in.offset && ctx->transport.in.offset != pInput->pBuffers[0].cbBuffer) {
         if(pInput->cBuffers<2 || pInput->pBuffers[1].BufferType!=SECBUFFER_EMPTY)
             return SEC_E_INVALID_TOKEN;
 
         pInput->pBuffers[1].BufferType = SECBUFFER_EXTRA;
         pInput->pBuffers[1].cbBuffer = pInput->pBuffers[0].cbBuffer-ctx->transport.in.offset;
-    }
-
-    out_buffers = &ctx->transport.out;
-    if (out_buffers->current_buffer_idx != -1)
-    {
-        SecBuffer *buffer = &out_buffers->desc->pBuffers[out_buffers->current_buffer_idx];
-        buffer->cbBuffer = out_buffers->offset;
     }
 
     *pfContextAttr = 0;
