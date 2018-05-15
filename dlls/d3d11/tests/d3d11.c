@@ -9684,6 +9684,7 @@ static void test_clear_state(void)
     float blend_factor[4];
     ID3D11Device *device;
     BOOL predicate_value;
+    UINT instance_count;
     DXGI_FORMAT format;
     UINT sample_mask;
     UINT stencil_ref;
@@ -9719,8 +9720,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_VSGetShader(context, &tmp_vs, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_VSGetShader(context, &tmp_vs, NULL, &instance_count);
     ok(!tmp_vs, "Got unexpected vertex shader %p.\n", tmp_vs);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
 
     ID3D11DeviceContext_HSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
             tmp_buffer);
@@ -9738,8 +9741,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_HSGetShader(context, &tmp_hs, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_HSGetShader(context, &tmp_hs, NULL, &instance_count);
     ok(!tmp_hs, "Got unexpected hull shader %p.\n", tmp_hs);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
 
     ID3D11DeviceContext_DSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
             tmp_buffer);
@@ -9757,8 +9762,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_DSGetShader(context, &tmp_ds, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_DSGetShader(context, &tmp_ds, NULL, &instance_count);
     ok(!tmp_ds, "Got unexpected domain shader %p.\n", tmp_ds);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
 
     ID3D11DeviceContext_GSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
             tmp_buffer);
@@ -9776,8 +9783,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_GSGetShader(context, &tmp_gs, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_GSGetShader(context, &tmp_gs, NULL, &instance_count);
     ok(!tmp_gs, "Got unexpected geometry shader %p.\n", tmp_gs);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
 
     ID3D11DeviceContext_PSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
             tmp_buffer);
@@ -9796,8 +9805,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_PSGetShader(context, &tmp_ps, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_PSGetShader(context, &tmp_ps, NULL, &instance_count);
     ok(!tmp_ps, "Got unexpected pixel shader %p.\n", tmp_ps);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
 
     ID3D11DeviceContext_CSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
             tmp_buffer);
@@ -9816,8 +9827,10 @@ static void test_clear_state(void)
     {
         ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
     }
-    ID3D11DeviceContext_CSGetShader(context, &tmp_cs, NULL, 0);
+    instance_count = 100;
+    ID3D11DeviceContext_CSGetShader(context, &tmp_cs, NULL, &instance_count);
     ok(!tmp_cs, "Got unexpected compute shader %p.\n", tmp_cs);
+    ok(!instance_count, "Got unexpected instance count %u.\n", instance_count);
     ID3D11DeviceContext_CSGetUnorderedAccessViews(context, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
     for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
     {

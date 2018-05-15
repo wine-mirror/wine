@@ -1522,6 +1522,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_PSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_pixel_shader(device->wined3d_device)))
@@ -1577,6 +1579,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_vertex_shader(device->wined3d_device)))
@@ -1745,6 +1749,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_geometry_shader(device->wined3d_device)))
@@ -2187,6 +2193,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_hull_shader(device->wined3d_device)))
@@ -2294,6 +2302,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_domain_shader(device->wined3d_device)))
@@ -2426,6 +2436,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShader(ID3D11DeviceCo
 
     if (class_instances || class_instance_count)
         FIXME("Dynamic linking not implemented yet.\n");
+    if (class_instance_count)
+        *class_instance_count = 0;
 
     wined3d_mutex_lock();
     if (!(wined3d_shader = wined3d_device_get_compute_shader(device->wined3d_device)))
