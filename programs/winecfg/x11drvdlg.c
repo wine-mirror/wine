@@ -53,6 +53,7 @@ static const WCHAR explorerW[] = {'E','x','p','l','o','r','e','r',0};
 static const WCHAR explorer_desktopsW[] = {'E','x','p','l','o','r','e','r','\\',
                                            'D','e','s','k','t','o','p','s',0};
 
+static const UINT dpi_values[] = { 96, 120, 144, 168, 192, 216, 240, 288, 336, 384, 432, 480 };
 
 static BOOL updating_ui;
 
@@ -258,6 +259,15 @@ static void init_dpi_editbox(HWND hDlg)
     updating_ui = FALSE;
 }
 
+static int get_trackbar_pos( UINT dpi )
+{
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(dpi_values) - 1; i++)
+        if ((dpi_values[i] + dpi_values[i + 1]) / 2 >= dpi) break;
+    return i;
+}
+
 static void init_trackbar(HWND hDlg)
 {
     HWND hTrackBar = GetDlgItem(hDlg, IDC_RES_TRACKBAR);
@@ -267,8 +277,9 @@ static void init_trackbar(HWND hDlg)
 
     dwLogpixels = read_logpixels_reg();
 
-    SendMessageW(hTrackBar, TBM_SETRANGE, TRUE, MAKELONG(MINDPI, MAXDPI));
-    SendMessageW(hTrackBar, TBM_SETPOS, TRUE, dwLogpixels);
+    SendMessageW(hTrackBar, TBM_SETRANGE, TRUE, MAKELONG(0, ARRAY_SIZE(dpi_values)-1));
+    SendMessageW(hTrackBar, TBM_SETPAGESIZE, 0, 1);
+    SendMessageW(hTrackBar, TBM_SETPOS, TRUE, get_trackbar_pos(dwLogpixels));
 
     updating_ui = FALSE;
 }
@@ -297,7 +308,7 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
 
     if (dpi >= MINDPI && dpi <= MAXDPI)
     {
-        SendDlgItemMessageW(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, dpi);
+        SendDlgItemMessageW(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, get_trackbar_pos(dpi));
         set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, dpi);
     }
 
@@ -416,9 +427,9 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    switch (wParam) {
 		default: {
 		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
-		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, i, TRUE);
+		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dpi_values[i], TRUE);
 		    update_font_preview(hDlg);
-		    set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, i);
+		    set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, dpi_values[i]);
 		    break;
 		}
 	    }
