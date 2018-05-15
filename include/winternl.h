@@ -2169,6 +2169,32 @@ typedef struct _LDR_MODULE
     HANDLE              ActivationContext;
 } LDR_MODULE, *PLDR_MODULE;
 
+typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA
+{
+    ULONG Flags;
+    const UNICODE_STRING *FullDllName;
+    const UNICODE_STRING *BaseDllName;
+    void *DllBase;
+    ULONG SizeOfImage;
+} LDR_DLL_LOADED_NOTIFICATION_DATA, *PLDR_DLL_LOADED_NOTIFICATION_DATA;
+
+typedef struct _LDR_DLL_UNLOADED_NOTIFICATION_DATA
+{
+    ULONG Flags;
+    const UNICODE_STRING *FullDllName;
+    const UNICODE_STRING *BaseDllName;
+    void *DllBase;
+    ULONG SizeOfImage;
+} LDR_DLL_UNLOADED_NOTIFICATION_DATA, *PLDR_DLL_UNLOADED_NOTIFICATION_DATA;
+
+typedef union _LDR_DLL_NOTIFICATION_DATA
+{
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+} LDR_DLL_NOTIFICATION_DATA, *PLDR_DLL_NOTIFICATION_DATA;
+
+typedef void (CALLBACK *PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG, LDR_DLL_NOTIFICATION_DATA*, void*);
+
 /* those defines are (some of the) regular LDR_MODULE.Flags values */
 #define LDR_IMAGE_IS_DLL                0x00000004
 #define LDR_LOAD_IN_PROGRESS            0x00001000
@@ -2184,6 +2210,9 @@ typedef struct _LDR_MODULE
 
 /* flag for LdrAddRefDll */
 #define LDR_ADDREF_DLL_PIN              0x00000001
+
+#define LDR_DLL_NOTIFICATION_REASON_LOADED   1
+#define LDR_DLL_NOTIFICATION_REASON_UNLOADED 2
 
 /* FIXME: to be checked */
 #define MAXIMUM_FILENAME_LENGTH 256

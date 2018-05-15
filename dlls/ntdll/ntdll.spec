@@ -83,6 +83,7 @@
 @ stdcall LdrProcessRelocationBlock(ptr long ptr long)
 @ stdcall LdrQueryImageFileExecutionOptions(ptr wstr long ptr long ptr)
 @ stdcall LdrQueryProcessModuleInformation(ptr long ptr)
+@ stdcall LdrRegisterDllNotification(long ptr ptr ptr)
 @ stdcall LdrResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long)
 @ stub LdrSetAppCompatDllRedirectionCallback
 @ stub LdrSetDllManifestProber
@@ -91,6 +92,7 @@
 @ stub LdrUnloadAlternateResourceModule
 @ stdcall LdrUnloadDll(ptr)
 @ stdcall LdrUnlockLoaderLock(long long)
+@ stdcall LdrUnregisterDllNotification(ptr)
 @ stub LdrVerifyImageMatchesChecksum
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag

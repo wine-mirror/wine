@@ -1462,6 +1462,25 @@ NTSTATUS WINAPI LdrEnumerateLoadedModules( void *unknown, LDRENUMPROC callback, 
 }
 
 /******************************************************************
+ *              LdrRegisterDllNotification (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrRegisterDllNotification(ULONG flags, PLDR_DLL_NOTIFICATION_FUNCTION callback,
+                                           void *context, void **cookie)
+{
+    FIXME( "(%04x, %p, %p, %p) stub\n", flags, callback, context, cookie );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
+ *              LdrUnregisterDllNotification (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrUnregisterDllNotification( void *cookie )
+{
+    FIXME( "(%p) stub\n", cookie );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
  *		LdrLockLoaderLock  (NTDLL.@)
  *
  * Note: some flags are not implemented.
