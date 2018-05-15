@@ -434,7 +434,13 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
 static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
 {
+    jsdisp_t *prop_obj = This;
     HRESULT hres;
+
+    while(prop->type == PROP_PROTREF) {
+        prop_obj = prop_obj->prototype;
+        prop = prop_obj->props + prop->u.ref;
+    }
 
     switch(prop->type) {
     case PROP_BUILTIN:
@@ -456,18 +462,20 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
             *r = jsval_obj(obj);
         }
         break;
-    case PROP_PROTREF:
-        hres = prop_get(This->prototype, This->prototype->props + prop->u.ref, r);
-        break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
         break;
     case PROP_ACCESSOR:
-        FIXME("not supported on accessor property\n");
-        hres = E_NOTIMPL;
+        if(prop->u.accessor.getter) {
+            hres = jsdisp_call_value(prop->u.accessor.getter, to_disp(This),
+                                     DISPATCH_METHOD, 0, NULL, r);
+        }else {
+            *r = jsval_undefined();
+            hres = S_OK;
+        }
         break;
     case PROP_IDX:
-        hres = This->builtin_info->idx_get(This, prop->u.idx, r);
+        hres = prop_obj->builtin_info->idx_get(prop_obj, prop->u.idx, r);
         break;
     default:
         ERR("type %d\n", prop->type);
