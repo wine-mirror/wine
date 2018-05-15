@@ -5253,27 +5253,19 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
 BOOL WINAPI CheckMenuRadioItem(HMENU hMenu, UINT first, UINT last,
     UINT check, UINT flags)
 {
-    POPUPMENU *first_menu = NULL, *check_menu = NULL;
-    UINT i, first_pos, check_pos;
+    POPUPMENU *first_menu = NULL, *check_menu;
+    UINT i, check_pos;
     BOOL done = FALSE;
 
     for (i = first; i <= last; i++)
     {
         MENUITEM *item;
 
-        if (!first_menu)
-        {
-            if (!(first_menu = find_menu_item(hMenu, i, flags, &first_pos)))
-                continue;
+        if (!(check_menu = find_menu_item(hMenu, i, flags, &check_pos)))
+            continue;
 
-            check_pos = first_pos;
-            check_menu = grab_menu_ptr(first_menu->obj.handle);
-        }
-        else
-        {
-            if (!(check_menu = find_menu_item(hMenu, i, flags, &check_pos)))
-                continue;
-        }
+        if (!first_menu)
+            first_menu = grab_menu_ptr(check_menu->obj.handle);
 
         if (first_menu != check_menu)
         {
