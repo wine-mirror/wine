@@ -59,10 +59,9 @@ typedef struct
     ITaskDefinition *task;
     IExecAction *action;
     LPWSTR task_name;
-    UINT flags;
     HRESULT status;
     WORD idle_minutes, deadline_minutes;
-    DWORD priority, maxRunTime;
+    DWORD flags, priority, maxRunTime, exit_code;
     LPWSTR accountName;
     DWORD trigger_count;
     TASK_TRIGGER *trigger;
@@ -492,10 +491,12 @@ static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)
 
 static HRESULT WINAPI MSTASK_ITask_GetExitCode(ITask *iface, DWORD *exit_code)
 {
-    FIXME("(%p, %p): stub\n", iface, exit_code);
+    TaskImpl *This = impl_from_ITask(iface);
 
-    *exit_code = 0;
-    return SCHED_S_TASK_HAS_NOT_RUN;
+    TRACE("(%p, %p)\n", iface, exit_code);
+
+    *exit_code = This->exit_code;
+    return SCHED_S_TASK_HAS_NOT_RUN; /* FIXME */
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetComment(ITask *iface, LPCWSTR comment)
@@ -1073,6 +1074,7 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     TRACE("maximum_runtime %u\n", fixed->maximum_runtime);
     This->maxRunTime = fixed->maximum_runtime;
     TRACE("exit_code %#x\n", fixed->exit_code);
+    This->exit_code = fixed->exit_code;
     TRACE("status %08x\n", fixed->status);
     This->status = fixed->status;
     TRACE("flags %08x\n", fixed->flags);
@@ -1428,7 +1430,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     fixed.idle_deadline = This->deadline_minutes;
     fixed.priority = This->priority;
     fixed.maximum_runtime = This->maxRunTime;
-    fixed.exit_code = 0;
+    fixed.exit_code = This->exit_code;
     if (This->status == SCHED_S_TASK_NOT_SCHEDULED && This->trigger_count)
         This->status = SCHED_S_TASK_HAS_NOT_RUN;
     fixed.status = This->status;
@@ -1656,6 +1658,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->task_name = heap_strdupW(task_name);
     This->flags = 0;
     This->status = SCHED_S_TASK_NOT_SCHEDULED;
+    This->exit_code = 0;
     This->idle_minutes = 10;
     This->deadline_minutes = 60;
     This->priority = NORMAL_PRIORITY_CLASS;
