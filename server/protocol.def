@@ -2564,6 +2564,7 @@ enum message_type
 @REPLY
     user_handle_t  old_parent;  /* old parent window */
     user_handle_t  full_parent; /* full handle of new parent */
+    int            awareness;   /* new DPI awareness */
 @END
 
 

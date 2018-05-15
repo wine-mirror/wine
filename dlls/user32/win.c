@@ -3083,6 +3083,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
         {
             old_parent = wine_server_ptr_handle( reply->old_parent );
             wndPtr->parent = parent = wine_server_ptr_handle( reply->full_parent );
+            wndPtr->dpi_awareness = reply->awareness;
         }
 
     }

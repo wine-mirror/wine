@@ -3526,7 +3526,7 @@ static void test_dpi_window(void)
     DPI_AWARENESS_CONTEXT context, orig;
     DPI_AWARENESS awareness;
     ULONG_PTR i, j;
-    HWND hwnd, child;
+    HWND hwnd, child, ret;
     MSG msg = { 0, WM_USER + 1, 0, 0 };
 
     if (!pGetWindowDpiAwarenessContext)
@@ -3553,6 +3553,22 @@ static void test_dpi_window(void)
             CallWindowProcA( dpi_winproc, hwnd, WM_USER + 2, 0, 0 );
             child = CreateWindowA( "DpiTestClass", "Test",
                                    WS_CHILD, 0, 0, 100, 100, hwnd, 0, GetModuleHandleA(0), NULL );
+            context = pGetWindowDpiAwarenessContext( child );
+            awareness = pGetAwarenessFromDpiAwarenessContext( context );
+            ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ret = SetParent( child, NULL );
+            ok( ret != 0, "SetParent failed err %u\n", GetLastError() );
+            context = pGetWindowDpiAwarenessContext( child );
+            awareness = pGetAwarenessFromDpiAwarenessContext( context );
+            ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            DestroyWindow( child );
+            child = CreateWindowA( "DpiTestClass", "Test",
+                                   WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+            context = pGetWindowDpiAwarenessContext( child );
+            awareness = pGetAwarenessFromDpiAwarenessContext( context );
+            ok( awareness == j, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            ret = SetParent( child, hwnd );
+            ok( ret != 0, "SetParent failed err %u\n", GetLastError() );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );

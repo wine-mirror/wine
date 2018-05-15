@@ -3131,6 +3131,7 @@ static void dump_set_parent_reply( const struct set_parent_reply *req )
 {
     fprintf( stderr, " old_parent=%08x", req->old_parent );
     fprintf( stderr, ", full_parent=%08x", req->full_parent );
+    fprintf( stderr, ", awareness=%d", req->awareness );
 }
 
 static void dump_get_window_parents_request( const struct get_window_parents_request *req )

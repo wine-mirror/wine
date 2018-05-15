@@ -250,6 +250,8 @@ static int set_parent_window( struct window *win, struct window *parent )
         win->parent = parent;
         link_window( win, WINPTR_TOP );
 
+        if (!is_desktop_window( parent )) win->dpi_awareness = parent->dpi_awareness;
+
         /* if parent belongs to a different thread and the window isn't */
         /* top-level, attach the two threads */
         if (parent->thread && parent->thread != win->thread && !is_desktop_window(parent))
@@ -1939,6 +1941,7 @@ DECL_HANDLER(set_parent)
     reply->old_parent  = win->parent->handle;
     reply->full_parent = parent ? parent->handle : 0;
     set_parent_window( win, parent );
+    reply->awareness = win->dpi_awareness;
 }
 
 

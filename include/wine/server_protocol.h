@@ -3571,6 +3571,8 @@ struct set_parent_reply
     struct reply_header __header;
     user_handle_t  old_parent;
     user_handle_t  full_parent;
+    int            awareness;
+    char __pad_20[4];
 };
 
 
@@ -6507,6 +6509,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 549
+#define SERVER_PROTOCOL_VERSION 550
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
