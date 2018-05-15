@@ -3526,7 +3526,7 @@ static void test_dpi_window(void)
     DPI_AWARENESS_CONTEXT context, orig;
     DPI_AWARENESS awareness;
     ULONG_PTR i, j;
-    HWND hwnd;
+    HWND hwnd, child;
     MSG msg = { 0, WM_USER + 1, 0, 0 };
 
     if (!pGetWindowDpiAwarenessContext)
@@ -3551,6 +3551,12 @@ static void test_dpi_window(void)
             SendMessageA( hwnd, WM_USER, 0, 0 );
             DispatchMessageA( &msg );
             CallWindowProcA( dpi_winproc, hwnd, WM_USER + 2, 0, 0 );
+            child = CreateWindowA( "DpiTestClass", "Test",
+                                   WS_CHILD, 0, 0, 100, 100, hwnd, 0, GetModuleHandleA(0), NULL );
+            context = pGetWindowDpiAwarenessContext( child );
+            awareness = pGetAwarenessFromDpiAwarenessContext( context );
+            ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            DestroyWindow( child );
         }
         DestroyWindow( hwnd );
     }

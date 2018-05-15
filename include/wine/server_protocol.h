@@ -3443,7 +3443,9 @@ struct create_window_request
     user_handle_t  owner;
     atom_t         atom;
     mod_handle_t   instance;
+    int            awareness;
     /* VARARG(class,unicode_str); */
+    char __pad_36[4];
 };
 struct create_window_reply
 {
@@ -3453,6 +3455,8 @@ struct create_window_reply
     user_handle_t  owner;
     int            extra;
     client_ptr_t   class_ptr;
+    int            awareness;
+    char __pad_36[4];
 };
 
 
@@ -3513,6 +3517,8 @@ struct get_window_info_reply
     thread_id_t    tid;
     atom_t         atom;
     int            is_unicode;
+    int            awareness;
+    char __pad_36[4];
 };
 
 
@@ -6501,6 +6507,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 548
+#define SERVER_PROTOCOL_VERSION 549
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

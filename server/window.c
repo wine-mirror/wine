@@ -83,6 +83,7 @@ struct window
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
+    DPI_AWARENESS    dpi_awareness;   /* DPI awareness mode */
     lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
@@ -429,7 +430,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner,
-                                     atom_t atom, mod_handle_t instance )
+                                     atom_t atom, mod_handle_t instance, DPI_AWARENESS dpi_awareness )
 {
     static const rectangle_t empty_rect;
     int extra_bytes;
@@ -466,6 +467,8 @@ static struct window *create_window( struct window *parent, struct window *owner
         goto failed;
     }
 
+    if (parent && !is_desktop_window( parent )) dpi_awareness = parent->dpi_awareness;
+
     if (!(win = mem_alloc( sizeof(*win) + extra_bytes - 1 ))) goto failed;
     if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
 
@@ -485,6 +488,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;
+    win->dpi_awareness  = dpi_awareness;
     win->user_data      = 0;
     win->text           = NULL;
     win->paint_flags    = 0;
@@ -1908,12 +1912,13 @@ DECL_HANDLER(create_window)
 
     atom = cls_name.len ? find_global_atom( NULL, &cls_name ) : req->atom;
 
-    if (!(win = create_window( parent, owner, atom, req->instance ))) return;
+    if (!(win = create_window( parent, owner, atom, req->instance, req->awareness ))) return;
 
     reply->handle    = win->handle;
     reply->parent    = win->parent ? win->parent->handle : 0;
     reply->owner     = win->owner;
     reply->extra     = win->nb_extra_bytes;
+    reply->awareness = win->dpi_awareness;
     reply->class_ptr = get_class_client_ptr( win->class );
 }
 
@@ -1963,7 +1968,8 @@ DECL_HANDLER(get_desktop_window)
 
     if (!desktop->top_window && force)  /* create it */
     {
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0,
+                                                  DPI_AWARENESS_PER_MONITOR_AWARE )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -1975,7 +1981,8 @@ DECL_HANDLER(get_desktop_window)
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         atom_t atom = add_global_atom( NULL, &name );
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0 )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0,
+                                                          DPI_AWARENESS_PER_MONITOR_AWARE )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2022,20 +2029,18 @@ DECL_HANDLER(get_window_info)
 {
     struct window *win = get_window( req->handle );
 
-    reply->full_handle = 0;
-    reply->tid = reply->pid = 0;
-    if (win)
+    if (!win) return;
+
+    reply->full_handle = win->handle;
+    reply->last_active = win->handle;
+    reply->is_unicode  = win->is_unicode;
+    reply->awareness   = win->dpi_awareness;
+    if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
+    if (win->thread)
     {
-        reply->full_handle = win->handle;
-        reply->last_active = win->handle;
-        reply->is_unicode  = win->is_unicode;
-        if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
-        if (win->thread)
-        {
-            reply->tid  = get_thread_id( win->thread );
-            reply->pid  = get_process_id( win->thread->process );
-            reply->atom = win->class ? get_class_atom( win->class ) : DESKTOP_ATOM;
-        }
+        reply->tid  = get_thread_id( win->thread );
+        reply->pid  = get_process_id( win->thread->process );
+        reply->atom = win->class ? get_class_atom( win->class ) : DESKTOP_ATOM;
     }
 }
 
