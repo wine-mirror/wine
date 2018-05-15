@@ -1311,46 +1311,41 @@ static BOOL write_user_data(HANDLE hfile, BYTE *data, WORD data_size)
     return WriteFile(hfile, data, data_size, &size, NULL);
 }
 
-static HRESULT write_triggers(ITask *task, HANDLE hfile)
+static HRESULT write_triggers(TaskImpl *This, HANDLE hfile)
 {
     WORD count, i, idx = 0xffff;
     DWORD size;
-    HRESULT hr;
+    HRESULT hr = S_OK;
     ITaskTrigger *trigger;
 
-    hr = ITask_GetTriggerCount(task, &count);
-    if (hr != S_OK) return hr;
+    count = This->trigger_count;
 
     /* Windows saves a .job with at least 1 trigger */
     if (!count)
     {
-        hr = ITask_CreateTrigger(task, &idx, &trigger);
+        hr = ITask_CreateTrigger(&This->ITask_iface, &idx, &trigger);
         if (hr != S_OK) return hr;
         ITaskTrigger_Release(trigger);
 
         count = 1;
     }
 
-    if (!WriteFile(hfile, &count, sizeof(count), &size, NULL))
-        return HRESULT_FROM_WIN32(GetLastError());
-
-    for (i = 0; i < count; i++)
+    if (WriteFile(hfile, &count, sizeof(count), &size, NULL))
     {
-        TASK_TRIGGER task_trigger;
-
-        hr = ITask_GetTrigger(task, i, &trigger);
-        if (hr != S_OK) return hr;
-
-        hr = ITaskTrigger_GetTrigger(trigger, &task_trigger);
-        ITaskTrigger_Release(trigger);
-        if (hr != S_OK) break;
-
-        if (!WriteFile(hfile, &task_trigger, sizeof(task_trigger), &size, NULL))
-            return HRESULT_FROM_WIN32(GetLastError());
+        for (i = 0; i < count; i++)
+        {
+            if (!WriteFile(hfile, &This->trigger[i], sizeof(This->trigger[0]), &size, NULL))
+            {
+                hr = HRESULT_FROM_WIN32(GetLastError());
+                break;
+            }
+        }
     }
+    else
+        hr = HRESULT_FROM_WIN32(GetLastError());
 
     if (idx != 0xffff)
-        ITask_DeleteTrigger(task, idx);
+        ITask_DeleteTrigger(&This->ITask_iface, idx);
 
     return hr;
 }
@@ -1508,7 +1503,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     }
 
     /* Triggers */
-    hr = write_triggers(task, hfile);
+    hr = write_triggers(This, hfile);
     if (hr != S_OK)
         goto failed;
 
