@@ -1623,6 +1623,15 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
                 return hres;
         }
         break;
+    case PROP_ACCESSOR:
+        desc->explicit_getter = desc->explicit_setter = TRUE;
+        if(!flags_only) {
+            desc->getter = prop->u.accessor.getter
+                ? jsdisp_addref(prop->u.accessor.getter) : NULL;
+            desc->setter = prop->u.accessor.setter
+                ? jsdisp_addref(prop->u.accessor.setter) : NULL;
+        }
+        break;
     default:
         return DISP_E_UNKNOWNNAME;
     }

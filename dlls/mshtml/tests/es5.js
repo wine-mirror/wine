@@ -204,6 +204,19 @@ function test_getOwnPropertyDescriptor() {
 }
 
 function test_defineProperty() {
+    function test_accessor_prop_desc(obj, prop, orig_desc) {
+        var expected_enumerable = "enumerable" in orig_desc && !!orig_desc.enumerable;
+        var expected_configurable = "configurable" in orig_desc && !!orig_desc.configurable;
+
+        var desc = Object.getOwnPropertyDescriptor(obj, prop);
+        ok(desc.enumerable === expected_enumerable, "desc.enumerable = " + desc.enumerable
+           + " expected " + expected_enumerable);
+        ok(desc.configurable === expected_configurable, "desc.configurable = " + desc.configurable
+           + " expected " + expected_configurable);
+        ok(desc.get === orig_desc.get, "desc.get = " + desc.get);
+        ok(desc.set === orig_desc.set, "desc.set = " + desc.set);
+    }
+
     function expect_exception(func, expected_number) {
         try {
             func();
@@ -242,6 +255,7 @@ function test_defineProperty() {
         }
     };
     Object.defineProperty(obj, "getsetprop", desc);
+    test_accessor_prop_desc(obj, "getsetprop", desc);
 
     Object.defineProperty(obj, "notConf", {writable: true, enumerable: true, configurable: false, value: 1});
     test_own_data_prop_desc(obj, "notConf", true, true, false);
@@ -304,6 +318,7 @@ function test_defineProperty() {
         configurable: false
     };
     Object.defineProperty(obj, "notConfAcc", desc);
+    test_accessor_prop_desc(obj, "notConfAcc", desc);
 
     expect_exception(function() {
         Object.defineProperty(obj, "notConfAcc", {value: 1});
@@ -322,10 +337,13 @@ function test_defineProperty() {
     }, JS_E_NONCONFIGURABLE_REDEFINED);
 
     Object.defineProperty(obj, "notConfAcc", {get: desc.get});
+    test_accessor_prop_desc(obj, "notConfAcc", desc);
 
     Object.defineProperty(obj, "notConfAcc", {set: desc.set});
+    test_accessor_prop_desc(obj, "notConfAcc", desc);
 
     Object.defineProperty(obj, "notConfAcc", {configurable: false});
+    test_accessor_prop_desc(obj, "notConfAcc", desc);
 
     desc = {
         get: function() {
@@ -337,15 +355,18 @@ function test_defineProperty() {
         configurable: true
     };
     Object.defineProperty(obj, "confAcc", desc);
+    test_accessor_prop_desc(obj, "confAcc", desc);
 
     Object.defineProperty(obj, "confAcc", {writable: 1});
     test_own_data_prop_desc(obj, "confAcc", true, false, true);
 
     Object.defineProperty(obj, "confAcc", desc);
+    test_accessor_prop_desc(obj, "confAcc", desc);
 
     desc.get = function() {};
     desc.set = undefined;
     Object.defineProperty(obj, "confAcc", desc);
+    test_accessor_prop_desc(obj, "confAcc", desc);
 
     expect_exception(function() {
         Object.defineProperty(obj, "invaliddesc", {get: undefined, value: 1});
@@ -371,6 +392,7 @@ function test_defineProperty() {
 
     ok(Object.getOwnPropertyDescriptor(obj, "parent_accessor") === undefined,
        "getOwnPropertyDescriptor(parent_accessor) did not return undefined");
+    test_accessor_prop_desc(child.prototype, "parent_accessor", desc);
 
     next_test();
 }
