@@ -296,15 +296,12 @@ static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *n
     return S_OK;
 }
 
-static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, BOOL search_prot, DWORD create_flags, dispex_prop_t **ret)
+static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_flags, dispex_prop_t **ret)
 {
     dispex_prop_t *prop;
     HRESULT hres;
 
-    if(search_prot)
-        hres = find_prop_name_prot(This, string_hash(name), name, &prop);
-    else
-        hres = find_prop_name(This, string_hash(name), name, &prop);
+    hres = find_prop_name_prot(This, string_hash(name), name, &prop);
     if(SUCCEEDED(hres) && (!prop || prop->type == PROP_DELETED)) {
         TRACE("creating prop %s flags %x\n", debugstr_w(name), create_flags);
 
@@ -495,6 +492,18 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 {
     HRESULT hres;
 
+    if(prop->type == PROP_PROTREF) {
+        dispex_prop_t *prop_iter = prop;
+        jsdisp_t *prototype_iter = This;
+
+        do {
+            prototype_iter = prototype_iter->prototype;
+            prop_iter = prototype_iter->props + prop_iter->u.ref;
+        } while(prop_iter->type == PROP_PROTREF);
+
+        if(prop_iter->type == PROP_ACCESSOR)
+            prop = prop_iter;
+    }
 
     switch(prop->type) {
     case PROP_BUILTIN:
@@ -516,8 +525,11 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         jsval_release(prop->u.val);
         break;
     case PROP_ACCESSOR:
-        FIXME("not supported for accessor properties\n");
-        return E_NOTIMPL;
+        if(!prop->u.accessor.setter) {
+            TRACE("no setter\n");
+            return S_OK;
+        }
+        return jsdisp_call_value(prop->u.accessor.setter, to_disp(This), DISPATCH_METHOD, 1, &val, NULL);
     case PROP_IDX:
         if(!This->builtin_info->idx_put) {
             TRACE("no put_idx\n");
@@ -1079,7 +1091,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     HRESULT hres;
 
     if(flags & fdexNameEnsure)
-        hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE,
+        hres = ensure_prop_name(jsdisp, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                 &prop);
     else
         hres = find_prop_name_prot(jsdisp, string_hash(name), name, &prop);
@@ -1343,7 +1355,7 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = ensure_prop_name(obj, name, FALSE, flags, &prop);
+    hres = ensure_prop_name(obj, name, flags, &prop);
     if(FAILED(hres))
         return hres;
 

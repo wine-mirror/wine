@@ -258,6 +258,10 @@ function test_defineProperty() {
     test_accessor_prop_desc(obj, "getsetprop", desc);
 
     ok(obj.getsetprop === 1, "getsetprop = " + obj.getsetprop);
+    obj.getsetprop = 2;
+    ok(getsetprop_value === 2, "getsetprop_value = " + getsetprop_value);
+    test_accessor_prop_desc(obj, "getsetprop", desc);
+    ok(obj.getsetprop === 2, "getsetprop = " + obj.getsetprop);
 
     Object.defineProperty(obj, "notConf", {writable: true, enumerable: true, configurable: false, value: 1});
     test_own_data_prop_desc(obj, "notConf", true, true, false);
@@ -395,6 +399,9 @@ function test_defineProperty() {
     obj = new child();
     getsetprop_value = 6;
     ok(obj.parent_accessor === 6, "parent_accessor = " + obj.parent_accessor);
+    obj.parent_accessor = 1;
+    ok(getsetprop_value === 1, "getsetprop_value = " + getsetprop_value);
+    ok(obj.parent_accessor === 1, "parent_accessor = " + obj.parent_accessor);
 
     ok(Object.getOwnPropertyDescriptor(obj, "parent_accessor") === undefined,
        "getOwnPropertyDescriptor(parent_accessor) did not return undefined");
@@ -403,6 +410,19 @@ function test_defineProperty() {
     desc.get = undefined;
     Object.defineProperty(child.prototype, "parent_accessor", desc);
     ok(obj.parent_accessor === undefined, "parent_accessor = " + obj.parent_accessor);
+
+    /* no setter */
+    desc = {
+        get: function() {
+            ok(this === obj, "this != obj");
+            return true;
+        },
+        configurable: true
+    };
+    Object.defineProperty(obj, "no_setter", desc);
+    test_accessor_prop_desc(obj, "no_setter", desc);
+    obj.no_setter = false;
+    ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
 
     next_test();
 }
