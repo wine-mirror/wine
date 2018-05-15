@@ -258,22 +258,34 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_SetMaximumFrameLatency(IWineDXGIDevice *iface, UINT max_latency)
 {
-    FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
+
+    TRACE("iface %p, max_latency %u.\n", iface, max_latency);
 
     if (max_latency > DXGI_FRAME_LATENCY_MAX)
         return DXGI_ERROR_INVALID_CALL;
 
-    return E_NOTIMPL;
+    wined3d_mutex_lock();
+    wined3d_device_set_max_frame_latency(device->wined3d_device, max_latency);
+    wined3d_mutex_unlock();
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetMaximumFrameLatency(IWineDXGIDevice *iface, UINT *max_latency)
 {
-    FIXME("iface %p, max_latency %p stub!\n", iface, max_latency);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
 
-    if (max_latency)
-        *max_latency = DXGI_FRAME_LATENCY_DEFAULT;
+    TRACE("iface %p, max_latency %p.\n", iface, max_latency);
 
-    return E_NOTIMPL;
+    if (!max_latency)
+        return DXGI_ERROR_INVALID_CALL;
+
+    wined3d_mutex_lock();
+    *max_latency = wined3d_device_get_max_frame_latency(device->wined3d_device);
+    wined3d_mutex_unlock();
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_OfferResources(IWineDXGIDevice *iface, UINT resource_count,
