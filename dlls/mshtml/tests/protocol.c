@@ -64,6 +64,7 @@ DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
+DEFINE_EXPECT(outer_QI_test);
 
 static HRESULT expect_hrResult;
 static BOOL expect_hr_win32err = FALSE;
@@ -942,6 +943,68 @@ static void test_javascript_protocol(void)
     IUnknown_Release(unk);
 }
 
+static const IID outer_test_iid = {0xabcabc00,0,0,{0,0,0,0,0,0,0,0x66}};
+
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &outer_test_iid)) {
+        CHECK_EXPECT(outer_QI_test);
+        *ppv = (IUnknown*)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl outer_vtbl = {
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release
+};
+
+static void test_com_aggregation(const CLSID *clsid)
+{
+    IUnknown outer = { &outer_vtbl };
+    IClassFactory *class_factory;
+    IUnknown *unk, *unk2, *unk3;
+    HRESULT hres;
+
+    hres = CoGetClassObject(clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&class_factory);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+
+    hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CreateInstance returned: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&unk2);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
+
+    SET_EXPECT(outer_QI_test);
+    hres = IUnknown_QueryInterface(unk2, &outer_test_iid, (void**)&unk3);
+    CHECK_CALLED(outer_QI_test);
+    ok(hres == S_OK, "Could not get IInternetProtocol iface: %08x\n", hres);
+    ok(unk3 == (IUnknown*)0xdeadbeef, "unexpected unk2\n");
+
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+
+    unk = (void*)0xdeadbeef;
+    hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IInternetProtocol, (void**)&unk);
+    ok(hres == E_INVALIDARG, "CreateInstance returned: %08x\n", hres);
+    ok(!unk, "unk = %p\n", unk);
+
+    IClassFactory_Release(class_factory);
+}
+
 START_TEST(protocol)
 {
     res_url_base_len = 6 + GetModuleFileNameW(NULL, res_url_base + 6 /* strlen("res://") */, sizeof(res_url_base)/sizeof(WCHAR)-6);
@@ -951,6 +1014,9 @@ START_TEST(protocol)
     test_res_protocol();
     test_about_protocol();
     test_javascript_protocol();
+
+    test_com_aggregation(&CLSID_AboutProtocol);
+    test_com_aggregation(&CLSID_ResProtocol);
 
     OleUninitialize();
 }
