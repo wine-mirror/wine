@@ -495,28 +495,34 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 {
     HRESULT hres;
 
-    if(!(prop->flags & PROPF_WRITABLE) && prop->type != PROP_PROTREF)
-        return S_OK;
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(prop->u.p->setter)
-            return prop->u.p->setter(This->ctx, This, val);
-
-        if(prop->u.p->setter) {
-            FIXME("getter with no setter\n");
-            return E_FAIL;
+        if(!prop->u.p->setter) {
+            TRACE("getter with no setter\n");
+            return S_OK;
         }
-        /* fall through */
+        return prop->u.p->setter(This->ctx, This, val);
     case PROP_PROTREF:
+    case PROP_DELETED:
         prop->type = PROP_JSVAL;
         prop->flags = PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE;
         prop->u.val = jsval_undefined();
         break;
     case PROP_JSVAL:
+        if(!(prop->flags & PROPF_WRITABLE))
+            return S_OK;
+
         jsval_release(prop->u.val);
         break;
+    case PROP_ACCESSOR:
+        FIXME("not supported for accessor properties\n");
+        return E_NOTIMPL;
     case PROP_IDX:
+        if(!This->builtin_info->idx_put) {
+            TRACE("no put_idx\n");
+            return S_OK;
+        }
         return This->builtin_info->idx_put(This, prop->u.idx, val);
     default:
         ERR("type %d\n", prop->type);
