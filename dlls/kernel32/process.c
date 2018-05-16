@@ -3325,6 +3325,17 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PD
 
 
 /***********************************************************************
+ *           SetProcessAffinityUpdateMode (KERNEL32.@)
+ */
+BOOL WINAPI SetProcessAffinityUpdateMode( HANDLE process, DWORD flags )
+{
+    FIXME("(%p,0x%08x): stub\n", process, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           GetProcessVersion    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessVersion( DWORD pid )

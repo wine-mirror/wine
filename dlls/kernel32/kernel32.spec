@@ -1425,7 +1425,7 @@
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
 @ stdcall SetProcessAffinityMask(long long)
-# @ stub SetProcessAffinityUpdateMode
+@ stdcall SetProcessAffinityUpdateMode(long long)
 @ stdcall SetProcessDEPPolicy(long)
 # @ stub SetProcessPreferredUILanguages
 @ stdcall SetProcessPriorityBoost(long long)
