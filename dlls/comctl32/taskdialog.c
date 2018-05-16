@@ -561,6 +561,9 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
                 break;
             }
             return FALSE;
+        case WM_HELP:
+            taskdialog_notify(dialog_info, TDN_HELP, 0, 0);
+            break;
         case WM_DESTROY:
             taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
             RemovePropW(hwnd, taskdialog_info_propnameW);

@@ -121,6 +121,26 @@ static const struct message_info msg_return_press_custom10[] =
     { 0 }
 };
 
+static const struct message_info msg_send_click_ok[] =
+{
+    { TDM_CLICK_BUTTON, IDOK, 0 },
+    { 0 }
+};
+
+static const struct message_info msg_send_f1[] =
+{
+    { WM_KEYF1, 0, 0, 0},
+    { 0 }
+};
+
+static const struct message_info msg_got_tdn_help[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_send_f1 },
+    { TDN_HELP, 0, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
 static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct message *msg)
 {
     msg->message = WM_TD_CALLBACK;
@@ -291,6 +311,18 @@ static void test_buttons(void)
     run_test(&info, ID_START_BUTTON + 3, msg_return_press_custom4, "default button: valid default - 2");
 }
 
+static void test_help(void)
+{
+    TASKDIALOGCONFIG info = {0};
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG);
+    info.pfCallback = taskdialog_callback_proc;
+    info.lpCallbackData = test_ref_data;
+    info.dwCommonButtons = TDCBF_OK_BUTTON;
+
+    run_test(&info, IDOK, msg_got_tdn_help, "send f1");
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -327,6 +359,7 @@ START_TEST(taskdialog)
     test_invalid_parameters();
     test_callback();
     test_buttons();
+    test_help();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
