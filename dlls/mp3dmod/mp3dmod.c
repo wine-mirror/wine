@@ -33,6 +33,11 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
+#include "initguid.h"
+DEFINE_GUID(WMMEDIATYPE_Audio, 0x73647561,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+DEFINE_GUID(WMMEDIASUBTYPE_MP3,0x00000055,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+DEFINE_GUID(WMMEDIASUBTYPE_PCM,0x00000001,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+
 WINE_DEFAULT_DEBUG_CHANNEL(mp3dmod);
 
 static HINSTANCE mp3dmod_instance;
@@ -526,6 +531,18 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    static const WCHAR nameW[] = {'M','P','3',' ','D','e','c','o','d','e','r',' ','D','M','O',0};
+    DMO_PARTIAL_MEDIATYPE in, out;
+    HRESULT hr;
+
+    in.type = WMMEDIATYPE_Audio;
+    in.subtype = WMMEDIASUBTYPE_MP3;
+    out.type = WMMEDIATYPE_Audio;
+    out.subtype = WMMEDIASUBTYPE_PCM;
+    hr = DMORegister(nameW, &CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER,
+        0, 1, &in, 1, &out);
+    if (FAILED(hr)) return hr;
+
     return __wine_register_resources( mp3dmod_instance );
 }
 
@@ -534,5 +551,10 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
+    HRESULT hr;
+
+    hr = DMOUnregister(&CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER);
+    if (FAILED(hr)) return hr;
+
     return __wine_unregister_resources( mp3dmod_instance );
 }
