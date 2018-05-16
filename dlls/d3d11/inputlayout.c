@@ -134,7 +134,7 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_AddRef(ID3D11InputLayout *ifac
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(layout->device);
+        ID3D11Device2_AddRef(layout->device);
         wined3d_mutex_lock();
         wined3d_vertex_declaration_incref(layout->wined3d_decl);
         wined3d_mutex_unlock();
@@ -152,13 +152,13 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *ifa
 
     if (!refcount)
     {
-        ID3D11Device1 *device = layout->device;
+        ID3D11Device2 *device = layout->device;
 
         wined3d_mutex_lock();
         wined3d_vertex_declaration_decref(layout->wined3d_decl);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -262,7 +262,7 @@ static void STDMETHODCALLTYPE d3d10_input_layout_GetDevice(ID3D10InputLayout *if
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device1_QueryInterface(layout->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device2_QueryInterface(layout->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_GetPrivateData(ID3D10InputLayout *iface,
@@ -357,7 +357,7 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
     }
     wined3d_mutex_unlock();
 
-    ID3D11Device1_AddRef(layout->device = &device->ID3D11Device1_iface);
+    ID3D11Device2_AddRef(layout->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }

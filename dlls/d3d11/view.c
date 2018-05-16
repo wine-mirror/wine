@@ -1006,7 +1006,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_AddRef(ID3D11DepthStencil
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(view->device);
+        ID3D11Device2_AddRef(view->device);
         wined3d_mutex_lock();
         wined3d_rendertarget_view_incref(view->wined3d_view);
         wined3d_mutex_unlock();
@@ -1024,13 +1024,13 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_Release(ID3D11DepthStenci
 
     if (!refcount)
     {
-        ID3D11Device1 *device = view->device;
+        ID3D11Device2 *device = view->device;
 
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -1160,7 +1160,7 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_view_GetDevice(ID3D10DepthStenc
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device1_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device2_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_GetPrivateData(ID3D10DepthStencilView *iface,
@@ -1355,8 +1355,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    view->device = &device->ID3D11Device1_iface;
-    ID3D11Device1_AddRef(view->device);
+    ID3D11Device2_AddRef(view->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }
@@ -1449,7 +1448,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_AddRef(ID3D11RenderTarget
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(view->device);
+        ID3D11Device2_AddRef(view->device);
         wined3d_mutex_lock();
         wined3d_rendertarget_view_incref(view->wined3d_view);
         wined3d_mutex_unlock();
@@ -1467,13 +1466,13 @@ static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_Release(ID3D11RenderTarge
 
     if (!refcount)
     {
-        ID3D11Device1 *device = view->device;
+        ID3D11Device2 *device = view->device;
 
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -1603,7 +1602,7 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDevice(ID3D10RenderTarg
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device1_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device2_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_GetPrivateData(ID3D10RenderTargetView *iface,
@@ -1803,8 +1802,7 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    view->device = &device->ID3D11Device1_iface;
-    ID3D11Device1_AddRef(view->device);
+    ID3D11Device2_AddRef(view->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }
@@ -1898,7 +1896,7 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_AddRef(ID3D11ShaderRes
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(view->device);
+        ID3D11Device2_AddRef(view->device);
         wined3d_mutex_lock();
         wined3d_shader_resource_view_incref(view->wined3d_view);
         wined3d_mutex_unlock();
@@ -1916,13 +1914,13 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_Release(ID3D11ShaderRe
 
     if (!refcount)
     {
-        ID3D11Device1 *device = view->device;
+        ID3D11Device2 *device = view->device;
 
         wined3d_mutex_lock();
         wined3d_shader_resource_view_decref(view->wined3d_view);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -2053,7 +2051,7 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDevice(ID3D10ShaderR
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device1_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device2_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D10ShaderResourceView1 *iface,
@@ -2304,8 +2302,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    view->device = &device->ID3D11Device1_iface;
-    ID3D11Device1_AddRef(view->device);
+    ID3D11Device2_AddRef(view->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }
@@ -2384,7 +2381,7 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_AddRef(ID3D11Unordere
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(view->device);
+        ID3D11Device2_AddRef(view->device);
         wined3d_mutex_lock();
         wined3d_unordered_access_view_incref(view->wined3d_view);
         wined3d_mutex_unlock();
@@ -2402,13 +2399,13 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_Release(ID3D11Unorder
 
     if (!refcount)
     {
-        ID3D11Device1 *device = view->device;
+        ID3D11Device2 *device = view->device;
 
         wined3d_mutex_lock();
         wined3d_unordered_access_view_decref(view->wined3d_view);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -2614,7 +2611,7 @@ static HRESULT d3d11_unordered_access_view_init(struct d3d11_unordered_access_vi
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    ID3D11Device1_AddRef(view->device = &device->ID3D11Device1_iface);
+    ID3D11Device2_AddRef(view->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }

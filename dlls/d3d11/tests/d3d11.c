@@ -1236,10 +1236,6 @@ static BOOL is_d3d11_2_runtime(ID3D11Device *device)
     ID3D11Device2 *device2;
     HRESULT hr;
 
-    /* FIXME: Wine doesn't implement required interfaces yet, but we want to test new behavior. */
-    if (!strcmp(winetest_platform, "wine"))
-        return TRUE;
-
     hr = ID3D11Device_QueryInterface(device, &IID_ID3D11Device2, (void **)&device2);
     if (SUCCEEDED(hr))
         ID3D11Device2_Release(device2);

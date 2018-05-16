@@ -74,7 +74,7 @@ static ULONG STDMETHODCALLTYPE d3d11_query_AddRef(ID3D11Query *iface)
 
     if (refcount == 1)
     {
-        ID3D11Device1_AddRef(query->device);
+        ID3D11Device2_AddRef(query->device);
         wined3d_mutex_lock();
         wined3d_query_incref(query->wined3d_query);
         wined3d_mutex_unlock();
@@ -92,13 +92,13 @@ static ULONG STDMETHODCALLTYPE d3d11_query_Release(ID3D11Query *iface)
 
     if (!refcount)
     {
-        ID3D11Device1 *device = query->device;
+        ID3D11Device2 *device = query->device;
 
         wined3d_mutex_lock();
         wined3d_query_decref(query->wined3d_query);
         wined3d_mutex_unlock();
 
-        ID3D11Device1_Release(device);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -254,7 +254,7 @@ static void STDMETHODCALLTYPE d3d10_query_GetDevice(ID3D10Query *iface, ID3D10De
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device1_QueryInterface(query->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device2_QueryInterface(query->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetPrivateData(ID3D10Query *iface,
@@ -470,8 +470,7 @@ static HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device
     wined3d_mutex_unlock();
 
     query->predicate = predicate;
-    query->device = &device->ID3D11Device1_iface;
-    ID3D11Device1_AddRef(query->device);
+    ID3D11Device2_AddRef(query->device = &device->ID3D11Device2_iface);
 
     return S_OK;
 }
