@@ -2606,12 +2606,19 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_FinishCommandList(ID3D1
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion1(ID3D11DeviceContext1 *iface,
-        ID3D11Resource *resource, UINT subresource, UINT dst_x, UINT dst_y, UINT dst_z, ID3D11Resource *src_resource,
-        UINT src_subresource, const D3D11_BOX *src_box, UINT flags)
+        ID3D11Resource *dst_resource, UINT dst_subresource_idx, UINT dst_x, UINT dst_y, UINT dst_z,
+        ID3D11Resource *src_resource, UINT src_subresource_idx, const D3D11_BOX *src_box, UINT flags)
 {
-    FIXME("iface %p, resource %p, subresource %u, dst_x %u, dst_y %u, dst_z %u, src_resource %p, src_subresource %u, "
-            "src_box %p, flags %#x stub!\n", iface, resource, subresource, dst_x, dst_y, dst_z, src_resource,
-            src_subresource, src_box, flags);
+    TRACE("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
+            "src_resource %p, src_subresource_idx %u, src_box %p, flags %#x.\n",
+            iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
+            src_resource, src_subresource_idx, src_box, flags);
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    d3d11_immediate_context_CopySubresourceRegion(iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
+            src_resource, src_subresource_idx, src_box);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource1(ID3D11DeviceContext1 *iface,
