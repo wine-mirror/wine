@@ -16281,7 +16281,8 @@ static void test_alpha_to_coverage(void)
     ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D10Device_CheckMultisampleQualityLevels(device,
             texture_desc.Format, 4, &quality_level_count);
-    if (FAILED(hr))
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    if (!quality_level_count)
     {
         skip("4xMSAA not supported.\n");
         goto done;
@@ -16794,8 +16795,9 @@ static void test_multisample_resolve(void)
         return;
     device = test_context.device;
 
-    if (FAILED(hr = ID3D10Device_CheckMultisampleQualityLevels(device,
-            DXGI_FORMAT_R8G8B8A8_TYPELESS, 4, &i)))
+    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_TYPELESS, 4, &i);
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    if (!i)
     {
         skip("4xMSAA not supported.\n");
         release_test_context(&test_context);
