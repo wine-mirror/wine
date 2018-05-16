@@ -1725,7 +1725,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_resize(
         MSVCP_size_t len3, void (__cdecl *clear)(void*, MSVCP_size_t),
         void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
 {
-    FIXME("(%p %ld %ld %ld %p %p %p) stub", this, len1, len2, len3, clear, copy, v);
+    FIXME("(%p %ld %ld %ld %p %p %p) stub\n", this, len1, len2, len3, clear, copy, v);
 }
 
 /* ?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IAEXAAV123@@Z */
