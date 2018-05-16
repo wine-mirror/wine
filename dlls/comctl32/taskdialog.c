@@ -558,15 +558,17 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 taskdialog_on_button_click(dialog_info, LOWORD(wParam));
-                return TRUE;
+                break;
             }
-            break;
+            return FALSE;
         case WM_DESTROY:
             taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
             RemovePropW(hwnd, taskdialog_info_propnameW);
             break;
+        default:
+            return FALSE;
     }
-    return FALSE;
+    return TRUE;
 }
 
 /***********************************************************************
