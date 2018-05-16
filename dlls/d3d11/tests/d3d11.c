@@ -11455,6 +11455,7 @@ static void test_copy_subresource_region(void)
     ID3D11ShaderResourceView *ps_srv;
     D3D11_SAMPLER_DESC sampler_desc;
     ID3D11DeviceContext *context;
+    ID3D11DeviceContext1 *context1;
     struct vec4 float_colors[16];
     struct resource_readback rb;
     ID3D11PixelShader *ps;
@@ -11642,6 +11643,42 @@ static void test_copy_subresource_region(void)
         }
     }
     release_resource_readback(&rb);
+
+    hr = ID3D11DeviceContext_QueryInterface(context, &IID_ID3D11DeviceContext1, (void **)&context1);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Failed to query ID3D11DeviceContext1, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        ID3D11DeviceContext1_ClearRenderTargetView(context1, test_context.backbuffer_rtv, red);
+        check_texture_color(test_context.backbuffer, 0x800000ff, 2);
+
+        memset(float_colors, 0, sizeof(float_colors));
+        ID3D11DeviceContext1_UpdateSubresource1(context1, (ID3D11Resource *)dst_texture, 0, NULL,
+                float_colors, 0, 0, 0);
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, 0x00000000, 1);
+
+        ID3D11DeviceContext1_CopySubresourceRegion1(context1, (ID3D11Resource *)dst_texture, 0,
+                0, 0, 0, (ID3D11Resource *)src_texture, 0, NULL, 0);
+        draw_quad(&test_context);
+
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (i = 0; i < 4; ++i)
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+                ok(compare_color(color, bitmap_data[j + i * 4], 1),
+                        "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        color, j, i, bitmap_data[j + i * 4]);
+            }
+        }
+        release_resource_readback(&rb);
+
+        ID3D11DeviceContext1_Release(context1);
+    }
+
 
     ID3D11PixelShader_Release(ps);
     hr = ID3D11Device_CreatePixelShader(device, ps_buffer_code, sizeof(ps_buffer_code), NULL, &ps);
