@@ -16339,6 +16339,91 @@ done:
     release_test_context(&test_context);
 }
 
+static void test_unbound_multisample_texture(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10PixelShader *ps;
+    struct uvec4 cb_data;
+    ID3D10Device *device;
+    ID3D10Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture2DMS<float4, 4> t;
+
+        uint sample_index;
+
+        float4 main(float4 position : SV_Position) : SV_Target
+        {
+            float3 p;
+            t.GetDimensions(p.x, p.y, p.z);
+            p *= float3(position.x / 640.0f, position.y / 480.0f, 0.0f);
+            /* sample index must be a literal */
+            switch (sample_index)
+            {
+                case 1: return t.Load(int2(p.xy), 1);
+                case 2: return t.Load(int2(p.xy), 2);
+                case 3: return t.Load(int2(p.xy), 3);
+                default: return t.Load(int2(p.xy), 0);
+            }
+        }
+#endif
+        0x43425844, 0x03d62416, 0x1914ee8b, 0xccd08d68, 0x27f42136, 0x00000001, 0x000002f8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000025c, 0x00000040,
+        0x00000097, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x04042058, 0x00107000, 0x00000000,
+        0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000002, 0x0700003d, 0x001000f2, 0x00000000, 0x00004001, 0x00000000, 0x00107e46,
+        0x00000000, 0x07000038, 0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x00101046, 0x00000000,
+        0x0a000038, 0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889,
+        0x00000000, 0x00000000, 0x0400004c, 0x0020800a, 0x00000000, 0x00000000, 0x03000006, 0x00004001,
+        0x00000001, 0x0500001b, 0x00100032, 0x00000001, 0x00100046, 0x00000000, 0x08000036, 0x001000c2,
+        0x00000001, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0900002e, 0x001020f2,
+        0x00000000, 0x00100e46, 0x00000001, 0x00107e46, 0x00000000, 0x00004001, 0x00000001, 0x0100003e,
+        0x03000006, 0x00004001, 0x00000002, 0x0500001b, 0x00100032, 0x00000001, 0x00100046, 0x00000000,
+        0x08000036, 0x001000c2, 0x00000001, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x0900002e, 0x001020f2, 0x00000000, 0x00100e46, 0x00000001, 0x00107e46, 0x00000000, 0x00004001,
+        0x00000002, 0x0100003e, 0x03000006, 0x00004001, 0x00000003, 0x0500001b, 0x00100032, 0x00000001,
+        0x00100046, 0x00000000, 0x08000036, 0x001000c2, 0x00000001, 0x00004002, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x0900002e, 0x001020f2, 0x00000000, 0x00100e46, 0x00000001, 0x00107e46,
+        0x00000000, 0x00004001, 0x00000003, 0x0100003e, 0x0100000a, 0x0500001b, 0x00100032, 0x00000000,
+        0x00100046, 0x00000000, 0x08000036, 0x001000c2, 0x00000000, 0x00004002, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x0900002e, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00107e46,
+        0x00000000, 0x00004001, 0x00000000, 0x0100003e, 0x01000017, 0x0100003e,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    memset(&cb_data, 0, sizeof(cb_data));
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
+    ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
+
+    for (i = 0; i < 4; ++i)
+    {
+        cb_data.x = i;
+        ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &cb_data, 0, 0);
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, 0x00000000, 1);
+    }
+
+    ID3D10Buffer_Release(cb);
+    ID3D10PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 static void test_multiple_viewports(void)
 {
     struct
@@ -16922,6 +17007,7 @@ START_TEST(device)
     test_combined_clip_and_cull_distances();
     test_generate_mips();
     test_alpha_to_coverage();
+    test_unbound_multisample_texture();
     test_multiple_viewports();
     test_multisample_resolve();
     test_depth_clip();
