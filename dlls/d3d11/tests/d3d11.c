@@ -26816,6 +26816,78 @@ static void test_multisample_resolve(void)
     release_test_context(&test_context);
 }
 
+static void test_sample_mask(void)
+{
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(in float4 pos : SV_Position, out uint sample_mask : SV_Coverage) : SV_Target
+        {
+            sample_mask = 0x5;
+            return float4(1.0, 1.0, 1.0, 1.0);
+        }
+#endif
+        0x43425844, 0x196779a9, 0xda85988a, 0xb7f0a0b6, 0xb30dd6ba, 0x00000001, 0x00000114, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000b8, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x00000050, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000042, 0x00000000, 0x00000000, 0x00000001, 0xffffffff, 0x00000e01,
+        0x545f5653, 0x65677261, 0x56530074, 0x766f435f, 0x67617265, 0xabab0065, 0x58454853, 0x00000054,
+        0x00000050, 0x00000015, 0x0100086a, 0x03000065, 0x001020f2, 0x00000000, 0x02000065, 0x0000f000,
+        0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x04000036, 0x0000f001, 0x00004001, 0x00000005, 0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture2D *texture;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    UINT quality_levels;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_TYPELESS, 4, &quality_levels);
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    if (!quality_levels)
+    {
+        skip("4xMSAA not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.SampleDesc.Count = 4;
+    texture_desc.SampleDesc.Quality = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, black);
+    draw_quad(&test_context);
+    ID3D11DeviceContext_ResolveSubresource(context, (ID3D11Resource *)test_context.backbuffer, 0,
+            (ID3D11Resource *)texture, 0, texture_desc.Format);
+    check_texture_color(test_context.backbuffer, 0x7f7f7f7f, 1);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(texture);
+    ID3D11PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 static void test_depth_clip(void)
 {
     struct d3d11_test_context test_context;
@@ -27027,5 +27099,6 @@ START_TEST(d3d11)
     test_unbound_multisample_texture();
     test_multiple_viewports();
     test_multisample_resolve();
+    test_sample_mask();
     test_depth_clip();
 }
