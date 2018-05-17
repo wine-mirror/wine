@@ -2368,9 +2368,14 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hinst, const char *name, char *buf, DWORD 
         DWORD len;
 
         if (!(remote = msi_get_remote(hinst)))
+        {
+            heap_free(nameW);
             return ERROR_INVALID_HANDLE;
+        }
 
         r = remote_GetProperty(remote, nameW, &value, &len);
+        heap_free(nameW);
+
         if (!r)
         {
             /* String might contain embedded nulls.
@@ -2388,7 +2393,6 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hinst, const char *name, char *buf, DWORD 
             heap_free(tmp);
         }
         midl_user_free(value);
-        heap_free(nameW);
         return r;
     }
 
