@@ -3526,6 +3526,7 @@ static void test_dpi_window(void)
     DPI_AWARENESS_CONTEXT context, orig;
     DPI_AWARENESS awareness;
     ULONG_PTR i, j;
+    UINT dpi;
     HWND hwnd, child, ret;
     MSG msg = { 0, WM_USER + 1, 0, 0 };
 
@@ -3544,6 +3545,9 @@ static void test_dpi_window(void)
         context = pGetWindowDpiAwarenessContext( hwnd );
         awareness = pGetAwarenessFromDpiAwarenessContext( context );
         ok( awareness == i, "%lu: wrong awareness %u\n", i, awareness );
+        dpi = pGetDpiForWindow( hwnd );
+        ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+            "%lu: got %u / %u\n", i, dpi, real_dpi );
         msg.hwnd = hwnd;
         for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
         {
@@ -3556,22 +3560,34 @@ static void test_dpi_window(void)
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            dpi = pGetDpiForWindow( child );
+            ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
             ret = SetParent( child, NULL );
             ok( ret != 0, "SetParent failed err %u\n", GetLastError() );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            dpi = pGetDpiForWindow( child );
+            ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
             DestroyWindow( child );
             child = CreateWindowA( "DpiTestClass", "Test",
                                    WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == j, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            dpi = pGetDpiForWindow( child );
+            ok( dpi == (j == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
             ret = SetParent( child, hwnd );
             ok( ret != 0, "SetParent failed err %u\n", GetLastError() );
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == i, "%lu/%lu: wrong awareness %u\n", i, j, awareness );
+            dpi = pGetDpiForWindow( child );
+            ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+                "%lu/%lu: got %u / %u\n", i, j, dpi, real_dpi );
             DestroyWindow( child );
         }
         DestroyWindow( hwnd );
@@ -3581,17 +3597,26 @@ static void test_dpi_window(void)
     context = pGetWindowDpiAwarenessContext( (HWND)0xdeadbeef );
     ok( !context, "got %p\n", context );
     ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    dpi = pGetDpiForWindow( (HWND)0xdeadbeef );
+    ok( !dpi, "got %u\n", dpi );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+        "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     context = pGetWindowDpiAwarenessContext( GetDesktopWindow() );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+    dpi = pGetDpiForWindow( GetDesktopWindow() );
+    ok( dpi == real_dpi, "got %u / %u\n", dpi, real_dpi );
 
     pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
     SetLastError( 0xdeadbeef );
     context = pGetWindowDpiAwarenessContext( GetDesktopWindow() );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE, "wrong awareness %u\n", awareness );
+    dpi = pGetDpiForWindow( GetDesktopWindow() );
+    ok( dpi == real_dpi, "got %u / %u\n", dpi, real_dpi );
 
     pSetThreadDpiAwarenessContext( orig );
 }

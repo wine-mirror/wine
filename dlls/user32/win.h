@@ -61,6 +61,7 @@ typedef struct tagWND
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
     HICON          hIconSmall2;   /* window's secondary small icon, derived from hIcon */
+    UINT           dpi;           /* window DPI */
     DPI_AWARENESS  dpi_awareness; /* DPI awareness */
     struct window_surface *surface; /* Window surface if any */
     struct tagDIALOGINFO *dlgInfo;/* Dialog additional info (dialogs only) */
@@ -128,6 +129,7 @@ extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect ) DECLSPEC_HIDDEN;
 extern void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam ) DECLSPEC_HIDDEN;
 
+extern UINT get_monitor_dpi( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                             const RECT *window_rect, const RECT *client_rect,
                             const RECT *valid_rects ) DECLSPEC_HIDDEN;

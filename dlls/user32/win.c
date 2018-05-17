@@ -201,12 +201,14 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     struct tagCLASS *class = NULL;
     int extra_bytes = 0;
     DPI_AWARENESS awareness = GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() );
+    UINT dpi = 0;
 
     SERVER_START_REQ( create_window )
     {
         req->parent   = wine_server_user_handle( parent );
         req->owner    = wine_server_user_handle( owner );
         req->instance = wine_server_client_ptr( instance );
+        req->dpi      = GetDpiForSystem();
         req->awareness = awareness;
         if (!(req->atom = get_int_atom_value( name )) && name)
             wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
@@ -216,6 +218,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
             full_parent = wine_server_ptr_handle( reply->parent );
             full_owner  = wine_server_ptr_handle( reply->owner );
             extra_bytes = reply->extra;
+            dpi         = reply->dpi;
             awareness   = reply->awareness;
             class       = wine_server_get_ptr( reply->class_ptr );
         }
@@ -269,6 +272,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     win->class      = class;
     win->winproc    = get_class_winproc( class );
     win->cbWndExtra = extra_bytes;
+    win->dpi        = dpi;
     win->dpi_awareness = awareness;
     InterlockedExchangePointer( &user_handles[index], win );
     if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
@@ -2217,6 +2221,39 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 }
 
 
+/***********************************************************************
+ *              GetDpiForWindow   (USER32.@)
+ */
+UINT WINAPI GetDpiForWindow( HWND hwnd )
+{
+    WND *win;
+    UINT ret = 0;
+
+    if (!(win = WIN_GetPtr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_DESKTOP) return get_monitor_dpi( GetDesktopWindow() );
+    if (win != WND_OTHER_PROCESS)
+    {
+        ret = win->dpi;
+        if (!ret) ret = get_monitor_dpi( hwnd );
+        WIN_ReleasePtr( win );
+    }
+    else
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            if (!wine_server_call_err( req )) ret = reply->dpi;
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
+}
+
+
 /**********************************************************************
  *	     WIN_GetWindowLong
  *
@@ -3083,6 +3120,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
         {
             old_parent = wine_server_ptr_handle( reply->old_parent );
             wndPtr->parent = parent = wine_server_ptr_handle( reply->full_parent );
+            wndPtr->dpi = reply->dpi;
             wndPtr->dpi_awareness = reply->awareness;
         }
 

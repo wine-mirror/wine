@@ -2476,6 +2476,7 @@ enum message_type
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
     mod_handle_t   instance;    /* module instance */
+    int            dpi;         /* system DPI */
     int            awareness;   /* thread DPI awareness */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
@@ -2484,6 +2485,7 @@ enum message_type
     user_handle_t  owner;       /* full handle of owner */
     int            extra;       /* number of extra bytes */
     client_ptr_t   class_ptr;   /* pointer to class in client address space */
+    int            dpi;         /* window DPI if not per-monitor aware */
     int            awareness;   /* window DPI awareness */
 @END
 
@@ -2523,6 +2525,7 @@ enum message_type
     thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
     int            is_unicode;  /* ANSI or unicode */
+    int            dpi;         /* window DPI */
     int            awareness;   /* DPI awareness */
 @END
 
@@ -2564,6 +2567,7 @@ enum message_type
 @REPLY
     user_handle_t  old_parent;  /* old parent window */
     user_handle_t  full_parent; /* full handle of new parent */
+    int            dpi;         /* new window DPI if not per-monitor aware */
     int            awareness;   /* new DPI awareness */
 @END
 
