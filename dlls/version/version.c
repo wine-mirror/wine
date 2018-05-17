@@ -705,7 +705,12 @@ DWORD WINAPI GetFileVersionInfoSizeExW( DWORD flags, LPCWSTR filename, LPDWORD h
         return (len * 2) + 4;
 
     default:
-        SetLastError( lzfd == HFILE_ERROR ? ofs.nErrCode : ERROR_RESOURCE_DATA_NOT_FOUND );
+        if (lzfd == HFILE_ERROR)
+            SetLastError(ofs.nErrCode);
+        else if (GetVersion() & 0x80000000) /* Windows 95/98 */
+            SetLastError(ERROR_FILE_NOT_FOUND);
+        else
+            SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
         return 0;
     }
 }
