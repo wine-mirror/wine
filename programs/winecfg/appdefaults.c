@@ -174,8 +174,7 @@ init_comboboxes (HWND dialog)
     if (current_app)
     {
         WCHAR str[256];
-        LoadStringW (GetModuleHandleW(NULL), IDS_USE_GLOBAL_SETTINGS, str,
-            sizeof(str)/sizeof(str[0]));
+        LoadStringW(GetModuleHandleW(NULL), IDS_USE_GLOBAL_SETTINGS, str, ARRAY_SIZE(str));
         SendDlgItemMessageW (dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM)str);
     }
 
@@ -216,21 +215,20 @@ static void init_appsheet(HWND dialog)
 
   /* we use the lparam field of the item so we can alter the presentation later and not change code
    * for instance, to use the tile view or to display the EXEs embedded 'display name' */
-  LoadStringW (GetModuleHandleW(NULL), IDS_DEFAULT_SETTINGS, appname,
-      sizeof(appname)/sizeof(appname[0]));
+  LoadStringW(GetModuleHandleW(NULL), IDS_DEFAULT_SETTINGS, appname, ARRAY_SIZE(appname));
   add_listview_item(listview, appname, NULL);
 
   /* because this list is only populated once, it's safe to bypass the settings list here  */
   if (RegOpenKeyA(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
   {
       i = 0;
-      size = sizeof(appname)/sizeof(appname[0]);
+      size = ARRAY_SIZE(appname);
       while (RegEnumKeyExW (key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
       {
           add_listview_item(listview, appname, strdupW(appname));
 
           i++;
-          size = sizeof(appname)/sizeof(appname[0]);
+          size = ARRAY_SIZE(appname);
       }
 
       RegCloseKey(key);
@@ -331,19 +329,19 @@ static void on_add_app_click(HWND dialog)
                        0, 0, NULL, 0, NULL };
 
   LoadStringW (GetModuleHandleW(NULL), IDS_SELECT_EXECUTABLE, selectExecutableStr,
-      sizeof(selectExecutableStr)/sizeof(selectExecutableStr[0]));
+      ARRAY_SIZE(selectExecutableStr));
   LoadStringW (GetModuleHandleW(NULL), IDS_EXECUTABLE_FILTER, programsFilter,
-      sizeof(programsFilter)/sizeof(programsFilter[0]));
+      ARRAY_SIZE(programsFilter));
   snprintfW( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
 
   ofn.lpstrTitle = selectExecutableStr;
   ofn.lpstrFilter = filter;
   ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
-  ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);
+  ofn.nMaxFileTitle = ARRAY_SIZE(filetitle);
   ofn.lpstrFile = file;
   ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = sizeof(file)/sizeof(file[0]);
+  ofn.nMaxFile = ARRAY_SIZE(file);
 
   if (GetOpenFileNameW (&ofn))
   {

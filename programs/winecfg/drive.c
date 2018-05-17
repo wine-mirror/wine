@@ -284,7 +284,7 @@ BOOL load_drives(void)
             if (data->mount_point_offset) unixpath = (char *)data + data->mount_point_offset;
             if (data->device_offset) device = (char *)data + data->device_offset;
 
-            if (!GetVolumeInformationW( root, volname, sizeof(volname)/sizeof(WCHAR),
+            if (!GetVolumeInformationW( root, volname, ARRAY_SIZE(volname),
                                         &serial, NULL, NULL, NULL, 0 ))
             {
                 volname[0] = 0;

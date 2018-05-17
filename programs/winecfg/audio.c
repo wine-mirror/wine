@@ -232,12 +232,11 @@ static void initAudioDlg (HWND hDlg)
 
     WINE_TRACE("\n");
 
-    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER,
-            format_str, sizeof(format_str) / sizeof(*format_str));
-    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER_NONE,
-            disabled_str, sizeof(disabled_str) / sizeof(*disabled_str));
-    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SYSDEFAULT,
-            sysdefault_str, sizeof(sysdefault_str) / sizeof(*sysdefault_str));
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER, format_str, ARRAY_SIZE(format_str));
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER_NONE, disabled_str,
+            ARRAY_SIZE(disabled_str));
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SYSDEFAULT, sysdefault_str,
+            ARRAY_SIZE(sysdefault_str));
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
@@ -250,8 +249,7 @@ static void initAudioDlg (HWND hDlg)
         PropVariantInit(&pv);
         if(get_driver_name(devenum, &pv) && pv.u.pwszVal[0] != '\0'){
             have_driver = TRUE;
-            wnsprintfW(display_str, sizeof(display_str) / sizeof(*display_str),
-                    format_str, pv.u.pwszVal);
+            wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, pv.u.pwszVal);
             lstrcatW(g_drv_keyW, pv.u.pwszVal);
         }
         PropVariantClear(&pv);
@@ -275,8 +273,8 @@ static void initAudioDlg (HWND hDlg)
 
     i = 0;
     while (speaker_configs[i].text_id != 0) {
-        LoadStringW(GetModuleHandleW(NULL), speaker_configs[i].text_id,
-            speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+        LoadStringW(GetModuleHandleW(NULL), speaker_configs[i].text_id, speaker_str,
+                ARRAY_SIZE(speaker_str));
 
         SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_ADDSTRING,
             0, (LPARAM)speaker_str);
@@ -287,14 +285,14 @@ static void initAudioDlg (HWND hDlg)
     GetClientRect(GetDlgItem(hDlg, IDC_LIST_AUDIO_DEVICES), &rect);
     width = (rect.right - rect.left) * 3 / 5;
 
-    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DEVICE, colW, sizeof(colW)/sizeof(*colW));
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DEVICE, colW, ARRAY_SIZE(colW));
     lvcol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     lvcol.pszText = colW;
     lvcol.cchTextMax = lstrlenW(colW);
     lvcol.cx = width;
     SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_INSERTCOLUMNW, 0, (LPARAM)&lvcol);
 
-    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SPEAKER_CONFIG, colW, sizeof(colW)/sizeof(*colW));
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SPEAKER_CONFIG, colW, ARRAY_SIZE(colW));
     lvcol.pszText = colW;
     lvcol.cchTextMax = lstrlenW(colW);
     lvcol.cx = rect.right - rect.left - width;
@@ -343,7 +341,7 @@ static void initAudioDlg (HWND hDlg)
             SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_INSERTITEMW, 0, (LPARAM)&lvitem);
 
             LoadStringW(GetModuleHandleW(NULL), speaker_configs[render_devs[i].speaker_config].text_id,
-                speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+                    speaker_str, ARRAY_SIZE(speaker_str));
 
             lvitem.mask = LVIF_TEXT;
             lvitem.iItem = i;
@@ -378,8 +376,7 @@ static void initAudioDlg (HWND hDlg)
         HeapFree(GetProcessHeap(), 0, reg_in_dev);
         HeapFree(GetProcessHeap(), 0, reg_vin_dev);
     }else
-        wnsprintfW(display_str, sizeof(display_str) / sizeof(*display_str),
-                format_str, disabled_str);
+        wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, disabled_str);
 
     SetDlgItemTextW(hDlg, IDC_AUDIO_DRIVER, display_str);
 }
@@ -405,10 +402,10 @@ static void test_sound(void)
     if(!PlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_ASYNC)){
         WCHAR error_str[256], title_str[256];
 
-        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED,
-                error_str, sizeof(error_str) / sizeof(*error_str));
-        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED_TITLE,
-                title_str, sizeof(title_str) / sizeof(*title_str));
+        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED, error_str,
+                ARRAY_SIZE(error_str));
+        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED_TITLE, title_str,
+                ARRAY_SIZE(title_str));
 
         MessageBoxW(NULL, error_str, title_str, MB_OK | MB_ICONERROR);
     }
@@ -527,7 +524,7 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                       render_devs[dev].speaker_config = idx;
 
                       LoadStringW(GetModuleHandleW(NULL), speaker_configs[idx].text_id,
-                          speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+                          speaker_str, ARRAY_SIZE(speaker_str));
 
                       lvitem.mask = LVIF_TEXT;
                       lvitem.iItem = dev;

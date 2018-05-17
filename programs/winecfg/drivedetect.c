@@ -291,8 +291,7 @@ static void ensure_drive_c_is_mapped(void)
     if (stat(drive_c_dir, &buf) == 0)
     {
         WCHAR label[64];
-        LoadStringW (GetModuleHandleW(NULL), IDS_SYSTEM_DRIVE_LABEL, label,
-                     sizeof(label)/sizeof(label[0]));
+        LoadStringW(GetModuleHandleW(NULL), IDS_SYSTEM_DRIVE_LABEL, label, ARRAY_SIZE(label));
         add_drive('C', "../drive_c", NULL, label, 0, DRIVE_FIXED);
     }
     else

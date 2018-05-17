@@ -299,8 +299,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
     WCHAR currentSize[MAX_PATH];
     ThemeFile* theme = NULL;
 
-    LoadStringW (GetModuleHandleW(NULL), IDS_NOTHEME, textNoTheme,
-	sizeof(textNoTheme) / sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), IDS_NOTHEME, textNoTheme, ARRAY_SIZE(textNoTheme));
 
     SendMessageW (comboTheme, CB_RESETCONTENT, 0, 0);
     SendMessageW (comboTheme, CB_ADDSTRING, 0, (LPARAM)textNoTheme);
@@ -311,11 +310,9 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
 	SendMessageW (comboTheme, CB_ADDSTRING, 0, 
 	    (LPARAM)item->fancyName);
     }
-  
-    if (IsThemeActive () && SUCCEEDED (GetCurrentThemeName (currentTheme, 
-	    sizeof(currentTheme) / sizeof(WCHAR),
-	    currentColor, sizeof(currentColor) / sizeof(WCHAR),
-	    currentSize, sizeof(currentSize) / sizeof(WCHAR))))
+
+    if (IsThemeActive() && SUCCEEDED(GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme),
+                currentColor, ARRAY_SIZE(currentColor), currentSize, ARRAY_SIZE(currentSize))))
     {
 	/* Determine the index of the currently active theme. */
 	BOOL found = FALSE;
@@ -371,11 +368,9 @@ static BOOL update_color_and_size (int themeIndex, HWND comboColor,
 	ThemeFile* theme = DSA_GetItemPtr (themeFiles, themeIndex - 1);
     
 	fill_color_size_combos (theme, comboColor, comboSize);
-      
-	if ((SUCCEEDED (GetCurrentThemeName (currentTheme, 
-	    sizeof(currentTheme) / sizeof(WCHAR),
-	    currentColor, sizeof(currentColor) / sizeof(WCHAR),
-	    currentSize, sizeof(currentSize) / sizeof(WCHAR))))
+
+        if ((SUCCEEDED(GetCurrentThemeName (currentTheme, ARRAY_SIZE(currentTheme),
+            currentColor, ARRAY_SIZE(currentColor), currentSize, ARRAY_SIZE(currentSize))))
 	    && (lstrcmpiW (currentTheme, theme->themeFileName) == 0))
 	{
 	    select_color_and_size (theme, currentColor, comboColor,
@@ -560,7 +555,7 @@ static void set_color_from_theme(WCHAR *keyName, COLORREF color)
     keyNameA = HeapAlloc(GetProcessHeap(), 0, keyNameSize);
     WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, keyNameSize, NULL, NULL);
 
-    for (i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++)
+    for (i=0; i < ARRAY_SIZE(metrics); i++)
     {
         if (lstrcmpiA(metrics[i].color_reg, keyNameA)==0)
         {
@@ -620,19 +615,16 @@ static void on_theme_install(HWND dialog)
   static const WCHAR filterMask[] = {0,'*','.','m','s','s','t','y','l','e','s',';',
       '*','.','t','h','e','m','e',0,0};
   static const WCHAR themeExt[] = {'.','T','h','e','m','e',0};
-  const int filterMaskLen = sizeof(filterMask)/sizeof(filterMask[0]);
+  const int filterMaskLen = ARRAY_SIZE(filterMask);
   OPENFILENAMEW ofn;
   WCHAR filetitle[MAX_PATH];
   WCHAR file[MAX_PATH];
   WCHAR filter[100];
   WCHAR title[100];
 
-  LoadStringW (GetModuleHandleW(NULL), IDS_THEMEFILE,
-      filter, sizeof (filter) / sizeof (filter[0]) - filterMaskLen);
-  memcpy (filter + lstrlenW (filter), filterMask, 
-      filterMaskLen * sizeof (WCHAR));
-  LoadStringW (GetModuleHandleW(NULL), IDS_THEMEFILE_SELECT,
-      title, sizeof (title) / sizeof (title[0]));
+  LoadStringW(GetModuleHandleW(NULL), IDS_THEMEFILE, filter, ARRAY_SIZE(filter) - filterMaskLen);
+  memcpy(filter + lstrlenW (filter), filterMask, filterMaskLen * sizeof (WCHAR));
+  LoadStringW(GetModuleHandleW(NULL), IDS_THEMEFILE_SELECT, title, ARRAY_SIZE(title));
 
   ofn.lStructSize = sizeof(OPENFILENAMEW);
   ofn.hwndOwner = dialog;
@@ -646,7 +638,7 @@ static void on_theme_install(HWND dialog)
   ofn.nMaxFile = sizeof(file)/sizeof(filetitle[0]);
   ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
-  ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);
+  ofn.nMaxFileTitle = ARRAY_SIZE(filetitle);
   ofn.lpstrInitialDir = NULL;
   ofn.lpstrTitle = title;
   ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
@@ -746,8 +738,8 @@ static void init_shell_folder_listview_headers(HWND dialog) {
     WCHAR szLinksTo[64] = {'L','i','n','k','s',' ','t','o',0};
     int width;
 
-    LoadStringW(GetModuleHandleW(NULL), IDS_SHELL_FOLDER, szShellFolder, sizeof(szShellFolder)/sizeof(WCHAR));
-    LoadStringW(GetModuleHandleW(NULL), IDS_LINKS_TO, szLinksTo, sizeof(szLinksTo)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), IDS_SHELL_FOLDER, szShellFolder, ARRAY_SIZE(szShellFolder));
+    LoadStringW(GetModuleHandleW(NULL), IDS_LINKS_TO, szLinksTo, ARRAY_SIZE(szLinksTo));
 
     GetClientRect(GetDlgItem(dialog, IDC_LIST_SFPATHS), &viewRect);
     width = (viewRect.right - viewRect.left) / 3;
@@ -965,7 +957,7 @@ static void refresh_sysparams(HWND hDlg)
 {
     int i;
 
-    for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(metrics); i++)
     {
         if (metrics[i].sm_idx != -1)
             metrics[i].size = GetSystemMetrics(metrics[i].sm_idx);
@@ -983,10 +975,9 @@ static void read_sysparams(HWND hDlg)
     NONCLIENTMETRICSW nonclient_metrics;
     int i, idx;
 
-    for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(metrics); i++)
     {
-        LoadStringW(GetModuleHandleW(NULL), i + IDC_SYSPARAMS_BUTTON, buffer,
-                    sizeof(buffer) / sizeof(buffer[0]));
+        LoadStringW(GetModuleHandleW(NULL), i + IDC_SYSPARAMS_BUTTON, buffer, ARRAY_SIZE(buffer));
         idx = SendMessageW(list, CB_ADDSTRING, 0, (LPARAM)buffer);
         if (idx != CB_ERR) SendMessageW(list, CB_SETITEMDATA, idx, i);
 
@@ -1013,8 +1004,8 @@ static void apply_sysparams(void)
 {
     NONCLIENTMETRICSW ncm;
     int i, cnt = 0;
-    int colors_idx[sizeof(metrics) / sizeof(metrics[0])];
-    COLORREF colors[sizeof(metrics) / sizeof(metrics[0])];
+    int colors_idx[ARRAY_SIZE(metrics)];
+    COLORREF colors[ARRAY_SIZE(metrics)];
     HDC hdc;
     int dpi;
 
@@ -1049,7 +1040,7 @@ static void apply_sysparams(void)
     SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(ncm), &ncm,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
 
-    for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(metrics); i++)
         if (metrics[i].color_idx != -1)
         {
             colors_idx[cnt] = metrics[i].color_idx;
