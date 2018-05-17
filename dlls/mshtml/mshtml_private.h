@@ -232,6 +232,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLWindow4) \
     XIID(IHTMLWindow5) \
     XIID(IHTMLWindow6) \
+    XIID(IHTMLWindow7) \
     XIID(IHTMLXMLHttpRequest) \
     XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
@@ -458,6 +459,7 @@ struct HTMLWindow {
     IHTMLWindow4       IHTMLWindow4_iface;
     IHTMLWindow5       IHTMLWindow5_iface;
     IHTMLWindow6       IHTMLWindow6_iface;
+    IHTMLWindow7       IHTMLWindow7_iface;
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
     IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
