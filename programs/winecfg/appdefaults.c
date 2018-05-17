@@ -72,8 +72,6 @@ static const struct
 #endif
 };
 
-#define NB_VERSIONS (sizeof(win_versions)/sizeof(win_versions[0]))
-
 static const char szKey9x[] = "Software\\Microsoft\\Windows\\CurrentVersion";
 static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
 static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOptions";
@@ -113,7 +111,7 @@ static int get_registry_version(void)
     }
     major = atoi(ver);
 
-    for (i = 0; i < NB_VERSIONS; i++)
+    for (i = 0; i < ARRAY_SIZE(win_versions); i++)
     {
         if (win_versions[i].dwPlatformId != platform) continue;
         if (win_versions[i].dwMajorVersion != major) continue;
@@ -151,7 +149,7 @@ static void update_comboboxes(HWND dialog)
     WINE_TRACE("winver is %s\n", winver);
 
     /* normalize the version strings */
-    for (i = 0; i < NB_VERSIONS; i++)
+    for (i = 0; i < ARRAY_SIZE(win_versions); i++)
     {
         if (!strcasecmp (win_versions[i].szVersion, winver))
         {
@@ -181,7 +179,7 @@ init_comboboxes (HWND dialog)
         SendDlgItemMessageW (dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM)str);
     }
 
-    for (i = 0; i < NB_VERSIONS; i++)
+    for (i = 0; i < ARRAY_SIZE(win_versions); i++)
     {
       SendDlgItemMessageA(dialog, IDC_WINVER, CB_ADDSTRING,
                           0, (LPARAM) win_versions[i].szDescription);
