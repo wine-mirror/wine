@@ -710,6 +710,7 @@ static NTSTATUS status_gss_to_sspi( OM_uint32 status )
     case GSS_S_OLD_TOKEN:            return SEC_E_INVALID_TOKEN;
     case GSS_S_UNSEQ_TOKEN:          return SEC_E_OUT_OF_SEQUENCE;
     case GSS_S_GAP_TOKEN:            return SEC_E_OUT_OF_SEQUENCE;
+    case GSS_S_FAILURE:              return SEC_E_INTERNAL_ERROR;
 
     default:
         FIXME( "couldn't convert status 0x%08x to NTSTATUS\n", status );
