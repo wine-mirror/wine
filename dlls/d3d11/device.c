@@ -2606,16 +2606,25 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion1(ID3
         ID3D11Resource *dst_resource, UINT dst_subresource_idx, UINT dst_x, UINT dst_y, UINT dst_z,
         ID3D11Resource *src_resource, UINT src_subresource_idx, const D3D11_BOX *src_box, UINT flags)
 {
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct wined3d_resource *wined3d_dst_resource, *wined3d_src_resource;
+    struct wined3d_box wined3d_src_box;
+
     TRACE("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
             "src_resource %p, src_subresource_idx %u, src_box %p, flags %#x.\n",
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box, flags);
 
-    if (flags)
-        FIXME("Ignoring flags %#x.\n", flags);
+    if (src_box)
+        wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
+                src_box->right, src_box->bottom, src_box->front, src_box->back);
 
-    d3d11_immediate_context_CopySubresourceRegion(iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
-            src_resource, src_subresource_idx, src_box);
+    wined3d_dst_resource = wined3d_resource_from_d3d11_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_d3d11_resource(src_resource);
+    wined3d_mutex_lock();
+    wined3d_device_copy_sub_resource_region(device->wined3d_device, wined3d_dst_resource, dst_subresource_idx,
+            dst_x, dst_y, dst_z, wined3d_src_resource, src_subresource_idx, src_box ? &wined3d_src_box : NULL, flags);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource1(ID3D11DeviceContext1 *iface,
