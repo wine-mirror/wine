@@ -603,6 +603,20 @@ NTSTATUS WINAPI NtSetInformationToken(
         }
         SERVER_END_REQ;
         break;
+    case TokenSessionId:
+        if (TokenInformationLength < sizeof(DWORD))
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+        if (!TokenInformation)
+        {
+            ret = STATUS_ACCESS_VIOLATION;
+            break;
+        }
+        FIXME("TokenSessionId stub!\n");
+        ret = STATUS_SUCCESS;
+        break;
     default:
         FIXME("unimplemented class %u\n", TokenInformationClass);
         break;
