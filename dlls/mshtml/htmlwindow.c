@@ -2330,15 +2330,37 @@ static HRESULT WINAPI HTMLWindow7_get_performance(IHTMLWindow7 *iface, VARIANT *
 static HRESULT WINAPI HTMLWindow7_get_innerWidth(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    INT32 ret;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMWindow_GetInnerWidth(This->outer_window->nswindow, &ret);
+    if(NS_FAILED(nsres)) {
+        ERR("GetInnerWidth failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow7_get_innerHeight(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    INT32 ret;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMWindow_GetInnerHeight(This->outer_window->nswindow, &ret);
+    if(NS_FAILED(nsres)) {
+        ERR("GetInnerWidth failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow7_get_pageXOffset(IHTMLWindow7 *iface, LONG *p)
