@@ -3418,6 +3418,15 @@ static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
 {
+    /* FIXME: Expose getComputedStyle and performance once they are implemented.
+     * Stubs break existing web sites. */
+    static const dispex_hook_t window7_hooks[] = {
+        {DISPID_IHTMLWINDOW7_GETCOMPUTEDSTYLE, NULL},
+        {DISPID_IHTMLWINDOW7_PERFORMANCE, NULL},
+        {DISPID_UNKNOWN}
+    };
+    if(compat_mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLWindow7_tid, window7_hooks);
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
     EventTarget_init_dispex_info(info, compat_mode);
 }

@@ -84,6 +84,8 @@ function test_window_props() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+    test_exposed("getSelection", v >= 9);
+    test_exposed("onfocusout", v >= 9);
 
     next_test();
 }
