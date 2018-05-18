@@ -730,9 +730,10 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     {
         if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
             num_properties++;
+        else
+            TRACE("Instance extension '%s' is not supported.\n", host_properties[i].extensionName);
     }
 
-    /* We only have to count. */
     if (!properties)
     {
         TRACE("Returning %u extensions\n", num_properties);
