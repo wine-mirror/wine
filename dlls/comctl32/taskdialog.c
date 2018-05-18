@@ -488,6 +488,7 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 
     template->style = DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_VISIBLE | WS_SYSMENU;
     if (taskconfig->dwFlags & TDF_CAN_BE_MINIMIZED) template->style |= WS_MINIMIZEBOX;
+    if (!(taskconfig->dwFlags & TDF_NO_SET_FOREGROUND)) template->style |= DS_SETFOREGROUND;
     template->cdit = desc.control_count;
     template->x = (ref_rect.left + ref_rect.right + desc.dialog_width) / 2;
     template->y = (ref_rect.top + ref_rect.bottom + desc.dialog_height) / 2;
