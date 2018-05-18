@@ -638,6 +638,10 @@ NTSTATUS WINAPI NtSetInformationToken(
         FIXME("TokenSessionId stub!\n");
         ret = STATUS_SUCCESS;
         break;
+    case TokenIntegrityLevel:
+        FIXME("TokenIntegrityLevel stub!\n");
+        ret = STATUS_SUCCESS;
+        break;
     default:
         FIXME("unimplemented class %u\n", TokenInformationClass);
         break;
