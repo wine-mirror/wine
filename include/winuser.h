@@ -2158,6 +2158,13 @@ typedef struct tagDROPSTRUCT
     DWORD     dwControlData;
 } DROPSTRUCT, *PDROPSTRUCT, *LPDROPSTRUCT;
 
+#define DOF_EXECUTABLE  0x8001
+#define DOF_DOCUMENT    0x8002
+#define DOF_DIRECTORY   0x8003
+#define DOF_MULTIPLE    0x8004
+#define DOF_PROGMAN     0x0001
+#define DOF_SHELLDATA   0x0002
+
 /* modifiers for RegisterHotKey */
 #define	MOD_ALT		0x0001
 #define	MOD_CONTROL	0x0002
