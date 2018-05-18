@@ -84,8 +84,7 @@ struct taskdialog_template_desc
 struct taskdialog_info
 {
     HWND hwnd;
-    PFTASKDIALOGCALLBACK callback;
-    LONG_PTR callback_data;
+    const TASKDIALOGCONFIG *taskconfig;
 };
 
 static void pixels_to_dialogunits(const struct taskdialog_template_desc *desc, LONG *width, LONG *height)
@@ -520,8 +519,10 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 
 static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notification, WPARAM wparam, LPARAM lparam)
 {
-    return dialog_info->callback ? dialog_info->callback(dialog_info->hwnd, notification, wparam, lparam,
-            dialog_info->callback_data) : S_OK;
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    return taskconfig->pfCallback
+               ? taskconfig->pfCallback(dialog_info->hwnd, notification, wparam, lparam, taskconfig->lpCallbackData)
+               : S_OK;
 }
 
 static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, WORD command_id)
@@ -590,8 +591,7 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *taskconfig, int *butto
     if (!taskconfig || taskconfig->cbSize != sizeof(TASKDIALOGCONFIG))
         return E_INVALIDARG;
 
-    dialog_info.callback = taskconfig->pfCallback;
-    dialog_info.callback_data = taskconfig->lpCallbackData;
+    dialog_info.taskconfig = taskconfig;
 
     template = create_taskdialog_template(taskconfig);
     ret = (short)DialogBoxIndirectParamW(taskconfig->hInstance, template, taskconfig->hwndParent,
