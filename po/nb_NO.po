@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-03-01 23:15+0100\n"
+"PO-Revision-Date: 2018-05-18 13:47+0200\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -8514,10 +8514,8 @@ msgid "&Browse..."
 msgstr "&Bla..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Filtype"
+msgstr "Filtype:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8528,16 +8526,12 @@ msgid "Size:"
 msgstr "Størrelse:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Dato opprettet"
+msgstr "Dato opprettet:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Attributter:"
+msgstr "Attributter:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8548,28 +8542,20 @@ msgid "&Archive"
 msgstr "&Arkiv"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Åpne:"
+msgstr "Åpne med:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Endre &ikon..."
+msgstr "&Endre..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Endret"
+msgstr "Sist endret:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Sist endret:"
+msgstr "Siste tilgang:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -9181,38 +9167,28 @@ msgstr ""
 "Det er minst ett uspesifisert sikkerhetsproblem med dette sertifikatet."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Tidsavbrudd for tjenesteforespørsel.\n"
+msgstr "Forespørselen ble tidsavbrutt.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "En skriverfeil har oppstått."
+msgstr "En intern feil har oppstått.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Stien er ugyldig.\n"
+msgstr "URL'en er ugyldig.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL-skjemaet ble ikke gjenkjent eller er ikke støttet.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Brukernavnet finnes ikke.\n"
+msgstr "Tjenernavnet kunne ikke slåes opp.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Brukerprofilen er ugyldig.\n"
+msgstr "Den forespurte operasjonen er ugyldig.\n"
 
 #: winineterror.mc:56
 msgid ""
@@ -9221,20 +9197,16 @@ msgid ""
 msgstr ""
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Klarte ikke legge til profilen.\n"
+msgstr "Det forespurte elementet kunne ikke lokaliseres.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Kan ikke koble til LDAP-tjeneren"
+msgstr "Tilkoblingsforsøk til tjeneren mislyktes.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Tilkoblingen til tjeneren har blitt terminert.\n"
 
 #: winineterror.mc:76
 msgid ""
