@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-03-07 15:56+0100\n"
+"PO-Revision-Date: 2018-05-18 15:21+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3698,18 +3698,21 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"'writable'-Attribut des Eigenschaftendeskriptors kann bei diesem Objekt "
+"nicht auf 'true' gesetzt werden"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
+"Nicht-konfigurierbare Eigenschaft '|' kann nicht erneut definiert werden"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "Nicht-schreibbare Eigenschaft '|' kann nicht geändert werden"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -8522,10 +8525,8 @@ msgid "&Browse..."
 msgstr "&Durchsuchen..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Dateityp"
+msgstr "Dateityp:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8533,19 +8534,15 @@ msgstr "Ort:"
 
 #: shell32.rc:361 shell32.rc:394 winefile.rc:170
 msgid "Size:"
-msgstr "&Größe:"
+msgstr "Größe:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Erstellungsdatum"
+msgstr "Erstellungsdatum:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Attribute:"
+msgstr "Attribute:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8556,28 +8553,20 @@ msgid "&Archive"
 msgstr "&Archiv"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Öffnen:"
+msgstr "Öffnen mit:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "&Symbol ändern..."
+msgstr "&Ändern..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Geändert"
+msgstr "Zuletzt geändert:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Letzte &Änderung:"
+msgstr "Letzter Zugriff:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -9198,70 +9187,60 @@ msgstr ""
 "Es gibt mindestens ein unbekanntes Sicherheitsproblem mit diesem Zertifikat."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Zeitüberschreitung der Dienstanfrage.\n"
+msgstr "Zeitüberschreitung der Anfrage.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Ein Druckerfehler ist aufgetreten."
+msgstr "Ein interner Fehler ist aufgetreten.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Pfad ist ungültig.\n"
+msgstr "Die URL ist ungültig.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "Das URL-Format wurde nicht erkannt oder wird nicht unterstützt.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Der Benutzername konnte nicht gefunden werden.\n"
+msgstr "Der Servername konnte nicht aufgelöst werden.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Das Benutzerprofil ist ungültig.\n"
+msgstr "Die angeforderte Operation ist ungültig.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"Die Operation wurde abgebrochen, üblicherweise weil das Handle, auf dem die "
+"Anfrage ausgeführt wurde, vorzeitig geschlossen wurde.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Das Profil konnte nicht hinzugefügt werden.\n"
+msgstr "Das angeforderte Objekt konnte nicht gefunden werden.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Kann nicht zum LDAP-Server verbinden"
+msgstr "Der Verbindungsversuch zum Server ist fehlgeschlagen.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Die Verbindung zum Server wurde unterbrochen.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"Das Datum des empfangenen SSL-Zertifikats ist ungültig. Das Zertifikat ist "
+"abgelaufen.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "Das Feld 'Common name' (Hostname) des SSL-Zertifikats ist inkorrekt.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
