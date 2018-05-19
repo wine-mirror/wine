@@ -48,9 +48,12 @@ static const UINT DIALOG_MIN_WIDTH = 240;
 static const UINT DIALOG_SPACING = 5;
 static const UINT DIALOG_BUTTON_WIDTH = 50;
 static const UINT DIALOG_BUTTON_HEIGHT = 14;
+static const UINT DIALOG_TIMER_MS = 200;
 
 static const UINT ID_MAIN_INSTRUCTION = 0xf000;
 static const UINT ID_CONTENT          = 0xf001;
+
+static const UINT ID_TIMER = 1;
 
 struct taskdialog_control
 {
@@ -85,6 +88,7 @@ struct taskdialog_info
 {
     HWND hwnd;
     const TASKDIALOGCONFIG *taskconfig;
+    DWORD last_timer_tick;
 };
 
 static void pixels_to_dialogunits(const struct taskdialog_template_desc *desc, LONG *width, LONG *height)
@@ -535,7 +539,15 @@ static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, WORD
 
 static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
 {
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+
     dialog_info->hwnd = hwnd;
+
+    if (taskconfig->dwFlags & TDF_CALLBACK_TIMER)
+    {
+        SetTimer(hwnd, ID_TIMER, DIALOG_TIMER_MS, NULL);
+        dialog_info->last_timer_tick = GetTickCount();
+    }
 }
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -574,9 +586,19 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case WM_HELP:
             taskdialog_notify(dialog_info, TDN_HELP, 0, 0);
             break;
+        case WM_TIMER:
+            if (ID_TIMER == wParam)
+            {
+                DWORD elapsed = GetTickCount() - dialog_info->last_timer_tick;
+                if (taskdialog_notify(dialog_info, TDN_TIMER, elapsed, 0) == S_FALSE)
+                    dialog_info->last_timer_tick = GetTickCount();
+            }
+            break;
         case WM_DESTROY:
             taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
             RemovePropW(hwnd, taskdialog_info_propnameW);
+            if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER)
+                KillTimer(hwnd, ID_TIMER);
             break;
         default:
             return FALSE;
