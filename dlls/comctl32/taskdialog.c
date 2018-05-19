@@ -533,6 +533,11 @@ static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, WORD
         EndDialog(dialog_info->hwnd, command_id);
 }
 
+static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
+{
+    dialog_info->hwnd = hwnd;
+}
+
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static const WCHAR taskdialog_info_propnameW[] = {'T','a','s','k','D','i','a','l','o','g','I','n','f','o',0};
@@ -550,9 +555,10 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             break;
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
-            dialog_info->hwnd = hwnd;
-            SetPropW(hwnd, taskdialog_info_propnameW, dialog_info);
 
+            taskdialog_init(dialog_info, hwnd);
+
+            SetPropW(hwnd, taskdialog_info_propnameW, dialog_info);
             taskdialog_notify(dialog_info, TDN_DIALOG_CONSTRUCTED, 0, 0);
             break;
         case WM_SHOWWINDOW:
