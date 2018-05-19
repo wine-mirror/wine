@@ -38,6 +38,11 @@ struct d2d_draw_text_layout_ctx
     D2D1_DRAW_TEXT_OPTIONS options;
 };
 
+static inline struct d2d_device *impl_from_ID2D1Device(ID2D1Device *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device_iface);
+}
+
 static ID2D1Brush *d2d_draw_get_text_brush(struct d2d_draw_text_layout_ctx *context, IUnknown *effect)
 {
     ID2D1Brush *brush = NULL;
@@ -3288,4 +3293,120 @@ HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *iface, IDXGISurface1
     render_target->view = view;
 
     return S_OK;
+}
+
+static HRESULT WINAPI d2d_device_QueryInterface(ID2D1Device *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1Device)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1Device_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI d2d_device_AddRef(ID2D1Device *iface)
+{
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
+    ULONG refcount = InterlockedIncrement(&device->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI d2d_device_Release(ID2D1Device *iface)
+{
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
+    ULONG refcount = InterlockedDecrement(&device->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IDXGIDevice_Release(device->dxgi_device);
+        ID2D1Factory1_Release(device->factory);
+        heap_free(device);
+    }
+
+    return refcount;
+}
+
+static void WINAPI d2d_device_GetFactory(ID2D1Device *iface, ID2D1Factory **factory)
+{
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    *factory = (ID2D1Factory *)device->factory;
+    ID2D1Factory1_AddRef(device->factory);
+}
+
+static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
+        ID2D1DeviceContext **context)
+{
+    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device *iface, IWICImagingFactory *wic_factory,
+        IPrintDocumentPackageTarget *document_target, const D2D1_PRINT_CONTROL_PROPERTIES *desc,
+        ID2D1PrintControl **print_control)
+{
+    FIXME("iface %p, wic_factory %p, document_target %p, desc %p, print_control %p stub!\n", iface, wic_factory,
+            document_target, desc, print_control);
+
+    return E_NOTIMPL;
+}
+
+static void WINAPI d2d_device_SetMaximumTextureMemory(ID2D1Device *iface, UINT64 max_texture_memory)
+{
+    FIXME("iface %p, max_texture_memory %s stub!\n", iface, wine_dbgstr_longlong(max_texture_memory));
+}
+
+static UINT64 WINAPI d2d_device_GetMaximumTextureMemory(ID2D1Device *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static HRESULT WINAPI d2d_device_ClearResources(ID2D1Device *iface, UINT msec_since_use)
+{
+    FIXME("iface %p, msec_since_use %u stub!\n", iface, msec_since_use);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID2D1DeviceVtbl d2d_device_vtbl =
+{
+    d2d_device_QueryInterface,
+    d2d_device_AddRef,
+    d2d_device_Release,
+    d2d_device_GetFactory,
+    d2d_device_CreateDeviceContext,
+    d2d_device_CreatePrintControl,
+    d2d_device_SetMaximumTextureMemory,
+    d2d_device_GetMaximumTextureMemory,
+    d2d_device_ClearResources,
+};
+
+void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *iface, IDXGIDevice *dxgi_device)
+{
+    device->ID2D1Device_iface.lpVtbl = &d2d_device_vtbl;
+    device->refcount = 1;
+    device->factory = iface;
+    ID2D1Factory1_AddRef(device->factory);
+    device->dxgi_device = dxgi_device;
+    IDXGIDevice_AddRef(device->dxgi_device);
 }

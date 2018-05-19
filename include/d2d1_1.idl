@@ -18,12 +18,22 @@
 
 import "d2d1.idl";
 
-interface ID2D1Device;
+interface ID2D1DeviceContext;
 interface ID2D1StrokeStyle1;
 interface ID2D1PathGeometry1;
 interface ID2D1DrawingStateBlock1;
 interface ID2D1GdiMetafile;
 interface ID2D1Properties;
+interface IPrintDocumentPackageTarget;
+interface ID2D1PrintControl;
+interface IWICImagingFactory;
+
+typedef enum D2D1_DEVICE_CONTEXT_OPTIONS
+{
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE = 0x0,
+    D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS = 0x1,
+    D2D1_DEVICE_CONTEXT_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_DEVICE_CONTEXT_OPTIONS;
 
 typedef enum D2D1_STROKE_TRANSFORM_TYPE
 {
@@ -50,6 +60,22 @@ typedef enum D2D1_UNIT_MODE
     D2D1_UNIT_MODE_FORCE_DWORD = 0xffffffff,
 } D2D1_UNIT_MODE;
 
+typedef enum D2D1_PRINT_FONT_SUBSET_MODE
+{
+    D2D1_PRINT_FONT_SUBSET_MODE_DEFAULT = 0x0,
+    D2D1_PRINT_FONT_SUBSET_MODE_EACHPAGE = 0x1,
+    D2D1_PRINT_FONT_SUBSET_MODE_NONE = 0x2,
+    D2D1_PRINT_FONT_SUBSET_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_PRINT_FONT_SUBSET_MODE;
+
+typedef enum D2D1_COLOR_SPACE
+{
+    D2D1_COLOR_SPACE_CUSTOM = 0x0,
+    D2D1_COLOR_SPACE_SRGB = 0x1,
+    D2D1_COLOR_SPACE_SCRGB = 0x2,
+    D2D1_COLOR_SPACE_FORCE_DWORD = 0xffffffff,
+} D2D1_COLOR_SPACE;
+
 typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
 
 typedef struct D2D1_STROKE_STYLE_PROPERTIES1
@@ -75,7 +101,40 @@ typedef struct D2D1_DRAWING_STATE_DESCRIPTION1
     D2D1_UNIT_MODE unitMode;
 } D2D1_DRAWING_STATE_DESCRIPTION1;
 
+typedef struct D2D1_PRINT_CONTROL_PROPERTIES
+{
+    D2D1_PRINT_FONT_SUBSET_MODE fontSubset;
+    float rasterDPI;
+    D2D1_COLOR_SPACE colorSpace;
+} D2D1_PRINT_CONTROL_PROPERTIES;
+
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
+
+[
+    object,
+    uuid(47dd575d-ac05-4cdd-8049-9b02cd16f44c),
+    local,
+]
+interface ID2D1Device : ID2D1Resource
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext **context
+    );
+    HRESULT CreatePrintControl(
+        [in] IWICImagingFactory *wic_factory,
+        [in] IPrintDocumentPackageTarget *document_target,
+        [in] const D2D1_PRINT_CONTROL_PROPERTIES *desc,
+        [out] ID2D1PrintControl **print_control
+    );
+    void SetMaximumTextureMemory(
+        [in] UINT64 max_texture_memory
+    );
+    UINT64 GetMaximumTextureMemory();
+    HRESULT ClearResources(
+        [in, defaultvalue(0)] UINT msec_since_use
+    );
+}
 
 [
     object,
