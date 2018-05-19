@@ -27396,12 +27396,10 @@ static void test_depth_clip(void)
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
     set_viewport(context, vp.TopLeftX, vp.TopLeftY, vp.Width, vp.Height, 0.4f, 0.6f);
     draw_quad_z(&test_context, 2.0f);
-todo_wine
     check_texture_float(texture, 0.6f, 1);
     draw_quad_z(&test_context, 0.5f);
     check_texture_float(texture, 0.5f, 1);
     draw_quad_z(&test_context, -1.0f);
-todo_wine
     check_texture_float(texture, 0.4f, 1);
 
     ID3D11DepthStencilView_Release(dsv);
