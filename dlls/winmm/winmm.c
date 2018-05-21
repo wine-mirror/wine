@@ -912,6 +912,7 @@ typedef struct WINE_MIDIStream {
     HMIDIOUT			hDevice;
     HANDLE			hThread;
     DWORD			dwThreadID;
+    CRITICAL_SECTION		lock;
     DWORD			dwTempo;
     DWORD			dwTimeDiv;
     DWORD			dwPositionMS;
@@ -1140,8 +1141,10 @@ start_header:
 
 	/* do we have to wait ? */
 	if (me->dwDeltaTime) {
+	    EnterCriticalSection(&lpMidiStrm->lock);
 	    lpMidiStrm->dwPositionMS += MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
 	    lpMidiStrm->dwPulses += me->dwDeltaTime;
+	    LeaveCriticalSection(&lpMidiStrm->lock);
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
 
@@ -1185,7 +1188,9 @@ start_header:
 	    midiOutShortMsg(lpMidiStrm->hDevice, MEVT_EVENTPARM(me->dwEvent));
 	    break;
 	case MEVT_TEMPO:
+	    EnterCriticalSection(&lpMidiStrm->lock);
 	    lpMidiStrm->dwTempo = MEVT_EVENTPARM(me->dwEvent);
+	    LeaveCriticalSection(&lpMidiStrm->lock);
 	    break;
 	case MEVT_VERSION:
 	    break;
@@ -1248,8 +1253,11 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
     DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
                    (HDRVR)lpMidiStrm->hDevice, MM_MOM_CLOSE,
                    lpwm->mod.dwInstance, 0, 0);
-    if(!ret)
+    if(!ret) {
+        lpMidiStrm->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&lpMidiStrm->lock);
         HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+    }
 
     return midiOutClose((HMIDIOUT)hMidiStrm);
 }
@@ -1305,6 +1313,9 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 	HeapFree(GetProcessHeap(), 0, lpMidiStrm);
 	return ret;
     }
+
+    InitializeCriticalSection(&lpMidiStrm->lock);
+    lpMidiStrm->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM_MidiStream.lock");
 
     lpMidiStrm->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     lpMidiStrm->wFlags = HIWORD(fdwOpen);
@@ -1402,6 +1413,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
     } else if (lpMMT == NULL || cbmmt != sizeof(MMTIME)) {
 	ret = MMSYSERR_INVALPARAM;
     } else {
+	EnterCriticalSection(&lpMidiStrm->lock);
 	switch (lpMMT->wType) {
 	default:
 	    FIXME("Unsupported time type %x\n", lpMMT->wType);
@@ -1419,6 +1431,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
 	    break;
 	}
+	LeaveCriticalSection(&lpMidiStrm->lock);
     }
     return ret;
 }
@@ -1440,6 +1453,7 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
     } else if (dwProperty & MIDIPROP_TEMPO) {
 	MIDIPROPTEMPO*	mpt = (MIDIPROPTEMPO*)lpPropData;
 
+	EnterCriticalSection(&lpMidiStrm->lock);
 	if (sizeof(MIDIPROPTEMPO) != mpt->cbStruct) {
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
@@ -1449,13 +1463,16 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    mpt->dwTempo = lpMidiStrm->dwTempo;
 	    TRACE("Getting tempo <= %d\n", mpt->dwTempo);
 	}
+	LeaveCriticalSection(&lpMidiStrm->lock);
     } else if (dwProperty & MIDIPROP_TIMEDIV) {
 	MIDIPROPTIMEDIV*	mptd = (MIDIPROPTIMEDIV*)lpPropData;
 
 	if (sizeof(MIDIPROPTIMEDIV) != mptd->cbStruct) {
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
+	    EnterCriticalSection(&lpMidiStrm->lock);
 	    lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
+	    LeaveCriticalSection(&lpMidiStrm->lock);
 	    TRACE("Setting time div to %d\n", mptd->dwTimeDiv);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mptd->dwTimeDiv = lpMidiStrm->dwTimeDiv;
