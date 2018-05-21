@@ -124,10 +124,23 @@ void ShowAboutBox(HWND hWnd);
 LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull);
 LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
 
+/* edit.c */
+BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR newKeyName);
+BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPWSTR valueName);
+BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName);
+BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
+BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
+BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
+BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
+int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
+
 /* framewnd.c */
 LRESULT CALLBACK FrameWndProc(HWND, UINT, WPARAM, LPARAM);
 void SetupStatusBar(HWND hWnd, BOOL bResize);
 void UpdateStatusBar(void);
+
+/* hexedit.c */
+void HexEdit_Register(void);
 
 /* listview.c */
 BOOL update_listview_path(const WCHAR *path);
@@ -165,18 +178,5 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name);
 HWND StartKeyRename(HWND hwndTV);
 HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName);
 HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row);
-
-/* edit.c */
-BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR newKeyName);
-BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPWSTR valueName);
-BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName);
-BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
-BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
-BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
-BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
-int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
-
-/* hexedit.c */
-void HexEdit_Register(void);
 
 #endif /* __MAIN_H__ */
