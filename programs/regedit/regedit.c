@@ -21,10 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <shellapi.h>
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "main.h"
 #include "regproc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);

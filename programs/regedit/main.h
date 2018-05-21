@@ -21,8 +21,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <stdio.h>
 #include "resource.h"
-
 
 #define STATUS_WINDOW   2001
 #define TREE_WINDOW     2002
@@ -140,6 +140,14 @@ extern LPWSTR GetItemText(HWND hwndLV, UINT item);
 extern LPCWSTR GetValueName(HWND hwndLV);
 extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 extern BOOL IsDefaultValue(HWND hwndLV, int i);
+
+/* regproc.c */
+void *heap_xalloc(size_t size);
+void *heap_xrealloc(void *buf, size_t size);
+char *GetMultiByteString(const WCHAR *strW);
+BOOL import_registry_file(FILE *reg_file);
+void delete_registry_key(WCHAR *reg_key_name);
+BOOL export_registry_key(WCHAR *file_name, WCHAR *path, DWORD format);
 
 /* treeview.c */
 extern HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id);
