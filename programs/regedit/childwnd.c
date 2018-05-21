@@ -138,7 +138,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     if (hRootKey)
         parts[1] = GetRootKeyName(hRootKey);
     if (bFull) {
-        DWORD dwSize = sizeof(text)/sizeof(WCHAR);
+        DWORD dwSize = ARRAY_SIZE(text);
         GetComputerNameW(text, &dwSize);
         parts[0] = text;
     }

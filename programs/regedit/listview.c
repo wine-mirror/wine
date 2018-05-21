@@ -241,7 +241,7 @@ static BOOL CreateListColumns(HWND hWndListView)
         lvC.iSubItem = index;
         lvC.cx = default_column_widths[index];
         lvC.fmt = column_alignment[index];
-        LoadStringW(hInst, IDS_LIST_COLUMN_FIRST + index, szText, sizeof(szText)/sizeof(WCHAR));
+        LoadStringW(hInst, IDS_LIST_COLUMN_FIRST + index, szText, ARRAY_SIZE(szText));
         if (ListView_InsertColumnW(hWndListView, index, &lvC) == -1) return FALSE;
     }
     return TRUE;

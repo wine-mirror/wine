@@ -74,7 +74,7 @@ void WINAPIV output_message(unsigned int id, ...)
     WCHAR fmt[1536];
     __ms_va_list va_args;
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(*fmt)))
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         return;
@@ -89,7 +89,7 @@ void WINAPIV error_exit(unsigned int id, ...)
     WCHAR fmt[1536];
     __ms_va_list va_args;
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(*fmt)))
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %u\n", GetLastError());
         return;
