@@ -5329,17 +5329,25 @@ static void test_InvalidateLayout(void)
         IDWriteTextFormat2_Release(format2);
 
         hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat2, (void**)&format2);
-        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Unexpected hr %#x.\n", hr);
+        if (hr == S_OK) {
+            ok(format != (IDWriteTextFormat *)format2, "Unexpected interface pointer.\n");
+            IDWriteTextFormat2_Release(format2);
+        }
 
         hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat1, (void**)&format1);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDWriteTextFormat1_QueryInterface(format1, &IID_IDWriteTextFormat2, (void**)&format2);
-        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            IDWriteTextFormat2_Release(format2);
         IDWriteTextFormat1_Release(format1);
 
         hr = IDWriteTextLayout3_QueryInterface(layout3, &IID_IDWriteTextFormat2, (void**)&format2);
-        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got 0x%08x\n", hr);
+        if (hr == S_OK)
+            IDWriteTextFormat2_Release(format2);
 
         hr = IDWriteTextLayout3_InvalidateLayout(layout3);
         ok(hr == S_OK, "got 0x%08x\n", hr);

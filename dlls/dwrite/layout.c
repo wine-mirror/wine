@@ -242,7 +242,7 @@ enum layout_recompute_mask {
 
 struct dwrite_textlayout {
     IDWriteTextLayout3 IDWriteTextLayout3_iface;
-    IDWriteTextFormat1 IDWriteTextFormat1_iface;
+    IDWriteTextFormat2 IDWriteTextFormat2_iface;
     IDWriteTextAnalysisSink1 IDWriteTextAnalysisSink1_iface;
     IDWriteTextAnalysisSource1 IDWriteTextAnalysisSource1_iface;
     LONG ref;
@@ -326,9 +326,9 @@ static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout3(IDWriteText
     return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextLayout3_iface);
 }
 
-static inline struct dwrite_textlayout *impl_layout_from_IDWriteTextFormat1(IDWriteTextFormat1 *iface)
+static inline struct dwrite_textlayout *impl_layout_from_IDWriteTextFormat2(IDWriteTextFormat2 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextFormat1_iface);
+    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextFormat2_iface);
 }
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSink1(IDWriteTextAnalysisSink1 *iface)
@@ -2814,9 +2814,10 @@ static HRESULT WINAPI dwritetextlayout_QueryInterface(IDWriteTextLayout3 *iface,
     {
         *obj = iface;
     }
-    else if (IsEqualIID(riid, &IID_IDWriteTextFormat1) ||
+    else if (IsEqualIID(riid, &IID_IDWriteTextFormat2) ||
+             IsEqualIID(riid, &IID_IDWriteTextFormat1) ||
              IsEqualIID(riid, &IID_IDWriteTextFormat))
-        *obj = &This->IDWriteTextFormat1_iface;
+        *obj = &This->IDWriteTextFormat2_iface;
 
     if (*obj) {
         IDWriteTextLayout3_AddRef(iface);
@@ -2865,39 +2866,39 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout3 *iface)
 static HRESULT WINAPI dwritetextlayout_SetTextAlignment(IDWriteTextLayout3 *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_SetTextAlignment(&This->IDWriteTextFormat1_iface, alignment);
+    return IDWriteTextFormat2_SetTextAlignment(&This->IDWriteTextFormat2_iface, alignment);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetParagraphAlignment(IDWriteTextLayout3 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_SetParagraphAlignment(&This->IDWriteTextFormat1_iface, alignment);
+    return IDWriteTextFormat2_SetParagraphAlignment(&This->IDWriteTextFormat2_iface, alignment);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetWordWrapping(IDWriteTextLayout3 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_SetWordWrapping(&This->IDWriteTextFormat1_iface, wrapping);
+    return IDWriteTextFormat2_SetWordWrapping(&This->IDWriteTextFormat2_iface, wrapping);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetReadingDirection(IDWriteTextLayout3 *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_SetReadingDirection(&This->IDWriteTextFormat1_iface, direction);
+    return IDWriteTextFormat2_SetReadingDirection(&This->IDWriteTextFormat2_iface, direction);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetFlowDirection(IDWriteTextLayout3 *iface, DWRITE_FLOW_DIRECTION direction)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%d)\n", This, direction);
-    return IDWriteTextFormat1_SetFlowDirection(&This->IDWriteTextFormat1_iface, direction);
+    return IDWriteTextFormat2_SetFlowDirection(&This->IDWriteTextFormat2_iface, direction);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetIncrementalTabStop(IDWriteTextLayout3 *iface, FLOAT tabstop)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%.2f)\n", This, tabstop);
-    return IDWriteTextFormat1_SetIncrementalTabStop(&This->IDWriteTextFormat1_iface, tabstop);
+    return IDWriteTextFormat2_SetIncrementalTabStop(&This->IDWriteTextFormat2_iface, tabstop);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetTrimming(IDWriteTextLayout3 *iface, DWRITE_TRIMMING const *trimming,
@@ -2905,7 +2906,7 @@ static HRESULT WINAPI dwritetextlayout_SetTrimming(IDWriteTextLayout3 *iface, DW
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%p %p)\n", This, trimming, trimming_sign);
-    return IDWriteTextFormat1_SetTrimming(&This->IDWriteTextFormat1_iface, trimming, trimming_sign);
+    return IDWriteTextFormat2_SetTrimming(&This->IDWriteTextFormat2_iface, trimming, trimming_sign);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetLineSpacing(IDWriteTextLayout3 *iface, DWRITE_LINE_SPACING_METHOD spacing,
@@ -2913,111 +2914,113 @@ static HRESULT WINAPI dwritetextlayout_SetLineSpacing(IDWriteTextLayout3 *iface,
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%d %.2f %.2f)\n", This, spacing, line_spacing, baseline);
-    return IDWriteTextFormat1_SetLineSpacing(&This->IDWriteTextFormat1_iface, spacing, line_spacing, baseline);
+    return IDWriteTextFormat1_SetLineSpacing((IDWriteTextFormat1 *)&This->IDWriteTextFormat2_iface, spacing,
+            line_spacing, baseline);
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextlayout_GetTextAlignment(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetTextAlignment(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetTextAlignment(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_PARAGRAPH_ALIGNMENT WINAPI dwritetextlayout_GetParagraphAlignment(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetParagraphAlignment(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetParagraphAlignment(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_WORD_WRAPPING WINAPI dwritetextlayout_GetWordWrapping(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetWordWrapping(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetWordWrapping(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_READING_DIRECTION WINAPI dwritetextlayout_GetReadingDirection(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetReadingDirection(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetReadingDirection(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_FLOW_DIRECTION WINAPI dwritetextlayout_GetFlowDirection(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFlowDirection(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFlowDirection(&This->IDWriteTextFormat2_iface);
 }
 
 static FLOAT WINAPI dwritetextlayout_GetIncrementalTabStop(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetIncrementalTabStop(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetIncrementalTabStop(&This->IDWriteTextFormat2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetTrimming(IDWriteTextLayout3 *iface, DWRITE_TRIMMING *options,
     IDWriteInlineObject **trimming_sign)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetTrimming(&This->IDWriteTextFormat1_iface, options, trimming_sign);
+    return IDWriteTextFormat2_GetTrimming(&This->IDWriteTextFormat2_iface, options, trimming_sign);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetLineSpacing(IDWriteTextLayout3 *iface, DWRITE_LINE_SPACING_METHOD *method,
     FLOAT *spacing, FLOAT *baseline)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat_GetLineSpacing((IDWriteTextFormat*)&This->IDWriteTextFormat1_iface, method, spacing, baseline);
+    return IDWriteTextFormat_GetLineSpacing((IDWriteTextFormat *)&This->IDWriteTextFormat2_iface, method,
+            spacing, baseline);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetFontCollection(IDWriteTextLayout3 *iface, IDWriteFontCollection **collection)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontCollection(&This->IDWriteTextFormat1_iface, collection);
+    return IDWriteTextFormat2_GetFontCollection(&This->IDWriteTextFormat2_iface, collection);
 }
 
 static UINT32 WINAPI dwritetextlayout_GetFontFamilyNameLength(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontFamilyNameLength(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFontFamilyNameLength(&This->IDWriteTextFormat2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetFontFamilyName(IDWriteTextLayout3 *iface, WCHAR *name, UINT32 size)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontFamilyName(&This->IDWriteTextFormat1_iface, name, size);
+    return IDWriteTextFormat2_GetFontFamilyName(&This->IDWriteTextFormat2_iface, name, size);
 }
 
 static DWRITE_FONT_WEIGHT WINAPI dwritetextlayout_GetFontWeight(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontWeight(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFontWeight(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_FONT_STYLE WINAPI dwritetextlayout_GetFontStyle(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontStyle(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFontStyle(&This->IDWriteTextFormat2_iface);
 }
 
 static DWRITE_FONT_STRETCH WINAPI dwritetextlayout_GetFontStretch(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontStretch(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFontStretch(&This->IDWriteTextFormat2_iface);
 }
 
 static FLOAT WINAPI dwritetextlayout_GetFontSize(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetFontSize(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetFontSize(&This->IDWriteTextFormat2_iface);
 }
 
 static UINT32 WINAPI dwritetextlayout_GetLocaleNameLength(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetLocaleNameLength(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetLocaleNameLength(&This->IDWriteTextFormat2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetLocaleName(IDWriteTextLayout3 *iface, WCHAR *name, UINT32 size)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    return IDWriteTextFormat1_GetLocaleName(&This->IDWriteTextFormat1_iface, name, size);
+    return IDWriteTextFormat2_GetLocaleName(&This->IDWriteTextFormat2_iface, name, size);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout3 *iface, FLOAT maxWidth)
@@ -3950,28 +3953,28 @@ static HRESULT WINAPI dwritetextlayout2_SetLastLineWrapping(IDWriteTextLayout3 *
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%d)\n", This, lastline_wrapping_enabled);
-    return IDWriteTextFormat1_SetLastLineWrapping(&This->IDWriteTextFormat1_iface, lastline_wrapping_enabled);
+    return IDWriteTextFormat2_SetLastLineWrapping(&This->IDWriteTextFormat2_iface, lastline_wrapping_enabled);
 }
 
 static BOOL WINAPI dwritetextlayout2_GetLastLineWrapping(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)\n", This);
-    return IDWriteTextFormat1_GetLastLineWrapping(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetLastLineWrapping(&This->IDWriteTextFormat2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetOpticalAlignment(IDWriteTextLayout3 *iface, DWRITE_OPTICAL_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)->(%d)\n", This, alignment);
-    return IDWriteTextFormat1_SetOpticalAlignment(&This->IDWriteTextFormat1_iface, alignment);
+    return IDWriteTextFormat2_SetOpticalAlignment(&This->IDWriteTextFormat2_iface, alignment);
 }
 
 static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextlayout2_GetOpticalAlignment(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
     TRACE("(%p)\n", This);
-    return IDWriteTextFormat1_GetOpticalAlignment(&This->IDWriteTextFormat1_iface);
+    return IDWriteTextFormat2_GetOpticalAlignment(&This->IDWriteTextFormat2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetFontFallback(IDWriteTextLayout3 *iface, IDWriteFontFallback *fallback)
@@ -4142,28 +4145,29 @@ static const IDWriteTextLayout3Vtbl dwritetextlayoutvtbl = {
     dwritetextlayout3_GetLineMetrics
 };
 
-static HRESULT WINAPI dwritetextformat_layout_QueryInterface(IDWriteTextFormat1 *iface, REFIID riid, void **obj)
+static HRESULT WINAPI dwritetextformat_layout_QueryInterface(IDWriteTextFormat2 *iface, REFIID riid, void **obj)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
     return IDWriteTextLayout3_QueryInterface(&This->IDWriteTextLayout3_iface, riid, obj);
 }
 
-static ULONG WINAPI dwritetextformat_layout_AddRef(IDWriteTextFormat1 *iface)
+static ULONG WINAPI dwritetextformat_layout_AddRef(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     return IDWriteTextLayout3_AddRef(&This->IDWriteTextLayout3_iface);
 }
 
-static ULONG WINAPI dwritetextformat_layout_Release(IDWriteTextFormat1 *iface)
+static ULONG WINAPI dwritetextformat_layout_Release(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     return IDWriteTextLayout3_Release(&This->IDWriteTextLayout3_iface);
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetTextAlignment(IDWriteTextFormat1 *iface, DWRITE_TEXT_ALIGNMENT alignment)
+static HRESULT WINAPI dwritetextformat_layout_SetTextAlignment(IDWriteTextFormat2 *iface,
+        DWRITE_TEXT_ALIGNMENT alignment)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4183,9 +4187,10 @@ static HRESULT WINAPI dwritetextformat_layout_SetTextAlignment(IDWriteTextFormat
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
+static HRESULT WINAPI dwritetextformat_layout_SetParagraphAlignment(IDWriteTextFormat2 *iface,
+        DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4205,9 +4210,9 @@ static HRESULT WINAPI dwritetextformat_layout_SetParagraphAlignment(IDWriteTextF
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
+static HRESULT WINAPI dwritetextformat_layout_SetWordWrapping(IDWriteTextFormat2 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4223,9 +4228,10 @@ static HRESULT WINAPI dwritetextformat_layout_SetWordWrapping(IDWriteTextFormat1
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)
+static HRESULT WINAPI dwritetextformat_layout_SetReadingDirection(IDWriteTextFormat2 *iface,
+        DWRITE_READING_DIRECTION direction)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4241,9 +4247,10 @@ static HRESULT WINAPI dwritetextformat_layout_SetReadingDirection(IDWriteTextFor
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)
+static HRESULT WINAPI dwritetextformat_layout_SetFlowDirection(IDWriteTextFormat2 *iface,
+        DWRITE_FLOW_DIRECTION direction)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4259,17 +4266,17 @@ static HRESULT WINAPI dwritetextformat_layout_SetFlowDirection(IDWriteTextFormat
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetIncrementalTabStop(IDWriteTextFormat1 *iface, FLOAT tabstop)
+static HRESULT WINAPI dwritetextformat_layout_SetIncrementalTabStop(IDWriteTextFormat2 *iface, FLOAT tabstop)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     FIXME("(%p)->(%f): stub\n", This, tabstop);
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *iface, DWRITE_TRIMMING const *trimming,
+static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat2 *iface, DWRITE_TRIMMING const *trimming,
     IDWriteInlineObject *trimming_sign)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     BOOL changed;
     HRESULT hr;
 
@@ -4283,10 +4290,10 @@ static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *if
     return hr;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_SetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD method,
-    FLOAT height, FLOAT baseline)
+static HRESULT WINAPI dwritetextformat_layout_SetLineSpacing(IDWriteTextFormat2 *iface,
+        DWRITE_LINE_SPACING_METHOD method, FLOAT height, FLOAT baseline)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     DWRITE_LINE_SPACING spacing;
 
     TRACE("(%p)->(%d %f %f)\n", This, method, height, baseline);
@@ -4298,52 +4305,52 @@ static HRESULT WINAPI dwritetextformat_layout_SetLineSpacing(IDWriteTextFormat1 
     return IDWriteTextLayout3_SetLineSpacing(&This->IDWriteTextLayout3_iface, &spacing);
 }
 
-static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_layout_GetTextAlignment(IDWriteTextFormat1 *iface)
+static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_layout_GetTextAlignment(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.textalignment;
 }
 
-static DWRITE_PARAGRAPH_ALIGNMENT WINAPI dwritetextformat_layout_GetParagraphAlignment(IDWriteTextFormat1 *iface)
+static DWRITE_PARAGRAPH_ALIGNMENT WINAPI dwritetextformat_layout_GetParagraphAlignment(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.paralign;
 }
 
-static DWRITE_WORD_WRAPPING WINAPI dwritetextformat_layout_GetWordWrapping(IDWriteTextFormat1 *iface)
+static DWRITE_WORD_WRAPPING WINAPI dwritetextformat_layout_GetWordWrapping(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.wrapping;
 }
 
-static DWRITE_READING_DIRECTION WINAPI dwritetextformat_layout_GetReadingDirection(IDWriteTextFormat1 *iface)
+static DWRITE_READING_DIRECTION WINAPI dwritetextformat_layout_GetReadingDirection(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.readingdir;
 }
 
-static DWRITE_FLOW_DIRECTION WINAPI dwritetextformat_layout_GetFlowDirection(IDWriteTextFormat1 *iface)
+static DWRITE_FLOW_DIRECTION WINAPI dwritetextformat_layout_GetFlowDirection(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.flow;
 }
 
-static FLOAT WINAPI dwritetextformat_layout_GetIncrementalTabStop(IDWriteTextFormat1 *iface)
+static FLOAT WINAPI dwritetextformat_layout_GetIncrementalTabStop(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     FIXME("(%p): stub\n", This);
     return 0.0f;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_GetTrimming(IDWriteTextFormat1 *iface, DWRITE_TRIMMING *options,
+static HRESULT WINAPI dwritetextformat_layout_GetTrimming(IDWriteTextFormat2 *iface, DWRITE_TRIMMING *options,
     IDWriteInlineObject **trimming_sign)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%p %p)\n", This, options, trimming_sign);
 
@@ -4354,10 +4361,10 @@ static HRESULT WINAPI dwritetextformat_layout_GetTrimming(IDWriteTextFormat1 *if
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_GetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD *method,
-    FLOAT *spacing, FLOAT *baseline)
+static HRESULT WINAPI dwritetextformat_layout_GetLineSpacing(IDWriteTextFormat2 *iface,
+        DWRITE_LINE_SPACING_METHOD *method, FLOAT *spacing, FLOAT *baseline)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%p %p %p)\n", This, method, spacing, baseline);
 
@@ -4367,9 +4374,10 @@ static HRESULT WINAPI dwritetextformat_layout_GetLineSpacing(IDWriteTextFormat1 
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_GetFontCollection(IDWriteTextFormat1 *iface, IDWriteFontCollection **collection)
+static HRESULT WINAPI dwritetextformat_layout_GetFontCollection(IDWriteTextFormat2 *iface,
+        IDWriteFontCollection **collection)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%p)\n", This, collection);
 
@@ -4379,16 +4387,16 @@ static HRESULT WINAPI dwritetextformat_layout_GetFontCollection(IDWriteTextForma
     return S_OK;
 }
 
-static UINT32 WINAPI dwritetextformat_layout_GetFontFamilyNameLength(IDWriteTextFormat1 *iface)
+static UINT32 WINAPI dwritetextformat_layout_GetFontFamilyNameLength(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.family_len;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_GetFontFamilyName(IDWriteTextFormat1 *iface, WCHAR *name, UINT32 size)
+static HRESULT WINAPI dwritetextformat_layout_GetFontFamilyName(IDWriteTextFormat2 *iface, WCHAR *name, UINT32 size)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%p %u)\n", This, name, size);
 
@@ -4397,44 +4405,44 @@ static HRESULT WINAPI dwritetextformat_layout_GetFontFamilyName(IDWriteTextForma
     return S_OK;
 }
 
-static DWRITE_FONT_WEIGHT WINAPI dwritetextformat_layout_GetFontWeight(IDWriteTextFormat1 *iface)
+static DWRITE_FONT_WEIGHT WINAPI dwritetextformat_layout_GetFontWeight(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.weight;
 }
 
-static DWRITE_FONT_STYLE WINAPI dwritetextformat_layout_GetFontStyle(IDWriteTextFormat1 *iface)
+static DWRITE_FONT_STYLE WINAPI dwritetextformat_layout_GetFontStyle(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.style;
 }
 
-static DWRITE_FONT_STRETCH WINAPI dwritetextformat_layout_GetFontStretch(IDWriteTextFormat1 *iface)
+static DWRITE_FONT_STRETCH WINAPI dwritetextformat_layout_GetFontStretch(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.stretch;
 }
 
-static FLOAT WINAPI dwritetextformat_layout_GetFontSize(IDWriteTextFormat1 *iface)
+static FLOAT WINAPI dwritetextformat_layout_GetFontSize(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.fontsize;
 }
 
-static UINT32 WINAPI dwritetextformat_layout_GetLocaleNameLength(IDWriteTextFormat1 *iface)
+static UINT32 WINAPI dwritetextformat_layout_GetLocaleNameLength(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.locale_len;
 }
 
-static HRESULT WINAPI dwritetextformat_layout_GetLocaleName(IDWriteTextFormat1 *iface, WCHAR *name, UINT32 size)
+static HRESULT WINAPI dwritetextformat_layout_GetLocaleName(IDWriteTextFormat2 *iface, WCHAR *name, UINT32 size)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%p %u)\n", This, name, size);
 
@@ -4443,23 +4451,25 @@ static HRESULT WINAPI dwritetextformat_layout_GetLocaleName(IDWriteTextFormat1 *
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_SetVerticalGlyphOrientation(IDWriteTextFormat1 *iface, DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
+static HRESULT WINAPI dwritetextformat1_layout_SetVerticalGlyphOrientation(IDWriteTextFormat2 *iface,
+        DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     FIXME("(%p)->(%d): stub\n", This, orientation);
     return E_NOTIMPL;
 }
 
-static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextformat1_layout_GetVerticalGlyphOrientation(IDWriteTextFormat1 *iface)
+static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextformat1_layout_GetVerticalGlyphOrientation(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     FIXME("(%p): stub\n", This);
     return DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_SetLastLineWrapping(IDWriteTextFormat1 *iface, BOOL lastline_wrapping_enabled)
+static HRESULT WINAPI dwritetextformat1_layout_SetLastLineWrapping(IDWriteTextFormat2 *iface,
+        BOOL lastline_wrapping_enabled)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
 
     TRACE("(%p)->(%d)\n", This, lastline_wrapping_enabled);
 
@@ -4467,42 +4477,58 @@ static HRESULT WINAPI dwritetextformat1_layout_SetLastLineWrapping(IDWriteTextFo
     return S_OK;
 }
 
-static BOOL WINAPI dwritetextformat1_layout_GetLastLineWrapping(IDWriteTextFormat1 *iface)
+static BOOL WINAPI dwritetextformat1_layout_GetLastLineWrapping(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.last_line_wrapping;
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_SetOpticalAlignment(IDWriteTextFormat1 *iface, DWRITE_OPTICAL_ALIGNMENT alignment)
+static HRESULT WINAPI dwritetextformat1_layout_SetOpticalAlignment(IDWriteTextFormat2 *iface,
+        DWRITE_OPTICAL_ALIGNMENT alignment)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%d)\n", This, alignment);
     return format_set_optical_alignment(&This->format, alignment);
 }
 
-static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_layout_GetOpticalAlignment(IDWriteTextFormat1 *iface)
+static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_layout_GetOpticalAlignment(IDWriteTextFormat2 *iface)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)\n", This);
     return This->format.optical_alignment;
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_SetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback *fallback)
+static HRESULT WINAPI dwritetextformat1_layout_SetFontFallback(IDWriteTextFormat2 *iface,
+        IDWriteFontFallback *fallback)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%p)\n", This, fallback);
     return IDWriteTextLayout3_SetFontFallback(&This->IDWriteTextLayout3_iface, fallback);
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_GetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback **fallback)
+static HRESULT WINAPI dwritetextformat1_layout_GetFontFallback(IDWriteTextFormat2 *iface,
+        IDWriteFontFallback **fallback)
 {
-    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%p)\n", This, fallback);
     return IDWriteTextLayout3_GetFontFallback(&This->IDWriteTextLayout3_iface, fallback);
 }
 
-static const IDWriteTextFormat1Vtbl dwritetextformat1_layout_vtbl = {
+static HRESULT WINAPI dwritetextformat2_layout_SetLineSpacing(IDWriteTextFormat2 *iface,
+        DWRITE_LINE_SPACING const *spacing)
+{
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
+    return IDWriteTextLayout3_SetLineSpacing(&This->IDWriteTextLayout3_iface, spacing);
+}
+
+static HRESULT WINAPI dwritetextformat2_layout_GetLineSpacing(IDWriteTextFormat2 *iface, DWRITE_LINE_SPACING *spacing)
+{
+    struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
+    return IDWriteTextLayout3_GetLineSpacing(&This->IDWriteTextLayout3_iface, spacing);
+}
+
+static const IDWriteTextFormat2Vtbl dwritetextformat2_layout_vtbl = {
     dwritetextformat_layout_QueryInterface,
     dwritetextformat_layout_AddRef,
     dwritetextformat_layout_Release,
@@ -4539,6 +4565,8 @@ static const IDWriteTextFormat1Vtbl dwritetextformat1_layout_vtbl = {
     dwritetextformat1_layout_GetOpticalAlignment,
     dwritetextformat1_layout_SetFontFallback,
     dwritetextformat1_layout_GetFontFallback,
+    dwritetextformat2_layout_SetLineSpacing,
+    dwritetextformat2_layout_GetLineSpacing,
 };
 
 static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSink1 *iface,
@@ -4913,7 +4941,7 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     HRESULT hr;
 
     layout->IDWriteTextLayout3_iface.lpVtbl = &dwritetextlayoutvtbl;
-    layout->IDWriteTextFormat1_iface.lpVtbl = &dwritetextformat1_layout_vtbl;
+    layout->IDWriteTextFormat2_iface.lpVtbl = &dwritetextformat2_layout_vtbl;
     layout->IDWriteTextAnalysisSink1_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
     layout->IDWriteTextAnalysisSource1_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     layout->ref = 1;
