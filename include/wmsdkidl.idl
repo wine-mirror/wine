@@ -495,6 +495,18 @@ interface IWMProfileManager : IUnknown
         [out] IWMProfile **ppProfile);
 }
 
+[
+    object,
+    uuid(7a924e51-73c1-494d-8019-23d37ed9b89a),
+    pointer_default(unique),
+    local
+]
+interface IWMProfileManager2 : IWMProfileManager
+{
+    HRESULT GetSystemProfileVersion(WMT_VERSION *version);
+    HRESULT SetSystemProfileVersion(WMT_VERSION version);
+};
+
 cpp_quote("HRESULT WINAPI WMCreateProfileManager(IWMProfileManager**);")
 
 [
@@ -1615,6 +1627,73 @@ interface IWMReaderPlaylistBurn : IUnknown
     HRESULT EndPlaylistBurn([in] HRESULT result);
 }
 
+[
+    object,
+    uuid(72995a79-5090-42a4-9c8c-d9d0b6d34be5),
+    pointer_default(unique),
+    local
+]
+interface IWMPropertyVault : IUnknown
+{
+    HRESULT GetPropertyCount([in] DWORD *count);
+
+    HRESULT GetPropertyByName(
+        [in] const WCHAR *name,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is( *size )] BYTE *value,
+        [in, out] DWORD *size);
+
+    HRESULT SetProperty(
+        [in] const WCHAR *name,
+        [in] WMT_ATTR_DATATYPE type,
+        [in] BYTE *value,
+        [in] DWORD size);
+
+    HRESULT GetPropertyByIndex(
+        [in] DWORD index,
+        [out, size_is( *pdwNameLen )] WCHAR *name,
+        [in, out]  DWORD *length,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is( *size )] BYTE *value,
+        [in, out] DWORD *size);
+
+    HRESULT CopyPropertiesFrom([in] IWMPropertyVault *vault);
+
+    HRESULT Clear();
+};
+
+[
+    object,
+    uuid(fc54a285-38c4-45b5-aa23-85b9f7cb424b),
+    pointer_default(unique),
+    local
+]
+interface IWMWriterPreprocess : IUnknown
+{
+    HRESULT GetMaxPreprocessingPasses(
+        [in] DWORD input,
+        [in] DWORD flags,
+        [out] DWORD *passes);
+
+    HRESULT SetNumPreprocessingPasses(
+        [in] DWORD input,
+        [in] DWORD flags,
+        [in] DWORD passes);
+
+    HRESULT BeginPreprocessingPass(
+        [in] DWORD input,
+        [in] DWORD flags);
+
+    HRESULT PreprocessSample(
+        [in] DWORD input,
+        [in] QWORD sample_time,
+        [in] DWORD flags,
+        [in] INSSBuffer *sample);
+
+    HRESULT EndPreprocessingPass(
+        [in] DWORD input,
+        [in] DWORD flags);
+};
 
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
 cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
