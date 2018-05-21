@@ -117,33 +117,31 @@ extern const WCHAR* reg_class_namesW[];
 #define INDEX_HKEY_CURRENT_USER     4
 #define INDEX_HKEY_DYN_DATA         5
 
-
-
 /* about.c */
-extern void ShowAboutBox(HWND hWnd);
+void ShowAboutBox(HWND hWnd);
 
 /* childwnd.c */
-extern LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull);
-extern LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
+LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull);
+LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
 
 /* framewnd.c */
-extern LRESULT CALLBACK FrameWndProc(HWND, UINT, WPARAM, LPARAM);
-extern void SetupStatusBar(HWND hWnd, BOOL bResize);
-extern void UpdateStatusBar(void);
+LRESULT CALLBACK FrameWndProc(HWND, UINT, WPARAM, LPARAM);
+void SetupStatusBar(HWND hWnd, BOOL bResize);
+void UpdateStatusBar(void);
 
 /* listview.c */
-extern BOOL update_listview_path(const WCHAR *path);
-extern void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD size);
-extern int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos);
-extern void OnGetDispInfo(NMLVDISPINFOW *plvdi);
-extern HWND CreateListView(HWND hwndParent, UINT id);
-extern int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);
-extern HWND StartValueRename(HWND hwndLV);
-extern LPWSTR GetItemText(HWND hwndLV, UINT item);
-extern LPCWSTR GetValueName(HWND hwndLV);
-extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
-extern BOOL IsDefaultValue(HWND hwndLV, int i);
+BOOL update_listview_path(const WCHAR *path);
+void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD size);
+int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos);
+void OnGetDispInfo(NMLVDISPINFOW *plvdi);
+HWND CreateListView(HWND hwndParent, UINT id);
+int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);
+HWND StartValueRename(HWND hwndLV);
+LPWSTR GetItemText(HWND hwndLV, UINT item);
+LPCWSTR GetValueName(HWND hwndLV);
+BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
+BOOL IsDefaultValue(HWND hwndLV, int i);
 
 /* regedit.c */
 void WINAPIV output_message(unsigned int id, ...);
@@ -158,27 +156,27 @@ void delete_registry_key(WCHAR *reg_key_name);
 BOOL export_registry_key(WCHAR *file_name, WCHAR *path, DWORD format);
 
 /* treeview.c */
-extern HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id);
-extern BOOL RefreshTreeView(HWND hWndTV);
-extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEWW* pnmtv);
-extern LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
-extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
-extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name);
-extern HWND StartKeyRename(HWND hwndTV);
-extern HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName);
-extern HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row);
+HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id);
+BOOL RefreshTreeView(HWND hWndTV);
+BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEWW* pnmtv);
+LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
+BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
+HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name);
+HWND StartKeyRename(HWND hwndTV);
+HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName);
+HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row);
 
 /* edit.c */
-extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR newKeyName);
-extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPWSTR valueName);
-extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName);
-extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
-extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
-extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
-extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
-extern int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
+BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR newKeyName);
+BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPWSTR valueName);
+BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName);
+BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
+BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
+BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
+BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
+int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
 
 /* hexedit.c */
-extern void HexEdit_Register(void);
+void HexEdit_Register(void);
 
 #endif /* __MAIN_H__ */
