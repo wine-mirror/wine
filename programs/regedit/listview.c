@@ -23,7 +23,6 @@
 #include <winternl.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "main.h"
 #include "wine/heap.h"

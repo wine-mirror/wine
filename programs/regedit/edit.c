@@ -25,7 +25,6 @@
 #include <commdlg.h>
 #include <cderr.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <shellapi.h>
 #include <shlwapi.h>
 

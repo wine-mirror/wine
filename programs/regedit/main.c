@@ -22,7 +22,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include "wine/debug.h"
 
