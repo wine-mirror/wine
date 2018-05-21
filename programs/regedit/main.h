@@ -141,6 +141,10 @@ extern LPCWSTR GetValueName(HWND hwndLV);
 extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 extern BOOL IsDefaultValue(HWND hwndLV, int i);
 
+/* regedit.c */
+void WINAPIV output_message(unsigned int id, ...);
+void WINAPIV error_exit(unsigned int id, ...);
+
 /* regproc.c */
 void *heap_xalloc(size_t size);
 void *heap_xrealloc(void *buf, size_t size);

@@ -23,6 +23,3 @@
 
 #define REG_FORMAT_5 1
 #define REG_FORMAT_4 2
-
-void WINAPIV output_message(unsigned int id, ...);
-void WINAPIV error_exit(unsigned int id, ...);
