@@ -1590,14 +1590,17 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                                 [ancestor orderWindow:orderingMode relativeTo:[ancestorOfOther windowNumber]];
                         }
 
-                        for (child = self;
-                             (parent = (WineWindow*)child.parentWindow);
-                             child = parent)
+                        if (!ancestorOfOther || ancestor != self)
                         {
-                            if ([parent isKindOfClass:[WineWindow class]])
-                                [parent order:-orderingMode childWindow:child relativeTo:nil];
-                            if (parent == ancestor)
-                                break;
+                            for (child = self;
+                                 (parent = (WineWindow*)child.parentWindow);
+                                 child = parent)
+                            {
+                                if ([parent isKindOfClass:[WineWindow class]])
+                                    [parent order:-orderingMode childWindow:child relativeTo:nil];
+                                if (parent == ancestor)
+                                    break;
+                            }
                         }
 
                         [self checkWineDisplayLink];
