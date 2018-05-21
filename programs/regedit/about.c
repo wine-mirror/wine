@@ -29,6 +29,6 @@ void ShowAboutBox(HWND hWnd)
 {
     WCHAR title[64];
     HICON icon = LoadImageW( hInst, MAKEINTRESOURCEW(IDI_REGEDIT), IMAGE_ICON, 48, 48, LR_SHARED );
-    LoadStringW(hInst, IDS_APP_TITLE, title, COUNT_OF(title));
+    LoadStringW(hInst, IDS_APP_TITLE, title, ARRAY_SIZE(title));
     ShellAboutW(hWnd, title, NULL, icon);
 }

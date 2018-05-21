@@ -167,7 +167,7 @@ static void update_new_items_and_copy_keyname(HMENU hMenu, WCHAR *keyName)
     if (!keyName)
         state = MF_GRAYED;
 
-    for (i = 0; i < COUNT_OF(items); i++)
+    for (i = 0; i < ARRAY_SIZE(items); i++)
         EnableMenuItem(hMenu, items[i], state | MF_BYCOMMAND);
 }
 
@@ -469,7 +469,7 @@ static BOOL ImportRegistryFile(HWND hWnd)
 
     InitOpenFileName(hWnd, &ofn);
     ofn.Flags |= OFN_ENABLESIZING;
-    LoadStringW(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
+    LoadStringW(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, ARRAY_SIZE(title));
     ofn.lpstrTitle = title;
     if (GetOpenFileNameW(&ofn)) {
         if (!import_registry_filename(ofn.lpstrFile)) {
@@ -498,7 +498,7 @@ static BOOL ExportRegistryFile(HWND hWnd)
     WCHAR title[128];
 
     InitOpenFileName(hWnd, &ofn);
-    LoadStringW(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
+    LoadStringW(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, ARRAY_SIZE(title));
     ofn.lpstrTitle = title;
     ofn.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
     ofn.lpfnHook = ExportRegistryFile_OFNHookProc;
@@ -676,7 +676,7 @@ static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
             item.mask = TVIF_HANDLE | TVIF_TEXT;
             item.hItem = selected;
             item.pszText = buf;
-            item.cchTextMax = COUNT_OF(buf);
+            item.cchTextMax = ARRAY_SIZE(buf);
             SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETITEMW, 0, (LPARAM)&item);
 
             EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
@@ -1065,10 +1065,10 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         CreateWindowExW(0, szChildClass, captionW, WS_CHILD | WS_VISIBLE,
                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                         hWnd, NULL, hInst, 0);
-        LoadStringW(hInst, IDS_EXPAND, expandW, COUNT_OF(expandW));
-        LoadStringW(hInst, IDS_COLLAPSE, collapseW, COUNT_OF(collapseW));
-        LoadStringW(hInst, IDS_EDIT_MODIFY, modifyW, COUNT_OF(modifyW));
-        LoadStringW(hInst, IDS_EDIT_MODIFY_BIN, modify_binaryW, COUNT_OF(modify_binaryW));
+        LoadStringW(hInst, IDS_EXPAND, expandW, ARRAY_SIZE(expandW));
+        LoadStringW(hInst, IDS_COLLAPSE, collapseW, ARRAY_SIZE(collapseW));
+        LoadStringW(hInst, IDS_EDIT_MODIFY, modifyW, ARRAY_SIZE(modifyW));
+        LoadStringW(hInst, IDS_EDIT_MODIFY_BIN, modify_binaryW, ARRAY_SIZE(modify_binaryW));
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam))

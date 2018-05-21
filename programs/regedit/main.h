@@ -30,7 +30,7 @@
 
 #define	SPLIT_WIDTH	5
 
-#define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
+#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
 #define MAX_NEW_KEY_LEN 128
 

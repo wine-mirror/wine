@@ -54,8 +54,8 @@ static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_l
     WCHAR *str;
     int ret;
 
-    LoadStringW(hInst, titleId, title, COUNT_OF(title));
-    LoadStringW(hInst, resId, fmt, COUNT_OF(fmt));
+    LoadStringW(hInst, titleId, title, ARRAY_SIZE(title));
+    LoadStringW(hInst, resId, fmt, ARRAY_SIZE(fmt));
 
     FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
                    fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
@@ -94,7 +94,7 @@ static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
     WCHAR buf[128];
     DWORD val;
 
-    if (!GetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf, COUNT_OF(buf))) return FALSE;
+    if (!GetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf, ARRAY_SIZE(buf))) return FALSE;
     if (!swscanf(buf, toHex ? percent_u : percent_x, &val)) return FALSE;
     wsprintfW(buf, toHex ? percent_x : percent_u, val);
     return SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf);
@@ -244,7 +244,7 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
 	goto done;
     }
 
-    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
+    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWKEY, newKey, ARRAY_SIZE(newKey))) goto done;
 
     /* try to find a name for the key being created (maximum = 100 attempts) */
     for (keyNum = 1; keyNum < 100; keyNum++) {
@@ -460,7 +460,7 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
 	return FALSE;
     }
 
-    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
+    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWVALUE, newValue, ARRAY_SIZE(newValue))) goto done;
 
     /* try to find a name for the value being created (maximum = 100 attempts) */
     for (valueNum = 1; valueNum < 100; valueNum++) {
