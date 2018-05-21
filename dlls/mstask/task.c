@@ -408,11 +408,95 @@ static HRESULT WINAPI MSTASK_ITask_GetRunTimes(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *st)
+static void get_begin_time(const TASK_TRIGGER *trigger, FILETIME *ft)
 {
-    FIXME("(%p, %p): stub\n", iface, st);
+    SYSTEMTIME st;
 
-    memset(st, 0, sizeof(*st));
+    st.wYear = trigger->wBeginYear;
+    st.wMonth = trigger->wBeginMonth;
+    st.wDay = trigger->wBeginDay;
+    st.wDayOfWeek = 0;
+    st.wHour = 0;
+    st.wMinute = 0;
+    st.wSecond = 0;
+    st.wMilliseconds = 0;
+    SystemTimeToFileTime(&st, ft);
+}
+
+static void get_end_time(const TASK_TRIGGER *trigger, FILETIME *ft)
+{
+    SYSTEMTIME st;
+
+    if (!(trigger->rgFlags & TASK_TRIGGER_FLAG_HAS_END_DATE))
+    {
+        ft->dwHighDateTime = ~0u;
+        ft->dwLowDateTime = ~0u;
+        return;
+    }
+
+    st.wYear = trigger->wEndYear;
+    st.wMonth = trigger->wEndMonth;
+    st.wDay = trigger->wEndDay;
+    st.wDayOfWeek = 0;
+    st.wHour = 0;
+    st.wMinute = 0;
+    st.wSecond = 0;
+    st.wMilliseconds = 0;
+    SystemTimeToFileTime(&st, ft);
+}
+
+static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
+{
+    TaskImpl *This = impl_from_ITask(iface);
+    SYSTEMTIME st, current_st;
+    FILETIME current_ft, begin_ft, end_ft, best_ft;
+    BOOL have_best_time = FALSE;
+    DWORD i;
+
+    TRACE("(%p, %p)\n", iface, rt);
+
+    GetLocalTime(&current_st);
+
+    for (i = 0; i < This->trigger_count; i++)
+    {
+        if (!(This->trigger[i].rgFlags & TASK_TRIGGER_FLAG_DISABLED))
+        {
+            get_begin_time(&This->trigger[i], &begin_ft);
+            get_end_time(&This->trigger[i], &end_ft);
+
+            switch (This->trigger[i].TriggerType)
+            {
+            case TASK_TIME_TRIGGER_ONCE:
+                st = current_st;
+                st.wHour = This->trigger[i].wStartHour;
+                st.wMinute = This->trigger[i].wStartMinute;
+                st.wSecond = 0;
+                st.wMilliseconds = 0;
+                SystemTimeToFileTime(&st, &current_ft);
+                if (CompareFileTime(&begin_ft, &current_ft) <= 0 && CompareFileTime(&current_ft, &end_ft) < 0)
+                {
+                    if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                    {
+                        best_ft = current_ft;
+                        have_best_time = TRUE;
+                    }
+                }
+                break;
+
+            default:
+                FIXME("trigger type %u is not handled\n", This->trigger[i].TriggerType);
+                break;
+            }
+        }
+    }
+
+    if (have_best_time)
+    {
+        FileTimeToSystemTime(&best_ft, rt);
+        return S_OK;
+    }
+
+    memset(rt, 0, sizeof(*rt));
     return SCHED_S_TASK_NO_VALID_TRIGGERS;
 }
 

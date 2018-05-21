@@ -422,6 +422,53 @@ static void test_task_trigger(void)
     ok(ref == 0, "got %u\n", ref);
 }
 
+static void time_add_ms(SYSTEMTIME *st, DWORD ms)
+{
+    union
+    {
+        FILETIME ft;
+        ULONGLONG ll;
+    } ftll;
+    BOOL ret;
+
+    trace("old: %u/%u/%u wday %u %u:%02u:%02u.%03u\n",
+          st->wDay, st->wMonth, st->wYear, st->wDayOfWeek,
+          st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+    ret = SystemTimeToFileTime(st, &ftll.ft);
+    ok(ret, "SystemTimeToFileTime error %u\n", GetLastError());
+
+    ftll.ll += ms * (ULONGLONG)10000;
+    ret = FileTimeToSystemTime(&ftll.ft, st);
+    ok(ret, "FileTimeToSystemTime error %u\n", GetLastError());
+    trace("new: %u/%u/%u wday %u %u:%02u:%02u.%03u\n",
+          st->wDay, st->wMonth, st->wYear, st->wDayOfWeek,
+          st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+}
+
+static void trigger_add_ms(TASK_TRIGGER *data, DWORD ms, SYSTEMTIME *ret)
+{
+    SYSTEMTIME st;
+
+    st.wYear = data->wBeginYear;
+    st.wMonth = data->wBeginMonth;
+    st.wDayOfWeek = 0;
+    st.wDay = data->wBeginDay;
+    st.wHour = data->wStartHour;
+    st.wMinute = data->wStartMinute;
+    st.wSecond = 0;
+    st.wMilliseconds = 0;
+
+    time_add_ms(&st, ms);
+
+    data->wBeginYear = st.wYear;
+    data->wBeginMonth = st.wMonth;
+    data->wBeginDay = st.wDay;
+    data->wStartHour = st.wHour;
+    data->wStartMinute = st.wMinute;
+
+    *ret = st;
+}
+
 static void test_GetNextRunTime(void)
 {
     static const WCHAR task_name[] = { 'T','e','s','t','i','n','g',0 };
@@ -429,8 +476,9 @@ static void test_GetNextRunTime(void)
     HRESULT hr;
     ITask *task;
     ITaskTrigger *trigger;
+    TASK_TRIGGER data;
     WORD idx;
-    SYSTEMTIME st;
+    SYSTEMTIME st, cmp;
 
     hr = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name, &CLSID_CTask,
                                     &IID_ITask, (IUnknown **)&task);
@@ -442,9 +490,9 @@ static void test_GetNextRunTime(void)
     memset(&st, 0xff, sizeof(st));
     hr = ITask_GetNextRunTime(task, &st);
     ok(hr == SCHED_S_TASK_NO_VALID_TRIGGERS, "got %#x\n", hr);
-    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %d/%d/%d wday %d %d:%d:%d.%03d\n",
+    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
        st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
-       st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+       st.wHour, st.wMinute, st.wSecond);
 
     hr = ITask_CreateTrigger(task, &idx, &trigger);
     ok(hr == S_OK, "got %#x\n", hr);
@@ -452,9 +500,32 @@ static void test_GetNextRunTime(void)
     memset(&st, 0xff, sizeof(st));
     hr = ITask_GetNextRunTime(task, &st);
     ok(hr == SCHED_S_TASK_NO_VALID_TRIGGERS, "got %#x\n", hr);
-    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %d/%d/%d wday %d %d:%d:%d.%03d\n",
+    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
        st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
-       st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+       st.wHour, st.wMinute, st.wSecond);
+
+    /* TASK_TIME_TRIGGER_ONCE */
+
+    hr = ITaskTrigger_GetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+    data.TriggerType = TASK_TIME_TRIGGER_ONCE;
+    /* add 5 minutes to avoid races */
+    trigger_add_ms(&data, 5 * 60 * 1000, &cmp);
+    hr = ITaskTrigger_SetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(!memcmp(&st, &cmp, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond);
+
+    /* FIXME: TASK_TIME_TRIGGER_DAILY */
+    /* FIXME: TASK_TIME_TRIGGER_WEEKLY */
+    /* FIXME: TASK_TIME_TRIGGER_MONTHLYDATE */
+    /* FIXME: TASK_TIME_TRIGGER_MONTHLYDOW */
 
     ITaskTrigger_Release(trigger);
     ITask_Release(task);
