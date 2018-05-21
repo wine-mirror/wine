@@ -37,7 +37,6 @@
 
 #include "wine/heap.h"
 #include "main.h"
-#include "regproc.h"
 
 /* spaces dividing hex and ASCII */
 #define DIV_SPACES 4

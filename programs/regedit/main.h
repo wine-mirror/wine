@@ -32,7 +32,11 @@
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
-#define MAX_NEW_KEY_LEN 128
+#define MAX_NEW_KEY_LEN  128
+#define KEY_MAX_LEN      1024
+
+#define REG_FORMAT_5     1
+#define REG_FORMAT_4     2
 
 /* Pop-Up Menus */
 #define PM_COMPUTER      0

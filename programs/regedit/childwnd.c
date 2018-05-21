@@ -24,7 +24,6 @@
 #include <stdio.h>
 
 #include "main.h"
-#include "regproc.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"

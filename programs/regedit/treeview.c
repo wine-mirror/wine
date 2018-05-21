@@ -32,7 +32,6 @@
 
 #include "wine/heap.h"
 #include "main.h"
-#include "regproc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
