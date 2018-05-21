@@ -919,6 +919,7 @@ typedef struct WINE_MIDIStream {
     DWORD			dwPulses;
     DWORD			dwStartTicks;
     WORD			wFlags;
+    WORD			status;
     HANDLE			hEvent;
     LPMIDIHDR			lpMidiHdr;
 } WINE_MIDIStream;
@@ -927,6 +928,10 @@ typedef struct WINE_MIDIStream {
 #define WINE_MSM_STOP		(WM_USER+1)
 #define WINE_MSM_PAUSE		(WM_USER+2)
 #define WINE_MSM_RESUME		(WM_USER+3)
+
+#define MSM_STATUS_STOPPED	WINE_MSM_STOP
+#define MSM_STATUS_PAUSED	WINE_MSM_PAUSE
+#define MSM_STATUS_PLAYING	WINE_MSM_RESUME
 
 /**************************************************************************
  * 				MMSYSTEM_GetMidiStream		[internal]
@@ -976,7 +981,6 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
     LPMIDIHDR	lpMidiHdr;
     LPMIDIHDR*	lpmh;
     LPBYTE	lpData;
-    BOOL	paused = FALSE;
 
     for (;;) {
         switch (msg->message) {
@@ -984,6 +988,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             return FALSE;
         case WINE_MSM_STOP:
             TRACE("STOP\n");
+            lpMidiStrm->status = MSM_STATUS_STOPPED;
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
             /* empty list of already submitted buffers */
@@ -1003,10 +1008,11 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
         case WINE_MSM_RESUME:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
             lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
+            lpMidiStrm->status = MSM_STATUS_PLAYING;
             return TRUE;
         case WINE_MSM_PAUSE:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
-            paused = TRUE;
+            lpMidiStrm->status = MSM_STATUS_PAUSED;
             break;
 	/* FIXME(EPP): "I don't understand the content of the first MIDIHDR sent
 	 * by native mcimidi, it doesn't look like a correct one".
@@ -1087,7 +1093,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             FIXME("Unknown message %d\n", msg->message);
             break;
         }
-        if (!paused)
+        if (lpMidiStrm->status != MSM_STATUS_PAUSED)
             return TRUE;
         GetMessageA(msg, 0, 0, 0);
     }
@@ -1292,6 +1298,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpMidiStrm->dwTempo = 500000;  /* micro seconds per quarter note, i.e. 120 BPM */
     lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
     lpMidiStrm->dwPositionMS = 0;
+    lpMidiStrm->status = MSM_STATUS_PAUSED;
 
     mosm.dwStreamID = (DWORD)lpMidiStrm;
     /* FIXME: the correct value is not allocated yet for MAPPER */
@@ -1331,8 +1338,6 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 
     /* wait for thread to have started, and for its queue to be created */
     WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-
-    PostThreadMessageA(lpMidiStrm->dwThreadID, WINE_MSM_PAUSE, 0, 0);
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
