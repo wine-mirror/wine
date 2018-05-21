@@ -445,6 +445,27 @@ static void get_end_time(const TASK_TRIGGER *trigger, FILETIME *ft)
     SystemTimeToFileTime(&st, ft);
 }
 
+static void filetime_add_ms(FILETIME *ft, ULONGLONG ms)
+{
+    union u_ftll
+    {
+        FILETIME ft;
+        ULONGLONG ll;
+    } *ftll = (union u_ftll *)ft;
+
+    ftll->ll += ms * (ULONGLONG)10000;
+}
+
+static void filetime_add_hours(FILETIME *ft, ULONG hours)
+{
+    filetime_add_ms(ft, (ULONGLONG)hours * 60 * 60 * 1000);
+}
+
+static void filetime_add_days(FILETIME *ft, ULONG days)
+{
+    filetime_add_hours(ft, (ULONGLONG)days * 24);
+}
+
 static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 {
     TaskImpl *This = impl_from_ITask(iface);
@@ -480,6 +501,29 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                         best_ft = current_ft;
                         have_best_time = TRUE;
                     }
+                }
+                break;
+
+            case TASK_TIME_TRIGGER_DAILY:
+                st = current_st;
+                st.wHour = This->trigger[i].wStartHour;
+                st.wMinute = This->trigger[i].wStartMinute;
+                st.wSecond = 0;
+                st.wMilliseconds = 0;
+                SystemTimeToFileTime(&st, &current_ft);
+                while (CompareFileTime(&current_ft, &end_ft) < 0)
+                {
+                    if (CompareFileTime(&current_ft, &begin_ft) >= 0)
+                    {
+                        if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                        {
+                            best_ft = current_ft;
+                            have_best_time = TRUE;
+                        }
+                        break;
+                    }
+
+                    filetime_add_days(&current_ft, This->trigger[i].Type.Daily.DaysInterval);
                 }
                 break;
 

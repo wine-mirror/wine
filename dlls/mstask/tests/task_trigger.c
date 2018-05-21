@@ -522,7 +522,23 @@ static void test_GetNextRunTime(void)
        st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
        st.wHour, st.wMinute, st.wSecond);
 
-    /* FIXME: TASK_TIME_TRIGGER_DAILY */
+    /* TASK_TIME_TRIGGER_DAILY */
+
+    hr = ITaskTrigger_GetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+    data.TriggerType = TASK_TIME_TRIGGER_DAILY;
+    data.Type.Daily.DaysInterval = 1;
+    hr = ITaskTrigger_SetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(!memcmp(&st, &cmp, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond);
+
     /* FIXME: TASK_TIME_TRIGGER_WEEKLY */
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDATE */
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDOW */
