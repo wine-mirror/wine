@@ -1517,6 +1517,7 @@ if (0) /* crashes on native */
     hr = IDWriteFontFamily_QueryInterface(family, &IID_IDWriteFontFamily1, (void**)&family1);
     if (hr == S_OK) {
         IDWriteFontFaceReference *ref, *ref1;
+        IDWriteFontList1 *fontlist1;
         IDWriteFontList *fontlist;
         IDWriteFont3 *font3;
         IDWriteFont1 *font1;
@@ -1537,8 +1538,17 @@ if (0) /* crashes on native */
         ok(hr == S_OK, "got 0x%08x\n", hr);
         IDWriteFont1_Release(font1);
 
-        hr = IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList1, (void**)&fontlist);
-        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+        hr = IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList1, (void **)&fontlist1);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Failed to get interface, hr %#x.\n", hr);
+        if (hr == S_OK) {
+            hr = IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList, (void **)&fontlist);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(fontlist == (IDWriteFontList *)fontlist1, "Unexpected interface pointer.\n");
+            ok(fontlist != (IDWriteFontList *)family1, "Unexpected interface pointer.\n");
+            ok(fontlist != (IDWriteFontList *)family, "Unexpected interface pointer.\n");
+            IDWriteFontList1_Release(fontlist1);
+            IDWriteFontList_Release(fontlist);
+        }
 
         hr = IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList, (void**)&fontlist);
         ok(hr == S_OK, "got 0x%08x\n", hr);
