@@ -19,6 +19,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include "windows.h"
 #include "mmsystem.h"
@@ -531,6 +533,51 @@ static MIDISHORTEVENT strmNops[] = { /* Test callback + dwOffset */
   { 0, 0, (MEVT_NOP <<24)| MEVT_F_CALLBACK },
 };
 
+static MIDISHORTEVENT strmNopsWithDelta[] = {
+  {  0, 0, (MEVT_NOP <<24)| MEVT_F_CALLBACK },
+  { 12, 0, (MEVT_NOP <<24)| MEVT_F_CALLBACK },
+};
+
+struct time_stamp_records {
+    UINT  count;
+    DWORD time_stamp[2];
+    HANDLE done;
+};
+
+static void CALLBACK time_stamp_callback(HMIDIOUT hmo, UINT msg, DWORD_PTR instance, DWORD_PTR p1, DWORD_PTR p2)
+{
+    struct time_stamp_records *records = (struct time_stamp_records *)instance;
+    switch (msg) {
+    case MM_MOM_POSITIONCB:
+        if (records->count < sizeof(records->time_stamp)/sizeof(records->time_stamp[0]))
+            records->time_stamp[records->count] = GetTickCount();
+        records->count++;
+        break;
+    case MM_MOM_DONE:
+        SetEvent(records->done);
+        break;
+    }
+}
+
+static DWORD get_position(HMIDISTRM hm, UINT type)
+{
+    MMRESULT rc;
+    MMTIME mmtime;
+    mmtime.wType = type;
+    rc = midiStreamPosition(hm, &mmtime, sizeof(mmtime));
+    if (rc != MMSYSERR_NOERROR || mmtime.wType != type)
+        return MAXDWORD;
+
+    switch (mmtime.wType) {
+    case TIME_MS:
+        return mmtime.u.ms;
+    case TIME_TICKS:
+        return mmtime.u.ticks;
+    default:
+        return MAXDWORD;
+    }
+}
+
 static MMRESULT playStream(HMIDISTRM hm, LPMIDIHDR lpMidiHdr)
 {
     MMRESULT rc = midiStreamOut(hm, lpMidiHdr, sizeof(MIDIHDR));
@@ -549,6 +596,9 @@ static void test_midiStream(UINT udev, HWND hwnd)
         MIDIPROPTEMPO tempo;
         MIDIPROPTIMEDIV tdiv;
     } midiprop;
+    DWORD diff, expected, ret;
+    const DWORD MARGIN = 50;
+    struct time_stamp_records records;
     MIDIOUTCAPSA capsA;
 
     if (hwnd)
@@ -785,6 +835,100 @@ static void test_midiStream(UINT udev, HWND hwnd)
         rc = midiStreamClose(hm);
         ok(!rc, "midiStreamClose rc=%s\n", mmsys_error(rc));
     }
+
+    /* Test the player time clock and positions */
+    memset(&records, 0, sizeof(records));
+    records.done = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(records.done != NULL, "CreateEvent failed (dev=%d)\n", udev);
+
+    rc = midiStreamOpen(&hm, &udev, 1, (DWORD_PTR)time_stamp_callback, (DWORD_PTR)&records, CALLBACK_FUNCTION);
+    ok(!rc, "midiStreamOpen(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    expected = 0;
+    ret = get_position(hm, TIME_MS);
+    ok(ret == expected, "expected %u, got %u\n", expected, ret);
+
+    memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.lpData = (LPSTR)strmNopsWithDelta;
+    mhdr.dwBytesRecorded = mhdr.dwBufferLength = sizeof(strmNopsWithDelta);
+    rc = midiOutPrepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutPrepareHeader(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    rc = midiStreamOut(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiStreamOut(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    ret = get_position(hm, TIME_MS);
+    ok(ret == expected, "expected %u, got %u\n", expected, ret);
+
+    rc = midiStreamRestart(hm);
+    ok(!rc, "midiStreamRestart(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    Sleep(50);
+
+    rc = midiStreamPause(hm);
+    ok(!rc, "midiStreamPause(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    expected = 50;
+    ret = get_position(hm, TIME_MS);
+    todo_wine ok(ret >= expected && ret < expected + MARGIN, "expected %ums or greater, got %ums\n", expected, ret);
+    expected = ret;
+
+    Sleep(100);
+
+    ret = get_position(hm, TIME_MS);
+    ok(ret == expected, "expected %ums, got %ums\n", expected, ret);
+
+    rc = midiStreamRestart(hm);
+    ok(!rc, "midiStreamRestart(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    Sleep(1);
+    ret = get_position(hm, TIME_MS);
+    todo_wine ok(ret > expected && ret < expected + MARGIN, "expected greater than %ums, got %ums\n", expected, ret);
+    expected = ret;
+
+    ret = WaitForSingleObject(records.done, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed, got %d\n", ret);
+
+    rc = midiStreamPause(hm);
+    ok(!rc, "midiStreamPause(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    expected = 250; /* = 12 ticks in 120 BPM */
+    ret = get_position(hm, TIME_MS);
+    ok(ret >= expected - MARGIN && ret <= expected + MARGIN,
+       "expected greater than %ums, got %ums\n", expected, ret);
+    trace("after playing, got %ums\n", ret);
+
+    /* set tempo to 240 BPM */
+    midiprop.tempo.cbStruct = sizeof(midiprop.tempo);
+    midiprop.tempo.dwTempo = 250000;
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_SET | MIDIPROP_TEMPO);
+    ok(!rc, "midiStreamProperty(SET|TEMPO, dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    /* a tempo change doesn't affect elapsed ticks */
+    ret = get_position(hm, TIME_TICKS);
+    ok(ret >= strmNopsWithDelta[1].dwDeltaTime && ret < strmNopsWithDelta[1].dwDeltaTime + 3,
+       "expected %u ticks, got %u\n", strmNopsWithDelta[1].dwDeltaTime, ret);
+
+    ok(records.count == 2, "expected 2 MM_MOM_DONE messages, got %d\n", records.count);
+
+    /* Time between midiStreamPause and midiStreamRestart isn't counted.
+       So, the second event happens at dwDeltaTime(250ms) + 100ms after the first event. */
+    expected = 250 + 100;
+    diff = records.time_stamp[1] - records.time_stamp[0];
+    todo_wine ok(diff >= expected - MARGIN && diff <= expected + MARGIN,
+       "expected %u ~ %ums, got %ums (dev=%d)\n", expected - MARGIN, expected + MARGIN, diff, udev);
+
+    rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiOutUnprepareHeader(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    rc = midiStreamStop(hm);
+    ok(!rc, "midiStreamStop(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    ret = get_position(hm, TIME_MS);
+    todo_wine ok(ret == 0, "expected 0ms, got %ums\n", ret);
+
+    rc = midiStreamClose(hm);
+    ok(!rc, "midiStreamClose(dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    CloseHandle(records.done);
 
     rc = midiOutGetDevCapsA((UINT_PTR)udev, &capsA, sizeof(capsA));
     ok(!rc, "midiOutGetDevCaps(dev=%d) rc=%s\n", udev, mmsys_error(rc));
