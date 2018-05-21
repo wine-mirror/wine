@@ -131,6 +131,20 @@ interface IMFSinkWriterEx : IMFSinkWriter
                                   [out] IMFTransform **transform);
 }
 
+[
+    object,
+    uuid(e7fe2e12-661c-40da-92f9-4f002ab67627),
+    local
+]
+interface IMFReadWriteClassFactory : IUnknown
+{
+    HRESULT CreateInstanceFromURL([in] REFCLSID clsid, [in] LPCWSTR url, [in] IMFAttributes *attributes,
+                                  [in] REFIID riid, [out, iid_is(riid)] void **object );
+
+    HRESULT CreateInstanceFromObject([in] REFCLSID clsid, [in] IUnknown *unk, [in] IMFAttributes *attributes,
+                                     [in] REFIID riid, [out, iid_is(riid)] void **object );
+}
+
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttributes *attributes," )
 cpp_quote( "                                                  IMFSourceReader **reader);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
