@@ -184,12 +184,9 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
     return FALSE;
 }
 
-static BOOL check_value(HWND hwnd, HKEY hKey, LPCWSTR valueName)
+static BOOL value_exists(HWND hwnd, HKEY hKey, const WCHAR *value_name)
 {
-    WCHAR empty = 0;
-    LONG lRet = RegQueryValueExW(hKey, valueName ? valueName : &empty, 0, NULL, 0, NULL);
-    if(lRet != ERROR_SUCCESS) return FALSE;
-    return TRUE;
+    return !RegQueryValueExW(hKey, value_name, NULL, NULL, NULL, NULL);
 }
 
 static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType, LONG *len)
@@ -508,8 +505,8 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR oldName, LPC
         error_code_messagebox(hwnd, IDS_RENAME_VALUE_FAILED);
 	return FALSE;
     }
-    /* check if the value already exists */
-    if (check_value(hwnd, hKey, newName)) {
+
+    if (value_exists(hwnd, hKey, newName)) {
         error_code_messagebox(hwnd, IDS_VALUE_EXISTS, oldName);
         goto done;
     }
