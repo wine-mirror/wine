@@ -3703,7 +3703,9 @@ struct get_window_text_request
 struct get_window_text_reply
 {
     struct reply_header __header;
+    data_size_t    length;
     /* VARARG(text,unicode_str); */
+    char __pad_12[4];
 };
 
 
@@ -6509,6 +6511,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 551
+#define SERVER_PROTOCOL_VERSION 552
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

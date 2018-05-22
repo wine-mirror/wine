@@ -3233,7 +3233,8 @@ static void dump_get_window_text_request( const struct get_window_text_request *
 
 static void dump_get_window_text_reply( const struct get_window_text_reply *req )
 {
-    dump_varargs_unicode_str( " text=", cur_size );
+    fprintf( stderr, " length=%u", req->length );
+    dump_varargs_unicode_str( ", text=", cur_size );
 }
 
 static void dump_set_window_text_request( const struct set_window_text_request *req )

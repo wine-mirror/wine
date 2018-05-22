@@ -2659,6 +2659,7 @@ enum coords_relative
 @REQ(get_window_text)
     user_handle_t  handle;        /* handle to the window */
 @REPLY
+    data_size_t    length;        /* total length in WCHARs */
     VARARG(text,unicode_str);     /* window text */
 @END
 

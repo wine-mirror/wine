@@ -2398,9 +2398,8 @@ DECL_HANDLER(get_window_text)
 
     if (win && win->text)
     {
-        data_size_t len = strlenW( win->text ) * sizeof(WCHAR);
-        if (len > get_reply_max_size()) len = get_reply_max_size();
-        set_reply_data( win->text, len );
+        reply->length = strlenW( win->text );
+        set_reply_data( win->text, min( reply->length * sizeof(WCHAR), get_reply_max_size() ));
     }
 }
 
