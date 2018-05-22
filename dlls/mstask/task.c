@@ -469,6 +469,7 @@ static void filetime_add_days(FILETIME *ft, ULONG days)
 static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 {
     TaskImpl *This = impl_from_ITask(iface);
+    HRESULT hr = SCHED_S_TASK_NO_VALID_TRIGGERS;
     SYSTEMTIME st, current_st;
     FILETIME current_ft, begin_ft, end_ft, best_ft;
     BOOL have_best_time = FALSE;
@@ -493,6 +494,12 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 
             switch (This->trigger[i].TriggerType)
             {
+            case TASK_EVENT_TRIGGER_ON_IDLE:
+            case TASK_EVENT_TRIGGER_AT_SYSTEMSTART:
+            case TASK_EVENT_TRIGGER_AT_LOGON:
+                hr = SCHED_S_EVENT_TRIGGER;
+                break;
+
             case TASK_TIME_TRIGGER_ONCE:
                 st = current_st;
                 st.wHour = This->trigger[i].wStartHour;
@@ -547,7 +554,7 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
     }
 
     memset(rt, 0, sizeof(*rt));
-    return SCHED_S_TASK_NO_VALID_TRIGGERS;
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetIdleWait(

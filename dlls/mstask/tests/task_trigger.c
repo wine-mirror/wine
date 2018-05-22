@@ -477,7 +477,7 @@ static void test_GetNextRunTime(void)
     ITask *task;
     ITaskTrigger *trigger;
     TASK_TRIGGER data;
-    WORD idx;
+    WORD idx, i;
     SYSTEMTIME st, cmp;
 
     hr = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name, &CLSID_CTask,
@@ -555,6 +555,60 @@ static void test_GetNextRunTime(void)
     /* FIXME: TASK_TIME_TRIGGER_WEEKLY */
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDATE */
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDOW */
+
+    ITaskTrigger_Release(trigger);
+    /* do not delete a valid trigger */
+
+    idx = 0xdead;
+    hr = ITask_CreateTrigger(task, &idx, &trigger);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(idx == 1, "got %u\n", idx);
+
+    /* TASK_EVENT_TRIGGER_ON_IDLE = 5
+     * TASK_EVENT_TRIGGER_AT_SYSTEMSTART = 6
+     * TASK_EVENT_TRIGGER_AT_LOGON = 7
+     */
+    for (i = 5; i <= 7; i++)
+    {
+        hr = ITaskTrigger_GetTrigger(trigger, &data);
+        ok(hr == S_OK, "got %#x\n", hr);
+        data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+        data.TriggerType = i;
+        hr = ITaskTrigger_SetTrigger(trigger, &data);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        memset(&st, 0xff, sizeof(st));
+        hr = ITask_GetNextRunTime(task, &st);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(!memcmp(&st, &cmp, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+           st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+           st.wHour, st.wMinute, st.wSecond);
+    }
+
+    ITaskTrigger_Release(trigger);
+
+    hr = ITask_DeleteTrigger(task, 0);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = ITask_GetTrigger(task, 0, &trigger);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    for (i = 5; i <= 7; i++)
+    {
+        hr = ITaskTrigger_GetTrigger(trigger, &data);
+        ok(hr == S_OK, "got %#x\n", hr);
+        data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+        data.TriggerType = i;
+        hr = ITaskTrigger_SetTrigger(trigger, &data);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        memset(&st, 0xff, sizeof(st));
+        hr = ITask_GetNextRunTime(task, &st);
+        ok(hr == SCHED_S_EVENT_TRIGGER, "got %#x\n", hr);
+        ok(!memcmp(&st, &st_empty, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+           st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+           st.wHour, st.wMinute, st.wSecond);
+    }
 
     ITaskTrigger_Release(trigger);
     ITask_Release(task);
