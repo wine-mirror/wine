@@ -510,15 +510,20 @@ BOOL WINAPI SQLGetInstalledDriversW(WCHAR *buf, WORD size, WORD *sizeout)
         return FALSE;
     }
 
-    RegQueryInfoKeyW(drivers, 0, 0, 0, 0, 0, 0, 0, &valuelen, 0, 0, 0);
-    value = heap_alloc(++valuelen * sizeof(WCHAR));
+    valuelen = 256;
+    value = heap_alloc(valuelen * sizeof(WCHAR));
 
     size--;
 
     while (1)
     {
         len = valuelen;
-        res = RegEnumValueW(drivers, index++, value, &len, NULL, NULL, NULL, NULL);
+        res = RegEnumValueW(drivers, index, value, &len, NULL, NULL, NULL, NULL);
+        while (res == ERROR_MORE_DATA)
+        {
+            value = heap_realloc(value, ++len * sizeof(WCHAR));
+            res = RegEnumValueW(drivers, index, value, &len, NULL, NULL, NULL, NULL);
+        }
         if (res == ERROR_SUCCESS)
         {
             lstrcpynW(buf + written, value, size - written);
@@ -532,6 +537,7 @@ BOOL WINAPI SQLGetInstalledDriversW(WCHAR *buf, WORD size, WORD *sizeout)
             ret = FALSE;
             break;
         }
+        index++;
     }
 
     buf[written++] = 0;
