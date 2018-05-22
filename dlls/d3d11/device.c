@@ -2631,13 +2631,22 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource1(ID3D11D
         ID3D11Resource *resource, UINT subresource_idx, const D3D11_BOX *box, const void *data,
         UINT row_pitch, UINT depth_pitch, UINT flags)
 {
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct wined3d_resource *wined3d_resource;
+    struct wined3d_box wined3d_box;
+
     TRACE("iface %p, resource %p, subresource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u, flags %#x.\n",
             iface, resource, subresource_idx, box, data, row_pitch, depth_pitch, flags);
 
-    if (flags)
-        FIXME("Ignoring flags %#x.\n", flags);
+    if (box)
+        wined3d_box_set(&wined3d_box, box->left, box->top, box->right, box->bottom,
+                box->front, box->back);
 
-    d3d11_immediate_context_UpdateSubresource(iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
+    wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
+    wined3d_mutex_lock();
+    wined3d_device_update_sub_resource(device->wined3d_device, wined3d_resource, subresource_idx,
+            box ? &wined3d_box : NULL, data, row_pitch, depth_pitch, flags);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DiscardResource(ID3D11DeviceContext1 *iface,
