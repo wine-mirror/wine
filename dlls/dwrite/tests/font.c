@@ -2515,6 +2515,7 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
         if (exists) {
             static const WCHAR enusW[] = {'e','n','-','u','s',0};
             WCHAR localeW[LOCALE_NAME_MAX_LENGTH];
+            WCHAR nameW[256];
             UINT32 index;
 
             /* Fallback to en-us if there's no string for user locale. */
@@ -2525,8 +2526,12 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
             if (!exists)
                 IDWriteLocalizedStrings_FindLocaleName(names, enusW, &index, &exists);
 
-            if (exists)
-                IDWriteLocalizedStrings_GetString(names, index, logfont->lfFaceName, ARRAY_SIZE(logfont->lfFaceName));
+            if (exists) {
+                nameW[0] = 0;
+                hr = IDWriteLocalizedStrings_GetString(names, index, nameW, ARRAY_SIZE(nameW));
+                ok(hr == S_OK, "Failed to get name string, hr %#x.\n", hr);
+                lstrcpynW(logfont->lfFaceName, nameW, ARRAY_SIZE(logfont->lfFaceName));
+            }
         }
 
         IDWriteLocalizedStrings_Release(names);

@@ -1736,8 +1736,19 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
         if (!exists)
             IDWriteLocalizedStrings_FindLocaleName(lfnames, enusW, &index, &exists);
 
-        if (exists)
-            IDWriteLocalizedStrings_GetString(lfnames, index, lfname, LF_FACESIZE);
+        if (exists) {
+            UINT32 length = 0;
+            WCHAR *nameW;
+
+            IDWriteLocalizedStrings_GetStringLength(lfnames, index, &length);
+            nameW = heap_alloc((length + 1) * sizeof(WCHAR));
+            if (nameW) {
+                *nameW = 0;
+                IDWriteLocalizedStrings_GetString(lfnames, index, nameW, length + 1);
+                lstrcpynW(lfname, nameW, LF_FACESIZE);
+                heap_free(nameW);
+            }
+        }
 
         IDWriteLocalizedStrings_Release(lfnames);
     }
