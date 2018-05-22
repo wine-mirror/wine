@@ -156,7 +156,7 @@ static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, filter_state, http_post_test, thread_id;
 static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
-static BOOL empty_file, no_mime, bind_from_cache, file_with_hash;
+static BOOL empty_file, no_mime, bind_from_cache, file_with_hash, reuse_protocol_thread;
 
 enum {
     STATE_CONNECTING,
@@ -1611,40 +1611,41 @@ static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, RE
 
 static DWORD WINAPI thread_proc(PVOID arg)
 {
-    BOOL redirect_only = redirect_on_continue;
+    BOOL redirect = redirect_on_continue;
     HRESULT hres;
 
     memset(&protocoldata, -1, sizeof(protocoldata));
 
-    prot_state = 0;
-
-    SET_EXPECT(ReportProgress_FINDINGRESOURCE);
-    hres = IInternetProtocolSink_ReportProgress(binding_sink,
-            BINDSTATUS_FINDINGRESOURCE, hostW);
-    CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
-    ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
-
-    SET_EXPECT(ReportProgress_CONNECTING);
-    hres = IInternetProtocolSink_ReportProgress(binding_sink,
-            BINDSTATUS_CONNECTING, winehq_ipW);
-    CHECK_CALLED(ReportProgress_CONNECTING);
-    ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
-
-    SET_EXPECT(ReportProgress_SENDINGREQUEST);
-    hres = IInternetProtocolSink_ReportProgress(binding_sink,
-            BINDSTATUS_SENDINGREQUEST, NULL);
-    CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-    ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
-
-    prot_state = 1;
-    SET_EXPECT(Switch);
-    hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
-    CHECK_CALLED(Switch);
-    ok(hres == S_OK, "Switch failed: %08x\n", hres);
-
-    if(redirect_only) {
+    while(1) {
         prot_state = 0;
-        return 0;
+
+        SET_EXPECT(ReportProgress_FINDINGRESOURCE);
+        hres = IInternetProtocolSink_ReportProgress(binding_sink,
+                BINDSTATUS_FINDINGRESOURCE, hostW);
+        CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+        ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
+
+        SET_EXPECT(ReportProgress_CONNECTING);
+        hres = IInternetProtocolSink_ReportProgress(binding_sink,
+                BINDSTATUS_CONNECTING, winehq_ipW);
+        CHECK_CALLED(ReportProgress_CONNECTING);
+        ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
+
+        SET_EXPECT(ReportProgress_SENDINGREQUEST);
+        hres = IInternetProtocolSink_ReportProgress(binding_sink,
+                BINDSTATUS_SENDINGREQUEST, NULL);
+        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
+
+        prot_state = 1;
+        SET_EXPECT(Switch);
+        hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
+        CHECK_CALLED(Switch);
+        ok(hres == S_OK, "Switch failed: %08x\n", hres);
+
+        if(!redirect)
+            break;
+        redirect = FALSE;
     }
 
     if(!short_read) {
@@ -1799,7 +1800,8 @@ static void protocol_start(IInternetProtocolSink *pOIProtSink, IInternetBindInfo
 
         IServiceProvider_Release(service_provider);
 
-        CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
+        if(!reuse_protocol_thread)
+            CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
         return;
     }
 
@@ -1909,6 +1911,7 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
 
         if(redirect_on_continue) {
             redirect_on_continue = FALSE;
+            reuse_protocol_thread = TRUE;
 
             if(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS)
                 SET_EXPECT(Redirect);
@@ -2632,6 +2635,7 @@ static void init_test(int prot, DWORD flags)
     bind_from_cache = (flags & TEST_FROMCACHE) != 0;
     file_with_hash = FALSE;
     security_problem = FALSE;
+    reuse_protocol_thread = FALSE;
 
     bindinfo_options = 0;
     if(flags & TEST_DISABLEAUTOREDIRECT)
