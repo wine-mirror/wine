@@ -76,7 +76,7 @@ VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc)
 {
     lstrcpyW(Globals.szFileName, szFileName);
     Globals.szFileTitle[0] = 0;
-    GetFileTitleW(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle) / sizeof(WCHAR));
+    GetFileTitleW(szFileName, Globals.szFileTitle, ARRAY_SIZE(Globals.szFileTitle));
     Globals.encFile = enc;
 }
 
