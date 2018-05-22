@@ -246,14 +246,17 @@ static  HRESULT WINAPI HttpSecurity_GetWindow(IHttpSecurity* iface, REFGUID rgui
 
 static HRESULT WINAPI HttpSecurity_OnSecurityProblem(IHttpSecurity *iface, DWORD dwProblem)
 {
-    trace("Security problem: %u\n", dwProblem);
-    ok(dwProblem == ERROR_INTERNET_SEC_CERT_REV_FAILED, "Expected ERROR_INTERNET_SEC_CERT_REV_FAILED got %u\n", dwProblem);
+    win_skip("Security problem: %u\n", dwProblem);
+    ok(dwProblem == ERROR_INTERNET_SEC_CERT_REV_FAILED || dwProblem == ERROR_INTERNET_INVALID_CA,
+       "Expected got %u security problem\n", dwProblem);
 
     /* Only retry once */
     if (security_problem)
         return E_ABORT;
 
     security_problem = TRUE;
+    if(dwProblem == ERROR_INTERNET_INVALID_CA)
+        return E_ABORT;
     SET_EXPECT(BeginningTransaction);
 
     return RPC_E_RETRY;
@@ -1156,6 +1159,9 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
         DWORD dwError, LPCWSTR szResult)
 {
     CHECK_EXPECT(ReportResult);
+
+    if(security_problem)
+        return S_OK;
 
     if(tested_protocol == FTP_TEST)
         ok(hrResult == E_PENDING || hrResult == S_OK, "hrResult = %08x, expected E_PENDING or S_OK\n", hrResult);
@@ -2625,6 +2631,7 @@ static void init_test(int prot, DWORD flags)
     empty_file = (flags & TEST_EMPTY) != 0;
     bind_from_cache = (flags & TEST_FROMCACHE) != 0;
     file_with_hash = FALSE;
+    security_problem = FALSE;
 
     bindinfo_options = 0;
     if(flags & TEST_DISABLEAUTOREDIRECT)
