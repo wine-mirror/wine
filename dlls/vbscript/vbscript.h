@@ -25,6 +25,7 @@
 #include "ole2.h"
 #include "dispex.h"
 #include "activscp.h"
+#include "activdbg.h"
 
 #include "vbscript_classes.h"
 

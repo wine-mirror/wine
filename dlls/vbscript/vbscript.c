@@ -29,12 +29,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 #ifdef _WIN64
 
 #define CTXARG_T DWORDLONG
+#define IActiveScriptDebugVtbl IActiveScriptDebug64Vtbl
 #define IActiveScriptParseVtbl IActiveScriptParse64Vtbl
 #define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_64Vtbl
 
 #else
 
 #define CTXARG_T DWORD
+#define IActiveScriptDebugVtbl IActiveScriptDebug32Vtbl
 #define IActiveScriptParseVtbl IActiveScriptParse32Vtbl
 #define IActiveScriptParseProcedure2Vtbl IActiveScriptParseProcedure2_32Vtbl
 
@@ -42,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 struct VBScript {
     IActiveScript IActiveScript_iface;
+    IActiveScriptDebug IActiveScriptDebug_iface;
     IActiveScriptParse IActiveScriptParse_iface;
     IActiveScriptParseProcedure2 IActiveScriptParseProcedure2_iface;
     IObjectSafety IObjectSafety_iface;
@@ -267,6 +270,9 @@ static HRESULT WINAPI VBScript_QueryInterface(IActiveScript *iface, REFIID riid,
     }else if(IsEqualGUID(riid, &IID_IActiveScript)) {
         TRACE("(%p)->(IID_IActiveScript %p)\n", This, ppv);
         *ppv = &This->IActiveScript_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptDebug)) {
+        TRACE("(%p)->(IID_IActiveScriptDebug %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptDebug_iface;
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
         *ppv = &This->IActiveScriptParse_iface;
@@ -564,6 +570,64 @@ static const IActiveScriptVtbl VBScriptVtbl = {
     VBScript_Clone
 };
 
+static inline VBScript *impl_from_IActiveScriptDebug(IActiveScriptDebug *iface)
+{
+    return CONTAINING_RECORD(iface, VBScript, IActiveScriptDebug_iface);
+}
+
+static HRESULT WINAPI VBScriptDebug_QueryInterface(IActiveScriptDebug *iface, REFIID riid, void **ppv)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
+}
+
+static ULONG WINAPI VBScriptDebug_AddRef(IActiveScriptDebug *iface)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
+}
+
+static ULONG WINAPI VBScriptDebug_Release(IActiveScriptDebug *iface)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
+}
+
+static HRESULT WINAPI VBScriptDebug_GetScriptTextAttributes(IActiveScriptDebug *iface,
+        LPCOLESTR code, ULONG len, LPCOLESTR delimiter, DWORD flags, SOURCE_TEXT_ATTR *attr)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    FIXME("(%p)->(%s %u %s %#x %p)\n", This, debugstr_w(code), len,
+          debugstr_w(delimiter), flags, attr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBScriptDebug_GetScriptletTextAttributes(IActiveScriptDebug *iface,
+        LPCOLESTR code, ULONG len, LPCOLESTR delimiter, DWORD flags, SOURCE_TEXT_ATTR *attr)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    FIXME("(%p)->(%s %u %s %#x %p)\n", This, debugstr_w(code), len,
+          debugstr_w(delimiter), flags, attr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBScriptDebug_EnumCodeContextsOfPosition(IActiveScriptDebug *iface,
+        CTXARG_T source, ULONG offset, ULONG len, IEnumDebugCodeContexts **ret)
+{
+    VBScript *This = impl_from_IActiveScriptDebug(iface);
+    FIXME("(%p)->(%s %u %u %p)\n", This, wine_dbgstr_longlong(source), offset, len, ret);
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptDebugVtbl VBScriptDebugVtbl = {
+    VBScriptDebug_QueryInterface,
+    VBScriptDebug_AddRef,
+    VBScriptDebug_Release,
+    VBScriptDebug_GetScriptTextAttributes,
+    VBScriptDebug_GetScriptletTextAttributes,
+    VBScriptDebug_EnumCodeContextsOfPosition,
+};
+
 static inline VBScript *impl_from_IActiveScriptParse(IActiveScriptParse *iface)
 {
     return CONTAINING_RECORD(iface, VBScript, IActiveScriptParse_iface);
@@ -806,6 +870,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
         return E_OUTOFMEMORY;
 
     ret->IActiveScript_iface.lpVtbl = &VBScriptVtbl;
+    ret->IActiveScriptDebug_iface.lpVtbl = &VBScriptDebugVtbl;
     ret->IActiveScriptParse_iface.lpVtbl = &VBScriptParseVtbl;
     ret->IActiveScriptParseProcedure2_iface.lpVtbl = &VBScriptParseProcedureVtbl;
     ret->IObjectSafety_iface.lpVtbl = &VBScriptSafetyVtbl;
