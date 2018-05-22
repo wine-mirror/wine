@@ -511,6 +511,98 @@ cpp_quote("HRESULT WINAPI WMCreateProfileManager(IWMProfileManager**);")
 
 [
     object,
+    uuid(a970f41e-34de-4a98-b3ba-e4b3ca7528f0),
+    pointer_default(unique),
+    local
+]
+interface IWMCodecInfo : IUnknown
+{
+    HRESULT GetCodecInfoCount(
+        [in] REFGUID guid,
+        [out] DWORD *count);
+
+    HRESULT GetCodecFormatCount(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [out] DWORD *formatcount);
+
+    HRESULT GetCodecFormat(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] DWORD formatindex,
+        [out] IWMStreamConfig **streamconfig);
+}
+
+[
+    object,
+    uuid(aa65e273-b686-4056-91ec-dd768d4df710),
+    pointer_default(unique),
+    local
+]
+interface IWMCodecInfo2 : IWMCodecInfo
+{
+    HRESULT GetCodecName(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [out, size_is(*namesize)] WCHAR *name,
+        [in, out] DWORD *namesize);
+
+    HRESULT GetCodecFormatDesc(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] DWORD formatindex,
+        [out] IWMStreamConfig **streamconfig,
+        [out, size_is(*descrsize)] WCHAR *description,
+        [in, out] DWORD *descrsize);
+}
+
+[
+    object,
+    uuid(7e51f487-4d93-4f98-8ab4-27d0565adc51),
+    pointer_default(unique),
+    local
+]
+interface IWMCodecInfo3 : IWMCodecInfo2
+{
+    HRESULT GetCodecFormatProp(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] DWORD formatindex,
+        [in] const WCHAR *name,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is(*size)] BYTE *value,
+        [in, out] DWORD *size);
+
+    HRESULT GetCodecProp(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] const WCHAR *name,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is(*size)] BYTE *value,
+        [in, out] DWORD *size);
+
+    HRESULT SetCodecEnumerationSetting(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] const WCHAR *name,
+        [in] WMT_ATTR_DATATYPE type,
+        [in, size_is(size)] const BYTE *value,
+        [in] DWORD size);
+
+    HRESULT GetCodecEnumerationSetting(
+        [in] REFGUID guid,
+        [in] DWORD codecindex,
+        [in] const WCHAR *name,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is(*size)] BYTE *value,
+        [in, out] DWORD *size);
+}
+
+cpp_quote("static const WCHAR g_wszNumPasses[] = {'_','P','A','S','S','E','S','U','S','E','D',0};")
+cpp_quote("static const WCHAR g_wszVBREnabled[] = {'_','V','B','R','E','N','A','B','L','E','D',0};")
+
+[
+    object,
     uuid(96406bce-2b2b-11d3-b36b-00c04f6108ff),
     pointer_default(unique),
     local
