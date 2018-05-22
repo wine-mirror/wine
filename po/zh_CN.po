@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-16 00:29-0600\n"
+"PO-Revision-Date: 2018-05-20 10:58+0800\n"
 "Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -3636,19 +3636,19 @@ msgstr "期望得到 Array 对象"
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
-msgstr ""
+msgstr "无法在此对象上更改属性描述符中的“writable”属性为“true”"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "无法重定义不可配置的属性“|”"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "无法更改不可写的属性“|”"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "属性不能同时包含存取器和值"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -6619,10 +6619,8 @@ msgid "Connection reset by peer.\n"
 msgstr "连接被重置。\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "未在文件 %2 中发现消息 0x%1。\n"
+msgstr "未在文件内找到签名。\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -8441,10 +8439,8 @@ msgid "&Browse..."
 msgstr "浏览(&B)..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "文件类型"
+msgstr "文件类型："
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8455,16 +8451,12 @@ msgid "Size:"
 msgstr "大小："
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "创建日期"
+msgstr "创建日期："
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "属性(&A)："
+msgstr "属性："
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8475,28 +8467,20 @@ msgid "&Archive"
 msgstr "存档(&A)"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "打开："
+msgstr "打开方式："
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "改变图标(&I)..."
+msgstr "更改(&C)..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "修改"
+msgstr "最近修改："
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "最后更改："
+msgstr "最近访问："
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -9100,70 +9084,56 @@ msgid ""
 msgstr "证书至少带有一个不明安全问题。"
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "服务请求超时。\n"
+msgstr "请求超时。\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "打印机错误。"
+msgstr "发生内部错误。\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "路径无效。\n"
+msgstr "URL 无效。\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "该 URL 格式无法识别或不被支持。\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "找不到用户名。\n"
+msgstr "无法解析服务器域名。\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "无效用户档案。\n"
+msgstr "请求的操作无效。\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
-msgstr ""
+msgstr "该操作已被取消，这一般是操作完成前请求操作的句柄被关闭导致的。\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "无法添加该档案。\n"
+msgstr "无法找到请求项。\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "无法连接到 LDAP 服务器"
+msgstr "尝试连接到服务器失败。\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "到服务器的连接已终止。\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
-msgstr ""
+msgstr "从服务器接收的 SSL 证书日期无效。该证书已过期。\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL 证书一般名称（域名栏目）不正确。\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
