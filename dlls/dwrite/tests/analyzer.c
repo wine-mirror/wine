@@ -31,6 +31,8 @@
 
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 static IDWriteFactory *factory;
 static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 
@@ -484,7 +486,7 @@ static WCHAR *create_testfontfile(const WCHAR *filename)
     HRSRC res;
     void *ptr;
 
-    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcatW(pathW, filename);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -1273,7 +1275,7 @@ if (0) { /* crashes on native */
 
     fontface = create_fontface();
 
-    for (i = 0; i < sizeof(textcomplexity_tests)/sizeof(struct textcomplexity_test); i++) {
+    for (i = 0; i < ARRAY_SIZE(textcomplexity_tests); i++) {
        const struct textcomplexity_test *ptr = &textcomplexity_tests[i];
        len = 1;
        simple = !ptr->simple;
@@ -1563,7 +1565,7 @@ todo_wine {
     get_script_analysis(arabicW, &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine {
     ok(count > 0, "got %u\n", count);
@@ -1575,7 +1577,7 @@ todo_wine {
     get_script_analysis(abcW, &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine {
     ok(count > 0, "got %u\n", count);
@@ -1820,7 +1822,7 @@ static void test_ApplyCharacterSpacing(void)
         return;
     }
 
-    for (i = 0; i < sizeof(spacing_tests)/sizeof(spacing_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(spacing_tests); i++) {
         const struct spacing_test *ptr = spacing_tests + i;
         DWRITE_GLYPH_OFFSET offsets[3];
         UINT32 glyph_count;
@@ -1853,7 +1855,7 @@ static void test_ApplyCharacterSpacing(void)
             ptr->leading,
             ptr->trailing,
             ptr->min_advance,
-            sizeof(clustermap)/sizeof(clustermap[0]),
+            ARRAY_SIZE(clustermap),
             glyph_count,
             clustermap,
             ptr->advances,
@@ -1907,7 +1909,7 @@ static void test_ApplyCharacterSpacing(void)
             ptr->leading,
             ptr->trailing,
             ptr->min_advance,
-            sizeof(clustermap)/sizeof(clustermap[0]),
+            ARRAY_SIZE(clustermap),
             glyph_count,
             clustermap,
             advances,
@@ -2003,7 +2005,7 @@ static void test_GetGlyphOrientationTransform(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(m.m11 == 0.0, "got %.2f\n", m.m11);
 
-    for (i = 0; i < sizeof(ot_tests)/sizeof(ot_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(ot_tests); i++) {
         memset(&m, 0, sizeof(m));
         hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer1, ot_tests[i].angle,
             ot_tests[i].is_sideways, &m);
@@ -2027,7 +2029,7 @@ static void test_GetGlyphOrientationTransform(void)
 
     originx = 50.0;
     originy = 60.0;
-    for (i = 0; i < sizeof(ot_tests)/sizeof(ot_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(ot_tests); i++) {
         DWRITE_GLYPH_ORIENTATION_ANGLE angle = DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES;
         DWRITE_MATRIX m_exp;
 

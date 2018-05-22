@@ -29,6 +29,8 @@
 
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
@@ -236,7 +238,7 @@ static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
     hr = IDWriteTextFormat_GetFontCollection(format, &collection);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextFormat_GetFontFamilyName(format, nameW, sizeof(nameW)/sizeof(WCHAR));
+    hr = IDWriteTextFormat_GetFontFamilyName(format, nameW, ARRAY_SIZE(nameW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontCollection_FindFamilyName(collection, nameW, &index, &exists);
@@ -574,8 +576,8 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
         ctxt->originY = baselineOriginY;
     }
 
-    ok(descr->stringLength < sizeof(entry.string)/sizeof(WCHAR), "string is too long\n");
-    if (descr->stringLength && descr->stringLength < sizeof(entry.string)/sizeof(WCHAR)) {
+    ok(descr->stringLength < ARRAY_SIZE(entry.string), "string is too long\n");
+    if (descr->stringLength && descr->stringLength < ARRAY_SIZE(entry.string)) {
         memcpy(entry.string, descr->string, descr->stringLength*sizeof(WCHAR));
         entry.string[descr->stringLength] = 0;
     }
@@ -1079,7 +1081,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
     IDWriteTextLayout_Release(layout);
 
     /* transforms */
-    for (i = 0; i < sizeof(layoutcreate_transforms)/sizeof(layoutcreate_transforms[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(layoutcreate_transforms); i++) {
         hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, 1.0,
             &layoutcreate_transforms[i], FALSE, &layout);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2009,7 +2011,7 @@ static void test_GetClusterMetrics(void)
 
     /* check every cluster width */
     count = 0;
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 4, "got %u\n", count);
     for (i = 0; i < count; i++) {
@@ -2044,7 +2046,7 @@ static void test_GetClusterMetrics(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         count = 0;
-        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics2, sizeof(metrics2)/sizeof(metrics2[0]), &count);
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics2, ARRAY_SIZE(metrics2), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 4, "got %u\n", count);
         for (i = 0; i < count; i++) {
@@ -2265,7 +2267,7 @@ todo_wine
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 22, "got %u\n", count);
 
@@ -2308,7 +2310,7 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* Test whitespace resolution from linebreaking classes BK, ZW, and SP */
-    hr = IDWriteFactory_CreateTextLayout(factory, str_white_spaceW, sizeof(str_white_spaceW)/sizeof(WCHAR), format,
+    hr = IDWriteFactory_CreateTextLayout(factory, str_white_spaceW, ARRAY_SIZE(str_white_spaceW), format,
         100.0f, 200.0f, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -2395,7 +2397,7 @@ static void test_SetLocaleName(void)
 {
     static const WCHAR eNuSW[] = {'e','N','-','u','S',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
-    WCHAR buffW[LOCALE_NAME_MAX_LENGTH+sizeof(strW)/sizeof(WCHAR)];
+    WCHAR buffW[LOCALE_NAME_MAX_LENGTH + ARRAY_SIZE(strW)];
     IDWriteTextFormat *format, *format2;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
@@ -2409,7 +2411,7 @@ static void test_SetLocaleName(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, eNuSW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextFormat_GetLocaleName(format, buffW, sizeof(buffW)/sizeof(buffW[0]));
+    hr = IDWriteTextFormat_GetLocaleName(format, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
 
@@ -2419,11 +2421,11 @@ static void test_SetLocaleName(void)
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&format2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextFormat_GetLocaleName(format2, buffW, sizeof(buffW)/sizeof(buffW[0]));
+    hr = IDWriteTextFormat_GetLocaleName(format2, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
 
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(buffW[0]), NULL);
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
 
@@ -2458,7 +2460,7 @@ static void test_SetLocaleName(void)
 
     buffW[0] = 0;
     range.length = 0;
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
     ok(range.startPosition == 0 && range.length == 1, "got %u,%u\n", range.startPosition, range.length);
@@ -2480,7 +2482,7 @@ static void test_SetLocaleName(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     buffW[0] = 0;
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), NULL);
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
 
@@ -2492,7 +2494,7 @@ static void test_SetLocaleName(void)
 
     buffW[0] = 0;
     range.length = 0;
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
     ok((range.startPosition == 0 && range.length == ~0u) ||
@@ -2501,7 +2503,7 @@ static void test_SetLocaleName(void)
     /* check what's returned for positions after the text */
     buffW[0] = 0;
     range.length = 0;
-    hr = IDWriteTextLayout_GetLocaleName(layout, 100, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
+    hr = IDWriteTextLayout_GetLocaleName(layout, 100, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
     ok((range.startPosition == 0 && range.length == ~0u) ||
@@ -2754,14 +2756,14 @@ static void test_DetermineMinWidth(void)
     ok(minwidth == 0.0f, "got %f\n", minwidth);
     IDWriteTextLayout_Release(layout);
 
-    for (i = 0; i < sizeof(minwidth_tests)/sizeof(minwidth_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(minwidth_tests); i++) {
         FLOAT width = 0.0f;
 
         /* measure expected width */
         hr = IDWriteFactory_CreateTextLayout(factory, minwidth_tests[i].mintext, lstrlenW(minwidth_tests[i].mintext), format, 1000.0f, 1000.0f, &layout);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         for (j = 0; j < count; j++)
@@ -2906,7 +2908,7 @@ static void test_SetFontFamilyName(void)
     r.startPosition = 1;
     r.length = 0;
     nameW[0] = 0;
-    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
 
@@ -2925,7 +2927,7 @@ static void test_SetFontFamilyName(void)
     r.startPosition = 0;
     r.length = 0;
     nameW[0] = 0;
-    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(nameW, taHomaW), "got %s\n", wine_dbgstr_w(nameW));
     ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
@@ -2937,7 +2939,7 @@ static void test_SetFontFamilyName(void)
 
     r.startPosition = 1;
     r.length = 0;
-    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
 
@@ -2947,7 +2949,7 @@ static void test_SetFontFamilyName(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     nameW[0] = 0;
-    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
     ok(!lstrcmpW(nameW, arialW), "got name %s\n", wine_dbgstr_w(nameW));
@@ -3590,7 +3592,7 @@ static void test_GetLineMetrics(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        if (!(exists = get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0])))) {
+        if (!(exists = get_enus_string(names, nameW, ARRAY_SIZE(nameW)))) {
             IDWriteLocalFontFileLoader *localloader;
             IDWriteFontFileLoader *loader;
             IDWriteFontFile *file;
@@ -3612,7 +3614,7 @@ static void test_GetLineMetrics(void)
             hr = IDWriteFontFile_GetReferenceKey(file, &key, &keysize);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, sizeof(nameW)/sizeof(*nameW));
+            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, ARRAY_SIZE(nameW));
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
             skip("Failed to get English family name, font file %s\n", wine_dbgstr_w(nameW));
@@ -3637,7 +3639,7 @@ static void test_GetLineMetrics(void)
 
         memset(metrics, 0, sizeof(metrics));
         count = 0;
-        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 1, "got %u\n", count);
 
@@ -3671,7 +3673,7 @@ static void test_GetLineMetrics(void)
 
     memset(metrics, 0, sizeof(metrics));
     count = 0;
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
     /* baseline is relative to a line, and is not accumulated */
@@ -3691,7 +3693,7 @@ static void test_GetLineMetrics(void)
 
     memset(metrics, 0xcc, sizeof(metrics));
     count = 0;
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 6, "got %u\n", count);
 
@@ -3772,7 +3774,7 @@ static void test_GetLineMetrics(void)
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
     ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
@@ -3808,7 +3810,7 @@ static void test_GetLineMetrics(void)
     hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_UNIFORM, 456.0f, 123.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
 
@@ -3825,7 +3827,7 @@ static void test_GetLineMetrics(void)
         hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 100.0f, 300.0f, &layout);
         ok(hr == S_OK, "Failed to create layout, hr %#x.\n", hr);
 
-        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
         ok(hr == S_OK, "Failed to get line metrics, hr %#x.\n", hr);
         ok(count == 1, "Unexpected line count %u\n", count);
 
@@ -3918,7 +3920,7 @@ static void test_SetTextAlignment(void)
 
     IDWriteTextLayout_Release(layout);
 
-    for (i = 0; i < sizeof(stringsW)/sizeof(stringsW[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(stringsW); i++) {
         FLOAT text_width;
 
         hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_LEADING);
@@ -3931,7 +3933,7 @@ static void test_SetTextAlignment(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         count = 0;
-        hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(*clusters), &count);
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         if (lstrlenW(stringsW[i]))
             ok(count > 0, "got %u\n", count);
@@ -4344,7 +4346,7 @@ static void test_pixelsnapping(void)
 
     ctxt.snapping_disabled = FALSE;
 
-    for (i = 0; i < sizeof(snapping_tests)/sizeof(snapping_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(snapping_tests); i++) {
         struct snapping_test *ptr = &snapping_tests[i];
         FLOAT expectedY;
 
@@ -4361,7 +4363,7 @@ static void test_pixelsnapping(void)
             i, ctxt.originY, expectedY, baseline);
 
         /* gdicompat layout transform doesn't affect snapping */
-        for (j = 0; j < sizeof(compattransforms)/sizeof(compattransforms[0]); j++) {
+        for (j = 0; j < ARRAY_SIZE(compattransforms); j++) {
             hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 500.0, 100.0,
                 1.0, &compattransforms[j], FALSE, &layout2);
             ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
@@ -4403,7 +4405,7 @@ static void test_SetWordWrapping(void)
     v = IDWriteTextFormat_GetWordWrapping(format);
     ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, sizeof(strW)/sizeof(WCHAR), format, 10.0f, 100.0f, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, ARRAY_SIZE(strW), format, 10.0f, 100.0f, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     v = IDWriteTextLayout_GetWordWrapping(layout);
@@ -4664,7 +4666,7 @@ if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
-    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
@@ -4685,7 +4687,7 @@ if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
-    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
@@ -5122,7 +5124,7 @@ static void test_SetUnderline(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     count = 0;
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(clusters[0]), &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(count == 3, "got %u\n", count);
@@ -5133,7 +5135,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     count = 0;
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(clusters[0]), &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(count == 3, "got %u\n", count);
@@ -5232,7 +5234,7 @@ todo_wine
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        if (!(exists = get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0])))) {
+        if (!(exists = get_enus_string(names, nameW, ARRAY_SIZE(nameW)))) {
             IDWriteLocalFontFileLoader *localloader;
             IDWriteFontFileLoader *loader;
             IDWriteFontFile *file;
@@ -5254,7 +5256,7 @@ todo_wine
             hr = IDWriteFontFile_GetReferenceKey(file, &key, &keysize);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, sizeof(nameW)/sizeof(*nameW));
+            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, ARRAY_SIZE(nameW));
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
             skip("Failed to get English family name, font file %s\n", wine_dbgstr_w(nameW));
@@ -5481,7 +5483,7 @@ static void test_GetOverhangMetrics(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
 
-    for (i = 0; i < sizeof(overhangs_tests)/sizeof(overhangs_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(overhangs_tests); i++) {
         const struct overhangs_test *test = &overhangs_tests[i];
         DWRITE_OVERHANG_METRICS overhang_metrics;
         DWRITE_TEXT_RANGE range = { 0, 1 };

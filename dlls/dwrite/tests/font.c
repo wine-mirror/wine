@@ -33,6 +33,8 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 #define MS_VDMX_TAG DWRITE_MAKE_OPENTYPE_TAG('V','D','M','X')
 #define MS_GASP_TAG DWRITE_MAKE_OPENTYPE_TAG('g','a','s','p')
@@ -487,7 +489,7 @@ static WCHAR *create_testfontfile(const WCHAR *filename)
     HRSRC res;
     void *ptr;
 
-    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcatW(pathW, filename);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -850,7 +852,7 @@ static void WINAPI test_geometrysink_BeginFigure(ID2D1SimplifiedGeometrySink *if
     D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
 {
     ok(figureBegin == D2D1_FIGURE_BEGIN_FILLED, "begin figure %d\n", figureBegin);
-    if (g_startpoint_count < sizeof(g_startpoints)/sizeof(g_startpoints[0]))
+    if (g_startpoint_count < ARRAY_SIZE(g_startpoints))
         g_startpoints[g_startpoint_count] = startPoint;
     g_startpoint_count++;
 }
@@ -1021,7 +1023,7 @@ static void test_CreateFontFromLOGFONT(void)
     IDWriteFont_Release(font);
 
     /* weight values */
-    for (i = 0; i < sizeof(weights)/(2*sizeof(LONG)); i++)
+    for (i = 0; i < ARRAY_SIZE(weights); i++)
     {
         memset(&logfont, 0, sizeof(logfont));
         logfont.lfHeight = 12;
@@ -2218,7 +2220,7 @@ static void test_GetMetrics(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
 
         IDWriteLocalizedStrings_Release(names);
         IDWriteFont_Release(font);
@@ -2517,14 +2519,14 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
 
             /* Fallback to en-us if there's no string for user locale. */
             exists = FALSE;
-            if (GetSystemDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
+            if (GetSystemDefaultLocaleName(localeW, ARRAY_SIZE(localeW)))
                 IDWriteLocalizedStrings_FindLocaleName(names, localeW, &index, &exists);
 
             if (!exists)
                 IDWriteLocalizedStrings_FindLocaleName(names, enusW, &index, &exists);
 
             if (exists)
-                IDWriteLocalizedStrings_GetString(names, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
+                IDWriteLocalizedStrings_GetString(names, index, logfont->lfFaceName, ARRAY_SIZE(logfont->lfFaceName));
         }
 
         IDWriteLocalizedStrings_Release(names);
@@ -2582,7 +2584,7 @@ if (0) /* crashes on native */
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, familynameW, sizeof(familynameW)/sizeof(familynameW[0]));
+        get_enus_string(names, familynameW, ARRAY_SIZE(familynameW));
         IDWriteLocalizedStrings_Release(names);
 
         font_count = IDWriteFontFamily_GetFontCount(family);
@@ -2597,7 +2599,7 @@ if (0) /* crashes on native */
             hr = IDWriteFont_GetFaceNames(font, &names);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            get_enus_string(names, facenameW, sizeof(facenameW)/sizeof(facenameW[0]));
+            get_enus_string(names, facenameW, ARRAY_SIZE(facenameW));
             IDWriteLocalizedStrings_Release(names);
 
             lstrcpyW(nameW, familynameW);
@@ -3837,12 +3839,12 @@ static void test_GetFaceNames(void)
 
     /* for simulated faces names are also simulated */
     buffW[0] = 0;
-    hr = IDWriteLocalizedStrings_GetLocaleName(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IDWriteLocalizedStrings_GetLocaleName(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
 
     buffW[0] = 0;
-    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, obliqueW), "got %s\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
@@ -3903,7 +3905,7 @@ static void test_TryGetFontTable(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(lstrlenW(key->name) == len, "path length %d\n", len);
 
-    hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, size, buffW, sizeof(buffW)/sizeof(WCHAR));
+    hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, size, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, key->name), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(key->name));
     IDWriteLocalFontFileLoader_Release(localloader);
@@ -4005,7 +4007,7 @@ if (0) { /* crashes on native */
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, familynameW, sizeof(familynameW)/sizeof(familynameW[0]));
+        get_enus_string(names, familynameW, ARRAY_SIZE(familynameW));
         IDWriteLocalizedStrings_Release(names);
 
         font_count = IDWriteFontFamily_GetFontCount(family);
@@ -4019,7 +4021,7 @@ if (0) { /* crashes on native */
             hr = IDWriteFont_GetFaceNames(font, &names);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            get_enus_string(names, facenameW, sizeof(facenameW)/sizeof(facenameW[0]));
+            get_enus_string(names, facenameW, ARRAY_SIZE(facenameW));
             IDWriteLocalizedStrings_Release(names);
 
             lstrcpyW(nameW, familynameW);
@@ -4927,7 +4929,7 @@ static void test_CreateGlyphRunAnalysis(void)
     OffsetRect(&rect, 10, -5);
     ok(EqualRect(&rect, &rect2), "got different bounds\n");
 
-    for (i = 0; i < sizeof(rendermodes)/sizeof(rendermodes[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(rendermodes); i++) {
         hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
             rendermodes[i], DWRITE_MEASURING_MODE_NATURAL,
             0.0, 0.0, &analysis);
@@ -5517,7 +5519,7 @@ static void test_gdicompat_metrics(IDWriteFontFace *face)
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
     test_metrics_cmp(5.0, &comp_metrics, &expected);
 
-    for (i = 0; i < sizeof(compatmetrics_tests)/sizeof(compatmetrics_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(compatmetrics_tests); i++) {
         struct compatmetrics_test *ptr = &compatmetrics_tests[i];
 
         get_expected_metrics(face, ptr, (DWRITE_FONT_METRICS*)&expected);
@@ -5700,7 +5702,7 @@ static void test_GetPanose(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
 
         IDWriteLocalizedStrings_Release(names);
 
@@ -6032,7 +6034,7 @@ static void test_GetRecommendedRenderingMode(void)
         WORD gasp;
         int i;
 
-        for (i = 0; i < sizeof(recmode_tests)/sizeof(recmode_tests[0]); i++) {
+        for (i = 0; i < ARRAY_SIZE(recmode_tests); i++) {
             ppdip = 1.0f;
             mode = 10;
             gasp = get_gasp_flags(fontface, emsize, ppdip);
@@ -6073,7 +6075,7 @@ static void test_GetRecommendedRenderingMode(void)
 
         /* IDWriteFontFace1 offers another variant of this method */
         if (fontface1) {
-            for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
                 FLOAT dpi;
 
                 ppdip = 1.0f;
@@ -6158,7 +6160,7 @@ static void test_GetRecommendedRenderingMode(void)
             DWRITE_GRID_FIT_MODE gridfit, expected_gridfit;
 
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
-            for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
                 mode = 10;
                 expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
@@ -6177,7 +6179,7 @@ static void test_GetRecommendedRenderingMode(void)
             DWRITE_RENDERING_MODE1 mode1, expected1;
 
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
-            for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
                 mode1 = 10;
                 expected1 = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
@@ -6380,7 +6382,7 @@ static void test_GetAlphaBlendParams(void)
     ok(ret, "got %d\n", ret);
     expected_gdi_gamma = (FLOAT)(value / 1000.0);
 
-    for (i = 0; i < sizeof(rendermodes)/sizeof(rendermodes[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(rendermodes); i++) {
         hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
             rendermodes[i], DWRITE_MEASURING_MODE_NATURAL,
             0.0, 0.0, &analysis);
@@ -7141,7 +7143,7 @@ static void test_GetFontSignature(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
 
         IDWriteLocalizedStrings_Release(names);
 
@@ -7336,7 +7338,7 @@ static void test_HasVerticalGlyphVariants(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
 
         expected_vert = has_vertical_glyph_variants(fontface1);
         has_vert = IDWriteFontFace1_HasVerticalGlyphVariants(fontface1);
@@ -7409,7 +7411,7 @@ static void test_HasKerningPairs(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
 
         exists = FALSE;
         hr = IDWriteFontFace1_TryGetFontTable(fontface1, MS_KERN_TAG, &data, &size, &context, &exists);
@@ -8112,7 +8114,7 @@ static void test_GetGlyphImageFormats(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, familynameW, sizeof(familynameW)/sizeof(*familynameW));
+        get_enus_string(names, familynameW, ARRAY_SIZE(familynameW));
         IDWriteLocalizedStrings_Release(names);
 
         fontcount = IDWriteFontFamily_GetFontCount(family);
@@ -8128,7 +8130,7 @@ static void test_GetGlyphImageFormats(void)
             hr = IDWriteFont_GetFaceNames(font, &names);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            get_enus_string(names, facenameW, sizeof(facenameW)/sizeof(*facenameW));
+            get_enus_string(names, facenameW, ARRAY_SIZE(facenameW));
 
             IDWriteLocalizedStrings_Release(names);
 
@@ -8184,7 +8186,7 @@ static void test_CreateCustomRenderingParams(void)
 
     factory = create_factory();
 
-    for (i = 0; i < sizeof(params_tests)/sizeof(*params_tests); i++) {
+    for (i = 0; i < ARRAY_SIZE(params_tests); i++) {
         IDWriteRenderingParams *params;
 
         params = (void *)0xdeadbeef;
@@ -8415,12 +8417,12 @@ todo_wine
                     ok(c == 1, "Unexpected string count %u.\n", c);
 
                     buffW[0] = 'a';
-                    hr = IDWriteLocalizedStrings_GetLocaleName(values, 0, buffW, sizeof(buffW)/sizeof(buffW[0]));
+                    hr = IDWriteLocalizedStrings_GetLocaleName(values, 0, buffW, ARRAY_SIZE(buffW));
                     ok(hr == S_OK, "Failed to get locale name, hr %#x.\n", hr);
                     ok(!*buffW, "Unexpected locale %s.\n", wine_dbgstr_w(buffW));
 
                     buff2W[0] = 0;
-                    hr = IDWriteLocalizedStrings_GetString(values, 0, buff2W, sizeof(buff2W)/sizeof(buff2W[0]));
+                    hr = IDWriteLocalizedStrings_GetString(values, 0, buff2W, ARRAY_SIZE(buff2W));
                     ok(hr == S_OK, "Failed to get property string, hr %#x.\n", hr);
 
                     wsprintfW(buffW, fmtW, ivalue);
