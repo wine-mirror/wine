@@ -487,6 +487,19 @@ static void test_GetNextRunTime(void)
     if (0) /* crashes under Windows */
         hr = ITask_GetNextRunTime(task, NULL);
 
+    hr = ITask_SetFlags(task, TASK_FLAG_DISABLED);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == SCHED_S_TASK_DISABLED, "got %#x\n", hr);
+    ok(!memcmp(&st, &st_empty, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond);
+
+    hr = ITask_SetFlags(task, 0);
+    ok(hr == S_OK, "got %#x\n", hr);
+
     memset(&st, 0xff, sizeof(st));
     hr = ITask_GetNextRunTime(task, &st);
     ok(hr == SCHED_S_TASK_NO_VALID_TRIGGERS, "got %#x\n", hr);

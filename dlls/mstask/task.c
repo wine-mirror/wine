@@ -476,6 +476,12 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 
     TRACE("(%p, %p)\n", iface, rt);
 
+    if (This->flags & TASK_FLAG_DISABLED)
+    {
+        memset(rt, 0, sizeof(*rt));
+        return SCHED_S_TASK_DISABLED;
+    }
+
     GetLocalTime(&current_st);
 
     for (i = 0; i < This->trigger_count; i++)
