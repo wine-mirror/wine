@@ -20005,7 +20005,6 @@ static void test_sampleinfo_instruction(void)
 
     hr = ID3D11Device_CreatePixelShader(device, ps_rt_code, sizeof(ps_rt_code), NULL, &ps_rt);
     ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
-    ID3D11DeviceContext_PSSetShader(context, ps_rt, NULL, 0);
     for (sample_count = 1; sample_count <= 8; sample_count *= 2)
     {
         texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -20026,6 +20025,11 @@ static void test_sampleinfo_instruction(void)
         ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
+        /* Some drivers (AMD Radeon HD 6310) return stale sample counts if we
+         * don't rebind the pixel shader between runs with different sample
+         * counts. */
+        ID3D11DeviceContext_PSSetShader(context, NULL, NULL, 0);
+        ID3D11DeviceContext_PSSetShader(context, ps_rt, NULL, 0);
         draw_quad(&test_context);
 
         if (sample_count != 1)
