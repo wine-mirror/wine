@@ -1812,7 +1812,7 @@ INT WINAPI GetLocaleInfoEx(LPCWSTR locale, LCTYPE info, LPWSTR buffer, INT len)
     /* special handling for neutral locale names */
     if (locale && strlenW(locale) == 2)
     {
-        switch (info)
+        switch (info & ~LOCALE_LOCALEINFOFLAGSMASK)
         {
         case LOCALE_SNAME:
             if (len && len < 3)
