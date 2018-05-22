@@ -466,6 +466,11 @@ static void filetime_add_days(FILETIME *ft, ULONG days)
     filetime_add_hours(ft, (ULONGLONG)days * 24);
 }
 
+static void filetime_add_weeks(FILETIME *ft, ULONG weeks)
+{
+    filetime_add_days(ft, (ULONGLONG)weeks * 7);
+}
+
 static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 {
     TaskImpl *This = impl_from_ITask(iface);
@@ -537,6 +542,40 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                     }
 
                     filetime_add_days(&current_ft, This->trigger[i].Type.Daily.DaysInterval);
+                }
+                break;
+
+            case TASK_TIME_TRIGGER_WEEKLY:
+                if (!This->trigger[i].Type.Weekly.rgfDaysOfTheWeek)
+                    break; /* avoid infinite loop */
+
+                st = current_st;
+                st.wHour = This->trigger[i].wStartHour;
+                st.wMinute = This->trigger[i].wStartMinute;
+                st.wSecond = 0;
+                st.wMilliseconds = 0;
+                SystemTimeToFileTime(&st, &current_ft);
+                while (CompareFileTime(&current_ft, &end_ft) < 0)
+                {
+                    FileTimeToSystemTime(&current_ft, &st);
+
+                    if (CompareFileTime(&current_ft, &begin_ft) >= 0)
+                    {
+                        if (This->trigger[i].Type.Weekly.rgfDaysOfTheWeek & (1 << st.wDayOfWeek))
+                        {
+                            if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                            {
+                                best_ft = current_ft;
+                                have_best_time = TRUE;
+                            }
+                            break;
+                        }
+                    }
+
+                    if (st.wDayOfWeek == 0) /* Sunday, goto next week */
+                        filetime_add_weeks(&current_ft, This->trigger[i].Type.Weekly.WeeksInterval - 1);
+                    else /* check next weekday */
+                        filetime_add_days(&current_ft, 1);
                 }
                 break;
 

@@ -552,7 +552,27 @@ static void test_GetNextRunTime(void)
        st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
        st.wHour, st.wMinute, st.wSecond);
 
-    /* FIXME: TASK_TIME_TRIGGER_WEEKLY */
+    /* TASK_TIME_TRIGGER_WEEKLY */
+
+    hr = ITaskTrigger_GetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+    data.TriggerType = TASK_TIME_TRIGGER_WEEKLY;
+    data.Type.Weekly.WeeksInterval = 1;
+    /* add 3 days */
+    time_add_ms(&cmp, 3 * 24 * 60 * 60 * 1000);
+    /* bits: TASK_SUNDAY = 1, TASK_MONDAY = 2, TASK_TUESDAY = 4, etc. */
+    data.Type.Weekly.rgfDaysOfTheWeek = 1 << cmp.wDayOfWeek; /* wDayOfWeek is 0 based */
+    hr = ITaskTrigger_SetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(!memcmp(&st, &cmp, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond);
+
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDATE */
     /* FIXME: TASK_TIME_TRIGGER_MONTHLYDOW */
 
