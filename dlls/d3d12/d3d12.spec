@@ -5,4 +5,4 @@
 104 stub D3D12CoreGetLayeredDeviceSize
 105 stub D3D12CoreRegisterLayers
 106 stdcall D3D12CreateRootSignatureDeserializer(ptr long ptr ptr)
-107 stub D3D12SerializeRootSignature
+107 stdcall D3D12SerializeRootSignature(ptr long ptr ptr)

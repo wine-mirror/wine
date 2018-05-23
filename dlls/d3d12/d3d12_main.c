@@ -58,3 +58,12 @@ HRESULT WINAPI D3D12CreateRootSignatureDeserializer(const void *data, SIZE_T dat
 
     return vkd3d_create_root_signature_deserializer(data, data_size, iid, deserializer);
 }
+
+HRESULT WINAPI D3D12SerializeRootSignature(const D3D12_ROOT_SIGNATURE_DESC *root_signature_desc,
+        D3D_ROOT_SIGNATURE_VERSION version, ID3DBlob **blob, ID3DBlob **error_blob)
+{
+    TRACE("root_signature_desc %p, version %#x, blob %p, error_blob %p.\n",
+            root_signature_desc, version, blob, error_blob);
+
+    return vkd3d_serialize_root_signature(root_signature_desc, version, blob, error_blob);
+}
