@@ -20,8 +20,17 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define VK_NO_PROTOTYPES
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
+#define WINE_VK_ALIGN(x)
+
 #include "wine/debug.h"
+#include "wine/vulkan.h"
+
 #include "d3d12.h"
+
+#include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d12);
 
@@ -39,4 +48,13 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
             adapter, minimum_feature_level, debugstr_guid(iid), device);
 
     return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3D12CreateRootSignatureDeserializer(const void *data, SIZE_T data_size,
+        REFIID iid, void **deserializer)
+{
+    TRACE("data %p, data_size %lu, iid %s, deserializer %p.\n",
+            data, data_size, debugstr_guid(iid), deserializer);
+
+    return vkd3d_create_root_signature_deserializer(data, data_size, iid, deserializer);
 }

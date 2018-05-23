@@ -1,5 +1,7 @@
 MODULE    = d3d12.dll
 IMPORTLIB = d3d12
+EXTRALIBS = $(VKD3D_LIBS)
+EXTRAINCL = $(VKD3D_CFLAGS)
 
 C_SRCS = \
 	d3d12_main.c
