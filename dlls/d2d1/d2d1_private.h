@@ -326,7 +326,7 @@ HRESULT d2d_mesh_create(ID2D1Factory *factory, struct d2d_mesh **mesh) DECLSPEC_
 
 struct d2d_bitmap
 {
-    ID2D1Bitmap ID2D1Bitmap_iface;
+    ID2D1Bitmap1 ID2D1Bitmap1_iface;
     LONG refcount;
 
     ID2D1Factory *factory;

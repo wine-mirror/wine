@@ -291,7 +291,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
             iface, size.width, size.height, src_data, pitch, desc, bitmap);
 
     if (SUCCEEDED(hr = d2d_bitmap_create(render_target->factory, render_target->device, size, src_data, pitch, desc, &object)))
-        *bitmap = &object->ID2D1Bitmap_iface;
+        *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
 }
@@ -308,7 +308,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap
 
     if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(render_target->factory, render_target->device, bitmap_source,
             desc, &object)))
-        *bitmap = &object->ID2D1Bitmap_iface;
+        *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
 }
@@ -324,7 +324,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1R
             iface, debugstr_guid(iid), data, desc, bitmap);
 
     if (SUCCEEDED(hr = d2d_bitmap_create_shared(iface, render_target->device, iid, data, desc, &object)))
-        *bitmap = &object->ID2D1Bitmap_iface;
+        *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
 }

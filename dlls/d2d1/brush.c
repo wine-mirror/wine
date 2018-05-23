@@ -864,7 +864,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_Release(ID2D1BitmapBrush *iface)
         if (brush->u.bitmap.sampler_state)
             ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
         if (brush->u.bitmap.bitmap)
-            ID2D1Bitmap_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
+            ID2D1Bitmap1_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap1_iface);
         d2d_brush_destroy(brush);
     }
 
@@ -971,7 +971,7 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetBitmap(ID2D1BitmapBrush *iface
     if (bitmap)
         ID2D1Bitmap_AddRef(bitmap);
     if (brush->u.bitmap.bitmap)
-        ID2D1Bitmap_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
+        ID2D1Bitmap1_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap1_iface);
     brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap);
 }
 
@@ -1008,7 +1008,7 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_GetBitmap(ID2D1BitmapBrush *iface
 
     TRACE("iface %p, bitmap %p.\n", iface, bitmap);
 
-    if ((*bitmap = &brush->u.bitmap.bitmap->ID2D1Bitmap_iface))
+    if ((*bitmap = (ID2D1Bitmap *)&brush->u.bitmap.bitmap->ID2D1Bitmap1_iface))
         ID2D1Bitmap_AddRef(*bitmap);
 }
 
@@ -1041,7 +1041,7 @@ HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap, cons
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_BITMAP,
             brush_desc, (ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
     if (((*brush)->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap)))
-        ID2D1Bitmap_AddRef(&(*brush)->u.bitmap.bitmap->ID2D1Bitmap_iface);
+        ID2D1Bitmap1_AddRef(&(*brush)->u.bitmap.bitmap->ID2D1Bitmap1_iface);
     if (bitmap_brush_desc)
     {
         (*brush)->u.bitmap.extend_mode_x = bitmap_brush_desc->extendModeX;

@@ -27,6 +27,7 @@ interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
 interface ID2D1PrintControl;
 interface IWICImagingFactory;
+interface ID2D1ColorContext;
 
 typedef enum D2D1_DEVICE_CONTEXT_OPTIONS
 {
@@ -76,6 +77,25 @@ typedef enum D2D1_COLOR_SPACE
     D2D1_COLOR_SPACE_FORCE_DWORD = 0xffffffff,
 } D2D1_COLOR_SPACE;
 
+typedef enum D2D1_BITMAP_OPTIONS
+{
+    D2D1_BITMAP_OPTIONS_NONE = 0x0,
+    D2D1_BITMAP_OPTIONS_TARGET = 0x1,
+    D2D1_BITMAP_OPTIONS_CANNOT_DRAW = 0x2,
+    D2D1_BITMAP_OPTIONS_CPU_READ = 0x4,
+    D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE = 0x8,
+    D2D1_BITMAP_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_BITMAP_OPTIONS;
+
+typedef enum D2D1_MAP_OPTIONS
+{
+    D2D1_MAP_OPTIONS_NONE = 0x0,
+    D2D1_MAP_OPTIONS_READ = 0x1,
+    D2D1_MAP_OPTIONS_WRITE = 0x2,
+    D2D1_MAP_OPTIONS_DISCARD = 0x4,
+    D2D1_MAP_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_MAP_OPTIONS;
+
 typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
 
 typedef struct D2D1_STROKE_STYLE_PROPERTIES1
@@ -108,7 +128,34 @@ typedef struct D2D1_PRINT_CONTROL_PROPERTIES
     D2D1_COLOR_SPACE colorSpace;
 } D2D1_PRINT_CONTROL_PROPERTIES;
 
+typedef struct D2D1_MAPPED_RECT
+{
+    UINT32 pitch;
+    BYTE *bits;
+} D2D1_MAPPED_RECT;
+
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
+
+[
+    object,
+    uuid(a898a84c-3873-4588-b08b-ebbf978df041),
+    local,
+]
+interface ID2D1Bitmap1 : ID2D1Bitmap
+{
+    void GetColorContext(
+        [out] ID2D1ColorContext **context
+    );
+    D2D1_BITMAP_OPTIONS GetOptions();
+    HRESULT GetSurface(
+        [out] IDXGISurface **surface
+    );
+    HRESULT Map(
+        [in] D2D1_MAP_OPTIONS options,
+        [out] D2D1_MAPPED_RECT *mapped_rect
+    );
+    HRESULT Unmap();
+}
 
 [
     object,
