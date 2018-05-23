@@ -22,6 +22,7 @@ interface IDWriteFontFaceReference;
 interface IDWriteFontFace3;
 interface IDWriteFontSet;
 interface IDWriteFontDownloadQueue;
+interface IDWriteFontResource;
 
 cpp_quote("#ifndef _WINGDI_")
 /* already defined in wingdi.h but needed for WIDL */
@@ -455,6 +456,37 @@ interface IDWriteFontFace4 : IDWriteFontFace3
         DWRITE_GLYPH_IMAGE_DATA *data,
         void **context);
     void ReleaseGlyphImageData(void *context);
+}
+
+typedef enum DWRITE_FONT_AXIS_TAG
+{
+    DWRITE_FONT_AXIS_TAG_WEIGHT       = 0x74686777, /* 'wght' */
+    DWRITE_FONT_AXIS_TAG_WIDTH        = 0x68746477, /* 'wdth' */
+    DWRITE_FONT_AXIS_TAG_SLANT        = 0x746e6c73, /* 'slnt' */
+    DWRITE_FONT_AXIS_TAG_OPTICAL_SIZE = 0x7a73706f, /* 'opsz' */
+    DWRITE_FONT_AXIS_TAG_ITALIC       = 0x6c617469, /* 'ital' */
+} DWRITE_FONT_AXIS_TAG;
+
+typedef struct DWRITE_FONT_AXIS_VALUE
+{
+    DWRITE_FONT_AXIS_TAG axisTag;
+    FLOAT value;
+} DWRITE_FONT_AXIS_VALUE;
+
+[
+    local,
+    object,
+    uuid(98eff3a5-b667-479a-b145-e2fa5b9fdc29)
+]
+interface IDWriteFontFace5 : IDWriteFontFace4
+{
+    UINT32 GetFontAxisValueCount();
+    HRESULT GetFontAxisValues(
+        DWRITE_FONT_AXIS_VALUE *values,
+        UINT32 value_count);
+    BOOL HasVariations();
+    HRESULT GetFontResource(IDWriteFontResource **resource);
+    BOOL Equals(IDWriteFontFace *fontface);
 }
 
 typedef struct DWRITE_COLOR_GLYPH_RUN1

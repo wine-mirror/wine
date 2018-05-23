@@ -2544,6 +2544,19 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
     IDWriteFontFace_Release(fontface);
 }
 
+static BOOL has_face_variations(IDWriteFontFace *fontface)
+{
+    IDWriteFontFace5 *fontface5;
+    BOOL ret = FALSE;
+
+    if (SUCCEEDED(IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace5, (void **)&fontface5))) {
+        ret = IDWriteFontFace5_HasVariations(fontface5);
+        IDWriteFontFace5_Release(fontface5);
+    }
+
+    return ret;
+}
+
 static void test_ConvertFontFaceToLOGFONT(void)
 {
     IDWriteFontCollection *collection;
@@ -2613,6 +2626,13 @@ if (0) /* crashes on native */
 
             hr = IDWriteFont_CreateFontFace(font, &fontface);
             ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            if (has_face_variations(fontface)) {
+                skip("%s: test does not support variable fonts.\n", wine_dbgstr_w(nameW));
+                IDWriteFontFace_Release(fontface);
+                IDWriteFont_Release(font);
+                continue;
+            }
 
             memset(&logfont, 0xcc, sizeof(logfont));
             hr = IDWriteGdiInterop_ConvertFontFaceToLOGFONT(interop, fontface, &logfont);
@@ -4014,6 +4034,8 @@ if (0) { /* crashes on native */
 
         for (j = 0; j < font_count; j++) {
             static const WCHAR spaceW[] = {' ', 0};
+            IDWriteFontFace *fontface;
+            BOOL has_variations;
 
             hr = IDWriteFontFamily_GetFont(family, j, &font);
             ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -4027,6 +4049,18 @@ if (0) { /* crashes on native */
             lstrcpyW(nameW, familynameW);
             lstrcatW(nameW, spaceW);
             lstrcatW(nameW, facenameW);
+
+            hr = IDWriteFont_CreateFontFace(font, &fontface);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            has_variations = has_face_variations(fontface);
+            IDWriteFontFace_Release(fontface);
+
+            if (has_variations) {
+                skip("%s: test does not support variable fonts.\n", wine_dbgstr_w(nameW));
+                IDWriteFont_Release(font);
+                continue;
+            }
 
             system = FALSE;
             memset(&logfont, 0xcc, sizeof(logfont));
