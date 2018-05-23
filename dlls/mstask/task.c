@@ -572,7 +572,7 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                         }
                     }
 
-                    if (st.wDayOfWeek == 0) /* Sunday, goto next week */
+                    if (st.wDayOfWeek == 0 && This->trigger[i].Type.Weekly.WeeksInterval > 1) /* Sunday, goto next week */
                         filetime_add_weeks(&current_ft, This->trigger[i].Type.Weekly.WeeksInterval - 1);
                     else /* check next weekday */
                         filetime_add_days(&current_ft, 1);
