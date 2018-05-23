@@ -89,6 +89,7 @@ struct taskdialog_info
     HWND hwnd;
     const TASKDIALOGCONFIG *taskconfig;
     DWORD last_timer_tick;
+    HFONT main_instruction_font;
 };
 
 static void pixels_to_dialogunits(const struct taskdialog_template_desc *desc, LONG *width, LONG *height)
@@ -111,6 +112,24 @@ static void template_write_data(char **ptr, const void *src, unsigned int size)
 {
     memcpy(*ptr, src, size);
     *ptr += size;
+}
+
+static void taskdialog_set_main_instruction_font(struct taskdialog_info *dialog_info)
+{
+    NONCLIENTMETRICSW ncm;
+    HWND hwnd;
+
+    hwnd = GetDlgItem(dialog_info->hwnd, ID_MAIN_INSTRUCTION);
+    if(!hwnd) return;
+
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+    /* 1.25 times the height */
+    ncm.lfMessageFont.lfHeight = ncm.lfMessageFont.lfHeight * 5 / 4;
+    ncm.lfMessageFont.lfWeight = FW_BOLD;
+    dialog_info->main_instruction_font = CreateFontIndirectW(&ncm.lfMessageFont);
+
+    SendMessageW(hwnd, WM_SETFONT, (WPARAM)dialog_info->main_instruction_font, TRUE);
 }
 
 /* used to calculate size for the controls */
@@ -548,6 +567,8 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
         SetTimer(hwnd, ID_TIMER, DIALOG_TIMER_MS, NULL);
         dialog_info->last_timer_tick = GetTickCount();
     }
+
+    taskdialog_set_main_instruction_font(dialog_info);
 }
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -597,6 +618,8 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             RemovePropW(hwnd, taskdialog_info_propnameW);
             if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER)
                 KillTimer(hwnd, ID_TIMER);
+            if (dialog_info->main_instruction_font)
+                DeleteObject(dialog_info->main_instruction_font);
             break;
         default:
             return FALSE;
