@@ -31,7 +31,6 @@
 #include "wine/heap.h"
 #include "wine/unicode.h"
 #include "main.h"
-#include "resource.h"
 
 static const WCHAR* editValueName;
 static WCHAR* stringValueData;
