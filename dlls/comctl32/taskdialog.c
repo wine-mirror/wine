@@ -572,8 +572,6 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
             SetPropW(hwnd, taskdialog_info_propnameW, dialog_info);
             taskdialog_notify(dialog_info, TDN_DIALOG_CONSTRUCTED, 0, 0);
-            break;
-        case WM_SHOWWINDOW:
             taskdialog_notify(dialog_info, TDN_CREATED, 0, 0);
             break;
         case WM_COMMAND:
