@@ -636,6 +636,8 @@ UNWINDFLAGS
 EXCESS_PRECISION_CFLAGS
 BUILTINFLAG
 EXTRACFLAGS
+VKD3D_LIBS
+VKD3D_CFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
 PROCSTAT_LIBS
@@ -863,6 +865,7 @@ with_sdl
 with_tiff
 with_udev
 with_v4l
+with_vkd3d
 with_vulkan
 with_xcomposite
 with_xcursor
@@ -1814,6 +1817,8 @@ MPG123_CFLAGS
 MPG123_LIBS
 NETAPI_CFLAGS
 NETAPI_LIBS
+VKD3D_CFLAGS
+VKD3D_LIBS
 LDAP_CFLAGS
 LDAP_LIBS'
 
@@ -2493,6 +2498,7 @@ Optional Packages:
   --without-tiff          do not use TIFF
   --without-udev          do not use udev (plug and play support)
   --without-v4l           do not use v4l1 (v4l support)
+  --without-vkd3d         do not use vkd3d (Direct3D 12 support)
   --without-vulkan        do not use Vulkan
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
@@ -2591,6 +2597,9 @@ Some influential environment variables:
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
+  VKD3D_CFLAGS
+              C compiler flags for libvkd3d, overriding pkg-config
+  VKD3D_LIBS  Linker flags for libvkd3d, overriding pkg-config
   LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
   LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
@@ -3811,6 +3820,12 @@ fi
 # Check whether --with-v4l was given.
 if test "${with_v4l+set}" = set; then :
   withval=$with_v4l;
+fi
+
+
+# Check whether --with-vkd3d was given.
+if test "${with_vkd3d+set}" = set; then :
+  withval=$with_vkd3d;
 fi
 
 
@@ -14678,6 +14693,94 @@ esac
 
 fi
 
+if test "x$with_vkd3d" != "xno"
+then
+    if ${VKD3D_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  VKD3D_CFLAGS=`$PKG_CONFIG --cflags libvkd3d 2>/dev/null`
+fi
+fi
+
+if ${VKD3D_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  VKD3D_LIBS=`$PKG_CONFIG --libs libvkd3d 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: libvkd3d cflags: $VKD3D_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libvkd3d libs: $VKD3D_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $VKD3D_CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lvkd3d" >&5
+$as_echo_n "checking for -lvkd3d... " >&6; }
+if ${ac_cv_lib_soname_vkd3d+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lvkd3d $VKD3D_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vkd3d_create_device ();
+int
+main ()
+{
+return vkd3d_create_device ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_vkd3d=`$ac_cv_path_LDD conftest.exe | grep "vkd3d" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_vkd3d=`$OTOOL -L conftest$ac_exeext | grep "libvkd3d\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libvkd3d\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_vkd3d=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libvkd3d\\.$LIBEXT" | sed -e "s/^.*\\[\\(libvkd3d\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_vkd3d:+false} :; then :
+  ac_cv_lib_soname_vkd3d=`$LDD conftest$ac_exeext | grep "libvkd3d\\.$LIBEXT" | sed -e "s/^.*\(libvkd3d\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_vkd3d:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vkd3d" >&5
+$as_echo "$ac_cv_lib_soname_vkd3d" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBVKD3D "$ac_cv_lib_soname_vkd3d"
+_ACEOF
+
+
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$VKD3D_CFLAGS" || VKD3D_CFLAGS=`echo " $VKD3D_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$VKD3D_LIBS" || VKD3D_LIBS=`echo " $VKD3D_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "x$ac_cv_lib_soname_vkd3d" = "x"; then :
+  case "x$with_vkd3d" in
+  x)   as_fn_append wine_notices "|vkd3d ${notice_platform}development files not found, Direct3D 12 won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "vkd3d ${notice_platform}development files not found, Direct3D 12 won't be supported.
+This is an error since --with-vkd3d was requested." "$LINENO" 5 ;;
+esac
+
+fi
+test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
+
 
 EXTRACFLAGS=""
 
@@ -18184,6 +18287,8 @@ KSTAT_LIBS = $KSTAT_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
+VKD3D_CFLAGS = $VKD3D_CFLAGS
+VKD3D_LIBS = $VKD3D_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
 DL_LIBS = $DL_LIBS
 POLL_LIBS = $POLL_LIBS
