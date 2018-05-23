@@ -3233,12 +3233,7 @@ static void test_shared_isolated(void)
     ok(shared == shared2, "got %p, and %p\n", shared, shared2);
     IDWriteFactory_Release(shared2);
 
-    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IUnknown, (IUnknown**)&shared2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(shared == shared2, "got %p, and %p\n", shared, shared2);
-
     IDWriteFactory_Release(shared);
-    IDWriteFactory_Release(shared2);
 
     /* we got 2 references, released 2 - still same pointer is returned */
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown**)&shared2);
