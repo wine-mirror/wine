@@ -3684,18 +3684,19 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"Attribuutti 'writable' ei voi olla 'true' tämän objektin ominaisuuksissa"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "Ei-konfiguroitavaa ominaisuutta '|' ei voi määritellä uudestaan"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "Ominaisuudella ei voi olla sekä hakufunktiota että arvoa"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -8502,10 +8503,8 @@ msgid "&Browse..."
 msgstr "&Selaa..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Tiedostotyyppi"
+msgstr "Tiedostotyyppi:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8516,16 +8515,12 @@ msgid "Size:"
 msgstr "Koko:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Luotu"
+msgstr "Luotu:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Ominaisuudet:"
+msgstr "Ominaisuudet:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8536,28 +8531,20 @@ msgid "&Archive"
 msgstr "&Arkisto"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Avaa:"
+msgstr "Avaa ohjelmalla:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "&Vaihda kuvaketta..."
+msgstr "&Vaihda..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Muokattu"
+msgstr "Muokattu:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Viimeisin muutos:"
+msgstr "Käytetty:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
