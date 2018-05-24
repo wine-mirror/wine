@@ -791,6 +791,7 @@ static ULONG flags_isc_req_to_gss( ULONG flags )
     if (flags & ISC_REQ_INTEGRITY)       ret |= GSS_C_INTEG_FLAG;
     if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
     if (flags & ISC_REQ_USE_DCE_STYLE)   ret |= GSS_C_DCE_STYLE;
+    if (flags & ISC_REQ_IDENTIFY)        ret |= GSS_C_IDENTIFY_FLAG;
     return ret;
 }
 
@@ -804,6 +805,7 @@ static ULONG flags_gss_to_isc_ret( ULONG flags )
     if (flags & GSS_C_CONF_FLAG)     ret |= ISC_RET_CONFIDENTIALITY;
     if (flags & GSS_C_INTEG_FLAG)    ret |= ISC_RET_INTEGRITY;
     if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
+    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ISC_RET_IDENTIFY;
     return ret;
 }
 
@@ -817,6 +819,7 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     if (flags & GSS_C_CONF_FLAG)     ret |= ASC_RET_CONFIDENTIALITY;
     if (flags & GSS_C_INTEG_FLAG)    ret |= ASC_RET_INTEGRITY;
     if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
+    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ASC_RET_IDENTIFY;
     return ret;
 }
 
@@ -1014,7 +1017,8 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
 #ifdef SONAME_LIBGSSAPI_KRB5
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
-                                   ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE;
+                                   ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
+                                   ISC_REQ_IDENTIFY;
     OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
     gss_cred_id_t cred_handle;
     gss_ctx_id_t ctxt_handle;
