@@ -942,6 +942,7 @@ static void test_DxDiag_DisplayDevices(void)
     static const WCHAR b3DAccelerationExists[] = {'b','3','D','A','c','c','e','l','e','r','a','t','i','o','n','E','x','i','s','t','s',0};
     static const WCHAR b3DAccelerationEnabled[] = {'b','3','D','A','c','c','e','l','e','r','a','t','i','o','n','E','n','a','b','l','e','d',0};
     static const WCHAR bDDAccelerationEnabled[] = {'b','D','D','A','c','c','e','l','e','r','a','t','i','o','n','E','n','a','b','l','e','d',0};
+    static const WCHAR iAdapter[] = {'i','A','d','a','p','t','e','r',0};
 
     static const struct property_test property_tests[] =
     {
@@ -966,6 +967,7 @@ static void test_DxDiag_DisplayDevices(void)
         {b3DAccelerationExists, VT_BOOL},
         {b3DAccelerationEnabled, VT_BOOL},
         {bDDAccelerationEnabled, VT_BOOL},
+        {iAdapter, VT_UI4},
     };
 
     IDxDiagContainer *display_cont = NULL;
