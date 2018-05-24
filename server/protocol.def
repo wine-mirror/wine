@@ -2643,7 +2643,6 @@ enum message_type
     int            relative;      /* coords relative to (see below) */
 @REPLY
     rectangle_t    window;        /* window rectangle */
-    rectangle_t    visible;       /* visible part of the window rectangle */
     rectangle_t    client;        /* client rectangle */
 @END
 enum coords_relative

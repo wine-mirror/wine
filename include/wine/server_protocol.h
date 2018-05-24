@@ -3682,7 +3682,6 @@ struct get_window_rectangles_reply
 {
     struct reply_header __header;
     rectangle_t    window;
-    rectangle_t    visible;
     rectangle_t    client;
 };
 enum coords_relative
@@ -6511,6 +6510,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 552
+#define SERVER_PROTOCOL_VERSION 553
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

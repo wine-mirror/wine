@@ -3222,7 +3222,6 @@ static void dump_get_window_rectangles_request( const struct get_window_rectangl
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )
 {
     dump_rectangle( " window=", &req->window );
-    dump_rectangle( ", visible=", &req->visible );
     dump_rectangle( ", client=", &req->client );
 }
 
