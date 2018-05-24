@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-12 22:41+0900\n"
+"PO-Revision-Date: 2018-05-24 20:49+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -6665,10 +6665,8 @@ msgid "Connection reset by peer.\n"
 msgstr "相手側により接続がリセットされました。\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "メッセージ 0x%1 はファイル %2 に見つかりませんでした。\n"
+msgstr "ファイルにデジタル署名がありません。\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -8502,10 +8500,8 @@ msgid "&Browse..."
 msgstr "参照(&B)..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "ファイルの種類"
+msgstr "ファイルの種類:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8516,16 +8512,12 @@ msgid "Size:"
 msgstr "サイズ:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "作成日"
+msgstr "作成日:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "属性(&A):"
+msgstr "属性:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8536,28 +8528,20 @@ msgid "&Archive"
 msgstr "アーカイブ(&A)"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "URL:"
+msgstr "アプリケーション:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "アイコンの変更(&I)..."
+msgstr "変更(&C)..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "更新日時"
+msgstr "最終変更日時:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "最終変更日時:"
+msgstr "最終アクセス日時:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -9167,70 +9151,59 @@ msgid ""
 msgstr "この証明書には特定できないセキュリティ問題があります。"
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "サービス要求が時間切れとなりました。\n"
+msgstr "要求は時間切れとなりました。\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "プリンタ エラーが発生しました。"
+msgstr "内部エラーが発生しました。\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "パス名が不正です。\n"
+msgstr "URL が不正です。\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL スキームを認識できなかったかサポートしていません。\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "ユーザ名を見つけられませんでした。\n"
+msgstr "サーバ名をを解決できませんでした。\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "ユーザ プロファイルが正しくありません。\n"
+msgstr "要求された操作は正しくありません。\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"操作は取り消されました。通常は要求が行われたハンドルが操作の完了前にクローズ"
+"されたことが原因です。\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "プロファイルを追加できませんでした。\n"
+msgstr "要求された項目は見つかりませんでした。\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "LDAP サーバに接続できません"
+msgstr "サーバへの接続試行は失敗しました。\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "サーバへの接続は終了されました。\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"サーバから受信した SSL 証明書の日付が不正です。証明書は期限切れです。\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL 証明書の一般名(ホスト名フィールド)が不適切です。\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
