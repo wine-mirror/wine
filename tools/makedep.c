@@ -3283,7 +3283,7 @@ static void output_test_module( struct makefile *make )
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
 
-    if (!make->disabled)
+    if (!make->disabled && !strarray_exists( &disabled_dirs, "programs/winetest" ))
         output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
     output( "%s/%s: %s%s\n", top_obj_dir_path( make, "programs/winetest" ), testres,
             obj_dir_path( make, stripped ), dll_ext );
