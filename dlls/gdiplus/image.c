@@ -4567,7 +4567,7 @@ static GpStatus encode_image_jpeg(GpImage *image, IStream* stream,
 static GpStatus encode_image_gif(GpImage *image, IStream* stream,
     GDIPCONST EncoderParameters* params)
 {
-    return encode_image_wic(image, stream, &CLSID_WICGifEncoder, params);
+    return encode_image_wic(image, stream, &GUID_ContainerFormatGif, params);
 }
 
 /*****************************************************************************
