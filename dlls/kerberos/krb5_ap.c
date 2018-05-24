@@ -805,6 +805,7 @@ static ULONG flags_gss_to_isc_ret( ULONG flags )
     if (flags & GSS_C_CONF_FLAG)     ret |= ISC_RET_CONFIDENTIALITY;
     if (flags & GSS_C_INTEG_FLAG)    ret |= ISC_RET_INTEGRITY;
     if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
+    if (flags & GSS_C_DCE_STYLE)     ret |= ISC_RET_USED_DCE_STYLE;
     if (flags & GSS_C_IDENTIFY_FLAG) ret |= ISC_RET_IDENTIFY;
     return ret;
 }
@@ -819,6 +820,7 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     if (flags & GSS_C_CONF_FLAG)     ret |= ASC_RET_CONFIDENTIALITY;
     if (flags & GSS_C_INTEG_FLAG)    ret |= ASC_RET_INTEGRITY;
     if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
+    if (flags & GSS_C_DCE_STYLE)     ret |= ASC_RET_USED_DCE_STYLE;
     if (flags & GSS_C_IDENTIFY_FLAG) ret |= ASC_RET_IDENTIFY;
     return ret;
 }
