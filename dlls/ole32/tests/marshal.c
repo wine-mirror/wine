@@ -289,8 +289,8 @@ struct host_object_data
     IID iid;
     IUnknown *object;
     MSHLFLAGS marshal_flags;
-    HANDLE marshal_event;
     IMessageFilter *filter;
+    HANDLE marshal_event;
 };
 
 static DWORD CALLBACK host_object_proc(LPVOID p)
@@ -335,31 +335,27 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     return hr;
 }
 
-static DWORD start_host_object2(IStream *stream, REFIID riid, IUnknown *object, MSHLFLAGS marshal_flags, IMessageFilter *filter, HANDLE *thread)
+static DWORD start_host_object2(struct host_object_data *object_data, HANDLE *thread)
 {
     DWORD tid = 0;
-    HANDLE marshal_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    struct host_object_data *data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+    struct host_object_data *data;
 
-    data->stream = stream;
-    data->iid = *riid;
-    data->object = object;
-    data->marshal_flags = marshal_flags;
-    data->marshal_event = marshal_event;
-    data->filter = filter;
-
+    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+    *data = *object_data;
+    data->marshal_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     *thread = CreateThread(NULL, 0, host_object_proc, data, 0, &tid);
 
     /* wait for marshaling to complete before returning */
-    ok( !WaitForSingleObject(marshal_event, 10000), "wait timed out\n" );
-    CloseHandle(marshal_event);
+    ok( !WaitForSingleObject(data->marshal_event, 10000), "wait timed out\n" );
+    CloseHandle(data->marshal_event);
 
     return tid;
 }
 
 static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, MSHLFLAGS marshal_flags, HANDLE *thread)
 {
-    return start_host_object2(stream, riid, object, marshal_flags, NULL, thread);
+    struct host_object_data object_data = { stream, *riid, object, marshal_flags };
+    return start_host_object2(&object_data, thread);
 }
 
 /* asks thread to release the marshal data because it has to be done by the
@@ -1965,25 +1961,27 @@ static IMessageFilter MessageFilter = { &MessageFilter_Vtbl };
 static void test_message_filter(void)
 {
     HRESULT hr;
-    IStream *pStream = NULL;
     IClassFactory *cf = NULL;
     DWORD tid;
     IUnknown *proxy = NULL;
     IMessageFilter *prev_filter = NULL;
     HANDLE thread;
 
+    struct host_object_data object_data = { NULL, IID_IClassFactory, (IUnknown*)&Test_ClassFactory,
+                                            MSHLFLAGS_NORMAL, &MessageFilter };
+
     cLocks = 0;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &object_data.stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
-    tid = start_host_object2(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &MessageFilter, &thread);
+    tid = start_host_object2(&object_data, &thread);
 
     ok_more_than_one_lock();
 
-    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&cf);
+    IStream_Seek(object_data.stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(object_data.stream, &IID_IClassFactory, (void **)&cf);
     ok_ole_success(hr, CoUnmarshalInterface);
-    IStream_Release(pStream);
+    IStream_Release(object_data.stream);
 
     ok_more_than_one_lock();
 
@@ -3855,12 +3853,14 @@ static IChannelHook TestChannelHook = { &TestChannelHookVtbl };
 
 static void test_channel_hook(void)
 {
-    IStream *pStream = NULL;
     IClassFactory *cf = NULL;
     DWORD tid;
     IUnknown *proxy = NULL;
     HANDLE thread;
     HRESULT hr;
+
+    struct host_object_data object_data = { NULL, IID_IClassFactory, (IUnknown*)&Test_ClassFactory,
+                                            MSHLFLAGS_NORMAL, &MessageFilter };
 
     hr = CoRegisterChannelHook(&EXTENTID_WineTest, &TestChannelHook);
     ok_ole_success(hr, CoRegisterChannelHook);
@@ -3870,17 +3870,17 @@ static void test_channel_hook(void)
 
     cLocks = 0;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &object_data.stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
-    tid = start_host_object2(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &MessageFilter, &thread);
+    tid = start_host_object2(&object_data, &thread);
     server_tid = tid;
 
     ok_more_than_one_lock();
 
-    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&cf);
+    IStream_Seek(object_data.stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(object_data.stream, &IID_IClassFactory, (void **)&cf);
     ok_ole_success(hr, CoUnmarshalInterface);
-    IStream_Release(pStream);
+    IStream_Release(object_data.stream);
 
     ok_more_than_one_lock();
 
