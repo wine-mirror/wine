@@ -73,7 +73,8 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
     struct ifstub *stub;
     HRESULT hr;
 
-    TRACE("oid=%s, stubbuffer=%p, iid=%s\n", wine_dbgstr_longlong(m->oid), sb, debugstr_guid(iid));
+    TRACE("oid=%s, stubbuffer=%p, iid=%s, dest_context=%x\n", wine_dbgstr_longlong(m->oid), sb,
+          debugstr_guid(iid), dest_context);
 
     stub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct ifstub));
     if (!stub) return NULL;
@@ -704,18 +705,23 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
     USHORT successful_qis = 0;
     APARTMENT *apt;
     struct stub_manager *stubmgr;
+    struct ifstub *ifstub;
+    DWORD dest_context;
+    void *dest_context_data;
 
     TRACE("(%p)->(%s, %d, %d, %p, %p)\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
 
-    hr = ipid_to_stub_manager(ripid, &apt, &stubmgr);
+    hr = ipid_to_ifstub(ripid, &apt, &stubmgr, &ifstub);
     if (hr != S_OK) return hr;
+
+    IRpcChannelBuffer_GetDestCtx(ifstub->chan, &dest_context, &dest_context_data);
 
     *ppQIResults = CoTaskMemAlloc(sizeof(REMQIRESULT) * cIids);
 
     for (i = 0; i < cIids; i++)
     {
         HRESULT hrobj = marshal_object(apt, &(*ppQIResults)[i].std, &iids[i],
-                                       stubmgr->object, MSHCTX_DIFFERENTMACHINE, NULL, MSHLFLAGS_NORMAL);
+                                       stubmgr->object, dest_context, dest_context_data, MSHLFLAGS_NORMAL);
         if (hrobj == S_OK)
             successful_qis++;
         (*ppQIResults)[i].hResult = hrobj;

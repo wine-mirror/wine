@@ -449,7 +449,6 @@ static HRESULT WINAPI RpcStubBuffer_Invoke(IRpcStubBuffer *iface, RPCOLEMESSAGE 
 
     hr = IRpcChannelBuffer_GetDestCtx(_pRpcChannelBuffer, &dest_context, &dest_context_data);
     ok(hr == S_OK, "GetDestCtx failed: %08x\n", hr);
-todo_wine
     ok(dest_context == MSHCTX_INPROC, "desc_context = %x\n", dest_context);
     ok(!dest_context_data, "desc_context_data = %p\n", dest_context_data);
 
@@ -1295,9 +1294,7 @@ static void test_marshal_channel_buffer(void)
     SET_EXPECT(Invoke);
     SET_EXPECT(GetWindow);
     hr = IOleWindow_GetWindow(ole_window, &hwnd);
-todo_wine
     ok(hr == S_OK, "GetWindow failed: %08x\n", hr);
-todo_wine
     ok(hwnd == (HWND)0xdeadbeef, "hwnd = %p\n", hwnd);
     CHECK_CALLED(Invoke);
     CHECK_CALLED(GetWindow);
