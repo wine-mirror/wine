@@ -43,10 +43,6 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) ( sizeof(x) / sizeof((x)[0]) )
-#endif
-
 /* from pidl.h, not included here: */
 #ifndef PT_CPL             /* Guess, Win7 uses this for CSIDL_CONTROLS */
 #define PT_CPL        0x01 /* no path */

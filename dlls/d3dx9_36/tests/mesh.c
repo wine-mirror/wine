@@ -42,8 +42,6 @@ static inline float __port_nan(void)
 
 #define admitted_error 0.0001f
 
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
-
 #define compare_vertex_sizes(type, exp) \
     got=D3DXGetFVFVertexSize(type); \
     ok(got==exp, "Expected: %d, Got: %d\n", exp, got);

@@ -32,10 +32,6 @@ static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 struct vec2
 {
     float x, y;

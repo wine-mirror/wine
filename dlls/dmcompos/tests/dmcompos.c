@@ -24,8 +24,6 @@
 #include <wine/test.h>
 #include <dmusici.h>
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 static BOOL missing_dmcompos(void)
 {
     IDirectMusicComposer *dmc;
