@@ -58,6 +58,7 @@ typedef struct
     LONG ref;
     ITaskDefinition *task;
     IExecAction *action;
+    UUID uuid;
     LPWSTR task_name;
     HRESULT status;
     WORD idle_minutes, deadline_minutes;
@@ -1241,6 +1242,8 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     if (fixed->file_version != 0x0001)
         return SCHED_E_INVALID_TASK;
 
+    This->uuid = fixed->uuid;
+
     TRACE("name_size_offset %04x\n", fixed->name_size_offset);
     TRACE("trigger_offset %04x\n", fixed->trigger_offset);
     TRACE("error_retry_count %u\n", fixed->error_retry_count);
@@ -1583,7 +1586,6 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
     ver = GetVersion();
     fixed.product_version = MAKEWORD(ver >> 8, ver);
     fixed.file_version = 0x0001;
-    CoCreateGuid(&fixed.uuid);
     fixed.name_size_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
     fixed.trigger_offset = sizeof(fixed) + sizeof(USHORT); /* FIXDLEN_DATA + Instance Count */
     fixed.trigger_offset += sizeof(USHORT); /* Application Name */
@@ -1626,6 +1628,11 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
         if (try++ >= 3) return HRESULT_FROM_WIN32(GetLastError());
         Sleep(100);
     }
+
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+        fixed.uuid = This->uuid;
+    else
+        CoCreateGuid(&fixed.uuid);
 
     if (!WriteFile(hfile, &fixed, sizeof(fixed), &size, NULL))
     {
@@ -1847,6 +1854,8 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->trigger = NULL;
     This->is_dirty = FALSE;
     This->instance_count = 0;
+
+    CoCreateGuid(&This->uuid);
 
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
