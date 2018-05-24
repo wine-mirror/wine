@@ -1053,8 +1053,6 @@ static const DWORD biSize_tests[] = {
     0xffffffff
 };
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
 {
     BITMAP bm;

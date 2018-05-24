@@ -28,8 +28,6 @@
 #include <d3d8.h>
 #include "wine/test.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 struct vec3
 {
     float x, y, z;

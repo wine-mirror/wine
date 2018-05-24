@@ -23,8 +23,6 @@
 #include "d3dx9.h"
 #include <math.h>
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;

@@ -23,10 +23,6 @@
 #include "d3d11.h"
 #include "wine/test.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 enum frame_latency
 {
     DEFAULT_FRAME_LATENCY =  3,

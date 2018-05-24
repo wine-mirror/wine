@@ -41,8 +41,6 @@ static float get_nan(void)
 #define NAN get_nan()
 #endif
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
-
 /* helper functions */
 static BOOL compare_float(FLOAT f, FLOAT g, UINT ulps)
 {

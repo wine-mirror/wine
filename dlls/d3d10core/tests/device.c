@@ -26,10 +26,6 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 #define BITS_NNAN 0xffc00000
 #define BITS_NAN  0x7fc00000
 #define BITS_NINF 0xff800000

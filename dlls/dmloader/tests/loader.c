@@ -24,8 +24,6 @@
 #include <dmusicf.h>
 #include "wine/test.h"
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 static unsigned char mp3file[] = "\xFF\xFB\x92\x04"; /* MP3 header */
 static unsigned char rifffile[8+4+8+16+8+256] = "RIFF\x24\x01\x00\x00WAVE" /* header: 4 ("WAVE") + (8 + 16) (format segment) + (8 + 256) (data segment) = 0x124 */

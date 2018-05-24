@@ -32,7 +32,6 @@
 #include "winerror.h"
 #include "aclapi.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define IS_HKCR(hk) ((UINT_PTR)hk > 0 && ((UINT_PTR)hk & 3) == 2)
 
 static HKEY hkey_main;

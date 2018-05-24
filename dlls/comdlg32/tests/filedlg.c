@@ -1026,8 +1026,6 @@ static UINT_PTR WINAPI test_extension_wndproc(HWND dlg, UINT msg, WPARAM wParam,
     return FALSE;
 }
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 static void test_extension_helper(OPENFILENAMEA* ofn, const char *filter,
                                   const char *expected_filename)
 {

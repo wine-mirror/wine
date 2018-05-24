@@ -26,8 +26,6 @@
 #include <dmusici.h>
 #include <dmusicf.h>
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static BOOL missing_dmstyle(void)

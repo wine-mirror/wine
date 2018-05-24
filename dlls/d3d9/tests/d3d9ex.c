@@ -26,8 +26,6 @@
 #include <initguid.h>
 #include <d3d9.h>
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static HMODULE d3d9_handle = 0;
 static DEVMODEW registry_mode;
 

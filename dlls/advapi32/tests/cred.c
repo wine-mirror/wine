@@ -27,8 +27,6 @@
 
 #include "wine/test.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static BOOL (WINAPI *pCredDeleteA)(LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCredEnumerateA)(LPCSTR,DWORD,DWORD *,PCREDENTIALA **);
 static VOID (WINAPI *pCredFree)(PVOID);

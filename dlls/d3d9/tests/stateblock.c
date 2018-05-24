@@ -21,8 +21,6 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static DWORD texture_stages;
 
 /* ============================ State Testing Framework ========================== */

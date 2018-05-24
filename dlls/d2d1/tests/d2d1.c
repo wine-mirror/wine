@@ -26,10 +26,6 @@
 #include "dwrite.h"
 #include "wincodec.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 struct resource_readback
 {
     ID3D10Resource *resource;

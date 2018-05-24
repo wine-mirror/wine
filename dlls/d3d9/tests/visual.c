@@ -34,8 +34,6 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 struct vec2
 {
     float x, y;

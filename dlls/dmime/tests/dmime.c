@@ -27,8 +27,6 @@
 #include <audioclient.h>
 #include <guiddef.h>
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 static BOOL missing_dmime(void)
 {
     IDirectMusicSegment8 *dms;
