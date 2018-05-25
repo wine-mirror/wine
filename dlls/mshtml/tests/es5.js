@@ -427,6 +427,22 @@ function test_defineProperty() {
     next_test();
 }
 
+function test_string_trim() {
+    function test_trim(value, expected) {
+        var r = String.prototype.trim.call(value);
+        ok(r === expected, "trim(" + value + ") = " + r);
+    }
+
+    test_trim("test", "test");
+    test_trim(false, "false");
+    test_trim("\n \t\rte st\t\t\n", "te st");
+    test_trim({ toString: function() { return " test "; } }, "test");
+    test_trim("", "");
+    test_trim(" \t\n", "");
+
+    next_test();
+}
+
 function test_global_properties() {
     var o;
 
@@ -452,5 +468,6 @@ var tests = [
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
+    test_string_trim,
     test_global_properties
 ];

@@ -63,6 +63,7 @@ static const WCHAR toLowerCaseW[] = {'t','o','L','o','w','e','r','C','a','s','e'
 static const WCHAR toUpperCaseW[] = {'t','o','U','p','p','e','r','C','a','s','e',0};
 static const WCHAR toLocaleLowerCaseW[] = {'t','o','L','o','c','a','l','e','L','o','w','e','r','C','a','s','e',0};
 static const WCHAR toLocaleUpperCaseW[] = {'t','o','L','o','c','a','l','e','U','p','p','e','r','C','a','s','e',0};
+static const WCHAR trimW[] = {'t','r','i','m',0};
 static const WCHAR localeCompareW[] = {'l','o','c','a','l','e','C','o','m','p','a','r','e',0};
 static const WCHAR fromCharCodeW[] = {'f','r','o','m','C','h','a','r','C','o','d','e',0};
 
@@ -1465,6 +1466,41 @@ static HRESULT String_toLocaleUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD
     return E_NOTIMPL;
 }
 
+static HRESULT String_trim(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc,
+        jsval_t *argv, jsval_t *r)
+{
+    const WCHAR *str, *begin, *end;
+    jsstr_t *jsstr;
+    unsigned len;
+    HRESULT hres;
+
+    hres = to_flat_string(ctx, jsval_disp(jsthis->u.disp), &jsstr, &str);
+    if(FAILED(hres)) {
+        WARN("to_flat_string failed: %08x\n", hres);
+        return hres;
+    }
+    len = jsstr_length(jsstr);
+    TRACE("%s\n", debugstr_wn(str, len));
+
+    for(begin = str, end = str + len; begin < end && isspaceW(*begin); begin++);
+    while(end > begin + 1 && isspaceW(*(end-1))) end--;
+
+    if(r) {
+        jsstr_t *ret;
+
+        if(begin == str && end == str + len)
+            ret = jsstr_addref(jsstr);
+        else
+            ret = jsstr_alloc_len(begin, end - begin);
+        if(ret)
+            *r = jsval_string(ret);
+        else
+            hres = E_OUTOFMEMORY;
+    }
+    jsstr_release(jsstr);
+    return hres;
+}
+
 static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -1552,6 +1588,7 @@ static const builtin_prop_t String_props[] = {
     {toLowerCaseW,           String_toLowerCase,           PROPF_METHOD},
     {toStringW,              String_toString,              PROPF_METHOD},
     {toUpperCaseW,           String_toUpperCase,           PROPF_METHOD},
+    {trimW,                  String_trim,                  PROPF_ES5|PROPF_METHOD},
     {valueOfW,               String_valueOf,               PROPF_METHOD}
 };
 
