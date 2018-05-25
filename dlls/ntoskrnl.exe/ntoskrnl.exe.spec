@@ -1259,7 +1259,7 @@
 @ stub SeSetAccessStateGenericMapping
 @ stub SeSetSecurityDescriptorInfo
 @ stub SeSetSecurityDescriptorInfoEx
-@ stub SeSinglePrivilegeCheck
+@ stdcall SeSinglePrivilegeCheck(int64 long)
 @ stub SeSystemDefaultDacl
 @ stub SeTokenImpersonationLevel
 @ stub SeTokenIsAdmin

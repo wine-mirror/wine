@@ -3525,3 +3525,12 @@ NTSTATUS WINAPI FsRtlRegisterFileSystemFilterCallbacks( DRIVER_OBJECT *object, P
     FIXME("stub: %p %p\n", object, callbacks);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/*********************************************************************
+ *           SeSinglePrivilegeCheck    (NTOSKRNL.@)
+ */
+BOOLEAN WINAPI SeSinglePrivilegeCheck(LUID privilege, KPROCESSOR_MODE mode)
+{
+    FIXME("stub: %08x%08x %u\n", privilege.HighPart, privilege.LowPart, mode);
+    return TRUE;
+}
