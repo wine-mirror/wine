@@ -35,6 +35,7 @@
 #include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d12);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 HRESULT WINAPI D3D12GetDebugInterface(REFIID iid, void **debug)
 {
@@ -117,7 +118,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
 
     if (!(vk_funcs = get_vk_funcs()))
     {
-        ERR("Failed to get Wine Vulkan driver.\n");
+        ERR_(winediag)("Failed to load Wine Vulkan driver.\n");
         return E_FAIL;
     }
 
