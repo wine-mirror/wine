@@ -572,7 +572,10 @@ BOOL WINAPI SQLGetInstalledDrivers(char *buf, WORD size, WORD *sizeout)
 
     ret = SQLGetInstalledDriversW(wbuf, size, &written);
     if (!ret)
+    {
+        heap_free(wbuf);
         return FALSE;
+    }
 
     *sizeout = WideCharToMultiByte(CP_ACP, 0, wbuf, written, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, wbuf, written, buf, size, NULL, NULL);
