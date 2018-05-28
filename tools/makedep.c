@@ -3247,6 +3247,7 @@ static void output_test_module( struct makefile *make )
     char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
     struct strarray dep_libs = empty_strarray;
     struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, 0 );
+    int parent_disabled = 0;
 
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
     strarray_addall( &all_libs, libs );
@@ -3321,16 +3322,19 @@ static void output_test_module( struct makefile *make )
         }
     }
 
+    if (strendswith( make->base_dir, "/tests" ))
+    {
+        char *dir = xstrdup( make->base_dir );
+        dir[strlen( dir ) - 6] = 0;
+        parent_disabled = strarray_exists( &disabled_dirs, dir );
+    }
     output_filenames_obj_dir( make, make->ok_files );
     output( ": %s%s ../%s%s\n", testmodule, dll_ext, make->testdll, dll_ext );
-    if (!make->disabled)
-    {
-        output( "check test:" );
-        output_filenames_obj_dir( make, make->ok_files );
-        output( "\n" );
-        strarray_add( &make->phony_targets, "check" );
-        strarray_add( &make->phony_targets, "test" );
-    }
+    output( "check test:" );
+    if (!make->disabled && !parent_disabled) output_filenames_obj_dir( make, make->ok_files );
+    output( "\n" );
+    strarray_add( &make->phony_targets, "check" );
+    strarray_add( &make->phony_targets, "test" );
     output( "testclean::\n" );
     output( "\trm -f" );
     output_filenames_obj_dir( make, make->ok_files );
