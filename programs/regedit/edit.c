@@ -192,9 +192,8 @@ static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType,
     DWORD valueDataLen;
     LPWSTR buffer = NULL;
     LONG lRet;
-	WCHAR empty = 0;
 
-    lRet = RegQueryValueExW(hKey, valueName ? valueName : &empty, 0, lpType, 0, &valueDataLen);
+    lRet = RegQueryValueExW(hKey, valueName, NULL, lpType, NULL, &valueDataLen);
     if (lRet) {
         if (lRet == ERROR_FILE_NOT_FOUND && !valueName) { /* no default value here, make it up */
             if (len) *len = 1;
@@ -413,12 +412,11 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     BOOL result = FALSE;
     LONG lRet;
     HKEY hKey;
-    WCHAR empty = 0;
 
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet) return FALSE;
 
-    lRet = RegDeleteValueW(hKey, valueName ? valueName : &empty);
+    lRet = RegDeleteValueW(hKey, valueName);
     if (lRet && valueName) {
         error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
     }
