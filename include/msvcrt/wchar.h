@@ -10,6 +10,7 @@
 
 #include <crtdefs.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <pshpack8.h>
 
@@ -492,6 +493,11 @@ static inline int wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
         if (s1[i] < s2[i]) return -1;
     }
     return 0;
+}
+
+static inline wchar_t* __cdecl wmemcpy(wchar_t *dst, const wchar_t *src, size_t n)
+{
+    return memcpy(dst, src, n * sizeof(wchar_t));
 }
 
 #ifdef __cplusplus
