@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-04-15 10:56+0900\n"
-"Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
+"PO-Revision-Date: 2018-05-28 23:02+0900\n"
+"Last-Translator: Kim Geonwoo <rlarjsdn122@naver.com>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.7\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -22,8 +23,8 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
-"플로피 디스크나 시디롬이나 ,하드디스크에서 새 프로그램을 설치하려면  [설치]"
-"를 클릭하십시오."
+"플로피 디스크나 시디롬이나 ,하드디스크에서 새 풀그림을 설치하려면  [설치]를 "
+"클릭하십시오."
 
 #: appwiz.rc:62
 msgid "&Install..."
@@ -35,8 +36,8 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"다음 소프트웨어는 자동으로 제거될 것입니다.프로그램을 제거하거나 설치된 구성"
-"요소를 변경하려면,목록에서 선택하고 고치기/제거를 클릭하십시오."
+"다음 무른모는 자동으로 제거될 것입니다.풀그림을 제거하거나 설치된 구성요소를 "
+"변경하려면,목록에서 선택하고 고치기/제거를 클릭하십시오."
 
 #: appwiz.rc:67
 msgid "&Support Information"
@@ -123,9 +124,9 @@ msgid ""
 "href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine은 HTML 임베딩 프로그램이 정상적으로 작동하기 위해서 필요로 하는 Gecko 패"
-"키지를 찾을 수 없습니다. Wine은 당신을 위해 자동으로 다운로드하고 설치할 것입"
-"니다.\n"
+"Wine은 HTML 임베딩 풀그림이 정상적으로 작동하기 위해서 필요로 하는 Gecko 패키"
+"지를 찾을 수 없습니다. Wine은 당신을 위해 자동으로 다운로드하고 설치할 것입니"
+"다.\n"
 "\n"
 "주위:당신의 배포판의 패키지를 대신 사용하는 것을 추천합니다. 자세한 것은 <a "
 "href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> 보십"
@@ -169,9 +170,8 @@ msgid ""
 "href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine은 닷넷 응용프로그램을 제대로 실행시키기 위해 필요한 wine-mono 패키지를 "
-"찾을 수없습니다. Wine은 당신을 위해서 자동으로 다운로드하고 설치할 것입니"
-"다.\n"
+"Wine은 닷넷 응용풀그림을 제대로 실행시키기 위해 필요한 wine-mono 패키지를 찾"
+"을 수없습니다. Wine은 당신을 위해서 자동으로 다운로드하고 설치할 것입니다.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
 "주의:당신의 배포판의 패키지를 대신 사용하는 것을 추천합니다.자세한 것은<a "
@@ -180,27 +180,27 @@ msgstr ""
 
 #: appwiz.rc:31
 msgid "Add/Remove Programs"
-msgstr "프로그램 추가/삭제"
+msgstr "풀그림 추가/삭제"
 
 #: appwiz.rc:32
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 "
-"할 수 있습니다."
+"새 무른모를 설치하거나,이미 설치된 무른모를 당신의 컴퓨터에서 삭제 할 수 있습"
+"니다."
 
 #: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
 msgid "Applications"
-msgstr "응용프로그램"
+msgstr "응용풀그림"
 
 #: appwiz.rc:35
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"언인스톨러를 실행할 수 없습니다, '%s'. 당신은 이 프로그램의 언인스톨 정보를 "
-"레지스트리에서 지우겠습니까?"
+"언인스톨러를 실행할 수 없습니다, '%s'. 당신은 이 풀그림의 언인스톨 정보를 레"
+"지스트리에서 지우겠습니까?"
 
 #: appwiz.rc:36
 msgid "Not specified"
@@ -220,11 +220,11 @@ msgstr "버젼"
 
 #: appwiz.rc:41
 msgid "Installation programs"
-msgstr "설치 프로그램"
+msgstr "설치 풀그림"
 
 #: appwiz.rc:42
 msgid "Programs (*.exe)"
-msgstr "프로그램 (*.exe)"
+msgstr "풀그림 (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
 #: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
@@ -860,7 +860,7 @@ msgstr "파일이 존재하지 않습니다"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "선택한 대상에 폴더에 있지않은 파일이 있습니다."
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1051,14 +1051,12 @@ msgid "Open File"
 msgstr "파일 열기"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "새 폴더"
+msgstr "선택한 폴더"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "숫자는 글꼴 크기입니다."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -1130,7 +1128,7 @@ msgstr "초기화중; "
 
 #: comdlg32.rc:100
 msgid "Warming up; "
-msgstr "가열중; "
+msgstr "준비 중;"
 
 #: comdlg32.rc:101
 msgid "Toner low; "
@@ -1712,7 +1710,7 @@ msgstr "암호화된 파일 시스템"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
-msgstr "윈도우즈 하드웨어 드라이버 검증"
+msgstr "윈도우즈 굳은모 드라이버 검증"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
@@ -1768,7 +1766,7 @@ msgstr "루트 목록 서명자"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "모든 프로그램의 방침"
+msgstr "모든 풀그림의 방침"
 
 #: crypt32.rc:164 cryptui.rc:149
 msgid "Directory Service Email Replication"
@@ -2638,7 +2636,7 @@ msgstr "열수 없음 "
 
 #: cryptui.rc:87
 msgid "Determined by the program"
-msgstr "프로그램에 의해 결정"
+msgstr "풀그림에 의해 결정"
 
 #: cryptui.rc:88
 msgid "Please select a store"
@@ -2650,7 +2648,7 @@ msgstr "인증서 보관소가 선택됨"
 
 #: cryptui.rc:90
 msgid "Automatically determined by the program"
-msgstr "자동으로 프로그램에 의해 결정"
+msgstr "자동으로 풀그림에 의해 결정"
 
 #: cryptui.rc:91 shell32.rc:137
 msgid "File"
@@ -2739,19 +2737,14 @@ msgstr ""
 "당신은 정말로 이 인증서를 제거하기를 원합니까?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"당신은 더 이상 이 인증서들를 이용해서 메세지를 암호하거나,아니면 서명된 것을 "
-"검증할 수 없을 것입니다.\n"
-"당신은 정말로 이 인증서들를 제거하기를 원합니까?"
+"더 이상 이 인증서를 이용해서 메세지를 암호하거나,아니면 서명된 것을 검증할 "
+"수 없을 것입니다.\n"
+"정말로 이 인증서를 제거하기를 원합니까?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2796,7 +2789,7 @@ msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"이 발행자에 의해 서명된 소프트웨어는 더 이상 신뢰할 수 없을 것입니다.\n"
+"이 발행자에 의해 서명된 무른모는 더 이상 신뢰할 수 없을 것입니다.\n"
 "당신은 정말로 이 인증서를 제거하기를 원합니까?"
 
 #: cryptui.rc:119
@@ -2804,7 +2797,7 @@ msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"이 발행자들에 의해 서명된 소프트웨어는 더 이상 신뢰할 수 없을 것입니다.\n"
+"이 발행자들에 의해 서명된 무른모는 더 이상 신뢰할 수 없을 것입니다.\n"
 "당신은 정말로 이 인증서들를 제거하기를 원합니까?"
 
 #: cryptui.rc:120
@@ -2828,8 +2821,8 @@ msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
-"소프트웨어 발행자로부터 온 소프트웨어 보증\n"
-"발행된 후의 소프트웨어를 개조로부터 보호"
+"무른모 발행자로부터 온 무른모 보증\n"
+"발행된 후의 무른모를 개조로부터 보호"
 
 #: cryptui.rc:127
 msgid "Protects e-mail messages"
@@ -3136,10 +3129,8 @@ msgid "&View Source"
 msgstr "소스 보기(&V)"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "속성"
+msgstr "속성(&T)"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:112
@@ -3569,16 +3560,12 @@ msgid "Expected ')'"
 msgstr "')' 가 필요합니다"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "주제 키 식별자"
+msgstr "예상된 식별자"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "';' 가 필요합니다"
+msgstr "'='가 필요합니다."
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3609,20 +3596,16 @@ msgid "Label not found"
 msgstr "라벨을 찾을 수 없음"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "';' 가 필요합니다"
+msgstr "'@end'가 필요합니다."
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "조건부 컴파일이 해제되어 있음"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "';' 가 필요합니다"
+msgstr "'@'가 필요합니다"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3696,15 +3679,15 @@ msgstr "배열 객체가 필요함"
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
-msgstr ""
+msgstr "이 대상을 쓰기 가능하게 할 수 없습니다."
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "구성되지 않은 요소 '|'를 재처리할 수 없습니다."
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "쓰기 가능하지 않은 요소 '|'를 편집할 수 없습니다."
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
@@ -3712,7 +3695,7 @@ msgstr ""
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "와인 주요 동적 연결 자료관"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -3900,7 +3883,7 @@ msgstr "명령이 너무 많습니다.\n"
 
 #: winerror.mc:253
 msgid "Adapter hardware error.\n"
-msgstr "어댑터 하드웨어 오류.\n"
+msgstr "어댑터 굳은모 오류.\n"
 
 #: winerror.mc:258
 msgid "Bad network response.\n"
@@ -4492,11 +4475,11 @@ msgstr "I/O 작업 취소됨.\n"
 
 #: winerror.mc:1003
 msgid "Overlapped I/O incomplete.\n"
-msgstr "겹쳐진 I/O가 미완료됨.\n"
+msgstr "겹쳐진 입출력 명령이 완료되지 않음.\n"
 
 #: winerror.mc:1008
 msgid "Overlapped I/O pending.\n"
-msgstr "겹쳐진 I/O가 대기중임.\n"
+msgstr "겹쳐진 입출력 명령이 대기중임.\n"
 
 #: winerror.mc:1013
 msgid "No access to memory location.\n"
@@ -4720,7 +4703,7 @@ msgstr "프로세스 중지를 발견할 수 없음.\n"
 
 #: winerror.mc:1288
 msgid "No recovery program for service.\n"
-msgstr "복구한 프로그램이나 서비스가 없음.\n"
+msgstr "복구한 풀그림이나 서비스가 없음.\n"
 
 #: winerror.mc:1293
 msgid "Service not implemented by exe.\n"
@@ -4882,11 +4865,11 @@ msgstr "잘못된 운영체제.\n"
 
 #: winerror.mc:1488
 msgid "Single-instance application.\n"
-msgstr "단일 인스턴트 프로그램 .\n"
+msgstr "단일 인스턴트 풀그림 .\n"
 
 #: winerror.mc:1493
 msgid "Real-mode application.\n"
-msgstr "리얼 모드 프로그램.\n"
+msgstr "리얼 모드 풀그림.\n"
 
 #: winerror.mc:1498
 msgid "Invalid DLL.\n"
@@ -4894,7 +4877,7 @@ msgstr "올바르지 않은DLL.\n"
 
 #: winerror.mc:1503
 msgid "No associated application.\n"
-msgstr "연결된 프로그램이 없습니다.\n"
+msgstr "연결된 풀그림이 없습니다.\n"
 
 #: winerror.mc:1508
 msgid "DDE failure.\n"
@@ -5222,7 +5205,7 @@ msgstr "어떤  보안 아이디는 매칭되어 잇지 않음.\n"
 
 #: winerror.mc:1918
 msgid "No quotas for account.\n"
-msgstr "게정에 할당된 쿼터가 없음.\n"
+msgstr "계정에 할당된 쿼터가 없음.\n"
 
 #: winerror.mc:1923
 msgid "Local user session key.\n"
@@ -5946,7 +5929,7 @@ msgstr "설치 패키지가 올바르지 않음.\n"
 
 #: winerror.mc:2828
 msgid "Installer user interface failed.\n"
-msgstr "설치 프로그램 사용자 인터페이스 실패.\n"
+msgstr "설치 풀그림 사용자 인터페이스 실패.\n"
 
 #: winerror.mc:2833
 msgid "Failed to open installation log file.\n"
@@ -5998,7 +5981,7 @@ msgstr "설치 플랫폼을 지원하지 않음.\n"
 
 #: winerror.mc:2893
 msgid "Installer not used.\n"
-msgstr "설치 프로그램이 사용되지 않음.\n"
+msgstr "설치 풀그림이 사용되지 않음.\n"
 
 #: winerror.mc:2898
 msgid "Failed to open the patch package.\n"
@@ -6673,22 +6656,16 @@ msgid "The username could not be found.\n"
 msgstr "사용자 이름을 찾을 수 없습니다.\n"
 
 #: winerror.mc:3743
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "사이트가 존재하지 않습니다.\n"
+msgstr "이 네트워크 연결은 존재하지 않습니다.\n"
 
 #: winerror.mc:3748
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "연결이 거부됨.\n"
+msgstr "피어가 연결을 초기화 했습니다..\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "메세지 0x%1 를 파일 %2에서 찾을 수 없습니다.\n"
+msgstr "서명 또는 인증서를 찾을 수 없습니다.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -6857,7 +6834,7 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"윈도우즈 설치 프로그램 %s\n"
+"윈도우즈 설치 풀그림 %s\n"
 "\n"
 "사용법:\n"
 "msiexec 명령 {필수 매개변수}  [선택적 매개변수]\n"
@@ -6908,260 +6885,200 @@ msgid "choose which folder contains %s"
 msgstr "%s를 포함하는 폴더 선택"
 
 #: msi.rc:90
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "레지스트리 로그 공간이 없습니다.\n"
+msgstr "레지스트리 공간 할당"
 
 #: msi.rc:91
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "단일 인스턴트 프로그램 .\n"
+msgstr "설치된 응용 무른모 찾기"
 
 #: msi.rc:92
 msgid "Binding executables"
-msgstr ""
+msgstr "실행파일 빌딩"
 
 #: msi.rc:93 msi.rc:136
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "%s 찾는 중"
+msgstr "자격있는 제품 찾는 중"
 
 #: msi.rc:94 msi.rc:95 msi.rc:100
 msgid "Computing space requirements"
-msgstr ""
+msgstr "전산 처리 공간 필요"
 
 #: msi.rc:96
-#, fuzzy
-#| msgid "New Folder"
 msgid "Creating folders"
 msgstr "새 폴더"
 
 #: msi.rc:97
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "바로가기 만들기(&T)"
+msgstr "바로가기 만들기"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "서비스의 예외.\n"
+msgstr "서비스 제거"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "만든 날짜"
+msgstr "사본 만들기"
 
 #: msi.rc:101
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "연결된 프로그램이 없습니다.\n"
+msgstr "연결된 응용 무른모 찾는 중"
 
 #: msi.rc:102
 msgid "Copying network install files"
-msgstr ""
+msgstr "네트워크 설치 파일 복사"
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "파일 복사중..."
+msgstr "새 파일 복사 중..."
 
 #: msi.rc:104
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "구성요소 설치가 실패함: %08x"
+msgstr "ODBC 구성 요소 설치 중"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "설치 서비스가 실패함.\n"
+msgstr "새 서비스 설치"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "설치/삭제"
+msgstr "시스템 카탈로그 설치"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Wine 응용프로그램 제거하기"
+msgstr "설치 확인 중"
 
 #: msi.rc:108
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "실행 조건 평가"
 
 #: msi.rc:109
 msgid "Migrating feature states from related applications"
-msgstr ""
+msgstr "관련 응용 무른모의 기능 상태 가져오기"
 
 #: msi.rc:110
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "아이콘 파일"
+msgstr "파일 이동"
 
 #: msi.rc:111
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "버젼 정보"
+msgstr "어셈블리 정보 게시"
 
 #: msi.rc:112
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "이진 정보 비게시"
 
 #: msi.rc:113
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "아이콘 파일"
+msgstr "기우기 파일"
 
 #: msi.rc:114
 msgid "Updating component registration"
-msgstr ""
+msgstr "구성 요소 등록 갱신"
 
 #: msi.rc:115
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "공식 구성요소 게시"
 
 #: msi.rc:116
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "제품 기능 게시"
 
 #: msi.rc:117
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "클라이언트 정보"
+msgstr "제품 정보 게시"
 
 #: msi.rc:118
 msgid "Registering Class servers"
-msgstr ""
+msgstr "클래스 서버 등록"
 
 #: msi.rc:119
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "COM+ 응용 무른모와 요소 등록"
 
 #: msi.rc:120
 msgid "Registering extension servers"
-msgstr ""
+msgstr "확장 서버 등록"
 
 #: msi.rc:121
 msgid "Registering fonts"
-msgstr ""
+msgstr "글꼴 등록"
 
 #: msi.rc:122
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "레지스트리 편집기"
+msgstr "MIME 정보 등록"
 
 #: msi.rc:123
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "레지스트리는 손상되었습니다.\n"
+msgstr "제품 등록"
 
 #: msi.rc:124
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "무른모 식별자 등록"
 
 #: msi.rc:125
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "타입 라이브러리"
+msgstr "형식 자료관 등록"
 
 #: msi.rc:126
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "리소스가 사용중입니다.\n"
+msgstr "사용자 등록 중"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "Removing duplicated files"
-msgstr "두번 제거(&R)"
+msgstr "두번 제거"
 
 #: msi.rc:128 msi.rc:152
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "글꼴 설정 적용"
+msgstr "환경 문자열 갱신"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "응용프로그램 제거(&R)"
+msgstr "응용 무른모 제거"
 
 #: msi.rc:130
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "아이콘 파일"
+msgstr "파일 삭제"
 
 #: msi.rc:131
 msgid "Removing folders"
-msgstr ""
+msgstr "폴더 삭제"
 
 #: msi.rc:132
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "설정 파일 목록 삭제"
 
 #: msi.rc:133
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "주소 구성요소"
+msgstr "ODBC 구성 요소 제거"
 
 #: msi.rc:134
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Removing system registry values"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "시스템 레지스트리 값 제거 중"
 
 #: msi.rc:135
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "단축키 제거"
 
 #: msi.rc:137
 msgid "Registering modules"
-msgstr ""
+msgstr "구성 요소 등록"
 
 #: msi.rc:138
 msgid "Unregistering modules"
-msgstr ""
+msgstr "구성 요소 등록 취소"
 
 #: msi.rc:139
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "초기화중; "
+msgstr "ODBC 디렉토리 초기화 중"
 
 #: msi.rc:140
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "워드패드 시작 실패함"
+msgstr "서비스 시작"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "종속된 서비스 정지중: %1\n"
+msgstr "서비스 정지"
 
 #: msi.rc:142
 msgid "Unpublishing Qualified Components"
@@ -7172,10 +7089,8 @@ msgid "Unpublishing Product Features"
 msgstr ""
 
 #: msi.rc:144
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "클라이언트 정보"
+msgstr "제품 정보 게시 취소"
 
 #: msi.rc:145
 msgid "Unregister Class servers"
@@ -7187,11 +7102,11 @@ msgstr ""
 
 #: msi.rc:147
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "등록되지 않은 확장 서버"
 
 #: msi.rc:148
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "등록되지 않은 글꼴"
 
 #: msi.rc:149
 msgid "Unregistering MIME info"
@@ -7199,25 +7114,23 @@ msgstr ""
 
 #: msi.rc:150
 msgid "Unregistering program identifiers"
-msgstr ""
+msgstr "등록되지 않은 풀그림 식별자"
 
 #: msi.rc:151
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "등록되지 않은 형식 자료관"
 
 #: msi.rc:153
 msgid "Writing INI files values"
-msgstr ""
+msgstr "와인 설정 파일 값"
 
 #: msi.rc:154
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "경고: 시스템 라이브러리"
+msgstr "시스템 레지스트리 값 쓰는 중"
 
 #: msi.rc:160
 msgid "Free space: [1]"
-msgstr ""
+msgstr "빈 공간: [1]"
 
 #: msi.rc:161
 msgid "Property: [1], Signature: [2]"
@@ -7233,43 +7146,35 @@ msgstr "폴더: [1]"
 
 #: msi.rc:164 msi.rc:193
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "바로가기: [1]"
 
 #: msi.rc:165 msi.rc:196 msi.rc:197
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "장치(&V):"
+msgstr "서비스: [1]"
 
 #: msi.rc:166 msi.rc:169 msi.rc:173
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "파일: [1],  디렉토리: [9],  크기: [6]"
 
 #: msi.rc:167
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "프로그램"
+msgstr "응용 무른모 찾음: [1]"
 
 #: msi.rc:168
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "파일: [1], 디렉토리: [9],  크기: [6]"
 
 #: msi.rc:170
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "장치(&V):"
+msgstr "서비스: [2]"
 
 #: msi.rc:171
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "파일: [1],  참조 또는 의존: [2]"
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "응용프로그램"
+msgstr "응용 무른모: [1]"
 
 #: msi.rc:174 msi.rc:175
 msgid "Application Context:[1], Assembly Name:[2]"
@@ -7277,7 +7182,7 @@ msgstr ""
 
 #: msi.rc:176
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "파일: [1],  디렉토리: [2],  크기: [3]"
 
 #: msi.rc:177 msi.rc:198
 msgid "Component ID: [1], Qualifier: [2]"
@@ -7285,21 +7190,19 @@ msgstr ""
 
 #: msi.rc:178 msi.rc:199
 msgid "Feature: [1]"
-msgstr ""
+msgstr "기능: [1]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Class Id: [1]"
-msgstr ""
+msgstr "클래스 번호 : [1]"
 
 #: msi.rc:180
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr ""
 
 #: msi.rc:181 msi.rc:202
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "오직 확장만"
+msgstr "확장: [1]"
 
 #: msi.rc:182 msi.rc:203
 msgid "Font: [1]"
@@ -7315,31 +7218,31 @@ msgstr ""
 
 #: msi.rc:185 msi.rc:206
 msgid "LibID: [1]"
-msgstr ""
+msgstr "자료관 번호: [1]"
 
 #: msi.rc:186 msi.rc:189
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "파일: [1], 위치: [9]"
 
 #: msi.rc:187 msi.rc:207
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "이름: [1], 값: [2], 작동 [3]"
 
 #: msi.rc:188
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "응용 무른모: [1], 명령줄: [2]"
 
 #: msi.rc:191 msi.rc:208
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "파일: [1],  부분: [2],  키: [3], 값: [4]"
 
 #: msi.rc:192
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "키: [1], 이름: [2]"
 
 #: msi.rc:194 msi.rc:195
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "폴더: [2], 파일: [1]"
 
 #: msi.rc:201
 msgid "AppId: [1]{{, AppType: [2]}}"
@@ -7347,23 +7250,23 @@ msgstr ""
 
 #: msi.rc:209
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "키: [1], 이름: [2], 값: [3]"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{치명적인 오류: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{오류 [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "경고 [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "정보 [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7378,7 +7281,7 @@ msgstr "{{디스크가 꽉 찼습니다: }}"
 
 #: msi.rc:77
 msgid "Action [Time]: [1]. [2]"
-msgstr ""
+msgstr "작동 [Time]: [1]. [2]"
 
 #: msi.rc:78
 msgid "Message type: [1], Argument: [2]{, [3]}"
@@ -7386,19 +7289,19 @@ msgstr ""
 
 #: msi.rc:81
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr ""
+msgstr "=== 기록 시작: [Date]  [Time] ==="
 
 #: msi.rc:79
 msgid "Action start [Time]: [1]."
-msgstr ""
+msgstr "시작 [Time]: [1]"
 
 #: msi.rc:80
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr ""
+msgstr "종료 [Time]: [1]. [2] 반환함."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "디스크를 삽입해 주세요. [2]"
 
 #: msi.rc:84
 msgid ""
@@ -7516,7 +7419,7 @@ msgstr "도구 팁"
 
 #: oleacc.rc:45
 msgid "application"
-msgstr "프로그램"
+msgstr "풀그림"
 
 #: oleacc.rc:46
 msgid "document"
@@ -7719,25 +7622,19 @@ msgid "outline button"
 msgstr "외곽선 단추"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
 msgstr "보통"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
 msgstr "불가능"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "선택"
+msgstr "선택됨"
 
 #: oleacc.rc:100
 #, fuzzy
@@ -7747,16 +7644,14 @@ msgid "focused"
 msgstr "정지됨"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "압축(&C)"
+msgstr "압축"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "확인"
 
 #: oleacc.rc:103
 #, fuzzy
@@ -7766,11 +7661,9 @@ msgid "mixed"
 msgstr "혼합"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "읽기 전용(&R)"
+msgstr "읽기 전용"
 
 #: oleacc.rc:105
 #, fuzzy
@@ -7789,7 +7682,7 @@ msgstr "기본"
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "확장됨"
 
 #: oleacc.rc:108
 msgctxt "object state"
@@ -7799,7 +7692,7 @@ msgstr ""
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "바쁨"
 
 #: oleacc.rc:110
 msgctxt "object state"
@@ -7809,38 +7702,32 @@ msgstr ""
 #: oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "가장 중요"
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "애니매이션"
+msgstr "애니매이션됨"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "보이지 않음"
 
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "화면 끄기"
 
 #: oleacc.rc:115
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "sizeable"
-msgstr "가능(&E)"
+msgstr "크기 수정 가능"
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "가능(&E)"
+msgstr "이동 가능"
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -7871,7 +7758,7 @@ msgstr "링크"
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "가로지름"
 
 #: oleacc.rc:122
 #, fuzzy
@@ -7881,44 +7768,34 @@ msgid "multi selectable"
 msgstr "테이블"
 
 #: oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "파일을 선택하십시오."
+msgstr "추가로 선택 가능"
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "경고"
+msgstr "저위험 경고"
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "경고"
+msgstr "중위험 경고"
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "경고"
+msgstr "고위험 경고"
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "쓰기 보호됨.\n"
+msgstr "쓰기 보호됨."
 
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "팝업 뜸"
 
 #: oleaut32.rc:30 oleview.rc:146
 msgid "True"
@@ -8014,8 +7891,8 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"당신이 그것을 만든 프로그램을 사용하여 활성화할 수 있도록문서에 개체로 파일"
-"의 내용을 넣습니다."
+"당신이 그것을 만든 풀그림을 사용하여 활성화할 수 있도록문서에 개체로 파일의 "
+"내용을 넣습니다."
 
 #: oledlg.rc:30 shell32.rc:197
 msgid "Browse"
@@ -8034,22 +7911,16 @@ msgid "Add Control"
 msgstr "컨트롤 더하기"
 
 #: oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "글꼴(&F)..."
+msgstr "&변환..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "객체(&O)"
+msgstr "%1 %2 객체(&O)"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "객체(&O)"
+msgstr "%1 객체(&O)"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8116,7 +7987,7 @@ msgstr "알수 없는 원본"
 
 #: oledlg.rc:50
 msgid "the program which created it"
-msgstr "내가 만든 프로그램"
+msgstr "내가 만든 풀그림"
 
 #: sane.rc:41
 msgid "Scanning"
@@ -8144,7 +8015,7 @@ msgstr "dpi"
 #: sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr "퍼센트"
+msgstr "%"
 
 #: sane.rc:36
 msgctxt "unit: microseconds"
@@ -8372,11 +8243,11 @@ msgstr "추적 정보 덤프"
 
 #: shdoclc.rc:202
 msgid "Debug Break"
-msgstr "디버그 브레이크"
+msgstr "디벌레 브레이크"
 
 #: shdoclc.rc:203
 msgid "Debug View"
-msgstr "디버그 보기"
+msgstr "디벌레 보기"
 
 #: shdoclc.rc:204
 msgid "Dump Tree"
@@ -8616,10 +8487,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine에 도움주신 분:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "실행(&R)..."
+msgstr "실행"
 
 #: shell32.rc:338
 msgid ""
@@ -8638,10 +8507,8 @@ msgid "&Browse..."
 msgstr "찾기(&B)..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "파일 타입"
+msgstr "파일 형식:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8652,16 +8519,12 @@ msgid "Size:"
 msgstr "크기:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "만든 날짜"
+msgstr "만든 날짜:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "속성(&A):"
+msgstr "속성:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8672,28 +8535,20 @@ msgid "&Archive"
 msgstr "아카이브(&A)"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
 msgstr "열기:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "아이콘 바꾸기(&I)..."
+msgstr "바꾸기(&C)..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "수정날짜"
+msgstr "수정날짜:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "마지막 변화:"
+msgstr "마지막 접근:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -8770,7 +8625,7 @@ msgstr "당신은 Wine 세션을 끄겠습니까?"
 
 #: shell32.rc:203 progman.rc:83
 msgid "Programs"
-msgstr "응용프로그램"
+msgstr "응용풀그림"
 
 #: shell32.rc:204
 msgid "My Documents"
@@ -8782,7 +8637,7 @@ msgstr "즐겨찾기"
 
 #: shell32.rc:206
 msgid "StartUp"
-msgstr "시작 프로그램"
+msgstr "시작 풀그림"
 
 #: shell32.rc:207
 msgid "Start Menu"
@@ -9010,7 +8865,7 @@ msgstr "실행 파일 (*.exe)"
 
 #: shell32.rc:244
 msgid "There is no Windows program configured to open this type of file."
-msgstr "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
+msgstr "이 형식의 파일을 도록 구성된 윈도우 풀그림이 없습니다."
 
 #: shell32.rc:246
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -9064,18 +8919,17 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine은 자유 소프트웨어입니다; 당신은 이것을 자유 소프트웨어 재단에 위해 발표"
-"된 GNU 약소 일반 공중 사용 허가서의 조건에 따라 수정이나 배포를 할 수 있습니"
-"다;버젼 2.1의 라이센스나,(당신의 선택에 따라)무엇이든 최신 버젼을 사용합니"
-"다.\n"
+"Wine은 자유 무른모입니다; 당신은 이것을 자유 무른모 재단에 위해 발표된 GNU 약"
+"소 일반 공중 사용 허가서의 조건에 따라 수정이나 배포를 할 수 있습니다;버젼 "
+"2.1의 라이센스나,(당신의 선택에 따라)무엇이든 최신 버젼을 사용합니다.\n"
 "\n"
 "Wine은 '어떠한 보증도 없이' 유용하게 사용될 것이라는 희망으로 배포됩니다; 심"
 "지어 '특정 목적에 대한 적합성'및 '상품성'의 묵시적 보증도 없습니다. 자세한 내"
 "용은 GNU 약소 일반 공중 사용 허가서를 참고하십시오.\n"
 "\n"
 "당신은 Wine에 포함되어 있는 GNU 약소 공중 사용 허가서의 사본을 받으셨을 것입"
-"니다; 그렇지 않으면 자유 소프트웨어 재단 주식회사 , 51 Franklin St, Fifth "
-"Floor, Boston, MA 02110-1301, USA에 편지를 보내십시오."
+"니다; 그렇지 않으면 자유 무른모 재단 주식회사 , 51 Franklin St, Fifth Floor, "
+"Boston, MA 02110-1301, USA에 편지를 보내십시오."
 
 #: shell32.rc:256
 msgid "Wine License"
@@ -9113,10 +8967,8 @@ msgid " sec"
 msgstr "초"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Source"
-msgstr "새 폴더"
+msgstr "원본 선택"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9124,7 +8976,7 @@ msgstr "보안 경고"
 
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
-msgstr "이 소프트웨어를 설치하기를 원합니까?"
+msgstr "이 무른모를 설치하기를 원합니까?"
 
 #: urlmon.rc:39
 msgid "Don't install"
@@ -9212,10 +9064,8 @@ msgid "&More Windows..."
 msgstr "더 많은 창들(&M)..."
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "숨기기"
+msgstr "%@ 숨기기"
 
 #: winemac.rc:35
 #, fuzzy
@@ -9224,18 +9074,16 @@ msgid "Hide Others"
 msgstr "다른 문제"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "보여주기"
+msgstr "모두 보여주기"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "%@에서 나가기"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "나가기"
 
 #: winemac.rc:40
 #, fuzzy
@@ -9257,13 +9105,11 @@ msgstr "확대"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "전체 화면"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "앞으로 가져오기(&B)"
+msgstr "모두 앞으로 가져오기"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -9274,10 +9120,8 @@ msgid "Duplex:"
 msgstr "양방향 통신:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "설정(&S)"
+msgstr "설정"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -9321,16 +9165,12 @@ msgid ""
 msgstr "이 인증서에는 최소한 하나의 지정되지 않은 보안 문제가 있습니다."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "서비스 요구 시간초과.\n"
+msgstr "요구 시간초과.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "프린터 오류 발생."
+msgstr "내부 오류 발생.\n"
 
 #: winineterror.mc:36
 #, fuzzy
@@ -9343,16 +9183,12 @@ msgid "The URL scheme could not be recognized or is not supported.\n"
 msgstr ""
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "사용자 이름을 찾을 수 없습니다.\n"
+msgstr "서버명을 찾을 수 없습니다.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "사용자 프로파일이 적합하지 않음.\n"
+msgstr "명령이 유효하지 않음.\n"
 
 #: winineterror.mc:56
 msgid ""
@@ -9367,10 +9203,8 @@ msgid "The requested item could not be located.\n"
 msgstr "프로필을 추가할 수 없습니다.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "LDAP 서버에 연결할수 없습니다"
+msgstr "서버에 연결할수 없습니다.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
@@ -9680,8 +9514,8 @@ msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"지정된 별명은 이미 프로그램에 의해 사용중입니다. 중복되지 않는 별명을 사용하"
-"십시오."
+"지정된 별명은 이미 풀그림에 의해 사용중입니다. 중복되지 않는 별명을 사용하십"
+"시오."
 
 #: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
@@ -9964,24 +9798,20 @@ msgstr ""
 "에 연결중인지 확인하십시오."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Wine Mono 설치관리자"
+msgstr "와인 음향 맵퍼"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "열"
+msgstr "볼륨"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "주 볼륨"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "소거"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -10056,10 +9886,8 @@ msgid "Confidentiality Required"
 msgstr "기밀성이 요구됩니다"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "이 작업을 종료.\n"
+msgstr "SASL 바인딩 진행 중"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -10330,15 +10158,6 @@ msgid "Clock"
 msgstr "시계"
 
 #: cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CALL <batchfilename> is used within a batch file to execute commands\n"
-#| "from another batch file. When the batch file exits, control returns to\n"
-#| "the file which called it. The CALL command may supply parameters to the\n"
-#| "called procedure.\n"
-#| "\n"
-#| "Changes to default directory, environment variables etc made within a\n"
-#| "called procedure are inherited by the caller.\n"
 msgid ""
 "CALL <batchfilename> is used within a batch file to execute commands from\n"
 "another batch file. When the batch file exits, control returns to the file\n"
@@ -10348,12 +10167,13 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"<배치파일 이름>을 호출(CALL)하는 것은 배치 파일안에서  다른 배치 파일 안의\n"
-"명령을 사용하는 것입니다. 배치 파일이 종료하면 , 제어권은  그것을 호출한\n"
+"<배치파일 이름>을 호출(CALL)하는 것은 실행한 배치 파일에서  다른 배치 파일"
+"의\n"
+"명령을 사용하는 것입니다. 배치 파일이 종료되면 , 제어권은  호출된 배치 파일"
+"을 호출한\n"
 "파일한테 돌아갑니다. CALL 명령은 호출하는 과정에서 매개변수를 가집니다.\n"
 "\n"
-"기본 디렉토리나 환경변수나 기타를 바꾸는 것은 호출자에 의해 상속되어서 호출"
-"된\n"
+"기본 디렉토리나 환경변수 등을 바꾸는 것은 호출자에 의해 상속되어서 호출된\n"
 "과정에만 적용됩니다.\n"
 
 #: cmd.rc:44
@@ -10419,10 +10239,10 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <문자열>은 <문자열>을 현재 터미널에 보여줍니다.\n"
+"ECHO <문자열>은 <문자열>을 현재 명령줄 해석기에 보여줍니다.\n"
 "\n"
-"ECHO ON는 배치파일에서 다음에 오는 모든 명령을 실행괴기 전에 터미널에 보여줍"
-"니다\n"
+"ECHO ON는 배치파일에서 다음에 오는 모든 명령을 실행괴기 전에 명령줄 해석기에 "
+"보여줍니다\n"
 "\n"
 "ECHO OFF 는 ECHO ON과 반대의 일을 합니다. (ECHO 는 OFF가 기본)\n"
 "ECHO OFF 명령은  신호가 진행되는 걸 보여주는걸 막습니다.\n"
@@ -10839,29 +10659,28 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"프로그램을 시작하거나, 파일 확장자에서 보통 사용하는 프로그램으로 문서를 엽니"
-"다\n"
+"풀그림을 시작하거나, 파일 확장자에서 보통 사용하는 풀그림으로 문서를 엽니다\n"
 "사용법:\n"
-"start [옵션] 프로그램_파일이름 [...]\n"
+"start [옵션] 풀그림_파일이름 [...]\n"
 "start [옵션] 문서_파일이름\n"
 "\n"
 "옵션:\n"
 "\"제목\"     자식 창의 제목 지정합니다.\n"
-"/d 디렉토리  지정한 디렉토리에서 프로그램을 실행합니다.\n"
-"/b           프로그램을 위해 새 콘솔을 만들지 않습니다.\n"
-"/i           깨끗한 환경 변수로 프로그램을 시작합니다.\n"
-"/min         프로그램을 최소화된 상태로 시작합니다.\n"
-"/max         프로그램을 최대화된 상태로 시작합니다.\n"
-"/low         프로그램을 낮은 우선 순위 클래스로 시작합니다.\n"
-"/normal      프로그램을 보통 우선 순위 클래스로 시작합니다.\n"
-"/high        프로그램을 높은 우선 순위 클래스로 시작합니다.\n"
-"/realtime    프로그램을 실시간 우선 순위 클래스로 시작합니다.\n"
-"/abovenormal 프로그램을 보통이상 우선 순위 클래스로 시작합니다.\n"
-"/belownormal 프로그램을 보통이하 우선 순위 클래스로 시작합니다.\n"
-"/node n      지정한 NUMA 노드로 프로그램을 시작합니다.\n"
-"/affinity 마스크 지정한 친화도 마스크로 프로그램을 시작합니다.\n"
-"/wait        시작된 프로그램이 끝나기를 기다리고,프로그램이 끝났을때 종료코드"
-"로 끝납니다.\n"
+"/d 디렉토리  지정한 디렉토리에서 풀그림을 실행합니다.\n"
+"/b           풀그림을 위해 새 콘솔을 만들지 않습니다.\n"
+"/i           깨끗한 환경 변수로 풀그림을 시작합니다.\n"
+"/min         풀그림을 최소화된 상태로 시작합니다.\n"
+"/max         풀그림을 최대화된 상태로 시작합니다.\n"
+"/low         풀그림을 낮은 우선 순위 클래스로 시작합니다.\n"
+"/normal      풀그림을 보통 우선 순위 클래스로 시작합니다.\n"
+"/high        풀그림을 높은 우선 순위 클래스로 시작합니다.\n"
+"/realtime    풀그림을 실시간 우선 순위 클래스로 시작합니다.\n"
+"/abovenormal 풀그림을 보통이상 우선 순위 클래스로 시작합니다.\n"
+"/belownormal 풀그림을 보통이하 우선 순위 클래스로 시작합니다.\n"
+"/node n      지정한 NUMA 노드로 풀그림을 시작합니다.\n"
+"/affinity 마스크 지정한 친화도 마스크로 풀그림을 시작합니다.\n"
+"/wait        시작된 풀그림이 끝나기를 기다리고,풀그림이 끝났을때 종료코드로 "
+"끝납니다.\n"
 "/unix        유닉스 파일이름을 사용하고, 윈도우즈 탐색기같이 파일을 시작합니"
 "다.\n"
 "/ProgIDOpen  지정한 progID를 사용해서 문서를 엽니다.\n"
@@ -11057,10 +10876,6 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:312
-#, fuzzy
-#| msgid ""
-#| "EXIT terminates the current command session and returns\n"
-#| "to the operating system or shell from which you invoked cmd.\n"
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
@@ -11069,47 +10884,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -11168,18 +10942,19 @@ msgstr ""
 "FTYPE\t\t파일 형식과 관련된 열기 명령어를 표시 또는 고치기\n"
 "HELP\t\t 목차의 짤막한 도움말 항목 보여줌\n"
 "MD (MKDIR)\t하위 디렉토리 만들기\n"
+"MKLINK\t상징 연결 만들기\n"
 "MORE\t\t페이지 출력 보여주기\n"
 "MOVE\t\t파일 이나 여러 파일,그리고 디렉토리 구조 이동\n"
 "PATH\t\t탐색 경로 보여주거나 설정하기\n"
 "PAUSE\t\t배치 파일에서 실행을 정지시킴\n"
 "POPD\t\tPUSHD로 마지막으로 저장했던 디렉토리로 돌아가기\n"
-"PROMPT\t\t명령 프롬프트 바꾸기\n"
+"PROMPT\t\t명령줄 해석기 바꾸기\n"
 "PUSHD\t\t현재 디렉토리를 저장하고, 새 디렉토리로 바꾸기\n"
 "REN (RENAME)\t파일 이름 바꾸기\n"
 "RD (RMDIR)\t하위 디렉토리 지우기\n"
 "SET\t\t환경 변수 보여주거나 바꾸기\n"
 "SETLOCAL\t배치 파일에서 환경변수의 지역화 시작을 알려줌\n"
-"START\t\t프로그램을 실행시키거나,연결된 프로그램으로 문서 열기\n"
+"START\t\t풀그림을 실행시키거나,연결된 풀그림으로 문서 열기\n"
 "TIME\t\t시스템 날짜 바꾸거나 보여주기\n"
 "TITLE\t\tCMD 세션의 창 제목 설정\n"
 "TYPE\t\t텍스트 파일의 내용 보여주기\n"
@@ -11319,7 +11094,7 @@ msgstr "Wine 명령 프롬프트"
 
 #: cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "마이크로소프트 윈도우 %1!S!\n"
 
 #: cmd.rc:398
 msgid "More? "
@@ -11352,7 +11127,7 @@ msgstr "'%1'을 내부나 외부 명령어,나 배치 스크립트로 인식할 
 
 #: cmd.rc:405
 msgid "Division by zero error.\n"
-msgstr "0으로 나눈 에러가 발생했습니다.\n"
+msgstr "0으로 나눈 오류가 발생했습니다.\n"
 
 #: cmd.rc:406
 msgid "Expected an operand.\n"
@@ -11387,10 +11162,8 @@ msgid "Wine Explorer"
 msgstr "Wine 탐색기"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "시작 프로그램"
+msgstr "시작"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -11480,10 +11253,8 @@ msgid "IPv6 address"
 msgstr "IPv6 주소"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "시스템 설정"
+msgstr "시스템 정보"
 
 #: net.rc:30
 msgid ""
@@ -11969,7 +11740,7 @@ msgstr "파일에 연결(&B)..."
 
 #: oleview.rc:33
 msgid "&View TypeLib..."
-msgstr "타입 라이브러리 보기(&V)..."
+msgstr "타입 자료관 보기(&V)..."
 
 #: oleview.rc:35
 msgid "&System Configuration"
@@ -12141,7 +11912,7 @@ msgstr "파일 별명으로 파일 연결"
 
 #: oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
-msgstr "타입 라이브러리 파일을 열고 내용 보기"
+msgstr "타입 자료관 파일을 열고 내용 보기"
 
 #: oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
@@ -12153,7 +11924,7 @@ msgstr "Wine 레지스트리 편집기 실행"
 
 #: oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
-msgstr "바뀐 것을 저장할지 물어보고 프로그램 끝내기"
+msgstr "바뀐 것을 저장할지 물어보고 풀그림 끝내기"
 
 #: oleview.rc:110
 msgid "Create an instance of the selected object"
@@ -12198,7 +11969,7 @@ msgstr "모든 목록 새로 고침"
 
 #: oleview.rc:124
 msgid "Display program information, version number and copyright"
-msgstr "프로그램 정보, 버젼, 저작권 보여주기"
+msgstr "풀그림 정보, 버젼, 저작권 보여주기"
 
 #: oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
@@ -12230,7 +12001,7 @@ msgstr "OLE 1.0 객체"
 
 #: oleview.rc:133
 msgid "COM Library Objects"
-msgstr "COM 라이브러리 객체"
+msgstr "COM 자료관 객체"
 
 #: oleview.rc:134
 msgid "All Objects"
@@ -12238,11 +12009,11 @@ msgstr "모든 객체"
 
 #: oleview.rc:135
 msgid "Application IDs"
-msgstr "응용프로그램 IDs"
+msgstr "응용풀그림 IDs"
 
 #: oleview.rc:136
 msgid "Type Libraries"
-msgstr "타입 라이브러리"
+msgstr "타입 자료관"
 
 #: oleview.rc:137
 msgid "ver."
@@ -12358,7 +12129,7 @@ msgstr "아이콘 정렬(&A)"
 
 #: progman.rc:57
 msgid "&About Program Manager"
-msgstr "프로그램 관리자 정보(&A)"
+msgstr "풀그림 관리자 정보(&A)"
 
 #: progman.rc:103
 msgid "Program &group"
@@ -12458,7 +12229,7 @@ msgstr "그룹 `%s'을 지우겠습니까?"
 
 #: progman.rc:69
 msgid "Delete program `%s'?"
-msgstr "프로그램 `%s'을 지우겠습니까?"
+msgstr "풀그림 `%s'을 지우겠습니까?"
 
 #: progman.rc:70
 msgid "Not implemented"
@@ -12499,7 +12270,7 @@ msgstr ""
 
 #: progman.rc:84
 msgid "Libraries (*.dll)"
-msgstr "라이브러리 파일(*.dll)"
+msgstr "자료관 파일(*.dll)"
 
 #: progman.rc:85
 msgid "Icon files"
@@ -12521,6 +12292,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"문법:\n"
+"  REG [명령] [매개 변수]\n"
+"\n"
+"지원하는 명령:\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"\n"
+"각 명령에 관한 도움말:\n"
+"  REG [명령] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -12541,58 +12321,46 @@ msgid "The operation completed successfully\n"
 msgstr "작업이 성공적으로 끝났습니다\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "레지스트리: 올바르지 않은 키 이름\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "오류:올바르지 않은 명령라인 매개변수\n"
+msgstr "레지스트리: 올바르지 않은 명령라인 매개변수\n"
 
 #: reg.rc:42
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리: 가상 전산기에 접근할 수 없습니다.\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+msgstr ""
+"레지스트리: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다.\n"
 
 #: reg.rc:44
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "레지스트리: [%1](은)는 지원하지 않는 형식입니다.\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
+msgstr "레지스트리: 변수 [/d]는 반드시 유효한 정수 값이 따라와야 합니다.\n"
 
 #: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
+msgstr "레지스트리: 변수 [/d]는 반드시 유효한 16진수 값이 따라와야 합니다.\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "레지스트리: 참조되지 않은 레지스트리 정보 형태 [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:48
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
+msgstr "레지스트리 값 '%1'(이)가 이미 있습니다. 덮어 쓰시겠습니까?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "레지스트리 명령이 취소되었습니다.\n"
 
 #: reg.rc:53 regedit.rc:239
 msgid "(Default)"
@@ -12605,56 +12373,51 @@ msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "이 값들을 정말로 지우겠습니까?"
 
 #: reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "당신은 이 값 '%s'을 정말로 지우겠습니까?"
+msgstr "정말로 '%s' 안에 있는 모든 레지스트리 값을 지우겠습니까?"
 
 #: reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "당신은  '%1'을 지우기를 바랍니까?"
+msgstr "정말로 레지스트리 키 '%1'(을)를 지우시겠습니까?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
+msgstr "레지스트리: [/d] 변수에는 반드시 유효한 문자열이 따라와야 합니다.\n"
 
 #: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"레지스트리: '%1' 안에 있는 모든 레지스트리 값을 삭제할 수 없습니다. 알 수 없"
+"는 오류가 발생했습니다.\n"
 
 #: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"레지스트리: 명령을 완료할 수 없습니다. 알 수 없는 오류가 발생했습니다.\n"
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "검색 완료. %1!d!개를 찾았습니다.\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "레지스트리: 올바르지 않은 구문"
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
+msgstr "레지스트리: 올바르지 않은 변수 [%1]."
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "\"REG /?\"를 입력해 도움말을 볼 수 있습니다.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "\"REG %1 /?\"를 입력해 도움말을 볼 수 있습니다.\n"
 
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
@@ -12662,41 +12425,31 @@ msgstr "(값이 정해지지 않음)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT 파일.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "No command was specified."
 msgid "reg: The file '%1' was not found.\n"
-msgstr "어떤 명령도 정의되지 않았습니다."
+msgstr "레지스트리: 파일 '%1'(을)를 찾을 수 없습니다.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리: 키 '%1'(을)를 열 수 없습니다.\n"
 
 #: reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "레지스트리: 알 수 없는 제어 문자 [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY 키 이름 [/v 값| /ve] [/s]\n"
+msgstr "REG QUERY 키_이름.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "레지스트리: 올바르지 않은 키 [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
+msgstr "'%1'(은)는 이미 존재합니다. 덮어 쓰시겠습니까?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12768,13 +12521,11 @@ msgstr "레지스트리 편집기 정보(&A)"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "확장"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "이진값 고치기..."
+msgstr "이진값 고치기...(&B)"
 
 #: regedit.rc:267
 msgid "Export registry"
@@ -12873,10 +12624,6 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "자주 사용하는 키 접근하는 명령 포함"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr "레지스트리 편집기 정보와 도움말 보여주는 명령 포함"
@@ -12918,64 +12665,53 @@ msgid "(unknown %d)"
 msgstr "(알 수 없는 %d)"
 
 #: regedit.rc:247
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to modify the selected registry value."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "선택한 레지스트리 값을 편집할 수 없습니다."
 
 #: regedit.rc:248
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry key."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "새 레지스트리 키를 만들 수 없습니다."
 
 #: regedit.rc:249
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry value."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "새 레지스트리 값을 만들 수 없습니다."
 
 #: regedit.rc:250
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"키 '%1'의 이름을 바꿀 수 없습니다.\n"
+"입력한 내용이 이미 존재합니다."
 
 #: regedit.rc:251
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"값 '%1'의 이름을 바꿀 수 없습니다.\n"
+"입력한 내용이 이미 존재합니다."
 
 #: regedit.rc:252
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to delete the selected registry key."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "선택한 레지스트리 키를 지울 수 없습니다."
 
 #: regedit.rc:253
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry key."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "선택한 레지스트리 키의 이름을 바꿀 수 없습니다."
 
 #: regedit.rc:254
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry value."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "선택한 레지스트리 값의 이름을 바꿀 수 없습니다."
 
 #: regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "%1에 있는 레지스트리 키와 값이 성공적으로 추가되었습니다."
 
 #: regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+msgstr "%1(을)를 불러올 수 없습니다. 유효하지 않은 레지스트리 파일입니다."
 
 #: regedit.rc:408
 msgid ""
@@ -13011,127 +12747,103 @@ msgstr ""
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
+"레지스트리 편집기: [%1](은)는 유효하지 않은 또는 알 수 없는 여닫개 입니다.\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "\"regedit /?\"를 입력해 도움말을 볼 수 있습니다.\n"
 
 #: regedit.rc:411
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "어떤 명령도 정의되지 않았습니다."
+msgstr "레지스트리 편집기: 파일 이름이 지정되지 않았습니다.\n"
 
 #: regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "레지스트리 편집기: 제거 할 레지스트리 키가 지정되지 않았습니다.\n"
 
 #: regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "레지스트리 편집기: 파일 '%1'(을)를 찾을 수 없습니다.\n"
 
 #: regedit.rc:414
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 편집기: '%1'(을)를 열 수 없습니다.\n"
 
 #: regedit.rc:415
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "올바르지 않은 핸들 작업.\n"
+msgstr "레지스트리 편집기: 올바르지 않은 핸들 작업.\n"
 
 #: regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "레지스트리 편집기: 메모리 초과! (%2!u!번째 줄, %1!S!, )\n"
 
 #: regedit.rc:417
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "레지스트리 편집기: 올바르지 않은 16진수 값\n"
 
 #: regedit.rc:418
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"레지스트리 편집기: 16진수 값을 변환 할 수 없습니다. '%1'(이)가 올바르지 않습"
+"니다.\n"
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "레지스트리 편집기: [\\%1!c!](은)는 알 수 없는 제어 문자입니다.\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr ""
+"레지스트리 편집기: [0x%1!x!](은)는 지원하지 않는 레지스트리 형태입니다.\n"
 
 #: regedit.rc:421
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 편집기: '%1'(은)는 예상치 못한 마지막 문자입니다.\n"
 
 #: regedit.rc:422
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "어떤 명령도 정의되지 않았습니다."
+msgstr "레지스트리 편집기: 명령줄 '%1'(을)를 인식할 수 없습니다.\n"
 
 #: regedit.rc:423
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 편집기: 레지스트리 값 '%1'(을)를 '%2'에 더할 수 없습니다.\n"
 
 #: regedit.rc:424
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 편집기: 레지스트리 키 '%1'를 열 수 없습니다.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr ""
+"레지스트리 편집기: '%2'의 형태는 [0x%1!x!](으)로 지원하지 않는 정보 형태입니"
+"다..\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "레지스트리 편집기: 레지스트리 값 '%1'(이)가 이진 정보로 출력됩니다.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "레지스트리 편집기: 올바르지 않은 시스템 키\n"
 
 #: regedit.rc:428
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+msgstr ""
+"레지스트리 편집기: '%1\"(을)를 내보낼 수 없습니다. 키를 찾을 수 없습니다.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 편집기: 레지스트리 '%1'를 지울 수 없습니다.\n"
 
 #: regedit.rc:431
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "어떤 명령도 정의되지 않았습니다."
+msgstr "레지스트리 편집기: 명령에 유효하지 않은 구문이 있습니다.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "레지스트리 편집기 나가기"
 
@@ -13148,8 +12860,6 @@ msgid "Shows or hides the status bar"
 msgstr "상태바 보여주거나 숨기기"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "두 틀을 나누는 위치 바꾸기"
 
@@ -13194,10 +12904,8 @@ msgid "Adds a new binary value"
 msgstr "새 바이너리 값 더하기"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "새 바이너리 값 더하기"
+msgstr "새 32두값 값 더하기"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -13212,32 +12920,24 @@ msgid "Prints all or part of the registry"
 msgstr "레지스트리 전부나 부분 인쇄하기"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "레지스트리 편집기"
+msgstr "레지스트리 편집기 도움말 열기"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
 msgstr "풀그림 정보,버젼, 저작권 보여주기"
 
 #: regedit.rc:206
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 값 '%1'를 찾을 수 없음."
 
 #: regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "이 타입 (%u)의 키를 고칠 수 없습니다"
+msgstr "이 형식(%1!u!)의 값을 편집할 수 없습니다."
 
 #: regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "값이 너무 큽니다 (%u)"
+msgstr "값이 너무 큽니다 (%1!u!)"
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
@@ -13253,7 +12953,7 @@ msgstr "이 값들을 정말로 지우겠습니까?"
 #, fuzzy
 #| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "'%s'을 찾을 수 없습니다"
+msgstr "검색 완료. '%1'(을)를 찾을 수 없습니다"
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -13268,55 +12968,41 @@ msgid "New Value #%d"
 msgstr "새 값 #%d"
 
 #: regedit.rc:205
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "레지스트리 '%1'를 찾을 수 없음."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "값 데이타 고치기"
+msgstr "이진 형식으로 값을 수정합니다."
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "새 다중 문자열 값 더하기"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
-msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
+msgstr "레지스트리의 선택된 부분을 문자 파일로 내보내기"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
 msgstr "새 문자열 값 더하기"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
 msgstr "값 지우기 확인"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "당신은  '%1'을 지우기를 바랍니까?"
+msgstr "이 레지스트리 값과 하위 값을 정말 모두 지우시겠습니까?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "선택한 노드를 확장하거나 축소합니다."
 
 #: regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "정렬(&O)"
+msgstr "축소"
 
 #: regsvr32.rc:32
 msgid ""
@@ -13325,6 +13011,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"와인 동적 연결 자료관 등록 도구\n"
+"\n"
+"동적 연결 자료관 서비스를 제공합니다.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -13339,54 +13029,65 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"문법:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:명령줄]] 동적 연결 자료관 이름\n"
+"\n"
+"변수:\n"
+"  [/u]  서버 등록 취소.\n"
+"  [/s]  조용히 (어떤 진행 상황도 표시되지 않음).\n"
+"  [/i]  DllInstall을 부르면, [명령줄]을 무시합니다.\n"
+"\t[/u] 변수와 함께 쓰이면, 제거 무른모가 됍니다.\n"
+"  [/n]  DllRegisterServer를 부르지 마십시오. 이 변수는 반드시 [/i]와 함께 쓰"
+"여야 합니다.\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: 유효하지 않거나 인식 불가능한 여닫개  [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "'%1' 열기 실패\n"
+msgstr "regsvr32: 동적 연결 자료관 '%1' 열기 실패\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: '%2'에서 '%1!S!' 함수를 찾을 수 없습니다.\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 등록 실패\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1'등록 성공\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 등록 취소 실패\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 등록 취소 성공\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 설치 실패\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 설치 성공\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 제거 실패\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: '%1' 제거 성공\n"
 
 #: start.rc:58
 msgid ""
@@ -13394,7 +13095,7 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
-"프로그램을 실행할 수 없거나, 지정된 파일에 연결된 프로그램이 없습니다.\n"
+"풀그림을 실행할 수 없거나, 지정된 파일에 연결된 풀그림이 없습니다.\n"
 "ShellExecuteEx 실패"
 
 #: start.rc:60
@@ -13569,7 +13270,7 @@ msgstr "작업 트리 끝(&T)"
 
 #: taskmgr.rc:152 winedbg.rc:32
 msgid "&Debug"
-msgstr "디버그(&D)"
+msgstr "디벌레(&D)"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
@@ -13593,7 +13294,7 @@ msgstr "선호도 설정(&A)..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "디버그 채널 편집(&C)..."
+msgstr "디벌레 채널 편집(&C)..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -13677,7 +13378,7 @@ msgstr "메모리 사용 현황"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
-msgstr "디버그 채널"
+msgstr "디벌레 채널"
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
@@ -13932,7 +13633,7 @@ msgstr "새 작업 만들기"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
-msgstr "새 프로그램 실행"
+msgstr "새 풀그림 실행"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
@@ -14012,7 +13713,7 @@ msgstr "풀그림 정보,버젼 그리고 저작권 보여주기"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "작업 관리자 프로그램 나가기"
+msgstr "작업 관리자 풀그림 나가기"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
@@ -14092,7 +13793,7 @@ msgstr "작업을 낮은 순위 클래스로 설정"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "디버그 채널 제어"
+msgstr "디벌레 채널 제어"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -14215,12 +13916,12 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"경고: 프로세스를 디버그 하는 것은 데이터의 손실을 가져올 수 있습니다.\n"
+"경고: 프로세스를 디벌레 하는 것은 데이터의 손실을 가져올 수 있습니다.\n"
 "디버거를  사용하시겠습니까?"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr "프로세스를 디버그 할 수 없습니다"
+msgstr "프로세스를 디벌레 할 수 없습니다"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
@@ -14252,7 +13953,7 @@ msgstr "작"
 
 #: uninstaller.rc:29
 msgid "Wine Application Uninstaller"
-msgstr "Wine 응용프로그램 제거하기"
+msgstr "Wine 응용풀그림 제거하기"
 
 #: uninstaller.rc:30
 msgid ""
@@ -14265,18 +13966,17 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "삭제: 전역 고유 식별자 '%1'(을)를 찾을 수 없습니다.\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"삭제: '--remove' 변수 뒤에는 반드시 전역 고유 식별자가 따라와야 합니다.\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
+msgstr "삭제: 올바르지 않은 변수 [%1].\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -14285,6 +13985,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"와인 응용 무른모 제거자\n"
+"\n"
+"현재 와인 선가상저장소에서 응용 무른모를 제거합니다.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -14299,6 +14003,18 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"문법:\n"
+"  uninstaller [변수]\n"
+"\n"
+"변수:\n"
+"  --help\t    도움말을 출력합니다.\n"
+"  --list\t    이 선가상저장소에 설치된 모든 응용 무른모의 목록을 출력합니"
+"다.\n"
+"  --remove {전역 고유 식별자}   특정 응용 무른모를 제거합니다.\n"
+"\t\t    '--list'를 사용해 개별 응용 무른모의 전역 고유 식별자를 알아낼 수 있"
+"습니다.\n"
+"  [설정 안함]       그림 사이틀을 엽니다.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
@@ -14322,7 +14038,7 @@ msgstr "정규 메타파일 보기"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
-msgstr "프로그램 대기중"
+msgstr "풀그림 대기중"
 
 #: wineboot.rc:35
 msgid "Terminate Process"
@@ -14335,8 +14051,8 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"이 프로세스에 로그 오프나 종료를 시도했으나, 이 프로그램은 아무런 반응이 없습"
-"니다.\n"
+"이 프로세스에 로그 오프나 종료를 시도했으나, 이 풀그림은 아무런 반응이 없습니"
+"다.\n"
 "\n"
 "만약 당신이 이 프로세스를 끝낸다면 저장 하지 않은 모든 데이터를 잃어버릴 것입"
 "니다."
@@ -14353,10 +14069,10 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"이 라이브러리는 자유 소프트웨어입니다. 당신은 자유 소프트웨어 재단(Free "
-"Software Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에"
-"서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 "
-"(선택적으로) 그 이후 버전을 따르면 됩니다."
+"이 자료관는 자유 무른모입니다. 당신은 자유 무른모 재단(Free Software "
+"Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에서 이 풀그"
+"림을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 (선택적으로) "
+"그 이후 버전을 따르면 됩니다."
 
 #: winecfg.rc:143
 msgid "Windows registration information"
@@ -14372,7 +14088,7 @@ msgstr "단체(&Z):"
 
 #: winecfg.rc:154
 msgid "Application settings"
-msgstr "응용프로그램 설정"
+msgstr "응용풀그림 설정"
 
 #: winecfg.rc:155
 msgid ""
@@ -14380,17 +14096,17 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine은 각 응용 프로그램에 대한 서로 다른 Windows 버전을 모방할 수 있습니다."
-"이 탭은 시스템 전체뿐만 아니라 해당 탭의 각각의 응용프로그램 설정을 변경할 "
-"수 있도록 라이브러리 및 그래픽 탭에 연결되어 있습니다."
+"Wine은 각 응용 풀그림에 대한 서로 다른 Windows 버전을 모방할 수 있습니다.이 "
+"탭은 시스템 전체뿐만 아니라 해당 탭의 각각의 응용풀그림 설정을 변경할 수 있도"
+"록 자료관 및 그래픽 탭에 연결되어 있습니다."
 
 #: winecfg.rc:159
 msgid "Add appli&cation..."
-msgstr "응용프로그램 추가(&C)..."
+msgstr "응용풀그림 추가(&C)..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
-msgstr "응용프로그램 제거(&R)"
+msgstr "응용풀그림 제거(&R)"
 
 #: winecfg.rc:161
 msgid "&Windows Version:"
@@ -14414,7 +14130,7 @@ msgstr "창관리자가 Wine창을 관리하도록 함(&W)"
 
 #: winecfg.rc:173
 msgid "&Emulate a virtual desktop"
-msgstr "가상 데스크탑 흉내내기(&E)"
+msgstr "바탕화면 흉내내기(&E)"
 
 #: winecfg.rc:175
 msgid "Desktop &size:"
@@ -14426,7 +14142,7 @@ msgstr "화면 해상도"
 
 #: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "10크기 타호마 글꼴 예시"
 
 #: winecfg.rc:191
 msgid "DLL overrides"
@@ -14438,12 +14154,12 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우"
-"즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
+"동적 링크 자료관는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우즈나 "
+"풀그림에 의해 제공)으로 지정될수 있습니다."
 
 #: winecfg.rc:194
 msgid "&New override for library:"
-msgstr "새로 덮어쓸 라이브러리(&N):"
+msgstr "새로 덮어쓸 자료관(&N):"
 
 #: winecfg.rc:196
 msgid "A&dd"
@@ -14486,10 +14202,8 @@ msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
 #: winecfg.rc:232
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Wine 설정"
+msgstr "저장소 구성"
 
 #: winecfg.rc:233
 msgid ""
@@ -14563,14 +14277,12 @@ msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Wine 설정"
+msgstr "확성기 설정"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "확성기:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -14602,7 +14314,7 @@ msgstr "연결 위치(&L):"
 
 #: winecfg.rc:34
 msgid "Libraries"
-msgstr "라이브러리"
+msgstr "자료관"
 
 #: winecfg.rc:35
 msgid "Drives"
@@ -14678,33 +14390,31 @@ msgstr "(시스템 기본)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 전방향 경로"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "그림"
+msgstr "4 경로"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "2 경로"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "부호 개방형 유사 닷넷"
 
 #: winecfg.rc:54
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"이 라이브러리의 로드 순서를 바꾸는 것을 추천하지 않습니다..\n"
+"이 자료관의 로드 순서를 바꾸는 것을 추천하지 않습니다..\n"
 "정말로 바꾸시겠습니까?"
 
 #: winecfg.rc:55
 msgid "Warning: system library"
-msgstr "경고: 시스템 라이브러리"
+msgstr "경고: 시스템 자료관"
 
 #: winecfg.rc:56
 msgid "native"
@@ -14732,7 +14442,7 @@ msgstr "기본 설정"
 
 #: winecfg.rc:62
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine 프로그램들 (*.exe,*.exe.so)"
+msgstr "Wine 풀그림들 (*.exe,*.exe.so)"
 
 #: winecfg.rc:63
 msgid "Use global settings"
@@ -14786,8 +14496,8 @@ msgid ""
 msgstr ""
 "당신은 하드 드라이브  C를 지우기를 원합니까?\n"
 "\n"
-"대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고, 없으면 다운될것입니"
-"다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
+"대부분의 윈도우 풀그림은 C드라이브가 있다고 예상하고, 없으면 다운될것입니다. "
+"만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
 
 #: winecfg.rc:77
 msgctxt "Drive letter"
@@ -14795,10 +14505,8 @@ msgid "Letter"
 msgstr "문자"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "새 폴더"
+msgstr "목표 폴더"
 
 #: winecfg.rc:79
 msgid ""
@@ -14955,16 +14663,12 @@ msgid "Command history"
 msgstr "명령 히스토리"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "버퍼 존"
+msgstr "사이간 구역"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "두번 제거(&R)"
+msgstr "사본 제거(&R)"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -14979,22 +14683,16 @@ msgid "S&hift"
 msgstr "쉬프트(&H)"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "콘솔 닫기(&C)"
+msgstr "조종간"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
 msgstr "빠른 편집"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "전문가 모드(&E)"
+msgstr "삽입 형식(&E)"
 
 #: wineconsole.rc:88
 msgid "&Font"
@@ -15089,12 +14787,10 @@ msgid "Configuration error"
 msgstr "설정 오류"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다"
+msgstr "모니터 사이칸 크기는 반드시 창보다 같거나 커야합니다"
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -15118,7 +14814,7 @@ msgstr "wineconsole: 이해할수 없는 명령 라인 옵션\n"
 
 #: wineconsole.rc:47
 msgid "Starts a program in a Wine console\n"
-msgstr "Wine 콘솔에서 프로그램 시작\n"
+msgstr "Wine 콘솔에서 풀그림 시작\n"
 
 #: wineconsole.rc:48
 msgid ""
@@ -15150,12 +14846,12 @@ msgid ""
 "console.\n"
 msgstr ""
 "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"
-"                            curses으로 Wine 콘솔처럼 현재 터미널에  나타낼 것"
-"인지 선택.\n"
+"                            curses으로 Wine 콘솔처럼 현재 명령줄 해석기에  나"
+"타낼 것인지 선택.\n"
 
 #: wineconsole.rc:53
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨.\n"
+msgstr "  <명령>                 The Wine 풀그림은 콘솔을 통해서 시작됨.\n"
 
 #: wineconsole.rc:54
 msgid ""
@@ -15173,15 +14869,15 @@ msgstr ""
 
 #: winedbg.rc:49
 msgid "Program Error"
-msgstr "프로그램 에러"
+msgstr "풀그림 오류"
 
 #: winedbg.rc:54
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
-"이 프로그램 %s 은 심각한 문제에 직면해서 종료를 필요로 합니다. 우리는  불편"
-"을 끼쳐드린 거에 대하여 유감을 표함니다."
+"이 풀그림 %s 은 심각한 문제에 직면해서 종료를 필요로 합니다. 우리는  불편을 "
+"끼쳐드린 거에 대하여 유감을 표함니다."
 
 #: winedbg.rc:58
 msgid ""
@@ -15189,8 +14885,8 @@ msgid ""
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"이 문제는 프로그램의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 당신은 "
-"실행한 프로그램에 대하여   <a href=\"https://appdb.winehq.org\">Application "
+"이 문제는 풀그림의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 당신은 실"
+"행한 풀그림에 대하여   <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> 에서 관련 팁을 살펴 볼 수 있습니다."
 
 #: winedbg.rc:61
@@ -15199,7 +14895,7 @@ msgstr "자세히 보여주기(&D)"
 
 #: winedbg.rc:66
 msgid "Program Error Details"
-msgstr "자세한 프로그램 에러"
+msgstr "자세한 풀그림 오류"
 
 #: winedbg.rc:73
 msgid ""
@@ -15210,12 +14906,12 @@ msgid ""
 msgstr ""
 "만약 이 문제가 윈도우즈에는 존재하지 않고 아직 보고되지 않았다면,당신은  \"다"
 "른 이름으로 저장\" 버튼을 사용해서 자세한 정보를 파일로 저장해서, <a href="
-"\"https://wiki.winehq.org/Bugs\">버그 보고 파일</a>로 가서보고서에 파일을 같"
+"\"https://wiki.winehq.org/Bugs\">벌레 보고 파일</a>로 가서보고서에 파일을 같"
 "이 올리수 있습니다."
 
 #: winedbg.rc:38
 msgid "Wine program crash"
-msgstr "Wine 프로그램 충돌"
+msgstr "Wine 풀그림 충돌"
 
 #: winedbg.rc:39
 msgid "Internal errors - invalid parameters received"
@@ -15331,7 +15027,7 @@ msgstr "디렉토리(&D)"
 
 #: winefile.rc:143
 msgid "&Programs"
-msgstr "프로그램(&P)"
+msgstr "풀그림(&P)"
 
 #: winefile.rc:145
 msgid "Docu&ments"
@@ -15483,10 +15179,8 @@ msgid "Expert"
 msgstr "전문가"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "결과"
+msgstr "초기화 결과"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -15514,7 +15208,7 @@ msgstr "지뢰"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "모든 결과를 잃습니다. 계속 진행할까요?"
 
 #: winemine.rc:30
 msgid "WineMine"
@@ -15633,8 +15327,6 @@ msgid "Error: Invalid query\n"
 msgstr "오류: 올바르지 않은 질의\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "오류: 올바르지 않은 키 이름\n"
 
@@ -15711,8 +15403,6 @@ msgid "F&ormat"
 msgstr "형식(&O)"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
 msgstr "목록(&L)"
 
@@ -15721,26 +15411,24 @@ msgid "&Bullet points"
 msgstr "강조 점(&U)"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL 번호"
+msgstr "번호"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "아래 첨자"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "위 첨자"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "로마 숫자 위 첨자"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "로마 숫자 아래 첨자"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
@@ -15986,7 +15674,7 @@ msgstr "문서에서 찾기 끝."
 
 #: wordpad.rc:194
 msgid "Failed to load the RichEdit library."
-msgstr "리치텍스트 라이브러리 불러오기 실패."
+msgstr "리치텍스트 자료관 불러오기 실패."
 
 #: wordpad.rc:195
 msgid ""
