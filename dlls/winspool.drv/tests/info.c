@@ -219,7 +219,7 @@ static struct monitor_entry * find_installed_monitor(void)
 
     if (entry) return entry;
 
-    num_tests = (sizeof(monitor_table)/sizeof(struct monitor_entry));
+    num_tests = ARRAY_SIZE(monitor_table);
 
     /* cleanup */
     DeleteMonitorA(NULL, env_x64, winetest);
