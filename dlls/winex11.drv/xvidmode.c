@@ -202,7 +202,7 @@ void X11DRV_XF86VM_Init(void)
       pXF86VidModeGetGammaRampSize(gdi_display, DefaultScreen(gdi_display),
                                    &xf86vm_gammaramp_size);
       if (X11DRV_check_error()) xf86vm_gammaramp_size = 0;
-      if (xf86vm_gammaramp_size == 256)
+      if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
           xf86vm_use_gammaramp = TRUE;
   }
 #endif /* X_XF86VidModeSetGammaRamp */
@@ -250,16 +250,16 @@ sym_not_found:
 
 #ifdef X_XF86VidModeSetGamma
 
-static void GenerateRampFromGamma(WORD ramp[256], float gamma)
+static void GenerateRampFromGamma(WORD ramp[GAMMA_RAMP_SIZE], float gamma)
 {
   float r_gamma = 1/gamma;
   unsigned i;
   TRACE("gamma is %f\n", r_gamma);
-  for (i=0; i<256; i++)
+  for (i=0; i<GAMMA_RAMP_SIZE; i++)
     ramp[i] = pow(i/255.0, r_gamma) * 65535.0;
 }
 
-static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
+static BOOL ComputeGammaFromRamp(WORD ramp[GAMMA_RAMP_SIZE], float *gamma)
 {
   float r_x, r_y, r_lx, r_ly, r_d, r_v, r_e, g_avg, g_min, g_max;
   unsigned i, f, l, g_n, c;
@@ -342,7 +342,7 @@ static BOOL X11DRV_XF86VM_GetGammaRamp(struct x11drv_gamma_ramp *ramp)
   if (xf86vm_major < 2) return FALSE; /* no gamma control */
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_use_gammaramp)
-      return pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
+      return pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display), GAMMA_RAMP_SIZE,
                                       ramp->red, ramp->green, ramp->blue);
 #endif
   if (pXF86VidModeGetGamma(gdi_display, DefaultScreen(gdi_display), &gamma))
@@ -367,7 +367,7 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(struct x11drv_gamma_ramp *ramp)
       !ComputeGammaFromRamp(ramp->blue,  &gamma.blue)) return FALSE;
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_use_gammaramp)
-      return pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display), 256,
+      return pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display), GAMMA_RAMP_SIZE,
                                       ramp->red, ramp->green, ramp->blue);
 #endif
   return pXF86VidModeSetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
