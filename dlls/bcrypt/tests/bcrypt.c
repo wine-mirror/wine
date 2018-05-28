@@ -145,7 +145,7 @@ static void format_hash(const UCHAR *bytes, ULONG size, char *buf)
 static int strcmp_wa(const WCHAR *strw, const char *stra)
 {
     WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(buf[0]));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
     return lstrcmpW(strw, buf);
 }
 
@@ -229,7 +229,7 @@ static void test_hash(const struct hash_test *test)
     NTSTATUS ret;
     ULONG len;
 
-    MultiByteToWideChar(CP_ACP, 0, test->alg, -1, alg_name, sizeof(alg_name)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, test->alg, -1, alg_name, ARRAY_SIZE(alg_name));
 
     alg = NULL;
     ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, 0);
@@ -349,7 +349,7 @@ static void test_hashes(void)
     };
     unsigned i;
 
-    for(i = 0; i < sizeof(tests)/sizeof(*tests); i++)
+    for(i = 0; i < ARRAY_SIZE(tests); i++)
         test_hash(tests+i);
 }
 
