@@ -25,7 +25,7 @@
 static char workdir[MAX_PATH];
 static DWORD workdir_len;
 static char drive[2];
-static const DWORD drive_len = sizeof(drive)/sizeof(drive[0]);
+static const DWORD drive_len = ARRAY_SIZE(drive);
 static char path[MAX_PATH];
 static DWORD path_len;
 static char shortpath[MAX_PATH];
@@ -469,8 +469,7 @@ START_TEST(batch)
     } else {
         path_len = 1; /* \ */
     }
-    shortpath_len = GetShortPathNameA(path, shortpath,
-                                      sizeof(shortpath)/sizeof(shortpath[0]));
+    shortpath_len = GetShortPathNameA(path, shortpath, ARRAY_SIZE(shortpath));
 
     argc = winetest_get_mainargs(&argv);
     if(argc > 2)
