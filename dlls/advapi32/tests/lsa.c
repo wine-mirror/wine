@@ -120,7 +120,7 @@ static void test_lsa(void)
                 UINT len;
                 guidstrW[0] = '\0';
                 ConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
-                StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, sizeof(guidstrW)/sizeof(WCHAR));
+                StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, ARRAY_SIZE(guidstrW));
                 len = WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, NULL, 0, NULL, NULL );
                 guidstr = LocalAlloc( 0, len );
                 WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, guidstr, len, NULL, NULL );
