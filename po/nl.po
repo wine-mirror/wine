@@ -12534,7 +12534,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Standaard)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -13183,6 +13183,12 @@ msgstr "Waarde te groot (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Waarde verwijderen bevestigen"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Weet u zeker dat u deze waarden wilt verwijderen?"
 
 #: regedit.rc:216
 #, fuzzy

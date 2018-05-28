@@ -12514,7 +12514,7 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Osnovno"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Želite li da izbrišete ovih %1 stavki?"
@@ -13145,6 +13145,11 @@ msgstr ""
 #, fuzzy
 msgid "Confirm Value Delete"
 msgstr "Potvrda brisanja datoteke"
+
+#: regedit.rc:210
+#, fuzzy
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Želite li da izbrišete ovih %1 stavki?"
 
 #: regedit.rc:216
 #, fuzzy

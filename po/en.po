@@ -12205,7 +12205,7 @@ msgstr "The registry operation was cancelled\n"
 msgid "(Default)"
 msgstr "(Default)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Are you sure you want to delete the registry value '%1'?"
 
@@ -12806,6 +12806,10 @@ msgstr "The value is too big (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirm Value Delete"
+
+#: regedit.rc:210
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Are you sure you want to delete the selected registry value?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

@@ -12573,7 +12573,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(الافتراضي)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -13217,6 +13217,12 @@ msgstr "القيمة كبيرة جدًا (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "تاكيد حذف القيمة"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "هل أنت متأكد من رغبتك في حذف هذه القيم ؟"
 
 #: regedit.rc:216
 #, fuzzy

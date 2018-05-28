@@ -12341,7 +12341,7 @@ msgstr "Operația pe registru a fost anulată\n"
 msgid "(Default)"
 msgstr "(Implicit)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Sigur doriți să ștergeți valoarea de registru „%1”?"
 
@@ -12966,6 +12966,12 @@ msgstr "Valoarea este prea mare (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmă ștergerea valorii"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Sigur doriți să ștergeți valoarea de registru „%1”?"
 
 #: regedit.rc:216
 #, fuzzy

@@ -206,7 +206,7 @@ BEGIN
     IDS_UNSUPPORTED_TYPE    "Unable to edit registry keys of this type (%1!u!)."
     IDS_TOO_BIG_VALUE       "The value is too big (%1!u!)."
     IDS_DELETE_VALUE_TITLE  "Confirm Value Delete"
-    IDS_DELETE_VALUE_TEXT   "Are you sure you want to delete the registry value '%1'?"
+    IDS_DELETE_VALUE_TEXT   "Are you sure you want to delete the selected registry value?"
     IDS_DELETE_VALUE_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_DELETE_KEY_TITLE    "Confirm Key Delete"
     IDS_DELETE_KEY_TEXT     "Are you sure you want to delete this registry key and all of its subkeys?"

@@ -12528,7 +12528,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Standard)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -13178,6 +13178,12 @@ msgstr "Værdien er for stor (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Bekræft sletning af værdi"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Er du sikker på du vil slette disse værdier?"
 
 #: regedit.rc:216
 #, fuzzy

@@ -12094,7 +12094,7 @@ msgstr "Operace registru byla přerušena\n"
 msgid "(Default)"
 msgstr "(výchozí)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Opravdu chcete odstranit hodnotu registru „%1“?"
 
@@ -12708,6 +12708,12 @@ msgstr "Hodnota je příliš velká (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Potvrďte smazání položky"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Opravdu chcete odstranit hodnotu registru „%1“?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

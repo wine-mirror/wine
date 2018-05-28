@@ -11990,7 +11990,7 @@ msgstr "注册表操作已经取消\n"
 msgid "(Default)"
 msgstr "(默认)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "您真的要删除注册表键值 '%1' 吗?"
 
@@ -12578,6 +12578,12 @@ msgstr "该值太大 (%1!u!)。"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "确认删除值"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "您真的要删除注册表键值 '%1' 吗?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

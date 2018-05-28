@@ -12227,7 +12227,7 @@ msgstr "Registeroperationen avbröts\n"
 msgid "(Default)"
 msgstr "(Standard)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Vill du verkligen ta bort registervärdet '%1'?"
 
@@ -12826,6 +12826,12 @@ msgstr "Värdet är for stort (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Bekräfta borttagning av värde"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Vill du verkligen ta bort registervärdet '%1'?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

@@ -11858,7 +11858,7 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr ""
 
@@ -12436,6 +12436,10 @@ msgstr ""
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
+msgstr ""
+
+#: regedit.rc:210
+msgid "Are you sure you want to delete the selected registry value?"
 msgstr ""
 
 #: regedit.rc:216

@@ -12204,7 +12204,7 @@ msgstr "Операция с реестром была отменена\n"
 msgid "(Default)"
 msgstr "(По умолчанию)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Вы точно хотите удалить параметр реестра «%1»?"
 
@@ -12799,6 +12799,12 @@ msgstr "Значение слишком велико (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Подтверждение удаления значения"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Вы точно хотите удалить параметр реестра «%1»?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

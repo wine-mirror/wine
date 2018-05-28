@@ -12402,7 +12402,7 @@ msgstr "A operação de registro foi cancelada\n"
 msgid "(Default)"
 msgstr "(Padrão)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Tem certeza que deseja excluir o valor do registro '%1'?"
 
@@ -13097,6 +13097,12 @@ msgstr "O valor é muito grande (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmar Exclusão de Valor"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Tem certeza que deseja excluir o valor do registro '%1'?"
 
 #: regedit.rc:216
 #, fuzzy

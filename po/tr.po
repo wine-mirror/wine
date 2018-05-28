@@ -12240,7 +12240,7 @@ msgstr "Kayıt defteri işlemi iptal edildi\n"
 msgid "(Default)"
 msgstr "(Standart)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "'%1' kayıt defteri değerini silmek istediğinizden emin misiniz?"
 
@@ -12847,6 +12847,12 @@ msgstr "Değer çok büyük (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Değer Silmeyi Onayla"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "'%1' kayıt defteri değerini silmek istediğinizden emin misiniz?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

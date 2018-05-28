@@ -12482,7 +12482,7 @@ msgstr "L'operation sur le registre a été annulée\n"
 msgid "(Default)"
 msgstr "(par défaut)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Voulez-vous réellement supprimer la valeur de registre « %1 » ?"
 
@@ -13185,6 +13185,12 @@ msgstr "La valeur est trop grande (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmez l'effacement de valeur"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Voulez-vous réellement supprimer la valeur de registre « %1 » ?"
 
 #: regedit.rc:216
 #, fuzzy

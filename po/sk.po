@@ -11964,7 +11964,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Predvolené)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -12593,6 +12593,12 @@ msgstr "Hodnota je príliš veľká (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Potvrdenie zmazania hodnoty"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Ste si istý že chcete zmazať tieto hodnoty?"
 
 #: regedit.rc:216
 #, fuzzy

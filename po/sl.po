@@ -12551,7 +12551,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Privzeto)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -13196,6 +13196,12 @@ msgstr "Vrednost je prevelika (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Potrditev brisanja vrednosti"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Are ste prepričani, da želite izbrisati te vrednosti?"
 
 #: regedit.rc:216
 #, fuzzy

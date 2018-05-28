@@ -12326,7 +12326,7 @@ msgstr "S'ha cancel·lat l'operació de registre\n"
 msgid "(Default)"
 msgstr "(Per defecte)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Esteu segur que voleu suprimir el valor de registre '%1'?"
 
@@ -12931,6 +12931,12 @@ msgstr "El valor és massa gran (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmar eliminació de valor"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Esteu segur que voleu suprimir el valor de registre '%1'?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

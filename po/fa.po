@@ -11846,7 +11846,7 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr ""
 
@@ -12430,6 +12430,11 @@ msgstr ""
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr ""
+
+#: regedit.rc:210
+#, fuzzy
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "پرونده‌های متنی (*.txt).\n"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

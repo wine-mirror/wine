@@ -12209,7 +12209,7 @@ msgstr "Registro operacija buvo nutraukta\n"
 msgid "(Default)"
 msgstr "(numatytoji)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
 
@@ -12807,6 +12807,12 @@ msgstr "Reikšmė per didelė (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

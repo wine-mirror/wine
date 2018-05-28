@@ -12598,7 +12598,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(기본)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -13242,6 +13242,12 @@ msgstr "값이 너무 큽니다 (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "값 지우기 확인"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "이 값들을 정말로 지우겠습니까?"
 
 #: regedit.rc:216
 #, fuzzy

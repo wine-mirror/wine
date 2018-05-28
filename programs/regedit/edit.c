@@ -408,23 +408,15 @@ done:
     return result;
 }
 
-BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox)
+BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 {
     BOOL result = FALSE;
     LONG lRet;
     HKEY hKey;
-    LPCWSTR visibleValueName = valueName ? valueName : g_pszDefaultValueName;
     WCHAR empty = 0;
 
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet) return FALSE;
-
-    if (showMessageBox)
-    {
-        if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_VALUE_TITLE, IDS_DELETE_VALUE_TEXT,
-                visibleValueName) != IDYES)
-            goto done;
-    }
 
     lRet = RegDeleteValueW(hKey, valueName ? valueName : &empty);
     if (lRet && valueName) {

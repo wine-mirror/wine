@@ -803,15 +803,17 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             unsigned int num_selected, index, focus_idx;
             WCHAR *keyPath;
 
-            if (!(num_selected = SendMessageW(g_pChildWnd->hListWnd, LVM_GETSELECTEDCOUNT, 0, 0L)))
-                break;
+            num_selected = SendMessageW(g_pChildWnd->hListWnd, LVM_GETSELECTEDCOUNT, 0, 0L);
 
-            if (num_selected > 1)
-            {
-                if (messagebox(hWnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_VALUE_TITLE,
-                               IDS_DELETE_VALUE_TEXT_MULTIPLE) != IDYES)
-                    break;
-            }
+            if (!num_selected)
+                break;
+            else if (num_selected == 1)
+                index = IDS_DELETE_VALUE_TEXT;
+            else
+                index = IDS_DELETE_VALUE_TEXT_MULTIPLE;
+
+            if (messagebox(hWnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_VALUE_TITLE, index) != IDYES)
+                break;
 
             keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 
@@ -821,7 +823,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             while (index != -1)
             {
                 WCHAR *valueName = GetItemText(g_pChildWnd->hListWnd, index);
-                if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, num_selected == 1))
+                if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
                 {
                     heap_free(valueName);
                     break;

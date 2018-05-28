@@ -12303,7 +12303,7 @@ msgstr "Операцію з реєстром було скасовано\n"
 msgid "(Default)"
 msgstr "(За замовчуванням)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ви впевнені, що хочете видалити значення реєстру '%1'?"
 
@@ -12901,6 +12901,12 @@ msgstr "Значення занадто довге (%1!u!)."
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Підтвердження видалення значення"
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete the registry value '%1'?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Ви впевнені, що хочете видалити значення реєстру '%1'?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."

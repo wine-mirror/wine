@@ -12038,7 +12038,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Podrazumijevano)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these %1 items?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -12664,6 +12664,12 @@ msgstr "Vrijednost je prevelika (%u)"
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr ""
+
+#: regedit.rc:210
+#, fuzzy
+#| msgid "Are you sure you want to delete these %1 items?"
+msgid "Are you sure you want to delete the selected registry value?"
+msgstr "Sigurno želite izbrisati ovih %1 stavki?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
