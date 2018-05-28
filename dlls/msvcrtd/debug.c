@@ -88,8 +88,8 @@ int CDECL _CrtSetDbgFlag(int new)
 /*********************************************************************
  *		_CrtDbgReport (MSVCRTD.@)
  */
-int CDECL _CrtDbgReport(int reportType, const char *filename, int linenumber,
-                        const char *moduleName, const char *format, ...)
+int WINAPIV _CrtDbgReport(int reportType, const char *filename, int linenumber,
+                          const char *moduleName, const char *format, ...)
 {
     return 0;
 }
