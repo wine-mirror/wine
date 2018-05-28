@@ -1563,7 +1563,7 @@ static void test_object(void)
     ok(hr == CLASSFACTORY_E_FIRST, "Expected hr == CLASSFACTORY_E_FIRST, got %#x.\n", hr);
     ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
@@ -3028,7 +3028,7 @@ static void test_d3drm_qi(void)
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
-    test_qi("d3drm_qi", (IUnknown *)d3drm, &IID_IDirect3DRM, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("d3drm_qi", (IUnknown *)d3drm, &IID_IDirect3DRM, tests, ARRAY_SIZE(tests));
 
     IDirect3DRM_Release(d3drm);
 }
@@ -3122,7 +3122,7 @@ static void test_frame_qi(void)
     hr = IDirect3DRMFrame_QueryInterface(frame1, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame1 (hr = %x)\n", hr);
     IDirect3DRMFrame_Release(frame1);
-    test_qi("frame1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("frame1_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
@@ -3132,7 +3132,7 @@ static void test_frame_qi(void)
     hr = IDirect3DRMFrame2_QueryInterface(frame2, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame2 (hr = %x)\n", hr);
     IDirect3DRMFrame2_Release(frame2);
-    test_qi("frame2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("frame2_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
@@ -3142,7 +3142,7 @@ static void test_frame_qi(void)
     hr = IDirect3DRMFrame3_QueryInterface(frame3, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame3 (hr = %x)\n", hr);
     IDirect3DRMFrame3_Release(frame3);
-    test_qi("frame3_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("frame3_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     IDirect3DRM3_Release(d3drm3);
@@ -3251,7 +3251,7 @@ static void test_device_qi(void)
     hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMDevice (hr = %x)\n", hr);
     IDirect3DRMDevice_Release(device1);
-    test_qi("device1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("device1_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
@@ -3261,7 +3261,7 @@ static void test_device_qi(void)
     hr = IDirect3DRMDevice2_QueryInterface(device2, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMDevice2 (hr = %x)\n", hr);
     IDirect3DRMDevice2_Release(device2);
-    test_qi("device2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("device2_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
@@ -3271,7 +3271,7 @@ static void test_device_qi(void)
     IDirect3DRMDevice3_QueryInterface(device3, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMDevice3 (hr = %x)\n", hr);
     IDirect3DRMDevice3_Release(device3);
-    test_qi("device3_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("device3_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     IDirectDrawClipper_Release(clipper);
@@ -4439,7 +4439,7 @@ static IDirect3DDevice *create_device1(IDirectDraw *ddraw, HWND window, IDirectD
     /* We used to use EnumDevices() for this, but it seems
     * D3DDEVICEDESC.dwDeviceZBufferBitDepth only has a very casual
     * relationship with reality. */
-    for (i = 0; i < sizeof(z_depths) / sizeof(*z_depths); ++i)
+    for (i = 0; i < ARRAY_SIZE(z_depths); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -4773,7 +4773,7 @@ static IDirect3DDevice2 *create_device2(IDirectDraw2 *ddraw, HWND window, IDirec
     /* We used to use EnumDevices() for this, but it seems
     * D3DDEVICEDESC.dwDeviceZBufferBitDepth only has a very casual
     * relationship with reality. */
-    for (i = 0; i < sizeof(z_depths) / sizeof(*z_depths); ++i)
+    for (i = 0; i < ARRAY_SIZE(z_depths); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -5596,7 +5596,7 @@ static void test_load_texture(void)
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
     ok(SUCCEEDED(hr), "Failed to get IDirect3DRM3 interface, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         filename = create_bitmap(tests[i].w, tests[i].h, tests[i].palettized);
 
@@ -5736,7 +5736,7 @@ static void test_texture_qi(void)
     hr = IDirect3DRMTexture_QueryInterface(texture1, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMTexture (hr = %#x)\n", hr);
     IDirect3DRMTexture_Release(texture1);
-    test_qi("texture1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("texture1_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
@@ -5746,7 +5746,7 @@ static void test_texture_qi(void)
     hr = IDirect3DRMTexture2_QueryInterface(texture2, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMTexture2 (hr = %#x)\n", hr);
     IDirect3DRMTexture2_Release(texture2);
-    test_qi("texture2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("texture2_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
@@ -5757,7 +5757,7 @@ static void test_texture_qi(void)
     hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMTexture3 (hr = %#x)\n", hr);
     IDirect3DRMTexture3_Release(texture3);
-    test_qi("texture3_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("texture3_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     IDirect3DRM3_Release(d3drm3);
@@ -5873,7 +5873,7 @@ static void test_viewport_qi(void)
     hr = IDirect3DRMViewport_QueryInterface(viewport1, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
     IDirect3DRMViewport_Release(viewport1);
-    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
@@ -5883,7 +5883,7 @@ static void test_viewport_qi(void)
     hr = IDirect3DRMViewport_QueryInterface(viewport1, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
     IDirect3DRMViewport_Release(viewport1);
-    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
     IDirect3DRMDevice_Release(device1);
     IDirect3DRMFrame_Release(camera1);
@@ -5902,7 +5902,7 @@ static void test_viewport_qi(void)
     hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
     IDirect3DRMViewport_Release(viewport2);
-    test_qi("viewport2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("viewport2_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
     IDirect3DRMDevice3_Release(device3);
     IDirect3DRMFrame3_Release(camera3);
@@ -7181,7 +7181,7 @@ static void test_animation_qi(void)
     ok(SUCCEEDED(hr), "Failed to get IUnknown from animation, hr %#x.\n", hr);
     IDirect3DRMAnimation_Release(animation);
 
-    test_qi("animation_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("animation_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
@@ -7194,7 +7194,7 @@ static void test_animation_qi(void)
     ok(SUCCEEDED(hr), "Failed to get IUnknown from animation, hr %#x.\n", hr);
     IDirect3DRMAnimation2_Release(animation2);
 
-    test_qi("animation2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("animation2_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     IDirect3DRM3_Release(d3drm3);
@@ -7302,7 +7302,7 @@ static void test_wrap_qi(void)
     hr = IDirect3DRMWrap_QueryInterface(wrap, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Failed to get IUnknown from wrap (hr = %#x)\n", hr);
     IDirect3DRMWrap_Release(wrap);
-    test_qi("wrap_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("wrap_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
     IUnknown_Release(unknown);
 
     IDirect3DRM_Release(d3drm1);
