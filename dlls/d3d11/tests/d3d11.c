@@ -671,11 +671,11 @@ struct resource_readback
     ID3D11Resource *resource;
     D3D11_MAPPED_SUBRESOURCE map_desc;
     ID3D11DeviceContext *immediate_context;
-    unsigned int width, height, sub_resource_idx;
+    unsigned int width, height, depth, sub_resource_idx;
 };
 
 static void init_resource_readback(ID3D11Resource *resource, ID3D11Resource *readback_resource,
-        unsigned int width, unsigned int height, unsigned int sub_resource_idx,
+        unsigned int width, unsigned int height, unsigned int depth, unsigned int sub_resource_idx,
         ID3D11Device *device, struct resource_readback *rb)
 {
     HRESULT hr;
@@ -683,6 +683,7 @@ static void init_resource_readback(ID3D11Resource *resource, ID3D11Resource *rea
     rb->resource = readback_resource;
     rb->width = width;
     rb->height = height;
+    rb->depth = depth;
     rb->sub_resource_idx = sub_resource_idx;
 
     ID3D11Device_GetImmediateContext(device, &rb->immediate_context);
@@ -724,7 +725,7 @@ static void get_buffer_readback(ID3D11Buffer *buffer, struct resource_readback *
     }
 
     init_resource_readback((ID3D11Resource *)buffer, rb_buffer,
-            buffer_desc.ByteWidth, 1, 0, device, rb);
+            buffer_desc.ByteWidth, 1, 1, 0, device, rb);
 
     ID3D11Device_Release(device);
 }
@@ -756,7 +757,7 @@ static void get_texture1d_readback(ID3D11Texture1D *texture, unsigned int sub_re
 
     miplevel = sub_resource_idx % texture_desc.MipLevels;
     init_resource_readback((ID3D11Resource *)texture, rb_texture,
-            max(1, texture_desc.Width >> miplevel), 1, sub_resource_idx, device, rb);
+            max(1, texture_desc.Width >> miplevel), 1, 1, sub_resource_idx, device, rb);
 
     ID3D11Device_Release(device);
 }
@@ -790,34 +791,70 @@ static void get_texture_readback(ID3D11Texture2D *texture, unsigned int sub_reso
     init_resource_readback((ID3D11Resource *)texture, rb_texture,
             max(1, texture_desc.Width >> miplevel),
             max(1, texture_desc.Height >> miplevel),
+            1, sub_resource_idx, device, rb);
+
+    ID3D11Device_Release(device);
+}
+
+static void get_texture3d_readback(ID3D11Texture3D *texture, unsigned int sub_resource_idx,
+        struct resource_readback *rb)
+{
+    D3D11_TEXTURE3D_DESC texture_desc;
+    ID3D11Resource *rb_texture;
+    unsigned int miplevel;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+
+    ID3D11Texture3D_GetDevice(texture, &device);
+
+    ID3D11Texture3D_GetDesc(texture, &texture_desc);
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    if (FAILED(hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, (ID3D11Texture3D **)&rb_texture)))
+    {
+        trace("Failed to create texture, hr %#x.\n", hr);
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    miplevel = sub_resource_idx % texture_desc.MipLevels;
+    init_resource_readback((ID3D11Resource *)texture, rb_texture,
+            max(1, texture_desc.Width >> miplevel),
+            max(1, texture_desc.Height >> miplevel),
+            max(1, texture_desc.Depth >> miplevel),
             sub_resource_idx, device, rb);
 
     ID3D11Device_Release(device);
 }
 
-static void *get_readback_data(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned byte_width)
+static void *get_readback_data(struct resource_readback *rb,
+        unsigned int x, unsigned int y, unsigned int z, unsigned byte_width)
 {
-    return (BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch + x * byte_width;
+    return (BYTE *)rb->map_desc.pData + z * rb->map_desc.DepthPitch + y * rb->map_desc.RowPitch + x * byte_width;
 }
 
-static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
+static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
 {
-    return *(DWORD *)get_readback_data(rb, x, y, sizeof(DWORD));
+    return *(DWORD *)get_readback_data(rb, x, y, z, sizeof(DWORD));
 }
 
 static float get_readback_float(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return *(float *)get_readback_data(rb, x, y, sizeof(float));
+    return *(float *)get_readback_data(rb, x, y, 0, sizeof(float));
 }
 
 static const struct vec4 *get_readback_vec4(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return get_readback_data(rb, x, y, sizeof(struct vec4));
+    return get_readback_data(rb, x, y, 0, sizeof(struct vec4));
 }
 
 static const struct uvec4 *get_readback_uvec4(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return get_readback_data(rb, x, y, sizeof(struct uvec4));
+    return get_readback_data(rb, x, y, 0, sizeof(struct uvec4));
 }
 
 static void release_resource_readback(struct resource_readback *rb)
@@ -833,7 +870,7 @@ static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigne
     DWORD color;
 
     get_texture_readback(texture, 0, &rb);
-    color = get_readback_color(&rb, x, y);
+    color = get_readback_color(&rb, x, y, 0);
     release_resource_readback(&rb);
 
     return color;
@@ -843,7 +880,7 @@ static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigne
 static void check_readback_data_color_(unsigned int line, struct resource_readback *rb,
         const RECT *rect, DWORD expected_color, BYTE max_diff)
 {
-    unsigned int x = 0, y = 0;
+    unsigned int x = 0, y = 0, z = 0;
     BOOL all_match = TRUE;
     RECT default_rect;
     DWORD color = 0;
@@ -854,23 +891,28 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
         rect = &default_rect;
     }
 
-    for (y = rect->top; y < rect->bottom; ++y)
+    for (z = 0; z < rb->depth; ++z)
     {
-        for (x = rect->left; x < rect->right; ++x)
+        for (y = rect->top; y < rect->bottom; ++y)
         {
-            color = get_readback_color(rb, x, y);
-            if (!compare_color(color, expected_color, max_diff))
+            for (x = rect->left; x < rect->right; ++x)
             {
-                all_match = FALSE;
-                break;
+                color = get_readback_color(rb, x, y, z);
+                if (!compare_color(color, expected_color, max_diff))
+                {
+                    all_match = FALSE;
+                    break;
+                }
             }
+            if (!all_match)
+                break;
         }
         if (!all_match)
             break;
     }
     ok_(__FILE__, line)(all_match,
-            "Got 0x%08x, expected 0x%08x at (%u, %u), sub-resource %u.\n",
-            color, expected_color, x, y, rb->sub_resource_idx);
+            "Got 0x%08x, expected 0x%08x at (%u, %u, %u), sub-resource %u.\n",
+            color, expected_color, x, y, z, rb->sub_resource_idx);
 }
 
 #define check_texture_sub_resource_color(a, b, c, d, e) check_texture_sub_resource_color_(__LINE__, a, b, c, d, e)
@@ -919,6 +961,30 @@ static void check_texture1d_color_(unsigned int line, ID3D11Texture1D *texture,
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
         check_texture1d_sub_resource_color_(line, texture, sub_resource_idx, NULL, expected_color, max_diff);
+}
+
+#define check_texture3d_sub_resource_color(a, b, c, d, e) check_texture3d_sub_resource_color_(__LINE__, a, b, c, d, e)
+static void check_texture3d_sub_resource_color_(unsigned int line, ID3D11Texture3D *texture,
+        unsigned int sub_resource_idx, const RECT *rect, DWORD expected_color, BYTE max_diff)
+{
+    struct resource_readback rb;
+
+    get_texture3d_readback(texture, sub_resource_idx, &rb);
+    check_readback_data_color_(line, &rb, rect, expected_color, max_diff);
+    release_resource_readback(&rb);
+}
+
+#define check_texture3d_color(t, c, d) check_texture3d_color_(__LINE__, t, c, d)
+static void check_texture3d_color_(unsigned int line, ID3D11Texture3D *texture,
+        DWORD expected_color, BYTE max_diff)
+{
+    unsigned int sub_resource_idx, sub_resource_count;
+    D3D11_TEXTURE3D_DESC texture_desc;
+
+    ID3D11Texture3D_GetDesc(texture, &texture_desc);
+    sub_resource_count = texture_desc.MipLevels;
+    for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
+        check_texture3d_sub_resource_color_(line, texture, sub_resource_idx, NULL, expected_color, max_diff);
 }
 
 #define check_texture_sub_resource_float(a, b, c, d, e) check_texture_sub_resource_float_(__LINE__, a, b, c, d, e)
@@ -6657,7 +6723,7 @@ static void test_texture1d(void)
         get_texture_readback(test_context.backbuffer, 0, &rb);
         for (x = 0; x < 4; ++x)
         {
-            color = get_readback_color(&rb, 80 + x * 160, 0);
+            color = get_readback_color(&rb, 80 + x * 160, 0, 0);
             ok(compare_color(color, test->expected_colors[x], 2),
                     "Test %u: Got unexpected color 0x%08x at (%u).\n", i, color, x);
         }
@@ -6745,7 +6811,7 @@ static void test_texture1d(void)
         get_texture_readback(test_context.backbuffer, 0, &rb);
         for (x = 0; x < 4; ++x)
         {
-            color = get_readback_color(&rb, 80 + x * 160, 0);
+            color = get_readback_color(&rb, 80 + x * 160, 0, 0);
             ok(compare_color(color, test->expected_colors[x], 1),
                     "Test %u: Got unexpected color 0x%08x at (%u).\n", i, color, x);
         }
@@ -7615,7 +7681,7 @@ static void test_texture(void)
         {
             for (x = 0; x < 4; ++x)
             {
-                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, test->expected_colors[y * 4 + x], 2),
                         "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
             }
@@ -7707,7 +7773,7 @@ static void test_texture(void)
         {
             for (x = 0; x < 4; ++x)
             {
-                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
                         "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
             }
@@ -11405,7 +11471,7 @@ static void test_update_subresource(void)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, expected_colors[j + i * 4]);
@@ -11421,7 +11487,7 @@ static void test_update_subresource(void)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
@@ -11612,7 +11678,7 @@ static void test_copy_subresource_region(void)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, expected_colors[j + i * 4]);
@@ -11628,7 +11694,7 @@ static void test_copy_subresource_region(void)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
@@ -11660,7 +11726,7 @@ static void test_copy_subresource_region(void)
         {
             for (j = 0; j < 4; ++j)
             {
-                color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+                color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
                 ok(compare_color(color, bitmap_data[j + i * 4], 1),
                         "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                         color, j, i, bitmap_data[j + i * 4]);
@@ -11735,7 +11801,7 @@ static void test_copy_subresource_region(void)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
@@ -12707,7 +12773,7 @@ static void test_clear_render_target_view_1d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture1D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
@@ -12758,11 +12824,11 @@ static void test_clear_render_target_view_2d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &srgb_texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
@@ -12789,7 +12855,7 @@ static void test_clear_render_target_view_2d(void)
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -12813,7 +12879,7 @@ static void test_clear_render_target_view_2d(void)
         for (j = 0; j < 4; ++j)
         {
             BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
-            DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
+            DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120, 0);
             ok(compare_color(color, expected_srgb_color, 1)
                     || broken(compare_color(color, expected_color, 1) && broken_device),
                     "Got unexpected color 0x%08x.\n", color);
@@ -12824,6 +12890,70 @@ static void test_clear_render_target_view_2d(void)
     ID3D11RenderTargetView_Release(srgb_rtv);
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
+static void test_clear_render_target_view_3d(void)
+{
+    static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+    static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
+
+    struct d3d11_test_context test_context;
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D11_TEXTURE3D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture3D *texture;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.Width = 8;
+    texture_desc.Height = 8;
+    texture_desc.Depth = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
+    check_texture3d_color(texture, 0xbf4c7f19, 1);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, green);
+    check_texture3d_color(texture, 0x8000ff00, 1);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture3D_Release(texture);
+
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
+    U(rtv_desc).Texture3D.MipSlice = 0;
+    U(rtv_desc).Texture3D.FirstWSlice = 0;
+    U(rtv_desc).Texture3D.WSize = ~0u;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
+    check_texture3d_color(texture, 0xbf95bc59, 1);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, green);
+    check_texture3d_color(texture, 0x8000ff00, 1);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture3D_Release(texture);
     release_test_context(&test_context);
 }
 
@@ -13061,7 +13191,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
         release_resource_readback(&rb);
@@ -13070,7 +13200,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             uvec4 = x < U(uav_desc).Buffer.NumElements ? fe_uvec4 : uvec4_data[i];
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
@@ -13105,7 +13235,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
         release_resource_readback(&rb);
@@ -13114,7 +13244,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
@@ -13149,7 +13279,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
         release_resource_readback(&rb);
@@ -13158,7 +13288,7 @@ static void test_clear_buffer_unordered_access_view(void)
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
-            DWORD data = get_readback_color(&rb, x, 0);
+            DWORD data = get_readback_color(&rb, x, 0, 0);
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
             ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
         }
@@ -13233,7 +13363,7 @@ static void test_clear_buffer_unordered_access_view(void)
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0), &uvec4);
+            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
@@ -13241,7 +13371,7 @@ static void test_clear_buffer_unordered_access_view(void)
         for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
         {
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0), &uvec4);
+            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
         }
         release_resource_readback(&rb);
     }
@@ -17403,15 +17533,15 @@ float4 main(struct ps_data ps_input) : SV_Target
         ID3D11DeviceContext_Draw(context, 4, 0);
 
         get_texture_readback(texture, 0, &rb);
-        color = get_readback_color(&rb, 320, 190);
+        color = get_readback_color(&rb, 320, 190, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 255, 240);
+        color = get_readback_color(&rb, 255, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 320, 240);
+        color = get_readback_color(&rb, 320, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 385, 240);
+        color = get_readback_color(&rb, 385, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 320, 290);
+        color = get_readback_color(&rb, 320, 290, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
         release_resource_readback(&rb);
 
@@ -17420,15 +17550,15 @@ float4 main(struct ps_data ps_input) : SV_Target
         ID3D11DeviceContext_Draw(context, 4, 0);
 
         get_texture_readback(test_context.backbuffer, 0, &rb);
-        color = get_readback_color(&rb, 320, 190);
+        color = get_readback_color(&rb, 320, 190, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 255, 240);
+        color = get_readback_color(&rb, 255, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 320, 240);
+        color = get_readback_color(&rb, 320, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 385, 240);
+        color = get_readback_color(&rb, 385, 240, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
-        color = get_readback_color(&rb, 320, 290);
+        color = get_readback_color(&rb, 320, 290, 0);
         ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
         release_resource_readback(&rb);
 
@@ -18084,7 +18214,7 @@ static void test_uav_load(void)
             for (x = 0; x < 4; ++x)
             {
                 DWORD expected = test->expected_colors[y * 4 + x];
-                DWORD color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                DWORD color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, expected, 0),
                         "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
                         i, color, expected, x, y);
@@ -18485,7 +18615,7 @@ static void test_uav_store_immediate_constant(void)
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     get_buffer_readback(buffer, &rb);
-    int_data = get_readback_color(&rb, 0, 0);
+    int_data = get_readback_color(&rb, 0, 0, 0);
     ok(int_data == 42, "Got unexpected value %u.\n", int_data);
     release_resource_readback(&rb);
 
@@ -18880,7 +19010,7 @@ static void test_atomic_instructions(void)
         get_buffer_readback(in_buffer, &rb);
         for (j = 0; j < ARRAY_SIZE(instructions); ++j)
         {
-            unsigned int value = get_readback_color(&rb, j, 0);
+            unsigned int value = get_readback_color(&rb, j, 0, 0);
             unsigned int expected = test->expected_result[j];
 
             todo_wine_if(expected != test->input[j]
@@ -18907,8 +19037,8 @@ static void test_atomic_instructions(void)
         {
             BOOL todo_instruction = !strcmp(imm_instructions[j], "imm_atomic_imax")
                     || !strcmp(imm_instructions[j], "imm_atomic_imin");
-            unsigned int out_value = get_readback_color(&out_rb, j, 0);
-            unsigned int value = get_readback_color(&rb, j, 0);
+            unsigned int out_value = get_readback_color(&out_rb, j, 0, 0);
+            unsigned int value = get_readback_color(&rb, j, 0, 0);
             unsigned int expected = test->expected_result[j];
 
             todo_wine_if(expected != test->input[j] && todo_instruction)
@@ -20409,7 +20539,7 @@ static void test_buffer_srv(void)
         {
             for (x = 0; x < 4; ++x)
             {
-                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 expected_color = test->expected_colors[y * 4 + x];
                 ok(compare_color(color, expected_color, 1),
                         "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
@@ -20635,7 +20765,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     get_buffer_readback(raw_buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(buffer_data); ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
     }
     release_resource_readback(&rb);
@@ -20649,7 +20779,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     get_buffer_readback(raw_buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(buffer_data); ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
     }
     release_resource_readback(&rb);
@@ -20663,7 +20793,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     get_buffer_readback(raw_buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(buffer_data); ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
     }
     release_resource_readback(&rb);
@@ -20677,7 +20807,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     get_buffer_readback(raw_buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(buffer_data); ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
     }
     release_resource_readback(&rb);
@@ -20694,9 +20824,9 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
             NULL, &offset, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     get_buffer_readback(raw_buffer, &rb);
-    data = get_readback_color(&rb, 0, 0);
+    data = get_readback_color(&rb, 0, 0, 0);
     ok(data == 0xffff, "Got unexpected result %#x.\n", data);
-    data = get_readback_color(&rb, 1, 0);
+    data = get_readback_color(&rb, 1, 0, 0);
     ok(data == 0xa, "Got unexpected result %#x.\n", data);
     release_resource_readback(&rb);
 
@@ -20903,7 +21033,7 @@ static void test_uav_counters(void)
     get_buffer_readback(buffer2, &rb);
     for (i = 0; i < 8; ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == 0xdeadbeef, "Got data %u at %u.\n", data, i);
     }
     release_resource_readback(&rb);
@@ -21453,7 +21583,7 @@ static void test_tgsm(void)
     get_buffer_readback(buffer, &rb);
     for (i = 0; i < 64; ++i)
     {
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         expected = 33 * i;
         ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
     }
@@ -21486,9 +21616,9 @@ static void test_tgsm(void)
     for (i = 0; i < 32; ++i)
     {
         expected = 64 * i + 32;
-        data = get_readback_color(&rb, i, 0);
+        data = get_readback_color(&rb, i, 0, 0);
         ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
-        data = get_readback_color(&rb2, i, 0);
+        data = get_readback_color(&rb2, i, 0, 0);
         ok(data == expected || !data, "Got %u, expected %u (index %u).\n", data, expected, i);
     }
     release_resource_readback(&rb);
@@ -21530,7 +21660,7 @@ static void test_tgsm(void)
         expected = (i % 32 + 1) * (i / 32);
         float_data = get_readback_float(&rb, i, 0);
         ok(float_data == expected, "Got %.8e, expected %u (index %u).\n", float_data, expected, i);
-        data = get_readback_color(&rb2, i, 0);
+        data = get_readback_color(&rb2, i, 0, 0);
         ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
     }
     release_resource_readback(&rb);
@@ -21746,15 +21876,15 @@ float4 main(struct ps_data ps_input) : SV_Target
     ID3D11DeviceContext_Draw(context, 1, 0);
 
     get_texture_readback(test_context.backbuffer, 0, &rb);
-    color = get_readback_color(&rb, 320, 190);
+    color = get_readback_color(&rb, 320, 190, 0);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
-    color = get_readback_color(&rb, 255, 240);
+    color = get_readback_color(&rb, 255, 240, 0);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
-    color = get_readback_color(&rb, 320, 240);
+    color = get_readback_color(&rb, 320, 240, 0);
     ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
-    color = get_readback_color(&rb, 385, 240);
+    color = get_readback_color(&rb, 385, 240, 0);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
-    color = get_readback_color(&rb, 320, 290);
+    color = get_readback_color(&rb, 320, 290, 0);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
     release_resource_readback(&rb);
 
@@ -21784,7 +21914,7 @@ static void check_triangles_(unsigned int line, ID3D11Buffer *buffer,
 
     for (i = 0; i < triangle_count; ++i)
     {
-        current = get_readback_data(&rb, i, 0, sizeof(*current));
+        current = get_readback_data(&rb, i, 0, 0, sizeof(*current));
         expected = &triangles[i];
 
         offset = ~0u;
@@ -24136,7 +24266,7 @@ static void test_depth_bias(void)
                 {
                     for (x = 0; x < texture_desc.Width; ++x)
                     {
-                        u16 = get_readback_data(&rb, x, y, sizeof(*u16));
+                        u16 = get_readback_data(&rb, x, y, 0, sizeof(*u16));
                         ok(*u16 == 0xffff, "Got unexpected value %#x.\n", *u16);
                     }
                 }
@@ -24182,7 +24312,7 @@ static void test_depth_bias(void)
                             expected_value = depth * 16777215.0f + 0.5f;
                             for (x = 0; x < texture_desc.Width; ++x)
                             {
-                                u32 = get_readback_data(&rb, x, y, sizeof(*u32));
+                                u32 = get_readback_data(&rb, x, y, 0, sizeof(*u32));
                                 u32_value = *u32 >> shift;
                                 ok(abs(u32_value - expected_value) <= 1,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
@@ -24203,7 +24333,7 @@ static void test_depth_bias(void)
                             expected_value = depth * 65535.0f + 0.5f;
                             for (x = 0; x < texture_desc.Width; ++x)
                             {
-                                u16 = get_readback_data(&rb, x, y, sizeof(*u16));
+                                u16 = get_readback_data(&rb, x, y, 0, sizeof(*u16));
                                 ok(abs(*u16 - expected_value) <= 1,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
                                         *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
@@ -24239,12 +24369,12 @@ static void test_depth_bias(void)
                         depth_values[y] = get_readback_float(&rb, 0, y);
                         break;
                     case DXGI_FORMAT_D24_UNORM_S8_UINT:
-                        u32 = get_readback_data(&rb, 0, y, sizeof(*u32));
+                        u32 = get_readback_data(&rb, 0, y, 0, sizeof(*u32));
                         u32_value = *u32 >> shift;
                         depth_values[y] = u32_value / 16777215.0f;
                         break;
                     case DXGI_FORMAT_D16_UNORM:
-                        u16 = get_readback_data(&rb, 0, y, sizeof(*u16));
+                        u16 = get_readback_data(&rb, 0, y, 0, sizeof(*u16));
                         depth_values[y] = *u16 / 65535.0f;
                         break;
                     default:
@@ -24276,7 +24406,7 @@ static void test_depth_bias(void)
                                     "Got depth %.8e, expected %.8e.\n", data, depth);
                             break;
                         case DXGI_FORMAT_D24_UNORM_S8_UINT:
-                            u32 = get_readback_data(&rb, 0, y, sizeof(*u32));
+                            u32 = get_readback_data(&rb, 0, y, 0, sizeof(*u32));
                             u32_value = *u32 >> shift;
                             expected_value = depth * 16777215.0f + 0.5f;
                             ok(abs(u32_value - expected_value) <= 3,
@@ -24285,7 +24415,7 @@ static void test_depth_bias(void)
                                     expected_value, expected_value / 16777215.0f);
                             break;
                         case DXGI_FORMAT_D16_UNORM:
-                            u16 = get_readback_data(&rb, 0, y, sizeof(*u16));
+                            u16 = get_readback_data(&rb, 0, y, 0, sizeof(*u16));
                             expected_value = depth * 65535.0f + 0.5f;
                             ok(abs(*u16 - expected_value) <= 1,
                                     "Got value %#x (%.8e), expected %#x (%.8e).\n",
@@ -24839,7 +24969,7 @@ static void test_format_compatibility(void)
         {
             x = j % 4;
             y = j / 4;
-            colour = get_readback_color(&rb, x, y);
+            colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success && x >= texel_dwords && y
                     ? bitmap_data[j - (4 + texel_dwords)] : initial_data[j];
             ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
@@ -24854,7 +24984,7 @@ static void test_format_compatibility(void)
         {
             x = j % 4;
             y = j / 4;
-            colour = get_readback_color(&rb, x, y);
+            colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
             ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
                     i, colour, x, y, expected);
@@ -25601,9 +25731,9 @@ static void test_combined_clip_and_cull_distances(void)
             else
             {
                 get_texture_readback(test_context.backbuffer, 0, &rb);
-                color = get_readback_color(&rb, 160, 240);
+                color = get_readback_color(&rb, 160, 240, 0);
                 ok(color == expected_color[0], "Got unexpected color 0x%08x.\n", color);
-                color = get_readback_color(&rb, 480, 240);
+                color = get_readback_color(&rb, 480, 240, 0);
                 ok(color == expected_color[1], "Got unexpected color 0x%08x.\n", color);
                 release_resource_readback(&rb);
             }
@@ -25980,7 +26110,7 @@ static void test_generate_mips(void)
             get_texture_readback(test_context.backbuffer, 0, &rb);
             for (k = 0; k < ARRAY_SIZE(expected); ++k)
             {
-                color = get_readback_color(&rb, expected[k].pos.x, expected[k].pos.y);
+                color = get_readback_color(&rb, expected[k].pos.x, expected[k].pos.y, 0);
                 expected_color = tests[j].expected_mips ? expected[k].color : 0;
                 ok(color == expected_color, "Resource type %u, test %u: pixel (%u, %u) "
                         "has color %08x, expected %08x.\n",
@@ -26044,7 +26174,7 @@ static void test_generate_mips(void)
     draw_quad(&test_context);
 
     get_texture_readback(test_context.backbuffer, 0, &rb);
-    color = get_readback_color(&rb, 320, 240);
+    color = get_readback_color(&rb, 320, 240, 0);
     ok(compare_color(color, 0x7fbcbcbc, 1) || broken(compare_color(color, 0x7f7f7f7f, 1)), /* AMD */
             "Unexpected color %08x.\n", color);
     release_resource_readback(&rb);
@@ -27181,7 +27311,7 @@ static void test_sample_shading(void)
         draw_quad(&test_context);
         check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
         get_buffer_readback(buffer, &rb);
-        data = get_readback_color(&rb, 0, 0);
+        data = get_readback_color(&rb, 0, 0, 0);
         ok(1024 <= data && data <= 1056, "Test %u: Got unexpected value %u.\n", i, data);
         release_resource_readback(&rb);
 
@@ -27191,7 +27321,7 @@ static void test_sample_shading(void)
                 1, &rtv, NULL, 1, 1, &uav, NULL);
         draw_quad(&test_context);
         get_buffer_readback(buffer, &rb);
-        data = get_readback_color(&rb, 0, 0);
+        data = get_readback_color(&rb, 0, 0, 0);
         todo_wine_if(tests[i].todo)
         {
             if (tests[i].sample_shading)
@@ -27475,6 +27605,7 @@ START_TEST(d3d11)
     test_swapchain_flip();
     test_clear_render_target_view_1d();
     test_clear_render_target_view_2d();
+    test_clear_render_target_view_3d();
     test_clear_depth_stencil_view();
     test_clear_buffer_unordered_access_view();
     test_initial_depth_stencil_state();
