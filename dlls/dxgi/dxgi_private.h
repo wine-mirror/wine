@@ -31,8 +31,9 @@
 #include "objbase.h"
 #include "winnls.h"
 
-#include "d3d10_1.h"
 #include "dxgi1_6.h"
+#include "d3d10_1.h"
+#include "d3d12.h"
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
 #endif
@@ -177,6 +178,10 @@ HRESULT d3d11_swapchain_create(IWineDXGIDevice *device, HWND window, const DXGI_
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc, IDXGISwapChain1 **swapchain) DECLSPEC_HIDDEN;
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
         struct wined3d_swapchain_desc *desc, BOOL implicit) DECLSPEC_HIDDEN;
+
+HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
+        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
+        IDXGISwapChain1 **swapchain) DECLSPEC_HIDDEN;
 
 /* IDXGISurface */
 struct dxgi_surface

@@ -796,3 +796,549 @@ HRESULT d3d11_swapchain_create(IWineDXGIDevice *device, HWND window, const DXGI_
 
     return S_OK;
 }
+
+struct d3d12_swapchain
+{
+    IDXGISwapChain3 IDXGISwapChain3_iface;
+    LONG refcount;
+    struct wined3d_private_store private_store;
+
+    ID3D12CommandQueue *command_queue;
+    ID3D12Device *device;
+    IWineDXGIFactory *factory;
+
+    HWND window;
+    DXGI_SWAP_CHAIN_DESC1 desc;
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
+};
+
+static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain3(IDXGISwapChain3 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_swapchain, IDXGISwapChain3_iface);
+}
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_QueryInterface(IDXGISwapChain3 *iface, REFIID iid, void **object)
+{
+    TRACE("iface %p, iid %s, object %p.\n", iface, debugstr_guid(iid), object);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IDXGIObject)
+            || IsEqualGUID(iid, &IID_IDXGIDeviceSubObject)
+            || IsEqualGUID(iid, &IID_IDXGISwapChain)
+            || IsEqualGUID(iid, &IID_IDXGISwapChain1)
+            || IsEqualGUID(iid, &IID_IDXGISwapChain2)
+            || IsEqualGUID(iid, &IID_IDXGISwapChain3))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    ULONG refcount = InterlockedIncrement(&swapchain->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", swapchain, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    ULONG refcount = InterlockedDecrement(&swapchain->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
+
+    if (!refcount)
+    {
+        ID3D12CommandQueue_Release(swapchain->command_queue);
+        IWineDXGIFactory_Release(swapchain->factory);
+
+        wined3d_private_store_cleanup(&swapchain->private_store);
+
+        ID3D12Device_Release(swapchain->device);
+
+        heap_free(swapchain);
+    }
+
+    return refcount;
+}
+
+/* IDXGIObject methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetPrivateData(IDXGISwapChain3 *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_set_private_data(&swapchain->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetPrivateDataInterface(IDXGISwapChain3 *iface,
+        REFGUID guid, const IUnknown *object)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
+
+    return dxgi_set_private_data_interface(&swapchain->private_store, guid, object);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetPrivateData(IDXGISwapChain3 *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_get_private_data(&swapchain->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetParent(IDXGISwapChain3 *iface, REFIID iid, void **parent)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, iid %s, parent %p.\n", iface, debugstr_guid(iid), parent);
+
+    return IWineDXGIFactory_QueryInterface(swapchain->factory, iid, parent);
+}
+
+/* IDXGIDeviceSubObject methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDevice(IDXGISwapChain3 *iface, REFIID iid, void **device)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, iid %s, device %p.\n", iface, debugstr_guid(iid), device);
+
+    return ID3D12Device_QueryInterface(swapchain->device, iid, device);
+}
+
+/* IDXGISwapChain methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present(IDXGISwapChain3 *iface, UINT sync_interval, UINT flags)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, sync_interval %u, flags %#x.\n", iface, sync_interval, flags);
+
+    return IDXGISwapChain3_Present1(&swapchain->IDXGISwapChain3_iface, sync_interval, flags, NULL);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetBuffer(IDXGISwapChain3 *iface,
+        UINT buffer_idx, REFIID iid, void **surface)
+{
+    FIXME("iface %p, buffer_idx %u, iid %s, surface %p stub!\n",
+            iface, buffer_idx, debugstr_guid(iid), surface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreenState(IDXGISwapChain3 *iface,
+        BOOL fullscreen, IDXGIOutput *target)
+{
+    FIXME("iface %p, fullscreen %#x, target %p stub!\n", iface, fullscreen, target);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapChain3 *iface,
+        BOOL *fullscreen, IDXGIOutput **target)
+{
+    FIXME("iface %p, fullscreen %p, target %p stub!n", iface, fullscreen, target);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain3 *iface, DXGI_SWAP_CHAIN_DESC *desc)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc = &swapchain->fullscreen_desc;
+    const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc = &swapchain->desc;
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    desc->BufferDesc.Width = swapchain_desc->Width;
+    desc->BufferDesc.Height = swapchain_desc->Height;
+    desc->BufferDesc.RefreshRate = fullscreen_desc->RefreshRate;
+    desc->BufferDesc.Format = swapchain_desc->Format;
+    desc->BufferDesc.ScanlineOrdering = fullscreen_desc->ScanlineOrdering;
+    desc->BufferDesc.Scaling = fullscreen_desc->Scaling;
+    desc->SampleDesc = swapchain_desc->SampleDesc;
+    desc->BufferUsage = swapchain_desc->BufferUsage;
+    desc->BufferCount = swapchain_desc->BufferCount;
+    desc->OutputWindow = swapchain->window;
+    desc->Windowed = fullscreen_desc->Windowed;
+    desc->SwapEffect = swapchain_desc->SwapEffect;
+    desc->Flags = swapchain_desc->Flags;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *iface,
+        UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
+{
+    FIXME("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x stub!\n",
+            iface, buffer_count, width, height, debug_dxgi_format(format), flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeTarget(IDXGISwapChain3 *iface,
+        const DXGI_MODE_DESC *target_mode_desc)
+{
+    FIXME("iface %p, target_mode_desc %p stub!\n", iface, target_mode_desc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapChain3 *iface,
+        IDXGIOutput **output)
+{
+    FIXME("iface %p, output %p stub!\n", iface, output);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFrameStatistics(IDXGISwapChain3 *iface,
+        DXGI_FRAME_STATISTICS *stats)
+{
+    FIXME("iface %p, stats %p stub!\n", iface, stats);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetLastPresentCount(IDXGISwapChain3 *iface,
+        UINT *last_present_count)
+{
+    FIXME("iface %p, last_present_count %p stub!\n", iface, last_present_count);
+
+    return E_NOTIMPL;
+}
+
+/* IDXGISwapChain1 methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc1(IDXGISwapChain3 *iface, DXGI_SWAP_CHAIN_DESC1 *desc)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    *desc = swapchain->desc;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenDesc(IDXGISwapChain3 *iface,
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC *desc)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    *desc = swapchain->fullscreen_desc;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetHwnd(IDXGISwapChain3 *iface, HWND *hwnd)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, hwnd %p.\n", iface, hwnd);
+
+    if (!hwnd)
+    {
+        WARN("Invalid pointer.\n");
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    *hwnd = swapchain->window;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetCoreWindow(IDXGISwapChain3 *iface,
+        REFIID iid, void **core_window)
+{
+    FIXME("iface %p, iid %s, core_window %p stub!\n", iface, debugstr_guid(iid), core_window);
+
+    if (core_window)
+        *core_window = NULL;
+
+    return DXGI_ERROR_INVALID_CALL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface,
+        UINT sync_interval, UINT flags, const DXGI_PRESENT_PARAMETERS *present_parameters)
+{
+    FIXME("iface %p, sync_interval %u, flags %#x, present_parameters %p stub!\n",
+            iface, sync_interval, flags, present_parameters);
+
+    return E_NOTIMPL;
+}
+
+static BOOL STDMETHODCALLTYPE d3d12_swapchain_IsTemporaryMonoSupported(IDXGISwapChain3 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return FALSE;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetRestrictToOutput(IDXGISwapChain3 *iface, IDXGIOutput **output)
+{
+    FIXME("iface %p, output %p stub!\n", iface, output);
+
+    if (!output)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    *output = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetBackgroundColor(IDXGISwapChain3 *iface, const DXGI_RGBA *color)
+{
+    FIXME("iface %p, color %p stub!\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetBackgroundColor(IDXGISwapChain3 *iface, DXGI_RGBA *color)
+{
+    FIXME("iface %p, color %p stub!\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetRotation(IDXGISwapChain3 *iface, DXGI_MODE_ROTATION rotation)
+{
+    FIXME("iface %p, rotation %#x stub!\n", iface, rotation);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetRotation(IDXGISwapChain3 *iface, DXGI_MODE_ROTATION *rotation)
+{
+    FIXME("iface %p, rotation %p stub!\n", iface, rotation);
+
+    return E_NOTIMPL;
+}
+
+/* IDXGISwapChain2 methods */
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetSourceSize(IDXGISwapChain3 *iface, UINT width, UINT height)
+{
+    FIXME("iface %p, width %u, height %u stub!\n", iface, width, height);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetSourceSize(IDXGISwapChain3 *iface, UINT *width, UINT *height)
+{
+    FIXME("iface %p, width %p, height %p stub!\n", iface, width, height);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMaximumFrameLatency(IDXGISwapChain3 *iface, UINT max_latency)
+{
+    FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetMaximumFrameLatency(IDXGISwapChain3 *iface, UINT *max_latency)
+{
+    FIXME("iface %p, max_latency %p stub!\n", iface, max_latency);
+
+    return E_NOTIMPL;
+}
+
+static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(IDXGISwapChain3 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMatrixTransform(IDXGISwapChain3 *iface,
+        const DXGI_MATRIX_3X2_F *matrix)
+{
+    FIXME("iface %p, matrix %p stub!\n", iface, matrix);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetMatrixTransform(IDXGISwapChain3 *iface,
+        DXGI_MATRIX_3X2_F *matrix)
+{
+    FIXME("iface %p, matrix %p stub!\n", iface, matrix);
+
+    return E_NOTIMPL;
+}
+
+/* IDXGISwapChain3 methods */
+
+static UINT STDMETHODCALLTYPE d3d12_swapchain_GetCurrentBackBufferIndex(IDXGISwapChain3 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_CheckColorSpaceSupport(IDXGISwapChain3 *iface,
+        DXGI_COLOR_SPACE_TYPE colour_space, UINT *colour_space_support)
+{
+    FIXME("iface %p, colour_space %#x, colour_space_support %p stub!\n",
+            iface, colour_space, colour_space_support);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetColorSpace1(IDXGISwapChain3 *iface,
+        DXGI_COLOR_SPACE_TYPE colour_space)
+{
+    FIXME("iface %p, colour_space %#x stub!\n", iface, colour_space);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers1(IDXGISwapChain3 *iface,
+        UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags,
+        const UINT *node_mask, IUnknown * const *present_queue)
+{
+    FIXME("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x, "
+            "node_mask %p, present_queue %p stub!\n",
+            iface, buffer_count, width, height, debug_dxgi_format(format), flags, node_mask, present_queue);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDXGISwapChain3Vtbl d3d12_swapchain_vtbl =
+{
+    /* IUnknown methods */
+    d3d12_swapchain_QueryInterface,
+    d3d12_swapchain_AddRef,
+    d3d12_swapchain_Release,
+    /* IDXGIObject methods */
+    d3d12_swapchain_SetPrivateData,
+    d3d12_swapchain_SetPrivateDataInterface,
+    d3d12_swapchain_GetPrivateData,
+    d3d12_swapchain_GetParent,
+    /* IDXGIDeviceSubObject methods */
+    d3d12_swapchain_GetDevice,
+    /* IDXGISwapChain methods */
+    d3d12_swapchain_Present,
+    d3d12_swapchain_GetBuffer,
+    d3d12_swapchain_SetFullscreenState,
+    d3d12_swapchain_GetFullscreenState,
+    d3d12_swapchain_GetDesc,
+    d3d12_swapchain_ResizeBuffers,
+    d3d12_swapchain_ResizeTarget,
+    d3d12_swapchain_GetContainingOutput,
+    d3d12_swapchain_GetFrameStatistics,
+    d3d12_swapchain_GetLastPresentCount,
+    /* IDXGISwapChain1 methods */
+    d3d12_swapchain_GetDesc1,
+    d3d12_swapchain_GetFullscreenDesc,
+    d3d12_swapchain_GetHwnd,
+    d3d12_swapchain_GetCoreWindow,
+    d3d12_swapchain_Present1,
+    d3d12_swapchain_IsTemporaryMonoSupported,
+    d3d12_swapchain_GetRestrictToOutput,
+    d3d12_swapchain_SetBackgroundColor,
+    d3d12_swapchain_GetBackgroundColor,
+    d3d12_swapchain_SetRotation,
+    d3d12_swapchain_GetRotation,
+    /* IDXGISwapChain2 methods */
+    d3d12_swapchain_SetSourceSize,
+    d3d12_swapchain_GetSourceSize,
+    d3d12_swapchain_SetMaximumFrameLatency,
+    d3d12_swapchain_GetMaximumFrameLatency,
+    d3d12_swapchain_GetFrameLatencyWaitableObject,
+    d3d12_swapchain_SetMatrixTransform,
+    d3d12_swapchain_GetMatrixTransform,
+    /* IDXGISwapChain3 methods */
+    d3d12_swapchain_GetCurrentBackBufferIndex,
+    d3d12_swapchain_CheckColorSpaceSupport,
+    d3d12_swapchain_SetColorSpace1,
+    d3d12_swapchain_ResizeBuffers1,
+};
+
+HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
+        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
+        IDXGISwapChain1 **swapchain)
+{
+    struct d3d12_swapchain *object;
+    ID3D12Device *device;
+    HRESULT hr;
+
+    if (FAILED(hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&device)))
+    {
+        ERR("Failed to get D3D12 device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        ID3D12Device_Release(device);
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDXGISwapChain3_iface.lpVtbl = &d3d12_swapchain_vtbl;
+    object->refcount = 1;
+
+    wined3d_private_store_init(&object->private_store);
+
+    ID3D12CommandQueue_AddRef(object->command_queue = queue);
+    object->device = device;
+    IWineDXGIFactory_AddRef(object->factory = factory);
+
+    object->window = window;
+    object->desc = *swapchain_desc;
+    if (fullscreen_desc)
+    {
+        object->fullscreen_desc = *fullscreen_desc;
+    }
+    else
+    {
+        memset(&object->fullscreen_desc, 0, sizeof(object->fullscreen_desc));
+        object->fullscreen_desc.Windowed = TRUE;
+    }
+
+    TRACE("Created swapchain %p.\n", object);
+
+    *swapchain = (IDXGISwapChain1 *)&object->IDXGISwapChain3_iface;
+
+    return S_OK;
+}

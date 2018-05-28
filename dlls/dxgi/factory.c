@@ -250,6 +250,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
+    ID3D12CommandQueue *command_queue;
     unsigned int min_buffer_count;
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
@@ -297,6 +298,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     {
         hr = d3d11_swapchain_create(dxgi_device, window, swapchain_desc, fullscreen_desc, swapchain);
         IWineDXGIDevice_Release(dxgi_device);
+        return hr;
+    }
+
+    if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&command_queue)))
+    {
+        hr = d3d12_swapchain_create(iface, command_queue, window, swapchain_desc, fullscreen_desc, swapchain);
+        ID3D12CommandQueue_Release(command_queue);
         return hr;
     }
 
