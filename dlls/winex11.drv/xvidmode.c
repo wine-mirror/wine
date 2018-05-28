@@ -37,6 +37,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xvidmode);
@@ -202,7 +203,8 @@ void X11DRV_XF86VM_Init(void)
       pXF86VidModeGetGammaRampSize(gdi_display, DefaultScreen(gdi_display),
                                    &xf86vm_gammaramp_size);
       if (X11DRV_check_error()) xf86vm_gammaramp_size = 0;
-      if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
+      TRACE("Gamma ramp size %d.\n", xf86vm_gammaramp_size);
+      if (xf86vm_gammaramp_size >= GAMMA_RAMP_SIZE)
           xf86vm_use_gammaramp = TRUE;
   }
 #endif /* X_XF86VidModeSetGammaRamp */
@@ -334,6 +336,94 @@ static BOOL ComputeGammaFromRamp(WORD ramp[GAMMA_RAMP_SIZE], float *gamma)
 /* Hmm... should gamma control be available in desktop mode or not?
  * I'll assume that it should */
 
+#ifdef X_XF86VidModeSetGammaRamp
+static void interpolate_gamma_ramp(WORD *dst_r, WORD *dst_g, WORD *dst_b, unsigned int dst_size,
+        const WORD *src_r, const WORD *src_g, const WORD *src_b, unsigned int src_size)
+{
+    double position, distance;
+    unsigned int dst_i, src_i;
+
+    for (dst_i = 0; dst_i < dst_size; ++dst_i)
+    {
+        position = dst_i * (src_size - 1) / (double)(dst_size - 1);
+        src_i = position;
+
+        if (src_i + 1 < src_size)
+        {
+            distance = position - src_i;
+
+            dst_r[dst_i] = (1.0 - distance) * src_r[src_i] + distance * src_r[src_i + 1] + 0.5;
+            dst_g[dst_i] = (1.0 - distance) * src_g[src_i] + distance * src_g[src_i + 1] + 0.5;
+            dst_b[dst_i] = (1.0 - distance) * src_b[src_i] + distance * src_b[src_i + 1] + 0.5;
+        }
+        else
+        {
+            dst_r[dst_i] = src_r[src_i];
+            dst_g[dst_i] = src_g[src_i];
+            dst_b[dst_i] = src_b[src_i];
+        }
+    }
+}
+
+static BOOL xf86vm_get_gamma_ramp(struct x11drv_gamma_ramp *ramp)
+{
+    WORD *red, *green, *blue;
+    BOOL ret = FALSE;
+
+    if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
+    {
+        red = ramp->red;
+        green = ramp->green;
+        blue = ramp->blue;
+    }
+    else
+    {
+        if (!(red = heap_calloc(3 * xf86vm_gammaramp_size, sizeof(*red))))
+            return FALSE;
+        green = red + xf86vm_gammaramp_size;
+        blue = green + xf86vm_gammaramp_size;
+    }
+
+    ret = pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display),
+                                   xf86vm_gammaramp_size, red, green, blue);
+    if (ret && red != ramp->red)
+        interpolate_gamma_ramp(ramp->red, ramp->green, ramp->blue, GAMMA_RAMP_SIZE,
+                               red, green, blue, xf86vm_gammaramp_size);
+    if (red != ramp->red)
+        heap_free(red);
+    return ret;
+}
+
+static BOOL xf86vm_set_gamma_ramp(struct x11drv_gamma_ramp *ramp)
+{
+    WORD *red, *green, *blue;
+    BOOL ret = FALSE;
+
+    if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
+    {
+        red = ramp->red;
+        green = ramp->green;
+        blue = ramp->blue;
+    }
+    else
+    {
+        if (!(red = heap_calloc(3 * xf86vm_gammaramp_size, sizeof(*red))))
+            return FALSE;
+        green = red + xf86vm_gammaramp_size;
+        blue = green + xf86vm_gammaramp_size;
+
+        interpolate_gamma_ramp(red, green, blue, xf86vm_gammaramp_size,
+                               ramp->red, ramp->green, ramp->blue, GAMMA_RAMP_SIZE);
+    }
+
+    ret = pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display),
+                                   xf86vm_gammaramp_size, red, green, blue);
+    if (red != ramp->red)
+        heap_free(red);
+    return ret;
+}
+#endif
+
 static BOOL X11DRV_XF86VM_GetGammaRamp(struct x11drv_gamma_ramp *ramp)
 {
 #ifdef X_XF86VidModeSetGamma
@@ -342,8 +432,7 @@ static BOOL X11DRV_XF86VM_GetGammaRamp(struct x11drv_gamma_ramp *ramp)
   if (xf86vm_major < 2) return FALSE; /* no gamma control */
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_use_gammaramp)
-      return pXF86VidModeGetGammaRamp(gdi_display, DefaultScreen(gdi_display), GAMMA_RAMP_SIZE,
-                                      ramp->red, ramp->green, ramp->blue);
+      return xf86vm_get_gamma_ramp(ramp);
 #endif
   if (pXF86VidModeGetGamma(gdi_display, DefaultScreen(gdi_display), &gamma))
   {
@@ -367,8 +456,7 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(struct x11drv_gamma_ramp *ramp)
       !ComputeGammaFromRamp(ramp->blue,  &gamma.blue)) return FALSE;
 #ifdef X_XF86VidModeSetGammaRamp
   if (xf86vm_use_gammaramp)
-      return pXF86VidModeSetGammaRamp(gdi_display, DefaultScreen(gdi_display), GAMMA_RAMP_SIZE,
-                                      ramp->red, ramp->green, ramp->blue);
+      return xf86vm_set_gamma_ramp(ramp);
 #endif
   return pXF86VidModeSetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
 #else
