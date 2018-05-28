@@ -327,7 +327,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {
-        ERR("Failed to allocate DXGI surface object memory\n");
+        ERR("Failed to allocate DXGI surface object memory.\n");
         return E_OUTOFMEMORY;
     }
 
@@ -338,7 +338,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
         return hr;
     }
 
-    TRACE("Created IDXGISurface %p\n", object);
+    TRACE("Created IDXGISurface %p.\n", object);
     *surface = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGISurface1_iface;
 
     return S_OK;
@@ -348,7 +348,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *i
         struct wined3d_swapchain_desc *desc, BOOL implicit, struct wined3d_swapchain **wined3d_swapchain)
 {
     struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
-    struct dxgi_swapchain *object;
+    struct d3d11_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, wined3d_swapchain %p.\n",
@@ -360,7 +360,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *i
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_swapchain_init(object, device, desc, implicit)))
+    if (FAILED(hr = d3d11_swapchain_init(object, device, desc, implicit)))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
         heap_free(object);
