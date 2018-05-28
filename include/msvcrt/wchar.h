@@ -501,6 +501,11 @@ static inline wchar_t* __cdecl wmemcpy(wchar_t *dst, const wchar_t *src, size_t 
     return memcpy(dst, src, n * sizeof(wchar_t));
 }
 
+static inline wchar_t* __cdecl wmemmove(wchar_t *dst, const wchar_t *src, size_t n)
+{
+    return memmove(dst, src, n * sizeof(wchar_t));
+}
+
 #ifdef __cplusplus
 }
 #endif
