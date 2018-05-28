@@ -173,6 +173,8 @@ struct d3d11_swapchain
     IDXGIOutput *target;
 };
 
+HRESULT d3d11_swapchain_create(IWineDXGIDevice *device, HWND window, const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc,
+        const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc, IDXGISwapChain1 **swapchain) DECLSPEC_HIDDEN;
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
         struct wined3d_swapchain_desc *desc, BOOL implicit) DECLSPEC_HIDDEN;
 
