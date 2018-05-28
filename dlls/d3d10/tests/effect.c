@@ -2425,7 +2425,7 @@ static void test_effect_constant_buffer_stride(void)
     hr = create_effect(fx_test_ecbs, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
-    for (i=0; i<sizeof(tv_ecbs)/sizeof(tv_ecbs[0]); i++)
+    for (i=0; i<ARRAY_SIZE(tv_ecbs); i++)
     {
         constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, i);
         type = constantbuffer->lpVtbl->GetType(constantbuffer);

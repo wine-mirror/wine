@@ -154,7 +154,7 @@ static void test_stateblock_mask(void)
     ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
     hr = D3D10StateBlockMaskEnableCapture(NULL, D3D10_DST_VS, 0, 1);
     ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
-    for (i = 0; i < sizeof(capture_test) / sizeof(*capture_test); ++i)
+    for (i = 0; i < ARRAY_SIZE(capture_test); ++i)
     {
         memset(&result, 0xff, sizeof(result));
         hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS_SHADER_RESOURCES,
