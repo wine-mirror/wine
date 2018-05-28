@@ -1844,7 +1844,8 @@ static void test_create_texture2d(void)
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
     ID3D10Texture2D_Release(texture);
 
-    ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_level_count);
+    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_level_count);
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
     desc.ArraySize = 1;
     desc.SampleDesc.Count = 2;
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
@@ -9578,7 +9579,8 @@ static void test_check_multisample_quality_levels(void)
         return;
     }
 
-    ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
+    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
     if (!quality_levels)
     {
         skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping test.\n");
