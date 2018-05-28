@@ -570,6 +570,49 @@ static void get_buffer_readback(ID3D10Buffer *buffer, struct resource_readback *
     ID3D10Device_Release(device);
 }
 
+static void get_texture1d_readback(ID3D10Texture1D *texture, unsigned int sub_resource_idx,
+        struct resource_readback *rb)
+{
+    D3D10_TEXTURE1D_DESC texture_desc;
+    unsigned int miplevel;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    rb->dimension = D3D10_RESOURCE_DIMENSION_TEXTURE1D;
+
+    ID3D10Texture1D_GetDevice(texture, &device);
+
+    ID3D10Texture1D_GetDesc(texture, &texture_desc);
+    texture_desc.Usage = D3D10_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    if (FAILED(hr = ID3D10Device_CreateTexture1D(device, &texture_desc, NULL, (ID3D10Texture1D **)&rb->resource)))
+    {
+        trace("Failed to create texture, hr %#x.\n", hr);
+        ID3D10Device_Release(device);
+        return;
+    }
+
+    miplevel = sub_resource_idx % texture_desc.MipLevels;
+    rb->width = max(1, texture_desc.Width >> miplevel);
+    rb->height = 1;
+    rb->sub_resource_idx = sub_resource_idx;
+
+    ID3D10Device_CopyResource(device, rb->resource, (ID3D10Resource *)texture);
+    if (FAILED(hr = ID3D10Texture1D_Map((ID3D10Texture1D *)rb->resource, sub_resource_idx,
+            D3D10_MAP_READ, 0, &rb->map_desc.pData)))
+    {
+        trace("Failed to map sub-resource %u, hr %#x.\n", sub_resource_idx, hr);
+        ID3D10Resource_Release(rb->resource);
+        rb->resource = NULL;
+    }
+    rb->map_desc.RowPitch = 0;
+
+    ID3D10Device_Release(device);
+}
+
 static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_resource_idx,
         struct resource_readback *rb)
 {
@@ -643,6 +686,9 @@ static void release_resource_readback(struct resource_readback *rb)
     {
         case D3D10_RESOURCE_DIMENSION_BUFFER:
             ID3D10Buffer_Unmap((ID3D10Buffer *)rb->resource);
+            break;
+        case D3D10_RESOURCE_DIMENSION_TEXTURE1D:
+            ID3D10Texture1D_Unmap((ID3D10Texture1D *)rb->resource, rb->sub_resource_idx);
             break;
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
             ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->resource, rb->sub_resource_idx);
@@ -722,6 +768,30 @@ static void check_texture_color_(unsigned int line, ID3D10Texture2D *texture,
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
         check_texture_sub_resource_color_(line, texture, sub_resource_idx, NULL, expected_color, max_diff);
+}
+
+#define check_texture1d_sub_resource_color(a, b, c, d, e) check_texture1d_sub_resource_color_(__LINE__, a, b, c, d, e)
+static void check_texture1d_sub_resource_color_(unsigned int line, ID3D10Texture1D *texture,
+        unsigned int sub_resource_idx, const RECT *rect, DWORD expected_color, BYTE max_diff)
+{
+    struct resource_readback rb;
+
+    get_texture1d_readback(texture, sub_resource_idx, &rb);
+    check_readback_data_color_(line, &rb, rect, expected_color, max_diff);
+    release_resource_readback(&rb);
+}
+
+#define check_texture1d_color(t, c, d) check_texture1d_color_(__LINE__, t, c, d)
+static void check_texture1d_color_(unsigned int line, ID3D10Texture1D *texture,
+        DWORD expected_color, BYTE max_diff)
+{
+    unsigned int sub_resource_idx, sub_resource_count;
+    D3D10_TEXTURE1D_DESC texture_desc;
+
+    ID3D10Texture1D_GetDesc(texture, &texture_desc);
+    sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
+    for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
+        check_texture1d_sub_resource_color_(line, texture, sub_resource_idx, NULL, expected_color, max_diff);
 }
 
 #define check_texture_sub_resource_float(a, b, c, d, e) check_texture_sub_resource_float_(__LINE__, a, b, c, d, e)
@@ -10182,7 +10252,49 @@ static void test_swapchain_flip(void)
     DestroyWindow(window);
 }
 
-static void test_clear_render_target_view(void)
+static void test_clear_render_target_view_1d(void)
+{
+    static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+    static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
+
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE1D_DESC texture_desc;
+    ID3D10RenderTargetView *rtv;
+    ID3D10Texture1D *texture;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    texture_desc.Width = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture1D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv, color);
+    check_texture1d_color(texture, 0xbf4c7f19, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv, green);
+    check_texture1d_color(texture, 0x8000ff00, 1);
+
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10Texture1D_Release(texture);
+    release_test_context(&test_context);
+}
+
+static void test_clear_render_target_view_2d(void)
 {
     static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
     static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
@@ -10215,11 +10327,11 @@ static void test_clear_render_target_view(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &srgb_texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
@@ -10253,7 +10365,7 @@ static void test_clear_render_target_view(void)
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
@@ -16964,7 +17076,8 @@ START_TEST(device)
     test_swapchain_formats();
     test_swapchain_views();
     test_swapchain_flip();
-    test_clear_render_target_view();
+    test_clear_render_target_view_1d();
+    test_clear_render_target_view_2d();
     test_clear_depth_stencil_view();
     test_initial_depth_stencil_state();
     test_draw_depth_only();
