@@ -484,6 +484,17 @@ static inline wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)
     return NULL;
 }
 
+static inline int wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++)
+    {
+        if (s1[i] > s2[i]) return 1;
+        if (s1[i] < s2[i]) return -1;
+    }
+    return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
