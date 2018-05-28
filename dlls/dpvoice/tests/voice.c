@@ -428,11 +428,11 @@ static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDire
        "%s: expected ret=%x got ret=%x\n", name, DVERR_BUFFERTOOSMALL, ret);
     ok(data_size > sizeof(DVCOMPRESSIONINFO) && data_size < sizeof(data) - 1,
        "%s: got data_size=%u\n", name, data_size);
-    tests[sizeof(tests) / sizeof(tests[0]) - 3].data_size = data_size - 1;
-    tests[sizeof(tests) / sizeof(tests[0]) - 2].data_size = data_size;
-    tests[sizeof(tests) / sizeof(tests[0]) - 1].data_size = data_size + 1;
+    tests[ARRAY_SIZE(tests) - 3].data_size = data_size - 1;
+    tests[ARRAY_SIZE(tests) - 2].data_size = data_size;
+    tests[ARRAY_SIZE(tests) - 1].data_size = data_size + 1;
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(tests); i++)
     {
         memset(data, 0x23, sizeof(data));
 
