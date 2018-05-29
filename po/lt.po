@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-05-11 22:08+0300\n"
+"PO-Revision-Date: 2018-05-29 20:50+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12809,10 +12809,8 @@ msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
+msgstr "Ar tikrai norite pašalinti pasirinktą registro reikšmę?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
