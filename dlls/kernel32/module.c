@@ -1493,10 +1493,56 @@ FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function )
     return NULL;
 }
 
+typedef struct _PEB32
+{
+    BOOLEAN InheritedAddressSpace;
+    BOOLEAN ReadImageFileExecOptions;
+    BOOLEAN BeingDebugged;
+    BOOLEAN SpareBool;
+    DWORD   Mutant;
+    DWORD   ImageBaseAddress;
+    DWORD   LdrData;
+} PEB32;
+
+typedef struct _LIST_ENTRY32
+{
+  DWORD Flink;
+  DWORD Blink;
+} LIST_ENTRY32;
+
+typedef struct _PEB_LDR_DATA32
+{
+    ULONG        Length;
+    BOOLEAN      Initialized;
+    DWORD        SsHandle;
+    LIST_ENTRY32 InLoadOrderModuleList;
+} PEB_LDR_DATA32;
+
+typedef struct _UNICODE_STRING32
+{
+  USHORT Length;
+  USHORT MaximumLength;
+  DWORD  Buffer;
+} UNICODE_STRING32;
+
+typedef struct _LDR_MODULE32
+{
+    LIST_ENTRY32        InLoadOrderModuleList;
+    LIST_ENTRY32        InMemoryOrderModuleList;
+    LIST_ENTRY32        InInitializationOrderModuleList;
+    DWORD               BaseAddress;
+    DWORD               EntryPoint;
+    ULONG               SizeOfImage;
+    UNICODE_STRING32    FullDllName;
+    UNICODE_STRING32    BaseDllName;
+} LDR_MODULE32;
+
 typedef struct {
     HANDLE process;
     PLIST_ENTRY head, current;
     LDR_MODULE ldr_module;
+    BOOL wow64;
+    LDR_MODULE32 ldr_module32;
 } MODULE_ITERATOR;
 
 static BOOL init_module_iterator(MODULE_ITERATOR *iter, HANDLE process)
@@ -1505,6 +1551,9 @@ static BOOL init_module_iterator(MODULE_ITERATOR *iter, HANDLE process)
     PPEB_LDR_DATA ldr_data;
     NTSTATUS status;
 
+    if (!IsWow64Process(process, &iter->wow64))
+        return FALSE;
+
     /* Get address of PEB */
     status = NtQueryInformationProcess(process, ProcessBasicInformation,
                                        &pbi, sizeof(pbi), NULL);
@@ -1512,6 +1561,30 @@ static BOOL init_module_iterator(MODULE_ITERATOR *iter, HANDLE process)
     {
         SetLastError(RtlNtStatusToDosError(status));
         return FALSE;
+    }
+
+    if (sizeof(void *) == 8 && iter->wow64)
+    {
+        PEB_LDR_DATA32 *ldr_data32_ptr;
+        DWORD ldr_data32, first_module;
+        PEB32 *peb32;
+
+        peb32 = (PEB32 *)(DWORD_PTR)pbi.PebBaseAddress;
+
+        if (!ReadProcessMemory(process, &peb32->LdrData, &ldr_data32,
+                               sizeof(ldr_data32), NULL))
+            return FALSE;
+        ldr_data32_ptr = (PEB_LDR_DATA32 *)(DWORD_PTR) ldr_data32;
+
+        if (!ReadProcessMemory(process,
+                               &ldr_data32_ptr->InLoadOrderModuleList.Flink,
+                               &first_module, sizeof(first_module), NULL))
+            return FALSE;
+        iter->head = (LIST_ENTRY *)&ldr_data32_ptr->InLoadOrderModuleList;
+        iter->current = (LIST_ENTRY *)(DWORD_PTR) first_module;
+        iter->process = process;
+
+        return TRUE;
     }
 
     /* Read address of LdrData from PEB */
@@ -1535,6 +1608,19 @@ static int module_iterator_next(MODULE_ITERATOR *iter)
 {
     if (iter->current == iter->head)
         return 0;
+
+    if (sizeof(void *) == 8 && iter->wow64)
+    {
+        LIST_ENTRY32 *entry32 = (LIST_ENTRY32 *)iter->current;
+
+        if (!ReadProcessMemory(iter->process,
+                               CONTAINING_RECORD(entry32, LDR_MODULE32, InLoadOrderModuleList),
+                               &iter->ldr_module32, sizeof(iter->ldr_module32), NULL))
+            return -1;
+
+        iter->current = (LIST_ENTRY *)(DWORD_PTR) iter->ldr_module32.InLoadOrderModuleList.Flink;
+        return 1;
+    }
 
     if (!ReadProcessMemory(iter->process,
                            CONTAINING_RECORD(iter->current, LDR_MODULE, InLoadOrderModuleList),
@@ -1594,7 +1680,10 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
     {
         if (cb >= sizeof(HMODULE))
         {
-            *lphModule++ = iter.ldr_module.BaseAddress;
+            if (sizeof(void *) == 8 && iter.wow64)
+                *lphModule++ = (HMODULE) (DWORD_PTR)iter.ldr_module32.BaseAddress;
+            else
+                *lphModule++ = iter.ldr_module.BaseAddress;
             cb -= sizeof(HMODULE);
         }
         size += sizeof(HMODULE);
