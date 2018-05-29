@@ -182,6 +182,7 @@ static void test_EnumProcessModules(void)
 
     if (sizeof(void *) == 8)
     {
+        MODULEINFO info;
         char name[40];
 
         strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
@@ -206,6 +207,12 @@ static void test_EnumProcessModules(void)
         ok(ret, "got error %u\n", GetLastError());
 todo_wine
         ok(!strcmp(name, buffer), "got %s\n", name);
+
+        ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
+        ok(ret, "got error %u\n", GetLastError());
+        ok(info.lpBaseOfDll == hMod, "expected %p, got %p\n", hMod, info.lpBaseOfDll);
+        ok(info.SizeOfImage, "image size was 0\n");
+        ok(info.EntryPoint >= info.lpBaseOfDll, "got entry point %p\n", info.EntryPoint);
 
         TerminateProcess(pi.hProcess, 0);
     }

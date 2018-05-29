@@ -1907,6 +1907,7 @@ BOOL WINAPI K32GetModuleInformation(HANDLE process, HMODULE module,
                                     MODULEINFO *modinfo, DWORD cb)
 {
     LDR_MODULE ldr_module;
+    BOOL wow64;
 
     if (cb < sizeof(MODULEINFO))
     {
@@ -1914,12 +1915,29 @@ BOOL WINAPI K32GetModuleInformation(HANDLE process, HMODULE module,
         return FALSE;
     }
 
-    if (!get_ldr_module(process, module, &ldr_module))
+    if (!IsWow64Process(process, &wow64))
         return FALSE;
 
-    modinfo->lpBaseOfDll = ldr_module.BaseAddress;
-    modinfo->SizeOfImage = ldr_module.SizeOfImage;
-    modinfo->EntryPoint  = ldr_module.EntryPoint;
+    if (sizeof(void *) == 8 && wow64)
+    {
+        LDR_MODULE32 ldr_module32;
+
+        if (!get_ldr_module32(process, module, &ldr_module32))
+            return FALSE;
+
+        modinfo->lpBaseOfDll = (void *)(DWORD_PTR)ldr_module32.BaseAddress;
+        modinfo->SizeOfImage = ldr_module32.SizeOfImage;
+        modinfo->EntryPoint  = (void *)(DWORD_PTR)ldr_module32.EntryPoint;
+    }
+    else
+    {
+        if (!get_ldr_module(process, module, &ldr_module))
+            return FALSE;
+
+        modinfo->lpBaseOfDll = ldr_module.BaseAddress;
+        modinfo->SizeOfImage = ldr_module.SizeOfImage;
+        modinfo->EntryPoint  = ldr_module.EntryPoint;
+    }
     return TRUE;
 }
 
