@@ -97,6 +97,23 @@ static ULONG STDMETHODCALLTYPE d3d11_immediate_context_Release(ID3D11DeviceConte
     return refcount;
 }
 
+static void d3d11_immediate_context_set_constant_buffers(ID3D11DeviceContext1 *iface,
+        enum wined3d_shader_type type, UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
+{
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    unsigned int i;
+
+    wined3d_mutex_lock();
+    for (i = 0; i < buffer_count; ++i)
+    {
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
+
+        wined3d_device_set_constant_buffer(device->wined3d_device, type, start_slot + i,
+                buffer ? buffer->wined3d_buffer : NULL);
+    }
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d11_immediate_context_GetDevice(ID3D11DeviceContext1 *iface, ID3D11Device **device)
 {
     struct d3d_device *device_object = device_from_immediate_ID3D11DeviceContext1(iface);
@@ -140,21 +157,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_SetPrivateDataInterface
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_vs_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_VERTEX, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_PSSetShaderResources(ID3D11DeviceContext1 *iface,
@@ -302,21 +309,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_Unmap(ID3D11DeviceContext1
 static void STDMETHODCALLTYPE d3d11_immediate_context_PSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_ps_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_PIXEL, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_IASetInputLayout(ID3D11DeviceContext1 *iface,
@@ -405,21 +402,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstanced(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_gs_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_GEOMETRY, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetShader(ID3D11DeviceContext1 *iface,
@@ -1260,21 +1247,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_HSSetSamplers(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_HSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_hs_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_HULL, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DSSetShaderResources(ID3D11DeviceContext1 *iface,
@@ -1337,21 +1314,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DSSetSamplers(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_DSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_ds_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_DOMAIN, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetShaderResources(ID3D11DeviceContext1 *iface,
@@ -1434,21 +1401,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetSamplers(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetConstantBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < buffer_count; ++i)
-    {
-        struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-
-        wined3d_device_set_cs_cb(device->wined3d_device, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_set_constant_buffers(iface, WINED3D_SHADER_TYPE_COMPUTE, start_slot,
+            buffer_count, buffers);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetConstantBuffers(ID3D11DeviceContext1 *iface,
