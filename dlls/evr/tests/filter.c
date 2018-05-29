@@ -163,7 +163,7 @@ static void test_evr_filter_aggregations(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(iids); i++)
     {
         test_aggregation(CLSID_EnhancedVideoRenderer, *iids[i], "filter", i);
     }
