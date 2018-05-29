@@ -104,7 +104,7 @@ static void test_create_device(void)
     HWND window;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
+    for (i = 0; i < ARRAY_SIZE(d3d10_feature_levels); ++i)
     {
         if (SUCCEEDED(hr = D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0,
                 d3d10_feature_levels[i], D3D10_1_SDK_VERSION, &device)))
@@ -279,7 +279,7 @@ static void test_device_interfaces(void)
     unsigned int i;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
+    for (i = 0; i < ARRAY_SIZE(d3d10_feature_levels); ++i)
     {
         struct device_desc device_desc;
 
@@ -320,7 +320,7 @@ static void test_device_interfaces(void)
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
 
-    for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
+    for (i = 0; i < ARRAY_SIZE(d3d10_feature_levels); ++i)
     {
         struct device_desc device_desc;
 
@@ -614,7 +614,7 @@ static void test_create_blend_state(void)
     refcount = ID3D10BlendState1_Release(blend_state2);
     ok(!refcount, "Blend state has %u references left.\n", refcount);
 
-    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const D3D10_BLEND_DESC1 *current_desc = &desc_conversion_tests[i];
 
