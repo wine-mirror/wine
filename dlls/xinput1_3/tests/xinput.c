@@ -292,7 +292,7 @@ START_TEST(xinput)
     void *pXInputGetStateEx_Ordinal;
     int i;
 
-    for (i = 0; i < sizeof(libs) / sizeof(libs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(libs); i++)
     {
         hXinput = LoadLibraryA( libs[i].name );
 
