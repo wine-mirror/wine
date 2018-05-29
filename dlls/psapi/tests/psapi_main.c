@@ -182,6 +182,8 @@ static void test_EnumProcessModules(void)
 
     if (sizeof(void *) == 8)
     {
+        char name[40];
+
         strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess failed: %u\n", GetLastError());
@@ -195,6 +197,10 @@ static void test_EnumProcessModules(void)
         ok(ret == 1, "got %d, error %u\n", ret, GetLastError());
         ok(!!hMod, "expected non-NULL module\n");
         ok(cbNeeded % sizeof(hMod) == 0, "got %u\n", cbNeeded);
+
+        ret = GetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
+        ok(ret, "got error %u\n", GetLastError());
+        ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
 
         TerminateProcess(pi.hProcess, 0);
     }

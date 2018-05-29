@@ -1654,6 +1654,29 @@ static BOOL get_ldr_module(HANDLE process, HMODULE module, LDR_MODULE *ldr_modul
     return FALSE;
 }
 
+static BOOL get_ldr_module32(HANDLE process, HMODULE module, LDR_MODULE32 *ldr_module)
+{
+    MODULE_ITERATOR iter;
+    INT ret;
+
+    if (!init_module_iterator(&iter, process))
+        return FALSE;
+
+    while ((ret = module_iterator_next(&iter)) > 0)
+        /* When hModule is NULL we return the process image - which will be
+         * the first module since our iterator uses InLoadOrderModuleList */
+        if (!module || (DWORD)(DWORD_PTR) module == iter.ldr_module32.BaseAddress)
+        {
+            *ldr_module = iter.ldr_module32;
+            return TRUE;
+        }
+
+    if (ret == 0)
+        SetLastError(ERROR_INVALID_HANDLE);
+
+    return FALSE;
+}
+
 /***********************************************************************
  *           K32EnumProcessModules (KERNEL32.@)
  *
@@ -1720,14 +1743,33 @@ DWORD WINAPI K32GetModuleBaseNameW(HANDLE process, HMODULE module,
                                    LPWSTR base_name, DWORD size)
 {
     LDR_MODULE ldr_module;
+    BOOL wow64;
 
-    if (!get_ldr_module(process, module, &ldr_module))
+    if (!IsWow64Process(process, &wow64))
         return 0;
 
-    size = min(ldr_module.BaseDllName.Length / sizeof(WCHAR), size);
-    if (!ReadProcessMemory(process, ldr_module.BaseDllName.Buffer,
-                           base_name, size * sizeof(WCHAR), NULL))
-        return 0;
+    if (sizeof(void *) == 8 && wow64)
+    {
+        LDR_MODULE32 ldr_module32;
+
+        if (!get_ldr_module32(process, module, &ldr_module32))
+            return 0;
+
+        size = min(ldr_module32.BaseDllName.Length / sizeof(WCHAR), size);
+        if (!ReadProcessMemory(process, (void *)(DWORD_PTR)ldr_module32.BaseDllName.Buffer,
+                               base_name, size * sizeof(WCHAR), NULL))
+            return 0;
+    }
+    else
+    {
+        if (!get_ldr_module(process, module, &ldr_module))
+            return 0;
+
+        size = min(ldr_module.BaseDllName.Length / sizeof(WCHAR), size);
+        if (!ReadProcessMemory(process, ldr_module.BaseDllName.Buffer,
+                               base_name, size * sizeof(WCHAR), NULL))
+            return 0;
+    }
 
     base_name[size] = 0;
     return size;
