@@ -2385,7 +2385,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    unsigned int i;
+    unsigned int i, j;
 
     TRACE("iface %p.\n", iface);
 
@@ -2414,14 +2414,10 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
         wined3d_device_set_ps_resource_view(device->wined3d_device, i, NULL);
         wined3d_device_set_cs_resource_view(device->wined3d_device, i, NULL);
     }
-    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
-        wined3d_device_set_vs_cb(device->wined3d_device, i, NULL);
-        wined3d_device_set_hs_cb(device->wined3d_device, i, NULL);
-        wined3d_device_set_ds_cb(device->wined3d_device, i, NULL);
-        wined3d_device_set_gs_cb(device->wined3d_device, i, NULL);
-        wined3d_device_set_ps_cb(device->wined3d_device, i, NULL);
-        wined3d_device_set_cs_cb(device->wined3d_device, i, NULL);
+        for (j = 0; j < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++j)
+            wined3d_device_set_constant_buffer(device->wined3d_device, i, j, NULL);
     }
     for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
     {
