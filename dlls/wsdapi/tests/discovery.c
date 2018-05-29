@@ -47,8 +47,27 @@ static const char testProbeMessage[] = "<?xml version=\"1.0\" encoding=\"utf-8\"
     "xmlns:wsd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
     "xmlns:grog=\"http://more.tests/\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>"
     "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>"
-    "<wsa:MessageID>urn:uuid:%s</wsa:MessageID></soap:Header>"
-    "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types></wsd:Probe></soap:Body></soap:Envelope>";
+    "<wsa:MessageID>urn:uuid:%s</wsa:MessageID>"
+    "<grog:Perry>ExtraInfo</grog:Perry></soap:Header>"
+    "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types><grog:Lager>MoreInfo</grog:Lager></wsd:Probe></soap:Body></soap:Envelope>";
+
+static const WCHAR discoveryTo[] = {
+    'u','r','n',':',
+    's','c','h','e','m','a','s','-','x','m','l','s','o','a','p','-','o','r','g',':',
+    'w','s',':','2','0','0','5',':','0','4',':',
+    'd','i','s','c','o','v','e','r','y', 0 };
+
+static const WCHAR actionProbe[] = {
+    'h','t','t','p',':','/','/',
+    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
+    'w','s','/','2','0','0','5','/','0','4','/',
+    'd','i','s','c','o','v','e','r','y','/',
+    'P','r','o','b','e', 0 };
+
+static const WCHAR uri_more_tests[] = { 'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s','/', 0 };
+static const WCHAR uri_more_tests_no_slash[] = { 'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s', 0 };
+static const WCHAR prefix_grog[] = { 'g','r','o','g', 0 };
+static const WCHAR name_cider[] = { 'C','i','d','e','r', 0 };
 
 static HANDLE probe_event = NULL;
 static UUID probe_message_id;
@@ -449,6 +468,53 @@ static ULONG WINAPI IWSDiscoveryPublisherNotifyImpl_Release(IWSDiscoveryPublishe
     return ref;
 }
 
+static void verify_wsdxml_name(const char *debug_prefix, WSDXML_NAME *name, LPCWSTR uri, LPCWSTR prefix,
+    LPCWSTR local_name)
+{
+    ok(name != NULL, "%s: name == NULL\n", debug_prefix);
+    if (name == NULL) return;
+
+    ok(name->LocalName != NULL && lstrcmpW(name->LocalName, local_name) == 0,
+        "%s: Local name = '%s'\n", debug_prefix, wine_dbgstr_w(name->LocalName));
+
+    ok(name->Space != NULL, "%s: Space == NULL\n", debug_prefix);
+    if (name->Space == NULL) return;
+
+    ok(name->Space->Uri != NULL && lstrcmpW(name->Space->Uri, uri) == 0,
+        "%s: URI == '%s'\n", debug_prefix, wine_dbgstr_w(name->Space->Uri));
+    ok(name->Space->PreferredPrefix != NULL && lstrcmpW(name->Space->PreferredPrefix, prefix) == 0,
+        "%s: Prefix = '%s'\n", debug_prefix, wine_dbgstr_w(name->Space->PreferredPrefix));
+}
+
+static void verify_wsdxml_any_text(const char *debug_prefix, WSDXML_ELEMENT *any, LPCWSTR uri, LPCWSTR prefix,
+    LPCWSTR local_name, LPCWSTR value)
+{
+    WSDXML_TEXT *child;
+
+    ok(any != NULL, "%s: any == NULL\n", debug_prefix);
+    if (any == NULL) return;
+
+    child = (WSDXML_TEXT *) any->FirstChild;
+
+    ok(any->Node.Type == ElementType, "%s: Node type == %d\n", debug_prefix, any->Node.Type);
+    ok(any->Node.Parent == NULL, "%s: Parent == %p\n", debug_prefix, any->Node.Parent);
+    ok(any->Node.Next == NULL, "%s: Next == %p\n", debug_prefix, any->Node.Next);
+    verify_wsdxml_name(debug_prefix, any->Name, uri, prefix, local_name);
+
+    ok(child != NULL, "%s: First child == NULL\n", debug_prefix);
+
+    if (child != NULL)
+    {
+        ok(child->Node.Type == TextType, "%s: Node type == %d\n", debug_prefix, child->Node.Type);
+        ok(child->Node.Parent == any, "%s: Parent == %p\n", debug_prefix, child->Node.Parent);
+        ok(child->Node.Next == NULL, "%s: Next == %p\n", debug_prefix, child->Node.Next);
+
+        if (child->Node.Type == TextType)
+            ok(child->Text != NULL && lstrcmpW(child->Text, value) == 0,
+                "%s: Text == '%s'\n", debug_prefix, wine_dbgstr_w(child->Text));
+    }
+}
+
 static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryPublisherNotify *This, const WSD_SOAP_MESSAGE *pSoap, IWSDMessageParameters *pMessageParameters)
 {
     trace("IWSDiscoveryPublisherNotifyImpl_ProbeHandler called (%p, %p, %p)\n", This, pSoap, pMessageParameters);
@@ -464,8 +530,15 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
     if (pSoap != NULL)
     {
+        static const WCHAR perry[] = {'P','e','r','r','y',0};
+        static const WCHAR extra_info[] = {'E','x','t','r','a','I','n','f','o',0};
+        WSD_PROBE *probe_msg = (WSD_PROBE *) pSoap->Body;
+
         ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
-        ok(pSoap->Header.To != NULL, "pSoap->Header.To == NULL\n");
+        ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, discoveryTo) == 0,
+            "pSoap->Header.To == '%s'\n", wine_dbgstr_w(pSoap->Header.To));
+        ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, actionProbe) == 0,
+            "pSoap->Header.Action == '%s'\n", wine_dbgstr_w(pSoap->Header.Action));
 
         ok(pSoap->Header.MessageID != NULL, "pSoap->Header.MessageID == NULL");
 
@@ -481,6 +554,27 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
             /* Check if we've either received a message without a UUID, or the UUID isn't the one we sent. If so,
                ignore it and wait for another message. */
             if ((ret != RPC_S_OK) || (UuidEqual(&uuid, &probe_message_id, &ret) == FALSE)) return S_OK;
+        }
+
+        verify_wsdxml_any_text("pSoap->Header.AnyHeaders", pSoap->Header.AnyHeaders, uri_more_tests_no_slash,
+            prefix_grog, perry, extra_info);
+
+        if (probe_msg != NULL)
+        {
+            static const WCHAR lager[] = {'L','a','g','e','r',0};
+            static const WCHAR more_info[] = {'M','o','r','e','I','n','f','o',0};
+
+            ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
+
+            if (probe_msg->Types != NULL)
+            {
+                verify_wsdxml_name("probe_msg->Types->Element", probe_msg->Types->Element, uri_more_tests_no_slash,
+                    prefix_grog, name_cider);
+                ok(probe_msg->Types->Next == NULL, "probe_msg->Types->Next == %p\n", probe_msg->Types->Next);
+            }
+
+            ok(probe_msg->Scopes == NULL, "Probe message Scopes != NULL\n");
+            verify_wsdxml_any_text("probe_msg->Any", probe_msg->Any, uri_more_tests_no_slash, prefix_grog, lager, more_info);
         }
     }
 
@@ -628,15 +722,12 @@ static void Publish_tests(void)
     WSDXML_NAME header_any_name, another_name;
     WSDXML_NAMESPACE ns, ns2;
     WCHAR header_any_name_text[] = {'B','e','e','r',0};
-    WCHAR another_name_text[] = {'C','i','d','e','r',0};
     static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
     static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
     static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
     static const WCHAR ref_param_any_text[] = {'R','e','f','P','T','e','s','t',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'w','i','n','e',0};
-    static const WCHAR uri2[] = {'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s','/',0};
-    static const WCHAR prefix2[] = {'g','r','o','g',0};
     static const WCHAR uri3[] = {'h','t','t','p',':','/','/','t','h','i','r','d','.','u','r','l','/',0};
     WSD_NAME_LIST types_list;
     WSD_URI_LIST scopes_list, xaddrs_list;
@@ -722,10 +813,10 @@ static void Publish_tests(void)
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
     /* Create types list */
-    ns2.Uri = uri2;
-    ns2.PreferredPrefix = prefix2;
+    ns2.Uri = uri_more_tests;
+    ns2.PreferredPrefix = prefix_grog;
 
-    another_name.LocalName = another_name_text;
+    another_name.LocalName = (WCHAR *) name_cider;
     another_name.Space = &ns2;
 
     types_list.Next = malloc(sizeof(WSD_NAME_LIST));
@@ -739,10 +830,10 @@ static void Publish_tests(void)
     scopes_list.Element = uri;
 
     scopes_list.Next->Next = NULL;
-    scopes_list.Next->Element = uri2;
+    scopes_list.Next->Element = uri_more_tests;
 
     xaddrs_list.Next = malloc(sizeof(WSD_URI_LIST));
-    xaddrs_list.Element = uri2;
+    xaddrs_list.Element = uri_more_tests;
 
     xaddrs_list.Next->Next = NULL;
     xaddrs_list.Next->Element = uri3;
