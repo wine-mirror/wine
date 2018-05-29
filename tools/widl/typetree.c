@@ -442,6 +442,7 @@ void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stm
     iface->details.iface->disp_methods = NULL;
     iface->details.iface->stmts = stmts;
     iface->details.iface->inherit = inherit;
+    iface->details.iface->disp_inherit = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }
@@ -454,14 +455,22 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *met
     iface->details.iface->stmts = NULL;
     iface->details.iface->inherit = find_type("IDispatch", NULL, 0);
     if (!iface->details.iface->inherit) error_loc("IDispatch is undefined\n");
+    iface->details.iface->disp_inherit = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
 }
 
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface)
 {
-    type_dispinterface_define(dispiface, iface->details.iface->disp_props,
-                              iface->details.iface->disp_methods);
+    dispiface->details.iface = xmalloc(sizeof(*dispiface->details.iface));
+    dispiface->details.iface->disp_props = NULL;
+    dispiface->details.iface->disp_methods = NULL;
+    dispiface->details.iface->stmts = NULL;
+    dispiface->details.iface->inherit = find_type("IDispatch", NULL, 0);
+    if (!dispiface->details.iface->inherit) error_loc("IDispatch is undefined\n");
+    dispiface->details.iface->disp_inherit = iface;
+    dispiface->defined = TRUE;
+    compute_method_indexes(dispiface);
 }
 
 void type_module_define(type_t *module, statement_list_t *stmts)

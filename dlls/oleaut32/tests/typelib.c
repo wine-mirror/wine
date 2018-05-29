@@ -1530,13 +1530,10 @@ static void test_inheritance(void)
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
     ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
-if(use_midl_tlb) {
     ok(pTA->cFuncs == 6, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
-}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
-if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
@@ -1555,7 +1552,6 @@ if(use_midl_tlb) {
     ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
     ok(pFD->oVft == 5 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-}
     ITypeInfo_Release(pTI);
 
 
@@ -1616,12 +1612,10 @@ if(use_midl_tlb) {
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
-if(use_midl_tlb) {
     hr = ITypeInfo_GetFuncDesc(pTI, 6, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x1234, "memid %08x\n", pFD->memid);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-}
     ITypeInfo_Release(pTI);
 
     /* ItestIF7 is dual with inherited ifaces which derive from Dispatch */
@@ -1662,13 +1656,10 @@ if(use_midl_tlb) {
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
     ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
-if(use_midl_tlb) {
     ok(pTA->cFuncs == 3, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
-}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
-if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, -1, &href);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
@@ -1689,7 +1680,6 @@ if(use_midl_tlb) {
     ok(pFD->memid == 0x60010000, "memid %08x\n", pFD->memid);
     ok(pFD->oVft == 2 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-}
     ITypeInfo_Release(pTI);
 
     /* ItestIF11 is a syntax 2 dispinterface which derives from IDispatch */
@@ -1701,13 +1691,10 @@ if(use_midl_tlb) {
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
     ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
-if(use_midl_tlb) {
     ok(pTA->cFuncs == 10, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
-}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
-if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
@@ -1736,7 +1723,6 @@ if(use_midl_tlb) {
     ok(hr == S_OK, "hr %08x\n", hr);
     if (SUCCEEDED(hr)) ITypeInfo_Release(pTI_p);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-}
     ITypeInfo_Release(pTI);
 
 
@@ -1749,13 +1735,10 @@ if(use_midl_tlb) {
     ok(pTA->typekind == TKIND_INTERFACE, "kind %04x\n", pTA->typekind);
     ok(pTA->cbSizeVft == 6 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == 0, "typeflags %x\n", pTA->wTypeFlags);
-if(use_midl_tlb) {
     ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
-}
     ITypeInfo_ReleaseTypeAttr(pTI, pTA);
 
-if(use_midl_tlb) {
     /* Should have one method */
     hr = ITypeInfo_GetFuncDesc(pTI, 1, &pFD);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
@@ -1764,7 +1747,6 @@ if(use_midl_tlb) {
     ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
     ok(pFD->oVft == 5 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-}
     ITypeInfo_Release(pTI);
 
     ITypeLib_Release(pTL);

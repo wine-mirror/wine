@@ -343,6 +343,7 @@ struct iface_details
   var_list_t *disp_methods;
   var_list_t *disp_props;
   struct _type_t *inherit;
+  struct _type_t *disp_inherit;
 };
 
 struct module_details

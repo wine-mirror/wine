@@ -2040,11 +2040,29 @@ static void add_dispatch(msft_typelib_t *typelib)
 
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
 {
+    int num_parents = 0, num_funcs = 0;
+    importinfo_t *importinfo = NULL;
+    const statement_t *stmt_func;
+    type_t *inherit, *ref;
     int idx = 0;
     var_t *func;
     var_t *var;
     msft_typeinfo_t *msft_typeinfo;
 
+    if (-1 < dispinterface->typelib_idx)
+        return;
+
+    inherit = type_dispiface_get_inherit(dispinterface);
+
+    if (inherit)
+    {
+        importinfo = find_importinfo(typelib, inherit->name);
+
+        if (!importinfo && type_iface_get_inherit(inherit) && inherit->typelib_idx == -1)
+            add_interface_typeinfo(typelib, inherit);
+    }
+
+    /* check typelib_idx again, it could have been added while resolving the parent interface */
     if (-1 < dispinterface->typelib_idx)
         return;
 
@@ -2057,7 +2075,27 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
 
     msft_typeinfo->typeinfo->flags |= 0x1000; /* TYPEFLAG_FDISPATCHABLE */
     add_dispatch(typelib);
-    msft_typeinfo->typeinfo->cImplTypes = 1;
+
+    if (inherit)
+    {
+        add_impl_type(msft_typeinfo, inherit, importinfo);
+        msft_typeinfo->typeinfo->typekind |= 0x10;
+    }
+
+    /* count the number of inherited interfaces and non-local functions */
+    for (ref = inherit; ref; ref = type_iface_get_inherit(ref))
+    {
+        num_parents++;
+        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(ref) )
+        {
+            var_t *func = stmt_func->u.var;
+            if (!is_local(func->attrs)) num_funcs++;
+        }
+    }
+    msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
+    msft_typeinfo->typeinfo->cbSizeVft = num_funcs * pointer_size;
+
+    msft_typeinfo->typeinfo->cImplTypes = 1;    /* IDispatch */
 
     /* count the no of methods, as the variable indices come after the funcs */
     if (dispinterface->details.iface->disp_methods)
