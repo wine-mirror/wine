@@ -1295,7 +1295,7 @@ static void test_marshal_channel_buffer(void)
     SET_EXPECT(GetWindow);
     hr = IOleWindow_GetWindow(ole_window, &hwnd);
     ok(hr == S_OK, "GetWindow failed: %08x\n", hr);
-    ok(hwnd == (HWND)0xdeadbeef, "hwnd = %p\n", hwnd);
+    ok((DWORD)(DWORD_PTR)hwnd == 0xdeadbeef, "hwnd = %p\n", hwnd);
     CHECK_CALLED(Invoke);
     CHECK_CALLED(GetWindow);
 
