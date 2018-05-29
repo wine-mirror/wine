@@ -869,7 +869,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     expected = 50;
     ret = get_position(hm, TIME_MS);
-    todo_wine ok(ret >= expected && ret < expected + MARGIN, "expected %ums or greater, got %ums\n", expected, ret);
+    ok(ret >= expected && ret < expected + MARGIN, "expected %ums or greater, got %ums\n", expected, ret);
     expected = ret;
 
     Sleep(100);
@@ -882,7 +882,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     Sleep(1);
     ret = get_position(hm, TIME_MS);
-    todo_wine ok(ret > expected && ret < expected + MARGIN, "expected greater than %ums, got %ums\n", expected, ret);
+    ok(ret > expected && ret < expected + MARGIN, "expected greater than %ums, got %ums\n", expected, ret);
     expected = ret;
 
     ret = WaitForSingleObject(records.done, INFINITE);
@@ -893,7 +893,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     expected = 250; /* = 12 ticks in 120 BPM */
     ret = get_position(hm, TIME_MS);
-    ok(ret >= expected - MARGIN && ret <= expected + MARGIN,
+    todo_wine ok(ret >= expected - MARGIN && ret <= expected + MARGIN,
        "expected greater than %ums, got %ums\n", expected, ret);
     trace("after playing, got %ums\n", ret);
 
@@ -924,7 +924,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     ok(!rc, "midiStreamStop(dev=%d) rc=%s\n", udev, mmsys_error(rc));
 
     ret = get_position(hm, TIME_MS);
-    todo_wine ok(ret == 0, "expected 0ms, got %ums\n", ret);
+    ok(ret == 0, "expected 0ms, got %ums\n", ret);
 
     rc = midiStreamClose(hm);
     ok(!rc, "midiStreamClose(dev=%d) rc=%s\n", udev, mmsys_error(rc));

@@ -918,6 +918,7 @@ typedef struct WINE_MIDIStream {
     DWORD			dwPositionMS;
     DWORD			dwPulses;
     DWORD			dwStartTicks;
+    DWORD			dwElapsedMS;
     WORD			wFlags;
     WORD			status;
     HANDLE			hEvent;
@@ -973,6 +974,20 @@ static	DWORD	MMSYSTEM_MidiStream_Convert(WINE_MIDIStream* lpMidiStrm, DWORD puls
     return ret;
 }
 
+static DWORD midistream_get_playing_position(WINE_MIDIStream* lpMidiStrm)
+{
+    switch (lpMidiStrm->status) {
+    case MSM_STATUS_STOPPED:
+    case MSM_STATUS_PAUSED:
+        return lpMidiStrm->dwElapsedMS;
+    case MSM_STATUS_PLAYING:
+        return GetTickCount() - lpMidiStrm->dwStartTicks;
+    default:
+        FIXME("Unknown playing status %hu\n", lpMidiStrm->status);
+        return 0;
+    }
+}
+
 /**************************************************************************
  * 			MMSYSTEM_MidiStream_MessageHandler	[internal]
  */
@@ -988,7 +1003,11 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             return FALSE;
         case WINE_MSM_STOP:
             TRACE("STOP\n");
+            EnterCriticalSection(&lpMidiStrm->lock);
             lpMidiStrm->status = MSM_STATUS_STOPPED;
+            lpMidiStrm->dwPulses = 0;
+            lpMidiStrm->dwElapsedMS = 0;
+            LeaveCriticalSection(&lpMidiStrm->lock);
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
             /* empty list of already submitted buffers */
@@ -1008,13 +1027,22 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             return TRUE;
         case WINE_MSM_RESUME:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
-            lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
-            lpMidiStrm->status = MSM_STATUS_PLAYING;
+            if (lpMidiStrm->status != MSM_STATUS_PLAYING) {
+                EnterCriticalSection(&lpMidiStrm->lock);
+                lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwElapsedMS;
+                lpMidiStrm->status = MSM_STATUS_PLAYING;
+                LeaveCriticalSection(&lpMidiStrm->lock);
+            }
             SetEvent((HANDLE)msg->wParam);
             return TRUE;
         case WINE_MSM_PAUSE:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
-            lpMidiStrm->status = MSM_STATUS_PAUSED;
+            if (lpMidiStrm->status != MSM_STATUS_PAUSED) {
+                EnterCriticalSection(&lpMidiStrm->lock);
+                lpMidiStrm->dwElapsedMS = GetTickCount() - lpMidiStrm->dwStartTicks;
+                lpMidiStrm->status = MSM_STATUS_PAUSED;
+                LeaveCriticalSection(&lpMidiStrm->lock);
+            }
             SetEvent((HANDLE)msg->wParam);
             break;
 	/* FIXME(EPP): "I don't understand the content of the first MIDIHDR sent
@@ -1302,6 +1330,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
     lpMidiStrm->dwPositionMS = 0;
     lpMidiStrm->status = MSM_STATUS_PAUSED;
+    lpMidiStrm->dwElapsedMS = 0;
 
     mosm.dwStreamID = (DWORD)lpMidiStrm;
     /* FIXME: the correct value is not allocated yet for MAPPER */
@@ -1460,7 +1489,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	    lpMMT->wType = TIME_MS;
 	    /* fall through to alternative format */
 	case TIME_MS:
-	    lpMMT->u.ms = lpMidiStrm->dwPositionMS;
+	    lpMMT->u.ms = midistream_get_playing_position(lpMidiStrm);
 	    TRACE("=> %d ms\n", lpMMT->u.ms);
 	    break;
 	case TIME_TICKS:
