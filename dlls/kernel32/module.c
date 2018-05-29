@@ -1812,17 +1812,36 @@ DWORD WINAPI K32GetModuleFileNameExW(HANDLE process, HMODULE module,
                                      LPWSTR file_name, DWORD size)
 {
     LDR_MODULE ldr_module;
+    BOOL wow64;
     DWORD len;
 
     if (!size) return 0;
 
-    if(!get_ldr_module(process, module, &ldr_module))
+    if (!IsWow64Process(process, &wow64))
         return 0;
 
-    len = ldr_module.FullDllName.Length / sizeof(WCHAR);
-    if (!ReadProcessMemory(process, ldr_module.FullDllName.Buffer,
-                           file_name, min( len, size ) * sizeof(WCHAR), NULL))
-        return 0;
+    if (sizeof(void *) == 8 && wow64)
+    {
+        LDR_MODULE32 ldr_module32;
+
+        if (!get_ldr_module32(process, module, &ldr_module32))
+            return 0;
+
+        len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
+        if (!ReadProcessMemory(process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
+                               file_name, min( len, size ) * sizeof(WCHAR), NULL))
+            return 0;
+    }
+    else
+    {
+        if (!get_ldr_module(process, module, &ldr_module))
+            return 0;
+
+        len = ldr_module.FullDllName.Length / sizeof(WCHAR);
+        if (!ReadProcessMemory(process, ldr_module.FullDllName.Buffer,
+                               file_name, min( len, size ) * sizeof(WCHAR), NULL))
+            return 0;
+    }
 
     if (len < size)
     {
