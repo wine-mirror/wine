@@ -1197,6 +1197,8 @@ start_header:
 			    goto start_header;
 			}
 		    }
+		    /* reset dwToGo because dwStartTicks might be updated */
+		    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
 		} else {
 		    /* timeout, so me->dwDeltaTime is elapsed, can break the while loop */
 		    break;

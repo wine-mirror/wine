@@ -893,7 +893,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     expected = 250; /* = 12 ticks in 120 BPM */
     ret = get_position(hm, TIME_MS);
-    todo_wine ok(ret >= expected - MARGIN && ret <= expected + MARGIN,
+    ok(ret >= expected - MARGIN && ret <= expected + MARGIN,
        "expected greater than %ums, got %ums\n", expected, ret);
     trace("after playing, got %ums\n", ret);
 
@@ -914,7 +914,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
        So, the second event happens at dwDeltaTime(250ms) + 100ms after the first event. */
     expected = 250 + 100;
     diff = records.time_stamp[1] - records.time_stamp[0];
-    todo_wine ok(diff >= expected - MARGIN && diff <= expected + MARGIN,
+    ok(diff >= expected - MARGIN && diff <= expected + MARGIN,
        "expected %u ~ %ums, got %ums (dev=%d)\n", expected - MARGIN, expected + MARGIN, diff, udev);
 
     rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
