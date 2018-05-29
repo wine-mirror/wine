@@ -44,7 +44,7 @@ static void test_register_game(IGameExplorer **explorer)
     BSTR bstrExeName, bstrExePath;
 
     /* prepare path to binary */
-    GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
+    GetModuleFileNameW(NULL, sExeName, ARRAY_SIZE(sExeName));
 
     lstrcpyW(pathW, sExeName);
     PathRemoveFileSpecW(pathW);
@@ -101,7 +101,7 @@ static HRESULT _buildStatisticsFilePath(LPCGUID guidApplicationId, LPWSTR *lpSta
     hr = SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, sPath);
 
     if(SUCCEEDED(hr))
-        hr = (StringFromGUID2(guidApplicationId, sGuid, sizeof(sGuid) / sizeof(sGuid[0])) != 0 ? S_OK : E_FAIL);
+        hr = (StringFromGUID2(guidApplicationId, sGuid, ARRAY_SIZE(sGuid)) != 0 ? S_OK : E_FAIL);
 
     if(SUCCEEDED(hr))
     {

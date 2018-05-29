@@ -143,7 +143,7 @@ static HRESULT _buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     if(gameInstanceId)
     {
         if(SUCCEEDED(hr))
-            hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
+            hr = (StringFromGUID2(gameInstanceId, sInstanceId, ARRAY_SIZE(sInstanceId)) ? S_OK : E_FAIL);
 
         if(SUCCEEDED(hr))
         {
@@ -294,7 +294,7 @@ static void _validateGameRegistryValues(int line,
     HRESULT hr;
     WCHAR sGameApplicationId[40];
 
-    hr = (StringFromGUID2(gameApplicationId, sGameApplicationId, sizeof(sGameApplicationId)/sizeof(sGameApplicationId[0])) ? S_OK : E_FAIL);
+    hr = (StringFromGUID2(gameApplicationId, sGameApplicationId, ARRAY_SIZE(sGameApplicationId)) ? S_OK : E_FAIL);
     ok_(__FILE__, line)(hr == S_OK, "cannot convert game application id to string\n");
 
     /* these values exist up from Vista */
@@ -547,7 +547,7 @@ static void test_add_remove_game(void)
     if(ge)
     {
         /* prepare path to binary */
-        dwExeNameLen = GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
+        dwExeNameLen = GetModuleFileNameW(NULL, sExeName, ARRAY_SIZE(sExeName));
         ok(dwExeNameLen != 0, "GetModuleFileNameW returned invalid value\n");
         lstrcpynW(sExePath, sExeName, StrRChrW(sExeName, NULL, '\\') - sExeName + 1);
         bstrExeName = SysAllocString(sExeName);
@@ -625,7 +625,7 @@ static void test_install_uninstall_game(void)
     if(ge2)
     {
         /* prepare path to binary */
-        dwExeNameLen = GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
+        dwExeNameLen = GetModuleFileNameW(NULL, sExeName, ARRAY_SIZE(sExeName));
         ok(dwExeNameLen != 0, "GetModuleFileNameW returned invalid value\n");
         lstrcpynW(sExePath, sExeName, StrRChrW(sExeName, NULL, '\\') - sExeName + 1);
 
