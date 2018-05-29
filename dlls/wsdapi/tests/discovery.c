@@ -47,10 +47,11 @@ static const char testProbeMessage[] = "<?xml version=\"1.0\" encoding=\"utf-8\"
     "xmlns:wsd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
     "xmlns:grog=\"http://more.tests/\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>"
     "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>"
-    "<wsa:MessageID>urn:uuid:aa3eb169-9440-4eb7-9090-88402664cc6a</wsa:MessageID></soap:Header>"
+    "<wsa:MessageID>urn:uuid:%s</wsa:MessageID></soap:Header>"
     "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types></wsd:Probe></soap:Body></soap:Envelope>";
 
 static HANDLE probe_event = NULL;
+static UUID probe_message_id;
 
 #define MAX_CACHED_MESSAGES     5
 #define MAX_LISTENING_THREADS  20
@@ -465,6 +466,22 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
     {
         ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
         ok(pSoap->Header.To != NULL, "pSoap->Header.To == NULL\n");
+
+        ok(pSoap->Header.MessageID != NULL, "pSoap->Header.MessageID == NULL");
+
+        /* Ensure the message ID is at least 9 characters long (to skip past the 'urn:uuid:' prefix) */
+        if ((pSoap->Header.MessageID != NULL) && (lstrlenW(pSoap->Header.MessageID) > 9))
+        {
+            UUID uuid;
+            RPC_STATUS ret = UuidFromStringW((LPWSTR)pSoap->Header.MessageID + 9, &uuid);
+
+            trace("Received message with UUID '%s' (expected UUID '%s')\n", wine_dbgstr_guid(&uuid),
+                wine_dbgstr_guid(&probe_message_id));
+
+            /* Check if we've either received a message without a UUID, or the UUID isn't the one we sent. If so,
+               ignore it and wait for another message. */
+            if ((ret != RPC_S_OK) || (UuidEqual(&uuid, &probe_message_id, &ret) == FALSE)) return S_OK;
+        }
     }
 
     SetEvent(probe_event);
@@ -623,6 +640,7 @@ static void Publish_tests(void)
     static const WCHAR uri3[] = {'h','t','t','p',':','/','/','t','h','i','r','d','.','u','r','l','/',0};
     WSD_NAME_LIST types_list;
     WSD_URI_LIST scopes_list, xaddrs_list;
+    unsigned char *probe_uuid_str;
 
     rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
     ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
@@ -818,8 +836,23 @@ after_publish_test:
 
     /* Test the receiving of a probe message */
     probe_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    ok(send_udp_multicast_of_type(testProbeMessage, sizeof(testProbeMessage) - 1, AF_INET) == TRUE, "Sending Probe message failed\n");
-    todo_wine ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
+
+    UuidCreate(&probe_message_id);
+    UuidToStringA(&probe_message_id, &probe_uuid_str);
+
+    ok(probe_uuid_str != NULL, "Failed to create UUID for probe message\n");
+
+    if (probe_uuid_str != NULL)
+    {
+        char probe_message[sizeof(testProbeMessage) + 50];
+        sprintf(probe_message, testProbeMessage, probe_uuid_str);
+
+        ok(send_udp_multicast_of_type(probe_message, strlen(probe_message), AF_INET) == TRUE, "Sending Probe message failed\n");
+        todo_wine ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
+
+        RpcStringFreeA(&probe_uuid_str);
+    }
+
     CloseHandle(probe_event);
 
     ref = IWSDiscoveryPublisher_Release(publisher);
