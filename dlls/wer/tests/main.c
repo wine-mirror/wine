@@ -66,7 +66,7 @@ static void test_WerAddExcludedApplication(void)
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 
     /* appname has a path */
-    res = GetWindowsDirectoryW(buffer, sizeof(buffer) / sizeof(buffer[0]));
+    res = GetWindowsDirectoryW(buffer, ARRAY_SIZE(buffer));
     if (res > 0) {
         /* the last part from the path is added to the inclusion list */
         hr = WerAddExcludedApplication(buffer, FALSE);
@@ -118,7 +118,7 @@ static void test_WerRemoveExcludedApplication(void)
         "got 0x%x (expected E_FAIL or HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND))\n", hr);
 
     /* appname has a path */
-    res = GetWindowsDirectoryW(buffer, sizeof(buffer) / sizeof(buffer[0]));
+    res = GetWindowsDirectoryW(buffer, ARRAY_SIZE(buffer));
     if (res > 0) {
         hr = WerRemoveExcludedApplication(buffer, FALSE);
         ok((hr == E_FAIL) || (hr == __HRESULT_FROM_WIN32(ERROR_ENVVAR_NOT_FOUND)),
@@ -223,7 +223,7 @@ static void  test_WerReportCreate(void)
 
     /* multiple active reports are possible */
     memset(table, 0, sizeof(table));
-    for (i = 0; i < (sizeof(table) / sizeof(table[0]) -1); i++) {
+    for (i = 0; i < (ARRAY_SIZE(table) - 1); i++) {
         report = (void *) 0xdeadbeef;
         hr = WerReportCreate(appcrash, WerReportCritical, NULL, &table[i]);
         ok(hr == S_OK, "%02d: got 0x%x and %p (expected S_OK)\n", i, hr, table[i]);
