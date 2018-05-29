@@ -158,7 +158,7 @@ static void test_EnumChildContainerNames(void)
     ok(hr == E_INVALIDARG,
        "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
 
-    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, NULL, sizeof(container)/sizeof(WCHAR));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, NULL, ARRAY_SIZE(container));
     ok(hr == E_INVALIDARG,
        "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
 
@@ -178,7 +178,7 @@ static void test_EnumChildContainerNames(void)
        "Expected the container buffer to be untouched, got %s\n", wine_dbgstr_w(container));
 
     memcpy(container, testW, sizeof(testW));
-    hr = IDxDiagContainer_EnumChildContainerNames(pddc, ~0, container, sizeof(container)/sizeof(WCHAR));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, ~0, container, ARRAY_SIZE(container));
     ok(hr == E_INVALIDARG,
        "Expected IDxDiagContainer::EnumChildContainerNames to return E_INVALIDARG, got 0x%08x\n", hr);
     ok(!memcmp(container, zerotestW, sizeof(zerotestW)),
@@ -221,7 +221,7 @@ static void test_EnumChildContainerNames(void)
                "Expected the container buffer string to be empty, got %s\n", wine_dbgstr_w(container));
 
             /* Get the container name to compare against. */
-            hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, temp, sizeof(temp)/sizeof(WCHAR));
+            hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, temp, ARRAY_SIZE(temp));
             ok(hr == S_OK,
                "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
 
@@ -293,7 +293,7 @@ static void test_GetChildContainer(void)
     ok(child == NULL, "Expected output pointer to be NULL, got %p\n", child);
 
     /* Get the name of a suitable child container. */
-    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, container, sizeof(container)/sizeof(WCHAR));
+    hr = IDxDiagContainer_EnumChildContainerNames(pddc, 0, container, ARRAY_SIZE(container));
     ok(hr == S_OK,
        "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
     if (FAILED(hr))
@@ -367,7 +367,7 @@ static void test_dot_parsing(void)
     {
         IDxDiagContainer *child;
 
-        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, containerbufW, sizeof(containerbufW)/sizeof(WCHAR));
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, containerbufW, ARRAY_SIZE(containerbufW));
         ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
         if (FAILED(hr))
         {
@@ -380,7 +380,7 @@ static void test_dot_parsing(void)
 
         if (SUCCEEDED(hr))
         {
-            hr = IDxDiagContainer_EnumChildContainerNames(child, 0, childbufW, sizeof(childbufW)/sizeof(WCHAR));
+            hr = IDxDiagContainer_EnumChildContainerNames(child, 0, childbufW, ARRAY_SIZE(childbufW));
             ok(hr == S_OK || hr == E_INVALIDARG,
                "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK or E_INVALIDARG, got 0x%08x\n", hr);
             IDxDiagContainer_Release(child);
@@ -399,7 +399,7 @@ static void test_dot_parsing(void)
     trace("Testing IDxDiagContainer::GetChildContainer dot parsing with container %s and child container %s.\n",
           wine_dbgstr_w(containerbufW), wine_dbgstr_w(childbufW));
 
-    for (i = 0; i < sizeof(test_strings)/sizeof(test_strings[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_strings); i++)
     {
         IDxDiagContainer *child;
         char containerbufA[256];
@@ -410,7 +410,7 @@ static void test_dot_parsing(void)
         WideCharToMultiByte(CP_ACP, 0, containerbufW, -1, containerbufA, sizeof(containerbufA), NULL, NULL);
         WideCharToMultiByte(CP_ACP, 0, childbufW, -1, childbufA, sizeof(childbufA), NULL, NULL);
         sprintf(dotbufferA, test_strings[i].format, containerbufA, childbufA);
-        MultiByteToWideChar(CP_ACP, 0, dotbufferA, -1, dotbufferW, sizeof(dotbufferW)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, dotbufferA, -1, dotbufferW, ARRAY_SIZE(dotbufferW));
 
         trace("Trying container name %s\n", wine_dbgstr_w(dotbufferW));
         hr = IDxDiagContainer_GetChildContainer(pddc, dotbufferW, &child);
@@ -451,7 +451,7 @@ static void test_EnumPropNames(void)
 
     for (index = 0; index < count; index++)
     {
-        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, sizeof(container)/sizeof(WCHAR));
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, ARRAY_SIZE(container));
         ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
         if (FAILED(hr))
         {
@@ -493,7 +493,7 @@ static void test_EnumPropNames(void)
        "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
 
     memcpy(property, testW, sizeof(testW));
-    hr = IDxDiagContainer_EnumPropNames(child, ~0, property, sizeof(property)/sizeof(WCHAR));
+    hr = IDxDiagContainer_EnumPropNames(child, ~0, property, ARRAY_SIZE(property));
     ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::EnumPropNames to return E_INVALIDARG, got 0x%08x\n", hr);
     ok(!memcmp(property, testW, sizeof(testW)),
        "Expected the property buffer to be unchanged, got %s\n", wine_dbgstr_w(property));
@@ -526,7 +526,7 @@ static void test_EnumPropNames(void)
 
             ok(property[0] == '\0',
                "Expected the property buffer string to be empty, got %s\n", wine_dbgstr_w(property));
-            hr = IDxDiagContainer_EnumPropNames(child, index, temp, sizeof(temp)/sizeof(WCHAR));
+            hr = IDxDiagContainer_EnumPropNames(child, index, temp, ARRAY_SIZE(temp));
             ok(hr == S_OK,
                "Expected IDxDiagContainer::EnumPropNames to return S_OK, got 0x%08x\n", hr);
 
@@ -596,7 +596,7 @@ static void test_GetProp(void)
 
     for (index = 0; index < count; index++)
     {
-        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, sizeof(container)/sizeof(WCHAR));
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, ARRAY_SIZE(container));
         ok(hr == S_OK, "Expected IDxDiagContainer_EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
         if (FAILED(hr))
         {
@@ -609,7 +609,7 @@ static void test_GetProp(void)
 
         if (SUCCEEDED(hr))
         {
-            hr = IDxDiagContainer_EnumPropNames(child, 0, property, sizeof(property)/sizeof(WCHAR));
+            hr = IDxDiagContainer_EnumPropNames(child, 0, property, ARRAY_SIZE(property));
             ok(hr == S_OK || hr == E_INVALIDARG,
                "Expected IDxDiagContainer::EnumPropNames to return S_OK or E_INVALIDARG, got 0x%08x\n", hr);
 
@@ -745,10 +745,10 @@ static void test_root_children(void)
         goto cleanup;
     }
 
-    ok(count == sizeof(root_children)/sizeof(root_children[0]),
+    ok(count == ARRAY_SIZE(root_children),
        "Got unexpected count %u for the number of child containers\n", count);
 
-    if (count != sizeof(root_children)/sizeof(root_children[0]))
+    if (count != ARRAY_SIZE(root_children))
     {
         skip("Received unexpected number of child containers\n");
         goto cleanup;
@@ -758,7 +758,7 @@ static void test_root_children(void)
     {
         WCHAR container[256];
 
-        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, sizeof(container)/sizeof(WCHAR));
+        hr = IDxDiagContainer_EnumChildContainerNames(pddc, index, container, ARRAY_SIZE(container));
         if (hr == E_INVALIDARG)
         {
             ok(index == count,
@@ -911,7 +911,7 @@ static void test_DxDiag_SystemInfo(void)
     if (hr == S_OK)
     {
         trace("Testing container DxDiag_SystemInfo\n");
-        test_container_properties(container, property_tests, sizeof(property_tests)/sizeof(property_tests[0]));
+        test_container_properties(container, property_tests, ARRAY_SIZE(property_tests));
         IDxDiagContainer_Release(container);
     }
 
@@ -1002,7 +1002,7 @@ static void test_DxDiag_DisplayDevices(void)
         WCHAR child_container[256];
         IDxDiagContainer *child;
 
-        hr = IDxDiagContainer_EnumChildContainerNames(display_cont, i, child_container, sizeof(child_container)/sizeof(WCHAR));
+        hr = IDxDiagContainer_EnumChildContainerNames(display_cont, i, child_container, ARRAY_SIZE(child_container));
         ok(hr == S_OK, "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
 
         hr = IDxDiagContainer_GetChildContainer(display_cont, child_container, &child);
@@ -1011,7 +1011,7 @@ static void test_DxDiag_DisplayDevices(void)
         if (hr == S_OK)
         {
             trace("Testing container %s\n", wine_dbgstr_w(child_container));
-            test_container_properties(child, property_tests, sizeof(property_tests)/sizeof(property_tests[0]));
+            test_container_properties(child, property_tests, ARRAY_SIZE(property_tests));
         }
         IDxDiagContainer_Release(child);
     }
