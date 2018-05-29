@@ -1507,15 +1507,9 @@ static void test_inheritance(void)
     FUNCDESC *pFD;
     WCHAR path[MAX_PATH];
     CHAR pathA[MAX_PATH];
-    static const WCHAR tl_path[] = {'.','\\','m','i','d','l','_','t','m','a','r','s','h','a','l','.','t','l','b',0};
-
-    BOOL use_midl_tlb = FALSE;
 
     GetModuleFileNameA(NULL, pathA, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
-
-    if(use_midl_tlb)
-        memcpy(path, tl_path, sizeof(tl_path));
 
     hr = LoadTypeLib(path, &pTL);
     if(FAILED(hr)) return;
@@ -1592,17 +1586,13 @@ static void test_inheritance(void)
 
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
-    if (hr == S_OK)
-    {
-        ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-        ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
-        if(use_midl_tlb) {
-            ok(pTA->wTypeFlags == TYPEFLAG_FDUAL, "typeflags %x\n", pTA->wTypeFlags);
-        }
-        ok(pTA->cFuncs == 8, "cfuncs %d\n", pTA->cFuncs);
-        ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
-        ITypeInfo_ReleaseTypeAttr(pTI, pTA);
-    }
+    ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->wTypeFlags == TYPEFLAG_FDUAL, "typeflags %x\n", pTA->wTypeFlags);
+    ok(pTA->cFuncs == 8, "cfuncs %d\n", pTA->cFuncs);
+    ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+    ITypeInfo_ReleaseTypeAttr(pTI, pTA);
+
     hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
@@ -4903,8 +4893,8 @@ static void test_register_typelib(BOOL system_registration)
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
         { TKIND_INTERFACE, TYPEFLAG_FOLEAUTOMATION },
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FOLEAUTOMATION },
-        { TKIND_DISPATCH,  0 /* TYPEFLAG_FDUAL - widl clears this flag for non-IDispatch derived interfaces */ },
-        { TKIND_DISPATCH,  0 /* TYPEFLAG_FDUAL - widl clears this flag for non-IDispatch derived interfaces */ },
+        { TKIND_DISPATCH,  TYPEFLAG_FDUAL },
+        { TKIND_DISPATCH,  TYPEFLAG_FDUAL },
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL },
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FDUAL },
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
@@ -4979,7 +4969,8 @@ static void test_register_typelib(BOOL system_registration)
             ok(hr == S_OK, "got %08x\n", hr);
 
             ok(dual_attr->typekind == TKIND_INTERFACE, "%d: got kind %d\n", i, dual_attr->typekind);
-            ok(dual_attr->wTypeFlags == (TYPEFLAG_FDISPATCHABLE | TYPEFLAG_FOLEAUTOMATION | TYPEFLAG_FDUAL), "%d: got flags %04x\n", i, dual_attr->wTypeFlags);
+            ok(dual_attr->wTypeFlags == (attrs[i].flags | TYPEFLAG_FOLEAUTOMATION),
+                "%d: got flags %04x\n", i, dual_attr->wTypeFlags);
 
             ITypeInfo_ReleaseTypeAttr(dual_info, dual_attr);
             ITypeInfo_Release(dual_info);

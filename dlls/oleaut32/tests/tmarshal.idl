@@ -208,9 +208,7 @@ library TestTypelib
     [
         odl,
         uuid(a028db05-30f0-4b93-b17a-41c72f831d84),
-#if 0 /* FIXME: commented out as causes widl to generate incorrect typelib */
         dual,
-#endif
         oleautomation
     ]
     interface IKindaEnumWidget : IUnknown

@@ -2166,10 +2166,6 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
         if (derived->name && !strcmp(derived->name, "IDispatch"))
             msft_typeinfo->typeinfo->flags |= 0x1000; /* TYPEFLAG_FDISPATCHABLE */
 
-    /* can't be dual if it doesn't derive from IDispatch */
-    if (!(msft_typeinfo->typeinfo->flags & 0x1000)) /* TYPEFLAG_FDISPATCHABLE */
-        msft_typeinfo->typeinfo->flags &= ~0x40; /* TYPEFLAG_FDUAL */
-
     if(type_iface_get_inherit(interface))
         add_impl_type(msft_typeinfo, type_iface_get_inherit(interface),
                       ref_importinfo);
