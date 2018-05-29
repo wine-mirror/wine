@@ -287,7 +287,7 @@ static HANDLE create_temp_file(WCHAR *temp_file)
     HANDLE file = INVALID_HANDLE_VALUE;
     WCHAR temp_path[MAX_PATH];
 
-    if (GetTempPathW(sizeof(temp_path) / sizeof(temp_path[0]), temp_path))
+    if (GetTempPathW(ARRAY_SIZE(temp_path), temp_path))
     {
         static const WCHAR img[] = { 'i','m','g',0 };
 
