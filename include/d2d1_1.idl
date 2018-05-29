@@ -27,7 +27,18 @@ interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
 interface ID2D1PrintControl;
 interface IWICImagingFactory;
+interface IWICColorContext;
 interface ID2D1ColorContext;
+interface ID2D1Effect;
+interface ID2D1GradientStopCollection1;
+interface ID2D1ImageBrush;
+interface ID2D1BitmapBrush1;
+interface ID2D1CommandList;
+
+cpp_quote("#ifndef __dwrite_h__")
+/* already defined in dwrite.h but needed for WIDL */
+typedef struct DWRITE_GLYPH_RUN_DESCRIPTION DWRITE_GLYPH_RUN_DESCRIPTION;
+cpp_quote("#endif /* __dwrite_h__ */")
 
 typedef enum D2D1_DEVICE_CONTEXT_OPTIONS
 {
@@ -96,7 +107,63 @@ typedef enum D2D1_MAP_OPTIONS
     D2D1_MAP_OPTIONS_FORCE_DWORD = 0xffffffff,
 } D2D1_MAP_OPTIONS;
 
+typedef enum D2D1_BUFFER_PRECISION
+{
+    D2D1_BUFFER_PRECISION_UNKNOWN = 0x0,
+    D2D1_BUFFER_PRECISION_8BPC_UNORM = 0x1,
+    D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB = 0x2,
+    D2D1_BUFFER_PRECISION_16BPC_UNORM = 0x3,
+    D2D1_BUFFER_PRECISION_16BPC_FLOAT = 0x4,
+    D2D1_BUFFER_PRECISION_32BPC_FLOAT = 0x5,
+    D2D1_BUFFER_PRECISION_FORCE_DWORD = 0xffffffff,
+} D2D1_BUFFER_PRECISION;
+
+typedef enum D2D1_COLOR_INTERPOLATION_MODE
+{
+    D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT = 0x0,
+    D2D1_COLOR_INTERPOLATION_MODE_PREMULTIPLIED = 0x1,
+    D2D1_COLOR_INTERPOLATION_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_COLOR_INTERPOLATION_MODE;
+
+typedef enum D2D1_INTERPOLATION_MODE
+{
+    D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR = D2D1_INTERPOLATION_MODE_DEFINITION_NEAREST_NEIGHBOR,
+    D2D1_INTERPOLATION_MODE_LINEAR = D2D1_INTERPOLATION_MODE_DEFINITION_LINEAR,
+    D2D1_INTERPOLATION_MODE_CUBIC = D2D1_INTERPOLATION_MODE_DEFINITION_CUBIC,
+    D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR = D2D1_INTERPOLATION_MODE_DEFINITION_MULTI_SAMPLE_LINEAR,
+    D2D1_INTERPOLATION_MODE_ANISOTROPIC = D2D1_INTERPOLATION_MODE_DEFINITION_ANISOTROPIC,
+    D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC = D2D1_INTERPOLATION_MODE_DEFINITION_HIGH_QUALITY_CUBIC,
+    D2D1_INTERPOLATION_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_INTERPOLATION_MODE;
+
+typedef enum D2D1_COMPOSITE_MODE
+{
+    D2D1_COMPOSITE_MODE_SOURCE_OVER = 0x0,
+    D2D1_COMPOSITE_MODE_DESTINATION_OVER = 0x1,
+    D2D1_COMPOSITE_MODE_SOURCE_IN = 0x2,
+    D2D1_COMPOSITE_MODE_DESTINATION_IN = 0x3,
+    D2D1_COMPOSITE_MODE_SOURCE_OUT = 0x4,
+    D2D1_COMPOSITE_MODE_DESTINATION_OUT = 0x5,
+    D2D1_COMPOSITE_MODE_SOURCE_ATOP = 0x6,
+    D2D1_COMPOSITE_MODE_DESTINATION_ATOP = 0x7,
+    D2D1_COMPOSITE_MODE_XOR = 0x8,
+    D2D1_COMPOSITE_MODE_PLUS = 0x9,
+    D2D1_COMPOSITE_MODE_SOURCE_COPY = 0xa,
+    D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY = 0xb,
+    D2D1_COMPOSITE_MODE_MASK_INVERT = 0xc,
+    D2D1_COMPOSITE_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_COMPOSITE_MODE;
+
+typedef enum D2D1_LAYER_OPTIONS1
+{
+    D2D1_LAYER_OPTIONS1_NONE = 0x0,
+    D2D1_LAYER_OPTIONS1_INITIALIZE_FROM_BACKGROUND = 0x1,
+    D2D1_LAYER_OPTIONS1_IGNORE_ALPHA = 0x2,
+    D2D1_LAYER_OPTIONS1_FORCE_DWORD = 0xffffffff,
+} D2D1_LAYER_OPTIONS1;
+
 typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
+typedef D2D_MATRIX_4X4_F D2D1_MATRIX_4X4_F;
 
 typedef struct D2D1_STROKE_STYLE_PROPERTIES1
 {
@@ -133,6 +200,54 @@ typedef struct D2D1_MAPPED_RECT
     UINT32 pitch;
     BYTE *bits;
 } D2D1_MAPPED_RECT;
+
+typedef struct D2D1_BITMAP_PROPERTIES1
+{
+    D2D1_PIXEL_FORMAT pixelFormat;
+    float dpiX;
+    float dpiY;
+    D2D1_BITMAP_OPTIONS bitmapOptions;
+    ID2D1ColorContext *colorContext;
+} D2D1_BITMAP_PROPERTIES1;
+
+typedef struct D2D1_IMAGE_BRUSH_PROPERTIES
+{
+    D2D1_RECT_F sourceRectangle;
+    D2D1_EXTEND_MODE extendModeX;
+    D2D1_EXTEND_MODE extendModeY;
+    D2D1_INTERPOLATION_MODE interpolationMode;
+} D2D1_IMAGE_BRUSH_PROPERTIES;
+
+typedef struct D2D1_BITMAP_BRUSH_PROPERTIES1
+{
+    D2D1_EXTEND_MODE extendModeX;
+    D2D1_EXTEND_MODE extendModeY;
+    D2D1_INTERPOLATION_MODE interpolationMode;
+} D2D1_BITMAP_BRUSH_PROPERTIES1;
+
+typedef struct D2D1_RENDERING_CONTROLS
+{
+    D2D1_BUFFER_PRECISION bufferPrecision;
+    D2D1_SIZE_U tileSize;
+} D2D1_RENDERING_CONTROLS;
+
+typedef struct D2D1_LAYER_PARAMETERS1
+{
+    D2D1_RECT_F contentBounds;
+    ID2D1Geometry *geometricMask;
+    D2D1_ANTIALIAS_MODE maskAntialiasMode;
+    D2D1_MATRIX_3X2_F maskTransform;
+    float opacity;
+    ID2D1Brush *opacityBrush;
+    D2D1_LAYER_OPTIONS1 layerOptions;
+} D2D1_LAYER_PARAMETERS1;
+
+typedef struct D2D1_EFFECT_INPUT_DESCRIPTION
+{
+    ID2D1Effect *effect;
+    UINT32 inputIndex;
+    D2D1_RECT_F inputRectangle;
+} D2D1_EFFECT_INPUT_DESCRIPTION;
 
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
 
@@ -180,6 +295,175 @@ interface ID2D1Device : ID2D1Resource
     UINT64 GetMaximumTextureMemory();
     HRESULT ClearResources(
         [in, defaultvalue(0)] UINT msec_since_use
+    );
+}
+
+[
+    object,
+    uuid(e8f7fe7a-191c-466d-ad95-975678bda998),
+    local,
+]
+interface ID2D1DeviceContext : ID2D1RenderTarget
+{
+    HRESULT CreateBitmap(
+        [in] D2D1_SIZE_U size,
+        [in] const void *src_data,
+        [in] UINT32 pitch,
+        [in] const D2D1_BITMAP_PROPERTIES1 *desc,
+        [out] ID2D1Bitmap1 **bitmap
+    );
+    HRESULT CreateBitmapFromWicBitmap(
+        [in] IWICBitmapSource *bitmap_source,
+        [in] const D2D1_BITMAP_PROPERTIES1 *desc,
+        [out] ID2D1Bitmap1 **bitmap
+    );
+    HRESULT CreateColorContext(
+        [in] D2D1_COLOR_SPACE space,
+        [in] const BYTE *profile,
+        [in] UINT32 profile_size,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CreateColorContextFromFilename(
+        [in] const WCHAR *filename,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CreateColorContextFromWicColorContext(
+        [in] IWICColorContext *wic_color_context,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CreateBitmapFromDxgiSurface(
+        [in] IDXGISurface *surface,
+        [in] const D2D1_BITMAP_PROPERTIES1 *desc,
+        [out] ID2D1Bitmap1 **bitmap
+    );
+    HRESULT CreateEffect(
+        [in] REFCLSID effect_id,
+        [out] ID2D1Effect **effect
+    );
+    HRESULT CreateGradientStopCollection(
+        [in] const D2D1_GRADIENT_STOP *stops,
+        [in] UINT32 stop_count,
+        [in] D2D1_COLOR_SPACE preinterpolation_space,
+        [in] D2D1_COLOR_SPACE postinterpolation_space,
+        [in] D2D1_BUFFER_PRECISION buffer_precision,
+        [in] D2D1_EXTEND_MODE extend_mode,
+        [in] D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode,
+        [out] ID2D1GradientStopCollection1 **gradient
+    );
+    HRESULT CreateImageBrush(
+        [in] ID2D1Image *image,
+        [in] const D2D1_IMAGE_BRUSH_PROPERTIES *image_brush_desc,
+        [in] const D2D1_BRUSH_PROPERTIES *brush_desc,
+        [out] ID2D1ImageBrush **brush
+    );
+    HRESULT CreateBitmapBrush(
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc,
+        [in] const D2D1_BRUSH_PROPERTIES *brush_desc,
+        [out] ID2D1BitmapBrush1 **bitmap_brush
+    );
+    HRESULT CreateCommandList(
+        [out] ID2D1CommandList **command_list
+    );
+    BOOL IsDxgiFormatSupported(
+        [in] DXGI_FORMAT format
+    );
+    BOOL IsBufferPrecisionSupported(
+        [in] D2D1_BUFFER_PRECISION buffer_precision
+    );
+    void GetImageLocalBounds(
+        [in] ID2D1Image *image,
+        [out] D2D1_RECT_F *local_bounds
+    );
+    HRESULT GetImageWorldBounds(
+        [in] ID2D1Image *image,
+        [out] D2D1_RECT_F *world_bounds
+    );
+    HRESULT GetGlyphRunWorldBounds(
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [out] D2D1_RECT_F *bounds
+    );
+    void GetDevice(
+        [out] ID2D1Device **device
+    );
+    void SetTarget(
+        [in] ID2D1Image *target
+    );
+    void GetTarget(
+        [out] ID2D1Image **target
+    );
+    void SetRenderingControls(
+        [in] const D2D1_RENDERING_CONTROLS *rendering_controls
+    );
+    void GetRenderingControls(
+        [out] D2D1_RENDERING_CONTROLS *rendering_controls
+    );
+    void SetPrimitiveBlend(
+        [in] D2D1_PRIMITIVE_BLEND primitive_blend
+    );
+    D2D1_PRIMITIVE_BLEND GetPrimitiveBlend();
+    void SetUnitMode(
+        [in] D2D1_UNIT_MODE unit_mode
+    );
+    D2D1_UNIT_MODE GetUnitMode();
+    void DrawGlyphRun(
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in] const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc,
+        [in] ID2D1Brush *brush,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    void DrawImage(
+        [in] ID2D1Image *image,
+        [in] const D2D1_POINT_2F *target_offset,
+        [in] const D2D1_RECT_F *image_rect,
+        [in] D2D1_INTERPOLATION_MODE interpolation_mode,
+        [in] D2D1_COMPOSITE_MODE composite_mode
+    );
+    void DrawGdiMetafile(
+        [in] ID2D1GdiMetafile *metafile,
+        [in] const D2D1_POINT_2F *target_offset
+    );
+    void DrawBitmap(
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] float opacity,
+        [in] D2D1_INTERPOLATION_MODE interpolation_mode,
+        [in] const D2D1_RECT_F *src_rect,
+        [in] const D2D1_MATRIX_4X4_F *perspective_transform
+    );
+    void PushLayer(
+        [in] const D2D1_LAYER_PARAMETERS1 *layer_parameters,
+        [in] ID2D1Layer *layer
+    );
+    HRESULT InvalidateEffectInputRectangle(
+        [in] ID2D1Effect *effect,
+        [in] UINT32 input,
+        [in] const D2D1_RECT_F *input_rect
+    );
+    HRESULT GetEffectInvalidRectangleCount(
+        [in] ID2D1Effect *effect,
+        [out] UINT32 *rect_count
+    );
+    HRESULT GetEffectInvalidRectangles(
+        [in] ID2D1Effect *effect,
+        [out] D2D1_RECT_F *rectangles,
+        [in] UINT32 rect_count
+    );
+    HRESULT GetEffectRequiredInputRectangles(
+        [in] ID2D1Effect *effect,
+        [in] const D2D1_RECT_F *image_rect,
+        [in] const D2D1_EFFECT_INPUT_DESCRIPTION *desc,
+        [out] D2D1_RECT_F *input_rect,
+        [in] UINT32 input_count
+    );
+    void FillOpacityMask(
+        [in] ID2D1Bitmap *mask,
+        [in] ID2D1Brush *brush,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] const D2D1_RECT_F *src_rect
     );
 }
 

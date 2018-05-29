@@ -61,3 +61,19 @@ typedef struct D2D_SIZE_U
     UINT32 width;
     UINT32 height;
 } D2D_SIZE_U, D2D1_SIZE_U;
+
+typedef struct D2D_MATRIX_4X4_F
+{
+    union
+    {
+        struct
+        {
+            float _11, _12, _13, _14;
+            float _21, _22, _23, _24;
+            float _31, _32, _33, _34;
+            float _41, _42, _43, _44;
+        };
+
+        float m[4][4];
+    };
+} D2D_MATRIX_4X4_F;
