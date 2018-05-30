@@ -368,7 +368,7 @@ static void test_hash_value(void)
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == 0, "got %d\n", V_I4(&hash));
 
-    for (i = 0; i < sizeof(str_hash_tests)/sizeof(str_hash_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(str_hash_tests); i++) {
         expected = get_str_hash(str_hash_tests[i], BinaryCompare);
 
         hr = IDictionary_put_CompareMode(dict, BinaryCompare);
@@ -461,7 +461,7 @@ static void test_hash_value(void)
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
 
-    for (i = 0; i < sizeof(int_hash_tests)/sizeof(int_hash_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(int_hash_tests); i++) {
         SHORT i2;
         BYTE ui1;
         LONG i4;
@@ -597,7 +597,7 @@ static void test_hash_value(void)
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
 
-    for (i = 0; i < sizeof(float_hash_tests)/sizeof(float_hash_tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(float_hash_tests); i++) {
         double dbl;
         FLOAT flt;
         DATE date;
