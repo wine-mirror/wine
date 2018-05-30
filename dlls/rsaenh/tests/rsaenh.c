@@ -1815,7 +1815,7 @@ static void test_hmac(void) {
         0xcf, 0x10, 0x6b, 0xb6, 0x7d, 0x0f, 0x13, 0x32 };
     int i;
 
-    for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abData[i] = (BYTE)i;
+    for (i=0; i < ARRAY_SIZE(abData); i++) abData[i] = (BYTE)i;
 
     if (!derive_key(CALG_RC2, &hKey, 56)) return;
 
@@ -1829,7 +1829,7 @@ static void test_hmac(void) {
     result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08x\n", GetLastError());
 
-    dwLen = sizeof(abData)/sizeof(BYTE);
+    dwLen = ARRAY_SIZE(abData);
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
 
@@ -1855,8 +1855,8 @@ static void test_mac(void) {
     static const BYTE mac_40[8] = { 0xb7, 0xa2, 0x46, 0xe9, 0x11, 0x31, 0xe0, 0xad};
     int i;
 
-    for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abData[i] = (BYTE)i;
-    for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abEnc[i] = (BYTE)i;
+    for (i=0; i < ARRAY_SIZE(abData); i++) abData[i] = (BYTE)i;
+    for (i=0; i < ARRAY_SIZE(abData); i++) abEnc[i] = (BYTE)i;
 
     if (!derive_key(CALG_RC2, &hKey, 40)) return;
 
@@ -1871,7 +1871,7 @@ static void test_mac(void) {
     result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08x\n", GetLastError());
 
-    dwLen = sizeof(abData)/sizeof(BYTE);
+    dwLen = ARRAY_SIZE(abData);
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result && dwLen == 8, "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
@@ -2725,7 +2725,7 @@ static void test_import_hmac(void)
     };
     DWORD i;
 
-    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cases); i++)
     {
         const struct rfc2202_test_case *test_case = &cases[i];
         DWORD size = sizeof(BLOBHEADER) + sizeof(DWORD) + test_case->key_len;
@@ -3822,13 +3822,13 @@ static void test_key_derivation(const char *prov)
         },
     };
     /* Due to differences between encryption from <= 2000 and >= XP some tests need to be skipped */
-    int old_broken[sizeof(tests)/sizeof(tests[0])];
+    int old_broken[ARRAY_SIZE(tests)];
     memset(old_broken, 0, sizeof(old_broken));
     old_broken[3] = old_broken[4] = old_broken[15] = old_broken[16] = 1;
     old_broken[27] = old_broken[28] = old_broken[39] = old_broken[40] = 1;
     uniquecontainer(NULL);
 
-    for (i=0; i<sizeof(tests)/sizeof(tests[0]); i++)
+    for (i=0; i < ARRAY_SIZE(tests); i++)
     {
         if (win2k && old_broken[i]) continue;
 
@@ -3886,7 +3886,7 @@ err:
 
 START_TEST(rsaenh)
 {
-    for (iProv = 0; iProv < sizeof(szProviders) / sizeof(szProviders[0]); iProv++)
+    for (iProv = 0; iProv < ARRAY_SIZE(szProviders); iProv++)
     {
         if (!init_base_environment(szProviders[iProv], 0))
             continue;
