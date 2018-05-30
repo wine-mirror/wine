@@ -703,7 +703,7 @@ static void test_math_errors(void)
     /* necessary so that exp(1e100)==INFINITY on glibc, we can remove this if we change our implementation */
     p_fesetround(FE_TONEAREST);
 
-    for(i = 0; i < sizeof(testsd)/sizeof(testsd[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(testsd); i++) {
         p_funcd = (void*)GetProcAddress(module, testsd[i].func);
         *p_errno() = -1;
         exception.type = -1;
@@ -717,7 +717,7 @@ static void test_math_errors(void)
            "%s(%f) got exception arg1 %f\n", testsd[i].func, testsd[i].x, exception.arg1);
     }
 
-    for(i = 0; i < sizeof(tests2d)/sizeof(tests2d[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(tests2d); i++) {
         p_func2d = (void*)GetProcAddress(module, tests2d[i].func);
         *p_errno() = -1;
         exception.type = -1;
@@ -733,7 +733,7 @@ static void test_math_errors(void)
            "%s(%f, %f) got exception arg2 %f\n", tests2d[i].func, tests2d[i].a, tests2d[i].b, exception.arg2);
     }
 
-    for(i = 0; i < sizeof(testsdl)/sizeof(testsdl[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(testsdl); i++) {
         p_funcdl = (void*)GetProcAddress(module, testsdl[i].func);
         *p_errno() = -1;
         exception.type = -1;

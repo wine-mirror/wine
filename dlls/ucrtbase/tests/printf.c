@@ -171,7 +171,7 @@ static void test_snprintf (void)
     unsigned int i;
 
     /* Legacy _snprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
         const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
@@ -184,7 +184,7 @@ static void test_snprintf (void)
     }
 
     /* C99 snprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt);
         const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
@@ -199,7 +199,7 @@ static void test_snprintf (void)
     }
 
     /* swprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt) >= bufsiz ? -2 : strlen(fmt);
         const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
@@ -242,11 +242,11 @@ static void test_swprintf (void)
 
     wchar_t buffer[8];
     char narrow[8], narrow_fmt[16];
-    const int bufsiz = sizeof buffer / sizeof buffer[0];
+    const int bufsiz = ARRAY_SIZE(buffer);
     unsigned int i;
 
     /* Legacy _snprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt) > bufsiz ? -1 : wcslen(fmt);
         const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
@@ -261,7 +261,7 @@ static void test_swprintf (void)
     }
 
     /* C99 snprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt);
         const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
@@ -278,7 +278,7 @@ static void test_swprintf (void)
     }
 
     /* swprintf style termination */
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt) >= bufsiz ? -2 : wcslen(fmt);
         const int n        = vswprintf_wrapper (0, buffer, bufsiz, fmt);
@@ -411,12 +411,12 @@ static void test_fwprintf(void)
     p_fclose(fp);
 
     fp = p_fopen(file_name, "rb");
-    p_fgetws(bufw, sizeof(bufw)/sizeof(bufw[0]), fp);
+    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
     ret = p_ftell(fp);
     ok(ret == 24, "ftell returned %d\n", ret);
     ok(!wcscmp(bufw, simple), "buf = %s\n", wine_dbgstr_w(bufw));
 
-    p_fgetws(bufw, sizeof(bufw)/sizeof(bufw[0]), fp);
+    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
     ret = p_ftell(fp);
     ok(ret == 52, "ret = %d\n", ret);
     ok(!memcmp(bufw, cont, 28), "buf = %s\n", wine_dbgstr_w(bufw));
