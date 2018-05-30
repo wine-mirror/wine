@@ -766,7 +766,7 @@ static void CDECL for_static_simple_cb(void)
     int thread_num = pomp_get_thread_num();
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         unsigned int my_begin, my_end, begin, end;
 
@@ -966,7 +966,7 @@ static void CDECL for_static_cb(void)
     int thread_num = pomp_get_thread_num();
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         int my_begin, my_end, my_next, my_lastchunk;
         int begin, end, next, lastchunk;
@@ -1614,25 +1614,25 @@ static void test_atomic_integer8(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests1); i++)
     {
         char val = tests1[i].v1;
         tests1[i].func(&val, tests1[i].v2);
         ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         char val = tests2[i].v1;
         tests2[i].func(&val, tests2[i].v2);
         ok(val == tests2[i].expected, "test %d: expected val == %d, got %d\n", i, tests2[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests3); i++)
     {
         unsigned char val = tests3[i].v1;
         tests3[i].func(&val, tests3[i].v2);
         ok(val == tests3[i].expected, "test %d: expected val == %u, got %u\n", i, tests3[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests4); i++)
     {
         unsigned char val = tests4[i].v1;
         tests4[i].func(&val, tests4[i].v2);
@@ -1707,25 +1707,25 @@ static void test_atomic_integer16(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests1); i++)
     {
         short val = tests1[i].v1;
         tests1[i].func(&val, tests1[i].v2);
         ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         short val = tests2[i].v1;
         tests2[i].func(&val, tests2[i].v2);
         ok(val == tests2[i].expected, "test %d: expected val == %d, got %d\n", i, tests2[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests3); i++)
     {
         unsigned short val = tests3[i].v1;
         tests3[i].func(&val, tests3[i].v2);
         ok(val == tests3[i].expected, "test %d: expected val == %u, got %u\n", i, tests3[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests4); i++)
     {
         unsigned short val = tests4[i].v1;
         tests4[i].func(&val, tests4[i].v2);
@@ -1777,13 +1777,13 @@ static void test_atomic_integer32(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests1); i++)
     {
         int val = tests1[i].v1;
         tests1[i].func(&val, tests1[i].v2);
         ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         unsigned int val = tests2[i].v1;
         tests2[i].func(&val, tests2[i].v2);
@@ -1871,26 +1871,26 @@ static void test_atomic_integer64(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests1); i++)
     {
         LONG64 val = tests1[i].v1;
         tests1[i].func(&val, tests1[i].v2);
         ok(val == tests1[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
-    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         LONG64 val = tests2[i].v1;
         tests2[i].func(&val, tests2[i].v2);
         todo_wine_if(tests2[i].todo)
         ok(val == tests2[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
-    for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests3); i++)
     {
         ULONG64 val = tests3[i].v1;
         tests3[i].func(&val, tests3[i].v2);
         ok(val == tests3[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
-    for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests4); i++)
     {
         ULONG64 val = tests4[i].v1;
         tests4[i].func(&val, tests4[i].v2);
@@ -1915,7 +1915,7 @@ static void test_atomic_float(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         float val = tests[i].v1;
         tests[i].func(&val, tests[i].v2);
@@ -1940,7 +1940,7 @@ static void test_atomic_double(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         double val = tests[i].v1;
         tests[i].func(&val, tests[i].v2);
@@ -1978,13 +1978,13 @@ static void test_reduction_integer8(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         char val = tests[i].v1;
         p_vcomp_reduction_i1(tests[i].flags, &val, tests[i].v2);
         ok(val == tests[i].expected, "test %d: expected val == %d, got %d\n", i, tests[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         unsigned char val = tests[i].v1;
         p_vcomp_reduction_u1(tests[i].flags, &val, tests[i].v2);
@@ -2022,13 +2022,13 @@ static void test_reduction_integer16(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         short val = tests[i].v1;
         p_vcomp_reduction_i2(tests[i].flags, &val, tests[i].v2);
         ok(val == tests[i].expected, "test %d: expected val == %d, got %d\n", i, tests[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         unsigned short val = tests[i].v1;
         p_vcomp_reduction_u2(tests[i].flags, &val, tests[i].v2);
@@ -2105,13 +2105,13 @@ static void test_reduction_integer32(void)
 
     pomp_set_num_threads(max_threads);
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         int val = tests[i].v1;
         p_vcomp_reduction_i4(tests[i].flags, &val, tests[i].v2);
         ok(val == tests[i].expected, "test %d: expected val == %d, got %d\n", i, tests[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         unsigned int val = tests[i].v1;
         p_vcomp_reduction_u4(tests[i].flags, &val, tests[i].v2);
@@ -2148,13 +2148,13 @@ static void test_reduction_integer64(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         LONG64 val = tests[i].v1;
         p_vcomp_reduction_i8(tests[i].flags, &val, tests[i].v2);
         ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         ULONG64 val = tests[i].v1;
         p_vcomp_reduction_u8(tests[i].flags, &val, tests[i].v2);
@@ -2206,14 +2206,14 @@ static void test_reduction_float_double(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         float val = tests[i].v1;
         p_vcomp_reduction_r4(tests[i].flags, &val, tests[i].v2);
         ok(tests[i].expected - 0.001 < val && val < tests[i].expected + 0.001,
            "test %d: expected val == %f, got %f\n", i, tests[i].expected, val);
     }
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         double val = tests[i].v1;
         p_vcomp_reduction_r8(tests[i].flags, &val, tests[i].v2);
