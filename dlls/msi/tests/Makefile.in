@@ -15,5 +15,7 @@ SOURCES = \
 	package.c \
 	patch.c \
 	record.c \
+	rsrc.rc \
 	source.c \
-	suminfo.c
+	suminfo.c \
+	typelib.idl
