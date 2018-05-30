@@ -66,7 +66,7 @@ static void test_Connect(void)
     /* Win7 doesn't support UNC \\ prefix, but according to a user
      * comment on MSDN Win8 supports both ways.
      */
-    len = sizeof(comp_name)/sizeof(comp_name[0]);
+    len = ARRAY_SIZE(comp_name);
     GetComputerNameW(comp_name, &len);
 
     V_VT(&v_null) = VT_NULL;
@@ -486,7 +486,7 @@ static void test_FolderCollection(void)
     hr = ITaskFolderCollection_get_Item(folders, idx, NULL);
     ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
-    for (i = 0; i < sizeof(vt)/sizeof(vt[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(vt); i++)
     {
         set_var(vt[i], &idx, 1);
         hr = ITaskFolderCollection_get_Item(folders, idx, &subfolder);
@@ -774,9 +774,9 @@ static void test_GetTask(void)
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
        "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
 
-    for (i = 0; i < sizeof(create_new_task)/sizeof(create_new_task[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
         hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
         ok(hr == create_new_task[i].hr, "%d: expected %#x, got %#x\n", i, create_new_task[i].hr, hr);
@@ -810,7 +810,7 @@ todo_wine
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
-    for (i = 0; i < sizeof(open_existing_task)/sizeof(open_existing_task[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(open_existing_task); i++)
     {
         hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
         ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
@@ -841,7 +841,7 @@ todo_wine
     hr = ITaskFolder_RegisterTask(folder, Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, ARRAY_SIZE(xmlW));
 
     hr = ITaskFolder_RegisterTask(folder, Task2, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
@@ -1262,7 +1262,7 @@ static void test_daily_trigger(ITrigger *trigger)
     ok(hr == S_OK, "get_StartBoundary failed: %08x\n", hr);
     ok(start_boundary == NULL, "start_boundary not set\n");
 
-    for (i = 0; i < sizeof(start_test)/sizeof(start_test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(start_test); i++)
     {
         start_boundary = SysAllocString(start_test[i].str);
         hr = IDailyTrigger_put_StartBoundary(daily_trigger, start_boundary);
@@ -1569,33 +1569,33 @@ static void test_TaskDefinition(void)
     hr = ITaskDefinition_put_XmlText(taskdef, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == S_OK, "put_XmlText error %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == SCHED_E_NAMESPACE, "expected SCHED_E_NAMESPACE, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml3, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml3, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
 todo_wine
     ok(hr == SCHED_E_UNEXPECTEDNODE, "expected SCHED_E_UNEXPECTEDNODE, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == S_OK, "put_XmlText error %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml5, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml5, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
 todo_wine
     ok(hr == SCHED_E_MISSINGNODE, "expected SCHED_E_MISSINGNODE, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml6, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml6, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml7, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml7, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == SCHED_E_INVALIDVALUE, "expected SCHED_E_INVALIDVALUE, got %#x\n", hr);
 
@@ -1604,7 +1604,7 @@ todo_wine
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#x\n", hr);
 
     /* test registration info */
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == S_OK, "put_XmlText error %#x\n", hr);
     hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
@@ -1697,7 +1697,7 @@ if (hr == S_OK)
 
     IRegistrationInfo_Release(reginfo);
 
-    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == S_OK, "put_XmlText error %#x\n", hr);
     hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
