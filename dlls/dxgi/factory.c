@@ -288,7 +288,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
             return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (swapchain_desc->BufferCount < min_buffer_count || swapchain_desc->BufferCount > 16)
+    if (swapchain_desc->BufferCount < min_buffer_count || swapchain_desc->BufferCount > DXGI_MAX_SWAP_CHAIN_BUFFERS)
     {
         WARN("BufferCount is %u.\n", swapchain_desc->BufferCount);
         return DXGI_ERROR_INVALID_CALL;
