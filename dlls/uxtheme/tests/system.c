@@ -443,9 +443,8 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
 
     /* The same is true if the number of characters is too small for Color and/or Size */
-    hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR),
-                                currentColor, 2,
-                                currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
+    hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor, 2,
+                               currentSize,  ARRAY_SIZE(currentSize));
     if (bThemeActive)
         todo_wine
             ok(hRes == E_NOT_SUFFICIENT_BUFFER ||
@@ -455,7 +454,7 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
 
     /* Given number of characters is correct */
-    hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), NULL, 0, NULL, 0);
+    hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), NULL, 0, NULL, 0);
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
@@ -471,26 +470,23 @@ static void test_GetCurrentThemeName(void)
             "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
  
     /* The too large case is only for the theme name, not for color name or size name */
-    hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR),
-                                currentColor, sizeof(currentTheme),
-                                currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
+    hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
+                               sizeof(currentTheme), currentSize,  ARRAY_SIZE(currentSize));
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
 
-    hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR),
-                                currentColor, sizeof(currentTheme) / sizeof(WCHAR),
-                                currentSize,  sizeof(currentSize));
+    hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
+                               ARRAY_SIZE(currentTheme), currentSize,  sizeof(currentSize));
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
 
     /* Correct call */
-    hRes = GetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR),
-                                currentColor, sizeof(currentColor) / sizeof(WCHAR),
-                                currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
+    hRes = GetCurrentThemeName(currentTheme, ARRAY_SIZE(currentTheme), currentColor,
+                               ARRAY_SIZE(currentColor), currentSize,  ARRAY_SIZE(currentSize));
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
