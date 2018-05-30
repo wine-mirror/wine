@@ -159,7 +159,7 @@ START_TEST(rpcapi)
     hr = SchRpcCreateFolder(Wine, NULL, 0);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
 
     path = NULL;
     info = NULL;
@@ -168,7 +168,7 @@ START_TEST(rpcapi)
     ok(!path, "expected NULL, path %p\n", path);
     ok(!info, "expected NULL, info %p\n", info);
 
-    for (i = 0; i < sizeof(create_new_task)/sizeof(create_new_task[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
         path = NULL;
         info = NULL;
@@ -207,7 +207,7 @@ START_TEST(rpcapi)
     ok(!info, "expected NULL, info %p\n", info);
     MIDL_user_free(path);
 
-    for (i = 0; i < sizeof(open_existing_task)/sizeof(open_existing_task[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(open_existing_task); i++)
     {
         path = NULL;
         info = NULL;
