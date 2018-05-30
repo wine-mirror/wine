@@ -294,6 +294,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (output)
+        FIXME("Ignoring output %p.\n", output);
+
     if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device)))
     {
         hr = d3d11_swapchain_create(dxgi_device, window, swapchain_desc, fullscreen_desc, swapchain);
