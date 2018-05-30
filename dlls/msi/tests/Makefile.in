@@ -16,6 +16,8 @@ SOURCES = \
 	patch.c \
 	record.c \
 	rsrc.rc \
+	selfreg.c \
+	selfreg.spec \
 	source.c \
 	suminfo.c \
 	typelib.idl
