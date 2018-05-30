@@ -655,7 +655,7 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
     shader_model = min(caps.VertexShaderVersion, caps.PixelShaderVersion);
     for (i = 0; i < level_count; ++i)
     {
-        for (j = 0; j < sizeof(feature_levels_sm) / sizeof(feature_levels_sm[0]); ++j)
+        for (j = 0; j < ARRAY_SIZE(feature_levels_sm); ++j)
         {
             if (feature_levels[i] == feature_levels_sm[j].feature_level)
             {
@@ -671,7 +671,7 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
         if (selected_feature_level)
             break;
 
-        if (j == sizeof(feature_levels_sm) / sizeof(feature_levels_sm[0]))
+        if (j == ARRAY_SIZE(feature_levels_sm))
             FIXME("Unexpected feature level %#x.\n", feature_levels[i]);
         else
             TRACE("Feature level %s not supported, trying next fallback if available.\n",

@@ -40,6 +40,8 @@
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 enum dxgi_frame_latency
 {
     DXGI_FRAME_LATENCY_DEFAULT =  3,
