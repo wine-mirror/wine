@@ -3427,6 +3427,8 @@ static void test_swapchain_present(void)
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
 static void test_maximum_frame_latency(void)
