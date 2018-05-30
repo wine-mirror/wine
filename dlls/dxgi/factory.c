@@ -246,7 +246,7 @@ static BOOL STDMETHODCALLTYPE dxgi_factory_IsWindowedStereoEnabled(IWineDXGIFact
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFactory *iface,
-        IUnknown *device, HWND window, const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc,
+        IUnknown *device, HWND window, const DXGI_SWAP_CHAIN_DESC1 *desc,
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
@@ -255,23 +255,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
 
-    TRACE("iface %p, device %p, window %p, swapchain_desc %p, fullscreen_desc %p, "
-            "output %p, swapchain %p.\n",
-            iface, device, window, swapchain_desc, fullscreen_desc, output, swapchain);
+    TRACE("iface %p, device %p, window %p, desc %p, fullscreen_desc %p, output %p, swapchain %p.\n",
+            iface, device, window, desc, fullscreen_desc, output, swapchain);
 
-    if (!device || !window || !swapchain_desc || !swapchain)
+    if (!device || !window || !desc || !swapchain)
     {
         WARN("Invalid pointer.\n");
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (swapchain_desc->Stereo)
+    if (desc->Stereo)
     {
         FIXME("Stereo swapchains are not supported.\n");
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    switch (swapchain_desc->SwapEffect)
+    switch (desc->SwapEffect)
     {
         case DXGI_SWAP_EFFECT_DISCARD:
         case DXGI_SWAP_EFFECT_SEQUENTIAL:
@@ -281,16 +280,23 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         case DXGI_SWAP_EFFECT_FLIP_DISCARD:
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
             min_buffer_count = 2;
+
+            if (desc->SampleDesc.Count != 1 || desc->SampleDesc.Quality)
+            {
+                WARN("Invalid sample desc %u, %u for swap effect %#x.\n",
+                        desc->SampleDesc.Count, desc->SampleDesc.Quality, desc->SwapEffect);
+                return DXGI_ERROR_INVALID_CALL;
+            }
             break;
 
         default:
-            WARN("Invalid swap effect %u used.\n", swapchain_desc->SwapEffect);
+            WARN("Invalid swap effect %u used.\n", desc->SwapEffect);
             return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (swapchain_desc->BufferCount < min_buffer_count || swapchain_desc->BufferCount > DXGI_MAX_SWAP_CHAIN_BUFFERS)
+    if (desc->BufferCount < min_buffer_count || desc->BufferCount > DXGI_MAX_SWAP_CHAIN_BUFFERS)
     {
-        WARN("BufferCount is %u.\n", swapchain_desc->BufferCount);
+        WARN("BufferCount is %u.\n", desc->BufferCount);
         return DXGI_ERROR_INVALID_CALL;
     }
 
@@ -299,14 +305,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
 
     if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device)))
     {
-        hr = d3d11_swapchain_create(dxgi_device, window, swapchain_desc, fullscreen_desc, swapchain);
+        hr = d3d11_swapchain_create(dxgi_device, window, desc, fullscreen_desc, swapchain);
         IWineDXGIDevice_Release(dxgi_device);
         return hr;
     }
 
     if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&command_queue)))
     {
-        hr = d3d12_swapchain_create(iface, command_queue, window, swapchain_desc, fullscreen_desc, swapchain);
+        hr = d3d12_swapchain_create(iface, command_queue, window, desc, fullscreen_desc, swapchain);
         ID3D12CommandQueue_Release(command_queue);
         return hr;
     }
