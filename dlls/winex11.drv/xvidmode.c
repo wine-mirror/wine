@@ -368,7 +368,7 @@ static void interpolate_gamma_ramp(WORD *dst_r, WORD *dst_g, WORD *dst_b, unsign
 static BOOL xf86vm_get_gamma_ramp(struct x11drv_gamma_ramp *ramp)
 {
     WORD *red, *green, *blue;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
     {
@@ -378,7 +378,7 @@ static BOOL xf86vm_get_gamma_ramp(struct x11drv_gamma_ramp *ramp)
     }
     else
     {
-        if (!(red = heap_calloc(3 * xf86vm_gammaramp_size, sizeof(*red))))
+        if (!(red = heap_calloc(xf86vm_gammaramp_size, 3 * sizeof(*red))))
             return FALSE;
         green = red + xf86vm_gammaramp_size;
         blue = green + xf86vm_gammaramp_size;
@@ -397,7 +397,7 @@ static BOOL xf86vm_get_gamma_ramp(struct x11drv_gamma_ramp *ramp)
 static BOOL xf86vm_set_gamma_ramp(struct x11drv_gamma_ramp *ramp)
 {
     WORD *red, *green, *blue;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     if (xf86vm_gammaramp_size == GAMMA_RAMP_SIZE)
     {
@@ -407,7 +407,7 @@ static BOOL xf86vm_set_gamma_ramp(struct x11drv_gamma_ramp *ramp)
     }
     else
     {
-        if (!(red = heap_calloc(3 * xf86vm_gammaramp_size, sizeof(*red))))
+        if (!(red = heap_calloc(xf86vm_gammaramp_size, 3 * sizeof(*red))))
             return FALSE;
         green = red + xf86vm_gammaramp_size;
         blue = green + xf86vm_gammaramp_size;
