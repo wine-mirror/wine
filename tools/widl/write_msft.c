@@ -993,7 +993,13 @@ static int encode_type(
         importinfo_t *importinfo;
         int typeinfo_offset;
 
-        if ((importinfo = find_importinfo(typelib, type->name)))
+        if (type->typelib_idx > -1)
+        {
+            chat("encode_type: VT_USERDEFINED - found already defined type %s at %d\n",
+                type->name, type->typelib_idx);
+            typeinfo_offset = typelib->typelib_typeinfo_offsets[type->typelib_idx];
+        }
+        else if ((importinfo = find_importinfo(typelib, type->name)))
         {
             chat("encode_type: VT_USERDEFINED - found imported type %s in %s\n",
                 type->name, importinfo->importlib->name);
@@ -1003,36 +1009,32 @@ static int encode_type(
         else
         {
             /* typedef'd types without public attribute aren't included in the typelib */
-            while (type->typelib_idx < 0 && type_is_alias(type) && !is_attr(type->attrs, ATTR_PUBLIC))
+            while (type_is_alias(type) && !is_attr(type->attrs, ATTR_PUBLIC))
                 type = type_alias_get_aliasee(type);
 
-            chat("encode_type: VT_USERDEFINED - type %p name = %s real type %d idx %d\n", type,
-                 type->name, type_get_type(type), type->typelib_idx);
+            chat("encode_type: VT_USERDEFINED - adding new type %s, real type %d\n",
+                 type->name, type_get_type(type));
 
-            if (type->typelib_idx == -1)
+            switch (type_get_type(type))
             {
-                chat("encode_type: trying to ref not added type\n");
-                switch (type_get_type(type))
-                {
-                case TYPE_STRUCT:
-                    add_structure_typeinfo(typelib, type);
-                    break;
-                case TYPE_INTERFACE:
-                    add_interface_typeinfo(typelib, type);
-                    break;
-                case TYPE_ENUM:
-                    add_enum_typeinfo(typelib, type);
-                    break;
-                case TYPE_UNION:
-                    add_union_typeinfo(typelib, type);
-                    break;
-                case TYPE_COCLASS:
-                    add_coclass_typeinfo(typelib, type);
-                    break;
-                default:
-                    error("encode_type: VT_USERDEFINED - unhandled type %d\n",
-                          type_get_type(type));
-                }
+            case TYPE_STRUCT:
+                add_structure_typeinfo(typelib, type);
+                break;
+            case TYPE_INTERFACE:
+                add_interface_typeinfo(typelib, type);
+                break;
+            case TYPE_ENUM:
+                add_enum_typeinfo(typelib, type);
+                break;
+            case TYPE_UNION:
+                add_union_typeinfo(typelib, type);
+                break;
+            case TYPE_COCLASS:
+                add_coclass_typeinfo(typelib, type);
+                break;
+            default:
+                error("encode_type: VT_USERDEFINED - unhandled type %d\n",
+                      type_get_type(type));
             }
 
             typeinfo_offset = typelib->typelib_typeinfo_offsets[type->typelib_idx];
