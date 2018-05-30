@@ -393,11 +393,12 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 {
     int v = 0;
 
+    static const WCHAR ie_eqW[] = {'I','E','='};
     static const WCHAR edgeW[] = {'e','d','g','e',0};
 
     TRACE("%s\n", debugstr_w(p));
 
-    if(p[0] != 'I' || p[1] != 'E' || p[2] != '=')
+    if(strncmpiW(ie_eqW, p, sizeof(ie_eqW)/sizeof(WCHAR)))
         return FALSE;
     p += 3;
 

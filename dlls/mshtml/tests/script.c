@@ -3425,7 +3425,7 @@ static void run_script_as_http_with_mode(const char *script, const char *opt, co
             "  </body>\n"
             "</html>\n",
             document_mode ? "<!DOCTYPE html>\n" : "",
-            document_mode ? "<meta http-equiv=\"x-ua-compatible\" content=\"IE=" : "",
+            document_mode ? "<meta http-equiv=\"x-ua-compatible\" content=\"Ie=" : "",
             document_mode ? document_mode : "",
             document_mode ? "\">" : "",
             script);
