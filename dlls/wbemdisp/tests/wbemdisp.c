@@ -56,10 +56,10 @@ static void test_ParseDisplayName(void)
         ULONG        eaten;
     } tests[] =
     {
-        { name1, S_OK, &IID_ISWbemServices, sizeof(name1)/sizeof(name1[0]) - 1 },
-        { name2, S_OK, &IID_ISWbemServices, sizeof(name2)/sizeof(name2[0]) - 1 },
-        { name3, S_OK, &IID_ISWbemObject, sizeof(name3)/sizeof(name3[0]) - 1 },
-        { name4, S_OK, &IID_ISWbemObject, sizeof(name4)/sizeof(name4[0]) - 1 }
+        { name1, S_OK, &IID_ISWbemServices, ARRAY_SIZE( name1 ) - 1 },
+        { name2, S_OK, &IID_ISWbemServices, ARRAY_SIZE( name2 ) - 1 },
+        { name3, S_OK, &IID_ISWbemObject, ARRAY_SIZE( name3 ) - 1 },
+        { name4, S_OK, &IID_ISWbemObject, ARRAY_SIZE( name4 ) - 1 }
     };
     IParseDisplayName *displayname;
     IBindCtx *ctx;
@@ -79,7 +79,7 @@ static void test_ParseDisplayName(void)
     hr = CreateBindCtx( 0, &ctx );
     ok( hr == S_OK, "got %x\n", hr );
 
-    for (i =0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i =0; i < ARRAY_SIZE( tests ); i++)
     {
         str = SysAllocString( tests[i].name );
         eaten = 0xdeadbeef;
