@@ -141,7 +141,7 @@ static void test_select( IWbemServices *services )
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
     ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
 
-    for (i = 0; i < sizeof(test)/sizeof(test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( test ); i++)
     {
         hr = exec_query( services, test[i], &result );
         ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
@@ -168,7 +168,7 @@ static void test_associators( IWbemServices *services )
     IEnumWbemClassObject *result;
     UINT i;
 
-    for (i = 0; i < sizeof(test)/sizeof(test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( test ); i++)
     {
         hr = exec_query( services, test[i], &result );
         todo_wine ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
@@ -433,7 +433,7 @@ static void test_Win32_Process( IWbemServices *services )
 
     out = NULL;
     method = SysAllocString( getownerW );
-    class = SysAllocStringLen( NULL, sizeof(fmtW)/sizeof(fmtW[0]) + 10 );
+    class = SysAllocStringLen( NULL, ARRAY_SIZE( fmtW ) + 10 );
     wsprintfW( class, fmtW, GetCurrentProcessId() );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
     ok( hr == S_OK, "failed to execute method %08x\n", hr );
@@ -524,13 +524,13 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     WCHAR username[128];
     DWORD len, count;
 
-    len = sizeof(compname) / sizeof(compname[0]);
+    len = ARRAY_SIZE( compname );
     if (!GetComputerNameW( compname, &len ))
         compname[0] = 0;
 
     lstrcpyW( username, compname );
     lstrcatW( username, backslashW );
-    len = sizeof(username) / sizeof(username[0]) - lstrlenW( username );
+    len = ARRAY_SIZE( username ) - lstrlenW( username );
     if (!GetUserNameW( username + lstrlenW( username ), &len ))
         username[0] = 0;
 
