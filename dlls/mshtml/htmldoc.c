@@ -5197,6 +5197,7 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
 
     HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &HTMLDocumentNode_dispex);
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
+    doc_frag->document_mode = lock_document_mode(doc_node);
 
     *ret = doc_frag;
     return S_OK;

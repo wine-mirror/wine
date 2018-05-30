@@ -70,6 +70,23 @@ function test_doc_props() {
     next_test();
 }
 
+function test_docfrag_props() {
+    var docfrag = document.createDocumentFragment();
+
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in docfrag, prop + " not found in document fragent.");
+        else
+            ok(!(prop in docfrag), prop + " found in document fragent.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("compareDocumentPosition", v >= 9);
+
+    next_test();
+}
+
 function test_window_props() {
     function test_exposed(prop, expect) {
         if(expect)
@@ -247,6 +264,7 @@ var tests = [
     test_iframe_doc_mode,
     test_elem_props,
     test_doc_props,
+    test_docfrag_props,
     test_window_props,
     test_javascript,
     test_xhr_props,
