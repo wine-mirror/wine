@@ -1,0 +1,4 @@
+MODULE    = fc.exe
+APPMODE   = -mconsole -municode
+
+C_SRCS = fc.c
