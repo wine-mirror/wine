@@ -1,6 +1,7 @@
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
-IMPORTS   = dxguid uuid wined3d user32
+IMPORTS   = gdi32 dxguid uuid wined3d user32
+EXTRAINCL = $(VKD3D_CFLAGS)
 
 C_SRCS = \
 	adapter.c \

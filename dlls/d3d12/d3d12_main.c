@@ -34,6 +34,8 @@
 
 #include <vkd3d.h>
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d12);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
@@ -113,6 +115,16 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     struct vkd3d_device_create_info device_create_info;
     const struct vulkan_funcs *vk_funcs;
 
+    static const char * const instance_extensions[] =
+    {
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+    };
+    static const char * const device_extensions[] =
+    {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
     TRACE("adapter %p, minimum_feature_level %#x, iid %s, device %p.\n",
             adapter, minimum_feature_level, debugstr_guid(iid), device);
 
@@ -132,11 +144,15 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     instance_create_info.wchar_size = sizeof(WCHAR);
     instance_create_info.pfn_vkGetInstanceProcAddr
             = (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
+    instance_create_info.instance_extensions = instance_extensions;
+    instance_create_info.instance_extension_count = ARRAY_SIZE(instance_extensions);
 
     memset(&device_create_info, 0, sizeof(device_create_info));
     device_create_info.type = VKD3D_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.minimum_feature_level = minimum_feature_level;
     device_create_info.instance_create_info = &instance_create_info;
+    device_create_info.device_extensions = device_extensions;
+    device_create_info.device_extension_count = ARRAY_SIZE(device_extensions);
 
     return vkd3d_create_device(&device_create_info, iid, device);
 }

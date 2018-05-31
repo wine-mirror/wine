@@ -22,7 +22,21 @@
 
 #include "dxgi_private.h"
 
+#ifdef SONAME_LIBVKD3D
+#define VK_NO_PROTOTYPES
+#define VKAPI_CALL
+#define VKD3D_NO_PROTOTYPES
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
+#define WINE_VK_ALIGN(x)
+#include "wine/library.h"
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
+#include <vkd3d.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static inline struct d3d11_swapchain *d3d11_swapchain_from_IDXGISwapChain1(IDXGISwapChain1 *iface)
 {
@@ -797,11 +811,58 @@ HRESULT d3d11_swapchain_create(IWineDXGIDevice *device, HWND window, const DXGI_
     return S_OK;
 }
 
+#ifdef SONAME_LIBVKD3D
+
+static PFN_vkd3d_acquire_vk_queue vkd3d_acquire_vk_queue;
+static PFN_vkd3d_create_image_resource vkd3d_create_image_resource;
+static PFN_vkd3d_get_vk_device vkd3d_get_vk_device;
+static PFN_vkd3d_get_vk_format vkd3d_get_vk_format;
+static PFN_vkd3d_get_vk_physical_device vkd3d_get_vk_physical_device;
+static PFN_vkd3d_get_vk_queue_family_index vkd3d_get_vk_queue_family_index;
+static PFN_vkd3d_instance_from_device vkd3d_instance_from_device;
+static PFN_vkd3d_instance_get_vk_instance vkd3d_instance_get_vk_instance;
+static PFN_vkd3d_release_vk_queue vkd3d_release_vk_queue;
+static PFN_vkd3d_resource_decref vkd3d_resource_decref;
+static PFN_vkd3d_resource_incref vkd3d_resource_incref;
+
+struct dxgi_vk_funcs
+{
+    PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
+    PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
+    PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
+    PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
+    PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+    PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+    PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR p_vkGetPhysicalDeviceSurfaceFormatsKHR;
+    PFN_vkGetPhysicalDeviceSurfacePresentModesKHR p_vkGetPhysicalDeviceSurfacePresentModesKHR;
+    PFN_vkGetPhysicalDeviceSurfaceSupportKHR p_vkGetPhysicalDeviceSurfaceSupportKHR;
+    PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    PFN_vkGetSwapchainImagesKHR p_vkGetSwapchainImagesKHR;
+    PFN_vkQueuePresentKHR p_vkQueuePresentKHR;
+    PFN_vkCreateFence p_vkCreateFence;
+    PFN_vkWaitForFences p_vkWaitForFences;
+    PFN_vkResetFences p_vkResetFences;
+    PFN_vkDestroyFence p_vkDestroyFence;
+};
+
 struct d3d12_swapchain
 {
     IDXGISwapChain3 IDXGISwapChain3_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
+
+    VkSwapchainKHR vk_swapchain;
+    VkSurfaceKHR vk_surface;
+    VkFence vk_fence;
+    VkInstance vk_instance;
+    VkDevice vk_device;
+    ID3D12Resource *buffers[DXGI_MAX_SWAP_CHAIN_BUFFERS];
+    unsigned int buffer_count;
+
+    uint32_t current_buffer_index;
+    struct dxgi_vk_funcs vk_funcs;
 
     ID3D12CommandQueue *command_queue;
     ID3D12Device *device;
@@ -855,7 +916,9 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
 static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     ULONG refcount = InterlockedDecrement(&swapchain->refcount);
+    unsigned int i;
 
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
 
@@ -865,6 +928,15 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
         IWineDXGIFactory_Release(swapchain->factory);
 
         wined3d_private_store_cleanup(&swapchain->private_store);
+
+        for (i = 0; i < swapchain->buffer_count; ++i)
+        {
+            vkd3d_resource_decref(swapchain->buffers[i]);
+        }
+
+        vk_funcs->p_vkDestroyFence(swapchain->vk_device, swapchain->vk_fence, NULL);
+        vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
+        vk_funcs->p_vkDestroySurfaceKHR(swapchain->vk_instance, swapchain->vk_surface, NULL);
 
         ID3D12Device_Release(swapchain->device);
 
@@ -1295,45 +1367,423 @@ static const struct IDXGISwapChain3Vtbl d3d12_swapchain_vtbl =
     d3d12_swapchain_ResizeBuffers1,
 };
 
+static const struct vulkan_funcs *get_vk_funcs(void)
+{
+    const struct vulkan_funcs *vk_funcs;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    ReleaseDC(0, hdc);
+    return vk_funcs;
+}
+
+static BOOL load_vkd3d_functions(void *vkd3d_handle)
+{
+#define LOAD_FUNCPTR(f) if (!(f = wine_dlsym(vkd3d_handle, #f, NULL, 0))) return FALSE;
+    LOAD_FUNCPTR(vkd3d_acquire_vk_queue)
+    LOAD_FUNCPTR(vkd3d_create_image_resource)
+    LOAD_FUNCPTR(vkd3d_get_vk_device)
+    LOAD_FUNCPTR(vkd3d_get_vk_format)
+    LOAD_FUNCPTR(vkd3d_get_vk_physical_device)
+    LOAD_FUNCPTR(vkd3d_get_vk_queue_family_index)
+    LOAD_FUNCPTR(vkd3d_instance_from_device)
+    LOAD_FUNCPTR(vkd3d_instance_get_vk_instance)
+    LOAD_FUNCPTR(vkd3d_release_vk_queue)
+    LOAD_FUNCPTR(vkd3d_resource_decref)
+    LOAD_FUNCPTR(vkd3d_resource_incref)
+#undef LOAD_FUNCPTR
+
+    return TRUE;
+}
+
+static void *vkd3d_handle;
+
+static BOOL WINAPI init_vkd3d_once(INIT_ONCE *once, void *param, void **context)
+{
+    TRACE("Loading vkd3d %s.\n", SONAME_LIBVKD3D);
+
+    if (!(vkd3d_handle = wine_dlopen(SONAME_LIBVKD3D, RTLD_NOW, NULL, 0)))
+        return FALSE;
+
+    if (!load_vkd3d_functions(vkd3d_handle))
+    {
+        ERR("Failed to load vkd3d functions.\n");
+        wine_dlclose(vkd3d_handle, NULL, 0);
+        vkd3d_handle = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL init_vkd3d(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, init_vkd3d_once, NULL, NULL);
+    return !!vkd3d_handle;
+}
+
+static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkDevice vk_device)
+{
+    const struct vulkan_funcs *vk;
+
+    if (!(vk = get_vk_funcs()))
+    {
+        ERR_(winediag)("Failed to load Wine Vulkan driver.\n");
+        return FALSE;
+    }
+
+    dxgi->p_vkAcquireNextImageKHR = vk->p_vkAcquireNextImageKHR;
+    dxgi->p_vkCreateSwapchainKHR = vk->p_vkCreateSwapchainKHR;
+    dxgi->p_vkCreateWin32SurfaceKHR = vk->p_vkCreateWin32SurfaceKHR;
+    dxgi->p_vkDestroySurfaceKHR = vk->p_vkDestroySurfaceKHR;
+    dxgi->p_vkDestroySwapchainKHR = vk->p_vkDestroySwapchainKHR;
+    dxgi->p_vkGetDeviceProcAddr = (PFN_vkGetDeviceProcAddr)vk->p_vkGetDeviceProcAddr;
+    dxgi->p_vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)vk->p_vkGetInstanceProcAddr;
+    dxgi->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR = vk->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    dxgi->p_vkGetPhysicalDeviceSurfaceFormatsKHR = vk->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
+    dxgi->p_vkGetPhysicalDeviceSurfacePresentModesKHR = vk->p_vkGetPhysicalDeviceSurfacePresentModesKHR;
+    dxgi->p_vkGetPhysicalDeviceSurfaceSupportKHR = vk->p_vkGetPhysicalDeviceSurfaceSupportKHR;
+    dxgi->p_vkGetPhysicalDeviceWin32PresentationSupportKHR = vk->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    dxgi->p_vkGetSwapchainImagesKHR = vk->p_vkGetSwapchainImagesKHR;
+    dxgi->p_vkQueuePresentKHR = vk->p_vkQueuePresentKHR;
+
+#define LOAD_DEVICE_PFN(name) \
+    if (!(dxgi->p_##name = vk->p_vkGetDeviceProcAddr(vk_device, #name))) \
+    { \
+        ERR("Failed to get device proc "#name".\n"); \
+        return FALSE; \
+    }
+    LOAD_DEVICE_PFN(vkCreateFence)
+    LOAD_DEVICE_PFN(vkWaitForFences)
+    LOAD_DEVICE_PFN(vkResetFences)
+    LOAD_DEVICE_PFN(vkDestroyFence)
+#undef LOAD_DEVICE_PFN
+
+    return TRUE;
+}
+
+static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
+        VkPhysicalDevice vk_physical_device, VkSurfaceKHR vk_surface,
+        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, VkFormat *vk_format)
+{
+    VkSurfaceFormatKHR *formats;
+    uint32_t format_count;
+    VkFormat format;
+    unsigned int i;
+    VkResult vr;
+
+    *vk_format = VK_FORMAT_UNDEFINED;
+
+    format = vkd3d_get_vk_format(swapchain_desc->Format);
+    if (format == VK_FORMAT_UNDEFINED)
+        return DXGI_ERROR_INVALID_CALL;
+
+    vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, vk_surface, &format_count, NULL);
+    if (vr < 0 || !format_count)
+    {
+        WARN("Failed to get supported surface formats, vr %d.\n", vr);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (!(formats = heap_calloc(format_count, sizeof(*formats))))
+        return E_OUTOFMEMORY;
+
+    if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device,
+            vk_surface, &format_count, formats)) < 0)
+    {
+        WARN("Failed to enumerate supported surface formats, vr %d.\n", vr);
+        heap_free(formats);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    for (i = 0; i < format_count; ++i)
+    {
+        if (formats[i].format == format && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            break;
+    }
+    heap_free(formats);
+
+    if (i == format_count)
+    {
+        FIXME("Failed to find suitable format for %s.\n", debug_dxgi_format(swapchain_desc->Format));
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    *vk_format = format;
+    return S_OK;
+}
+
+static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGIFactory *factory,
+        ID3D12Device *device, ID3D12CommandQueue *queue, HWND window,
+        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    struct vkd3d_image_resource_create_info resource_info;
+    struct VkSwapchainCreateInfoKHR vk_swapchain_desc;
+    struct VkWin32SurfaceCreateInfoKHR surface_desc;
+    VkImage vk_images[DXGI_MAX_SWAP_CHAIN_BUFFERS];
+    VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
+    VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+    VkSurfaceCapabilitiesKHR surface_caps;
+    VkPhysicalDevice vk_physical_device;
+    VkFence vk_fence = VK_NULL_HANDLE;
+    unsigned int image_count, i, j;
+    VkFenceCreateInfo fence_desc;
+    uint32_t queue_family_index;
+    VkInstance vk_instance;
+    HRESULT hr = E_FAIL;
+    VkBool32 supported;
+    VkDevice vk_device;
+    VkFormat vk_format;
+    VkResult vr;
+
+    swapchain->IDXGISwapChain3_iface.lpVtbl = &d3d12_swapchain_vtbl;
+    swapchain->refcount = 1;
+
+    swapchain->window = window;
+    swapchain->desc = *swapchain_desc;
+    swapchain->fullscreen_desc = *fullscreen_desc;
+
+    switch (swapchain_desc->SwapEffect)
+    {
+        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
+        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
+            FIXME("Ignoring swap effect %#x.\n", swapchain_desc->SwapEffect);
+            break;
+        default:
+            WARN("Invalid swap effect %#x.\n", swapchain_desc->SwapEffect);
+            return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (!init_vkd3d())
+    {
+        ERR_(winediag)("libvkd3d could not be loaded.\n");
+        return DXGI_ERROR_UNSUPPORTED;
+    }
+
+    if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
+        FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage);
+    if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH)
+        FIXME("Ignoring scaling %#x.\n", swapchain_desc->Scaling);
+    if (swapchain_desc->AlphaMode && swapchain_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
+        FIXME("Ignoring alpha mode %#x.\n", swapchain_desc->AlphaMode);
+    if (swapchain_desc->Flags)
+        FIXME("Ignoring swapchain flags %#x.\n", swapchain_desc->Flags);
+
+    FIXME("Ignoring refresh rate.\n");
+    if (fullscreen_desc->ScanlineOrdering)
+        FIXME("Unhandled scanline ordering %#x.\n", fullscreen_desc->ScanlineOrdering);
+    if (fullscreen_desc->Scaling)
+        FIXME("Unhandled mode scaling %#x.\n", fullscreen_desc->Scaling);
+    if (!fullscreen_desc->Windowed)
+        FIXME("Fullscreen not supported yet.\n");
+
+    vk_instance = vkd3d_instance_get_vk_instance(vkd3d_instance_from_device(device));
+    vk_physical_device = vkd3d_get_vk_physical_device(device);
+    vk_device = vkd3d_get_vk_device(device);
+
+    if (!init_vk_funcs(&swapchain->vk_funcs, vk_device))
+        return E_FAIL;
+
+    surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surface_desc.pNext = NULL;
+    surface_desc.flags = 0;
+    surface_desc.hinstance = GetModuleHandleA("dxgi.dll");
+    surface_desc.hwnd = window;
+    if ((vr = vk_funcs->p_vkCreateWin32SurfaceKHR(vk_instance, &surface_desc, NULL, &vk_surface)) < 0)
+    {
+        WARN("Failed to create Vulkan surface, vr %d.\n", vr);
+        goto fail;
+    }
+
+    queue_family_index = vkd3d_get_vk_queue_family_index(queue);
+    if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device,
+            queue_family_index, vk_surface, &supported)) < 0 || !supported)
+    {
+        FIXME("Queue family does not support presentation, vr %d.\n", vr);
+        goto fail;
+    }
+
+    if (FAILED(hr = select_vk_format(vk_funcs, vk_physical_device, vk_surface, swapchain_desc, &vk_format)))
+        goto fail;
+    hr = E_FAIL;
+
+    if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device,
+            vk_surface, &surface_caps)) < 0)
+    {
+        WARN("Failed to get surface capabilities, vr %d.\n", vr);
+        goto fail;
+    }
+
+    if (surface_caps.maxImageCount && (swapchain_desc->BufferCount > surface_caps.maxImageCount
+            || swapchain_desc->BufferCount < surface_caps.minImageCount))
+    {
+        WARN("Buffer count %u is not supported (%u-%u).\n", swapchain_desc->BufferCount,
+                surface_caps.minImageCount, surface_caps.maxImageCount);
+        goto fail;
+    }
+
+    if (swapchain_desc->Width > surface_caps.maxImageExtent.width
+            || swapchain_desc->Width < surface_caps.minImageExtent.width
+            || swapchain_desc->Height > surface_caps.maxImageExtent.height
+            || swapchain_desc->Height < surface_caps.minImageExtent.height)
+    {
+        FIXME("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
+                swapchain_desc->Width, swapchain_desc->Height,
+                surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width,
+                surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
+    }
+
+    if (!(surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR))
+    {
+        FIXME("Unsupported alpha mode.\n");
+        goto fail;
+    }
+
+    vk_swapchain_desc.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    vk_swapchain_desc.pNext = NULL;
+    vk_swapchain_desc.flags = 0;
+    vk_swapchain_desc.surface = vk_surface;
+    vk_swapchain_desc.minImageCount = swapchain_desc->BufferCount;
+    vk_swapchain_desc.imageFormat = vk_format;
+    vk_swapchain_desc.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    vk_swapchain_desc.imageExtent.width = swapchain_desc->Width;
+    vk_swapchain_desc.imageExtent.height = swapchain_desc->Height;
+    vk_swapchain_desc.imageArrayLayers = 1;
+    vk_swapchain_desc.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    vk_swapchain_desc.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    vk_swapchain_desc.queueFamilyIndexCount = 0;
+    vk_swapchain_desc.pQueueFamilyIndices = NULL;
+    vk_swapchain_desc.preTransform = surface_caps.currentTransform;
+    vk_swapchain_desc.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    vk_swapchain_desc.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    vk_swapchain_desc.clipped = VK_TRUE;
+    vk_swapchain_desc.oldSwapchain = VK_NULL_HANDLE;
+    if ((vr = vk_funcs->p_vkCreateSwapchainKHR(vk_device, &vk_swapchain_desc, NULL, &vk_swapchain)) < 0)
+    {
+        WARN("Failed to create Vulkan swapchain, vr %d.\n", vr);
+        goto fail;
+    }
+
+    fence_desc.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_desc.pNext = NULL;
+    fence_desc.flags = 0;
+    if ((vr = vk_funcs->p_vkCreateFence(vk_device, &fence_desc, NULL, &vk_fence)) < 0)
+    {
+        WARN("Failed to create Vulkan fence, vr %d.\n", vr);
+        goto fail;
+    }
+
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        goto fail;
+    }
+    if (image_count != swapchain_desc->BufferCount)
+        FIXME("Got %u swapchain images, expected %u.\n", image_count, swapchain_desc->BufferCount);
+    if (image_count > ARRAY_SIZE(vk_images))
+        goto fail;
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, vk_images)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        goto fail;
+    }
+
+    swapchain->vk_swapchain = vk_swapchain;
+    swapchain->vk_surface = vk_surface;
+    swapchain->vk_fence = vk_fence;
+    swapchain->vk_instance = vk_instance;
+    swapchain->vk_device = vk_device;
+
+    vk_funcs->p_vkAcquireNextImageKHR(vk_device, vk_swapchain, UINT64_MAX,
+            VK_NULL_HANDLE, vk_fence, &swapchain->current_buffer_index);
+    vk_funcs->p_vkWaitForFences(vk_device, 1, &vk_fence, VK_TRUE, UINT64_MAX);
+    vk_funcs->p_vkResetFences(vk_device, 1, &vk_fence);
+
+    resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
+    resource_info.next = NULL;
+    resource_info.desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    resource_info.desc.Alignment = 0;
+    resource_info.desc.Width = swapchain_desc->Width;
+    resource_info.desc.Height = swapchain_desc->Height;
+    resource_info.desc.DepthOrArraySize = 1;
+    resource_info.desc.MipLevels = 1;
+    resource_info.desc.Format = swapchain_desc->Format;
+    resource_info.desc.SampleDesc.Count = 1;
+    resource_info.desc.SampleDesc.Quality = 0;
+    resource_info.desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    resource_info.desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    resource_info.flags = VKD3D_RESOURCE_INITIAL_STATE_TRANSITION | VKD3D_RESOURCE_PRESENT_STATE_TRANSITION;
+    resource_info.present_state = D3D12_RESOURCE_STATE_PRESENT;
+    for (i = 0; i < image_count; ++i)
+    {
+        resource_info.vk_image = vk_images[i];
+        if (SUCCEEDED(hr = vkd3d_create_image_resource(device, &resource_info, &swapchain->buffers[i])))
+        {
+            vkd3d_resource_incref(swapchain->buffers[i]);
+            ID3D12Resource_Release(swapchain->buffers[i]);
+        }
+        else
+        {
+            ERR("Failed to create vkd3d resource for Vulkan image %u, hr %#x.\n", i, hr);
+            for (j = 0; j < i; ++j)
+            {
+                vkd3d_resource_decref(swapchain->buffers[j]);
+            }
+            goto fail;
+        }
+    }
+    swapchain->buffer_count = image_count;
+
+    wined3d_private_store_init(&swapchain->private_store);
+
+    ID3D12CommandQueue_AddRef(swapchain->command_queue = queue);
+    ID3D12Device_AddRef(swapchain->device = device);
+    IWineDXGIFactory_AddRef(swapchain->factory = factory);
+
+    return S_OK;
+
+fail:
+    vk_funcs->p_vkDestroyFence(vk_device, vk_fence, NULL);
+    vk_funcs->p_vkDestroySwapchainKHR(vk_device, vk_swapchain, NULL);
+    vk_funcs->p_vkDestroySurfaceKHR(vk_instance, vk_surface, NULL);
+    return hr;
+}
+
 HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGISwapChain1 **swapchain)
 {
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC default_fullscreen_desc;
     struct d3d12_swapchain *object;
     ID3D12Device *device;
     HRESULT hr;
 
-    if (FAILED(hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&device)))
+    if (!fullscreen_desc)
     {
-        ERR("Failed to get D3D12 device, hr %#x.\n", hr);
-        return hr;
+        memset(&default_fullscreen_desc, 0, sizeof(default_fullscreen_desc));
+        default_fullscreen_desc.Windowed = TRUE;
+        fullscreen_desc = &default_fullscreen_desc;
     }
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        ID3D12Device_Release(device);
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&device)))
+    {
+        ERR("Failed to get D3D12 device, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
     }
 
-    object->IDXGISwapChain3_iface.lpVtbl = &d3d12_swapchain_vtbl;
-    object->refcount = 1;
-
-    wined3d_private_store_init(&object->private_store);
-
-    ID3D12CommandQueue_AddRef(object->command_queue = queue);
-    object->device = device;
-    IWineDXGIFactory_AddRef(object->factory = factory);
-
-    object->window = window;
-    object->desc = *swapchain_desc;
-    if (fullscreen_desc)
+    hr = d3d12_swapchain_init(object, factory, device, queue, window, swapchain_desc, fullscreen_desc);
+    ID3D12Device_Release(device);
+    if (FAILED(hr))
     {
-        object->fullscreen_desc = *fullscreen_desc;
-    }
-    else
-    {
-        memset(&object->fullscreen_desc, 0, sizeof(object->fullscreen_desc));
-        object->fullscreen_desc.Windowed = TRUE;
+        heap_free(object);
+        return hr;
     }
 
     TRACE("Created swapchain %p.\n", object);
@@ -1342,3 +1792,15 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
 
     return S_OK;
 }
+
+#else
+
+HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
+        const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
+        IDXGISwapChain1 **swapchain)
+{
+    ERR_(winediag)("Wine was built without Direct3D 12 support.\n");
+    return DXGI_ERROR_UNSUPPORTED;
+}
+
+#endif  /* SONAME_LIBVKD3D */
