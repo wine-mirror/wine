@@ -63,6 +63,7 @@ typedef struct
     HRESULT status;
     WORD idle_minutes, deadline_minutes;
     DWORD flags, priority, maxRunTime, exit_code;
+    SYSTEMTIME last_runtime;
     LPWSTR accountName;
     DWORD trigger_count;
     TASK_TRIGGER *trigger;
@@ -654,10 +655,18 @@ static HRESULT WINAPI MSTASK_ITask_EditWorkItem(
 
 static HRESULT WINAPI MSTASK_ITask_GetMostRecentRunTime(ITask *iface, SYSTEMTIME *st)
 {
-    FIXME("(%p, %p): stub\n", iface, st);
+    TaskImpl *This = impl_from_ITask(iface);
 
-    memset(st, 0, sizeof(*st));
-    return SCHED_S_TASK_HAS_NOT_RUN;
+    TRACE("(%p, %p)\n", iface, st);
+
+    if (This->status == SCHED_S_TASK_NOT_SCHEDULED)
+    {
+        memset(st, 0, sizeof(*st));
+        return SCHED_S_TASK_HAS_NOT_RUN;
+    }
+
+    *st = This->last_runtime;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetStatus(ITask *iface, HRESULT *status)
@@ -1262,8 +1271,9 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     This->status = fixed->status;
     TRACE("flags %08x\n", fixed->flags);
     This->flags = fixed->flags;
+    This->last_runtime = fixed->last_runtime;
     st = &fixed->last_runtime;
-    TRACE("last_runtime %d/%d/%d wday %d %d:%d:%d.%03d\n",
+    TRACE("last_runtime %u/%u/%u wday %u %u:%02u:%02u.%03u\n",
             st->wDay, st->wMonth, st->wYear, st->wDayOfWeek,
             st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
 
@@ -1617,7 +1627,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
         This->status = SCHED_S_TASK_HAS_NOT_RUN;
     fixed.status = This->status;
     fixed.flags = This->flags;
-    memset(&fixed.last_runtime, 0, sizeof(fixed.last_runtime));
+    fixed.last_runtime = This->last_runtime;
 
     try = 1;
     for (;;)
@@ -1855,6 +1865,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->is_dirty = FALSE;
     This->instance_count = 0;
 
+    memset(&This->last_runtime, 0, sizeof(This->last_runtime));
     CoCreateGuid(&This->uuid);
 
     /* Default time is 3 days = 259200000 ms */
