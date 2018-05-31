@@ -1176,13 +1176,82 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetCoreWindow(IDXGISwapChain3 *
     return DXGI_ERROR_INVALID_CALL;
 }
 
+static HRESULT d3d12_swapchain_acquire_next_image(struct d3d12_swapchain *swapchain)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkDevice vk_device = swapchain->vk_device;
+    VkFence vk_fence = swapchain->vk_fence;
+    VkResult vr;
+
+    if ((vr = vk_funcs->p_vkAcquireNextImageKHR(vk_device, swapchain->vk_swapchain, UINT64_MAX,
+            VK_NULL_HANDLE, vk_fence, &swapchain->current_buffer_index)) < 0)
+    {
+        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
+        return E_FAIL;
+    }
+
+    if ((vr = vk_funcs->p_vkWaitForFences(vk_device, 1, &vk_fence, VK_TRUE, UINT64_MAX)) < 0)
+    {
+        ERR("Failed to wait for fences, vr %d.\n", vr);
+        return E_FAIL;
+    }
+    if ((vr = vk_funcs->p_vkResetFences(vk_device, 1, &vk_fence)) < 0)
+    {
+        ERR("Failed to reset fence, vr %d.\n", vr);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface,
         UINT sync_interval, UINT flags, const DXGI_PRESENT_PARAMETERS *present_parameters)
 {
-    FIXME("iface %p, sync_interval %u, flags %#x, present_parameters %p stub!\n",
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkPresentInfoKHR present_desc;
+    VkQueue vk_queue;
+
+    TRACE("iface %p, sync_interval %u, flags %#x, present_parameters %p.\n",
             iface, sync_interval, flags, present_parameters);
 
-    return E_NOTIMPL;
+    if (sync_interval > 4)
+    {
+        WARN("Invalid sync interval %u.\n", sync_interval);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+    if (sync_interval != 1)
+        FIXME("Ignoring sync interval %u.\n", sync_interval);
+
+    if (flags & ~DXGI_PRESENT_TEST)
+        FIXME("Unimplemented flags %#x.\n", flags);
+    if (flags & DXGI_PRESENT_TEST)
+    {
+        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
+        return S_OK;
+    }
+
+    if (present_parameters)
+        FIXME("Ignored present parameters %p.\n", present_parameters);
+
+    present_desc.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_desc.pNext = NULL;
+    present_desc.waitSemaphoreCount = 0;
+    present_desc.pWaitSemaphores = NULL;
+    present_desc.swapchainCount = 1;
+    present_desc.pSwapchains = &swapchain->vk_swapchain;
+    present_desc.pImageIndices = &swapchain->current_buffer_index;
+    present_desc.pResults = NULL;
+
+    if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
+    {
+        ERR("Failed to acquire Vulkan queue.\n");
+        return E_FAIL;
+    }
+    vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_desc);
+    vkd3d_release_vk_queue(swapchain->command_queue);
+
+    return d3d12_swapchain_acquire_next_image(swapchain);
 }
 
 static BOOL STDMETHODCALLTYPE d3d12_swapchain_IsTemporaryMonoSupported(IDXGISwapChain3 *iface)
@@ -1707,10 +1776,11 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->vk_instance = vk_instance;
     swapchain->vk_device = vk_device;
 
-    vk_funcs->p_vkAcquireNextImageKHR(vk_device, vk_swapchain, UINT64_MAX,
-            VK_NULL_HANDLE, vk_fence, &swapchain->current_buffer_index);
-    vk_funcs->p_vkWaitForFences(vk_device, 1, &vk_fence, VK_TRUE, UINT64_MAX);
-    vk_funcs->p_vkResetFences(vk_device, 1, &vk_fence);
+    if (FAILED(hr = d3d12_swapchain_acquire_next_image(swapchain)))
+    {
+        WARN("Failed to acquire Vulkan image, hr %#x.\n", hr);
+        goto fail;
+    }
 
     resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
     resource_info.next = NULL;
