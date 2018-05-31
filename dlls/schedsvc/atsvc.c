@@ -59,6 +59,8 @@ struct job_t
 {
     struct list entry;
     WCHAR *name;
+    WCHAR *params;
+    WCHAR *curdir;
     AT_ENUM info;
     FIXDLEN_DATA data;
     USHORT instance_count;
@@ -76,7 +78,7 @@ static CRITICAL_SECTION_DEBUG cs_debug =
 };
 static CRITICAL_SECTION at_job_list_section = { &cs_debug, -1, 0, 0, 0, 0 };
 
-static DWORD load_unicode_strings(const char *data, DWORD limit, AT_ENUM *info)
+static DWORD load_unicode_strings(const char *data, DWORD limit, struct job_t *job)
 {
     DWORD i, data_size = 0;
     USHORT len;
@@ -101,8 +103,23 @@ static DWORD load_unicode_strings(const char *data, DWORD limit, AT_ENUM *info)
 
         TRACE("string %u: %s\n", i, wine_dbgstr_wn((const WCHAR *)data, len));
 
-        if (i == 0)
-            info->Command = heap_strdupW((const WCHAR *)data);
+        switch (i)
+        {
+        case 0:
+            job->info.Command = heap_strdupW((const WCHAR *)data);
+            break;
+
+        case 1:
+            job->params = heap_strdupW((const WCHAR *)data);
+            break;
+
+        case 2:
+            job->curdir = heap_strdupW((const WCHAR *)data);
+            break;
+
+        default:
+            break;
+        }
 
         data += len * sizeof(WCHAR);
         data_size += len * sizeof(WCHAR);
@@ -162,7 +179,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
     TRACE("instance count %u\n", info->instance_count);
 
     if (fixed->name_size_offset + sizeof(USHORT) < size)
-        unicode_strings_size = load_unicode_strings(data + fixed->name_size_offset, size - fixed->name_size_offset, &info->info);
+        unicode_strings_size = load_unicode_strings(data + fixed->name_size_offset, size - fixed->name_size_offset, info);
     else
     {
         TRACE("invalid name_size_offset\n");
@@ -324,6 +341,8 @@ static void free_job(struct job_t *job)
 {
     free_job_info(&job->info);
     heap_free(job->name);
+    heap_free(job->params);
+    heap_free(job->curdir);
     heap_free(job);
 }
 
