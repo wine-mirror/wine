@@ -25,6 +25,9 @@
 void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
 void add_job(const WCHAR *name) DECLSPEC_HIDDEN;
 void remove_job(const WCHAR *name) DECLSPEC_HIDDEN;
+void check_task_state(void) DECLSPEC_HIDDEN;
+void add_process_to_queue(HANDLE hproc) DECLSPEC_HIDDEN;
+void update_process_status(DWORD pid) DECLSPEC_HIDDEN;
 
 static inline WCHAR *heap_strdupW(const WCHAR *src)
 {

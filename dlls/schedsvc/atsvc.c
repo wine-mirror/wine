@@ -66,9 +66,19 @@ struct job_t
     USHORT instance_count;
 };
 
+struct running_job_t
+{
+    struct list entry;
+    UUID uuid;
+    HANDLE process;
+    DWORD pid;
+};
+
 static LONG current_jobid = 1;
 
 static struct list at_job_list = LIST_INIT(at_job_list);
+static struct list running_job_list = LIST_INIT(running_job_list);
+
 static CRITICAL_SECTION at_job_list_section;
 static CRITICAL_SECTION_DEBUG cs_debug =
 {
@@ -359,11 +369,6 @@ void add_job(const WCHAR *name)
         return;
     }
 
-    if (job->data.flags & 0x08000000)
-        FIXME("Terminate(%s): not implemented\n", debugstr_w(job->info.Command));
-    else if (job->data.flags & 0x04000000)
-        FIXME("Run(%s): not implemented\n", debugstr_w(job->info.Command));
-
     EnterCriticalSection(&at_job_list_section);
     job->name = heap_strdupW(name);
     job->info.JobId = current_jobid++;
@@ -545,17 +550,172 @@ failed:
     return ret;
 }
 
-static struct job_t *find_job(DWORD jobid, const WCHAR *name)
+static struct job_t *find_job(DWORD jobid, const WCHAR *name, const UUID *id)
 {
     struct job_t *job;
 
     LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
     {
-        if ((name && !lstrcmpiW(job->name, name)) || job->info.JobId == jobid)
+        if (job->info.JobId == jobid || (name && !lstrcmpiW(job->name, name)) || (id && IsEqualGUID(&job->data.uuid, id)))
             return job;
     }
 
     return NULL;
+}
+
+static void update_job_status(struct job_t *job)
+{
+    HANDLE hfile;
+    DWORD try, size;
+#include "pshpack2.h"
+    struct
+    {
+        UINT exit_code;
+        UINT status;
+        UINT flags;
+        SYSTEMTIME last_runtime;
+        WORD instance_count;
+    } state;
+#include "poppack.h"
+
+    try = 1;
+    for (;;)
+    {
+        hfile = CreateFileW(job->name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+        if (hfile != INVALID_HANDLE_VALUE) break;
+
+        if (try++ >= 3)
+        {
+            ERR("Failed to update %s, error %u\n", debugstr_w(job->name), GetLastError());
+            return;
+        }
+        Sleep(100);
+    }
+
+    if (SetFilePointer(hfile, FIELD_OFFSET(FIXDLEN_DATA, exit_code), NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER)
+    {
+        state.exit_code = job->data.exit_code;
+        state.status = job->data.status;
+        state.flags = job->data.flags;
+        state.last_runtime = job->data.last_runtime;
+        state.instance_count = job->instance_count;
+        WriteFile(hfile, &state, sizeof(state), &size, NULL);
+    }
+
+    CloseHandle(hfile);
+}
+
+void update_process_status(DWORD pid)
+{
+    struct running_job_t *runjob;
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(runjob, &running_job_list, struct running_job_t, entry)
+    {
+        if (runjob->pid == pid)
+        {
+            struct job_t *job = find_job(0, NULL, &runjob->uuid);
+            if (job)
+            {
+                DWORD exit_code = STILL_ACTIVE;
+
+                GetExitCodeProcess(runjob->process, &exit_code);
+
+                if (exit_code != STILL_ACTIVE)
+                {
+                    CloseHandle(runjob->process);
+                    list_remove(&runjob->entry);
+                    heap_free(runjob);
+
+                    job->data.exit_code = exit_code;
+                    job->data.status = SCHED_S_TASK_TERMINATED;
+                    job->data.flags &= ~0x0c000000;
+                    job->instance_count = 0;
+                    update_job_status(job);
+                }
+            }
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+}
+
+void check_task_state(void)
+{
+    struct job_t *job;
+    struct running_job_t *runjob;
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if (job->data.flags & 0x08000000)
+        {
+            TRACE("terminating process %s\n", debugstr_w(job->info.Command));
+
+            LIST_FOR_EACH_ENTRY(runjob, &running_job_list, struct running_job_t, entry)
+            {
+                if (IsEqualGUID(&job->data.uuid, &runjob->uuid))
+                {
+                    TerminateProcess(runjob->process, 0);
+                    update_process_status(runjob->pid);
+                    break;
+                }
+            }
+        }
+        else if (job->data.flags & 0x04000000)
+        {
+            STARTUPINFOW si;
+            PROCESS_INFORMATION pi;
+
+            TRACE("running process %s\n", debugstr_w(job->info.Command));
+
+            if (job->instance_count)
+                FIXME("process %s is already running\n", debugstr_w(job->info.Command));
+
+            runjob = heap_alloc(sizeof(*runjob));
+            if (runjob)
+            {
+                static WCHAR winsta0[] = { 'W','i','n','S','t','a','0',0 };
+
+                memset(&si, 0, sizeof(si));
+                si.cb = sizeof(si);
+                /* FIXME: if (job->data.flags & TASK_FLAG_INTERACTIVE) */
+                si.lpDesktop = winsta0;
+                si.dwFlags = STARTF_USESHOWWINDOW;
+                si.wShowWindow = SW_SHOWNORMAL;
+                TRACE("executing %s %s at %s\n", debugstr_w(job->info.Command), debugstr_w(job->params), debugstr_w(job->curdir));
+                if (CreateProcessW(job->info.Command, job->params, NULL, NULL, FALSE, 0, NULL, job->curdir, &si, &pi))
+                {
+                    CloseHandle(pi.hThread);
+
+                    GetLocalTime(&job->data.last_runtime);
+                    job->data.exit_code = 0;
+                    job->data.status = SCHED_S_TASK_RUNNING;
+                    job->instance_count = 1;
+
+                    runjob->uuid = job->data.uuid;
+                    runjob->process = pi.hProcess;
+                    runjob->pid = pi.dwProcessId;
+                    list_add_tail(&running_job_list, &runjob->entry);
+                    add_process_to_queue(pi.hProcess);
+                }
+                else
+                {
+                    WARN("failed to execute %s\n", debugstr_w(job->info.Command));
+                    job->data.status = SCHED_S_TASK_HAS_NOT_RUN;
+                    job->instance_count = 0;
+                }
+            }
+
+            job->data.flags &= ~0x0c000000;
+            update_job_status(job);
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
 }
 
 void remove_job(const WCHAR *name)
@@ -563,7 +723,7 @@ void remove_job(const WCHAR *name)
     struct job_t *job;
 
     EnterCriticalSection(&at_job_list_section);
-    job = find_job(0, name);
+    job = find_job(0, name, NULL);
     if (job)
     {
         list_remove(&job->entry);
@@ -596,7 +756,7 @@ DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
             for (i = 0; i < 5; i++)
             {
                 EnterCriticalSection(&at_job_list_section);
-                job = find_job(0, task_name);
+                job = find_job(0, task_name, NULL);
                 LeaveCriticalSection(&at_job_list_section);
 
                 if (job)
@@ -640,7 +800,7 @@ DWORD __cdecl NetrJobDel(ATSVC_HANDLE server_name, DWORD min_jobid, DWORD max_jo
 
     for (jobid = min_jobid; jobid <= max_jobid; jobid++)
     {
-        struct job_t *job = find_job(jobid, NULL);
+        struct job_t *job = find_job(jobid, NULL, NULL);
 
         if (!job)
         {
@@ -735,7 +895,7 @@ DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **in
 
     EnterCriticalSection(&at_job_list_section);
 
-    job = find_job(jobid, NULL);
+    job = find_job(jobid, NULL, NULL);
     if (job)
     {
         AT_INFO *info_ret = heap_alloc(sizeof(*info_ret));
