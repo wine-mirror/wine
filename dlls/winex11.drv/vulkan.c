@@ -86,21 +86,17 @@ static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
     return (struct wine_vk_surface *)(uintptr_t)handle;
 }
 
-static BOOL wine_vk_init(void)
+static void *vulkan_handle;
+
+static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    static BOOL init_done = FALSE;
-    static void *vulkan_handle;
-
-    if (init_done) return (vulkan_handle != NULL);
-    init_done = TRUE;
-
     if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0)))
     {
         ERR("Failed to load %s\n", SONAME_LIBVULKAN);
-        return FALSE;
+        return TRUE;
     }
 
-#define LOAD_FUNCPTR(f) if ((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) return FALSE;
+#define LOAD_FUNCPTR(f) if ((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) goto fail;
     LOAD_FUNCPTR(vkAcquireNextImageKHR)
     LOAD_FUNCPTR(vkCreateInstance)
     LOAD_FUNCPTR(vkCreateSwapchainKHR)
@@ -120,6 +116,11 @@ static BOOL wine_vk_init(void)
     LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
 
+    return TRUE;
+
+fail:
+    wine_dlclose(vulkan_handle, NULL, 0);
+    vulkan_handle = NULL;
     return TRUE;
 }
 
@@ -558,13 +559,16 @@ static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *n
 
 const struct vulkan_funcs *get_vulkan_driver(UINT version)
 {
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
         ERR("version mismatch, vulkan wants %u but driver has %u\n", version, WINE_VULKAN_DRIVER_VERSION);
         return NULL;
     }
 
-    if (wine_vk_init())
+    InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
+    if (vulkan_handle)
         return &vulkan_funcs;
 
     return NULL;
