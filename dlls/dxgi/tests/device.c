@@ -2200,17 +2200,22 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
             continue;
 
         hr = IDXGIOutput_GetDesc(target, &output_desc);
-        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get desc, hr %#x.\n", hr);
 
         compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
                 &swapchain_desc, &output_desc.DesktopCoordinates, modes[i].Width, modes[i].Height, NULL);
 
         hr = IDXGISwapChain_ResizeTarget(swapchain, &modes[i]);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+        if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+        {
+            skip("Failed to change to video mode %u.\n", i);
+            break;
+        }
         check_swapchain_fullscreen_state(swapchain, &expected_state);
 
         hr = IDXGIOutput_GetDesc(target, &output_desc);
-        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get desc, hr %#x.\n", hr);
         ok(EqualRect(&output_desc.DesktopCoordinates, &expected_state.fullscreen_state.monitor_rect),
                 "Got desktop coordinates %s, expected %s.\n",
                 wine_dbgstr_rect(&output_desc.DesktopCoordinates),
