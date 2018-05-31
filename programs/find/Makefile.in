@@ -1,0 +1,4 @@
+MODULE    = find.exe
+APPMODE   = -mconsole -municode
+
+C_SRCS = find.c
