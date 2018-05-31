@@ -1718,10 +1718,12 @@ void __cdecl __ExceptionPtrCreate(exception_ptr *ep)
 }
 
 #ifdef __i386__
-static inline void call_dtor(const cxx_exception_type *type, void *func, void *object)
-{
-    __asm__ __volatile__("call *%0" : : "m" (func), "c" (object) : "eax", "edx", "memory");
-}
+extern void call_dtor(const cxx_exception_type *type, void *func, void *object);
+
+__ASM_GLOBAL_FUNC( call_dtor,
+                   "movl 12(%esp),%ecx\n\t"
+                   "call *8(%esp)\n\t"
+                   "ret" );
 #elif __x86_64__
 static inline void call_dtor(const cxx_exception_type *type, unsigned int dtor, void *object)
 {
