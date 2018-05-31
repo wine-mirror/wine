@@ -29,6 +29,7 @@
 #include "psapi.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -75,9 +76,42 @@ static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
     return ++ptr;
 }
 
+static BOOL is_wine_loader(const WCHAR *module)
+{
+    static const WCHAR wineW[] = {'w','i','n','e',0};
+    static const WCHAR suffixW[] = {'6','4',0};
+    const WCHAR *filename = get_filename(module, NULL);
+    const char *ptr, *p;
+    BOOL ret = FALSE;
+    WCHAR *buffer;
+    DWORD len;
+
+    if ((ptr = getenv("WINELOADER")))
+    {
+        if ((p = strrchr(ptr, '/'))) ptr = p + 1;
+        len = 2 + MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, NULL, 0 );
+        buffer = heap_alloc( len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, buffer, len );
+    }
+    else
+    {
+        buffer = heap_alloc( sizeof(wineW) + 2 * sizeof(WCHAR) );
+        strcpyW( buffer, wineW );
+    }
+
+    if (!strcmpW( filename, buffer ))
+        ret = TRUE;
+
+    strcatW( buffer, suffixW );
+    if (!strcmpW( filename, buffer ))
+        ret = TRUE;
+
+    heap_free( buffer );
+    return ret;
+}
+
 static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 {
-    const WCHAR *loader = get_wine_loader_name();
     const WCHAR *ptr, *endptr;
     size_t      len, l;
 
@@ -87,7 +121,7 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
     out[len] = '\0';
     if (len > 4 && (l = match_ext(out, len)))
         out[len - l] = '\0';
-    else if (len > strlenW(loader) && !strcmpiW(out + len - strlenW(loader), loader))
+    else if (is_wine_loader(out))
         lstrcpynW(out, S_WineLoaderW, size);
     else
     {
@@ -455,8 +489,7 @@ static BOOL module_is_container_loaded(const struct process* pcs,
  */
 enum module_type module_get_type_by_name(const WCHAR* name)
 {
-    int loader_len, len = strlenW(name);
-    const WCHAR *loader;
+    int len = strlenW(name);
 
     /* Skip all version extensions (.[digits]) regex: "(\.\d+)*$" */
     do
@@ -491,10 +524,7 @@ enum module_type module_get_type_by_name(const WCHAR* name)
         return DMT_DBG;
 
     /* wine is also a native module (Mach-O on Mac OS X, ELF elsewhere) */
-    loader = get_wine_loader_name();
-    loader_len = strlenW( loader );
-    if ((len == loader_len || (len > loader_len && name[len - loader_len - 1] == '/')) &&
-        !strcmpiW(name + len - loader_len, loader))
+    if (is_wine_loader(name))
     {
 #ifdef __APPLE__
         return DMT_MACHO;
