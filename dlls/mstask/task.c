@@ -1398,7 +1398,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
     TaskImpl *This = impl_from_IPersistFile(iface);
     HRESULT hr;
     HANDLE file, mapping;
-    DWORD access, sharing, size;
+    DWORD access, sharing, size, try;
     void *data;
 
     TRACE("(%p, %s, 0x%08x)\n", iface, debugstr_w(file_name), mode);
@@ -1432,11 +1432,18 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
         break;
     }
 
-    file = CreateFileW(file_name, access, sharing, NULL, OPEN_EXISTING, 0, 0);
-    if (file == INVALID_HANDLE_VALUE)
+    try = 1;
+    for (;;)
     {
-        TRACE("Failed to open %s, error %u\n", debugstr_w(file_name), GetLastError());
-        return HRESULT_FROM_WIN32(GetLastError());
+        file = CreateFileW(file_name, access, sharing, NULL, OPEN_EXISTING, 0, 0);
+        if (file != INVALID_HANDLE_VALUE) break;
+
+        if (try++ >= 3)
+        {
+            TRACE("Failed to open %s, error %u\n", debugstr_w(file_name), GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        Sleep(100);
     }
 
     size = GetFileSize(file, NULL);
