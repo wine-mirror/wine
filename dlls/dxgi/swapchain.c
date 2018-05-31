@@ -1291,9 +1291,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetMatrixTransform(IDXGISwapCha
 
 static UINT STDMETHODCALLTYPE d3d12_swapchain_GetCurrentBackBufferIndex(IDXGISwapChain3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return swapchain->current_buffer_index;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_CheckColorSpaceSupport(IDXGISwapChain3 *iface,
