@@ -390,15 +390,63 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
     }
 }
 
-static IDXGIDevice *create_device(UINT flags)
+static BOOL use_warp_adapter;
+static unsigned int use_adapter_idx;
+
+static IDXGIAdapter *create_adapter(void)
+{
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    if (!use_warp_adapter && !use_adapter_idx)
+        return NULL;
+
+    if (FAILED(hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory)))
+    {
+        trace("Failed to create IDXGIFactory, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    adapter = NULL;
+    if (use_warp_adapter)
+    {
+        if (SUCCEEDED(hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4)))
+        {
+            hr = IDXGIFactory4_EnumWarpAdapter(factory4, &IID_IDXGIAdapter, (void **)&adapter);
+            IDXGIFactory4_Release(factory4);
+        }
+        else
+        {
+            trace("Failed to get IDXGIFactory4, hr %#x.\n", hr);
+        }
+    }
+    else
+    {
+        hr = IDXGIFactory_EnumAdapters(factory, use_adapter_idx, &adapter);
+    }
+    IDXGIFactory_Release(factory);
+    if (FAILED(hr))
+        trace("Failed to get adapter, hr %#x.\n", hr);
+    return adapter;
+}
+
+static IDXGIDevice *create_device(unsigned int flags)
 {
     IDXGIDevice *dxgi_device;
     ID3D10Device1 *device;
+    IDXGIAdapter *adapter;
     HRESULT hr;
 
-    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL,
-            flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
+    adapter = create_adapter();
+    hr = D3D10CreateDevice1(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL,
+            flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device);
+    if (adapter)
+        IDXGIAdapter_Release(adapter);
+    if (SUCCEEDED(hr))
         goto success;
+
     if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP, NULL,
             flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
@@ -3766,12 +3814,25 @@ static void test_object_wrapping(void)
 
 START_TEST(device)
 {
-    HMODULE dxgi_module = GetModuleHandleA("dxgi.dll");
+    unsigned int argc, i;
+    HMODULE dxgi_module;
+    char **argv;
+
+    dxgi_module = GetModuleHandleA("dxgi.dll");
     pCreateDXGIFactory1 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory1");
     pCreateDXGIFactory2 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory2");
 
     registry_mode.dmSize = sizeof(registry_mode);
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
+
+    argc = winetest_get_mainargs(&argv);
+    for (i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--warp"))
+            use_warp_adapter = TRUE;
+        else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
+            use_adapter_idx = atoi(argv[++i]);
+    }
 
     test_adapter_desc();
     test_adapter_luid();
