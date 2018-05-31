@@ -436,6 +436,27 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     return RtlDosPathNameToNtPathName_U_WithStatus(dos_path, ntpath, file_part, cd) == STATUS_SUCCESS;
 }
 
+/**************************************************************************
+ *        RtlDosPathNameToRelativeNtPathName_U_WithStatus [NTDLL.@]
+ *
+ * See RtlDosPathNameToNtPathName_U_WithStatus (except the last parameter)
+ */
+NTSTATUS WINAPI RtlDosPathNameToRelativeNtPathName_U_WithStatus(const WCHAR *dos_path,
+    UNICODE_STRING *ntpath, WCHAR **file_part, RTL_RELATIVE_NAME *relative)
+{
+    TRACE("(%s,%p,%p,%p)\n", debugstr_w(dos_path), ntpath, file_part, relative);
+
+    if (relative)
+    {
+        FIXME("Unsupported parameter\n");
+        memset(relative, 0, sizeof(*relative));
+    }
+
+    /* FIXME: fill parameter relative */
+
+    return RtlDosPathNameToNtPathName_U_WithStatus(dos_path, ntpath, file_part, NULL);
+}
+
 /******************************************************************
  *		RtlDosSearchPath_U
  *

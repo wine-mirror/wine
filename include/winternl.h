@@ -148,6 +148,13 @@ typedef struct RTL_DRIVE_LETTER_CURDIR
     UNICODE_STRING      DosPath;
 } RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
 
+typedef struct _RTL_RELATIVE_NAME
+{
+    UNICODE_STRING RelativeName;
+    HANDLE         ContainerDirectory;
+    void          *CurDirRef;
+} RTL_RELATIVE_NAME, *PRTL_RELATIVE_NAME;
+
 typedef struct tagRTL_BITMAP {
     ULONG  SizeOfBitMap; /* Number of bits in the bitmap */
     PULONG Buffer; /* Bitmap data, assumed sized to a DWORD boundary */
