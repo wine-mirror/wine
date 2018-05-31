@@ -21,6 +21,7 @@
 #include "initguid.h"
 #include "dxgi1_6.h"
 #include "d3d11.h"
+#include "wine/heap.h"
 #include "wine/test.h"
 
 enum frame_latency
@@ -801,7 +802,8 @@ static void test_output(void)
     ok(mode_count >= mode_count_comp, "Got unexpected mode_count %u, expected >= %u.\n", mode_count, mode_count_comp);
     mode_count_comp = mode_count;
 
-    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * (mode_count + 10));
+    modes = heap_calloc(mode_count + 10, sizeof(*modes));
+    ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
             DXGI_ENUM_MODES_SCALING, NULL, modes);
@@ -845,7 +847,7 @@ static void test_output(void)
         skip("Not enough modes for test, skipping.\n");
     }
 
-    HeapFree(GetProcessHeap(), 0, modes);
+    heap_free(modes);
     IDXGIOutput_Release(output);
     IDXGIAdapter_Release(adapter);
     refcount = IDXGIDevice_Release(device);
@@ -898,7 +900,8 @@ static void test_find_closest_matching_mode(void)
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
 
-    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * mode_count);
+    modes = heap_calloc(mode_count, sizeof(*modes));
+    ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
@@ -1024,7 +1027,7 @@ static void test_find_closest_matching_mode(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
 
-    HeapFree(GetProcessHeap(), 0, modes);
+    heap_free(modes);
 
 done:
     IDXGIOutput_Release(output);
@@ -1768,7 +1771,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         ++output_count;
     }
 
-    output_monitor_info = HeapAlloc(GetProcessHeap(), 0, output_count * sizeof(*output_monitor_info));
+    output_monitor_info = heap_calloc(output_count, sizeof(*output_monitor_info));
     ok(!!output_monitor_info, "Failed to allocate memory.\n");
     for (i = 0; i < output_count; ++i)
     {
@@ -1869,7 +1872,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         IDXGIOutput_Release(output);
     }
 
-    HeapFree(GetProcessHeap(), 0, output_monitor_info);
+    heap_free(output_monitor_info);
 }
 
 static void test_set_fullscreen(void)
@@ -2185,7 +2188,7 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
         return;
     }
 
-    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * mode_count);
+    modes = heap_calloc(mode_count, sizeof(*modes));
     ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(target, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
@@ -2222,7 +2225,7 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
                 wine_dbgstr_rect(&expected_state.fullscreen_state.monitor_rect));
     }
 
-    HeapFree(GetProcessHeap(), 0, modes);
+    heap_free(modes);
     IDXGIOutput_Release(target);
 }
 
