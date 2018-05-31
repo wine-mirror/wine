@@ -70,6 +70,22 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
     return hr;
 }
 
+static unsigned int check_multisample_quality_levels(IDXGIDevice *dxgi_device,
+        DXGI_FORMAT format, unsigned int sample_count)
+{
+    ID3D10Device *device;
+    unsigned int levels;
+    HRESULT hr;
+
+    hr = IDXGIDevice_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)&device);
+    ok(hr == S_OK, "Failed to query ID3D10Device, hr %#x.\n", hr);
+    hr = ID3D10Device_CheckMultisampleQualityLevels(device, format, sample_count, &levels);
+    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ID3D10Device_Release(device);
+
+    return levels;
+}
+
 #define MODE_DESC_IGNORE_RESOLUTION        0x00000001u
 #define MODE_DESC_IGNORE_REFRESH_RATE      0x00000002u
 #define MODE_DESC_IGNORE_FORMAT            0x00000004u
@@ -3213,13 +3229,13 @@ static void test_swapchain_parameters(void)
             0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown.\n");
+    ok(hr == S_OK, "IDXGIDevice does not implement IUnknown.\n");
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
-
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -3372,8 +3388,39 @@ static void test_swapchain_parameters(void)
         IDXGISwapChain_Release(swapchain);
     }
 
+    /* multisampling */
+    memset(&desc, 0, sizeof(desc));
+    desc.BufferDesc.Width = registry_mode.dmPelsWidth;
+    desc.BufferDesc.Height = registry_mode.dmPelsHeight;
+    desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 4;
+    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc.BufferCount = 4;
+    desc.OutputWindow = window;
+    desc.Windowed = TRUE;
+    desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &desc, &swapchain);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &desc, &swapchain);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    if (check_multisample_quality_levels(device, desc.BufferDesc.Format, desc.SampleDesc.Count))
+    {
+        desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &desc, &swapchain);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGISwapChain_Release(swapchain);
+        desc.SwapEffect = DXGI_SWAP_EFFECT_SEQUENTIAL;
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &desc, &swapchain);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGISwapChain_Release(swapchain);
+    }
+    else
+    {
+        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM.\n");
+    }
+
     IDXGIFactory_Release(factory);
-    IDXGIAdapter_Release(adapter);
     IUnknown_Release(obj);
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
