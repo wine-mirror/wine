@@ -1012,10 +1012,18 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present(IDXGISwapChain3 *iface,
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetBuffer(IDXGISwapChain3 *iface,
         UINT buffer_idx, REFIID iid, void **surface)
 {
-    FIXME("iface %p, buffer_idx %u, iid %s, surface %p stub!\n",
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, buffer_idx %u, iid %s, surface %p.\n",
             iface, buffer_idx, debugstr_guid(iid), surface);
 
-    return E_NOTIMPL;
+    if (buffer_idx >= swapchain->buffer_count)
+    {
+        WARN("Invalid buffer index %u.\n", buffer_idx);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    return ID3D12Resource_QueryInterface(swapchain->buffers[buffer_idx], iid, surface);
 }
 
 static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreenState(IDXGISwapChain3 *iface,
