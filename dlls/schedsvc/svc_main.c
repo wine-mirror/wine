@@ -39,7 +39,7 @@ static HANDLE done_event, hjob_queue;
 void add_process_to_queue(HANDLE process)
 {
     if (!AssignProcessToJobObject(hjob_queue, process))
-        ERR("AssignProcessToJobObject failed");
+        ERR("AssignProcessToJobObject failed\n");
 }
 
 static DWORD WINAPI tasks_monitor_thread(void *arg)
@@ -69,14 +69,14 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
     hjob_queue = CreateJobObjectW(NULL, NULL);
     if (!hjob_queue)
     {
-        ERR("CreateJobObject failed");
+        ERR("CreateJobObject failed\n");
         return -1;
     }
 
     hport = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
     if (!hport)
     {
-        ERR("CreateIoCompletionPort failed");
+        ERR("CreateIoCompletionPort failed\n");
         return -1;
     }
 
@@ -84,7 +84,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
     info.CompletionPort = hport;
     if (!SetInformationJobObject(hjob_queue, JobObjectAssociateCompletionPortInformation, &info, sizeof(info)))
     {
-        ERR("SetInformationJobObject failed");
+        ERR("SetInformationJobObject failed\n");
         return -1;
     }
 
