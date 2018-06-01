@@ -120,7 +120,7 @@ static void test_HlinkIsShortcut(void)
         {NULL,  E_INVALIDARG}
     };
 
-    for(i=0; i<sizeof(shortcut_test)/sizeof(shortcut_test[0]); i++) {
+    for (i=0; i < ARRAY_SIZE(shortcut_test); i++) {
         hres = HlinkIsShortcut(shortcut_test[i].file);
         ok(hres == shortcut_test[i].hres, "[%d] HlinkIsShortcut returned %08x, expected %08x\n",
            i, hres, shortcut_test[i].hres);
@@ -651,7 +651,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = HlinkParseDisplayName(bctx, winehq_urlW, FALSE, &eaten, &mon);
     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
-    ok(eaten == sizeof(winehq_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(eaten == ARRAY_SIZE(winehq_urlW)-1, "eaten=%d\n", eaten);
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
@@ -667,7 +667,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = HlinkParseDisplayName(bctx, clsid_nameW, FALSE, &eaten, &mon);
     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
-    ok(eaten == sizeof(clsid_nameW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(eaten == ARRAY_SIZE(clsid_nameW)-1, "eaten=%d\n", eaten);
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_IsSystemMoniker(mon, &issys);
@@ -678,7 +678,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = HlinkParseDisplayName(bctx, invalid_urlW, FALSE, &eaten, &mon);
     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
-    ok(eaten == sizeof(invalid_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(eaten == ARRAY_SIZE(invalid_urlW)-1, "eaten=%d\n", eaten);
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
@@ -694,7 +694,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = HlinkParseDisplayName(bctx, file_urlW, FALSE, &eaten, &mon);
     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
-    ok(eaten == sizeof(file_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(eaten == ARRAY_SIZE(file_urlW)-1, "eaten=%d\n", eaten);
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
