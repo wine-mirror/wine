@@ -1749,6 +1749,9 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 break;
             default:
                 ERR("Got path flag %c\n", flat_path->flags[i]);
+                for(i = 0; i < numStrokes; i++) free_gdi_path(pStrokes[i]);
+                HeapFree(GetProcessHeap(), 0, pStrokes);
+                free_gdi_path(flat_path);
                 return NULL;
         }
     }
