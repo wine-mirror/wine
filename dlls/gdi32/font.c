@@ -2823,6 +2823,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
         UINT cp;
         int len;
         char mbchs[2];
+        WCHAR wChar;
 
         cp = GdiGetCodePage(hdc);
         if (IsDBCSLeadByteEx(cp, uChar >> 8)) {
@@ -2833,8 +2834,9 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
             len = 1;
             mbchs[0] = (uChar & 0xff);
         }
-        uChar = 0;
-        MultiByteToWideChar(cp, 0, mbchs, len, (LPWSTR)&uChar, 1);
+        wChar = 0;
+        MultiByteToWideChar(cp, 0, mbchs, len, &wChar, 1);
+        uChar = wChar;
     }
 
     return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer,
