@@ -6,6 +6,12 @@
 #include <windef.h>
 #include <stdint.h>
 
+/* Define WINE_VK_HOST to get 'host' headers. */
+#ifdef WINE_VK_HOST
+#define VKAPI_CALL
+#define WINE_VK_ALIGN(x)
+#endif
+
 #ifndef VKAPI_CALL
 #define VKAPI_CALL __stdcall
 #endif
@@ -14,7 +20,6 @@
 #define VKAPI_PTR VKAPI_CALL
 #endif
 
-/* Callers can override WINE_VK_ALIGN if they want 'host' headers. */
 #ifndef WINE_VK_ALIGN
 #define WINE_VK_ALIGN DECLSPEC_ALIGN
 #endif

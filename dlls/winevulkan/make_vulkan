@@ -2009,6 +2009,12 @@ class VkGenerator(object):
         f.write("#include <windef.h>\n")
         f.write("#include <stdint.h>\n\n")
 
+        f.write("/* Define WINE_VK_HOST to get 'host' headers. */\n")
+        f.write("#ifdef WINE_VK_HOST\n")
+        f.write("#define VKAPI_CALL\n")
+        f.write('#define WINE_VK_ALIGN(x)\n')
+        f.write("#endif\n\n")
+
         f.write("#ifndef VKAPI_CALL\n")
         f.write("#define VKAPI_CALL __stdcall\n")
         f.write("#endif\n\n")
@@ -2017,7 +2023,6 @@ class VkGenerator(object):
         f.write("#define VKAPI_PTR VKAPI_CALL\n")
         f.write("#endif\n\n")
 
-        f.write("/* Callers can override WINE_VK_ALIGN if they want 'host' headers. */\n")
         f.write("#ifndef WINE_VK_ALIGN\n")
         f.write("#define WINE_VK_ALIGN DECLSPEC_ALIGN\n")
         f.write("#endif\n\n")

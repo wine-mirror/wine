@@ -23,7 +23,7 @@
 #define VK_NO_PROTOTYPES
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
-#define WINE_VK_ALIGN(x)
+#define WINE_VK_HOST
 
 #include "wine/debug.h"
 #include "wine/heap.h"

@@ -24,11 +24,10 @@
 
 #ifdef SONAME_LIBVKD3D
 #define VK_NO_PROTOTYPES
-#define VKAPI_CALL
 #define VKD3D_NO_PROTOTYPES
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
-#define WINE_VK_ALIGN(x)
+#define WINE_VK_HOST
 #include "wine/library.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
