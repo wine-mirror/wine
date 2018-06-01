@@ -2171,6 +2171,9 @@ interface ID3D12RootSignatureDeserializer : IUnknown
         const D3D12_VERSIONED_ROOT_SIGNATURE_DESC *root_signature_desc,
         ID3DBlob **blob, ID3DBlob **error_blob);
 
+typedef HRESULT (__stdcall *PFN_D3D12_CREATE_DEVICE)(IUnknown *adapter,
+        D3D_FEATURE_LEVEL minmum_feature_level, REFIID iid, void **device);
+
 [local] HRESULT __stdcall D3D12CreateDevice(IUnknown *adapter,
         D3D_FEATURE_LEVEL minimum_feature_level, REFIID iid, void **device);
 
