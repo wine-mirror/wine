@@ -281,7 +281,7 @@ interface IDWriteFontSet1 : IDWriteFontSet
         UINT32 *actual_num_ranges);
     HRESULT GetFontFaceReference(
         UINT32 index,
-        IDWriteFontFaceReference1 **referece);
+        IDWriteFontFaceReference1 **reference);
     HRESULT CreateFontResource(
         UINT32 index,
         IDWriteFontResource **resource);
@@ -651,7 +651,7 @@ interface IDWriteFontSetBuilder2 : IDWriteFontSetBuilder1
         DWRITE_FONT_AXIS_RANGE const *axis_ranges,
         UINT32 num_ranges,
         DWRITE_FONT_PROPERTY const *props,
-        UINT32 num_properies);
+        UINT32 num_properties);
     HRESULT AddFontFile(const WCHAR *filepath);
 }
 
