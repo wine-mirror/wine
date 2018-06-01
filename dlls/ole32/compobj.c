@@ -479,6 +479,8 @@ struct apartment_loaded_dll
 
 static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',0};
 
+static ATOM apt_win_class;
+
 /*****************************************************************************
  * This section contains OpenDllList implementation
  */
@@ -1695,7 +1697,7 @@ static BOOL WINAPI register_class( INIT_ONCE *once, void *param, void **context 
     wclass.lpfnWndProc = apartment_wndproc;
     wclass.hInstance = hProxyDll;
     wclass.lpszClassName = wszAptWinClass;
-    RegisterClassW(&wclass);
+    apt_win_class = RegisterClassW(&wclass);
     return TRUE;
 }
 
@@ -5270,7 +5272,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_std_git();
-        UnregisterClassW( wszAptWinClass, hProxyDll );
+        if(apt_win_class)
+            UnregisterClassW( (const WCHAR*)MAKEINTATOM(apt_win_class), hProxyDll );
         RPC_UnregisterAllChannelHooks();
         COMPOBJ_DllList_Free();
         DeleteCriticalSection(&csRegisteredClassList);
