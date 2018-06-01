@@ -133,7 +133,7 @@ static void test_PSStringFromPropertyKey(void)
 
     int i;
 
-    for (i = 0; i < sizeof(testcases)/sizeof(testcases[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(testcases); i++)
     {
         if (testcases[i].psz)
             memcpy(testcases[i].psz, fillerW, PKEYSTR_MAX * sizeof(WCHAR));
@@ -413,7 +413,7 @@ static void test_PSPropertyKeyFromString(void)
 
     int i;
 
-    for (i = 0; i < sizeof(testcases)/sizeof(testcases[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(testcases); i++)
     {
         if (testcases[i].pkey)
             *testcases[i].pkey = out_init;
@@ -480,7 +480,7 @@ static void test_InitPropVariantFromGUIDAsString(void)
         InitVariantFromGUIDAsString(&IID_NULL, NULL);
     }
 
-    for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(testcases); i++) {
         memset(&propvar, 0, sizeof(PROPVARIANT));
         hres = InitPropVariantFromGUIDAsString(testcases[i].guid, &propvar);
         ok(hres == S_OK, "%d) InitPropVariantFromGUIDAsString returned %x\n", i, hres);
