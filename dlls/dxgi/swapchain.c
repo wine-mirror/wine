@@ -1037,7 +1037,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapChain3 *iface,
         BOOL *fullscreen, IDXGIOutput **target)
 {
-    FIXME("iface %p, fullscreen %p, target %p stub!n", iface, fullscreen, target);
+    FIXME("iface %p, fullscreen %p, target %p stub!\n", iface, fullscreen, target);
 
     return E_NOTIMPL;
 }
