@@ -21,6 +21,7 @@
 #include "initguid.h"
 #include "dxgi1_6.h"
 #include "d3d11.h"
+#include "d3d12.h"
 #include "wine/heap.h"
 #include "wine/test.h"
 
@@ -34,6 +35,8 @@ static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
 static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **factory);
+
+static PFN_D3D12_CREATE_DEVICE pD3D12CreateDevice;
 
 static ULONG get_refcount(IUnknown *iface)
 {
@@ -462,6 +465,64 @@ success:
     ID3D10Device1_Release(device);
 
     return dxgi_device;
+}
+
+static ID3D12Device *create_d3d12_device(void)
+{
+    IDXGIAdapter *adapter;
+    ID3D12Device *device;
+    HRESULT hr;
+
+    if (!pD3D12CreateDevice)
+        return NULL;
+
+    adapter = create_adapter();
+    hr = pD3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    if (adapter)
+        IDXGIAdapter_Release(adapter);
+    if (FAILED(hr))
+        return NULL;
+
+    return device;
+}
+
+static ID3D12CommandQueue *create_d3d12_direct_queue(ID3D12Device *device)
+{
+    D3D12_COMMAND_QUEUE_DESC command_queue_desc;
+    ID3D12CommandQueue *queue;
+    HRESULT hr;
+
+    command_queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    command_queue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    command_queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    command_queue_desc.NodeMask = 0;
+    hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
+            &IID_ID3D12CommandQueue, (void **)&queue);
+    ok(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+    return queue;
+}
+
+#define get_factory(a, b, c) get_factory_(__LINE__, a, b, c)
+static void get_factory_(unsigned int line, IUnknown *device, BOOL is_d3d12, IDXGIFactory **factory)
+{
+    IDXGIDevice *dxgi_device;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    if (is_d3d12)
+    {
+        hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)factory);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    }
+    else
+    {
+        dxgi_device = (IDXGIDevice *)device;
+        hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+        hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)factory);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+        IDXGIAdapter_Release(adapter);
+    }
 }
 
 static void test_adapter_desc(void)
@@ -3534,40 +3595,33 @@ static void test_swapchain_present(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
-static void test_swapchain_backbuffer_index(void)
+static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
-    unsigned int backbuffer_index;
+    unsigned int index, expected_index;
     IDXGISwapChain3 *swapchain3;
     IDXGISwapChain *swapchain;
-    IDXGIAdapter *adapter;
+    HRESULT hr, expected_hr;
     IDXGIFactory *factory;
-    IDXGIDevice *device;
     unsigned int i, j;
     ULONG refcount;
-    HRESULT hr;
     RECT rect;
     BOOL ret;
 
-    static const DXGI_SWAP_EFFECT swap_effects[] =
+    static const struct
     {
-        DXGI_SWAP_EFFECT_DISCARD,
-        DXGI_SWAP_EFFECT_SEQUENTIAL,
-        DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
-        DXGI_SWAP_EFFECT_FLIP_DISCARD,
+        DXGI_SWAP_EFFECT swap_effect;
+        BOOL supported_in_d3d12;
+    }
+    tests[] =
+    {
+        {DXGI_SWAP_EFFECT_DISCARD, FALSE},
+        {DXGI_SWAP_EFFECT_SEQUENTIAL, FALSE},
+        {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, TRUE},
+        {DXGI_SWAP_EFFECT_FLIP_DISCARD, TRUE},
     };
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
-    IDXGIAdapter_Release(adapter);
+    get_factory(device, is_d3d12, &factory);
 
     swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
     swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
@@ -3588,11 +3642,15 @@ static void test_swapchain_backbuffer_index(void)
     swapchain_desc.BufferDesc.Width = rect.right;
     swapchain_desc.BufferDesc.Height = rect.bottom;
 
-    for (i = 0; i < ARRAY_SIZE(swap_effects); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        swapchain_desc.SwapEffect = swap_effects[i];
+        swapchain_desc.SwapEffect = tests[i].swap_effect;
+        expected_hr = !is_d3d12 || tests[i].supported_in_d3d12 ? S_OK : DXGI_ERROR_INVALID_CALL;
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-        ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+        todo_wine_if(is_d3d12 && tests[i].supported_in_d3d12)
+        ok(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+        if (FAILED(hr))
+            continue;
 
         hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain3, (void **)&swapchain3);
         if (hr == E_NOINTERFACE)
@@ -3602,10 +3660,11 @@ static void test_swapchain_backbuffer_index(void)
             goto done;
         }
 
-        for (j = 0; j < swapchain_desc.BufferCount; ++j)
+        for (j = 0; j < 2 * swapchain_desc.BufferCount; ++j)
         {
-            backbuffer_index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
-            ok(!backbuffer_index, "Got unexpected back buffer index %u.\n", backbuffer_index);
+            index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            expected_index = is_d3d12 ? j % swapchain_desc.BufferCount : 0;
+            ok(index == expected_index, "Got back buffer index %u, expected %u.\n", index, expected_index);
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         }
@@ -3616,11 +3675,9 @@ static void test_swapchain_backbuffer_index(void)
     }
 
 done:
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
 }
 
 static void test_maximum_frame_latency(void)
@@ -3901,10 +3958,49 @@ static void test_object_wrapping(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
+{
+    IDXGIDevice *device;
+    ULONG refcount;
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create Direct3D 10 device.\n");
+        return;
+    }
+
+    test_func((IUnknown *)device, FALSE);
+
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
+{
+    ID3D12CommandQueue *queue;
+    ID3D12Device *device;
+    ULONG refcount;
+
+    if (!(device = create_d3d12_device()))
+    {
+        skip("Failed to create Direct3D 12 device.\n");
+        return;
+    }
+
+    queue = create_d3d12_direct_queue(device);
+
+    test_func((IUnknown *)queue, TRUE);
+
+    refcount = ID3D12CommandQueue_Release(queue);
+    ok(!refcount, "Command queue has %u references left.\n", refcount);
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
+    HMODULE dxgi_module, d3d12_module;
     unsigned int argc, i;
-    HMODULE dxgi_module;
     char **argv;
 
     dxgi_module = GetModuleHandleA("dxgi.dll");
@@ -3941,8 +4037,20 @@ START_TEST(device)
     test_swapchain_resize();
     test_swapchain_parameters();
     test_swapchain_present();
-    test_swapchain_backbuffer_index();
+    run_on_d3d10(test_swapchain_backbuffer_index);
     test_maximum_frame_latency();
     test_output_desc();
     test_object_wrapping();
+
+    if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
+    {
+        skip("Direct3D 12 is not available.\n");
+        return;
+    }
+
+    pD3D12CreateDevice = (void *)GetProcAddress(d3d12_module, "D3D12CreateDevice");
+
+    run_on_d3d12(test_swapchain_backbuffer_index);
+
+    FreeLibrary(d3d12_module);
 }
