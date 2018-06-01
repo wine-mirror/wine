@@ -502,7 +502,7 @@ static INT_PTR CALLBACK file_properties_proc(HWND hwndDlg, UINT uMsg, WPARAM wPa
                             ERR("failed to update file attributes of %s\n", debugstr_w(props->path));
                     }
 
-                    /* Update filename it it was changed */
+                    /* Update filename if it was changed */
                     if (GetDlgItemTextW(hwndDlg, IDC_FPROP_PATH, newname, ARRAY_SIZE(newname)) &&
                         strcmpW(props->filename, newname) &&
                         strlenW(props->dir) + strlenW(newname) + 2 < ARRAY_SIZE(newpath))
