@@ -221,8 +221,8 @@ static void test_canconvert(void)
         return;
     }
 
-    for(src_idx = 0; src_idx < sizeof(simple_convert) / sizeof(simple_convert[0]); src_idx++)
-        for(dst_idx = 0; dst_idx < sizeof(simple_convert) / sizeof(simple_convert[0]); dst_idx++)
+    for(src_idx = 0; src_idx < ARRAY_SIZE(simple_convert); src_idx++)
+        for(dst_idx = 0; dst_idx < ARRAY_SIZE(simple_convert); dst_idx++)
         {
             BOOL expect, simple_expect;
             simple_expect = (simple_convert[src_idx].can_convert_to >> dst_idx) & 1;
@@ -1479,7 +1479,7 @@ static void test_converttowstr(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_w) * 4, "got %ld\n", dst_len);
     ok(!lstrcmpW(hexunpacked_w, dst), "got %s\n", wine_dbgstr_w(dst));
-    ok(dst[sizeof(hexpacked_w)/sizeof(WCHAR) * 4 + 1] == 0xcccc, "clobbered buffer\n");
+    ok(dst[ARRAY_SIZE(hexpacked_w) * 4 + 1] == 0xcccc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
     memset(dst, 0xcc, sizeof(dst));
@@ -2045,7 +2045,7 @@ static void test_converttostr(void)
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(hexpacked_a) * 2, "got %ld\n", dst_len);
     ok(!lstrcmpA(hexunpacked_a, dst), "got %s\n", dst);
-    ok(dst[sizeof(hexpacked_a)/sizeof(char) * 4 + 1] == (char)0xcc, "clobbered buffer\n");
+    ok(dst[ARRAY_SIZE(hexpacked_a) * 4 + 1] == (char)0xcc, "clobbered buffer\n");
 
     memcpy(src, hexpacked_a, sizeof(hexpacked_a));
     memset(dst, 0xcc, sizeof(dst));
