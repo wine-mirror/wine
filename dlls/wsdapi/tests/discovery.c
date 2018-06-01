@@ -540,7 +540,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
         ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, actionProbe) == 0,
             "pSoap->Header.Action == '%s'\n", wine_dbgstr_w(pSoap->Header.Action));
 
-        ok(pSoap->Header.MessageID != NULL, "pSoap->Header.MessageID == NULL");
+        ok(pSoap->Header.MessageID != NULL, "pSoap->Header.MessageID == NULL\n");
 
         /* Ensure the message ID is at least 9 characters long (to skip past the 'urn:uuid:' prefix) */
         if ((pSoap->Header.MessageID != NULL) && (lstrlenW(pSoap->Header.MessageID) > 9))
