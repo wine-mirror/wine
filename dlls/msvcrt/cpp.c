@@ -1820,17 +1820,7 @@ void __cdecl __ExceptionPtrRethrow(const exception_ptr *ep)
 #if _MSVCR_VER >= 100
 
 #ifdef __i386__
-static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
-{
-    TRACE( "calling copy ctor %p object %p src %p\n", func, this, src );
-    if (has_vbase)
-        /* in that case copy ctor takes an extra bool indicating whether to copy the base class */
-        __asm__ __volatile__("pushl $1; pushl %2; call *%0"
-                             : : "m" (func), "c" (this), "m" (src) : "eax", "edx", "memory" );
-    else
-        __asm__ __volatile__("pushl %2; call *%0"
-                             : : "m" (func), "c" (this), "m" (src) : "eax", "edx", "memory" );
-}
+extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
 #else
 static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
 {

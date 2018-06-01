@@ -154,17 +154,22 @@ static inline void *call_ebp_func( void *func, void *ebp )
 }
 
 /* call a copy constructor */
-static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
-{
-    TRACE( "calling copy ctor %p object %p src %p\n", func, this, src );
-    if (has_vbase)
-        /* in that case copy ctor takes an extra bool indicating whether to copy the base class */
-        __asm__ __volatile__("pushl $1; pushl %2; call *%0"
-                             : : "r" (func), "c" (this), "r" (src) : "eax", "edx", "memory" );
-    else
-        __asm__ __volatile__("pushl %2; call *%0"
-                             : : "r" (func), "c" (this), "r" (src) : "eax", "edx", "memory" );
-}
+extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
+
+__ASM_GLOBAL_FUNC( call_copy_ctor,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp, %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl $1\n\t"
+                   "movl 12(%ebp), %ecx\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "call *8(%ebp)\n\t"
+                   "leave\n"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" );
 
 /* continue execution to the specified address after exception is caught */
 static inline void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr )
