@@ -3534,6 +3534,95 @@ static void test_swapchain_present(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_swapchain_backbuffer_index(void)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    unsigned int backbuffer_index;
+    IDXGISwapChain3 *swapchain3;
+    IDXGISwapChain *swapchain;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    IDXGIDevice *device;
+    unsigned int i, j;
+    ULONG refcount;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    static const DXGI_SWAP_EFFECT swap_effects[] =
+    {
+        DXGI_SWAP_EFFECT_DISCARD,
+        DXGI_SWAP_EFFECT_SEQUENTIAL,
+        DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
+        DXGI_SWAP_EFFECT_FLIP_DISCARD,
+    };
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 4;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    ret = GetClientRect(swapchain_desc.OutputWindow, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain_desc.BufferDesc.Width = rect.right;
+    swapchain_desc.BufferDesc.Height = rect.bottom;
+
+    for (i = 0; i < ARRAY_SIZE(swap_effects); ++i)
+    {
+        swapchain_desc.SwapEffect = swap_effects[i];
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+
+        hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain3, (void **)&swapchain3);
+        if (hr == E_NOINTERFACE)
+        {
+            skip("IDXGISwapChain3 is not supported.\n");
+            IDXGISwapChain_Release(swapchain);
+            goto done;
+        }
+
+        for (j = 0; j < swapchain_desc.BufferCount; ++j)
+        {
+            backbuffer_index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain3);
+            ok(!backbuffer_index, "Got unexpected back buffer index %u.\n", backbuffer_index);
+            hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        }
+
+        IDXGISwapChain3_Release(swapchain3);
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    }
+
+done:
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(swapchain_desc.OutputWindow);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 static void test_maximum_frame_latency(void)
 {
     IDXGIDevice1 *device1;
@@ -3852,6 +3941,7 @@ START_TEST(device)
     test_swapchain_resize();
     test_swapchain_parameters();
     test_swapchain_present();
+    test_swapchain_backbuffer_index();
     test_maximum_frame_latency();
     test_output_desc();
     test_object_wrapping();
