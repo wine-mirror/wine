@@ -457,7 +457,7 @@ static void test_packager(void)
     ok(hr == S_OK, "Load failed: %08x\n", hr);
 
     if(extended){
-        len = GetTempPathW(sizeof(filename) / sizeof(*filename), filename);
+        len = GetTempPathW(ARRAY_SIZE(filename), filename);
         lstrcpyW(filename + len, filename3W);
 
         file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
