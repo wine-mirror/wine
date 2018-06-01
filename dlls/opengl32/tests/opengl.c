@@ -525,7 +525,7 @@ static void test_colorbits(HDC hdc)
 {
     const int iAttribList[] = { WGL_COLOR_BITS_ARB, WGL_RED_BITS_ARB, WGL_GREEN_BITS_ARB,
                                 WGL_BLUE_BITS_ARB, WGL_ALPHA_BITS_ARB };
-    int iAttribRet[sizeof(iAttribList)/sizeof(iAttribList[0])];
+    int iAttribRet[ARRAY_SIZE(iAttribList)];
     const int iAttribs[] = { WGL_ALPHA_BITS_ARB, 1, 0 };
     unsigned int nFormats;
     BOOL res;
@@ -545,8 +545,8 @@ static void test_colorbits(HDC hdc)
         return;
     }
 
-    res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0,
-              sizeof(iAttribList)/sizeof(iAttribList[0]), iAttribList, iAttribRet);
+    res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, ARRAY_SIZE(iAttribList), iAttribList,
+            iAttribRet);
     if(res == FALSE)
     {
         skip("wglGetPixelFormatAttribivARB failed\n");
@@ -560,7 +560,7 @@ static void test_colorbits(HDC hdc)
 static void test_gdi_dbuf(HDC hdc)
 {
     const int iAttribList[] = { WGL_SUPPORT_GDI_ARB, WGL_DOUBLE_BUFFER_ARB };
-    int iAttribRet[sizeof(iAttribList)/sizeof(iAttribList[0])];
+    int iAttribRet[ARRAY_SIZE(iAttribList)];
     unsigned int nFormats;
     int iPixelFormat;
     BOOL res;
@@ -574,9 +574,8 @@ static void test_gdi_dbuf(HDC hdc)
     nFormats = DescribePixelFormat(hdc, 0, 0, NULL);
     for(iPixelFormat = 1;iPixelFormat <= nFormats;iPixelFormat++)
     {
-        res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0,
-                  sizeof(iAttribList)/sizeof(iAttribList[0]), iAttribList,
-                  iAttribRet);
+        res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, ARRAY_SIZE(iAttribList),
+                iAttribList, iAttribRet);
         ok(res!=FALSE, "wglGetPixelFormatAttribivARB failed for pixel format %d\n", iPixelFormat);
         if(res == FALSE)
             continue;
@@ -588,7 +587,7 @@ static void test_gdi_dbuf(HDC hdc)
 static void test_acceleration(HDC hdc)
 {
     const int iAttribList[] = { WGL_ACCELERATION_ARB };
-    int iAttribRet[sizeof(iAttribList)/sizeof(iAttribList[0])];
+    int iAttribRet[ARRAY_SIZE(iAttribList)];
     unsigned int nFormats;
     int iPixelFormat;
     int res;
@@ -603,9 +602,8 @@ static void test_acceleration(HDC hdc)
     nFormats = DescribePixelFormat(hdc, 0, 0, NULL);
     for(iPixelFormat = 1; iPixelFormat <= nFormats; iPixelFormat++)
     {
-        res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0,
-                  sizeof(iAttribList)/sizeof(iAttribList[0]), iAttribList,
-                  iAttribRet);
+        res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, ARRAY_SIZE(iAttribList),
+                iAttribList, iAttribRet);
         ok(res!=FALSE, "wglGetPixelFormatAttribivARB failed for pixel format %d\n", iPixelFormat);
         if(res == FALSE)
             continue;
