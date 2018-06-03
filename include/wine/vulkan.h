@@ -1251,28 +1251,28 @@ typedef enum VkVertexInputRate
 
 typedef void* (VKAPI_PTR * PFN_vkAllocationFunction)(
     void *pUserData,
-    const size_t size,
-    const size_t alignment,
-    const VkSystemAllocationScope allocationScope);
+    size_t size,
+    size_t alignment,
+    VkSystemAllocationScope allocationScope);
 typedef void (VKAPI_PTR * PFN_vkFreeFunction)(
     void *pUserData,
-    const void *pMemory);
+    void *pMemory);
 typedef void (VKAPI_PTR * PFN_vkInternalAllocationNotification)(
     void *pUserData,
-    const size_t size,
-    const VkInternalAllocationType allocationType,
-    const VkSystemAllocationScope allocationScope);
+    size_t size,
+    VkInternalAllocationType allocationType,
+    VkSystemAllocationScope allocationScope);
 typedef void (VKAPI_PTR * PFN_vkInternalFreeNotification)(
     void *pUserData,
-    const size_t size,
-    const VkInternalAllocationType allocationType,
-    const VkSystemAllocationScope allocationScope);
+    size_t size,
+    VkInternalAllocationType allocationType,
+    VkSystemAllocationScope allocationScope);
 typedef void* (VKAPI_PTR * PFN_vkReallocationFunction)(
     void *pUserData,
-    const void *pOriginal,
-    const size_t size,
-    const size_t alignment,
-    const VkSystemAllocationScope allocationScope);
+    void *pOriginal,
+    size_t size,
+    size_t alignment,
+    VkSystemAllocationScope allocationScope);
 typedef void (VKAPI_PTR * PFN_vkVoidFunction)(
 void);
 

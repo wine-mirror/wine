@@ -670,7 +670,8 @@ class VkFunctionPointer(object):
             # <type>void</type>*       pUserData,
             # Parsing of the tail (anything past </type>) is tricky since there
             # can be other data on the next line like: const <type>int</type>..
-            const = begin
+
+            const = True if begin and "const" in begin else False
             _type = t.text
             lines = t.tail.split(",\n")
             if lines[0][0] == "*":
@@ -779,7 +780,7 @@ class VkHandle(object):
 
 
 class VkMember(object):
-    def __init__(self, const=None, _type=None, pointer=None, name=None, array_len=None, dyn_array_len=None, optional=False,
+    def __init__(self, const=False, _type=None, pointer=None, name=None, array_len=None, dyn_array_len=None, optional=False,
             extension_structs=None):
         self.const = const
         self.name = name
@@ -814,7 +815,7 @@ class VkMember(object):
         name_elem = member.find("name")
         type_elem = member.find("type")
 
-        const = member.text.strip() if member.text else None
+        const = True if member.text and "const" in member.text else False
         member_type = None
         pointer = None
         array_len = None
@@ -948,7 +949,7 @@ class VkMember(object):
         return conversions
 
     def is_const(self):
-        return self.const is not None
+        return self.const
 
     def is_dynamic_array(self):
         """ Returns if the member is an array element.
