@@ -981,7 +981,8 @@ static void test_Register(void)
     ok(SUCCEEDED(hr),"Unable to register COM for TextService\n");
     hr = ITfInputProcessorProfiles_Register(g_ipp, &CLSID_FakeService);
     ok(SUCCEEDED(hr),"Unable to register text service(%x)\n",hr);
-    hr = ITfInputProcessorProfiles_AddLanguageProfile(g_ipp, &CLSID_FakeService, gLangid, &CLSID_FakeService, szDesc, sizeof(szDesc)/sizeof(WCHAR), szFile, sizeof(szFile)/sizeof(WCHAR), 1);
+    hr = ITfInputProcessorProfiles_AddLanguageProfile(g_ipp, &CLSID_FakeService, gLangid,
+            &CLSID_FakeService, szDesc, ARRAY_SIZE(szDesc), szFile, ARRAY_SIZE(szFile), 1);
     ok(SUCCEEDED(hr),"Unable to add Language Profile (%x)\n",hr);
 }
 
@@ -2088,7 +2089,7 @@ static void enum_compartments(ITfCompartmentMgr *cmpmgr, REFGUID present, REFGUI
         {
             WCHAR str[50];
             CHAR strA[50];
-            StringFromGUID2(&g,str,sizeof(str)/sizeof(str[0]));
+            StringFromGUID2(&g,str,ARRAY_SIZE(str));
             WideCharToMultiByte(CP_ACP,0,str,-1,strA,sizeof(strA),0,0);
             trace("found %s\n",strA);
             if (present && IsEqualGUID(present,&g))
