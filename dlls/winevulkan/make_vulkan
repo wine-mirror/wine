@@ -780,9 +780,10 @@ class VkHandle(object):
 
 
 class VkMember(object):
-    def __init__(self, const=False, _type=None, pointer=None, name=None, array_len=None, dyn_array_len=None, optional=False,
-            extension_structs=None):
+    def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
+            dyn_array_len=None, optional=False, extension_structs=None):
         self.const = const
+        self.struct_fwd_decl = struct_fwd_decl
         self.name = name
         self.pointer = pointer
         self.type = _type
@@ -805,8 +806,8 @@ class VkMember(object):
         return False
 
     def __repr__(self):
-        return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_len,
-                self.dyn_array_len)
+        return "{0} {1} {2} {3} {4} {5} {6}".format(self.const, self.struct_fwd_decl, self.type, self.pointer,
+                self.name, self.array_len, self.dyn_array_len)
 
     @staticmethod
     def from_xml(member):
@@ -815,10 +816,21 @@ class VkMember(object):
         name_elem = member.find("name")
         type_elem = member.find("type")
 
-        const = True if member.text and "const" in member.text else False
+        const = False
+        struct_fwd_decl = False
         member_type = None
         pointer = None
         array_len = None
+
+        if member.text:
+            if "const" in member.text:
+                const = True
+
+            # Some members contain forward declarations:
+            # - VkBaseInstructure has a member "const struct VkBaseInStructure *pNext"
+            # - VkWaylandSurfaceCreateInfoKHR has a member "struct wl_display *display"
+            if "struct" in member.text:
+                struct_fwd_decl = True
 
         if type_elem is not None:
             member_type = type_elem.text
@@ -855,8 +867,8 @@ class VkMember(object):
                 # Remove brackets around length
                 array_len = name_elem.tail.strip("[]")
 
-        return VkMember(const=const, _type=member_type, pointer=pointer, name=name_elem.text, array_len=array_len,
-                dyn_array_len=dyn_array_len, optional=optional, extension_structs=extension_structs)
+        return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
+                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, extension_structs=extension_structs)
 
     def copy(self, input, output, direction):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member. """
@@ -899,6 +911,9 @@ class VkMember(object):
         text = ""
         if self.is_const():
             text += "const "
+
+        if self.is_struct_forward_declaration():
+            text += "struct "
 
         if conv and self.is_struct():
             text += "{0}_host".format(self.type)
@@ -973,6 +988,9 @@ class VkMember(object):
 
     def is_struct(self):
         return self.type_info["category"] == "struct"
+
+    def is_struct_forward_declaration(self):
+        return self.struct_fwd_decl
 
     def is_union(self):
         return self.type_info["category"] == "union"
