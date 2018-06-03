@@ -2359,45 +2359,53 @@ class VkRegistry(object):
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
-            # Extensions can add enum values to Core / extension enums, so add these.
-            enums = ext.findall("require/enum")
-            for enum_elem in enums:
-                if "bitpos" in enum_elem.keys():
-                    # We need to add an extra value to an existing enum type.
-                    # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                    type_name = enum_elem.attrib["extends"]
-                    enum = self.types[type_name]["data"]
-                    enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
-                elif "offset" in enum_elem.keys():
-                    ext_number = int(ext.attrib["number"])
-                    offset = int(enum_elem.attrib["offset"])
-                    value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
+            # Extensions can define one or more require sections each requiring
+            # different features (e.g. Vulkan 1.1). Parse each require section
+            # separately, so we can skip sections we don't want.
+            for require in ext.findall("require"):
+                # Extensions can add enum values to Core / extension enums, so add these.
+                for enum_elem in require.findall("enum"):
+                    if "bitpos" in enum_elem.keys():
+                        # We need to add an extra value to an existing enum type.
+                        # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
+                        type_name = enum_elem.attrib["extends"]
+                        enum = self.types[type_name]["data"]
+                        enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
+                    elif "offset" in enum_elem.keys():
+                        # Extensions promoted to Core, have the extension number as part
+                        # of the enum value. Else retrieve from the extension tag.
+                        if enum_elem.attrib.get("extnumber") is not None:
+                            ext_number = int(enum_elem.attrib.get("extnumber"))
+                        else:
+                            ext_number = int(ext.attrib["number"])
+                        offset = int(enum_elem.attrib["offset"])
+                        value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
 
-                    # Deal with negative values.
-                    direction = enum_elem.attrib.get("dir")
-                    if direction is not None:
-                        value = -value
+                        # Deal with negative values.
+                        direction = enum_elem.attrib.get("dir")
+                        if direction is not None:
+                            value = -value
 
-                    type_name = enum_elem.attrib["extends"]
-                    enum = self.types[type_name]["data"]
-                    enum.add(VkEnumValue(enum_elem.attrib["name"], value))
+                        type_name = enum_elem.attrib["extends"]
+                        enum = self.types[type_name]["data"]
+                        enum.add(VkEnumValue(enum_elem.attrib["name"], value))
 
-                elif "value" in enum_elem.keys():
-                    self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
-                    continue
-                else:
-                    # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
-                    continue
+                    elif "value" in enum_elem.keys():
+                        self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
+                        continue
+                    else:
+                        # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
+                        continue
+
+                # Pull in any commands we need. We infer types to pull in from the command
+                # as well.
+                for command in require.findall("command"):
+                    cmd_name = command.attrib["name"]
+                    self._mark_command_required(cmd_name)
 
             # Store a list with extensions.
             ext_info = {"name" : ext_name, "type" : ext_type}
             extensions.append(ext_info)
-
-            # Pull in any commands we need. We infer types to pull in from the command
-            # as well.
-            for command in commands:
-                cmd_name = command.attrib["name"]
-                self._mark_command_required(cmd_name)
 
         # Sort in alphabetical order.
         self.extensions = sorted(extensions, key=lambda ext: ext["name"])
