@@ -1,0 +1,4 @@
+MODULE    = dism.exe
+APPMODE   = -mconsole -municode
+
+C_SRCS = dism.c

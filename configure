@@ -1666,6 +1666,7 @@ enable_cmd
 enable_conhost
 enable_control
 enable_cscript
+enable_dism
 enable_dpnsvr
 enable_dxdiag
 enable_eject
@@ -19369,6 +19370,7 @@ wine_fn_config_makefile programs/cmd/tests enable_tests
 wine_fn_config_makefile programs/conhost enable_conhost
 wine_fn_config_makefile programs/control enable_control
 wine_fn_config_makefile programs/cscript enable_cscript
+wine_fn_config_makefile programs/dism enable_dism
 wine_fn_config_makefile programs/dpnsvr enable_dpnsvr
 wine_fn_config_makefile programs/dxdiag enable_dxdiag
 wine_fn_config_makefile programs/eject enable_eject
