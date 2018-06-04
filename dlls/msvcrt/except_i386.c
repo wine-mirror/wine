@@ -181,11 +181,11 @@ __ASM_GLOBAL_FUNC( continue_after_catch,
                    "leal 12(%edx), %ebp\n\t"
                    "jmp *%eax" );
 
-static inline void call_finally_block( void *code_block, void *base_ptr )
-{
-    __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax"
-                          : : "a" (code_block), "g" (base_ptr));
-}
+extern void DECLSPEC_NORETURN call_finally_block( void *code_block, void *base_ptr );
+
+__ASM_GLOBAL_FUNC( call_finally_block,
+                   "movl 8(%esp), %ebp\n\t"
+                   "jmp *4(%esp)" );
 
 static inline int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp )
 {
@@ -938,7 +938,6 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
           frame->trylevel = pScopeTable[trylevel].previousTryLevel;
           TRACE("__finally block %p\n",pScopeTable[trylevel].lpfnHandler);
           call_finally_block(pScopeTable[trylevel].lpfnHandler, &frame->_ebp);
-          ERR("Returned from __finally block - expect crash!\n");
        }
       }
       trylevel = pScopeTable[trylevel].previousTryLevel;
@@ -1012,7 +1011,6 @@ int CDECL _except_handler4_common( ULONG *cookie, void (*check_cookie)(void),
                     frame->trylevel = scope_table->entries[trylevel].previousTryLevel;
                     TRACE("__finally block %p\n",scope_table->entries[trylevel].lpfnHandler);
                     call_finally_block(scope_table->entries[trylevel].lpfnHandler, &frame->_ebp);
-                    ERR("Returned from __finally block - expect crash!\n");
                 }
             }
             trylevel = scope_table->entries[trylevel].previousTryLevel;
