@@ -187,15 +187,16 @@ __ASM_GLOBAL_FUNC( call_finally_block,
                    "movl 8(%esp), %ebp\n\t"
                    "jmp *4(%esp)" );
 
-static inline int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp )
-{
-    int ret;
-    __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"
-                          : "=a" (ret)
-                          : "0" (func), "r" (ebp), "r" (arg)
-                          : "ecx", "edx", "memory" );
-    return ret;
-}
+extern int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp );
+
+__ASM_GLOBAL_FUNC( call_filter,
+                   "pushl %ebp\n\t"
+                   "pushl 12(%esp)\n\t"
+                   "movl 20(%esp), %ebp\n\t"
+                   "call *12(%esp)\n\t"
+                   "popl %ebp\n\t"
+                   "popl %ebp\n\t"
+                   "ret" );
 
 static inline int call_unwind_func( int (*func)(void), void *ebp )
 {
