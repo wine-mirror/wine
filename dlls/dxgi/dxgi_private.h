@@ -44,7 +44,6 @@
 
 enum dxgi_frame_latency
 {
-    DXGI_FRAME_LATENCY_DEFAULT =  3,
     DXGI_FRAME_LATENCY_MAX     = 16,
 };
 
