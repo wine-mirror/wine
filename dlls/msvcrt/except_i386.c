@@ -172,12 +172,14 @@ __ASM_GLOBAL_FUNC( call_copy_ctor,
                    "ret" );
 
 /* continue execution to the specified address after exception is caught */
-static inline void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr )
-{
-    __asm__ __volatile__("movl -4(%0),%%esp; leal 12(%0),%%ebp; jmp *%1"
-                         : : "r" (frame), "a" (addr) );
-    for (;;) ; /* unreached */
-}
+extern void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr );
+
+__ASM_GLOBAL_FUNC( continue_after_catch,
+                   "movl 4(%esp), %edx\n\t"
+                   "movl 8(%esp), %eax\n\t"
+                   "movl -4(%edx), %esp\n\t"
+                   "leal 12(%edx), %ebp\n\t"
+                   "jmp *%eax" );
 
 static inline void call_finally_block( void *code_block, void *base_ptr )
 {
