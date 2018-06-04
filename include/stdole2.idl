@@ -32,15 +32,15 @@
 ]
 library stdole
 {
-	/* typedefs aren't stored in the type library.
-           These type names are known by the type compiler so it
-           doesn't really matter what we define them as. */
-
+    /* These typedefs need to have the same size as their real counterparts. */
     typedef short VARIANT_BOOL;
-    typedef long BSTR;
+    typedef void *BSTR;
     typedef double CURRENCY;
     typedef unsigned long HRESULT;
-    typedef void *VARIANT;
+    typedef struct {
+        short word1, word2, word3, word4;
+        void *ptr1, *ptr2;
+    } VARIANT;
     typedef unsigned long SCODE;
 
     typedef struct GUID {
