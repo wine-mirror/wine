@@ -84,7 +84,6 @@ static const unsigned short IsSimpleRef = 0x0100;
 
 static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
-static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align);
 static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
                                     const char *name, unsigned int *typestring_offset);
 static unsigned int write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
@@ -1841,7 +1840,7 @@ static unsigned int union_memsize(const var_list_t *fields, unsigned int *pmaxa)
     return maxs;
 }
 
-static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align)
+unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align)
 {
     unsigned int size = 0;
 
@@ -1910,6 +1909,7 @@ static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *al
         size = union_memsize(type_union_get_cases(t), align);
         break;
     case TYPE_POINTER:
+    case TYPE_INTERFACE:
         assert( pointer_size );
         size = pointer_size;
         if (size > *align) *align = size;
@@ -1933,7 +1933,6 @@ static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *al
             if (size > *align) *align = size;
         }
         break;
-    case TYPE_INTERFACE:
     case TYPE_ALIAS:
     case TYPE_VOID:
     case TYPE_COCLASS:
