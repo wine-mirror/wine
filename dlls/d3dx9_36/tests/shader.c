@@ -649,17 +649,17 @@ static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
 static void test_constant_tables(void)
 {
     test_constant_table("test_basic", ctab_basic, ctab_basic_expected,
-            sizeof(ctab_basic_expected)/sizeof(*ctab_basic_expected));
+            ARRAY_SIZE(ctab_basic_expected));
     test_constant_table("test_matrices", ctab_matrices, ctab_matrices_expected,
-            sizeof(ctab_matrices_expected)/sizeof(*ctab_matrices_expected));
+            ARRAY_SIZE(ctab_matrices_expected));
     test_constant_table("test_matrices2", ctab_matrices2, ctab_matrices2_expected,
-            sizeof(ctab_matrices2_expected)/sizeof(*ctab_matrices2_expected));
+            ARRAY_SIZE(ctab_matrices2_expected));
     test_constant_table("test_arrays", ctab_arrays, ctab_arrays_expected,
-            sizeof(ctab_arrays_expected)/sizeof(*ctab_arrays_expected));
+            ARRAY_SIZE(ctab_arrays_expected));
     test_constant_table("test_default_values", ctab_with_default_values, ctab_with_default_values_expected,
-            sizeof(ctab_with_default_values_expected)/sizeof(*ctab_with_default_values_expected));
+            ARRAY_SIZE(ctab_with_default_values_expected));
     test_constant_table("test_samplers", ctab_samplers, ctab_samplers_expected,
-            sizeof(ctab_samplers_expected)/sizeof(*ctab_samplers_expected));
+            ARRAY_SIZE(ctab_samplers_expected));
 }
 
 static void test_setting_basic_table(IDirect3DDevice9 *device)
@@ -1844,7 +1844,7 @@ static void test_get_shader_constant_variables(void)
     ctab = ID3DXConstantTable_GetBufferPointer(ctable);
     ok(ctab[0] == test_get_shader_constant_variables_blob[3], "ID3DXConstantTable_GetBufferPointer failed\n");
 
-    for (i = 0; i < sizeof(test_get_shader_constant_variables_data) / sizeof(*test_get_shader_constant_variables_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_get_shader_constant_variables_data); ++i)
     {
         const char *fullname = test_get_shader_constant_variables_data[i].fullname;
         const D3DXCONSTANT_DESC *expected_desc = &test_get_shader_constant_variables_data[i].desc;
@@ -6025,7 +6025,7 @@ static UINT registerset_compare_all(IDirect3DDevice9 *device, BOOL is_vs, D3DXRE
     D3DXREGISTER_SET regsets[] = {D3DXRS_BOOL, D3DXRS_INT4, D3DXRS_FLOAT4};
     UINT err = 0, i;
 
-    for (i = 0; i < sizeof(regsets) / sizeof(*regsets); i++)
+    for (i = 0; i < ARRAY_SIZE(regsets); i++)
     {
         if (regset == regsets[i])
             err += registerset_compare(device, is_vs, regset, start, in_count, expected);
@@ -6137,7 +6137,7 @@ static void test_registerset(void)
         return;
     }
 
-    for (k = 0; k < sizeof(registerset_data) / sizeof(*registerset_data); ++k)
+    for (k = 0; k < ARRAY_SIZE(registerset_data); ++k)
     {
         const char *tablename = registerset_data[k].name;
         const char *name = registerset_data[k].var;
@@ -6442,7 +6442,7 @@ static void test_registerset_defaults(void)
         return;
     }
 
-    for (k = 0; k < sizeof(registerset_defaults_data) / sizeof(*registerset_defaults_data); ++k)
+    for (k = 0; k < ARRAY_SIZE(registerset_defaults_data); ++k)
     {
         const char *tablename = registerset_defaults_data[k].name;
         ID3DXConstantTable *ctable;
@@ -6616,7 +6616,7 @@ static void test_shader_semantics(void)
     hr = D3DXGetShaderInputSemantics(vs_1_1, semantics, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const DWORD *shader = tests[i].shader;
 

@@ -991,7 +991,7 @@ struct test_effect_parameter_value_result test_effect_parameter_value_result_spe
     test_effect_parameter_value_blob_ ## x,\
     sizeof(test_effect_parameter_value_blob_ ## x),\
     test_effect_parameter_value_result_ ## x,\
-    sizeof(test_effect_parameter_value_result_ ## x)/sizeof(*test_effect_parameter_value_result_ ## x),\
+    ARRAY_SIZE(test_effect_parameter_value_result_ ## x),\
 }
 
 static const struct

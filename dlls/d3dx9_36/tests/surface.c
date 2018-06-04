@@ -398,7 +398,7 @@ static void test_dds_header_handling(void)
         return;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         DWORD file_size = sizeof(dds->magic) + sizeof(dds->header) + tests[i].pixel_data_size;
         assert(file_size <= sizeof(*dds));

@@ -552,7 +552,7 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
         check_release((IUnknown*)font, 0);
     } else skip("Failed to create a ID3DXFont object\n");
 
-    for(i = 0; i < sizeof(texture_tests) / sizeof(texture_tests[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(texture_tests); i++) {
         HDC hdc;
         DWORD ret;
         HRESULT hr;
@@ -617,7 +617,7 @@ static void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, NULL /* out */);
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         hr = D3DXCreateRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil,
                 tests[i].DepthStencilFormat, &render);
@@ -1024,7 +1024,7 @@ static void test_ID3DXRenderToSurface(IDirect3DDevice9 *device)
 
     check_release((IUnknown *)render, 0);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, TRUE);
         check_ID3DXRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil, tests[i].DepthStencilFormat, FALSE);
@@ -1052,7 +1052,7 @@ static void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
         { { 256,   1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN }, { 256, 1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN } }
     };
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         const D3DXRTE_DESC *parameters = &tests[i].parameters;
         const D3DXRTE_DESC *expected  = &tests[i].expected_values;
