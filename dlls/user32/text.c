@@ -1064,6 +1064,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     if (retstr) memcpy(str, retstr, size_retstr);
 
     ret = y - rect->top;
+    if (ret == 0) ret = 1;
 done:
     heap_free(retstr);
     return ret;

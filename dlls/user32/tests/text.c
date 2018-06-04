@@ -277,6 +277,21 @@ static void test_DrawTextCalcRect(void)
     ok(textheight==0,"Got textheight from DrawTextA\n");
     ok(textheight == heightcheck,"DrawTextEx and DrawText differ in return\n");
 
+    /* When offset to top is zero, return 1 */
+    SetRectEmpty(&rect);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_SINGLELINE | DT_CALCRECT | DT_BOTTOM, NULL);
+    ok(textheight == 1, "Expect returned height:1 got:%d\n", textheight);
+
+    SetRect(&rect, 0, 100, 0, 100);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_SINGLELINE | DT_CALCRECT | DT_BOTTOM, NULL);
+    ok(textheight == 1, "Expect returned height:1 got:%d\n", textheight);
+
+    SetRectEmpty(&rect);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_SINGLELINE | DT_CALCRECT | DT_TOP, NULL);
+    /* Set top to text height and bottom zero, so bottom of drawn text to top is zero when DT_VCENTER is used */
+    SetRect(&rect, 0, textheight, 0, 0);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_SINGLELINE | DT_CALCRECT | DT_VCENTER, NULL);
+    ok(textheight == 1, "Expect returned height:1 got:%d\n", textheight);
 
     /* invalid dtp size test */
     dtp.cbSize = -1; /* Invalid */
