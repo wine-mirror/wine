@@ -837,6 +837,15 @@ LONG WINAPI GetDisplayConfigBufferSizes(UINT32 flags, UINT32 *num_path_info, UIN
     return ERROR_NOT_SUPPORTED;
 }
 
+/**********************************************************************
+ * RegisterPointerDeviceNotifications [USER32.@]
+ */
+BOOL WINAPI RegisterPointerDeviceNotifications(HWND hwnd, BOOL notifyrange)
+{
+    FIXME("(%p %d): stub\n", hwnd, notifyrange);
+    return FALSE;
+}
+
 static const WCHAR imeW[] = {'I','M','E',0};
 const struct builtin_class_descr IME_builtin_class =
 {
