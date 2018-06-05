@@ -785,7 +785,7 @@ static void test__Xtime_diff_to_millis2(void)
     MSVCRT_long ret;
     xtime t1, t2;
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); ++ i)
+    for(i = 0; i < ARRAY_SIZE(tests); ++ i)
     {
         t1.sec = tests[i].sec_before;
         t1.nsec = tests[i].nsec_before;
@@ -805,7 +805,7 @@ static void test_xtime_get(void)
     xtime before, after;
     int i;
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i ++)
+    for(i = 0; i < ARRAY_SIZE(tests); i ++)
     {
         p_xtime_get(&before, 1);
         Sleep(tests[i]);
@@ -1166,7 +1166,7 @@ static void test_tr2_sys__Equivalent(void)
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
     CloseHandle(file);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         val = p_tr2_sys__Equivalent(tests[i].path1, tests[i].path2);
         ok(tests[i].equivalent == val, "tr2_sys__Equivalent(): test %d expect: %d, got %d\n", i+1, tests[i].equivalent, val);
@@ -1272,7 +1272,7 @@ static void test_tr2_sys__Make_dir(void)
         { "??invalid_name>>", -1 }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Make_dir(tests[i].path);
         ok(ret == tests[i].val, "tr2_sys__Make_dir(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
@@ -1301,7 +1301,7 @@ static void test_tr2_sys__Remove_dir(void)
 
     ok(p_tr2_sys__Make_dir("tr2_test_dir"), "tr2_sys__Make_dir() failed\n");
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Remove_dir(tests[i].path);
         ok(ret == tests[i].val, "test_tr2_sys__Remove_dir(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
@@ -1345,7 +1345,7 @@ static void test_tr2_sys__Copy_file(void)
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Copy_file(tests[i].source, tests[i].dest, tests[i].fail_if_exists);
         todo_wine_if(tests[i].is_todo)
@@ -1403,7 +1403,7 @@ static void test_tr2_sys__Rename(void)
 
     ret = p_tr2_sys__Rename("tr2_test_dir\\f1", "tr2_test_dir\\f1");
     todo_wine ok(ERROR_SUCCESS == ret, "test_tr2_sys__Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         if(tests[i].val == ERROR_SUCCESS) {
             h1 = CreateFileA(tests[i].old_path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1542,7 +1542,7 @@ static void test_tr2_sys__Stat(void)
     todo_wine ok(ERROR_SUCCESS == err_code, "tr2_sys__Lstat(): err_code expect: ERROR_SUCCESS, got %d\n", err_code);
     ok(CloseHandle(file), "CloseHandle\n");
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         err_code = 0xdeadbeef;
         val = p_tr2_sys__Stat(tests[i].path, &err_code);
         todo_wine_if(tests[i].is_todo)
@@ -1744,7 +1744,7 @@ static void test_tr2_sys__Link(void)
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Link(tests[i].existing_path, tests[i].new_path);
         ok(ret == tests[i].last_error, "tr2_sys__Link(): test %d expect: %d, got %d\n",
@@ -1820,7 +1820,7 @@ static void test_tr2_sys__Symlink(void)
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         ret = p_tr2_sys__Symlink(tests[i].existing_path, tests[i].new_path);
@@ -1892,7 +1892,7 @@ static void test_tr2_sys__Unlink(void)
     ret = p_tr2_sys__Link("tr2_test_dir/f1", "tr2_test_dir/f1_link");
     ok(ret == ERROR_SUCCESS, "tr2_sys__Link(): expect: ERROR_SUCCESS, got %d\n", ret);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Unlink(tests[i].path);
         todo_wine_if(tests[i].is_todo)
@@ -1949,14 +1949,14 @@ static void test_thrd(void)
     };
 
     /* test for equal */
-    for(i=0; i<sizeof(testeq)/sizeof(testeq[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(testeq); i++) {
         ret = p__Thrd_equal(testeq[i].a, testeq[i].b);
         ok(ret == testeq[i].r, "(%p %u) = (%p %u) expected %d, got %d\n",
             testeq[i].a.hnd, testeq[i].a.id, testeq[i].b.hnd, testeq[i].b.id, testeq[i].r, ret);
     }
 
     /* test for less than */
-    for(i=0; i<sizeof(testlt)/sizeof(testlt[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(testlt); i++) {
         ret = p__Thrd_lt(testlt[i].a, testlt[i].b);
         ok(ret == testlt[i].r, "(%p %u) < (%p %u) expected %d, got %d\n",
             testlt[i].a.hnd, testlt[i].a.id, testlt[i].b.hnd, testlt[i].b.id, testlt[i].r, ret);
@@ -2323,7 +2323,7 @@ static void test_vector_base_v4__Segment_index_of(void)
         {~0, 8*sizeof(void*)-1}
     };
 
-    for(i=0; i<sizeof(tests) / sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         ret = p_vector_base_v4__Segment_index_of(tests[i].x);
         ok(ret == tests[i].expect, "expected %ld, got %ld for %ld\n",
             (long)tests[i].expect, (long)ret, (long)tests[i].x);
