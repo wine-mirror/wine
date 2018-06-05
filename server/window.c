@@ -2496,13 +2496,10 @@ DECL_HANDLER(get_surface_region)
 
     if ((region = get_surface_region( win )))
     {
-        rectangle_t *data;
-        if (win->parent) map_win_region_to_screen( win->parent, region );
-        data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
+        rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
         if (data) set_reply_data_ptr( data, reply->total_size );
     }
     reply->visible_rect = win->visible_rect;
-    if (win->parent) client_to_screen_rect( win->parent, &reply->visible_rect );
 }
 
 
