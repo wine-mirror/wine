@@ -856,15 +856,15 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
     }
     if (win != WND_OTHER_PROCESS)
     {
-        RECT window_rect = win->rectWindow, client_rect = win->rectClient;
+        RECT window_rect = win->rectWindow, client_rect = win->client_rect;
 
         switch (relative)
         {
         case COORDS_CLIENT:
-            OffsetRect( &window_rect, -win->rectClient.left, -win->rectClient.top );
-            OffsetRect( &client_rect, -win->rectClient.left, -win->rectClient.top );
+            OffsetRect( &window_rect, -win->client_rect.left, -win->client_rect.top );
+            OffsetRect( &client_rect, -win->client_rect.left, -win->client_rect.top );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
-                mirror_rect( &win->rectClient, &window_rect );
+                mirror_rect( &win->client_rect, &window_rect );
             break;
         case COORDS_WINDOW:
             OffsetRect( &window_rect, -win->rectWindow.left, -win->rectWindow.top );
@@ -890,8 +890,8 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                 }
                 if (parent->dwExStyle & WS_EX_LAYOUTRTL)
                 {
-                    mirror_rect( &parent->rectClient, &window_rect );
-                    mirror_rect( &parent->rectClient, &client_rect );
+                    mirror_rect( &parent->client_rect, &window_rect );
+                    mirror_rect( &parent->client_rect, &client_rect );
                 }
                 WIN_ReleasePtr( parent );
             }
@@ -915,8 +915,8 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                 win = parent;
                 if (win->parent)
                 {
-                    OffsetRect( &window_rect, win->rectClient.left, win->rectClient.top );
-                    OffsetRect( &client_rect, win->rectClient.left, win->rectClient.top );
+                    OffsetRect( &window_rect, win->client_rect.left, win->client_rect.top );
+                    OffsetRect( &client_rect, win->client_rect.left, win->client_rect.top );
                 }
             }
             break;

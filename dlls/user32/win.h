@@ -43,7 +43,7 @@ typedef struct tagWND
     WNDPROC        winproc;       /* Window procedure */
     DWORD          tid;           /* Owner thread id */
     HINSTANCE      hInstance;     /* Window hInstance (from CreateWindow) */
-    RECT           rectClient;    /* Client area rel. to parent client area */
+    RECT           client_rect;   /* Client area rel. to parent client area */
     RECT           rectWindow;    /* Whole window rel. to parent client area */
     RECT           visible_rect;  /* Visible part of the whole rect, rel. to parent client area */
     RECT           normal_rect;   /* Normal window rect saved when maximized/minimized */

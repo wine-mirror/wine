@@ -428,12 +428,12 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
             if (wndPtr->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_from = TRUE;
-                offset.x += wndPtr->rectClient.right - wndPtr->rectClient.left;
+                offset.x += wndPtr->client_rect.right - wndPtr->client_rect.left;
             }
             while (wndPtr->parent)
             {
-                offset.x += wndPtr->rectClient.left;
-                offset.y += wndPtr->rectClient.top;
+                offset.x += wndPtr->client_rect.left;
+                offset.y += wndPtr->client_rect.top;
                 hwnd = wndPtr->parent;
                 WIN_ReleasePtr( wndPtr );
                 if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
@@ -463,12 +463,12 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
             if (wndPtr->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_to = TRUE;
-                offset.x -= wndPtr->rectClient.right - wndPtr->rectClient.left;
+                offset.x -= wndPtr->client_rect.right - wndPtr->client_rect.left;
             }
             while (wndPtr->parent)
             {
-                offset.x -= wndPtr->rectClient.left;
-                offset.y -= wndPtr->rectClient.top;
+                offset.x -= wndPtr->client_rect.left;
+                offset.y -= wndPtr->client_rect.top;
                 hwnd = wndPtr->parent;
                 WIN_ReleasePtr( wndPtr );
                 if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
@@ -2087,7 +2087,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         return FALSE;
     }
     old_visible_rect = win->visible_rect;
-    old_client_rect = win->rectClient;
+    old_client_rect = win->client_rect;
     old_surface = win->surface;
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
 
@@ -2118,7 +2118,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             win->dwStyle    = reply->new_style;
             win->dwExStyle  = reply->new_ex_style;
             win->rectWindow = *window_rect;
-            win->rectClient = *client_rect;
+            win->client_rect  = *client_rect;
             win->visible_rect = visible_rect;
             win->surface      = new_surface;
             surface_win       = wine_server_ptr_handle( reply->surface_win );
@@ -2128,7 +2128,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                 RECT client;
                 GetClientRect( win->parent, &client );
                 mirror_rect( &client, &win->rectWindow );
-                mirror_rect( &client, &win->rectClient );
+                mirror_rect( &client, &win->client_rect );
                 mirror_rect( &client, &win->visible_rect );
             }
             /* if an RTL window is resized the children have moved */

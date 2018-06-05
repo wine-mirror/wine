@@ -838,8 +838,8 @@ void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, c
 
     TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
     MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2 );
-    OffsetRect( &src, win->rectClient.left - win->visible_rect.left,
-                win->rectClient.top - win->visible_rect.top );
+    OffsetRect( &src, win->client_rect.left - win->visible_rect.left,
+                win->client_rect.top - win->visible_rect.top );
     OffsetRect( &dst, -window_rect->left, -window_rect->top );
     window_surface_add_ref( surface );
     WIN_ReleasePtr( win );
