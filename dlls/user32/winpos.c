@@ -2080,6 +2080,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                                      window_rect, client_rect, &visible_rect, &new_surface );
 
     WIN_GetRectangles( hwnd, COORDS_SCREEN, &old_window_rect, NULL );
+    if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;
 
     if (!(win = WIN_GetPtr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
     {
@@ -2104,11 +2105,10 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         req->client.top    = client_rect->top;
         req->client.right  = client_rect->right;
         req->client.bottom = client_rect->bottom;
-        if (!EqualRect( window_rect, &visible_rect ) || !IsRectEmpty( &valid_rects[0] ))
+        if (!EqualRect( window_rect, &visible_rect ) || valid_rects)
         {
             wine_server_add_data( req, &visible_rect, sizeof(visible_rect) );
-            if (!IsRectEmpty( &valid_rects[0] ))
-                wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+            if (valid_rects) wine_server_add_data( req, valid_rects, sizeof(*valid_rects) );
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
         if (win->pixel_format) req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
@@ -2155,7 +2155,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         register_window_surface( old_surface, new_surface );
         if (old_surface)
         {
-            if (!IsRectEmpty( valid_rects ))
+            if (valid_rects)
             {
                 move_window_bits( hwnd, old_surface, new_surface, &visible_rect,
                                   &old_visible_rect, window_rect, valid_rects );
@@ -2165,7 +2165,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         }
         else if (surface_win && surface_win != hwnd)
         {
-            if (!IsRectEmpty( valid_rects ))
+            if (valid_rects)
             {
                 RECT rects[2];
                 int x_offset = old_visible_rect.left - visible_rect.left;

@@ -1653,7 +1653,7 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
 static void set_window_pos( struct window *win, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
                             const rectangle_t *client_rect, const rectangle_t *visible_rect,
-                            const rectangle_t *valid_rects )
+                            const rectangle_t *valid_rect )
 {
     struct region *old_vis_rgn = NULL, *exposed_rgn = NULL;
     const rectangle_t old_window_rect = win->window_rect;
@@ -1767,8 +1767,7 @@ static void set_window_pos( struct window *win, struct window *previous,
                           client_rect->right  - old_client_rect.right  != x_offset ||
                           client_rect->top    - old_client_rect.top    != y_offset ||
                           client_rect->bottom - old_client_rect.bottom != y_offset ||
-                          !valid_rects ||
-                          memcmp( &valid_rects[0], client_rect, sizeof(*client_rect) ));
+                          !valid_rect || memcmp( valid_rect, client_rect, sizeof(*client_rect) ));
     }
 
     if (frame_changed || client_changed)
@@ -1776,13 +1775,13 @@ static void set_window_pos( struct window *win, struct window *previous,
         struct region *win_rgn = old_vis_rgn;  /* reuse previous region */
 
         set_region_rect( win_rgn, window_rect );
-        if (valid_rects)
+        if (valid_rect)
         {
             /* subtract the valid portion of client rect from the total region */
             struct region *tmp = create_empty_region();
             if (tmp)
             {
-                set_region_rect( tmp, &valid_rects[0] );
+                set_region_rect( tmp, valid_rect );
                 /* subtract update region since invalid parts of the valid rect won't be copied */
                 if (win->update_region)
                 {
@@ -2313,16 +2312,13 @@ DECL_HANDLER(set_window_pos)
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
-    if (get_req_data_size() >= 3 * sizeof(rectangle_t))
+    if (get_req_data_size() >= 2 * sizeof(rectangle_t))
     {
-        rectangle_t valid_rects[2];
-        memcpy( valid_rects, (const rectangle_t *)get_req_data() + 1, 2 * sizeof(rectangle_t) );
+        rectangle_t valid_rect;
+        memcpy( &valid_rect, (const rectangle_t *)get_req_data() + 1, sizeof(rectangle_t) );
         if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
-        {
-            mirror_rect( &win->parent->client_rect, &valid_rects[0] );
-            mirror_rect( &win->parent->client_rect, &valid_rects[1] );
-        }
-        set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, valid_rects );
+            mirror_rect( &win->parent->client_rect, &valid_rect );
+        set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, &valid_rect );
     }
     else set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, NULL );
 
