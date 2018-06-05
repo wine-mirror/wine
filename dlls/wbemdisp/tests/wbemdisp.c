@@ -265,7 +265,10 @@ static void test_locator(void)
     ISWbemObject *object;
     ISWbemPropertySet *prop_set;
     ISWbemProperty *prop;
+    ISWbemSecurity *security;
     VARIANT var;
+    WbemImpersonationLevelEnum imp_level;
+    WbemAuthenticationLevelEnum auth_level;
 
     hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemLocator, (void **)&locator );
     ok( hr == S_OK, "got %x\n", hr );
@@ -283,6 +286,34 @@ static void test_locator(void)
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( lang_bstr );
     SysFreeString( query_bstr );
+
+    hr = ISWbemLocator_get_Security_( locator, &security );
+    ok( hr == S_OK, "got %x\n", hr );
+    imp_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_ImpersonationLevel( security, &imp_level );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( imp_level == wbemImpersonationLevelImpersonate, "got %u\n", imp_level );
+    hr = ISWbemSecurity_put_ImpersonationLevel( security, wbemImpersonationLevelAnonymous );
+    ok( hr == S_OK, "got %x\n", hr );
+    imp_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_ImpersonationLevel( security, &imp_level );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( imp_level == wbemImpersonationLevelAnonymous, "got %u\n", imp_level );
+
+    auth_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_AuthenticationLevel( security, &auth_level );
+    todo_wine {
+    ok( hr == WBEM_E_FAILED, "got %x\n", hr );
+    ok( auth_level == 0xdeadbeef, "got %u\n", auth_level );
+    }
+    hr = ISWbemSecurity_put_AuthenticationLevel( security, wbemAuthenticationLevelNone );
+    ok( hr == S_OK, "got %x\n", hr );
+    auth_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_AuthenticationLevel( security, &auth_level );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( auth_level == wbemAuthenticationLevelNone, "got %u\n", auth_level );
+    ISWbemSecurity_Release( security );
+    security = NULL;
 
     hr = ISWbemObjectSet_get__NewEnum( object_set, (IUnknown**)&enum_var );
     ok( hr == S_OK, "got %x\n", hr );
@@ -318,6 +349,18 @@ static void test_locator(void)
     ok( V_VT(&var) == VT_BSTR, "got %x\n", V_VT(&var) );
     VariantClear( &var );
 
+    hr = ISWbemServices_get_Security_( services, &security );
+    ok( hr == S_OK, "got %x\n", hr );
+    imp_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_ImpersonationLevel( security, &imp_level );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( imp_level == wbemImpersonationLevelImpersonate, "got %u\n", imp_level );
+    auth_level = 0xdeadbeef;
+    hr = ISWbemSecurity_get_AuthenticationLevel( security, &auth_level );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( auth_level == wbemAuthenticationLevelPktPrivacy, "got %u\n", auth_level );
+
+    ISWbemSecurity_Release(security);
     ISWbemProperty_Release( prop );
     ISWbemPropertySet_Release( prop_set );
     ISWbemObject_Release( object );
