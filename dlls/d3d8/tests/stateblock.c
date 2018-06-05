@@ -1108,7 +1108,7 @@ const D3DRENDERSTATETYPE render_state_indices[] =
 
 struct render_state_data
 {
-    DWORD states[sizeof(render_state_indices) / sizeof(*render_state_indices)];
+    DWORD states[ARRAY_SIZE(render_state_indices)];
 };
 
 struct render_state_arg
@@ -1132,7 +1132,7 @@ static void render_state_apply_data(IDirect3DDevice8 *device, const struct state
     unsigned int i;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    for (i = 0; i < ARRAY_SIZE(render_state_indices); ++i)
     {
         hr = IDirect3DDevice8_SetRenderState(device, render_state_indices[i], rsdata->states[i]);
         ok(SUCCEEDED(hr), "SetRenderState returned %#x.\n", hr);
@@ -1147,7 +1147,7 @@ static void render_state_check_data(IDirect3DDevice8 *device, const struct state
     unsigned int i;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    for (i = 0; i < ARRAY_SIZE(render_state_indices); ++i)
     {
         DWORD value = ctx->poison_data_buffer.states[i];
         hr = IDirect3DDevice8_GetRenderState(device, render_state_indices[i], &value);
@@ -1244,7 +1244,7 @@ static void render_state_poison_data_init(struct render_state_data *data)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    for (i = 0; i < ARRAY_SIZE(render_state_indices); ++i)
     {
         data->states[i] = 0x1337c0de;
     }
@@ -1423,10 +1423,10 @@ static HRESULT render_state_test_init(IDirect3DDevice8 *device, struct state_tes
     render_state_test_data_init(&ctx->test_data_all_buffer);
     render_state_poison_data_init(&ctx->poison_data_buffer);
 
-    for (i = 0; i < sizeof(render_state_indices) / sizeof(*render_state_indices); ++i)
+    for (i = 0; i < ARRAY_SIZE(render_state_indices); ++i)
     {
         ctx->test_data_vertex_buffer.states[i] = ctx->default_data_buffer.states[i];
-        for (j = 0; j < sizeof(states_vertex) / sizeof(*states_vertex); ++j)
+        for (j = 0; j < ARRAY_SIZE(states_vertex); ++j)
         {
             if (render_state_indices[i] == states_vertex[j])
             {
@@ -1436,7 +1436,7 @@ static HRESULT render_state_test_init(IDirect3DDevice8 *device, struct state_tes
         }
 
         ctx->test_data_pixel_buffer.states[i] = ctx->default_data_buffer.states[i];
-        for (j = 0; j < sizeof(states_pixel) / sizeof(*states_pixel); ++j)
+        for (j = 0; j < ARRAY_SIZE(states_pixel); ++j)
         {
             if (render_state_indices[i] == states_pixel[j])
             {

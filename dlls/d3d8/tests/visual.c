@@ -494,7 +494,7 @@ static void lighting_test(void)
     hr = IDirect3DDevice8_LightEnable(device, 0, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable light 0, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLD, tests[i].world_matrix);
         ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
@@ -706,22 +706,14 @@ static void test_specular_lighting(void)
     }
     tests[] =
     {
-        {&directional, FALSE, 30.0f, expected_directional,
-                sizeof(expected_directional) / sizeof(expected_directional[0])},
-        {&directional, TRUE, 30.0f, expected_directional_local,
-                sizeof(expected_directional_local) / sizeof(expected_directional_local[0])},
-        {&point, FALSE, 30.0f, expected_point,
-                sizeof(expected_point) / sizeof(expected_point[0])},
-        {&point, TRUE, 30.0f, expected_point_local,
-                sizeof(expected_point_local) / sizeof(expected_point_local[0])},
-        {&spot, FALSE, 30.0f, expected_spot,
-                sizeof(expected_spot) / sizeof(expected_spot[0])},
-        {&spot, TRUE, 30.0f, expected_spot_local,
-                sizeof(expected_spot_local) / sizeof(expected_spot_local[0])},
-        {&point_range, FALSE, 30.0f, expected_point_range,
-                sizeof(expected_point_range) / sizeof(expected_point_range[0])},
-        {&point_side, TRUE, 0.0f, expected_point_side,
-                sizeof(expected_point_side) / sizeof(expected_point_side[0])},
+        {&directional, FALSE, 30.0f, expected_directional, ARRAY_SIZE(expected_directional)},
+        {&directional, TRUE, 30.0f, expected_directional_local, ARRAY_SIZE(expected_directional_local)},
+        {&point, FALSE, 30.0f, expected_point, ARRAY_SIZE(expected_point)},
+        {&point, TRUE, 30.0f, expected_point_local, ARRAY_SIZE(expected_point_local)},
+        {&spot, FALSE, 30.0f, expected_spot, ARRAY_SIZE(expected_spot)},
+        {&spot, TRUE, 30.0f, expected_spot_local, ARRAY_SIZE(expected_spot_local)},
+        {&point_range, FALSE, 30.0f, expected_point_range, ARRAY_SIZE(expected_point_range)},
+        {&point_side, TRUE, 0.0f, expected_point_side, ARRAY_SIZE(expected_point_side)},
     };
     IDirect3DDevice8 *device;
     D3DMATERIAL8 material;
@@ -795,7 +787,7 @@ static void test_specular_lighting(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SPECULARENABLE, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable specular lighting, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice8_SetLight(device, 0, tests[i].light);
         ok(SUCCEEDED(hr), "Failed to set light parameters, hr %#x.\n", hr);
@@ -1480,7 +1472,7 @@ static void fog_with_shader_test(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGEND, end.i);
     ok(hr == D3D_OK, "Setting fog end failed (%08x)\n", hr);
 
-    for (i = 0; i < sizeof(test_data)/sizeof(test_data[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DDevice8_SetVertexShader(device, vertex_shader[test_data[i].vshader]);
         ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
@@ -2458,7 +2450,7 @@ static void test_scalar_instructions(void)
         goto done;
     }
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff336699, 0.0f, 0);
         ok(SUCCEEDED(hr), "%s: Failed to clear, hr %#x.\n", test_data[i].name, hr);
@@ -3100,7 +3092,7 @@ static void texop_test(void)
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         if (!(caps.TextureOpCaps & test_data[i].caps_flag))
         {
@@ -3789,7 +3781,7 @@ static void intz_test(void)
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     get_rt_readback(original_rt, &rb);
-    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
@@ -3847,7 +3839,7 @@ static void intz_test(void)
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     get_rt_readback(original_rt, &rb);
-    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
@@ -3915,7 +3907,7 @@ static void intz_test(void)
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     get_rt_readback(original_rt, &rb);
-    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
@@ -4070,7 +4062,7 @@ static void shadow_test(void)
             D3DTTFF_COUNT4 | D3DTTFF_PROJECTED);
     ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         D3DFORMAT format = formats[i].format;
         IDirect3DTexture8 *texture;
@@ -4132,7 +4124,7 @@ static void shadow_test(void)
         IDirect3DTexture8_Release(texture);
 
         get_rt_readback(original_rt, &rb);
-        for (j = 0; j < sizeof(expected_colors) / sizeof(*expected_colors); ++j)
+        for (j = 0; j < ARRAY_SIZE(expected_colors); ++j)
         {
             D3DCOLOR color = get_readback_color(&rb, expected_colors[j].x, expected_colors[j].y);
             /* Geforce 7 on Windows returns 1.0 in alpha when the depth format is D24S8 or D24X8,
@@ -4459,7 +4451,7 @@ static void resz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
@@ -4544,7 +4536,7 @@ static void resz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
@@ -4891,7 +4883,7 @@ static void fog_special_test(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGEND, conv.d);
     ok(SUCCEEDED(hr), "Failed to set fog end, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
@@ -5926,7 +5918,7 @@ static void test_fog_interpolation(void)
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &ident_mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         if(!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE) && tests[i].tfog)
             continue;
@@ -6081,7 +6073,7 @@ static void test_negative_fixedfunction_fog(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         if (!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE) && tests[i].tfog)
             continue;
@@ -6206,7 +6198,7 @@ static void test_table_fog_zw(void)
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
     ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x000000ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
@@ -6414,7 +6406,7 @@ static void test_signed_formats(void)
     hr = IDirect3DDevice8_CreatePixelShader(device, shader_code_alpha, &shader_alpha);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
     {
         hr = IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
                 D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, formats[i].format);
@@ -6424,7 +6416,7 @@ static void test_signed_formats(void)
             continue;
         }
 
-        for (j = 0; j < sizeof(tests) / sizeof(*tests); j++)
+        for (j = 0; j < ARRAY_SIZE(tests); j++)
         {
             texture_sysmem = NULL;
             hr = IDirect3DDevice8_CreateTexture(device, tests[j].width, 4, 1, 0,
@@ -6661,7 +6653,7 @@ static void test_updatetexture(void)
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     ok(hr == D3D_OK, "Failed to set texture stage state, hr %#x.\n", hr);
 
-    for (t = 0; t < sizeof(texture_types) / sizeof(*texture_types); ++t)
+    for (t = 0; t < ARRAY_SIZE(texture_types); ++t)
     {
         if (!(caps.TextureCaps & texture_types[t].cap))
         {
@@ -6683,7 +6675,7 @@ static void test_updatetexture(void)
         hr = IDirect3DDevice8_SetVertexShader(device, texture_types[t].fvf);
         ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
 
-        for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
         {
             if (tests[i].src_format == MAKEFOURCC('A','T','I','2') && !ati2n_supported)
                 continue;
@@ -7253,7 +7245,7 @@ static void test_pointsize(void)
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, depthstencil);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(test_setups) / sizeof(test_setups[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_setups); ++i)
     {
         if (caps.VertexShaderVersion < test_setups[i].vs->version
                 || caps.PixelShaderVersion < test_setups[i].ps->version)
@@ -7285,7 +7277,7 @@ static void test_pointsize(void)
         hr = IDirect3DDevice8_SetPixelShader(device, ps);
         ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
 
-        for (j = 0; j < sizeof(tests) / sizeof(tests[0]); ++j)
+        for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
             unsigned int size = tests[j].override_min ? 63 : tests[j].zero_size ? 0 : tests[j].scale
                     ? test_setups[i].scaled_size : test_setups[i].nonscaled_size;
@@ -8116,7 +8108,7 @@ static void test_flip(void)
         return;
     }
 
-    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    for (i = 0; i < ARRAY_SIZE(back_buffers); ++i)
     {
         hr = IDirect3DDevice8_GetBackBuffer(device, i, D3DBACKBUFFER_TYPE_MONO, &back_buffers[i]);
         ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
@@ -8152,7 +8144,7 @@ static void test_flip(void)
     IDirect3DSurface8_Release(test_surface);
 
     /* Backbuffer surface pointers are unmodified */
-    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    for (i = 0; i < ARRAY_SIZE(back_buffers); ++i)
     {
         hr = IDirect3DDevice8_GetBackBuffer(device, i, D3DBACKBUFFER_TYPE_MONO, &test_surface);
         ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
@@ -8184,7 +8176,7 @@ static void test_flip(void)
     color = get_surface_color(back_buffers[0], 1, 1);
     ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
 
-    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    for (i = 0; i < ARRAY_SIZE(back_buffers); ++i)
         IDirect3DSurface8_Release(back_buffers[i]);
 
     refcount = IDirect3DDevice8_Release(device);
@@ -8377,7 +8369,7 @@ static void test_uninitialized_varyings(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
     ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         if (caps.VertexShaderVersion < tests[i].vs_version
                 || caps.PixelShaderVersion < tests[i].ps_version)
@@ -8574,7 +8566,7 @@ static void test_shademode(void)
     /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
      * the color fixups we have to do for FLAT shading will be dependent on that. */
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         if (tests[i].vs->version)
         {
@@ -9222,7 +9214,7 @@ static void test_texture_blending(void)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "Failed to disable lighting, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const struct test *current_test = &tests[i];
 
@@ -9413,7 +9405,7 @@ static void test_color_clamping(void)
     hr = IDirect3DDevice8_SetTextureStageState(device, 1, D3DTSS_COLORARG2, D3DTA_CURRENT);
     ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         if (caps.VertexShaderVersion < tests[i].vs_version
                 || caps.PixelShaderVersion < tests[i].ps_version)
@@ -10118,7 +10110,7 @@ static void test_map_synchronisation(void)
     }
     size = (tri_count + 2) * sizeof(*quad1.strip);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice8_CreateVertexBuffer(device, size,
                 D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &buffer);
@@ -10228,7 +10220,7 @@ static void test_viewport(void)
     /* This crashes on Windows. */
     /* hr = IDirect3DDevice8_SetViewport(device, NULL); */
 
-    for (i = 0; i < sizeof(rt_sizes) / sizeof(rt_sizes[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(rt_sizes); ++i)
     {
         if (i)
         {
@@ -10244,7 +10236,7 @@ static void test_viewport(void)
             ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
         }
 
-        for (j = 0; j < sizeof(tests) / sizeof(tests[0]); ++j)
+        for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
             hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 1.0f, 0);
             ok(SUCCEEDED(hr), "Failed to clear, hr %#x (i %u, j %u).\n", hr, i, j);
