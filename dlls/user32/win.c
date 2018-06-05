@@ -856,7 +856,7 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
     }
     if (win != WND_OTHER_PROCESS)
     {
-        RECT window_rect = win->rectWindow, client_rect = win->client_rect;
+        RECT window_rect = win->window_rect, client_rect = win->client_rect;
 
         switch (relative)
         {
@@ -867,10 +867,10 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                 mirror_rect( &win->client_rect, &window_rect );
             break;
         case COORDS_WINDOW:
-            OffsetRect( &window_rect, -win->rectWindow.left, -win->rectWindow.top );
-            OffsetRect( &client_rect, -win->rectWindow.left, -win->rectWindow.top );
+            OffsetRect( &window_rect, -win->window_rect.left, -win->window_rect.top );
+            OffsetRect( &client_rect, -win->window_rect.left, -win->window_rect.top );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
-                mirror_rect( &win->rectWindow, &client_rect );
+                mirror_rect( &win->window_rect, &client_rect );
             break;
         case COORDS_PARENT:
             if (win->parent)

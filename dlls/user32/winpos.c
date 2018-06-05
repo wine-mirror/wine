@@ -704,7 +704,7 @@ static void WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
     TRACE("%p %i\n", hwnd, (bShow != 0) );
 
     if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return;
-    if (win->rectWindow.left == -32000 || win->rectWindow.top == -32000)
+    if (win->window_rect.left == -32000 || win->window_rect.top == -32000)
     {
         TRACE( "not showing title for hidden icon %p\n", hwnd );
         bShow = FALSE;
@@ -1318,17 +1318,17 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     /* update the placement according to the current style */
     if (pWnd->dwStyle & WS_MINIMIZE)
     {
-        pWnd->min_pos.x = pWnd->rectWindow.left;
-        pWnd->min_pos.y = pWnd->rectWindow.top;
+        pWnd->min_pos.x = pWnd->window_rect.left;
+        pWnd->min_pos.y = pWnd->window_rect.top;
     }
     else if (pWnd->dwStyle & WS_MAXIMIZE)
     {
-        pWnd->max_pos.x = pWnd->rectWindow.left;
-        pWnd->max_pos.y = pWnd->rectWindow.top;
+        pWnd->max_pos.x = pWnd->window_rect.left;
+        pWnd->max_pos.y = pWnd->window_rect.top;
     }
     else
     {
-        pWnd->normal_rect = pWnd->rectWindow;
+        pWnd->normal_rect = pWnd->window_rect;
     }
 
     wndpl->length  = sizeof(*wndpl);
@@ -2117,7 +2117,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         {
             win->dwStyle    = reply->new_style;
             win->dwExStyle  = reply->new_ex_style;
-            win->rectWindow = *window_rect;
+            win->window_rect  = *window_rect;
             win->client_rect  = *client_rect;
             win->visible_rect = visible_rect;
             win->surface      = new_surface;
@@ -2127,7 +2127,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             {
                 RECT client;
                 GetClientRect( win->parent, &client );
-                mirror_rect( &client, &win->rectWindow );
+                mirror_rect( &client, &win->window_rect );
                 mirror_rect( &client, &win->client_rect );
                 mirror_rect( &client, &win->visible_rect );
             }
