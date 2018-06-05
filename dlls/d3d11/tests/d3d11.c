@@ -24602,6 +24602,57 @@ static void test_fractional_viewports(void)
     release_test_context(&test_context);
 }
 
+static void test_negative_viewports(const D3D_FEATURE_LEVEL feature_level)
+{
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    BOOL quirk;
+    RECT rect;
+
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+    context = test_context.immediate_context;
+
+    set_viewport(context, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    set_viewport(context, -0.0f, -0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    /* For feature levels greater than or equal to 11_0, a negative top left
+     * corner shifts the bottom right corner by a whole integer. It seems that
+     * floor() is used to round viewport corners to integers.
+     */
+    quirk = feature_level >= D3D_FEATURE_LEVEL_11_0;
+
+    set_viewport(context, -0.4f, -0.4f, 640.0f, 480.0f, 0.0f, 1.0f);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    SetRect(&rect, 0, 0, 639, 479);
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
+    SetRect(&rect, 639, 479, 640, 480);
+    todo_wine_if(quirk)
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
+
+    set_viewport(context, -1.0f / 128.0f, -1.0 / 128.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    SetRect(&rect, 0, 0, 639, 479);
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
+    SetRect(&rect, 639, 479, 640, 480);
+    todo_wine_if(quirk)
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
+
+    release_test_context(&test_context);
+}
+
 static void test_early_depth_stencil(void)
 {
     ID3D11DepthStencilState *depth_stencil_state;
@@ -27669,6 +27720,7 @@ START_TEST(d3d11)
     test_gather_c();
     test_depth_bias();
     test_fractional_viewports();
+    run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0, test_negative_viewports);
     test_early_depth_stencil();
     test_conservative_depth_output();
     test_format_compatibility();
