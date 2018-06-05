@@ -3818,7 +3818,7 @@ static void test_ostream_print(void)
     ret = (int) call_func3(p_streambuf_xsputn, &ssb_test3.base, "we're gonna play it 3.14159", 27);
     ok(ret == 27, "expected 27 got %d\n", ret);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         os.base_ios.state = tests[i].state;
         os.base_ios.flags = tests[i].flags;
         os.base_ios.precision = tests[i].precision;
@@ -5635,7 +5635,7 @@ static void test_istream_getint(void)
     pis = call_func3(p_istream_sb_ctor, &is, &ssb.base, TRUE);
     ok(pis == &is, "wrong return, expected %p got %p\n", &is, pis);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         len = strlen(tests[i].stream_content);
         is.base_ios.state = tests[i].initial_state;
         is.base_ios.flags = tests[i].flags;
@@ -5747,7 +5747,7 @@ static void test_istream_getdouble(void)
     pis = call_func3(p_istream_sb_ctor, &is, &ssb.base, TRUE);
     ok(pis == &is, "wrong return, expected %p got %p\n", &is, pis);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         len = strlen(tests[i].stream_content);
         is.base_ios.state = tests[i].initial_state;
         is.base_ios.flags = tests[i].flags;
@@ -5949,7 +5949,7 @@ static void test_istream_read(void)
     pis = call_func3(p_istream_sb_ctor, &is, &ssb.base, TRUE);
     ok(pis == &is, "wrong return, expected %p got %p\n", &is, pis);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
         len = strlen(tests[i].stream_content);
         is.base_ios.state = IOSTATE_goodbit;
         is.base_ios.flags = tests[i].flags;
