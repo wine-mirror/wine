@@ -2861,10 +2861,11 @@ static void test_draw_primitive(void)
         D3DDECL_END()
     };
 
+    IDirect3DVertexBuffer9 *vertex_buffer, *current_vb;
+    IDirect3DIndexBuffer9 *index_buffer, *current_ib;
     IDirect3DVertexDeclaration9 *vertex_declaration;
-    IDirect3DVertexBuffer9 *vertex_buffer;
-    IDirect3DIndexBuffer9 *index_buffer;
     IDirect3DDevice9 *device;
+    UINT offset, stride;
     IDirect3D9 *d3d9;
     ULONG refcount;
     HWND window;
@@ -2918,8 +2919,23 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(current_vb == vertex_buffer, "Unexpected vb %p.\n", current_vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
+    IDirect3DVertexBuffer9_Release(current_vb);
+
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    todo_wine ok(!current_vb, "Unexpected vb %p.\n", current_vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
+    if (current_vb)
+        IDirect3DVertexBuffer9_Release(current_vb);
 
     hr = IDirect3DDevice9_SetIndices(device, NULL);
     ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
@@ -2927,7 +2943,7 @@ static void test_draw_primitive(void)
             0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
-    /* Valid index buffer, NULL vertex declaration. Should fail */
+    /* Valid index buffer, NULL vertex declaration. */
     hr = IDirect3DDevice9_SetIndices(device, index_buffer);
     ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
@@ -2938,6 +2954,12 @@ static void test_draw_primitive(void)
             indices, D3DFMT_INDEX16, quad, sizeof(*quad));
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_GetIndices(device, &current_ib);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    todo_wine ok(!current_ib, "Unexpected index buffer %p.\n", current_vb);
+    if (current_ib)
+        IDirect3DIndexBuffer9_Release(current_ib);
+
     hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
     ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
 
@@ -2947,14 +2969,20 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
-    /* NULL index buffer, valid vertex vertex declaration. Should succeed */
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(!current_vb, "Unexpected vb %p.\n", current_vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    todo_wine ok(!stride, "Unexpected stride %u.\n", stride);
+
+    /* NULL index buffer, valid vertex declaration, NULL stream source. */
     hr = IDirect3DDevice9_SetIndices(device, NULL);
     ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
             0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
     todo_wine ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
 
-    /* Valid index buffer and vertex declaration. Should succeed */
+    /* Valid index buffer and vertex declaration, NULL stream source. */
     hr = IDirect3DDevice9_SetIndices(device, index_buffer);
     ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,

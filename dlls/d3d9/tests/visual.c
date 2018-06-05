@@ -23078,7 +23078,9 @@ static void test_drawindexedprimitiveup(void)
         {{ 1.0f,  1.0f, 0.1f}, 0xff00ff00},
     };
     static const unsigned short indices[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    IDirect3DVertexBuffer9 *vb;
     IDirect3DDevice9 *device;
+    UINT offset, stride;
     IDirect3D9 *d3d;
     ULONG refcount;
     D3DCOLOR color;
@@ -23125,6 +23127,12 @@ static void test_drawindexedprimitiveup(void)
     ok(color_match(color, 0x00404080, 1), "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 480, 360);
     ok(color_match(color, 0x00bf4000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(!vb, "Unexpected vb %p.\n", vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    todo_wine ok(!stride, "Unexpected stride %u.\n", stride);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
