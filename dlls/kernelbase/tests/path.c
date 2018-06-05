@@ -102,7 +102,7 @@ static void test_PathCchCombineEx(void)
         "Combination of %s + %s returned %s, expected %s\n",
         wine_dbgstr_w(p1), wine_dbgstr_w(p2), wine_dbgstr_w(output), wine_dbgstr_w(expected));
 
-    for (i = 0; i < sizeof(combine_test)/sizeof(combine_test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(combine_test); i++)
     {
         MultiByteToWideChar(CP_ACP, 0, combine_test[i].path1, -1, p1, MAX_PATH);
         MultiByteToWideChar(CP_ACP, 0, combine_test[i].path2, -1, p2, MAX_PATH);
@@ -168,16 +168,16 @@ static void test_PathCchAddBackslash(void)
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
     ok(pathW[0] == 0, "Unexpected path.\n");
 
-    for (i = 0; i < sizeof(addbackslash_tests)/sizeof(addbackslash_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(addbackslash_tests); i++)
     {
         const struct addbackslash_test *test = &addbackslash_tests[i];
         char path[MAX_PATH];
 
-        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, ARRAY_SIZE(pathW));
         hr = pPathCchAddBackslash(pathW, test->size);
         ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
 
-        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, sizeof(path)/sizeof(path[0]), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, ARRAY_SIZE(path), NULL, NULL);
         ok(!strcmp(path, test->result), "%u: unexpected resulting path %s.\n", i, path);
     }
 }
@@ -215,21 +215,21 @@ static void test_PathCchAddBackslashEx(void)
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
     ok(pathW[0] == 0, "Unexpected path.\n");
 
-    for (i = 0; i < sizeof(addbackslash_tests)/sizeof(addbackslash_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(addbackslash_tests); i++)
     {
         const struct addbackslash_test *test = &addbackslash_tests[i];
         char path[MAX_PATH];
 
-        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, ARRAY_SIZE(pathW));
         hr = pPathCchAddBackslashEx(pathW, test->size, NULL, NULL);
         ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
 
-        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, sizeof(path)/sizeof(path[0]), NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, ARRAY_SIZE(path), NULL, NULL);
         ok(!strcmp(path, test->result), "%u: unexpected resulting path %s.\n", i, path);
 
         ptrW = (void *)0xdeadbeef;
         remaining = 123;
-        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, sizeof(pathW)/sizeof(pathW[0]));
+        MultiByteToWideChar(CP_ACP, 0, test->path, -1, pathW, ARRAY_SIZE(pathW));
         hr = pPathCchAddBackslashEx(pathW, test->size, &ptrW, &remaining);
         ok(hr == test->hr, "%u: unexpected return value %#x.\n", i, hr);
         if (SUCCEEDED(hr))
