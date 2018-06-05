@@ -1459,7 +1459,7 @@ static void test_GetAdaptersAddresses(void)
                   S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ? 0 : ua->OnLinkPrefixLength);
             ua = ua->Next;
         }
-        for (i = 0, temp[0] = '\0'; i < sizeof(aa->ZoneIndices) / sizeof(aa->ZoneIndices[0]); i++)
+        for (i = 0, temp[0] = '\0'; i < ARRAY_SIZE(aa->ZoneIndices); i++)
             sprintf(temp + strlen(temp), "%d ", aa->ZoneIndices[i]);
         trace("status %u index %u zone %s\n", aa->OperStatus, aa->Ipv6IfIndex, temp );
         prefix = aa->FirstPrefix;
@@ -1836,7 +1836,7 @@ static void test_interface_identifier_conversion(void)
     ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
 
     nameW[0] = 0;
-    len = sizeof(nameW)/sizeof(nameW[0]);
+    len = ARRAY_SIZE(nameW);
     ret = pConvertInterfaceLuidToNameW( &luid, nameW, len );
     ok( !ret, "got %u\n", ret );
     ok( nameW[0], "name not set\n" );
@@ -1855,7 +1855,7 @@ static void test_interface_identifier_conversion(void)
     ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
 
     nameA[0] = 0;
-    len = sizeof(nameA)/sizeof(nameA[0]);
+    len = ARRAY_SIZE(nameA);
     ret = pConvertInterfaceLuidToNameA( &luid, nameA, len );
     ok( !ret, "got %u\n", ret );
     ok( nameA[0], "name not set\n" );
