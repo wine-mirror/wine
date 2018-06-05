@@ -858,7 +858,7 @@ static void test_num_get_get_double(void)
         { "1.0e1,0", NULL,      IOSTATE_goodbit, 10.0,  ',' }, /* group in exponent */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -982,7 +982,7 @@ static void test_num_put_put_double(void)
         { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_stringstream_char_ctor_mode, &ss, OPENMODE_in|OPENMODE_out, TRUE);
 
@@ -1072,7 +1072,7 @@ static void test_istream_ipfx(void)
         { "\n\t ws",    TRUE,  FALSE, TRUE,  IOSTATE_goodbit, '\n' },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1152,7 +1152,7 @@ static void test_istream_ignore(void)
         { "ABC ",         42, ' ',  IOSTATE_goodbit, EOF }, /* delim at end */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1216,7 +1216,7 @@ static void test_istream_seekg(void)
         { "",            0, SEEKDIR_beg, IOSTATE_goodbit, EOF },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1275,7 +1275,7 @@ static void test_istream_seekg_fpos(void)
         { "",           0,  IOSTATE_goodbit, EOF },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1336,7 +1336,7 @@ static void test_istream_peek(void)
         { "ABCDEF", 'A', 'A', IOSTATE_goodbit },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1407,7 +1407,7 @@ static void test_istream_tellg(void)
         { "ABCDEFGHIJ", -6,  0,  0,  0 }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* stringstream<char> version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1554,7 +1554,7 @@ static void test_istream_getline(void)
         return;
     }
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);

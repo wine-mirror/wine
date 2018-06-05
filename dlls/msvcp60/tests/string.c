@@ -599,7 +599,7 @@ static void test_basic_string_char_rfind(void) {
         { "aaa", "z",   0, 1, *p_basic_string_char_npos }  /* can't find */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
 
         ret = (size_t)call_func4(p_basic_string_char_rfind_cstr_substr, &str,
@@ -647,7 +647,7 @@ static void test_basic_string_char_replace(void) {
         { "ABCDEF", 6, *p_basic_string_char_npos, "-", "ABCDEF-" }, /* replace after end with npos */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         call_func3(p_basic_string_char_ctor_cstr_alloc, &str, tests[i].str, &fake_allocator);
 
         ret = call_func4(p_basic_string_char_replace_cstr, &str, tests[i].off, tests[i].len, tests[i].replace);
