@@ -190,7 +190,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
 
 static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__setmbcp)(int);
-static int (__cdecl *p_isleadbyte)(int);
+static int (__cdecl *p__ismbblead)(unsigned int);
 
 static MSVCRT_long (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
@@ -673,7 +673,7 @@ static BOOL init(void)
     hdll = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
     p__setmbcp = (void*)GetProcAddress(hdll, "_setmbcp");
-    p_isleadbyte = (void*)GetProcAddress(hdll, "isleadbyte");
+    p__ismbblead = (void*)GetProcAddress(hdll, "_ismbblead");
 
     hdll = GetModuleHandleA("kernel32.dll");
     pCreateSymbolicLinkA = (void*)GetProcAddress(hdll, "CreateSymbolicLinkA");
@@ -806,8 +806,14 @@ static void test__Getcvt(void)
     ok(cvtvec.page == 936, "cvtvec.page = %d\n", cvtvec.page);
     ok(cvtvec.mb_max == 2, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
     ok(cvtvec.unk == 0, "cvtvec.unk = %d\n", cvtvec.unk);
-    for(i=0; i<32; i++)
-        ok(cvtvec.isleadbyte[i] == 0, "cvtvec.isleadbyte[%d] = %x\n", i, cvtvec.isleadbyte[i]);
+    for(i=0; i<32; i++) {
+        BYTE b = 0;
+        int j;
+
+        for(j=0; j<8; j++)
+            b |= (p__ismbblead(i*8+j) ? 1 : 0) << j;
+        ok(cvtvec.isleadbyte[i] ==b, "cvtvec.isleadbyte[%d] = %x (%x)\n", i, cvtvec.isleadbyte[i], b);
+    }
 
     p__setmbcp(936);
     p__Getcvt(&cvtvec);
@@ -819,7 +825,7 @@ static void test__Getcvt(void)
         int j;
 
         for(j=0; j<8; j++)
-            b |= (p_isleadbyte(i*8+j) ? 1 : 0) << j;
+            b |= (p__ismbblead(i*8+j) ? 1 : 0) << j;
         ok(cvtvec.isleadbyte[i] ==b, "cvtvec.isleadbyte[%d] = %x (%x)\n", i, cvtvec.isleadbyte[i], b);
     }
 }
