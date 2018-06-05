@@ -900,7 +900,7 @@ static void test_bsearch_s(void)
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     /* just try all array sizes */
-    for (j=1;j<sizeof(arr)/sizeof(arr[0]);j++) {
+    for (j=1; j<ARRAY_SIZE(arr); j++) {
         for (i=0;i<j;i++) {
             l = arr[i];
             g_bsearch_s_context_counter = 0;
@@ -1494,7 +1494,7 @@ static void test__AdjustPointer(void)
     void *ret;
     int i;
 
-    for(i=0; i<sizeof(data)/sizeof(data[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(data); i++) {
         ret = p__AdjustPointer(data[i].ptr, &data[i].this_ptr_offsets);
         ok(ret == data[i].ret, "%d) __AdjustPointer returned %p, expected %p\n", i, ret, data[i].ret);
     }
@@ -1734,7 +1734,7 @@ static void test__fpieee_flt(void)
     ok(ret == EXCEPTION_CONTINUE_SEARCH, "_fpieee_flt returned %d\n", ret);
     ok(handler_called == 0, "handler_called = %d\n", handler_called);
 
-    for(i=0; i<sizeof(test_data)/sizeof(test_data[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(test_data); i++) {
         ep.ExceptionRecord = &rec;
         ep.ContextRecord = &ctx;
         memset(&rec, 0, sizeof(rec));
