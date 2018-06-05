@@ -582,7 +582,7 @@ static void test_wctype(void)
     };
     int i, ret;
 
-    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(properties); i++) {
         ret = p_wctype(properties[i].name);
         ok(properties[i].mask == ret, "%d - Expected %x, got %x\n", i, properties[i].mask, ret);
     }

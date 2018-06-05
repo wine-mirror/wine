@@ -1137,7 +1137,7 @@ static void test_num_get_get_uint64(void)
         { "0xx10",   NULL, FMTFLAG_hex, IOSTATE_failbit, 42, EOF },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1287,7 +1287,7 @@ static void test_num_get_get_double(void)
         { "1.0e1,0", NULL,      IOSTATE_goodbit, 10.0,  ',' }, /* group in exponent */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1406,7 +1406,7 @@ static void test_num_put_put_double(void)
         { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func1(p_basic_stringstream_char_ctor, &ss);
 
@@ -1499,7 +1499,7 @@ static void test_istream_ipfx(void)
         { "\n\t ws",    TRUE,  FALSE, TRUE,  IOSTATE_goodbit, '\n' },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1579,7 +1579,7 @@ static void test_istream_ignore(void)
         { "ABC ",         42, ' ',  IOSTATE_goodbit, EOF }, /* delim at end */
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1643,7 +1643,7 @@ static void test_istream_seekg(void)
         { "",            0, SEEKDIR_beg, IOSTATE_failbit, EOF },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1702,7 +1702,7 @@ static void test_istream_seekg_fpos(void)
         { "",           0,  IOSTATE_failbit, EOF },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1763,7 +1763,7 @@ static void test_istream_peek(void)
         { "ABCDEF", 'A', 'A', IOSTATE_goodbit },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1834,7 +1834,7 @@ static void test_istream_tellg(void)
         { "ABCDEFGHIJ", -6, -1, -1,  0 }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* stringstream<char> version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1980,7 +1980,7 @@ static void test_istream_getline(void)
         { "this is some text\n", "this is some text\n", '\0', IOSTATE_eofbit,  "this is some text\n", '\n', IOSTATE_faileof },
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         /* char version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
@@ -2208,7 +2208,7 @@ static void test_ostream_print_complex_float(void)
         { {-1.23456789e-9,2.3456789e9}, NULL, 9, FMTFLAG_fixed, "(-0.000000001,2345678848.000000000)"    }
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         call_func1(p_basic_stringstream_char_ctor, &ss);
 
         if(tests[i].lcl) {
@@ -2331,7 +2331,7 @@ static void test_istream_read_complex_double(void)
         { "(1.0eE10, 3)" , NULL, deadbeef, IOSTATE_failbit, ""},
     };
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         call_func2(p_basic_string_char_ctor_cstr, &str, deadbeef_str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
         p_basic_istream_char_read_complex_double(&ss.base.base1, &val);
