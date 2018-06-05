@@ -2164,7 +2164,7 @@ void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
 BOOLEAN WINAPI MmIsAddressValid(PVOID VirtualAddress)
 {
     TRACE("(%p)\n", VirtualAddress);
-    return !IsBadWritePtr(VirtualAddress, 1);
+    return !IsBadReadPtr(VirtualAddress, 1);
 }
 
 /***********************************************************************
