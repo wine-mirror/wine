@@ -408,7 +408,7 @@ static void test_lconv(void)
         "Japanese", "Korean", "Spanish"
     };
 
-    for(i = 0; i < sizeof(locstrs) / sizeof(char *); i ++)
+    for(i = 0; i < ARRAY_SIZE(locstrs); i ++)
         test_lconv_helper(locstrs[i]);
 }
 
@@ -445,7 +445,7 @@ static void test__dpcomp(void)
     };
     int i, ret;
 
-    for(i=0; i<sizeof(tests)/sizeof(*tests); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         ret = p__dpcomp(tests[i].x, tests[i].y);
         ok(ret == tests[i].ret, "%d) dpcomp(%f, %f) = %x\n", i, tests[i].x, tests[i].y, ret);
     }
@@ -473,7 +473,7 @@ static void test____lc_locale_name_func(void)
     int i, j;
     wchar_t **lc_names;
 
-    for(i=0; i<sizeof(tests)/sizeof(*tests); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         if(!p_setlocale(LC_ALL, tests[i].locale))
             continue;
 
@@ -536,12 +536,11 @@ static void test__W_Gettnames(void)
     else
         ok(size==0x164, "structure size: %x\n", size);
 
-    for(i=0; i<sizeof(str)/sizeof(*str); i++) {
+    for(i=0; i<ARRAY_SIZE(str); i++) {
         ok(!strcmp(ret->str[i], str[i]), "ret->str[%d] = %s, expected %s\n",
                 i, ret->str[i], str[i]);
 
-        MultiByteToWideChar(CP_ACP, 0, str[i], strlen(str[i])+1,
-                buf, sizeof(buf)/sizeof(*buf));
+        MultiByteToWideChar(CP_ACP, 0, str[i], strlen(str[i])+1, buf, ARRAY_SIZE(buf));
         ok(!lstrcmpW(ret->wstr[i], buf), "ret->wstr[%d] = %s, expected %s\n",
                 i, wine_dbgstr_w(ret->wstr[i]), wine_dbgstr_w(buf));
     }
@@ -640,7 +639,7 @@ static void test_remainder(void)
     if(sizeof(void*) != 8) /* errno handling slightly different on 32-bit */
         return;
 
-    for(i=0; i<sizeof(tests)/sizeof(*tests); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = -1;
         r = p_remainder(tests[i].x, tests[i].y);
         e = errno;
@@ -907,7 +906,7 @@ static void test_wctype(void)
     };
     int i, ret;
 
-    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(properties); i++) {
         ret = p_wctype(properties[i].name);
         ok(properties[i].mask == ret, "%d - Expected %x, got %x\n", i, properties[i].mask, ret);
     }
