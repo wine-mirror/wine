@@ -61,7 +61,7 @@ static void test_setlocale(void)
         "uz-Latn-uz",
     };
 
-    for(i=0; i<sizeof(names)/sizeof(*names); i++) {
+    for(i=0; i<ARRAY_SIZE(names); i++) {
         ret = p_setlocale(LC_ALL, names[i]);
         ok(ret != NULL, "expected success, but got NULL\n");
         ok(!strcmp(ret, names[i]), "expected %s, got %s\n", names[i], ret);
