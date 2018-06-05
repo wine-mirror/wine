@@ -555,11 +555,10 @@ static void test_to_byte(void)
 
     ok(!memcmp(dst, compare, sizeof(compare)), "Destination was modified: %s\n", dst);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         ret = p_To_byte(tests[i], dst);
-        expected = WideCharToMultiByte(CP_ACP, 0, tests[i], -1, compare, sizeof(compare) / sizeof(*compare),
-                NULL, NULL);
+        expected = WideCharToMultiByte(CP_ACP, 0, tests[i], -1, compare, ARRAY_SIZE(compare), NULL, NULL);
         ok(ret == expected,  "Got unexpected result %d, expected %d, test case %u\n", ret, expected, i);
         ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, test case %u\n", dst, i);
     }
@@ -601,10 +600,10 @@ static void test_to_wide(void)
     ok(!ret, "Got unexpected result %d\n", ret);
     ok(!memcmp(dst, compare, sizeof(compare)), "Destination was modified: %s\n", wine_dbgstr_w(dst));
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         ret = p_To_wide(tests[i], dst);
-        expected = MultiByteToWideChar(CP_ACP, 0, tests[i], -1, compare, sizeof(compare) / sizeof(*compare));
+        expected = MultiByteToWideChar(CP_ACP, 0, tests[i], -1, compare, ARRAY_SIZE(compare));
         ok(ret == expected,  "Got unexpected result %d, expected %d, test case %u\n", ret, expected, i);
         ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, test case %u\n",
                 wine_dbgstr_w(dst), i);
@@ -829,7 +828,7 @@ static void test_Stat(void)
     todo_wine ok(0777 == perms, "_Lstat(): perms expect: 0777, got 0%o\n", perms);
     ok(CloseHandle(file), "CloseHandle\n");
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         perms = 0xdeadbeef;
         val = p_Stat(tests[i].path, &perms);
         todo_wine_if(tests[i].is_todo) {
@@ -1043,7 +1042,7 @@ static void test_Unlink(void)
     ret = p_Link(f1W, f1_linkW);
     ok(ret == ERROR_SUCCESS, "_Link(): expect: ERROR_SUCCESS, got %d\n", ret);
 
-    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         ret = p_Unlink(tests[i].path);
         todo_wine_if(tests[i].is_todo)
