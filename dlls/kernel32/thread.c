@@ -251,6 +251,24 @@ BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with 
 }
 
 
+/***********************************************************************
+ * Wow64GetThreadContext [KERNEL32.@]
+ */
+BOOL WINAPI Wow64GetThreadContext( HANDLE handle, WOW64_CONTEXT *context)
+{
+#ifdef __i386__
+    NTSTATUS status = NtGetContextThread( handle, (CONTEXT *)context );
+#elif defined(__x86_64__)
+    NTSTATUS status = RtlWow64GetThreadContext( handle, context );
+#else
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    FIXME("not implemented on this platform\n");
+#endif
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
 /**********************************************************************
  * SuspendThread [KERNEL32.@]  Suspends a thread.
  *
