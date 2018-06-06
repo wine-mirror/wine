@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
+HINSTANCE webservices_instance;
+
 static BOOL winsock_loaded;
 
 static BOOL WINAPI winsock_startup( INIT_ONCE *once, void *param, void **ctx )
@@ -46,6 +48,26 @@ void winsock_init(void)
 {
     static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
     InitOnceExecuteOnce( &once, winsock_startup, NULL, NULL );
+}
+
+/******************************************************************
+ *      DllMain (webservices.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        webservices_instance = hinst;
+        DisableThreadLibraryCalls( hinst );
+        break;
+
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        if (winsock_loaded) WSACleanup();
+        break;
+    }
+    return TRUE;
 }
 
 static const struct prop_desc listener_props[] =
