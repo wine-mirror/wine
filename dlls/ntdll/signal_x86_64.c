@@ -2284,6 +2284,74 @@ static NTSTATUS wow64_context_from_server( WOW64_CONTEXT *to, const context_t *f
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           wow64_context_to_server
+ */
+static void wow64_context_to_server( context_t *to, const WOW64_CONTEXT *from )
+{
+    DWORD flags = from->ContextFlags & ~WOW64_CONTEXT_i386;  /* get rid of CPU id */
+
+    memset( to, 0, sizeof(*to) );
+    to->cpu = CPU_x86;
+
+    if (flags & WOW64_CONTEXT_CONTROL)
+    {
+        to->flags |= SERVER_CTX_CONTROL;
+        to->ctl.i386_regs.ebp    = from->Ebp;
+        to->ctl.i386_regs.esp    = from->Esp;
+        to->ctl.i386_regs.eip    = from->Eip;
+        to->ctl.i386_regs.cs     = from->SegCs;
+        to->ctl.i386_regs.ss     = from->SegSs;
+        to->ctl.i386_regs.eflags = from->EFlags;
+    }
+    if (flags & WOW64_CONTEXT_INTEGER)
+    {
+        to->flags |= SERVER_CTX_INTEGER;
+        to->integer.i386_regs.eax = from->Eax;
+        to->integer.i386_regs.ebx = from->Ebx;
+        to->integer.i386_regs.ecx = from->Ecx;
+        to->integer.i386_regs.edx = from->Edx;
+        to->integer.i386_regs.esi = from->Esi;
+        to->integer.i386_regs.edi = from->Edi;
+    }
+    if (flags & WOW64_CONTEXT_SEGMENTS)
+    {
+        to->flags |= SERVER_CTX_SEGMENTS;
+        to->seg.i386_regs.ds = from->SegDs;
+        to->seg.i386_regs.es = from->SegEs;
+        to->seg.i386_regs.fs = from->SegFs;
+        to->seg.i386_regs.gs = from->SegGs;
+    }
+    if (flags & WOW64_CONTEXT_FLOATING_POINT)
+    {
+        to->flags |= SERVER_CTX_FLOATING_POINT;
+        to->fp.i386_regs.ctrl     = from->FloatSave.ControlWord;
+        to->fp.i386_regs.status   = from->FloatSave.StatusWord;
+        to->fp.i386_regs.tag      = from->FloatSave.TagWord;
+        to->fp.i386_regs.err_off  = from->FloatSave.ErrorOffset;
+        to->fp.i386_regs.err_sel  = from->FloatSave.ErrorSelector;
+        to->fp.i386_regs.data_off = from->FloatSave.DataOffset;
+        to->fp.i386_regs.data_sel = from->FloatSave.DataSelector;
+        to->fp.i386_regs.cr0npx   = from->FloatSave.Cr0NpxState;
+        memcpy( to->fp.i386_regs.regs, from->FloatSave.RegisterArea, sizeof(to->fp.i386_regs.regs) );
+    }
+    if (flags & WOW64_CONTEXT_DEBUG_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        to->debug.i386_regs.dr0 = from->Dr0;
+        to->debug.i386_regs.dr1 = from->Dr1;
+        to->debug.i386_regs.dr2 = from->Dr2;
+        to->debug.i386_regs.dr3 = from->Dr3;
+        to->debug.i386_regs.dr6 = from->Dr6;
+        to->debug.i386_regs.dr7 = from->Dr7;
+    }
+    if (flags & WOW64_CONTEXT_EXTENDED_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
+        memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
+    }
+}
+
 
 /******************************************************************************
  *              RtlWow64GetThreadContext  (NTDLL.@)
@@ -2299,6 +2367,20 @@ NTSTATUS WINAPI RtlWow64GetThreadContext( HANDLE handle, WOW64_CONTEXT *context 
     if (self) return STATUS_INVALID_PARAMETER;
     return wow64_context_from_server( context, &server_context );
 }
+
+
+/******************************************************************************
+ *              RtlWow64SetThreadContext  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *context )
+{
+    BOOL self;
+    context_t server_context;
+
+    wow64_context_to_server( &server_context, context );
+    return set_thread_context( handle, &server_context, &self );
+}
+
 
 extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
 __ASM_GLOBAL_FUNC( raise_func_trampoline,

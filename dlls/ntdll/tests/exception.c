@@ -150,6 +150,7 @@ static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, 
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
+static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
 static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
@@ -2520,6 +2521,9 @@ static void test_wow64_context(void)
     ok(*(WORD *)ctx.ExtendedRegisters == 0x27f, "got SSE control word %04x\n",
        *(WORD *)ctx.ExtendedRegisters);
 
+    ret = pRtlWow64SetThreadContext( pi.hThread, &ctx );
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
     pNtTerminateProcess(pi.hProcess, 0);
 }
 
@@ -3163,6 +3167,8 @@ START_TEST(exception)
                                                                  "RtlUnwindEx" );
     pRtlWow64GetThreadContext          = (void *)GetProcAddress( hntdll,
                                                                  "RtlWow64GetThreadContext" );
+    pRtlWow64SetThreadContext          = (void *)GetProcAddress( hntdll,
+                                                                 "RtlWow64SetThreadContext" );
     p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
                                                                  "_setjmp" );
 
