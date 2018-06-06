@@ -1893,9 +1893,19 @@ class VkGenerator(object):
                 if not any(s.name == conv.struct.name for s in self.host_structs):
                     self.host_structs.append(conv.struct)
 
-    def generate_thunks_c(self, f, prefix):
-        f.write("/* Automatically generated from Vulkan vk.xml; DO NOT EDIT! */\n\n")
+    def _generate_copyright(self, f, spec_file=False):
+        c = "# " if spec_file else " * "
+        f.write("# " if spec_file else "/* ")
+        f.write("Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n")
+        lines = ["", "This file is generated from Vulkan vk.xml file covered",
+            "by the following copyright and permission notice:"]
+        lines.extend([l.rstrip(" ") for l in self.registry.copyright.splitlines()])
+        for line in lines:
+            f.write("{0}{1}".format("# " if spec_file else " * ", line).rstrip(" ") + "\n")
+        f.write("\n" if spec_file else " */\n\n")
 
+    def generate_thunks_c(self, f, prefix):
+        self._generate_copyright(f)
         f.write("#include \"config.h\"\n")
         f.write("#include \"wine/port.h\"\n\n")
 
@@ -2011,7 +2021,7 @@ class VkGenerator(object):
         f.write("}\n")
 
     def generate_thunks_h(self, f, prefix):
-        f.write("/* Automatically generated from Vulkan vk.xml; DO NOT EDIT! */\n\n")
+        self._generate_copyright(f)
 
         f.write("#ifndef __WINE_VULKAN_THUNKS_H\n")
         f.write("#define __WINE_VULKAN_THUNKS_H\n\n")
@@ -2109,7 +2119,7 @@ class VkGenerator(object):
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
 
     def generate_vulkan_h(self, f):
-        f.write("/* Automatically generated from Vulkan vk.xml; DO NOT EDIT! */\n\n")
+        self._generate_copyright(f)
         f.write("#ifndef __WINE_VULKAN_H\n")
         f.write("#define __WINE_VULKAN_H\n\n")
 
@@ -2203,7 +2213,7 @@ class VkGenerator(object):
         f.write("#endif /* __WINE_VULKAN_H */\n")
 
     def generate_vulkan_driver_h(self, f):
-        f.write("/* Automatically generated from Vulkan vk.xml; DO NOT EDIT! */\n\n")
+        self._generate_copyright(f)
         f.write("#ifndef __WINE_VULKAN_DRIVER_H\n")
         f.write("#define __WINE_VULKAN_DRIVER_H\n\n")
 
@@ -2231,7 +2241,7 @@ class VkGenerator(object):
         f.write("#endif /* __WINE_VULKAN_DRIVER_H */\n")
 
     def generate_vulkan_spec(self, f):
-        f.write("# Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n\n")
+        self._generate_copyright(f, spec_file=True)
         f.write("@ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
         f.write("@ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
 
@@ -2252,7 +2262,7 @@ class VkGenerator(object):
                 f.write("@ stub {0}\n".format(func.name))
 
     def generate_vulkan_loader_spec(self, f):
-        f.write("# Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n\n")
+        self._generate_copyright(f, spec_file=True)
 
         # Export symbols for all Vulkan Core functions.
         for func in self.registry.funcs.values():
@@ -2302,6 +2312,8 @@ class VkRegistry(object):
         # Pull in any required types and functions.
         self._parse_features(root)
         self._parse_extensions(root)
+
+        self.copyright = root.find('./comment').text
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
