@@ -64,6 +64,8 @@ struct job_t
     AT_ENUM info;
     FIXDLEN_DATA data;
     USHORT instance_count;
+    USHORT trigger_count;
+    TASK_TRIGGER *trigger;
 };
 
 struct running_job_t
@@ -143,7 +145,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
     const FIXDLEN_DATA *fixed;
     const SYSTEMTIME *st;
     DWORD unicode_strings_size, data_size, triggers_size;
-    USHORT triggers_count, i;
+    USHORT i;
     const USHORT *signature;
     const TASK_TRIGGER *trigger;
 
@@ -202,11 +204,10 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         TRACE("no space for triggers count\n");
         return FALSE;
     }
-    triggers_count = *(const USHORT *)(data + fixed->trigger_offset);
-    TRACE("triggers_count %u\n", triggers_count);
+    info->trigger_count = *(const USHORT *)(data + fixed->trigger_offset);
+    TRACE("trigger_count %u\n", info->trigger_count);
     triggers_size = size - fixed->trigger_offset - sizeof(USHORT);
     TRACE("triggers_size %u\n", triggers_size);
-    trigger = (const TASK_TRIGGER *)(data + fixed->trigger_offset + sizeof(USHORT));
 
     data += fixed->name_size_offset + unicode_strings_size;
     size -= fixed->name_size_offset + unicode_strings_size;
@@ -249,42 +250,51 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
 
     /* Trigger Data */
     TRACE("trigger_offset %04x, triggers end at %04x\n", fixed->trigger_offset,
-          (DWORD)(fixed->trigger_offset + sizeof(USHORT) + triggers_count * sizeof(TASK_TRIGGER)));
+          (DWORD)(fixed->trigger_offset + sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER)));
 
-    triggers_count = *(const USHORT *)data;
-    TRACE("triggers_count %u\n", triggers_count);
+    info->trigger_count = *(const USHORT *)data;
+    TRACE("trigger_count %u\n", info->trigger_count);
     trigger = (const TASK_TRIGGER *)(data + sizeof(USHORT));
 
-    if (triggers_count * sizeof(TASK_TRIGGER) > triggers_size)
+    if (info->trigger_count * sizeof(TASK_TRIGGER) > triggers_size)
     {
         TRACE("no space for triggers data\n");
         return FALSE;
     }
 
-    for (i = 0; i < triggers_count; i++)
+    info->trigger = heap_alloc(info->trigger_count * sizeof(info->trigger[0]));
+    if (!info->trigger)
+    {
+        TRACE("not enough memory for trigger data\n");
+        return FALSE;
+    }
+
+    for (i = 0; i < info->trigger_count; i++)
     {
         TRACE("%u: cbTriggerSize = %#x\n", i, trigger[i].cbTriggerSize);
         if (trigger[i].cbTriggerSize != sizeof(TASK_TRIGGER))
             TRACE("invalid cbTriggerSize\n");
         TRACE("Reserved1 = %#x\n", trigger[i].Reserved1);
-        TRACE("wBeginYear = %u\n", trigger->wBeginYear);
-        TRACE("wBeginMonth = %u\n", trigger->wBeginMonth);
-        TRACE("wBeginDay = %u\n", trigger->wBeginDay);
-        TRACE("wEndYear = %u\n", trigger->wEndYear);
-        TRACE("wEndMonth = %u\n", trigger->wEndMonth);
-        TRACE("wEndDay = %u\n", trigger->wEndDay);
-        TRACE("wStartHour = %u\n", trigger->wStartHour);
-        TRACE("wStartMinute = %u\n", trigger->wStartMinute);
-        TRACE("MinutesDuration = %u\n", trigger->MinutesDuration);
-        TRACE("MinutesInterval = %u\n", trigger->MinutesInterval);
-        TRACE("rgFlags = %u\n", trigger->rgFlags);
-        TRACE("TriggerType = %u\n", trigger->TriggerType);
-        TRACE("Reserved2 = %u\n", trigger->Reserved2);
-        TRACE("wRandomMinutesInterval = %u\n", trigger->wRandomMinutesInterval);
+        TRACE("wBeginYear = %u\n", trigger[i].wBeginYear);
+        TRACE("wBeginMonth = %u\n", trigger[i].wBeginMonth);
+        TRACE("wBeginDay = %u\n", trigger[i].wBeginDay);
+        TRACE("wEndYear = %u\n", trigger[i].wEndYear);
+        TRACE("wEndMonth = %u\n", trigger[i].wEndMonth);
+        TRACE("wEndDay = %u\n", trigger[i].wEndDay);
+        TRACE("wStartHour = %u\n", trigger[i].wStartHour);
+        TRACE("wStartMinute = %u\n", trigger[i].wStartMinute);
+        TRACE("MinutesDuration = %u\n", trigger[i].MinutesDuration);
+        TRACE("MinutesInterval = %u\n", trigger[i].MinutesInterval);
+        TRACE("rgFlags = %u\n", trigger[i].rgFlags);
+        TRACE("TriggerType = %u\n", trigger[i].TriggerType);
+        TRACE("Reserved2 = %u\n", trigger[i].Reserved2);
+        TRACE("wRandomMinutesInterval = %u\n", trigger[i].wRandomMinutesInterval);
+
+        info->trigger[i] = trigger[i];
     }
 
-    size -= sizeof(USHORT) + triggers_count * sizeof(TASK_TRIGGER);
-    data += sizeof(USHORT) + triggers_count * sizeof(TASK_TRIGGER);
+    size -= sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER);
+    data += sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER);
 
     if (size < 2 * sizeof(USHORT) + 64)
     {
@@ -353,6 +363,7 @@ static void free_job(struct job_t *job)
     heap_free(job->name);
     heap_free(job->params);
     heap_free(job->curdir);
+    heap_free(job->trigger);
     heap_free(job);
 }
 
