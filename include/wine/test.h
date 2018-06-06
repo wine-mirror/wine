@@ -113,10 +113,17 @@ extern void __winetest_cdecl winetest_skip( const char *msg, ... ) WINETEST_PRIN
 extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
 extern void __winetest_cdecl winetest_trace( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
 
-#define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
-#define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
-#define win_skip_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_win_skip
-#define trace_(file, line)    (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
+#ifdef WINETEST_NO_LINE_NUMBERS
+# define ok_(file, line)       (winetest_set_location(file, 0), 0) ? (void)0 : winetest_ok
+# define skip_(file, line)     (winetest_set_location(file, 0), 0) ? (void)0 : winetest_skip
+# define win_skip_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_win_skip
+# define trace_(file, line)    (winetest_set_location(file, 0), 0) ? (void)0 : winetest_trace
+#else
+# define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
+# define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
+# define win_skip_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_win_skip
+# define trace_(file, line)    (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
+#endif
 
 #define ok       ok_(__FILE__, __LINE__)
 #define skip     skip_(__FILE__, __LINE__)
