@@ -236,6 +236,23 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
 
 
 /***********************************************************************
+ * Wow64SetThreadContext [KERNEL32.@]
+ */
+BOOL WINAPI Wow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *context)
+{
+#ifdef __i386__
+    NTSTATUS status = NtSetContextThread( handle, (const CONTEXT *)context );
+#elif defined(__x86_64__)
+    NTSTATUS status = RtlWow64SetThreadContext( handle, context );
+#else
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    FIXME("not implemented on this platform\n");
+#endif
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/***********************************************************************
  * GetThreadContext [KERNEL32.@]  Retrieves context of thread.
  *
  * RETURNS
