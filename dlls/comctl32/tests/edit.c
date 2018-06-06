@@ -2969,7 +2969,7 @@ static void test_EM_GETLINE(void)
     hwnd[0] = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     hwnd[1] = create_editcontrolW(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
 
-    for (i = 0; i < sizeof(hwnd)/sizeof(hwnd[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(hwnd); i++)
     {
         static const WCHAR strW[] = {'t','e','x','t',0};
         static const char *str = "text";
@@ -2994,13 +2994,13 @@ static void test_EM_GETLINE(void)
         ok(!strcmp(buff, str), "Unexpected line data %s.\n", buff);
 
         memset(buffW, 0, sizeof(buffW));
-        *(WORD *)buffW = sizeof(buffW)/sizeof(buffW[0]);
+        *(WORD *)buffW = ARRAY_SIZE(buffW);
         r = SendMessageW(hwnd[i], EM_GETLINE, 0, (LPARAM)buffW);
         ok(r == lstrlenW(strW), "Failed to get a line %d.\n", r);
         ok(!lstrcmpW(buffW, strW), "Unexpected line data %s.\n", wine_dbgstr_w(buffW));
 
         memset(buffW, 0, sizeof(buffW));
-        *(WORD *)buffW = sizeof(buffW)/sizeof(buffW[0]);
+        *(WORD *)buffW = ARRAY_SIZE(buffW);
         r = SendMessageW(hwnd[i], EM_GETLINE, 1, (LPARAM)buffW);
         ok(r == lstrlenW(strW), "Failed to get a line %d.\n", r);
         ok(!lstrcmpW(buffW, strW), "Unexpected line data %s.\n", wine_dbgstr_w(buffW));

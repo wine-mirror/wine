@@ -127,7 +127,7 @@ static int CALLBACK check_height_font_enumproc(ENUMLOGFONTEXA *enumlf, NEWTEXTME
     if (type != TRUETYPE_FONTTYPE)
         facename = enumlf->elfLogFont.lfFaceName;
 
-    for (i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(sizes); i++)
     {
         HFONT hFont;
         TEXTMETRICA tm;

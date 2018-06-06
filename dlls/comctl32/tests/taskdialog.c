@@ -152,8 +152,7 @@ static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct
 }
 
 #define run_test(info, expect_button, seq, context) \
-        run_test_(info, expect_button, seq, context, \
-                  sizeof(seq)/sizeof(seq[0]) - 1, __FILE__, __LINE__)
+        run_test_(info, expect_button, seq, context, ARRAY_SIZE(seq) - 1, __FILE__, __LINE__)
 
 static void run_test_(TASKDIALOGCONFIG *info, int expect_button, const struct message_info *test_messages,
     const char *context, int test_messages_len, const char *file, int line)

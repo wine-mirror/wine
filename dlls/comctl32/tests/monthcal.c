@@ -1216,7 +1216,7 @@ if (0)
             } else {
                 title_index++;
 
-                if (sizeof(title_hits) / sizeof(title_hits[0]) <= title_index)
+                if (ARRAY_SIZE(title_hits) <= title_index)
                     break;
 
                 todo_wine_if(title_hits[title_index].todo)
@@ -1241,8 +1241,7 @@ if (0)
 
     todo_wine ok(month_count + year_count >= 1, "Not enough month and year items\n");
 
-    ok(r.right <= x && title_index + 1 == sizeof(title_hits) / sizeof(title_hits[0]),
-       "Wrong title layout\n");
+    ok(r.right <= x && title_index + 1 == ARRAY_SIZE(title_hits), "Wrong title layout\n");
 
     DestroyWindow(hwnd);
 }
@@ -2016,7 +2015,7 @@ static void test_sel_notify(void)
     };
     int i;
 
-    for(i = 0; i < sizeof styles / sizeof styles[0]; i++)
+    for(i = 0; i < ARRAY_SIZE(styles); i++)
     {
         hwnd = create_monthcal_control(styles[i].val);
         SetWindowLongPtrA(hwnd, GWLP_ID, SEL_NOTIFY_TEST_ID);

@@ -2328,7 +2328,7 @@ static void test_multiselect(void)
     r = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
     ok(r == 0, "got %d\n", r);
 
-    for (i = 0; i < sizeof(task_list)/sizeof(task_list[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(task_list); i++) {
         DWORD selected_count;
         LVITEMA item;
 
@@ -3481,7 +3481,7 @@ static void test_norecompute(void)
     item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
     item.iItem = 0;
     item.pszText    = buff;
-    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    item.cchTextMax = ARRAY_SIZE(buff);
     res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, res);
     ok(lstrcmpA(buff, testA) == 0, "Expected (%s), got (%s)\n", testA, buff);
@@ -3495,7 +3495,7 @@ static void test_norecompute(void)
     item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
     item.iItem = 1;
     item.pszText    = buff;
-    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    item.cchTextMax = ARRAY_SIZE(buff);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
@@ -3520,7 +3520,7 @@ static void test_norecompute(void)
     item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
     item.iItem = 0;
     item.pszText    = buff;
-    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    item.cchTextMax = ARRAY_SIZE(buff);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, res);
@@ -4662,7 +4662,7 @@ static void test_canceleditlabel(void)
     ok(!IsWindow(hwndedit), "Expected edit control to be destroyed\n");
     memset(&itema, 0, sizeof(itema));
     itema.pszText = buff;
-    itema.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    itema.cchTextMax = ARRAY_SIZE(buff);
     ret = SendMessageA(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&itema);
     expect(5, ret);
     ok(strcmp(buff, test1) == 0, "Expected label text not to change\n");
@@ -5658,7 +5658,7 @@ static void test_dispinfo(void)
 
     g_disp_A_to_W = TRUE;
     item.pszText = (char*)buff;
-    item.cchTextMax = sizeof(buff)/sizeof(WCHAR);
+    item.cchTextMax = ARRAY_SIZE(buff);
     ret = SendMessageA(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
     ok(ret == sizeof(testA)-1, "got %d, expected 4\n", ret);
     g_disp_A_to_W = FALSE;
@@ -6177,7 +6177,7 @@ static void test_state_image(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(styles)/sizeof(styles[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
     {
         static char text[] = "Item";
         static char subtext[] = "Subitem";

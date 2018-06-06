@@ -1096,7 +1096,7 @@ static void image_list_init(HIMAGELIST himl, INT grow)
 
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 2, grow, ILC_COLOR24, "total 0");
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         image_list_add_bitmap(himl, td[i].grey, i + 1);
         check_iml_data(himl, td[i].cx, td[i].cy, td[i].cur, td[i].max, grow, td[i].bpp, td[i].comment);

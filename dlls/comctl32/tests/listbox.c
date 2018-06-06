@@ -48,7 +48,7 @@ static int strcmp_aw(LPCWSTR strw, const char *stra)
     WCHAR buf[1024];
 
     if (!stra) return 1;
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
     return lstrcmpW(strw, buf);
 }
 

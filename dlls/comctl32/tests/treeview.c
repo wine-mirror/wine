@@ -527,7 +527,7 @@ static void test_callback(void)
     tvi.hItem = hRoot;
     tvi.mask = TVIF_TEXT;
     tvi.pszText = buf;
-    tvi.cchTextMax = sizeof(buf)/sizeof(buf[0]);
+    tvi.cchTextMax = ARRAY_SIZE(buf);
     ret = TreeView_GetItemA(hTree, &tvi);
     expect(TRUE, ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Callback item text mismatch %s vs %s\n",
@@ -706,7 +706,7 @@ static void test_getitemtext(void)
     HWND hTree;
 
     CHAR szBuffer[80] = "Blah";
-    int nBufferSize = sizeof(szBuffer)/sizeof(CHAR);
+    int nBufferSize = ARRAY_SIZE(szBuffer);
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -1630,7 +1630,7 @@ static void test_itemedit(void)
     item.mask = TVIF_TEXT;
     item.hItem = hRoot;
     item.pszText = buffA;
-    item.cchTextMax = sizeof(buffA)/sizeof(CHAR);
+    item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
     ok(!strcmp("x", buffA), "Expected item text to change\n");
@@ -1664,7 +1664,7 @@ static void test_itemedit(void)
     ok(IsWindow(edit), "Expected valid handle\n");
     g_beginedit_alter_text = FALSE;
 
-    GetWindowTextA(edit, buffA, sizeof(buffA)/sizeof(CHAR));
+    GetWindowTextA(edit, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "<edittextaltered>"), "got string %s\n", buffA);
 
     DestroyWindow(hTree);
@@ -1991,7 +1991,7 @@ static void test_TVS_SINGLEEXPAND(void)
     SetWindowLongA(hTree, GWL_STYLE, GetWindowLongA(hTree, GWL_STYLE) | TVS_SINGLEEXPAND);
     /* to avoid painting related notifications */
     ShowWindow(hTree, SW_HIDE);
-    for (i = 0; i < sizeof(items)/sizeof(items[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(items); i++)
     {
         ins.hParent = items[i].parent ? *items[i].parent : TVI_ROOT;
         ins.hInsertAfter = TVI_FIRST;
@@ -2000,7 +2000,7 @@ static void test_TVS_SINGLEEXPAND(void)
         *items[i].handle = TreeView_InsertItemA(hTree, &ins);
     }
 
-    for (i = 0; i < sizeof(sequence_tests)/sizeof(sequence_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(sequence_tests); i++)
     {
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
         ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)(*sequence_tests[i].select));
@@ -2009,7 +2009,7 @@ static void test_TVS_SINGLEEXPAND(void)
         ok_sequence(sequences, PARENT_SEQ_INDEX, sequence_tests[i].sequence, context, FALSE);
     }
 
-    for (i = 0; i < sizeof(items)/sizeof(items[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(items); i++)
     {
         ret = SendMessageA(hTree, TVM_GETITEMSTATE, (WPARAM)(*items[i].handle), 0xFFFF);
         ok(ret == items[i].final_state, "singleexpand items[%d]: expected state 0x%x got 0x%x\n",
