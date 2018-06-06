@@ -289,8 +289,7 @@ static void test_message_from_string_wide(void)
     ok(r==4,"failed: r=%d\n", r);
 
     /* a single digit, left justified */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1_4d, 0,
-        0, out, sizeof(out)/sizeof(CHAR), 1);
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1_4d, 0, 0, out, ARRAY_SIZE(out), 1);
     ok(!lstrcmpW(s_1_4d, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
