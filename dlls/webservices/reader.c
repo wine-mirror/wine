@@ -5095,6 +5095,13 @@ static HRESULT text_to_uint64( const WS_XML_TEXT *text, UINT64 *val )
         hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT64, val );
         break;
     }
+    case WS_XML_TEXT_TYPE_INT64:
+    {
+        const WS_XML_INT64_TEXT *text_int64 = (const WS_XML_INT64_TEXT *)text;
+        *val = text_int64->value;
+        hr = S_OK;
+        break;
+    }
     case WS_XML_TEXT_TYPE_UINT64:
     {
         const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
