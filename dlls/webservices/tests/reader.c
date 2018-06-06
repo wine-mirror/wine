@@ -67,57 +67,6 @@ static const char data9[] =
 static const char data10[] =
     "<a></b>";
 
-static const char data11[] =
-    "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
-    "<o:services o:GenerationTime=\"2015-09-03T18:47:54\">"
-    "<!--Build: 16.0.6202.6852-->"
-    "</o:services>"
-    "</o:OfficeConfig>";
-
-static const char data11b[] =
-    "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
-    "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"></o:services>"
-    "<trailing>content</trailing>"
-    "</o:OfficeConfig>";
-
-static const char data12[] =
-    "<services>"
-    "<service><id>1</id></service>"
-    "<service><id>2</id></service>"
-    "</services>";
-
-static const char data13[] =
-    "<services></services>";
-
-static const char data14[] =
-    "<services>"
-    "<wrapper>"
-    "<service><id>1</id></service>"
-    "<service><id>2</id></service>"
-    "</wrapper>"
-    "</services>";
-
-static const char data15[] =
-    "<services>"
-    "<wrapper>"
-    "<service>1</service>"
-    "<service>2</service>"
-    "</wrapper>"
-    "</services>";
-
-static const char data16[] =
-    "<services>"
-    "<wrapper>"
-    "<service name='1'>1</service>"
-    "<service name='2'>2</service>"
-    "</wrapper>"
-    "</services>";
-
-static const char data17[] =
-    "<services>"
-    "<service><name></name></service>"
-    "</services>";
-
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -2997,6 +2946,17 @@ static void test_text_field_mapping(void)
 
 static void test_complex_struct_type(void)
 {
+    static const char data[] =
+        "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
+        "<o:services o:GenerationTime=\"2015-09-03T18:47:54\">"
+        "<!--Build: 16.0.6202.6852-->"
+        "</o:services>"
+        "</o:OfficeConfig>";
+    static const char data2[] =
+        "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
+        "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"></o:services>"
+        "<trailing>content</trailing>"
+        "</o:OfficeConfig>";
     static const WCHAR timestampW[] =
         {'2','0','1','5','-','0','9','-','0','3','T','1','8',':','4','7',':','5','4',0};
     HRESULT hr;
@@ -3035,7 +2995,7 @@ static void test_complex_struct_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     /* element content type mapping */
-    prepare_struct_type_test( reader, data11 );
+    prepare_struct_type_test( reader, data );
 
     hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3112,7 +3072,7 @@ static void test_complex_struct_type(void)
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     /* element type mapping */
-    prepare_struct_type_test( reader, data11 );
+    prepare_struct_type_test( reader, data );
 
     hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3136,7 +3096,7 @@ static void test_complex_struct_type(void)
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     /* trailing content */
-    prepare_struct_type_test( reader, data11b );
+    prepare_struct_type_test( reader, data2 );
     hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -3149,7 +3109,7 @@ static void test_complex_struct_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
-    prepare_struct_type_test( reader, data11b );
+    prepare_struct_type_test( reader, data2 );
     hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -3165,6 +3125,38 @@ static void test_complex_struct_type(void)
 
 static void test_repeating_element(void)
 {
+    static const char data[] =
+        "<services>"
+        "<service><id>1</id></service>"
+        "<service><id>2</id></service>"
+        "</services>";
+    static const char data2[] =
+        "<services></services>";
+    static const char data3[] =
+        "<services>"
+        "<wrapper>"
+        "<service><id>1</id></service>"
+        "<service><id>2</id></service>"
+        "</wrapper>"
+        "</services>";
+    static const char data4[] =
+        "<services>"
+        "<wrapper>"
+        "<service>1</service>"
+        "<service>2</service>"
+        "</wrapper>"
+        "</services>";
+    static const char data5[] =
+        "<services>"
+        "<wrapper>"
+        "<service name='1'>1</service>"
+        "<service name='2'>2</service>"
+        "</wrapper>"
+        "</services>";
+    static const char data6[] =
+        "<services>"
+        "<service><name></name></service>"
+        "</services>";
     static const WCHAR oneW[] = {'1',0}, twoW[] = {'2',0};
     WS_XML_STRING str_name = {4, (BYTE *)"name"};
     WS_XML_STRING str_services = {8, (BYTE *)"services"};
@@ -3214,7 +3206,7 @@ static void test_repeating_element(void)
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    prepare_struct_type_test( reader, data12 );
+    prepare_struct_type_test( reader, data );
 
     memset( &f2, 0, sizeof(f2) );
     f2.mapping   = WS_ELEMENT_FIELD_MAPPING;
@@ -3257,7 +3249,7 @@ static void test_repeating_element(void)
     ok( test->service[1].id == 2, "got %u\n", test->service[1].id );
 
     /* array of pointers */
-    prepare_struct_type_test( reader, data12 );
+    prepare_struct_type_test( reader, data );
     f.options = WS_FIELD_POINTER;
     test4 = NULL;
     hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
@@ -3272,7 +3264,7 @@ static void test_repeating_element(void)
     }
 
     /* item range */
-    prepare_struct_type_test( reader, data13 );
+    prepare_struct_type_test( reader, data2 );
     f.options = 0;
     range.minItemCount = 0;
     range.maxItemCount = 1;
@@ -3286,7 +3278,7 @@ static void test_repeating_element(void)
     ok( !test->service_count, "got %u\n", test->service_count );
 
     /* wrapper element */
-    prepare_struct_type_test( reader, data14 );
+    prepare_struct_type_test( reader, data3 );
     f.itemRange = NULL;
     f.localName = &str_wrapper;
     f.ns        = &str_ns;
@@ -3301,7 +3293,7 @@ static void test_repeating_element(void)
     ok( test->service[1].id == 2, "got %u\n", test->service[1].id );
 
     /* repeating text field mapping */
-    prepare_struct_type_test( reader, data15 );
+    prepare_struct_type_test( reader, data4 );
     f2.mapping   = WS_TEXT_FIELD_MAPPING;
     f2.localName = NULL;
     f2.ns        = NULL;
@@ -3319,7 +3311,7 @@ static void test_repeating_element(void)
     ok( !lstrcmpW( test2->service[1].id, twoW ), "wrong data\n" );
 
     /* repeating attribute field + text field mapping */
-    prepare_struct_type_test( reader, data16 );
+    prepare_struct_type_test( reader, data5 );
     f2.offset    = FIELD_OFFSET(struct service3, id);
     memset( &f3, 0, sizeof(f3) );
     f3.mapping   = WS_ATTRIBUTE_FIELD_MAPPING;
@@ -3344,7 +3336,7 @@ static void test_repeating_element(void)
     ok( !lstrcmpW( test3->service[1].id, twoW ), "wrong data\n" );
 
     /* empty text, item range */
-    prepare_struct_type_test( reader, data17 );
+    prepare_struct_type_test( reader, data6 );
 
     memset( &f2, 0, sizeof(f2) );
     f2.mapping   = WS_ELEMENT_FIELD_MAPPING;
