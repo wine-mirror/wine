@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
 #include "windef.h"
 #include "atsvc.h"
 #include "mstask.h"
@@ -89,6 +90,235 @@ static CRITICAL_SECTION_DEBUG cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": at_job_list_section") }
 };
 static CRITICAL_SECTION at_job_list_section = { &cs_debug, -1, 0, 0, 0, 0 };
+
+static void filetime_add_ms(FILETIME *ft, LONGLONG ms)
+{
+    union u_ftll
+    {
+        FILETIME ft;
+        LONGLONG ll;
+    } *ftll = (union u_ftll *)ft;
+
+    ftll->ll += ms * (ULONGLONG)10000;
+}
+
+static void filetime_add_minutes(FILETIME *ft, LONG minutes)
+{
+    filetime_add_ms(ft, (LONGLONG)minutes * 60 * 1000);
+}
+
+static void filetime_add_hours(FILETIME *ft, LONG hours)
+{
+    filetime_add_minutes(ft, (LONGLONG)hours * 60);
+}
+
+static void filetime_add_days(FILETIME *ft, LONG days)
+{
+    filetime_add_hours(ft, (LONGLONG)days * 24);
+}
+
+static void filetime_add_weeks(FILETIME *ft, ULONG weeks)
+{
+    filetime_add_days(ft, (LONGLONG)weeks * 7);
+}
+
+static void get_begin_time(const TASK_TRIGGER *trigger, FILETIME *ft)
+{
+    SYSTEMTIME st;
+
+    st.wYear = trigger->wBeginYear;
+    st.wMonth = trigger->wBeginMonth;
+    st.wDay = trigger->wBeginDay;
+    st.wDayOfWeek = 0;
+    st.wHour = 0;
+    st.wMinute = 0;
+    st.wSecond = 0;
+    st.wMilliseconds = 0;
+    SystemTimeToFileTime(&st, ft);
+}
+
+static void get_end_time(const TASK_TRIGGER *trigger, FILETIME *ft)
+{
+    SYSTEMTIME st;
+
+    if (!(trigger->rgFlags & TASK_TRIGGER_FLAG_HAS_END_DATE))
+    {
+        ft->dwHighDateTime = ~0u;
+        ft->dwLowDateTime = ~0u;
+        return;
+    }
+
+    st.wYear = trigger->wEndYear;
+    st.wMonth = trigger->wEndMonth;
+    st.wDay = trigger->wEndDay;
+    st.wDayOfWeek = 0;
+    st.wHour = 0;
+    st.wMinute = 0;
+    st.wSecond = 0;
+    st.wMilliseconds = 0;
+    SystemTimeToFileTime(&st, ft);
+}
+
+static BOOL trigger_get_next_runtime(const TASK_TRIGGER *trigger, const FILETIME *current_ft, FILETIME *rt)
+{
+    SYSTEMTIME st, current_st;
+    FILETIME begin_ft, end_ft, trigger_ft;
+
+    if (trigger->rgFlags & TASK_TRIGGER_FLAG_DISABLED)
+        return FALSE;
+
+    FileTimeToSystemTime(current_ft, &current_st);
+
+    get_begin_time(trigger, &begin_ft);
+    get_end_time(trigger, &end_ft);
+
+    switch (trigger->TriggerType)
+    {
+    case TASK_EVENT_TRIGGER_ON_IDLE:
+    case TASK_EVENT_TRIGGER_AT_SYSTEMSTART:
+    case TASK_EVENT_TRIGGER_AT_LOGON:
+        return FALSE;
+
+    case TASK_TIME_TRIGGER_ONCE:
+        st = current_st;
+        st.wHour = trigger->wStartHour;
+        st.wMinute = trigger->wStartMinute;
+        st.wSecond = 0;
+        st.wMilliseconds = 0;
+        SystemTimeToFileTime(&st, &trigger_ft);
+        if (CompareFileTime(&begin_ft, &trigger_ft) <= 0 && CompareFileTime(&trigger_ft, &end_ft) < 0)
+        {
+            *rt = trigger_ft;
+            return TRUE;
+        }
+        break;
+
+    case TASK_TIME_TRIGGER_DAILY:
+        st = current_st;
+        st.wHour = trigger->wStartHour;
+        st.wMinute = trigger->wStartMinute;
+        st.wSecond = 0;
+        st.wMilliseconds = 0;
+        SystemTimeToFileTime(&st, &trigger_ft);
+        while (CompareFileTime(&trigger_ft, &end_ft) < 0)
+        {
+            if (CompareFileTime(&trigger_ft, &begin_ft) >= 0)
+            {
+                *rt = trigger_ft;
+                return TRUE;
+            }
+
+            filetime_add_days(&trigger_ft, trigger->Type.Daily.DaysInterval);
+        }
+        break;
+
+    case TASK_TIME_TRIGGER_WEEKLY:
+        if (!trigger->Type.Weekly.rgfDaysOfTheWeek)
+            break; /* avoid infinite loop */
+
+        st = current_st;
+        st.wHour = trigger->wStartHour;
+        st.wMinute = trigger->wStartMinute;
+        st.wSecond = 0;
+        st.wMilliseconds = 0;
+        SystemTimeToFileTime(&st, &trigger_ft);
+        while (CompareFileTime(&trigger_ft, &end_ft) < 0)
+        {
+            FileTimeToSystemTime(&trigger_ft, &st);
+
+            if (CompareFileTime(&trigger_ft, &begin_ft) >= 0)
+            {
+                if (trigger->Type.Weekly.rgfDaysOfTheWeek & (1 << st.wDayOfWeek))
+                {
+                    *rt = trigger_ft;
+                    return TRUE;
+                }
+            }
+
+            if (st.wDayOfWeek == 0 && trigger->Type.Weekly.WeeksInterval > 1) /* Sunday, goto next week */
+                filetime_add_weeks(&trigger_ft, trigger->Type.Weekly.WeeksInterval - 1);
+            else /* check next weekday */
+                filetime_add_days(&trigger_ft, 1);
+        }
+        break;
+
+    default:
+        FIXME("trigger type %u is not handled\n", trigger->TriggerType);
+        break;
+    }
+
+    return FALSE;
+}
+
+static BOOL job_get_next_runtime(struct job_t *job, FILETIME *current_ft, FILETIME *next_rt)
+{
+    FILETIME trigger_rt;
+    BOOL have_next_rt = FALSE;
+    USHORT i;
+
+    for (i = 0; i < job->trigger_count; i++)
+    {
+        if (trigger_get_next_runtime(&job->trigger[i], current_ft, &trigger_rt))
+        {
+            if (!have_next_rt || CompareFileTime(&trigger_rt, next_rt) < 0)
+            {
+                *next_rt = trigger_rt;
+                have_next_rt = TRUE;
+            }
+        }
+    }
+
+    return have_next_rt;
+}
+
+/* Returns next runtime in UTC */
+BOOL get_next_runtime(LARGE_INTEGER *rt)
+{
+    FILETIME current_ft, job_rt, next_job_rt;
+    BOOL have_next_rt = FALSE;
+    struct job_t *job;
+
+    GetSystemTimeAsFileTime(&current_ft);
+    FileTimeToLocalFileTime(&current_ft, &current_ft);
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if (job_get_next_runtime(job, &current_ft, &job_rt))
+        {
+            if (!have_next_rt || CompareFileTime(&job_rt, &next_job_rt) < 0)
+            {
+                next_job_rt = job_rt;
+                have_next_rt = TRUE;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+
+    if (have_next_rt)
+    {
+        LocalFileTimeToFileTime(&next_job_rt, &next_job_rt);
+        rt->u.LowPart = next_job_rt.dwLowDateTime;
+        rt->u.HighPart = next_job_rt.dwHighDateTime;
+    }
+
+    return have_next_rt;
+}
+
+static BOOL job_runs_at(struct job_t *job, FILETIME *begin_ft, FILETIME *end_ft)
+{
+    FILETIME job_ft;
+
+    if (job_get_next_runtime(job, begin_ft, &job_ft))
+    {
+        if (CompareFileTime(&job_ft, end_ft) < 0)
+            return TRUE;
+    }
+
+    return FALSE;
+}
 
 static DWORD load_unicode_strings(const char *data, DWORD limit, struct job_t *job)
 {
@@ -723,6 +953,39 @@ void check_task_state(void)
 
             job->data.flags &= ~0x0c000000;
             update_job_status(job);
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+}
+
+static void run_job(struct job_t *job)
+{
+    job->data.flags |= 0x04000000;
+    update_job_status(job);
+}
+
+void check_task_time(void)
+{
+    FILETIME current_ft, begin_ft, end_ft;
+    struct job_t *job;
+
+    GetSystemTimeAsFileTime(&current_ft);
+    FileTimeToLocalFileTime(&current_ft, &current_ft);
+
+    /* Give -1/+1 minute margin */
+    begin_ft = current_ft;
+    filetime_add_minutes(&begin_ft, -1);
+    end_ft = current_ft;
+    filetime_add_minutes(&end_ft, 1);
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if (job_runs_at(job, &begin_ft, &end_ft))
+        {
+            run_job(job);
         }
     }
 

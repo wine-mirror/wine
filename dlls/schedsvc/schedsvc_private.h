@@ -28,6 +28,8 @@ void remove_job(const WCHAR *name) DECLSPEC_HIDDEN;
 void check_task_state(void) DECLSPEC_HIDDEN;
 void add_process_to_queue(HANDLE hproc) DECLSPEC_HIDDEN;
 void update_process_status(DWORD pid) DECLSPEC_HIDDEN;
+BOOL get_next_runtime(LARGE_INTEGER *rt) DECLSPEC_HIDDEN;
+void check_task_time(void) DECLSPEC_HIDDEN;
 
 static inline WCHAR *heap_strdupW(const WCHAR *src)
 {

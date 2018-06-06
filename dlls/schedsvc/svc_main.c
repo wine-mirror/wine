@@ -46,11 +46,19 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
 {
     static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
     WCHAR path[MAX_PATH];
-    HANDLE htasks, hport;
+    HANDLE htasks, hport, htimer;
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT info;
     OVERLAPPED ov;
+    LARGE_INTEGER period;
 
     TRACE("Starting...\n");
+
+    htimer = CreateWaitableTimerW(NULL, FALSE, NULL);
+    if (htimer == NULL)
+    {
+        ERR("CreateWaitableTimer failed\n");
+        return -1;
+    }
 
     GetWindowsDirectoryW(path, MAX_PATH);
     lstrcatW(path, tasksW);
@@ -98,7 +106,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             FILE_NOTIFY_INFORMATION data;
             WCHAR name_buffer[MAX_PATH];
         } info;
-        HANDLE events[3];
+        HANDLE events[4];
         DWORD ret;
 
         /* the buffer must be DWORD aligned */
@@ -115,12 +123,22 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             FIXME("got multiple entries\n");
 
         events[0] = done_event;
-        events[1] = ov.hEvent;
+        events[1] = htimer;
         events[2] = hport;
+        events[3] = ov.hEvent;
 
-        ret = WaitForMultipleObjects(3, events, FALSE, INFINITE);
+        ret = WaitForMultipleObjects(4, events, FALSE, INFINITE);
+        /* Done event */
         if (ret == WAIT_OBJECT_0) break;
 
+        /* Next runtime timer */
+        if (ret == WAIT_OBJECT_0 + 1)
+        {
+            check_task_time();
+            continue;
+        }
+
+        /* Job queue */
         if (ret == WAIT_OBJECT_0 + 2)
         {
             DWORD msg;
@@ -139,6 +157,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
             continue;
         }
 
+        /* Directory change notification */
         info.data.FileName[info.data.FileNameLength/sizeof(WCHAR)] = 0;
 
         switch (info.data.Action)
@@ -176,8 +195,16 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
         }
 
         check_task_state();
+
+        if (get_next_runtime(&period))
+        {
+            if (!SetWaitableTimer(htimer, &period, 0, NULL, NULL, FALSE))
+                ERR("SetWaitableTimer failed\n");
+        }
     }
 
+    CancelWaitableTimer(htimer);
+    CloseHandle(htimer);
     CloseHandle(ov.hEvent);
     CloseHandle(hport);
     CloseHandle(hjob_queue);
