@@ -20,8 +20,10 @@
 
 import argparse
 import logging
+import os
 import re
 import sys
+import urllib.request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from collections.abc import Sequence
@@ -61,6 +63,8 @@ from enum import Enum
 
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
+
+VK_XML_VERSION = "1.0.51"
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -2542,6 +2546,10 @@ class VkRegistry(object):
         self.handles = sorted(handles, key=lambda handle: handle.name)
         self.structs = sorted(structs, key=lambda struct: struct.name)
 
+def download_vk_xml(filename):
+    url = "https://raw.github.com/KhronosGroup/Vulkan-Docs/v{0}-core/src/spec/vk.xml".format(VK_XML_VERSION)
+    if not os.path.isfile(filename):
+        urllib.request.urlretrieve(url, filename)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -2555,7 +2563,9 @@ def main():
     else: # > 1
         LOGGER.setLevel(logging.DEBUG)
 
-    registry = VkRegistry("vk.xml")
+    vk_xml = "vk-{0}.xml".format(VK_XML_VERSION)
+    download_vk_xml(vk_xml)
+    registry = VkRegistry(vk_xml)
     generator = VkGenerator(registry)
 
     with open(WINE_VULKAN_H, "w") as f:
