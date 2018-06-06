@@ -6539,6 +6539,155 @@ static void test_repeating_element_choice(void)
     WsFreeHeap( heap );
 }
 
+static void test_empty_text_field(void)
+{
+    static WS_XML_STRING str_ns = {0, NULL}, str_t = {1, (BYTE *)"t"};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_STRUCT_DESCRIPTION s;
+    struct test
+    {
+        WS_STRING str;
+    } *test;
+    struct test2
+    {
+        WCHAR *str;
+    } *test2;
+    struct test3
+    {
+        BOOL bool;
+    } *test3;
+    struct test4
+    {
+        WS_XML_STRING str;
+    } *test4;
+    struct test5
+    {
+        WS_BYTES bytes;
+    } *test5;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_TEXT_FIELD_MAPPING;
+    f.type      = WS_STRING_TYPE;
+    f.offset    = FIELD_OFFSET(struct test, str);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_t;
+    s.typeNs        = &str_ns;
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( !test->str.length, "got %u\n", test->str.length );
+    todo_wine ok( test->str.chars != NULL, "chars not set\n" );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_TEXT_FIELD_MAPPING;
+    f.type      = WS_WSZ_TYPE;
+    f.offset    = FIELD_OFFSET(struct test2, str);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test2);
+    s.alignment     = TYPE_ALIGNMENT(struct test2);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_t;
+    s.typeNs        = &str_ns;
+
+    test2 = NULL;
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test2, sizeof(test2), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test2 != NULL, "test2 not set\n" );
+    ok( test2->str != NULL, "str not set\n" );
+    ok( !test2->str[0], "not empty\n" );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_TEXT_FIELD_MAPPING;
+    f.type      = WS_BOOL_TYPE;
+    f.offset    = FIELD_OFFSET(struct test3, bool);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test3);
+    s.alignment     = TYPE_ALIGNMENT(struct test3);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_t;
+    s.typeNs        = &str_ns;
+
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test3, sizeof(test3), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_TEXT_FIELD_MAPPING;
+    f.type      = WS_XML_STRING_TYPE;
+    f.offset    = FIELD_OFFSET(struct test4, str);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test4);
+    s.alignment     = TYPE_ALIGNMENT(struct test4);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_t;
+    s.typeNs        = &str_ns;
+
+    test4 = NULL;
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test4, sizeof(test4), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test4 != NULL, "test4 not set\n" );
+    ok( !test4->str.length, "got %u\n", test4->str.length );
+    todo_wine ok( test4->str.bytes != NULL, "bytes not set\n" );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_TEXT_FIELD_MAPPING;
+    f.type      = WS_BYTES_TYPE;
+    f.offset    = FIELD_OFFSET(struct test5, bytes);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test5);
+    s.alignment     = TYPE_ALIGNMENT(struct test5);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_t;
+    s.typeNs        = &str_ns;
+
+    test5 = NULL;
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test5, sizeof(test5), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test5 != NULL, "test5 not set\n" );
+    ok( !test5->bytes.length, "got %u\n", test5->bytes.length );
+    todo_wine ok( test5->bytes.bytes != NULL, "bytes not set\n" );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
 
 START_TEST(reader)
 {
@@ -6588,4 +6737,5 @@ START_TEST(reader)
     test_union_type();
     test_float();
     test_repeating_element_choice();
+    test_empty_text_field();
 }
