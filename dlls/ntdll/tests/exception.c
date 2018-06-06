@@ -149,6 +149,7 @@ static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UN
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
+static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
@@ -2490,6 +2491,38 @@ static void test_dpe_exceptions(void)
     pRtlRemoveVectoredExceptionHandler(handler);
 }
 
+static void test_wow64_context(void)
+{
+    char cmdline[] = "C:\\windows\\syswow64\\notepad.exe";
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    WOW64_CONTEXT ctx;
+    NTSTATUS ret;
+
+    memset(&ctx, 0x55, sizeof(ctx));
+    ctx.ContextFlags = WOW64_CONTEXT_ALL;
+    ret = pRtlWow64GetThreadContext( GetCurrentThread(), &ctx );
+    ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_PARTIAL_COPY), "got %#x\n", ret);
+
+    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+
+    ret = pRtlWow64GetThreadContext( pi.hThread, &ctx );
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ctx.ContextFlags == WOW64_CONTEXT_ALL, "got context flags %#x\n", ctx.ContextFlags);
+    ok(!ctx.Ebp, "got ebp %08x\n", ctx.Ebp);
+    ok(!ctx.Ecx, "got ecx %08x\n", ctx.Ecx);
+    ok(!ctx.Edx, "got edx %08x\n", ctx.Edx);
+    ok(!ctx.Esi, "got esi %08x\n", ctx.Esi);
+    ok(!ctx.Edi, "got edi %08x\n", ctx.Edi);
+    ok((ctx.EFlags & ~2) == 0x200, "got eflags %08x\n", ctx.EFlags);
+    ok((WORD) ctx.FloatSave.ControlWord == 0x27f, "got control word %08x\n",
+        ctx.FloatSave.ControlWord);
+    ok(*(WORD *)ctx.ExtendedRegisters == 0x27f, "got SSE control word %04x\n",
+       *(WORD *)ctx.ExtendedRegisters);
+
+    pNtTerminateProcess(pi.hProcess, 0);
+}
+
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -3128,6 +3161,8 @@ START_TEST(exception)
                                                                  "RtlRestoreContext" );
     pRtlUnwindEx                       = (void *)GetProcAddress( hntdll,
                                                                  "RtlUnwindEx" );
+    pRtlWow64GetThreadContext          = (void *)GetProcAddress( hntdll,
+                                                                 "RtlWow64GetThreadContext" );
     p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
                                                                  "_setjmp" );
 
@@ -3143,6 +3178,7 @@ START_TEST(exception)
     test_restore_context();
     test_prot_fault();
     test_dpe_exceptions();
+    test_wow64_context();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
