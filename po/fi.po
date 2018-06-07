@@ -12782,10 +12782,8 @@ msgid "Confirm Value Delete"
 msgstr "Vahvista arvon tuhoaminen"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Haluatko varmasti tuhota rekisteristä arvon '%1'?"
+msgstr "Haluatko varmasti tuhota rekisteristä valitun arvon?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
