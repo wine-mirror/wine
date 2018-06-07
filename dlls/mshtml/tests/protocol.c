@@ -271,7 +271,7 @@ static void test_res_url(const char *url_suffix)
     HRESULT hres;
 
     memcpy(url, res_url_base, res_url_base_len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, url_suffix, -1, url+res_url_base_len, sizeof(url)/sizeof(WCHAR)-res_url_base_len);
+    MultiByteToWideChar(CP_ACP, 0, url_suffix, -1, url+res_url_base_len, ARRAY_SIZE(url)-res_url_base_len);
 
     hres = CoCreateInstance(&CLSID_ResProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void**)&protocol);
     ok(hres == S_OK, "Could not create ResProtocol instance: %08x\n", hres);
@@ -296,13 +296,13 @@ static void res_sec_url_cmp(LPCWSTR url, DWORD size, LPCWSTR file)
 
     static const WCHAR fileW[] = {'f','i','l','e',':','/','/'};
 
-    if(size < sizeof(fileW)/sizeof(WCHAR) || memcmp(url, fileW, sizeof(fileW))) {
+    if(size < ARRAY_SIZE(fileW) || memcmp(url, fileW, sizeof(fileW))) {
         ok(0, "wrong URL protocol\n");
         return;
     }
 
     SetLastError(0xdeadbeef);
-    len = SearchPathW(NULL, file, NULL, sizeof(buf)/sizeof(WCHAR), buf, NULL);
+    len = SearchPathW(NULL, file, NULL, ARRAY_SIZE(buf), buf, NULL);
     if(!len) {
         if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
             win_skip("SearchPathW is not implemented\n");
@@ -311,9 +311,9 @@ static void res_sec_url_cmp(LPCWSTR url, DWORD size, LPCWSTR file)
         return;
     }
 
-    len += sizeof(fileW)/sizeof(WCHAR)+1;
+    len += ARRAY_SIZE(fileW)+1;
     ok(len == size, "wrong size %u, expected %u\n", size, len);
-    ok(!lstrcmpW(url + sizeof(fileW)/sizeof(WCHAR), buf), "wrong file part %s\n", wine_dbgstr_w(url));
+    ok(!lstrcmpW(url + ARRAY_SIZE(fileW), buf), "wrong file part %s\n", wine_dbgstr_w(url));
 }
 
 static void test_res_protocol(void)
@@ -355,14 +355,14 @@ static void test_res_protocol(void)
         for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
             if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
                 hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, i, 0, buf,
-                        sizeof(buf)/sizeof(buf[0]), &size, 0);
+                        ARRAY_SIZE(buf), &size, 0);
                 ok(hres == INET_E_DEFAULT_ACTION,
                         "[%d] failed: %08x, expected INET_E_DEFAULT_ACTION\n", i, hres);
             }
         }
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         res_sec_url_cmp(buf, size, mshtml_dllW);
         ok(size == lstrlenW(buf)+1, "size = %d\n", size);
@@ -381,36 +381,32 @@ static void test_res_protocol(void)
         ok(size == expected_size, "size = %d\n", size);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == MK_E_SYNTAX || hres == E_INVALIDARG,
            "ParseUrl failed: %08x, expected MK_E_SYNTAX\n", hres);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url5, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == MK_E_SYNTAX, "ParseUrl failed: %08x, expected MK_E_SYNTAX\n", hres);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url6, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == MK_E_SYNTAX, "ParseUrl failed: %08x, expected MK_E_SYNTAX\n", hres);
 
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(blank_url)/sizeof(WCHAR) ||
-           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
-           "size=%d\n", size);
+        ok(size == ARRAY_SIZE(blank_url) || size == ARRAY_SIZE(buf), /* IE8 */ "size=%d\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(wrong_url1)/sizeof(WCHAR) ||
-           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
-           "size=%d\n", size);
+        ok(size == ARRAY_SIZE(wrong_url1) || size == ARRAY_SIZE(buf), /* IE8 */ "size=%d\n", size);
 
         if (0)
         {
@@ -418,40 +414,40 @@ static void test_res_protocol(void)
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
         ok(size == 1, "size=%u, expected 1\n", size);
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+                ARRAY_SIZE(buf), NULL, 0);
         ok(hres == E_POINTER, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+                ARRAY_SIZE(buf), NULL, 0);
         ok(hres == E_POINTER, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
         }
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08x, expected INET_E_DEFAULT_ACTION\n", hres);
         ok(buf[0] == '?', "buf changed\n");
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
-                0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                0, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_part_url,
-                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                URL_FILE_USE_PATHURL, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
@@ -693,14 +689,14 @@ static void test_about_protocol(void)
         for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
             if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
                 hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, i, 0, buf,
-                        sizeof(buf)/sizeof(buf[0]), &size, 0);
+                        ARRAY_SIZE(buf), &size, 0);
                 ok(hres == INET_E_DEFAULT_ACTION,
                         "[%d] failed: %08x, expected INET_E_DEFAULT_ACTION\n", i, hres);
             }
         }
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         ok(!lstrcmpW(about_blank_url, buf), "buf != blank_url\n");
 
@@ -711,7 +707,7 @@ static void test_about_protocol(void)
         ok(size == 12, "size = %d\n", size);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_test_url, PARSE_SECURITY_URL, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         ok(!lstrcmpW(about_test_url, buf), "buf != test_url\n");
         ok(size == 11, "size = %d\n", size);
@@ -719,13 +715,12 @@ static void test_about_protocol(void)
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?' || buf[0] == '\0' /* Win10 */,
            "Expected buf to be unchanged or empty, got %s\n",
            wine_dbgstr_w(buf));
-        ok(size == sizeof(about_blank_url)/sizeof(WCHAR) ||
-           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
+        ok(size == ARRAY_SIZE(about_blank_url) || size == ARRAY_SIZE(buf), /* IE8 */
            "size=%d\n", size);
 
         if (0)
@@ -734,44 +729,44 @@ static void test_about_protocol(void)
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
         ok(size == 1, "size=%u, expected 1\n", size);
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+                ARRAY_SIZE(buf), NULL, 0);
         ok(hres == E_POINTER, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+                ARRAY_SIZE(buf), NULL, 0);
         ok(hres == E_POINTER, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
         }
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_UNESCAPE+1, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08x, expected INET_E_DEFAULT_ACTION\n", hres);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, about_blank_url, about_test_url,
-                0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                0, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, about_blank_url, about_test_url,
-                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                URL_FILE_USE_PATHURL, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, NULL, NULL,
-                URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                URL_FILE_USE_PATHURL, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
@@ -870,20 +865,20 @@ static void test_javascript_protocol(void)
         for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
             if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
                 hres = IInternetProtocolInfo_ParseUrl(protocol_info, javascript_test_url, i, 0, buf,
-                        sizeof(buf)/sizeof(buf[0]), &size, 0);
+                        ARRAY_SIZE(buf), &size, 0);
                 ok(hres == INET_E_DEFAULT_ACTION,
                         "[%d] failed: %08x, expected INET_E_DEFAULT_ACTION\n", i, hres);
             }
         }
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, javascript_test_url, PARSE_UNESCAPE+1, 0, buf,
-                sizeof(buf)/sizeof(buf[0]), &size, 0);
+                ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08x, expected INET_E_DEFAULT_ACTION\n", hres);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, javascript_test_url, javascript_test_url,
-                0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
+                0, buf, ARRAY_SIZE(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
@@ -1007,7 +1002,8 @@ static void test_com_aggregation(const CLSID *clsid)
 
 START_TEST(protocol)
 {
-    res_url_base_len = 6 + GetModuleFileNameW(NULL, res_url_base + 6 /* strlen("res://") */, sizeof(res_url_base)/sizeof(WCHAR)-6);
+    res_url_base_len = 6 + GetModuleFileNameW(NULL, res_url_base + 6 /* strlen("res://") */,
+                                              ARRAY_SIZE(res_url_base)-6);
 
     OleInitialize(NULL);
 

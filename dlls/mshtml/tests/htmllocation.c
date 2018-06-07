@@ -300,7 +300,7 @@ static void perform_test(const struct location_test* test)
     if(FAILED(hres))
         return;
 
-    MultiByteToWideChar(CP_ACP, 0, test->url, -1, url, sizeof(url)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, test->url, -1, url, ARRAY_SIZE(url));
     hres = CreateURLMoniker(NULL, url, &url_mon);
     ok(hres == S_OK, "%s: CreateURLMoniker failed: 0x%08x\n", test->name, hres);
     if(FAILED(hres)){
@@ -381,7 +381,7 @@ START_TEST(htmllocation)
 
     CoInitialize(NULL);
 
-    for(i=0; i < sizeof(location_tests)/sizeof(*location_tests); i++)
+    for(i=0; i < ARRAY_SIZE(location_tests); i++)
         perform_test(location_tests+i);
 
     CoUninitialize();

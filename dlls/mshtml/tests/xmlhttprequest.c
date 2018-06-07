@@ -747,7 +747,7 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *
     SysFreeString(text);
 
     if(expect_text)
-        test_header(expect_headers, sizeof(expect_headers)/sizeof(expect_headers[0]));
+        test_header(expect_headers, ARRAY_SIZE(expect_headers));
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
@@ -905,7 +905,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url, const char 
     SysFreeString(text);
 
     if(expect_text)
-        test_header(expect_headers, sizeof(expect_headers)/sizeof(expect_headers[0]));
+        test_header(expect_headers, ARRAY_SIZE(expect_headers));
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);

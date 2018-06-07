@@ -6456,7 +6456,7 @@ static void test_MSHTML_QueryStatus(IHTMLDocument2 *doc, DWORD cmdf)
 static void test_OleCommandTarget(IHTMLDocument2 *doc)
 {
     IOleCommandTarget *cmdtrg;
-    OLECMD cmds[sizeof(expect_cmds)/sizeof(*expect_cmds)-1];
+    OLECMD cmds[ARRAY_SIZE(expect_cmds)-1];
     int i;
     HRESULT hres;
 
@@ -6465,19 +6465,19 @@ static void test_OleCommandTarget(IHTMLDocument2 *doc)
     if(FAILED(hres))
         return;
 
-    for(i=0; i < sizeof(cmds)/sizeof(*cmds); i++) {
+    for(i=0; i < ARRAY_SIZE(cmds); i++) {
         cmds[i].cmdID = i+1;
         cmds[i].cmdf = 0xf0f0;
     }
 
     SET_EXPECT(QueryStatus_OPEN);
     SET_EXPECT(QueryStatus_NEW);
-    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, sizeof(cmds)/sizeof(cmds[0]), cmds, NULL);
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, NULL, ARRAY_SIZE(cmds), cmds, NULL);
     ok(hres == S_OK, "QueryStatus failed: %08x\n", hres);
     CHECK_CALLED(QueryStatus_OPEN);
     CHECK_CALLED(QueryStatus_NEW);
 
-    for(i=0; i < sizeof(cmds)/sizeof(*cmds); i++) {
+    for(i=0; i < ARRAY_SIZE(cmds); i++) {
         ok(cmds[i].cmdID == i+1, "cmds[%d].cmdID canged to %x\n", i, cmds[i].cmdID);
         if(i+1 == OLECMDID_FIND)
             continue;
@@ -7332,7 +7332,7 @@ static void test_enum_objects(IOleContainer *container)
     ok(enum_unknown != NULL, "enum_unknown == NULL\n");
 
     fetched = 0xdeadbeef;
-    hres = IEnumUnknown_Next(enum_unknown, sizeof(buf)/sizeof(*buf), buf, &fetched);
+    hres = IEnumUnknown_Next(enum_unknown, ARRAY_SIZE(buf), buf, &fetched);
     ok(hres == S_FALSE, "Next returned %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
     ok(buf[0] == (void*)0xdeadbeef, "buf[0] = %p\n", buf[0]);
@@ -7764,7 +7764,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_cookie(doc, &str);
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     if(str) {
-        size = sizeof(buf)/sizeof(WCHAR);
+        size = ARRAY_SIZE(buf);
         b = InternetGetCookieW(http_urlW, NULL, buf, &size);
         ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
         ok(!lstrcmpW(buf, str), "cookie = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buf));
@@ -7779,7 +7779,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_cookie(doc, &str2);
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     ok(str2 != NULL, "cookie = NULL\n");
-    size = sizeof(buf)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buf);
     b = InternetGetCookieW(http_urlW, NULL, buf, &size);
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
@@ -7796,7 +7796,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_cookie(doc, &str2);
     ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
     ok(str2 != NULL, "cookie = NULL\n");
-    size = sizeof(buf)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buf);
     b = InternetGetCookieW(http_urlW, NULL, buf, &size);
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));

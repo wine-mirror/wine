@@ -2704,7 +2704,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
 
     memset(vs, 0, sizeof(vs));
     fetched = 0;
-    hres = IEnumVARIANT_Next(enum_var, sizeof(vs)/sizeof(*vs), vs, &fetched);
+    hres = IEnumVARIANT_Next(enum_var, ARRAY_SIZE(vs), vs, &fetched);
     ok_(__FILE__,line)(hres == S_FALSE, "Next failed: %08x\n", hres);
     ok_(__FILE__,line)(fetched == (len > 2 ? 2 : len), "fetched = %d\n", fetched);
     if(len) {
@@ -6188,7 +6188,7 @@ static void _test_language_string(unsigned line, const WCHAR *lang, LCID lcid)
     int res;
 
     if(pLCIDToLocaleName) {
-        res = pLCIDToLocaleName(lcid, buf, sizeof(buf)/sizeof(WCHAR), 0);
+        res = pLCIDToLocaleName(lcid, buf, ARRAY_SIZE(buf), 0);
         ok_(__FILE__,line)(res, "LCIDToLocaleName failed: %u\n", GetLastError());
         ok_(__FILE__,line)(!lstrcmpW(lang, buf), "lang = %s, expected %s\n", wine_dbgstr_w(lang), wine_dbgstr_w(buf));
     }else {
@@ -6486,17 +6486,17 @@ static void test_unique_id(IHTMLDocument2 *doc, IHTMLElement *elem)
 
     hres = IHTMLDocument3_get_uniqueID(doc3, &id);
     ok(hres == S_OK, "get_uniqueID failed: %08x\n", hres);
-    ok(SysStringLen(id) >= sizeof(prefixW)/sizeof(*prefixW), "id %s too short\n", wine_dbgstr_w(id));
+    ok(SysStringLen(id) >= ARRAY_SIZE(prefixW), "id %s too short\n", wine_dbgstr_w(id));
 
     hres = IHTMLDocument3_get_uniqueID(doc3, &id2);
     ok(hres == S_OK, "get_uniqueID failed: %08x\n", hres);
-    ok(SysStringLen(id2) >= sizeof(prefixW)/sizeof(*prefixW), "id %s too short\n", wine_dbgstr_w(id2));
+    ok(SysStringLen(id2) >= ARRAY_SIZE(prefixW), "id %s too short\n", wine_dbgstr_w(id2));
 
     ok(lstrcmpW(id, id2), "same unique ids %s\n", wine_dbgstr_w(id));
 
-    id[sizeof(prefixW)/sizeof(*prefixW)-1] = 0;
+    id[ARRAY_SIZE(prefixW)-1] = 0;
     ok(!lstrcmpW(id, prefixW), "unexpected prefix %s\n", wine_dbgstr_w(id));
-    id2[sizeof(prefixW)/sizeof(*prefixW)-1] = 0;
+    id2[ARRAY_SIZE(prefixW)-1] = 0;
     ok(!lstrcmpW(id2, prefixW), "unexpected prefix %s\n", wine_dbgstr_w(id2));
 
     SysFreeString(id);
@@ -7267,7 +7267,7 @@ static void test_tr_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_cells failed: %08x\n", hres);
     ok(col != NULL, "get_cells returned NULL\n");
 
-    test_elem_collection((IUnknown*)col, cell_types, sizeof(cell_types)/sizeof(*cell_types));
+    test_elem_collection((IUnknown*)col, cell_types, ARRAY_SIZE(cell_types));
     IHTMLElementCollection_Release(col);
 
     bstr = a2bstr("left");
@@ -7591,14 +7591,14 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_rows failed: %08x\n", hres);
     ok(col != NULL, "get_rows returned NULL\n");
 
-    test_elem_collection((IUnknown*)col, row_types, sizeof(row_types)/sizeof(*row_types));
+    test_elem_collection((IUnknown*)col, row_types, ARRAY_SIZE(row_types));
     IHTMLElementCollection_Release(col);
 
-    test_elem_all((IUnknown*)table, all_types, sizeof(all_types)/sizeof(*all_types));
+    test_elem_all((IUnknown*)table, all_types, ARRAY_SIZE(all_types));
 
     node = clone_node((IUnknown*)table, VARIANT_TRUE);
     test_elem_tag((IUnknown*)node, "TABLE");
-    test_elem_all((IUnknown*)node, all_types, sizeof(all_types)/sizeof(*all_types));
+    test_elem_all((IUnknown*)node, all_types, ARRAY_SIZE(all_types));
     IHTMLDOMNode_Release(node);
 
     node = clone_node((IUnknown*)table, VARIANT_FALSE);
@@ -7611,7 +7611,7 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_tBodies failed: %08x\n", hres);
     ok(col != NULL, "get_tBodies returned NULL\n");
 
-    test_elem_collection((IUnknown*)col, tbodies_types, sizeof(tbodies_types)/sizeof(*tbodies_types));
+    test_elem_collection((IUnknown*)col, tbodies_types, ARRAY_SIZE(tbodies_types));
     IHTMLElementCollection_Release(col);
 
     test_table_cell_spacing(table, NULL);
@@ -7994,7 +7994,7 @@ static void test_iframe_elem(IHTMLElement *elem)
 
     hres = IHTMLDocument2_get_all(content_doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
 
     body = doc_get_body(content_doc);
@@ -8302,7 +8302,7 @@ static void test_elemsbyclass(IHTMLElement *div)
     hres = IHTMLElement6_getElementsByClassName(elem, str, &collection);
     ok(hres == S_OK, "getElementsByClassName failed: %08x\n", hres);
     ok(collection != NULL, "collection == NULL\n");
-    test_elem_collection((IUnknown*)collection, types, sizeof(types)/sizeof(*types));
+    test_elem_collection((IUnknown*)collection, types, ARRAY_SIZE(types));
     IHTMLElementCollection_Release(collection);
     SysFreeString(str);
 
@@ -8364,8 +8364,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
-    test_elem_col_item(col, "x", item_types, sizeof(item_types)/sizeof(item_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
+    test_elem_col_item(col, "x", item_types, ARRAY_SIZE(item_types));
 
     elem = get_elem_col_item_idx(col, 0);
     test_elem_source_index(elem, 0);
@@ -8419,7 +8419,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_doc_elem(doc);
     test_elem_istextedit(elem, VARIANT_FALSE);
-    test_elem_all((IUnknown*)elem, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
+    test_elem_all((IUnknown*)elem, all_types+1, ARRAY_SIZE(all_types)-1);
     IHTMLElement_Release(elem);
 
     get_elem_by_id(doc, "xxx", FALSE);
@@ -8964,7 +8964,7 @@ static void test_elems(IHTMLDocument2 *doc)
         static const elem_type_t select_types[] = { ET_OPTION, ET_OPTION, ET_OPTION };
 
         test_select_put_length((IUnknown*)elem, 3);
-        test_elem_all((IUnknown*)elem, select_types, sizeof(select_types)/sizeof(*select_types));
+        test_elem_all((IUnknown*)elem, select_types, ARRAY_SIZE(select_types));
         test_select_put_length((IUnknown*)elem, 1);
         test_elem_all((IUnknown*)elem, select_types, 1);
         IHTMLElement_Release(elem);
@@ -9204,7 +9204,7 @@ static void test_elem_names(IHTMLDocument2 *doc)
     test_elem_set_innerhtml((IUnknown*)body,
             "<input name=\"test\"><a name=\"test\"></a><a name=\"xxx\"></a><div id=\"test\"></div>");
     col = doc_get_elems_by_name(doc, "test");
-    test_elem_collection((IUnknown*)col, test1_types, sizeof(test1_types)/sizeof(*test1_types));
+    test_elem_collection((IUnknown*)col, test1_types, ARRAY_SIZE(test1_types));
     IHTMLElementCollection_Release(col);
 
     col = doc_get_elems_by_name(doc, "yyy");
@@ -9252,7 +9252,7 @@ static void test_elems2(IHTMLDocument2 *doc)
     elem2 = get_doc_elem_by_id(doc, "innerid");
     ok(elem2 != NULL, "elem2 == NULL\n");
     test_elem_set_outerhtml((IUnknown*)elem2, "<br><a href=\"about:blank\" id=\"aid\">a</a>");
-    test_elem_all((IUnknown*)div, outer_types, sizeof(outer_types)/sizeof(*outer_types));
+    test_elem_all((IUnknown*)div, outer_types, ARRAY_SIZE(outer_types));
     IHTMLElement_Release(elem2);
 
     elem2 = get_doc_elem_by_id(doc, "aid");
@@ -9407,8 +9407,7 @@ static void test_form_element(IHTMLDocument2 *doc, IHTMLElement *parent)
     test_form_put_encoding((IUnknown*)elem, S_OK, "multipart/form-data");
     test_form_put_encoding((IUnknown*)elem, E_INVALIDARG, "image/png");
     test_form_encoding((IUnknown*)elem, "multipart/form-data");
-    test_form_elements((IUnknown*)elem, elems_textarea_input,
-                       sizeof(elems_textarea_input)/sizeof(*elems_textarea_input));
+    test_form_elements((IUnknown*)elem, elems_textarea_input, ARRAY_SIZE(elems_textarea_input));
     test_form_reset((IUnknown*)elem);
     test_form_target((IUnknown*)elem);
 
@@ -9495,7 +9494,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
 
     hres = IHTMLElement_get_all(body, &disp);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)disp, types1, sizeof(types1)/sizeof(types1[0]));
+    test_elem_collection((IUnknown*)disp, types1, ARRAY_SIZE(types1));
     IDispatch_Release(disp);
 
     test_node_remove_child((IUnknown*)body, node);
@@ -9636,12 +9635,12 @@ static void test_noscript(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
 
     body = doc_get_body(doc);
     test_elem_set_innerhtml((IUnknown*)body, "<div>test</div><noscript><a href=\"about:blank\">A</a></noscript>");
-    test_elem_all((IUnknown*)body, body_all_types, sizeof(body_all_types)/sizeof(*body_all_types));
+    test_elem_all((IUnknown*)body, body_all_types, ARRAY_SIZE(body_all_types));
     IHTMLElement_Release(body);
 }
 
@@ -9703,12 +9702,12 @@ static void test_create_stylesheet(IHTMLDocument2 *doc)
         ET_DIV
     };
 
-    test_doc_all(doc, all_types, sizeof(all_types)/sizeof(*all_types));
+    test_doc_all(doc, all_types, ARRAY_SIZE(all_types));
 
     hres = IHTMLDocument2_createStyleSheet(doc, NULL, -1, &stylesheet);
     ok(hres == S_OK, "createStyleSheet failed: %08x\n", hres);
 
-    test_doc_all(doc, all_types2, sizeof(all_types2)/sizeof(*all_types2));
+    test_doc_all(doc, all_types2, ARRAY_SIZE(all_types2));
 
     doc_elem = get_doc_elem(doc);
 
@@ -9773,7 +9772,7 @@ static void test_indent(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
 
     range = test_create_body_range(doc);
@@ -9782,7 +9781,7 @@ static void test_indent(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, indent_types, sizeof(indent_types)/sizeof(indent_types[0]));
+    test_elem_collection((IUnknown*)col, indent_types, ARRAY_SIZE(indent_types));
     IHTMLElementCollection_Release(col);
 }
 
@@ -9801,7 +9800,7 @@ static void test_cond_comment(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
 }
 
@@ -10116,7 +10115,7 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
 
     div = test_create_elem(frag, "div");
