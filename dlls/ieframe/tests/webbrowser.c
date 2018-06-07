@@ -2167,7 +2167,7 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     fetched = 0xdeadbeef;
     memset(verbs, 0xa, sizeof(verbs));
     verbs[1].lVerb = 0xdeadbeef;
-    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
     ok(hres == S_OK, "Next failed: %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
     /* Although fetched==0, an element is returned. */
@@ -2184,12 +2184,12 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     fetched = 0xdeadbeef;
     memset(verbs, 0xa, sizeof(verbs));
     verbs[0].lVerb = 0xdeadbeef;
-    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
     todo_wine ok(hres == S_OK, "Next failed: %08x\n", hres);
     todo_wine ok(fetched == 1, "fetched = %d\n", fetched);
     todo_wine ok(verbs[0].lVerb != 0xdeadbeef, "verbs[0].lVerb = %x\n", verbs[0].lVerb);
 
-    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    hres = IEnumOLEVERB_Next(enum_verbs, ARRAY_SIZE(verbs), verbs, &fetched);
     ok(hres == S_FALSE, "Next failed: %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
 

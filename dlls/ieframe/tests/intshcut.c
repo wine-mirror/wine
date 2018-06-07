@@ -331,7 +331,7 @@ static void test_Load(void)
     GetTempPathW(MAX_PATH, file_path);
     lstrcatW(file_path, test_urlW);
 
-    for(test = load_tests; test < load_tests + sizeof(load_tests)/sizeof(*load_tests); test++) {
+    for(test = load_tests; test < load_tests + ARRAY_SIZE(load_tests); test++) {
         IPropertySetStorage *propsetstorage;
         IPropertyStorage *propstorage;
         PROPVARIANT v;
