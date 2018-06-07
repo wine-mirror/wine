@@ -846,6 +846,24 @@ BOOL WINAPI RegisterPointerDeviceNotifications(HWND hwnd, BOOL notifyrange)
     return TRUE;
 }
 
+/**********************************************************************
+ * GetPointerDevices [USER32.@]
+ */
+BOOL WINAPI GetPointerDevices(UINT32 *device_count, POINTER_DEVICE_INFO *devices)
+{
+    FIXME("(%p %p): partial stub\n", device_count, devices);
+
+    if (!device_count)
+        return FALSE;
+
+    if (devices)
+        return FALSE;
+
+    *device_count = 0;
+    return TRUE;
+}
+
+
 static const WCHAR imeW[] = {'I','M','E',0};
 const struct builtin_class_descr IME_builtin_class =
 {

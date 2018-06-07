@@ -4,7 +4,7 @@
 @ stub GetPointerDevice
 @ stub GetPointerDeviceProperties
 @ stub GetPointerDeviceRects
-@ stub GetPointerDevices
+@ stdcall GetPointerDevices(ptr ptr) user32.GetPointerDevices
 @ stub GetPointerFrameInfo
 @ stub GetPointerFrameInfoHistory
 @ stub GetPointerFramePenInfo
