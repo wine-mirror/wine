@@ -843,7 +843,7 @@ LONG WINAPI GetDisplayConfigBufferSizes(UINT32 flags, UINT32 *num_path_info, UIN
 BOOL WINAPI RegisterPointerDeviceNotifications(HWND hwnd, BOOL notifyrange)
 {
     FIXME("(%p %d): stub\n", hwnd, notifyrange);
-    return FALSE;
+    return TRUE;
 }
 
 static const WCHAR imeW[] = {'I','M','E',0};
