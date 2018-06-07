@@ -108,7 +108,7 @@ static void preproc_test(void) {
         },
     };
 
-    exec_tests("preproc", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("preproc", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_1_1_test(void) {
@@ -134,7 +134,7 @@ static void ps_1_1_test(void) {
         },
     };
 
-    exec_tests("ps_1_1", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_1_1", tests, ARRAY_SIZE(tests));
 }
 
 static void vs_1_1_test(void) {
@@ -277,7 +277,7 @@ static void vs_1_1_test(void) {
         },
     };
 
-    exec_tests("vs_1_1", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("vs_1_1", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_1_3_test(void) {
@@ -517,7 +517,7 @@ static void ps_1_3_test(void) {
         },
     };
 
-    exec_tests("ps_1_3", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_1_3", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_1_4_test(void) {
@@ -627,7 +627,7 @@ static void ps_1_4_test(void) {
         },
     };
 
-    exec_tests("ps_1_4", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_1_4", tests, ARRAY_SIZE(tests));
 }
 
 static void vs_2_0_test(void) {
@@ -818,7 +818,7 @@ static void vs_2_0_test(void) {
         },
     };
 
-    exec_tests("vs_2_0", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("vs_2_0", tests, ARRAY_SIZE(tests));
 }
 
 static void vs_2_x_test(void) {
@@ -879,7 +879,7 @@ static void vs_2_x_test(void) {
         },
     };
 
-    exec_tests("vs_2_x", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("vs_2_x", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_2_0_test(void) {
@@ -952,7 +952,7 @@ static void ps_2_0_test(void) {
         },
     };
 
-    exec_tests("ps_2_0", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_2_0", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_2_x_test(void) {
@@ -1090,7 +1090,7 @@ static void ps_2_x_test(void) {
         },
     };
 
-    exec_tests("ps_2_x", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_2_x", tests, ARRAY_SIZE(tests));
 }
 
 static void vs_3_0_test(void) {
@@ -1175,7 +1175,7 @@ static void vs_3_0_test(void) {
 
     };
 
-    exec_tests("vs_3_0", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("vs_3_0", tests, ARRAY_SIZE(tests));
 }
 
 static void ps_3_0_test(void) {
@@ -1261,7 +1261,7 @@ static void ps_3_0_test(void) {
         },
     };
 
-    exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
+    exec_tests("ps_3_0", tests, ARRAY_SIZE(tests));
 }
 
 static void failure_test(void) {
@@ -1408,7 +1408,8 @@ static void failure_test(void) {
     unsigned int i;
     ID3DBlob *shader, *messages;
 
-    for(i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++) {
+    for(i = 0; i < ARRAY_SIZE(tests); i++)
+    {
         shader = NULL;
         messages = NULL;
         hr = D3DAssemble(tests[i], strlen(tests[i]), NULL,
@@ -1689,7 +1690,7 @@ static void d3dpreprocess_test(void)
 
     /* pInclude tests */
     include.ID3DInclude_iface.lpVtbl = &D3DInclude_Vtbl;
-    for (i = 0; i < sizeof(include_test_shaders) / sizeof(include_test_shaders[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(include_test_shaders); ++i)
     {
         shader = NULL;
         messages = NULL;

@@ -320,7 +320,7 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
         set_float4_d3d9(device, constants, "color", 0.0303f, 0.0f, 0.0f, 0.0202f);
 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
+                probes, ARRAY_SIZE(probes), 1, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -363,7 +363,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
         ID3DXConstantTable_SetFloat(constants, device, "$z", z);
 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
-                probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
+                probes, ARRAY_SIZE(probes), 1, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -417,7 +417,7 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     if (pshader != NULL)
     {
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, if_greater_probes,
-                sizeof(if_greater_probes) / sizeof(*if_greater_probes), 32, 1, __LINE__);
+                ARRAY_SIZE(if_greater_probes), 32, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -427,7 +427,7 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
     if (pshader != NULL)
     {
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, ternary_operator_probes,
-                sizeof(ternary_operator_probes) / sizeof(*ternary_operator_probes), 8, 1, __LINE__);
+                ARRAY_SIZE(ternary_operator_probes), 8, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -476,7 +476,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
     if (pshader != NULL)
     {
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test1_probes,
-                sizeof(vec4_indexing_test1_probes) / sizeof(*vec4_indexing_test1_probes), 1, 1, __LINE__);
+                ARRAY_SIZE(vec4_indexing_test1_probes), 1, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -488,7 +488,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
         ID3DXConstantTable_SetInt(constants, device, "i", 2);
 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test2_probes,
-                sizeof(vec4_indexing_test2_probes) / sizeof(*vec4_indexing_test2_probes), 32, 1, __LINE__);
+                ARRAY_SIZE(vec4_indexing_test2_probes), 32, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);
@@ -550,7 +550,7 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     if (pshader != NULL)
     {
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, sincos_probes,
-                sizeof(sincos_probes) / sizeof(*sincos_probes), 32, 1, __LINE__);
+                ARRAY_SIZE(sincos_probes), 32, 1, __LINE__);
 
         ID3DXConstantTable_Release(constants);
         IDirect3DPixelShader9_Release(pshader);

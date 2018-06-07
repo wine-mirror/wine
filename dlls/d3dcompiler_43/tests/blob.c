@@ -171,7 +171,7 @@ static void test_get_blob_part(void)
     ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
     ok(TAG_ISGN == *(dword+9), "ISGN got %#x, expected %#x.\n", *(dword+9), TAG_ISGN);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
@@ -202,7 +202,7 @@ static void test_get_blob_part(void)
     ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
     ok(TAG_OSGN == *(dword+9), "OSGN got %#x, expected %#x.\n", *(dword+9), TAG_OSGN);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
@@ -234,7 +234,7 @@ static void test_get_blob_part(void)
     ok(TAG_ISGN == *(dword+10), "ISGN got %#x, expected %#x.\n", *(dword+10), TAG_ISGN);
     ok(TAG_OSGN == *(dword+32), "OSGN got %#x, expected %#x.\n", *(dword+32), TAG_OSGN);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
@@ -278,7 +278,7 @@ static void test_get_blob_part(void)
     dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
     ok(test_blob_part[0] != *dword, "DXBC failed got %#x.\n", *dword);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         /* There isn't a full DXBC blob returned for D3D_BLOB_LEGACY_SHADER */
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
@@ -298,7 +298,7 @@ static void test_get_blob_part(void)
     dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
     ok(test_blob_part[0] != *dword, "DXBC failed got %#x.\n", *dword);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         /* There isn't a full DXBC blob returned for D3D_BLOB_XNA_PREPASS_SHADER */
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
@@ -318,7 +318,7 @@ static void test_get_blob_part(void)
     dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
     ok(test_blob_part[0] != *dword, "DXBC failed got %#x.\n", *dword);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         /* There isn't a full DXBC blob returned for D3D_BLOB_XNA_SHADER */
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
@@ -606,7 +606,7 @@ static void test_get_blob_part2(void)
     ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
     ok(TAG_PCSG == *(dword+9), "PCSG got %#x, expected %#x.\n", *(dword+9), TAG_PCSG);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
@@ -639,7 +639,7 @@ static void test_get_blob_part2(void)
     ok(TAG_OSGN == *(dword+24), "OSGN got %#x, expected %#x.\n", *(dword+24), TAG_OSGN);
     ok(TAG_PCSG == *(dword+37), "PCSG got %#x, expected %#x.\n", *(dword+37), TAG_PCSG);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
 
@@ -673,7 +673,7 @@ static void test_get_blob_part2(void)
     dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
     ok(TAG_DXBC != *dword, "DXBC failed got %#x.\n", *dword);
 
-    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parts); i++)
     {
         /* There isn't a full DXBC blob returned for D3D_BLOB_DEBUG_INFO */
         hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);

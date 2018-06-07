@@ -356,7 +356,7 @@ static void test_reflection_desc_vs(void)
     ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
 
     /* GetIn/OutputParameterDesc */
-    for (i = 0; i < sizeof(test_reflection_desc_vs_resultin)/sizeof(*test_reflection_desc_vs_resultin); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultin); ++i)
     {
         pdesc = &test_reflection_desc_vs_resultin[i];
 
@@ -381,7 +381,7 @@ static void test_reflection_desc_vs(void)
                 i, desc.Stream, pdesc->ReadWriteMask);
     }
 
-    for (i = 0; i < sizeof(test_reflection_desc_vs_resultout)/sizeof(*test_reflection_desc_vs_resultout); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultout); ++i)
     {
         pdesc = &test_reflection_desc_vs_resultout[i];
 
@@ -656,7 +656,7 @@ static void test_reflection_desc_ps(void)
     ok(hr == E_INVALIDARG, "GetPatchConstantParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     /* GetIn/OutputParameterDesc */
-    for (i = 0; i < sizeof(test_reflection_desc_ps_resultin)/sizeof(*test_reflection_desc_ps_resultin); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_resultin); ++i)
     {
         pdesc = &test_reflection_desc_ps_resultin[i];
 
@@ -681,7 +681,7 @@ static void test_reflection_desc_ps(void)
                 i, desc.Stream, pdesc->ReadWriteMask);
     }
 
-    for (i = 0; i < sizeof(test_reflection_desc_ps_resultout)/sizeof(*test_reflection_desc_ps_resultout); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_resultout); ++i)
     {
         pdesc = &test_reflection_desc_ps_resultout[i];
 
@@ -899,7 +899,7 @@ static void test_reflection_desc_ps_output(void)
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
     unsigned int i;
 
-    for (i = 0; i < sizeof(test_reflection_desc_ps_output_result)/sizeof(*test_reflection_desc_ps_output_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_output_result); ++i)
     {
         hr = D3DReflect(test_reflection_desc_ps_output_blob[i], test_reflection_desc_ps_output_blob[i][6], &IID_ID3D11ShaderReflection, (void **)&ref11);
         ok(hr == S_OK, "(%u): D3DReflect failed %x\n", i, hr);
@@ -1036,7 +1036,7 @@ static void test_reflection_bound_resources(void)
     ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     /* GetResourceBindingDesc */
-    for (i = 0; i < sizeof(test_reflection_bound_resources_result)/sizeof(*test_reflection_bound_resources_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_bound_resources_result); ++i)
     {
         pdesc = &test_reflection_bound_resources_result[i];
 
@@ -1062,7 +1062,7 @@ static void test_reflection_bound_resources(void)
     }
 
     /* GetResourceBindingDescByName */
-    for (i = 0; i < sizeof(test_reflection_bound_resources_result)/sizeof(*test_reflection_bound_resources_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_bound_resources_result); ++i)
     {
         pdesc = &test_reflection_bound_resources_result[i];
 
@@ -1393,7 +1393,7 @@ static void test_reflection_constant_buffer(void)
     ok(hr == S_OK, "IsEqual failed, got %x, expected %x\n", hr, S_OK);
 
     /* constant buffers */
-    for (i = 0; i < sizeof(test_reflection_constant_buffer_cb_result)/sizeof(*test_reflection_constant_buffer_cb_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_constant_buffer_cb_result); ++i)
     {
         pcbdesc = &test_reflection_constant_buffer_cb_result[i];
 
@@ -1416,7 +1416,7 @@ static void test_reflection_constant_buffer(void)
     }
 
     /* variables */
-    for (i = 0; i < sizeof(test_reflection_constant_buffer_variable_result)/sizeof(*test_reflection_constant_buffer_variable_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_reflection_constant_buffer_variable_result); ++i)
     {
         pvdesc = &test_reflection_constant_buffer_variable_result[i].desc;
 
