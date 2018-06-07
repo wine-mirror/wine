@@ -101,7 +101,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
     df.dwObjSize = sizeof( DIOBJECTDATAFORMAT );
     df.dwFlags = DIDF_RELAXIS;
     df.dwDataSize = sizeof( custom_state );
-    df.dwNumObjs = sizeof( dodf )/sizeof( dodf[0] );
+    df.dwNumObjs = ARRAY_SIZE(dodf);
     df.rgodf = dodf;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
@@ -139,7 +139,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
 
     memset(custom_state, 0x56, sizeof(custom_state));
     IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
-    for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(custom_state); i++)
         ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
 
     /* simulate some keyboard input */
@@ -160,7 +160,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
         ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
         hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
         ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState failed: %08x\n", hr);
-        for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(custom_state); i++)
             ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
     }
     keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
@@ -316,7 +316,7 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     HKL hkl, hkl_orig;
     MSG msg;
 
-    for (i = 0; i < sizeof(expected)/sizeof(expected[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(expected); i++)
     {
         if (expected[i].langid == langid)
         {
@@ -340,7 +340,7 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     SetFocus(hwnd);
     pump_messages();
 
-    for (i = 0; i < sizeof(key2dik_en)/sizeof(key2dik_en[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(key2dik_en); i++)
     {
         BYTE kbd_state[256];
         UINT n;
