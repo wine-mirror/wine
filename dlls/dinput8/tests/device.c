@@ -317,8 +317,8 @@ static void test_action_mapping(void)
     memset (&af, 0, sizeof(af));
     af.dwSize = sizeof(af);
     af.dwActionSize = sizeof(DIACTIONA);
-    af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
-    af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
+    af.dwDataSize = 4 * ARRAY_SIZE(actionMapping);
+    af.dwNumActions = ARRAY_SIZE(actionMapping);
     af.rgoAction = actionMapping;
     af.guidActionMap = ACTION_MAPPING_GUID;
     af.dwGenre = 0x01000000; /* DIVIRTUAL_DRIVING_RACE */
@@ -357,8 +357,8 @@ static void test_action_mapping(void)
         hr = IDirectInputDevice8_SetActionMap(data.keyboard, data.lpdiaf, NULL, 0);
         ok (hr == DI_NOEFFECT, "SetActionMap should have no effect with no actions to map hr=%08x\n", hr);
 
-        af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
-        af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
+        af.dwDataSize = 4 * ARRAY_SIZE(actionMapping);
+        af.dwNumActions = ARRAY_SIZE(actionMapping);
 
         /* test DIDSAM_NOUSER */
         dps.diph.dwSize = sizeof(dps);
@@ -448,8 +448,8 @@ static void test_save_settings(void)
     memset (&af, 0, sizeof(af));
     af.dwSize = sizeof(af);
     af.dwActionSize = sizeof(DIACTIONA);
-    af.dwDataSize = 4 * sizeof(actions) / sizeof(actions[0]);
-    af.dwNumActions = sizeof(actions) / sizeof(actions[0]);
+    af.dwDataSize = 4 * ARRAY_SIZE(actions);
+    af.dwNumActions = ARRAY_SIZE(actions);
     af.rgoAction = actions;
     af.guidActionMap = mapping_guid;
     af.dwGenre = 0x01000000; /* DIVIRTUAL_DRIVING_RACE */
