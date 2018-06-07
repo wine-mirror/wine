@@ -863,6 +863,15 @@ BOOL WINAPI GetPointerDevices(UINT32 *device_count, POINTER_DEVICE_INFO *devices
     return TRUE;
 }
 
+/**********************************************************************
+ * RegisterTouchHitTestingWindow [USER32.@]
+ */
+BOOL WINAPI RegisterTouchHitTestingWindow(HWND hwnd, ULONG value)
+{
+    FIXME("(%p %d): stub\n", hwnd, value);
+    return TRUE;
+}
+
 
 static const WCHAR imeW[] = {'I','M','E',0};
 const struct builtin_class_descr IME_builtin_class =

@@ -606,6 +606,7 @@
 @ stdcall RegisterShellHookWindow (long)
 @ stdcall RegisterSystemThread(long long)
 @ stdcall RegisterTasklist (long)
+@ stdcall RegisterTouchHitTestingWindow(long long)
 @ stdcall RegisterTouchWindow(long long)
 # @ stub RegisterUserApiHook
 @ stdcall RegisterWindowMessageA(str)
