@@ -313,7 +313,7 @@ void __cdecl s_get_number_array(int x[20], int *n)
 {
   int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   memcpy(x, c, sizeof(c));
-  *n = sizeof(c)/sizeof(c[0]);
+  *n = ARRAY_SIZE(c);
 }
 
 int __cdecl s_sum_cs(cs_t *cs)

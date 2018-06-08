@@ -596,7 +596,7 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
 #undef VTBL_PROXY_TEST
 #undef VTBL_PROXY_TEST_NOT_ZERO
 
-    for (i = 0; i < sizeof(interfaces)/sizeof(interfaces[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(interfaces); i++)
         ok( proxy_vtbl[i]->header.piid == interfaces[i],
             "wrong proxy %u iid %p/%p\n", i, proxy_vtbl[i]->header.piid, interfaces[i] );
 

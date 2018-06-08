@@ -149,10 +149,8 @@ static void TestDceErrorInqText (void)
                          */
     DWORD dwCount;
 
-    dwCount = FormatMessageA (FORMAT_MESSAGE_FROM_SYSTEM | 
-              FORMAT_MESSAGE_IGNORE_INSERTS,
-              NULL, RPC_S_NOT_RPC_ERROR, 0, bufferInvalid,
-              sizeof(bufferInvalid)/sizeof(bufferInvalid[0]), NULL);
+    dwCount = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+            RPC_S_NOT_RPC_ERROR, 0, bufferInvalid, ARRAY_SIZE(bufferInvalid), NULL);
 
     /* A random sample of DceErrorInqText */
     /* 0 is success */
