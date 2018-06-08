@@ -54,6 +54,7 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
     TRACE("Starting...\n");
 
     load_at_tasks();
+    check_missed_task_time();
 
     htimer = CreateWaitableTimerW(NULL, FALSE, NULL);
     if (htimer == NULL)

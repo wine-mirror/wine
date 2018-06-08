@@ -1039,6 +1039,30 @@ void check_task_time(void)
     LeaveCriticalSection(&at_job_list_section);
 }
 
+void check_missed_task_time(void)
+{
+    FILETIME current_ft, last_ft;
+    struct job_t *job;
+
+    GetSystemTimeAsFileTime(&current_ft);
+    FileTimeToLocalFileTime(&current_ft, &current_ft);
+
+    EnterCriticalSection(&at_job_list_section);
+
+    LIST_FOR_EACH_ENTRY(job, &at_job_list, struct job_t, entry)
+    {
+        if (SystemTimeToFileTime(&job->data.last_runtime, &last_ft))
+        {
+            if (job_runs_at(job, &last_ft, &current_ft))
+            {
+                run_job(job);
+            }
+        }
+    }
+
+    LeaveCriticalSection(&at_job_list_section);
+}
+
 void remove_job(const WCHAR *name)
 {
     struct job_t *job;
