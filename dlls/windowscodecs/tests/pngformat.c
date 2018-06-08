@@ -717,7 +717,7 @@ static void test_color_formats(void)
      * with tEXt id.
      */
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         /* with the tRNS and PLTE chunks */
         memcpy(buf, png_1x1_data, sizeof(png_1x1_data));

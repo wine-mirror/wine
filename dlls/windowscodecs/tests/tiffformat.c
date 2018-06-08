@@ -454,7 +454,7 @@ static void test_tiff_resolution(void)
     double dpi_x, dpi_y;
     int i;
 
-    for (i = 0; i < sizeof(tiff_resolution_test_data)/sizeof(tiff_resolution_test_data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tiff_resolution_test_data); i++)
     {
         const struct tiff_resolution_test_data *test_data = &tiff_resolution_test_data[i];
         tiff_resolution_image_data.resx = test_data->resx;
