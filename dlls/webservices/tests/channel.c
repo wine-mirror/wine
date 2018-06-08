@@ -134,7 +134,7 @@ static void test_WsOpenChannel(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.length = ARRAY_SIZE( url );
     addr.url.chars  = url;
     hr = WsOpenChannel( NULL, &addr, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -179,7 +179,7 @@ static void test_WsResetChannel(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.length = ARRAY_SIZE( url );
     addr.url.chars  = url;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -301,7 +301,7 @@ static void test_WsOpenListener(void)
     hr = WsOpenListener( listener, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    url.length = sizeof(str)/sizeof(str[0]);
+    url.length = ARRAY_SIZE( str );
     url.chars  = str;
     hr = WsOpenListener( NULL, &url, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -320,7 +320,7 @@ static void test_WsOpenListener(void)
     hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    url.length = sizeof(str2)/sizeof(str2[0]);
+    url.length = ARRAY_SIZE( str2 );
     url.chars  = str2;
     hr = WsOpenListener( listener, &url, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -333,7 +333,7 @@ static void test_WsOpenListener(void)
     hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    url.length = sizeof(str3)/sizeof(str3[0]);
+    url.length = ARRAY_SIZE( str3 );
     url.chars  = str3;
     hr = WsOpenListener( listener, &url, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -387,7 +387,7 @@ static void test_WsResetListener(void)
 {
     WCHAR str[] =
         {'n','e','t','.','t','c','p',':','/','/','+',':','2','0','1','7','/','p','a','t','h'};
-    WS_STRING url = { sizeof(str)/sizeof(str[0]), str };
+    WS_STRING url = { ARRAY_SIZE( str ), str };
     WS_LISTENER *listener;
     WS_LISTENER_STATE state;
     WS_LISTENER_PROPERTY prop;

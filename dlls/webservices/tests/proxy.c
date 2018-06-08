@@ -164,7 +164,7 @@ static void test_WsOpenServiceProxy(void)
     ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.length = ARRAY_SIZE( url );
     addr.url.chars  = url;
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -206,7 +206,7 @@ static void test_WsResetServiceProxy(void)
     ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.length = ARRAY_SIZE( url );
     addr.url.chars  = url;
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -385,7 +385,7 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
 
     *ret = NULL;
     hr = WsCreateServiceProxy( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, NULL,
-                               0, prop, sizeof(prop)/sizeof(prop[0]), &proxy, NULL );
+                               0, prop, ARRAY_SIZE( prop ), &proxy, NULL );
     if (hr != S_OK) return hr;
 
     memset( &addr, 0, sizeof(addr) );
@@ -687,7 +687,7 @@ static DWORD CALLBACK server_proc( void *arg )
         }
         buf[i] = 0;
 
-        for (j = 0; j < sizeof(tests)/sizeof(tests[0]); j++)
+        for (j = 0; j < ARRAY_SIZE( tests ); j++)
         {
             if (strstr( buf, tests[j].req_action ))
             {

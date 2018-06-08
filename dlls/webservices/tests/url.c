@@ -131,7 +131,7 @@ static void test_WsDecodeUrl(void)
     hr = WsDecodeUrl( &str, 0, NULL, (WS_URL **)&url, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
 
@@ -271,7 +271,7 @@ static void test_WsEncodeUrl(void)
     hr = WsEncodeUrl( (const WS_URL *)&url, 0, heap, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         memset( &url, 0, sizeof(url) );
         url.url.scheme          = tests[i].scheme;

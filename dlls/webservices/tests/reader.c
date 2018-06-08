@@ -479,7 +479,7 @@ static void test_WsSetInput(void)
     enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
     enc.charSet               = WS_CHARSET_AUTO;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         input.encodedData     = tests[i].data;
         input.encodedDataSize = tests[i].size;
@@ -1174,7 +1174,7 @@ static void test_WsReadNode(void)
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         hr = set_input( reader, tests[i].text, strlen(tests[i].text) );
         ok( hr == S_OK, "got %08x\n", hr );
@@ -1644,7 +1644,7 @@ static void test_WsReadType(void)
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     enum_desc.values       = enum_values;
-    enum_desc.valueCount   = sizeof(enum_values)/sizeof(enum_values[0]);
+    enum_desc.valueCount   = ARRAY_SIZE( enum_values );
     enum_desc.maxByteCount = 3;
     enum_desc.nameIndices  = NULL;
 
@@ -3526,7 +3526,7 @@ static void test_datetime(void)
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         memset( &date, 0, sizeof(date) );
         prepare_type_test( reader, tests[i].str, strlen(tests[i].str) );
@@ -3578,7 +3578,7 @@ static void test_WsDateTimeToFileTime(void)
     hr = WsDateTimeToFileTime( NULL, &ft, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         memset( &ft, 0, sizeof(ft) );
         hr = WsDateTimeToFileTime( &tests[i].dt, &ft, NULL );
@@ -3716,7 +3716,7 @@ static void test_double(void)
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         val = 0;
         prepare_type_test( reader, tests[i].str, strlen(tests[i].str) );
@@ -4064,7 +4064,7 @@ static void test_entities(void)
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         hr = set_input( reader, tests[i].str, strlen(tests[i].str) );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
@@ -4628,7 +4628,7 @@ static void test_WsReadQualifiedName(void)
     hr = WsReadQualifiedName( reader, heap, NULL, &localname, NULL, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         hr = set_input( reader, tests[i].str, strlen(tests[i].str) );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
@@ -5647,7 +5647,7 @@ static void test_dictionary(void)
 
     UuidCreate( &dict.guid );
     dict.strings     = strings;
-    dict.stringCount = sizeof(strings)/sizeof(strings[0]);
+    dict.stringCount = ARRAY_SIZE( strings );
     dict.isConst     = TRUE;
 
     /* short dictionary element */
@@ -6385,7 +6385,7 @@ static void test_float(void)
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
         val = 0;
         prepare_type_test( reader, tests[i].str, strlen(tests[i].str) );

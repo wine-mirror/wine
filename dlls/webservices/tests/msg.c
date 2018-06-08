@@ -258,7 +258,7 @@ static void test_WsAddressMessage(void)
 
     memset( &endpoint, 0, sizeof(endpoint) );
     endpoint.url.chars  = localhost;
-    endpoint.url.length = sizeof(localhost)/sizeof(localhost[0]);
+    endpoint.url.length = ARRAY_SIZE( localhost );
     hr = WsAddressMessage( msg, &endpoint, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
