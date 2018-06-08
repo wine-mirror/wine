@@ -394,6 +394,12 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
     TRACE("file_version %04x\n", fixed->file_version);
     TRACE("uuid %s\n", wine_dbgstr_guid(&fixed->uuid));
 
+    if (fixed->file_version != 0x0001)
+    {
+        TRACE("invalid file version\n");
+        return FALSE;
+    }
+
     TRACE("name_size_offset %04x\n", fixed->name_size_offset);
     TRACE("trigger_offset %04x\n", fixed->trigger_offset);
     TRACE("error_retry_count %u\n", fixed->error_retry_count);
