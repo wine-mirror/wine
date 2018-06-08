@@ -623,6 +623,47 @@ void add_job(const WCHAR *name)
     LeaveCriticalSection(&at_job_list_section);
 }
 
+static inline BOOL is_file(const WIN32_FIND_DATAW *data)
+{
+    return !(data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+void load_at_tasks(void)
+{
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
+    static const WCHAR allW[] = { '*',0 };
+    WCHAR windir[MAX_PATH], path[MAX_PATH];
+    WIN32_FIND_DATAW data;
+    HANDLE handle;
+
+    GetWindowsDirectoryW(windir, MAX_PATH);
+    lstrcpyW(path, windir);
+    lstrcatW(path, tasksW);
+    lstrcatW(path, allW);
+
+    handle = FindFirstFileW(path, &data);
+    if (handle == INVALID_HANDLE_VALUE) return;
+
+    do
+    {
+        if (is_file(&data))
+        {
+            lstrcpyW(path, windir);
+            lstrcatW(path, tasksW);
+
+            if (lstrlenW(path) + lstrlenW(data.cFileName) < MAX_PATH)
+            {
+                lstrcatW(path, data.cFileName);
+                add_job(path);
+            }
+            else
+                FIXME("too long file name %s\n", debugstr_w(data.cFileName));
+        }
+    } while (FindNextFileW(handle, &data));
+
+    FindClose(handle);
+}
+
 static BOOL write_signature(HANDLE hfile)
 {
     struct

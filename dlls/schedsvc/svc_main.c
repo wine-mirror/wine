@@ -53,6 +53,8 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
 
     TRACE("Starting...\n");
 
+    load_at_tasks();
+
     htimer = CreateWaitableTimerW(NULL, FALSE, NULL);
     if (htimer == NULL)
     {
