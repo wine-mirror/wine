@@ -536,12 +536,12 @@ todo_wine {
 }
 
     SetLastError(0xdeadbeef);
-    ret = pGetMappedFileNameW(GetCurrentProcess(), base, map_nameW, sizeof(map_nameW)/sizeof(map_nameW[0]));
+    ret = pGetMappedFileNameW(GetCurrentProcess(), base, map_nameW, ARRAY_SIZE(map_nameW));
 todo_wine {
     ok(ret, "GetMappedFileNameW error %d\n", GetLastError());
     ok(ret > strlen(device_name), "map_name should be longer than device_name\n");
 }
-    if (nt_get_mapped_file_name(GetCurrentProcess(), base, nt_map_name, sizeof(nt_map_name)/sizeof(nt_map_name[0])))
+    if (nt_get_mapped_file_name(GetCurrentProcess(), base, nt_map_name, ARRAY_SIZE(nt_map_name)))
     {
         ok(memcmp(map_nameW, nt_map_name, lstrlenW(map_nameW)) == 0, "map name does not start with a device name: %s\n", map_name);
         WideCharToMultiByte(CP_ACP, 0, map_nameW, -1, map_name, MAX_PATH, NULL, NULL);
@@ -658,7 +658,7 @@ static void test_GetProcessImageFileName(void)
 
     /* correct call */
     memset(szImgPathW, 0xff, sizeof(szImgPathW));
-    ret = pGetProcessImageFileNameW(hpQI, szImgPathW, sizeof(szImgPathW)/sizeof(WCHAR));
+    ret = pGetProcessImageFileNameW(hpQI, szImgPathW, ARRAY_SIZE(szImgPathW));
     ok(ret > 0, "GetProcessImageFileNameW should have succeeded.\n");
     ok(szImgPathW[0] == '\\', "GetProcessImageFileNameW should have returned an NT path.\n");
     ok(lstrlenW(szImgPathW) == ret, "Expected length to be %d, got %d\n", ret, lstrlenW(szImgPathW));
