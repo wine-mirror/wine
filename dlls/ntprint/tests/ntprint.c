@@ -67,7 +67,7 @@ static void test_PSetupCreateMonitorInfo(VOID)
 {
     HANDLE  mi;
     WCHAR buffer[1024] = {'\\','\\'};
-    UINT len = sizeof(buffer) / sizeof(buffer[0]) - 2;
+    UINT len = ARRAY_SIZE(buffer) - 2;
     GetComputerNameW(buffer + 2, &len);
 
     SetLastError(0xdeadbeef);
@@ -155,7 +155,7 @@ static void test_PSetupEnumMonitor(VOID)
         "and '> 0')\n", res, GetLastError(), minsize);
 
 
-    size = sizeof(buffer) / sizeof(buffer[0]);
+    size = ARRAY_SIZE(buffer);
     if ((minsize + 1) > size) {
         skip("overflow: %u\n", minsize);
         pPSetupDestroyMonitorInfo(mi);
@@ -165,7 +165,7 @@ static void test_PSetupEnumMonitor(VOID)
     if (0) {
         /* XP: ERROR_INVALID_PARAMETER,  w2k: Crash */
         SetLastError(0xdeadbeef);
-        size = sizeof(buffer) / sizeof(buffer[0]);
+        size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(NULL, 0, buffer, &size);
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
             "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -175,7 +175,7 @@ static void test_PSetupEnumMonitor(VOID)
     if (0) {
         /* XP: Crash,  w2k: Success (how can that work?) */
         SetLastError(0xdeadbeef);
-        size = sizeof(buffer) / sizeof(buffer[0]);
+        size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(mi, 0, NULL, &size);
         trace("got %u with %u and %u\n", res, GetLastError(), size);
     }
@@ -213,7 +213,7 @@ static void test_PSetupEnumMonitor(VOID)
     while (res && (index < 20)) {
         SetLastError(0xdeadbeef);
         buffer[0] = '\0';
-        size = sizeof(buffer) / sizeof(buffer[0]);
+        size = ARRAY_SIZE(buffer);
         res = pPSetupEnumMonitor(mi, index, buffer, &size);
         ok( res || (GetLastError() == ERROR_NO_MORE_ITEMS),
             "(%u) got %u with %u and %u (expected '!=0' or: '0' with "
