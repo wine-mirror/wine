@@ -169,7 +169,7 @@ static void test_null_renderer_aggregations(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(iids); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_NullRenderer, IID_IReferenceClock, *iids[i]);
     }
@@ -182,7 +182,7 @@ static void test_video_renderer_aggregations(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(iids); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_VideoRenderer,
                          IID_IReferenceClock, *iids[i]);
@@ -199,7 +199,7 @@ static void test_filter_graph_aggregations(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(iids); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_FilterGraph,
                          IID_IReferenceClock, *iids[i]);
@@ -213,7 +213,7 @@ static void test_filter_mapper_aggregations(void)
     };
     int i;
 
-    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(iids); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_FilterMapper2,
                          IID_IReferenceClock, *iids[i]);

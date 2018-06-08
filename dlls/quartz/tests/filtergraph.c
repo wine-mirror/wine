@@ -50,7 +50,7 @@ static WCHAR *load_resource(const WCHAR *name)
     HRSRC res;
     void *ptr;
 
-    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcatW(pathW, name);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -1500,14 +1500,14 @@ static HRESULT createtestfilter(const CLSID* pClsid, const TestFilterPinData *pi
         pinInfo.pFilter = &pTestFilter->IBaseFilter_iface;
         if (pinInfo.dir == PINDIR_INPUT)
         {
-            lstrcpynW(pinInfo.achName, wcsInputPinName, sizeof(pinInfo.achName) / sizeof(pinInfo.achName[0]));
+            lstrcpynW(pinInfo.achName, wcsInputPinName, ARRAY_SIZE(pinInfo.achName));
             hr = TestFilter_Pin_Construct(&TestFilter_InputPin_Vtbl, &pinInfo, &mt, &pTestFilter->csFilter,
                 &pTestFilter->ppPins[i]);
 
         }
         else
         {
-            lstrcpynW(pinInfo.achName, wcsOutputPinName, sizeof(pinInfo.achName) / sizeof(pinInfo.achName[0]));
+            lstrcpynW(pinInfo.achName, wcsOutputPinName, ARRAY_SIZE(pinInfo.achName));
             hr = TestFilter_Pin_Construct(&TestFilter_OutputPin_Vtbl, &pinInfo, &mt, &pTestFilter->csFilter,
                  &pTestFilter->ppPins[i]);
         }
