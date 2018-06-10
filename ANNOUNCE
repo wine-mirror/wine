@@ -1,13 +1,12 @@
-The Wine maintenance release 3.0.1 is now available.
+The Wine maintenance release 3.0.2 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes
-  - Translation updates
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0.1.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.1.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0.2.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.2.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -23,242 +22,210 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0.1 (total 60):
+Bugs fixed in 3.0.2 (total 53):
 
-  23033  Tages Protection v5.x: games report "DLL not found shell.dll16.dll" (Runaway 2: The Dream Of The Turtle, ...)
-  25138  Black and White 2 demo crashes on startup (ID3DXEffect interface changes between d3dx9_xx versions)
-  32104  KwMusic: crashes during installing
-  32802  Janetter 4.1.1.0 fails to start properly and gives an error saying: "Backend server cannot init"
-  35268  64bit InstallShield installer uses 32bit typelib function offsets
-  35910  TuneUp Utilities 2014 installer crashes (API signature mismatch for NtAllocateUuids)
-  36143  Symantec Norton 360 installer reports 'This product is not compatible with this computer's current operating system' (RtlVerifyVersionInfo doesn't handle major/minor/service pack condition mask properly)
-  36718  Mindjet MindManager 14.x/15.x installer fails with 'Microsoft .NET Framework version 4.0.30319 or higher required' (builtin 'MsiNetAssemblySupport' property missing)
-  37217  wine builtin iexplore couldn't load local pages correctly in chinese named folders
-  37809  C runtime dlls can't link with uclibc (bessel functions missing)
-  37852  Sentinel HASP 'hardlock.sys' kernel driver custom imports resolver can't cope with many 'ntoskrnl.exe' functions being fowarded to 'ntdll.dll' (Minitab 16 fails to start)
-  37997  Jeskola Buzz Build 1499 (.NET 4.0 app) crashes on unimplemented function msvcp100.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z
-  38352  Multiple games need d3dx9_36.dll.D3DXComputeNormalMap (Foresight, Gamestudio Venice, GOG King Arthur Collection)
-  38838  MS Office Pro Plus 2010 reruns setup on starting any app when Windows version is Vista or later
-  39500  DRM kernel drivers used by some game demos crash on unimplemented function hal.dll.KeQueryPerformanceCounter (Secret Files: Tunguska, Sherlock Holmes vs Jack the Ripper)
-  40539  Fail to start HPDiagnosticCoreUI.exe
-  40926  Multiple games (Solus Project, Dying Light) require unimplemented function msvcp110.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z
-  41096  ResEdit Resources treeview has rendered wrongly positioned first branch
-  42170  Microsoft .NET Framework 4.6.2 offline installer does not complete, needs wevtapi.EvtNext stub
-  42468  Broken msxml text nodes escaping
-  42789  Qemu 2.9.0-rc3 crashes before displaying anything
-  43041  Multiple application installers crash due to missing message string for 0x800b0100 (TRUST_E_NOSIGNATURE) (CodeXL 2.3, RT Se7en Lite)
-  43256  Civilization V in-game font corrupted
-  43357  Stars in Shadow crashes on startup
-  43520  Magic The Gathering Online - corrupted rendering of CMYK jpegs
-  43538  x64dbg needs unimplemented function msvcp120.dll.??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z
-  43728  Magic: The Gathering Online intensive CPU usage when idle
-  43998  treeview not drawn correctly
-  44053  MobilePASS application quits with an error, needs unimplemented function bcrypt.dll.BCryptImportKey
-  44176  EverQuest crashes with unimplemented function d3dx9_43.dll.D3DXCreateKeyframedAnimationSet
-  44213  ShareHolder Finder 0.9.3.0 fails to generate unique hardware id, reports 'Error: The requested action with this object has failed.' (several 'Win32_ComputerSystemProduct' WMI class properties missing)
-  44222  Office 2010 Pro Plus reruns setup on starting any app even when Windows version is XP
-  44255  Wolf RPG Editor: Game.exe zombifies upon quit
-  44265  Options dialog triggers exception upon close in Windows Media Player 6.4
-  44270  Exception when organizing favorites in Windows Media Player 6.4 (unimplemented function shdocvw.dll.DoOrganizeFavDlg)
-  44296  Qt 5 programs fail to resolve DNS SRV records
-  44310  WritePrivateProfileString doesn't check for flush errors
-  44329  Listview does not reset returned state mask for subitems
-  44349  winedbg: stepping is broken using GDB proxy
-  44428  x64dbg needs unimplemented function msvcr120.dll.??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
-  44441  for loop reading a file strips out double quotes and then equals
-  44468  x64dbg crashes on unimplemented function msvcr120.dll.?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ
-  44473  glyph overlap in Delphi editor
-  44475  Microsoft SQL Server 2008 Express Edition installer fails install .NET assemblies into GAC
-  44482  x64dbg crashes during exit on unimplemented function msvcp120.dll.??0_Runtime_object@details@Concurrency@@QEAA@XZ
-  44492  winedbg reports unknown mode, fails to backtrace etc. in protected-mode with 64-bit wineserver
-  44501  Missing D3D11_1_UAV_SLOT_COUNT constant
-  44512  Royale Noir theme - Various: fixme:uxtheme:DrawThemeTextEx unsupported flags
-  44550  ReactOS ftp.exe: enters endless loop on CTRL-Z
-  44570  explorer.exe crashes when opening relative paths
-  44578  ShellDispatch::BrowseForFolder is not implemented
-  44616  Multiple Blizzard games need 'ntdll.NtCreateThreadEx' implementation (Diablo III v2. 6. 1. 49286+, World of Warcraft, Overwatch)
-  44626  AvP Classic 2000 (Steam) launcher crashes when attempting to start the game
-  44628  BaiduMusic needs dwmapi.DwmSetIconicThumbnail (stub)
-  44641  Sentinel HASP 'hardlock.sys' kernel driver crashes on unimplemented function ntoskrnl.exe.RtlCreateRegistryKey
-  44647  Smart Diary Suite 4 just segfaults
-  44654  EDIdEv Framework EDI Runtime installer fails due to 'sfc.SfcGetNextProtectedFile' not setting last-error code
-  44701  xinput console spam with steam
-  44717  Bermuda (Steam, Indie game) crashes due to 'msscript.ocx' 'ScriptControl_put_AllowUI' being a stub
-  44749  Sentinel HASP 'hardlock.sys' kernel driver expects ntdll.RtlCheckRegistryKey to return STATUS_SUCCESS on empty path
+  13351  Empire Earth v. 1.00: mouse is not responsive
+  15350  wrong keyboard layout in Tomb Raider Anniversary / Legend
+  29842  IE4 crashes on showing certificate authorities, needs wininet.dll.ParseX509EncodedCertificateForListBoxEntry
+  29999  Bloodrayne 2: text in the menus misplaced
+  30076  .NET Framework 4.x with WinVer setting "Windows 7" spams terminal with "LocaleNameToLCID/LCIDToLocaleName unsupported flags 8000000" (LOCALE_ALLOW_NEUTRAL_NAMES)
+  30611  Lazarus browser sample fails, needs ieframe:ViewObject_Draw implementation
+  31850  Age of Mythology needs pidgen.dll.PIDGenSimpA
+  34101  Need for Speed: Shift demo crashes in 'purist' mode (d3dx9_36) (needs ID3DXEffect::FindNextValidTechnique method implementation)
+  36843  "Read only"checkbox on Save As dialog
+  37228  Cisco Jabber 11.x crashes on unimplemented function ntdsapi.dll.DsCrackNamesW
+  37594  World of Warcraft in-game browser does not work (needs advapi32.BuildSecurityDescriptorW() implementation)
+  38564  Rush for Berlin Gold crashes after starting
+  38836  SCM 'StartService' must wait for driver service entry point execution before return (PunkBuster 'PnkBstrB' service failure, CPU-Z randomly fails to load its driver, BattlEye 'BEDaisy' kernel service)
+  39209  Smart Diary Suite 4 crashes when updating options ('CLSID_AudioCompressorCategory', '{33D9A761-90C8-11d0-BD43-00A0C911CE86}' must be treated as special category)
+  39452  mpr.WNetGetUniversalName() return value (causes Intel MPI to fail)
+  39979  SupArc crashes inside msvcr110
+  40767  Indiana Jones and The Emperor's Tomb quits after the splash screen
+  41377  Windows 10 DISM fails to find its resources (kernel32 SetThreadUILanguage must return non-zero/best fit language identifier if zero is passed)
+  42267  Rogue-Killer installer crashes on unimplemented function ntdll.dll._aulldvrm
+  42446  Native Instruments 'Native Access' 1.1.x fails to start, reports 'You cannot start Native Access from the mounted disk'
+  42686  Poedit crashes on start on unimplemented function msvcp140.dll.?_IsNonBlockingThread@_Task_impl_base@details@Concurrency@@SA_NXZ
+  42768  Ys: The Ark of Napishtim (Ys 6) silently crashes playing in-game videos
+  43351  x64dbg needs kernel32.dll CreateRemoteThreadEx in Win7+ mode
+  43831  Cuphead (Steam) crashes on startup (needs setupapi.CM_Get_Parent stub to return CR_NO_SUCH_DEVNODE)
+  43930  iCopy 1.6.x (.NET 2.0 app) crashes on startup (IWiaDevMgr::SelectDeviceDlg DeviceID pointer parameter can be NULL, needs be declared 'unique' for RPC marshalling)
+  44135  Olive Tree Bible Software BibleStudySetup_6.0.23.exe fails to install
+  44138  Native Access needs unimplemented function iphlpapi.dll.if_indextoname
+  44278  Multiple applications crash on unimplemented function msvcp140.dll.?uncaught_exceptions@std@@YAHXZ
+  44404  Several .Net apps (e.g. Remembear) throw errors/crash,caused by msctf stubs TextStoreACPSink_{OnTextChange,OnSelectionChange,OnLayoutChange}
+  44466  PrtSc button crashes StarCraft
+  44496  Custom imports resolver used by multiple kernel drivers can't cope with 'ntoskrnl.exe' low-level (wc)string/copy helpers being forwarded to 'msvcrt.dll' (BattlEye 'BEDaisy', Sentinel HASP 'hardlock.sys')
+  44504  vlc 2.2.6: playback performance hampered
+  44530  64-bit Sentinel HASP hardlock.sys kernel driver tries to access to DR7 (not handled in ntoskrnl emulate_instruction)
+  44693  Native Access crashes on unimplemented function vcruntime140.dll.__current_exception
+  44742  Divinity: Original Sin 2 crashes due to unimplemented IPHLPAPI.DLL.ConvertLengthToIpv4Mask
+  44744  Autodesk Fusion 360 need propsys.dll.PSGetPropertyKeyFromName to be installed
+  44746  Running any command in MS PowerShell 6+ (.NET app) results in advapi:EventActivityIdControl console spam
+  44770  ExpressPCB Plus 1.1 (.NET 3.5 SP1 app) throws 'System.NotImplementedException: Not implemented at System.Drawing.Pen.TranslateTransform' (GdipTranslatePenTransform not implemented)
+  44772  progecad 2018 installer does not start
+  44804  PCBWeb crashes: Call to unimplemented function d3dx11_43.dll.D3DX11CreateTextureFromFileW
+  44811  BattlEye 'BEDaisy' kernel service crashes on unimplemented function ntoskrnl.exe._chkstk
+  44818  ntdll.NtClose (kernel32.CloseHandle) should throw invalid handle exception (EXCEPTION_INVALID_HANDLE) for invalid handles when run under debugger
+  44864  Incoming crashes after the intro video
+  44874  Phonetools 9.x crashes on unimplemented function KERNEL32.dll.RequestDeviceWakeup
+  44904  winebus blocks auto start up of scheduler service
+  44923  Failing kernel driver services can stall WINEPREFIX bootstrapping/startup for a considerable time when configured as autostart
+  44924  StarForce v3 kernel drivers need ntoskrnl.IoCreateSynchronizationEvent to return a non-NULL handle
+  44932  limited list of available printer's paper/page size
+  44944  Adobe Premiere Elements 14 fails to install: ERROR: Third party payload installer pxengine5_08_13a.exe failed with exit code: -1
+  44971  HackShield for Banking Driver 'HSBDrvNt.sys' (part of Ahnlab Safe Transaction) crashes on unimplemented function ntoskrnl.exe.ExInterlockedPopEntrySList
+  44984  Maya 2018 LT Installer requires unimplemented function api-ms-win-crt-time-l1-1-0.dll._timespec64_get
+  44993  Magic The Gathering Arena fails to install
+  45026  Windows File Manager (WinFile) fails to build in winelib (LPDROPSTRUCT missing from winuser.h)
 
 ----------------------------------------------------------------
 
-Changes since 3.0:
+Changes since 3.0.1:
 
-Akihiro Sagawa (6):
-      gdi32: Fix ABC width calculations when applying transformations internally.
-      gdi32: Fix synthetic bold outline text metrics.
-      gdi32/tests: Add more text metrics tests in synthetic bold bitmap fonts.
-      gdi32: Fix text metrics in synthetic bold bitmap fonts.
-      ws2_32/tests: Add ioctlsocket(FIONREAD) tests with listening socket.
-      ws2_32: Fix ioctlsocket(FIONREAD) with listening socket.
+Alexander Morozov (1):
+      ntoskrnl.exe: Add stubs for ExAcquireFastMutexUnsafe and ExReleaseFastMutexUnsafe.
 
-Alex Henrie (2):
-      msxml3: Remove CRs in domtext_put_data and add them in domtext_get_xml.
-      msvcrt: Compile but show an error if Bessel functions aren't available.
+Alexandre Julliard (7):
+      winex11: Use the correct colormap for the OpenGL parent window.
+      winex11: Store the visual info in the OpenGL pixel format.
+      winex11: Store only the pixmap size instead of the window rectangle in the GL drawable.
+      winex11: Implement refcounting of GL drawables.
+      winex11: Hold a reference to the drawable from the GL context.
+      wininet/tests: Update the winehq.org certificate data.
+      ntoskrnl: Add emulation of CRn and DRn registers on x86-64.
 
-Alexandre Julliard (5):
-      ntoskrnl: Avoid forwarding to ntdll, link directly instead.
-      urlmon/tests: Update the IP address for the WineHQ server.
-      ntdll: Avoid pushl %esp instruction in RtlUnwind prolog.
-      configure: Check the positive form of the warning options.
-      ntdll: Fix crash on nested thread exit.
-
-Alistair Leslie-Hughes (2):
-      d3dx9: Stub D3DXCreateKeyframedAnimationSet().
-      msscript: Implement IScriptControl get/set AllowUI.
+Alistair Leslie-Hughes (9):
+      comctl32/treeview: Fix item icon background when using TVS_FULLROWSELECT style.
+      pidgen: Add PIDGenSimpA stub.
+      winedevice: Wait until driver has started before returning.
+      ntoskrnl.exe: Dont forward some msvcrt functions.
+      propsys: Add PSGetPropertyKeyFromName stub.
+      ntoskrnl.exe: Implement _chkstk.
+      winedevice: Improve error handling when a driver fails to load.
+      maintainers: Update Staging branch.
+      maintainers: Remove previous wine-staging maintainers.
 
 Andrew Eikum (1):
-      advapi32: Also wait on services without a control thread during shutdown.
+      maintainers: Remove myself from a dmusic DLL.
 
 Andrew Wesie (1):
-      ntdll: Implement NtCreateThreadEx.
+      advapi32: Implement BuildSecurityDescriptorW.
 
 Andrey Gusev (1):
-      po: Update Ukrainian translation.
+      d3dx11: Add D3DX11CreateTextureFromFileA/W stub.
 
-Anton Romanov (2):
-      ole32: Make CoWaitForMultipleHandles peek at all posted messages.
-      windowscodecs: Fix data corruption for Adobe CMYK JPEGs.
+André Hentschel (3):
+      wininet: Fix negated check for drain_content result (clang).
+      gdiplus: Add stub for GdipSetPathGradientPath.
+      progman: Fix warning in PUT_SHORT macro (clang).
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Austin English (4):
+      wininet: Add ParseX509EncodedCertificateForListBoxEntry stub.
+      ntdsapi: Add DsCrackNamesA/W stubs.
+      include/winuser.h: Add tagDROPSTRUCT struct.
+      include/wfext.h: Add miscellaneous FM_* defines.
 
-Bernhard Übelacker (1):
-      user32: Validate DIB offset in CURSORICON_GetFileEntry.
+Christian Inci (1):
+      wined3d: Recognize Titan V.
 
-Christian Costa (1):
-      wined3d: Recognize GTX 560M card with NVIDIA driver.
+Dagfinn Reiakvam (1):
+      iphlpapi: Add support for ConvertLengthToIpv4Mask().
 
-Fabian Maurer (1):
-      cmd.exe: Parse parameters in "FOR /F" properly.
+Dmitry Timoshkov (5):
+      avifil32: Correct threading model on interfaces.
+      services: Add a 3000 ms timeout to StartService.
+      winspool.drv: Add A0, A1 and A2 paper sizes to generic.ppd.
+      dinput: The DIK_ key code should match the scan code.
+      sspicli: Add forwards to secur32.
 
-Gijs Vermeulen (2):
-      compobj.dll16: Add StringFromIID.
-      ole2disp.dll16: Implement SafeArrayGet[UBound|LBound].
+Gijs Vermeulen (1):
+      ntoskrnl.exe: Improve IoCreateSynchronizationEvent stub.
 
-Hans Leidekker (5):
-      dnsapi: Use default server list if passed in array is empty.
-      msi: Don't mark uncompressed global assembly files as installed until they are in the assembly cache.
-      wbemprox: Add more Win32_ComputerSystemProduct properties.
-      msi: Properly set the MsiNetAssemblySupport property.
-      bcrypt: Partial implementation of BCryptImportKey and BCryptExportKey.
+Hans Leidekker (2):
+      iphlpapi: Implement if_indextoname.
+      msi: Don't cache the base URL.
 
-Henri Verbeet (2):
-      include: Add d3d11.1 and d3d11.2 constants to d3d11.idl.
-      winedbg: Handle byte-sized registers in cpu_register() and cpu_register_hex_from().
+Henri Verbeet (1):
+      winex11: Restore the X11DRV_FLUSH_GL_DRAWABLE XFlush() for setups without OML_sync_control.
 
-Huw D. M. Davies (4):
-      oleaut32: Fix vtable offset for a SYS_WIN32 typelib loaded on WIN64.
-      winebrowser: Fix calling convention for wine_get_unix_file_name().
-      winedbg: Fix the operand order of some XMM instructions.
-      winedbg: Add cvtdq2ps and cvtps2pd opcodes.
+Huw D. M. Davies (1):
+      winebuild: On x86_64, save xmm0 - 3 during the delayed import lookup.
 
-Jacek Caban (1):
-      mshtml: Use nsIDOMEvent directly to prevent default event handling in dispatch_event_object.
+Ivan Kalvachev (1):
+      kernel32: Add DECL_HOTPATCH to OutputDebugString functions.
 
-James Woodcock (1):
-      msvcrt: Gets() should handle EOF on stdin gracefully.
+Jarkko Korpi (1):
+      kernel32: Silence repeated LocaleNameToLCID unsupported flags.
 
-Julian Rüger (1):
-      po: Update German translation.
+Johann Frei (1):
+      dinput: Implement X/Y axis granularity and add test.
 
-Kai Krakow (1):
-      wined3d: Recognize GTX 1050 Ti card with NVIDIA driver.
+Louis Lenders (9):
+      ntdll: Update version resource.
+      kernel32/tests: Add simple test for SetThreadUILanguage.
+      kernel32: Improve stub for SetThreadUILanguage.
+      iexplore/iexplore.inf: Add svcVersion reg key and update to win7.
+      msctf: Return S_OK in TextStoreACPSink_OnTextChange.
+      msctf: Return S_OK in TextStoreACPSink_OnSelectionChange.
+      msctf: Return S_OK in TextStoreACPSink_OnLayoutChange.
+      wine.inf: Create catroot directory.
+      kernel32: Add stub for RequestDeviceWakeup.
 
-Kim Malmo (1):
-      po: Update Norwegian translation.
-
-Lauri Kenttä (1):
-      po: Update Finnish translation.
-
-Louis Lenders (4):
-      kernel32: Add message resource for TRUST_E_NOSIGNATURE.
-      gdiplus: Fix argument check in GdipLoadImageFromStream().
-      xinput1_3: Quiet a noisy fixme.
-      ntdll: Match NtAllocateUuids signature to Windows 2000 instead of NT4.
-
-Marcin Mikołajczak (1):
-      po: Update Polish translation.
+Mark White (1):
+      kernel32: Fix forward slash path handling to GetVolumePathNameW.
 
 Martin Storsjo (1):
-      configure: Check for -Wno-pragma-pack.
+      ucrtbase: Hook up __intrinsic_setjmpex for x86_64 and arm64.
 
-Matteo Bruni (1):
-      server: Avoid writing out of bounds in get_selector_entry().
+Matteo Bruni (2):
+      d3dx9: Implement FindNextValidTechnique().
+      d3d8: Forbid setting a viewport larger than the render target.
 
-Michael Müller (6):
-      shell32: Use manual redirection for RunDLL_CallEntry16.
-      dwmapi: Add DwmSetIconicThumbnail() stub.
-      hal: Implement KeQueryPerformanceCounter.
-      wbemprox: Add FreePhysicalMemory to Win32_OperatingSystem.
-      wbemprox: Provide DeviceID, Location and PortName for printers.
-      sfc_os: Set an error code in SfcGetNextProtectedFile stub.
+Michael Müller (3):
+      ieframe: Return S_OK in IViewObject::Draw stub.
+      mpr: Return correct error code for non network paths and REMOTE_NAME_INFO_LEVEL in WNetGetUniversalName.
+      ntoskrnl: Implement ExInterlockedPopEntrySList.
 
-Michael Stefaniuc (3):
-      quartz: Don't create the advise thread during the clock teardown.
-      include: Add generic HeapAlloc() wrappers.
-      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+Michael Stefaniuc (1):
+      maintainers: Add a DirectMusic section.
 
-Nikolay Sivov (10):
-      comctl32/listview: Always return zero state mask for subitems.
-      wevtapi: Add EvtNext() stub.
-      uxtheme: Properly initialize text drawing options.
-      shell32: Partially implement IShellDispatch::BrowseForFolder().
-      oleaut32: Don't reset property page site to NULL.
-      gdiplus/tests: Add some invalid arguments tests for GdipLoadImageFromStream().
-      kernel32/tests: Add more tests for VerifyVersionInfo().
-      comctl32/toolbar: Fix a crash when tracing special button string identifier.
-      comctl32/treeview: Fix tooltip window leak.
-      po: Update Russian translation.
+Nikolay Sivov (6):
+      comdlg32: Add a helper to test if file dialog hook is enabled.
+      comdlg32: Hide Read-only checkbox for Save dialogs.
+      gdiplus: Implement GdipTranslatePenTransform.
+      wincodecs: Use static array for property bag descriptions.
+      wincodecs: Encoder options are optional for CreateNewFrame().
+      kernel32: Add CreateRemoteThreadEx().
 
-Paul Graham (1):
-      kernel32: Fix failure reporting in WritePrivateProfile* and add tests.
-
-Piotr Caban (8):
-      msvcp100: Add Concurrency::details::_Concurrent_queue_base_v4 class stub.
-      msvcr110: Add Concurrency::_Trace_agents function stub.
-      msvcr100: Add _NonReentrantPPLLock@details class stub.
-      user32: Fix itemData passed in ListBox WM_MEASUREITEM message.
-      user32/tests: Add listbox WM_MEASUREITEM tests.
-      comctl32: Update all items rects in TREEVIEW_RecalculateVisibleOrder.
-      msvcrt: Fix misleading indentation in gets.
-      msvcp100: Add _Runtime_object class implementation.
+Piotr Caban (6):
+      msvcrt: Optimize _strupr implementation in C locale.
+      msvcrt/tests: Add _strupr tests.
+      msvcp140: Add __uncaught_exceptions implementation.
+      ucrtbase: Add __current_exception() implementation.
+      msvcp140: Add _Task_impl_base::_IsNonBlockingThread stub.
+      ucrtbase: Add _timespec{32,64}_get implementation.
 
 Sebastian Lackner (2):
-      ntdll: Fix condition mask handling in RtlVerifyVersionInfo.
-      d3dx9: Adjust ID3DXEffect interface based on DLL version.
+      ntdll: Throw exception if invalid handle is passed to NtClose and debugger enabled.
+      advapi32/tests: Add basic tests for BuildSecurityDescriptor.
+
+Stefan Dösinger (2):
+      ddraw: Fix D3DEXECUTEDATA.dwSize handling.
+      ddraw: Don't read past the end of the executebuffer.
 
 Stefan Leichter (2):
-      ntdll: Fix RtlCheckRegistryKey when called with empty path.
-      ntdll: Implement RtlCreateRegistryKey.
+      advapi32: Silence the fixme in EventActivityIdControl.
+      include: Fix declaration of SelectDeviceDlg.
 
-Thomas Faber (1):
-      ntdll: Handle RtlReAllocateHeap failure in com_class_add_progid (Coverity).
+Tim Wanders (1):
+      setupapi: Return CR_NO_SUCH_DEVNODE from CM_Get_Parent stub.
 
-Vijay Kiran Kamuju (1):
-      shdocvw: Add stub DoOrganizeFavDlg.
-
-Vladimir Bespalov (1):
-      winedbg: Fix enum value compilation warning.
-
-Zebediah Figura (7):
-      winedbg/gdbproxy: Replace memory read over a breakpoint with the real value.
-      server: Fix pointer arithmetic in get_selector_entry().
-      d3dx9: Add stub for D3DXComputeNormalMap.
-      explorer: Pass the full path to ParseDisplayName().
-      winegstreamer: Stop creating the filter if gstreamer fails to render.
-      ieframe: Clean up InternetExplorerManager server process.
-      winedbg: Remove a misplaced \n.
-
-Zhiyi Zhang (2):
-      urlmon: Do not canonicalize Unicode characters.
-      kernel32: Fix handling lines with only values in GetPrivateProfileSection.
+Zebediah Figura (5):
+      ntdll: Implement _alldvrm() and _aulldvrm().
+      devenum/tests: Test registering DirectShow filters.
+      devenum: More correctly handle device types.
+      devenum: Allow parsing display name without class ID.
+      devenum: Correctly implement IMoniker::GetDisplayName().
 
 --
 Michael Stefaniuc
