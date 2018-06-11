@@ -212,22 +212,87 @@ done:
 
 static void test_Enum(void)
 {
+    static const WCHAR Task1[] = { 'w','i','n','e','t','a','s','k','1',0 };
     ITaskScheduler *scheduler;
+    ITask *task;
     IEnumWorkItems *tasks;
+    WCHAR **names;
+    ULONG fetched;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
             &IID_ITaskScheduler, (void **)&scheduler);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
-if (0) { /* crashes on win2k */
+    /* cleanup after previous runs */
+    ITaskScheduler_Delete(scheduler, Task1);
+
+    hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "got %#x\n", hr);
+    hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    ITask_Release(task);
+
     hr = ITaskScheduler_Enum(scheduler, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-}
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
 
     hr = ITaskScheduler_Enum(scheduler, &tasks);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    names = (void *)0xdeadbeef;
+    fetched = 0xdeadbeef;
+    hr = IEnumWorkItems_Next(tasks, 0, &names, &fetched);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(names == (void *)0xdeadbeef, "got %p\n", names);
+    ok(fetched == 0xdeadbeef, "got %#x\n", fetched);
+
+    hr = IEnumWorkItems_Next(tasks, 1, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    names = NULL;
+    hr = IEnumWorkItems_Next(tasks, 1, &names, NULL);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(names != NULL, "got NULL\n");
+    ok(names[0] != NULL, "got NULL\n");
+    CoTaskMemFree(names[0]);
+    CoTaskMemFree(names);
+
+    names = (void *)0xdeadbeef;
+    hr = IEnumWorkItems_Next(tasks, 2, &names, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(names == (void *)0xdeadbeef, "got %p\n", names);
+
+    hr = IEnumWorkItems_Reset(tasks);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    names = NULL;
+    fetched = 0xdeadbeef;
+    hr = IEnumWorkItems_Next(tasks, 1, &names, &fetched);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(names != NULL, "got NULL\n");
+    ok(names[0] != NULL, "got NULL\n");
+    ok(fetched == 1, "got %u\n", fetched);
+    CoTaskMemFree(names[0]);
+    CoTaskMemFree(names);
+
+    while (IEnumWorkItems_Skip(tasks, 1) == S_OK)
+        /* do nothing*/;
+
+    hr = IEnumWorkItems_Skip(tasks, 1);
+    ok(hr == S_FALSE, "got %#x\n", hr);
+
+    names = (void *)0xdeadbeef;
+    fetched = 0xdeadbeef;
+    hr = IEnumWorkItems_Next(tasks, 1, &names, &fetched);
+    ok(hr == S_FALSE, "got %#x\n", hr);
+    ok(names == NULL, "got %p\n", names);
+    ok(fetched == 0, "got %u\n", fetched);
+
     IEnumWorkItems_Release(tasks);
+
+    hr = ITaskScheduler_Delete(scheduler, Task1);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     ITaskScheduler_Release(scheduler);
 }
