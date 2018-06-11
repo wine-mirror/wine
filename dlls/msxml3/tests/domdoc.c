@@ -102,7 +102,7 @@ static void get_class_support_data(struct msxmlsupported_data_t *table)
         HRESULT hr;
         int i;
 
-        for (i = 0; i < sizeof(table->ifaces)/sizeof(table->ifaces[0]) && table->ifaces[i] != NULL; i++)
+        for (i = 0; i < ARRAY_SIZE(table->ifaces) && table->ifaces[i] != NULL; i++)
         {
             hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, table->ifaces[i], (void**)&unk);
             if (hr == S_OK) IUnknown_Release(unk);
@@ -124,7 +124,7 @@ static BOOL is_clsid_supported(const GUID *clsid, REFIID riid)
         {
             int i;
 
-            for (i = 0; i < sizeof(table->ifaces)/sizeof(table->ifaces[0]) && table->ifaces[i] != NULL; i++)
+            for (i = 0; i < ARRAY_SIZE(table->ifaces) && table->ifaces[i] != NULL; i++)
                 if (table->ifaces[i] == riid) return table->supported[i];
         }
 
@@ -1238,7 +1238,7 @@ static int alloced_bstrs_count;
 
 static BSTR _bstr_(const char *str)
 {
-    assert(alloced_bstrs_count < sizeof(alloced_bstrs)/sizeof(alloced_bstrs[0]));
+    assert(alloced_bstrs_count < ARRAY_SIZE(alloced_bstrs));
     alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
     return alloced_bstrs[alloced_bstrs_count++];
 }
@@ -10834,13 +10834,13 @@ static void test_mxnamespacemanager_override(void)
         &IID_IMXNamespaceManager, (void**)&nsmgr);
     EXPECT_HR(hr, S_OK);
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, E_FAIL);
@@ -10859,7 +10859,7 @@ static void test_mxnamespacemanager_override(void)
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_OK);
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
     EXPECT_HR(hr, S_OK);
@@ -10868,19 +10868,19 @@ static void test_mxnamespacemanager_override(void)
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_OK);
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(buffW, _bstr_("ns0")), "got prefix %s\n", wine_dbgstr_w(buffW));
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 2, buffW, &len);
     EXPECT_HR(hr, S_OK);
@@ -10890,7 +10890,7 @@ static void test_mxnamespacemanager_override(void)
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns1"), _bstr_("ns1 uri"));
     EXPECT_HR(hr, S_OK);
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, S_OK);
@@ -10911,13 +10911,13 @@ static void test_mxnamespacemanager_override(void)
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri override"));
     EXPECT_HR(hr, S_FALSE);
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(buffW, _bstr_("ns0 uri override")), "got uri %s\n", wine_dbgstr_w(buffW));
 
-    len = sizeof(buffW)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 3, buffW, &len);
     EXPECT_HR(hr, S_OK);

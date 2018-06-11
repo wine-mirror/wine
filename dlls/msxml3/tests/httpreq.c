@@ -97,7 +97,7 @@ static int g_unexpectedcall, g_expectedcall;
 static int strcmp_wa(const WCHAR *strw, const char *stra)
 {
     WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
     return lstrcmpW(strw, buf);
 }
 
@@ -117,7 +117,7 @@ static BSTR _bstr_(const char *str)
     if(!str)
         return NULL;
 
-    assert(alloced_bstrs_count < sizeof(alloced_bstrs)/sizeof(alloced_bstrs[0]));
+    assert(alloced_bstrs_count < ARRAY_SIZE(alloced_bstrs));
     alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
     return alloced_bstrs[alloced_bstrs_count++];
 }
