@@ -113,7 +113,7 @@ BLACKLISTED_EXTENSIONS = [
     "VK_KHR_external_semaphore_capabilities",
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_win32_keyed_mutex",
-    "VK_NV_external_memory_win32"
+    "VK_NV_external_memory_win32",
 ]
 
 # The Vulkan loader provides entry-points for core functionality and important
@@ -123,7 +123,7 @@ CORE_EXTENSIONS = [
     "VK_KHR_display_swapchain",
     "VK_KHR_surface",
     "VK_KHR_swapchain",
-    "VK_KHR_win32_surface"
+    "VK_KHR_win32_surface",
 ]
 
 # Functions part of our winevulkan graphics driver interface.
@@ -377,8 +377,8 @@ class VkEnumValue(object):
 
 
 class VkFunction(object):
-    def __init__(self, _type=None, name=None, params=[], extension=None, alias=False):
-        self.extension = extension
+    def __init__(self, _type=None, name=None, params=[], extensions=[], alias=False):
+        self.extensions = []
         self.name = name
         self.type = _type
         self.params = params
@@ -448,13 +448,10 @@ class VkFunction(object):
         Core API as well as several KHR WSI extensions.
         """
 
-        if self.extension is None:
+        if not self.extensions:
             return True
 
-        if self.extension in CORE_EXTENSIONS:
-            return True
-
-        return False
+        return any(ext in self.extensions for ext in CORE_EXTENSIONS)
 
     def is_device_func(self):
         # If none of the other, it must be a device function
@@ -2452,7 +2449,7 @@ class VkRegistry(object):
             commands = ext.findall("require/command")
             for command in commands:
                 cmd_name = command.attrib["name"]
-                self.funcs[cmd_name].extension = ext_name
+                self.funcs[cmd_name].extensions.append(ext_name)
 
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":

@@ -34,6 +34,7 @@
 # but only in their entirety and only with respect to the Combined Software.
 #
 
+@ stub vkAcquireNextImage2KHR
 @ stdcall vkAcquireNextImageKHR(ptr int64 int64 int64 int64 ptr) winevulkan.wine_vkAcquireNextImageKHR
 @ stdcall vkAllocateCommandBuffers(ptr ptr ptr) winevulkan.wine_vkAllocateCommandBuffers
 @ stdcall vkAllocateDescriptorSets(ptr ptr ptr) winevulkan.wine_vkAllocateDescriptorSets
@@ -158,6 +159,8 @@
 @ stub vkGetBufferMemoryRequirements2
 @ stub vkGetDescriptorSetLayoutSupport
 @ stub vkGetDeviceGroupPeerMemoryFeatures
+@ stub vkGetDeviceGroupPresentCapabilitiesKHR
+@ stub vkGetDeviceGroupSurfacePresentModesKHR
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr) winevulkan.wine_vkGetDeviceMemoryCommitment
 @ stdcall vkGetDeviceProcAddr(ptr str) winevulkan.wine_vkGetDeviceProcAddr
 @ stdcall vkGetDeviceQueue(ptr long long ptr) winevulkan.wine_vkGetDeviceQueue
@@ -186,6 +189,7 @@
 @ stub vkGetPhysicalDeviceImageFormatProperties2
 @ stdcall vkGetPhysicalDeviceMemoryProperties(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceMemoryProperties
 @ stub vkGetPhysicalDeviceMemoryProperties2
+@ stub vkGetPhysicalDevicePresentRectanglesKHR
 @ stdcall vkGetPhysicalDeviceProperties(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceProperties
 @ stub vkGetPhysicalDeviceProperties2
 @ stdcall vkGetPhysicalDeviceQueueFamilyProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceQueueFamilyProperties

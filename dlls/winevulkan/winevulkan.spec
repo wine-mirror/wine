@@ -36,6 +36,7 @@
 
 @ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr
 @ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion
+@ stub vkAcquireNextImage2KHR
 @ stdcall wine_vkAcquireNextImageKHR(ptr int64 int64 int64 int64 ptr)
 @ stdcall wine_vkAllocateCommandBuffers(ptr ptr ptr)
 @ stdcall wine_vkAllocateDescriptorSets(ptr ptr ptr)
@@ -159,6 +160,8 @@
 @ stub vkGetBufferMemoryRequirements2
 @ stub vkGetDescriptorSetLayoutSupport
 @ stub vkGetDeviceGroupPeerMemoryFeatures
+@ stub vkGetDeviceGroupPresentCapabilitiesKHR
+@ stub vkGetDeviceGroupSurfacePresentModesKHR
 @ stdcall wine_vkGetDeviceMemoryCommitment(ptr int64 ptr)
 @ stdcall wine_vkGetDeviceProcAddr(ptr str)
 @ stdcall wine_vkGetDeviceQueue(ptr long long ptr)
@@ -187,6 +190,7 @@
 @ stub vkGetPhysicalDeviceImageFormatProperties2
 @ stdcall wine_vkGetPhysicalDeviceMemoryProperties(ptr ptr)
 @ stub vkGetPhysicalDeviceMemoryProperties2
+@ stub vkGetPhysicalDevicePresentRectanglesKHR
 @ stdcall wine_vkGetPhysicalDeviceProperties(ptr ptr)
 @ stub vkGetPhysicalDeviceProperties2
 @ stdcall wine_vkGetPhysicalDeviceQueueFamilyProperties(ptr ptr ptr)
