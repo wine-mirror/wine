@@ -116,6 +116,37 @@ static ID3D12Device *create_device(void)
     return device;
 }
 
+static void print_adapter_info(void)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGIFactory4 *factory;
+    IDXGIAdapter *adapter;
+    ID3D12Device *device;
+    HRESULT hr;
+    LUID luid;
+
+    if (!(device = create_device()))
+        return;
+    luid = ID3D12Device_GetAdapterLuid(device);
+    ID3D12Device_Release(device);
+
+    hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    hr = IDXGIFactory4_EnumAdapterByLuid(factory, luid, &IID_IDXGIAdapter, (void **)&adapter);
+    todo_wine ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+    IDXGIFactory4_Release(factory);
+
+    if (FAILED(hr))
+        return;
+
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    trace("Adapter: %s, %04x:%04x.\n", wine_dbgstr_w(adapter_desc.Description),
+            adapter_desc.VendorId, adapter_desc.DeviceId);
+}
+
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
@@ -793,6 +824,8 @@ START_TEST(d3d12)
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
     }
+
+    print_adapter_info();
 
     test_interfaces();
     test_draw();
