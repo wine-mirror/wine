@@ -70,11 +70,47 @@ static void set_viewport(D3D12_VIEWPORT *vp, float x, float y,
     vp->MaxDepth = max_depth;
 }
 
+static BOOL use_warp_adapter;
+static unsigned int use_adapter_idx;
+
+static IDXGIAdapter *create_adapter(void)
+{
+    IDXGIFactory4 *factory;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    if (!use_warp_adapter && !use_adapter_idx)
+        return NULL;
+
+    hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+
+    adapter = NULL;
+    if (use_warp_adapter)
+    {
+        hr = IDXGIFactory4_EnumWarpAdapter(factory, &IID_IDXGIAdapter, (void **)&adapter);
+    }
+    else
+    {
+        hr = IDXGIFactory4_EnumAdapters(factory, use_adapter_idx, &adapter);
+    }
+    IDXGIFactory4_Release(factory);
+    if (FAILED(hr))
+        trace("Failed to get adapter, hr %#x.\n", hr);
+    return adapter;
+}
+
 static ID3D12Device *create_device(void)
 {
+    IDXGIAdapter *adapter;
     ID3D12Device *device;
+    HRESULT hr;
 
-    if (FAILED(D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device)))
+    adapter = create_adapter();
+    hr = D3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    if (adapter)
+        IDXGIAdapter_Release(adapter);
+    if (FAILED(hr))
         return NULL;
 
     return device;
@@ -746,6 +782,18 @@ static void test_swapchain_draw(void)
 
 START_TEST(d3d12)
 {
+    unsigned int argc, i;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
+    for (i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--warp"))
+            use_warp_adapter = TRUE;
+        else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
+            use_adapter_idx = atoi(argv[++i]);
+    }
+
     test_interfaces();
     test_draw();
     test_swapchain_draw();
