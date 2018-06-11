@@ -457,6 +457,13 @@ NTSTATUS WINAPI RtlDosPathNameToRelativeNtPathName_U_WithStatus(const WCHAR *dos
     return RtlDosPathNameToNtPathName_U_WithStatus(dos_path, ntpath, file_part, NULL);
 }
 
+/**************************************************************************
+ *        RtlReleaseRelativeName [NTDLL.@]
+ */
+void WINAPI RtlReleaseRelativeName(RTL_RELATIVE_NAME *relative)
+{
+}
+
 /******************************************************************
  *		RtlDosSearchPath_U
  *
