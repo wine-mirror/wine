@@ -2907,7 +2907,7 @@ static void test_not_modified(int port)
 
     memcpy(today, ifmodifiedW, sizeof(ifmodifiedW));
     GetSystemTime(&st);
-    WinHttpTimeFromSystemTime(&st, &today[sizeof(ifmodifiedW)/sizeof(WCHAR)]);
+    WinHttpTimeFromSystemTime(&st, &today[ARRAY_SIZE(ifmodifiedW)]);
 
     session = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY,
         WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -3277,13 +3277,13 @@ static void test_credentials(void)
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
     ok(ret, "failed to query proxy username %u\n", GetLastError());
     ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(!size, "expected 0, got %u\n", size);
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
     ok(ret, "failed to query proxy password %u\n", GetLastError());
     ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
@@ -3292,19 +3292,19 @@ static void test_credentials(void)
     ret = WinHttpSetOption(req, WINHTTP_OPTION_PROXY_USERNAME, proxy_userW, lstrlenW(proxy_userW));
     ok(ret, "failed to set username %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
     ok(ret, "failed to query proxy username %u\n", GetLastError());
     ok(!winetest_strcmpW(buffer, proxy_userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(size == lstrlenW(proxy_userW) * sizeof(WCHAR), "unexpected result %u\n", size);
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
     ok(ret, "failed to query username %u\n", GetLastError());
     ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(!size, "expected 0, got %u\n", size);
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
     ok(ret, "failed to query password %u\n", GetLastError());
     ok(!buffer[0], "unexpected result %s\n", wine_dbgstr_w(buffer));
@@ -3313,7 +3313,7 @@ static void test_credentials(void)
     ret = WinHttpSetOption(req, WINHTTP_OPTION_PROXY_PASSWORD, proxy_passW, lstrlenW(proxy_passW));
     ok(ret, "failed to set proxy password %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
     ok(ret, "failed to query proxy password %u\n", GetLastError());
     ok(!winetest_strcmpW(buffer, proxy_passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
@@ -3322,7 +3322,7 @@ static void test_credentials(void)
     ret = WinHttpSetOption(req, WINHTTP_OPTION_USERNAME, userW, lstrlenW(userW));
     ok(ret, "failed to set username %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
     ok(ret, "failed to query username %u\n", GetLastError());
     ok(!winetest_strcmpW(buffer, userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
@@ -3331,7 +3331,7 @@ static void test_credentials(void)
     ret = WinHttpSetOption(req, WINHTTP_OPTION_PASSWORD, passW, lstrlenW(passW));
     ok(ret, "failed to set password %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
     ok(ret, "failed to query password %u\n", GetLastError());
     ok(!winetest_strcmpW(buffer, passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
@@ -3357,7 +3357,7 @@ static void test_credentials(void)
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
     ok(ret, "failed to set credentials %u\n", GetLastError());
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
     ok(ret, "failed to query username %u\n", GetLastError());
     todo_wine {
@@ -3365,7 +3365,7 @@ static void test_credentials(void)
     ok(!size, "expected 0, got %u\n", size);
     }
 
-    size = sizeof(buffer)/sizeof(WCHAR);
+    size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
     ok(ret, "failed to query password %u\n", GetLastError());
     todo_wine {
@@ -3920,7 +3920,7 @@ static void test_IWinHttpRequest(int port)
     ok( hr == S_OK, "got %08x\n", hr );
 
     sprintf( buf, "http://localhost:%d/auth", port );
-    MultiByteToWideChar( CP_ACP, 0, buf, -1, bufW, sizeof(bufW)/sizeof(bufW[0]) );
+    MultiByteToWideChar( CP_ACP, 0, buf, -1, bufW, ARRAY_SIZE( bufW ));
     url = SysAllocString( bufW );
     method = SysAllocString( method3W );
     V_VT( &async ) = VT_BOOL;
