@@ -4480,7 +4480,9 @@ struct create_class_request
     int            extra;
     int            win_extra;
     client_ptr_t   client_ptr;
+    data_size_t    name_offset;
     /* VARARG(name,unicode_str); */
+    char __pad_52[4];
 };
 struct create_class_reply
 {
@@ -6510,6 +6512,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 553
+#define SERVER_PROTOCOL_VERSION 554
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

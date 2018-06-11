@@ -487,6 +487,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
         req->win_extra  = winExtra;
         req->client_ptr = wine_server_client_ptr( classPtr );
         req->atom       = classPtr->atomName;
+        req->name_offset = basename_offset;
         if (!req->atom && name) wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
         classPtr->atomName = reply->atom;
