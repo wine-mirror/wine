@@ -788,6 +788,9 @@ static void test_swapchain_draw(void)
     ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", index, hr);
     ID3D12Device_CreateRenderTargetView(context.device, backbuffer, NULL, context.rtv);
 
+    transition_sub_resource_state(command_list, backbuffer, 0,
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
     ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, white, 0, NULL);
 
     ID3D12GraphicsCommandList_OMSetRenderTargets(command_list, 1, &context.rtv, FALSE, NULL);
