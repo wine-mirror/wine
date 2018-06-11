@@ -107,7 +107,7 @@ typedef struct _SCOPETABLE
 {
   int previousTryLevel;
   int (*lpfnFilter)(PEXCEPTION_POINTERS);
-  int (*lpfnHandler)(void);
+  void * (*lpfnHandler)(void);
 } SCOPETABLE, *PSCOPETABLE;
 
 typedef struct _MSVCRT_EXCEPTION_FRAME
@@ -198,24 +198,20 @@ __ASM_GLOBAL_FUNC( call_filter,
                    "popl %ebp\n\t"
                    "ret" );
 
-static inline int call_unwind_func( int (*func)(void), void *ebp )
-{
-    int ret;
-    __asm__ __volatile__ ("pushl %%ebp\n\t"
-                          "pushl %%ebx\n\t"
-                          "pushl %%esi\n\t"
-                          "pushl %%edi\n\t"
-                          "movl %2,%%ebp\n\t"
-                          "call *%0\n\t"
-                          "popl %%edi\n\t"
-                          "popl %%esi\n\t"
-                          "popl %%ebx\n\t"
-                          "popl %%ebp"
-                          : "=a" (ret)
-                          : "0" (func), "r" (ebp)
-                          : "ecx", "edx", "memory" );
-    return ret;
-}
+extern void *call_handler( void * (*func)(void), void *ebp );
+
+__ASM_GLOBAL_FUNC( call_handler,
+                   "pushl %ebp\n\t"
+                   "pushl %ebx\n\t"
+                   "pushl %esi\n\t"
+                   "pushl %edi\n\t"
+                   "movl 24(%esp), %ebp\n\t"
+                   "call *20(%esp)\n\t"
+                   "popl %edi\n\t"
+                   "popl %esi\n\t"
+                   "popl %ebx\n\t"
+                   "popl %ebp\n\t"
+                   "ret" );
 
 static inline void dump_type( const cxx_type_info *type )
 {
@@ -806,7 +802,7 @@ static void msvcrt_local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel, vo
       {
           TRACE( "__try block cleanup level %d handler %p ebp %p\n",
                  level, frame->scopetable[level].lpfnHandler, ebp );
-          call_unwind_func( frame->scopetable[level].lpfnHandler, ebp );
+          call_handler( frame->scopetable[level].lpfnHandler, ebp );
       }
   }
   __wine_pop_frame(&reg);
@@ -833,7 +829,7 @@ static void msvcrt_local_unwind4( ULONG *cookie, MSVCRT_EXCEPTION_FRAME* frame, 
         {
             TRACE( "__try block cleanup level %d handler %p ebp %p\n",
                    level, scopetable->entries[level].lpfnHandler, ebp );
-            call_unwind_func( scopetable->entries[level].lpfnHandler, ebp );
+            call_handler( scopetable->entries[level].lpfnHandler, ebp );
         }
     }
     __wine_pop_frame(&reg);
