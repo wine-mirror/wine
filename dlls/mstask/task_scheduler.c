@@ -209,9 +209,17 @@ static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPW
 
 static HRESULT WINAPI EnumWorkItems_Skip(IEnumWorkItems *iface, ULONG count)
 {
-    EnumWorkItemsImpl *This = impl_from_IEnumWorkItems(iface);
-    FIXME("(%p)->(%u): stub\n", This, count);
-    return E_NOTIMPL;
+    LPWSTR *names;
+    ULONG fetched;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u)\n", iface, count);
+
+    hr = EnumWorkItems_Next(iface, count, &names, &fetched);
+    if (SUCCEEDED(hr))
+        free_list(names, fetched);
+
+    return hr;
 }
 
 static HRESULT WINAPI EnumWorkItems_Reset(IEnumWorkItems *iface)
