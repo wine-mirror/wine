@@ -43,6 +43,7 @@ typedef struct
 {
     IEnumWorkItems IEnumWorkItems_iface;
     LONG ref;
+    HANDLE handle;
 } EnumWorkItemsImpl;
 
 static inline TaskSchedulerImpl *impl_from_ITaskScheduler(ITaskScheduler *iface)
@@ -97,6 +98,8 @@ static ULONG WINAPI EnumWorkItems_Release(IEnumWorkItems *iface)
 
     if (ref == 0)
     {
+        if (This->handle != INVALID_HANDLE_VALUE)
+            FindClose(This->handle);
         heap_free(This);
         InterlockedDecrement(&dll_ref);
     }
@@ -104,11 +107,104 @@ static ULONG WINAPI EnumWorkItems_Release(IEnumWorkItems *iface)
     return ref;
 }
 
+static void free_list(LPWSTR *list, LONG count)
+{
+    LONG i;
+
+    for (i = 0; i < count; i++)
+        CoTaskMemFree(list[i]);
+
+    CoTaskMemFree(list);
+}
+
+static inline BOOL is_file(const WIN32_FIND_DATAW *data)
+{
+    return !(data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
 static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPWSTR **names, ULONG *fetched)
 {
+    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\','*',0 };
     EnumWorkItemsImpl *This = impl_from_IEnumWorkItems(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, count, names, fetched);
-    return E_NOTIMPL;
+    WCHAR path[MAX_PATH];
+    WIN32_FIND_DATAW data;
+    ULONG enumerated, allocated, dummy;
+    LPWSTR *list;
+    HRESULT hr = S_FALSE;
+
+    TRACE("(%p)->(%u %p %p)\n", This, count, names, fetched);
+
+    if (!count || !names || (!fetched && count > 1)) return E_INVALIDARG;
+
+    if (!fetched) fetched = &dummy;
+
+    *names = NULL;
+    *fetched = 0;
+    enumerated = 0;
+    list = NULL;
+
+    allocated = 64;
+    list = CoTaskMemAlloc(allocated * sizeof(list[0]));
+    if (!list) return E_OUTOFMEMORY;
+
+    if (This->handle == INVALID_HANDLE_VALUE)
+    {
+        GetWindowsDirectoryW(path, MAX_PATH);
+        lstrcatW(path, tasksW);
+        This->handle = FindFirstFileW(path, &data);
+        if (This->handle == INVALID_HANDLE_VALUE)
+            return S_FALSE;
+    }
+    else
+    {
+        if (!FindNextFileW(This->handle, &data))
+            return S_FALSE;
+    }
+
+    do
+    {
+        if (is_file(&data))
+        {
+            if (enumerated >= allocated)
+            {
+                LPWSTR *new_list;
+                allocated *= 2;
+                new_list = CoTaskMemRealloc(list, allocated * sizeof(list[0]));
+                if (!new_list)
+                {
+                    hr = E_OUTOFMEMORY;
+                    break;
+                }
+                list = new_list;
+            }
+
+            list[enumerated] = CoTaskMemAlloc((lstrlenW(data.cFileName) + 1) * sizeof(WCHAR));
+            if (!list[enumerated])
+            {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+
+            lstrcpyW(list[enumerated], data.cFileName);
+            enumerated++;
+
+            if (enumerated >= count)
+            {
+                hr = S_OK;
+                break;
+            }
+        }
+    } while (FindNextFileW(This->handle, &data));
+
+    if (FAILED(hr))
+        free_list(list, enumerated);
+    else
+    {
+        *fetched = enumerated;
+        *names = list;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI EnumWorkItems_Skip(IEnumWorkItems *iface, ULONG count)
@@ -154,6 +250,7 @@ static HRESULT create_task_enum(IEnumWorkItems **ret)
 
     tasks->IEnumWorkItems_iface.lpVtbl = &EnumWorkItemsVtbl;
     tasks->ref = 1;
+    tasks->handle = INVALID_HANDLE_VALUE;
 
     *ret = &tasks->IEnumWorkItems_iface;
     InterlockedIncrement(&dll_ref);
