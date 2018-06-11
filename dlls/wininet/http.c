@@ -4853,7 +4853,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 	DWORD dwContentLength, BOOL bEndRequest)
 {
     BOOL redirected = FALSE, secure_proxy_connect = FALSE, loop_next;
-    LPWSTR requestString = NULL;
+    WCHAR *request_header = NULL;
     INT responseLen, cnt;
     DWORD res;
 
@@ -4963,12 +4963,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             if (HTTP_GetCustomHeaderIndex(request, szContent_Length, 0, TRUE) >= 0)
                 set_content_length_header(request, 0, HTTP_ADDREQ_FLAG_REPLACE);
 
-            requestString = build_request_header(request, connectW, target, g_szHttp1_1, TRUE);
+            request_header = build_request_header(request, connectW, target, g_szHttp1_1, TRUE);
         }
         else if (request->proxy && !(request->hdr.dwFlags & INTERNET_FLAG_SECURE))
         {
             WCHAR *url = build_proxy_path_url(request);
-            requestString = build_request_header(request, request->verb, url, request->version, TRUE);
+            request_header = build_request_header(request, request->verb, url, request->version, TRUE);
             heap_free(url);
         }
         else
@@ -4976,16 +4976,17 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             if (request->proxy && HTTP_GetCustomHeaderIndex(request, szContent_Length, 0, TRUE) >= 0)
                 set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_REPLACE);
 
-            requestString = build_request_header(request, request->verb, request->path, request->version, TRUE);
+            request_header = build_request_header(request, request->verb, request->path, request->version, TRUE);
         }
 
-        TRACE("Request header -> %s\n", debugstr_w(requestString) );
+        TRACE("Request header -> %s\n", debugstr_w(request_header) );
 
         /* send the request as ASCII, tack on the optional data */
         if (!lpOptional || redirected || secure_proxy_connect)
             data_len = 0;
 
-        ascii_req = build_ascii_request( requestString, lpOptional, data_len, &len );
+        ascii_req = build_ascii_request(request_header, lpOptional, data_len, &len);
+        heap_free(request_header);
         TRACE("full request -> %s\n", debugstr_a(ascii_req) );
 
         INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
@@ -5068,10 +5069,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     http_release_netconn(request, drain_content(request, FALSE) == ERROR_SUCCESS);
                     res = HTTP_HandleRedirect(request, new_url);
                     heap_free(new_url);
-                    if (res == ERROR_SUCCESS) {
-                        heap_free(requestString);
+                    if (res == ERROR_SUCCESS)
                         loop_next = TRUE;
-                    }
                     redirected = TRUE;
                 }
             }
@@ -5090,7 +5089,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  request->session->userName,
                                                  request->session->password, host))
                         {
-                            heap_free(requestString);
                             if (drain_content(request, TRUE) != ERROR_SUCCESS)
                             {
                                 FIXME("Could not drain content\n");
@@ -5119,7 +5117,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  request->session->appInfo->proxyPassword,
                                                  NULL))
                         {
-                            heap_free(requestString);
                             if (drain_content(request, TRUE) != ERROR_SUCCESS)
                             {
                                 FIXME("Could not drain content\n");
@@ -5162,8 +5159,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     while (loop_next);
 
 lend:
-    heap_free(requestString);
-
     /* TODO: send notification for P3P header */
 
     if(res == ERROR_SUCCESS)
