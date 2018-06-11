@@ -1191,7 +1191,7 @@ static void test_WithWSAStartup(void)
     ok(ptr != NULL, "gethostbyname() failed unexpectedly: %d\n", WSAGetLastError());
 
     /* Alloc some sockets to check if they are destroyed on WSACleanup */
-    for (socks = 0; socks < sizeof(pairs) / sizeof(pairs[0]); socks++)
+    for (socks = 0; socks < ARRAY_SIZE(pairs); socks++)
     {
         WSAPROTOCOL_INFOA info;
         if (tcp_socketpair(&pairs[socks].src, &pairs[socks].dst)) break;
@@ -1471,7 +1471,7 @@ static void test_set_getsockopt(void)
     todo_wine ok( value == 4096, "expected 4096, got %u\n", value );
 
     /* SO_LINGER */
-    for( i = 0; i < sizeof(linger_testvals)/sizeof(LINGER);i++) {
+    for( i = 0; i < ARRAY_SIZE(linger_testvals);i++) {
         size =  sizeof(lingval);
         lingval = linger_testvals[i];
         err = setsockopt(s, SOL_SOCKET, SO_LINGER, (char *) &lingval, size); 
@@ -1630,7 +1630,7 @@ todo_wine
     closesocket(s);
 
     /* test SO_PROTOCOL_INFO structure returned for different protocols */
-    for (i = 0; i < sizeof(prottest) / sizeof(prottest[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(prottest); i++)
     {
         int k;
 
@@ -2083,7 +2083,7 @@ static void test_ip_pktinfo(void)
     /* Note: hdr.Control.len is set below */
     hdr.dwFlags       = 0;
 
-    for (i=0;i<sizeof(addresses)/sizeof(UINT32);i++)
+    for (i=0;i<ARRAY_SIZE(addresses);i++)
     {
         s1addr.sin_addr.s_addr = addresses[i];
 
@@ -2689,7 +2689,7 @@ static void test_WSASocket(void)
 
     /* when no socket type is specified the first entry from WSAEnumProtocols
      * that matches the protocol is returned */
-    for (i = 0; i < sizeof(autoprotocols) / sizeof(autoprotocols[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(autoprotocols); i++)
     {
         sock = WSASocketA(0, 0, autoprotocols[i], NULL, 0, 0);
         ok(sock != INVALID_SOCKET, "Failed to create socket for protocol %d, received %d\n",
@@ -3010,7 +3010,7 @@ static void test_WSAEnumNetworkEvents(void)
     /* This test follows the steps from bugs 10204 and 24946 */
     for (l = 0; l < 2; l++)
     {
-        for (i = 0; i < sizeof(sock_type) / sizeof(sock_type[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(sock_type); i++)
         {
             if (i == 2)
                 ok(!tcp_socketpair(&s, &s2), "Test[%d]: creating socket pair failed\n", i);
@@ -3280,7 +3280,7 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect1 ), "Expected different address string\n" );
-    ok( len == sizeof( expect1 )/sizeof( WCHAR ), "Got size %d\n", len);
+    ok( len == ARRAY_SIZE(expect1), "Got size %d\n", len);
 
     len = sizeof(address);
 
@@ -3314,7 +3314,7 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
-    ok( len == sizeof( expect4 )/sizeof( WCHAR ), "Got %d\n", len);
+    ok( len == ARRAY_SIZE(expect4), "Got %d\n", len);
 
     /*check to see it IPv6 is available */
     v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
@@ -3325,7 +3325,7 @@ static void test_WSAAddressToStringW(void)
     }
 
     /* Test a short IPv6 address */
-    len = sizeof(address6)/sizeof(WCHAR);
+    len = ARRAY_SIZE(address6);
 
     sockaddr6.sin6_family = AF_INET6;
     sockaddr6.sin6_port = 0x0000;
@@ -3335,10 +3335,10 @@ static void test_WSAAddressToStringW(void)
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !lstrcmpW( address6, expect6_1 ), "Wrong string returned\n" );
-    ok( len == sizeof(expect6_1)/sizeof(WCHAR), "Got %d\n", len);
+    ok( len == ARRAY_SIZE(expect6_1), "Got %d\n", len);
 
     /* Test a longer IPv6 address */
-    len = sizeof(address6)/sizeof(WCHAR);
+    len = ARRAY_SIZE(address6);
 
     sockaddr6.sin6_family = AF_INET6;
     sockaddr6.sin6_port = 0x0000;
@@ -3349,10 +3349,10 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address6, expect6_2 ), "Wrong string returned\n" );
-    ok( len == sizeof(expect6_2)/sizeof(WCHAR), "Got %d\n", len);
+    ok( len == ARRAY_SIZE(expect6_2), "Got %d\n", len);
 
     /* Test IPv6 address and port number */
-    len = sizeof(address6)/sizeof(WCHAR);
+    len = ARRAY_SIZE(address6);
 
     sockaddr6.sin6_family = AF_INET6;
     sockaddr6.sin6_port = 0xfa81;
@@ -3363,10 +3363,10 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !lstrcmpW( address6, expect6_3 ),
         "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3), wine_dbgstr_w(address6) );
-    ok( len == sizeof(expect6_3)/sizeof(WCHAR), "Got %d\n", len );
+    ok( len == ARRAY_SIZE(expect6_3), "Got %d\n", len );
 
     /* Test IPv6 address, port number and scope_id */
-    len = sizeof(address6)/sizeof(WCHAR);
+    len = ARRAY_SIZE(address6);
 
     sockaddr6.sin6_family = AF_INET6;
     sockaddr6.sin6_port = 0xfa81;
@@ -3377,10 +3377,10 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !lstrcmpW( address6, expect6_3_2 ),
         "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_2), wine_dbgstr_w(address6) );
-    ok( len == sizeof(expect6_3_2)/sizeof(WCHAR), "Got %d\n", len );
+    ok( len == ARRAY_SIZE(expect6_3_2), "Got %d\n", len );
 
     /* Test IPv6 address and scope_id */
-    len = sizeof(address6)/sizeof(WCHAR);
+    len = ARRAY_SIZE(address6);
 
     sockaddr6.sin6_family = AF_INET6;
     sockaddr6.sin6_port = 0x0000;
@@ -3391,7 +3391,7 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !lstrcmpW( address6, expect6_3_3 ),
         "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_3), wine_dbgstr_w(address6) );
-    ok( len == sizeof(expect6_3_3)/sizeof(WCHAR), "Got %d\n", len );
+    ok( len == ARRAY_SIZE(expect6_3_3), "Got %d\n", len );
 
 end:
     if (v6 != INVALID_SOCKET)
@@ -5112,7 +5112,7 @@ static void test_inet_pton(void)
         return;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         WSASetLastError(0xdeadbeef);
         ret = pInetPtonA(tests[i].family, tests[i].printable, buffer);
@@ -5137,11 +5137,10 @@ static void test_inet_pton(void)
             i, tests[i].collapsed, ptr);
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         if (tests[i].printable)
-            MultiByteToWideChar(CP_ACP, 0, tests[i].printable, -1, printableW,
-                                sizeof(printableW) / sizeof(printableW[0]));
+            MultiByteToWideChar(CP_ACP, 0, tests[i].printable, -1, printableW, ARRAY_SIZE(printableW));
         WSASetLastError(0xdeadbeef);
         ret = pInetPtonW(tests[i].family, tests[i].printable ? printableW : NULL, buffer);
         ok(ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
@@ -5157,13 +5156,12 @@ static void test_inet_pton(void)
 
         /* Test the result from Pton with Ntop */
         printableW[0] = 0xdead;
-        ptrW = pInetNtopW(tests[i].family, buffer, printableW, sizeof(printableW) / sizeof(printableW[0]));
+        ptrW = pInetNtopW(tests[i].family, buffer, printableW, ARRAY_SIZE(printableW));
         ok (ptrW != NULL, "Test [%d]: Failed with NULL\n", i);
         ok (ptrW == printableW, "Test [%d]: Pointers differ (%p != %p)\n", i, ptrW, printableW);
         if (!ptrW) continue;
 
-        MultiByteToWideChar(CP_ACP, 0, tests[i].collapsed, -1, collapsedW,
-                            sizeof(collapsedW) / sizeof(collapsedW[0]));
+        MultiByteToWideChar(CP_ACP, 0, tests[i].collapsed, -1, collapsedW, ARRAY_SIZE(collapsedW));
         ok (lstrcmpW(ptrW, collapsedW) == 0, "Test [%d]: Expected '%s', got '%s'\n",
             i, tests[i].collapsed, wine_dbgstr_w(ptrW));
     }
@@ -5189,7 +5187,7 @@ static void test_ioctlsocket(void)
         return;
     }
 
-    for(i = 0; i < sizeof(cmds)/sizeof(cmds[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(cmds); i++)
     {
         /* broken apps like defcon pass the argp value directly instead of a pointer to it */
         ret = ioctlsocket(sock, cmds[i], (u_long *)1);
@@ -7345,7 +7343,7 @@ static void test_GetAddrInfoW(void)
     int i, ret;
     ADDRINFOW *result, *result2, *p, hint;
     WCHAR name[256];
-    DWORD size = sizeof(name)/sizeof(WCHAR);
+    DWORD size = ARRAY_SIZE(name);
     /* te su to.winehq.org written in katakana */
     static const WCHAR idn_domain[] =
         {0x30C6,0x30B9,0x30C8,'.','w','i','n','e','h','q','.','o','r','g',0};
@@ -7483,7 +7481,7 @@ static void test_GetAddrInfoW(void)
     ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
     ok(result == NULL, "got %p\n", result);
 
-    for (i = 0;i < (sizeof(hinttests) / sizeof(hinttests[0]));i++)
+    for (i = 0;i < (ARRAY_SIZE(hinttests));i++)
     {
         hint.ai_family = hinttests[i].family;
         hint.ai_socktype = hinttests[i].socktype;
@@ -7939,7 +7937,7 @@ static void test_getaddrinfo(void)
 
     hint.ai_flags = 0;
 
-    for (i = 0;i < (sizeof(hinttests) / sizeof(hinttests[0]));i++)
+    for (i = 0;i < (ARRAY_SIZE(hinttests));i++)
     {
         hint.ai_family = hinttests[i].family;
         hint.ai_socktype = hinttests[i].socktype;
@@ -11504,7 +11502,7 @@ START_TEST( sock )
     test_ip_pktinfo();
     test_extendedSocketOptions();
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         trace ( " **** STARTING TEST %d ****\n", i );
         do_test (  &tests[i] );
