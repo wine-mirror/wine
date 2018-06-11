@@ -1765,6 +1765,10 @@ static BOOL open_connection( request_t *request )
                     return FALSE;
                 }
             }
+
+            CertFreeCertificateContext( request->server_cert );
+            request->server_cert = NULL;
+
             if (!ensure_cred_handle( connect->session ) ||
                 !netconn_secure_connect( netconn, connect->hostname, request->security_flags,
                                          &connect->session->cred_handle ))
@@ -1785,6 +1789,13 @@ static BOOL open_connection( request_t *request )
         netconn_set_timeout( netconn, TRUE, request->send_timeout );
         netconn_set_timeout( netconn, FALSE, request->recv_timeout );
         request->netconn = netconn;
+    }
+
+    if (netconn->secure && !(request->server_cert = netconn_get_certificate( netconn )))
+    {
+        heap_free( addressW );
+        netconn_close( netconn );
+        return FALSE;
     }
 
 done:

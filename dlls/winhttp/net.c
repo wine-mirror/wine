@@ -47,7 +47,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winhttp.h"
-#include "wincrypt.h"
 #include "schannel.h"
 
 #include "winhttp_private.h"
