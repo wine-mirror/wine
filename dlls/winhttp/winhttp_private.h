@@ -45,6 +45,7 @@
 
 #include "ole2.h"
 #include "sspi.h"
+#include "wincrypt.h"
 
 static const WCHAR getW[]    = {'G','E','T',0};
 static const WCHAR postW[]   = {'P','O','S','T',0};
@@ -208,6 +209,7 @@ typedef struct
     DWORD optional_len;
     netconn_t *netconn;
     DWORD security_flags;
+    const CERT_CONTEXT *server_cert;
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;

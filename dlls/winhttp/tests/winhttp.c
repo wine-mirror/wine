@@ -1107,6 +1107,11 @@ static void test_secure_connection(void)
     }
     ok(read_size >= available_size, "read_size = %u, available_size = %u\n", read_size, available_size);
 
+    size = sizeof(cert);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &cert, &size);
+    ok(ret, "failed to retrieve certificate context %u\n", GetLastError());
+    if (ret) CertFreeCertificateContext(cert);
+
 cleanup:
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
