@@ -59,7 +59,7 @@ typedef struct __catchblock_info
     UINT             flags;         /* flags (see below) */
     const type_info *type_info;     /* C++ type caught by this block */
     int              offset;        /* stack offset to copy exception object to */
-    void           (*handler)(void);/* catch block handler code */
+    void *         (*handler)(void);/* catch block handler code */
 } catchblock_info;
 #define TYPE_FLAG_CONST      1
 #define TYPE_FLAG_VOLATILE   2
@@ -78,8 +78,8 @@ typedef struct __tryblock_info
 /* info about the unwind handler for a given trylevel */
 typedef struct __unwind_info
 {
-    int    prev;          /* prev trylevel unwind handler, to run after this one */
-    void (*handler)(void);/* unwind handler */
+    int      prev;          /* prev trylevel unwind handler, to run after this one */
+    void * (*handler)(void);/* unwind handler */
 } unwind_info;
 
 /* descriptor of all try blocks of a given function */
@@ -136,22 +136,6 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                                const cxx_function_descr *descr,
                                EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel ) DECLSPEC_HIDDEN;
-
-/* call a function with a given ebp */
-static inline void *call_ebp_func( void *func, void *ebp )
-{
-    void *ret;
-    int dummy;
-    __asm__ __volatile__ ("pushl %%ebx\n\t"
-                          "pushl %%ebp\n\t"
-                          "movl %4,%%ebp\n\t"
-                          "call *%%eax\n\t"
-                          "popl %%ebp\n\t"
-                          "popl %%ebx"
-                          : "=a" (ret), "=S" (dummy), "=D" (dummy)
-                          : "0" (func), "1" (ebp) : "ecx", "edx", "memory" );
-    return ret;
-}
 
 /* call a copy constructor */
 extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
@@ -326,7 +310,7 @@ static void copy_exception( void *object, cxx_exception_frame *frame,
 /* unwind the local function up to a given trylevel */
 static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_descr *descr, int last_level)
 {
-    void (*handler)(void);
+    void * (*handler)(void);
     int trylevel = frame->trylevel;
 
     while (trylevel != last_level)
@@ -341,7 +325,7 @@ static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_des
         {
             TRACE( "calling unwind handler %p trylevel %d last %d ebp %p\n",
                    handler, trylevel, last_level, &frame->ebp );
-            call_ebp_func( handler, &frame->ebp );
+            call_handler( handler, &frame->ebp );
         }
         trylevel = descr->unwind_table[trylevel].prev;
     }
@@ -478,7 +462,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
             nested_frame.trylevel  = nested_trylevel + 1;
 
             __wine_push_frame( &nested_frame.frame );
-            addr = call_ebp_func( catchblock->handler, &frame->ebp );
+            addr = call_handler( catchblock->handler, &frame->ebp );
             __wine_pop_frame( &nested_frame.frame );
 
             ((DWORD*)frame)[-1] = save_esp;
