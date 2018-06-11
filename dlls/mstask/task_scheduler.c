@@ -217,8 +217,16 @@ static HRESULT WINAPI EnumWorkItems_Skip(IEnumWorkItems *iface, ULONG count)
 static HRESULT WINAPI EnumWorkItems_Reset(IEnumWorkItems *iface)
 {
     EnumWorkItemsImpl *This = impl_from_IEnumWorkItems(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if (This->handle != INVALID_HANDLE_VALUE)
+    {
+        FindClose(This->handle);
+        This->handle = INVALID_HANDLE_VALUE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI EnumWorkItems_Clone(IEnumWorkItems *iface, IEnumWorkItems **cloned)
