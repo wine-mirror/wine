@@ -1891,7 +1891,6 @@ class VkGenerator(object):
                     self.host_structs.append(conv.struct)
 
     def _generate_copyright(self, f, spec_file=False):
-        c = "# " if spec_file else " * "
         f.write("# " if spec_file else "/* ")
         f.write("Automatically generated from Vulkan vk.xml; DO NOT EDIT!\n")
         lines = ["", "This file is generated from Vulkan vk.xml file covered",
