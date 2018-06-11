@@ -906,7 +906,7 @@ static HRESULT WINAPI NewWindowManager_QueryInterface(INewWindowManager *iface, 
         return S_OK;
     }
 
-    trace("NewWindowManager_QueryInterface %s\n", wine_dbgstr_guid(riid));
+    if(winetest_debug > 1) trace("NewWindowManager_QueryInterface %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -1248,7 +1248,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         return E_NOINTERFACE;
     }
 
-    trace("Binding::QI(%s)\n", wine_dbgstr_guid(riid));
+    if(winetest_debug > 1) trace("Binding::QI(%s)\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -2727,7 +2727,7 @@ static HRESULT WINAPI CustomDocHostUIHandler_QueryInterface(IDocHostUIHandler2 *
     if(IsEqualGUID(&IID_IDocHostShowUI, riid))
         return E_NOINTERFACE; /* TODO */
 
-    trace("CustomDocHostUIHandler::QI(%s)\n", wine_dbgstr_guid(riid));
+    if(winetest_debug > 1) trace("CustomDocHostUIHandler::QI(%s)\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -5328,7 +5328,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         return E_NOINTERFACE; /* IE10 */
     else if(IsEqualGUID(&IID_IDocHostUIHandlerPriv, riid))
         return E_NOINTERFACE; /* ? */
-    else
+    else if(winetest_debug > 1)
         trace("QI(%s)\n", wine_dbgstr_guid(riid));
 
     if(*ppv)
