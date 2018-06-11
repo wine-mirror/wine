@@ -813,16 +813,26 @@ static void test_swapchain_draw(void)
 
 START_TEST(d3d12)
 {
+    BOOL enable_debug_layer = FALSE;
     unsigned int argc, i;
+    ID3D12Debug *debug;
     char **argv;
 
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "--warp"))
+        if (!strcmp(argv[i], "--validate"))
+            enable_debug_layer = TRUE;
+        else if (!strcmp(argv[i], "--warp"))
             use_warp_adapter = TRUE;
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
+    }
+
+    if (enable_debug_layer && SUCCEEDED(D3D12GetDebugInterface(&IID_ID3D12Debug, (void **)&debug)))
+    {
+        ID3D12Debug_EnableDebugLayer(debug);
+        ID3D12Debug_Release(debug);
     }
 
     print_adapter_info();
