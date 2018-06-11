@@ -685,8 +685,14 @@ static HRESULT WINAPI MSTASK_ITask_GetExitCode(ITask *iface, DWORD *exit_code)
 
     TRACE("(%p, %p)\n", iface, exit_code);
 
+    if (This->status == SCHED_S_TASK_NOT_SCHEDULED)
+    {
+        *exit_code = 0;
+        return SCHED_S_TASK_HAS_NOT_RUN;
+    }
+
     *exit_code = This->exit_code;
-    return SCHED_S_TASK_HAS_NOT_RUN; /* FIXME */
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetComment(ITask *iface, LPCWSTR comment)
