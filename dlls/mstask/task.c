@@ -1444,7 +1444,7 @@ static HRESULT WINAPI MSTASK_IPersistFile_Load(IPersistFile *iface, LPCOLESTR fi
         file = CreateFileW(file_name, access, sharing, NULL, OPEN_EXISTING, 0, 0);
         if (file != INVALID_HANDLE_VALUE) break;
 
-        if (try++ >= 3)
+        if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3)
         {
             TRACE("Failed to open %s, error %u\n", debugstr_w(file_name), GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
