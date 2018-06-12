@@ -95,7 +95,7 @@ struct gdb_context
     /* current Win32 trap env */
     unsigned                    last_sig;
     BOOL                        in_trap;
-    CONTEXT                     context;
+    dbg_ctx_t                   context;
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
@@ -497,13 +497,13 @@ static struct cpu_register cpu_register_map[] = {
 
 static const size_t cpu_num_regs = (sizeof(cpu_register_map) / sizeof(cpu_register_map[0]));
 
-static inline void* cpu_register_ptr(CONTEXT* ctx, unsigned idx)
+static inline void* cpu_register_ptr(dbg_ctx_t *ctx, unsigned idx)
 {
     assert(idx < cpu_num_regs);
     return (char*)ctx + cpu_register_map[idx].ctx_offset;
 }
 
-static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
+static inline DWORD64 cpu_register(dbg_ctx_t *ctx, unsigned idx)
 {
     switch (cpu_register_map[idx].ctx_length)
     {
@@ -518,7 +518,7 @@ static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
     }
 }
 
-static inline   void    cpu_register_hex_from(CONTEXT* ctx, unsigned idx, const char** phex)
+static inline void cpu_register_hex_from(dbg_ctx_t* ctx, unsigned idx, const char **phex)
 {
     if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
         hex_from(cpu_register_ptr(ctx, idx), *phex, cpu_register_map[idx].gdb_length);
@@ -550,10 +550,9 @@ static inline   void    cpu_register_hex_from(CONTEXT* ctx, unsigned idx, const 
  * =============================================== *
  */
 
-static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
+static BOOL fetch_context(struct gdb_context *gdbctx, HANDLE h, dbg_ctx_t *ctx)
 {
-    ctx->ContextFlags = CONTEXT_ALL;
-    if (!GetThreadContext(h, ctx))
+    if (!GetThreadContext(h, &ctx->ctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Can't get thread's context\n");
@@ -769,7 +768,7 @@ static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
 {
     if (dbg_curr_thread)
     {
-        if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context))
+        if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context.ctx))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
                 fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
         if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
@@ -789,7 +788,7 @@ static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsig
     {
         if(dbg_curr_thread->tid  == threadid){
             /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
-            if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context))
+            if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context.ctx))
                 if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
                     fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
             if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
@@ -1443,7 +1442,7 @@ static enum packet_return packet_detach(struct gdb_context* gdbctx)
 static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
     int                 i;
-    CONTEXT             ctx;
+    dbg_ctx_t ctx;
 
     assert(gdbctx->in_trap);
 
@@ -1463,8 +1462,8 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
     unsigned    i;
-    CONTEXT     ctx;
-    CONTEXT*    pctx = &gdbctx->context;
+    dbg_ctx_t ctx;
+    dbg_ctx_t *pctx = &gdbctx->context;
     const char* ptr;
 
     assert(gdbctx->in_trap);
@@ -1479,7 +1478,7 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     for (i = 0; i < cpu_num_regs; i++)
         cpu_register_hex_from(pctx, i, &ptr);
 
-    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
+    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, &pctx->ctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Cannot set context on thread %04x\n", gdbctx->other_thread->tid);
@@ -1616,8 +1615,8 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
 static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 {
     unsigned            reg;
-    CONTEXT             ctx;
-    CONTEXT*            pctx = &gdbctx->context;
+    dbg_ctx_t ctx;
+    dbg_ctx_t *pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
     reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
@@ -1650,8 +1649,8 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
     unsigned            reg;
     char*               ptr;
-    CONTEXT             ctx;
-    CONTEXT*            pctx = &gdbctx->context;
+    dbg_ctx_t ctx;
+    dbg_ctx_t *pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
 
@@ -1678,7 +1677,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     }
 
     cpu_register_hex_from(pctx, reg, (const char**)&ptr);
-    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
+    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, &pctx->ctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Cannot set context for thread %04x\n", gdbctx->other_thread->tid);

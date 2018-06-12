@@ -184,14 +184,14 @@ static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr,
  *
  * Do a backtrace on the current thread
  */
-unsigned stack_fetch_frames(const CONTEXT* _ctx)
+unsigned stack_fetch_frames(const dbg_ctx_t* _ctx)
 {
     STACKFRAME64 sf;
     unsigned     nf = 0;
     /* as native stackwalk can modify the context passed to it, simply copy
      * it to avoid any damage
      */
-    CONTEXT      ctx = *_ctx;
+    dbg_ctx_t ctx = *_ctx;
     BOOL         ret;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
@@ -351,21 +351,21 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
         dbg_printf("Unknown thread id (%04x) in process (%04x)\n", tid, pcs->pid);
     else
     {
-        CONTEXT context;
+        dbg_ctx_t ctx = {0};
 
         dbg_curr_tid = dbg_curr_thread->tid;
-        memset(&context, 0, sizeof(context));
-        context.ContextFlags = CONTEXT_FULL;
+
+        ctx.ctx.ContextFlags = CONTEXT_FULL;
         if (SuspendThread(dbg_curr_thread->handle) != -1)
         {
-            if (!GetThreadContext(dbg_curr_thread->handle, &context))
+            if (!GetThreadContext(dbg_curr_thread->handle, &ctx.ctx))
             {
                 dbg_printf("Can't get context for thread %04x in current process\n",
                            tid);
             }
             else
             {
-                stack_fetch_frames(&context);
+                stack_fetch_frames(&ctx);
                 backtrace();
             }
             ResumeThread(dbg_curr_thread->handle);
@@ -386,7 +386,7 @@ static void backtrace_all(void)
 {
     struct dbg_process* process = dbg_curr_process;
     struct dbg_thread*  thread = dbg_curr_thread;
-    CONTEXT             ctx = dbg_context;
+    dbg_ctx_t ctx = dbg_context;
     DWORD               cpid = dbg_curr_pid;
     THREADENTRY32       entry;
     HANDLE              snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);

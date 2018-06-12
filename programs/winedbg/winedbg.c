@@ -87,7 +87,7 @@ struct dbg_process*	dbg_curr_process = NULL;
 struct dbg_thread*	dbg_curr_thread = NULL;
 DWORD_PTR	        dbg_curr_tid = 0;
 DWORD_PTR	        dbg_curr_pid = 0;
-CONTEXT                 dbg_context;
+dbg_ctx_t               dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 HANDLE                  dbg_houtput = 0;
 

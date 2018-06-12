@@ -69,7 +69,7 @@ void minidump_write(const char* file, const EXCEPTION_RECORD* rec)
         mei.ThreadId = dbg_curr_thread->tid;
         mei.ExceptionPointers = &ep;
         ep.ExceptionRecord = (EXCEPTION_RECORD*)rec;
-        ep.ContextRecord = &dbg_context;
+        ep.ContextRecord = &dbg_context.ctx;
         mei.ClientPointers = FALSE;
     }
     MiniDumpWriteDump(dbg_curr_process->handle, dbg_curr_process->pid,

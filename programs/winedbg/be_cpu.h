@@ -37,13 +37,13 @@ struct backend_cpu
      * in an ADDRESS64 (except an linear one).
      * Non segmented CPU shall use be_cpu_build_addr
      */
-    BOOL                (*build_addr)(HANDLE hThread, const CONTEXT* ctx,
+    BOOL                (*build_addr)(HANDLE hThread, const dbg_ctx_t *ctx,
                                       ADDRESS64* addr, unsigned seg,
                                       unsigned long offset);
     /* Retrieves in addr an address related to the context (program counter, stack
      * pointer, frame pointer)
      */
-    BOOL                (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
+    BOOL                (*get_addr)(HANDLE hThread, const dbg_ctx_t *ctx,
                                     enum be_cpu_addr, ADDRESS64* addr);
 
     /* returns which kind of information a given register number refers to */
@@ -53,13 +53,13 @@ struct backend_cpu
      * context manipulation 
      * ------------------------------------------------------------------------------- */
     /* Enables/disables CPU single step mode (depending on enable) */
-    void                (*single_step)(CONTEXT* ctx, BOOL enable);
+    void                (*single_step)(dbg_ctx_t *ctx, BOOL enable);
     /* Dumps out the content of the context */
-    void                (*print_context)(HANDLE hThread, const CONTEXT* ctx, int all_regs);
+    void                (*print_context)(HANDLE hThread, const dbg_ctx_t *ctx, int all_regs);
     /* Prints information about segments. Non segmented CPU should leave this
      * function empty
      */
-    void                (*print_segment_info)(HANDLE hThread, const CONTEXT* ctx);
+    void                (*print_segment_info)(HANDLE hThread, const dbg_ctx_t *ctx);
     /* all the CONTEXT's relative variables, bound to this CPU */
     const struct dbg_internal_var* context_vars;
 
@@ -89,22 +89,22 @@ struct backend_cpu
      * -------------------------------------------------------------------------------*/
     /* Inserts an Xpoint in the CPU context and/or debuggee address space */
     BOOL                (*insert_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
-                                         CONTEXT* ctx, enum be_xpoint_type type,
+                                         dbg_ctx_t *ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long* val, unsigned size);
     /* Removes an Xpoint in the CPU context and/or debuggee address space */
     BOOL                (*remove_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
-                                         CONTEXT* ctx, enum be_xpoint_type type,
+                                         dbg_ctx_t *ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long val, unsigned size);
     /* Checks whether a given watchpoint has been triggered */
-    BOOL                (*is_watchpoint_set)(const CONTEXT* ctx, unsigned idx);
+    BOOL                (*is_watchpoint_set)(const dbg_ctx_t *ctx, unsigned idx);
     /* Clears the watchpoint indicator */
-    void                (*clear_watchpoint)(CONTEXT* ctx, unsigned idx);
+    void                (*clear_watchpoint)(dbg_ctx_t *ctx, unsigned idx);
     /* After a break instruction is executed, in the corresponding exception handler,
      * some CPUs report the address of the insn after the break insn, some others 
      * report the address of the break insn itself.
      * This function lets adjust the context PC to reflect this behavior.
      */
-    int                 (*adjust_pc_for_break)(CONTEXT* ctx, BOOL way);
+    int                 (*adjust_pc_for_break)(dbg_ctx_t *ctx, BOOL way);
     /* -------------------------------------------------------------------------------
      * basic type read/write 
      * -------------------------------------------------------------------------------*/
@@ -118,5 +118,5 @@ struct backend_cpu
 
 /* some handy functions for non segmented CPUs */
 void*    be_cpu_linearize(HANDLE hThread, const ADDRESS64*);
-BOOL be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
+BOOL be_cpu_build_addr(HANDLE hThread, const dbg_ctx_t *ctx, ADDRESS64* addr,
                        unsigned seg, unsigned long offset);

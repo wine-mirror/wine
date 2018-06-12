@@ -91,7 +91,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe)
 
 static unsigned dbg_fetch_context(void)
 {
-    dbg_context.ContextFlags = CONTEXT_CONTROL
+    dbg_context.ctx.ContextFlags = CONTEXT_CONTROL
         | CONTEXT_INTEGER
 #ifdef CONTEXT_FLOATING_POINT
         | CONTEXT_FLOATING_POINT
@@ -103,7 +103,7 @@ static unsigned dbg_fetch_context(void)
         | CONTEXT_DEBUG_REGISTERS
 #endif
         ;
-    if (!GetThreadContext(dbg_curr_thread->handle, &dbg_context))
+    if (!GetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx))
     {
         WINE_WARN("Can't get thread's context\n");
         return FALSE;
@@ -356,7 +356,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                                         de->u.Exception.dwFirstChance);
             if (cont && dbg_curr_thread)
             {
-                SetThreadContext(dbg_curr_thread->handle, &dbg_context);
+                SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx);
             }
         }
         break;
@@ -539,7 +539,7 @@ static void dbg_resume_debuggee(DWORD cont)
                    dbg_curr_thread->exec_count);
         if (dbg_curr_thread)
         {
-            if (!SetThreadContext(dbg_curr_thread->handle, &dbg_context))
+            if (!SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx))
                 dbg_printf("Cannot set ctx on %04lx\n", dbg_curr_tid);
         }
     }
@@ -1001,7 +1001,7 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
         dbg_curr_process->be_cpu->single_step(&dbg_context, FALSE);
         if (dbg_curr_thread->in_exception)
         {
-            SetThreadContext(dbg_curr_thread->handle, &dbg_context);
+            SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx);
             ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
         }
     }
