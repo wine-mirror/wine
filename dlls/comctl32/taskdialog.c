@@ -573,6 +573,12 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_set_main_instruction_font(dialog_info);
 }
 
+static void taskdialog_destroy(struct taskdialog_info *dialog_info)
+{
+    if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER) KillTimer(dialog_info->hwnd, ID_TIMER);
+    if (dialog_info->main_instruction_font) DeleteObject(dialog_info->main_instruction_font);
+}
+
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static const WCHAR taskdialog_info_propnameW[] = {'T','a','s','k','D','i','a','l','o','g','I','n','f','o',0};
@@ -618,10 +624,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case WM_DESTROY:
             taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
             RemovePropW(hwnd, taskdialog_info_propnameW);
-            if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER)
-                KillTimer(hwnd, ID_TIMER);
-            if (dialog_info->main_instruction_font)
-                DeleteObject(dialog_info->main_instruction_font);
+            taskdialog_destroy(dialog_info);
             break;
         default:
             return FALSE;
