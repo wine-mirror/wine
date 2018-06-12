@@ -560,6 +560,8 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
 
+    memset(dialog_info, 0, sizeof(*dialog_info));
+    dialog_info->taskconfig = taskconfig;
     dialog_info->hwnd = hwnd;
 
     if (taskconfig->dwFlags & TDF_CALLBACK_TIMER)
