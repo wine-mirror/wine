@@ -4402,15 +4402,19 @@ static HRESULT WINAPI HTMLElement6_get_onerror(IHTMLElement6 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLElement6_put_oninput(IHTMLElement6 *iface, VARIANT v)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return set_node_event(&This->node, EVENTID_INPUT, &v);
 }
 
 static HRESULT WINAPI HTMLElement6_get_oninput(IHTMLElement6 *iface, VARIANT *p)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_node_event(&This->node, EVENTID_INPUT, p);
 }
 
 static HRESULT WINAPI HTMLElement6_put_onload(IHTMLElement6 *iface, VARIANT v)

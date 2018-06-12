@@ -76,6 +76,7 @@ static const WCHAR focusW[] = {'f','o','c','u','s',0};
 static const WCHAR focusinW[] = {'f','o','c','u','s','i','n',0};
 static const WCHAR focusoutW[] = {'f','o','c','u','s','o','u','t',0};
 static const WCHAR helpW[] = {'h','e','l','p',0};
+static const WCHAR inputW[] = {'i','n','p','u','t',0};
 static const WCHAR keydownW[] = {'k','e','y','d','o','w','n',0};
 static const WCHAR keypressW[] = {'k','e','y','p','r','e','s','s',0};
 static const WCHAR keyupW[] = {'k','e','y','u','p',0};
@@ -183,6 +184,8 @@ static const event_info_t event_info[] = {
         EVENT_BUBBLES},
     {helpW,              EVENT_TYPE_EVENT,     DISPID_EVMETH_ONHELP,
         EVENT_BUBBLES | EVENT_CANCELABLE},
+    {inputW,             EVENT_TYPE_EVENT,     DISPID_UNKNOWN,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES},
     {keydownW,           EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYDOWN,
         EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE },
     {keypressW,          EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYPRESS,
@@ -2270,7 +2273,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     int min, max, i;
     HRESULT hres;
 
-    if(!data)
+    if(!data || dispid == DISPID_UNKNOWN)
         return FALSE;
 
     if(!data->ids) {

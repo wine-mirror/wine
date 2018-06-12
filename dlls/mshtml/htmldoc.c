@@ -3710,15 +3710,19 @@ static HRESULT WINAPI HTMLDocument7_get_onfocus(IHTMLDocument7 *iface, VARIANT *
 static HRESULT WINAPI HTMLDocument7_put_oninput(IHTMLDocument7 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return set_doc_event(This, EVENTID_INPUT, &v);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_oninput(IHTMLDocument7 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_doc_event(This, EVENTID_INPUT, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onload(IHTMLDocument7 *iface, VARIANT v)
