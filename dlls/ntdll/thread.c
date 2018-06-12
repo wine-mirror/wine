@@ -855,19 +855,16 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 /***********************************************************************
  *              set_thread_context
  */
-NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self )
+NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self )
 {
     NTSTATUS ret;
     DWORD dummy, i;
-    context_t server_context;
-
-    context_to_server( &server_context, context );
 
     SERVER_START_REQ( set_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
         req->suspend = 1;
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
+        wine_server_add_data( req, context, sizeof(*context) );
         ret = wine_server_call( req );
         *self = reply->self;
     }
@@ -881,7 +878,7 @@ NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self )
             {
                 req->handle  = wine_server_obj_handle( handle );
                 req->suspend = 0;
-                wine_server_add_data( req, &server_context, sizeof(server_context) );
+                wine_server_add_data( req, context, sizeof(*context) );
                 ret = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -901,45 +898,20 @@ NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self )
 }
 
 
-/* convert CPU-specific flags to generic server flags */
-static inline unsigned int get_server_context_flags( DWORD flags )
-{
-    unsigned int ret = 0;
-
-    flags &= 0x3f;  /* mask CPU id flags */
-    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
-    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
-#ifdef CONTEXT_SEGMENTS
-    if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
-#endif
-#ifdef CONTEXT_FLOATING_POINT
-    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
-#endif
-#ifdef CONTEXT_DEBUG_REGISTERS
-    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-#endif
-#ifdef CONTEXT_EXTENDED_REGISTERS
-    if (flags & CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
-#endif
-    return ret;
-}
-
 /***********************************************************************
  *              get_thread_context
  */
-NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self )
+NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self )
 {
     NTSTATUS ret;
     DWORD dummy, i;
-    unsigned int server_flags = get_server_context_flags( context->ContextFlags );
-    context_t server_context;
 
     SERVER_START_REQ( get_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
-        req->flags   = server_flags;
+        req->flags   = flags;
         req->suspend = 1;
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
+        wine_server_set_reply( req, context, sizeof(*context) );
         ret = wine_server_call( req );
         *self = reply->self;
     }
@@ -952,9 +924,9 @@ NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self )
             SERVER_START_REQ( get_thread_context )
             {
                 req->handle  = wine_server_obj_handle( handle );
-                req->flags   = server_flags;
+                req->flags   = flags;
                 req->suspend = 0;
-                wine_server_set_reply( req, &server_context, sizeof(server_context) );
+                wine_server_set_reply( req, context, sizeof(*context) );
                 ret = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -969,7 +941,6 @@ NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self )
         NtResumeThread( handle, &dummy );
         if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
     }
-    if (!ret) ret = context_from_server( context, &server_context );
     return ret;
 }
 

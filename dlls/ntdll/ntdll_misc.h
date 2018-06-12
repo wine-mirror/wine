@@ -55,8 +55,8 @@ extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context ) DE
 extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self ) DECLSPEC_HIDDEN;
+extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
