@@ -859,6 +859,11 @@ static BOOL be_i386_get_context(HANDLE thread, dbg_ctx_t *ctx)
     return Wow64GetThreadContext(thread, &ctx->x86);
 }
 
+static BOOL be_i386_set_context(HANDLE thread, const dbg_ctx_t *ctx)
+{
+    return Wow64SetThreadContext(thread, &ctx->x86);
+}
+
 struct backend_cpu be_i386 =
 {
     IMAGE_FILE_MACHINE_I386,
@@ -886,5 +891,6 @@ struct backend_cpu be_i386 =
     be_i386_fetch_float,
     be_i386_store_integer,
     be_i386_get_context,
+    be_i386_set_context,
 };
 #endif

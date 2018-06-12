@@ -1899,6 +1899,11 @@ static BOOL be_arm_get_context(HANDLE thread, dbg_ctx_t *ctx)
 #endif
 }
 
+static BOOL be_arm_set_context(HANDLE thread, const dbg_ctx_t *ctx)
+{
+    return SetThreadContext(thread, &ctx->ctx);
+}
+
 struct backend_cpu be_arm =
 {
     IMAGE_FILE_MACHINE_ARMNT,

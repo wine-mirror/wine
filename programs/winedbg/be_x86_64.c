@@ -684,6 +684,11 @@ static BOOL be_x86_64_get_context(HANDLE thread, dbg_ctx_t *ctx)
 #endif
 }
 
+static BOOL be_x86_64_set_context(HANDLE thread, const dbg_ctx_t *ctx)
+{
+    return SetThreadContext(thread, &ctx->ctx);
+}
+
 struct backend_cpu be_x86_64 =
 {
     IMAGE_FILE_MACHINE_AMD64,
@@ -711,5 +716,6 @@ struct backend_cpu be_x86_64 =
     be_x86_64_fetch_float,
     be_x86_64_store_integer,
     be_x86_64_get_context,
+    be_x86_64_set_context,
 };
 #endif

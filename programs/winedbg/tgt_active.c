@@ -344,7 +344,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                                         de->u.Exception.dwFirstChance);
             if (cont && dbg_curr_thread)
             {
-                SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx);
+                dbg_curr_process->be_cpu->set_context(dbg_curr_thread->handle, &dbg_context);
             }
         }
         break;
@@ -527,7 +527,7 @@ static void dbg_resume_debuggee(DWORD cont)
                    dbg_curr_thread->exec_count);
         if (dbg_curr_thread)
         {
-            if (!SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx))
+            if (!dbg_curr_process->be_cpu->set_context(dbg_curr_thread->handle, &dbg_context))
                 dbg_printf("Cannot set ctx on %04lx\n", dbg_curr_tid);
         }
     }
@@ -989,7 +989,7 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
         dbg_curr_process->be_cpu->single_step(&dbg_context, FALSE);
         if (dbg_curr_thread->in_exception)
         {
-            SetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx);
+            dbg_curr_process->be_cpu->set_context(dbg_curr_thread->handle, &dbg_context);
             ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
         }
     }

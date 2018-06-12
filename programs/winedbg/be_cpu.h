@@ -117,6 +117,7 @@ struct backend_cpu
     BOOL                (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG);
 
     BOOL                (*get_context)(HANDLE thread, dbg_ctx_t *ctx);
+    BOOL                (*set_context)(HANDLE thread, const dbg_ctx_t *ctx);
 };
 
 /* some handy functions for non segmented CPUs */

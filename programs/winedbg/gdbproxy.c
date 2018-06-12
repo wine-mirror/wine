@@ -768,7 +768,7 @@ static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
 {
     if (dbg_curr_thread)
     {
-        if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context.ctx))
+        if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
                 fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
         if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
@@ -788,7 +788,7 @@ static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsig
     {
         if(dbg_curr_thread->tid  == threadid){
             /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
-            if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context.ctx))
+            if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
                 if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
                     fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
             if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
@@ -1478,7 +1478,8 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     for (i = 0; i < cpu_num_regs; i++)
         cpu_register_hex_from(pctx, i, &ptr);
 
-    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, &pctx->ctx))
+    if (pctx != &gdbctx->context &&
+        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Cannot set context on thread %04x\n", gdbctx->other_thread->tid);
@@ -1677,7 +1678,8 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     }
 
     cpu_register_hex_from(pctx, reg, (const char**)&ptr);
-    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, &pctx->ctx))
+    if (pctx != &gdbctx->context &&
+        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Cannot set context for thread %04x\n", gdbctx->other_thread->tid);

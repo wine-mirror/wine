@@ -190,6 +190,11 @@ static BOOL be_ppc_get_context(HANDLE thread, dbg_ctx_t *ctx)
 #endif
 }
 
+static BOOL be_ppc_set_context(HANDLE thread, const dbg_ctx_t *ctx)
+{
+    return SetThreadContext(thread, &ctx->ctx);
+}
+
 struct backend_cpu be_ppc =
 {
     IMAGE_FILE_MACHINE_POWERPC,
@@ -217,5 +222,6 @@ struct backend_cpu be_ppc =
     be_ppc_fetch_float,
     be_ppc_store_integer,
     be_ppc_get_context,
+    be_ppc_set_context,
 };
 #endif
