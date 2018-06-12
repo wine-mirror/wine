@@ -50,7 +50,6 @@ static const UINT DIALOG_BUTTON_WIDTH = 50;
 static const UINT DIALOG_BUTTON_HEIGHT = 14;
 static const UINT DIALOG_TIMER_MS = 200;
 
-static const UINT ID_MAIN_INSTRUCTION = 0xf000;
 static const UINT ID_CONTENT          = 0xf001;
 
 static const UINT ID_TIMER = 1;
@@ -84,6 +83,8 @@ struct taskdialog_info
     DWORD last_timer_tick;
     HFONT font;
     HFONT main_instruction_font;
+    /* Control handles */
+    HWND main_instruction;
     /* Dialog metrics */
     struct
     {
@@ -112,24 +113,6 @@ static void template_write_data(char **ptr, const void *src, unsigned int size)
 {
     memcpy(*ptr, src, size);
     *ptr += size;
-}
-
-static void taskdialog_set_main_instruction_font(struct taskdialog_info *dialog_info)
-{
-    NONCLIENTMETRICSW ncm;
-    HWND hwnd;
-
-    hwnd = GetDlgItem(dialog_info->hwnd, ID_MAIN_INSTRUCTION);
-    if(!hwnd) return;
-
-    ncm.cbSize = sizeof(ncm);
-    SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-    /* 1.25 times the height */
-    ncm.lfMessageFont.lfHeight = ncm.lfMessageFont.lfHeight * 5 / 4;
-    ncm.lfMessageFont.lfWeight = FW_BOLD;
-    dialog_info->main_instruction_font = CreateFontIndirectW(&ncm.lfMessageFont);
-
-    SendMessageW(hwnd, WM_SETFONT, (WPARAM)dialog_info->main_instruction_font, TRUE);
 }
 
 static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc, WORD id, const WCHAR *class,
@@ -182,11 +165,6 @@ static unsigned int taskdialog_add_static_label(struct taskdialog_template_desc 
 
     size = taskdialog_add_control(desc, id, WC_STATICW, desc->taskconfig->hInstance, str, 0);
     return size;
-}
-
-static unsigned int taskdialog_add_main_instruction(struct taskdialog_template_desc *desc)
-{
-    return taskdialog_add_static_label(desc, ID_MAIN_INSTRUCTION, desc->taskconfig->pszMainInstruction);
 }
 
 static unsigned int taskdialog_add_content(struct taskdialog_template_desc *desc)
@@ -351,7 +329,6 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     desc.control_count = 0;
     desc.default_button = NULL;
 
-    size += taskdialog_add_main_instruction(&desc);
     size += taskdialog_add_content(&desc);
     size += taskdialog_add_buttons(&desc);
 
@@ -404,6 +381,30 @@ static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, WORD
         EndDialog(dialog_info->hwnd, command_id);
 }
 
+static WCHAR *taskdialog_gettext(struct taskdialog_info *dialog_info, BOOL user_resource, const WCHAR *text)
+{
+    const WCHAR *textW = NULL;
+    INT length;
+    WCHAR *ret;
+
+    if (IS_INTRESOURCE(text))
+    {
+        if (!(length = LoadStringW(user_resource ? dialog_info->taskconfig->hInstance : COMCTL32_hModule,
+                                   (UINT_PTR)text, (WCHAR *)&textW, 0)))
+            return NULL;
+    }
+    else
+    {
+        textW = text;
+        length = strlenW(textW);
+    }
+
+    ret = Alloc((length + 1) * sizeof(WCHAR));
+    if (ret) memcpy(ret, textW, length * sizeof(WCHAR));
+
+    return ret;
+}
+
 static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND hwnd, LONG max_width, SIZE *size)
 {
     DWORD style = DT_EXPANDTABS | DT_CALCRECT | DT_WORDBREAK;
@@ -427,6 +428,39 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     size->cx = min(max_width, rect.right - rect.left);
     if (old_hfont) SelectObject(hdc, old_hfont);
     ReleaseDC(hwnd, hdc);
+}
+
+static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const WCHAR *text, HFONT font)
+{
+    WCHAR *textW;
+    HWND hwnd;
+
+    if (!text) return NULL;
+
+    textW = taskdialog_gettext(dialog_info, TRUE, text);
+    hwnd = CreateWindowW(WC_STATICW, textW, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
+    if (textW) Free(textW);
+
+    SendMessageW(hwnd, WM_SETFONT, (WPARAM)font, 0);
+    return hwnd;
+}
+
+static void taskdialog_add_main_instruction(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    NONCLIENTMETRICSW ncm;
+
+    if (!taskconfig->pszMainInstruction) return;
+
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+    /* 1.25 times the height */
+    ncm.lfMessageFont.lfHeight = ncm.lfMessageFont.lfHeight * 5 / 4;
+    ncm.lfMessageFont.lfWeight = FW_BOLD;
+    dialog_info->main_instruction_font = CreateFontIndirectW(&ncm.lfMessageFont);
+
+    dialog_info->main_instruction =
+        taskdialog_create_label(dialog_info, taskconfig->pszMainInstruction, dialog_info->main_instruction_font);
 }
 
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
@@ -471,8 +505,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     v_spacing = dialog_info->m.v_spacing;
 
     /* Main instruction */
-    hwnd = GetDlgItem(dialog_info->hwnd, ID_MAIN_INSTRUCTION);
-    taskdialog_label_layout(dialog_info, hwnd, 0, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->main_instruction, 0, dialog_width, &dialog_height);
 
     /* Content */
     hwnd = GetDlgItem(dialog_info->hwnd, ID_CONTENT);
@@ -624,7 +657,8 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
         dialog_info->last_timer_tick = GetTickCount();
     }
 
-    taskdialog_set_main_instruction_font(dialog_info);
+    taskdialog_add_main_instruction(dialog_info);
+
     taskdialog_layout(dialog_info);
 }
 
