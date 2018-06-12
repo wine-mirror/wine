@@ -886,7 +886,8 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 
 static void detach_debuggee(struct gdb_context* gdbctx, BOOL kill)
 {
-    be_cpu->single_step(&gdbctx->context, FALSE);
+    assert(gdbctx->process->be_cpu);
+    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     if (!kill)
         DebugActiveProcessStop(gdbctx->process->pid);
@@ -1309,13 +1310,13 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
             switch (gdbctx->in_packet[actionIndex[i] + 1])
             {
             case 's': /* step */
-                be_cpu->single_step(&gdbctx->context, TRUE);
+                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
                 /* fall through*/
             case 'c': /* continue */
                 resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
                 break;
             case 'S': /* step Sig, */
-                be_cpu->single_step(&gdbctx->context, TRUE);
+                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
                 /* fall through */
             case 'C': /* continue sig */
                 hex_from(&sig, gdbctx->in_packet + actionIndex[i] + 2, 1);
@@ -1352,13 +1353,13 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
                 switch (gdbctx->in_packet[actionIndex[defaultAction] + 1])
                 {
                 case 's': /* step */
-                    be_cpu->single_step(&gdbctx->context, TRUE);
+                    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
                     /* fall through */
                 case 'c': /* continue */
                     resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
                     break;
                 case 'S':
-                     be_cpu->single_step(&gdbctx->context, TRUE);
+                     gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
                      /* fall through */
                 case 'C': /* continue sig */
                     hex_from(&sig, gdbctx->in_packet + actionIndex[defaultAction] + 2, 1);
@@ -1375,7 +1376,7 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
     } /* if(defaultAction >=0) */
 
     wait_for_debuggee(gdbctx);
-    be_cpu->single_step(&gdbctx->context, FALSE);
+    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
 
@@ -2090,10 +2091,10 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
             fprintf(stderr, "NIY: step on %04x, while last thread is %04x\n",
                     gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-    be_cpu->single_step(&gdbctx->context, TRUE);
+    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
-    be_cpu->single_step(&gdbctx->context, FALSE);
+    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
 

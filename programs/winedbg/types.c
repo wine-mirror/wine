@@ -92,11 +92,11 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         {
         case btChar:
         case btInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btUInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btFloat:
@@ -106,17 +106,17 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         if (issigned) *issigned = s;
         break;
     case SymTagPointerType:
-        if (!be_cpu->fetch_integer(lvalue, sizeof(void*), s = FALSE, &rtn))
+        if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, sizeof(void*), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
+        if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
         /* FIXME: we don't handle enum size */
-        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
+        if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagFunctionType:
@@ -173,7 +173,7 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
     }
     /* FIXME: should support floats as well */
     val = types_extract_as_longlong(lvalue_from, NULL, &is_signed);
-    return be_cpu->store_integer(lvalue_to, size, is_signed, val);
+    return dbg_curr_process->be_cpu->store_integer(lvalue_to, size, is_signed, val);
 }
 
 /******************************************************************
@@ -302,9 +302,10 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
         result->addr = lvalue->addr;
         break;
     case SymTagPointerType:
-        if (!memory_read_value(lvalue, be_cpu->pointer_size, &result->addr.Offset)) return FALSE;
+        if (!memory_read_value(lvalue, dbg_curr_process->be_cpu->pointer_size, &result->addr.Offset))
+            return FALSE;
         result->addr.Mode = AddrModeFlat;
-        switch (be_cpu->pointer_size)
+        switch (dbg_curr_process->be_cpu->pointer_size)
         {
         case 4: result->addr.Offset = (DWORD)result->addr.Offset; break;
         case 8: break;

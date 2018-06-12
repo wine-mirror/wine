@@ -63,15 +63,13 @@ void  break_set_xpoints(BOOL set)
         addr = memory_to_linear_addr(&bp[i].addr);
 
         if (set)
-            ret = be_cpu->insert_Xpoint(dbg_curr_process->handle,
-                                        dbg_curr_process->process_io,
-                                        &dbg_context, bp[i].xpoint_type, addr,
-                                        &bp[i].info, size);
+            ret = dbg_curr_process->be_cpu->insert_Xpoint(dbg_curr_process->handle,
+                dbg_curr_process->process_io, &dbg_context, bp[i].xpoint_type,
+                addr, &bp[i].info, size);
         else
-            ret = be_cpu->remove_Xpoint(dbg_curr_process->handle, 
-                                        dbg_curr_process->process_io,
-                                        &dbg_context, bp[i].xpoint_type, addr,
-                                        bp[i].info, size);
+            ret = dbg_curr_process->be_cpu->remove_Xpoint(dbg_curr_process->handle,
+                dbg_curr_process->process_io, &dbg_context, bp[i].xpoint_type,
+                addr, bp[i].info, size);
         if (!ret)
         {
             dbg_printf("Invalid address (");
@@ -572,9 +570,9 @@ static int find_triggered_watch(void)
         DWORD64 val = 0;
 
         if (bp[i].refcount && bp[i].enabled && !is_xpoint_break(i) &&
-            (be_cpu->is_watchpoint_set(&dbg_context, bp[i].info)))
+            (dbg_curr_process->be_cpu->is_watchpoint_set(&dbg_context, bp[i].info)))
         {
-            be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
+            dbg_curr_process->be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
 
             if (get_watched_value(i, &val))
             {
@@ -599,7 +597,7 @@ static int find_triggered_watch(void)
         {
             if (val != bp[i].w.oldval)
             {
-                be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
+                dbg_curr_process->be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
                 bp[i].w.oldval = val;
                 found = i;
                 /* cannot break, because two watch points may have been triggered on
@@ -805,7 +803,7 @@ void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL first_chance, BOOL* is_br
 
     /* If not single-stepping, back up to the break instruction */
     if (code == EXCEPTION_BREAKPOINT)
-        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
+        addr->Offset += dbg_curr_process->be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
 
     dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
     dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
@@ -821,7 +819,7 @@ void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL first_chance, BOOL* is_br
         {
             /* If not single-stepping, do not back up over the break instruction */
             if (code == EXCEPTION_BREAKPOINT)
-                addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
+                addr->Offset += dbg_curr_process->be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
             return;
         }
     }
@@ -833,7 +831,7 @@ void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL first_chance, BOOL* is_br
     if (dbg_curr_thread->stopped_xpoint == -1 && code == EXCEPTION_BREAKPOINT)
     {
         *is_break = TRUE;
-        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
+        addr->Offset += dbg_curr_process->be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
     }
 }
 
@@ -890,7 +888,7 @@ void break_restart_execution(int count)
         dbg_printf("Not stopped at any breakpoint; argument ignored.\n");
     }
 
-    if (mode == dbg_exec_finish && be_cpu->is_function_return(linear))
+    if (mode == dbg_exec_finish && dbg_curr_process->be_cpu->is_function_return(linear))
     {
 	mode = ret_mode = dbg_exec_step_into_insn;
     }
@@ -901,7 +899,7 @@ void break_restart_execution(int count)
      * FIXME - we need to check for things like thunks or trampolines,
      * as the actual function may in fact have debug info.
      */
-    if (be_cpu->is_function_call(linear, &callee))
+    if (dbg_curr_process->be_cpu->is_function_call(linear, &callee))
     {
 	status = symbol_get_function_line_status(&callee);
 #if 0
@@ -936,7 +934,7 @@ void break_restart_execution(int count)
     switch (mode)
     {
     case dbg_exec_cont: /* Continuous execution */
-        be_cpu->single_step(&dbg_context, FALSE);
+        dbg_curr_process->be_cpu->single_step(&dbg_context, FALSE);
         break_set_xpoints(TRUE);
         break;
 
@@ -968,16 +966,16 @@ void break_restart_execution(int count)
     case dbg_exec_finish:
     case dbg_exec_step_over_insn:  /* Stepping over a call */
     case dbg_exec_step_over_line:  /* Stepping over a call */
-        if (be_cpu->is_step_over_insn(linear))
+        if (dbg_curr_process->be_cpu->is_step_over_insn(linear))
         {
-            be_cpu->disasm_one_insn(&addr, FALSE);
+            dbg_curr_process->be_cpu->disasm_one_insn(&addr, FALSE);
             dbg_curr_process->bp[0].addr = addr;
             dbg_curr_process->bp[0].enabled = TRUE;
             dbg_curr_process->bp[0].refcount = 1;
 	    dbg_curr_process->bp[0].skipcount = 0;
             dbg_curr_process->bp[0].xpoint_type = be_xpoint_break;
             dbg_curr_process->bp[0].condition = NULL;
-            be_cpu->single_step(&dbg_context, FALSE);
+            dbg_curr_process->be_cpu->single_step(&dbg_context, FALSE);
             break_set_xpoints(TRUE);
             break;
         }
@@ -985,7 +983,7 @@ void break_restart_execution(int count)
 
     case dbg_exec_step_into_line: /* Single-stepping a line */
     case dbg_exec_step_into_insn: /* Single-stepping an instruction */
-        be_cpu->single_step(&dbg_context, TRUE);
+        dbg_curr_process->be_cpu->single_step(&dbg_context, TRUE);
         break;
     default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
     }

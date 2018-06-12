@@ -121,7 +121,7 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pv
     {
         enum be_cpu_addr        kind;
 
-        if (!be_cpu->get_register_info(div->val, &kind)) return FALSE;
+        if (!dbg_curr_process->be_cpu->get_register_info(div->val, &kind)) return FALSE;
 
         /* reuse some known registers directly out of stackwalk details */
         switch (kind)
@@ -198,9 +198,9 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
     dbg_curr_thread->frames = NULL;
 
     memset(&sf, 0, sizeof(sf));
-    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_frame, &sf.AddrFrame);
-    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_pc, &sf.AddrPC);
-    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_stack, &sf.AddrStack);
+    dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_frame, &sf.AddrFrame);
+    dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_pc, &sf.AddrPC);
+    dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_stack, &sf.AddrStack);
 
     /* don't confuse StackWalk by passing in inconsistent addresses */
     if ((sf.AddrPC.Mode == AddrModeFlat) && (sf.AddrFrame.Mode != AddrModeFlat))
@@ -209,7 +209,7 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    while ((ret = StackWalk64(be_cpu->machine, dbg_curr_process->handle,
+    while ((ret = StackWalk64(dbg_curr_process->be_cpu->machine, dbg_curr_process->handle,
                               dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
                               SymFunctionTableAccess64, SymGetModuleBase64, NULL)) ||
            nf == 0) /* we always register first frame information */

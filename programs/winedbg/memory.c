@@ -50,20 +50,20 @@ BOOL be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
 
 void* memory_to_linear_addr(const ADDRESS64* addr)
 {
-    return be_cpu->linearize(dbg_curr_thread->handle, addr);
+    return dbg_curr_process->be_cpu->linearize(dbg_curr_thread->handle, addr);
 }
 
 BOOL memory_get_current_pc(ADDRESS64* addr)
 {
-    assert(be_cpu->get_addr);
-    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
+    assert(dbg_curr_process->be_cpu->get_addr);
+    return dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context,
                             be_cpu_addr_pc, addr);
 }
 
 BOOL memory_get_current_stack(ADDRESS64* addr)
 {
-    assert(be_cpu->get_addr);
-    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
+    assert(dbg_curr_process->be_cpu->get_addr);
+    return dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context,
                             be_cpu_addr_stack, addr);
 }
 
@@ -374,17 +374,17 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
         case btInt:
         case btLong:
-            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             if (size == 1) goto print_char;
             dbg_print_hex(size, val_int);
             break;
         case btUInt:
         case btULong:
-            if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
             dbg_print_hex(size, val_int);
             break;
         case btFloat:
-            if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
+            if (!dbg_curr_process->be_cpu->fetch_float(lvalue, size, &val_real)) return;
             dbg_printf("%Lf", val_real);
             break;
         case btChar:
@@ -392,7 +392,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             /* sometimes WCHAR is defined as btChar with size = 2, so discrimate
              * Ansi/Unicode based on size, not on basetype
              */
-            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
         print_char:
             if (size == 1 && isprint((char)val_int))
                 dbg_printf("'%c'", (char)val_int);
@@ -407,7 +407,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 dbg_printf("%d", (int)val_int);
             break;
         case btBool:
-            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             dbg_printf("%s", val_int ? "true" : "false");
             break;
         default:
@@ -455,7 +455,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
              * (not supported yet in dbghelp)
              * Assuming 4 as for an int
              */
-            if (!be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
+            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
 
             if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))
             {
@@ -631,7 +631,7 @@ BOOL memory_disasm_one_insn(ADDRESS64* addr)
         dbg_printf("-- no code accessible --\n");
         return FALSE;
     }
-    be_cpu->disasm_one_insn(addr, TRUE);
+    dbg_curr_process->be_cpu->disasm_one_insn(addr, TRUE);
     dbg_printf("\n");
     return TRUE;
 }
@@ -685,7 +685,7 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
         return FALSE;
     }
 
-    for (div = be_cpu->context_vars; div->name; div++)
+    for (div = dbg_curr_process->be_cpu->context_vars; div->name; div++)
     {
         if (div->val == regno)
         {

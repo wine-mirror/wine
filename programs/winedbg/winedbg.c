@@ -241,7 +241,7 @@ const struct dbg_internal_var* dbg_get_internal_var(const char* name)
     {
 	if (!strcmp(div->name, name)) return div;
     }
-    for (div = be_cpu->context_vars; div->name; div++)
+    for (div = dbg_curr_process->be_cpu->context_vars; div->name; div++)
     {
 	if (!strcasecmp(div->name, name))
         {
@@ -278,6 +278,20 @@ struct dbg_process*     dbg_get_process_h(HANDLE h)
 	if (p->handle == h) return p;
     return NULL;
 }
+
+#ifdef __i386__
+extern struct backend_cpu be_i386;
+#elif defined(__powerpc__)
+extern struct backend_cpu be_ppc;
+#elif defined(__x86_64__)
+extern struct backend_cpu be_x86_64;
+#elif defined(__arm__) && !defined(__ARMEB__)
+extern struct backend_cpu be_arm;
+#elif defined(__aarch64__) && !defined(__AARCH64EB__)
+extern struct backend_cpu be_arm64;
+#else
+# error CPU unknown
+#endif
 
 struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h)
 {
@@ -318,6 +332,20 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->source_end_line = -1;
 
     list_add_head(&dbg_process_list, &p->entry);
+
+#ifdef __i386__
+    p->be_cpu = &be_i386;
+#elif defined(__powerpc__)
+    p->be_cpu = &be_ppc;
+#elif defined(__x86_64__)
+    p->be_cpu = &be_x86_64;
+#elif defined(__arm__) && !defined(__ARMEB__)
+    p->be_cpu = &be_arm;
+#elif defined(__aarch64__) && !defined(__AARCH64EB__)
+    p->be_cpu = &be_arm64;
+#else
+# error CPU unknown
+#endif
     return p;
 }
 
@@ -609,40 +637,12 @@ static LONG CALLBACK top_filter( EXCEPTION_POINTERS *ptr )
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-struct backend_cpu* be_cpu;
-#ifdef __i386__
-extern struct backend_cpu be_i386;
-#elif defined(__powerpc__)
-extern struct backend_cpu be_ppc;
-#elif defined(__x86_64__)
-extern struct backend_cpu be_x86_64;
-#elif defined(__arm__) && !defined(__ARMEB__)
-extern struct backend_cpu be_arm;
-#elif defined(__aarch64__) && !defined(__AARCH64EB__)
-extern struct backend_cpu be_arm64;
-#else
-# error CPU unknown
-#endif
-
 int main(int argc, char** argv)
 {
     int 	        retv = 0;
     HANDLE              hFile = INVALID_HANDLE_VALUE;
     enum dbg_start      ds;
 
-#ifdef __i386__
-    be_cpu = &be_i386;
-#elif defined(__powerpc__)
-    be_cpu = &be_ppc;
-#elif defined(__x86_64__)
-    be_cpu = &be_x86_64;
-#elif defined(__arm__) && !defined(__ARMEB__)
-    be_cpu = &be_arm;
-#elif defined(__aarch64__) && !defined(__AARCH64EB__)
-    be_cpu = &be_arm64;
-#else
-# error CPU unknown
-#endif
     /* Initialize the output */
     dbg_houtput = GetStdHandle(STD_OUTPUT_HANDLE);
 

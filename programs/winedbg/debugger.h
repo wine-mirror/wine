@@ -39,7 +39,7 @@
 #include "oaidl.h"
 #include <wine/list.h>
 
-#define ADDRSIZE        (be_cpu->pointer_size)
+#define ADDRSIZE        (dbg_curr_process->be_cpu->pointer_size)
 #define ADDRWIDTH       (ADDRSIZE * 2)
 
 /* the debugger uses these exceptions for its internal use */
@@ -228,6 +228,7 @@ struct dbg_process
     void*                       pio_data;
     const WCHAR*		imageName;
     struct list           	threads;
+    struct backend_cpu*         be_cpu;
     BOOL                        continue_on_first_exception : 1,
                                 active_debuggee : 1;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];

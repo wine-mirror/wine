@@ -148,7 +148,8 @@ static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
         case AddrMode1616: name = "16 bit";     break;
         case AddrMode1632: name = "segmented 32 bit"; break;
         case AddrModeReal: name = "vm86";       break;
-        case AddrModeFlat: name = be_cpu->pointer_size == 4 ? "32 bit" : "64 bit"; break;
+        case AddrModeFlat: name = dbg_curr_process->be_cpu->pointer_size == 4
+                                  ? "32 bit" : "64 bit"; break;
         }
         dbg_printf("In %s mode.\n", name);
         dbg_curr_thread->addr_mode = addr.Mode;
@@ -158,9 +159,9 @@ static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     if (!is_debug)
     {
 	/* This is a real crash, dump some info */
-	be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0);
+        dbg_curr_process->be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0);
 	stack_info(-1);
-        be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
+        dbg_curr_process->be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
 	stack_backtrace(dbg_curr_tid);
     }
     else
@@ -997,7 +998,7 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
         /* needed for single stepping (ugly).
          * should this be handled inside the server ??? 
          */
-        be_cpu->single_step(&dbg_context, FALSE);
+        dbg_curr_process->be_cpu->single_step(&dbg_context, FALSE);
         if (dbg_curr_thread->in_exception)
         {
             SetThreadContext(dbg_curr_thread->handle, &dbg_context);

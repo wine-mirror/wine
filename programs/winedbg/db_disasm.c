@@ -1800,8 +1800,8 @@ void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
                                        short_addr ? 2 : 4, FALSE );
                         get_value_inc( address.Segment, addr,  /* segment */
                                        2, FALSE );
-                        be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
-                                           &address, address.Segment, address.Offset);
+                        dbg_curr_process->be_cpu->build_addr(dbg_curr_thread->handle,
+                            &dbg_context, &address, address.Segment, address.Offset);
 			if( db_display )
 			  {
                               print_address( &address, TRUE );

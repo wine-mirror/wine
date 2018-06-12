@@ -116,8 +116,6 @@ struct backend_cpu
     BOOL                (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG);
 };
 
-extern struct backend_cpu*      be_cpu;
-
 /* some handy functions for non segmented CPUs */
 void*    be_cpu_linearize(HANDLE hThread, const ADDRESS64*);
 BOOL be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,

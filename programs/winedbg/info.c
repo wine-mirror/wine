@@ -974,7 +974,7 @@ void info_win32_exception(void)
     {
     case AddrModeFlat:
         dbg_printf(" in %d-bit code (%s)",
-                   be_cpu->pointer_size * 8,
+                   dbg_curr_process->be_cpu->pointer_size * 8,
                    memory_offset_to_string(hexbuf, addr.Offset, 0));
         break;
     case AddrModeReal:
