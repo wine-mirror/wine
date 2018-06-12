@@ -50,8 +50,6 @@ static const UINT DIALOG_BUTTON_WIDTH = 50;
 static const UINT DIALOG_BUTTON_HEIGHT = 14;
 static const UINT DIALOG_TIMER_MS = 200;
 
-static const UINT ID_CONTENT          = 0xf001;
-
 static const UINT ID_TIMER = 1;
 
 struct taskdialog_control
@@ -85,6 +83,7 @@ struct taskdialog_info
     HFONT main_instruction_font;
     /* Control handles */
     HWND main_instruction;
+    HWND content;
     /* Dialog metrics */
     struct
     {
@@ -154,22 +153,6 @@ static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc
     list_add_tail(&desc->controls, &control->entry);
     desc->control_count++;
     return ALIGNED_LENGTH(size, 3);
-}
-
-static unsigned int taskdialog_add_static_label(struct taskdialog_template_desc *desc, WORD id, const WCHAR *str)
-{
-    unsigned int size;
-
-    if (!str)
-        return 0;
-
-    size = taskdialog_add_control(desc, id, WC_STATICW, desc->taskconfig->hInstance, str, 0);
-    return size;
-}
-
-static unsigned int taskdialog_add_content(struct taskdialog_template_desc *desc)
-{
-    return taskdialog_add_static_label(desc, ID_CONTENT, desc->taskconfig->pszContent);
 }
 
 static void taskdialog_init_button(struct taskdialog_button_desc *button, struct taskdialog_template_desc *desc,
@@ -329,7 +312,6 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     desc.control_count = 0;
     desc.default_button = NULL;
 
-    size += taskdialog_add_content(&desc);
     size += taskdialog_add_buttons(&desc);
 
     template = Alloc(size);
@@ -463,6 +445,11 @@ static void taskdialog_add_main_instruction(struct taskdialog_info *dialog_info)
         taskdialog_create_label(dialog_info, taskconfig->pszMainInstruction, dialog_info->main_instruction_font);
 }
 
+static void taskdialog_add_content(struct taskdialog_info *dialog_info)
+{
+    dialog_info->content = taskdialog_create_label(dialog_info, dialog_info->taskconfig->pszContent, dialog_info->font);
+}
+
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
                                     LONG *dialog_height)
 {
@@ -484,7 +471,6 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
     DWORD flags = taskconfig->dwCommonButtons;
     static BOOL first_time = TRUE;
-    HWND hwnd;
     RECT ref_rect;
     LONG screen_width, dialog_width, dialog_height = 0;
     LONG h_spacing, v_spacing;
@@ -508,8 +494,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     taskdialog_label_layout(dialog_info, dialog_info->main_instruction, 0, dialog_width, &dialog_height);
 
     /* Content */
-    hwnd = GetDlgItem(dialog_info->hwnd, ID_CONTENT);
-    taskdialog_label_layout(dialog_info, hwnd, 0, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->content, 0, dialog_width, &dialog_height);
 
     /* Common and custom buttons */
     /* Allocate enough memory for the custom and the default buttons. Maximum 6 default buttons possible. */
@@ -658,6 +643,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     }
 
     taskdialog_add_main_instruction(dialog_info);
+    taskdialog_add_content(dialog_info);
 
     taskdialog_layout(dialog_info);
 }
