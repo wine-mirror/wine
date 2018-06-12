@@ -424,6 +424,7 @@ struct _script_ctx_t {
     jsval_t *stack;
     unsigned stack_size;
     unsigned stack_top;
+    jsval_t acc;
 
     jsstr_t *last_match;
     match_result_t match_parens[9];

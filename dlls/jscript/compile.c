@@ -609,7 +609,7 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
     if(FAILED(hres))
         return hres;
 
-    return push_instr(ctx, OP_push_ret) ? S_OK : E_OUTOFMEMORY;
+    return push_instr(ctx, OP_push_acc) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL emit_ret)
@@ -651,7 +651,7 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
     if(FAILED(hres))
         return hres;
 
-    return !emit_ret || push_instr(ctx, OP_push_ret) ? S_OK : E_OUTOFMEMORY;
+    return !emit_ret || push_instr(ctx, OP_push_acc) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t *expr)
