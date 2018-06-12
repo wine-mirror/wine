@@ -2973,7 +2973,7 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
     ok(!current_vb, "Unexpected vb %p.\n", current_vb);
     ok(!offset, "Unexpected offset %u.\n", offset);
-    todo_wine ok(!stride, "Unexpected stride %u.\n", stride);
+    ok(!stride, "Unexpected stride %u.\n", stride);
 
     /* NULL index buffer, valid vertex declaration, NULL stream source. */
     hr = IDirect3DDevice9_SetIndices(device, NULL);

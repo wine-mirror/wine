@@ -5493,8 +5493,8 @@ float4 main(float4 color : COLOR) : SV_TARGET
     for (i = 0; i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
     {
         ok(!tmp_buffer[i], "Got unexpected vertex buffer %p in slot %u.\n", tmp_buffer[i], i);
-        todo_wine ok(!stride[i], "Got unexpected stride %u in slot %u.\n", stride[i], i);
-        todo_wine ok(!offset[i], "Got unexpected offset %u in slot %u.\n", offset[i], i);
+        ok(!stride[i], "Got unexpected stride %u in slot %u.\n", stride[i], i);
+        ok(!offset[i], "Got unexpected offset %u in slot %u.\n", offset[i], i);
     }
     ID3D10Device_IAGetIndexBuffer(device, tmp_buffer, &format, offset);
     ok(!tmp_buffer[0], "Got unexpected index buffer %p.\n", tmp_buffer[0]);

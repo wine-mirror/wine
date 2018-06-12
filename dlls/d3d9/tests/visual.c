@@ -23132,7 +23132,7 @@ static void test_drawindexedprimitiveup(void)
     ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
     ok(!vb, "Unexpected vb %p.\n", vb);
     ok(!offset, "Unexpected offset %u.\n", offset);
-    todo_wine ok(!stride, "Unexpected stride %u.\n", stride);
+    ok(!stride, "Unexpected stride %u.\n", stride);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
