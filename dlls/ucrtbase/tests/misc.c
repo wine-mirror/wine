@@ -114,7 +114,7 @@ static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
 static char* (CDECL *p__get_narrow_winmain_command_line)(void);
 static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
 static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
-static MSVCRT_lldiv_t (CDECL *p_lldiv)(LONGLONG,LONGLONG);
+static MSVCRT_lldiv_t* (CDECL *p_lldiv)(MSVCRT_lldiv_t*,LONGLONG,LONGLONG);
 static int (CDECL *p__isctype)(int,int);
 static int (CDECL *p_isblank)(int);
 static int (CDECL *p__isblank_l)(int,_locale_t);
@@ -504,7 +504,7 @@ static void test_lldiv(void)
 {
     MSVCRT_lldiv_t r;
 
-    r = p_lldiv((LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
+    p_lldiv(&r, (LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
     ok(r.quot == 0x111, "quot = %s\n", wine_dbgstr_longlong(r.quot));
     ok(r.rem == 0x222, "rem = %s\n", wine_dbgstr_longlong(r.rem));
 }

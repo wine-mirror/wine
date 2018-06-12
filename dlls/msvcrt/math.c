@@ -1938,12 +1938,11 @@ MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 /*********************************************************************
  *		lldiv (MSVCR100.@)
  */
-MSVCRT_lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
+MSVCRT_lldiv_t* CDECL MSVCRT_lldiv(MSVCRT_lldiv_t *ret,
+        MSVCRT_longlong num, MSVCRT_longlong denom)
 {
-  MSVCRT_lldiv_t ret;
-
-  ret.quot = num / denom;
-  ret.rem = num % denom;
+  ret->quot = num / denom;
+  ret->rem = num % denom;
 
   return ret;
 }
