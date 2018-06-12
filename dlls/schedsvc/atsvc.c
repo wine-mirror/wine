@@ -558,7 +558,7 @@ static BOOL load_job(const WCHAR *name, struct job_t *info)
         if (file == INVALID_HANDLE_VALUE)
         {
             TRACE("Failed to open %s, error %u\n", debugstr_w(name), GetLastError());
-            if (try++ >= 3) break;
+            if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3) break;
             Sleep(100);
             continue;
         }
@@ -872,9 +872,9 @@ static void update_job_status(struct job_t *job)
         hfile = CreateFileW(job->name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
         if (hfile != INVALID_HANDLE_VALUE) break;
 
-        if (try++ >= 3)
+        if (GetLastError() != ERROR_SHARING_VIOLATION || try++ >= 3)
         {
-            ERR("Failed to update %s, error %u\n", debugstr_w(job->name), GetLastError());
+            TRACE("Failed to update %s, error %u\n", debugstr_w(job->name), GetLastError());
             return;
         }
         Sleep(100);
