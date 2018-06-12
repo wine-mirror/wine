@@ -430,7 +430,7 @@ static unsigned int taskdialog_get_reference_rect(const struct taskdialog_templa
     return info.rcWork.right - info.rcWork.left;
 }
 
-static WCHAR *taskdialog_get_exe_name(const TASKDIALOGCONFIG *taskconfig, WCHAR *name, DWORD length)
+static WCHAR *taskdialog_get_exe_name(WCHAR *name, DWORD length)
 {
     DWORD len = GetModuleFileNameW(NULL, name, length);
     if (len && len < length)
@@ -461,11 +461,11 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 
     /* Window title */
     if (!taskconfig->pszWindowTitle)
-        titleW = taskdialog_get_exe_name(taskconfig, pathW, ARRAY_SIZE(pathW));
+        titleW = taskdialog_get_exe_name(pathW, ARRAY_SIZE(pathW));
     else if (IS_INTRESOURCE(taskconfig->pszWindowTitle))
     {
         if (!LoadStringW(taskconfig->hInstance, LOWORD(taskconfig->pszWindowTitle), (WCHAR *)&titleW, 0))
-            titleW = taskdialog_get_exe_name(taskconfig, pathW, ARRAY_SIZE(pathW));
+            titleW = taskdialog_get_exe_name(pathW, ARRAY_SIZE(pathW));
     }
     else
         titleW = taskconfig->pszWindowTitle;
