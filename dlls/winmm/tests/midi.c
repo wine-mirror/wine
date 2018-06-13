@@ -549,7 +549,7 @@ static void CALLBACK time_stamp_callback(HMIDIOUT hmo, UINT msg, DWORD_PTR insta
     struct time_stamp_records *records = (struct time_stamp_records *)instance;
     switch (msg) {
     case MM_MOM_POSITIONCB:
-        if (records->count < sizeof(records->time_stamp)/sizeof(records->time_stamp[0]))
+        if (records->count < ARRAY_SIZE(records->time_stamp))
             records->time_stamp[records->count] = GetTickCount();
         records->count++;
         break;
