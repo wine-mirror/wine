@@ -632,6 +632,35 @@ static LONG CALLBACK top_filter( EXCEPTION_POINTERS *ptr )
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+static void restart_if_wow64(void)
+{
+    BOOL is_wow64;
+
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR filename[MAX_PATH];
+        void *redir;
+        DWORD exit_code;
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        GetModuleFileNameW( 0, filename, MAX_PATH );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        {
+            WINE_TRACE( "restarting %s\n", wine_dbgstr_w(filename) );
+            WaitForSingleObject( pi.hProcess, INFINITE );
+            GetExitCodeProcess( pi.hProcess, &exit_code );
+            ExitProcess( exit_code );
+        }
+        else WINE_ERR( "failed to restart 64-bit %s, err %d\n", wine_dbgstr_w(filename), GetLastError() );
+        Wow64RevertWow64FsRedirection( redir );
+    }
+}
+
 int main(int argc, char** argv)
 {
     int 	        retv = 0;
@@ -654,6 +683,7 @@ int main(int argc, char** argv)
 
     if (argc && !strcmp(argv[0], "--gdb"))
     {
+        restart_if_wow64();
         retv = gdb_main(argc, argv);
         if (retv == -1) dbg_winedbg_usage(FALSE);
         return retv;
@@ -726,6 +756,8 @@ int main(int argc, char** argv)
     case start_error_parse:     return dbg_winedbg_usage(FALSE);
     case start_error_init:      return -1;
     }
+
+    restart_if_wow64();
 
     dbg_start_interactive(hFile);
 
