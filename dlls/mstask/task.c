@@ -840,13 +840,26 @@ static HRESULT WINAPI MSTASK_ITask_SetWorkItemData(ITask *iface, WORD count, BYT
     return S_OK;
 }
 
-static HRESULT WINAPI MSTASK_ITask_GetWorkItemData(
-        ITask* iface,
-        WORD *pcBytes,
-        BYTE **ppBytes)
+static HRESULT WINAPI MSTASK_ITask_GetWorkItemData(ITask *iface, WORD *count, BYTE **data)
 {
-    FIXME("(%p, %p, %p): stub\n", iface, pcBytes, ppBytes);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_ITask(iface);
+
+    TRACE("(%p, %p, %p)\n", iface, count, data);
+
+    if (!This->data)
+    {
+        *count = 0;
+        *data = NULL;
+    }
+    else
+    {
+        *data = CoTaskMemAlloc(This->data_count);
+        if (!*data) return E_OUTOFMEMORY;
+        memcpy(*data, This->data, This->data_count);
+        *count = This->data_count;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetErrorRetryCount(
