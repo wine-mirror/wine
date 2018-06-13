@@ -180,6 +180,16 @@ static BOOL be_ppc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
     return FALSE;
 }
 
+static BOOL be_ppc_get_context(HANDLE thread, dbg_ctx_t *ctx)
+{
+#ifdef __powerpc__
+    ctx->ctx.ContextFlags = CONTEXT_ALL;
+    return GetThreadContext(thread, &ctx->ctx);
+#else
+    WINE_FIXME("Cannot debug a PowerPC process on this architecture.\n");
+#endif
+}
+
 struct backend_cpu be_ppc =
 {
     IMAGE_FILE_MACHINE_POWERPC,
@@ -206,5 +216,6 @@ struct backend_cpu be_ppc =
     be_ppc_fetch_integer,
     be_ppc_fetch_float,
     be_ppc_store_integer,
+    be_ppc_get_context,
 };
 #endif

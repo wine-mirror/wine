@@ -1889,6 +1889,16 @@ static BOOL be_arm_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
     return memory_write_value(lvalue, size, &val);
 }
 
+static BOOL be_arm_get_context(HANDLE thread, dbg_ctx_t *ctx)
+{
+#ifdef __arm__
+    ctx->ctx.ContextFlags = CONTEXT_ALL;
+    return GetThreadContext(thread, &ctx->ctx);
+#else
+    WINE_FIXME("Cannot debug an ARM process on this architecture.\n");
+#endif
+}
+
 struct backend_cpu be_arm =
 {
     IMAGE_FILE_MACHINE_ARMNT,
@@ -1915,5 +1925,6 @@ struct backend_cpu be_arm =
     be_arm_fetch_integer,
     be_arm_fetch_float,
     be_arm_store_integer,
+    be_arm_get_context,
 };
 #endif

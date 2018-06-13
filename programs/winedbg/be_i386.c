@@ -853,6 +853,12 @@ static BOOL be_i386_store_integer(const struct dbg_lvalue* lvalue, unsigned size
     return memory_write_value(lvalue, size, &val);
 }
 
+static BOOL be_i386_get_context(HANDLE thread, dbg_ctx_t *ctx)
+{
+    ctx->x86.ContextFlags = WOW64_CONTEXT_ALL;
+    return Wow64GetThreadContext(thread, &ctx->x86);
+}
+
 struct backend_cpu be_i386 =
 {
     IMAGE_FILE_MACHINE_I386,
@@ -879,5 +885,6 @@ struct backend_cpu be_i386 =
     be_i386_fetch_integer,
     be_i386_fetch_float,
     be_i386_store_integer,
+    be_i386_get_context,
 };
 #endif

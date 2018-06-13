@@ -91,19 +91,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe)
 
 static unsigned dbg_fetch_context(void)
 {
-    dbg_context.ctx.ContextFlags = CONTEXT_CONTROL
-        | CONTEXT_INTEGER
-#ifdef CONTEXT_FLOATING_POINT
-        | CONTEXT_FLOATING_POINT
-#endif
-#ifdef CONTEXT_SEGMENTS
-        | CONTEXT_SEGMENTS
-#endif
-#ifdef CONTEXT_DEBUG_REGISTERS
-        | CONTEXT_DEBUG_REGISTERS
-#endif
-        ;
-    if (!GetThreadContext(dbg_curr_thread->handle, &dbg_context.ctx))
+    if (!dbg_curr_process->be_cpu->get_context(dbg_curr_thread->handle, &dbg_context))
     {
         WINE_WARN("Can't get thread's context\n");
         return FALSE;

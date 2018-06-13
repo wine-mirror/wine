@@ -354,11 +354,9 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
         dbg_ctx_t ctx = {0};
 
         dbg_curr_tid = dbg_curr_thread->tid;
-
-        ctx.ctx.ContextFlags = CONTEXT_FULL;
         if (SuspendThread(dbg_curr_thread->handle) != -1)
         {
-            if (!GetThreadContext(dbg_curr_thread->handle, &ctx.ctx))
+            if (!pcs->be_cpu->get_context(dbg_curr_thread->handle, &ctx))
             {
                 dbg_printf("Can't get context for thread %04x in current process\n",
                            tid);

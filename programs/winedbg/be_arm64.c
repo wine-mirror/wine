@@ -278,6 +278,16 @@ void be_arm64_disasm_one_insn(ADDRESS64 *addr, int display)
     dbg_printf("be_arm64_disasm_one_insn: not done\n");
 }
 
+static BOOL be_arm64_get_context(HANDLE thread, dbg_ctx_t *ctx)
+{
+#ifdef __aarch64__
+    ctx->ctx.ContextFlags = CONTEXT_ALL;
+    return GetThreadContext(thread, &ctx->ctx);
+#else
+    WINE_FIXME("Cannot debug an ARM64 process on this architecture.\n");
+#endif
+}
+
 struct backend_cpu be_arm64 =
 {
     IMAGE_FILE_MACHINE_ARM64,
@@ -304,5 +314,6 @@ struct backend_cpu be_arm64 =
     be_arm64_fetch_integer,
     be_arm64_fetch_float,
     be_arm64_store_integer,
+    be_arm64_get_context,
 };
 #endif

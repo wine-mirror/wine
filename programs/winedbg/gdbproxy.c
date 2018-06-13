@@ -552,7 +552,7 @@ static inline void cpu_register_hex_from(dbg_ctx_t* ctx, unsigned idx, const cha
 
 static BOOL fetch_context(struct gdb_context *gdbctx, HANDLE h, dbg_ctx_t *ctx)
 {
-    if (!GetThreadContext(h, &ctx->ctx))
+    if (!gdbctx->process->be_cpu->get_context(h, ctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
             fprintf(stderr, "Can't get thread's context\n");

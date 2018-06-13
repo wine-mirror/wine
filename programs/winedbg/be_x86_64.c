@@ -674,6 +674,16 @@ static BOOL be_x86_64_store_integer(const struct dbg_lvalue* lvalue, unsigned si
     return memory_write_value(lvalue, size, &val);
 }
 
+static BOOL be_x86_64_get_context(HANDLE thread, dbg_ctx_t *ctx)
+{
+#ifdef __x86_64__
+    ctx->ctx.ContextFlags = CONTEXT_ALL;
+    return GetThreadContext(thread, &ctx->ctx);
+#else
+    WINE_FIXME("Cannot debug an x86-64 process on this architecture.\n");
+#endif
+}
+
 struct backend_cpu be_x86_64 =
 {
     IMAGE_FILE_MACHINE_AMD64,
@@ -700,5 +710,6 @@ struct backend_cpu be_x86_64 =
     be_x86_64_fetch_integer,
     be_x86_64_fetch_float,
     be_x86_64_store_integer,
+    be_x86_64_get_context,
 };
 #endif

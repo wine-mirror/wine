@@ -21,6 +21,7 @@
 enum be_cpu_addr {be_cpu_addr_pc, be_cpu_addr_stack, be_cpu_addr_frame};
 enum be_xpoint_type {be_xpoint_break, be_xpoint_watch_exec, be_xpoint_watch_read,
                      be_xpoint_watch_write, be_xpoint_free=-1};
+
 struct backend_cpu
 {
     const DWORD         machine;
@@ -114,6 +115,8 @@ struct backend_cpu
     BOOL                (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
     /* Writes an integer to memory */
     BOOL                (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG);
+
+    BOOL                (*get_context)(HANDLE thread, dbg_ctx_t *ctx);
 };
 
 /* some handy functions for non segmented CPUs */
