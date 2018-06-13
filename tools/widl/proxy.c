@@ -152,7 +152,7 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     break;
 
   case TGT_STRUCT:
-    if (get_struct_fc(type) != RPC_FC_STRUCT)
+    if (get_struct_fc(type) != FC_STRUCT)
       print_proxy("/* FIXME: %s code for %s struct type 0x%x missing */\n", __FUNCTION__, arg->name, get_struct_fc(type) );
     break;
 

@@ -104,7 +104,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
 
     write_parameters_init(server, indent, func, "__frame->");
 
-    if (explicit_fc == RPC_FC_BIND_PRIMITIVE)
+    if (explicit_fc == FC_BIND_PRIMITIVE)
     {
         print_server("__frame->%s = _pRpcMessage->Handle;\n", handle_var->name);
         fprintf(server, "\n");

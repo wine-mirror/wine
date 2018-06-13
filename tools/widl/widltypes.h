@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "guiddef.h"
-#include "wine/rpcfc.h"
+#include "ndrtypes.h"
 #include "wine/list.h"
 
 #ifndef UUID_DEFINED

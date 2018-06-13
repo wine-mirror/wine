@@ -91,7 +91,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
     if (handle_var)
     {
-        if (explicit_fc == RPC_FC_BIND_GENERIC)
+        if (explicit_fc == FC_BIND_GENERIC)
             print_client("%s %s;\n",
                          get_explicit_generic_handle_type(handle_var)->name, handle_var->name );
         print_client("RPC_BINDING_HANDLE _Handle;\n");
@@ -113,7 +113,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
 
     print_client("NdrFreeBuffer(&__frame->_StubMsg);\n");
 
-    if (explicit_fc == RPC_FC_BIND_GENERIC)
+    if (explicit_fc == FC_BIND_GENERIC)
     {
         fprintf(client, "\n");
         print_client("if (__frame->_Handle)\n");
@@ -144,7 +144,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     if (handle_var)
     {
         print_client( "__frame->_Handle = 0;\n" );
-        if (explicit_fc == RPC_FC_BIND_GENERIC)
+        if (explicit_fc == FC_BIND_GENERIC)
             print_client("__frame->%s = %s;\n", handle_var->name, handle_var->name );
     }
     if (has_ret && decl_indirect(retval->type))
@@ -180,16 +180,16 @@ static void write_function_stub( const type_t *iface, const var_t *func,
 
     switch (explicit_fc)
     {
-    case RPC_FC_BIND_PRIMITIVE:
+    case FC_BIND_PRIMITIVE:
         print_client("__frame->_Handle = %s;\n", handle_var->name);
         fprintf(client, "\n");
         break;
-    case RPC_FC_BIND_GENERIC:
+    case FC_BIND_GENERIC:
         print_client("__frame->_Handle = %s_bind(%s);\n",
                      get_explicit_generic_handle_type(handle_var)->name, handle_var->name);
         fprintf(client, "\n");
         break;
-    case RPC_FC_BIND_CONTEXT:
+    case FC_BIND_CONTEXT:
     {
         /* if the context_handle attribute appears in the chain of types
          * without pointers being followed, then the context handle must

@@ -38,7 +38,7 @@
 #include "expr.h"
 #include "typetree.h"
 
-static unsigned char pointer_default = RPC_FC_UP;
+static unsigned char pointer_default = FC_UP;
 
 typedef struct list typelist_t;
 struct typenode {
@@ -1107,9 +1107,9 @@ threading_type:
 	;
 
 pointer_type:
-	  tREF					{ $$ = RPC_FC_RP; }
-	| tUNIQUE				{ $$ = RPC_FC_UP; }
-	| tPTR					{ $$ = RPC_FC_FP; }
+	  tREF					{ $$ = FC_RP; }
+	| tUNIQUE				{ $$ = FC_UP; }
+	| tPTR					{ $$ = FC_FP; }
 	;
 
 structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, current_namespace, TRUE, $4); }
@@ -1501,12 +1501,12 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
     }
     if (is_ptr(ptr))
     {
-      if (ptr_attr && ptr_attr != RPC_FC_UP &&
+      if (ptr_attr && ptr_attr != FC_UP &&
           type_get_type(type_pointer_get_ref(ptr)) == TYPE_INTERFACE)
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (!ptr_attr && top && (*pt)->details.pointer.def_fc != RPC_FC_RP)
+      if (!ptr_attr && top && (*pt)->details.pointer.def_fc != FC_RP)
       {
         /* FIXME: this is a horrible hack to cope with the issue that we
          * store an offset to the typeformat string in the type object, but
@@ -1531,9 +1531,9 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
       t = type_pointer_get_ref(t);
 
     if (type_get_type(t) != TYPE_BASIC &&
-        (get_basic_fc(t) != RPC_FC_CHAR &&
-         get_basic_fc(t) != RPC_FC_BYTE &&
-         get_basic_fc(t) != RPC_FC_WCHAR))
+        (get_basic_fc(t) != FC_CHAR &&
+         get_basic_fc(t) != FC_BYTE &&
+         get_basic_fc(t) != FC_WCHAR))
     {
       error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
                 v->name);
@@ -1764,7 +1764,7 @@ static declarator_t *make_declarator(var_t *var)
 static type_t *make_safearray(type_t *type)
 {
   return type_new_array(NULL, type_new_alias(type, "SAFEARRAY"), TRUE, 0,
-                        NULL, NULL, RPC_FC_RP);
+                        NULL, NULL, FC_RP);
 }
 
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)
