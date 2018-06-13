@@ -1347,6 +1347,86 @@ static void remove_element(WSDXML_ELEMENT *element)
     WSDFreeLinkedMemory(element);
 }
 
+static WSD_NAME_LIST *build_types_list_from_string(IWSDXMLContext *context, LPCWSTR buffer, void *parent)
+{
+    WSD_NAME_LIST *list = NULL, *cur_list = NULL, *prev_list = NULL;
+    LPWSTR name_start = NULL, temp_buffer = NULL;
+    LPCWSTR prefix_start = buffer;
+    WSDXML_NAMESPACE *ns;
+    WSDXML_NAME *name;
+    int buffer_len, i;
+
+    if (buffer == NULL)
+        return NULL;
+
+    temp_buffer = duplicate_string(parent, buffer);
+    if (temp_buffer == NULL) goto cleanup;
+
+    buffer_len = lstrlenW(temp_buffer);
+
+    list = WSDAllocateLinkedMemory(parent, sizeof(WSD_NAME_LIST));
+    if (list == NULL) goto cleanup;
+
+    ZeroMemory(list, sizeof(WSD_NAME_LIST));
+    prefix_start = temp_buffer;
+
+    for (i = 0; i < buffer_len; i++)
+    {
+        if (temp_buffer[i] == ':')
+        {
+            temp_buffer[i] = 0;
+            name_start = &temp_buffer[i + 1];
+        }
+        else if ((temp_buffer[i] == ' ') || (i == buffer_len - 1))
+        {
+            WSDXML_NAMESPACE *known_ns;
+
+            if (temp_buffer[i] == ' ')
+                temp_buffer[i] = 0;
+
+            if (cur_list == NULL)
+                cur_list = list;
+            else
+            {
+                cur_list = WSDAllocateLinkedMemory(parent, sizeof(WSD_NAME_LIST));
+                if (cur_list == NULL) goto cleanup;
+
+                prev_list->Next = cur_list;
+            }
+
+            name = WSDAllocateLinkedMemory(cur_list, sizeof(WSDXML_NAME));
+            if (name == NULL) goto cleanup;
+
+            ns = WSDAllocateLinkedMemory(cur_list, sizeof(WSDXML_NAMESPACE));
+            if (ns == NULL) goto cleanup;
+
+            ZeroMemory(ns, sizeof(WSDXML_NAMESPACE));
+            ns->PreferredPrefix = duplicate_string(ns, prefix_start);
+
+            known_ns = xml_context_find_namespace_by_prefix(context, ns->PreferredPrefix);
+
+            if (known_ns != NULL)
+                ns->Uri = duplicate_string(ns, known_ns->Uri);
+
+            name->Space = ns;
+            name->LocalName = duplicate_string(name, name_start);
+
+            cur_list->Element = name;
+            prefix_start = &temp_buffer[i + 1];
+            name_start = NULL;
+        }
+    }
+
+    WSDFreeLinkedMemory(temp_buffer);
+    return list;
+
+cleanup:
+    WSDFreeLinkedMemory(list);
+    WSDFreeLinkedMemory(temp_buffer);
+
+    return NULL;
+}
+
 static WSDXML_TYPE *generate_type(LPCWSTR uri, void *parent)
 {
     WSDXML_TYPE *type = WSDAllocateLinkedMemory(parent, sizeof(WSDXML_TYPE));
@@ -1516,7 +1596,16 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
 
         ZeroMemory(probe, sizeof(WSD_PROBE));
 
-        /* TODO: Check for the "types" element */
+        /* Check for the "types" element */
+        ret = WSDXMLGetValueFromAny(discoveryNsUri, typesString, (WSDXML_ELEMENT *) probe_element->FirstChild, &value);
+
+        if (FAILED(ret))
+        {
+            WARN("Unable to find Types element in received Probe message\n");
+            goto cleanup;
+        }
+
+        probe->Types = build_types_list_from_string(context, value, probe);
 
         /* Now detach and free known headers to leave the "any" elements */
         remove_element(find_element(probe_element, typesString, discoveryNsUri));

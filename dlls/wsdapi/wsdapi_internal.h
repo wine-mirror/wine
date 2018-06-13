@@ -81,5 +81,6 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
 
 LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value);
 WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name);
+WSDXML_NAMESPACE *xml_context_find_namespace_by_prefix(IWSDXMLContext *context, LPCWSTR prefix);
 
 #endif

@@ -564,7 +564,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
             static const WCHAR lager[] = {'L','a','g','e','r',0};
             static const WCHAR more_info[] = {'M','o','r','e','I','n','f','o',0};
 
-            todo_wine ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
+            ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
 
             if (probe_msg->Types != NULL)
             {
