@@ -398,7 +398,7 @@ static void wave_in_test_device(UINT_PTR device)
 
     HeapFree(GetProcessHeap(), 0, nameA);
 
-    for (f=0;f<NB_WIN_FORMATS;f++) {
+    for (f = 0; f < ARRAY_SIZE(win_formats); f++) {
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=win_formats[f][3];
         format.wBitsPerSample=win_formats[f][2];
