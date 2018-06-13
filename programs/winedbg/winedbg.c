@@ -284,6 +284,7 @@ extern struct backend_cpu be_i386;
 #elif defined(__powerpc__)
 extern struct backend_cpu be_ppc;
 #elif defined(__x86_64__)
+extern struct backend_cpu be_i386;
 extern struct backend_cpu be_x86_64;
 #elif defined(__arm__) && !defined(__ARMEB__)
 extern struct backend_cpu be_arm;
@@ -296,21 +297,13 @@ extern struct backend_cpu be_arm64;
 struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h)
 {
     struct dbg_process*	p;
+    BOOL wow64;
 
     if ((p = dbg_get_process(pid)))
-    {
-        if (p->handle != 0)
-        {
-            WINE_ERR("Process (%04x) is already defined\n", pid);
-        }
-        else
-        {
-            p->handle = h;
-            p->process_io = pio;
-            p->imageName = NULL;
-        }
         return p;
-    }
+
+    if (!h)
+        h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
     if (!(p = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_process)))) return NULL;
     p->handle = h;
@@ -333,12 +326,14 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
 
     list_add_head(&dbg_process_list, &p->entry);
 
+    IsWow64Process(h, &wow64);
+
 #ifdef __i386__
     p->be_cpu = &be_i386;
 #elif defined(__powerpc__)
     p->be_cpu = &be_ppc;
 #elif defined(__x86_64__)
-    p->be_cpu = &be_x86_64;
+    p->be_cpu = wow64 ? &be_i386 : &be_x86_64;
 #elif defined(__arm__) && !defined(__ARMEB__)
     p->be_cpu = &be_arm;
 #elif defined(__aarch64__) && !defined(__AARCH64EB__)

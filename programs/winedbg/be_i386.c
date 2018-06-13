@@ -21,7 +21,7 @@
 #include "debugger.h"
 #include "wine/debug.h"
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -33,6 +33,7 @@ extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define IS_VM86_MODE(ctx) (ctx->EFlags & V86_FLAG)
 
+#ifndef __x86_64__
 typedef struct DECLSPEC_ALIGN(16) _M128A {
     ULONGLONG Low;
     LONGLONG High;
@@ -56,6 +57,7 @@ typedef struct _XMM_SAVE_AREA32 {
     M128A XmmRegisters[16];  /* 0a0 */
     BYTE Reserved4[96];      /* 1a0 */
 } XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
+#endif
 
 static ADDRESS_MODE get_selector_type(HANDLE hThread, const WOW64_CONTEXT *ctx, WORD sel)
 {
@@ -77,18 +79,18 @@ static void* be_i386_linearize(HANDLE hThread, const ADDRESS64* addr)
     switch (addr->Mode)
     {
     case AddrModeReal:
-        return (void*)((DWORD)(LOWORD(addr->Segment) << 4) + (DWORD)addr->Offset);
+        return (void*)((DWORD_PTR)(LOWORD(addr->Segment) << 4) + (DWORD_PTR)addr->Offset);
     case AddrMode1632:
         if (!(addr->Segment & 4) || ((addr->Segment >> 3) < 17))
-            return (void*)(DWORD)addr->Offset;
+            return (void*)(DWORD_PTR)addr->Offset;
         /* fall through */
     case AddrMode1616:
         if (!dbg_curr_process->process_io->get_selector(hThread, addr->Segment, &le)) return NULL;
         return (void*)((le.HighWord.Bits.BaseHi << 24) + 
                        (le.HighWord.Bits.BaseMid << 16) + le.BaseLow +
-                       (DWORD)addr->Offset);
+                       (DWORD_PTR)addr->Offset);
     case AddrModeFlat:
-        return (void*)(DWORD)addr->Offset;
+        return (void*)(DWORD_PTR)addr->Offset;
     }
     return NULL;
 }
@@ -502,7 +504,7 @@ static BOOL be_i386_is_func_call(const void* insn, ADDRESS64* callee)
         if (!fetch_value((const char*)insn + 1, operand_size, &delta))
             return FALSE;
         callee->Segment = dbg_context.x86.SegCs;
-        callee->Offset = (DWORD)insn + 1 + (operand_size / 8) + delta;
+        callee->Offset = (DWORD_PTR)insn + 1 + (operand_size / 8) + delta;
         return TRUE;
 
     case 0x9a: /* absolute far call */
@@ -589,11 +591,11 @@ static BOOL be_i386_is_func_call(const void* insn, ADDRESS64* callee)
                 }
                 if (((ch >> 3) & 0x07) == 0x03) /* LCALL */
                 {
-                    if (!dbg_read_memory((const char*)dst + operand_size, &segment, sizeof(segment)))
+                    if (!dbg_read_memory((const char*)(UINT_PTR)dst + operand_size, &segment, sizeof(segment)))
                         return FALSE;
                 }
                 else segment = dbg_context.x86.SegCs;
-                if (!dbg_read_memory((const char*)dst, &delta, sizeof(delta)))
+                if (!dbg_read_memory((const char*)(UINT_PTR)dst, &delta, sizeof(delta)))
                     return FALSE;
                 callee->Mode = get_selector_type(dbg_curr_thread->handle, &dbg_context.x86,
                                                  segment);
@@ -643,7 +645,7 @@ static BOOL be_i386_is_jump(const void* insn, ADDRESS64* jumpee)
         if (!fetch_value((const char*)insn + 1, operand_size, &delta))
             return FALSE;
         jumpee->Segment = dbg_context.x86.SegCs;
-        jumpee->Offset = (DWORD)insn + 1 + (operand_size / 8) + delta;
+        jumpee->Offset = (DWORD_PTR)insn + 1 + (operand_size / 8) + delta;
         return TRUE;
     default: WINE_FIXME("unknown %x\n", ch); return FALSE;
     }
@@ -733,7 +735,7 @@ static BOOL be_i386_insert_Xpoint(HANDLE hProcess, const struct be_process_io* p
         bits = DR7_RW_WRITE;
     hw_bp:
         if ((reg = be_i386_get_unused_DR(ctx, &pr)) == -1) return FALSE;
-        *pr = (DWORD)addr;
+        *pr = (DWORD_PTR)addr;
         if (type != be_xpoint_watch_exec) switch (size)
         {
         case 4: bits |= DR7_LEN_4; break;

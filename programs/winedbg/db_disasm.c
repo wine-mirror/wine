@@ -64,7 +64,7 @@
 
 #include "debugger.h"
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 
 /*
  * Switch to disassemble 16-bit code.
@@ -1225,7 +1225,7 @@ static void db_print_address(const char *seg, int size, struct i_addr *addrp, in
                void*    a2;
                
                dbg_printf("0x%x -> ", addrp->disp);
-	       if (!dbg_read_memory((void*)addrp->disp, &a1, sizeof(a1))) {
+	       if (!dbg_read_memory((void*)(INT_PTR)addrp->disp, &a1, sizeof(a1))) {
 		   dbg_printf("(invalid source)");
 	       } else if (!dbg_read_memory(a1, &a2, sizeof(a2))) {
 		  dbg_printf("(invalid destination)");
