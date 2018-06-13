@@ -276,6 +276,7 @@ DECL_HANDLER(set_class_info)
     reply->old_extra     = class->nb_extra_bytes;
     reply->old_win_extra = class->win_extra;
     reply->old_instance  = class->instance;
+    reply->base_atom     = class->base_atom;
 
     if (req->flags & SET_CLASS_ATOM)
     {

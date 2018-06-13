@@ -1194,8 +1194,20 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
     if (class == CLASS_OTHER_PROCESS)
     {
         WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+        ATOM atom = 0;
 
-        ret = GlobalGetAtomNameW( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
+        SERVER_START_REQ( set_class_info )
+        {
+            req->window = wine_server_user_handle( hwnd );
+            req->flags = 0;
+            req->extra_offset = -1;
+            req->extra_size = 0;
+            if (!wine_server_call_err( req ))
+                atom = reply->base_atom;
+        }
+        SERVER_END_REQ;
+
+        ret = GlobalGetAtomNameW( atom, tmpbuf, MAX_ATOM_LEN + 1 );
         if (ret)
         {
             ret = min(count - 1, ret);

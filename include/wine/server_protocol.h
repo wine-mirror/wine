@@ -4525,11 +4525,13 @@ struct set_class_info_reply
 {
     struct reply_header __header;
     atom_t         old_atom;
+    atom_t         base_atom;
+    mod_handle_t   old_instance;
+    lparam_t       old_extra_value;
     unsigned int   old_style;
     int            old_extra;
     int            old_win_extra;
-    mod_handle_t   old_instance;
-    lparam_t       old_extra_value;
+    char __pad_44[4];
 };
 #define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002
@@ -6512,6 +6514,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 554
+#define SERVER_PROTOCOL_VERSION 555
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
