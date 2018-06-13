@@ -197,7 +197,7 @@ static BOOL create_manifest_file(const char *filename, const char *manifest)
     WCHAR path[MAX_PATH];
 
     MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
-    GetFullPathNameW(path, sizeof(manifest_path)/sizeof(WCHAR), manifest_path, NULL);
+    GetFullPathNameW(path, ARRAY_SIZE(manifest_path), manifest_path, NULL);
 
     manifest_len = strlen(manifest);
     file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -2334,7 +2334,7 @@ static void test_OleRegGetUserType(void)
     }
 
     /* test using registered CLSID */
-    StringFromGUID2(&CLSID_non_existent, clsidW, sizeof(clsidW)/sizeof(clsidW[0]));
+    StringFromGUID2(&CLSID_non_existent, clsidW, ARRAY_SIZE(clsidW));
 
     ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsidkeyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &clsidhkey, &disposition);
     if (!ret)
@@ -2522,7 +2522,7 @@ static void flush_messages(void)
 
 static LRESULT CALLBACK cowait_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    if(cowait_msgs_last < sizeof(cowait_msgs)/sizeof(*cowait_msgs))
+    if(cowait_msgs_last < ARRAY_SIZE(cowait_msgs))
         cowait_msgs[cowait_msgs_last++] = msg;
     if(msg == WM_DDE_FIRST)
         return 6;

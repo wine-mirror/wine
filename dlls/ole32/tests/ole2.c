@@ -1728,7 +1728,7 @@ static void test_data_cache(void)
         { NULL, 0 }
     };
 
-    GetSystemDirectoryA(szSystemDir, sizeof(szSystemDir)/sizeof(szSystemDir[0]));
+    GetSystemDirectoryA(szSystemDir, ARRAY_SIZE(szSystemDir));
 
     expected_method_list = methods_cacheinitnew;
 
@@ -1860,7 +1860,7 @@ static void test_data_cache(void)
     hr = IOleCache2_Cache(pOleCache, &fmtetc, 0, &dwConnection);
     ok_ole_success(hr, "IOleCache_Cache");
 
-    MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszPath, sizeof(wszPath)/sizeof(wszPath[0]));
+    MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszPath, ARRAY_SIZE(wszPath));
     memcpy(wszPath+lstrlenW(wszPath), wszShell32, sizeof(wszShell32));
 
     fmtetc.cfFormat = CF_METAFILEPICT;
@@ -2490,7 +2490,7 @@ static void test_data_cache_init(void)
         { &CLSID_Picture_EnhMetafile, 3, 1 }
     };
 
-    for (i = 0; i < sizeof(data) / sizeof(data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(data); i++)
     {
         hr = CreateDataCache( NULL, data[i].clsid, &IID_IOleCache2, (void **)&cache );
         ok( hr == S_OK, "got %08x\n", hr );
@@ -4541,7 +4541,7 @@ static void test_data_cache_contents(void)
         { &stg_def_9, &stg_def_9_saved },
     };
 
-    for (i = 0; i < sizeof(test_data)/sizeof(test_data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         if (winetest_debug > 1)
             trace("start testing storage def %d\n", i);

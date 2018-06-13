@@ -69,7 +69,7 @@ static const char *debugstr_guid(const GUID *guid)
 
     if (!guid) return "(null)";
 
-    for (i = 0; i < sizeof(guid_name)/sizeof(guid_name[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(guid_name); i++)
     {
         if (IsEqualIID(guid, guid_name[i].guid))
             return guid_name[i].name;
