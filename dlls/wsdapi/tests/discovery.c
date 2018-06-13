@@ -491,7 +491,7 @@ static void verify_wsdxml_any_text(const char *debug_prefix, WSDXML_ELEMENT *any
 {
     WSDXML_TEXT *child;
 
-    todo_wine ok(any != NULL, "%s: any == NULL\n", debug_prefix);
+    ok(any != NULL, "%s: any == NULL\n", debug_prefix);
     if (any == NULL) return;
 
     child = (WSDXML_TEXT *) any->FirstChild;

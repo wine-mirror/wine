@@ -1317,6 +1317,35 @@ static WSDXML_ELEMENT *find_element(WSDXML_ELEMENT *parent, LPCWSTR name, LPCWST
     return NULL;
 }
 
+static void remove_element(WSDXML_ELEMENT *element)
+{
+    WSDXML_NODE *cur;
+
+    if (element == NULL)
+        return;
+
+    if (element->Node.Parent->FirstChild == (WSDXML_NODE *) element)
+        element->Node.Parent->FirstChild = element->Node.Next;
+    else
+    {
+        cur = element->Node.Parent->FirstChild;
+
+        while (cur != NULL)
+        {
+            if (cur->Next == (WSDXML_NODE *) element)
+            {
+                cur->Next = element->Node.Next;
+                break;
+            }
+
+            cur = cur->Next;
+        }
+    }
+
+    WSDDetachLinkedMemory(element);
+    WSDFreeLinkedMemory(element);
+}
+
 HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
 {
     WSDXML_ELEMENT *envelope = NULL, *header_element, *body_element;
@@ -1437,6 +1466,17 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
     if (FAILED(ret)) goto cleanup;
     soap_msg->Header.MessageID = duplicate_string(soap_msg, value);
     if (soap_msg->Header.MessageID == NULL) goto outofmemory;
+
+    /* Now detach and free known headers to leave the "any" elements */
+    remove_element(find_element(header_element, actionString, addressingNsUri));
+    remove_element(find_element(header_element, toString, addressingNsUri));
+    remove_element(find_element(header_element, messageIdString, addressingNsUri));
+    remove_element(find_element(header_element, appSequenceString, discoveryNsUri));
+
+    soap_msg->Header.AnyHeaders = (WSDXML_ELEMENT *) header_element->FirstChild;
+
+    if (soap_msg->Header.AnyHeaders != NULL)
+        soap_msg->Header.AnyHeaders->Node.Parent = NULL;
 
     /* Find the body element */
     body_element = find_element(envelope, bodyString, envelopeNsUri);
