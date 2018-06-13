@@ -6742,6 +6742,7 @@ static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self, *parent;
     IHTMLWindow5 *window5;
+    IHTMLWindow7 *window7;
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
     IUnknown *unk;
@@ -6841,6 +6842,29 @@ static void test_window(IHTMLDocument2 *doc)
         IHTMLWindow5_Release(window5);
     }else {
         win_skip("IHTMLWindow5 not supported!\n");
+    }
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
+    if(SUCCEEDED(hres)) {
+        IHTMLPerformance *performance;
+
+        ok(window7 != NULL, "window7 == NULL\n");
+
+        hres = IHTMLWindow7_get_performance(window7, &v);
+        todo_wine
+        ok(hres == S_OK, "get_performance failed: %08x\n", hres);
+        if(SUCCEEDED(hres)) {
+            ok(V_VT(&v) == VT_DISPATCH, "V_VT(performance) = %u\n", V_VT(&v));
+
+            hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IHTMLPerformance,
+                                            (void**)&performance);
+            ok(hres == S_OK, "Could not get IHTMLPerformance iface: %08x\n", hres);
+
+            IHTMLPerformance_Release(performance);
+            IHTMLWindow7_Release(window7);
+        }
+    }else {
+        win_skip("IHTMLWindow7 not supported\n");
     }
 
     IHTMLWindow2_Release(window);
