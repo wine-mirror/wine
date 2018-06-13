@@ -720,6 +720,60 @@ static void test_SetFlags(void)
     ITask_Release(task);
 }
 
+static void test_workitem_data(void)
+{
+    static BYTE hello[] = "Hello World!";
+    HRESULT hr;
+    ITask *task;
+    WORD count;
+    BYTE *data;
+
+    hr = ITaskScheduler_NewWorkItem(scheduler, task_name, &CLSID_CTask,
+                                    &IID_ITask, (IUnknown **)&task);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    if (0) /* crashes under Windows */
+        hr = ITask_GetWorkItemData(task, &count, NULL);
+    if (0) /* crashes under Windows */
+        hr = ITask_GetWorkItemData(task, NULL, &data);
+
+    count = 0xdead;
+    data = (BYTE *)0xdeadbeef;
+    hr = ITask_GetWorkItemData(task, &count, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(count == 0, "got %u\n", count);
+    ok(data == NULL, "got %p\n", data);
+
+    hr = ITask_SetWorkItemData(task, sizeof(hello), NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = ITask_SetWorkItemData(task, 0, hello);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = ITask_SetWorkItemData(task, sizeof(hello), hello);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    count = 0xdead;
+    data = NULL;
+    hr = ITask_GetWorkItemData(task, &count, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(count == sizeof(hello), "got %u\n", count);
+    ok(data != NULL, "got NULL\n");
+    ok(!memcmp(data, hello, sizeof(hello)), "data mismatch\n");
+
+    hr = ITask_SetWorkItemData(task, 0, NULL);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    count = 0xdead;
+    data = (BYTE *)0xdeadbeef;
+    hr = ITask_GetWorkItemData(task, &count, &data);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(count == 0, "got %u\n", count);
+    ok(data == NULL, "got %p\n", data);
+
+    ITask_Release(task);
+}
+
 START_TEST(task)
 {
     HRESULT hr;
@@ -738,6 +792,7 @@ START_TEST(task)
     test_task_state();
     test_Run();
     test_SetFlags();
+    test_workitem_data();
 
     ITaskScheduler_Release(scheduler);
     CoUninitialize();
