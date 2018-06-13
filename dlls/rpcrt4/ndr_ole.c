@@ -36,8 +36,8 @@
 
 #include "ndr_misc.h"
 #include "rpcndr.h"
+#include "ndrtypes.h"
 #include "rpcproxy.h"
-#include "wine/rpcfc.h"
 #include "cpsf.h"
 
 #include "wine/debug.h"
@@ -288,8 +288,8 @@ static const IID* get_ip_iid(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory
   const IID *riid;
   if (!pFormat) return &IID_IUnknown;
   TRACE("format=%02x %02x\n", pFormat[0], pFormat[1]);
-  if (pFormat[0] != RPC_FC_IP) FIXME("format=%d\n", pFormat[0]);
-  if (pFormat[1] == RPC_FC_CONSTANT_IID) {
+  if (pFormat[0] != FC_IP) FIXME("format=%d\n", pFormat[0]);
+  if (pFormat[1] == FC_CONSTANT_IID) {
     riid = (const IID *)&pFormat[2];
   } else {
     ComputeConformance(pStubMsg, pMemory, pFormat+2, 0);
