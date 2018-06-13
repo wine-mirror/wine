@@ -40,6 +40,8 @@ struct notificationSink
     IWSDiscoveryPublisherNotify *notificationSink;
 };
 
+#define MAX_WSD_THREADS        20
+
 typedef struct IWSDiscoveryPublisherImpl {
     IWSDiscoveryPublisher IWSDiscoveryPublisher_iface;
     LONG                  ref;
@@ -47,6 +49,8 @@ typedef struct IWSDiscoveryPublisherImpl {
     DWORD                 addressFamily;
     struct list           notificationSinks;
     BOOL                  publisherStarted;
+    HANDLE                thread_handles[MAX_WSD_THREADS];
+    int                   num_thread_handles;
 } IWSDiscoveryPublisherImpl;
 
 /* network.c */

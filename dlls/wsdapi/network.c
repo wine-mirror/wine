@@ -231,11 +231,287 @@ BOOL send_udp_multicast(IWSDiscoveryPublisherImpl *impl, char *data, int length,
     return TRUE;
 }
 
+static int join_multicast_group(SOCKET s, SOCKADDR_STORAGE *group, SOCKADDR_STORAGE *iface)
+{
+    int level, optname, optlen;
+    struct ipv6_mreq mreqv6;
+    struct ip_mreq mreqv4;
+    char *optval;
+
+    if (iface->ss_family == AF_INET6)
+    {
+        level = IPPROTO_IPV6;
+        optname = IPV6_ADD_MEMBERSHIP;
+        optval = (char *)&mreqv6;
+        optlen = sizeof(mreqv6);
+
+        mreqv6.ipv6mr_multiaddr = ((SOCKADDR_IN6 *)group)->sin6_addr;
+        mreqv6.ipv6mr_interface = ((SOCKADDR_IN6 *)iface)->sin6_scope_id;
+    }
+    else
+    {
+        level = IPPROTO_IP;
+        optname = IP_ADD_MEMBERSHIP;
+        optval = (char *)&mreqv4;
+        optlen = sizeof(mreqv4);
+
+        mreqv4.imr_multiaddr.s_addr = ((SOCKADDR_IN *)group)->sin_addr.s_addr;
+        mreqv4.imr_interface.s_addr = ((SOCKADDR_IN *)iface)->sin_addr.s_addr;
+    }
+
+    return setsockopt(s, level, optname, optval, optlen);
+}
+
+static int set_send_interface(SOCKET s, SOCKADDR_STORAGE *iface)
+{
+    int level, optname, optlen;
+    char *optval = NULL;
+
+    if (iface->ss_family == AF_INET6)
+    {
+        level = IPPROTO_IPV6;
+        optname = IPV6_MULTICAST_IF;
+        optval = (char *) &((SOCKADDR_IN6 *)iface)->sin6_scope_id;
+        optlen = sizeof(((SOCKADDR_IN6 *)iface)->sin6_scope_id);
+    }
+    else
+    {
+        level = IPPROTO_IP;
+        optname = IP_MULTICAST_IF;
+        optval = (char *) &((SOCKADDR_IN *)iface)->sin_addr.s_addr;
+        optlen = sizeof(((SOCKADDR_IN *)iface)->sin_addr.s_addr);
+    }
+
+    return setsockopt(s, level, optname, optval, optlen);
+}
+
+typedef struct listener_thread_params
+{
+    IWSDiscoveryPublisherImpl *impl;
+    SOCKET listening_socket;
+    BOOL ipv6;
+} listener_thread_params;
+
+#define RECEIVE_BUFFER_SIZE        65536
+
+static DWORD WINAPI listening_thread(LPVOID params)
+{
+    listener_thread_params *parameter = (listener_thread_params *)params;
+    int bytes_received, address_len, err;
+    SOCKADDR_STORAGE source_addr;
+    char *buffer;
+
+    buffer = heap_alloc(RECEIVE_BUFFER_SIZE);
+    address_len = parameter->ipv6 ? sizeof(SOCKADDR_IN6) : sizeof(SOCKADDR_IN);
+
+    while (parameter->impl->publisherStarted)
+    {
+        bytes_received = recvfrom(parameter->listening_socket, buffer, RECEIVE_BUFFER_SIZE, 0,
+            (LPSOCKADDR) &source_addr, &address_len);
+
+        if (bytes_received == SOCKET_ERROR)
+        {
+            err = WSAGetLastError();
+
+            if (err != WSAETIMEDOUT)
+            {
+                WARN("Received error when trying to read from socket: %d. Stopping listener.\n", err);
+                return 0;
+            }
+        }
+        else
+        {
+            /* TODO: Process received message */
+        }
+    }
+
+    /* The publisher has been stopped */
+    closesocket(parameter->listening_socket);
+
+    heap_free(buffer);
+    heap_free(parameter);
+
+    return 0;
+}
+
+static int start_listening(IWSDiscoveryPublisherImpl *impl, SOCKADDR_STORAGE *bind_address)
+{
+    SOCKADDR_STORAGE multicast_addr, bind_addr, interface_addr;
+    listener_thread_params *parameter = NULL;
+    const DWORD receive_timeout = 5000;
+    const UINT reuse_addr = 1;
+    HANDLE thread_handle;
+    int address_length;
+    SOCKET s = 0;
+
+    TRACE("(%p, %p) family %d\n", impl, bind_address, bind_address->ss_family);
+
+    /* Populate the multicast address */
+    ZeroMemory(&multicast_addr, sizeof(SOCKADDR_STORAGE));
+
+    if (bind_address->ss_family == AF_INET)
+    {
+        SOCKADDR_IN *sockaddr4 = (SOCKADDR_IN *)&multicast_addr;
+
+        sockaddr4->sin_port = htons(SEND_PORT);
+        sockaddr4->sin_addr.S_un.S_addr = htonl(SEND_ADDRESS_IPV4);
+        address_length = sizeof(SOCKADDR_IN);
+    }
+    else
+    {
+        SOCKADDR_IN6 *sockaddr6 = (SOCKADDR_IN6 *)&multicast_addr;
+
+        sockaddr6->sin6_port = htons(SEND_PORT);
+        memcpy(&sockaddr6->sin6_addr, &send_address_ipv6, sizeof(send_address_ipv6));
+        address_length = sizeof(SOCKADDR_IN6);
+    }
+
+    /* Update the port for the binding address */
+    memcpy(&bind_addr, bind_address, address_length);
+    ((SOCKADDR_IN *)&bind_addr)->sin_port = htons(SEND_PORT);
+
+    /* Update the port for the interface address */
+    memcpy(&interface_addr, bind_address, address_length);
+    ((SOCKADDR_IN *)&interface_addr)->sin_port = htons(0);
+
+    /* Create the socket */
+    s = socket(bind_address->ss_family, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (s == INVALID_SOCKET)
+    {
+        WARN("socket() failed (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Ensure the socket can be reused */
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse_addr, sizeof(reuse_addr)) == SOCKET_ERROR)
+    {
+        WARN("setsockopt(SO_REUSEADDR) failed (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Bind the socket to the local interface so we can receive data */
+    if (bind(s, (struct sockaddr *)&bind_addr, address_length) == SOCKET_ERROR)
+    {
+        WARN("bind() failed (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Join the multicast group */
+    if (join_multicast_group(s, &multicast_addr, &interface_addr) == SOCKET_ERROR)
+    {
+        WARN("Unable to join multicast group (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Set the outgoing interface */
+    if (set_send_interface(s, &interface_addr) == SOCKET_ERROR)
+    {
+        WARN("Unable to set outgoing interface (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Set a 5-second receive timeout */
+    if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&receive_timeout, sizeof(receive_timeout)) == SOCKET_ERROR)
+    {
+        WARN("setsockopt(SO_RCVTIME0) failed (error %d)\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Allocate memory for thread parameters */
+    parameter = heap_alloc(sizeof(listener_thread_params));
+
+    parameter->impl = impl;
+    parameter->listening_socket = s;
+    parameter->ipv6 = (bind_address->ss_family == AF_INET6);
+
+    thread_handle = CreateThread(NULL, 0, listening_thread, parameter, 0, NULL);
+
+    if (thread_handle == NULL)
+    {
+        WARN("CreateThread failed (error %d)\n", GetLastError());
+        goto cleanup;
+    }
+
+    impl->thread_handles[impl->num_thread_handles] = thread_handle;
+    impl->num_thread_handles++;
+
+    return 1;
+
+cleanup:
+    closesocket(s);
+    heap_free(parameter);
+
+    return 0;
+}
+
+static BOOL start_listening_on_all_addresses(IWSDiscoveryPublisherImpl *impl, ULONG family)
+{
+    IP_ADAPTER_ADDRESSES *adapter_addresses = NULL, *adapter_address;
+    int valid_listeners = 0;
+    ULONG bufferSize = 0;
+    ULONG ret;
+
+    ret = GetAdaptersAddresses(family, 0, NULL, NULL, &bufferSize); /* family should be AF_INET or AF_INET6 */
+
+    if (ret != ERROR_BUFFER_OVERFLOW)
+    {
+        WARN("GetAdaptorsAddresses failed with error %08x\n", ret);
+        return FALSE;
+    }
+
+    /* Get size of buffer for adapters */
+    adapter_addresses = (IP_ADAPTER_ADDRESSES *)heap_alloc(bufferSize);
+
+    if (adapter_addresses == NULL)
+    {
+        WARN("Out of memory allocating space for adapter information\n");
+        return FALSE;
+    }
+
+    /* Get list of adapters */
+    ret = GetAdaptersAddresses(family, 0, NULL, adapter_addresses, &bufferSize);
+
+    if (ret != ERROR_SUCCESS)
+    {
+        WARN("GetAdaptorsAddresses failed with error %08x\n", ret);
+        goto cleanup;
+    }
+
+    for (adapter_address = adapter_addresses; adapter_address != NULL; adapter_address = adapter_address->Next)
+    {
+        if (impl->num_thread_handles >= MAX_WSD_THREADS)
+        {
+            WARN("Exceeded maximum number of supported listener threads; too many network interfaces.");
+            goto cleanup;
+        }
+
+        if (adapter_address->FirstUnicastAddress == NULL)
+        {
+            TRACE("No address found for adaptor '%s' (%p)\n", adapter_address->AdapterName, adapter_address);
+            continue;
+        }
+
+        valid_listeners += start_listening(impl, (SOCKADDR_STORAGE *)adapter_address->FirstUnicastAddress->Address.lpSockaddr);
+    }
+
+cleanup:
+    heap_free(adapter_addresses);
+    return (ret == ERROR_SUCCESS) && (valid_listeners > 0);
+}
+
 void terminate_networking(IWSDiscoveryPublisherImpl *impl)
 {
     BOOL needsCleanup = impl->publisherStarted;
+    int i;
 
     impl->publisherStarted = FALSE;
+    WaitForMultipleObjects(impl->num_thread_handles, impl->thread_handles, TRUE, INFINITE);
+
+    for (i = 0; i < impl->num_thread_handles; i++)
+    {
+        CloseHandle(impl->thread_handles[i]);
+    }
 
     if (needsCleanup)
         WSACleanup();
@@ -254,6 +530,15 @@ BOOL init_networking(IWSDiscoveryPublisherImpl *impl)
 
     impl->publisherStarted = TRUE;
 
-    /* TODO: Start listening */
+    if ((impl->addressFamily & WSDAPI_ADDRESSFAMILY_IPV4) && (!start_listening_on_all_addresses(impl, AF_INET)))
+        goto cleanup;
+
+    if ((impl->addressFamily & WSDAPI_ADDRESSFAMILY_IPV6) && (!start_listening_on_all_addresses(impl, AF_INET6)))
+        goto cleanup;
+
     return TRUE;
+
+cleanup:
+    terminate_networking(impl);
+    return FALSE;
 }
