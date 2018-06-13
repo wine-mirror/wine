@@ -72,6 +72,11 @@ HRESULT send_bye_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG 
 
 HRESULT register_namespaces(IWSDXMLContext *xml_context);
 
+HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type);
+
+#define MSGTYPE_UNKNOWN     0
+#define MSGTYPE_PROBE       1
+
 /* xml.c */
 
 LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value);

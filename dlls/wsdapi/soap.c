@@ -1080,3 +1080,9 @@ cleanup:
 
     return ret;
 }
+
+HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
+{
+    /* TODO: Parse and read message */
+    return E_NOTIMPL;
+}

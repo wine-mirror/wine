@@ -292,6 +292,64 @@ typedef struct listener_thread_params
     BOOL ipv6;
 } listener_thread_params;
 
+static HRESULT process_received_message(listener_thread_params *params, char *message, int message_len,
+    SOCKADDR_STORAGE *source_addr)
+{
+    IWSDUdpMessageParameters *msg_params = NULL;
+    IWSDUdpAddress *remote_addr = NULL;
+    struct notificationSink *sink;
+    WSD_SOAP_MESSAGE *msg = NULL;
+    int msg_type;
+    HRESULT ret;
+
+    ret = read_message(message, message_len, &msg, &msg_type);
+    if (FAILED(ret)) return ret;
+
+    switch (msg_type)
+    {
+        case MSGTYPE_PROBE:
+            TRACE("Received probe message\n");
+
+            ret = WSDCreateUdpMessageParameters(&msg_params);
+
+            if (FAILED(ret))
+            {
+                ERR("Unable to create IWSDUdpMessageParameters, not processing message.\n");
+                goto cleanup;
+            }
+
+            ret = WSDCreateUdpAddress(&remote_addr);
+
+            if (FAILED(ret))
+            {
+                ERR("Unable to create IWSDUdpAddress, not processing message.\n");
+                goto cleanup;
+            }
+
+            IWSDUdpAddress_SetSockaddr(remote_addr, source_addr);
+            IWSDUdpMessageParameters_SetRemoteAddress(msg_params, (IWSDAddress *)remote_addr);
+
+            EnterCriticalSection(&params->impl->notification_sink_critical_section);
+
+            LIST_FOR_EACH_ENTRY(sink, &params->impl->notificationSinks, struct notificationSink, entry)
+            {
+                IWSDiscoveryPublisherNotify_ProbeHandler(sink->notificationSink, msg, (IWSDMessageParameters *)msg_params);
+            }
+
+            LeaveCriticalSection(&params->impl->notification_sink_critical_section);
+
+            break;
+    }
+
+cleanup:
+    WSDFreeLinkedMemory(msg);
+
+    if (remote_addr != NULL) IWSDUdpAddress_Release(remote_addr);
+    if (msg_params != NULL) IWSDUdpMessageParameters_Release(msg_params);
+
+    return ret;
+}
+
 #define RECEIVE_BUFFER_SIZE        65536
 
 static DWORD WINAPI listening_thread(LPVOID params)
@@ -321,7 +379,7 @@ static DWORD WINAPI listening_thread(LPVOID params)
         }
         else
         {
-            /* TODO: Process received message */
+            process_received_message(parameter, buffer, bytes_received, &source_addr);
         }
     }
 
