@@ -1719,6 +1719,7 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     release_win_data( data );
     HeapFree( GetProcessHeap(), 0, data );
     destroy_gl_drawable( hwnd );
+    wine_vk_surface_destroy( hwnd );
 }
 
 

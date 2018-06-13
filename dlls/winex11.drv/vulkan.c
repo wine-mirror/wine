@@ -41,11 +41,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBVULKAN
 
+static CRITICAL_SECTION context_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &context_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": context_section") }
+};
+static CRITICAL_SECTION context_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static XContext vulkan_hwnd_context;
+
 typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
 
 struct wine_vk_surface
 {
+    LONG ref;
     Window window;
     VkSurfaceKHR surface; /* native surface */
 };
@@ -115,6 +127,8 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
 
+    vulkan_hwnd_context = XUniqueContext();
+
     return TRUE;
 
 fail:
@@ -171,18 +185,33 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     return VK_SUCCESS;
 }
 
-static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface *surface)
+static struct wine_vk_surface *wine_vk_surface_grab(struct wine_vk_surface *surface)
 {
-    if (!surface)
-        return;
+    InterlockedIncrement(&surface->ref);
+    return surface;
+}
 
-    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
-    pvkDestroySurfaceKHR(instance, surface->surface, NULL /* allocator */);
+static void wine_vk_surface_release(struct wine_vk_surface *surface)
+{
+    if (InterlockedDecrement(&surface->ref))
+        return;
 
     if (surface->window)
         XDestroyWindow(gdi_display, surface->window);
 
     heap_free(surface);
+}
+
+void wine_vk_surface_destroy(HWND hwnd)
+{
+    struct wine_vk_surface *surface;
+    EnterCriticalSection(&context_section);
+    if (!XFindContext(gdi_display, (XID)hwnd, vulkan_hwnd_context, (char **)&surface))
+    {
+        wine_vk_surface_release(surface);
+    }
+    XDeleteContext(gdi_display, (XID)hwnd, vulkan_hwnd_context);
+    LeaveCriticalSection(&context_section);
 }
 
 static VkResult X11DRV_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
@@ -245,7 +274,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
 {
     VkResult res;
     VkXlibSurfaceCreateInfoKHR create_info_host;
-    struct wine_vk_surface *x11_surface;
+    struct wine_vk_surface *x11_surface, *prev;
 
     TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
 
@@ -262,6 +291,8 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     x11_surface = heap_alloc_zero(sizeof(*x11_surface));
     if (!x11_surface)
         return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    x11_surface->ref = 1;
 
     x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
     if (!x11_surface->window)
@@ -286,13 +317,21 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
+    EnterCriticalSection(&context_section);
+    if (!XFindContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char **)&prev))
+    {
+        wine_vk_surface_release(prev);
+    }
+    XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
+    LeaveCriticalSection(&context_section);
+
     *surface = (uintptr_t)x11_surface;
 
     TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
     return VK_SUCCESS;
 
 err:
-    wine_vk_surface_destroy(instance, x11_surface);
+    wine_vk_surface_release(x11_surface);
     return res;
 }
 
@@ -316,7 +355,13 @@ static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    wine_vk_surface_destroy(instance, x11_surface);
+    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
+    if (x11_surface)
+    {
+        pvkDestroySurfaceKHR(instance, x11_surface->surface, NULL /* allocator */);
+
+        wine_vk_surface_release(x11_surface);
+    }
 }
 
 static void X11DRV_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
