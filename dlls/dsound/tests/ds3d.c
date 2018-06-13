@@ -139,7 +139,7 @@ const char * getDSBCAPS(DWORD xmask) {
 
     buffer[0] = 0;
 
-    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
+    for (i = 0; i < ARRAY_SIZE(flags); i++) {
         if ((flags[i].mask & xmask) == flags[i].mask) {
             if (first)
                 first = FALSE;

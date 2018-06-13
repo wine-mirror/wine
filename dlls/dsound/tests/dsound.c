@@ -1004,8 +1004,8 @@ static HRESULT test_frequency(LPGUID lpGuid)
         if (rc!=DS_OK)
             goto EXIT1;
 
-        for (f=0;f<sizeof(fmts)/sizeof(fmts[0]);f++) {
-        for (r=0;r<sizeof(rates)/sizeof(rates[0]);r++) {
+        for (f = 0; f < ARRAY_SIZE(fmts); f++) {
+        for (r = 0; r < ARRAY_SIZE(rates); r++) {
             init_format(&wfx,WAVE_FORMAT_PCM,11025,fmts[f].bits,
                         fmts[f].channels);
             secondary=NULL;
@@ -1135,7 +1135,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
             int i;
 
             /* Prepare notify events */
-            for (i=0;i<sizeof(event)/sizeof(event[0]);i++) {
+            for (i = 0; i < ARRAY_SIZE(event); i++) {
                 event[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
             }
 
@@ -1174,8 +1174,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
                    "IDirectSound_DuplicateSoundBuffer failed %08x\n",rc);
 
                 trace("testing duplicated buffer without notifications.\n");
-                test_notify(duplicated,sizeof(event)/sizeof(event[0]),
-                            event,WAIT_TIMEOUT);
+                test_notify(duplicated, ARRAY_SIZE(event), event, WAIT_TIMEOUT);
 
                 rc=IDirectSoundBuffer_QueryInterface(duplicated,
                                                      &IID_IDirectSoundNotify,
@@ -1192,8 +1191,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
                        "failed %08x\n",rc);
 
                     trace("testing duplicated buffer with a notification.\n");
-                    test_notify(duplicated,sizeof(event)/sizeof(event[0]),
-                                event,WAIT_OBJECT_0+1);
+                    test_notify(duplicated, ARRAY_SIZE(event), event, WAIT_OBJECT_0 + 1);
 
                     ref=IDirectSoundNotify_Release(dup_notify);
                     ok(ref==0,"IDirectSoundNotify_Release() has %d references, "
@@ -1204,8 +1202,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
                    "should have 0\n",ref);
 
                 trace("testing original buffer with a notification.\n");
-                test_notify(original,sizeof(event)/sizeof(event[0]),
-                            event,WAIT_OBJECT_0);
+                test_notify(original, ARRAY_SIZE(event), event, WAIT_OBJECT_0);
 
                 ref=IDirectSoundBuffer_Release(duplicated);
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
