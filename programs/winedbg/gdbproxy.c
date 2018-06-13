@@ -183,233 +183,12 @@ static unsigned char checksum(const char* ptr, int len)
     return cksum;
 }
 
-/* =============================================== *
- *              C P U   H A N D L E R S            *
- * =============================================== *
- */
-
-/* This struct helps us to manage the different representations of a register:
- * ctx_offset and ctx_length are the location and size in Win32 CONTEXT
- * gdb_length is the length gdb expects on the wire
- * As the two sizes could be different, we have to convert between the two
- * (for example, on x86_64, Seg?s are 4 bytes on the wire and 2 in CONTEXT)
- */
-struct cpu_register
-{
-    size_t      ctx_offset;
-    size_t      ctx_length;
-    size_t      gdb_length;
-};
-
-#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
-
 #ifdef __i386__
-typedef struct DECLSPEC_ALIGN(16) _M128A {
-    ULONGLONG Low;
-    LONGLONG High;
-} M128A, *PM128A;
-
-typedef struct _XMM_SAVE_AREA32 {
-    WORD ControlWord;        /* 000 */
-    WORD StatusWord;         /* 002 */
-    BYTE TagWord;            /* 004 */
-    BYTE Reserved1;          /* 005 */
-    WORD ErrorOpcode;        /* 006 */
-    DWORD ErrorOffset;       /* 008 */
-    WORD ErrorSelector;      /* 00c */
-    WORD Reserved2;          /* 00e */
-    DWORD DataOffset;        /* 010 */
-    WORD DataSelector;       /* 014 */
-    WORD Reserved3;          /* 016 */
-    DWORD MxCsr;             /* 018 */
-    DWORD MxCsr_Mask;        /* 01c */
-    M128A FloatRegisters[8]; /* 020 */
-    M128A XmmRegisters[16];  /* 0a0 */
-    BYTE Reserved4[96];      /* 1a0 */
-} XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
-
 static const char target_xml[] = "";
-static struct cpu_register cpu_register_map[] = {
-    REG(Eax, 4),
-    REG(Ecx, 4),
-    REG(Edx, 4),
-    REG(Ebx, 4),
-    REG(Esp, 4),
-    REG(Ebp, 4),
-    REG(Esi, 4),
-    REG(Edi, 4),
-    REG(Eip, 4),
-    REG(EFlags, 4),
-    REG(SegCs, 4),
-    REG(SegSs, 4),
-    REG(SegDs, 4),
-    REG(SegEs, 4),
-    REG(SegFs, 4),
-    REG(SegGs, 4),
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[ 0]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[10]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[20]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[30]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[40]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[50]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[60]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[70]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.ControlWord), 2, 4 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.StatusWord), 2, 4 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.TagWord), 2, 4 },
-    { FIELD_OFFSET(CONTEXT, FloatSave.ErrorSelector), 2, 4 },
-    REG(FloatSave.ErrorOffset, 4 ),
-    { FIELD_OFFSET(CONTEXT, FloatSave.DataSelector), 2, 4 },
-    REG(FloatSave.DataOffset, 4 ),
-    { FIELD_OFFSET(CONTEXT, FloatSave.ErrorSelector)+2, 2, 4 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7]), 16, 16 },
-    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, MxCsr), 4, 4 },
-};
 #elif defined(__powerpc__)
 static const char target_xml[] = "";
-static struct cpu_register cpu_register_map[] = {
-    REG(Gpr0, 4),
-    REG(Gpr1, 4),
-    REG(Gpr2, 4),
-    REG(Gpr3, 4),
-    REG(Gpr4, 4),
-    REG(Gpr5, 4),
-    REG(Gpr6, 4),
-    REG(Gpr7, 4),
-    REG(Gpr8, 4),
-    REG(Gpr9, 4),
-    REG(Gpr10, 4),
-    REG(Gpr11, 4),
-    REG(Gpr12, 4),
-    REG(Gpr13, 4),
-    REG(Gpr14, 4),
-    REG(Gpr15, 4),
-    REG(Gpr16, 4),
-    REG(Gpr17, 4),
-    REG(Gpr18, 4),
-    REG(Gpr19, 4),
-    REG(Gpr20, 4),
-    REG(Gpr21, 4),
-    REG(Gpr22, 4),
-    REG(Gpr23, 4),
-    REG(Gpr24, 4),
-    REG(Gpr25, 4),
-    REG(Gpr26, 4),
-    REG(Gpr27, 4),
-    REG(Gpr28, 4),
-    REG(Gpr29, 4),
-    REG(Gpr30, 4),
-    REG(Gpr31, 4),
-    REG(Fpr0, 4),
-    REG(Fpr1, 4),
-    REG(Fpr2, 4),
-    REG(Fpr3, 4),
-    REG(Fpr4, 4),
-    REG(Fpr5, 4),
-    REG(Fpr6, 4),
-    REG(Fpr7, 4),
-    REG(Fpr8, 4),
-    REG(Fpr9, 4),
-    REG(Fpr10, 4),
-    REG(Fpr11, 4),
-    REG(Fpr12, 4),
-    REG(Fpr13, 4),
-    REG(Fpr14, 4),
-    REG(Fpr15, 4),
-    REG(Fpr16, 4),
-    REG(Fpr17, 4),
-    REG(Fpr18, 4),
-    REG(Fpr19, 4),
-    REG(Fpr20, 4),
-    REG(Fpr21, 4),
-    REG(Fpr22, 4),
-    REG(Fpr23, 4),
-    REG(Fpr24, 4),
-    REG(Fpr25, 4),
-    REG(Fpr26, 4),
-    REG(Fpr27, 4),
-    REG(Fpr28, 4),
-    REG(Fpr29, 4),
-    REG(Fpr30, 4),
-    REG(Fpr31, 4),
-
-    REG(Iar, 4),
-    REG(Msr, 4),
-    REG(Cr, 4),
-    REG(Lr, 4),
-    REG(Ctr, 4),
-    REG(Xer, 4),
-    /* FIXME: MQ is missing? FIELD_OFFSET(CONTEXT, Mq), */
-    /* see gdb/nlm/ppc.c */
-};
 #elif defined(__x86_64__)
 static const char target_xml[] = "";
-static struct cpu_register cpu_register_map[] = {
-    REG(Rax, 8),
-    REG(Rbx, 8),
-    REG(Rcx, 8),
-    REG(Rdx, 8),
-    REG(Rsi, 8),
-    REG(Rdi, 8),
-    REG(Rbp, 8),
-    REG(Rsp, 8),
-    REG(R8, 8),
-    REG(R9, 8),
-    REG(R10, 8),
-    REG(R11, 8),
-    REG(R12, 8),
-    REG(R13, 8),
-    REG(R14, 8),
-    REG(R15, 8),
-    REG(Rip, 8),
-    REG(EFlags, 4),
-    REG(SegCs, 4),
-    REG(SegSs, 4),
-    REG(SegDs, 4),
-    REG(SegEs, 4),
-    REG(SegFs, 4),
-    REG(SegGs, 4),
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 0]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 1]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 2]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 3]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 4]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 5]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 6]), 10, 10 },
-    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 7]), 10, 10 },
-    REG(u.FltSave.ControlWord, 4),
-    REG(u.FltSave.StatusWord, 4),
-    REG(u.FltSave.TagWord, 4),
-    REG(u.FltSave.ErrorSelector, 4),
-    REG(u.FltSave.ErrorOffset, 4),
-    REG(u.FltSave.DataSelector, 4),
-    REG(u.FltSave.DataOffset, 4),
-    REG(u.FltSave.ErrorOpcode, 4),
-    REG(u.s.Xmm0, 16),
-    REG(u.s.Xmm1, 16),
-    REG(u.s.Xmm2, 16),
-    REG(u.s.Xmm3, 16),
-    REG(u.s.Xmm4, 16),
-    REG(u.s.Xmm5, 16),
-    REG(u.s.Xmm6, 16),
-    REG(u.s.Xmm7, 16),
-    REG(u.s.Xmm8, 16),
-    REG(u.s.Xmm9, 16),
-    REG(u.s.Xmm10, 16),
-    REG(u.s.Xmm11, 16),
-    REG(u.s.Xmm12, 16),
-    REG(u.s.Xmm13, 16),
-    REG(u.s.Xmm14, 16),
-    REG(u.s.Xmm15, 16),
-    REG(u.FltSave.MxCsr, 4),
-};
 #elif defined(__arm__)
 static const char target_xml[] =
     "l <target><architecture>arm</architecture>\n"
@@ -432,96 +211,43 @@ static const char target_xml[] =
     "    <reg name=\"pc\" bitsize=\"32\" type=\"code_ptr\"/>\n"
     "    <reg name=\"cpsr\" bitsize=\"32\"/>\n"
     "</feature></target>\n";
-
-static struct cpu_register cpu_register_map[] = {
-    REG(R0, 4),
-    REG(R1, 4),
-    REG(R2, 4),
-    REG(R3, 4),
-    REG(R4, 4),
-    REG(R5, 4),
-    REG(R6, 4),
-    REG(R7, 4),
-    REG(R8, 4),
-    REG(R9, 4),
-    REG(R10, 4),
-    REG(R11, 4),
-    REG(R12, 4),
-    REG(Sp, 4),
-    REG(Lr, 4),
-    REG(Pc, 4),
-    REG(Cpsr, 4),
-};
 #elif defined(__aarch64__)
 static const char target_xml[] = "";
-static struct cpu_register cpu_register_map[] = {
-    REG(Cpsr, 4),
-    REG(u.s.X0,  8),
-    REG(u.s.X1,  8),
-    REG(u.s.X2,  8),
-    REG(u.s.X3,  8),
-    REG(u.s.X4,  8),
-    REG(u.s.X5,  8),
-    REG(u.s.X6,  8),
-    REG(u.s.X7,  8),
-    REG(u.s.X8,  8),
-    REG(u.s.X9,  8),
-    REG(u.s.X10, 8),
-    REG(u.s.X11, 8),
-    REG(u.s.X12, 8),
-    REG(u.s.X13, 8),
-    REG(u.s.X14, 8),
-    REG(u.s.X15, 8),
-    REG(u.s.X16, 8),
-    REG(u.s.X17, 8),
-    REG(u.s.X18, 8),
-    REG(u.s.X19, 8),
-    REG(u.s.X20, 8),
-    REG(u.s.X21, 8),
-    REG(u.s.X22, 8),
-    REG(u.s.X23, 8),
-    REG(u.s.X24, 8),
-    REG(u.s.X25, 8),
-    REG(u.s.X26, 8),
-    REG(u.s.X27, 8),
-    REG(u.s.X28, 8),
-    REG(u.s.Fp,  8),
-    REG(u.s.Lr,  8),
-    REG(Sp,  8),
-    REG(Pc,  8),
-};
 #else
 # error Define the registers map for your CPU
 #endif
-#undef REG
 
-static const size_t cpu_num_regs = (sizeof(cpu_register_map) / sizeof(cpu_register_map[0]));
-
-static inline void* cpu_register_ptr(dbg_ctx_t *ctx, unsigned idx)
+static inline void* cpu_register_ptr(struct gdb_context *gdbctx,
+    dbg_ctx_t *ctx, unsigned idx)
 {
-    assert(idx < cpu_num_regs);
-    return (char*)ctx + cpu_register_map[idx].ctx_offset;
+    assert(idx < gdbctx->process->be_cpu->gdb_num_regs);
+    return (char*)ctx + gdbctx->process->be_cpu->gdb_register_map[idx].ctx_offset;
 }
 
-static inline DWORD64 cpu_register(dbg_ctx_t *ctx, unsigned idx)
+static inline DWORD64 cpu_register(struct gdb_context *gdbctx,
+    dbg_ctx_t *ctx, unsigned idx)
 {
-    switch (cpu_register_map[idx].ctx_length)
+    switch (gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length)
     {
-    case 1: return *(BYTE*)cpu_register_ptr(ctx, idx);
-    case 2: return *(WORD*)cpu_register_ptr(ctx, idx);
-    case 4: return *(DWORD*)cpu_register_ptr(ctx, idx);
-    case 8: return *(DWORD64*)cpu_register_ptr(ctx, idx);
+    case 1: return *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx);
+    case 2: return *(WORD*)cpu_register_ptr(gdbctx, ctx, idx);
+    case 4: return *(DWORD*)cpu_register_ptr(gdbctx, ctx, idx);
+    case 8: return *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx);
     default:
-        fprintf(stderr, "got unexpected size: %u\n", (unsigned)cpu_register_map[idx].ctx_length);
+        fprintf(stderr, "got unexpected size: %u\n",
+            (unsigned)gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length);
         assert(0);
         return 0;
     }
 }
 
-static inline void cpu_register_hex_from(dbg_ctx_t* ctx, unsigned idx, const char **phex)
+static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
+    dbg_ctx_t* ctx, unsigned idx, const char **phex)
 {
+    const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
+
     if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        hex_from(cpu_register_ptr(ctx, idx), *phex, cpu_register_map[idx].gdb_length);
+        hex_from(cpu_register_ptr(gdbctx, ctx, idx), *phex, cpu_register_map[idx].gdb_length);
     else
     {
         DWORD64     val = 0;
@@ -536,10 +262,10 @@ static inline void cpu_register_hex_from(dbg_ctx_t* ctx, unsigned idx, const cha
         }
         switch (cpu_register_map[idx].ctx_length)
         {
-        case 1: *(BYTE*)cpu_register_ptr(ctx, idx) = (BYTE)val; break;
-        case 2: *(WORD*)cpu_register_ptr(ctx, idx) = (WORD)val; break;
-        case 4: *(DWORD*)cpu_register_ptr(ctx, idx) = (DWORD)val; break;
-        case 8: *(DWORD64*)cpu_register_ptr(ctx, idx) = val; break;
+        case 1: *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx) = (BYTE)val; break;
+        case 2: *(WORD*)cpu_register_ptr(gdbctx, ctx, idx) = (WORD)val; break;
+        case 4: *(DWORD*)cpu_register_ptr(gdbctx, ctx, idx) = (DWORD)val; break;
+        case 8: *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx) = val; break;
         default: assert(0);
         }
     }
@@ -1078,11 +804,14 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
 
 static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsigned idx)
 {
+    const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
+
     if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        packet_reply_hex_to(gdbctx, cpu_register_ptr(&gdbctx->context, idx), cpu_register_map[idx].gdb_length);
+        packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, &gdbctx->context, idx),
+                            cpu_register_map[idx].gdb_length);
     else
     {
-        DWORD64     val = cpu_register(&gdbctx->context, idx);
+        DWORD64     val = cpu_register(gdbctx, &gdbctx->context, idx);
         unsigned    i;
 
         for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
@@ -1117,7 +846,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         packet_reply_val(gdbctx, dbg_curr_thread->tid, 4);
         packet_reply_catc(gdbctx, ';');
 
-        for (i = 0; i < cpu_num_regs; i++)
+        for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
         {
             /* FIXME: this call will also grow the buffer...
              * unneeded, but not harmful
@@ -1453,14 +1182,16 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
     }
 
     packet_reply_open(gdbctx);
-    for (i = 0; i < cpu_num_regs; i++)
+    for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
         packet_reply_register_hex_to(gdbctx, i);
+
     packet_reply_close(gdbctx);
     return packet_done;
 }
 
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
+    const size_t cpu_num_regs = gdbctx->process->be_cpu->gdb_num_regs;
     unsigned    i;
     dbg_ctx_t ctx;
     dbg_ctx_t *pctx = &gdbctx->context;
@@ -1476,7 +1207,7 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 
     ptr = gdbctx->in_packet;
     for (i = 0; i < cpu_num_regs; i++)
-        cpu_register_hex_from(pctx, i, &ptr);
+        cpu_register_hex_from(gdbctx, pctx, i, &ptr);
 
     if (pctx != &gdbctx->context &&
         !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
@@ -1621,7 +1352,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 
     assert(gdbctx->in_trap);
     reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
-    if (reg >= cpu_num_regs)
+    if (reg >= gdbctx->process->be_cpu->gdb_num_regs)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Register out of bounds %x\n", reg);
@@ -1634,9 +1365,9 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
     {
-        if (cpu_register_map[reg].ctx_length <= sizeof(DWORD64))
+        if (gdbctx->process->be_cpu->gdb_register_map[reg].ctx_length <= sizeof(DWORD64))
             fprintf(stderr, "Read register %x => %08x%08x\n", reg,
-                    (unsigned)(cpu_register(pctx, reg) >> 32), (unsigned)cpu_register(pctx, reg));
+                    (unsigned)(cpu_register(gdbctx, pctx, reg) >> 32), (unsigned)cpu_register(gdbctx, pctx, reg));
         else
             fprintf(stderr, "Read register %x\n", reg);
     }
@@ -1656,7 +1387,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     assert(gdbctx->in_trap);
 
     reg = strtoul(gdbctx->in_packet, &ptr, 16);
-    if (ptr == NULL || reg >= cpu_num_regs || *ptr++ != '=')
+    if (ptr == NULL || reg >= gdbctx->process->be_cpu->gdb_num_regs || *ptr++ != '=')
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Invalid register index %s\n", gdbctx->in_packet);
@@ -1677,7 +1408,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
             return packet_error;
     }
 
-    cpu_register_hex_from(pctx, reg, (const char**)&ptr);
+    cpu_register_hex_from(gdbctx, pctx, reg, (const char**)&ptr);
     if (pctx != &gdbctx->context &&
         !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
     {

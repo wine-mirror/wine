@@ -293,6 +293,45 @@ static BOOL be_arm64_set_context(HANDLE thread, const dbg_ctx_t *ctx)
     return SetThreadContext(thread, &ctx->ctx);
 }
 
+#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+
+static struct gdb_register be_arm64_gdb_register_map[] = {
+    REG(Cpsr, 4),
+    REG(u.s.X0,  8),
+    REG(u.s.X1,  8),
+    REG(u.s.X2,  8),
+    REG(u.s.X3,  8),
+    REG(u.s.X4,  8),
+    REG(u.s.X5,  8),
+    REG(u.s.X6,  8),
+    REG(u.s.X7,  8),
+    REG(u.s.X8,  8),
+    REG(u.s.X9,  8),
+    REG(u.s.X10, 8),
+    REG(u.s.X11, 8),
+    REG(u.s.X12, 8),
+    REG(u.s.X13, 8),
+    REG(u.s.X14, 8),
+    REG(u.s.X15, 8),
+    REG(u.s.X16, 8),
+    REG(u.s.X17, 8),
+    REG(u.s.X18, 8),
+    REG(u.s.X19, 8),
+    REG(u.s.X20, 8),
+    REG(u.s.X21, 8),
+    REG(u.s.X22, 8),
+    REG(u.s.X23, 8),
+    REG(u.s.X24, 8),
+    REG(u.s.X25, 8),
+    REG(u.s.X26, 8),
+    REG(u.s.X27, 8),
+    REG(u.s.X28, 8),
+    REG(u.s.Fp,  8),
+    REG(u.s.Lr,  8),
+    REG(Sp,  8),
+    REG(Pc,  8),
+};
+
 struct backend_cpu be_arm64 =
 {
     IMAGE_FILE_MACHINE_ARM64,
@@ -320,5 +359,7 @@ struct backend_cpu be_arm64 =
     be_arm64_fetch_float,
     be_arm64_store_integer,
     be_arm64_get_context,
+    be_arm64_gdb_register_map,
+    ARRAY_SIZE(be_arm64_gdb_register_map),
 };
 #endif

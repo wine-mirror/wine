@@ -1904,6 +1904,28 @@ static BOOL be_arm_set_context(HANDLE thread, const dbg_ctx_t *ctx)
     return SetThreadContext(thread, &ctx->ctx);
 }
 
+#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+
+static struct gdb_register be_arm_gdb_register_map[] = {
+    REG(R0, 4),
+    REG(R1, 4),
+    REG(R2, 4),
+    REG(R3, 4),
+    REG(R4, 4),
+    REG(R5, 4),
+    REG(R6, 4),
+    REG(R7, 4),
+    REG(R8, 4),
+    REG(R9, 4),
+    REG(R10, 4),
+    REG(R11, 4),
+    REG(R12, 4),
+    REG(Sp, 4),
+    REG(Lr, 4),
+    REG(Pc, 4),
+    REG(Cpsr, 4),
+};
+
 struct backend_cpu be_arm =
 {
     IMAGE_FILE_MACHINE_ARMNT,
@@ -1931,5 +1953,7 @@ struct backend_cpu be_arm =
     be_arm_fetch_float,
     be_arm_store_integer,
     be_arm_get_context,
+    be_arm_gdb_register_map,
+    ARRAY_SIZE(be_arm_gdb_register_map),
 };
 #endif

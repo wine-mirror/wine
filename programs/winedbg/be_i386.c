@@ -866,6 +866,52 @@ static BOOL be_i386_set_context(HANDLE thread, const dbg_ctx_t *ctx)
     return Wow64SetThreadContext(thread, &ctx->x86);
 }
 
+#define REG(r,gs)  {FIELD_OFFSET(WOW64_CONTEXT, r), sizeof(((WOW64_CONTEXT*)NULL)->r), gs}
+
+static struct gdb_register be_i386_gdb_register_map[] = {
+    REG(Eax, 4),
+    REG(Ecx, 4),
+    REG(Edx, 4),
+    REG(Ebx, 4),
+    REG(Esp, 4),
+    REG(Ebp, 4),
+    REG(Esi, 4),
+    REG(Edi, 4),
+    REG(Eip, 4),
+    REG(EFlags, 4),
+    REG(SegCs, 4),
+    REG(SegSs, 4),
+    REG(SegDs, 4),
+    REG(SegEs, 4),
+    REG(SegFs, 4),
+    REG(SegGs, 4),
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[ 0]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[10]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[20]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[30]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[40]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[50]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[60]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[70]), 10, 10 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.ControlWord), 2, 4 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.StatusWord), 2, 4 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.TagWord), 2, 4 },
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.ErrorSelector), 2, 4 },
+    REG(FloatSave.ErrorOffset, 4 ),
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.DataSelector), 2, 4 },
+    REG(FloatSave.DataOffset, 4 ),
+    { FIELD_OFFSET(WOW64_CONTEXT, FloatSave.ErrorSelector)+2, 2, 4 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7]), 16, 16 },
+    { FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, MxCsr), 4, 4 },
+};
+
 struct backend_cpu be_i386 =
 {
     IMAGE_FILE_MACHINE_I386,
@@ -894,5 +940,7 @@ struct backend_cpu be_i386 =
     be_i386_store_integer,
     be_i386_get_context,
     be_i386_set_context,
+    be_i386_gdb_register_map,
+    ARRAY_SIZE(be_i386_gdb_register_map),
 };
 #endif

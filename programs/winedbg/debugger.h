@@ -39,6 +39,8 @@
 #include "oaidl.h"
 #include <wine/list.h>
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 #define ADDRSIZE        (dbg_curr_process->be_cpu->pointer_size)
 #define ADDRWIDTH       (ADDRSIZE * 2)
 

@@ -22,6 +22,13 @@ enum be_cpu_addr {be_cpu_addr_pc, be_cpu_addr_stack, be_cpu_addr_frame};
 enum be_xpoint_type {be_xpoint_break, be_xpoint_watch_exec, be_xpoint_watch_read,
                      be_xpoint_watch_write, be_xpoint_free=-1};
 
+struct gdb_register
+{
+    size_t      ctx_offset;
+    size_t      ctx_length;
+    size_t      gdb_length;
+};
+
 struct backend_cpu
 {
     const DWORD         machine;
@@ -118,6 +125,9 @@ struct backend_cpu
 
     BOOL                (*get_context)(HANDLE thread, dbg_ctx_t *ctx);
     BOOL                (*set_context)(HANDLE thread, const dbg_ctx_t *ctx);
+
+    const struct gdb_register *gdb_register_map;
+    const size_t gdb_num_regs;
 };
 
 /* some handy functions for non segmented CPUs */
