@@ -97,6 +97,7 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
             HeapFree(GetProcessHeap(), 0, sink);
         }
 
+        DeleteCriticalSection(&This->notification_sink_critical_section);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -148,7 +149,9 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_RegisterNotificationSink(IWSDisc
     sink->notificationSink = pSink;
     IWSDiscoveryPublisherNotify_AddRef(pSink);
 
+    EnterCriticalSection(&impl->notification_sink_critical_section);
     list_add_tail(&impl->notificationSinks, &sink->entry);
+    LeaveCriticalSection(&impl->notification_sink_critical_section);
 
     if ((!impl->publisherStarted) && (!init_networking(impl)))
         return E_FAIL;
@@ -168,6 +171,8 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_UnRegisterNotificationSink(IWSDi
         return E_INVALIDARG;
     }
 
+    EnterCriticalSection(&impl->notification_sink_critical_section);
+
     LIST_FOR_EACH_ENTRY(sink, &impl->notificationSinks, struct notificationSink, entry)
     {
         if (sink->notificationSink == pSink)
@@ -176,9 +181,12 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_UnRegisterNotificationSink(IWSDi
             list_remove(&sink->entry);
             HeapFree(GetProcessHeap(), 0, sink);
 
+            LeaveCriticalSection(&impl->notification_sink_critical_section);
             return S_OK;
         }
     }
+
+    LeaveCriticalSection(&impl->notification_sink_critical_section);
 
     /* Notification sink is not registered */
     return E_FAIL;
@@ -391,6 +399,7 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
         return ret;
     }
 
+    InitializeCriticalSection(&obj->notification_sink_critical_section);
     list_init(&obj->notificationSinks);
 
     *ppPublisher = &obj->IWSDiscoveryPublisher_iface;

@@ -48,6 +48,7 @@ typedef struct IWSDiscoveryPublisherImpl {
     IWSDXMLContext        *xmlContext;
     DWORD                 addressFamily;
     struct list           notificationSinks;
+    CRITICAL_SECTION      notification_sink_critical_section;
     BOOL                  publisherStarted;
     HANDLE                thread_handles[MAX_WSD_THREADS];
     int                   num_thread_handles;
