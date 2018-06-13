@@ -626,21 +626,20 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
 {
     static const struct
     {
-        D3D_FEATURE_LEVEL feature_level;
-        unsigned int sm;
+        D3D_FEATURE_LEVEL d3d;
+        enum wined3d_feature_level wined3d;
     }
-    feature_levels_sm[] =
+    wined3d_feature_levels[] =
     {
-        {D3D_FEATURE_LEVEL_11_1, 5},
-        {D3D_FEATURE_LEVEL_11_0, 5},
-        {D3D_FEATURE_LEVEL_10_1, 4},
-        {D3D_FEATURE_LEVEL_10_0, 4},
-        {D3D_FEATURE_LEVEL_9_3,  3},
-        {D3D_FEATURE_LEVEL_9_2,  2},
-        {D3D_FEATURE_LEVEL_9_1,  2},
+        {D3D_FEATURE_LEVEL_11_1, WINED3D_FEATURE_LEVEL_11},
+        {D3D_FEATURE_LEVEL_11_0, WINED3D_FEATURE_LEVEL_11},
+        {D3D_FEATURE_LEVEL_10_1, WINED3D_FEATURE_LEVEL_10},
+        {D3D_FEATURE_LEVEL_10_0, WINED3D_FEATURE_LEVEL_10},
+        {D3D_FEATURE_LEVEL_9_3,  WINED3D_FEATURE_LEVEL_9_SM3},
+        {D3D_FEATURE_LEVEL_9_2,  WINED3D_FEATURE_LEVEL_9_SM2},
+        {D3D_FEATURE_LEVEL_9_1,  WINED3D_FEATURE_LEVEL_9_SM2},
     };
     D3D_FEATURE_LEVEL selected_feature_level = 0;
-    unsigned int shader_model;
     struct wined3d_caps caps;
     unsigned int i, j;
     HRESULT hr;
@@ -652,18 +651,17 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
     if (FAILED(hr))
         level_count = 0;
 
-    shader_model = min(caps.VertexShaderVersion, caps.PixelShaderVersion);
     for (i = 0; i < level_count; ++i)
     {
-        for (j = 0; j < ARRAY_SIZE(feature_levels_sm); ++j)
+        for (j = 0; j < ARRAY_SIZE(wined3d_feature_levels); ++j)
         {
-            if (feature_levels[i] == feature_levels_sm[j].feature_level)
+            if (feature_levels[i] == wined3d_feature_levels[j].d3d)
             {
-                if (shader_model >= feature_levels_sm[j].sm)
+                if (caps.max_feature_level >= wined3d_feature_levels[j].wined3d)
                 {
                     selected_feature_level = feature_levels[i];
-                    TRACE("Choosing supported feature level %s (SM%u).\n",
-                            debug_feature_level(selected_feature_level), feature_levels_sm[j].sm);
+                    TRACE("Choosing supported feature level %s.\n",
+                            debug_feature_level(selected_feature_level));
                 }
                 break;
             }
@@ -671,7 +669,7 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
         if (selected_feature_level)
             break;
 
-        if (j == ARRAY_SIZE(feature_levels_sm))
+        if (j == ARRAY_SIZE(wined3d_feature_levels))
             FIXME("Unexpected feature level %#x.\n", feature_levels[i]);
         else
             TRACE("Feature level %s not supported, trying next fallback if available.\n",
