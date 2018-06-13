@@ -34,15 +34,9 @@
 #include "comctl32.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskdialog);
-
-#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align))&~(_Align))
-#define ALIGNED_POINTER(_Ptr, _Align) ((LPVOID)ALIGNED_LENGTH((ULONG_PTR)(_Ptr), _Align))
-#define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
-#define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 
 static const UINT DIALOG_MIN_WIDTH = 240;
 static const UINT DIALOG_SPACING = 5;
@@ -51,28 +45,6 @@ static const UINT DIALOG_BUTTON_HEIGHT = 14;
 static const UINT DIALOG_TIMER_MS = 200;
 
 static const UINT ID_TIMER = 1;
-
-struct taskdialog_control
-{
-    struct list entry;
-    DLGITEMTEMPLATE *template;
-    unsigned int template_size;
-};
-
-struct taskdialog_button_desc
-{
-    int id;
-    const WCHAR *text;
-    HINSTANCE hinst;
-};
-
-struct taskdialog_template_desc
-{
-    const TASKDIALOGCONFIG *taskconfig;
-    struct list controls;
-    WORD control_count;
-    struct taskdialog_button_desc *default_button;
-};
 
 struct taskdialog_info
 {
@@ -84,6 +56,9 @@ struct taskdialog_info
     /* Control handles */
     HWND main_instruction;
     HWND content;
+    HWND *buttons;
+    INT button_count;
+    HWND default_button;
     /* Dialog metrics */
     struct
     {
@@ -96,8 +71,6 @@ struct taskdialog_info
 
 struct button_layout_info
 {
-    INT id;
-    HWND hwnd;
     LONG width;
     LONG line;
 };
@@ -112,138 +85,6 @@ static void template_write_data(char **ptr, const void *src, unsigned int size)
 {
     memcpy(*ptr, src, size);
     *ptr += size;
-}
-
-static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc, WORD id, const WCHAR *class,
-        HINSTANCE hInstance, const WCHAR *text, DWORD style)
-{
-    struct taskdialog_control *control = Alloc(sizeof(*control));
-    unsigned int size, class_size, text_size;
-    DLGITEMTEMPLATE *template;
-    static const WCHAR nulW;
-    const WCHAR *textW;
-    char *ptr;
-
-    class_size = (strlenW(class) + 1) * sizeof(WCHAR);
-
-    if (IS_INTRESOURCE(text))
-        text_size = LoadStringW(hInstance, (UINT_PTR)text, (WCHAR *)&textW, 0) * sizeof(WCHAR);
-    else
-    {
-        textW = text;
-        text_size = strlenW(textW) * sizeof(WCHAR);
-    }
-
-    size = sizeof(DLGITEMTEMPLATE);
-    size += class_size;
-    size += text_size + sizeof(WCHAR);
-    size += sizeof(WORD); /* creation data */
-
-    control->template = template = Alloc(size);
-    control->template_size = size;
-
-    template->style = WS_VISIBLE | style;
-    template->dwExtendedStyle = 0;
-    template->id = id;
-    ptr = (char *)(template + 1);
-    template_write_data(&ptr, class, class_size);
-    template_write_data(&ptr, textW, text_size);
-    template_write_data(&ptr, &nulW, sizeof(nulW));
-
-    list_add_tail(&desc->controls, &control->entry);
-    desc->control_count++;
-    return ALIGNED_LENGTH(size, 3);
-}
-
-static void taskdialog_init_button(struct taskdialog_button_desc *button, struct taskdialog_template_desc *desc,
-        int id, const WCHAR *text, BOOL custom_button)
-{
-    button->id = id;
-    button->text = text;
-    button->hinst = custom_button ? desc->taskconfig->hInstance : COMCTL32_hModule;
-
-    if (id == desc->taskconfig->nDefaultButton)
-        desc->default_button = button;
-}
-
-static void taskdialog_init_common_buttons(struct taskdialog_template_desc *desc, struct taskdialog_button_desc *buttons,
-    unsigned int *button_count)
-{
-    DWORD flags = desc->taskconfig->dwCommonButtons;
-
-#define TASKDIALOG_INIT_COMMON_BUTTON(id) \
-    do { \
-        taskdialog_init_button(&buttons[(*button_count)++], desc, ID##id, MAKEINTRESOURCEW(IDS_BUTTON_##id), FALSE); \
-    } while(0)
-
-    if (flags & TDCBF_OK_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(OK);
-    if (flags & TDCBF_YES_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(YES);
-    if (flags & TDCBF_NO_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(NO);
-    if (flags & TDCBF_RETRY_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(RETRY);
-    if (flags & TDCBF_CANCEL_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(CANCEL);
-    if (flags & TDCBF_CLOSE_BUTTON)
-        TASKDIALOG_INIT_COMMON_BUTTON(CLOSE);
-
-#undef TASKDIALOG_INIT_COMMON_BUTTON
-}
-
-static unsigned int taskdialog_add_buttons(struct taskdialog_template_desc *desc)
-{
-    unsigned int count = 0, buttons_size, i, size = 0;
-    const TASKDIALOGCONFIG *taskconfig = desc->taskconfig;
-    struct taskdialog_button_desc *buttons;
-
-    /* Allocate enough memory for the custom and the default buttons. Maximum 6 default buttons possible. */
-    buttons_size = 6;
-    if (taskconfig->cButtons && taskconfig->pButtons)
-        buttons_size += taskconfig->cButtons;
-
-    if (!(buttons = Alloc(buttons_size * sizeof(*buttons))))
-        return 0;
-
-    /* Custom buttons */
-    if (taskconfig->cButtons && taskconfig->pButtons)
-        for (i = 0; i < taskconfig->cButtons; i++)
-            taskdialog_init_button(&buttons[count++], desc, taskconfig->pButtons[i].nButtonID,
-                    taskconfig->pButtons[i].pszButtonText, TRUE);
-
-    /* Common buttons */
-    taskdialog_init_common_buttons(desc, buttons, &count);
-
-    /* There must be at least one button */
-    if (count == 0)
-        taskdialog_init_button(&buttons[count++], desc, IDOK, MAKEINTRESOURCEW(IDS_BUTTON_OK), FALSE);
-
-    if (!desc->default_button)
-        desc->default_button = &buttons[0];
-
-    /* create all buttons */
-    for (i = 0; i < count; i++)
-    {
-        DWORD style = &buttons[i] == desc->default_button ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON;
-        size += taskdialog_add_control(desc, buttons[i].id, WC_BUTTONW, buttons[i].hinst, buttons[i].text, style);
-    }
-
-    Free(buttons);
-
-    return size;
-}
-
-static void taskdialog_clear_controls(struct list *controls)
-{
-    struct taskdialog_control *control, *control2;
-
-    LIST_FOR_EACH_ENTRY_SAFE(control, control2, controls, struct taskdialog_control, entry)
-    {
-        list_remove(&control->entry);
-        Free(control->template);
-        Free(control);
-    }
 }
 
 static unsigned int taskdialog_get_reference_rect(const TASKDIALOGCONFIG *taskconfig, RECT *ret)
@@ -279,9 +120,7 @@ static WCHAR *taskdialog_get_exe_name(WCHAR *name, DWORD length)
 
 static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfig)
 {
-    struct taskdialog_control *control, *control2;
     unsigned int size, title_size;
-    struct taskdialog_template_desc desc;
     static const WORD fontsize = 0x7fff;
     static const WCHAR emptyW[] = { 0 };
     const WCHAR *titleW = NULL;
@@ -307,44 +146,19 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     size += title_size;
     size += 2; /* font size */
 
-    list_init(&desc.controls);
-    desc.taskconfig = taskconfig;
-    desc.control_count = 0;
-    desc.default_button = NULL;
-
-    size += taskdialog_add_buttons(&desc);
-
     template = Alloc(size);
-    if (!template)
-    {
-        taskdialog_clear_controls(&desc.controls);
-        return NULL;
-    }
+    if (!template) return NULL;
 
     template->style = DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_VISIBLE | WS_SYSMENU;
     if (taskconfig->dwFlags & TDF_CAN_BE_MINIMIZED) template->style |= WS_MINIMIZEBOX;
     if (!(taskconfig->dwFlags & TDF_NO_SET_FOREGROUND)) template->style |= DS_SETFOREGROUND;
     if (taskconfig->dwFlags & TDF_RTL_LAYOUT) template->dwExtendedStyle = WS_EX_LAYOUTRTL | WS_EX_RIGHT | WS_EX_RTLREADING;
-    template->cdit = desc.control_count;
 
     ptr = (char *)(template + 1);
     ptr += 2; /* menu */
     ptr += 2; /* class */
     template_write_data(&ptr, titleW, title_size);
     template_write_data(&ptr, &fontsize, sizeof(fontsize));
-
-    /* write control entries */
-    LIST_FOR_EACH_ENTRY_SAFE(control, control2, &desc.controls, struct taskdialog_control, entry)
-    {
-        ALIGN_POINTER(ptr, 3);
-
-        template_write_data(&ptr, control->template, control->template_size);
-
-        /* list item won't be needed later */
-        list_remove(&control->entry);
-        Free(control->template);
-        Free(control);
-    }
 
     return template;
 }
@@ -450,6 +264,58 @@ static void taskdialog_add_content(struct taskdialog_info *dialog_info)
     dialog_info->content = taskdialog_create_label(dialog_info, dialog_info->taskconfig->pszContent, dialog_info->font);
 }
 
+static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT id, const WCHAR *text,
+                                  BOOL custom_button)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    WCHAR *textW;
+
+    textW = taskdialog_gettext(dialog_info, custom_button, text);
+    *button = CreateWindowW(WC_BUTTONW, textW, WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 0, 0, 0, dialog_info->hwnd,
+                            (HMENU)id, 0, NULL);
+    Free(textW);
+    SendMessageW(*button, WM_SETFONT, (WPARAM)dialog_info->font, 0);
+
+    if (id == taskconfig->nDefaultButton && !dialog_info->default_button) dialog_info->default_button = *button;
+}
+
+static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    DWORD flags = taskconfig->dwCommonButtons;
+    INT count, max_count;
+
+    /* Allocate enough memory for the custom and the default buttons. Maximum 6 default buttons possible. */
+    max_count = 6;
+    if (taskconfig->cButtons && taskconfig->pButtons) max_count += taskconfig->cButtons;
+
+    dialog_info->buttons = Alloc(max_count * sizeof(*dialog_info->buttons));
+    if (!dialog_info->buttons) return;
+
+    for (count = 0; count < taskconfig->cButtons; count++)
+        taskdialog_add_button(dialog_info, &dialog_info->buttons[count], taskconfig->pButtons[count].nButtonID,
+                              taskconfig->pButtons[count].pszButtonText, TRUE);
+
+#define TASKDIALOG_INIT_COMMON_BUTTON(id)                                                                             \
+    do                                                                                                                \
+    {                                                                                                                 \
+        taskdialog_add_button(dialog_info, &dialog_info->buttons[count++], ID##id, MAKEINTRESOURCEW(IDS_BUTTON_##id), \
+                              FALSE);                                                                                 \
+    } while (0)
+
+    if (flags & TDCBF_OK_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(OK);
+    if (flags & TDCBF_YES_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(YES);
+    if (flags & TDCBF_NO_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(NO);
+    if (flags & TDCBF_RETRY_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(RETRY);
+    if (flags & TDCBF_CANCEL_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(CANCEL);
+    if (flags & TDCBF_CLOSE_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(CLOSE);
+
+    if (!count) TASKDIALOG_INIT_COMMON_BUTTON(OK);
+#undef TASKDIALOG_INIT_COMMON_BUTTON
+
+    dialog_info->button_count = count;
+}
+
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
                                     LONG *dialog_height)
 {
@@ -469,12 +335,10 @@ static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hw
 static void taskdialog_layout(struct taskdialog_info *dialog_info)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
-    DWORD flags = taskconfig->dwCommonButtons;
     static BOOL first_time = TRUE;
     RECT ref_rect;
     LONG screen_width, dialog_width, dialog_height = 0;
     LONG h_spacing, v_spacing;
-    INT button_max_count, button_count = 0;
     struct button_layout_info *button_layout_infos;
     LONG button_min_width, button_height;
     LONG *line_widths, line_count, align;
@@ -497,39 +361,21 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     taskdialog_label_layout(dialog_info, dialog_info->content, 0, dialog_width, &dialog_height);
 
     /* Common and custom buttons */
-    /* Allocate enough memory for the custom and the default buttons. Maximum 6 default buttons possible. */
-    button_max_count = 6;
-    /* Custom buttons */
-    if (taskconfig->cButtons && taskconfig->pButtons) button_max_count += taskconfig->cButtons;
-
-    button_layout_infos = Alloc(button_max_count * sizeof(*button_layout_infos));
-    line_widths = Alloc(button_max_count * sizeof(*line_widths));
-
-    if (taskconfig->cButtons && taskconfig->pButtons)
-        for (button_count = 0; button_count < taskconfig->cButtons; button_count++)
-            button_layout_infos[button_count].id = taskconfig->pButtons[button_count].nButtonID;
-
-    /* Ok button may be added if no button is specified in taskconfig */
-    if (GetDlgItem(dialog_info->hwnd, IDOK)) button_layout_infos[button_count++].id = IDOK;
-    if (flags & TDCBF_YES_BUTTON) button_layout_infos[button_count++].id = IDYES;
-    if (flags & TDCBF_NO_BUTTON) button_layout_infos[button_count++].id = IDNO;
-    if (flags & TDCBF_RETRY_BUTTON) button_layout_infos[button_count++].id = IDRETRY;
-    if (flags & TDCBF_CANCEL_BUTTON) button_layout_infos[button_count++].id = IDCANCEL;
-    if (flags & TDCBF_CLOSE_BUTTON) button_layout_infos[button_count++].id = IDCLOSE;
+    button_layout_infos = Alloc(dialog_info->button_count * sizeof(*button_layout_infos));
+    line_widths = Alloc(dialog_info->button_count * sizeof(*line_widths));
 
     button_min_width = DIALOG_BUTTON_WIDTH;
     button_height = DIALOG_BUTTON_HEIGHT;
     taskdialog_du_to_px(dialog_info, &button_min_width, &button_height);
-    for (i = 0; i < button_count; i++)
+    for (i = 0; i < dialog_info->button_count; i++)
     {
-        button_layout_infos[i].hwnd = GetDlgItem(dialog_info->hwnd, button_layout_infos[i].id);
-        taskdialog_get_label_size(dialog_info, button_layout_infos[i].hwnd, dialog_width - h_spacing * 2, &size);
+        taskdialog_get_label_size(dialog_info, dialog_info->buttons[i], dialog_width - h_spacing * 2, &size);
         button_layout_infos[i].width = max(size.cx, button_min_width);
     }
 
     /* Separate buttons into lines */
     x = h_spacing;
-    for (i = 0, line_count = 0; i < button_count; i++)
+    for (i = 0, line_count = 0; i < dialog_info->button_count; i++)
     {
         if (x + button_layout_infos[i].width + h_spacing >= dialog_width)
         {
@@ -551,7 +397,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         unsigned int j, last_button = 0;
         int diff_changed;
 
-        for (j = 0; j < button_count; j++)
+        for (j = 0; j < dialog_info->button_count; j++)
             if (button_layout_infos[j].line == i - 1) last_button = j;
 
         /* Difference in length of both lines if we wrapped the last button from the last line into this one */
@@ -576,7 +422,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     /* Now that we got them all positioned, move all buttons */
     x = align;
     size.cy = button_height;
-    for (i = 0; i < button_count; i++)
+    for (i = 0; i < dialog_info->button_count; i++)
     {
         /* New line */
         if (i > 0 && button_layout_infos[i].line != button_layout_infos[i - 1].line)
@@ -587,7 +433,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
 
         y = dialog_height + v_spacing;
         size.cx = button_layout_infos[i].width;
-        SetWindowPos(button_layout_infos[i].hwnd, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        SetWindowPos(dialog_info->buttons[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         x += button_layout_infos[i].width + h_spacing;
     }
 
@@ -618,6 +464,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
     NONCLIENTMETRICSW ncm;
     HDC hdc;
+    INT id;
 
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
@@ -644,6 +491,13 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
 
     taskdialog_add_main_instruction(dialog_info);
     taskdialog_add_content(dialog_info);
+    taskdialog_add_buttons(dialog_info);
+
+    /* Set default button */
+    if (!dialog_info->default_button) dialog_info->default_button = dialog_info->buttons[0];
+    SendMessageW(dialog_info->hwnd, WM_NEXTDLGCTL, (WPARAM)dialog_info->default_button, TRUE);
+    id = GetWindowLongW(dialog_info->default_button, GWLP_ID);
+    SendMessageW(dialog_info->hwnd, DM_SETDEFID, id, 0);
 
     taskdialog_layout(dialog_info);
 }
@@ -653,6 +507,7 @@ static void taskdialog_destroy(struct taskdialog_info *dialog_info)
     if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER) KillTimer(dialog_info->hwnd, ID_TIMER);
     if (dialog_info->font) DeleteObject(dialog_info->font);
     if (dialog_info->main_instruction_font) DeleteObject(dialog_info->main_instruction_font);
+    if (dialog_info->buttons) Free(dialog_info->buttons);
 }
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -678,7 +533,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             SetPropW(hwnd, taskdialog_info_propnameW, dialog_info);
             taskdialog_notify(dialog_info, TDN_DIALOG_CONSTRUCTED, 0, 0);
             taskdialog_notify(dialog_info, TDN_CREATED, 0, 0);
-            break;
+            return FALSE;
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
