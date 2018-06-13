@@ -641,8 +641,8 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
     };
     D3D_FEATURE_LEVEL selected_feature_level = 0;
     unsigned int shader_model;
+    struct wined3d_caps caps;
     unsigned int i, j;
-    WINED3DCAPS caps;
     HRESULT hr;
 
     wined3d_mutex_lock();

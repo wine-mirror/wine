@@ -3411,7 +3411,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
         void *feature_support_data, UINT feature_support_data_size)
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
-    WINED3DCAPS wined3d_caps;
+    struct wined3d_caps wined3d_caps;
     HRESULT hr;
 
     TRACE("iface %p, feature %u, feature_support_data %p, feature_support_data_size %u.\n",
