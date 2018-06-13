@@ -1944,7 +1944,6 @@ struct wined3d_caps
     DWORD DevCaps2;
 
     float MaxNpatchTessellationLevel;
-    DWORD Reserved5; /* undocumented */
 
     UINT MasterAdapterOrdinal;
     UINT AdapterOrdinalInGroup;
@@ -1959,8 +1958,6 @@ struct wined3d_caps
     DWORD MaxPShaderInstructionsExecuted;
     DWORD MaxVertexShader30InstructionSlots;
     DWORD MaxPixelShader30InstructionSlots;
-    DWORD Reserved2; /* Not in the microsoft headers but documented */
-    DWORD Reserved3;
 
     struct wined3d_ddraw_caps ddraw_caps;
 
