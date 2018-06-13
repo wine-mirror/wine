@@ -581,8 +581,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
        "%08x\n",rc);
 
     if (rc==DS_OK && primary!=NULL) {
-        for (f=0;f<NB_FORMATS;f++) {
-          for (tag=0;tag<NB_TAGS;tag++) {
+        for (f = 0; f < ARRAY_SIZE(formats); f++) {
+          for (tag = 0; tag < ARRAY_SIZE(format_tags); tag++) {
             /* if float, we only want to test 32-bit */
             if ((format_tags[tag] == WAVE_FORMAT_IEEE_FLOAT) && (formats[f][1] != 32))
                 continue;
@@ -727,8 +727,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
         if (rc!=DS_OK)
             goto EXIT1;
 
-        for (f=0;f<NB_FORMATS;f++) {
-          for (tag=0;tag<NB_TAGS;tag++) {
+        for (f = 0; f < ARRAY_SIZE(formats); f++) {
+          for (tag = 0; tag < ARRAY_SIZE(format_tags); tag++) {
             WAVEFORMATEXTENSIBLE wfxe;
 
             /* if float, we only want to test 32-bit */

@@ -71,10 +71,8 @@ static const unsigned int formats[][4]={
     {96000, 32, 1, 0 },
     {96000, 32, 2, 0 }
 };
-#define NB_FORMATS (sizeof(formats)/sizeof(*formats))
 
 static const unsigned int format_tags[] = {WAVE_FORMAT_PCM, WAVE_FORMAT_IEEE_FLOAT};
-#define NB_TAGS (sizeof(format_tags)/sizeof(*format_tags))
 
 /* The time slice determines how often we will service the buffer */
 #define TIME_SLICE     31
