@@ -89,6 +89,7 @@ static const WCHAR sequenceIdString[] = { 'S','e','q','u','e','n','c','e','I','d
 static const WCHAR emptyString[] = { 0 };
 static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
+static const WCHAR probeString[] = { 'P','r','o','b','e', 0 };
 static const WCHAR byeString[] = { 'B','y','e', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
@@ -1346,6 +1347,19 @@ static void remove_element(WSDXML_ELEMENT *element)
     WSDFreeLinkedMemory(element);
 }
 
+static WSDXML_TYPE *generate_type(LPCWSTR uri, void *parent)
+{
+    WSDXML_TYPE *type = WSDAllocateLinkedMemory(parent, sizeof(WSDXML_TYPE));
+
+    if (type == NULL)
+        return NULL;
+
+    type->Uri = duplicate_string(parent, uri);
+    type->Table = NULL;
+
+    return type;
+}
+
 HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
 {
     WSDXML_ELEMENT *envelope = NULL, *header_element, *body_element;
@@ -1491,7 +1505,31 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
     /* Now figure out which message we've been sent */
     if (lstrcmpW(soap_msg->Header.Action, actionProbe) == 0)
     {
-        /* TODO: Parse the Probe message */
+        WSDXML_ELEMENT *probe_element;
+        WSD_PROBE *probe = NULL;
+
+        probe_element = find_element(body_element, probeString, discoveryNsUri);
+        if (probe_element == NULL) goto cleanup;
+
+        probe = WSDAllocateLinkedMemory(soap_msg, sizeof(WSD_PROBE));
+        if (probe == NULL) goto cleanup;
+
+        ZeroMemory(probe, sizeof(WSD_PROBE));
+
+        /* TODO: Check for the "types" element */
+
+        /* Now detach and free known headers to leave the "any" elements */
+        remove_element(find_element(probe_element, typesString, discoveryNsUri));
+        remove_element(find_element(probe_element, scopesString, discoveryNsUri));
+
+        probe->Any = (WSDXML_ELEMENT *) probe_element->FirstChild;
+
+        if (probe->Any != NULL)
+            probe->Any->Node.Parent = NULL;
+
+        soap_msg->Body = probe;
+        soap_msg->BodyType = generate_type(actionProbe, soap_msg);
+        if (soap_msg->BodyType == NULL) goto cleanup;
 
         *out_msg = soap_msg;
         soap_msg = NULL; /* caller will clean this up */

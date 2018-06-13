@@ -534,7 +534,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
         static const WCHAR extra_info[] = {'E','x','t','r','a','I','n','f','o',0};
         WSD_PROBE *probe_msg = (WSD_PROBE *) pSoap->Body;
 
-        todo_wine ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
+        ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
         ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, discoveryTo) == 0,
             "pSoap->Header.To == '%s'\n", wine_dbgstr_w(pSoap->Header.To));
         ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, actionProbe) == 0,
@@ -564,7 +564,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
             static const WCHAR lager[] = {'L','a','g','e','r',0};
             static const WCHAR more_info[] = {'M','o','r','e','I','n','f','o',0};
 
-            ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
+            todo_wine ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
 
             if (probe_msg->Types != NULL)
             {
