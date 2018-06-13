@@ -45,6 +45,13 @@ static const WCHAR actionHello[] = {
     'd','i','s','c','o','v','e','r','y','/',
     'H','e','l','l','o', 0 };
 
+static const WCHAR actionProbe[] = {
+    'h','t','t','p',':','/','/',
+    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
+    'w','s','/','2','0','0','5','/','0','4','/',
+    'd','i','s','c','o','v','e','r','y','/',
+    'P','r','o','b','e', 0 };
+
 static const WCHAR actionBye[] = {
     'h','t','t','p',':','/','/',
     's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
@@ -97,6 +104,27 @@ struct discovered_namespace
     LPCWSTR prefix;
     LPCWSTR uri;
 };
+
+static LPWSTR utf8_to_wide(void *parent, const char *utf8_str, int length)
+{
+    int utf8_str_len = 0, chars_needed = 0, bytes_needed = 0;
+    LPWSTR new_str = NULL;
+
+    if (utf8_str == NULL) return NULL;
+
+    utf8_str_len = (length < 0) ? lstrlenA(utf8_str) : length;
+    chars_needed = MultiByteToWideChar(CP_UTF8, 0, utf8_str, utf8_str_len, NULL, 0);
+
+    if (chars_needed <= 0) return NULL;
+
+    bytes_needed = sizeof(WCHAR) * (chars_needed + 1);
+    new_str = WSDAllocateLinkedMemory(parent, bytes_needed);
+
+    MultiByteToWideChar(CP_UTF8, 0, utf8_str, utf8_str_len, new_str, chars_needed);
+    new_str[chars_needed] = 0;
+
+    return new_str;
+}
 
 static char *wide_to_utf8(LPCWSTR wide_string, int *length)
 {
@@ -1081,8 +1109,364 @@ cleanup:
     return ret;
 }
 
+static LPWSTR xml_text_to_wide_string(void *parent_memory, WS_XML_TEXT *text)
+{
+    if (text->textType == WS_XML_TEXT_TYPE_UTF8)
+    {
+        WS_XML_UTF8_TEXT *utf8_text = (WS_XML_UTF8_TEXT *) text;
+        return utf8_to_wide(parent_memory, (const char *) utf8_text->value.bytes, utf8_text->value.length);
+    }
+    else if (text->textType == WS_XML_TEXT_TYPE_UTF16)
+    {
+        WS_XML_UTF16_TEXT *utf_16_text = (WS_XML_UTF16_TEXT *) text;
+        return duplicate_string(parent_memory, (LPCWSTR) utf_16_text->bytes);
+    }
+
+    FIXME("Support for text type %d not implemented.\n", text->textType);
+    return NULL;
+}
+
+static HRESULT move_to_element(WS_XML_READER *reader, const char *element_name, WS_XML_STRING *uri)
+{
+    WS_XML_STRING envelope;
+    BOOL found = FALSE;
+    HRESULT ret;
+
+    envelope.bytes = (BYTE *) element_name;
+    envelope.length = strlen(element_name);
+    envelope.dictionary = NULL;
+    envelope.id = 0;
+
+    ret = WsReadToStartElement(reader, &envelope, uri, &found, NULL);
+    if (FAILED(ret)) return ret;
+
+    return found ? ret : E_FAIL;
+}
+
+static void trim_trailing_slash(LPWSTR uri)
+{
+    /* Trim trailing slash from URI */
+    int uri_len = lstrlenW(uri);
+    if (uri_len > 0 && uri[uri_len - 1] == '/') uri[uri_len - 1] = 0;
+}
+
+static HRESULT ws_element_to_wsdxml_element(WS_XML_READER *reader, IWSDXMLContext *context, WSDXML_ELEMENT *parent_element)
+{
+    WSDXML_ATTRIBUTE *cur_wsd_attrib = NULL, *new_wsd_attrib = NULL;
+    const WS_XML_ELEMENT_NODE *element_node = NULL;
+    WSDXML_ELEMENT *cur_element = parent_element;
+    const WS_XML_TEXT_NODE *text_node = NULL;
+    LPWSTR uri = NULL, element_name = NULL;
+    WS_XML_STRING *ns_string = NULL;
+    WS_XML_ATTRIBUTE *attrib = NULL;
+    WSDXML_ELEMENT *element = NULL;
+    const WS_XML_NODE *node = NULL;
+    WSDXML_NAME *name = NULL;
+    WSDXML_TEXT *text = NULL;
+    HRESULT ret;
+    int i;
+
+    for (;;)
+    {
+        if (cur_element == NULL) break;
+
+        ret = WsReadNode(reader, NULL);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = WsGetReaderNode(reader, &node, NULL);
+        if (FAILED(ret)) goto cleanup;
+
+        switch (node->nodeType)
+        {
+            case WS_XML_NODE_TYPE_ELEMENT:
+                element_node = (const WS_XML_ELEMENT_NODE *) node;
+
+                uri = utf8_to_wide(NULL, (const char *) element_node->ns->bytes, element_node->ns->length);
+                if (uri == NULL) goto outofmemory;
+
+                /* Link element_name to uri so they will be freed at the same time */
+                element_name = utf8_to_wide(uri, (const char *) element_node->localName->bytes,
+                    element_node->localName->length);
+                if (element_name == NULL) goto outofmemory;
+
+                trim_trailing_slash(uri);
+
+                ret = IWSDXMLContext_AddNameToNamespace(context, uri, element_name, &name);
+                if (FAILED(ret)) goto cleanup;
+
+                WSDFreeLinkedMemory(uri);
+                uri = NULL;
+
+                ret = WSDXMLBuildAnyForSingleElement(name, NULL, &element);
+                if (FAILED(ret)) goto cleanup;
+                WSDXMLAddChild(cur_element, element);
+
+                cur_wsd_attrib = NULL;
+
+                /* Add attributes */
+                for (i = 0; i < element_node->attributeCount; i++)
+                {
+                    attrib = element_node->attributes[i];
+                    if (attrib->isXmlNs) continue;
+
+                    new_wsd_attrib = WSDAllocateLinkedMemory(element, sizeof(WSDXML_ATTRIBUTE));
+                    if (new_wsd_attrib == NULL) goto outofmemory;
+
+                    ns_string = attrib->ns;
+                    if (ns_string->length == 0) ns_string = element_node->ns;
+
+                    uri = utf8_to_wide(NULL, (const char *) ns_string->bytes, ns_string->length);
+                    if (uri == NULL) goto outofmemory;
+
+                    trim_trailing_slash(uri);
+
+                    /* Link element_name to uri so they will be freed at the same time */
+                    element_name = utf8_to_wide(uri, (const char *) attrib->localName->bytes, attrib->localName->length);
+                    if (element_name == NULL) goto outofmemory;
+
+                    ret = IWSDXMLContext_AddNameToNamespace(context, uri, element_name, &name);
+                    if (FAILED(ret)) goto cleanup;
+
+                    WSDFreeLinkedMemory(uri);
+                    uri = NULL;
+
+                    new_wsd_attrib->Value = xml_text_to_wide_string(new_wsd_attrib, attrib->value);
+                    if (new_wsd_attrib->Value == NULL) goto outofmemory;
+
+                    new_wsd_attrib->Name = name;
+                    new_wsd_attrib->Element = cur_element;
+                    new_wsd_attrib->Next = NULL;
+
+                    if (cur_wsd_attrib == NULL)
+                        element->FirstAttribute = new_wsd_attrib;
+                    else
+                        cur_wsd_attrib->Next = new_wsd_attrib;
+
+                    cur_wsd_attrib = new_wsd_attrib;
+                }
+
+                cur_element = element;
+                break;
+
+            case WS_XML_NODE_TYPE_TEXT:
+                text_node = (const WS_XML_TEXT_NODE *) node;
+
+                if (cur_element == NULL)
+                {
+                    WARN("No parent element open but encountered text element!\n");
+                    continue;
+                }
+
+                if (cur_element->FirstChild != NULL)
+                {
+                    WARN("Text node encountered but parent already has child!\n");
+                    continue;
+                }
+
+                text = WSDAllocateLinkedMemory(element, sizeof(WSDXML_TEXT));
+                if (text == NULL) goto outofmemory;
+
+                text->Node.Parent = element;
+                text->Node.Next = NULL;
+                text->Node.Type = TextType;
+                text->Text = xml_text_to_wide_string(text, text_node->text);
+
+                if (text->Text == NULL)
+                {
+                    WARN("Text node returned null string.\n");
+                    WSDFreeLinkedMemory(text);
+                    continue;
+                }
+
+                cur_element->FirstChild = (WSDXML_NODE *) text;
+                break;
+
+            case WS_XML_NODE_TYPE_END_ELEMENT:
+                /* Go up a level to the parent element */
+                cur_element = cur_element->Node.Parent;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return S_OK;
+
+outofmemory:
+    ret = E_OUTOFMEMORY;
+
+cleanup:
+    /* Free uri and element_name if applicable */
+    WSDFreeLinkedMemory(uri);
+    return ret;
+}
+
+static WSDXML_ELEMENT *find_element(WSDXML_ELEMENT *parent, LPCWSTR name, LPCWSTR ns_uri)
+{
+    WSDXML_ELEMENT *cur = (WSDXML_ELEMENT *) parent->FirstChild;
+
+    while (cur != NULL)
+    {
+        if ((lstrcmpW(cur->Name->LocalName, name) == 0) && (lstrcmpW(cur->Name->Space->Uri, ns_uri) == 0))
+            return cur;
+
+        cur = (WSDXML_ELEMENT *) cur->Node.Next;
+    }
+
+    return NULL;
+}
+
 HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
 {
-    /* TODO: Parse and read message */
-    return E_NOTIMPL;
+    WSDXML_ELEMENT *envelope = NULL, *header_element, *body_element;
+    WS_XML_READER_TEXT_ENCODING encoding;
+    WS_XML_ELEMENT_NODE *envelope_node;
+    WSD_SOAP_MESSAGE *soap_msg = NULL;
+    WS_XML_READER_BUFFER_INPUT input;
+    WS_XML_ATTRIBUTE *attrib = NULL;
+    IWSDXMLContext *context = NULL;
+    WS_XML_STRING *soap_uri = NULL;
+    const WS_XML_NODE *node;
+    WS_XML_READER *reader;
+    LPCWSTR value = NULL;
+    LPWSTR uri, prefix;
+    WS_HEAP *heap;
+    HRESULT ret;
+    int i;
+
+    *msg_type = MSGTYPE_UNKNOWN;
+
+    ret = WsCreateHeap(16384, 4096, NULL, 0, &heap, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = WsCreateReader(NULL, 0, &reader, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    encoding.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    encoding.charSet = WS_CHARSET_AUTO;
+
+    input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    input.encodedData = (char *) xml;
+    input.encodedDataSize = xml_length;
+
+    ret = WsSetInput(reader, (WS_XML_READER_ENCODING *) &encoding, (WS_XML_READER_INPUT *) &input, NULL, 0, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    soap_uri = populate_xml_string(envelopeNsUri);
+    if (soap_uri == NULL) goto outofmemory;
+
+    ret = move_to_element(reader, "Envelope", soap_uri);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = WsGetReaderNode(reader, &node, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    if (node->nodeType != WS_XML_NODE_TYPE_ELEMENT)
+    {
+        WARN("Unexpected node type (%d)\n", node->nodeType);
+        ret = E_FAIL;
+        goto cleanup;
+    }
+
+    envelope_node = (WS_XML_ELEMENT_NODE *) node;
+
+    ret = WSDXMLCreateContext(&context);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Find XML namespaces from the envelope element's attributes */
+    for (i = 0; i < envelope_node->attributeCount; i++)
+    {
+        attrib = envelope_node->attributes[i];
+
+        if (attrib->isXmlNs)
+        {
+            uri = utf8_to_wide(NULL, (const char *) attrib->ns->bytes, attrib->ns->length);
+            if (uri == NULL) continue;
+
+            trim_trailing_slash(uri);
+
+            prefix = utf8_to_wide(uri, (const char *) attrib->localName->bytes, attrib->localName->length);
+
+            if (prefix == NULL)
+            {
+                WSDFreeLinkedMemory(uri);
+                continue;
+            }
+
+            IWSDXMLContext_AddNamespace(context, uri, prefix, NULL);
+            WSDFreeLinkedMemory(uri);
+        }
+    }
+
+    /* Create the SOAP message to return to the caller */
+    soap_msg = WSDAllocateLinkedMemory(NULL, sizeof(WSD_SOAP_MESSAGE));
+    if (soap_msg == NULL) goto outofmemory;
+
+    ZeroMemory(soap_msg, sizeof(WSD_SOAP_MESSAGE));
+
+    envelope = WSDAllocateLinkedMemory(soap_msg, sizeof(WSDXML_ELEMENT));
+    if (envelope == NULL) goto outofmemory;
+
+    ZeroMemory(envelope, sizeof(WSDXML_ELEMENT));
+
+    ret = ws_element_to_wsdxml_element(reader, context, envelope);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Find the header element */
+    header_element = find_element(envelope, headerString, envelopeNsUri);
+
+    if (header_element == NULL)
+    {
+        WARN("Unable to find header element in received SOAP message\n");
+        ret = E_FAIL;
+        goto cleanup;
+    }
+
+    ret = WSDXMLGetValueFromAny(addressingNsUri, actionString, (WSDXML_ELEMENT *) header_element->FirstChild, &value);
+    if (FAILED(ret)) goto cleanup;
+    soap_msg->Header.Action = duplicate_string(soap_msg, value);
+    if (soap_msg->Header.Action == NULL) goto outofmemory;
+
+    ret = WSDXMLGetValueFromAny(addressingNsUri, toString, (WSDXML_ELEMENT *) header_element->FirstChild, &value);
+    if (FAILED(ret)) goto cleanup;
+    soap_msg->Header.To = duplicate_string(soap_msg, value);
+    if (soap_msg->Header.To == NULL) goto outofmemory;
+
+    ret = WSDXMLGetValueFromAny(addressingNsUri, messageIdString, (WSDXML_ELEMENT *) header_element->FirstChild, &value);
+    if (FAILED(ret)) goto cleanup;
+    soap_msg->Header.MessageID = duplicate_string(soap_msg, value);
+    if (soap_msg->Header.MessageID == NULL) goto outofmemory;
+
+    /* Find the body element */
+    body_element = find_element(envelope, bodyString, envelopeNsUri);
+
+    if (body_element == NULL)
+    {
+        WARN("Unable to find body element in received SOAP message\n");
+        ret = E_FAIL;
+        goto cleanup;
+    }
+
+    /* Now figure out which message we've been sent */
+    if (lstrcmpW(soap_msg->Header.Action, actionProbe) == 0)
+    {
+        /* TODO: Parse the Probe message */
+
+        *out_msg = soap_msg;
+        soap_msg = NULL; /* caller will clean this up */
+        *msg_type = MSGTYPE_PROBE;
+    }
+
+    goto cleanup;
+
+outofmemory:
+    ret = E_OUTOFMEMORY;
+
+cleanup:
+    free_xml_string(soap_uri);
+    WSDFreeLinkedMemory(soap_msg);
+    if (context != NULL) IWSDXMLContext_Release(context);
+
+    return ret;
 }

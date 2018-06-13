@@ -491,7 +491,7 @@ static void verify_wsdxml_any_text(const char *debug_prefix, WSDXML_ELEMENT *any
 {
     WSDXML_TEXT *child;
 
-    ok(any != NULL, "%s: any == NULL\n", debug_prefix);
+    todo_wine ok(any != NULL, "%s: any == NULL\n", debug_prefix);
     if (any == NULL) return;
 
     child = (WSDXML_TEXT *) any->FirstChild;
@@ -534,7 +534,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
         static const WCHAR extra_info[] = {'E','x','t','r','a','I','n','f','o',0};
         WSD_PROBE *probe_msg = (WSD_PROBE *) pSoap->Body;
 
-        ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
+        todo_wine ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
         ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, discoveryTo) == 0,
             "pSoap->Header.To == '%s'\n", wine_dbgstr_w(pSoap->Header.To));
         ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, actionProbe) == 0,
@@ -939,7 +939,7 @@ after_publish_test:
         sprintf(probe_message, testProbeMessage, probe_uuid_str);
 
         ok(send_udp_multicast_of_type(probe_message, strlen(probe_message), AF_INET) == TRUE, "Sending Probe message failed\n");
-        todo_wine ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
+        ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
 
         RpcStringFreeA(&probe_uuid_str);
     }
