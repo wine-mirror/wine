@@ -222,7 +222,13 @@ static WCHAR *taskdialog_gettext(struct taskdialog_info *dialog_info, BOOL user_
     return ret;
 }
 
-static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND hwnd, LONG max_width, SIZE *size)
+static BOOL taskdialog_hyperlink_enabled(struct taskdialog_info *dialog_info)
+{
+    return dialog_info->taskconfig->dwFlags & TDF_ENABLE_HYPERLINKS;
+}
+
+static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND hwnd, LONG max_width, SIZE *size,
+                                      BOOL syslink)
 {
     DWORD style = DT_EXPANDTABS | DT_CALCRECT | DT_WORDBREAK;
     HFONT hfont, old_hfont;
@@ -230,6 +236,12 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     RECT rect = {0};
     WCHAR text[1024];
     INT text_length;
+
+    if (syslink)
+    {
+        SendMessageW(hwnd, LM_GETIDEALSIZE, max_width, (LPARAM)size);
+        return;
+    }
 
     if (dialog_info->taskconfig->dwFlags & TDF_RTL_LAYOUT)
         style |= DT_RIGHT | DT_RTLREADING;
@@ -296,15 +308,19 @@ static void taskdialog_add_main_icon(struct taskdialog_info *dialog_info)
     taskdialog_set_icon(dialog_info, TDIE_ICON_MAIN, dialog_info->taskconfig->u.hMainIcon);
 }
 
-static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const WCHAR *text, HFONT font)
+static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const WCHAR *text, HFONT font, BOOL syslink)
 {
     WCHAR *textW;
     HWND hwnd;
+    const WCHAR *class;
+    DWORD style = WS_CHILD | WS_VISIBLE;
 
     if (!text) return NULL;
 
+    class = syslink ? WC_LINK : WC_STATICW;
+    if (syslink) style |= WS_TABSTOP;
     textW = taskdialog_gettext(dialog_info, TRUE, text);
-    hwnd = CreateWindowW(WC_STATICW, textW, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
+    hwnd = CreateWindowW(class, textW, style, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
     if (textW) Free(textW);
 
     SendMessageW(hwnd, WM_SETFONT, (WPARAM)font, 0);
@@ -326,15 +342,16 @@ static void taskdialog_add_main_instruction(struct taskdialog_info *dialog_info)
     dialog_info->main_instruction_font = CreateFontIndirectW(&ncm.lfMessageFont);
 
     dialog_info->main_instruction =
-        taskdialog_create_label(dialog_info, taskconfig->pszMainInstruction, dialog_info->main_instruction_font);
+        taskdialog_create_label(dialog_info, taskconfig->pszMainInstruction, dialog_info->main_instruction_font, FALSE);
 }
 
 static void taskdialog_add_content(struct taskdialog_info *dialog_info)
 {
-    dialog_info->content = taskdialog_create_label(dialog_info, dialog_info->taskconfig->pszContent, dialog_info->font);
+    dialog_info->content = taskdialog_create_label(dialog_info, dialog_info->taskconfig->pszContent, dialog_info->font,
+                                                   taskdialog_hyperlink_enabled(dialog_info));
 }
 
-static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT id, const WCHAR *text,
+static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT_PTR id, const WCHAR *text,
                                   BOOL custom_button)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
@@ -387,7 +404,7 @@ static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
 }
 
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
-                                    LONG *dialog_height)
+                                    LONG *dialog_height, BOOL syslink)
 {
     LONG x, y, max_width;
     SIZE size;
@@ -397,7 +414,7 @@ static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hw
     x = start_x + dialog_info->m.h_spacing;
     y = *dialog_height + dialog_info->m.v_spacing;
     max_width = dialog_width - x - dialog_info->m.h_spacing;
-    taskdialog_get_label_size(dialog_info, hwnd, max_width, &size);
+    taskdialog_get_label_size(dialog_info, hwnd, max_width, &size, syslink);
     SetWindowPos(hwnd, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
     *dialog_height = y + size.cy;
 }
@@ -405,6 +422,7 @@ static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hw
 static void taskdialog_layout(struct taskdialog_info *dialog_info)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    BOOL syslink = taskdialog_hyperlink_enabled(dialog_info);
     static BOOL first_time = TRUE;
     RECT ref_rect;
     LONG screen_width, dialog_width, dialog_height = 0;
@@ -440,10 +458,11 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     }
 
     /* Main instruction */
-    taskdialog_label_layout(dialog_info, dialog_info->main_instruction, main_icon_right, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->main_instruction, main_icon_right, dialog_width, &dialog_height,
+                            FALSE);
 
     /* Content */
-    taskdialog_label_layout(dialog_info, dialog_info->content, main_icon_right, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->content, main_icon_right, dialog_width, &dialog_height, syslink);
 
     dialog_height = max(dialog_height, main_icon_bottom);
 
@@ -456,7 +475,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     taskdialog_du_to_px(dialog_info, &button_min_width, &button_height);
     for (i = 0; i < dialog_info->button_count; i++)
     {
-        taskdialog_get_label_size(dialog_info, dialog_info->buttons[i], dialog_width - h_spacing * 2, &size);
+        taskdialog_get_label_size(dialog_info, dialog_info->buttons[i], dialog_width - h_spacing * 2, &size, FALSE);
         button_layout_infos[i].width = max(size.cx, button_min_width);
     }
 
@@ -643,6 +662,18 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
                     dialog_info->last_timer_tick = GetTickCount();
             }
             break;
+        case WM_NOTIFY:
+        {
+            PNMLINK pnmLink = (PNMLINK)lParam;
+            HWND hwndFrom = pnmLink->hdr.hwndFrom;
+            if ((taskdialog_hyperlink_enabled(dialog_info)) && (hwndFrom == dialog_info->content)
+                && (pnmLink->hdr.code == NM_CLICK || pnmLink->hdr.code == NM_RETURN))
+            {
+                taskdialog_notify(dialog_info, TDN_HYPERLINK_CLICKED, 0, (LPARAM)pnmLink->item.szUrl);
+                break;
+            }
+            return FALSE;
+        }
         case WM_DESTROY:
             taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
             RemovePropW(hwnd, taskdialog_info_propnameW);
