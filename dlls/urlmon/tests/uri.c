@@ -7786,7 +7786,7 @@ static void change_property(IUriBuilder *builder, const uri_builder_property *pr
 static void test_CreateUri_InvalidFlags(void) {
     DWORD i;
 
-    for(i = 0; i < sizeof(invalid_flag_tests)/sizeof(invalid_flag_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(invalid_flag_tests); ++i) {
         HRESULT hr;
         IUri *uri = (void*) 0xdeadbeef;
 
@@ -7825,7 +7825,7 @@ static void test_CreateUri_InvalidArgs(void) {
 static void test_CreateUri_InvalidUri(void) {
     DWORD i;
 
-    for(i = 0; i < sizeof(invalid_uri_tests)/sizeof(invalid_uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(invalid_uri_tests); ++i) {
         invalid_uri test = invalid_uri_tests[i];
         IUri *uri = NULL;
         LPWSTR uriW;
@@ -7877,7 +7877,7 @@ static void test_IUri_GetPropertyBSTR(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -7937,7 +7937,7 @@ static void test_IUri_GetPropertyDWORD(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -7952,7 +7952,7 @@ static void test_IUri_GetPropertyDWORD(void) {
             DWORD j;
 
             /* Checks all the DWORD properties of the uri. */
-            for(j = 0; j < sizeof(test.dword_props)/sizeof(test.dword_props[0]); ++j) {
+            for(j = 0; j < ARRAY_SIZE(test.dword_props); ++j) {
                 DWORD received;
                 uri_dword_property prop = test.dword_props[j];
 
@@ -8029,7 +8029,7 @@ static void test_IUri_GetStrProperties(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -8257,7 +8257,7 @@ static void test_IUri_GetDwordProperties(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -8343,7 +8343,7 @@ static void test_IUri_GetPropertyLength(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -8426,7 +8426,7 @@ static void test_IUri_GetProperties(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -8475,7 +8475,7 @@ static void test_IUri_HasProperty(void) {
     }
     if(uri) IUri_Release(uri);
 
-    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); ++i) {
         uri_properties test = uri_tests[i];
         LPWSTR uriW;
         uri = NULL;
@@ -8540,7 +8540,7 @@ static void test_IUri_IsEqual(void) {
     IUri_Release(uriA);
     IUri_Release(uriB);
 
-    for(i = 0; i < sizeof(equality_tests)/sizeof(equality_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(equality_tests); ++i) {
         uri_equality test = equality_tests[i];
         LPWSTR uriA_W, uriB_W;
 
@@ -8592,7 +8592,7 @@ static void test_CreateUriWithFragment_InvalidArgs(void) {
 static void test_CreateUriWithFragment_InvalidFlags(void) {
     DWORD i;
 
-    for(i = 0; i < sizeof(invalid_flag_tests)/sizeof(invalid_flag_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(invalid_flag_tests); ++i) {
         HRESULT hr;
         IUri *uri = (void*) 0xdeadbeef;
 
@@ -8606,7 +8606,7 @@ static void test_CreateUriWithFragment_InvalidFlags(void) {
 static void test_CreateUriWithFragment(void) {
     DWORD i;
 
-    for(i = 0; i < sizeof(uri_fragment_tests)/sizeof(uri_fragment_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_fragment_tests); ++i) {
         HRESULT hr;
         IUri *uri = NULL;
         LPWSTR uriW, fragW;
@@ -8685,7 +8685,7 @@ static void test_IUriBuilder_CreateUri(IUriBuilder *builder, const uri_builder_t
     if(SUCCEEDED(hr)) {
         DWORD i;
 
-        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_str_props); ++i) {
             uri_builder_str_property prop = test->expected_str_props[i];
             BSTR received = NULL;
 
@@ -8703,7 +8703,7 @@ static void test_IUriBuilder_CreateUri(IUriBuilder *builder, const uri_builder_t
             SysFreeString(received);
         }
 
-        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_dword_props); ++i) {
             uri_builder_dword_property prop = test->expected_dword_props[i];
             DWORD received = -2;
 
@@ -8737,7 +8737,7 @@ static void test_IUriBuilder_CreateUriSimple(IUriBuilder *builder, const uri_bui
     if(SUCCEEDED(hr)) {
         DWORD i;
 
-        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_str_props); ++i) {
             uri_builder_str_property prop = test->expected_str_props[i];
             BSTR received = NULL;
 
@@ -8755,7 +8755,7 @@ static void test_IUriBuilder_CreateUriSimple(IUriBuilder *builder, const uri_bui
             SysFreeString(received);
         }
 
-        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_dword_props); ++i) {
             uri_builder_dword_property prop = test->expected_dword_props[i];
             DWORD received = -2;
 
@@ -8790,7 +8790,7 @@ static void test_IUriBuilder_CreateUriWithFlags(IUriBuilder *builder, const uri_
     if(SUCCEEDED(hr)) {
         DWORD i;
 
-        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_str_props); ++i) {
             uri_builder_str_property prop = test->expected_str_props[i];
             BSTR received = NULL;
 
@@ -8808,7 +8808,7 @@ static void test_IUriBuilder_CreateUriWithFlags(IUriBuilder *builder, const uri_
             SysFreeString(received);
         }
 
-        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+        for(i = 0; i < ARRAY_SIZE(test->expected_dword_props); ++i) {
             uri_builder_dword_property prop = test->expected_dword_props[i];
             DWORD received = -2;
 
@@ -9051,7 +9051,7 @@ static void test_IUriBuilder_GetFragment(IUriBuilder *builder, const uri_builder
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_FRAGMENT)
             prop = &(test->properties[i]);
     }
@@ -9146,7 +9146,7 @@ static void test_IUriBuilder_GetHost(IUriBuilder *builder, const uri_builder_tes
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_HOST)
             prop = &(test->properties[i]);
     }
@@ -9241,7 +9241,7 @@ static void test_IUriBuilder_GetPassword(IUriBuilder *builder, const uri_builder
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_PASSWORD)
             prop = &(test->properties[i]);
     }
@@ -9336,7 +9336,7 @@ static void test_IUriBuilder_GetPath(IUriBuilder *builder, const uri_builder_tes
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_PATH)
             prop = &(test->properties[i]);
     }
@@ -9498,7 +9498,7 @@ static void test_IUriBuilder_GetQuery(IUriBuilder *builder, const uri_builder_te
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_QUERY)
             prop = &(test->properties[i]);
     }
@@ -9593,7 +9593,7 @@ static void test_IUriBuilder_GetSchemeName(IUriBuilder *builder, const uri_build
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_SCHEME_NAME)
             prop = &(test->properties[i]);
     }
@@ -9688,7 +9688,7 @@ static void test_IUriBuilder_GetUserName(IUriBuilder *builder, const uri_builder
     const uri_builder_property *prop = NULL;
 
     /* Check if the property was set earlier. */
-    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(test->properties); ++i) {
         if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_USER_NAME)
             prop = &(test->properties[i]);
     }
@@ -9780,7 +9780,7 @@ static void test_IUriBuilder(void) {
     IUriBuilder *builder;
     DWORD i;
 
-    for(i = 0; i < sizeof(uri_builder_tests)/sizeof(uri_builder_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_builder_tests); ++i) {
         IUri *uri = NULL;
         uri_builder_test test = uri_builder_tests[i];
         LPWSTR uriW = NULL;
@@ -10132,7 +10132,7 @@ static void test_IUriBuilder_RemoveProperties(void) {
     }
     if(builder) IUriBuilder_Release(builder);
 
-    for(i = 0; i < sizeof(uri_builder_remove_tests)/sizeof(uri_builder_remove_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_builder_remove_tests); ++i) {
         uri_builder_remove_test test = uri_builder_remove_tests[i];
         IUri *uri = NULL;
         LPWSTR uriW;
@@ -10328,7 +10328,7 @@ static void test_CoInternetCombineIUri(void) {
     if(base) IUri_Release(base);
     if(relative) IUri_Release(relative);
 
-    for(i = 0; i < sizeof(uri_combine_tests)/sizeof(uri_combine_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_combine_tests); ++i) {
         LPWSTR baseW = a2w(uri_combine_tests[i].base_uri);
 
         hr = pCreateUri(baseW, uri_combine_tests[i].base_create_flags, 0, &base);
@@ -10349,7 +10349,7 @@ static void test_CoInternetCombineIUri(void) {
                 if(SUCCEEDED(hr)) {
                     DWORD j;
 
-                    for(j = 0; j < sizeof(uri_combine_tests[i].str_props)/sizeof(uri_combine_tests[i].str_props[0]); ++j) {
+                    for(j = 0; j < ARRAY_SIZE(uri_combine_tests[i].str_props); ++j) {
                         uri_combine_str_property prop = uri_combine_tests[i].str_props[j];
                         BSTR received;
 
@@ -10366,7 +10366,7 @@ static void test_CoInternetCombineIUri(void) {
                         SysFreeString(received);
                     }
 
-                    for(j = 0; j < sizeof(uri_combine_tests[i].dword_props)/sizeof(uri_combine_tests[i].dword_props[0]); ++j) {
+                    for(j = 0; j < ARRAY_SIZE(uri_combine_tests[i].dword_props); ++j) {
                         uri_dword_property prop = uri_combine_tests[i].dword_props[j];
                         DWORD received;
 
@@ -10619,7 +10619,7 @@ static void test_CoInternetCombineUrlEx(void) {
         hr, E_POINTER);
     if(base) IUri_Release(base);
 
-    for(i = 0; i < sizeof(uri_combine_tests)/sizeof(uri_combine_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_combine_tests); ++i) {
         LPWSTR baseW = a2w(uri_combine_tests[i].base_uri);
 
         hr = pCreateUri(baseW, uri_combine_tests[i].base_create_flags, 0, &base);
@@ -10636,7 +10636,7 @@ static void test_CoInternetCombineUrlEx(void) {
             if(SUCCEEDED(hr)) {
                 DWORD j;
 
-                for(j = 0; j < sizeof(uri_combine_tests[i].str_props)/sizeof(uri_combine_tests[i].str_props[0]); ++j) {
+                for(j = 0; j < ARRAY_SIZE(uri_combine_tests[i].str_props); ++j) {
                     uri_combine_str_property prop = uri_combine_tests[i].str_props[j];
                     BSTR received;
                     LPCSTR value = (prop.value_ex) ? prop.value_ex : prop.value;
@@ -10654,7 +10654,7 @@ static void test_CoInternetCombineUrlEx(void) {
                     SysFreeString(received);
                 }
 
-                for(j = 0; j < sizeof(uri_combine_tests[i].dword_props)/sizeof(uri_combine_tests[i].dword_props[0]); ++j) {
+                for(j = 0; j < ARRAY_SIZE(uri_combine_tests[i].dword_props); ++j) {
                     uri_dword_property prop = uri_combine_tests[i].dword_props[j];
                     DWORD received;
 
@@ -10776,7 +10776,7 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
     len = INTERNET_MAX_URL_LENGTH*2;
     longurl = heap_alloc((len+1)*sizeof(WCHAR));
     memcpy(longurl, http_urlW, sizeof(http_urlW));
-    for(i = sizeof(http_urlW)/sizeof(WCHAR)-1; i < len; i++)
+    for(i = ARRAY_SIZE(http_urlW)-1; i < len; i++)
         longurl[i] = 'x';
     longurl[len] = 0;
 
@@ -10803,7 +10803,7 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
 static void test_CoInternetParseIUri(void) {
     DWORD i;
 
-    for(i = 0; i < sizeof(uri_parse_tests)/sizeof(uri_parse_tests[0]); ++i) {
+    for(i = 0; i < ARRAY_SIZE(uri_parse_tests); ++i) {
         HRESULT hr;
         IUri *uri;
         LPWSTR uriW;
@@ -11001,7 +11001,7 @@ static void test_CreateURLMoniker(void)
     IUri *uri, *base_uri;
     HRESULT hres;
 
-    for(test = create_urlmon_tests; test < create_urlmon_tests + sizeof(create_urlmon_tests)/sizeof(*create_urlmon_tests); test++) {
+    for(test = create_urlmon_tests; test < create_urlmon_tests + ARRAY_SIZE(create_urlmon_tests); test++) {
         url = a2w(test->url);
         base_url = a2w(test->base_url);
 
@@ -11100,7 +11100,7 @@ static void test_IPersistStream(void)
     props_order[Uri_PROPERTY_SCHEME_NAME] = 8;
     props_order[Uri_PROPERTY_USER_NAME] = 9;
 
-    for(i=0; i<sizeof(uri_tests)/sizeof(*uri_tests); i++) {
+    for(i = 0; i < ARRAY_SIZE(uri_tests); i++) {
         const uri_properties *test = uri_tests+i;
         LPWSTR uriW;
         IUri *uri;
