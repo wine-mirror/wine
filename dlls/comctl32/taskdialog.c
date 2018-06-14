@@ -54,6 +54,7 @@ struct taskdialog_info
     HFONT font;
     HFONT main_instruction_font;
     /* Control handles */
+    HWND main_icon;
     HWND main_instruction;
     HWND content;
     HWND *buttons;
@@ -246,6 +247,38 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     ReleaseDC(hwnd, hdc);
 }
 
+static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element, HICON icon)
+{
+    DWORD flags = dialog_info->taskconfig->dwFlags;
+    HICON hicon;
+
+    if (!icon) return;
+
+    if ((flags & TDF_USE_HICON_MAIN) && element == TDIE_ICON_MAIN)
+        hicon = icon;
+    else
+    {
+        hicon = LoadImageW(dialog_info->taskconfig->hInstance, (LPCWSTR)icon, IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+    }
+
+    if (!hicon) return;
+
+    if (element == TDIE_ICON_MAIN)
+    {
+        SendMessageW(dialog_info->hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hicon);
+        SendMessageW(dialog_info->main_icon, STM_SETICON, (WPARAM)hicon, 0);
+    }
+}
+
+static void taskdialog_add_main_icon(struct taskdialog_info *dialog_info)
+{
+    if (!dialog_info->taskconfig->u.hMainIcon) return;
+
+    dialog_info->main_icon =
+        CreateWindowW(WC_STATICW, NULL, WS_CHILD | WS_VISIBLE | SS_ICON, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
+    taskdialog_set_icon(dialog_info, TDIE_ICON_MAIN, dialog_info->taskconfig->u.hMainIcon);
+}
+
 static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const WCHAR *text, HFONT font)
 {
     WCHAR *textW;
@@ -359,6 +392,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     RECT ref_rect;
     LONG screen_width, dialog_width, dialog_height = 0;
     LONG h_spacing, v_spacing;
+    LONG main_icon_right, main_icon_bottom;
     struct button_layout_info *button_layout_infos;
     LONG button_min_width, button_height;
     LONG *line_widths, line_count, align;
@@ -374,11 +408,27 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     h_spacing = dialog_info->m.h_spacing;
     v_spacing = dialog_info->m.v_spacing;
 
+    /* Main icon */
+    main_icon_right = 0;
+    main_icon_bottom = 0;
+    if (dialog_info->main_icon)
+    {
+        x = h_spacing;
+        y = dialog_height + v_spacing;
+        size.cx = GetSystemMetrics(SM_CXICON);
+        size.cy = GetSystemMetrics(SM_CYICON);
+        SetWindowPos(dialog_info->main_icon, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        main_icon_right = x + size.cx;
+        main_icon_bottom = y + size.cy;
+    }
+
     /* Main instruction */
-    taskdialog_label_layout(dialog_info, dialog_info->main_instruction, 0, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->main_instruction, main_icon_right, dialog_width, &dialog_height);
 
     /* Content */
-    taskdialog_label_layout(dialog_info, dialog_info->content, 0, dialog_width, &dialog_height);
+    taskdialog_label_layout(dialog_info, dialog_info->content, main_icon_right, dialog_width, &dialog_height);
+
+    dialog_height = max(dialog_height, main_icon_bottom);
 
     /* Common and custom buttons */
     button_layout_infos = Alloc(dialog_info->button_count * sizeof(*button_layout_infos));
@@ -509,6 +559,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
         dialog_info->last_timer_tick = GetTickCount();
     }
 
+    taskdialog_add_main_icon(dialog_info);
     taskdialog_add_main_instruction(dialog_info);
     taskdialog_add_content(dialog_info);
     taskdialog_add_buttons(dialog_info);
