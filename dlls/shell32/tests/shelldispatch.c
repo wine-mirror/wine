@@ -541,8 +541,7 @@ static void test_items(void)
     count = -1;
     r = FolderItems_get_Count(items, &count);
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
-    ok(count == sizeof(file_defs)/sizeof(file_defs[0]),
-       "expected %d files, got %d\n", (LONG)(sizeof(file_defs)/sizeof(file_defs[0])), count);
+    ok(count == ARRAY_SIZE(file_defs), "got %d files\n", count);
 
     V_VT(&var) = VT_EMPTY;
     item = (FolderItem*)0xdeadbeef;
