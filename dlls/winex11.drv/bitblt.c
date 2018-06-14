@@ -2092,11 +2092,13 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
     HRGN region = 0;
+    RECT rc = *rect;
 
     if (window_surface->funcs != &x11drv_surface_funcs) return 0;  /* we may get the null surface */
 
     window_surface->funcs->lock( window_surface );
-    add_bounds_rect( &surface->bounds, rect );
+    OffsetRect( &rc, -window_surface->rect.left, -window_surface->rect.top );
+    add_bounds_rect( &surface->bounds, &rc );
     if (surface->region)
     {
         region = CreateRectRgnIndirect( rect );
