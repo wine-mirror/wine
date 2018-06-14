@@ -163,6 +163,26 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     return template;
 }
 
+static HWND taskdialog_find_button(HWND *buttons, INT count, INT id)
+{
+    INT button_id;
+    INT i;
+
+    for (i = 0; i < count; i++)
+    {
+        button_id = GetWindowLongW(buttons[i], GWLP_ID);
+        if (button_id == id) return buttons[i];
+    }
+
+    return NULL;
+}
+
+static void taskdialog_enable_button(const struct taskdialog_info *dialog_info, INT id, BOOL enable)
+{
+    HWND hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
+    if (hwnd) EnableWindow(hwnd, enable);
+}
+
 static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notification, WPARAM wparam, LPARAM lparam)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
@@ -524,6 +544,9 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     {
         case TDM_CLICK_BUTTON:
             taskdialog_on_button_click(dialog_info, LOWORD(wParam));
+            break;
+        case TDM_ENABLE_BUTTON:
+            taskdialog_enable_button(dialog_info, wParam, lParam);
             break;
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
