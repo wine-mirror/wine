@@ -339,6 +339,30 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         ret = TRUE;
         /* FIXME: we could also add here a O packet with additional information */
         break;
+    case EXCEPTION_NAME_THREAD:
+    {
+        const THREADNAME_INFO *threadname = (const THREADNAME_INFO *)rec->ExceptionInformation;
+        struct dbg_thread *thread;
+        char name[9];
+        SIZE_T read;
+
+        if (threadname->dwThreadID == -1)
+            thread = dbg_curr_thread;
+        else
+            thread = dbg_get_thread(gdbctx->process, threadname->dwThreadID);
+        if (thread)
+        {
+            if (gdbctx->process->process_io->read( gdbctx->process->handle,
+                threadname->szName, name, sizeof(name), &read) && read == sizeof(name))
+            {
+                fprintf(stderr, "Thread ID=%04x renamed to \"%.9s\"\n",
+                    threadname->dwThreadID, name);
+            }
+        }
+        else
+            fprintf(stderr, "Cannot set name of thread %04x\n", threadname->dwThreadID);
+        return DBG_CONTINUE;
+    }
     default:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
