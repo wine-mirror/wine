@@ -25,6 +25,7 @@
 #include "winbase.h"
 
 DWORD expect_idx;
+static int vector_alloc_count;
 
 #define DEFINE_EXPECT(func) \
     BOOL expect_ ## func, called_ ## func
@@ -2451,6 +2452,7 @@ static DWORD WINAPI queue_pop_thread(void*arg)
 static void* __cdecl concurrent_vector_int_alloc(vector_base_v4 *this, size_t n)
 {
     CHECK_EXPECT(concurrent_vector_int_alloc);
+    vector_alloc_count++;
     return malloc(n*sizeof(int));
 }
 
@@ -2474,6 +2476,7 @@ static void concurrent_vector_int_dtor(vector_base_v4 *this)
     blocks = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             this, concurrent_vector_int_destroy);
     while(this->first_block && blocks >= this->first_block) {
+        vector_alloc_count--;
         free(this->segment[blocks - this->first_block]);
         blocks--;
     }
@@ -2755,6 +2758,8 @@ static void test_vector_base_v4(void)
     ok(vector.early_size == 0, "vector.early_size got %ld expected 0\n",
             (long)vector.early_size);
     concurrent_vector_int_dtor(&vector);
+
+    ok(!vector_alloc_count, "vector_alloc_count = %d, expected 0\n", vector_alloc_count);
 }
 
 START_TEST(msvcp120)
