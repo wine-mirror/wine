@@ -397,7 +397,7 @@ BOOL module_get_debug(struct module_pair* pair)
                          &idslW64);
             break;
         case DMT_MACHO:
-            ret = macho_load_debug_info(pair->effective);
+            ret = macho_load_debug_info(pair->pcs, pair->effective);
             break;
         default:
             ret = FALSE;
