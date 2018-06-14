@@ -36,7 +36,7 @@ struct expect_struct {
     DEFINE_EXPECT(queue_char__Copy_item);
     DEFINE_EXPECT(queue_char__Assign_and_destroy_item);
     DEFINE_EXPECT(concurrent_vector_int_alloc);
-    DEFINE_EXPECT(concurrent_vector_int_free);
+    DEFINE_EXPECT(concurrent_vector_int_destroy);
 };
 
 #define SET_EXPECT(func) \
@@ -2454,10 +2454,10 @@ static void* __cdecl concurrent_vector_int_alloc(vector_base_v4 *this, size_t n)
     return malloc(n*sizeof(int));
 }
 
-static void __cdecl concurrent_vector_int_free(void *ptr, size_t n)
+static void __cdecl concurrent_vector_int_destroy(void *ptr, size_t n)
 {
-    CHECK_EXPECT2(concurrent_vector_int_free);
-    free(ptr);
+    CHECK_EXPECT2(concurrent_vector_int_destroy);
+    memset(ptr, 0xff, sizeof(int)*n);
 }
 
 static void concurrent_vector_int_ctor(vector_base_v4 *this)
@@ -2465,6 +2465,20 @@ static void concurrent_vector_int_ctor(vector_base_v4 *this)
     memset(this, 0, sizeof(*this));
     this->allocator = concurrent_vector_int_alloc;
     this->segment = &this->storage[0];
+}
+
+static void concurrent_vector_int_dtor(vector_base_v4 *this)
+{
+    size_t blocks;
+
+    blocks = (size_t)call_func2(p_vector_base_v4__Internal_clear,
+            this, concurrent_vector_int_destroy);
+    while(this->first_block && blocks >= this->first_block) {
+        free(this->segment[blocks - this->first_block]);
+        blocks--;
+    }
+
+    call_func1(p_vector_base_v4_dtor, this);
 }
 
 static void test_queue_base_v4(void)
@@ -2731,16 +2745,16 @@ static void test_vector_base_v4(void)
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &vector);
     ok(size == 8, "size of vector got %ld expected 8\n", (long)size);
 
-    SET_EXPECT(concurrent_vector_int_free);
+    SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
-            &vector, concurrent_vector_int_free);
-    CHECK_CALLED(concurrent_vector_int_free);
+            &vector, concurrent_vector_int_destroy);
+    CHECK_CALLED(concurrent_vector_int_destroy);
     ok(size == 3, "_Internal_clear returned %ld\n", (long)size);
     ok(vector.first_block == 1, "vector.first_block got %ld expected 1\n",
             (long)vector.first_block);
     ok(vector.early_size == 0, "vector.early_size got %ld expected 0\n",
             (long)vector.early_size);
-    call_func1(p_vector_base_v4_dtor, &vector);
+    concurrent_vector_int_dtor(&vector);
 }
 
 START_TEST(msvcp120)
