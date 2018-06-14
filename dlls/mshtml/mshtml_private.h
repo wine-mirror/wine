@@ -199,6 +199,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLObjectElement2) \
     XIID(IHTMLOptionElement) \
     XIID(IHTMLOptionElementFactory) \
+    XIID(IHTMLPerformance) \
     XIID(IHTMLPluginsCollection) \
     XIID(IHTMLRect) \
     XIID(IHTMLScreen) \
@@ -521,6 +522,9 @@ struct HTMLInnerWindow {
     IHTMLScreen *screen;
     OmHistory *history;
     IHTMLStorage *session_storage;
+
+    BOOL performance_initialized;
+    VARIANT performance;
 
     unsigned parser_callback_cnt;
     struct list script_queue;
@@ -870,6 +874,7 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFact
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
+HRESULT create_performance(IHTMLPerformance**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
 HRESULT create_dom_implementation(IHTMLDOMImplementation**) DECLSPEC_HIDDEN;
 

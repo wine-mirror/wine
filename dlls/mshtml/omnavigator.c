@@ -1320,3 +1320,167 @@ IOmNavigator *OmNavigator_Create(void)
 
     return &ret->IOmNavigator_iface;
 }
+
+typedef struct {
+    DispatchEx dispex;
+    IHTMLPerformance IHTMLPerformance_iface;
+    LONG ref;
+} HTMLPerformance;
+
+static inline HTMLPerformance *impl_from_IHTMLPerformance(IHTMLPerformance *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLPerformance, IHTMLPerformance_iface);
+}
+
+static HRESULT WINAPI HTMLPerformance_QueryInterface(IHTMLPerformance *iface, REFIID riid, void **ppv)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IHTMLPerformance_iface;
+    }else if(IsEqualGUID(&IID_IHTMLPerformance, riid)) {
+        *ppv = &This->IHTMLPerformance_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLPerformance_AddRef(IHTMLPerformance *iface)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLPerformance_Release(IHTMLPerformance *iface)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLPerformance_GetTypeInfoCount(IHTMLPerformance *iface, UINT *pctinfo)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPerformance_GetTypeInfo(IHTMLPerformance *iface, UINT iTInfo,
+                                                  LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLPerformance_GetIDsOfNames(IHTMLPerformance *iface, REFIID riid,
+                                                    LPOLESTR *rgszNames, UINT cNames,
+                                                    LCID lcid, DISPID *rgDispId)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLPerformance_Invoke(IHTMLPerformance *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
+                                                     IHTMLPerformanceNavigation **p)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLPerformanceTiming **p)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPerformance_toString(IHTMLPerformance *iface, BSTR *string)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    FIXME("(%p)->(%p)\n", This, string);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLPerformance_toJSON(IHTMLPerformance *iface, VARIANT *var)
+{
+    HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
+    FIXME("(%p)->(%p)\n", This, var);
+    return E_NOTIMPL;
+}
+
+static const IHTMLPerformanceVtbl HTMLPerformanceVtbl = {
+    HTMLPerformance_QueryInterface,
+    HTMLPerformance_AddRef,
+    HTMLPerformance_Release,
+    HTMLPerformance_GetTypeInfoCount,
+    HTMLPerformance_GetTypeInfo,
+    HTMLPerformance_GetIDsOfNames,
+    HTMLPerformance_Invoke,
+    HTMLPerformance_get_navigation,
+    HTMLPerformance_get_timing,
+    HTMLPerformance_toString,
+    HTMLPerformance_toJSON
+};
+
+static const tid_t HTMLPerformance_iface_tids[] = {
+    IHTMLPerformance_tid,
+    0
+};
+static dispex_static_data_t HTMLPerformance_dispex = {
+    NULL,
+    IHTMLPerformance_tid,
+    HTMLPerformance_iface_tids
+};
+
+HRESULT create_performance(IHTMLPerformance **ret)
+{
+    HTMLPerformance *performance;
+
+    performance = heap_alloc_zero(sizeof(*performance));
+    if(!performance)
+        return E_OUTOFMEMORY;
+
+    performance->IHTMLPerformance_iface.lpVtbl = &HTMLPerformanceVtbl;
+    performance->ref = 1;
+
+    init_dispex(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
+                &HTMLPerformance_dispex);
+
+    *ret = &performance->IHTMLPerformance_iface;
+    return S_OK;
+}

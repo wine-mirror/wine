@@ -2315,16 +2315,39 @@ static HRESULT WINAPI HTMLWindow7_get_styleMedia(IHTMLWindow7 *iface, IHTMLStyle
 
 static HRESULT WINAPI HTMLWindow7_put_performance(IHTMLWindow7 *iface, VARIANT v)
 {
-    HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    HTMLInnerWindow *This = impl_from_IHTMLWindow7(iface)->inner_window;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(!This->performance_initialized) {
+        V_VT(&This->performance) = VT_EMPTY;
+        This->performance_initialized = TRUE;
+    }
+
+    return VariantCopy(&This->performance, &v);
 }
 
 static HRESULT WINAPI HTMLWindow7_get_performance(IHTMLWindow7 *iface, VARIANT *p)
 {
-    HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLInnerWindow *This = impl_from_IHTMLWindow7(iface)->inner_window;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->performance_initialized) {
+        IHTMLPerformance *performance;
+
+        hres = create_performance(&performance);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(&This->performance) = VT_DISPATCH;
+        V_DISPATCH(&This->performance) = (IDispatch*)performance;
+        This->performance_initialized = TRUE;
+    }
+
+    V_VT(p) = VT_NULL;
+    return VariantCopy(p, &This->performance);
 }
 
 static HRESULT WINAPI HTMLWindow7_get_innerWidth(IHTMLWindow7 *iface, LONG *p)
