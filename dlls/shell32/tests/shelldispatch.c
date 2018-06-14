@@ -161,7 +161,7 @@ static void test_namespace(void)
     ok(folder == NULL, "expected NULL, got %p\n", folder);
 
     /* test valid folder ids */
-    for (i = 0; i < sizeof(special_folders)/sizeof(special_folders[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(special_folders); i++)
     {
         V_VT(&var) = VT_I4;
         V_I4(&var) = special_folders[i];
@@ -474,7 +474,7 @@ static void test_items(void)
     ok(!item, "item is not null\n");
 
     /* create test files */
-    for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(file_defs); i++)
     {
         switch (file_defs[i].type)
         {
@@ -605,7 +605,7 @@ static void test_items(void)
     V_VT(&int_index) = VT_I4;
 
     /* test the folder item corresponding to each file */
-    for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(file_defs); i++)
     {
         VARIANT_BOOL b;
         BSTR name;
@@ -729,7 +729,7 @@ static void test_items(void)
     }
 
     /* test that there are only as many folder items as there were files */
-    V_I4(&int_index) = sizeof(file_defs)/sizeof(file_defs[0]);
+    V_I4(&int_index) = ARRAY_SIZE(file_defs);
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, int_index, &item);
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
@@ -975,7 +975,7 @@ if (0) /* crashes on pre-vista */ {
     IShellView_Release(view);
 
     /* Try with some other folder, that's not a desktop */
-    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, pathW, NULL, &pidl, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1218,7 +1218,7 @@ static void test_ParseName(void)
         &IID_IShellDispatch, (void**)&sd);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(pathW);
     hr = IShellDispatch_NameSpace(sd, v, &folder);
@@ -1287,7 +1287,7 @@ static void test_Verbs(void)
         &IID_IShellDispatch, (void**)&sd);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(pathW);
     hr = IShellDispatch_NameSpace(sd, v, &folder);

@@ -869,7 +869,7 @@ static void test_SHCreateSessionKey(void)
     HKEY hkey, hkey2;
     HRESULT hr;
     DWORD session;
-    WCHAR sessionW[(sizeof(session_format)/sizeof(WCHAR)) + 16];
+    WCHAR sessionW[ARRAY_SIZE(session_format) + 16];
     LONG ret;
 
     if (!pSHCreateSessionKey)

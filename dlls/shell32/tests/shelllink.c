@@ -1287,7 +1287,7 @@ if (0)
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     /* Create a temporary non-executable file */
-    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcatW(pathW, nameW);
     file = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create a test file\n");

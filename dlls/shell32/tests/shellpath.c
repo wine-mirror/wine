@@ -114,7 +114,7 @@ static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
 static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
 static const BYTE shellExtType[] = { PT_SHELLEXT };
 static const BYTE workgroupType[] = { PT_WORKGRP };
-#define DECLARE_TYPE(x, y) { x, sizeof(y) / sizeof(y[0]), y }
+#define DECLARE_TYPE(x, y) { x, ARRAY_SIZE(y), y }
 static const struct shellExpectedValues requiredShellValues[] = {
  DECLARE_TYPE(CSIDL_BITBUCKET, guidType),
  DECLARE_TYPE(CSIDL_CONTROLS, controlPanelType),
@@ -2545,7 +2545,7 @@ static void test_DoEnvironmentSubst(void)
                             "%HOMEDRIVE%%HOMEPATH%",
                             "%OS% %windir%"}; /* always the last entry in the table */
 
-    for (i = 0; i < (sizeof(names)/sizeof(LPSTR)); i++)
+    for (i = 0; i < (ARRAY_SIZE(names)); i++)
     {
         memset(bufferA, '#', MAX_PATH - 1);
         bufferA[MAX_PATH - 1] = 0;

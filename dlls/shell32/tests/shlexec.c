@@ -758,7 +758,7 @@ static LSTATUS myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     dwMaxSubkeyLen++;
     dwMaxValueLen++;
     dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
-    if (dwMaxLen > sizeof(szNameBuf)/sizeof(CHAR))
+    if (dwMaxLen > ARRAY_SIZE(szNameBuf))
     {
         /* Name too big: alloc a buffer for it */
         if (!(lpszName = heap_alloc(dwMaxLen*sizeof(CHAR))))
@@ -1329,7 +1329,7 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
     int i, count;
 
     /* trace("----- cmd='%s'\n", test->cmd); */
-    MultiByteToWideChar(CP_ACP, 0, test->cmd, -1, cmdW, sizeof(cmdW)/sizeof(*cmdW));
+    MultiByteToWideChar(CP_ACP, 0, test->cmd, -1, cmdW, ARRAY_SIZE(cmdW));
     argsW = cl2a = CommandLineToArgvW(cmdW, &cl2a_count);
     if (argsW == NULL && cl2a_count == -1)
     {
@@ -1349,7 +1349,7 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
     {
         if (i < count)
         {
-            MultiByteToWideChar(CP_ACP, 0, test->args[i], -1, argW, sizeof(argW)/sizeof(*argW));
+            MultiByteToWideChar(CP_ACP, 0, test->args[i], -1, argW, ARRAY_SIZE(argW));
             todo_wine_if(test->todo & (1 << (i+4)))
                 ok(!lstrcmpW(*argsW, argW), "%s: arg[%d] expected %s but got %s\n", test->cmd, i, wine_dbgstr_w(argW), wine_dbgstr_w(*argsW));
         }
@@ -1395,7 +1395,7 @@ static void test_commandline2argv(void)
        "expected NULL-terminated list of commandline arguments\n");
     if (numargs == 1)
     {
-        GetModuleFileNameW(NULL, strW, sizeof(strW)/sizeof(*strW));
+        GetModuleFileNameW(NULL, strW, ARRAY_SIZE(strW));
         ok(!lstrcmpW(args[0], strW), "wrong path to the current executable: %s instead of %s\n", wine_dbgstr_w(args[0]), wine_dbgstr_w(strW));
     }
     if (args) LocalFree(args);
@@ -1859,7 +1859,7 @@ static void test_fileurls(void)
         return;
     }
 
-    get_long_path_name(tmpdir, longtmpdir, sizeof(longtmpdir)/sizeof(*longtmpdir));
+    get_long_path_name(tmpdir, longtmpdir, ARRAY_SIZE(longtmpdir));
     SetEnvironmentVariableA("urlprefix", "file:///");
 
     test=fileurl_tests;
@@ -2779,7 +2779,7 @@ static void init_test(void)
 
     /* Setup the test shortcuts */
     sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
-    MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, sizeof(lnkfile)/sizeof(*lnkfile));
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, ARRAY_SIZE(lnkfile));
     desc.description=NULL;
     desc.workdir=NULL;
     sprintf(filename, "%s\\test file.shlexec", tmpdir);
@@ -2793,7 +2793,7 @@ static void init_test(void)
     create_lnk(lnkfile, &desc, 0);
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
-    MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, sizeof(lnkfile)/sizeof(*lnkfile));
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, ARRAY_SIZE(lnkfile));
     desc.description=NULL;
     desc.workdir=NULL;
     desc.path=argv0;

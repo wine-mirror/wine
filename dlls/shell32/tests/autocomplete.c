@@ -369,7 +369,7 @@ static void test_custom_source(void)
     hr = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER, &IID_IAutoComplete2, (void**)&autocomplete);
     ok(hr == S_OK, "CoCreateInstance failed: %x\n", hr);
 
-    string_enumerator_create((void**)&enumerator, suggestions, sizeof(suggestions) / sizeof(*suggestions));
+    string_enumerator_create((void**)&enumerator, suggestions, ARRAY_SIZE(suggestions));
 
     hr = IAutoComplete2_SetOptions(autocomplete, ACO_AUTOSUGGEST | ACO_AUTOAPPEND);
     ok(hr == S_OK, "IAutoComplete2_SetOptions failed: %x\n", hr);
@@ -385,7 +385,7 @@ static void test_custom_source(void)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
-    SendMessageW(hwnd_edit, WM_GETTEXT, sizeof(buffer) / sizeof(*buffer), (LPARAM)buffer);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
 
     ShowWindow(hMainWnd, SW_HIDE);
