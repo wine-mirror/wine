@@ -22,17 +22,17 @@
 
 #if defined(__aarch64__) && !defined(__AARCH64EB__)
 
-static BOOL be_arm64_get_addr(HANDLE hThread, const CONTEXT* ctx,
+static BOOL be_arm64_get_addr(HANDLE hThread, const dbg_ctx_t *ctx,
                               enum be_cpu_addr bca, ADDRESS64* addr)
 {
     switch (bca)
     {
     case be_cpu_addr_pc:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Pc);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.Pc);
     case be_cpu_addr_stack:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Sp);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.Sp);
     case be_cpu_addr_frame:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->u.s.Fp);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.u.s.Fp);
         break;
     }
     return FALSE;
@@ -49,18 +49,18 @@ static BOOL be_arm64_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_arm64_single_step(CONTEXT* ctx, BOOL enable)
+static void be_arm64_single_step(dbg_ctx_t *ctx, BOOL enable)
 {
     dbg_printf("be_arm64_single_step: not done\n");
 }
 
-static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
+static void be_arm64_print_context(HANDLE hThread, const dbg_ctx_t *ctx, int all_regs)
 {
     static const char condflags[] = "NZCV";
     int i;
     char        buf[8];
 
-    switch (ctx->Cpsr & 0x0f)
+    switch (ctx->ctx.Cpsr & 0x0f)
     {
     case 0:  strcpy(buf, "EL0t"); break;
     case 4:  strcpy(buf, "EL1t"); break;
@@ -73,32 +73,32 @@ static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_r
     }
 
     dbg_printf("Register dump:\n");
-    dbg_printf("%s %s Mode\n", (ctx->Cpsr & 0x10) ? "ARM" : "ARM64", buf);
+    dbg_printf("%s %s Mode\n", (ctx->ctx.Cpsr & 0x10) ? "ARM" : "ARM64", buf);
 
     strcpy(buf, condflags);
     for (i = 0; buf[i]; i++)
-        if (!((ctx->Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
+        if (!((ctx->ctx.Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
     dbg_printf(" Pc:%016lx Sp:%016lx Lr:%016lx Cpsr:%08x(%s)\n",
-               ctx->Pc, ctx->Sp, ctx->u.s.Lr, ctx->Cpsr, buf);
+               ctx->ctx.Pc, ctx->ctx.Sp, ctx->ctx.u.s.Lr, ctx->ctx.Cpsr, buf);
     dbg_printf(" x0: %016lx x1: %016lx x2: %016lx x3: %016lx x4: %016lx\n",
-               ctx->u.s.X0, ctx->u.s.X1, ctx->u.s.X2, ctx->u.s.X3, ctx->u.s.X4);
+               ctx->ctx.u.s.X0, ctx->ctx.u.s.X1, ctx->ctx.u.s.X2, ctx->ctx.u.s.X3, ctx->ctx.u.s.X4);
     dbg_printf(" x5: %016lx x6: %016lx x7: %016lx x8: %016lx x9: %016lx\n",
-               ctx->u.s.X5, ctx->u.s.X6, ctx->u.s.X7, ctx->u.s.X8, ctx->u.s.X9);
+               ctx->ctx.u.s.X5, ctx->ctx.u.s.X6, ctx->ctx.u.s.X7, ctx->ctx.u.s.X8, ctx->ctx.u.s.X9);
     dbg_printf(" x10:%016lx x11:%016lx x12:%016lx x13:%016lx x14:%016lx\n",
-               ctx->u.s.X10, ctx->u.s.X11, ctx->u.s.X12, ctx->u.s.X13, ctx->u.s.X14);
+               ctx->ctx.u.s.X10, ctx->ctx.u.s.X11, ctx->ctx.u.s.X12, ctx->ctx.u.s.X13, ctx->ctx.u.s.X14);
     dbg_printf(" x15:%016lx ip0:%016lx ip1:%016lx x18:%016lx x19:%016lx\n",
-               ctx->u.s.X15, ctx->u.s.X16, ctx->u.s.X17, ctx->u.s.X18, ctx->u.s.X19);
+               ctx->ctx.u.s.X15, ctx->ctx.u.s.X16, ctx->ctx.u.s.X17, ctx->ctx.u.s.X18, ctx->ctx.u.s.X19);
     dbg_printf(" x20:%016lx x21:%016lx x22:%016lx x23:%016lx x24:%016lx\n",
-               ctx->u.s.X20, ctx->u.s.X21, ctx->u.s.X22, ctx->u.s.X23, ctx->u.s.X24);
+               ctx->ctx.u.s.X20, ctx->ctx.u.s.X21, ctx->ctx.u.s.X22, ctx->ctx.u.s.X23, ctx->ctx.u.s.X24);
     dbg_printf(" x25:%016lx x26:%016lx x27:%016lx x28:%016lx Fp:%016lx\n",
-               ctx->u.s.X25, ctx->u.s.X26, ctx->u.s.X27, ctx->u.s.X28, ctx->u.s.Fp);
+               ctx->ctx.u.s.X25, ctx->ctx.u.s.X26, ctx->ctx.u.s.X27, ctx->ctx.u.s.X28, ctx->ctx.u.s.Fp);
 
     if (all_regs) dbg_printf( "Floating point ARM64 dump not implemented\n" );
 }
 
-static void be_arm64_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
+static void be_arm64_print_segment_info(HANDLE hThread, const dbg_ctx_t *ctx)
 {
 }
 
@@ -170,7 +170,7 @@ static BOOL be_arm64_is_jump(const void* insn, ADDRESS64* jumpee)
 }
 
 static BOOL be_arm64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                   CONTEXT* ctx, enum be_xpoint_type type,
+                                   dbg_ctx_t *ctx, enum be_xpoint_type type,
                                    void* addr, unsigned long* val, unsigned size)
 {
     SIZE_T              sz;
@@ -188,7 +188,7 @@ static BOOL be_arm64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* 
 }
 
 static BOOL be_arm64_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                   CONTEXT* ctx, enum be_xpoint_type type,
+                                   dbg_ctx_t *ctx, enum be_xpoint_type type,
                                    void* addr, unsigned long val, unsigned size)
 {
     SIZE_T              sz;
@@ -206,25 +206,25 @@ static BOOL be_arm64_remove_Xpoint(HANDLE hProcess, const struct be_process_io* 
     return TRUE;
 }
 
-static BOOL be_arm64_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
+static BOOL be_arm64_is_watchpoint_set(const dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("be_arm64_is_watchpoint_set: not done\n");
     return FALSE;
 }
 
-static void be_arm64_clear_watchpoint(CONTEXT* ctx, unsigned idx)
+static void be_arm64_clear_watchpoint(dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("be_arm64_clear_watchpoint: not done\n");
 }
 
-static int be_arm64_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
+static int be_arm64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
 {
     if (way)
     {
-        ctx->Pc -= 4;
+        ctx->ctx.Pc -= 4;
         return -4;
     }
-    ctx->Pc += 4;
+    ctx->ctx.Pc += 4;
     return 4;
 }
 
@@ -359,6 +359,7 @@ struct backend_cpu be_arm64 =
     be_arm64_fetch_float,
     be_arm64_store_integer,
     be_arm64_get_context,
+    be_arm64_set_context,
     be_arm64_gdb_register_map,
     ARRAY_SIZE(be_arm64_gdb_register_map),
 };

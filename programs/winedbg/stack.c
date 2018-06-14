@@ -351,7 +351,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
         dbg_printf("Unknown thread id (%04x) in process (%04x)\n", tid, pcs->pid);
     else
     {
-        dbg_ctx_t ctx = {0};
+        dbg_ctx_t ctx = {{0}};
 
         dbg_curr_tid = dbg_curr_thread->tid;
         if (SuspendThread(dbg_curr_thread->handle) != -1)

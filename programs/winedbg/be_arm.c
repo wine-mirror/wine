@@ -1658,17 +1658,17 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     }
 }
 
-static BOOL be_arm_get_addr(HANDLE hThread, const CONTEXT* ctx,
+static BOOL be_arm_get_addr(HANDLE hThread, const dbg_ctx_t *ctx,
                             enum be_cpu_addr bca, ADDRESS64* addr)
 {
     switch (bca)
     {
     case be_cpu_addr_pc:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Pc);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.Pc);
     case be_cpu_addr_stack:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Sp);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.Sp);
     case be_cpu_addr_frame:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->R11);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.R11);
     }
     return FALSE;
 }
@@ -1684,17 +1684,17 @@ static BOOL be_arm_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_arm_single_step(CONTEXT* ctx, BOOL enable)
+static void be_arm_single_step(dbg_ctx_t *ctx, BOOL enable)
 {
 }
 
-static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
+static void be_arm_print_context(HANDLE hThread, const dbg_ctx_t *ctx, int all_regs)
 {
     static const char condflags[] = "NZCV";
     int i;
     char        buf[8];
 
-    switch (ctx->Cpsr & 0x1F)
+    switch (ctx->ctx.Cpsr & 0x1F)
     {
     case 0:  strcpy(buf, "User26"); break;
     case 1:  strcpy(buf, "FIQ26"); break;
@@ -1710,26 +1710,26 @@ static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_reg
     }
 
     dbg_printf("Register dump:\n");
-    dbg_printf("%s %s Mode\n", (ctx->Cpsr & 0x20) ? "Thumb" : "ARM", buf);
+    dbg_printf("%s %s Mode\n", (ctx->ctx.Cpsr & 0x20) ? "Thumb" : "ARM", buf);
 
     strcpy(buf, condflags);
     for (i = 0; buf[i]; i++)
-        if (!((ctx->Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
+        if (!((ctx->ctx.Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
     dbg_printf(" Pc:%08x Sp:%08x Lr:%08x Cpsr:%08x(%s)\n",
-               ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr, buf);
+               ctx->ctx.Pc, ctx->ctx.Sp, ctx->ctx.Lr, ctx->ctx.Cpsr, buf);
     dbg_printf(" r0:%08x r1:%08x r2:%08x r3:%08x\n",
-               ctx->R0, ctx->R1, ctx->R2, ctx->R3);
+               ctx->ctx.R0, ctx->ctx.R1, ctx->ctx.R2, ctx->ctx.R3);
     dbg_printf(" r4:%08x r5:%08x r6:%08x r7:%08x\n",
-               ctx->R4, ctx->R5, ctx->R6, ctx->R7);
+               ctx->ctx.R4, ctx->ctx.R5, ctx->ctx.R6, ctx->ctx.R7);
     dbg_printf(" r8:%08x r9:%08x r10:%08x r11:%08x r12:%08x\n",
-               ctx->R8, ctx->R9, ctx->R10, ctx->R11, ctx->R12);
+               ctx->ctx.R8, ctx->ctx.R9, ctx->ctx.R10, ctx->ctx.R11, ctx->ctx.R12);
 
     if (all_regs) dbg_printf( "Floating point ARM dump not implemented\n" );
 }
 
-static void be_arm_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
+static void be_arm_print_segment_info(HANDLE hThread, const dbg_ctx_t *ctx)
 {
 }
 
@@ -1784,7 +1784,7 @@ static BOOL be_arm_is_jump(const void* insn, ADDRESS64* jumpee)
 }
 
 static BOOL be_arm_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type,
                                  void* addr, unsigned long* val, unsigned size)
 {
     SIZE_T              sz;
@@ -1802,7 +1802,7 @@ static BOOL be_arm_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pi
 }
 
 static BOOL be_arm_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type,
                                  void* addr, unsigned long val, unsigned size)
 {
     SIZE_T              sz;
@@ -1820,27 +1820,27 @@ static BOOL be_arm_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pi
     return TRUE;
 }
 
-static BOOL be_arm_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
+static BOOL be_arm_is_watchpoint_set(const dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("be_arm_is_watchpoint_set: not done\n");
     return FALSE;
 }
 
-static void be_arm_clear_watchpoint(CONTEXT* ctx, unsigned idx)
+static void be_arm_clear_watchpoint(dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("be_arm_clear_watchpoint: not done\n");
 }
 
-static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
+static int be_arm_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
 {
-    INT step = (ctx->Cpsr & 0x20) ? 2 : 4;
+    INT step = (ctx->ctx.Cpsr & 0x20) ? 2 : 4;
 
     if (way)
     {
-        ctx->Pc -= step;
+        ctx->ctx.Pc -= step;
         return -step;
     }
-    ctx->Pc += step;
+    ctx->ctx.Pc += step;
     return step;
 }
 
@@ -1953,6 +1953,7 @@ struct backend_cpu be_arm =
     be_arm_fetch_float,
     be_arm_store_integer,
     be_arm_get_context,
+    be_arm_set_context,
     be_arm_gdb_register_map,
     ARRAY_SIZE(be_arm_gdb_register_map),
 };

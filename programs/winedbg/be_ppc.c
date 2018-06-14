@@ -23,13 +23,13 @@
 
 #if defined(__powerpc__)
 
-static BOOL be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx,
+static BOOL be_ppc_get_addr(HANDLE hThread, const dbg_ctx_t *ctx,
                             enum be_cpu_addr bca, ADDRESS64* addr)
 {
     switch (bca)
     {
     case be_cpu_addr_pc:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Iar);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->ctx.Iar);
     default:
     case be_cpu_addr_stack:
     case be_cpu_addr_frame:
@@ -44,21 +44,21 @@ static BOOL be_ppc_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_ppc_single_step(CONTEXT* ctx, BOOL enable)
+static void be_ppc_single_step(dbg_ctx_t *ctx, BOOL enable)
 {
 #ifndef MSR_SE
 # define MSR_SE (1<<10)
 #endif 
-    if (enable) ctx->Msr |= MSR_SE;
-    else ctx->Msr &= ~MSR_SE;
+    if (enable) ctx->ctx.Msr |= MSR_SE;
+    else ctx->ctx.Msr &= ~MSR_SE;
 }
 
-static void be_ppc_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
+static void be_ppc_print_context(HANDLE hThread, const dbg_ctx_t *ctx, int all_regs)
 {
     dbg_printf("Context printing for PPC not done yet\n");
 }
 
-static void be_ppc_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
+static void be_ppc_print_segment_info(HANDLE hThread, const dbg_ctx_t *ctx)
 {
 }
 
@@ -102,7 +102,7 @@ static void be_ppc_disasm_one_insn(ADDRESS64* addr, int display)
 }
 
 static BOOL be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type,
                                  void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
@@ -124,7 +124,7 @@ static BOOL be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pi
 }
 
 static BOOL be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type,
                                  void* addr, unsigned long val, unsigned size)
 {
     SIZE_T              sz;
@@ -142,18 +142,18 @@ static BOOL be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pi
     return TRUE;
 }
 
-static BOOL be_ppc_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
+static BOOL be_ppc_is_watchpoint_set(const dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static void be_ppc_clear_watchpoint(CONTEXT* ctx, unsigned idx)
+static void be_ppc_clear_watchpoint(dbg_ctx_t *ctx, unsigned idx)
 {
     dbg_printf("not done\n");
 }
 
-static int be_ppc_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
+static int be_ppc_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
 {
     dbg_printf("not done\n");
     return 0;
