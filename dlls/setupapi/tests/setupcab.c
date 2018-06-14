@@ -109,7 +109,7 @@ static void test_invalid_parametersA(void)
 
     create_source_fileA(source, NULL, 0);
 
-    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_parameters); i++)
     {
         SetLastError(0xdeadbeef);
         ret = SetupIterateCabinetA(invalid_parameters[i].CabinetFile, 0,
@@ -170,12 +170,12 @@ static void test_invalid_parametersW(void)
         return;
     }
 
-    GetTempPathW(sizeof(temp)/sizeof(WCHAR), temp);
+    GetTempPathW(ARRAY_SIZE(temp), temp);
     GetTempFileNameW(temp, docW, 0, source);
 
     create_source_fileW(source, NULL, 0);
 
-    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_parameters); i++)
     {
         SetLastError(0xdeadbeef);
         ret = SetupIterateCabinetW(invalid_parameters[i].CabinetFile, 0,
@@ -275,7 +275,7 @@ static void test_invalid_callbackW(void)
         return;
     }
 
-    GetTempPathW(sizeof(temp)/sizeof(WCHAR), temp);
+    GetTempPathW(ARRAY_SIZE(temp), temp);
     GetTempFileNameW(temp, docW, 0, source);
 
     create_source_fileW(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
@@ -316,7 +316,7 @@ static UINT CALLBACK simple_callbackA(PVOID Context, UINT Notification,
 
         (*file_count)++;
 
-        if (index < sizeof(expected_files)/sizeof(char *))
+        if (index < ARRAY_SIZE(expected_files))
         {
             ok(!strcmp(expected_files[index], info->NameInCabinet),
                "[%d] Expected file \"%s\", got \"%s\"\n",
@@ -348,8 +348,7 @@ static void test_simple_enumerationA(void)
 
     ret = SetupIterateCabinetA(source, 0, simple_callbackA, &enum_count);
     ok(ret == 1, "Expected SetupIterateCabinetA to return 1, got %d\n", ret);
-    ok(enum_count == sizeof(expected_files)/sizeof(char *),
-       "Unexpectedly enumerated %d files\n", enum_count);
+    ok(enum_count == ARRAY_SIZE(expected_files), "Unexpectedly enumerated %d files\n", enum_count);
 
     DeleteFileA(source);
 }
@@ -376,7 +375,7 @@ static UINT CALLBACK simple_callbackW(PVOID Context, UINT Notification,
 
         (*file_count)++;
 
-        if (index < sizeof(expected_filesW)/sizeof(WCHAR *))
+        if (index < ARRAY_SIZE(expected_filesW))
         {
             ok(!lstrcmpW(expected_filesW[index], info->NameInCabinet),
                "[%d] Expected file %s, got %s\n",
@@ -408,15 +407,14 @@ static void test_simple_enumerationW(void)
         return;
     }
 
-    GetTempPathW(sizeof(temp)/sizeof(WCHAR), temp);
+    GetTempPathW(ARRAY_SIZE(temp), temp);
     GetTempFileNameW(temp, docW, 0, source);
 
     create_source_fileW(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
 
     ret = SetupIterateCabinetW(source, 0, simple_callbackW, &enum_count);
     ok(ret == 1, "Expected SetupIterateCabinetW to return 1, got %d\n", ret);
-    ok(enum_count == sizeof(expected_files)/sizeof(WCHAR *),
-       "Unexpectedly enumerated %d files\n", enum_count);
+    ok(enum_count == ARRAY_SIZE(expected_files), "Unexpectedly enumerated %d files\n", enum_count);
 
     DeleteFileW(source);
 }

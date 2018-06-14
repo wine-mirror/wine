@@ -154,7 +154,7 @@ static void test_invalid_files(void)
     HINF hinf;
     DWORD err;
 
-    for (i = 0; i < sizeof(invalid_files)/sizeof(invalid_files[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_files); i++)
     {
         SetLastError( 0xdeadbeef );
         err_line = 0xdeadbeef;
@@ -229,7 +229,7 @@ static void test_section_names(void)
     DWORD err;
     LONG ret;
 
-    for (i = 0; i < sizeof(section_names)/sizeof(section_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(section_names); i++)
     {
         SetLastError( 0xdeadbeef );
         hinf = test_file_contents( section_names[i].data, &err_line );
@@ -418,7 +418,7 @@ static void test_key_names(void)
     BOOL ret;
     INFCONTEXT context;
 
-    for (i = 0; i < sizeof(key_names)/sizeof(key_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(key_names); i++)
     {
         strcpy( buffer, STD_HEADER "[Test]\n" );
         strcat( buffer, key_names[i].data );
@@ -622,7 +622,7 @@ static void test_SetupGetIntField(void)
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(keys); i++)
     {
         HINF hinf;
         char buffer[MAX_INF_STRING_LENGTH];

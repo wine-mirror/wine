@@ -121,7 +121,7 @@ static LSTATUS devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
     dwMaxSubkeyLen++;
     dwMaxValueLen++;
     dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
-    if (dwMaxLen > sizeof(szNameBuf)/sizeof(WCHAR))
+    if (dwMaxLen > ARRAY_SIZE(szNameBuf))
     {
         /* Name too big: alloc a buffer for it */
         if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(WCHAR))))
@@ -1259,7 +1259,7 @@ static void testSetupDiGetINFClassA(void)
     retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
     ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
 
-    for(i=0; i < sizeof(signatures)/sizeof(char*); i++)
+    for(i=0; i < ARRAY_SIZE(signatures); i++)
     {
         trace("testing signature %s\n", signatures[i]);
         h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
