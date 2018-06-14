@@ -247,6 +247,20 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     ReleaseDC(hwnd, hdc);
 }
 
+static ULONG_PTR taskdialog_get_standard_icon(LPCWSTR icon)
+{
+    if (icon == TD_WARNING_ICON)
+        return IDI_WARNING;
+    else if (icon == TD_ERROR_ICON)
+        return IDI_ERROR;
+    else if (icon == TD_INFORMATION_ICON)
+        return IDI_INFORMATION;
+    else if (icon == TD_SHIELD_ICON)
+        return IDI_SHIELD;
+    else
+        return (ULONG_PTR)icon;
+}
+
 static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element, HICON icon)
 {
     DWORD flags = dialog_info->taskconfig->dwFlags;
@@ -259,6 +273,9 @@ static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element
     else
     {
         hicon = LoadImageW(dialog_info->taskconfig->hInstance, (LPCWSTR)icon, IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+        if (!hicon)
+            hicon = LoadImageW(NULL, (LPCWSTR)taskdialog_get_standard_icon((LPCWSTR)icon), IMAGE_ICON, 0, 0,
+                               LR_SHARED | LR_DEFAULTSIZE);
     }
 
     if (!hicon) return;
