@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-05-10 08:12+0300\n"
+"PO-Revision-Date: 2018-06-15 13:16+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.0.8\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -3697,19 +3697,19 @@ msgstr "Ожидается объект типа «Array»"
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
-msgstr ""
+msgstr "Невозможно установить атрибут «writable» в «true» для этого объекта"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "Невозможно переопределить ненастраиваемое свойство «|»"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "Невозможно изменить свойство «|»"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "Свойство не может одновременно иметь методы для доступа и значение"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -12801,10 +12801,8 @@ msgid "Confirm Value Delete"
 msgstr "Подтверждение удаления значения"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Вы точно хотите удалить параметр реестра «%1»?"
+msgstr "Вы точно хотите удалить выбранный параметр реестра?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
