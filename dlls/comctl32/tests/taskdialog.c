@@ -373,6 +373,72 @@ static void test_timer(void)
     pTaskDialogIndirect(&info, NULL, NULL, NULL);
 }
 
+static HRESULT CALLBACK taskdialog_callback_proc_progress_bar(HWND hwnd, UINT notification, WPARAM wParam,
+                                                              LPARAM lParam, LONG_PTR ref_data)
+{
+    unsigned long ret;
+    LONG flags = (LONG)ref_data;
+    if (notification == TDN_CREATED)
+    {
+        /* TDM_SET_PROGRESS_BAR_STATE */
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_NORMAL, 0);
+        ok(ret == PBST_NORMAL, "Expect state: %d got state: %lx\n", PBST_NORMAL, ret);
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_PAUSED, 0);
+        ok(ret == PBST_NORMAL, "Expect state: %d got state: %lx\n", PBST_NORMAL, ret);
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_ERROR, 0);
+        /* Progress bar has fixme on handling PBM_SETSTATE message */
+        todo_wine ok(ret == PBST_PAUSED, "Expect state: %d got state: %lx\n", PBST_PAUSED, ret);
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_NORMAL, 0);
+        todo_wine ok(ret == PBST_ERROR, "Expect state: %d got state: %lx\n", PBST_ERROR, ret);
+
+        /* TDM_SET_PROGRESS_BAR_RANGE */
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_RANGE, 0, MAKELPARAM(0, 200));
+        ok(ret == MAKELONG(0, 100), "Expect range:%x got:%lx\n", MAKELONG(0, 100), ret);
+        ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_RANGE, 0, MAKELPARAM(0, 200));
+        ok(ret == MAKELONG(0, 200), "Expect range:%x got:%lx\n", MAKELONG(0, 200), ret);
+
+        /* TDM_SET_PROGRESS_BAR_POS */
+        if (flags & TDF_SHOW_MARQUEE_PROGRESS_BAR)
+        {
+            ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_POS, 1, 0);
+            ok(ret == 0, "Expect position:%x got:%lx\n", 0, ret);
+            ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_POS, 2, 0);
+            ok(ret == 0, "Expect position:%x got:%lx\n", 0, ret);
+        }
+        else
+        {
+            ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_POS, 1, 0);
+            ok(ret == 0, "Expect position:%x got:%lx\n", 0, ret);
+            ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_POS, 2, 0);
+            ok(ret == 1, "Expect position:%x got:%lx\n", 1, ret);
+        }
+
+        SendMessageW(hwnd, TDM_CLICK_BUTTON, IDOK, 0);
+    }
+
+    return S_OK;
+}
+
+static void test_progress_bar(void)
+{
+    TASKDIALOGCONFIG info = {0};
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG);
+    info.dwFlags = TDF_SHOW_PROGRESS_BAR;
+    info.pfCallback = taskdialog_callback_proc_progress_bar;
+    info.lpCallbackData = (LONG_PTR)info.dwFlags;
+    info.dwCommonButtons = TDCBF_OK_BUTTON;
+    pTaskDialogIndirect(&info, NULL, NULL, NULL);
+
+    info.dwFlags = TDF_SHOW_MARQUEE_PROGRESS_BAR;
+    info.lpCallbackData = (LONG_PTR)info.dwFlags;
+    pTaskDialogIndirect(&info, NULL, NULL, NULL);
+
+    info.dwFlags = TDF_SHOW_PROGRESS_BAR | TDF_SHOW_MARQUEE_PROGRESS_BAR;
+    info.lpCallbackData = (LONG_PTR)info.dwFlags;
+    pTaskDialogIndirect(&info, NULL, NULL, NULL);
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -411,6 +477,7 @@ START_TEST(taskdialog)
     test_buttons();
     test_help();
     test_timer();
+    test_progress_bar();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

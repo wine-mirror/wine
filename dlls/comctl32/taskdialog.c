@@ -57,6 +57,7 @@ struct taskdialog_info
     HWND main_icon;
     HWND main_instruction;
     HWND content;
+    HWND progress_bar;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -351,6 +352,17 @@ static void taskdialog_add_content(struct taskdialog_info *dialog_info)
                                                    taskdialog_hyperlink_enabled(dialog_info));
 }
 
+static void taskdialog_add_progress_bar(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    DWORD style = PBS_SMOOTH | PBS_SMOOTHREVERSE | WS_CHILD | WS_VISIBLE;
+
+    if (!(taskconfig->dwFlags & (TDF_SHOW_PROGRESS_BAR | TDF_SHOW_MARQUEE_PROGRESS_BAR))) return;
+    if (taskconfig->dwFlags & TDF_SHOW_MARQUEE_PROGRESS_BAR) style |= PBS_MARQUEE;
+    dialog_info->progress_bar =
+        CreateWindowW(PROGRESS_CLASSW, NULL, style, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
+}
+
 static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT_PTR id, const WCHAR *text,
                                   BOOL custom_button)
 {
@@ -463,6 +475,17 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
 
     /* Content */
     taskdialog_label_layout(dialog_info, dialog_info->content, main_icon_right, dialog_width, &dialog_height, syslink);
+
+    /* Progress bar */
+    if (dialog_info->progress_bar)
+    {
+        x = main_icon_right + h_spacing;
+        y = dialog_height + v_spacing;
+        size.cx = dialog_width - x - h_spacing;
+        size.cy = GetSystemMetrics(SM_CYVSCROLL);
+        SetWindowPos(dialog_info->progress_bar, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        dialog_height = y + size.cy;
+    }
 
     dialog_height = max(dialog_height, main_icon_bottom);
 
@@ -598,6 +621,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_main_icon(dialog_info);
     taskdialog_add_main_instruction(dialog_info);
     taskdialog_add_content(dialog_info);
+    taskdialog_add_progress_bar(dialog_info);
     taskdialog_add_buttons(dialog_info);
 
     /* Set default button */
@@ -621,6 +645,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 {
     static const WCHAR taskdialog_info_propnameW[] = {'T','a','s','k','D','i','a','l','o','g','I','n','f','o',0};
     struct taskdialog_info *dialog_info;
+    LRESULT result;
 
     TRACE("hwnd=%p msg=0x%04x wparam=%lx lparam=%lx\n", hwnd, msg, wParam, lParam);
 
@@ -634,6 +659,36 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             break;
         case TDM_ENABLE_BUTTON:
             taskdialog_enable_button(dialog_info, wParam, lParam);
+            break;
+        case TDM_SET_MARQUEE_PROGRESS_BAR:
+        {
+            BOOL marquee = wParam;
+            LONG style;
+            if(!dialog_info->progress_bar) break;
+            style = GetWindowLongW(dialog_info->progress_bar, GWL_STYLE);
+            style = marquee ? style | PBS_MARQUEE : style & (~PBS_MARQUEE);
+            SetWindowLongW(dialog_info->progress_bar, GWL_STYLE, style);
+            break;
+        }
+        case TDM_SET_PROGRESS_BAR_STATE:
+            result = SendMessageW(dialog_info->progress_bar, PBM_SETSTATE, wParam, 0);
+            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, result);
+            break;
+        case TDM_SET_PROGRESS_BAR_RANGE:
+            result = SendMessageW(dialog_info->progress_bar, PBM_SETRANGE, 0, lParam);
+            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, result);
+            break;
+        case TDM_SET_PROGRESS_BAR_POS:
+            result = 0;
+            if (dialog_info->progress_bar)
+            {
+                LONG style = GetWindowLongW(dialog_info->progress_bar, GWL_STYLE);
+                if (!(style & PBS_MARQUEE)) result = SendMessageW(dialog_info->progress_bar, PBM_SETPOS, wParam, 0);
+            }
+            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, result);
+            break;
+        case TDM_SET_PROGRESS_BAR_MARQUEE:
+            SendMessageW(dialog_info->progress_bar, PBM_SETMARQUEE, wParam, lParam);
             break;
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
