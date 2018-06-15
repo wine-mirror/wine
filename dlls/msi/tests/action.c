@@ -2650,7 +2650,7 @@ static void test_register_product(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
@@ -2917,7 +2917,7 @@ static void test_publish_product(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -3150,7 +3150,7 @@ static void test_publish_features(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -3336,7 +3336,7 @@ static void test_register_user(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -3430,7 +3430,7 @@ static void test_process_components(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, ppc_tables, sizeof(ppc_tables) / sizeof(msi_table));
+    create_database(msifile, ppc_tables, ARRAY_SIZE(ppc_tables));
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -3578,7 +3578,7 @@ static void test_publish(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4152,7 +4152,7 @@ static void test_publish_sourcelist(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, pp_tables, ARRAY_SIZE(pp_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4352,7 +4352,7 @@ static void test_remove_files(void)
     create_file("msitest\\helium", 500);
     create_file("msitest\\lithium", 500);
 
-    create_database(msifile, rem_tables, sizeof(rem_tables) / sizeof(msi_table));
+    create_database(msifile, rem_tables, ARRAY_SIZE(rem_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4509,7 +4509,7 @@ static void test_move_files(void)
     create_file("bur", 100);
     create_file("bird", 100);
 
-    create_database(msifile, mov_tables, sizeof(mov_tables) / sizeof(msi_table));
+    create_database(msifile, mov_tables, ARRAY_SIZE(mov_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4630,7 +4630,7 @@ static void test_duplicate_files(void)
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
-    create_database(msifile, df_tables, sizeof(df_tables) / sizeof(msi_table));
+    create_database(msifile, df_tables, ARRAY_SIZE(df_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4673,7 +4673,7 @@ static void test_write_registry_values(void)
 
     CreateDirectoryA("msitest", NULL);
 
-    create_database(msifile, wrv_tables, sizeof(wrv_tables) / sizeof(msi_table));
+    create_database(msifile, wrv_tables, ARRAY_SIZE(wrv_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -4839,7 +4839,7 @@ static void test_envvar(void)
         return;
     }
 
-    create_database(msifile, env_tables, sizeof(env_tables) / sizeof(msi_table));
+    create_database(msifile, env_tables, ARRAY_SIZE(env_tables));
 
     res = RegCreateKeyExA(HKEY_CURRENT_USER, "Environment", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &env, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4948,7 +4948,7 @@ static void test_create_remove_folder(void)
     CreateDirectoryA("msitest\\second", NULL);
     create_file("msitest\\first\\one.txt", 1000);
     create_file("msitest\\second\\two.txt", 1000);
-    create_database(msifile, cf_tables, sizeof(cf_tables) / sizeof(msi_table));
+    create_database(msifile, cf_tables, ARRAY_SIZE(cf_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5028,7 +5028,7 @@ static void test_start_stop_services(void)
     CloseServiceHandle(scm);
 
     create_test_files();
-    create_database(msifile, sss_tables, sizeof(sss_tables) / sizeof(msi_table));
+    create_database(msifile, sss_tables, ARRAY_SIZE(sss_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5128,7 +5128,7 @@ static void test_delete_services(void)
     if (!service) return;
 
     create_test_files();
-    create_database(msifile, sds_tables, sizeof(sds_tables) / sizeof(msi_table));
+    create_database(msifile, sds_tables, ARRAY_SIZE(sds_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5190,7 +5190,7 @@ static void test_install_services(void)
     }
 
     create_test_files();
-    create_database(msifile, sis_tables, sizeof(sis_tables) / sizeof(msi_table));
+    create_database(msifile, sis_tables, ARRAY_SIZE(sis_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5267,7 +5267,7 @@ static void test_self_registration(void)
 
     create_test_files();
     extract_resource("selfreg.dll", "TESTDLL", "msitest\\selfreg.dll");
-    create_database(msifile, sr_tables, sizeof(sr_tables) / sizeof(msi_table));
+    create_database(msifile, sr_tables, ARRAY_SIZE(sr_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5315,7 +5315,7 @@ static void test_register_font(void)
 
     create_test_files();
     create_file("msitest\\font.ttf", 1000);
-    create_database(msifile, font_tables, sizeof(font_tables) / sizeof(msi_table));
+    create_database(msifile, font_tables, ARRAY_SIZE(font_tables));
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -5365,7 +5365,7 @@ static void test_validate_product_id(void)
     }
 
     create_test_files();
-    create_database(msifile, vp_tables, sizeof(vp_tables) / sizeof(msi_table));
+    create_database(msifile, vp_tables, ARRAY_SIZE(vp_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5424,7 +5424,7 @@ static void test_install_remove_odbc(void)
     create_file("msitest\\ODBCtranslator.dll", 1000);
     create_file("msitest\\ODBCtranslator2.dll", 1000);
     create_file("msitest\\ODBCsetup.dll", 1000);
-    create_database(msifile, odbc_tables, sizeof(odbc_tables) / sizeof(msi_table));
+    create_database(msifile, odbc_tables, ARRAY_SIZE(odbc_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5510,7 +5510,7 @@ static void test_register_typelib(void)
 
     create_test_files();
     extract_resource("typelib.tlb", "TYPELIB", "msitest\\typelib.dll");
-    create_database(msifile, tl_tables, sizeof(tl_tables) / sizeof(msi_table));
+    create_database(msifile, tl_tables, ARRAY_SIZE(tl_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5553,7 +5553,7 @@ static void test_create_remove_shortcut(void)
 
     create_test_files();
     create_file("msitest\\target.txt", 1000);
-    create_database(msifile, crs_tables, sizeof(crs_tables) / sizeof(msi_table));
+    create_database(msifile, crs_tables, ARRAY_SIZE(crs_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5602,7 +5602,7 @@ static void test_publish_components(void)
 
     create_test_files();
     create_file("msitest\\english.txt", 1000);
-    create_database(msifile, pub_tables, sizeof(pub_tables) / sizeof(msi_table));
+    create_database(msifile, pub_tables, ARRAY_SIZE(pub_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5688,7 +5688,7 @@ static void test_remove_duplicate_files(void)
     create_file("msitest\\original.txt", 1000);
     create_file("msitest\\original2.txt", 1000);
     create_file("msitest\\original3.txt", 1000);
-    create_database(msifile, rd_tables, sizeof(rd_tables) / sizeof(msi_table));
+    create_database(msifile, rd_tables, ARRAY_SIZE(rd_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5736,7 +5736,7 @@ static void test_find_related_products(void)
 
     create_test_files();
     create_file("msitest\\product.txt", 1000);
-    create_database(msifile, frp_tables, sizeof(frp_tables) / sizeof(msi_table));
+    create_database(msifile, frp_tables, ARRAY_SIZE(frp_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5780,7 +5780,7 @@ static void test_ini_values(void)
 
     create_test_files();
     create_file("msitest\\inifile.txt", 1000);
-    create_database(msifile, ini_tables, sizeof(ini_tables) / sizeof(msi_table));
+    create_database(msifile, ini_tables, ARRAY_SIZE(ini_tables));
 
     lstrcpyA(inifile, PROG_FILES_DIR);
     lstrcatA(inifile, "\\msitest");
@@ -5841,7 +5841,7 @@ static void test_register_class_info(void)
 
     create_test_files();
     create_file("msitest\\class.txt", 1000);
-    create_database(msifile, rci_tables, sizeof(rci_tables) / sizeof(msi_table));
+    create_database(msifile, rci_tables, ARRAY_SIZE(rci_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5906,7 +5906,7 @@ static void test_register_extension_info(void)
 
     create_test_files();
     create_file("msitest\\extension.txt", 1000);
-    create_database(msifile, rei_tables, sizeof(rei_tables) / sizeof(msi_table));
+    create_database(msifile, rei_tables, ARRAY_SIZE(rei_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5958,7 +5958,7 @@ static void test_register_progid_info(void)
 
     create_test_files();
     create_file("msitest\\progid.txt", 1000);
-    create_database(msifile, rpi_tables, sizeof(rpi_tables) / sizeof(msi_table));
+    create_database(msifile, rpi_tables, ARRAY_SIZE(rpi_tables));
 
     res = RegCreateKeyExA(HKEY_CLASSES_ROOT, "Winetest.Orphaned", 0, NULL, 0,
                           KEY_ALL_ACCESS, NULL, &hkey, NULL);
@@ -6084,7 +6084,7 @@ static void test_register_mime_info(void)
 
     create_test_files();
     create_file("msitest\\mime.txt", 1000);
-    create_database(msifile, rmi_tables, sizeof(rmi_tables) / sizeof(msi_table));
+    create_database(msifile, rmi_tables, ARRAY_SIZE(rmi_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -6182,7 +6182,7 @@ static void test_publish_assemblies(void)
     create_file_data("msitest\\manifest_local.txt", manifest_local, 0);
     create_file("msitest\\application_win32.txt", 1000);
     create_file("msitest\\application_dotnet.txt", 1000);
-    create_database(msifile, pa_tables, sizeof(pa_tables) / sizeof(msi_table));
+    create_database(msifile, pa_tables, ARRAY_SIZE(pa_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -6340,7 +6340,7 @@ static void test_remove_existing_products(void)
 
     create_test_files();
     create_file("msitest\\rep.txt", 1000);
-    create_database(msifile, rep_tables, sizeof(rep_tables) / sizeof(msi_table));
+    create_database(msifile, rep_tables, ARRAY_SIZE(rep_tables));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
