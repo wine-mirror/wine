@@ -247,8 +247,8 @@ static void test_ITextDocument_Open(void)
       tomReadOnly|tomShareDenyWrite, tomReadOnly|tomShareDenyRead
     };
 
-  int tomNumSingle =  sizeof(tomConstantsSingle)/sizeof(tomConstantsSingle[0]);
-  int tomNumMulti = sizeof(tomConstantsMulti)/sizeof(tomConstantsMulti[0]);
+  int tomNumSingle =  ARRAY_SIZE(tomConstantsSingle);
+  int tomNumMulti = ARRAY_SIZE(tomConstantsMulti);
   int i;
 
   V_VT(&testfile) = VT_BSTR;
