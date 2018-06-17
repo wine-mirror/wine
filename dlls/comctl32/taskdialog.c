@@ -506,16 +506,15 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     x = h_spacing;
     for (i = 0, line_count = 0; i < dialog_info->button_count; i++)
     {
-        if (x + button_layout_infos[i].width + h_spacing >= dialog_width)
+        button_layout_infos[i].line = line_count;
+        x += button_layout_infos[i].width + h_spacing;
+        line_widths[line_count] += button_layout_infos[i].width + h_spacing;
+
+        if ((i + 1 < dialog_info->button_count) && (x + button_layout_infos[i + 1].width + h_spacing >= dialog_width))
         {
             x = h_spacing;
             line_count++;
         }
-
-        button_layout_infos[i].line = line_count;
-
-        x += button_layout_infos[i].width + h_spacing;
-        line_widths[line_count] += button_layout_infos[i].width + h_spacing;
     }
     line_count++;
 
