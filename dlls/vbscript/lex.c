@@ -383,13 +383,14 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 
 static void skip_spaces(parser_ctx_t *ctx)
 {
-    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
+    while(*ctx->ptr == ' ' || *ctx->ptr == '\t')
         ctx->ptr++;
 }
 
 static int comment_line(parser_ctx_t *ctx)
 {
-    ctx->ptr = strchrW(ctx->ptr, '\n');
+    static const WCHAR newlineW[] = {'\n','\r',0};
+    ctx->ptr = strpbrkW(ctx->ptr, newlineW);
     if(ctx->ptr)
         ctx->ptr++;
     else
@@ -421,6 +422,7 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
 
     switch(c) {
     case '\n':
+    case '\r':
         ctx->ptr++;
         return tNL;
     case '\'':
