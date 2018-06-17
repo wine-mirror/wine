@@ -106,9 +106,12 @@ static void test_NetFwAuthorizedApplication(void)
 {
     INetFwAuthorizedApplication *app;
     static WCHAR empty[] = {0};
+    UNIVERSAL_NAME_INFOW *info;
+    WCHAR netpath[MAX_PATH];
     WCHAR image[MAX_PATH];
     HRESULT hr;
     BSTR bstr;
+    DWORD sz;
 
     hr = CoCreateInstance(&CLSID_NetFwAuthorizedApplication, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_INetFwAuthorizedApplication, (void**)&app);
@@ -135,9 +138,19 @@ static void test_NetFwAuthorizedApplication(void)
     ok(hr == S_OK, "got: %08x\n", hr);
     SysFreeString(bstr);
 
+    info = (UNIVERSAL_NAME_INFOW *)&netpath;
+    sz = sizeof(netpath);
+    hr = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
+    if (hr != NO_ERROR)
+    {
+        info->lpUniversalName = netpath + sizeof(*info)/sizeof(WCHAR);
+        lstrcpyW(info->lpUniversalName, image);
+    }
+
     hr = INetFwAuthorizedApplication_get_ProcessImageFileName(app, &bstr);
     ok(hr == S_OK, "got: %08x\n", hr);
-    ok(!lstrcmpiW(bstr,image), "got: %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr,info->lpUniversalName), "expected %s, got %s\n",
+        wine_dbgstr_w(info->lpUniversalName), wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     INetFwAuthorizedApplication_Release(app);

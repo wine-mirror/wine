@@ -29,6 +29,7 @@
 #include "netfw.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "hnetcfg_private.h"
 
@@ -263,18 +264,39 @@ static HRESULT WINAPI fw_app_get_ProcessImageFileName(
 }
 
 static HRESULT WINAPI fw_app_put_ProcessImageFileName(
-    INetFwAuthorizedApplication *iface,
-    BSTR imageFileName )
+    INetFwAuthorizedApplication *iface, BSTR image )
 {
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
+    UNIVERSAL_NAME_INFOW *info;
+    WCHAR *netpath;
+    DWORD res;
+    DWORD sz;
 
-    FIXME("%p, %s\n", This, debugstr_w(imageFileName));
+    FIXME("%p, %s\n", This, debugstr_w(image));
 
-    if (!imageFileName || !imageFileName[0])
+    if (!image || !image[0])
         return E_INVALIDARG;
 
+    sz = 0;
+    res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, NULL, &sz);
+    if (res == WN_MORE_DATA)
+    {
+        if (!(netpath = heap_alloc(sz)))
+            return E_OUTOFMEMORY;
+
+        info = (UNIVERSAL_NAME_INFOW *)&netpath;
+        res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
+        if (res == NO_ERROR)
+        {
+            SysFreeString(This->filename);
+            This->filename = SysAllocString(info->lpUniversalName);
+        }
+        heap_free(netpath);
+        return HRESULT_FROM_WIN32(res);
+    }
+
     SysFreeString( This->filename );
-    This->filename = SysAllocString( imageFileName );
+    This->filename = SysAllocString(image);
     return This->filename ? S_OK : E_OUTOFMEMORY;
 }
 
