@@ -1031,6 +1031,7 @@
 @ stdcall -ret64 VerSetConditionMask(int64 long long)
 @ stdcall WinSqmEndSession(long)
 @ stdcall WinSqmIsOptedIn()
+@ stdcall WinSqmSetDWORD(ptr long long)
 @ stdcall WinSqmStartSession(ptr long long)
 @ stdcall -private ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
 @ stdcall -private ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck

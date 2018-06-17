@@ -359,6 +359,14 @@ HANDLE WINAPI WinSqmStartSession(GUID *sessionguid, DWORD sessionid, DWORD unkno
     return INVALID_HANDLE_VALUE;
 }
 
+/***********************************************************************
+ *          WinSqmSetDWORD (NTDLL.@)
+ */
+void WINAPI WinSqmSetDWORD(HANDLE session, DWORD datapoint_id, DWORD datapoint_value)
+{
+    FIXME("(%p, %d, %d): stub\n", session, datapoint_id, datapoint_value);
+}
+
 /******************************************************************************
  *                  EtwEventRegister (NTDLL.@)
  */
