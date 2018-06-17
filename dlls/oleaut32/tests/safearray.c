@@ -765,7 +765,7 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
 {
   SAFEARRAY *sa;
   HRESULT hres;
-  int i;
+  UINT i;
 
   /* Failure cases */
   hres = SafeArrayAllocDescriptor(0, &sa);
@@ -789,7 +789,7 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
 
     if (hres == S_OK)
     {
-      ok(SafeArrayGetDim(sa) == (UINT)i, "Dimension is %d; should be %d\n",
+      ok(SafeArrayGetDim(sa) == i, "Dimension is %d; should be %d\n",
          SafeArrayGetDim(sa), i);
 
       hres = SafeArrayDestroyDescriptor(sa);
