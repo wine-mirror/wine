@@ -360,7 +360,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         fetch_module_name(de->u.CreateProcessInfo.lpImageName,
                           de->u.CreateProcessInfo.fUnicode,
                           de->u.CreateProcessInfo.lpBaseOfImage,
-                          u.buffer, sizeof(u.buffer) / sizeof(WCHAR), TRUE);
+                          u.buffer, ARRAY_SIZE(u.buffer), TRUE);
 
         WINE_TRACE("%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
                    de->dwProcessId, de->dwThreadId,
@@ -455,7 +455,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         fetch_module_name(de->u.LoadDll.lpImageName,
                           de->u.LoadDll.fUnicode,
                           de->u.LoadDll.lpBaseOfDll,
-                          u.buffer, sizeof(u.buffer) / sizeof(WCHAR), FALSE);
+                          u.buffer, ARRAY_SIZE(u.buffer), FALSE);
 
         WINE_TRACE("%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                    de->dwProcessId, de->dwThreadId,
@@ -708,7 +708,7 @@ static const char *get_windows_version(void)
 
     GetVersionExW( (OSVERSIONINFOW *)&info );
 
-    for (i = 0; i < sizeof(version_table) / sizeof(version_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(version_table); i++)
     {
         if (version_table[i].type == info.wProductType &&
             version_table[i].platform == info.dwPlatformId &&

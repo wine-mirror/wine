@@ -391,7 +391,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         memory_get_string_indirect(gdbctx->process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
-                                   u.buffer, sizeof(u.buffer) / sizeof(WCHAR));
+                                   u.buffer, ARRAY_SIZE(u.buffer));
         dbg_set_process_name(gdbctx->process, u.buffer);
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
@@ -423,7 +423,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         memory_get_string_indirect(gdbctx->process,
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
-                                   u.buffer, sizeof(u.buffer) / sizeof(WCHAR));
+                                   u.buffer, ARRAY_SIZE(u.buffer));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                     de->dwProcessId, de->dwThreadId,
@@ -1146,7 +1146,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
             if (gdbctx->trace & GDBPXY_TRC_COMMAND)
                 fprintf(stderr, "trying to process a verbose packet %*.*s\n",
                         gdbctx->in_packet_len, gdbctx->in_packet_len, gdbctx->in_packet);
-            for (i = 0; i < sizeof(verbose_details)/sizeof(verbose_details[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(verbose_details); i++)
             {
                 if (klen == verbose_details[i].len &&
                     !memcmp(gdbctx->in_packet, verbose_details[i].name, verbose_details[i].len))
@@ -1934,11 +1934,11 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                 assert(plen);
                 
                 /* FIXME: should use bsearch if packet_entries was sorted */
-                for (i = 0; i < sizeof(packet_entries)/sizeof(packet_entries[0]); i++)
+                for (i = 0; i < ARRAY_SIZE(packet_entries); i++)
                 {
                     if (packet_entries[i].key == gdbctx->in_buf[1]) break;
                 }
-                if (i == sizeof(packet_entries)/sizeof(packet_entries[0]))
+                if (i == ARRAY_SIZE(packet_entries))
                 {
                     if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
                         fprintf(stderr, "Unknown packet request %*.*s\n",
@@ -2178,7 +2178,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->in_trap = FALSE;
     gdbctx->trace = /*GDBPXY_TRC_PACKET | GDBPXY_TRC_COMMAND |*/ GDBPXY_TRC_COMMAND_ERROR | GDBPXY_TRC_COMMAND_FIXME | GDBPXY_TRC_WIN32_EVENT;
     gdbctx->process = NULL;
-    for (i = 0; i < sizeof(gdbctx->wine_segs) / sizeof(gdbctx->wine_segs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
         gdbctx->wine_segs[i] = 0;
 
     /* wait for first trap */

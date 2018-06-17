@@ -38,8 +38,8 @@ int msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType)
 {
     WCHAR caption[256];
     WCHAR text[256];
-    LoadStringW(GetModuleHandleW(NULL), captionId, caption, sizeof(caption)/sizeof(caption[0]));
-    LoadStringW(GetModuleHandleW(NULL), textId, text, sizeof(text)/sizeof(text[0]));
+    LoadStringW(GetModuleHandleW(NULL), captionId, caption, ARRAY_SIZE(caption));
+    LoadStringW(GetModuleHandleW(NULL), textId, text, ARRAY_SIZE(text));
     return MessageBoxW(hwnd, text, caption, uType);
 }
 
@@ -116,8 +116,7 @@ static void set_message_with_filename(HWND hDlg)
     WCHAR originalText[1000];
     WCHAR newText[1000 + MAX_PROGRAM_NAME_LENGTH];
 
-    GetDlgItemTextW(hDlg, IDC_STATIC_TXT1, originalText,
-            sizeof(originalText)/sizeof(originalText[0]));
+    GetDlgItemTextW(hDlg, IDC_STATIC_TXT1, originalText, ARRAY_SIZE(originalText));
     wsprintfW(newText, originalText, g_ProgramName);
     SetDlgItemTextW(hDlg, IDC_STATIC_TXT1, newText);
 }
@@ -150,11 +149,11 @@ static void save_crash_log( HWND hwnd )
     memset( &save, 0, sizeof(save) );
     lstrcpyW( path, default_name );
 
-    LoadStringW( GetModuleHandleW(0), IDS_TEXT_FILES, buffer, sizeof(buffer)/sizeof(buffer[0]) );
+    LoadStringW( GetModuleHandleW(0), IDS_TEXT_FILES, buffer, ARRAY_SIZE(buffer));
     p = buffer + lstrlenW(buffer) + 1;
     lstrcpyW(p, txt_files);
     p += lstrlenW(p) + 1;
-    LoadStringW( GetModuleHandleW(0), IDS_ALL_FILES, p, sizeof(buffer)/sizeof(buffer[0]) - (p - buffer) );
+    LoadStringW( GetModuleHandleW(0), IDS_ALL_FILES, p, ARRAY_SIZE(buffer) - (p - buffer) );
     p += lstrlenW(p) + 1;
     lstrcpyW(p, all_files);
     p += lstrlenW(p) + 1;
@@ -189,7 +188,7 @@ static void save_crash_log( HWND hwnd )
     }
     else err = GetLastError();
 
-    LoadStringW( GetModuleHandleW(0), IDS_SAVE_ERROR, buffer, sizeof(buffer)/sizeof(WCHAR) );
+    LoadStringW( GetModuleHandleW(0), IDS_SAVE_ERROR, buffer, ARRAY_SIZE(buffer));
     FormatMessageW( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                     NULL, err, 0, (LPWSTR)&p, 0, NULL);
     MessageBoxW( 0, p, buffer, MB_OK | MB_ICONERROR);
