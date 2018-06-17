@@ -725,7 +725,7 @@ static HRESULT WINAPI Widget_VarArg(
 static BOOL mystruct_uint_ordered(MYSTRUCT *mystruct)
 {
     int i;
-    for (i = 0; i < sizeof(mystruct->uarr)/sizeof(mystruct->uarr[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(mystruct->uarr); i++)
         if (mystruct->uarr[i] != i)
             return FALSE;
     return TRUE;

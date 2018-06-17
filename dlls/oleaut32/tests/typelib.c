@@ -627,7 +627,7 @@ static void test_CreateDispTypeInfo(void)
     OLECHAR *name = func1;
 
     ifdata.pmethdata = methdata;
-    ifdata.cMembers = sizeof(methdata) / sizeof(methdata[0]);
+    ifdata.cMembers = ARRAY_SIZE(methdata);
 
     methdata[0].szName = SysAllocString(func1);
     methdata[0].ppdata = parms1;
@@ -1350,7 +1350,7 @@ static LSTATUS myRegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey, REGSAM view)
     dwMaxSubkeyLen++;
     dwMaxValueLen++;
     dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
-    if (dwMaxLen > sizeof(szNameBuf)/sizeof(WCHAR))
+    if (dwMaxLen > ARRAY_SIZE(szNameBuf))
     {
         /* Name too big: alloc a buffer for it */
         if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(WCHAR))))
@@ -1483,7 +1483,7 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
     if (!do_typelib_reg_key(&uid, 5, 37, arch, base, FALSE)) return;
     if (arch == 64 && !do_typelib_reg_key(&uid, 5, 37, 32, wrongW, FALSE)) return;
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         ret = QueryPathOfRegTypeLib(&uid, td[i].maj, td[i].min, LOCALE_NEUTRAL, &path);
         ok(ret == td[i].ret, "QueryPathOfRegTypeLib(%u.%u) returned %08x\n", td[i].maj, td[i].min, ret);
@@ -2309,7 +2309,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     SysFreeString(V_BSTR(&paramdescex.varDefaultValue));
 
     WideCharToMultiByte(CP_ACP, 0, defaultW, -1, nameA, sizeof(nameA), NULL, NULL);
-    MultiByteToWideChar(CP_ACP, 0, nameA, -1, nameW, sizeof(nameW)/sizeof(nameW[0]));
+    MultiByteToWideChar(CP_ACP, 0, nameA, -1, nameW, ARRAY_SIZE(nameW));
 
     hres = ITypeInfo2_GetFuncDesc(ti2, 3, &pfuncdesc);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -3041,7 +3041,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 0, "got: %u\n", cnames);
 
-    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, ARRAY_SIZE(names), &cnames);
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 1, "got: %u\n", cnames);
     ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
@@ -3145,7 +3145,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     SysFreeString(name);
     SysFreeString(helpfile);
 
-    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, ARRAY_SIZE(names), &cnames);
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 3, "got: %u\n", cnames);
     ok(!memcmp(names[0], func2W, sizeof(func2W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
@@ -3375,7 +3375,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     SysFreeString(name);
     SysFreeString(helpfile);
 
-    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, ARRAY_SIZE(names), &cnames);
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 1, "got: %u\n", cnames);
     ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
@@ -3474,7 +3474,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     SysFreeString(name);
     SysFreeString(helpfile);
 
-    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, sizeof(names) / sizeof(*names), &cnames);
+    hres = ITypeInfo_GetNames(ti, pfuncdesc->memid, names, ARRAY_SIZE(names), &cnames);
     ok(hres == S_OK, "got: %08x\n", hres);
     ok(cnames == 1, "got: %u\n", cnames);
     ok(!memcmp(names[0], func1W, sizeof(func1W)), "got names[0]: %s\n", wine_dbgstr_w(names[0]));
@@ -4701,7 +4701,7 @@ static void test_dump_typelib(const char *name)
 {
     WCHAR wszName[MAX_PATH];
     ITypeLib *typelib;
-    int ticount = sizeof(info)/sizeof(info[0]);
+    int ticount = ARRAY_SIZE(info);
     int iface, func;
 
     MultiByteToWideChar(CP_ACP, 0, name, -1, wszName, MAX_PATH);
@@ -4739,7 +4739,7 @@ static void test_dump_typelib(const char *name)
             HRESULT hr;
             GUID guid;
 
-            MultiByteToWideChar(CP_ACP, 0, ti->uuid, -1, guidW, sizeof(guidW)/sizeof(guidW[0]));
+            MultiByteToWideChar(CP_ACP, 0, ti->uuid, -1, guidW, ARRAY_SIZE(guidW));
             IIDFromString(guidW, &guid);
             expect_guid(&guid, &typeattr->guid);
 
@@ -5002,7 +5002,7 @@ static void test_register_typelib(BOOL system_registration)
 
         }
 
-        StringFromGUID2(&attr->guid, uuidW, sizeof(uuidW) / sizeof(uuidW[0]));
+        StringFromGUID2(&attr->guid, uuidW, ARRAY_SIZE(uuidW));
         WideCharToMultiByte(CP_ACP, 0, uuidW, -1, uuid, sizeof(uuid), NULL, NULL);
         sprintf(key_name, "Interface\\%s", uuid);
 
@@ -5050,7 +5050,7 @@ static void test_register_typelib(BOOL system_registration)
         if((attr->typekind == TKIND_INTERFACE && (attr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
            attr->typekind == TKIND_DISPATCH)
         {
-            StringFromGUID2(&attr->guid, uuidW, sizeof(uuidW) / sizeof(uuidW[0]));
+            StringFromGUID2(&attr->guid, uuidW, ARRAY_SIZE(uuidW));
             WideCharToMultiByte(CP_ACP, 0, uuidW, -1, uuid, sizeof(uuid), NULL, NULL);
             sprintf(key_name, "Interface\\%s", uuid);
 
@@ -6204,7 +6204,7 @@ static void test_stub(void)
             WCHAR guidW[40];
             REGSAM opposite = side ^ (KEY_WOW64_64KEY | KEY_WOW64_32KEY);
 
-            StringFromGUID2(&interfaceguid, guidW, sizeof(guidW)/sizeof(guidW[0]));
+            StringFromGUID2(&interfaceguid, guidW, ARRAY_SIZE(guidW));
 
             /* Delete the opposite interface key */
             lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_READ | opposite, &hkey);

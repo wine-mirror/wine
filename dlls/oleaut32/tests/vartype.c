@@ -112,7 +112,7 @@ static BOOL has_locales;
 
 #define CONVERT_STR(func,str,flags) \
   SetLastError(0); \
-  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)/sizeof(WCHAR)); \
+  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,ARRAY_SIZE(buff)); \
   hres = func(str ? buff : NULL,in,flags,&out)
 
 #define COPYTEST(val, vt, srcval, dstval, srcref, dstref, fs) do { \
@@ -2944,7 +2944,7 @@ static void test_VarDateFromDec(void)
 
 #define DFS(str) \
   buff[0] = '\0'; out = 0.0; \
-  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)/sizeof(WCHAR)); \
+  if (str) MultiByteToWideChar(CP_ACP,0,str,-1,buff,ARRAY_SIZE(buff)); \
   hres = VarDateFromStr(str ? buff : NULL,lcid,LOCALE_NOUSEROVERRIDE,&out)
 
 #define MKRELDATE(day,mth) st.wMonth = mth; st.wDay = day; \
@@ -3091,7 +3091,7 @@ static void test_VarDateFromStr(void)
   DFS("1.2.3 4 5 6"); EXPECT_DBL(38812.04309027778);
   DFS("1 2 3 4.5.6"); EXPECT_DBL(37623.17020833334);
 
-  for (i = 0; i < sizeof(BadDateStrings)/sizeof(char*); i++)
+  for (i = 0; i < ARRAY_SIZE(BadDateStrings); i++)
   {
     DFS(BadDateStrings[i]); EXPECT_MISMATCH;
   }
@@ -4816,12 +4816,12 @@ static void test_VarBstrCmp(void)
     /* These two strings are considered equal even though one is
      * NULL-terminated and the other not.
      */
-    bstr2 = SysAllocStringLen(s1, sizeof(s1) / sizeof(WCHAR));
+    bstr2 = SysAllocStringLen(s1, ARRAY_SIZE(s1));
     VARBSTRCMP(bstr,bstr2,0,VARCMP_EQ);
     SysFreeString(bstr2);
 
     /* These two strings are not equal */
-    bstr2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
+    bstr2 = SysAllocStringLen(s2, ARRAY_SIZE(s2));
     VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
     SysFreeString(bstr2);
 
@@ -5235,8 +5235,7 @@ if (0)
     ret = VarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
-    ok(SysStringLen(res) == sizeof(sz1sz2) / sizeof(WCHAR) - 1,
-     "Unexpected length\n");
+    ok(SysStringLen(res) == ARRAY_SIZE(sz1sz2) - 1, "Unexpected length\n");
     ok(!memcmp(res, sz1sz2, sizeof(sz1sz2)), "Unexpected value\n");
     SysFreeString(res);
 
@@ -5244,14 +5243,13 @@ if (0)
     SysFreeString(str1);
 
     /* Concatenation of two strings with embedded NULLs */
-    str1 = SysAllocStringLen(s1, sizeof(s1) / sizeof(WCHAR));
-    str2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
+    str1 = SysAllocStringLen(s1, ARRAY_SIZE(s1));
+    str2 = SysAllocStringLen(s2, ARRAY_SIZE(s2));
 
     ret = VarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
-    ok(SysStringLen(res) == sizeof(s1s2) / sizeof(WCHAR),
-     "Unexpected length\n");
+    ok(SysStringLen(res) == ARRAY_SIZE(s1s2), "Unexpected length\n");
     ok(!memcmp(res, s1s2, sizeof(s1s2)), "Unexpected value\n");
     SysFreeString(res);
 
@@ -5893,13 +5891,13 @@ static void test_bstr_cache(void)
     /* Fill the bucket with cached entries.
        We roll our own, to show that the cache doesn't use
        the bstr length field to determine bucket allocation. */
-    for(i=0; i < sizeof(strs)/sizeof(*strs); i++)
+    for(i=0; i < ARRAY_SIZE(strs); i++)
     {
         DWORD_PTR *ptr = CoTaskMemAlloc(64);
         ptr[0] = 0;
         strs[i] = (BSTR)(ptr + 1);
     }
-    for(i=0; i < sizeof(strs)/sizeof(*strs); i++)
+    for(i=0; i < ARRAY_SIZE(strs); i++)
         SysFreeString(strs[i]);
 
     /* Following allocation will be made from cache */

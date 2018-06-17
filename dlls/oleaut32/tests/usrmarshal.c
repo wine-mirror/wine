@@ -416,7 +416,7 @@ static void test_marshal_LPSAFEARRAY(void)
 
     /* Test an array of VT_BSTR */
     sab[0].lLbound = 3;
-    sab[0].cElements = sizeof(values) / sizeof(values[0]);
+    sab[0].cElements = ARRAY_SIZE(values);
 
     lpsa = SafeArrayCreate(VT_BSTR, 1, sab);
     expected_bstr_size = 0;
@@ -463,7 +463,7 @@ static void test_marshal_LPSAFEARRAY(void)
     ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal, result %p\n", next);
 
-    for (i = 0; i < sizeof(values) / sizeof(values[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(values); i++)
     {
         BSTR gotvalue = NULL;
 

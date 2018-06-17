@@ -501,7 +501,7 @@ static void test_Invoke(void)
     /* DISPID_PICT_RENDER */
     hdc = create_render_dc();
 
-    for (i = 0; i < sizeof(args)/sizeof(args[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(args); i++)
         V_VT(&args[i]) = VT_I4;
 
     V_I4(&args[0]) = 0;
@@ -679,7 +679,7 @@ static HRESULT picture_render(IPicture *iface, HDC hdc, LONG x, LONG y, LONG cx,
     IPicture_QueryInterface(iface, &IID_IDispatch, (void**)&disp);
 
     /* This is broken on 64 bits - accepted pointer argument type is still VT_I4 */
-    for (i = 0; i < sizeof(args)/sizeof(args[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(args); i++)
         V_VT(&args[i]) = VT_I4;
 
     /* pack arguments and call */
@@ -884,7 +884,7 @@ static void test_OleLoadPicturePath(void)
         {emptyW, &IID_IPicture, NULL},
     };
 
-    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_parameters); i++)
     {
         pic = (IPicture *)0xdeadbeef;
         hres = OleLoadPicturePath(invalid_parameters[i].szURLorPath, NULL, 0, 0,
@@ -924,7 +924,7 @@ static void test_OleLoadPicturePath(void)
     WriteFile(file, bmpimage, sizeof(bmpimage), &size, NULL);
     CloseHandle(file);
 
-    MultiByteToWideChar(CP_ACP, 0, temp_file, -1, temp_fileW + 8, sizeof(temp_fileW)/sizeof(WCHAR) - 8);
+    MultiByteToWideChar(CP_ACP, 0, temp_file, -1, temp_fileW + 8, ARRAY_SIZE(temp_fileW) - 8);
 
     /* Try a normal DOS path. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);

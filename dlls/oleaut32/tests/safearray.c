@@ -567,7 +567,7 @@ static void test_safearray(void)
 	hres = SafeArrayDestroy(a);
 	ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
-	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
+        for (i = 0; i < ARRAY_SIZE(vttypes); i++) {
 	if ((i == VT_I8 || i == VT_UI8) && has_i8)
 	{
 	  vttypes[i].elemsize = sizeof(LONG64);
@@ -704,7 +704,7 @@ static void test_safearray(void)
     if (!pSafeArrayAllocDescriptorEx)
         return;
 
-    for (i = 0; i < sizeof(vttypes)/sizeof(vttypes[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(vttypes); i++) {
 		a = NULL;
 		hres = pSafeArrayAllocDescriptorEx(vttypes[i].vt,1,&a);
 		ok(hres == S_OK, "SafeArrayAllocDescriptorEx gave hres 0x%x\n", hres);
@@ -1457,7 +1457,7 @@ static void test_SafeArrayCopyData(void)
   ok(sacopy != NULL, "Copy test couldn't create copy array\n");
   ok(sacopy->fFeatures == FADF_HAVEVARTYPE, "0x%04x\n", sacopy->fFeatures);
 
-  for (i = 0; i < sizeof(ignored_copy_features)/sizeof(USHORT); i++)
+  for (i = 0; i < ARRAY_SIZE(ignored_copy_features); i++)
   {
       USHORT feature = ignored_copy_features[i];
       USHORT orig = sacopy->fFeatures;
@@ -1765,7 +1765,7 @@ static void test_SafeArrayCopy(void)
   ok(sa->fFeatures == 0, "got src features 0x%04x\n", sa->fFeatures);
   sa->cbElements = 16;
 
-  for (i = 0; i < sizeof(ignored_copy_features)/sizeof(USHORT); i++)
+  for (i = 0; i < ARRAY_SIZE(ignored_copy_features); i++)
   {
       USHORT feature = ignored_copy_features[i];
 
