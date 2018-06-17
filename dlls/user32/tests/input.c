@@ -848,16 +848,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
 {
     if (winetest_debug > 1) trace("MSG:  %8x W:%8lx L:%8lx\n", Msg, wParam, lParam);
 
-    if (Msg != WM_PAINT &&
-        Msg != WM_NCPAINT &&
-        Msg != WM_SYNCPAINT &&
-        Msg != WM_ERASEBKGND &&
-        Msg != WM_NCHITTEST &&
-        Msg != WM_GETTEXT &&
-        Msg != WM_GETICON &&
-        Msg != WM_IME_SELECT &&
-        Msg != WM_DEVICECHANGE &&
-        Msg != WM_TIMECHANGE)
+    if ((Msg >= WM_KEYFIRST && Msg <= WM_KEYLAST) || Msg == WM_SYSCOMMAND)
     {
         ok(sent_messages_cnt < MAXKEYMESSAGES, "Too many messages\n");
         if (sent_messages_cnt < MAXKEYMESSAGES)
