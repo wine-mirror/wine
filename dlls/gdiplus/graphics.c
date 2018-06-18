@@ -1064,7 +1064,11 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
             {
                 HDC hdc = CreateCompatibleDC(NULL);
 
-                if (!hdc) break;
+                if (!hdc)
+                {
+                    DeleteObject(bmp);
+                    break;
+                }
 
                 SelectObject(hdc, bmp);
                 gdi_alpha_blend(graphics, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
