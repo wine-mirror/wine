@@ -48,6 +48,7 @@ static const char testProbeMessage[] = "<?xml version=\"1.0\" encoding=\"utf-8\"
     "xmlns:grog=\"http://more.tests/\"><soap:Header><wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>"
     "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>"
     "<wsa:MessageID>urn:uuid:%s</wsa:MessageID>"
+    "<wsd:AppSequence InstanceId=\"21\" SequenceId=\"urn:uuid:638abee8-124d-4b6a-8b85-8cf2837a2fd2\" MessageNumber=\"14\"></wsd:AppSequence>"
     "<grog:Perry>ExtraInfo</grog:Perry></soap:Header>"
     "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types><grog:Lager>MoreInfo</grog:Lager></wsd:Probe></soap:Body></soap:Envelope>";
 
@@ -533,6 +534,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
         static const WCHAR perry[] = {'P','e','r','r','y',0};
         static const WCHAR extra_info[] = {'E','x','t','r','a','I','n','f','o',0};
         WSD_PROBE *probe_msg = (WSD_PROBE *) pSoap->Body;
+        WSD_APP_SEQUENCE *appseq = (WSD_APP_SEQUENCE *) pSoap->Header.AppSequence;
 
         ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
         ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, discoveryTo) == 0,
@@ -554,6 +556,22 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
             /* Check if we've either received a message without a UUID, or the UUID isn't the one we sent. If so,
                ignore it and wait for another message. */
             if ((ret != RPC_S_OK) || (UuidEqual(&uuid, &probe_message_id, &ret) == FALSE)) return S_OK;
+        }
+
+        ok(appseq != NULL, "pSoap->Header.AppSequence == NULL\n");
+
+        if (appseq != NULL)
+        {
+            static const WCHAR seq_id[] = {'u','r','n',':','u','u','i','d',':','6','3','8','a','b','e','e','8','-',
+                '1','2','4','d','-','4','b','6','a','-','8','b','8','5','-',
+                '8','c','f','2','8','3','7','a','2','f','d','2',0};
+
+            ok(appseq->InstanceId == 21, "pSoap->Header.AppSequence->InstanceId = %s\n",
+                wine_dbgstr_longlong(appseq->InstanceId));
+            ok(lstrcmpW(appseq->SequenceId, seq_id) == 0, "pSoap->Header.AppSequence->SequenceId = '%s'\n",
+                wine_dbgstr_w(appseq->SequenceId));
+            ok(appseq->MessageNumber == 14, "pSoap->Header.AppSequence->MessageNumber = %s\n",
+                wine_dbgstr_longlong(appseq->MessageNumber));
         }
 
         verify_wsdxml_any_text("pSoap->Header.AnyHeaders", pSoap->Header.AnyHeaders, uri_more_tests_no_slash,
