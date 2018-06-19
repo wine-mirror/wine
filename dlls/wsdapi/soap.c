@@ -1127,6 +1127,54 @@ static LPWSTR xml_text_to_wide_string(void *parent_memory, WS_XML_TEXT *text)
     return NULL;
 }
 
+static inline BOOL read_isspace(unsigned int ch)
+{
+    return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
+
+static HRESULT str_to_uint64(const unsigned char *str, ULONG len, UINT64 max, UINT64 *ret)
+{
+    const unsigned char *ptr = str;
+
+    *ret = 0;
+    while (len && read_isspace(*ptr)) { ptr++; len--; }
+    while (len && read_isspace(ptr[len - 1])) { len--; }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    while (len--)
+    {
+        unsigned int val;
+
+        if (!isdigit(*ptr)) return WS_E_INVALID_FORMAT;
+        val = *ptr - '0';
+
+        if ((*ret > max / 10 || *ret * 10 > max - val)) return WS_E_NUMERIC_OVERFLOW;
+        *ret = *ret * 10 + val;
+        ptr++;
+    }
+
+    return S_OK;
+}
+
+#define MAX_UINT64  (((UINT64)0xffffffff << 32) | 0xffffffff)
+
+static HRESULT wide_text_to_ulonglong(LPCWSTR text, ULONGLONG *value)
+{
+    char *utf8_text;
+    int utf8_length;
+    HRESULT ret;
+
+    utf8_text = wide_to_utf8(text, &utf8_length);
+
+    if (utf8_text == NULL) return E_OUTOFMEMORY;
+    if (utf8_length == 1) return E_FAIL;
+
+    ret = str_to_uint64((const unsigned char *) utf8_text, utf8_length - 1, MAX_UINT64, value);
+    heap_free(utf8_text);
+
+    return ret;
+}
+
 static HRESULT move_to_element(WS_XML_READER *reader, const char *element_name, WS_XML_STRING *uri)
 {
     WS_XML_STRING envelope;
@@ -1442,7 +1490,7 @@ static WSDXML_TYPE *generate_type(LPCWSTR uri, void *parent)
 
 HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
 {
-    WSDXML_ELEMENT *envelope = NULL, *header_element, *body_element;
+    WSDXML_ELEMENT *envelope = NULL, *header_element, *appsequence_element, *body_element;
     WS_XML_READER_TEXT_ENCODING encoding;
     WS_XML_ELEMENT_NODE *envelope_node;
     WSD_SOAP_MESSAGE *soap_msg = NULL;
@@ -1560,6 +1608,48 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
     if (FAILED(ret)) goto cleanup;
     soap_msg->Header.MessageID = duplicate_string(soap_msg, value);
     if (soap_msg->Header.MessageID == NULL) goto outofmemory;
+
+    /* Look for optional AppSequence element */
+    appsequence_element = find_element(header_element, appSequenceString, discoveryNsUri);
+
+    if (appsequence_element != NULL)
+    {
+        WSDXML_ATTRIBUTE *current_attrib;
+
+        soap_msg->Header.AppSequence = WSDAllocateLinkedMemory(soap_msg, sizeof(WSD_APP_SEQUENCE));
+        if (soap_msg->Header.AppSequence == NULL) goto outofmemory;
+
+        ZeroMemory(soap_msg->Header.AppSequence, sizeof(WSD_APP_SEQUENCE));
+
+        current_attrib = appsequence_element->FirstAttribute;
+
+        while (current_attrib != NULL)
+        {
+            if (lstrcmpW(current_attrib->Name->Space->Uri, discoveryNsUri) != 0)
+            {
+                current_attrib = current_attrib->Next;
+                continue;
+            }
+
+            if (lstrcmpW(current_attrib->Name->LocalName, instanceIdString) == 0)
+            {
+                ret = wide_text_to_ulonglong(current_attrib->Value, &soap_msg->Header.AppSequence->InstanceId);
+                if (FAILED(ret)) goto cleanup;
+            }
+            else if (lstrcmpW(current_attrib->Name->LocalName, messageNumberString) == 0)
+            {
+                ret = wide_text_to_ulonglong(current_attrib->Value, &soap_msg->Header.AppSequence->MessageNumber);
+                if (FAILED(ret)) goto cleanup;
+            }
+            else if (lstrcmpW(current_attrib->Name->LocalName, sequenceIdString) == 0)
+            {
+                soap_msg->Header.AppSequence->SequenceId = duplicate_string(soap_msg, current_attrib->Value);
+                if (soap_msg->Header.AppSequence->SequenceId == NULL) goto outofmemory;
+            }
+
+            current_attrib = current_attrib->Next;
+        }
+    }
 
     /* Now detach and free known headers to leave the "any" elements */
     remove_element(find_element(header_element, actionString, addressingNsUri));
