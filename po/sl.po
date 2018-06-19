@@ -244,7 +244,7 @@ msgid "Programs (*.exe)"
 msgstr "Programi (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
@@ -420,8 +420,8 @@ msgstr "&Ne"
 msgid "&Retry"
 msgstr "P&onovi"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Zapri"
 
@@ -6824,7 +6824,7 @@ msgstr "Celotno omrežje"
 msgid "Sound Selection"
 msgstr "Izbira zvoka"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "&Shrani kot ..."
 
@@ -11859,7 +11859,7 @@ msgstr "NAPAKA"
 msgid "Untitled"
 msgstr "Neimenovana"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Besedilne datoteke (*.txt)"
 
@@ -15152,11 +15152,11 @@ msgstr ""
 "Zažene ukazni poziv Wine (cmd) v konzoli Wine.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Napaka v programu"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -15164,7 +15164,7 @@ msgstr ""
 "Program %s je naletel na resno napako in se mora zapreti. Žal nam je za "
 "nevšečnosti."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -15174,15 +15174,15 @@ msgstr ""
 "<a href=\"https://appdb.winehq.org\">Application Database</a> za nasvete "
 "glede poganjanja te aplikacije."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Pokaži &Podrobnosti"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Podrobnosti napake v programu"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -15194,23 +15194,21 @@ msgstr ""
 "\", nato pa <a href=\"https://bugs.winehq.org\">prijavite napako</a> in ji "
 "priložite ravno ustvarjeno datoteko."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Program Wine se je sesul"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Notranje napake - prejeti so bili nepravilni parametri"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(nedoločeno)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Shranjevanje je spodletelo"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Nalaganje podrobnih informacij, prosimo počakajte ..."
 

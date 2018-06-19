@@ -226,7 +226,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -402,8 +402,8 @@ msgstr "&Nei"
 msgid "&Retry"
 msgstr "P&røv igjen"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Lukk"
 
@@ -6761,7 +6761,7 @@ msgstr "Hele nettverket"
 msgid "Sound Selection"
 msgstr "Lydutvalg"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "Lagre &som..."
 
@@ -11505,7 +11505,7 @@ msgstr "FEIL"
 msgid "Untitled"
 msgstr "Uten navn"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Tekstfiler (*.txt)"
 
@@ -14728,11 +14728,11 @@ msgstr ""
 "Starter Wine-ledeteksten i en Wine-konsoll.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Programfeil"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -14740,7 +14740,7 @@ msgstr ""
 "Programmet %s har fått et alvorlig problem og må avsluttes. Vi beklager det "
 "inntrufne."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -14750,15 +14750,15 @@ msgstr ""
 "besøke <a href=\"https://appdb.winehq.org\">Wines programdatabase</a> for "
 "råd om hvordan du kan kjøre dette programmet."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Vis &detaljer"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Detaljer for programfeil"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -14770,23 +14770,21 @@ msgstr ""
 "\"Lagre som\"-knappen. Deretter kan du <a href=\"https://wiki.winehq.org/Bugs"
 "\">opprette en feilrapport</a> og legge ved loggfilen."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Wine programfeil"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Interne feil - mottok ugyldig parameter"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(uidentifisert)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Klarte ikke lagre"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Laster detaljert informasjon, vent litt ..."
 

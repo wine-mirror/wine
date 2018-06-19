@@ -227,7 +227,7 @@ msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -403,8 +403,8 @@ msgstr "&Ne"
 msgid "&Retry"
 msgstr "&Pakartoti"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Užverti"
 
@@ -6762,7 +6762,7 @@ msgstr "Visas tinklas"
 msgid "Sound Selection"
 msgstr "Garso parinkimas"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "Išsaugoti k&aip..."
 
@@ -11521,7 +11521,7 @@ msgstr "KLAIDA"
 msgid "Untitled"
 msgstr "Be pavadinimo"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Tekstiniai failai (*.txt)"
 
@@ -14739,11 +14739,11 @@ msgstr ""
 "Paleidžia „Wine“ komandų interpretatorių „Wine“ pulte.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Programos klaida"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -14751,7 +14751,7 @@ msgstr ""
 "Programa %s susidūrė su rimta problema ir turi būti uždaryta. Atsiprašome "
 "dėl nepatogumų."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -14761,15 +14761,15 @@ msgstr ""
 "norėsite patikrinti <a href=\"https://appdb.winehq.org\">programų duomenų "
 "bazę</a> dėl patarimų šios programos vykdymui."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Rodyti &išsamiau"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Išsamiau apie programos klaidą"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -14781,23 +14781,21 @@ msgstr ""
 "kaip“, tada <a href=\"https://wiki.winehq.org/Bugs\">užregistruoti klaidą</"
 "a> ir prikabinti tą failą prie pranešimo."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "„Wine“ programos strigtis"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Vidinės klaidos - gauti neteisingi parametrai"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(nenustatytas)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Nepavyko išsaugoti"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Įkeliama išsami informacija, palaukite..."
 

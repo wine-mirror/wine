@@ -216,7 +216,7 @@ msgid "Programs (*.exe)"
 msgstr "程序 (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
@@ -390,8 +390,8 @@ msgstr "否(&N)"
 msgid "&Retry"
 msgstr "重试(&R)"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "关闭"
 
@@ -6702,7 +6702,7 @@ msgstr "整个网络"
 msgid "Sound Selection"
 msgstr "声音选择"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "保存为(&S)..."
 
@@ -11306,7 +11306,7 @@ msgstr "错误"
 msgid "Untitled"
 msgstr "（未命名）"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "文本文件 (*.txt)"
 
@@ -14483,17 +14483,17 @@ msgstr ""
 "在 Wine 控制台中运行 Wine 命令行。\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "程序错误"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr "程序 %s 遇到严重的问题需要关闭。我们对此造成的不便表示抱歉。"
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -14502,15 +14502,15 @@ msgstr ""
 "这可能是由程序的问题或者 Wine 的缺陷造成的。你可能需要查看 <a href=\"https://"
 "appdb.winehq.org\">Application Databa</a> 来获取运行该应用的相关技巧。"
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "详细信息 (&D)"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "程序错误详情"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -14521,23 +14521,21 @@ msgstr ""
 "保存为一个文件，然后<a href=\"https://wiki.winehq.org/Bugs\">新建一个错误报告"
 "</a>并且附带上该文件。"
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Wine 程序崩溃"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "内部错误 - 收到无效参数"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "（未被识别的）"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "保存失败"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "正在载入详细信息，请稍候..."
 

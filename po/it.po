@@ -245,7 +245,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmi (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Tutti i file (*.*)"
 
@@ -421,8 +421,8 @@ msgstr "&No"
 msgid "&Retry"
 msgstr "&Riprova"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Chiudi"
 
@@ -6832,7 +6832,7 @@ msgstr "Tutta la rete"
 msgid "Sound Selection"
 msgstr "Selezione dell'audio"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "&Salva con nome..."
 
@@ -11911,7 +11911,7 @@ msgstr "ERRORE"
 msgid "Untitled"
 msgstr "(senza nome)"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "File di testo (*.txt)"
 
@@ -15226,11 +15226,11 @@ msgstr ""
 "Avvia il prompt dei comandi di Wine in una console Wine.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Errore del programma"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -15238,7 +15238,7 @@ msgstr ""
 "Il programma %s ha incontrato un errore e deve essere chiuso. Siamo "
 "spiacenti per l'inconveniente."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -15248,15 +15248,15 @@ msgstr ""
 "Wine. Potresti voler consultare il <a href=\"https://appdb.winehq.org"
 "\">Database delle applicazioni</a> per consigli su questa applicazione."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Mostra i &dettagli"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Dettagli dell'errore del programma"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -15268,23 +15268,21 @@ msgstr ""
 "pulsante \"Salva con nome\", poi <a href=\"https://wiki.winehq.org/Bugs"
 "\">segnalalo</a> e allega quel file al report del bug."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Crash di Wine"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Errori interni - ricevuti parametri non validi"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(non identificato)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Salvataggio fallito"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Caricamento delle informazioni dettagliate, aspetta un momento..."
 

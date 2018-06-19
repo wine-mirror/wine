@@ -227,7 +227,7 @@ msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Všechny soubory (*.*)"
 
@@ -403,8 +403,8 @@ msgstr "&Ne"
 msgid "&Retry"
 msgstr "&Zkusit znovu"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Zavřít"
 
@@ -6699,7 +6699,7 @@ msgstr "Celá síť"
 msgid "Sound Selection"
 msgstr "Výběr zvuku"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "&Uložit jako..."
 
@@ -11405,7 +11405,7 @@ msgstr "CHYBA"
 msgid "Untitled"
 msgstr "Bez názvu"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Textové soubory (*.txt)"
 
@@ -14612,11 +14612,11 @@ msgstr ""
 "Spustí příkazový řádek Wine ve Wine terminálu.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Chyba v programu"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -14624,7 +14624,7 @@ msgstr ""
 "Aplikace %s zaznamenala závažný problém a je třeba ji uzavřít. Omlouváme se "
 "za způsobené obtíže."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -14635,15 +14635,15 @@ msgstr ""
 "aplikací</a>, kde mohou být popsány tipy pro provozování konkrétního "
 "programu."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Zobrazit podrobnosti"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Podrobnosti chyby programu"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -14655,23 +14655,21 @@ msgstr ""
 "tlačítko „Uložit jako“ a následně <a href=\"https://wiki.winehq.org/Bugs"
 "\">vyplnit hlášení o chybě</a> a tento soubor k němu připojit."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Program Wine spadl"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Vnitřní chyby – obdrženy neplatné parametry"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(neidentifikováno)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Uložení se nezdařilo"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Probíhá nahrávání podrobných informací, čekejte prosím..."
 

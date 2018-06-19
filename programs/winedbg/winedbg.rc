@@ -34,8 +34,9 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_AUTO_CAPTION     "Wine program crash"
-    IDS_INVALID_PARAMS   "Internal errors - invalid parameters received"
+    IDS_AUTO_CAPTION     "Program Error"
+    IDS_INVALID_PARAMS   "A program on your system has crashed, but WineDbg was \
+                         unable to attach to the process to obtain a backtrace."
     IDS_UNIDENTIFIED     "(unidentified)"
     IDS_TEXT_FILES,      "Text files (*.txt)"
     IDS_ALL_FILES,       "All files (*.*)"

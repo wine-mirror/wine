@@ -233,7 +233,7 @@ msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -407,8 +407,8 @@ msgstr "&לא"
 msgid "&Retry"
 msgstr "&ניסיון חוזר"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "סגירה"
 
@@ -7025,7 +7025,7 @@ msgstr "הרשת כולה"
 msgid "Sound Selection"
 msgstr "בחירת צליל"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "שמירה &בשם..."
 
@@ -11567,7 +11567,7 @@ msgstr "שגיאה"
 msgid "Untitled"
 msgstr "ללא שם"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "קובצי טקסט (‎*.txt)"
 
@@ -14934,17 +14934,17 @@ msgstr ""
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "שגיאה בתכנית"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr "התכנית %s נתקלה בשגיאה חמורה ועליה להיסגר. אנו מתנצלים על אי הנעימות."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -14957,17 +14957,17 @@ msgstr ""
 "אם תקלה זו אינה קיימת בעת הרצת Windows ולא דווח עליה עדיין, ניתן לדווח עליה "
 "בכתובת https://bugs.winehq.org."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 #, fuzzy
 msgid "Show &Details"
 msgstr "&פרטים"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 #, fuzzy
 msgid "Program Error Details"
 msgstr "שגיאה בתכנית"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -14975,24 +14975,22 @@ msgid ""
 "and attach that file to the report."
 msgstr ""
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr ""
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr ""
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr ""
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 #, fuzzy
 msgid "Saving failed"
 msgstr "פתיחת קובץ"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr ""
 

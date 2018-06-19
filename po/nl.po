@@ -229,7 +229,7 @@ msgid "Programs (*.exe)"
 msgstr "Programma's (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
@@ -405,8 +405,8 @@ msgstr "&Nee"
 msgid "&Retry"
 msgstr "O&pnieuw"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:60
-#: winedbg.rc:75 wordpad.rc:180
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Sluiten"
 
@@ -6806,7 +6806,7 @@ msgstr "Gehele netwerk"
 msgid "Sound Selection"
 msgstr "Geluidskeuze"
 
-#: msacm32.rc:39 winedbg.rc:76
+#: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
 msgstr "&Opslaan als..."
 
@@ -11831,7 +11831,7 @@ msgstr "FOUT"
 msgid "Untitled"
 msgstr "Naamloos"
 
-#: notepad.rc:77 winedbg.rc:41
+#: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Tekstbestanden (*.txt)"
 
@@ -15152,11 +15152,11 @@ msgstr ""
 "Start de Wine command prompt in een Wine console.\n"
 "\n"
 
-#: winedbg.rc:49
+#: winedbg.rc:50 winedbg.rc:38
 msgid "Program Error"
 msgstr "Programma Fout"
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -15164,7 +15164,7 @@ msgstr ""
 "Het programma %s is een serieus probleem tegengekomen en moet afgesloten "
 "worden. Excuses voor het ongemak."
 
-#: winedbg.rc:58
+#: winedbg.rc:59
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -15178,15 +15178,15 @@ msgstr ""
 "Als dit probleem niet optreedt onder Windows en nog niet is gerapporteerd, "
 "dan kunt u <a href=\"https://wiki.winehq.org/Bugs\">een bug rapporteren</a>."
 
-#: winedbg.rc:61
+#: winedbg.rc:62
 msgid "Show &Details"
 msgstr "Toon &Details"
 
-#: winedbg.rc:66
+#: winedbg.rc:67
 msgid "Program Error Details"
 msgstr "Programmafout details"
 
-#: winedbg.rc:73
+#: winedbg.rc:74
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -15198,23 +15198,21 @@ msgstr ""
 "opslaan met de \"Opslaan als\" knop. Dit bestand kunt U via <a href="
 "\"https://wiki.winehq.org/Bugs\">file a bug report</a> versturen."
 
-#: winedbg.rc:38
-msgid "Wine program crash"
-msgstr "Wine programma crash"
-
-#: winedbg.rc:39
-msgid "Internal errors - invalid parameters received"
-msgstr "Interne fouten - foutieve parameters ontvangen"
-
 #: winedbg.rc:40
+msgid ""
+"A program on your system has crashed, but WineDbg was unable to attach to "
+"the process to obtain a backtrace."
+msgstr ""
+
+#: winedbg.rc:41
 msgid "(unidentified)"
 msgstr "(onbekend)"
 
-#: winedbg.rc:43
+#: winedbg.rc:44
 msgid "Saving failed"
 msgstr "Opslaan mislukt"
 
-#: winedbg.rc:44
+#: winedbg.rc:45
 msgid "Loading detailed information, please wait..."
 msgstr "Even geduld a.u.b. Gedetailleerde informatie wordt geladen..."
 
