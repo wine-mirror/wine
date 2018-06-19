@@ -676,12 +676,8 @@ static BOOL be_x86_64_store_integer(const struct dbg_lvalue* lvalue, unsigned si
 
 static BOOL be_x86_64_get_context(HANDLE thread, dbg_ctx_t *ctx)
 {
-#ifdef __x86_64__
     ctx->ctx.ContextFlags = CONTEXT_ALL;
     return GetThreadContext(thread, &ctx->ctx);
-#else
-    WINE_FIXME("Cannot debug an x86-64 process on this architecture.\n");
-#endif
 }
 
 static BOOL be_x86_64_set_context(HANDLE thread, const dbg_ctx_t *ctx)

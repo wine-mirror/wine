@@ -182,12 +182,8 @@ static BOOL be_ppc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
 
 static BOOL be_ppc_get_context(HANDLE thread, dbg_ctx_t *ctx)
 {
-#ifdef __powerpc__
     ctx->ctx.ContextFlags = CONTEXT_ALL;
     return GetThreadContext(thread, &ctx->ctx);
-#else
-    WINE_FIXME("Cannot debug a PowerPC process on this architecture.\n");
-#endif
 }
 
 static BOOL be_ppc_set_context(HANDLE thread, const dbg_ctx_t *ctx)

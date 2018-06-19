@@ -1891,12 +1891,8 @@ static BOOL be_arm_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
 
 static BOOL be_arm_get_context(HANDLE thread, dbg_ctx_t *ctx)
 {
-#ifdef __arm__
     ctx->ctx.ContextFlags = CONTEXT_ALL;
     return GetThreadContext(thread, &ctx->ctx);
-#else
-    WINE_FIXME("Cannot debug an ARM process on this architecture.\n");
-#endif
 }
 
 static BOOL be_arm_set_context(HANDLE thread, const dbg_ctx_t *ctx)
