@@ -211,6 +211,34 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
     return ret;
 }
 
+#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b)
+static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color)
+{
+    struct surface_readback rb;
+    D3DSURFACE_DESC desc;
+    unsigned int x, y;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_GetDesc(rt, &desc);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get surface desc, hr %#x.\n", hr);
+
+    get_rt_readback(rt, &rb);
+    for (y = 0; y < desc.Height; ++y)
+    {
+        for (x = 0; x < desc.Width; ++x)
+        {
+            color = get_readback_color(&rb, x, y) & 0x00ffffff;
+            if (color != expected_color)
+                break;
+        }
+        if (color != expected_color)
+            break;
+    }
+    release_surface_readback(&rb);
+    ok_(__FILE__, line)(color == 0x000000ff, "Got unexpected color 0x%08x.\n", color);
+}
+
 static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -21406,6 +21434,92 @@ done:
     DestroyWindow(window);
 }
 
+static void test_depth_stencil_init(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *ds[2];
+    IDirect3DSurface9 *rt;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        struct vec3 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}},
+    };
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create D3D device.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(hr == S_OK, "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(hr == S_OK, "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == S_OK, "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+    ok(hr == S_OK, "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == S_OK, "Failed to set FVF, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8, 0, 0, FALSE, &ds[0], NULL);
+    ok(hr == S_OK, "Failed to create depth stencil surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &ds[1]);
+    ok(hr == S_OK, "Failed to get depth stencil surface, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(ds); ++i)
+    {
+        hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds[i]);
+        ok(hr == S_OK, "Failed to set depth stencil surface, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+        ok(hr == S_OK, "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == S_OK, "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x000000ff);
+        ok(hr == S_OK, "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == S_OK, "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == S_OK, "Failed to end scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
+        ok(hr == S_OK, "Failed to get render target, hr %#x.\n", hr);
+        check_rt_color(rt, 0x000000ff);
+        IDirect3DSurface9_Release(rt);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Failed to present, hr %#x.\n", hr);
+
+        IDirect3DSurface9_Release(ds[i]);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 static void test_texture_blending(void)
 {
 #define STATE_END()  {0xffffffff, 0xffffffff}
@@ -24037,6 +24151,7 @@ START_TEST(visual)
     test_flip();
     test_uninitialized_varyings();
     test_multisample_init();
+    test_depth_stencil_init();
     test_texture_blending();
     test_color_clamping();
     test_line_antialiasing_blending();
