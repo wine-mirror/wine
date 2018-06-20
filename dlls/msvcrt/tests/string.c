@@ -607,8 +607,6 @@ static void test_strcpy_s(void)
             dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
-#define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
-
 #define okchars(dst, b0, b1, b2, b3, b4, b5, b6, b7) \
     ok(dst[0] == b0 && dst[1] == b1 && dst[2] == b2 && dst[3] == b3 && \
        dst[4] == b4 && dst[5] == b5 && dst[6] == b6 && dst[7] == b7, \
@@ -628,14 +626,14 @@ static void test_memcpy_s(void)
 
     /* Normal */
     memset(dest, 'X', sizeof(dest));
-    ret = p_memcpy_s(dest, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ret = p_memcpy_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == 0, "Copying a buffer into a big enough destination returned %d, expected 0\n", ret);
     okchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], 'X', 'X');
 
     /* Vary source size */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memcpy_s(dest, NUMELMS(dest), big, NUMELMS(big));
+    ret = p_memcpy_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
     ok(ret == ERANGE, "Copying a big buffer to a small destination returned %d, expected ERANGE\n", ret);
     ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
     okchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -643,7 +641,7 @@ static void test_memcpy_s(void)
     /* Replace source with NULL */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memcpy_s(dest, NUMELMS(dest), NULL, NUMELMS(tiny));
+    ret = p_memcpy_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Copying a NULL source buffer returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -651,21 +649,21 @@ static void test_memcpy_s(void)
     /* Vary dest size */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memcpy_s(dest, 0, tiny, NUMELMS(tiny));
+    ret = p_memcpy_s(dest, 0, tiny, ARRAY_SIZE(tiny));
     ok(ret == ERANGE, "Copying into a destination of size 0 returned %d, expected ERANGE\n", ret);
     ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
 
     /* Replace dest with NULL */
     errno = 0xdeadbeef;
-    ret = p_memcpy_s(NULL, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ret = p_memcpy_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Copying a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
 
     /* Combinations */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memcpy_s(dest, 0, NULL, NUMELMS(tiny));
+    ret = p_memcpy_s(dest, 0, NULL, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
@@ -684,20 +682,20 @@ static void test_memmove_s(void)
 
     /* Normal */
     memset(dest, 'X', sizeof(dest));
-    ret = p_memmove_s(dest, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ret = p_memmove_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == 0, "Moving a buffer into a big enough destination returned %d, expected 0\n", ret);
     okchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], 'X', 'X');
 
     /* Overlapping */
     memcpy(dest, big, sizeof(dest));
-    ret = p_memmove_s(dest+1, NUMELMS(dest)-1, dest, NUMELMS(dest)-1);
+    ret = p_memmove_s(dest+1, ARRAY_SIZE(dest)-1, dest, ARRAY_SIZE(dest)-1);
     ok(ret == 0, "Moving a buffer up one char returned %d, expected 0\n", ret);
     okchars(dest, big[0], big[0], big[1], big[2], big[3], big[4], big[5], big[6]);
 
     /* Vary source size */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memmove_s(dest, NUMELMS(dest), big, NUMELMS(big));
+    ret = p_memmove_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
     ok(ret == ERANGE, "Moving a big buffer to a small destination returned %d, expected ERANGE\n", ret);
     ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
@@ -705,7 +703,7 @@ static void test_memmove_s(void)
     /* Replace source with NULL */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memmove_s(dest, NUMELMS(dest), NULL, NUMELMS(tiny));
+    ret = p_memmove_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Moving a NULL source buffer returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
@@ -713,21 +711,21 @@ static void test_memmove_s(void)
     /* Vary dest size */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memmove_s(dest, 0, tiny, NUMELMS(tiny));
+    ret = p_memmove_s(dest, 0, tiny, ARRAY_SIZE(tiny));
     ok(ret == ERANGE, "Moving into a destination of size 0 returned %d, expected ERANGE\n", ret);
     ok(errno == ERANGE, "errno is %d, expected ERANGE\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
 
     /* Replace dest with NULL */
     errno = 0xdeadbeef;
-    ret = p_memmove_s(NULL, NUMELMS(dest), tiny, NUMELMS(tiny));
+    ret = p_memmove_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Moving a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
 
     /* Combinations */
     errno = 0xdeadbeef;
     memset(dest, 'X', sizeof(dest));
-    ret = p_memmove_s(dest, 0, NULL, NUMELMS(tiny));
+    ret = p_memmove_s(dest, 0, NULL, ARRAY_SIZE(tiny));
     ok(ret == EINVAL, "Moving a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
