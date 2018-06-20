@@ -146,9 +146,9 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, DWORD system_store, co
     worldStores[2] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, myW);
     worldStores[3] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, trustW);
 
-    CRYPT_AddStoresToCollection(engine->hWorld,  sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
-    CRYPT_AddStoresToCollection(engine->hWorld,  config->cAdditionalStore, config->rghAdditionalStore);
-    CRYPT_CloseStores(sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
+    CRYPT_AddStoresToCollection(engine->hWorld, ARRAY_SIZE(worldStores), worldStores);
+    CRYPT_AddStoresToCollection(engine->hWorld, config->cAdditionalStore, config->rghAdditionalStore);
+    CRYPT_CloseStores(ARRAY_SIZE(worldStores), worldStores);
 
     engine->dwFlags = config->dwFlags;
     engine->dwUrlRetrievalTimeout = config->dwUrlRetrievalTimeout;
@@ -1688,11 +1688,9 @@ static LPCSTR filetime_to_str(const FILETIME *time)
 
     if (!time) return "(null)";
 
-    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
-     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt, ARRAY_SIZE(dateFmt));
     FileTimeToSystemTime(time, &sysTime);
-    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
-     sizeof(date) / sizeof(date[0]));
+    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date, ARRAY_SIZE(date));
     return wine_dbg_sprintf("%s", date);
 }
 
@@ -3117,8 +3115,7 @@ static BOOL WINAPI verify_authenticode_policy(LPCSTR szPolicyOID,
         };
 
         /* Check whether the root is an MS test root */
-        for (i = 0; !isMSTestRoot && i < sizeof(keyBlobs) / sizeof(keyBlobs[0]);
-         i++)
+        for (i = 0; !isMSTestRoot && i < ARRAY_SIZE(keyBlobs); i++)
         {
             msPubKey.PublicKey.cbData = keyBlobs[i].cbData;
             msPubKey.PublicKey.pbData = keyBlobs[i].pbData;
@@ -3408,7 +3405,7 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
 
                 end = dot ? dot : ptr + strlenW(ptr);
                 len = end - ptr;
-                if (len >= sizeof(component) / sizeof(component[0]))
+                if (len >= ARRAY_SIZE(component))
                 {
                     WARN_(chain)("domain component %s too long\n",
                      debugstr_wn(ptr, len));
@@ -3690,8 +3687,7 @@ static BOOL WINAPI verify_ms_root_policy(LPCSTR szPolicyOID,
         PCCERT_CONTEXT root =
          rootChain->rgpElement[rootChain->cElement - 1]->pCertContext;
 
-        for (i = 0; !isMSRoot && i < sizeof(keyBlobs) / sizeof(keyBlobs[0]);
-         i++)
+        for (i = 0; !isMSRoot && i < ARRAY_SIZE(keyBlobs); i++)
         {
             msPubKey.PublicKey.cbData = keyBlobs[i].cbData;
             msPubKey.PublicKey.pbData = keyBlobs[i].pbData;

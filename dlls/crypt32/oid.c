@@ -69,7 +69,7 @@ static const WCHAR ADDRESSBOOK[] = {'A','D','D','R','E','S','S','B','O','O','K',
 static const WCHAR TRUSTEDPUBLISHER[] = {'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',0};
 static const WCHAR DISALLOWED[] = {'D','i','s','a','l','l','o','w','e','d',0};
 static const LPCWSTR LocalizedKeys[] = {ROOT,MY,CA,ADDRESSBOOK,TRUSTEDPUBLISHER,DISALLOWED};
-static WCHAR LocalizedNames[sizeof(LocalizedKeys)/sizeof(LocalizedKeys[0])][256];
+static WCHAR LocalizedNames[ARRAY_SIZE(LocalizedKeys)][256];
 
 static void free_function_sets(void)
 {
@@ -1006,7 +1006,7 @@ static void oid_init_localizednames(void)
 {
     unsigned int i;
 
-    for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
+    for(i = 0; i < ARRAY_SIZE(LocalizedKeys); i++)
     {
         LoadStringW(hInstance, IDS_LOCALIZEDNAME_ROOT+i, LocalizedNames[i], 256);
     }
@@ -1019,7 +1019,7 @@ LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName)
 {
     unsigned int i;
 
-    for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
+    for(i = 0; i < ARRAY_SIZE(LocalizedKeys); i++)
     {
         if(!lstrcmpiW(LocalizedKeys[i], pwszCryptName))
         {
@@ -1399,8 +1399,7 @@ static void init_oid_info(void)
     DWORD i;
 
     oid_init_localizednames();
-    for (i = 0; i < sizeof(oidInfoConstructors) /
-     sizeof(oidInfoConstructors[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(oidInfoConstructors); i++)
     {
         if (!IS_INTRESOURCE(oidInfoConstructors[i].pwszName))
         {

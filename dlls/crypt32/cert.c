@@ -987,8 +987,7 @@ static BOOL container_matches_cert(PCCERT_CONTEXT pCert, LPCSTR container,
     WCHAR containerW[MAX_PATH];
     BOOL matches;
 
-    MultiByteToWideChar(CP_ACP, 0, container, -1,
-     containerW, sizeof(containerW) / sizeof(containerW[0]));
+    MultiByteToWideChar(CP_ACP, 0, container, -1, containerW, ARRAY_SIZE(containerW));
     /* We make a copy of the CRYPT_KEY_PROV_INFO because the caller expects
      * keyProvInfo->pwszContainerName to be NULL or a heap-allocated container
      * name.
