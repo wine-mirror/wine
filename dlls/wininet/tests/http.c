@@ -6558,7 +6558,7 @@ static const struct notification_data notification_data[] = {
     },
     {
         async_send_request_ex_test2,
-        sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
+        ARRAY_SIZE(async_send_request_ex_test2),
         "POST",
         "test.winehq.org",
         "tests/post.php"
