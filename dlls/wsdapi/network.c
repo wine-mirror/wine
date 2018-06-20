@@ -540,7 +540,7 @@ static BOOL start_listening_on_all_addresses(IWSDiscoveryPublisherImpl *impl, UL
     {
         if (impl->num_thread_handles >= MAX_WSD_THREADS)
         {
-            WARN("Exceeded maximum number of supported listener threads; too many network interfaces.");
+            WARN("Exceeded maximum number of supported listener threads; too many network interfaces.\n");
             goto cleanup;
         }
 
