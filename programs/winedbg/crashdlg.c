@@ -34,13 +34,18 @@
 
 static char *crash_log;
 
-int msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType)
+int msgbox_res_id(HWND hwnd, UINT textid, UINT captionid, UINT type)
 {
-    WCHAR caption[256];
-    WCHAR text[256];
-    LoadStringW(GetModuleHandleW(NULL), captionId, caption, ARRAY_SIZE(caption));
-    LoadStringW(GetModuleHandleW(NULL), textId, text, ARRAY_SIZE(text));
-    return MessageBoxW(hwnd, text, caption, uType);
+    if (DBG_IVAR(ShowCrashDialog))
+    {
+        WCHAR caption[256];
+        WCHAR text[256];
+        LoadStringW(GetModuleHandleW(NULL), captionid, caption, ARRAY_SIZE(caption));
+        LoadStringW(GetModuleHandleW(NULL), textid, text, ARRAY_SIZE(text));
+        return MessageBoxW(hwnd, text, caption, type);
+    }
+
+    return IDCANCEL;
 }
 
 static WCHAR *get_program_name(HANDLE hProcess)
