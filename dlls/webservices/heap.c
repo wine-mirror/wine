@@ -215,7 +215,7 @@ HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PR
 
 static void reset_heap( struct heap *heap )
 {
-    HeapDestroy( heap->handle );
+    if (heap->handle) HeapDestroy( heap->handle );
     heap->handle   = NULL;
     heap->max_size = heap->allocated = 0;
 }
