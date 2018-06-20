@@ -4866,3 +4866,22 @@ HRESULT writer_set_lookup( WS_XML_WRITER *handle, BOOL enable )
     LeaveCriticalSection( &writer->cs );
     return S_OK;
 }
+
+HRESULT writer_set_dict_callback( WS_XML_WRITER *handle, WS_DYNAMIC_STRING_CALLBACK cb, void *state )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    writer->dict_cb        = cb;
+    writer->dict_cb_state  = state;
+
+    LeaveCriticalSection( &writer->cs );
+    return S_OK;
+}

@@ -1009,22 +1009,26 @@ static inline ULONG size_length( ULONG size )
     return 5;
 }
 
-static ULONG string_table_size( const WS_XML_DICTIONARY *dict )
+static ULONG string_table_size( const struct dictionary *dict )
 {
     ULONG i, size = 0;
-    for (i = 0; i < dict->stringCount; i++)
-        size += size_length( dict->strings[i].length ) + dict->strings[i].length;
+    for (i = 0; i < dict->dict.stringCount; i++)
+    {
+        if (dict->sequence[i] == dict->current_sequence)
+            size += size_length( dict->dict.strings[i].length ) + dict->dict.strings[i].length;
+    }
     return size;
 }
 
-static HRESULT send_string_table( SOCKET socket, const WS_XML_DICTIONARY *dict )
+static HRESULT send_string_table( SOCKET socket, const struct dictionary *dict )
 {
     ULONG i;
     HRESULT hr;
-    for (i = 0; i < dict->stringCount; i++)
+    for (i = 0; i < dict->dict.stringCount; i++)
     {
-        if ((hr = send_size( socket, dict->strings[i].length )) != S_OK) return hr;
-        if ((hr = send_bytes( socket, dict->strings[i].bytes, dict->strings[i].length )) != S_OK) return hr;
+        if (dict->sequence[i] != dict->current_sequence) continue;
+        if ((hr = send_size( socket, dict->dict.strings[i].length )) != S_OK) return hr;
+        if ((hr = send_bytes( socket, dict->dict.strings[i].bytes, dict->dict.strings[i].length )) != S_OK) return hr;
     }
     return S_OK;
 }
@@ -1154,13 +1158,13 @@ static HRESULT receive_preamble_ack( struct channel *channel )
 
 static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG len )
 {
-    ULONG table_size = string_table_size( &channel->dict_send.dict );
+    ULONG table_size = string_table_size( &channel->dict_send );
     HRESULT hr;
 
     if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_SIZED_ENVELOPE )) != S_OK) return hr;
     if ((hr = send_size( channel->u.tcp.socket, size_length(table_size) + table_size + len )) != S_OK) return hr;
     if ((hr = send_size( channel->u.tcp.socket, table_size )) != S_OK) return hr;
-    if ((hr = send_string_table( channel->u.tcp.socket, &channel->dict_send.dict )) != S_OK) return hr;
+    if ((hr = send_string_table( channel->u.tcp.socket, &channel->dict_send )) != S_OK) return hr;
     return send_bytes( channel->u.tcp.socket, data, len );
 }
 
@@ -1285,11 +1289,8 @@ static HRESULT init_writer( struct channel *channel )
         return WsSetOutput( channel->writer, &text.encoding, &buf.output, NULL, 0, NULL );
 
     case WS_ENCODING_XML_BINARY_SESSION_1:
-        clear_dict( &channel->dict_send );
-        bin.staticDictionary           = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
-        bin.dynamicStringCallback      = dict_cb;
-        bin.dynamicStringCallbackState = &channel->dict_send;
-        return WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+        bin.staticDictionary = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
+        /* fall through */
 
     case WS_ENCODING_XML_BINARY_1:
         return WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL );
@@ -1307,6 +1308,8 @@ static HRESULT write_message( struct channel *channel, WS_MESSAGE *msg, const WS
     if ((hr = writer_set_lookup( channel->writer, TRUE )) != S_OK) return hr;
     if ((hr = WsWriteEnvelopeStart( msg, channel->writer, NULL, NULL, NULL )) != S_OK) return hr;
     if ((hr = writer_set_lookup( channel->writer, FALSE )) != S_OK) return hr;
+    channel->dict_send.current_sequence++;
+    if ((hr = writer_set_dict_callback( channel->writer, dict_cb, &channel->dict_send )) != S_OK) return hr;
     if ((hr = WsWriteBody( msg, desc, option, body, size, NULL )) != S_OK) return hr;
     return WsWriteEnvelopeEnd( msg, NULL );
 }

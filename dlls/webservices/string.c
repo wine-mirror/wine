@@ -91,7 +91,7 @@ int find_string( const struct dictionary *dict, const unsigned char *data, ULONG
 static HRESULT grow_dict( struct dictionary *dict, ULONG size )
 {
     WS_XML_STRING *tmp;
-    ULONG new_size, *tmp_sorted;
+    ULONG new_size, *tmp_sorted, *tmp_sequence;
 
     assert( !dict->dict.isConst );
     if (dict->size >= dict->dict.stringCount + size) return S_OK;
@@ -107,6 +107,14 @@ static HRESULT grow_dict( struct dictionary *dict, ULONG size )
             dict->dict.strings = NULL;
             return E_OUTOFMEMORY;
         }
+        if (!(dict->sequence = heap_alloc( new_size * sizeof(*dict->sequence) )))
+        {
+            heap_free( dict->dict.strings );
+            dict->dict.strings = NULL;
+            heap_free( dict->sorted );
+            dict->sorted = NULL;
+            return E_OUTOFMEMORY;
+        }
         dict->size = new_size;
         return S_OK;
     }
@@ -116,6 +124,8 @@ static HRESULT grow_dict( struct dictionary *dict, ULONG size )
     dict->dict.strings = tmp;
     if (!(tmp_sorted = heap_realloc( dict->sorted, new_size * sizeof(*tmp_sorted) ))) return E_OUTOFMEMORY;
     dict->sorted = tmp_sorted;
+    if (!(tmp_sequence = heap_realloc( dict->sequence, new_size * sizeof(*tmp_sequence) ))) return E_OUTOFMEMORY;
+    dict->sequence = tmp_sequence;
 
     dict->size = new_size;
     return S_OK;
@@ -131,6 +141,9 @@ void clear_dict( struct dictionary *dict )
     dict->dict.stringCount = 0;
     heap_free( dict->sorted );
     dict->sorted = NULL;
+    heap_free( dict->sequence );
+    dict->sequence = NULL;
+    dict->current_sequence = 0;
     dict->size = 0;
 }
 
@@ -149,6 +162,9 @@ HRESULT insert_string( struct dictionary *dict, unsigned char *data, ULONG len, 
     dict->dict.strings[id].dictionary = &dict->dict;
     dict->dict.strings[id].id         = id;
     dict->dict.stringCount++;
+
+    dict->sequence[id] = dict->current_sequence;
+
     if (ret_id) *ret_id = id;
     return S_OK;
 }
