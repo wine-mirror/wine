@@ -967,15 +967,6 @@ static HRESULT connect_channel( struct channel *channel )
     }
 }
 
-static HRESULT write_message( WS_MESSAGE *handle, WS_XML_WRITER *writer, const WS_ELEMENT_DESCRIPTION *desc,
-                              WS_WRITE_OPTION option, const void *body, ULONG size )
-{
-    HRESULT hr;
-    if ((hr = WsWriteEnvelopeStart( handle, writer, NULL, NULL, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteBody( handle, desc, option, body, size, NULL )) != S_OK) return hr;
-    return WsWriteEnvelopeEnd( handle, NULL );
-}
-
 static HRESULT send_message_http( HINTERNET request, BYTE *data, ULONG len )
 {
     if (!WinHttpSendRequest( request, NULL, 0, data, len, len, 0 ))
@@ -1298,8 +1289,7 @@ static HRESULT init_writer( struct channel *channel )
         bin.staticDictionary           = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
         bin.dynamicStringCallback      = dict_cb;
         bin.dynamicStringCallbackState = &channel->dict_send;
-        if ((hr = WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL )) != S_OK) return hr;
-        return writer_enable_lookup( channel->writer );
+        return WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL );
 
     case WS_ENCODING_XML_BINARY_1:
         return WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL );
@@ -1308,6 +1298,17 @@ static HRESULT init_writer( struct channel *channel )
         FIXME( "unhandled encoding %u\n", channel->encoding );
         return WS_E_NOT_SUPPORTED;
     }
+}
+
+static HRESULT write_message( struct channel *channel, WS_MESSAGE *msg, const WS_ELEMENT_DESCRIPTION *desc,
+                              WS_WRITE_OPTION option, const void *body, ULONG size )
+{
+    HRESULT hr;
+    if ((hr = writer_set_lookup( channel->writer, TRUE )) != S_OK) return hr;
+    if ((hr = WsWriteEnvelopeStart( msg, channel->writer, NULL, NULL, NULL )) != S_OK) return hr;
+    if ((hr = writer_set_lookup( channel->writer, FALSE )) != S_OK) return hr;
+    if ((hr = WsWriteBody( msg, desc, option, body, size, NULL )) != S_OK) return hr;
+    return WsWriteEnvelopeEnd( msg, NULL );
 }
 
 /**************************************************************************
@@ -1339,8 +1340,7 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
     if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
 
     if ((hr = init_writer( channel )) != S_OK) goto done;
-    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
-        goto done;
+    if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) goto done;
     hr = send_message( channel, msg );
 
 done:
@@ -1380,13 +1380,11 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
     if ((hr = message_set_request_id( msg, &req_id )) != S_OK) goto done;
 
     if ((hr = init_writer( channel )) != S_OK) goto done;
-    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
-        goto done;
+    if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) goto done;
     hr = send_message( channel, msg );
 
 done:
     LeaveCriticalSection( &channel->cs );
-    FIXME( "returning %08x\n", hr );
     return hr;
 }
 

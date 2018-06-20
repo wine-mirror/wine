@@ -4849,7 +4849,7 @@ done:
     return hr;
 }
 
-HRESULT writer_enable_lookup( WS_XML_WRITER *handle )
+HRESULT writer_set_lookup( WS_XML_WRITER *handle, BOOL enable )
 {
     struct writer *writer = (struct writer *)handle;
 
@@ -4861,7 +4861,7 @@ HRESULT writer_enable_lookup( WS_XML_WRITER *handle )
         return E_INVALIDARG;
     }
 
-    writer->dict_do_lookup = TRUE;
+    writer->dict_do_lookup = enable;
 
     LeaveCriticalSection( &writer->cs );
     return S_OK;
