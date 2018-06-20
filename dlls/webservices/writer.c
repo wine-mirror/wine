@@ -39,7 +39,7 @@ static const struct prop_desc writer_props[] =
 {
     { sizeof(ULONG), FALSE },       /* WS_XML_WRITER_PROPERTY_MAX_DEPTH */
     { sizeof(BOOL), FALSE },        /* WS_XML_WRITER_PROPERTY_ALLOW_FRAGMENT */
-    { sizeof(ULONG), FALSE },       /* WS_XML_READER_PROPERTY_MAX_ATTRIBUTES */
+    { sizeof(ULONG), FALSE },       /* WS_XML_WRITER_PROPERTY_MAX_ATTRIBUTES */
     { sizeof(BOOL), FALSE },        /* WS_XML_WRITER_PROPERTY_WRITE_DECLARATION */
     { sizeof(ULONG), FALSE },       /* WS_XML_WRITER_PROPERTY_INDENT */
     { sizeof(ULONG), FALSE },       /* WS_XML_WRITER_PROPERTY_BUFFER_TRIM_SIZE */
@@ -85,6 +85,7 @@ struct writer
     WS_CHARSET                   output_charset;
     WS_XML_WRITER_OUTPUT_TYPE    output_type;
     struct xmlbuf               *output_buf;
+    BOOL                         output_buf_user;
     WS_HEAP                     *output_heap;
     const WS_XML_DICTIONARY     *dict;
     BOOL                         dict_do_lookup;
@@ -332,7 +333,7 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
 static void set_output_buffer( struct writer *writer, struct xmlbuf *xmlbuf )
 {
     /* free current buffer if it's ours */
-    if (writer->output_buf && writer->output_buf->heap == writer->output_heap)
+    if (writer->output_buf && !writer->output_buf_user)
     {
         free_xmlbuf( writer->output_buf );
     }
@@ -419,6 +420,7 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
             goto done;
         }
         set_output_buffer( writer, xmlbuf );
+        writer->output_buf_user = FALSE;
         break;
     }
     default:
@@ -472,6 +474,7 @@ HRESULT WINAPI WsSetOutputToBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer
     writer->output_enc     = xmlbuf->encoding;
     writer->output_charset = xmlbuf->charset;
     set_output_buffer( writer, xmlbuf );
+    writer->output_buf_user = TRUE;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) hr = E_OUTOFMEMORY;
     else write_insert_bof( writer, node );
