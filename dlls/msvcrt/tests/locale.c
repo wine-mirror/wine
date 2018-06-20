@@ -643,7 +643,7 @@ static void test_crtGetStringTypeW(void)
         return;
     }
 
-    for(i=0; i<sizeof(str)/sizeof(*str); i++) {
+    for(i=0; i<ARRAY_SIZE(str); i++) {
         ret_crt = p__crtGetStringTypeW(0, CT_CTYPE1, str[i], 1, &out_crt);
         ret = GetStringTypeW(CT_CTYPE1, str[i], 1, &out);
         ok(ret == ret_crt, "%d) ret_crt = %d\n", i, (int)ret_crt);
@@ -708,7 +708,7 @@ static void test__Gettnames(void)
     else
         ok(size==0x164 || broken(size==0xb8), "structure size: %x\n", size);
 
-    for (i = 0; i < sizeof(time_data)/sizeof(time_data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(time_data); i++)
     {
         size = GetLocaleInfoA(MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
                               time_data[i], buf, sizeof(buf));
@@ -722,7 +722,7 @@ static void test__Gettnames(void)
         return;
 
     ret = _Gettnames();
-    for (i = 0; i < sizeof(time_data)/sizeof(time_data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(time_data); i++)
     {
         size = GetLocaleInfoA(MAKELCID(LANG_GERMAN, SORT_DEFAULT),
                               time_data[i], buf, sizeof(buf));
