@@ -193,6 +193,7 @@ enum session_state
 {
     SESSION_STATE_UNINITIALIZED,
     SESSION_STATE_SETUP_COMPLETE,
+    SESSION_STATE_SHUTDOWN,
 };
 
 struct channel
@@ -664,6 +665,78 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
     return hr;
 }
 
+enum frame_record_type
+{
+    FRAME_RECORD_TYPE_VERSION,
+    FRAME_RECORD_TYPE_MODE,
+    FRAME_RECORD_TYPE_VIA,
+    FRAME_RECORD_TYPE_KNOWN_ENCODING,
+    FRAME_RECORD_TYPE_EXTENSIBLE_ENCODING,
+    FRAME_RECORD_TYPE_UNSIZED_ENVELOPE,
+    FRAME_RECORD_TYPE_SIZED_ENVELOPE,
+    FRAME_RECORD_TYPE_END,
+    FRAME_RECORD_TYPE_FAULT,
+    FRAME_RECORD_TYPE_UPGRADE_REQUEST,
+    FRAME_RECORD_TYPE_UPGRADE_RESPONSE,
+    FRAME_RECORD_TYPE_PREAMBLE_ACK,
+    FRAME_RECORD_TYPE_PREAMBLE_END,
+};
+
+static HRESULT send_byte( SOCKET socket, BYTE byte )
+{
+    int count = send( socket, (char *)&byte, 1, 0 );
+    if (count < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
+    if (count != 1) return WS_E_OTHER;
+    return S_OK;
+}
+
+static HRESULT shutdown_session( struct channel *channel )
+{
+    HRESULT hr;
+
+    if (channel->state != WS_CHANNEL_STATE_OPEN ||
+        (channel->type != WS_CHANNEL_TYPE_OUTPUT_SESSION &&
+         channel->type != WS_CHANNEL_TYPE_DUPLEX_SESSION) ||
+         channel->session_state >= SESSION_STATE_SHUTDOWN) return WS_E_INVALID_OPERATION;
+
+    switch (channel->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_END )) != S_OK) return hr;
+        channel->session_state = SESSION_STATE_SHUTDOWN;
+        return S_OK;
+
+    default:
+        FIXME( "unhandled binding %u\n", channel->binding );
+        return E_NOTIMPL;
+    }
+}
+
+HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p\n", handle, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!channel) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = shutdown_session( channel );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
+}
+
 static void close_channel( struct channel *channel )
 {
     reset_channel( channel );
@@ -913,14 +986,6 @@ static HRESULT send_message_http( HINTERNET request, BYTE *data, ULONG len )
     return S_OK;
 }
 
-static HRESULT send_byte( SOCKET socket, BYTE byte )
-{
-    int count = send( socket, (char *)&byte, 1, 0 );
-    if (count < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
-    if (count != 1) return WS_E_OTHER;
-    return S_OK;
-}
-
 static HRESULT send_bytes( SOCKET socket, BYTE *bytes, int len )
 {
     int count = send( socket, (char *)bytes, len, 0 );
@@ -943,23 +1008,6 @@ static HRESULT send_size( SOCKET socket, ULONG size )
     if ((size >>= 7) < 0x08) return send_byte( socket, size );
     return E_INVALIDARG;
 }
-
-enum frame_record_type
-{
-    FRAME_RECORD_TYPE_VERSION,
-    FRAME_RECORD_TYPE_MODE,
-    FRAME_RECORD_TYPE_VIA,
-    FRAME_RECORD_TYPE_KNOWN_ENCODING,
-    FRAME_RECORD_TYPE_EXTENSIBLE_ENCODING,
-    FRAME_RECORD_TYPE_UNSIZED_ENVELOPE,
-    FRAME_RECORD_TYPE_SIZED_ENVELOPE,
-    FRAME_RECORD_TYPE_END,
-    FRAME_RECORD_TYPE_FAULT,
-    FRAME_RECORD_TYPE_UPGRADE_REQUEST,
-    FRAME_RECORD_TYPE_UPGRADE_RESPONSE,
-    FRAME_RECORD_TYPE_PREAMBLE_ACK,
-    FRAME_RECORD_TYPE_PREAMBLE_END,
-};
 
 static inline ULONG size_length( ULONG size )
 {

@@ -496,6 +496,9 @@ static void test_message_read_write( const struct listener_info *info )
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -627,6 +630,9 @@ static void test_duplex_session( const struct listener_info *info )
     hr = WsCreateChannel( info->type, info->binding, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
     memset( &addr, 0, sizeof(addr) );
     addr.url.length = wsprintfW( buf, fmt, info->port );
     addr.url.chars  = buf;
@@ -654,6 +660,12 @@ static void test_duplex_session( const struct listener_info *info )
 
     err = WaitForSingleObject( info->wait, 3000 );
     ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
+
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
