@@ -4264,6 +4264,9 @@ GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *p
     if(graphics->busy)
         return ObjectBusy;
 
+    if (!path->pathdata.Count)
+        return Ok;
+
     if (graphics->image && graphics->image->type == ImageTypeMetafile)
         return METAFILE_FillPath((GpMetafile*)graphics->image, brush, path);
 

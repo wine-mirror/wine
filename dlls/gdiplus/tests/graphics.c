@@ -1539,6 +1539,52 @@ static void test_GdipFillClosedCurveI(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_GdipFillPath(void)
+{
+    GpStatus status;
+    GpGraphics *graphics;
+    GpSolidFill *brush;
+    GpPath *path;
+    HDC hdc = GetDC(hwnd);
+
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+    status = GdipCreateSolidFill((ARGB)0xffffffff, &brush);
+    expect(Ok, status);
+    ok(brush != NULL, "Expected brush to be initialized\n");
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    ok(path != NULL, "Expected path to be initialized\n");
+
+    /* Empty path */
+    GdipResetPath(path);
+    status = GdipFillPath(graphics, (GpBrush *)brush, path);
+    expect(Ok, status);
+
+    /* Not closed path */
+    GdipResetPath(path);
+    status = GdipAddPathLineI(path, 0, 0, 2, 2);
+    expect(Ok, status);
+    status = GdipAddPathLineI(path, 2, 2, 4, 0);
+    expect(Ok, status);
+    status = GdipFillPath(graphics, (GpBrush *)brush, path);
+    expect(Ok, status);
+
+    /* Closed path */
+    GdipResetPath(path);
+    status = GdipAddPathRectangle(path, 0, 0, 4, 4);
+    expect(Ok, status);
+    status = GdipFillPath(graphics, (GpBrush *)brush, path);
+    expect(Ok, status);
+
+    GdipDeletePath(path);
+    GdipDeleteBrush((GpBrush *)brush);
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(hwnd, hdc);
+}
+
 static void test_Get_Release_DC(void)
 {
     GpStatus status;
@@ -6795,6 +6841,7 @@ START_TEST(graphics)
     test_GdipDrawImagePointsRect();
     test_GdipFillClosedCurve();
     test_GdipFillClosedCurveI();
+    test_GdipFillPath();
     test_GdipDrawString();
     test_GdipGetNearestColor();
     test_GdipGetVisibleClipBounds();
