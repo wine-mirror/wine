@@ -144,6 +144,8 @@ static const WCHAR DESKPATTERN_VALNAME[]=              {DESKTOP_KEY,'P','a','t',
 static const WCHAR FONTSMOOTHING_VALNAME[]=            {DESKTOP_KEY,'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
 static const WCHAR DRAGWIDTH_VALNAME[]=                {DESKTOP_KEY,'D','r','a','g','W','i','d','t','h',0};
 static const WCHAR DRAGHEIGHT_VALNAME[]=               {DESKTOP_KEY,'D','r','a','g','H','e','i','g','h','t',0};
+static const WCHAR DPISCALINGVER_VALNAME[]=            {DESKTOP_KEY,'D','p','i','S','c','a','l','i','n','g','V','e','r',0};
+static const WCHAR LOGPIXELS_VALNAME[]=                {DESKTOP_KEY,'L','o','g','P','i','x','e','l','s',0};
 static const WCHAR LOWPOWERACTIVE_VALNAME[]=           {DESKTOP_KEY,'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
 static const WCHAR POWEROFFACTIVE_VALNAME[]=           {DESKTOP_KEY,'P','o','w','e','r','O','f','f','A','c','t','i','v','e',0};
 static const WCHAR USERPREFERENCESMASK_VALNAME[]=      {DESKTOP_KEY,'U','s','e','r','P','r','e','f','e','r','e','n','c','e','s','M','a','s','k',0};
@@ -251,6 +253,9 @@ static BOOL notify_change = TRUE;
 
 /* System parameters storage */
 static RECT work_area;
+static UINT system_dpi;
+static DPI_AWARENESS dpi_awareness;
+static DPI_AWARENESS default_awareness = DPI_AWARENESS_UNAWARE;
 
 static HKEY volatile_base_key;
 
@@ -612,37 +617,6 @@ static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
     return init_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
 }
 
-static DWORD get_reg_dword( HKEY base, const WCHAR *key_name, const WCHAR *value_name )
-{
-    HKEY key;
-    DWORD type, ret = 0, size = sizeof(ret);
-
-    if (RegOpenKeyW( base, key_name, &key )) return 0;
-    if (RegQueryValueExW( key, value_name, NULL, &type, (void *)&ret, &size ) || type != REG_DWORD)
-        ret = 0;
-    RegCloseKey( key );
-    return ret;
-}
-
-/* get the system dpi from the registry */
-static UINT get_system_dpi(void)
-{
-    static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
-    static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
-    static UINT system_dpi;
-    UINT dpi;
-
-    if (!system_dpi)
-    {
-        if (!(dpi = get_reg_dword( HKEY_CURRENT_USER, dpi_key_name, dpi_value_name )) &&
-            !(dpi = get_reg_dword( HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name )))
-            dpi = USER_DEFAULT_SCREEN_DPI;
-        system_dpi = dpi;
-    }
-    return system_dpi;
-}
-
 HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
@@ -897,7 +871,7 @@ static BOOL get_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
         DWORD val;
         if (load_entry( &entry->hdr, &val, sizeof(val) ) == sizeof(DWORD)) entry->dword.val = val;
     }
-    *(DWORD *)ptr_param = entry->bool.val;
+    *(DWORD *)ptr_param = entry->dword.val;
     return TRUE;
 }
 
@@ -1285,6 +1259,7 @@ static TWIPS_ENTRY( SMCAPTIONWIDTH, -225 );
 static DWORD_ENTRY( ACTIVEWINDOWTRACKING, 0 );
 static DWORD_ENTRY( ACTIVEWNDTRKTIMEOUT, 0 );
 static DWORD_ENTRY( CARETWIDTH, 1 );
+static DWORD_ENTRY( DPISCALINGVER, 0 );
 static DWORD_ENTRY( FOCUSBORDERHEIGHT, 1 );
 static DWORD_ENTRY( FOCUSBORDERWIDTH, 1 );
 static DWORD_ENTRY( FONTSMOOTHINGCONTRAST, 0 );
@@ -1292,6 +1267,7 @@ static DWORD_ENTRY( FONTSMOOTHINGORIENTATION, FE_FONTSMOOTHINGORIENTATIONRGB );
 static DWORD_ENTRY( FONTSMOOTHINGTYPE, FE_FONTSMOOTHINGSTANDARD );
 static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
+static DWORD_ENTRY( LOGPIXELS, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 
 static PATH_ENTRY( DESKPATTERN );
@@ -1430,8 +1406,10 @@ static union sysparam_all_entry * const default_entries[] =
  */
 void SYSPARAMS_Init(void)
 {
+    static const WCHAR def_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
+    static const WCHAR def_value_name[] = {'L','o','g','P','i','x','e','l','s',0};
     HKEY key;
-    DWORD i, dispos;
+    DWORD i, dispos, dpi_scaling;
 
     /* this one must be non-volatile */
     if (RegCreateKeyW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY, &key ))
@@ -1446,6 +1424,24 @@ void SYSPARAMS_Init(void)
         ERR("Can't create non-permanent wine registry branch\n");
 
     RegCloseKey( key );
+
+    get_dword_entry( (union sysparam_all_entry *)&entry_LOGPIXELS, 0, &system_dpi, 0 );
+    if (!system_dpi)  /* check fallback key */
+    {
+        if (!RegOpenKeyW( HKEY_CURRENT_CONFIG, def_key_name, &key ))
+        {
+            DWORD type, size = sizeof(system_dpi);
+            if (RegQueryValueExW( key, def_value_name, NULL, &type, (void *)&system_dpi, &size ) ||
+                type != REG_DWORD)
+                system_dpi = 0;
+            RegCloseKey( key );
+        }
+    }
+    if (!system_dpi) system_dpi = USER_DEFAULT_SCREEN_DPI;
+
+    /* FIXME: what do the DpiScalingVer flags mean? */
+    get_dword_entry( (union sysparam_all_entry *)&entry_DPISCALINGVER, 0, &dpi_scaling, 0 );
+    if (!dpi_scaling) default_awareness = DPI_AWARENESS_PER_MONITOR_AWARE;
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
     {
@@ -3171,15 +3167,13 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 }
 
 
-static DPI_AWARENESS dpi_awareness;
-
 /**********************************************************************
  *              get_monitor_dpi
  */
 UINT get_monitor_dpi( HWND hwnd )
 {
     /* FIXME: use the monitor DPI instead */
-    return get_system_dpi();
+    return system_dpi;
 }
 
 /**********************************************************************
@@ -3300,7 +3294,7 @@ BOOL WINAPI IsProcessDPIAware(void)
 UINT WINAPI GetDpiForSystem(void)
 {
     if (!IsProcessDPIAware()) return USER_DEFAULT_SCREEN_DPI;
-    return get_system_dpi();
+    return system_dpi;
 }
 
 /***********************************************************************
@@ -3308,7 +3302,7 @@ UINT WINAPI GetDpiForSystem(void)
  */
 BOOL WINAPI GetDpiForMonitorInternal( HMONITOR monitor, UINT type, UINT *x, UINT *y )
 {
-    UINT dpi = get_system_dpi();
+    UINT dpi = system_dpi;
 
     WARN( "(%p, %u, %p, %p): semi-stub\n", monitor, type, x, y );
 
@@ -3326,7 +3320,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
 
     if (info->dpi_awareness) return ULongToHandle( info->dpi_awareness );
     if (dpi_awareness) return ULongToHandle( dpi_awareness );
-    return (DPI_AWARENESS_CONTEXT)(0x10 | DPI_AWARENESS_SYSTEM_AWARE);  /* FIXME: should default to unaware */
+    return ULongToHandle( 0x10 | default_awareness );
 }
 
 /**********************************************************************
@@ -3358,7 +3352,6 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
  */
 BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 {
-    UINT system_dpi = get_system_dpi();
     UINT dpi = GetDpiForWindow( hwnd );
     RECT rect;
 
@@ -3375,7 +3368,6 @@ BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 {
     DPI_AWARENESS_CONTEXT context;
-    UINT system_dpi = get_system_dpi();
     UINT dpi = GetDpiForWindow( hwnd );
     RECT rect;
 
