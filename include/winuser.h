@@ -3377,6 +3377,16 @@ typedef struct tagPOINTER_DEVICE_INFO {
     WCHAR               productString[POINTER_DEVICE_PRODUCT_STRING_MAX];
 } POINTER_DEVICE_INFO;
 
+enum tagPOINTER_INPUT_TYPE
+{
+    PT_POINTER = 1,
+    PT_TOUCH,
+    PT_PEN,
+    PT_MOUSE,
+    PT_TOUCHPAD,
+};
+typedef DWORD POINTER_INPUT_TYPE;
+
 #if defined(_WINGDI_) && !defined(NOGDI)
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
