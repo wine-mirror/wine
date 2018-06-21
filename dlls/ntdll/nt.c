@@ -1352,7 +1352,8 @@ static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
 
         (*pdata)[i].Relationship = rel;
         (*pdata)[i].ProcessorMask = mask;
-        /* TODO: set processor core flags */
+        if (rel == RelationProcessorCore)
+            (*pdata)[i].u.ProcessorCore.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
         (*pdata)[i].u.Reserved[0] = 0;
         (*pdata)[i].u.Reserved[1] = id;
         *len = i+1;
