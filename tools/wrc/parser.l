@@ -402,7 +402,7 @@ static unsigned long xstrtoul(const char *nptr, char **endptr, int base)
 0[oO][0-7]+[lL]?	{ parser_lval.num = xstrtoul(yytext+2, 0, 8);
                           return (yytext[yyleng-1] == 'L' || yytext[yyleng-1] == 'l') ? tLNUMBER : tNUMBER; }
 
-[A-Za-z_0-9./\\]+	{
+[A-Za-z_0-9./\\][A-Za-z_0-9./\\\-]*	{
 				struct keyword *tok = iskeyword(yytext);
 
 				if(tok)
