@@ -7,7 +7,7 @@
 @ stub GetInertiaParameterInteractionContext
 @ stub GetInteractionConfigurationInteractionContext
 @ stub GetMouseWheelParameterInteractionContext
-@ stub GetPropertyInteractionContext
+@ stdcall GetPropertyInteractionContext(ptr long ptr)
 @ stub GetStateInteractionContext
 @ stub ProcessBufferedPacketsInteractionContext
 @ stdcall ProcessInertiaInteractionContext(ptr)
@@ -20,5 +20,5 @@
 @ stub SetInteractionConfigurationInteractionContext
 @ stub SetMouseWheelParameterInteractionContext
 @ stub SetPivotInteractionContext
-@ stub SetPropertyInteractionContext
+@ stdcall SetPropertyInteractionContext(ptr long long)
 @ stub StopInteractionContext

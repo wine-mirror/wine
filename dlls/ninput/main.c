@@ -72,6 +72,65 @@ HRESULT WINAPI DestroyInteractionContext(HINTERACTIONCONTEXT handle)
     return S_OK;
 }
 
+HRESULT WINAPI GetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
+        INTERACTION_CONTEXT_PROPERTY property, UINT32 *value)
+{
+    struct interaction_context *context = context_from_handle(handle);
+
+    TRACE("context %p, property %#x, value %p.\n", context, property, value);
+
+    if (!context)
+        return E_HANDLE;
+    if (!value)
+        return E_POINTER;
+
+    switch (property)
+    {
+        case INTERACTION_CONTEXT_PROPERTY_MEASUREMENT_UNITS:
+        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
+            FIXME("Unhandled property %#x.\n", property);
+            *value = 0;
+            return E_NOTIMPL;
+
+        case INTERACTION_CONTEXT_PROPERTY_FILTER_POINTERS:
+            *value = context->filter_pointers;
+            return S_OK;
+
+        default:
+            WARN("Invalid property %#x.\n", property);
+            return E_INVALIDARG;
+    }
+}
+
+HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
+        INTERACTION_CONTEXT_PROPERTY property, UINT32 value)
+{
+    struct interaction_context *context = context_from_handle(handle);
+
+    TRACE("context %p, property %#x, value %#x.\n", context, property, value);
+
+    if (!context)
+        return E_HANDLE;
+
+    switch (property)
+    {
+        case INTERACTION_CONTEXT_PROPERTY_MEASUREMENT_UNITS:
+        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
+            FIXME("Unhandled property %#x.\n", property);
+            return E_NOTIMPL;
+
+        case INTERACTION_CONTEXT_PROPERTY_FILTER_POINTERS:
+            if (value != FALSE && value != TRUE)
+                return E_INVALIDARG;
+            context->filter_pointers = value;
+            return S_OK;
+
+        default:
+            WARN("Invalid property %#x.\n", property);
+            return E_INVALIDARG;
+    }
+}
+
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
 {
     FIXME("context %p: stub!\n", context);
