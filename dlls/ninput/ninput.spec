@@ -10,7 +10,7 @@
 @ stub GetPropertyInteractionContext
 @ stub GetStateInteractionContext
 @ stub ProcessBufferedPacketsInteractionContext
-@ stub ProcessInertiaInteractionContext
+@ stdcall ProcessInertiaInteractionContext(ptr)
 @ stub ProcessPointerFramesInteractionContext
 @ stub RegisterOutputCallbackInteractionContext
 @ stub RemovePointerInteractionContext

@@ -72,6 +72,12 @@ HRESULT WINAPI DestroyInteractionContext(HINTERACTIONCONTEXT handle)
     return S_OK;
 }
 
+HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
+{
+    FIXME("context %p: stub!\n", context);
+    return E_NOTIMPL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     TRACE("(%p, %d, %p)\n", inst, reason, reserved);
