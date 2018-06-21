@@ -73,6 +73,8 @@ static const WCHAR name_cider[] = { 'C','i','d','e','r', 0 };
 static HANDLE probe_event = NULL;
 static UUID probe_message_id;
 
+static IWSDiscoveryPublisher *publisher_instance = NULL;
+
 #define MAX_CACHED_MESSAGES     5
 #define MAX_LISTENING_THREADS  20
 
@@ -230,6 +232,49 @@ static DWORD WINAPI listening_thread(LPVOID lpParam)
     heap_free(parameter);
 
     return 0;
+}
+
+static BOOL start_listening_udp_unicast(messageStorage *msgStorage, struct sockaddr_in *address)
+{
+    listenerThreadParams *parameter = NULL;
+    const DWORD receive_timeout = 500;
+    const UINT reuse_addr = 1;
+    HANDLE hThread;
+    SOCKET s = 0;
+
+    /* Create the socket */
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (s == INVALID_SOCKET) goto cleanup;
+
+    /* Ensure the socket can be reused */
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse_addr, sizeof(reuse_addr)) == SOCKET_ERROR) goto cleanup;
+
+    /* Bind the socket to the local interface so we can receive data */
+    if (bind(s, (struct sockaddr *) address, sizeof(struct sockaddr_in)) == SOCKET_ERROR) goto cleanup;
+
+    /* Set a 500ms receive timeout */
+    if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *) &receive_timeout, sizeof(receive_timeout)) == SOCKET_ERROR)
+        goto cleanup;
+
+    /* Allocate memory for thread parameters */
+    parameter = heap_alloc(sizeof(listenerThreadParams));
+
+    parameter->msgStorage = msgStorage;
+    parameter->listeningSocket = s;
+
+    hThread = CreateThread(NULL, 0, listening_thread, parameter, 0, NULL);
+    if (hThread == NULL) goto cleanup;
+
+    msgStorage->threadHandles[msgStorage->numThreadHandles] = hThread;
+    msgStorage->numThreadHandles++;
+
+    return TRUE;
+
+cleanup:
+    closesocket(s);
+    heap_free(parameter);
+
+    return FALSE;
 }
 
 static void start_listening(messageStorage *msgStorage, const char *multicastAddress, const char *bindAddress)
@@ -581,6 +626,8 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
         {
             static const WCHAR lager[] = {'L','a','g','e','r',0};
             static const WCHAR more_info[] = {'M','o','r','e','I','n','f','o',0};
+            IWSDUdpAddress *remote_addr = NULL;
+            HRESULT rc;
 
             ok(probe_msg->Types != NULL, "Probe message Types == NULL\n");
 
@@ -593,6 +640,149 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
             ok(probe_msg->Scopes == NULL, "Probe message Scopes != NULL\n");
             verify_wsdxml_any_text("probe_msg->Any", probe_msg->Any, uri_more_tests_no_slash, prefix_grog, lager, more_info);
+
+            rc = IWSDMessageParameters_GetRemoteAddress(pMessageParameters, (IWSDAddress **) &remote_addr);
+            ok(rc == S_OK, "IWSDMessageParameters_GetRemoteAddress returned %08x\n", rc);
+
+            if (remote_addr != NULL)
+            {
+                messageStorage *msg_storage;
+                char endpoint_reference_string[MAX_PATH], app_sequence_string[MAX_PATH];
+                LPWSTR publisherIdW = NULL, sequenceIdW = NULL;
+                SOCKADDR_STORAGE remote_sock;
+                WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element, *ref_param_any_element;
+                WSDXML_NAME header_any_name;
+                WSDXML_NAMESPACE ns;
+                static const WCHAR header_any_name_text[] = {'B','e','e','r',0};
+                static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
+                static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
+                static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
+                static const WCHAR ref_param_any_text[] = {'R','e','f','P','T','e','s','t',0};
+                static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
+                static const WCHAR prefix[] = {'w','i','n','e',0};
+                BOOL probe_matches_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
+                BOOL metadata_version_seen = FALSE, wine_ns_seen = FALSE, body_probe_matches_seen = FALSE;
+                BOOL types_seen = FALSE, any_header_seen = FALSE, any_body_seen = FALSE;
+                BOOL message_ok;
+                char *msg;
+                int i;
+
+                rc = IWSDUdpAddress_GetSockaddr(remote_addr, &remote_sock);
+                ok(rc == S_OK, "IWSDMessageParameters_GetRemoteAddress returned %08x\n", rc);
+
+                IWSDUdpAddress_Release(remote_addr);
+
+                msg_storage = heap_alloc_zero(sizeof(messageStorage));
+                if (msg_storage == NULL) goto after_matchprobe_test;
+
+                msg_storage->running = TRUE;
+                InitializeCriticalSection(&msg_storage->criticalSection);
+
+                ok(start_listening_udp_unicast(msg_storage, (struct sockaddr_in *) &remote_sock) == TRUE,
+                    "Unable to listen on local socket for UDP messages\n");
+
+                publisherIdW = utf8_to_wide(publisherId);
+                sequenceIdW = utf8_to_wide(sequenceId);
+
+                /* Create "any" elements for header */
+                ns.Uri = uri;
+                ns.PreferredPrefix = prefix;
+
+                header_any_name.LocalName = (WCHAR *) header_any_name_text;
+                header_any_name.Space = &ns;
+
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, header_any_text, &header_any_element);
+                ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, body_any_text, &body_any_element);
+                ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, endpoint_any_text, &endpoint_any_element);
+                ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, ref_param_any_text, &ref_param_any_element);
+                ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
+
+                rc = IWSDiscoveryPublisher_MatchProbeEx(publisher_instance, pSoap, pMessageParameters, publisherIdW, 1, 1, 1,
+                    sequenceIdW, probe_msg->Types, NULL, NULL, header_any_element, ref_param_any_element, NULL,
+                    endpoint_any_element, body_any_element);
+                todo_wine ok(rc == S_OK, "IWSDiscoveryPublisher_MatchProbe failed with %08x\n", rc);
+
+                WSDFreeLinkedMemory(header_any_element);
+                WSDFreeLinkedMemory(body_any_element);
+                WSDFreeLinkedMemory(endpoint_any_element);
+                WSDFreeLinkedMemory(ref_param_any_element);
+
+                /* Wait up to 2 seconds for messages to be received */
+                if (WaitForMultipleObjects(msg_storage->numThreadHandles, msg_storage->threadHandles, TRUE, 5000) == WAIT_TIMEOUT)
+                {
+                    /* Wait up to 1 more second for threads to terminate */
+                    msg_storage->running = FALSE;
+                    WaitForMultipleObjects(msg_storage->numThreadHandles, msg_storage->threadHandles, TRUE, 1000);
+                }
+
+                for (i = 0; i < msg_storage->numThreadHandles; i++)
+                {
+                    CloseHandle(msg_storage->threadHandles[i]);
+                }
+
+                DeleteCriticalSection(&msg_storage->criticalSection);
+
+                /* Verify we've received a message */
+                todo_wine ok(msg_storage->messageCount >= 1, "No messages received\n");
+
+                sprintf(endpoint_reference_string, "<wsa:EndpointReference><wsa:Address>%s</wsa:Address>"
+                    "<wsa:ReferenceParameters><wine:Beer>RefPTest</wine:Beer></wsa:ReferenceParameters>"
+                    "<wine:Beer>EndPTest</wine:Beer></wsa:EndpointReference>", publisherId);
+
+                sprintf(app_sequence_string, "<wsd:AppSequence InstanceId=\"1\" SequenceId=\"%s\" MessageNumber=\"1\"></wsd:AppSequence>",
+                    sequenceId);
+
+                message_ok = FALSE;
+
+                /* Check we're received the correct message */
+                for (i = 0; i < msg_storage->messageCount; i++)
+                {
+                    msg = msg_storage->messages[i];
+                    message_ok = FALSE;
+
+                    probe_matches_message_seen = (strstr(msg,
+                        "<wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/ProbeMatches</wsa:Action>") != NULL);
+                    endpoint_reference_seen = (strstr(msg, endpoint_reference_string) != NULL);
+                    app_sequence_seen = (strstr(msg, app_sequence_string) != NULL);
+                    metadata_version_seen = (strstr(msg, "<wsd:MetadataVersion>1</wsd:MetadataVersion>") != NULL);
+                    any_header_seen = (strstr(msg, "<wine:Beer>PublishTest</wine:Beer>") != NULL);
+                    wine_ns_seen = (strstr(msg, "xmlns:grog=\"http://more.tests\"") != NULL);
+                    body_probe_matches_seen = (strstr(msg, "<soap:Body><wsd:ProbeMatches") != NULL);
+                    any_body_seen = (strstr(msg, "<wine:Beer>BodyTest</wine:Beer>") != NULL);
+                    types_seen = (strstr(msg, "<wsd:Types>grog:Cider</wsd:Types>") != NULL);
+                    message_ok = probe_matches_message_seen && endpoint_reference_seen && app_sequence_seen &&
+                        metadata_version_seen && body_probe_matches_seen && types_seen;
+
+                    if (message_ok) break;
+                }
+
+                for (i = 0; i < msg_storage->messageCount; i++)
+                {
+                    heap_free(msg_storage->messages[i]);
+                }
+
+                todo_wine ok(probe_matches_message_seen == TRUE, "Probe matches message not received\n");
+                todo_wine ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
+                todo_wine ok(app_sequence_seen == TRUE, "AppSequence not received\n");
+                todo_wine ok(metadata_version_seen == TRUE, "MetadataVersion not received\n");
+                todo_wine ok(message_ok == TRUE, "ProbeMatches message metadata not received\n");
+                todo_wine ok(any_header_seen == TRUE, "Custom header not received\n");
+                todo_wine ok(wine_ns_seen == TRUE, "Wine namespace not received\n");
+                todo_wine ok(body_probe_matches_seen == TRUE, "Body and Probe Matches elements not received\n");
+                todo_wine ok(any_body_seen == TRUE, "Custom body element not received\n");
+                todo_wine ok(types_seen == TRUE, "Types not received\n");
+
+after_matchprobe_test:
+                heap_free(publisherIdW);
+                heap_free(sequenceIdW);
+                heap_free(msg_storage);
+            }
         }
     }
 
@@ -754,6 +944,8 @@ static void Publish_tests(void)
     rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
     ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
     ok(publisher != NULL, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: publisher == NULL\n");
+
+    publisher_instance = publisher;
 
     /* Test SetAddressFamily */
     rc = IWSDiscoveryPublisher_SetAddressFamily(publisher, 12345);
@@ -957,7 +1149,7 @@ after_publish_test:
         sprintf(probe_message, testProbeMessage, probe_uuid_str);
 
         ok(send_udp_multicast_of_type(probe_message, strlen(probe_message), AF_INET) == TRUE, "Sending Probe message failed\n");
-        ok(WaitForSingleObject(probe_event, 2000) == WAIT_OBJECT_0, "Probe message not received\n");
+        ok(WaitForSingleObject(probe_event, 10000) == WAIT_OBJECT_0, "Probe message not received\n");
 
         RpcStringFreeA(&probe_uuid_str);
     }
