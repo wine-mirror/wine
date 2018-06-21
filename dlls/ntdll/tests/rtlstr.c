@@ -406,7 +406,6 @@ static const dupl_ustr_t dupl_ustr[] = {
     { 3,  0,  2,  2, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
     { 3,  0,  0,  0, NULL,               40, 42, 42, NULL,                    0,  2,  2, "",                     STATUS_SUCCESS},
 };
-#define NB_DUPL_USTR (sizeof(dupl_ustr)/sizeof(*dupl_ustr))
 
 
 static void test_RtlDuplicateUnicodeString(void)
@@ -429,7 +428,7 @@ static void test_RtlDuplicateUnicodeString(void)
         return;
     }
 
-    for (test_num = 0; test_num < NB_DUPL_USTR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(dupl_ustr); test_num++) {
 	source_str.Length        = dupl_ustr[test_num].source_Length;
 	source_str.MaximumLength = dupl_ustr[test_num].source_MaximumLength;
 	if (dupl_ustr[test_num].source_buf != NULL) {
@@ -776,7 +775,6 @@ static const ustr2astr_t ustr2astr[] = {
     {  0,  0, 12, NULL,           10, 10, 12,  NULL,    FALSE, 5, 0, 0, NULL,     STATUS_BUFFER_OVERFLOW},
 #endif
 };
-#define NB_USTR2ASTR (sizeof(ustr2astr)/sizeof(*ustr2astr))
 
 
 static void test_RtlUnicodeStringToAnsiString(void)
@@ -789,7 +787,7 @@ static void test_RtlUnicodeStringToAnsiString(void)
     NTSTATUS result;
     unsigned int test_num;
 
-    for (test_num = 0; test_num < NB_USTR2ASTR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(ustr2astr); test_num++) {
 	ansi_str.Length        = ustr2astr[test_num].ansi_Length;
 	ansi_str.MaximumLength = ustr2astr[test_num].ansi_MaximumLength;
 	if (ustr2astr[test_num].ansi_buf != NULL) {
@@ -852,7 +850,6 @@ static const app_asc2str_t app_asc2str[] = {
     { 5, 14, 15,               NULL,    NULL,  5, 14, 15,               NULL, STATUS_SUCCESS},
     { 5, 12, 15, "Tst\0S01234abcde", "tr\0i",  7, 12, 15, "Tst\0Str234abcde", STATUS_SUCCESS},
 };
-#define NB_APP_ASC2STR (sizeof(app_asc2str)/sizeof(*app_asc2str))
 
 
 static void test_RtlAppendAsciizToString(void)
@@ -862,7 +859,7 @@ static void test_RtlAppendAsciizToString(void)
     NTSTATUS result;
     unsigned int test_num;
 
-    for (test_num = 0; test_num < NB_APP_ASC2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(app_asc2str); test_num++) {
 	dest_str.Length        = app_asc2str[test_num].dest_Length;
 	dest_str.MaximumLength = app_asc2str[test_num].dest_MaximumLength;
 	if (app_asc2str[test_num].dest_buf != NULL) {
@@ -922,7 +919,6 @@ static const app_str2str_t app_str2str[] = {
     { 5, 14, 15,               NULL, 0, 0, 7,      NULL,  5, 14, 15,                NULL, STATUS_SUCCESS},
     { 5, 12, 15, "Tst\0S01234abcde", 4, 4, 7, "tr\0iZY",  9, 12, 15, "Tst\0Str\0i4abcde", STATUS_SUCCESS},
 };
-#define NB_APP_STR2STR (sizeof(app_str2str)/sizeof(*app_str2str))
 
 
 static void test_RtlAppendStringToString(void)
@@ -934,7 +930,7 @@ static void test_RtlAppendStringToString(void)
     NTSTATUS result;
     unsigned int test_num;
 
-    for (test_num = 0; test_num < NB_APP_STR2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(app_str2str); test_num++) {
 	dest_str.Length        = app_str2str[test_num].dest_Length;
 	dest_str.MaximumLength = app_str2str[test_num].dest_MaximumLength;
 	if (app_str2str[test_num].dest_buf != NULL) {
@@ -1005,7 +1001,6 @@ static const app_uni2str_t app_uni2str[] = {
     { 4, 14, 14,     "Fake0123abcdef", "U\0stri\0", 10, 14, 14, "FakeU\0stri\0\0ef", STATUS_SUCCESS},
     { 6, 14, 16, "Te\0\0stabcdefghij",  "St\0\0ri",  8, 14, 16, "Te\0\0stSt\0\0efghij", STATUS_SUCCESS},
 };
-#define NB_APP_UNI2STR (sizeof(app_uni2str)/sizeof(*app_uni2str))
 
 
 static void test_RtlAppendUnicodeToString(void)
@@ -1015,7 +1010,7 @@ static void test_RtlAppendUnicodeToString(void)
     NTSTATUS result;
     unsigned int test_num;
 
-    for (test_num = 0; test_num < NB_APP_UNI2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(app_uni2str); test_num++) {
 	dest_str.Length        = app_uni2str[test_num].dest_Length;
 	dest_str.MaximumLength = app_uni2str[test_num].dest_MaximumLength;
 	if (app_uni2str[test_num].dest_buf != NULL) {
@@ -1079,7 +1074,6 @@ static const app_ustr2str_t app_ustr2str[] = {
     { 4, 14, 14,                 NULL, 0, 0, 8,         NULL,  4, 14, 14,                 NULL, STATUS_SUCCESS},
     { 6, 14, 16, "Te\0\0stabcdefghij", 6, 8, 8, "St\0\0riZY", 12, 14, 16, "Te\0\0stSt\0\0ri\0\0ij", STATUS_SUCCESS},
 };
-#define NB_APP_USTR2STR (sizeof(app_ustr2str)/sizeof(*app_ustr2str))
 
 
 static void test_RtlAppendUnicodeStringToString(void)
@@ -1091,7 +1085,7 @@ static void test_RtlAppendUnicodeStringToString(void)
     NTSTATUS result;
     unsigned int test_num;
 
-    for (test_num = 0; test_num < NB_APP_USTR2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(app_ustr2str); test_num++) {
 	dest_str.Length        = app_ustr2str[test_num].dest_Length;
 	dest_str.MaximumLength = app_ustr2str[test_num].dest_MaximumLength;
 	if (app_ustr2str[test_num].dest_buf != NULL) {
@@ -1189,7 +1183,6 @@ static const find_ch_in_ustr_t find_ch_in_ustr[] = {
     { 2, "abcdabcdabcdabcdabcdabcd",   "abcd",    0, STATUS_NOT_FOUND},
     { 3, "abcdabcdabcdabcdabcdabcd",   "abcd",    0, STATUS_NOT_FOUND},
 };
-#define NB_FIND_CH_IN_USTR (sizeof(find_ch_in_ustr)/sizeof(*find_ch_in_ustr))
 
 
 static void test_RtlFindCharInUnicodeString(void)
@@ -1209,7 +1202,7 @@ static void test_RtlFindCharInUnicodeString(void)
         return;
     }
 
-    for (test_num = 0; test_num < NB_FIND_CH_IN_USTR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(find_ch_in_ustr); test_num++) {
 	if (find_ch_in_ustr[test_num].main_str != NULL) {
 	    main_str.Length        = strlen(find_ch_in_ustr[test_num].main_str) * sizeof(WCHAR);
 	    main_str.MaximumLength = main_str.Length + sizeof(WCHAR);
@@ -1371,7 +1364,6 @@ static const str2int_t str2int[] = {
     {-8, "0",                     0, STATUS_INVALID_PARAMETER}, /* Negative base */
 /*    { 0, NULL,                    0, STATUS_SUCCESS}, */ /* NULL as string */
 };
-#define NB_STR2INT (sizeof(str2int)/sizeof(*str2int))
 
 
 static void test_RtlUnicodeStringToInteger(void)
@@ -1382,7 +1374,7 @@ static void test_RtlUnicodeStringToInteger(void)
     WCHAR *wstr;
     UNICODE_STRING uni;
 
-    for (test_num = 0; test_num < NB_STR2INT; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2int); test_num++) {
 	wstr = AtoW(str2int[test_num].str);
 	value = 0xdeadbeef;
 	pRtlInitUnicodeString(&uni, wstr);
@@ -1451,7 +1443,7 @@ static void test_RtlCharToInteger(void)
     int value;
     NTSTATUS result;
 
-    for (test_num = 0; test_num < NB_STR2INT; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2int); test_num++) {
 	/* w2k skips a leading '\0' and processes the string after */
 	if (str2int[test_num].str[0] != '\0') {
 	    value = 0xdeadbeef;
@@ -1600,7 +1592,6 @@ static const int2str_t int2str[] = {
     {20,   0xdeadbeef,  0,  9, "-----------------------------------",  STATUS_INVALID_PARAMETER}, /* ill. base */
     {-8,     07654321,  0, 12, "-----------------------------------",  STATUS_INVALID_PARAMETER}, /* neg. base */
 };
-#define NB_INT2STR (sizeof(int2str)/sizeof(*int2str))
 
 
 static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *int2str)
@@ -1673,7 +1664,7 @@ static void test_RtlIntegerToUnicodeString(void)
 {
     size_t test_num;
 
-    for (test_num = 0; test_num < NB_INT2STR; test_num++)
+    for (test_num = 0; test_num < ARRAY_SIZE(int2str); test_num++)
         one_RtlIntegerToUnicodeString_test(test_num, &int2str[test_num]);
 }
 
@@ -1700,7 +1691,7 @@ static void test_RtlIntegerToChar(void)
     NTSTATUS result;
     size_t test_num;
 
-    for (test_num = 0; test_num < NB_INT2STR; test_num++)
+    for (test_num = 0; test_num < ARRAY_SIZE(int2str); test_num++)
       one_RtlIntegerToChar_test(test_num, &int2str[test_num]);
 
     result = pRtlIntegerToChar(int2str[0].value, 20, int2str[0].MaximumLength, NULL);

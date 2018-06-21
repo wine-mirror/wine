@@ -212,7 +212,6 @@ static const ulong2str_t ulong2str[] = {
     {36,    62193781, "111111\0------------------------------------------------------------", 0x77},
     {37,    71270178, "111111\0------------------------------------------------------------", 0x77},
 };
-#define NB_ULONG2STR (sizeof(ulong2str)/sizeof(*ulong2str))
 
 
 static void one_itoa_test(int test_num, const ulong2str_t *ulong2str)
@@ -276,7 +275,7 @@ static void test_ulongtoa(void)
 {
     int test_num;
 
-    for (test_num = 0; test_num < NB_ULONG2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(ulong2str); test_num++) {
 	if (ulong2str[test_num].mask & 0x01) {
 	    one_itoa_test(test_num, &ulong2str[test_num]);
 	} /* if */
@@ -402,7 +401,7 @@ static void test_ulongtow(void)
     int test_num;
     LPWSTR result;
 
-    for (test_num = 0; test_num < NB_ULONG2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(ulong2str); test_num++) {
 	if (ulong2str[test_num].mask & 0x10) {
 	    one_itow_test(test_num, &ulong2str[test_num]);
 	} /* if */
@@ -588,7 +587,6 @@ static const ulonglong2str_t ulonglong2str[] = {
     {37,     71270178, "111111\0------------------------------------------------------------", 0x33},
     {99, ULL(0x2,0x3c9e468c), "111111\0------------------------------------------------------------", 0x33},
 };
-#define NB_ULONGLONG2STR (sizeof(ulonglong2str)/sizeof(*ulonglong2str))
 
 
 static void one_i64toa_test(int test_num, const ulonglong2str_t *ulonglong2str)
@@ -642,7 +640,7 @@ static void test_ulonglongtoa(void)
 {
     int test_num;
 
-    for (test_num = 0; test_num < NB_ULONGLONG2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(ulonglong2str); test_num++) {
 	if (ulonglong2str[test_num].mask & 0x01) {
 	    one_i64toa_test(test_num, &ulonglong2str[test_num]);
 	} /* if */
@@ -746,7 +744,7 @@ static void test_ulonglongtow(void)
     int test_num;
     LPWSTR result;
 
-    for (test_num = 0; test_num < NB_ULONGLONG2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(ulonglong2str); test_num++) {
 	if (ulonglong2str[test_num].mask & 0x10) {
 	    one_i64tow_test(test_num, &ulonglong2str[test_num]);
 	} /* if */
@@ -885,7 +883,6 @@ static const str2long_t str2long[] = {
     { "",                      0   }, /* empty string */
 /*  { NULL,                    0   }, */ /* NULL as string */
 };
-#define NB_STR2LONG (sizeof(str2long)/sizeof(*str2long))
 
 
 static void test_wtoi(void)
@@ -894,7 +891,7 @@ static void test_wtoi(void)
     UNICODE_STRING uni;
     int result;
 
-    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2long); test_num++) {
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2long[test_num].str);
 	result = p_wtoi(uni.Buffer);
 	ok(result == str2long[test_num].value,
@@ -909,7 +906,7 @@ static void test_atoi(void)
     int test_num;
     int result;
 
-    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2long); test_num++) {
         result = patoi(str2long[test_num].str);
         ok(result == str2long[test_num].value,
            "(test %d): call failed: _atoi(\"%s\") has result %d, expected: %d\n",
@@ -922,7 +919,7 @@ static void test_atol(void)
     int test_num;
     int result;
 
-    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2long); test_num++) {
         result = patol(str2long[test_num].str);
         ok(result == str2long[test_num].value,
            "(test %d): call failed: _atol(\"%s\") has result %d, expected: %d\n",
@@ -936,7 +933,7 @@ static void test_wtol(void)
     UNICODE_STRING uni;
     LONG result;
 
-    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2long); test_num++) {
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2long[test_num].str);
 	result = p_wtol(uni.Buffer);
 	ok(result == str2long[test_num].value,
@@ -1068,7 +1065,6 @@ static const str2longlong_t str2longlong[] = {
     { "",                      0   }, /* empty string */
 /*  { NULL,                    0   }, */ /* NULL as string */
 };
-#define NB_STR2LONGLONG (sizeof(str2longlong)/sizeof(*str2longlong))
 
 
 static void test_atoi64(void)
@@ -1076,7 +1072,7 @@ static void test_atoi64(void)
     int test_num;
     LONGLONG result;
 
-    for (test_num = 0; test_num < NB_STR2LONGLONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2longlong); test_num++) {
 	result = p_atoi64(str2longlong[test_num].str);
         if (str2longlong[test_num].overflow)
             ok(result == str2longlong[test_num].value ||
@@ -1100,7 +1096,7 @@ static void test_wtoi64(void)
     UNICODE_STRING uni;
     LONGLONG result;
 
-    for (test_num = 0; test_num < NB_STR2LONGLONG; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(str2longlong); test_num++) {
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2longlong[test_num].str);
 	result = p_wtoi64(uni.Buffer);
         if (str2longlong[test_num].overflow)

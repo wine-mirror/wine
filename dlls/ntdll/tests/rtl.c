@@ -708,7 +708,6 @@ static const all_accesses_t all_accesses[] = {
     {0xFEDCBA76, 0xC8C4B242, 1},
     {0xC8C4B242, 0xFEDCBA76, 0},
 };
-#define NB_ALL_ACCESSES (sizeof(all_accesses)/sizeof(*all_accesses))
 
 
 static void test_RtlAreAllAccessesGranted(void)
@@ -722,7 +721,7 @@ static void test_RtlAreAllAccessesGranted(void)
         return;
     }
 
-    for (test_num = 0; test_num < NB_ALL_ACCESSES; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(all_accesses); test_num++) {
 	result = pRtlAreAllAccessesGranted(all_accesses[test_num].GrantedAccess,
 					   all_accesses[test_num].DesiredAccess);
 	ok(all_accesses[test_num].result == result,
@@ -751,7 +750,6 @@ static const any_accesses_t any_accesses[] = {
     {0xFEDCBA76, 0x00040000, 1},
     {0xFED8BA76, 0x00040000, 0},
 };
-#define NB_ANY_ACCESSES (sizeof(any_accesses)/sizeof(*any_accesses))
 
 
 static void test_RtlAreAnyAccessesGranted(void)
@@ -765,7 +763,7 @@ static void test_RtlAreAnyAccessesGranted(void)
         return;
     }
 
-    for (test_num = 0; test_num < NB_ANY_ACCESSES; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(any_accesses); test_num++) {
 	result = pRtlAreAnyAccessesGranted(any_accesses[test_num].GrantedAccess,
 					   any_accesses[test_num].DesiredAccess);
 	ok(any_accesses[test_num].result == result,

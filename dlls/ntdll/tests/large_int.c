@@ -102,7 +102,6 @@ static const magic_divide_t magic_divide[] = {
     { ULL(0x74ae3b5f,0x1558c800),  ULL(0x2f1e28fd,0x1b5cca00), 41,            0xabcde},
 
 };
-#define NB_MAGIC_DIVIDE (sizeof(magic_divide)/sizeof(*magic_divide))
 
 
 static void test_RtlExtendedMagicDivide(void)
@@ -110,7 +109,7 @@ static void test_RtlExtendedMagicDivide(void)
     int i;
     LONGLONG result;
 
-    for (i = 0; i < NB_MAGIC_DIVIDE; i++) {
+    for (i = 0; i < ARRAY_SIZE(magic_divide); i++) {
 	result = pRtlExtendedMagicDivide(magic_divide[i].a, magic_divide[i].b, magic_divide[i].shift);
 	ok(result == magic_divide[i].result,
            "call failed: RtlExtendedMagicDivide(0x%s, 0x%s, %d) has result 0x%s, expected 0x%s\n",
@@ -271,7 +270,6 @@ static const largeint2str_t largeint2str[] = {
     {20,   0xdeadbeef,  0,  9, "-------------------------------------------------------------------",  STATUS_INVALID_PARAMETER},
     {-8,     07654321,  0, 12, "-------------------------------------------------------------------",  STATUS_INVALID_PARAMETER},
 };
-#define NB_LARGEINT2STR (sizeof(largeint2str)/sizeof(*largeint2str))
 
 
 static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t *largeint2str)
@@ -360,7 +358,7 @@ static void test_RtlInt64ToUnicodeString(void)
 {
     int test_num;
 
-    for (test_num = 0; test_num < NB_LARGEINT2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(largeint2str); test_num++) {
 	one_RtlInt64ToUnicodeString_test(test_num, &largeint2str[test_num]);
     } /* for */
 }
@@ -405,7 +403,7 @@ static void test_RtlLargeIntegerToChar(void)
     int test_num;
     ULONGLONG value;
 
-    for (test_num = 0; test_num < NB_LARGEINT2STR; test_num++) {
+    for (test_num = 0; test_num < ARRAY_SIZE(largeint2str); test_num++) {
 	one_RtlLargeIntegerToChar_test(test_num, &largeint2str[test_num]);
     } /* for */
 
