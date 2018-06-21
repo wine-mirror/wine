@@ -1627,8 +1627,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
         PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
       }
     }
-    if( p_data ) XFree(p_data);
   }
+  if( p_data ) XFree(p_data);
 }
 
 
