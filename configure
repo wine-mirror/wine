@@ -19023,6 +19023,7 @@ wine_fn_config_makefile dlls/netprofm enable_netprofm
 wine_fn_config_makefile dlls/netprofm/tests enable_tests
 wine_fn_config_makefile dlls/newdev enable_newdev
 wine_fn_config_makefile dlls/ninput enable_ninput
+wine_fn_config_makefile dlls/ninput/tests enable_tests
 wine_fn_config_makefile dlls/normaliz enable_normaliz
 wine_fn_config_makefile dlls/npmshtml enable_npmshtml
 wine_fn_config_makefile dlls/npptools enable_npptools

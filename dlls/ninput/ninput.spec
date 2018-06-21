@@ -1,8 +1,8 @@
 @ stub DefaultInputHandler
 @ stub AddPointerInteractionContext
 @ stub BufferPointerPacketsInteractionContext
-@ stub CreateInteractionContext
-@ stub DestroyInteractionContext
+@ stdcall CreateInteractionContext(ptr)
+@ stdcall DestroyInteractionContext(ptr)
 @ stub GetCrossSlideParameterInteractionContext
 @ stub GetInertiaParameterInteractionContext
 @ stub GetInteractionConfigurationInteractionContext
