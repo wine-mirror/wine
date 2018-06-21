@@ -82,8 +82,44 @@ static void test_properties(void)
     ok(hr == S_OK, "Failed to destroy context, hr %#x.\n", hr);
 }
 
+static void test_configuration(void)
+{
+    HINTERACTIONCONTEXT context;
+    HRESULT hr;
+
+    static const INTERACTION_CONTEXT_CONFIGURATION config[] =
+    {
+        {
+            INTERACTION_ID_MANIPULATION,
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION |
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION_TRANSLATION_X |
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION_TRANSLATION_Y |
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION_SCALING |
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION_TRANSLATION_INERTIA |
+            INTERACTION_CONFIGURATION_FLAG_MANIPULATION_SCALING_INERTIA
+        },
+    };
+
+    hr = CreateInteractionContext(&context);
+    ok(hr == S_OK, "Failed to create context, hr %#x.\n", hr);
+
+    hr = SetInteractionConfigurationInteractionContext(NULL, 0, NULL);
+    ok(hr == E_HANDLE, "Got hr %#x.\n", hr);
+    hr = SetInteractionConfigurationInteractionContext(context, 0, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = SetInteractionConfigurationInteractionContext(context, 1, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = SetInteractionConfigurationInteractionContext(context, ARRAY_SIZE(config), config);
+    ok(hr == S_OK, "Failed to set configuration, hr %#x.\n", hr);
+
+    hr = DestroyInteractionContext(context);
+    ok(hr == S_OK, "Failed to destroy context, hr %#x.\n", hr);
+}
+
 START_TEST(ninput)
 {
     test_context();
     test_properties();
+    test_configuration();
 }

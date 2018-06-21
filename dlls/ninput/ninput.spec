@@ -17,7 +17,7 @@
 @ stub ResetInteractionContext
 @ stub SetCrossSlideParametersInteractionContext
 @ stub SetInertiaParameterInteractionContext
-@ stub SetInteractionConfigurationInteractionContext
+@ stdcall SetInteractionConfigurationInteractionContext(ptr long ptr)
 @ stub SetMouseWheelParameterInteractionContext
 @ stub SetPivotInteractionContext
 @ stdcall SetPropertyInteractionContext(ptr long long)

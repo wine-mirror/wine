@@ -131,6 +131,23 @@ HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
     }
 }
 
+HRESULT WINAPI SetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT handle,
+        UINT32 count, const INTERACTION_CONTEXT_CONFIGURATION *configuration)
+{
+    struct interaction_context *context = context_from_handle(handle);
+
+    FIXME("context %p, count %u, configuration %p: stub!.\n", context, count, configuration);
+
+    if (!context)
+        return E_HANDLE;
+    if (!count)
+        return E_INVALIDARG;
+    if (!configuration)
+        return E_POINTER;
+
+    return S_OK;
+}
+
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
 {
     FIXME("context %p: stub!\n", context);
