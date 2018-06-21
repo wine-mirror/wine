@@ -314,6 +314,7 @@ SOURCES = \
 	inputscope.idl \
 	inseng.idl \
 	inspectable.idl \
+	interactioncontext.h \
 	intshcut.h \
 	ipexport.h \
 	iphlpapi.h \
