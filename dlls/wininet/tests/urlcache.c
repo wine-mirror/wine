@@ -891,13 +891,13 @@ static void test_urlcacheW(void)
 
     if(ie10_cache) {
         if(!MultiByteToWideChar(CP_ACP, 0, urls[6].encoded_url, -1,
-                    urls[6].url, sizeof(urls[6].url)/sizeof(WCHAR)))
+                    urls[6].url, ARRAY_SIZE(urls[6].url)))
             urls[6].url[0] = 0;
 
         trace("converted url in test 6: %s\n", wine_dbgstr_w(urls[6].url));
     }
 
-    for(i=0; i<sizeof(urls)/sizeof(*urls); i++) {
+    for(i=0; i<ARRAY_SIZE(urls); i++) {
         INTERNET_CACHE_ENTRY_INFOA *entry_infoA;
         INTERNET_CACHE_ENTRY_INFOW *entry_infoW;
         DWORD size;

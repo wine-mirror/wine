@@ -172,7 +172,7 @@ static BOOL (WINAPI *pInternetGetSecurityInfoByURLA)(LPSTR,PCCERT_CHAIN_CONTEXT*
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
     return lstrcmpW(strw, buf);
 }
 
@@ -4204,7 +4204,7 @@ static void test_http_status(int port)
     DWORD i, size;
     BOOL res;
 
-    for(i=0; i < sizeof(http_status_tests)/sizeof(*http_status_tests); i++) {
+    for(i = 0; i < ARRAY_SIZE(http_status_tests); i++) {
         send_buffer = http_status_tests[i].response_text;
 
         open_simple_request(&req, "localhost", port, NULL, "/send_from_buffer");
@@ -6543,14 +6543,14 @@ static const struct notification async_send_request_ex_chunked_test[] =
 static const struct notification_data notification_data[] = {
     {
         async_send_request_ex_chunked_test,
-        sizeof(async_send_request_ex_chunked_test)/sizeof(async_send_request_ex_chunked_test[0]),
+        ARRAY_SIZE(async_send_request_ex_chunked_test),
         "GET",
         "test.winehq.org",
         "tests/data.php"
     },
     {
         async_send_request_ex_test,
-        sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
+        ARRAY_SIZE(async_send_request_ex_test),
         "POST",
         "test.winehq.org",
         "tests/post.php",
@@ -6565,7 +6565,7 @@ static const struct notification_data notification_data[] = {
     },
     {
         async_send_request_ex_resolve_failure_test,
-        sizeof(async_send_request_ex_resolve_failure_test)/sizeof(async_send_request_ex_resolve_failure_test[0]),
+        ARRAY_SIZE(async_send_request_ex_resolve_failure_test),
         "GET",
         "brokenhost",
         "index.html",

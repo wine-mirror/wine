@@ -735,7 +735,7 @@ static void test_command(HINTERNET hFtp, HINTERNET hConnect)
         return;
     }
 
-    for (i = 0; i < sizeof(command_test) / sizeof(command_test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(command_test); i++)
     {
         SetLastError(0xdeadbeef);
         ret = pFtpCommandA(hFtp, FALSE, FTP_TRANSFER_TYPE_ASCII, command_test[i].cmd, 0, NULL);

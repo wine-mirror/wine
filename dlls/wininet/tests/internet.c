@@ -629,7 +629,7 @@ static void test_cookie_url(void)
     ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
        "InternetGetCookeA failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    len = sizeof(bufw)/sizeof(*bufw);
+    len = ARRAY_SIZE(bufw);
     res = InternetGetCookieW(about_blankW, NULL, bufw, &len);
     ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
        "InternetGetCookeW failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
@@ -639,7 +639,7 @@ static void test_cookie_url(void)
     ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
        "InternetGetCookeExA failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    len = sizeof(bufw)/sizeof(*bufw);
+    len = ARRAY_SIZE(bufw);
     res = pInternetGetCookieExW(about_blankW, NULL, bufw, &len, 0, NULL);
     ok(!res && GetLastError() == ERROR_INVALID_PARAMETER,
        "InternetGetCookeExW failed: %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
@@ -887,7 +887,7 @@ static void InternetTimeFromSystemTimeW_test(void)
 
     /* test too small buffer size */
     SetLastError(0xdeadbeef);
-    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string)/sizeof(string[0]) );
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, ARRAY_SIZE(string));
     error = GetLastError();
     ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
     ok( error == ERROR_INSUFFICIENT_BUFFER,
@@ -1084,7 +1084,7 @@ static void test_PrivacyGetSetZonePreferenceW(void)
     trace("template %u\n", old_template);
 
     if(old_template == PRIVACY_TEMPLATE_ADVANCED) {
-        pref_size = sizeof(pref)/sizeof(WCHAR);
+        pref_size = ARRAY_SIZE(pref);
         ret = pPrivacyGetZonePreferenceW(zone, type, &old_template, pref, &pref_size);
         ok(ret == 0, "expected ret == 0, got %u\n", ret);
     }
@@ -1721,7 +1721,7 @@ static void test_InternetGetConnectedStateExW(void)
 
     flags = 0;
     buffer[0] = 0;
-    res = pInternetGetConnectedStateExW(&flags, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
     trace("Internet Connection: Flags 0x%02x - Name '%s'\n", flags, wine_dbgstr_w(buffer));
 todo_wine
     ok (flags & INTERNET_RAS_INSTALLED, "Missing RAS flag\n");
@@ -1755,21 +1755,21 @@ todo_wine
     ok(!buffer[0], "Buffer must not change, got %02X\n", buffer[0]);
 
     buffer[0] = 0;
-    res = pInternetGetConnectedStateExW(NULL, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    res = pInternetGetConnectedStateExW(NULL, buffer, ARRAY_SIZE(buffer), 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     sz = lstrlenW(buffer);
     ok(sz > 0, "Expected a connection name\n");
 
     buffer[0] = 0;
     flags = 0;
-    res = pInternetGetConnectedStateExW(&flags, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
     sz = lstrlenW(buffer);
     ok(sz > 0, "Expected a connection name\n");
 
     flags = 0;
-    res = pInternetGetConnectedStateExW(&flags, NULL, sizeof(buffer) / sizeof(buffer[0]), 0);
+    res = pInternetGetConnectedStateExW(&flags, NULL, ARRAY_SIZE(buffer), 0);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
 
