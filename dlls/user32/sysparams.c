@@ -1033,7 +1033,7 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     /* zero pad the end of lfFaceName so we don't save uninitialised data */
     ptr = memchrW( font.lfFaceName, 0, LF_FACESIZE );
     if (ptr) memset( ptr, 0, (font.lfFaceName + LF_FACESIZE - ptr) * sizeof(WCHAR) );
-    font.lfHeight = map_from_system_dpi( font.lfHeight );
+    if (font.lfHeight < 0) font.lfHeight = map_from_system_dpi( font.lfHeight );
 
     if (!save_entry( &entry->hdr, &font, sizeof(font), REG_BINARY, flags )) return FALSE;
     entry->font.val = font;
