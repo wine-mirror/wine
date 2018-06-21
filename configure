@@ -19222,6 +19222,7 @@ wine_fn_config_makefile dlls/vnetbios.vxd enable_win16
 wine_fn_config_makefile dlls/vssapi enable_vssapi
 wine_fn_config_makefile dlls/vtdapi.vxd enable_win16
 wine_fn_config_makefile dlls/vulkan-1 enable_vulkan_1
+wine_fn_config_makefile dlls/vulkan-1/tests enable_tests
 wine_fn_config_makefile dlls/vwin32.vxd enable_win16
 wine_fn_config_makefile dlls/w32skrnl enable_win16
 wine_fn_config_makefile dlls/w32sys.dll16 enable_win16
