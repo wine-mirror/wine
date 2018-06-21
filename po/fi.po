@@ -14743,6 +14743,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Ohjelma koneellasi kaatui, mutta WineDbg ei pystynyt liittymään siihen eikä "
+"keräämään virheenjäljitystietoja (backtrace)."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
