@@ -12,7 +12,7 @@
 @ stub ProcessBufferedPacketsInteractionContext
 @ stdcall ProcessInertiaInteractionContext(ptr)
 @ stub ProcessPointerFramesInteractionContext
-@ stub RegisterOutputCallbackInteractionContext
+@ stdcall RegisterOutputCallbackInteractionContext(ptr ptr ptr)
 @ stub RemovePointerInteractionContext
 @ stub ResetInteractionContext
 @ stub SetCrossSlideParametersInteractionContext

@@ -148,6 +148,19 @@ HRESULT WINAPI SetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT
     return S_OK;
 }
 
+HRESULT WINAPI RegisterOutputCallbackInteractionContext(HINTERACTIONCONTEXT handle,
+        INTERACTION_CONTEXT_OUTPUT_CALLBACK callback, void *data)
+{
+    struct interaction_context *context = context_from_handle(handle);
+
+    FIXME("context %p, callback %p, data %p: stub!.\n", context, callback, data);
+
+    if (!context)
+        return E_HANDLE;
+
+    return S_OK;
+}
+
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
 {
     FIXME("context %p: stub!\n", context);
