@@ -1811,6 +1811,7 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
     for(p = 0; p < pkgs_no; ++p){
         for(j = 0; j < cores_per_package && p * cores_per_package + j < cores_no; ++j){
             ULONG_PTR mask = 0;
+            DWORD phys_core;
 
             for(k = 0; k < lcpu_per_core; ++k)
                 mask |= (ULONG_PTR)1 << (j * lcpu_per_core + k);
@@ -1822,7 +1823,8 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
                 return STATUS_NO_MEMORY;
 
             /* add new core */
-            if(!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorCore, p, mask))
+            phys_core = p * cores_per_package + j;
+            if(!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorCore, phys_core, mask))
                 return STATUS_NO_MEMORY;
 
             for(i = 1; i < 5; ++i){
