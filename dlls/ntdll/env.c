@@ -281,21 +281,14 @@ done:
     return nts;
 }
 
-/******************************************************************
- *		RtlExpandEnvironmentStrings_U (NTDLL.@)
- *
+/******************************************************************************
+ *		RtlExpandEnvironmentStrings (NTDLL.@)
  */
-NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PCWSTR renv, const UNICODE_STRING* us_src,
-                                              PUNICODE_STRING us_dst, PULONG plen)
+NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE_T src_len,
+                                             WCHAR *dst, SIZE_T count, SIZE_T *plen )
 {
-    DWORD src_len, len, count, total_size = 1;  /* 1 for terminating '\0' */
-    LPCWSTR     env, src, p, var;
-    LPWSTR      dst;
-
-    src = us_src->Buffer;
-    src_len = us_src->Length / sizeof(WCHAR);
-    count = us_dst->MaximumLength / sizeof(WCHAR);
-    dst = count ? us_dst->Buffer : NULL;
+    SIZE_T len, total_size = 1;  /* 1 for terminating '\0' */
+    LPCWSTR env, p, var;
 
     if (!renv)
     {
@@ -353,15 +346,28 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PCWSTR renv, const UNICODE_STRING*
 
     if (!renv) RtlReleasePebLock();
 
-    /* Null-terminate the string */
     if (dst && count) *dst = '\0';
-
-    us_dst->Length = (dst) ? (dst - us_dst->Buffer) * sizeof(WCHAR) : 0;
-    if (plen) *plen = total_size * sizeof(WCHAR);
+    if (plen) *plen = total_size;
 
     return (count) ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
 }
 
+/******************************************************************
+ *		RtlExpandEnvironmentStrings_U (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlExpandEnvironmentStrings_U( const WCHAR *env, const UNICODE_STRING *src,
+                                               UNICODE_STRING *dst, ULONG *plen )
+{
+    SIZE_T len;
+    NTSTATUS ret;
+
+    ret = RtlExpandEnvironmentStrings( env, src->Buffer, src->Length / sizeof(WCHAR),
+                                       dst->Buffer, dst->MaximumLength / sizeof(WCHAR), &len );
+    if (plen) *plen = len * sizeof(WCHAR);  /* FIXME: check for overflow? */
+    if (len > UNICODE_STRING_MAX_CHARS) ret = STATUS_BUFFER_TOO_SMALL;
+    if (!ret) dst->Length = (len - 1) * sizeof(WCHAR);
+    return ret;
+}
 
 static inline void normalize( void *base, WCHAR **ptr )
 {

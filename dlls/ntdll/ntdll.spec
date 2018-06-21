@@ -596,6 +596,7 @@
 @ stdcall RtlEraseUnicodeString(ptr)
 @ stdcall RtlExitUserProcess(long)
 @ stdcall RtlExitUserThread(long)
+@ stdcall RtlExpandEnvironmentStrings(ptr wstr long ptr long ptr)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
 @ stdcall -arch=win32 -ret64 RtlExtendedIntegerMultiply(int64 long)
