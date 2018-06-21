@@ -183,9 +183,14 @@ enum install_res {
 
 static enum install_res install_file(const WCHAR *file_name)
 {
+    static const WCHAR update_cmd[] = {
+        'R','E','I','N','S','T','A','L','L','=','A','L','L',' ',
+        'R','E','I','N','S','T','A','L','L','M','O','D','E','=','v','o','m','u','s',0};
     ULONG res;
 
     res = MsiInstallProductW(file_name, NULL);
+    if(res == ERROR_PRODUCT_VERSION)
+        res = MsiInstallProductW(file_name, update_cmd);
     if(res != ERROR_SUCCESS) {
         ERR("MsiInstallProduct failed: %u\n", res);
         return INSTALL_FAILED;
