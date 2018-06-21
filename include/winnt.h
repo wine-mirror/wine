@@ -6050,6 +6050,8 @@ typedef enum _LOGICAL_PROCESSOR_RELATIONSHIP
     RelationAll              = 0xffff
 } LOGICAL_PROCESSOR_RELATIONSHIP;
 
+#define LTP_PC_SMT 0x1
+
 typedef enum _PROCESSOR_CACHE_TYPE
 {
     CacheUnified,

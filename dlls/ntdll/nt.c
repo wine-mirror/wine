@@ -1388,7 +1388,10 @@ static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
 
         dataex->Relationship = rel;
         dataex->Size = log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP));
-        dataex->u.Processor.Flags = 0; /* TODO */
+        if (rel == RelationProcessorCore)
+            dataex->u.Processor.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
+        else
+            dataex->u.Processor.Flags = 0;
         dataex->u.Processor.EfficiencyClass = 0;
         dataex->u.Processor.GroupCount = 1;
         dataex->u.Processor.GroupMask[0].Mask = mask;
