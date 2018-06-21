@@ -142,6 +142,15 @@ static void test_palette_entries(void)
     ok(res == 1, "GetPaletteEntries should have returned 1 but returned %d\n", res);
 
     ok( palEntry.peFlags == getEntryResult.peFlags, "palEntry.peFlags (%#x) != getEntryResult.peFlags (%#x)\n", palEntry.peFlags, getEntryResult.peFlags );
+
+    /* Try setting the system palette */
+    hpal = GetStockObject(DEFAULT_PALETTE);
+    res = SetPaletteEntries(hpal, 0, 1, &palEntry);
+    ok(!res, "SetPaletteEntries() should have failed\n");
+
+    res = GetPaletteEntries(hpal, 0, 1, &getEntryResult);
+    ok(res == 1, "GetPaletteEntries should have returned 1 but returned %d\n", res);
+    ok(memcmp(&palEntry, &getEntryResult, sizeof(PALETTEENTRY)), "entries should not match\n");
 }
 
 static void test_halftone_palette(void)
