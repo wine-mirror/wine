@@ -67,6 +67,10 @@
  *			  escaped '\0'.
  */
 
+/* Exclusive double-quoted nameID handling */
+%x tkid_dbl
+/* Exclusive single-quoted nameID handling */
+%x tkid_sgl
 /* Exclusive string handling */
 %x tkstr
 /* Exclusive unicode string handling */
@@ -121,7 +125,7 @@ ws	[ \f\t\r]
 /* Always update the current character position within a line */
 #define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
-#define YY_USER_INIT current_codepage = -1;
+#define YY_USER_INIT current_codepage = -1; id_initial = 1;
 
 static void addcchar(char c);
 static void addwchar(WCHAR s);
@@ -137,6 +141,14 @@ static int wbufidx;
 static int wbufalloc = 0;
 
 static int current_codepage = -1;  /* use language default */
+
+/* Used for differentiating between single- and double-quoted nameID's */
+static int id_dblquote = 0;
+
+/* Used for catching first (quoted) nameID before wanted_id is set. 
+This variable is reset to 0 once the first ID (quoted or not), string or 
+* data has been encountered */ 
+static int id_initial = 1;
 
 /*
  * This one is a bit tricky.
@@ -402,8 +414,44 @@ static unsigned long xstrtoul(const char *nptr, char **endptr, int base)
 0[oO][0-7]+[lL]?	{ parser_lval.num = xstrtoul(yytext+2, 0, 8);
                           return (yytext[yyleng-1] == 'L' || yytext[yyleng-1] == 'l') ? tLNUMBER : tNUMBER; }
 
+<tkid_dbl>[A-Za-z_0-9./\\\']+\' |
+<tkid_sgl>[A-Za-z_0-9./\\\"]+\' {
+	 char *tmp;
+	 size_t len;
+	   
+	   /* Plus 1 for the initial double quote that 
+	   *we missed and plus 1 for a trailing NUL */
+	   
+	   len = strlen(yytext) +2;
+	   
+	   tmp = xmalloc(len);
+	   
+	   /*Put the quote character that was missed*/
+	   
+	   tmp[0] = id_dblquote ? '\"' : '\'';
+	   
+	   id_dblquote = 0;
+	   
+	   strcpy(tmp + 1, yytext);
+	   
+	   /* Make sure we have a NUL at the end */
+	   
+	   tmp[len-1] = '\0';
+	   
+	   parser_lval.str = make_string(tmp);
+	   
+	   free(tmp);
+	   
+	   yy_pop_state();
+	   
+	   return tiDENT;
+	   }
+	   
+	   
 [A-Za-z_0-9./\\]+	{
 				struct keyword *tok = iskeyword(yytext);
+	
+				id_initial = 0;
 
 				if(tok)
 				{
@@ -427,6 +475,8 @@ static unsigned long xstrtoul(const char *nptr, char **endptr, int base)
 	 */
 L\"			{
 				yy_push_state(tklstr);
+	   
+	   			id_initial = 0;
 				wbufidx = 0;
 				if(!win32)
 					parser_warning("16bit resource contains unicode strings\n");
@@ -483,7 +533,27 @@ L\"			{
 	/*
 	 * Normal string scanning
 	 */
-\"			yy_push_state(tkstr); cbufidx = 0;
+\"		{
+	 
+	 if (wnated_id || id_initial)
+	 
+	 {
+		 
+		 yy_pusj_state(tkid_dbl);
+		 
+		 id_dblquote = 1;
+		 
+		 id_initial = 0;
+	 }
+	 
+	 else
+	 
+	 {
+		 
+	 yy_push_state(tkstr); cbufidx = 0;
+	 }
+	 	}
+	 
 <tkstr>\"{ws}+	|
 <tkstr>\"		{
 				yy_pop_state();
@@ -528,7 +598,27 @@ L\"			{
 	/*
 	 * Raw data scanning
 	 */
-\'			yy_push_state(tkrcd); cbufidx = 0;
+\'			{
+	if(wanted_id || id_initial)
+	
+	{
+		
+		yy_push_state(tkid_sgl);
+		
+		id_initial = 0;
+		
+		id_dblquote = 0;
+		
+	}
+	
+	else
+	
+	{
+		
+	yy_push_state(tkrcd); cbufidx = 0;
+		
+	}
+			}
 <tkrcd>\'		{
 				yy_pop_state();
 				parser_lval.raw = new_raw_data();
