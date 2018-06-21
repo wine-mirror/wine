@@ -1613,7 +1613,7 @@ static void test_query_process_debug_flags(int argc, char **argv)
     ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
     ok(debug_flags == TRUE, "Expected flag TRUE, got %x.\n", debug_flags);
 
-    for (i = 0; i < sizeof(test_flags)/sizeof(test_flags[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_flags); i++)
     {
         DWORD expected_flags = !(test_flags[i] & DEBUG_ONLY_THIS_PROCESS);
         sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");

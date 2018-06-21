@@ -650,7 +650,7 @@ static void test_name_limits(void)
 
     /* named pipes */
     memcpy( str.Buffer, pipeW, sizeof(pipeW) );
-    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(pipeW)/sizeof(WCHAR)] = 'a';
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + ARRAY_SIZE(pipeW)] = 'a';
     str.Length = 0;
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -703,7 +703,7 @@ static void test_name_limits(void)
 
     /* mailslots */
     memcpy( str.Buffer, mailslotW, sizeof(mailslotW) );
-    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(mailslotW)/sizeof(WCHAR)] = 'a';
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + ARRAY_SIZE(mailslotW)] = 'a';
     str.Length = 0;
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
@@ -744,7 +744,7 @@ static void test_name_limits(void)
 
     /* registry keys */
     memcpy( str.Buffer, registryW, sizeof(registryW) );
-    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(registryW)/sizeof(WCHAR)] = 'a';
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + ARRAY_SIZE(registryW)] = 'a';
     str.Length = 0;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     todo_wine

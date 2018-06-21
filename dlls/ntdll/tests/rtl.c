@@ -680,7 +680,7 @@ static void test_RtlRandom(void)
     }
 
     seed = 0;
-    for (i = 0; i < sizeof(res) / sizeof(res[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(res); i++)
     {
         res[i] = pRtlRandom(&seed);
         ok(seed != res[i], "%i: seed is same as res %x\n", i, seed);
@@ -1226,7 +1226,7 @@ static void test_RtlIpv4StringToAddress(void)
         { "::1",             STATUS_INVALID_PARAMETER,  0, { -1 } },
         { ":1",              STATUS_INVALID_PARAMETER,  0, { -1 } },
     };
-    const int testcount = sizeof(tests) / sizeof(tests[0]);
+    const int testcount = ARRAY_SIZE(tests);
     int i;
 
     if (!pRtlIpv4StringToAddressA)
@@ -1787,7 +1787,7 @@ static void test_RtlDecompressBuffer(void)
     ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
 
     /* regular tests for RtlDecompressBuffer */
-    for (i = 0; i < sizeof(test_lznt) / sizeof(test_lznt[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_lznt); i++)
     {
         trace("Running test %d (compressed_size=%u, uncompressed_size=%u, status=0x%08x)\n",
               i, test_lznt[i].compressed_size, test_lznt[i].uncompressed_size, test_lznt[i].status);

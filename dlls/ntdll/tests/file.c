@@ -563,7 +563,7 @@ static void delete_file_test(void)
 	ok(0, "couldn't get temp dir\n");
 	return;
     }
-    if (ret + sizeof(testdirW)/sizeof(WCHAR)-1 + sizeof(subdirW)/sizeof(WCHAR)-1 >= MAX_PATH)
+    if (ret + ARRAY_SIZE(testdirW)-1 + ARRAY_SIZE(subdirW)-1 >= MAX_PATH)
     {
 	ok(0, "MAX_PATH exceeded in constructing paths\n");
 	return;
@@ -3379,7 +3379,7 @@ static void test_NtCreateFile(void)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         status = pNtCreateFile(&handle, GENERIC_READ, &attr, &io, NULL,
                                td[i].attrib_in, FILE_SHARE_READ|FILE_SHARE_WRITE,

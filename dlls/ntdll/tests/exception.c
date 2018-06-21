@@ -643,7 +643,7 @@ static void test_prot_fault(void)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(exceptions); i++)
     {
         if (is_wow64 && exceptions[i].wow64_broken && !strcmp( winetest_platform, "windows" ))
         {
@@ -1734,7 +1734,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
         for (j = 0; j < 16; j++)
         {
-            static const UINT nb_regs = sizeof(test->results[i].regs) / sizeof(test->results[i].regs[0]);
+            static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
 
             for (k = 0; k < nb_regs; k++)
             {
@@ -1888,14 +1888,12 @@ static void test_virtual_unwind(void)
 
     static const struct unwind_test tests[] =
     {
-        { function_0, sizeof(function_0), unwind_info_0,
-          results_0, sizeof(results_0)/sizeof(results_0[0]) },
-        { function_1, sizeof(function_1), unwind_info_1,
-          results_1, sizeof(results_1)/sizeof(results_1[0]) }
+        { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0) },
+        { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) }
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
         call_virtual_unwind( i, &tests[i] );
 }
 
@@ -2429,7 +2427,7 @@ static void test_prot_fault(void)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(exceptions); i++)
     {
         got_exception = 0;
         run_exception_test(handler, &exceptions[i], &exceptions[i].code,
@@ -2567,7 +2565,7 @@ static void test_debug_registers(void)
     HANDLE thread;
     int i;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         memset(&ctx, 0, sizeof(ctx));
         ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;

@@ -1769,7 +1769,7 @@ static void test_RtlIsTextUnicode(void)
 
     be_unicode = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
     be_unicode[0] = 0xfffe;
-    for (i = 0; i < sizeof(unicode)/sizeof(unicode[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(unicode); i++)
     {
         be_unicode[i + 1] = (unicode[i] >> 8) | ((unicode[i] & 0xff) << 8);
     }
@@ -1791,7 +1791,7 @@ static void test_RtlIsTextUnicode(void)
     be_unicode_no_controls = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
     ok(be_unicode_no_controls != NULL, "Expected HeapAlloc to succeed.\n");
     be_unicode_no_controls[0] = 0xfffe;
-    for (i = 0; i < sizeof(unicode_no_controls)/sizeof(unicode_no_controls[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(unicode_no_controls); i++)
         be_unicode_no_controls[i + 1] = (unicode_no_controls[i] >> 8) | ((unicode_no_controls[i] & 0xff) << 8);
 
 
@@ -2093,7 +2093,7 @@ static void test_RtlUnicodeToUTF8N(void)
     const WCHAR special_string[] = { 'X',0x80,0xd800,0 };
     const unsigned char special_expected[] = { 'X',0xc2,0x80,0xef,0xbf,0xbd,0 };
     unsigned int input_len;
-    const unsigned int test_count = sizeof(unicode_to_utf8) / sizeof(unicode_to_utf8[0]);
+    const unsigned int test_count = ARRAY_SIZE(unicode_to_utf8);
     unsigned int i;
 
     if (!pRtlUnicodeToUTF8N)
@@ -2374,7 +2374,7 @@ static void unicode_expect_(const WCHAR *out_string, ULONG buflen, ULONG out_cha
             ok_(__FILE__, line)(buffer[i] == out_string[i],
                                 "buffer[%d] = 0x%x, expected 0x%x\n",
                                 i, buffer[i], out_string[i]);
-        for (; i < sizeof(buffer) / sizeof(WCHAR); i++)
+        for (; i < ARRAY_SIZE(buffer); i++)
             ok_(__FILE__, line)(buffer[i] == 0x5555,
                                 "buffer[%d] = 0x%x, expected 0x5555\n",
                                 i, buffer[i]);
@@ -2396,7 +2396,7 @@ static void test_RtlUTF8ToUnicodeN(void)
     const char special_string[] = { 'X',0xc2,0x80,0xF0,0x90,0x80,0x80,0 };
     const WCHAR special_expected[] = { 'X',0x80,0xd800,0xdc00,0 };
     unsigned int input_len;
-    const unsigned int test_count = sizeof(utf8_to_unicode) / sizeof(utf8_to_unicode[0]);
+    const unsigned int test_count = ARRAY_SIZE(utf8_to_unicode);
     unsigned int i;
 
     if (!pRtlUTF8ToUnicodeN)

@@ -1258,7 +1258,7 @@ static void test_bsearch(void)
     int *x, l, i, j;
 
     /* just try all array sizes */
-    for (j=1;j<sizeof(arr)/sizeof(arr[0]);j++) {
+    for (j=1;j<ARRAY_SIZE(arr);j++) {
         for (i=0;i<j;i++) {
             l = arr[i];
             x = p_bsearch (&l, arr, j, sizeof(arr[0]), intcomparefunc);

@@ -230,8 +230,8 @@ static void test_create(void)
     static const DWORD sharing[] =    { FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE };
     static const DWORD pipe_config[]= {               1,                0,                                  2 };
 
-    for (j = 0; j < sizeof(sharing) / sizeof(DWORD); j++) {
-        for (k = 0; k < sizeof(access) / sizeof(DWORD); k++) {
+    for (j = 0; j < ARRAY_SIZE(sharing); j++) {
+        for (k = 0; k < ARRAY_SIZE(access); k++) {
             HANDLE hclient;
             BOOL should_succeed = TRUE;
 

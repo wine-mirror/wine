@@ -74,8 +74,8 @@ static struct testfile_s {
     { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
     { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
 };
-static const int test_dir_count = sizeof(testfiles) / sizeof(testfiles[0]);
-static const int max_test_dir_size = sizeof(testfiles) / sizeof(testfiles[0]) + 5;  /* size of above plus some for .. etc */
+static const int test_dir_count = ARRAY_SIZE(testfiles);
+static const int max_test_dir_size = ARRAY_SIZE(testfiles) + 5;  /* size of above plus some for .. etc */
 
 static const WCHAR dummyW[] = {'d','u','m','m','y',0};
 static const WCHAR dotW[] = {'.',0};

@@ -1824,7 +1824,7 @@ static void test_tp_multi_wait(void)
     environment.Pool = pool;
 
     /* create semaphores and corresponding wait objects */
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         semaphores[i] = CreateSemaphoreW(NULL, 0, 1, NULL);
         ok(semaphores[i] != NULL, "failed to create semaphore %i\n", i);
@@ -1838,7 +1838,7 @@ static void test_tp_multi_wait(void)
     }
 
     /* release all semaphores and wait for callback */
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         multi_wait_info.result = 0;
         ReleaseSemaphore(semaphores[i], 1, NULL);
@@ -1851,7 +1851,7 @@ static void test_tp_multi_wait(void)
     }
 
     /* repeat the same test in reverse order */
-    for (i = sizeof(semaphores)/sizeof(semaphores[0]) - 1; i >= 0; i--)
+    for (i = ARRAY_SIZE(semaphores) - 1; i >= 0; i--)
     {
         multi_wait_info.result = 0;
         ReleaseSemaphore(semaphores[i], 1, NULL);
@@ -1865,13 +1865,13 @@ static void test_tp_multi_wait(void)
 
     /* test timeout of wait objects */
     multi_wait_info.result = 0;
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         when.QuadPart = (ULONGLONG)50 * -10000;
         pTpSetWait(waits[i], semaphores[i], &when);
     }
 
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         result = WaitForSingleObject(semaphore, 150);
         ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
@@ -1880,14 +1880,14 @@ static void test_tp_multi_wait(void)
     ok(multi_wait_info.result >> 16, "expected multi_wait_info.result >> 16 != 0\n");
 
     /* destroy the wait objects and semaphores while waiting */
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         pTpSetWait(waits[i], semaphores[i], NULL);
     }
 
     Sleep(50);
 
-    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
         pTpReleaseWait(waits[i]);
         NtClose(semaphores[i]);
