@@ -2675,7 +2675,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     ptiRet->typeattr.wMajorVerNum = LOWORD(tiBase.version);
     ptiRet->typeattr.wMinorVerNum = HIWORD(tiBase.version);
     ptiRet->typeattr.cImplTypes = tiBase.cImplTypes;
-    ptiRet->typeattr.cbSizeVft = tiBase.cbSizeVft; /* FIXME: this is only the non inherited part */
+    ptiRet->typeattr.cbSizeVft = tiBase.cbSizeVft;
     if (ptiRet->typeattr.typekind == TKIND_ALIAS) {
         TYPEDESC tmp;
         MSFT_GetTdesc(pcx, tiBase.datatype1, &tmp);
