@@ -27,6 +27,11 @@
 DWORD expect_idx;
 static int vector_alloc_count;
 static int vector_elem_count;
+typedef struct blocks_to_free{
+    size_t first_block;
+    void *blocks[sizeof(void*)*8];
+    int size_check;
+}compact_block;
 
 #define DEFINE_EXPECT(func) \
     BOOL expect_ ## func, called_ ## func
@@ -115,6 +120,8 @@ static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void 
         const void *b );
 static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void *a,
         const void *b, const void *c );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a,
+        const void *b, const void *c, const void *d );
 static void * (WINAPI *call_thiscall_func6)( void *func, void *this, const void *a,
         const void *b, const void *c, const void *d, const void *e );
 
@@ -131,6 +138,7 @@ static void init_thiscall_thunk(void)
     call_thiscall_func2 = (void *)thunk;
     call_thiscall_func3 = (void *)thunk;
     call_thiscall_func4 = (void *)thunk;
+    call_thiscall_func5 = (void *)thunk;
     call_thiscall_func6 = (void *)thunk;
 }
 
@@ -140,6 +148,8 @@ static void init_thiscall_thunk(void)
         (const void*)(b))
 #define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),\
         (const void*)(b),(const void*)(c))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),\
+        (const void*)(b),(const void*)(c),(const void*)(d))
 #define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(const void*)(a),\
         (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e))
 #else
@@ -149,6 +159,7 @@ static void init_thiscall_thunk(void)
 #define call_func2(func,_this,a) func(_this,a)
 #define call_func3(func,_this,a,b) func(_this,a,b)
 #define call_func4(func,_this,a,b,c) func(_this,a,b,c)
+#define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
 #define call_func6(func,_this,a,b,c,d,e) func(_this,a,b,c,d,e)
 #endif /* __i386__ */
 
@@ -404,6 +415,9 @@ static void (__thiscall *p_vector_base_v4__Internal_assign)(
         void (__cdecl*)(void*, const void*, size_t), void (__cdecl*)(void*, const void*, size_t));
 static void (__thiscall *p_vector_base_v4__Internal_swap)(
         vector_base_v4*, const vector_base_v4*);
+static void* (__thiscall *p_vector_base_v4__Internal_compact)(
+        vector_base_v4*, size_t, void*, void (__cdecl*)(void*, size_t),
+        void (__cdecl*)(void*, const void*, size_t));
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -552,6 +566,8 @@ static BOOL init(void)
                 "?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z");
         SET(p_vector_base_v4__Internal_swap,
                 "?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEAV123@@Z");
+        SET(p_vector_base_v4__Internal_compact,
+                "?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KPEAXP6AX10@ZP6AX1PEBX0@Z@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -669,6 +685,8 @@ static BOOL init(void)
                 "?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z");
         SET(p_vector_base_v4__Internal_swap,
                 "?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IAEXAAV123@@Z");
+        SET(p_vector_base_v4__Internal_compact,
+                "?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IAEPAXIPAXP6AX0I@ZP6AX0PBXI@Z@Z");
 #else
         SET(p__Thrd_current,
                 "_Thrd_current");
@@ -714,6 +732,9 @@ static BOOL init(void)
                 "?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAAXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z");
         SET(p_vector_base_v4__Internal_swap,
                 "?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IAAXAAV123@@Z");
+        SET(p_vector_base_v4__Internal_compact,
+                "?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IAAPAXIPAXP6AX0I@ZP6AX0PBXI@Z@Z");
+
 #endif
     }
     SET(p__Thrd_equal,
@@ -2734,7 +2755,8 @@ static void test_vector_base_v4(void)
 {
     vector_base_v4 vector, v2;
     size_t idx, size;
-    int *data;
+    compact_block b;
+    int i, *data;
 
     concurrent_vector_int_ctor(&vector);
 
@@ -2886,6 +2908,84 @@ static void test_vector_base_v4(void)
             (long)v2.early_size);
     ok(vector.early_size == 5, "vector.early_size got %ld expected 5\n",
             (long)vector.early_size);
+    SET_EXPECT(concurrent_vector_int_destroy);
+    size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
+            &v2, concurrent_vector_int_destroy);
+    CHECK_CALLED(concurrent_vector_int_destroy);
+    concurrent_vector_int_dtor(&v2);
+
+    /* test for _Internal_compact */
+    concurrent_vector_int_ctor(&v2);
+    for(i=0; i<2; i++) {
+        SET_EXPECT(concurrent_vector_int_alloc);
+        data = call_func3(p_vector_base_v4__Internal_push_back, &v2, sizeof(int), &idx);
+        CHECK_CALLED(concurrent_vector_int_alloc);
+        ok(data != NULL, "_Internal_push_back returned NULL\n");
+        data = call_func3(p_vector_base_v4__Internal_push_back, &v2, sizeof(int), &idx);
+        ok(data != NULL, "_Internal_push_back returned NULL\n");
+        vector_elem_count += 2;
+    }
+    ok(v2.first_block == 1, "v2.first_block got %ld expected 1\n", (long)v2.first_block);
+    ok(v2.early_size == 4, "v2.early_size got %ld expected 4\n", (long)v2.early_size);
+    memset(&b, 0xff, sizeof(b));
+    SET_EXPECT(concurrent_vector_int_alloc);
+    SET_EXPECT(concurrent_vector_int_copy);
+    SET_EXPECT(concurrent_vector_int_destroy);
+    data = call_func5(p_vector_base_v4__Internal_compact,
+            &v2, sizeof(int), &b, concurrent_vector_int_destroy,
+            concurrent_vector_int_copy);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    CHECK_CALLED(concurrent_vector_int_copy);
+    CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(v2.first_block == 2, "v2.first_block got %ld expected 2\n", (long)v2.first_block);
+    ok(v2.early_size == 4,"v2.early_size got %ld expected 4\n", (long)v2.early_size);
+    ok(b.first_block == 1, "b.first_block got %ld expected 1\n", (long)b.first_block);
+    for(i=0; i<2; i++){
+        ok(b.blocks[i] != NULL, "b.blocks[%d] got NULL\n", i);
+        free(b.blocks[i]);
+        vector_alloc_count--;
+    }
+    for(; i<ARRAY_SIZE(b.blocks); i++)
+        ok(!b.blocks[i], "b.blocks[%d] != NULL\n", i);
+    ok(b.size_check == -1, "b.size_check = %x\n", b.size_check);
+
+    SET_EXPECT(concurrent_vector_int_alloc);
+    data = call_func3(p_vector_base_v4__Internal_push_back, &v2, sizeof(int), &idx);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    ok(data != NULL, "_Internal_push_back returned NULL\n");
+    for(i=0; i<3; i++){
+        data = call_func3(p_vector_base_v4__Internal_push_back, &v2, sizeof(int), &idx);
+        ok(data != NULL, "_Internal_push_back returned NULL\n");
+    }
+    SET_EXPECT(concurrent_vector_int_alloc);
+    data = call_func3(p_vector_base_v4__Internal_push_back, &v2, sizeof(int), &idx);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    ok(data != NULL, "_Internal_push_back returned NULL\n");
+    vector_elem_count += 5;
+    ok(v2.first_block == 2, "v2.first_block got %ld expected 2\n", (long)v2.first_block);
+    ok(v2.early_size == 9, "v2.early_size got %ld expected 9\n", (long)v2.early_size);
+    memset(&b, 0xff, sizeof(b));
+    SET_EXPECT(concurrent_vector_int_alloc);
+    SET_EXPECT(concurrent_vector_int_copy);
+    SET_EXPECT(concurrent_vector_int_destroy);
+    data = call_func5(p_vector_base_v4__Internal_compact,
+            &v2, sizeof(int), &b, concurrent_vector_int_destroy,
+            concurrent_vector_int_copy);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    CHECK_CALLED(concurrent_vector_int_copy);
+    CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(v2.first_block == 4, "v2.first_block got %ld expected 4\n", (long)v2.first_block);
+    ok(v2.early_size == 9, "v2.early_size got %ld expected 9\n", (long)v2.early_size);
+    ok(b.first_block == 2, "b.first_block got %ld expected 2\n", (long)b.first_block);
+    for(i=0; i<4; i++){
+        ok(b.blocks[i] != NULL, "b.blocks[%d] got NULL\n", i);
+        /* only b.blocks[0] and b.blocks[>=b.first_block] are used */
+        if(i == b.first_block-1) continue;
+        free(b.blocks[i]);
+        vector_alloc_count--;
+    }
+    for(; i<ARRAY_SIZE(b.blocks); i++)
+        ok(!b.blocks[i], "b.blocks[%d] != NULL\n", i);
     SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
