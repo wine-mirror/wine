@@ -229,6 +229,7 @@ todo_wine
         SetLastError(0xdeadbeef);
         ret = pEnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
         ok(!ret, "got %d\n", ret);
+todo_wine
         ok(GetLastError() == ERROR_PARTIAL_COPY, "got error %u\n", GetLastError());
 
         TerminateProcess(pi.hProcess, 0);
