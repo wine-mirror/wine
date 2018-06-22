@@ -101,6 +101,8 @@ static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, U
 static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
 static NTSTATUS  (WINAPI *pRtlMakeSelfRelativeSD)(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
 static NTSTATUS  (WINAPI *pRtlAbsoluteToSelfRelativeSD)(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,PULONG);
+static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
+static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -108,10 +110,15 @@ static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 #define LEN 16
 static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
+static WCHAR ws2_32dllW[] = {'w','s','2','_','3','2','.','d','l','l',0};
+static WCHAR nsidllW[]    = {'n','s','i','.','d','l','l',0};
+static WCHAR wintrustdllW[] = {'w','i','n','t','r','u','s','t','.','d','l','l',0};
+static WCHAR crypt32dllW[] = {'c','r','y','p','t','3','2','.','d','l','l',0};
 static ULONG src_aligned_block[4];
 static ULONG dest_aligned_block[32];
 static const char *src = (const char*)src_aligned_block;
 static char* dest = (char*)dest_aligned_block;
+const WCHAR *expected_dll = nsidllW;
 
 static void InitFunctionPtrs(void)
 {
@@ -157,6 +164,8 @@ static void InitFunctionPtrs(void)
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pRtlMakeSelfRelativeSD = (void *)GetProcAddress(hntdll, "RtlMakeSelfRelativeSD");
         pRtlAbsoluteToSelfRelativeSD = (void *)GetProcAddress(hntdll, "RtlAbsoluteToSelfRelativeSD");
+        pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
+        pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -2257,6 +2266,257 @@ static void test_RtlMakeSelfRelativeSD(void)
     ok( status == STATUS_BAD_DESCRIPTOR_FORMAT, "got %08x\n", status );
 }
 
+static DWORD (CALLBACK *orig_entry)(HMODULE,DWORD,LPVOID);
+static DWORD *dll_main_data;
+
+static inline void *get_rva( HMODULE module, DWORD va )
+{
+    return (void *)((char *)module + va);
+}
+
+static void CALLBACK ldr_notify_callback1(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    const IMAGE_IMPORT_DESCRIPTOR *imports;
+    const IMAGE_THUNK_DATA *import_list;
+    IMAGE_THUNK_DATA *thunk_list;
+    DWORD *calls = context;
+    LIST_ENTRY *mark;
+    LDR_MODULE *mod;
+    ULONG size;
+    int i, j;
+
+    *calls <<= 4;
+    *calls |= reason;
+
+    if (!lstrcmpiW(data->Loaded.BaseDllName->Buffer, expected_dll))
+        return;
+
+    ok(data->Loaded.Flags == 0, "Expected flags 0, got %x\n", data->Loaded.Flags);
+    ok(!lstrcmpiW(data->Loaded.BaseDllName->Buffer, expected_dll), "Expected %s, got %s\n",
+       wine_dbgstr_w(expected_dll), wine_dbgstr_w(data->Loaded.BaseDllName->Buffer));
+    ok(!!data->Loaded.DllBase, "Expected non zero base address\n");
+    ok(data->Loaded.SizeOfImage, "Expected non zero image size\n");
+
+    /* expect module to be last module listed in LdrData load order list */
+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    mod = CONTAINING_RECORD(mark->Blink, LDR_MODULE, InMemoryOrderModuleList);
+    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->BaseAddress);
+    ok(!lstrcmpiW(mod->BaseDllName.Buffer, expected_dll), "Expected %s, got %s\n",
+       wine_dbgstr_w(expected_dll), wine_dbgstr_w(mod->BaseDllName.Buffer));
+
+    /* show that imports have already been resolved */
+    imports = RtlImageDirectoryEntryToData(data->Loaded.DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size);
+    ok(!!imports, "Expected dll to have imports\n");
+
+    for (i = 0; imports[i].Name; i++)
+    {
+        thunk_list = get_rva(data->Loaded.DllBase, (DWORD)imports[i].FirstThunk);
+        if (imports[i].OriginalFirstThunk)
+            import_list = get_rva(data->Loaded.DllBase, (DWORD)imports[i].OriginalFirstThunk);
+        else
+            import_list = thunk_list;
+
+        for (j = 0; import_list[j].u1.Ordinal; j++)
+        {
+            ok(thunk_list[j].u1.AddressOfData > data->Loaded.SizeOfImage,
+               "Import has not been resolved: %p\n", (void*)thunk_list[j].u1.Function);
+        }
+    }
+}
+
+static void CALLBACK ldr_notify_callback2(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    DWORD *calls = context;
+    *calls <<= 4;
+    *calls |= reason + 2;
+}
+
+static BOOL WINAPI fake_dll_main(HINSTANCE instance, DWORD reason, void* reserved)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        *dll_main_data <<= 4;
+        *dll_main_data |= 3;
+    }
+    else if (reason == DLL_PROCESS_DETACH)
+    {
+        *dll_main_data <<= 4;
+        *dll_main_data |= 4;
+    }
+    return orig_entry(instance, reason, reserved);
+}
+
+static void CALLBACK ldr_notify_callback_dll_main(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    DWORD *calls = context;
+    LIST_ENTRY *mark;
+    LDR_MODULE *mod;
+
+    *calls <<= 4;
+    *calls |= reason;
+
+    if (reason != LDR_DLL_NOTIFICATION_REASON_LOADED)
+        return;
+
+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    mod = CONTAINING_RECORD(mark->Blink, LDR_MODULE, InMemoryOrderModuleList);
+    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->BaseAddress);
+    if (mod->BaseAddress != data->Loaded.DllBase)
+       return;
+
+    orig_entry = mod->EntryPoint;
+    mod->EntryPoint = fake_dll_main;
+    dll_main_data = calls;
+}
+
+static BOOL WINAPI fake_dll_main_fail(HINSTANCE instance, DWORD reason, void* reserved)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        *dll_main_data <<= 4;
+        *dll_main_data |= 3;
+    }
+    else if (reason == DLL_PROCESS_DETACH)
+    {
+        *dll_main_data <<= 4;
+        *dll_main_data |= 4;
+    }
+    return FALSE;
+}
+
+static void CALLBACK ldr_notify_callback_fail(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    DWORD *calls = context;
+    LIST_ENTRY *mark;
+    LDR_MODULE *mod;
+
+    *calls <<= 4;
+    *calls |= reason;
+
+    if (reason != LDR_DLL_NOTIFICATION_REASON_LOADED)
+        return;
+
+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    mod = CONTAINING_RECORD(mark->Blink, LDR_MODULE, InMemoryOrderModuleList);
+    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->BaseAddress);
+    if (mod->BaseAddress != data->Loaded.DllBase)
+       return;
+
+    orig_entry = mod->EntryPoint;
+    mod->EntryPoint = fake_dll_main_fail;
+    dll_main_data = calls;
+}
+
+static void CALLBACK ldr_notify_callback_imports(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    DWORD *calls = context;
+
+    if (reason != LDR_DLL_NOTIFICATION_REASON_LOADED)
+        return;
+
+    if (!lstrcmpiW(data->Loaded.BaseDllName->Buffer, crypt32dllW))
+    {
+        *calls <<= 4;
+        *calls |= 1;
+    }
+
+    if (!lstrcmpiW(data->Loaded.BaseDllName->Buffer, wintrustdllW))
+    {
+        *calls <<= 4;
+        *calls |= 2;
+    }
+}
+
+static void test_LdrRegisterDllNotification(void)
+{
+    void *cookie, *cookie2;
+    NTSTATUS status;
+    HMODULE mod;
+    DWORD calls;
+
+    if (!pLdrRegisterDllNotification || !pLdrUnregisterDllNotification)
+    {
+        win_skip("Ldr(Un)RegisterDllNotification not available\n");
+        return;
+    }
+
+    mod = LoadLibraryW(expected_dll);
+    if(mod)
+        FreeLibrary(mod);
+    else
+        expected_dll = ws2_32dllW; /* XP Default */
+
+    /* generic test */
+    status = pLdrRegisterDllNotification(0, ldr_notify_callback1, &calls, &cookie);
+    ok(!status, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    calls = 0;
+    mod = LoadLibraryW(expected_dll);
+    ok(!!mod, "Failed to load library: %d\n", GetLastError());
+    ok(calls == LDR_DLL_NOTIFICATION_REASON_LOADED, "Expected LDR_DLL_NOTIFICATION_REASON_LOADED, got %x\n", calls);
+
+    calls = 0;
+    FreeLibrary(mod);
+    ok(calls == LDR_DLL_NOTIFICATION_REASON_UNLOADED, "Expected LDR_DLL_NOTIFICATION_REASON_UNLOADED, got %x\n", calls);
+
+    /* test order of callbacks */
+    status = pLdrRegisterDllNotification(0, ldr_notify_callback2, &calls, &cookie2);
+    ok(!status, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    calls = 0;
+    mod = LoadLibraryW(expected_dll);
+    ok(!!mod, "Failed to load library: %d\n", GetLastError());
+    ok(calls == 0x13, "Expected order 0x13, got %x\n", calls);
+
+    calls = 0;
+    FreeLibrary(mod);
+    ok(calls == 0x24, "Expected order 0x24, got %x\n", calls);
+
+    pLdrUnregisterDllNotification(cookie2);
+    pLdrUnregisterDllNotification(cookie);
+
+    /* test dll main order */
+    status = pLdrRegisterDllNotification(0, ldr_notify_callback_dll_main, &calls, &cookie);
+    ok(!status, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    calls = 0;
+    mod = LoadLibraryW(expected_dll);
+    ok(!!mod, "Failed to load library: %d\n", GetLastError());
+    ok(calls == 0x13, "Expected order 0x13, got %x\n", calls);
+
+    calls = 0;
+    FreeLibrary(mod);
+    ok(calls == 0x42, "Expected order 0x42, got %x\n", calls);
+
+    pLdrUnregisterDllNotification(cookie);
+
+    /* test dll main order */
+    status = pLdrRegisterDllNotification(0, ldr_notify_callback_fail, &calls, &cookie);
+    ok(!status, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    calls = 0;
+    mod = LoadLibraryW(expected_dll);
+    ok(!mod, "Expected library to fail loading\n");
+    ok(calls == 0x1342, "Expected order 0x1342, got %x\n", calls);
+
+    pLdrUnregisterDllNotification(cookie);
+
+    /* test dll with dependencies */
+    status = pLdrRegisterDllNotification(0, ldr_notify_callback_imports, &calls, &cookie);
+    ok(!status, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    calls = 0;
+    mod = LoadLibraryW(wintrustdllW);
+    ok(!!mod, "Failed to load library: %d\n", GetLastError());
+    ok(calls == 0x12 || calls == 0x21, "got %x\n", calls);
+
+    FreeLibrary(mod);
+    pLdrUnregisterDllNotification(cookie);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -2291,4 +2551,5 @@ START_TEST(rtl)
     test_RtlLeaveCriticalSection();
     test_LdrEnumerateLoadedModules();
     test_RtlMakeSelfRelativeSD();
+    test_LdrRegisterDllNotification();
 }
