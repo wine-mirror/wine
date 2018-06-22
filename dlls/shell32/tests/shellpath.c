@@ -1842,8 +1842,9 @@ static void test_NonExistentPath(void)
 
 static void test_SHGetFolderPathEx(void)
 {
+    WCHAR buffer[MAX_PATH], *path, *path2;
+    unsigned int i;
     HRESULT hr;
-    WCHAR buffer[MAX_PATH], *path;
     DWORD len;
 
     if (!pSHGetKnownFolderPath || !pSHGetFolderPathEx)
@@ -1867,6 +1868,44 @@ if (0) { /* crashes */
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
     ok(path != NULL, "expected path != NULL\n");
     CoTaskMemFree(path);
+
+    for (i = 0; i < ARRAY_SIZE(known_folders); ++i)
+    {
+        const KNOWNFOLDERID *folder_id = known_folders[i].folderId;
+
+        if (!folder_id)
+            continue;
+
+        path = NULL;
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_DEFAULT, NULL, &path);
+        if (FAILED(hr))
+            continue;
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path != NULL, "expected path != NULL\n");
+
+        path2 = NULL;
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_SIMPLE_IDLIST, NULL, &path2);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path != NULL, "expected path != NULL\n");
+        ok(!lstrcmpiW(path, path2), "expected equal paths: %s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(path2));
+        CoTaskMemFree(path2);
+
+        path2 = NULL;
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_DONT_UNEXPAND, NULL, &path2);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path2 != NULL, "expected path != NULL\n");
+        ok(!lstrcmpiW(path, path2), "expected equal paths: %s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(path2));
+        CoTaskMemFree(path2);
+
+        path2 = NULL;
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_SIMPLE_IDLIST | KF_FLAG_DONT_UNEXPAND, NULL, &path2);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path2 != NULL, "expected path != NULL\n");
+        ok(!lstrcmpiW(path, path2), "expected equal paths: %s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(path2));
+        CoTaskMemFree(path2);
+
+        CoTaskMemFree(path);
+    }
 
     path = NULL;
     hr = pSHGetKnownFolderPath(&FOLDERID_Desktop, 0, NULL, &path);
