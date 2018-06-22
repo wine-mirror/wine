@@ -1306,10 +1306,9 @@ static const struct knownFolderDef known_folders[] = {
                  NULL,
                  0,
                  0),
-    { 0 }
 };
 #undef KNOWN_FOLDER
-BOOL known_folder_found[ARRAY_SIZE(known_folders)-1];
+BOOL known_folder_found[ARRAY_SIZE(known_folders)];
 
 static void test_parameters(void)
 {
@@ -1873,9 +1872,6 @@ if (0) { /* crashes */
     {
         const KNOWNFOLDERID *folder_id = known_folders[i].folderId;
 
-        if (!folder_id)
-            continue;
-
         path = NULL;
         hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_DEFAULT, NULL, &path);
         if (FAILED(hr))
@@ -1968,19 +1964,20 @@ static BOOL is_in_strarray(const WCHAR *needle, const char *hay)
 static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId)
 {
     HRESULT hr;
-    const struct knownFolderDef *known_folder = &known_folders[0];
     int csidl, expectedCsidl, ret;
     KNOWNFOLDER_DEFINITION kfd;
     IKnownFolder *folder;
     WCHAR sName[1024];
-    BOOL *current_known_folder_found = &known_folder_found[0];
     BOOL found = FALSE;
+    unsigned int i;
 
-    while(known_folder->folderId != NULL)
+    for (i = 0; i < ARRAY_SIZE(known_folders); ++i)
     {
+        const struct knownFolderDef *known_folder = &known_folders[i];
+
         if(IsEqualGUID(known_folder->folderId, folderId))
         {
-            *current_known_folder_found = TRUE;
+            known_folder_found[i] = TRUE;
             found = TRUE;
             /* verify CSIDL */
             if(!(known_folder->csidl & NO_CSIDL))
@@ -2032,8 +2029,6 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
             break;
         }
-        known_folder++;
-        current_known_folder_found++;
     }
 
     if(!found)
