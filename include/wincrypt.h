@@ -1244,6 +1244,17 @@ typedef BOOL (WINAPI *PFN_CRYPT_ENUM_OID_FUNC)(DWORD dwEncodingType,
 
 #define CRYPT_MATCH_ANY_ENCODING_TYPE 0xffffffff
 
+#define CALG_OID_INFO_CNG_ONLY   0xffffffff
+#define CALG_OID_INFO_PARAMETERS 0xfffffffe
+
+#define CRYPT_OID_INFO_HASH_PARAMETERS_ALGORITHM     (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','H','a','s','h','P','a','r','a','m','e','t','e','r','s',0}
+#define CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM      (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','E','C','C','P','a','r','a','m','e','t','e','r','s',0}
+#define CRYPT_OID_INFO_MGF1_PARAMETERS_ALGORITHM     (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','M','g','f','1','P','a','r','a','m','e','t','e','r','s',0}
+#define CRYPT_OID_INFO_NO_SIGN_ALGORITHM             (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','N','o','S','i','g','n',0}
+#define CRYPT_OID_INFO_OAEP_PARAMETERS_ALGORITHM     (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','O','A','E','P','P','a','r','a','m','e','t','e','r','s',0}
+#define CRYPT_OID_INFO_ECC_WRAP_PARAMETERS_ALGORITHM (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','E','C','C','W','r','a','p','P','a','r','a','m','e','t','e','r','s',0}
+#define CRYPT_OID_INFO_NO_PARAMETERS_ALGORITHM       (const WCHAR []){'C','r','y','p','t','O','I','D','I','n','f','o','N','o','P','a','r','a','m','e','t','e','r','s',0}
+
 typedef struct _CRYPT_OID_INFO {
     DWORD   cbSize;
     LPCSTR  pszOID;
@@ -1255,6 +1266,10 @@ typedef struct _CRYPT_OID_INFO {
         DWORD  dwLength;
     } DUMMYUNIONNAME;
     CRYPT_DATA_BLOB ExtraInfo;
+#ifdef CRYPT_OID_INFO_HAS_EXTRA_FIELDS
+    LPCWSTR         pwszCNGAlgid;
+    LPCWSTR         pwszCNGExtraAlgid;
+#endif
 } CRYPT_OID_INFO, *PCRYPT_OID_INFO;
 typedef const CRYPT_OID_INFO CCRYPT_OID_INFO, *PCCRYPT_OID_INFO;
 

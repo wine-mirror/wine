@@ -22,6 +22,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winerror.h>
+#define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
 #include <wincrypt.h>
 #include <winreg.h>
 
@@ -543,8 +544,10 @@ static void test_enumOIDInfo(void)
 
 static void test_findOIDInfo(void)
 {
+    static WCHAR sha256ECDSA[] = { 's','h','a','2','5','6','E','C','D','S','A',0 };
     static WCHAR sha1[] = { 's','h','a','1',0 };
     static CHAR oid_rsa_md5[] = szOID_RSA_MD5, oid_sha256[] = szOID_NIST_sha256;
+    static CHAR oid_ecdsa_sha256[] = szOID_ECDSA_SHA256;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
     const struct oid_info
@@ -581,6 +584,34 @@ static void test_findOIDInfo(void)
                 "Unexpected Algid %d, expected %d\n", U(*info).Algid, test->algid);
         }
     }
+
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_ecdsa_sha256, 0);
+    if (info)
+    {
+        DWORD *data;
+
+        ok(info->cbSize == sizeof(*info), "Unexpected structure size %d.\n", info->cbSize);
+        ok(!strcmp(info->pszOID, oid_ecdsa_sha256), "Expected %s, got %s\n", oid_ecdsa_sha256, info->pszOID);
+        ok(!lstrcmpW(info->pwszName, sha256ECDSA), "Expected %s, got %s\n",
+            wine_dbgstr_w(sha256ECDSA), wine_dbgstr_w(info->pwszName));
+        ok(info->dwGroupId == CRYPT_SIGN_ALG_OID_GROUP_ID,
+           "Expected CRYPT_SIGN_ALG_OID_GROUP_ID, got %u\n", info->dwGroupId);
+        ok(U(*info).Algid == CALG_OID_INFO_CNG_ONLY,
+           "Expected CALG_OID_INFO_CNG_ONLY, got %d\n", U(*info).Algid);
+
+        data = (DWORD *)info->ExtraInfo.pbData;
+        ok(info->ExtraInfo.cbData == 8, "Expected 8, got %d\n", info->ExtraInfo.cbData);
+        ok(data[0] == CALG_OID_INFO_PARAMETERS, "Expected CALG_OID_INFO_PARAMETERS, got %x\n", data[0]);
+        ok(data[1] == CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG,
+            "Expected CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG, got %x\n", data[1]);
+
+        ok(!lstrcmpW(info->pwszCNGAlgid, BCRYPT_SHA256_ALGORITHM), "Expected %s, got %s\n",
+           wine_dbgstr_w(BCRYPT_SHA256_ALGORITHM), wine_dbgstr_w(info->pwszCNGAlgid));
+        ok(!lstrcmpW(info->pwszCNGExtraAlgid, CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM), "Expected %s, got %s\n",
+           wine_dbgstr_w(CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM), wine_dbgstr_w(info->pwszCNGExtraAlgid));
+    }
+    else
+        todo_wine win_skip("Host does not support ECDSA_SHA256, skipping test\n");
 }
 
 START_TEST(oid)
