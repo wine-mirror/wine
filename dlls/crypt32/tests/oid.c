@@ -547,58 +547,39 @@ static void test_findOIDInfo(void)
     static CHAR oid_rsa_md5[] = szOID_RSA_MD5, oid_sha256[] = szOID_NIST_sha256;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
+    const struct oid_info
+    {
+        DWORD key_type;
+        void *key;
+        const char *oid;
+        ALG_ID algid;
+        ALG_ID broken_algid;
+    } oid_test_info [] =
+    {
+        { CRYPT_OID_INFO_OID_KEY, oid_rsa_md5, szOID_RSA_MD5, CALG_MD5 },
+        { CRYPT_OID_INFO_NAME_KEY, sha1, szOID_OIWSEC_sha1, CALG_SHA1 },
+        { CRYPT_OID_INFO_ALGID_KEY, &alg, szOID_OIWSEC_sha1, CALG_SHA1 },
+        { CRYPT_OID_INFO_SIGN_KEY, algs, szOID_RSA_MD5RSA, CALG_MD5 },
+        { CRYPT_OID_INFO_OID_KEY, oid_sha256, szOID_NIST_sha256, CALG_SHA_256, -1 },
+    };
     PCCRYPT_OID_INFO info;
-
-    static const WCHAR sha256W[] = {'s','h','a','2','5','6',0};
+    int i;
 
     info = CryptFindOIDInfo(0, NULL, 0);
     ok(info == NULL, "Expected NULL\n");
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_rsa_md5, 0);
-    ok(info != NULL, "Expected to find szOID_RSA_MD5\n");
-    if (info)
-    {
-        ok(!strcmp(info->pszOID, szOID_RSA_MD5), "Expected %s, got %s\n",
-         szOID_RSA_MD5, info->pszOID);
-        ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
-           U(*info).Algid);
-    }
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_NAME_KEY, sha1, 0);
-    ok(info != NULL, "Expected to find sha1\n");
-    if (info)
-    {
-        ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
-         szOID_OIWSEC_sha1, info->pszOID);
-        ok(U(*info).Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
-           U(*info).Algid);
-    }
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_ALGID_KEY, &alg, 0);
-    ok(info != NULL, "Expected to find sha1\n");
-    if (info)
-    {
-        ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
-         szOID_OIWSEC_sha1, info->pszOID);
-        ok(U(*info).Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
-           U(*info).Algid);
-    }
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_SIGN_KEY, algs, 0);
-    ok(info != NULL, "Expected to find md5RSA\n");
-    if (info)
-    {
-        ok(!strcmp(info->pszOID, szOID_RSA_MD5RSA), "Expected %s, got %s\n",
-         szOID_RSA_MD5RSA, info->pszOID);
-        ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
-           U(*info).Algid);
-    }
 
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_sha256, 0);
-    ok(info != NULL, "Expected to find szOID_RSA_MD5\n");
-    if (info)
+    for (i = 0; i < ARRAY_SIZE(oid_test_info); i++)
     {
-        ok(!strcmp(info->pszOID, szOID_NIST_sha256), "Expected %s, got %s\n",
-         szOID_NIST_sha256, info->pszOID);
-        ok(!lstrcmpW(info->pwszName, sha256W), "pwszName = %s\n", wine_dbgstr_w(info->pwszName));
-        ok(U(*info).Algid == CALG_SHA_256 || U(*info).Algid == -1,
-           "Expected CALG_MD5 or -1, got %d\n", U(*info).Algid);
+        const struct oid_info *test = &oid_test_info[i];
+
+        info = CryptFindOIDInfo(test->key_type, test->key, 0);
+        ok(info != NULL, "Failed to find %s.\n", test->oid);
+        if (info)
+        {
+            ok(!strcmp(info->pszOID, test->oid), "Unexpected OID %s, expected %s\n", info->pszOID, test->oid);
+            ok(U(*info).Algid == test->algid || broken(U(*info).Algid == test->broken_algid),
+                "Unexpected Algid %d, expected %d\n", U(*info).Algid, test->algid);
+        }
     }
 }
 
