@@ -611,7 +611,7 @@ static void test_findOIDInfo(void)
            wine_dbgstr_w(CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM), wine_dbgstr_w(info->pwszCNGExtraAlgid));
     }
     else
-        todo_wine win_skip("Host does not support ECDSA_SHA256, skipping test\n");
+        win_skip("Host does not support ECDSA_SHA256, skipping test\n");
 }
 
 START_TEST(oid)
