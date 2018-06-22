@@ -738,8 +738,7 @@ static BOOL url_matches(LPCWSTR constraint, LPCWSTR name,
         /* Ignore any path or query portion of the URL. */
         if (*authority_end)
         {
-            if (authority_end - name < sizeof(hostname_buf) /
-             sizeof(hostname_buf[0]))
+            if (authority_end - name < ARRAY_SIZE(hostname_buf))
             {
                 memcpy(hostname_buf, name,
                  (authority_end - name) * sizeof(WCHAR));
