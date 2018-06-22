@@ -3741,28 +3741,25 @@ BOOL WINAPI EnableMenuItem( HMENU hMenu, UINT id, UINT wFlags )
     item->fState ^= (oldflags ^ wFlags) & (MF_GRAYED | MF_DISABLED);
 
     /* If the close item in the system menu change update the close button */
-    if ((item->wID == SC_CLOSE) && (oldflags != wFlags))
+    if ((item->wID == SC_CLOSE) && (oldflags != wFlags) && menu->hSysMenuOwner)
     {
-        if (menu->hSysMenuOwner)
-	{
-            RECT rc;
-	    POPUPMENU* parentMenu;
-            HWND hwnd;
+        RECT rc;
+        POPUPMENU* parentMenu;
+        HWND hwnd;
 
-	    /* Get the parent menu to access*/
-            parentMenu = grab_menu_ptr(menu->hSysMenuOwner);
-            release_menu_ptr(menu);
-            if (!parentMenu)
-                return (UINT)-1;
+        /* Get the parent menu to access */
+        parentMenu = grab_menu_ptr(menu->hSysMenuOwner);
+        release_menu_ptr(menu);
+        if (!parentMenu)
+            return (UINT)-1;
 
-            hwnd = parentMenu->hWnd;
-            release_menu_ptr(parentMenu);
+        hwnd = parentMenu->hWnd;
+        release_menu_ptr(parentMenu);
 
-            /* Refresh the frame to reflect the change */
-            WIN_GetRectangles( hwnd, COORDS_CLIENT, &rc, NULL );
-            rc.bottom = 0;
-            RedrawWindow(hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN);
-	}
+        /* Refresh the frame to reflect the change */
+        WIN_GetRectangles(hwnd, COORDS_CLIENT, &rc, NULL);
+        rc.bottom = 0;
+        RedrawWindow(hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN);
     }
     else
         release_menu_ptr(menu);
