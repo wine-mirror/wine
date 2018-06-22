@@ -230,6 +230,62 @@ static void test_convert(void)
     IMediaObject_Release(dmo);
 }
 
+static const GUID IID_test_outer = {0xdeadbeef,0,0,{0,0,0,0,0,0,0,0x66}};
+
+static HRESULT WINAPI Outer_QueryInterface(IUnknown *iface, REFIID iid, void **obj)
+{
+    if (IsEqualGUID(iid, &IID_test_outer))
+    {
+        *obj = (IUnknown *)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Outer_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Outer_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static IUnknownVtbl Outer_vtbl = {
+    Outer_QueryInterface,
+    Outer_AddRef,
+    Outer_Release,
+};
+
+static IUnknown Outer = { &Outer_vtbl };
+
+static void test_aggregation(void)
+{
+    IUnknown *unk, *unk2;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CMP3DecMediaObject, &Outer, CLSCTX_INPROC_SERVER,
+        &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IMediaObject_QueryInterface(dmo, &IID_test_outer, (void **)&unk2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "got unk %p\n", unk2);
+
+    IUnknown_Release(dmo);
+    IUnknown_Release(unk);
+
+    hr = CoCreateInstance(&CLSID_CMP3DecMediaObject, &Outer, CLSCTX_INPROC_SERVER,
+        &IID_IMediaObject, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+}
+
 START_TEST(mp3dmod)
 {
     IMediaObject *dmo;
@@ -247,6 +303,7 @@ START_TEST(mp3dmod)
     IMediaObject_Release(dmo);
 
     test_convert();
+    test_aggregation();
 
     CoUninitialize();
 }
