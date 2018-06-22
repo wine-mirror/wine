@@ -6303,24 +6303,47 @@ static FT_UInt get_GSUB_vert_glyph(const GdiFont *font, UINT glyph)
     return GSUB_apply_feature(header, feature, glyph);
 }
 
+static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
+{
+    FT_UInt ret;
+
+    if (glyph < 0x100) glyph += 0xf000;
+    /* there are a number of old pre-Unicode "broken" TTFs, which
+       do have symbols at U+00XX instead of U+f0XX */
+    if (!(ret = pFT_Get_Char_Index(font->ft_face, glyph)))
+        ret = pFT_Get_Char_Index(font->ft_face, glyph - 0xf000);
+
+    return ret;
+}
+
 static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 {
-    FT_UInt glyphId;
+    FT_UInt ret;
+    WCHAR wc;
+    char buf;
 
-    if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
-        WCHAR wc = (WCHAR)glyph;
+    if (font->ft_face->charmap->encoding == FT_ENCODING_NONE)
+    {
         BOOL default_used;
         BOOL *default_used_pointer;
-        FT_UInt ret;
-        char buf;
+
         default_used_pointer = NULL;
         default_used = FALSE;
         if (codepage_sets_default_used(font->codepage))
             default_used_pointer = &default_used;
-        if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) || default_used)
+        wc = (WCHAR)glyph;
+        if (!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) ||
+            default_used)
         {
-            if (font->codepage == CP_SYMBOL && wc < 0x100)
-                ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)wc);
+            if (font->codepage == CP_SYMBOL)
+            {
+                ret = get_glyph_index_symbol(font, glyph);
+                if (!ret)
+                {
+                    if (WideCharToMultiByte(CP_ACP, 0, &wc, 1, &buf, 1, NULL, NULL))
+                        ret = get_glyph_index_symbol(font, buf);
+                }
+            }
             else
                 ret = 0;
         }
@@ -6330,17 +6353,19 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
         return ret;
     }
 
-    if(font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+    if (font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
     {
-        if (glyph < 0x100) glyph += 0xf000;
-        /* there is a number of old pre-Unicode "broken" TTFs, which
-           do have symbols at U+00XX instead of U+f0XX */
-        if (!(glyphId = pFT_Get_Char_Index(font->ft_face, glyph)))
-            glyphId = pFT_Get_Char_Index(font->ft_face, glyph-0xf000);
+        ret = get_glyph_index_symbol(font, glyph);
+        if (!ret)
+        {
+            wc = (WCHAR)glyph;
+            if (WideCharToMultiByte(CP_ACP, 0, &wc, 1, &buf, 1, NULL, NULL))
+                ret = get_glyph_index_symbol(font, (unsigned char)buf);
+        }
+        return ret;
     }
-    else glyphId = pFT_Get_Char_Index(font->ft_face, glyph);
 
-    return glyphId;
+    return pFT_Get_Char_Index(font->ft_face, glyph);
 }
 
 /* helper for freetype_GetGlyphIndices */
