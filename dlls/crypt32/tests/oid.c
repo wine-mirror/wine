@@ -106,7 +106,7 @@ static void testOIDToAlgID(void)
     alg = CertOIDToAlgId("1.2.3");
     ok(!alg, "Expected failure, got %d\n", alg);
 
-    for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(oidToAlgID); i++)
     {
         alg = CertOIDToAlgId(oidToAlgID[i].oid);
         ok(alg == oidToAlgID[i].algID || (oidToAlgID[i].altAlgID && alg == oidToAlgID[i].altAlgID),
@@ -124,7 +124,7 @@ static void testAlgIDToOID(void)
     oid = CertAlgIdToOID(ALG_CLASS_SIGNATURE | ALG_TYPE_ANY | 80);
     ok(!oid && GetLastError() == 0xdeadbeef,
      "Didn't expect last error (%08x) to be set\n", GetLastError());
-    for (i = 0; i < sizeof(algIDToOID) / sizeof(algIDToOID[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(algIDToOID); i++)
     {
         oid = CertAlgIdToOID(algIDToOID[i].algID);
         /* Allow failure, not every version of Windows supports every algo */
@@ -424,7 +424,7 @@ static void test_registerDefaultOIDFunction(void)
         DWORD type, size;
         LPSTR ptr;
 
-        size = sizeof(dllBuf) / sizeof(dllBuf[0]);
+        size = ARRAY_SIZE(dllBuf);
         rc = RegQueryValueExA(key, dllA, NULL, &type, (LPBYTE)dllBuf, &size);
         ok(rc == 0,
          "Expected Dll value to exist, RegQueryValueExA failed: %d\n", rc);

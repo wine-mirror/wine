@@ -128,7 +128,7 @@ static void testBinaryToStringA(void)
     ret = CryptBinaryToStringA(NULL, 0, 0, NULL, &strLen);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         DWORD strLen = 0;
         LPSTR str = NULL;
@@ -163,7 +163,7 @@ static void testBinaryToStringA(void)
          CRYPT_STRING_BASE64X509CRLHEADER, tests[i].base64, X509_HEADER,
          X509_TRAILER);
     }
-    for (i = 0; i < sizeof(testsNoCR) / sizeof(testsNoCR[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(testsNoCR); i++)
     {
         DWORD strLen = 0;
         LPSTR str = NULL;
@@ -380,7 +380,7 @@ static void testStringToBinaryA(void)
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
      "Expected ERROR_INVALID_DATA, got ret=%d le=%u\n", ret, GetLastError());
     /* Bad strings */
-    for (i = 0; i < sizeof(badStrings) / sizeof(badStrings[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(badStrings); i++)
     {
         bufLen = 0;
         ret = CryptStringToBinaryA(badStrings[i].str, 0, badStrings[i].format,
@@ -447,7 +447,7 @@ static void testStringToBinaryA(void)
      ret, bufLen, buf[0]);
 
     /* Good strings */
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         bufLen = 0;
         /* Bogus length--oddly enough, that succeeds, even though it's not
@@ -504,7 +504,7 @@ static void testStringToBinaryA(void)
          */
     }
     /* And again, with no CR--decoding handles this automatically */
-    for (i = 0; i < sizeof(testsNoCR) / sizeof(testsNoCR[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(testsNoCR); i++)
     {
         bufLen = 0;
         /* Bogus length--oddly enough, that succeeds, even though it's not
