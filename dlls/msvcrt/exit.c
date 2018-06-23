@@ -29,9 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define LOCK_EXIT   _mlock(_EXIT_LOCK1)
 #define UNLOCK_EXIT _munlock(_EXIT_LOCK1)
 
-static MSVCRT__onexit_t *MSVCRT_atexit_table = NULL;
-static int MSVCRT_atexit_table_size = 0;
-static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 static MSVCRT_purecall_handler purecall_handler = NULL;
 
 typedef struct MSVCRT__onexit_table_t
@@ -40,6 +37,8 @@ typedef struct MSVCRT__onexit_table_t
     MSVCRT__onexit_t *_last;
     MSVCRT__onexit_t *_end;
 } MSVCRT__onexit_table_t;
+
+static MSVCRT__onexit_table_t MSVCRT_atexit_table;
 
 typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
 static _tls_callback_type tls_atexit_callback;
@@ -61,21 +60,93 @@ static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
 
 void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
 
-/* INTERNAL: call atexit functions */
-static void __MSVCRT__call_atexit(void)
+static int initialize_onexit_table(MSVCRT__onexit_table_t *table)
 {
-  /* Note: should only be called with the exit lock held */
-  TRACE("%d atext functions to call\n", MSVCRT_atexit_registered);
-  if (tls_atexit_callback) tls_atexit_callback(NULL, DLL_PROCESS_DETACH, NULL);
-  /* Last registered gets executed first */
-  while (MSVCRT_atexit_registered > 0)
-  {
-    MSVCRT_atexit_registered--;
-    TRACE("next is %p\n",MSVCRT_atexit_table[MSVCRT_atexit_registered]);
-    if (MSVCRT_atexit_table[MSVCRT_atexit_registered])
-      (*MSVCRT_atexit_table[MSVCRT_atexit_registered])();
-    TRACE("returned\n");
-  }
+    if (!table)
+        return -1;
+
+    if (table->_first == table->_end)
+        table->_last = table->_end = table->_first = NULL;
+    return 0;
+}
+
+static int register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+{
+    if (!table)
+        return -1;
+
+    EnterCriticalSection(&MSVCRT_onexit_cs);
+    if (!table->_first)
+    {
+        table->_first = MSVCRT_calloc(32, sizeof(void *));
+        if (!table->_first)
+        {
+            WARN("failed to allocate initial table.\n");
+            LeaveCriticalSection(&MSVCRT_onexit_cs);
+            return -1;
+        }
+        table->_last = table->_first;
+        table->_end = table->_first + 32;
+    }
+
+    /* grow if full */
+    if (table->_last == table->_end)
+    {
+        int len = table->_end - table->_first;
+        MSVCRT__onexit_t *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
+        if (!tmp)
+        {
+            WARN("failed to grow table.\n");
+            LeaveCriticalSection(&MSVCRT_onexit_cs);
+            return -1;
+        }
+        table->_first = tmp;
+        table->_end = table->_first + 2 * len;
+        table->_last = table->_first + len;
+    }
+
+    *table->_last = func;
+    table->_last++;
+    LeaveCriticalSection(&MSVCRT_onexit_cs);
+    return 0;
+}
+
+static int execute_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    MSVCRT__onexit_t *func;
+    MSVCRT__onexit_table_t copy;
+
+    if (!table)
+        return -1;
+
+    EnterCriticalSection(&MSVCRT_onexit_cs);
+    if (!table->_first || table->_first >= table->_last)
+    {
+        LeaveCriticalSection(&MSVCRT_onexit_cs);
+        return 0;
+    }
+    copy._first = table->_first;
+    copy._last  = table->_last;
+    copy._end   = table->_end;
+    memset(table, 0, sizeof(*table));
+    initialize_onexit_table(table);
+    LeaveCriticalSection(&MSVCRT_onexit_cs);
+
+    for (func = copy._last - 1; func >= copy._first; func--)
+    {
+        if (*func)
+           (*func)();
+    }
+
+    MSVCRT_free(copy._first);
+    return 0;
+}
+
+static void call_atexit(void)
+{
+    /* Note: should only be called with the exit lock held */
+    if (tls_atexit_callback) tls_atexit_callback(NULL, DLL_PROCESS_DETACH, NULL);
+    execute_onexit_table(&MSVCRT_atexit_table);
 }
 
 /*********************************************************************
@@ -277,7 +348,7 @@ void CDECL MSVCRT__cexit(void)
 {
   TRACE("(void)\n");
   LOCK_EXIT;
-  __MSVCRT__call_atexit();
+  call_atexit();
   UNLOCK_EXIT;
 }
 
@@ -292,25 +363,9 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
     return NULL;
 
   LOCK_EXIT;
-  if (MSVCRT_atexit_registered > MSVCRT_atexit_table_size - 1)
-  {
-    MSVCRT__onexit_t *newtable;
-    TRACE("expanding table\n");
-    newtable = MSVCRT_calloc(MSVCRT_atexit_table_size + 32, sizeof(void *));
-    if (!newtable)
-    {
-      TRACE("failed!\n");
-      UNLOCK_EXIT;
-      return NULL;
-    }
-    memcpy (newtable, MSVCRT_atexit_table, MSVCRT_atexit_table_size*sizeof(void *));
-    MSVCRT_atexit_table_size += 32;
-    MSVCRT_free (MSVCRT_atexit_table);
-    MSVCRT_atexit_table = newtable;
-  }
-  MSVCRT_atexit_table[MSVCRT_atexit_registered] = func;
-  MSVCRT_atexit_registered++;
+  register_onexit_function(&MSVCRT_atexit_table, func);
   UNLOCK_EXIT;
+
   return func;
 }
 
@@ -359,7 +414,6 @@ int CDECL MSVCRT__crt_atexit(void (*func)(void))
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
-
 /*********************************************************************
  *		_initialize_onexit_table (UCRTBASE.@)
  */
@@ -367,12 +421,7 @@ int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
 {
     TRACE("(%p)\n", table);
 
-    if (!table)
-        return -1;
-
-    if (table->_first == table->_end)
-        table->_last = table->_end = table->_first = NULL;
-    return 0;
+    return initialize_onexit_table(table);
 }
 
 /*********************************************************************
@@ -382,43 +431,7 @@ int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT
 {
     TRACE("(%p %p)\n", table, func);
 
-    if (!table)
-        return -1;
-
-    EnterCriticalSection(&MSVCRT_onexit_cs);
-    if (!table->_first)
-    {
-        table->_first = MSVCRT_calloc(32, sizeof(void *));
-        if (!table->_first)
-        {
-            WARN("failed to allocate initial table.\n");
-            LeaveCriticalSection(&MSVCRT_onexit_cs);
-            return -1;
-        }
-        table->_last = table->_first;
-        table->_end = table->_first + 32;
-    }
-
-    /* grow if full */
-    if (table->_last == table->_end)
-    {
-        int len = table->_end - table->_first;
-        MSVCRT__onexit_t *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
-        if (!tmp)
-        {
-            WARN("failed to grow table.\n");
-            LeaveCriticalSection(&MSVCRT_onexit_cs);
-            return -1;
-        }
-        table->_first = tmp;
-        table->_end = table->_first + 2 * len;
-        table->_last = table->_first + len;
-    }
-
-    *table->_last = func;
-    table->_last++;
-    LeaveCriticalSection(&MSVCRT_onexit_cs);
-    return 0;
+    return register_onexit_function(table, func);
 }
 
 /*********************************************************************
@@ -426,35 +439,9 @@ int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT
  */
 int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
 {
-    MSVCRT__onexit_t *func;
-    MSVCRT__onexit_table_t copy;
-
     TRACE("(%p)\n", table);
 
-    if (!table)
-        return -1;
-
-    EnterCriticalSection(&MSVCRT_onexit_cs);
-    if (!table->_first || table->_first >= table->_last)
-    {
-        LeaveCriticalSection(&MSVCRT_onexit_cs);
-        return 0;
-    }
-    copy._first = table->_first;
-    copy._last  = table->_last;
-    copy._end   = table->_end;
-    memset(table, 0, sizeof(*table));
-    MSVCRT__initialize_onexit_table(table);
-    LeaveCriticalSection(&MSVCRT_onexit_cs);
-
-    for (func = copy._last - 1; func >= copy._first; func--)
-    {
-        if (*func)
-           (*func)();
-    }
-
-    MSVCRT_free(copy._first);
-    return 0;
+    return execute_onexit_table(table);
 }
 
 /*********************************************************************

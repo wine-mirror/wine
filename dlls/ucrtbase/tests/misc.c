@@ -125,6 +125,8 @@ static int (CDECL *p_fesetround)(int);
 static void (CDECL *p___setusermatherr)(MSVCRT_matherr_func);
 static int* (CDECL *p_errno)(void);
 static char* (CDECL *p_asctime)(const struct tm *);
+static void (CDECL *p_exit)(int);
+static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
 
 static void test__initialize_onexit_table(void)
 {
@@ -429,6 +431,8 @@ static BOOL init(void)
     p___setusermatherr = (void*)GetProcAddress(module, "__setusermatherr");
     p_errno = (void*)GetProcAddress(module, "_errno");
     p_asctime = (void*)GetProcAddress(module, "asctime");
+    p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
+    p_exit = (void*)GetProcAddress(module, "exit");
 
     return TRUE;
 }
@@ -765,6 +769,52 @@ static void test_asctime(void)
     ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
 }
 
+static void test_exit(const char *argv0)
+{
+    PROCESS_INFORMATION proc;
+    STARTUPINFOA startup = {0};
+    char path[MAX_PATH];
+    HANDLE exit_event;
+    DWORD ret;
+
+    exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
+
+    sprintf(path, "%s misc exit", argv0);
+    startup.cb = sizeof(startup);
+    CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &proc);
+    winetest_wait_child_process(proc.hProcess);
+
+    ret = WaitForSingleObject(exit_event, 0);
+    ok(ret == WAIT_OBJECT_0, "exit_event was not set (%x)\n", ret);
+
+    CloseHandle(exit_event);
+}
+
+static int atexit_called;
+static void CDECL at_exit_func1(void)
+{
+    HANDLE exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
+
+    ok(exit_event != NULL, "CreateEvent failed: %d\n", GetLastError());
+    ok(atexit_called == 1, "atexit_called = %d\n", atexit_called);
+    atexit_called++;
+    SetEvent(exit_event);
+    CloseHandle(exit_event);
+}
+
+static void CDECL at_exit_func2(void)
+{
+    ok(!atexit_called, "atexit_called = %d\n", atexit_called);
+    atexit_called++;
+}
+
+static void test_call_exit(void)
+{
+    ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
+    ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+    p_exit(0);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -775,7 +825,10 @@ START_TEST(misc)
 
     arg_c = winetest_get_mainargs(&arg_v);
     if(arg_c == 3) {
-        test__get_narrow_winmain_command_line(NULL);
+        if(!strcmp(arg_v[2], "cmd"))
+            test__get_narrow_winmain_command_line(NULL);
+        else if(!strcmp(arg_v[2], "exit"))
+            test_call_exit();
         return;
     }
 
@@ -791,4 +844,5 @@ START_TEST(misc)
     test_isblank();
     test_math_errors();
     test_asctime();
+    test_exit(arg_v[0]);
 }
