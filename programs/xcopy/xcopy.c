@@ -743,101 +743,133 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                  Note: Windows docs say /P prompts when dest is created
                        but tests show it is done for each src file
                        regardless of the destination                   */
-            switch (toupper(word[1])) {
-            case 'I': flags |= OPT_ASSUMEDIR;     break;
-            case 'S': flags |= OPT_RECURSIVE;     break;
-            case 'Q': flags |= OPT_QUIET;         break;
-            case 'F': flags |= OPT_FULL;          break;
-            case 'L': flags |= OPT_SIMULATE;      break;
-            case 'W': flags |= OPT_PAUSE;         break;
-            case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
-            case 'Y': flags |= OPT_NOPROMPT;      break;
-            case 'N': flags |= OPT_SHORTNAME;     break;
-            case 'U': flags |= OPT_MUSTEXIST;     break;
-            case 'R': flags |= OPT_REPLACEREAD;   break;
-            case 'H': flags |= OPT_COPYHIDSYS;    break;
-            case 'C': flags |= OPT_IGNOREERRORS;  break;
-            case 'P': flags |= OPT_SRCPROMPT;     break;
-            case 'A': flags |= OPT_ARCHIVEONLY;   break;
-            case 'M': flags |= OPT_ARCHIVEONLY |
-                               OPT_REMOVEARCH;    break;
+            int skip=0;
+            WCHAR *rest;
 
-            /* E can be /E or /EXCLUDE */
-            case 'E': if (CompareStringW(LOCALE_USER_DEFAULT,
-                                         NORM_IGNORECASE | SORT_STRINGSORT,
-                                         &word[1], 8,
-                                         EXCLUDE, -1) == CSTR_EQUAL) {
-                        if (XCOPY_ProcessExcludeList(&word[9])) {
-                          XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
-                          goto out;
-                        } else flags |= OPT_EXCLUDELIST;
-                      } else flags |= OPT_EMPTYDIR | OPT_RECURSIVE;
-                      break;
+            while (word[0]) {
+                rest = NULL;
 
-            /* D can be /D or /D: */
-            case 'D': if (word[2]==':' && is_digit(word[3])) {
-                          SYSTEMTIME st;
-                          WCHAR     *pos = &word[3];
-                          BOOL       isError = FALSE;
-                          memset(&st, 0x00, sizeof(st));
+                switch (toupper(word[1])) {
+                case 'I': flags |= OPT_ASSUMEDIR;     break;
+                case 'S': flags |= OPT_RECURSIVE;     break;
+                case 'Q': flags |= OPT_QUIET;         break;
+                case 'F': flags |= OPT_FULL;          break;
+                case 'L': flags |= OPT_SIMULATE;      break;
+                case 'W': flags |= OPT_PAUSE;         break;
+                case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
+                case 'Y': flags |= OPT_NOPROMPT;      break;
+                case 'N': flags |= OPT_SHORTNAME;     break;
+                case 'U': flags |= OPT_MUSTEXIST;     break;
+                case 'R': flags |= OPT_REPLACEREAD;   break;
+                case 'H': flags |= OPT_COPYHIDSYS;    break;
+                case 'C': flags |= OPT_IGNOREERRORS;  break;
+                case 'P': flags |= OPT_SRCPROMPT;     break;
+                case 'A': flags |= OPT_ARCHIVEONLY;   break;
+                case 'M': flags |= OPT_ARCHIVEONLY |
+                                   OPT_REMOVEARCH;    break;
 
-                          /* Microsoft xcopy's usage message implies that the date
-                           * format depends on the locale, but that is false.
-                           * It is hardcoded to month-day-year.
-                           */
-                          st.wMonth = _wtol(pos);
-                          while (*pos && is_digit(*pos)) pos++;
-                          if (*pos++ != '-') isError = TRUE;
-
-                          if (!isError) {
-                              st.wDay = _wtol(pos);
-                              while (*pos && is_digit(*pos)) pos++;
-                              if (*pos++ != '-') isError = TRUE;
-                          }
-
-                          if (!isError) {
-                              st.wYear = _wtol(pos);
-                              while (*pos && is_digit(*pos)) pos++;
-                              if (st.wYear < 100) st.wYear+=2000;
-                          }
-
-                          if (!isError && SystemTimeToFileTime(&st, &dateRange)) {
-                              SYSTEMTIME st;
-                              WCHAR datestring[32], timestring[32];
-
-                              flags |= OPT_DATERANGE;
-
-                              /* Debug info: */
-                              FileTimeToSystemTime (&dateRange, &st);
-                              GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
-                                             sizeof(datestring)/sizeof(WCHAR));
-                              GetTimeFormatW(0, TIME_NOSECONDS, &st,
-                                             NULL, timestring, sizeof(timestring)/sizeof(WCHAR));
-
-                              WINE_TRACE("Date being used is: %s %s\n",
-                                         wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
-                          } else {
+                /* E can be /E or /EXCLUDE */
+                case 'E': if (CompareStringW(LOCALE_USER_DEFAULT,
+                                             NORM_IGNORECASE | SORT_STRINGSORT,
+                                             &word[1], 8,
+                                             EXCLUDE, -1) == CSTR_EQUAL) {
+                            if (XCOPY_ProcessExcludeList(&word[9])) {
                               XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                               goto out;
-                          }
-                      } else {
-                          flags |= OPT_DATENEWER;
-                      }
-                      break;
+                            } else {
+                              flags |= OPT_EXCLUDELIST;
 
-            case '-': if (toupper(word[2])=='Y')
-                          flags &= ~OPT_NOPROMPT;
-                      break;
-            case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
-                      rc = RC_HELP;
-                      goto out;
-            case 'V':
-                WINE_FIXME("ignoring /V\n");
-                break;
-            default:
-                WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(word));
-                XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), word);
-                goto out;
+                              /* Do not support concatenated switches onto exclude lists yet */
+                              rest = end;
+                            }
+                          } else {
+                              flags |= OPT_EMPTYDIR | OPT_RECURSIVE;
+                          }
+                          break;
+
+                /* D can be /D or /D: */
+                case 'D': if (word[2]==':' && is_digit(word[3])) {
+                              SYSTEMTIME st;
+                              WCHAR     *pos = &word[3];
+                              BOOL       isError = FALSE;
+                              memset(&st, 0x00, sizeof(st));
+
+                              /* Microsoft xcopy's usage message implies that the date
+                               * format depends on the locale, but that is false.
+                               * It is hardcoded to month-day-year.
+                               */
+                              st.wMonth = _wtol(pos);
+                              while (*pos && is_digit(*pos)) pos++;
+                              if (*pos++ != '-') isError = TRUE;
+
+                              if (!isError) {
+                                  st.wDay = _wtol(pos);
+                                  while (*pos && is_digit(*pos)) pos++;
+                                  if (*pos++ != '-') isError = TRUE;
+                              }
+
+                              if (!isError) {
+                                  st.wYear = _wtol(pos);
+                                  while (*pos && is_digit(*pos)) pos++;
+                                  if (st.wYear < 100) st.wYear+=2000;
+                              }
+
+                              /* Handle switches straight after the supplied date */
+                              rest = pos;
+
+                              if (!isError && SystemTimeToFileTime(&st, &dateRange)) {
+                                  SYSTEMTIME st;
+                                  WCHAR datestring[32], timestring[32];
+
+                                  flags |= OPT_DATERANGE;
+
+                                  /* Debug info: */
+                                  FileTimeToSystemTime (&dateRange, &st);
+                                  GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
+                                                 sizeof(datestring)/sizeof(WCHAR));
+                                  GetTimeFormatW(0, TIME_NOSECONDS, &st,
+                                                 NULL, timestring, sizeof(timestring)/sizeof(WCHAR));
+
+                                  WINE_TRACE("Date being used is: %s %s\n",
+                                             wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
+                              } else {
+                                  XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
+                                  goto out;
+                              }
+                          } else {
+                              flags |= OPT_DATENEWER;
+                          }
+                          break;
+
+                case '-': if (toupper(word[2])=='Y') {
+                              flags &= ~OPT_NOPROMPT;
+                              rest = &word[3];  /* Skip over 3 characters */
+                          }
+                          break;
+                case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
+                          rc = RC_HELP;
+                          goto out;
+                case 'V':
+                    WINE_FIXME("ignoring /V\n");
+                    break;
+                default:
+                    WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(word));
+                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), word);
+                    goto out;
+                }
+
+                /* Unless overriden above, skip over the '/' and the first character */
+                if (rest == NULL) rest = &word[2];
+
+                /* By now, rest should point either to the null after the
+                   switch, or the beginning of the next switch if there
+                   was no whitespace between them                          */
+                if (!skip && *rest && *rest != '/') {
+                    WINE_FIXME("Unexpected characters found and ignored '%s'\n", wine_dbgstr_w(rest));
+                    skip=1;
+                } else {
+                    word = rest;
+                }
             }
         }
         word = next;
