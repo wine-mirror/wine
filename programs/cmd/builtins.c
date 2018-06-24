@@ -2261,19 +2261,25 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
            thisSet->bracketDepth >= thisDepth) {
 
       /* Loop through all entries on the same line */
-      WCHAR *item;
+      WCHAR *staticitem;
       WCHAR *itemStart;
       WCHAR buffer[MAXSTRING];
 
       WINE_TRACE("Processing for set %p\n", thisSet);
       i = 0;
-      while (*(item = WCMD_parameter (thisSet->command, i, &itemStart, TRUE, FALSE))) {
+      while (*(staticitem = WCMD_parameter (thisSet->command, i, &itemStart, TRUE, FALSE))) {
 
         /*
          * If the parameter within the set has a wildcard then search for matching files
          * otherwise do a literal substitution.
          */
         static const WCHAR wildcards[] = {'*','?','\0'};
+
+        /* Take a copy of the item returned from WCMD_parameter as it is held in a
+           static buffer which can be overwritten during parsing of the for body   */
+        WCHAR item[MAXSTRING];
+        strcpyW(item, staticitem);
+
         thisCmdStart = cmdStart;
 
         itemNum++;
