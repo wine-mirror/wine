@@ -36,6 +36,7 @@ typedef struct
     IEnumMoniker IEnumMoniker_iface;
     CLSID class;
     LONG ref;
+    IEnumDMO *dmo_enum;
     HKEY sw_key;
     DWORD sw_index;
     HKEY cm_key;
@@ -845,6 +846,7 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_Release(IEnumMoniker *iface)
 
     if (!ref)
     {
+        IEnumDMO_Release(This->dmo_enum);
         RegCloseKey(This->sw_key);
         RegCloseKey(This->cm_key);
         CoTaskMemFree(This);
@@ -862,16 +864,31 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
     LONG res;
     ULONG fetched = 0;
     MediaCatMoniker * pMoniker;
+    WCHAR *name;
+    CLSID clsid;
+    HRESULT hr;
     HKEY hkey;
 
     TRACE("(%p)->(%d, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     while (fetched < celt)
     {
-        /* FIXME: try PNP devices and DMOs first */
+        /* FIXME: try PNP devices first */
 
+        /* try DMOs */
+        if ((hr = IEnumDMO_Next(This->dmo_enum, 1, &clsid, &name, NULL)) == S_OK)
+        {
+            if (!(pMoniker = DEVENUM_IMediaCatMoniker_Construct()))
+                return E_OUTOFMEMORY;
+
+            pMoniker->type = DEVICE_DMO;
+            pMoniker->clsid = clsid;
+
+            StringFromGUID2(&clsid, buffer, CHARS_IN_GUID);
+            StringFromGUID2(&This->class, buffer + CHARS_IN_GUID - 1, CHARS_IN_GUID);
+        }
         /* try DirectShow filters */
-        if (!(res = RegEnumKeyW(This->sw_key, This->sw_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
+        else if (!(res = RegEnumKeyW(This->sw_key, This->sw_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
         {
             This->sw_index++;
             if ((res = RegOpenKeyExW(This->sw_key, buffer, 0, KEY_QUERY_VALUE, &hkey)))
@@ -881,6 +898,13 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
                 return E_OUTOFMEMORY;
 
             pMoniker->type = DEVICE_FILTER;
+
+            if (!(pMoniker->name = CoTaskMemAlloc((strlenW(buffer) + 1) * sizeof(WCHAR))))
+            {
+                IMoniker_Release(&pMoniker->IMoniker_iface);
+                return E_OUTOFMEMORY;
+            }
+            strcpyW(pMoniker->name, buffer);
         }
         /* then try codecs */
         else if (!(res = RegEnumKeyW(This->cm_key, This->cm_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
@@ -894,16 +918,17 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
                 return E_OUTOFMEMORY;
 
             pMoniker->type = DEVICE_CODEC;
+
+            if (!(pMoniker->name = CoTaskMemAlloc((strlenW(buffer) + 1) * sizeof(WCHAR))))
+            {
+                IMoniker_Release(&pMoniker->IMoniker_iface);
+                return E_OUTOFMEMORY;
+            }
+            strcpyW(pMoniker->name, buffer);
         }
         else
             break;
 
-        if (!(pMoniker->name = CoTaskMemAlloc((strlenW(buffer) + 1) * sizeof(WCHAR))))
-        {
-            IMoniker_Release(&pMoniker->IMoniker_iface);
-            return E_OUTOFMEMORY;
-        }
-        strcpyW(pMoniker->name, buffer);
         pMoniker->has_class = TRUE;
         pMoniker->class = This->class;
 
@@ -930,10 +955,13 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Skip(IEnumMoniker *iface, ULONG celt)
 
     while (celt--)
     {
-        /* FIXME: try PNP devices and DMOs first */
+        /* FIXME: try PNP devices first */
 
+        /* try DMOs */
+        if (IEnumDMO_Skip(This->dmo_enum, 1) == S_OK)
+            ;
         /* try DirectShow filters */
-        if (RegEnumKeyW(This->sw_key, This->sw_index, NULL, 0) != ERROR_NO_MORE_ITEMS)
+        else if (RegEnumKeyW(This->sw_key, This->sw_index, NULL, 0) != ERROR_NO_MORE_ITEMS)
         {
             This->sw_index++;
         }
@@ -955,6 +983,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Reset(IEnumMoniker *iface)
 
     TRACE("(%p)->()\n", iface);
 
+    IEnumDMO_Reset(This->dmo_enum);
     This->sw_index = 0;
     This->cm_index = 0;
 
@@ -986,6 +1015,7 @@ HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **ppEnumMoniker)
 {
     EnumMonikerImpl * pEnumMoniker = CoTaskMemAlloc(sizeof(EnumMonikerImpl));
     WCHAR buffer[78];
+    HRESULT hr;
 
     if (!pEnumMoniker)
         return E_OUTOFMEMORY;
@@ -1006,6 +1036,13 @@ HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **ppEnumMoniker)
     StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
     if (RegOpenKeyExW(HKEY_CURRENT_USER, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->cm_key))
         pEnumMoniker->cm_key = NULL;
+
+    hr = DMOEnum(class, 0, 0, NULL, 0, NULL, &pEnumMoniker->dmo_enum);
+    if (FAILED(hr))
+    {
+        IEnumMoniker_Release(&pEnumMoniker->IEnumMoniker_iface);
+        return hr;
+    }
 
     *ppEnumMoniker = &pEnumMoniker->IEnumMoniker_iface;
 

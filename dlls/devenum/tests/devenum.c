@@ -525,6 +525,8 @@ static void test_dmo(void)
     {
         ok(hr == S_OK, "got %#x\n", hr);
 
+        ok(find_moniker(&CLSID_AudioRendererCategory, mon), "DMO should be registered\n");
+
         VariantClear(&var);
         hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
         ok(hr == S_OK, "got %#x\n", hr);
