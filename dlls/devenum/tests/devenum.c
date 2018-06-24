@@ -32,6 +32,7 @@
 #include "dsound.h"
 #include "mmddk.h"
 #include "vfw.h"
+#include "dmoreg.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -41,6 +42,7 @@ static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
 static const WCHAR clsidW[] = {'C','L','S','I','D',0};
 static const WCHAR waveW[] = {'w','a','v','e',':',0};
 static const WCHAR mrleW[] = {'m','r','l','e',0};
+static const WCHAR dmoW[] = {'d','m','o',':',0};
 static const WCHAR swW[] = {'s','w',':',0};
 static const WCHAR cmW[] = {'c','m',':',0};
 static const WCHAR backslashW[] = {'\\',0};
@@ -482,6 +484,67 @@ static void test_codec(void)
     IPropertyBag_Release(prop_bag);
     IMoniker_Release(mon);
 
+    IParseDisplayName_Release(parser);
+}
+
+static void test_dmo(void)
+{
+    static const WCHAR name[] = {'d','e','v','e','n','u','m',' ','t','e','s','t',0};
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    WCHAR buffer[200];
+    IMoniker *mon;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (void **)&parser);
+    ok(hr == S_OK, "Failed to create ParseDisplayName: %#x\n", hr);
+
+    lstrcpyW(buffer, deviceW);
+    lstrcatW(buffer, dmoW);
+    StringFromGUID2(&CLSID_TestFilter, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    StringFromGUID2(&CLSID_AudioRendererCategory, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    mon = check_display_name(parser, buffer);
+
+    ok(!find_moniker(&CLSID_AudioRendererCategory, mon), "DMO should not be registered\n");
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    VariantInit(&var);
+    hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+    ok(hr == E_FAIL, "got %#x\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(name);
+    hr = IPropertyBag_Write(prop_bag, friendly_name, &var);
+    ok(hr == E_ACCESSDENIED, "Write failed: %#x\n", hr);
+
+    hr = DMORegister(name, &CLSID_TestFilter, &CLSID_AudioRendererCategory, 0, 0, NULL, 0, NULL);
+    if (hr != E_ACCESSDENIED)
+    {
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(!lstrcmpW(V_BSTR(&var), name), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
+        VariantClear(&var);
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(name);
+        hr = IPropertyBag_Write(prop_bag, friendly_name, &var);
+        ok(hr == E_ACCESSDENIED, "Write failed: %#x\n", hr);
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, clsidW, &var, NULL);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "got %#x\n", hr);
+
+        hr = DMOUnregister(&CLSID_TestFilter, &CLSID_AudioRendererCategory);
+        ok(hr == S_OK, "got %#x\n", hr);
+    }
+    IPropertyBag_Release(prop_bag);
+    IMoniker_Release(mon);
     IParseDisplayName_Release(parser);
 }
 
@@ -974,6 +1037,7 @@ START_TEST(devenum)
     test_register_filter();
     test_directshow_filter();
     test_codec();
+    test_dmo();
 
     test_legacy_filter();
     hr = DirectSoundEnumerateW(test_dsound, NULL);

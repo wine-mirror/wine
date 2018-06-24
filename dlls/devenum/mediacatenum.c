@@ -25,6 +25,7 @@
 #include "devenum_private.h"
 #include "oleauto.h"
 #include "ocidl.h"
+#include "dmoreg.h"
 
 #include "wine/debug.h"
 
@@ -46,7 +47,11 @@ typedef struct
     IPropertyBag IPropertyBag_iface;
     LONG ref;
     enum device_type type;
-    WCHAR path[MAX_PATH];
+    union
+    {
+        WCHAR path[MAX_PATH];   /* for filters and codecs */
+        CLSID clsid;            /* for DMOs */
+    };
 } RegPropBagImpl;
 
 
@@ -114,18 +119,35 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     VARIANT* pVar,
     IErrorLog* pErrorLog)
 {
+    static const WCHAR FriendlyNameW[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     LPVOID pData = NULL;
     DWORD received;
     DWORD type = 0;
     RegPropBagImpl *This = impl_from_IPropertyBag(iface);
     HRESULT res = S_OK;
     LONG reswin32 = ERROR_SUCCESS;
+    WCHAR name[80];
     HKEY hkey;
 
     TRACE("(%p)->(%s, %p, %p)\n", This, debugstr_w(pszPropName), pVar, pErrorLog);
 
     if (!pszPropName || !pVar)
         return E_POINTER;
+
+    if (This->type == DEVICE_DMO)
+    {
+        if (!strcmpW(pszPropName, FriendlyNameW))
+        {
+            res = DMOGetName(&This->clsid, name);
+            if (SUCCEEDED(res))
+            {
+                V_VT(pVar) = VT_BSTR;
+                V_BSTR(pVar) = SysAllocString(name);
+            }
+            return res;
+        }
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+    }
 
     if (This->type == DEVICE_FILTER)
         reswin32 = RegOpenKeyW(HKEY_CLASSES_ROOT, This->path, &hkey);
@@ -246,6 +268,9 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(pszPropName), pVar);
 
+    if (This->type == DEVICE_DMO)
+        return E_ACCESSDENIED;
+
     switch (V_VT(pVar))
     {
     case VT_BSTR:
@@ -316,18 +341,29 @@ static HRESULT create_PropertyBag(MediaCatMoniker *mon, IPropertyBag **ppBag)
     rpb->ref = 1;
     rpb->type = mon->type;
 
-    if (rpb->type == DEVICE_FILTER)
-        strcpyW(rpb->path, clsidW);
-    else if (rpb->type == DEVICE_CODEC)
-        strcpyW(rpb->path, wszActiveMovieKey);
-    if (mon->has_class)
+    if (rpb->type == DEVICE_DMO)
+        rpb->clsid = mon->clsid;
+    else if (rpb->type == DEVICE_FILTER)
     {
-        StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
-        if (rpb->type == DEVICE_FILTER)
+        strcpyW(rpb->path, clsidW);
+        if (mon->has_class)
+        {
+            StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
             strcatW(rpb->path, instanceW);
-        strcatW(rpb->path, backslashW);
+            strcatW(rpb->path, backslashW);
+        }
+        strcatW(rpb->path, mon->name);
     }
-    strcatW(rpb->path, mon->name);
+    else if (rpb->type == DEVICE_CODEC)
+    {
+        strcpyW(rpb->path, wszActiveMovieKey);
+        if (mon->has_class)
+        {
+            StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
+            strcatW(rpb->path, backslashW);
+        }
+        strcatW(rpb->path, mon->name);
+    }
 
     *ppBag = &rpb->IPropertyBag_iface;
     DEVENUM_LockModule();
@@ -658,8 +694,6 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_RelativePathTo(IMoniker *iface, I
 static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
         IMoniker *pmkToLeft, LPOLESTR *ppszDisplayName)
 {
-    static const WCHAR swW[] = {'s','w',':',0};
-    static const WCHAR cmW[] = {'c','m',':',0};
     MediaCatMoniker *This = impl_from_IMoniker(iface);
     WCHAR *buffer;
 
@@ -667,23 +701,36 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetDisplayName(IMoniker *iface, I
 
     *ppszDisplayName = NULL;
 
-    buffer = CoTaskMemAlloc((strlenW(deviceW) + 4 + (This->has_class ? CHARS_IN_GUID : 0)
-                            + strlenW(This->name) + 1) * sizeof(WCHAR));
-    if (!buffer)
-        return E_OUTOFMEMORY;
-
-    strcpyW(buffer, deviceW);
-    if (This->type == DEVICE_FILTER)
-        strcatW(buffer, swW);
-    else if (This->type == DEVICE_CODEC)
-        strcatW(buffer, cmW);
-
-    if (This->has_class)
+    if (This->type == DEVICE_DMO)
     {
+        buffer = CoTaskMemAlloc((strlenW(deviceW) + strlenW(dmoW)
+                                 + 2 * CHARS_IN_GUID + 1) * sizeof(WCHAR));
+        if (!buffer) return E_OUTOFMEMORY;
+
+        strcpyW(buffer, deviceW);
+        strcatW(buffer, dmoW);
+        StringFromGUID2(&This->clsid, buffer + strlenW(buffer), CHARS_IN_GUID);
         StringFromGUID2(&This->class, buffer + strlenW(buffer), CHARS_IN_GUID);
-        strcatW(buffer, backslashW);
     }
-    strcatW(buffer, This->name);
+    else
+    {
+        buffer = CoTaskMemAlloc((strlenW(deviceW) + 3 + (This->has_class ? CHARS_IN_GUID : 0)
+                                 + strlenW(This->name) + 1) * sizeof(WCHAR));
+        if (!buffer) return E_OUTOFMEMORY;
+
+        strcpyW(buffer, deviceW);
+        if (This->type == DEVICE_FILTER)
+            strcatW(buffer, swW);
+        else if (This->type == DEVICE_CODEC)
+            strcatW(buffer, cmW);
+
+        if (This->has_class)
+        {
+            StringFromGUID2(&This->class, buffer + strlenW(buffer), CHARS_IN_GUID);
+            strcatW(buffer, backslashW);
+        }
+        strcatW(buffer, This->name);
+    }
 
     *ppszDisplayName = buffer;
     return S_OK;

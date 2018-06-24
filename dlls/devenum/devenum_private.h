@@ -64,6 +64,7 @@ enum device_type
 {
     DEVICE_FILTER,
     DEVICE_CODEC,
+    DEVICE_DMO,
 };
 
 typedef struct
@@ -73,7 +74,11 @@ typedef struct
     CLSID class;
     BOOL has_class;
     enum device_type type;
-    WCHAR *name;
+    union
+    {
+        WCHAR *name;    /* for filters and codecs */
+        CLSID clsid;    /* for DMOs */
+    };
 } MediaCatMoniker;
 
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void) DECLSPEC_HIDDEN;
@@ -95,5 +100,8 @@ static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                           'A','c','t','i','v','e','M','o','v','i','e','\\',
                                           'd','e','v','e','n','u','m','\\',0};
 static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
+static const WCHAR dmoW[] = {'d','m','o',':',0};
+static const WCHAR swW[] = {'s','w',':',0};
+static const WCHAR cmW[] = {'c','m',':',0};
 
 extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
