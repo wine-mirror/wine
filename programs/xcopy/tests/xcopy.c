@@ -97,17 +97,15 @@ static void test_parms_syntax(void)
     DeleteFileA("xcopytest\\xcopy1"); */
 
     rc = runcmd("xcopy /D/S xcopytest xcopytest2\\");
-    todo_wine
     ok(rc == 0, "xcopy /D/S test failed rc=%u\n", rc);
     ok(GetFileAttributesA("xcopytest2") == INVALID_FILE_ATTRIBUTES,
        "xcopy copied empty directory incorrectly\n");
 
     rc = runcmd("xcopy /D/S/E xcopytest xcopytest2\\");
-    todo_wine {
     ok(rc == 0, "xcopy /D/S/E test failed rc=%u\n", rc);
+    todo_wine
     ok(GetFileAttributesA("xcopytest2") != INVALID_FILE_ATTRIBUTES,
        "xcopy failed to copy empty directory\n");
-    }
     RemoveDirectoryA("xcopytest2");
 }
 

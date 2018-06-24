@@ -31,12 +31,14 @@
 
 /*
  * Notes:
- * Apparently, valid return codes are:
+ * Documented valid return codes are:
  *   0 - OK
- *   1 - No files found to copy
+ *   1 - No files found to copy  (*1)
  *   2 - CTRL+C during copy
  *   4 - Initialization error, or invalid source specification
  *   5 - Disk write error
+ *
+ * (*1) Testing shows return code 1 is never returned
  */
 
 
@@ -1165,7 +1167,6 @@ int wmain (int argc, WCHAR *argvW[])
     } else if (!(flags & OPT_NOCOPY)) {
         XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
     }
-    if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
     return rc;
 
 }
