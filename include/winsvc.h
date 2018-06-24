@@ -39,6 +39,9 @@ extern "C" {
 #elif defined(_MSC_VER)
 # define SERVICES_ACTIVE_DATABASEW    L"ServicesActive"
 # define SERVICES_FAILED_DATABASEW    L"ServicesFailed"
+#else
+static const WCHAR SERVICES_ACTIVE_DATABASEW[] = { 'S','e','r','v','i','c','e','s','A','c','t','i','v','e',0 };
+static const WCHAR SERVICES_FAILED_DATABASEW[] = { 'S','e','r','v','i','c','e','s','F','a','i','l','e','d',0 };
 #endif
 
 #define SERVICES_ACTIVE_DATABASE      WINELIB_NAME_AW( SERVICES_ACTIVE_DATABASE )
