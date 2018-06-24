@@ -2216,7 +2216,7 @@ static const WCHAR CERT_EFSBLOB_REGPATH[] =
  {'S','o','f','t','w','a','r','e','\\','P','o','l','i','c','i','e','s','\\',
   'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m','C','e','r',
   't','i','f','i','c','a','t','e','s','\\','E','F','S',0 };
-static const CERT_EFSBLOB_VALUE_NAME[] = { 'E','F','S','B','l','o','b',0 };
+static const WCHAR CERT_EFSBLOB_VALUE_NAME[] = { 'E','F','S','B','l','o','b',0 };
 #endif
 
 #if defined(__GNUC__)
