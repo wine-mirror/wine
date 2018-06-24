@@ -768,6 +768,14 @@ BA GTR B
 BA GTR AB
 BA GTR AA
 AA GTR A
+------------ Testing if/exist ------------
+exist explicit works
+exist explicit unknown file works
+exist explicit in subdir works
+exist simple wildcard works
+exist wildcard works
+negate exist wildcard works
+exist wildcard bad subdir broken works
 ------ for numbers
 negative numbers handled
 negative numbers handled

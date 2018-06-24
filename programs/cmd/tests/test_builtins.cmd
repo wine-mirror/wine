@@ -979,6 +979,49 @@ for %%i in (%WINE_STR_PARMS%) do (
 for %%i in (%WINE_STR_PARMS%) do (
     for %%j in (%WINE_STR_PARMS%) do (
         call :GTRtest %%i %%j))
+
+echo ------------ Testing if/exist ------------
+mkdir subdir
+echo something>subdir\bar
+echo something else>foo
+if exist foo (
+   echo exist explicit works
+) else (
+   echo ERROR exist explicit broken
+)
+if exist bar (
+   echo ERROR exist explicit unknown file broken
+) else (
+   echo exist explicit unknown file works
+)
+if exist subdir\bar (
+   echo exist explicit in subdir works
+) else (
+   echo ERROR exist explicit in subdir broken
+)
+if exist fo* (
+   echo exist simple wildcard works
+) else (
+   echo ERROR exist simple wildcard broken
+)
+if exist subdir\ba* (
+   echo exist wildcard works
+) else (
+   echo ERROR exist wildcard broken
+)
+if not exist subdir\ba* (
+   echo ERROR negate exist wildcard broken
+) else (
+   echo negate exist wildcard works
+)
+if exist idontexist\ba* (
+   echo ERROR exist wildcard bad subdir broken
+) else (
+   echo exist wildcard bad subdir broken works
+)
+del foo subdir\bar
+rd subdir
+
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)

@@ -2804,8 +2804,11 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
     WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, existW)) {
-    test = (GetFileAttributesW(WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE))
-             != INVALID_FILE_ATTRIBUTES);
+    WIN32_FIND_DATAW fd;
+    HANDLE hff = FindFirstFileW(WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE), &fd);
+    test = (hff != INVALID_HANDLE_VALUE );
+    if (!test) FindClose(hff);
+
     WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, defdW)) {
