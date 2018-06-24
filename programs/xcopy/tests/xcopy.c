@@ -103,7 +103,6 @@ static void test_parms_syntax(void)
 
     rc = runcmd("xcopy /D/S/E xcopytest xcopytest2\\");
     ok(rc == 0, "xcopy /D/S/E test failed rc=%u\n", rc);
-    todo_wine
     ok(GetFileAttributesA("xcopytest2") != INVALID_FILE_ATTRIBUTES,
        "xcopy failed to copy empty directory\n");
     RemoveDirectoryA("xcopytest2");

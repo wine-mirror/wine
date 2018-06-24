@@ -590,6 +590,13 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
     /* Search 2 - do subdirs */
     if (flags & OPT_RECURSIVE) {
+
+        /* If /E is supplied, create the directory now */
+        if ((flags & OPT_EMPTYDIR) &&
+           !(flags & OPT_SIMULATE)) {
+            XCOPY_CreateDirectory(deststem);
+        }
+
         lstrcpyW(inputpath, srcstem);
         lstrcatW(inputpath, wchr_star);
         findres = TRUE;
@@ -613,12 +620,6 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 lstrcpyW(outputpath, deststem);
                 if (*destspec == 0x00) {
                     lstrcatW(outputpath, finddata->cFileName);
-
-                    /* If /E is supplied, create the directory now */
-                    if ((flags & OPT_EMPTYDIR) &&
-                        !(flags & OPT_SIMULATE))
-                        XCOPY_CreateDirectory(outputpath);
-
                     lstrcatW(outputpath, wchr_slash);
                 }
 
