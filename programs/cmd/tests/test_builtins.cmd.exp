@@ -917,6 +917,10 @@ B C
 B D
 --- basic wildcards
 bazbaz
+--- wildcards in subdirs
+pop\bar1@space@
+pop\bar2.txt@space@
+pop\bar3@space@
 --- for /d
 baz@space@
 foo@space@

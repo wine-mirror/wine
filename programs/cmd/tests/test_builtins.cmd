@@ -1155,9 +1155,16 @@ mkdir foobar & cd foobar
 mkdir foo
 mkdir bar
 mkdir baz
+mkdir pop
 echo > bazbaz
 echo --- basic wildcards
 for %%i in (ba*) do echo %%i
+echo --- wildcards in subdirs
+echo something>pop\bar1
+echo something>pop\bar2.txt
+echo something>pop\bar3
+for %%f in (pop\ba*) do ( call echo %%f )
+rmdir /s/q pop
 echo --- for /d
 for /d %%i in (baz foo bar) do echo %%i 2>&1
 rem Confirm we don't match files:
