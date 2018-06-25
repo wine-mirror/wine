@@ -636,7 +636,7 @@ INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
      * be set automatically (this is different in Win32, and
      * DIALOG_DlgDirList sends Win32 messages to the control,
      * so do it here) */
-    if (attrib & DDL_DRIVES) attrib |= DDL_EXCLUSIVE;
+    if (attrib == DDL_DRIVES) attrib |= DDL_EXCLUSIVE;
     return DlgDirListA( WIN_Handle32(hDlg), spec, idLBox, idStatic, attrib );
 }
 
