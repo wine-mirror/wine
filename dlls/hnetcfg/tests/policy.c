@@ -117,7 +117,7 @@ static void test_NetFwAuthorizedApplication(void)
             &IID_INetFwAuthorizedApplication, (void**)&app);
     ok(hr == S_OK, "got: %08x\n", hr);
 
-    hr = GetModuleFileNameW(NULL, image, sizeof(image));
+    hr = GetModuleFileNameW(NULL, image, ARRAY_SIZE(image));
     ok(hr, "GetModuleFileName failed: %u\n", GetLastError());
 
     hr = INetFwAuthorizedApplication_get_ProcessImageFileName(app, NULL);
