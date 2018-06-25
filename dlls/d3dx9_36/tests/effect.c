@@ -7762,7 +7762,7 @@ static void test_create_effect_from_file(void)
     filename_size -= sizeof("effect1.fx") - 1;
     memcpy(effect_path, filename, filename_size);
     effect_path[filename_size] = 0;
-    MultiByteToWideChar(CP_ACP, 0, effect_path, -1, effect_path_w, sizeof(effect_path_w));
+    MultiByteToWideChar(CP_ACP, 0, effect_path, -1, effect_path_w, ARRAY_SIZE(effect_path_w));
 
     create_directory("include");
     create_file("effect2.fx", effect2, sizeof(effect2) - 1, NULL);
