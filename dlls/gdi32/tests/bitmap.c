@@ -84,7 +84,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     SetLastError(0xdeadbeef);
     test_size[0] = bm.bmWidthBytes * bm.bmHeight;
     /* NULL output buffer with different count values */
-    for (i = 0; i < sizeof(test_size) / sizeof(test_size[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_size); i++)
     {
         ret = GetBitmapBits(hbm, test_size[i], NULL);
         ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
@@ -94,7 +94,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
 
     /* Correct output buffer with different count values */
-    for (i = 0; i < sizeof(test_size) / sizeof(test_size[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_size); i++)
     {
         int expect = i == 1 ? 0 : bm.bmWidthBytes * bm.bmHeight;
         memset(buf, 0xAA, sizeof(buf));
@@ -1745,7 +1745,7 @@ static void test_mono_bitmap(void)
 
     SelectObject( hdc, hbmp );
 
-    for (col = 0; col < sizeof(colors) / sizeof(colors[0]); col++)
+    for (col = 0; col < ARRAY_SIZE(colors); col++)
     {
         SetTextColor( hdc, colors[col][0] );
         SetBkColor( hdc, colors[col][1] );
@@ -2690,7 +2690,7 @@ static void test_select_object(void)
 
     DeleteObject(hbm);
 
-    for(i = 0; i < sizeof(depths)/sizeof(depths[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(depths); i++) {
         /* test a color bitmap to dc bpp matching */
         planes = GetDeviceCaps(hdc, PLANES);
         bpp = GetDeviceCaps(hdc, BITSPIXEL);
@@ -5710,7 +5710,7 @@ static void test_D3DKMTCreateDCFromMemory( void )
     status = pD3DKMTCreateDCFromMemory( NULL );
     ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         memset( data, 0xaa, sizeof(data) );
 

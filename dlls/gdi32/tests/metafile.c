@@ -183,7 +183,7 @@ static void test_ExtTextOut(void)
     static const RECT rc = { 0, 0, 100, 100 };
     BOOL ret;
 
-    assert(sizeof(dx)/sizeof(dx[0]) >= lstrlenA(text));
+    assert(ARRAY_SIZE(dx) >= lstrlenA(text));
 
     /* Win9x doesn't play EMFs on invisible windows */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
@@ -3895,8 +3895,7 @@ static void test_emf_GradientFill(void)
      * written to the EMF, but is not considered in the bounds
      * calculation.
      */
-    ret = GdiGradientFill( mf, v, sizeof(v) / sizeof(v[0]), tri, sizeof(tri) / sizeof(tri[0]),
-                           GRADIENT_FILL_TRIANGLE );
+    ret = GdiGradientFill( mf, v, ARRAY_SIZE(v), tri, ARRAY_SIZE(tri), GRADIENT_FILL_TRIANGLE );
     ok( ret, "GradientFill\n" );
 
     hemf = CloseEnhMetaFile( mf );
@@ -4117,7 +4116,7 @@ static void test_emf_WorldTransform(void)
         { "manual modify", TRUE, FALSE }
     };
 
-    for(i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for(i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hdcMetafile = CreateEnhMetaFileA(GetDC(0), NULL, NULL, NULL);
         ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());

@@ -361,7 +361,7 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
 
     if (GetObjectType( hdc ) == OBJ_METADC)
     {
-        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(caps); i++)
             ok( GetDeviceCaps( hdc, caps[i] ) == (caps[i] == TECHNOLOGY ? DT_METAFILE : 0),
                 "wrong caps on %s for %u: %u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ) );
@@ -384,7 +384,7 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
     }
     else
     {
-        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(caps); i++)
         {
             INT precision = 0;
             INT hdc_caps = GetDeviceCaps( hdc, caps[i] );
@@ -506,7 +506,7 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
         dib = CreateDIBSection( ref_dc, info, DIB_RGB_COLORS, NULL, NULL, 0 );
         old = SelectObject( hdc, dib );
 
-        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(caps); i++)
             ok( GetDeviceCaps( hdc, caps[i] ) == GetDeviceCaps( ref_dc, caps[i] ),
                 "mismatched caps on %s and DIB for %u: %u/%u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );

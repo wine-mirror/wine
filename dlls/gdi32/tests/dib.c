@@ -1559,7 +1559,7 @@ static const POINT polypoly_lines[] =
 
 static const DWORD polypoly_counts[] =
 {
-    sizeof(polypoly_lines)/sizeof(polypoly_lines[0])
+    ARRAY_SIZE(polypoly_lines)
 };
 
 static const RECT patblt_clips[] =
@@ -1816,7 +1816,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     }
     compare_hash(hdc, bmi, bits, "diagonal solid lines");
 
-    for(i = 0; i < sizeof(bias_check) / sizeof(bias_check[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(bias_check); i++)
     {
         MoveToEx(hdc, bias_check[i].left, bias_check[i].top, NULL);
         LineTo(hdc, bias_check[i].right, bias_check[i].bottom);
@@ -1851,21 +1851,21 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
     DeleteObject(hrgn2);
 
-    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(hline_clips); i++)
     {
         MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
         LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
     }
     compare_hash(hdc, bmi, bits, "clipped solid hlines");
 
-    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(vline_clips); i++)
     {
         MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
         LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
     }
     compare_hash(hdc, bmi, bits, "clipped solid vlines");
 
-    for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(line_clips); i++)
     {
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
@@ -1873,7 +1873,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     compare_hash(hdc, bmi, bits, "clipped solid diagonal lines");
 
     /* clipped PatBlt */
-    for(i = 0; i < sizeof(patblt_clips) / sizeof(patblt_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(patblt_clips); i++)
     {
         PatBlt(hdc, patblt_clips[i].left, patblt_clips[i].top,
                patblt_clips[i].right - patblt_clips[i].left,
@@ -1887,35 +1887,35 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     SetBkMode(hdc, TRANSPARENT);
     SetBkColor(hdc, RGB(0, 0xff, 0));
 
-    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(hline_clips); i++)
     {
         MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
         LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
     }
     compare_hash(hdc, bmi, bits, "clipped dashed hlines");
 
-    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(hline_clips); i++)
     {
         MoveToEx(hdc, hline_clips[i].right - 1, hline_clips[i].bottom, NULL);
         LineTo(hdc, hline_clips[i].left - 1, hline_clips[i].top);
     }
     compare_hash(hdc, bmi, bits, "clipped dashed hlines r -> l");
 
-    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(vline_clips); i++)
     {
         MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
         LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
     }
     compare_hash(hdc, bmi, bits, "clipped dashed vlines");
 
-    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(vline_clips); i++)
     {
         MoveToEx(hdc, vline_clips[i].right, vline_clips[i].bottom - 1, NULL);
         LineTo(hdc, vline_clips[i].left, vline_clips[i].top - 1);
     }
     compare_hash(hdc, bmi, bits, "clipped dashed vlines b -> t");
 
-    for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(line_clips); i++)
     {
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
@@ -1924,7 +1924,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
 
     SetBkMode(hdc, OPAQUE);
 
-    for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(line_clips); i++)
     {
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
@@ -2163,13 +2163,13 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     SelectObject(hdc, solid_pen);
     SelectObject(hdc, solid_brush);
 
-    for(i = 0; i < sizeof(rectangles)/sizeof(rectangles[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(rectangles); i++)
     {
         Rectangle(hdc, rectangles[i].left, rectangles[i].top, rectangles[i].right, rectangles[i].bottom);
     }
 
     SelectObject(hdc, dashed_pen);
-    for(i = 0; i < sizeof(rectangles)/sizeof(rectangles[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(rectangles); i++)
     {
         Rectangle(hdc, rectangles[i].left, rectangles[i].top + 150, rectangles[i].right, rectangles[i].bottom + 150);
     }
@@ -2775,7 +2775,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     wide_pen = CreatePen( PS_SOLID, 7, RGB( 0xff, 0, 0 ) );
     SelectObject( hdc, wide_pen );
 
-    for (i = 0; i < sizeof( wide_lines ) / sizeof( wide_lines[0] ); i++)
+    for (i = 0; i < ARRAY_SIZE(wide_lines); i++)
     {
         MoveToEx( hdc, wide_lines[i].left, wide_lines[i].top, NULL );
         LineTo( hdc, wide_lines[i].right, wide_lines[i].bottom );
@@ -2794,7 +2794,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
                              9, &log_brush, 0, NULL );
     SelectObject( hdc, wide_pen );
     SetBrushOrgEx( hdc, 3, 3, NULL );
-    Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
+    Polyline( hdc, poly_lines, ARRAY_SIZE( poly_lines ));
     compare_hash_broken_todo( hdc, bmi, bits, "wide pen - flat caps, mitred", is_ddb, is_ddb );
     SetBrushOrgEx( hdc, 0, 0, NULL );
 
@@ -2805,7 +2805,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
                              16, &log_brush, 0, NULL );
     SelectObject( hdc, wide_pen );
 
-    Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
+    Polyline( hdc, poly_lines, ARRAY_SIZE( poly_lines ));
     compare_hash_broken_todo( hdc, bmi, bits, "wide pen - square caps, bevelled", is_ddb, is_ddb );
 
     SelectObject( hdc, orig_pen );
@@ -2815,7 +2815,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
                              9, &log_brush, 0, NULL );
     SelectObject( hdc, wide_pen );
 
-    PolyPolyline( hdc, polypoly_lines, polypoly_counts, sizeof(polypoly_counts)/sizeof(polypoly_counts[0]) );
+    PolyPolyline( hdc, polypoly_lines, polypoly_counts, ARRAY_SIZE( polypoly_counts ));
     compare_hash_broken_todo( hdc, bmi, bits, "wide pen - empty segments", is_ddb, is_ddb );
 
     SelectObject( hdc, orig_pen );
@@ -2833,7 +2833,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
                              12, &log_brush, 0, NULL );
     ok( wide_pen != 0, "failed to create pen\n" );
     SelectObject( hdc, wide_pen );
-    Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
+    Polyline( hdc, poly_lines, ARRAY_SIZE( poly_lines ));
 
     for (i = 1; i < 20; i++)
     {

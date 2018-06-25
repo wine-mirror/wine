@@ -345,7 +345,7 @@ static void test_handles_on_win64(void)
     if (sizeof(void*) != 8)
         return;
 
-    for (i = 0; i < sizeof(cases)/sizeof(cases[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cases); i++)
     {
         hrgn = CreateRectRgn(10, 10, 20, 20);
         hrgn_test = (HRGN)(ULONG_PTR)((ULONG_PTR)hrgn | ((ULONGLONG)cases[i].high << 32) | cases[i].low);

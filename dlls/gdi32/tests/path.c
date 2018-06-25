@@ -495,7 +495,7 @@ static void test_arcto(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "arcto_path", arcto_path, sizeof(arcto_path)/sizeof(path_test_t));
+    ok_path(hdc, "arcto_path", arcto_path, ARRAY_SIZE(arcto_path));
 done:
     ReleaseDC(0, hdc);
 }
@@ -540,7 +540,7 @@ static void test_anglearc(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t));
+    ok_path(hdc, "anglearc_path", anglearc_path, ARRAY_SIZE(anglearc_path));
 done:
     ReleaseDC(0, hdc);
 }
@@ -681,7 +681,7 @@ static void test_polydraw(void)
     ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 
     EndPath(hdc);
-    ok_path(hdc, "polydraw_path", polydraw_path, sizeof(polydraw_path)/sizeof(path_test_t));
+    ok_path(hdc, "polydraw_path", polydraw_path, ARRAY_SIZE(polydraw_path));
     GetCurrentPositionEx( hdc, &pos );
     ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 done:
@@ -966,7 +966,7 @@ static void test_rectangle(void)
     SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
     EndPath( hdc );
     SetMapMode( hdc, MM_TEXT );
-    ok_path( hdc, "rectangle_path", rectangle_path, sizeof(rectangle_path)/sizeof(path_test_t) );
+    ok_path( hdc, "rectangle_path", rectangle_path, ARRAY_SIZE(rectangle_path) );
     ReleaseDC( 0, hdc );
 }
 
@@ -1327,7 +1327,7 @@ static void test_roundrect(void)
     SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
     EndPath( hdc );
     SetMapMode( hdc, MM_TEXT );
-    ok_path( hdc, "roundrect_path", roundrect_path, sizeof(roundrect_path)/sizeof(path_test_t) );
+    ok_path( hdc, "roundrect_path", roundrect_path, ARRAY_SIZE(roundrect_path) );
     ReleaseDC( 0, hdc );
 }
 
@@ -1707,7 +1707,7 @@ static void test_ellipse(void)
     SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
     EndPath( hdc );
     SetMapMode( hdc, MM_TEXT );
-    ok_path( hdc, "ellipse_path", ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t) );
+    ok_path( hdc, "ellipse_path", ellipse_path, ARRAY_SIZE(ellipse_path) );
 }
 
 static const path_test_t all_funcs_path[] =
@@ -1890,7 +1890,7 @@ static void test_all_functions(void)
     LineTo( hdc, 150, 150 );
     /* FIXME: ExtTextOut */
     EndPath( hdc );
-    ok_path( hdc, "all_funcs_path", all_funcs_path, sizeof(all_funcs_path)/sizeof(path_test_t) );
+    ok_path( hdc, "all_funcs_path", all_funcs_path, ARRAY_SIZE(all_funcs_path) );
     ReleaseDC( 0, hdc );
 }
 

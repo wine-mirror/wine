@@ -937,7 +937,7 @@ static void test_bitmap_font_metrics(void)
     screen_log_pixels = GetDeviceCaps(hdc, LOGPIXELSY);
     diff = 32768;
     font_res = 0;
-    for (i = 0; i < sizeof(font_log_pixels)/sizeof(font_log_pixels[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(font_log_pixels); i++)
     {
         int new_diff = abs(font_log_pixels[i] - screen_log_pixels);
         if (new_diff < diff)
@@ -948,7 +948,7 @@ static void test_bitmap_font_metrics(void)
     }
     trace("best font resolution is %d\n", font_res);
 
-    for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(fd); i++)
     {
         int bit, height;
 
@@ -1190,7 +1190,7 @@ static void test_GetCharABCWidths(void)
         UINT cs;
         UINT a;
         UINT w;
-        BOOL r[sizeof range / sizeof range[0]];
+        BOOL r[ARRAY_SIZE(range)];
     } c[] =
     {
         {ANSI_CHARSET, 0x30, 0x30,
@@ -1253,7 +1253,7 @@ static void test_GetCharABCWidths(void)
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
 
-    for (i = 0; i < sizeof c / sizeof c[0]; ++i)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
     {
         ABC a[2], w[2];
         ABC full[256];
@@ -1285,7 +1285,7 @@ static void test_GetCharABCWidths(void)
         ok(memcmp(&a[0], &full[code], sizeof(ABC)) == 0,
            "GetCharABCWidthsA info should match. codepage = %u\n", c[i].cs);
 
-        for (j = 0; j < sizeof range / sizeof range[0]; ++j)
+        for (j = 0; j < ARRAY_SIZE(range); ++j)
         {
             memset(full, 0xdd, sizeof full);
             ret = pGetCharABCWidthsA(hdc, range[j].first, range[j].last, full);
@@ -1774,7 +1774,7 @@ static void test_GetKerningPairs(void)
         return;
     }
 
-    for (i = 0; i < sizeof(kd)/sizeof(kd[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(kd); i++)
     {
         OUTLINETEXTMETRICW otm;
         UINT uiRet;
@@ -2095,7 +2095,7 @@ static void test_height_selection_vdmx( HDC hdc )
         return;
     }
 
-    for (i = 0; i < sizeof(data) / sizeof(data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(data); i++)
     {
         res = get_res_data( "wine_vdmx.ttf", &size );
 
@@ -2356,7 +2356,7 @@ static void testJustification(HDC hdc, PCSTR str, RECT *clientArea)
         {
             SetTextJustification(hdc, areaWidth - size.cx, breakCount);
             GetTextExtentPoint32A(hdc, pFirstChar, pLastChar - pFirstChar, &size);
-            if (size.cx != areaWidth && nErrors < sizeof(error)/sizeof(error[0]) - 1)
+            if (size.cx != areaWidth && nErrors < ARRAY_SIZE(error) - 1)
             {
                 error[nErrors].start = pFirstChar;
                 error[nErrors].len = pLastChar - pFirstChar;
@@ -2613,7 +2613,7 @@ static void test_font_charset(void)
         return;
     }
 
-    for (i = 0; i < sizeof(cd)/sizeof(cd[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cd); i++)
     {
         if (cd[i].charset == SYMBOL_CHARSET)
         {
@@ -2687,7 +2687,7 @@ static void test_GdiGetCodePage(void)
 
     acp = GetACP();
 
-    for (i = 0; i < sizeof(matching_data) / sizeof(struct _matching_data); i++)
+    for (i = 0; i < ARRAY_SIZE(matching_data); i++)
     {
         /* only test data matched current locale codepage */
         if (matching_data[i].current_codepage != acp)
@@ -3700,7 +3700,7 @@ static int match_name_table_language( const sfnt_name *name, LANGID lang )
         break;
     case TT_PLATFORM_MACINTOSH:
         if (!IsValidCodePage( get_mac_code_page( name ))) return 0;
-        if (GET_BE_WORD(name->language_id) >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
+        if (GET_BE_WORD(name->language_id) >= ARRAY_SIZE(mac_langid_table)) return 0;
         name_lang = mac_langid_table[GET_BE_WORD(name->language_id)];
         break;
     case TT_PLATFORM_APPLE_UNICODE:
@@ -3710,7 +3710,7 @@ static int match_name_table_language( const sfnt_name *name, LANGID lang )
         case TT_APPLE_ID_DEFAULT:
         case TT_APPLE_ID_ISO_10646:
         case TT_APPLE_ID_UNICODE_2_0:
-            if (GET_BE_WORD(name->language_id) >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
+            if (GET_BE_WORD(name->language_id) >= ARRAY_SIZE(mac_langid_table)) return 0;
             name_lang = mac_langid_table[GET_BE_WORD(name->language_id)];
             break;
         default:
@@ -4105,7 +4105,7 @@ static void test_nonexistent_font(void)
 
     hdc = CreateCompatibleDC(0);
 
-    for (i = 0; i < sizeof(shell_subst)/sizeof(shell_subst[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(shell_subst); i++)
     {
         ret = is_font_installed(shell_subst[i].name);
         ok(ret || broken(!ret) /* win2000 */, "%s should be enumerated\n", shell_subst[i].name);
@@ -4201,7 +4201,7 @@ todo_wine /* Wine uses Arial for all substitutions */
     ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d\n", cs);
     DeleteObject(SelectObject(hdc, hfont));
 
-    for (i = 0; i < sizeof(font_subst)/sizeof(font_subst[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(font_subst); i++)
     {
         ret = is_font_installed(font_subst[i].name);
 todo_wine
@@ -4487,8 +4487,8 @@ static void test_GetTextFace(void)
 
     dc = GetDC(NULL);
     g = SelectObject(dc, f);
-    n = GetTextFaceW(dc, sizeof bufW / sizeof bufW[0], bufW);
-    ok(n == sizeof faceW / sizeof faceW[0], "GetTextFaceW returned %d\n", n);
+    n = GetTextFaceW(dc, ARRAY_SIZE(bufW), bufW);
+    ok(n == ARRAY_SIZE(faceW), "GetTextFaceW returned %d\n", n);
     ok(lstrcmpW(faceW, bufW) == 0, "GetTextFaceW\n");
 
     /* Play with the count arg.  */
@@ -4508,7 +4508,7 @@ static void test_GetTextFace(void)
     ok(bufW[0] == faceW[0] && bufW[1] == '\0', "GetTextFaceW didn't copy\n");
 
     n = GetTextFaceW(dc, 0, NULL);
-    ok(n == sizeof faceW / sizeof faceW[0], "GetTextFaceW returned %d\n", n);
+    ok(n == ARRAY_SIZE(faceW), "GetTextFaceW returned %d\n", n);
 
     DeleteObject(SelectObject(dc, g));
     ReleaseDC(NULL, dc);
@@ -4719,7 +4719,7 @@ static void test_GetGlyphOutline(void)
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
         ok(ret == GDI_ERROR, "GetGlyphOutlineW should return an error when the buffer size is too small.\n");
 
-    for (i = 0; i < sizeof(fmt) / sizeof(fmt[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(fmt); ++i)
     {
         DWORD dummy;
 
@@ -4785,7 +4785,7 @@ static void test_GetGlyphOutline(void)
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
-    for (i = 0; i < sizeof c / sizeof c[0]; ++i)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
     {
         static const MAT2 rotate_mat = {{0, 0}, {0, -1}, {0, 1}, {0, 0}};
         TEXTMETRICA tm;
@@ -4955,7 +4955,7 @@ static void test_CreateFontIndirect(void)
     lf.lfItalic = FALSE;
     lf.lfWeight = FW_DONTCARE;
 
-    for (i = 0; i < sizeof(TestName)/sizeof(TestName[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(TestName); i++)
     {
         lstrcpyA(lf.lfFaceName, TestName[i]);
         hfont = CreateFontIndirectA(&lf);
@@ -5409,7 +5409,7 @@ static void test_fullname(void)
     lf.lfItalic = FALSE;
     lf.lfWeight = FW_DONTCARE;
 
-    for (i = 0; i < sizeof(TestName) / sizeof(TestName[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(TestName); i++)
     {
         if (!is_font_installed_fullname("Lucida Sans", TestName[i]))
         {
@@ -6058,7 +6058,7 @@ static void test_vertical_font(void)
 
     ok(hgi != vgi, "same glyph h:%u v:%u\n", hgi, vgi);
 
-    for (i = 0; i < sizeof(face_list)/sizeof(face_list[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(face_list); i++) {
         const char* face = face_list[i];
         if (!is_truetype_font_installed(face)) {
             skip("%s is not installed\n", face);
@@ -6092,7 +6092,7 @@ static void test_east_asian_font_selection(void)
 
     hdc = GetDC(NULL);
 
-    for (i = 0; i < sizeof(charset)/sizeof(charset[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(charset); i++)
     {
         LOGFONTA lf;
         HFONT hfont;
@@ -6214,7 +6214,7 @@ static void test_stock_fonts(void)
     };
     int i, j;
 
-    for (i = 0; i < sizeof(font)/sizeof(font[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(font); i++)
     {
         HFONT hfont;
         LOGFONTA lf;
@@ -6314,7 +6314,7 @@ static void test_max_height(void)
     DeleteObject(SelectObject(hdc, hfont_old));
 
     /* test an invalid value */
-    for (i = 0; i < sizeof(invalid_height)/sizeof(invalid_height[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(invalid_height); i++) {
         lf.lfHeight = invalid_height[i];
         hfont = CreateFontIndirectA(&lf);
         hfont_old = SelectObject(hdc, hfont);
@@ -6638,7 +6638,7 @@ static void test_bitmap_font_glyph_index(void)
     bmi.bmiHeader.biHeight = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    for (i = 0; i < sizeof(bitmap_font_list)/sizeof(bitmap_font_list[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(bitmap_font_list); i++) {
         memset(&lf, 0, sizeof(lf));
         lf.lfCharSet = bitmap_font_list[i].charset;
         strcpy(lf.lfFaceName, bitmap_font_list[i].face);

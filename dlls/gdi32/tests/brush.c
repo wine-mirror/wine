@@ -48,7 +48,7 @@ static void test_solidbrush(void)
     size_t i;
     INT ret;
 
-    for(i=0; i<sizeof(stock)/sizeof(stock[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(stock); i++) {
         solidBrush = CreateSolidBrush(stock[i].color);
 
         if(stock[i].stockobj != -1) {

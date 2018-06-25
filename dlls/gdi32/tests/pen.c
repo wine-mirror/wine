@@ -72,7 +72,7 @@ static void test_logpen(void)
     EXTLOGPEN *ext_pen = (EXTLOGPEN *)elp_buffer;
     DWORD *ext_style = ext_pen->elpStyleEntry;
 
-    for (i = 0; i < sizeof(pen)/sizeof(pen[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(pen); i++)
     {
         trace("%d: testing style %u\n", i, pen[i].style);
 
