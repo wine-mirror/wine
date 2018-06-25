@@ -107,6 +107,7 @@ static void test_NetFwAuthorizedApplication(void)
     INetFwAuthorizedApplication *app;
     static WCHAR empty[] = {0};
     UNIVERSAL_NAME_INFOW *info;
+    WCHAR fullpath[MAX_PATH];
     WCHAR netpath[MAX_PATH];
     WCHAR image[MAX_PATH];
     HRESULT hr;
@@ -138,13 +139,15 @@ static void test_NetFwAuthorizedApplication(void)
     ok(hr == S_OK, "got: %08x\n", hr);
     SysFreeString(bstr);
 
+    GetFullPathNameW(image, ARRAY_SIZE(fullpath), fullpath, NULL);
+
     info = (UNIVERSAL_NAME_INFOW *)&netpath;
     sz = sizeof(netpath);
     hr = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
     if (hr != NO_ERROR)
     {
         info->lpUniversalName = netpath + sizeof(*info)/sizeof(WCHAR);
-        lstrcpyW(info->lpUniversalName, image);
+        lstrcpyW(info->lpUniversalName, fullpath);
     }
 
     hr = INetFwAuthorizedApplication_get_ProcessImageFileName(app, &bstr);

@@ -268,7 +268,7 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
 {
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
     UNIVERSAL_NAME_INFOW *info;
-    WCHAR *netpath;
+    WCHAR *path;
     DWORD res;
     DWORD sz;
 
@@ -281,22 +281,29 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
     res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, NULL, &sz);
     if (res == WN_MORE_DATA)
     {
-        if (!(netpath = heap_alloc(sz)))
+        if (!(path = heap_alloc(sz)))
             return E_OUTOFMEMORY;
 
-        info = (UNIVERSAL_NAME_INFOW *)&netpath;
+        info = (UNIVERSAL_NAME_INFOW *)&path;
         res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
         if (res == NO_ERROR)
         {
             SysFreeString(This->filename);
             This->filename = SysAllocString(info->lpUniversalName);
         }
-        heap_free(netpath);
+        heap_free(path);
         return HRESULT_FROM_WIN32(res);
     }
 
+    sz = GetFullPathNameW(image, 0, NULL, NULL);
+    if (!(path = heap_alloc(++sz * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    GetFullPathNameW(image, sz, path, NULL);
+
     SysFreeString( This->filename );
-    This->filename = SysAllocString(image);
+    This->filename = SysAllocString(path);
+    heap_free(path);
     return This->filename ? S_OK : E_OUTOFMEMORY;
 }
 
