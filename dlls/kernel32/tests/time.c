@@ -697,7 +697,7 @@ static void test_GetCalendarInfo(void)
     ok( ret == 5, "wrong size %u\n", ret );
     ok( atoi( bufferA ) == val1, "wrong value %s/%u\n", bufferA, val1 );
 
-    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, bufferW, sizeof(bufferW), NULL );
+    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, bufferW, ARRAY_SIZE(bufferW), NULL );
     ok( ret, "GetCalendarInfoW failed err %u\n", GetLastError() );
     ok( ret == 5, "wrong size %u\n", ret );
     memset( bufferA, 0x55, sizeof(bufferA) );
@@ -731,7 +731,7 @@ static void test_GetCalendarInfo(void)
     ok( ret == ret2, "got %d, expected %d\n", ret2, ret );
 
     ret2 = pGetCalendarInfoW( LANG_SYSTEM_DEFAULT, CAL_GREGORIAN, CAL_SDAYNAME1,
-                              bufferW, sizeof(bufferW), NULL);
+                              bufferW, ARRAY_SIZE(bufferW), NULL);
     ok( ret2, "GetCalendarInfoW failed err %u\n", GetLastError() );
     ret2 = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
     ok( ret == ret2, "got %d, expected %d\n", ret, ret2 );
