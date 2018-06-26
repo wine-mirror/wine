@@ -983,7 +983,7 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
         return;
     }
 
-    ret = pGetVolumeNameForVolumeMountPointW( drive_c, volume, sizeof(volume)/sizeof(volume[0]) );
+    ret = pGetVolumeNameForVolumeMountPointW( drive_c, volume, ARRAY_SIZE(volume) );
     ok(ret, "failed to get volume name %u\n", GetLastError());
 
     SetLastError( 0xdeadbeef );
@@ -1005,16 +1005,16 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
     ok(error == ERROR_MORE_DATA, "expected ERROR_MORE_DATA got %u\n", error);
 
     if (0) { /* crash */
-    ret = pGetVolumePathNamesForVolumeNameW( volume, NULL, sizeof(buffer), NULL );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, NULL, ARRAY_SIZE(buffer), NULL );
     ok(ret, "failed to get path names %u\n", GetLastError());
     }
 
-    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), NULL );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, ARRAY_SIZE(buffer), NULL );
     ok(ret, "failed to get path names %u\n", GetLastError());
 
     len = 0;
     memset( buffer, 0xff, sizeof(buffer) );
-    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, ARRAY_SIZE(buffer), &len );
     ok(ret, "failed to get path names %u\n", GetLastError());
     ok(len == 5, "expected 5 got %u\n", len);
     ok(!buffer[4], "expected double null-terminated buffer\n");
@@ -1023,7 +1023,7 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
     volume[1] = '?';
     volume[lstrlenW( volume ) - 1] = 0;
     SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, ARRAY_SIZE(buffer), &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
     ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
@@ -1032,7 +1032,7 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
     volume[0] = '\\';
     volume[1] = 0;
     SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, ARRAY_SIZE(buffer), &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
     todo_wine ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", error);
@@ -1040,7 +1040,7 @@ static void test_GetVolumePathNamesForVolumeNameW(void)
     len = 0;
     lstrcpyW( volume, volume_null );
     SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, ARRAY_SIZE(buffer), &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
     ok(error == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND got %u\n", error);
