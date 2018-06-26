@@ -28,13 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 DECLSPEC_HIDDEN LONG dll_refs;
 static HINSTANCE devenum_instance;
 
-typedef struct
-{
-    REFCLSID clsid;
-    LPCWSTR friendly_name;
-    BOOL instance;
-} register_info;
-
 /***********************************************************************
  *		DllEntryPoint
  */
