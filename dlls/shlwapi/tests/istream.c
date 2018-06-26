@@ -726,12 +726,12 @@ START_TEST(istream)
 
     int i, j, k;
 
-    for (i = 0; i != sizeof(stgm_access)/sizeof(stgm_access[0]); i++) {
-        for (j = 0; j != sizeof(stgm_sharing)/sizeof(stgm_sharing[0]); j ++) {
+    for (i = 0; i != ARRAY_SIZE(stgm_access); i++) {
+        for (j = 0; j != ARRAY_SIZE(stgm_sharing); j ++) {
             test_SHCreateStreamOnFileA(stgm_access[i], stgm_sharing[j]);
             test_SHCreateStreamOnFileW(stgm_access[i], stgm_sharing[j]);
 
-            for (k = 0; k != sizeof(stgm_flags)/sizeof(stgm_flags[0]); k++)
+            for (k = 0; k != ARRAY_SIZE(stgm_flags); k++)
                 test_SHCreateStreamOnFileEx(stgm_access[i], stgm_sharing[j] | stgm_flags[k]);
         }
     }
