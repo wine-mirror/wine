@@ -21,9 +21,14 @@
 #include <stdarg.h>
 
 #define NONAMELESSUNION
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
+#define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
+#include "bcrypt.h"
 #include "winnls.h"
 #include "rpc.h"
 #include "wine/debug.h"
@@ -2408,22 +2413,13 @@ BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV_LEGACY hCryptProv,
      CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pPublicKey, 0, NULL);
 }
 
-static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv,
- DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pubKeyInfo,
- const CERT_SIGNED_CONTENT_INFO *signedCert)
+static BOOL CRYPT_VerifySignature(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEncodingType,
+    CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert, const CRYPT_OID_INFO *info)
 {
     BOOL ret;
     HCRYPTKEY key;
-    PCCRYPT_OID_INFO info;
     ALG_ID pubKeyID, hashID;
 
-    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
-     signedCert->SignatureAlgorithm.pszObjId, 0);
-    if (!info || info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID)
-    {
-        SetLastError(NTE_BAD_ALGID);
-        return FALSE;
-    }
     hashID = info->u.Algid;
     if (info->ExtraInfo.cbData >= sizeof(ALG_ID))
         pubKeyID = *(ALG_ID *)info->ExtraInfo.pbData;
@@ -2451,6 +2447,248 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV_LEGACY hCryptP
         CryptDestroyKey(key);
     }
     return ret;
+}
+
+static BOOL CNG_CalcHash(const WCHAR *algorithm, const CERT_SIGNED_CONTENT_INFO *signedCert,
+        BYTE **hash_value, DWORD *hash_len)
+{
+    BCRYPT_HASH_HANDLE hash = NULL;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    NTSTATUS status;
+    DWORD size;
+
+    if ((status = BCryptOpenAlgorithmProvider(&alg, algorithm, NULL, 0)))
+        goto done;
+
+    if ((status = BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0)))
+        goto done;
+
+    if ((status = BCryptHashData(hash, signedCert->ToBeSigned.pbData, signedCert->ToBeSigned.cbData, 0)))
+        goto done;
+
+    if ((status = BCryptGetProperty(hash, BCRYPT_HASH_LENGTH, (BYTE *)hash_len, sizeof(*hash_len), &size, 0)))
+        goto done;
+
+    if (!(*hash_value = CryptMemAlloc(*hash_len)))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+
+    if ((status = BCryptFinishHash(hash, *hash_value, *hash_len, 0)))
+    {
+        CryptMemFree(*hash_value);
+        goto done;
+    }
+
+done:
+    if (hash) BCryptDestroyHash(hash);
+    if (alg)  BCryptCloseAlgorithmProvider(alg, 0);
+    if (status) SetLastError(RtlNtStatusToDosError(status));
+    return status == 0;
+}
+
+static BOOL CNG_ImportECCPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key)
+{
+    DWORD blob_magic, ecckey_len, size;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    BCRYPT_ECCKEY_BLOB *ecckey;
+    const WCHAR *sign_algo;
+    char **ecc_curve;
+    NTSTATUS status;
+
+    if (!pubKeyInfo->PublicKey.cbData)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if (pubKeyInfo->PublicKey.pbData[0] != 0x4)
+    {
+        FIXME("Compressed ECC curves (%02x) not yet supported\n", pubKeyInfo->PublicKey.pbData[0]);
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OBJECT_IDENTIFIER, pubKeyInfo->Algorithm.Parameters.pbData,
+            pubKeyInfo->Algorithm.Parameters.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &ecc_curve, &size))
+        return FALSE;
+
+    if (!strcmp(*ecc_curve, szOID_ECC_CURVE_P256))
+    {
+        sign_algo = BCRYPT_ECDSA_P256_ALGORITHM;
+        blob_magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+    }
+    else if (!strcmp(*ecc_curve, szOID_ECC_CURVE_P384))
+    {
+        sign_algo = BCRYPT_ECDSA_P384_ALGORITHM;
+        blob_magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
+    }
+    else
+    {
+        FIXME("Unsupported ecc curve type: %s\n", *ecc_curve);
+        sign_algo = NULL;
+        blob_magic = 0;
+    }
+    LocalFree(ecc_curve);
+
+    if (!sign_algo)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if ((status = BCryptOpenAlgorithmProvider(&alg, sign_algo, NULL, 0)))
+        goto done;
+
+    ecckey_len = sizeof(BCRYPT_ECCKEY_BLOB) + pubKeyInfo->PublicKey.cbData - 1;
+    if (!(ecckey = CryptMemAlloc(ecckey_len)))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+
+    ecckey->dwMagic = blob_magic;
+    ecckey->cbKey = (pubKeyInfo->PublicKey.cbData - 1) / 2;
+    memcpy(ecckey + 1, pubKeyInfo->PublicKey.pbData + 1, pubKeyInfo->PublicKey.cbData - 1);
+
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, key, (BYTE*)ecckey, ecckey_len, 0);
+
+done:
+    if (alg) BCryptCloseAlgorithmProvider(alg, 0);
+    if (status) SetLastError(RtlNtStatusToDosError(status));
+    return !status;
+}
+
+static BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key)
+{
+    if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_ECC_PUBLIC_KEY))
+        return CNG_ImportECCPubKey(pubKeyInfo, key);
+
+    FIXME("Unsupported public key type: %s\n", debugstr_a(pubKeyInfo->Algorithm.pszObjId));
+    SetLastError(NTE_BAD_ALGID);
+    return FALSE;
+}
+
+static BOOL CNG_PrepareSignatureECC(BYTE *encoded_sig, DWORD encoded_size, BYTE **sig_value, DWORD *sig_len)
+{
+    CERT_ECC_SIGNATURE *ecc_sig;
+    DWORD size;
+    int i;
+
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ECC_SIGNATURE, encoded_sig, encoded_size,
+            CRYPT_DECODE_ALLOC_FLAG, NULL, &ecc_sig, &size))
+        return FALSE;
+
+    if (!ecc_sig->r.cbData || !ecc_sig->s.cbData)
+    {
+        LocalFree(ecc_sig);
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    *sig_len = ecc_sig->r.cbData + ecc_sig->s.cbData;
+    if (!(*sig_value = CryptMemAlloc(*sig_len)))
+    {
+        LocalFree(ecc_sig);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    for (i = 0; i < ecc_sig->r.cbData; i++)
+        (*sig_value)[i] = ecc_sig->r.pbData[ecc_sig->r.cbData - i - 1];
+    for (i = 0; i < ecc_sig->s.cbData; i++)
+        (*sig_value)[ecc_sig->r.cbData + i] = ecc_sig->s.pbData[ecc_sig->s.cbData - i - 1];
+
+    LocalFree(ecc_sig);
+    return TRUE;
+}
+
+static BOOL CNG_PrepareSignature(CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert,
+    BYTE **sig_value, DWORD *sig_len)
+{
+    BYTE *encoded_sig;
+    BOOL ret = FALSE;
+    int i;
+
+    if (!signedCert->Signature.cbData)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    if (!(encoded_sig = CryptMemAlloc(signedCert->Signature.cbData)))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    for (i = 0; i < signedCert->Signature.cbData; i++)
+        encoded_sig[i] = signedCert->Signature.pbData[signedCert->Signature.cbData - i - 1];
+
+    if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_ECC_PUBLIC_KEY))
+        ret = CNG_PrepareSignatureECC(encoded_sig, signedCert->Signature.cbData, sig_value, sig_len);
+    else
+    {
+        FIXME("Unsupported public key type: %s\n", debugstr_a(pubKeyInfo->Algorithm.pszObjId));
+        SetLastError(NTE_BAD_ALGID);
+    }
+
+    CryptMemFree(encoded_sig);
+    return ret;
+}
+
+static BOOL CNG_VerifySignature(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEncodingType,
+    CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert, const CRYPT_OID_INFO *info)
+{
+    BCRYPT_KEY_HANDLE key = NULL;
+    BYTE *hash_value = NULL, *sig_value;
+    DWORD hash_len, sig_len;
+    NTSTATUS status;
+    BOOL ret;
+
+    ret = CNG_ImportPubKey(pubKeyInfo, &key);
+    if (ret)
+    {
+        ret = CNG_CalcHash(info->pwszCNGAlgid, signedCert, &hash_value, &hash_len);
+        if (ret)
+        {
+            ret = CNG_PrepareSignature(pubKeyInfo, signedCert, &sig_value, &sig_len);
+            if (ret)
+            {
+                status = BCryptVerifySignature(key, NULL, hash_value, hash_len, sig_value, sig_len, 0);
+                if (status)
+                {
+                    FIXME("Failed to verify signature: %08x\n", status);
+                    SetLastError(RtlNtStatusToDosError(status));
+                    ret = FALSE;
+                }
+                CryptMemFree(sig_value);
+            }
+            CryptMemFree(hash_value);
+        }
+        BCryptDestroyKey(key);
+    }
+
+    return ret;
+}
+
+static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEncodingType,
+    CERT_PUBLIC_KEY_INFO *pubKeyInfo, const CERT_SIGNED_CONTENT_INFO *signedCert)
+{
+    CCRYPT_OID_INFO *info;
+
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, signedCert->SignatureAlgorithm.pszObjId, 0);
+    if (!info || info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if (info->u.Algid == CALG_OID_INFO_CNG_ONLY)
+        return CNG_VerifySignature(hCryptProv, dwCertEncodingType, pubKeyInfo, signedCert, info);
+    else
+        return CRYPT_VerifySignature(hCryptProv, dwCertEncodingType, pubKeyInfo, signedCert, info);
 }
 
 BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV_LEGACY hCryptProv,
