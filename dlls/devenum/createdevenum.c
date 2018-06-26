@@ -37,7 +37,7 @@
 #include "mmddk.h"
 
 #include "initguid.h"
-#include "fil_data.h"
+#include "wine/fil_data.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 

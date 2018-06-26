@@ -30,7 +30,6 @@ RC_SRCS = version.rc
 
 IDL_SRCS = \
 	control_tlb.idl \
-	fil_data.idl \
 	quartz_strmif.idl
 
 dlldata_EXTRADEFS = -DENTRY_PREFIX=QUARTZ_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

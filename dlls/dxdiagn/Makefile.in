@@ -9,5 +9,4 @@ C_SRCS = \
 RC_SRCS = dxdiagn.rc
 
 IDL_SRCS = \
-	dxdiagn.idl \
-	fil_data.idl
+	dxdiagn.idl

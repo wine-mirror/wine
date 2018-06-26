@@ -26,7 +26,7 @@
 #include "dshow.h"
 #include "winternl.h"
 
-#include "fil_data.h"
+#include "wine/fil_data.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 

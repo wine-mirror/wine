@@ -9,7 +9,6 @@ C_SRCS = \
 	parsedisplayname.c
 
 IDL_SRCS = \
-	devenum_classes.idl \
-	fil_data.idl
+	devenum_classes.idl
 
 RC_SRCS = devenum.rc

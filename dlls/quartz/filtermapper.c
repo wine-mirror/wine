@@ -37,7 +37,7 @@
 #include "wine/unicode.h"
 #include "uuids.h"
 #include "initguid.h"
-#include "fil_data.h"
+#include "wine/fil_data.h"
 
 #include "wine/debug.h"
 
