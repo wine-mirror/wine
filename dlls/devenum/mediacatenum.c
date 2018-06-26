@@ -347,6 +347,7 @@ static HRESULT create_PropertyBag(MediaCatMoniker *mon, IPropertyBag **ppBag)
     else if (rpb->type == DEVICE_FILTER)
     {
         strcpyW(rpb->path, clsidW);
+        strcatW(rpb->path, backslashW);
         if (mon->has_class)
         {
             StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
@@ -496,7 +497,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(IMoniker *iface, IBi
             if (SUCCEEDED(res))
             {
                 V_VT(&var) = VT_LPWSTR;
-                res = IPropertyBag_Read(pProp, clsid_keyname, &var, NULL);
+                res = IPropertyBag_Read(pProp, clsidW, &var, NULL);
             }
             if (SUCCEEDED(res))
             {
@@ -1027,6 +1028,7 @@ HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **ppEnumMoniker)
     pEnumMoniker->class = *class;
 
     strcpyW(buffer, clsidW);
+    strcatW(buffer, backslashW);
     StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
     strcatW(buffer, instanceW);
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->sw_key))

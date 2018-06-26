@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 DECLSPEC_HIDDEN LONG dll_refs;
-DECLSPEC_HIDDEN HINSTANCE DEVENUM_hInstance;
+static HINSTANCE devenum_instance;
 
 typedef struct
 {
@@ -34,11 +34,6 @@ typedef struct
     LPCWSTR friendly_name;
     BOOL instance;
 } register_info;
-
-/***********************************************************************
- *		Global string constant definitions
- */
-const WCHAR clsid_keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
 
 /***********************************************************************
  *		DllEntryPoint
@@ -49,7 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
-        DEVENUM_hInstance = hinstDLL;
+        devenum_instance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
 	break;
     }
@@ -166,7 +161,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     TRACE("\n");
 
-    res = __wine_register_resources( DEVENUM_hInstance );
+    res = __wine_register_resources( devenum_instance );
     if (FAILED(res))
         return res;
 
@@ -214,5 +209,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     FIXME("stub!\n");
-    return __wine_unregister_resources( DEVENUM_hInstance );
+    return __wine_unregister_resources( devenum_instance );
 }

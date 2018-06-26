@@ -83,7 +83,7 @@ extern IParseDisplayName DEVENUM_ParseDisplayName DECLSPEC_HIDDEN;
  */
 
 static const WCHAR backslashW[] = {'\\',0};
-static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0};
+static const WCHAR clsidW[] = {'C','L','S','I','D',0};
 static const WCHAR instanceW[] = {'\\','I','n','s','t','a','n','c','e',0};
 static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                           'M','i','c','r','o','s','o','f','t','\\',
@@ -93,5 +93,3 @@ static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':',0};
 static const WCHAR dmoW[] = {'d','m','o',':',0};
 static const WCHAR swW[] = {'s','w',':',0};
 static const WCHAR cmW[] = {'c','m',':',0};
-
-extern const WCHAR clsid_keyname[6] DECLSPEC_HIDDEN;
