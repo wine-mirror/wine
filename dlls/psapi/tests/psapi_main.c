@@ -645,7 +645,7 @@ static void test_GetProcessImageFileName(void)
     }
 
     SetLastError(0xdeadbeef);
-    pGetProcessImageFileNameW(NULL, szImgPathW, sizeof(szImgPathW));
+    pGetProcessImageFileNameW(NULL, szImgPathW, ARRAY_SIZE(szImgPathW));
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     /* no information about correct buffer size returned: */
