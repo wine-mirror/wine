@@ -26,14 +26,14 @@
 static int mywprintf(const WCHAR *format, ...)
 {
     static char output_bufA[65536];
-    static WCHAR output_bufW[sizeof(output_bufA) / sizeof(WCHAR)];
+    static WCHAR output_bufW[sizeof(output_bufA)];
     va_list             parms;
     DWORD               nOut;
     BOOL                res = FALSE;
     HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
     va_start(parms, format);
-    vsnprintfW(output_bufW, sizeof(output_bufW), format, parms);
+    vsnprintfW(output_bufW, sizeof(output_bufW)/sizeof(output_bufW[0]), format, parms);
     va_end(parms);
 
     /* Try to write as unicode whenever we think it's a console */
