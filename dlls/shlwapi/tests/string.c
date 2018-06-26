@@ -694,7 +694,7 @@ static void test_StrFormatKBSizeW(void)
   while(result->value)
   {
     pStrFormatKBSizeW(result->value, szBuffW, 256);
-    WideCharToMultiByte(CP_ACP,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),NULL,NULL);
+    WideCharToMultiByte(CP_ACP, 0, szBuffW, -1, szBuff, ARRAY_SIZE(szBuff), NULL, NULL);
 
     ok(!strcmp(result->kb_size, szBuff), "Formatted %s wrong: got %s, expected %s\n",
        wine_dbgstr_longlong(result->value), szBuff, result->kb_size);
