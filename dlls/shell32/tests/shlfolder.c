@@ -244,8 +244,8 @@ todo_wine_if(parse_tests[i].todo)
     CoTaskMemFree(pidl);
 
     /* Relative paths are interpreted relative to the desktop. */
-    GetTempPathW(sizeof(buffer), buffer);
-    GetLongPathNameW(buffer, buffer, sizeof(buffer));
+    GetTempPathW(ARRAY_SIZE(buffer), buffer);
+    GetLongPathNameW(buffer, buffer, ARRAY_SIZE(buffer));
     SetCurrentDirectoryW(buffer);
     CreateDirectoryW(testdirW, NULL);
 
