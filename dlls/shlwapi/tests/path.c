@@ -1595,7 +1595,7 @@ static void test_PathUnExpandEnvStrings(void)
     buffW[0] = 0;
     lstrcpyW(pathW, sysdrvW);
     lstrcatW(pathW, sysdrvW);
-    ret = pPathUnExpandEnvStringsW(pathW, buffW, sizeof(buff)/sizeof(WCHAR));
+    ret = pPathUnExpandEnvStringsW(pathW, buffW, ARRAY_SIZE(buffW));
     ok(ret, "got %d\n", ret);
     /* expected string */
     lstrcpyW(pathW, sysdriveW);
