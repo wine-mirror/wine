@@ -235,7 +235,7 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     HFONT hfont, old_hfont;
     HDC hdc;
     RECT rect = {0};
-    WCHAR text[1024];
+    WCHAR *text;
     INT text_length;
 
     if (syslink)
@@ -250,7 +250,15 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
         style |= DT_LEFT;
 
     hfont = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
-    text_length = GetWindowTextW(hwnd, text, ARRAY_SIZE(text));
+    text_length = GetWindowTextLengthW(hwnd);
+    text = Alloc((text_length + 1) * sizeof(WCHAR));
+    if (!text)
+    {
+        size->cx = 0;
+        size->cy = 0;
+        return;
+    }
+    GetWindowTextW(hwnd, text, text_length + 1);
     hdc = GetDC(hwnd);
     old_hfont = SelectObject(hdc, hfont);
     rect.right = max_width;
@@ -258,6 +266,7 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     size->cx = min(max_width, rect.right - rect.left);
     if (old_hfont) SelectObject(hdc, old_hfont);
     ReleaseDC(hwnd, hdc);
+    Free(text);
 }
 
 static ULONG_PTR taskdialog_get_standard_icon(LPCWSTR icon)
