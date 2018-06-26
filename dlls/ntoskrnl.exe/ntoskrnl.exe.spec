@@ -471,7 +471,7 @@
 @ stub IoThreadToProcess
 @ stdcall IoUnregisterFileSystem(ptr)
 @ stub IoUnregisterFsRegistrationChange
-@ stub IoUnregisterPlugPlayNotification
+@ stdcall IoUnregisterPlugPlayNotification(ptr)
 @ stdcall IoUnregisterShutdownNotification(ptr)
 @ stub IoUpdateShareAccess
 @ stub IoValidateDeviceIoControlAccess

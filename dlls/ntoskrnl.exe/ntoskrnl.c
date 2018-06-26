@@ -2682,6 +2682,15 @@ NTSTATUS WINAPI IoRegisterPlugPlayNotification(IO_NOTIFICATION_EVENT_CATEGORY ca
 }
 
 /*****************************************************
+ *           IoUnregisterPlugPlayNotification    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoUnregisterPlugPlayNotification(PVOID notification)
+{
+    FIXME("stub: %p\n", notification);
+    return STATUS_SUCCESS;
+}
+
+/*****************************************************
  *           IoCsqInitialize  (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_CSQ_REMOVE_IRP remove_irp,
