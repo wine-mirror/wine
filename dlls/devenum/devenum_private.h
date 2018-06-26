@@ -51,15 +51,6 @@ extern LONG dll_refs DECLSPEC_HIDDEN;
 static inline void DEVENUM_LockModule(void) { InterlockedIncrement(&dll_refs); }
 static inline void DEVENUM_UnlockModule(void) { InterlockedDecrement(&dll_refs); }
 
-
-/**********************************************************************
- * ClassFactory declaration for devenum.dll
- */
-typedef struct
-{
-    IClassFactory IClassFactory_iface;
-} ClassFactoryImpl;
-
 enum device_type
 {
     DEVICE_FILTER,
@@ -84,7 +75,6 @@ typedef struct
 MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void) DECLSPEC_HIDDEN;
 HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **enum_mon) DECLSPEC_HIDDEN;
 
-extern ClassFactoryImpl DEVENUM_ClassFactory DECLSPEC_HIDDEN;
 extern ICreateDevEnum DEVENUM_CreateDevEnum DECLSPEC_HIDDEN;
 extern IParseDisplayName DEVENUM_ParseDisplayName DECLSPEC_HIDDEN;
 

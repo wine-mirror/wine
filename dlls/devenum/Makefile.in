@@ -5,7 +5,6 @@ DELAYIMPORTS = msvfw32
 C_SRCS = \
 	createdevenum.c \
 	devenum_main.c \
-	factory.c \
 	mediacatenum.c \
 	parsedisplayname.c
 
