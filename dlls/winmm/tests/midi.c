@@ -885,6 +885,12 @@ static void test_midiStream(UINT udev, HWND hwnd)
     ok(ret > expected && ret < expected + MARGIN, "expected greater than %ums, got %ums\n", expected, ret);
     expected = ret;
 
+    /* shouldn't set time division property while playing */
+    midiprop.tdiv.cbStruct  = sizeof(midiprop.tdiv);
+    midiprop.tdiv.dwTimeDiv = 24;
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_SET | MIDIPROP_TIMEDIV);
+    ok(rc == MMSYSERR_INVALPARAM, "midiStreamProperty(SET|TIMEDIV, dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
     ret = WaitForSingleObject(records.done, INFINITE);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed, got %d\n", ret);
 

@@ -1539,9 +1539,13 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
 	    EnterCriticalSection(&lpMidiStrm->lock);
-	    lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
+	    if (lpMidiStrm->status != MSM_STATUS_PLAYING) {
+		lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
+		TRACE("Setting time div to %d\n", mptd->dwTimeDiv);
+	    }
+	    else
+		ret = MMSYSERR_INVALPARAM;
 	    LeaveCriticalSection(&lpMidiStrm->lock);
-	    TRACE("Setting time div to %d\n", mptd->dwTimeDiv);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mptd->dwTimeDiv = lpMidiStrm->dwTimeDiv;
 	    TRACE("Getting time div <= %d\n", mptd->dwTimeDiv);
