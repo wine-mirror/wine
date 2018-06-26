@@ -921,6 +921,7 @@ typedef struct WINE_MIDIStream {
     DWORD			dwElapsedMS;
     WORD			wFlags;
     WORD			status;
+    WORD			remainder;
     HANDLE			hEvent;
     LPMIDIHDR			lpMidiHdr;
 } WINE_MIDIStream;
@@ -965,13 +966,13 @@ static	DWORD	MMSYSTEM_MidiStream_Convert(WINE_MIDIStream* lpMidiStrm, DWORD puls
     } else if (lpMidiStrm->dwTimeDiv > 0x8000) { /* SMPTE, unchecked FIXME? */
 	int	nf = 256 - HIBYTE(lpMidiStrm->dwTimeDiv);	/* number of frames     */
 	int	nsf = LOBYTE(lpMidiStrm->dwTimeDiv);		/* number of sub-frames */
-	ret = (pulse * 1000) / (nf * nsf);
+	ret = (pulse * 1000000) / (nf * nsf);
     } else {
-	ret = (DWORD)((double)pulse * ((double)lpMidiStrm->dwTempo / 1000) /
+	ret = (DWORD)((double)pulse * (double)lpMidiStrm->dwTempo /
 		      (double)lpMidiStrm->dwTimeDiv);
     }
 
-    return ret;
+    return ret; /* in microseconds */
 }
 
 static DWORD midistream_get_playing_position(WINE_MIDIStream* lpMidiStrm)
@@ -1007,6 +1008,8 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             lpMidiStrm->status = MSM_STATUS_STOPPED;
             lpMidiStrm->dwPulses = 0;
             lpMidiStrm->dwElapsedMS = 0;
+            lpMidiStrm->dwPositionMS = 0;
+            lpMidiStrm->remainder = 0;
             LeaveCriticalSection(&lpMidiStrm->lock);
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
@@ -1178,8 +1181,11 @@ start_header:
 
 	/* do we have to wait ? */
 	if (me->dwDeltaTime) {
+	    DWORD delta;
 	    EnterCriticalSection(&lpMidiStrm->lock);
-	    lpMidiStrm->dwPositionMS += MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
+	    delta = lpMidiStrm->remainder + MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
+	    lpMidiStrm->dwPositionMS += delta / 1000;
+	    lpMidiStrm->remainder = delta % 1000;
 	    lpMidiStrm->dwPulses += me->dwDeltaTime;
 	    LeaveCriticalSection(&lpMidiStrm->lock);
 
@@ -1331,6 +1337,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpMidiStrm->dwTempo = 500000;  /* micro seconds per quarter note, i.e. 120 BPM */
     lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
     lpMidiStrm->dwPositionMS = 0;
+    lpMidiStrm->remainder = 0;
     lpMidiStrm->status = MSM_STATUS_PAUSED;
     lpMidiStrm->dwElapsedMS = 0;
 
