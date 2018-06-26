@@ -60,6 +60,8 @@ struct taskdialog_info
     HWND progress_bar;
     HWND *radio_buttons;
     INT radio_button_count;
+    HWND *command_links;
+    INT command_link_count;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -184,7 +186,8 @@ static HWND taskdialog_find_button(HWND *buttons, INT count, INT id)
 
 static void taskdialog_enable_button(const struct taskdialog_info *dialog_info, INT id, BOOL enable)
 {
-    HWND hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
+    HWND hwnd = taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, id);
+    if (!hwnd) hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
     if (hwnd) EnableWindow(hwnd, enable);
 }
 
@@ -251,6 +254,11 @@ static WCHAR *taskdialog_gettext(struct taskdialog_info *dialog_info, BOOL user_
 static BOOL taskdialog_hyperlink_enabled(struct taskdialog_info *dialog_info)
 {
     return dialog_info->taskconfig->dwFlags & TDF_ENABLE_HYPERLINKS;
+}
+
+static BOOL taskdialog_use_command_link(struct taskdialog_info *dialog_info)
+{
+    return dialog_info->taskconfig->dwFlags & (TDF_USE_COMMAND_LINKS | TDF_USE_COMMAND_LINKS_NO_ICON);
 }
 
 static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND hwnd, LONG max_width, SIZE *size,
@@ -486,6 +494,34 @@ static void taskdialog_add_radio_buttons(struct taskdialog_info *dialog_info)
     }
 }
 
+static void taskdialog_add_command_links(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    DWORD default_style = BS_MULTILINE | BS_LEFT | BS_TOP | WS_CHILD | WS_VISIBLE | WS_TABSTOP, style;
+    BOOL is_default;
+    WCHAR *textW;
+    INT i;
+
+    if (!taskconfig->cButtons || !taskconfig->pButtons || !taskdialog_use_command_link(dialog_info)) return;
+
+    dialog_info->command_links = Alloc(taskconfig->cButtons * sizeof(*dialog_info->command_links));
+    if (!dialog_info->command_links) return;
+
+    dialog_info->command_link_count = taskconfig->cButtons;
+    for (i = 0; i < dialog_info->command_link_count; i++)
+    {
+        is_default = taskconfig->pButtons[i].nButtonID == taskconfig->nDefaultButton;
+        style = is_default ? default_style | BS_DEFCOMMANDLINK : default_style | BS_COMMANDLINK;
+        textW = taskdialog_gettext(dialog_info, TRUE, taskconfig->pButtons[i].pszButtonText);
+        dialog_info->command_links[i] = CreateWindowW(WC_BUTTONW, textW, style, 0, 0, 0, 0, dialog_info->hwnd,
+                                                      (HMENU)taskconfig->pButtons[i].nButtonID, 0, NULL);
+        SendMessageW(dialog_info->command_links[i], WM_SETFONT, (WPARAM)dialog_info->font, 0);
+        Free(textW);
+
+        if (is_default && !dialog_info->default_button) dialog_info->default_button = dialog_info->command_links[i];
+    }
+}
+
 static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT_PTR id, const WCHAR *text,
                                   BOOL custom_button)
 {
@@ -504,17 +540,18 @@ static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *but
 static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    BOOL use_command_links = taskdialog_use_command_link(dialog_info);
     DWORD flags = taskconfig->dwCommonButtons;
     INT count, max_count;
 
     /* Allocate enough memory for the custom and the default buttons. Maximum 6 default buttons possible. */
     max_count = 6;
-    if (taskconfig->cButtons && taskconfig->pButtons) max_count += taskconfig->cButtons;
+    if (!use_command_links && taskconfig->cButtons && taskconfig->pButtons) max_count += taskconfig->cButtons;
 
     dialog_info->buttons = Alloc(max_count * sizeof(*dialog_info->buttons));
     if (!dialog_info->buttons) return;
 
-    for (count = 0; count < taskconfig->cButtons; count++)
+    for (count = 0; !use_command_links && count < taskconfig->cButtons; count++)
         taskdialog_add_button(dialog_info, &dialog_info->buttons[count], taskconfig->pButtons[count].nButtonID,
                               taskconfig->pButtons[count].pszButtonText, TRUE);
 
@@ -532,7 +569,7 @@ static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
     if (flags & TDCBF_CANCEL_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(CANCEL);
     if (flags & TDCBF_CLOSE_BUTTON) TASKDIALOG_INIT_COMMON_BUTTON(CLOSE);
 
-    if (!count) TASKDIALOG_INIT_COMMON_BUTTON(OK);
+    if (!count && !dialog_info->command_link_count) TASKDIALOG_INIT_COMMON_BUTTON(OK);
 #undef TASKDIALOG_INIT_COMMON_BUTTON
 
     dialog_info->button_count = count;
@@ -618,6 +655,19 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         taskdialog_get_radio_button_size(dialog_info, dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         SetWindowPos(dialog_info->radio_buttons[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        dialog_height = y + size.cy;
+    }
+
+    /* Command links */
+    for (i = 0; i < dialog_info->command_link_count; i++)
+    {
+        x = main_icon_right + h_spacing;
+        y = dialog_height + v_spacing;
+        taskdialog_get_label_size(dialog_info, dialog_info->command_links[i], dialog_width - x - h_spacing, &size, FALSE);
+        size.cx = dialog_width - x - h_spacing;
+        /* Add spacing */
+        size.cy += 4;
+        SetWindowPos(dialog_info->command_links[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         dialog_height = y + size.cy;
     }
 
@@ -756,9 +806,12 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_content(dialog_info);
     taskdialog_add_progress_bar(dialog_info);
     taskdialog_add_radio_buttons(dialog_info);
+    taskdialog_add_command_links(dialog_info);
     taskdialog_add_buttons(dialog_info);
 
     /* Set default button */
+    if (!dialog_info->default_button && dialog_info->command_links)
+        dialog_info->default_button = dialog_info->command_links[0];
     if (!dialog_info->default_button) dialog_info->default_button = dialog_info->buttons[0];
     SendMessageW(dialog_info->hwnd, WM_NEXTDLGCTL, (WPARAM)dialog_info->default_button, TRUE);
     id = GetWindowLongW(dialog_info->default_button, GWLP_ID);
@@ -774,6 +827,7 @@ static void taskdialog_destroy(struct taskdialog_info *dialog_info)
     if (dialog_info->main_instruction_font) DeleteObject(dialog_info->main_instruction_font);
     if (dialog_info->buttons) Free(dialog_info->buttons);
     if (dialog_info->radio_buttons) Free(dialog_info->radio_buttons);
+    if (dialog_info->command_links) Free(dialog_info->command_links);
 }
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

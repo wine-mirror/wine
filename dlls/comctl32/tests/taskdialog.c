@@ -323,7 +323,7 @@ static void test_callback(void)
 static void test_buttons(void)
 {
     TASKDIALOGCONFIG info = {0};
-
+    static const DWORD command_link_flags[] = {0, TDF_USE_COMMAND_LINKS, TDF_USE_COMMAND_LINKS_NO_ICON};
     TASKDIALOG_BUTTON custom_buttons[TEST_NUM_BUTTONS], radio_buttons[TEST_NUM_RADIO_BUTTONS];
     const WCHAR button_format[] = {'%','0','2','d',0};
     /* Each button has two digits as title, plus null-terminator */
@@ -373,31 +373,40 @@ static void test_buttons(void)
     info.dwCommonButtons = TDCBF_CANCEL_BUTTON | TDCBF_CLOSE_BUTTON;
     run_test(&info, IDCANCEL, 0, msg_return_press_cancel, "default button: unset default");
 
-    /* Test with all common and custom buttons and invalid default ID */
-    info.nDefaultButton = 0xff; /* Random ID, should also default to first created button */
-    info.cButtons = TEST_NUM_BUTTONS;
-    info.pButtons = custom_buttons;
-    run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1, "default button: invalid default, with common buttons - 1");
+    /* Custom buttons could be command links */
+    for (i = 0; i < ARRAY_SIZE(command_link_flags); i++)
+    {
+        info.dwFlags = command_link_flags[i];
 
-    info.nDefaultButton = -1; /* Should work despite button ID -1 */
-    run_test(&info, -1, 0, msg_return_press_custom10, "default button: invalid default, with common buttons - 2");
+        /* Test with all common and custom buttons and invalid default ID */
+        info.nDefaultButton = 0xff; /* Random ID, should also default to first created button */
+        info.cButtons = TEST_NUM_BUTTONS;
+        info.pButtons = custom_buttons;
+        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+                 "default button: invalid default, with common buttons - 1");
 
-    info.nDefaultButton = -2; /* Should also default to first created button */
-    run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1, "default button: invalid default, with common buttons - 3");
+        info.nDefaultButton = -1; /* Should work despite button ID -1 */
+        run_test(&info, -1, 0, msg_return_press_custom10, "default button: invalid default, with common buttons - 2");
 
-    /* Test with only custom buttons and invalid default ID */
-    info.dwCommonButtons = 0;
-    run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1, "default button: invalid default, no common buttons");
+        info.nDefaultButton = -2; /* Should also default to first created button */
+        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+                 "default button: invalid default, with common buttons - 3");
 
-    /* Test with common and custom buttons and valid default ID */
-    info.dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_YES_BUTTON | TDCBF_NO_BUTTON
-                               | TDCBF_CANCEL_BUTTON | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
-    info.nDefaultButton = IDRETRY;
-    run_test(&info, IDRETRY, 0, msg_return_press_retry, "default button: valid default - 1");
+        /* Test with only custom buttons and invalid default ID */
+        info.dwCommonButtons = 0;
+        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+                 "default button: invalid default, no common buttons");
 
-    /* Test with common and custom buttons and valid default ID */
-    info.nDefaultButton = ID_START_BUTTON + 3;
-    run_test(&info, ID_START_BUTTON + 3, 0, msg_return_press_custom4, "default button: valid default - 2");
+        /* Test with common and custom buttons and valid default ID */
+        info.dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_YES_BUTTON | TDCBF_NO_BUTTON | TDCBF_CANCEL_BUTTON
+                               | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
+        info.nDefaultButton = IDRETRY;
+        run_test(&info, IDRETRY, 0, msg_return_press_retry, "default button: valid default - 1");
+
+        /* Test with common and custom buttons and valid default ID */
+        info.nDefaultButton = ID_START_BUTTON + 3;
+        run_test(&info, ID_START_BUTTON + 3, 0, msg_return_press_custom4, "default button: valid default - 2");
+    }
 
     /* Test radio buttons */
     info.nDefaultButton = 0;
