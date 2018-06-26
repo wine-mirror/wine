@@ -1,5 +1,5 @@
 /*
- *	exported dll functions for devenum.dll
+ * Device Enumeration
  *
  * Copyright (C) 2002 John K. Hohm
  * Copyright (C) 2002 Robert Shearman
@@ -56,6 +56,76 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID iid, void **obj)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(iid), obj);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("no interface for %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    DEVENUM_LockModule();
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    DEVENUM_UnlockModule();
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface,
+    IUnknown *outer, REFIID iid, void **obj)
+{
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(iid), obj);
+
+    if (!obj) return E_POINTER;
+
+    if (outer) return CLASS_E_NOAGGREGATION;
+
+    if (IsEqualGUID(&IID_ICreateDevEnum, iid))
+    {
+        *obj = &DEVENUM_CreateDevEnum;
+        return S_OK;
+    }
+    if (IsEqualGUID(&IID_IParseDisplayName, iid))
+    {
+        *obj = &DEVENUM_ParseDisplayName;
+        return S_OK;
+    }
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    if (lock)
+        DEVENUM_LockModule();
+    else
+        DEVENUM_UnlockModule();
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactory_vtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory devenum_cf = { &ClassFactory_vtbl };
+
 /***********************************************************************
  *		DllGetClassObject (DEVENUM.@)
  */
@@ -69,7 +139,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
      * Oh well - works just fine as it is */
     if (IsEqualGUID(rclsid, &CLSID_SystemDeviceEnum) ||
         IsEqualGUID(rclsid, &CLSID_CDeviceMoniker))
-        return IClassFactory_QueryInterface(&DEVENUM_ClassFactory.IClassFactory_iface, iid, ppv);
+        return IClassFactory_QueryInterface(&devenum_cf, iid, ppv);
 
     FIXME("CLSID: %s, IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
