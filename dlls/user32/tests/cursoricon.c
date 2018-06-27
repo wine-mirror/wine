@@ -1328,8 +1328,6 @@ static void test_LoadImage(void)
     test_LoadImageFile("Cursor (invalid dwDIBOffset)", invalid_dwDIBOffset, sizeof(invalid_dwDIBOffset), "cur", 0);
 }
 
-#undef ARRAY_SIZE
-
 static void test_CreateIconFromResource(void)
 {
     HANDLE handle;
