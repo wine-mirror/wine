@@ -532,6 +532,9 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                 break;
 
             case TASK_TIME_TRIGGER_DAILY:
+                if (!This->trigger[i].Type.Daily.DaysInterval)
+                    break; /* avoid infinite loop */
+
                 st = current_st;
                 st.wHour = This->trigger[i].wStartHour;
                 st.wMinute = This->trigger[i].wStartMinute;
