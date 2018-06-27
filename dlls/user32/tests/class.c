@@ -645,7 +645,6 @@ static void test_builtinproc(void)
         "ScrollBar",
         "#32770",  /* dialog */
     };
-    static const int NUM_NORMAL_CLASSES = (sizeof(NORMAL_CLASSES)/sizeof(NORMAL_CLASSES[0]));
     static const char classA[] = "deftest";
     static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
     WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destroyed by a W->A->W conversion */
@@ -656,7 +655,7 @@ static void test_builtinproc(void)
     WCHAR buf[128];
     ATOM atom;
     HWND hwnd;
-    int i;
+    unsigned int i;
 
     pDefWindowProcA = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "DefWindowProcA");
     pDefWindowProcW = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "DefWindowProcW");
@@ -771,7 +770,7 @@ static void test_builtinproc(void)
 
     /* For most of the builtin controls both GetWindowLongPtrA and W returns a pointer that is executed directly
      * by CallWindowProcA/W */
-    for (i = 0; i < NUM_NORMAL_CLASSES; i++)
+    for (i = 0; i < ARRAY_SIZE(NORMAL_CLASSES); i++)
     {
         WNDPROC procA, procW;
         hwnd = CreateWindowExA(0, NORMAL_CLASSES[i], classA, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 680, 260,
