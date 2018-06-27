@@ -170,6 +170,9 @@ static BOOL trigger_get_next_runtime(const TASK_TRIGGER *trigger, const FILETIME
     FileTimeToSystemTime(current_ft, &current_st);
 
     get_begin_time(trigger, &begin_ft);
+    if (CompareFileTime(&begin_ft, current_ft) < 0)
+        begin_ft = *current_ft;
+
     get_end_time(trigger, &end_ft);
 
     switch (trigger->TriggerType)
