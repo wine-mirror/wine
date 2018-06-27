@@ -410,8 +410,6 @@ static const TEST test[] =
 	},
 };
 
-#define TEST_COUNT (sizeof(test) / sizeof(TEST))
-
 /* This function can be useful if you are modifying the test cases and want to
    output the contents of a DCB structure. */
 /*static print_dcb(DCB *pdcb)
@@ -656,7 +654,7 @@ static void test_BuildCommDCB(void)
 	if(!port)
 		trace("Could not find a valid COM port.  Some tests will be skipped.\n");
 
-	for(i = 0; i < TEST_COUNT; i++)
+        for(i = 0; i < ARRAY_SIZE(test); i++)
 	{
                 char string[sizeof(test[i].string)];
 

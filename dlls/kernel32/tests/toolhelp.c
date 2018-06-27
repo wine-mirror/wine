@@ -217,8 +217,6 @@ static const char* sub_expected_modules[] =
     "ntdll.dll"
 };
 
-#define NUM_OF(x) (sizeof(x) / sizeof(x[0]))
-
 static void test_module(DWORD pid, const char* expected[], unsigned num_expected)
 {
     HANDLE              hSnapshot;
@@ -229,7 +227,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     unsigned            i;
     int                 num = 0;
 
-    ok(NUM_OF(found) >= num_expected, "Internal: bump found[] size\n");
+    ok(ARRAY_SIZE(found) >= num_expected, "Internal: bump found[] size\n");
 
     hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
     ok(hSnapshot != NULL, "Cannot create snapshot\n");
@@ -341,8 +339,8 @@ START_TEST(toolhelp)
 
     test_process(pid, info.dwProcessId);
     test_thread(pid, info.dwProcessId);
-    test_module(pid, curr_expected_modules, NUM_OF(curr_expected_modules));
-    test_module(info.dwProcessId, sub_expected_modules, NUM_OF(sub_expected_modules));
+    test_module(pid, curr_expected_modules, ARRAY_SIZE(curr_expected_modules));
+    test_module(info.dwProcessId, sub_expected_modules, ARRAY_SIZE(sub_expected_modules));
 
     SetEvent(ev2);
     winetest_wait_child_process( info.hProcess );
