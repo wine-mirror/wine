@@ -99,7 +99,7 @@ static void filetime_add_ms(FILETIME *ft, LONGLONG ms)
         LONGLONG ll;
     } *ftll = (union u_ftll *)ft;
 
-    ftll->ll += ms * (ULONGLONG)10000;
+    ftll->ll += ms * (LONGLONG)10000;
 }
 
 static void filetime_add_minutes(FILETIME *ft, LONG minutes)
@@ -117,7 +117,7 @@ static void filetime_add_days(FILETIME *ft, LONG days)
     filetime_add_hours(ft, (LONGLONG)days * 24);
 }
 
-static void filetime_add_weeks(FILETIME *ft, ULONG weeks)
+static void filetime_add_weeks(FILETIME *ft, LONG weeks)
 {
     filetime_add_days(ft, (LONGLONG)weeks * 7);
 }
@@ -250,7 +250,7 @@ static BOOL trigger_get_next_runtime(const TASK_TRIGGER *trigger, const FILETIME
     return FALSE;
 }
 
-static BOOL job_get_next_runtime(struct job_t *job, FILETIME *current_ft, FILETIME *next_rt)
+static BOOL job_get_next_runtime(struct job_t *job, const FILETIME *current_ft, FILETIME *next_rt)
 {
     FILETIME trigger_rt;
     BOOL have_next_rt = FALSE;
@@ -307,7 +307,7 @@ BOOL get_next_runtime(LARGE_INTEGER *rt)
     return have_next_rt;
 }
 
-static BOOL job_runs_at(struct job_t *job, FILETIME *begin_ft, FILETIME *end_ft)
+static BOOL job_runs_at(struct job_t *job, const FILETIME *begin_ft, const FILETIME *end_ft)
 {
     FILETIME job_ft;
 
