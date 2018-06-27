@@ -194,6 +194,9 @@ static BOOL trigger_get_next_runtime(const TASK_TRIGGER *trigger, const FILETIME
         break;
 
     case TASK_TIME_TRIGGER_DAILY:
+        if (!trigger->Type.Daily.DaysInterval)
+            break; /* avoid infinite loop */
+
         st = current_st;
         st.wHour = trigger->wStartHour;
         st.wMinute = trigger->wStartMinute;
