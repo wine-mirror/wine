@@ -2381,9 +2381,8 @@ static void test_NamedPipeHandleState(void)
      * on a local pipe.
      */
     SetLastError(0xdeadbeef);
-    ret = GetNamedPipeHandleStateA(server, &state, &instances,
-        &maxCollectionCount, &collectDataTimeout, userName,
-        sizeof(userName) / sizeof(userName[0]));
+    ret = GetNamedPipeHandleStateA(server, &state, &instances, &maxCollectionCount,
+        &collectDataTimeout, userName, ARRAY_SIZE(userName));
     todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());

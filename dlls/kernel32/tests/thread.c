@@ -1933,7 +1933,7 @@ static void test_thread_info(void)
         return;
     }
 
-    for (i = 0; i < sizeof(info_size)/sizeof(info_size[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(info_size); i++)
     {
         memset(buf, 0, sizeof(buf));
 

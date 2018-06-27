@@ -982,7 +982,7 @@ static void test_GetSetConsoleInputExeName(void)
     GetModuleFileNameA(GetModuleHandleA(NULL), module, sizeof(module));
     p = strrchr(module, '\\') + 1;
 
-    ret = pGetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ret = pGetConsoleInputExeNameA(ARRAY_SIZE(buffer), buffer);
     ok(ret, "GetConsoleInputExeNameA failed\n");
     todo_wine ok(!lstrcmpA(buffer, p), "got %s expected %s\n", buffer, p);
 
@@ -1001,7 +1001,7 @@ static void test_GetSetConsoleInputExeName(void)
     ret = pSetConsoleInputExeNameA(input_exe);
     ok(ret, "SetConsoleInputExeNameA failed\n");
 
-    ret = pGetConsoleInputExeNameA(sizeof(buffer)/sizeof(buffer[0]), buffer);
+    ret = pGetConsoleInputExeNameA(ARRAY_SIZE(buffer), buffer);
     ok(ret, "GetConsoleInputExeNameA failed\n");
     ok(!lstrcmpA(buffer, input_exe), "got %s expected %s\n", buffer, input_exe);
 }
@@ -1074,7 +1074,7 @@ static void test_OpenCON(void)
     unsigned            i;
     HANDLE              h;
 
-    for (i = 0; i < sizeof(accesses) / sizeof(accesses[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(accesses); i++)
     {
         h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
         ok(h != INVALID_HANDLE_VALUE || broken(accesses[i] == TRUNCATE_EXISTING /* Win8 */),
@@ -1179,7 +1179,7 @@ static void test_OpenConsoleW(void)
         return;
     }
 
-    for (index = 0; index < sizeof(invalid_table)/sizeof(invalid_table[0]); index++)
+    for (index = 0; index < ARRAY_SIZE(invalid_table); index++)
     {
         SetLastError(0xdeadbeef);
         ret = pOpenConsoleW(invalid_table[index].name, invalid_table[index].access,
@@ -1193,7 +1193,7 @@ static void test_OpenConsoleW(void)
            invalid_table[index].gle, invalid_table[index].gle2, index, gle);
     }
 
-    for (index = 0; index < sizeof(valid_table)/sizeof(valid_table[0]); index++)
+    for (index = 0; index < ARRAY_SIZE(valid_table); index++)
     {
         ret = pOpenConsoleW(valid_table[index].name, valid_table[index].access,
                             valid_table[index].inherit, valid_table[index].creation);
@@ -1248,7 +1248,7 @@ static void test_CreateFileW(void)
     HANDLE ret;
     SECURITY_ATTRIBUTES sa;
 
-    for (index = 0; index < sizeof(cf_table)/sizeof(cf_table[0]); index++)
+    for (index = 0; index < ARRAY_SIZE(cf_table); index++)
     {
         SetLastError(0xdeadbeef);
 
@@ -1380,7 +1380,7 @@ static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
         {INVALID_HANDLE_VALUE, &count, ERROR_INVALID_HANDLE},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         SetLastError(0xdeadbeef);
         if (invalid_table[i].nrofevents) count = 0xdeadbeef;
@@ -1481,7 +1481,7 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     event.EventType = MOUSE_EVENT;
     event.Event.MouseEvent = mouse_event;
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win_crash)
             continue;
@@ -1541,31 +1541,31 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
 
-    for (i = 0; i < sizeof(event_list)/sizeof(event_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(event_list); i++)
     {
         event_list[i].EventType = MOUSE_EVENT;
         event_list[i].Event.MouseEvent = mouse_event;
     }
 
     /* Writing consecutive chunks of mouse events appears to work. */
-    ret = WriteConsoleInputA(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ret = WriteConsoleInputA(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
-    ret = WriteConsoleInputA(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ret = WriteConsoleInputA(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == 2*ARRAY_SIZE(event_list),
        "Expected count to be twice event list length, got %u\n", count);
 
     /* Again, writing a single mouse event with adjacent mouse events queued doesn't appear to affect the count. */
@@ -1576,7 +1576,7 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
-    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == 2*ARRAY_SIZE(event_list),
        "Expected count to be twice event list length, got %u\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
@@ -1718,7 +1718,7 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     event.EventType = MOUSE_EVENT;
     event.Event.MouseEvent = mouse_event;
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win_crash)
             continue;
@@ -1778,31 +1778,31 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ret = FlushConsoleInputBuffer(input_handle);
     ok(ret == TRUE, "Expected FlushConsoleInputBuffer to return TRUE, got %d\n", ret);
 
-    for (i = 0; i < sizeof(event_list)/sizeof(event_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(event_list); i++)
     {
         event_list[i].EventType = MOUSE_EVENT;
         event_list[i].Event.MouseEvent = mouse_event;
     }
 
     /* Writing consecutive chunks of mouse events appears to work. */
-    ret = WriteConsoleInputW(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ret = WriteConsoleInputW(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
-    ret = WriteConsoleInputW(input_handle, event_list, sizeof(event_list)/sizeof(event_list[0]), &count);
+    ret = WriteConsoleInputW(input_handle, event_list, ARRAY_SIZE(event_list), &count);
     ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
-    ok(count == sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == ARRAY_SIZE(event_list),
        "Expected count to be event list length, got %u\n", count);
 
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
-    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == 2*ARRAY_SIZE(event_list),
        "Expected count to be twice event list length, got %u\n", count);
 
     /* Again, writing a single mouse event with adjacent mouse events queued doesn't appear to affect the count. */
@@ -1813,7 +1813,7 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ret = GetNumberOfConsoleInputEvents(input_handle, &count);
     ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
     todo_wine
-    ok(count == 2*sizeof(event_list)/sizeof(event_list[0]),
+    ok(count == 2*ARRAY_SIZE(event_list),
        "Expected count to be twice event list length, got %u\n", count);
 
     ret = FlushConsoleInputBuffer(input_handle);
@@ -1932,7 +1932,7 @@ static void test_WriteConsoleOutputCharacterA(HANDLE output_handle)
         {output_handle, output, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2016,7 +2016,7 @@ static void test_WriteConsoleOutputCharacterW(HANDLE output_handle)
         {output_handle, outputW, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2099,7 +2099,7 @@ static void test_WriteConsoleOutputAttribute(HANDLE output_handle)
         {output_handle, &attr, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2169,7 +2169,7 @@ static void test_FillConsoleOutputCharacterA(HANDLE output_handle)
         {output_handle, 'a', 1, {0, 0}, NULL, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2228,7 +2228,7 @@ static void test_FillConsoleOutputCharacterW(HANDLE output_handle)
         {output_handle, 'a', 1, {0, 0}, NULL, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2287,7 +2287,7 @@ static void test_FillConsoleOutputAttribute(HANDLE output_handle)
         {output_handle, FOREGROUND_BLUE, 1, {0, 0}, NULL, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2365,7 +2365,7 @@ static void test_ReadConsoleOutputCharacterA(HANDLE output_handle)
         {output_handle, &read, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2449,7 +2449,7 @@ static void test_ReadConsoleOutputCharacterW(HANDLE output_handle)
         {output_handle, &read, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;
@@ -2532,7 +2532,7 @@ static void test_ReadConsoleOutputAttribute(HANDLE output_handle)
         {output_handle, &attr, 1, {0, 0}, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
     };
 
-    for (i = 0; i < sizeof(invalid_table)/sizeof(invalid_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(invalid_table); i++)
     {
         if (invalid_table[i].win7_crash)
             continue;

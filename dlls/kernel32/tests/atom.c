@@ -276,7 +276,7 @@ static void test_get_atom_name(void)
         do_initW(inW, "abcdefghij", 255);
         atom = GlobalAddAtomW(inW);
         ok(atom, "couldn't add atom for %s\n", in);
-        len = GlobalGetAtomNameW(atom, outW, sizeof(outW)/sizeof(outW[0]));
+        len = GlobalGetAtomNameW(atom, outW, ARRAY_SIZE(outW));
         ok(len == 255, "length mismatch (%u instead of 255)\n", len);
         for (i = 0; i < 255; i++)
         {
@@ -537,7 +537,7 @@ static void test_local_get_atom_name(void)
         do_initW(inW, "abcdefghij", 255);
         atom = AddAtomW(inW);
         ok(atom, "couldn't add atom for %s\n", in);
-        len = GetAtomNameW(atom, outW, sizeof(outW)/sizeof(outW[0]));
+        len = GetAtomNameW(atom, outW, ARRAY_SIZE(outW));
         ok(len == 255, "length mismatch (%u instead of 255)\n", len);
         for (i = 0; i < 255; i++)
         {

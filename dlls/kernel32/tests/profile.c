@@ -71,7 +71,7 @@ static void test_profile_int(void)
          { SECTION, KEY,  "B4294967297", TESTFILE, -1, 0          , 0},
          { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0          , 0},
     };
-    int i, num_test = (sizeof(profileInt)/sizeof(struct _profileInt));
+    int i, num_test = ARRAY_SIZE(profileInt);
     UINT res;
 
     DeleteFileA( TESTFILE);
@@ -144,8 +144,7 @@ static void test_profile_string(void)
     CloseHandle( h);
 
     /* works only in unicode, ascii crashes */
-    ret=GetPrivateProfileStringW(emptyW, keyW, emptyW, bufW,
-                                 sizeof(bufW)/sizeof(bufW[0]), TESTFILE2W);
+    ret=GetPrivateProfileStringW(emptyW, keyW, emptyW, bufW, ARRAY_SIZE(bufW), TESTFILE2W);
     todo_wine
     ok(ret == 13, "expected 13, got %u\n", ret);
     todo_wine
@@ -153,8 +152,7 @@ static void test_profile_string(void)
         wine_dbgstr_w(valsectionW), wine_dbgstr_w(bufW) );
 
     /* works only in unicode, ascii crashes */
-    ret=GetPrivateProfileStringW(sW, emptyW, emptyW, bufW,
-                                 sizeof(bufW)/sizeof(bufW[0]), TESTFILE2W);
+    ret=GetPrivateProfileStringW(sW, emptyW, emptyW, bufW, ARRAY_SIZE(bufW), TESTFILE2W);
     todo_wine
     ok(ret == 10, "expected 10, got %u\n", ret);
     todo_wine
@@ -394,7 +392,7 @@ static void test_profile_existing(void)
     HANDLE h = 0;
     char buffer[MAX_PATH];
 
-    for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
+    for (i=0; i < ARRAY_SIZE(pe); i++)
     {
         h = CreateFileA(testfile1, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -434,7 +432,7 @@ static void test_profile_existing(void)
     ok( WriteFile( h, buffer, strlen(buffer), &size, NULL ), "failed to write\n" );
     CloseHandle( h );
 
-    for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
+    for (i=0; i < ARRAY_SIZE(pe); i++)
     {
         h = CreateFileA(testfile2, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

@@ -823,7 +823,7 @@ static void test_obsolete_flags(void)
         return;
     }
 
-    for (i = 0; i < sizeof(test_global_flags)/sizeof(test_global_flags[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test_global_flags); i++)
     {
         gbl = GlobalAlloc(test_global_flags[i].flags, 4);
         ok(gbl != NULL, "GlobalAlloc failed\n");

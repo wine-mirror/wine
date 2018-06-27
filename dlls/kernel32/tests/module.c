@@ -39,7 +39,7 @@ static BOOL cmpStrAW(const char* a, const WCHAR* b, DWORD lenA, DWORD lenB)
     WCHAR       aw[1024];
 
     DWORD len = MultiByteToWideChar( AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0,
-                                     a, lenA, aw, sizeof(aw) / sizeof(aw[0]) );
+                                     a, lenA, aw, ARRAY_SIZE(aw));
     if (len != lenB) return FALSE;
     return memcmp(aw, b, len * sizeof(WCHAR)) == 0;
 }
@@ -149,7 +149,7 @@ static void testGetModuleFileName(const char* name)
     {
         memset(bufW, '-', sizeof(bufW));
         SetLastError(0xdeadbeef);
-        len1W = GetModuleFileNameW(hMod, bufW, sizeof(bufW) / sizeof(WCHAR));
+        len1W = GetModuleFileNameW(hMod, bufW, ARRAY_SIZE(bufW));
         ok(GetLastError() == ERROR_SUCCESS ||
            broken(GetLastError() == 0xdeadbeef), /* <= XP SP3 */
            "LastError was not reset: %u\n", GetLastError());
@@ -191,7 +191,8 @@ static void testGetModuleFileName_Wrong(void)
     if (is_unicode_enabled)
     {
         bufW[0] = '*';
-        ok(GetModuleFileNameW((void*)0xffffffff, bufW, sizeof(bufW) / sizeof(WCHAR)) == 0, "Unexpected success in module handle\n");
+        ok(GetModuleFileNameW((void*)0xffffffff, bufW, ARRAY_SIZE(bufW)) == 0,
+           "Unexpected success in module handle\n");
         ok(bufW[0] == '*', "When failing, buffer shouldn't be written to\n");
     }
 
@@ -538,7 +539,7 @@ static void test_LoadLibraryEx_search_flags(void)
     ok( !mod, "LoadLibrary succeeded\n" );
     ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
 
-    for (j = 0; j < sizeof(tests) / sizeof(tests[0]); j++)
+    for (j = 0; j < ARRAY_SIZE(tests); j++)
     {
         for (k = 0; tests[j].add_dirs[k]; k++)
         {
@@ -598,7 +599,7 @@ static void testGetDllDirectory(void)
         "C:\\Some\\Path\\",
         "Q:\\A\\Long\\Path with spaces that\\probably\\doesn't exist!",
     };
-    const int test_count = sizeof(dll_directories) / sizeof(dll_directories[0]);
+    const int test_count = ARRAY_SIZE(dll_directories);
 
     if (!pGetDllDirectoryA || !pGetDllDirectoryW)
     {
@@ -917,7 +918,7 @@ static void test_AddDllDirectory(void)
     }
 
     buf[0] = '\0';
-    GetTempPathW( sizeof(path)/sizeof(path[0]), path );
+    GetTempPathW(ARRAY_SIZE(path), path );
     ret = GetTempFileNameW( path, tmpW, 0, buf );
     ok( ret, "GetTempFileName failed err %u\n", GetLastError() );
     SetLastError( 0xdeadbeef );

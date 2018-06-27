@@ -251,7 +251,7 @@ static void test_GetVolumeNameForVolumeMountPointW(void)
 {
     BOOL ret;
     WCHAR volume[MAX_PATH], path[] = {'c',':','\\',0};
-    DWORD len = sizeof(volume) / sizeof(WCHAR);
+    DWORD len = ARRAY_SIZE(volume);
 
     /* not present before w2k */
     if (!pGetVolumeNameForVolumeMountPointW) {
@@ -795,7 +795,7 @@ static void test_GetVolumePathNameA(void)
     ret = SetEnvironmentVariableA( "CurrentDrive", cwd );
     ok( ret, "Failed to set an environment variable for the current working drive.\n" );
 
-    for (i=0; i<sizeof(test_paths)/sizeof(test_paths[0]); i++)
+    for (i=0; i<ARRAY_SIZE(test_paths); i++)
     {
         BOOL broken_ret = test_paths[i].broken_error == NO_ERROR;
         char *output = (test_paths[i].path_name != NULL ? volume_path : NULL);

@@ -697,7 +697,7 @@ static void test_Loader(void)
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         nt_header = nt_header_template;
         nt_header.FileHeader.NumberOfSections = td[i].number_of_sections;
@@ -922,7 +922,7 @@ static void test_Loader(void)
 
             error_match = FALSE;
             for (error_index = 0;
-                 ! error_match && error_index < sizeof(td[i].errors) / sizeof(DWORD);
+                 ! error_match && error_index < ARRAY_SIZE(td[i].errors);
                  error_index++)
             {
                 error_match = td[i].errors[error_index] == GetLastError();
@@ -1581,7 +1581,7 @@ static void test_VirtualProtect(void *base, void *section)
 
     orig_prot = old_prot;
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         ret = VirtualQuery(section, &info, sizeof(info));
@@ -1712,7 +1712,7 @@ static void test_section_access(void)
 
     GetTempPathA(MAX_PATH, temp_path);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         IMAGE_NT_HEADERS nt_header;
 
@@ -2028,7 +2028,7 @@ static DWORD WINAPI mutex_thread_proc(void *param)
     trace("%04x: mutex_thread_proc: starting\n", GetCurrentThreadId());
     while (1)
     {
-        ret = WaitForMultipleObjects(sizeof(wait_list)/sizeof(wait_list[0]), wait_list, FALSE, 50);
+        ret = WaitForMultipleObjects(ARRAY_SIZE(wait_list), wait_list, FALSE, 50);
         if (ret == WAIT_OBJECT_0) break;
         else if (ret == WAIT_OBJECT_0 + 1)
         {
@@ -3364,7 +3364,7 @@ static void test_ResolveDelayLoadedAPI(void)
 
     section.PointerToRawData = 0x2000;
     section.VirtualAddress = 0x2000;
-    i = sizeof(td)/sizeof(td[0]);
+    i = ARRAY_SIZE(td);
     section.Misc.VirtualSize = sizeof(test_dll) + sizeof(hint) + sizeof(test_func) + sizeof(HMODULE) +
                                2 * (i + 1) * sizeof(IMAGE_THUNK_DATA);
     ok(section.Misc.VirtualSize <= 0x1000, "Too much tests, add a new section!\n");
@@ -3413,7 +3413,7 @@ static void test_ResolveDelayLoadedAPI(void)
 
     SetFilePointer( hfile, idd.ImportAddressTableRVA, NULL, SEEK_SET );
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         /* 0x1a00 is an empty space between delay data and extended delay data, real thunks are not necessary */
         itd32.u1.Function = nt_header.OptionalHeader.ImageBase + 0x1a00 + i * 0x20;
@@ -3427,7 +3427,7 @@ static void test_ResolveDelayLoadedAPI(void)
     ret = WriteFile(hfile, &itd32, sizeof(itd32), &dummy, NULL);
     ok(ret, "WriteFile error %d\n", GetLastError());
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         if (td[i].func)
             itd32.u1.AddressOfData = idd.DllNameRVA + sizeof(test_dll);
@@ -3480,7 +3480,7 @@ static void test_ResolveDelayLoadedAPI(void)
         itda = RVAToAddr(delaydir->ImportAddressTableRVA, hlib);
         htarget = LoadLibraryA(RVAToAddr(delaydir->DllNameRVA, hlib));
 
-        for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(td); i++)
         {
             void *ret, *load;
 

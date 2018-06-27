@@ -423,7 +423,7 @@ static void     doChild(const char* file, const char* option)
     childPrintf(hFile, "[Misc]\n");
     if (GetCurrentDirectoryA(sizeof(bufA), bufA))
         childPrintf(hFile, "CurrDirA=%s\n", encodeA(bufA));
-    if (GetCurrentDirectoryW(sizeof(bufW) / sizeof(bufW[0]), bufW))
+    if (GetCurrentDirectoryW(ARRAY_SIZE(bufW), bufW))
         childPrintf(hFile, "CurrDirW=%s\n", encodeW(bufW));
     childPrintf(hFile, "\n");
 
@@ -1987,14 +1987,14 @@ static void test_QueryFullProcessImageNameW(void)
     ok(GetModuleFileNameW(NULL, module_name, 1024), "GetModuleFileNameW(NULL, ...) failed\n");
 
     /* GetCurrentProcess pseudo-handle */
-    size = sizeof(buf) / sizeof(buf[0]);
+    size = ARRAY_SIZE(buf);
     expect_eq_d(TRUE, pQueryFullProcessImageNameW(GetCurrentProcess(), 0, buf, &size));
     expect_eq_d(lstrlenW(buf), size);
     expect_eq_ws_i(buf, module_name);
 
     hSelf = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
     /* Real handle */
-    size = sizeof(buf) / sizeof(buf[0]);
+    size = ARRAY_SIZE(buf);
     expect_eq_d(TRUE, pQueryFullProcessImageNameW(hSelf, 0, buf, &size));
     expect_eq_d(lstrlenW(buf), size);
     expect_eq_ws_i(buf, module_name);
@@ -2032,7 +2032,7 @@ static void test_QueryFullProcessImageNameW(void)
 
 
     /* native path */
-    size = sizeof(buf) / sizeof(buf[0]);
+    size = ARRAY_SIZE(buf);
     expect_eq_d(TRUE, pQueryFullProcessImageNameW(hSelf, PROCESS_NAME_NATIVE, buf, &size));
     expect_eq_d(lstrlenW(buf), size);
     ok(buf[0] == '\\', "NT path should begin with '\\'\n");
@@ -2040,7 +2040,7 @@ static void test_QueryFullProcessImageNameW(void)
 
     module_name[2] = '\0';
     *device = '\0';
-    size = QueryDosDeviceW(module_name, device, sizeof(device)/sizeof(device[0]));
+    size = QueryDosDeviceW(module_name, device, ARRAY_SIZE(device));
     ok(size, "QueryDosDeviceW failed: le=%u\n", GetLastError());
     len = lstrlenW(device);
     ok(size >= len+2, "expected %d to be greater than %d+2 = strlen(%s)\n", size, len, wine_dbgstr_w(device));

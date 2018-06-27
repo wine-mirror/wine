@@ -1716,7 +1716,7 @@ static void test_CreateFileMapping(void)
     file[2] = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
     ok( file[2] != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
 
-    for (i = 0; i < sizeof(sec_flag_tests) / sizeof(sec_flag_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(sec_flag_tests); i++)
     {
         DWORD flags = sec_flag_tests[i].flags;
         DWORD perm = sec_flag_tests[i].file == 2 ? PAGE_READONLY : PAGE_READWRITE;
@@ -3333,7 +3333,7 @@ static void test_VirtualProtect(void)
     ok(status == STATUS_SUCCESS, "NtProtectVirtualMemory should succeed, got %08x\n", status);
     ok(old_prot == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", old_prot);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         ret = VirtualQuery(base, &info, sizeof(info));
@@ -3499,7 +3499,7 @@ static void test_VirtualAlloc_protection(void)
     DWORD ret, i;
     MEMORY_BASIC_INFORMATION info;
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         base = VirtualAlloc(0, si.dwPageSize, MEM_COMMIT, td[i].prot);
@@ -3602,7 +3602,7 @@ static void test_CreateFileMapping_protection(void)
     SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
     SetEndOfFile(hfile);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         hmap = CreateFileMappingW(hfile, NULL, td[i].prot | SEC_COMMIT, 0, si.dwPageSize, NULL);
@@ -3674,7 +3674,7 @@ static void test_CreateFileMapping_protection(void)
     hmap = CreateFileMappingW(hfile, NULL, alloc_prot, 0, si.dwPageSize, NULL);
     ok(hmap != 0, "%d: CreateFileMapping error %d\n", i, GetLastError());
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         base = MapViewOfFile(hmap, FILE_MAP_READ | FILE_MAP_WRITE | (page_exec_supported ? FILE_MAP_EXECUTE : 0), 0, 0, 0);
@@ -3941,7 +3941,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
     BOOL anon_mapping = (hfile == INVALID_HANDLE_VALUE);
 
     trace( "testing %s mapping flags %08x\n", anon_mapping ? "anonymous" : "file", sec_flags );
-    for (i = 0; i < sizeof(page_prot)/sizeof(page_prot[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(page_prot); i++)
     {
         SetLastError(0xdeadbeef);
         hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, si.dwPageSize, NULL);
@@ -3998,7 +3998,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
 
         ok(hmap != 0, "%d: CreateFileMapping(%04x) error %d\n", i, page_prot[i], GetLastError());
 
-        for (j = 0; j < sizeof(view)/sizeof(view[0]); j++)
+        for (j = 0; j < ARRAY_SIZE(view); j++)
         {
             nt_base = map_view_of_file(hmap, view[j].access);
             if (nt_base)
@@ -4085,7 +4085,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
             prev_prot = info.Protect;
             alloc_prot = info.AllocationProtect;
 
-            for (k = 0; k < sizeof(page_prot)/sizeof(page_prot[0]); k++)
+            for (k = 0; k < ARRAY_SIZE(page_prot); k++)
             {
                 /*trace("map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);*/
                 DWORD actual_prot = (sec_flags & SEC_IMAGE) ? map_prot_no_write(page_prot[k]) : page_prot[k];
@@ -4118,7 +4118,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 }
             }
 
-            for (k = 0; k < sizeof(page_prot)/sizeof(page_prot[0]); k++)
+            for (k = 0; k < ARRAY_SIZE(page_prot); k++)
             {
                 /*trace("map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);*/
                 SetLastError(0xdeadbeef);
@@ -4172,7 +4172,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 prev_prot = info.Protect;
                 alloc_prot = info.AllocationProtect;
 
-                for (k = 0; k < sizeof(page_prot)/sizeof(page_prot[0]); k++)
+                for (k = 0; k < ARRAY_SIZE(page_prot); k++)
                 {
                     DWORD actual_prot = (sec_flags & SEC_IMAGE) ? map_prot_no_write(page_prot[k]) : page_prot[k];
                     SetLastError(0xdeadbeef);

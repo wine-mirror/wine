@@ -478,7 +478,7 @@ START_TEST(resource)
 
     update_empty_exe();
 
-    for(i=0; i < sizeof( sec_variants ) / sizeof( sec_variants[0] ); i++)
+    for(i=0; i < ARRAY_SIZE(sec_variants); i++)
     {
         const struct _sec_variants *sec = &sec_variants[i];
         build_exe( &sec->build );

@@ -606,7 +606,7 @@ static void test_VerifyVersionInfo(void)
         }
     }
 
-    for (i = 0; i < sizeof(verify_version_tests)/sizeof(verify_version_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(verify_version_tests); i++)
     {
         struct verify_version_test *test = &verify_version_tests[i];
         DWORD srcinfo = test->srcinfo;

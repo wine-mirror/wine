@@ -205,7 +205,7 @@ static void test_other_invalid_parameters(void)
     char c_string[] = "Hello World";
     size_t c_string_len = sizeof(c_string);
     WCHAR w_string[] = {'H','e','l','l','o',' ','W','o','r','l','d',0};
-    size_t w_string_len = sizeof(w_string) / sizeof(WCHAR);
+    size_t w_string_len = ARRAY_SIZE(w_string);
     BOOL used;
     INT len;
 
@@ -683,7 +683,7 @@ static void test_utf7_encoding(void)
            i, expected_len, expected_len, output[expected_len]);
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         memset(output, '#', sizeof(output) - 1);
         output[sizeof(output) - 1] = 0;
@@ -746,12 +746,12 @@ static void test_utf7_decoding(void)
     {
         /* tests string conversion with srclen=-1 */
         {
-            "+T2BZfQ-", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2BZfQ-", -1, output, ARRAY_SIZE(output) - 1,
             {0x4F60,0x597D,0}, 3, 3
         },
         /* tests string conversion with srclen=-2 */
         {
-            "+T2BZfQ-", -2, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2BZfQ-", -2, output, ARRAY_SIZE(output) - 1,
             {0x4F60,0x597D,0}, 3, 3
         },
         /* tests string conversion with dstlen=strlen(expected_dst) */
@@ -781,72 +781,72 @@ static void test_utf7_decoding(void)
         },
         /* tests ill-formed UTF-7: 6 bits, not enough for a byte pair */
         {
-            "+T-+T-+T-hello", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T-+T-+T-hello", -1, output, ARRAY_SIZE(output) - 1,
             {'h','e','l','l','o',0}, 6, 6
         },
         /* tests ill-formed UTF-7: 12 bits, not enough for a byte pair */
         {
-            "+T2-+T2-+T2-hello", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2-+T2-+T2-hello", -1, output, ARRAY_SIZE(output) - 1,
             {'h','e','l','l','o',0}, 6, 6
         },
         /* tests ill-formed UTF-7: 18 bits, not a multiple of 16 and the last bit is a 1 */
         {
-            "+T2B-+T2B-+T2B-hello", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2B-+T2B-+T2B-hello", -1, output, ARRAY_SIZE(output) - 1,
             {0x4F60,0x4F60,0x4F60,'h','e','l','l','o',0}, 9, 9
         },
         /* tests ill-formed UTF-7: 24 bits, a multiple of 8 but not a multiple of 16 */
         {
-            "+T2BZ-+T2BZ-+T2BZ-hello", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2BZ-+T2BZ-+T2BZ-hello", -1, output, ARRAY_SIZE(output) - 1,
             {0x4F60,0x4F60,0x4F60,'h','e','l','l','o',0}, 9, 9
         },
         /* tests UTF-7 followed by characters that should be encoded but aren't */
         {
-            "+T2BZ-\x82\xFE", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2BZ-\x82\xFE", -1, output, ARRAY_SIZE(output) - 1,
             {0x4F60,0x0082,0x00FE,0}, 4, 4
         },
         /* tests srclen > strlen(src) */
         {
-            "a\0b", 4, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "a\0b", 4, output, ARRAY_SIZE(output) - 1,
             {'a',0,'b',0}, 4, 4
         },
         /* tests srclen < strlen(src) outside of a UTF-7 sequence */
         {
-            "hello", 2, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "hello", 2, output, ARRAY_SIZE(output) - 1,
             {'h','e'}, 2, 2
         },
         /* tests srclen < strlen(src) inside of a UTF-7 sequence */
         {
-            "+T2BZfQ-", 4, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2BZfQ-", 4, output, ARRAY_SIZE(output) - 1,
             {0x4F60}, 1, 1
         },
         /* tests srclen < strlen(src) right at the beginning of a UTF-7 sequence */
         {
-            "hi+T2A-", 3, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "hi+T2A-", 3, output, ARRAY_SIZE(output) - 1,
             {'h','i'}, 2, 2
         },
         /* tests srclen < strlen(src) right at the end of a UTF-7 sequence */
         {
-            "+T2A-hi", 5, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+T2A-hi", 5, output, ARRAY_SIZE(output) - 1,
             {0x4F60}, 1, 1
         },
         /* tests srclen < strlen(src) at the beginning of an escaped + sign */
         {
-            "hi+-", 3, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "hi+-", 3, output, ARRAY_SIZE(output) - 1,
             {'h','i'}, 2, 2
         },
         /* tests srclen < strlen(src) at the end of an escaped + sign */
         {
-            "+-hi", 2, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+-hi", 2, output, ARRAY_SIZE(output) - 1,
             {'+'}, 1, 1
         },
         /* tests len=0 but no error */
         {
-            "+", 1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "+", 1, output, ARRAY_SIZE(output) - 1,
             {}, 0, 0
         },
         /* tests a single null char */
         {
-            "", -1, output, sizeof(output) / sizeof(WCHAR) - 1,
+            "", -1, output, ARRAY_SIZE(output) - 1,
             {0}, 1, 1
         },
         /* tests a buffer that runs out while not decoding a UTF-7 sequence */
@@ -867,9 +867,9 @@ static void test_utf7_decoding(void)
         sprintf(input, "+%c+AAA", i);
 
         memset(output, 0x23, sizeof(output) - sizeof(WCHAR));
-        output[sizeof(output) / sizeof(WCHAR) - 1] = 0;
+        output[ARRAY_SIZE(output) - 1] = 0;
 
-        len = MultiByteToWideChar(CP_UTF7, 0, input, 7, output, sizeof(output) / sizeof(WCHAR) - 1);
+        len = MultiByteToWideChar(CP_UTF7, 0, input, 7, output, ARRAY_SIZE(output) - 1);
 
         if (i == '-')
         {
@@ -909,9 +909,9 @@ static void test_utf7_decoding(void)
         sprintf(input, "+B%c+AAA", i);
 
         memset(output, 0x23, sizeof(output) - sizeof(WCHAR));
-        output[sizeof(output) / sizeof(WCHAR) - 1] = 0;
+        output[ARRAY_SIZE(output) - 1] = 0;
 
-        len = MultiByteToWideChar(CP_UTF7, 0, input, 8, output, sizeof(output) / sizeof(WCHAR) - 1);
+        len = MultiByteToWideChar(CP_UTF7, 0, input, 8, output, ARRAY_SIZE(output) - 1);
 
         if (i == '-')
         {
@@ -955,10 +955,10 @@ static void test_utf7_decoding(void)
            i, wine_dbgstr_wn(expected, expected_len + 1), wine_dbgstr_wn(output, expected_len + 1));
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         memset(output, 0x23, sizeof(output) - sizeof(WCHAR));
-        output[sizeof(output) / sizeof(WCHAR) - 1] = 0;
+        output[ARRAY_SIZE(output) - 1] = 0;
         SetLastError(0xdeadbeef);
 
         len = MultiByteToWideChar(CP_UTF7, 0, tests[i].src, tests[i].srclen,
@@ -1004,7 +1004,7 @@ static void test_undefined_byte_char(void)
     };
     INT i, ret;
 
-    for (i = 0; i < (sizeof(testset) / sizeof(testset[0])); i++) {
+    for (i = 0; i < ARRAY_SIZE(testset); i++) {
         if (! IsValidCodePage(testset[i].codepage))
         {
             skip("Codepage %d not available\n", testset[i].codepage);
@@ -1106,7 +1106,7 @@ static void test_threadcp(void)
     last = GetThreadLocale();
     acp  = GetACP();
 
-    for (i = 0; i < sizeof(lcids)/sizeof(lcids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(lcids); i++)
     {
         SetThreadLocale(lcids[i].lcid);
 
@@ -1151,7 +1151,7 @@ static void test_threadcp(void)
     }
 
     /* IsDBCSLeadByteEx - locales without codepage */
-    for (i = 0; i < sizeof(isleads_nocp)/sizeof(isleads_nocp[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(isleads_nocp); i++)
     {
         SetThreadLocale(isleads_nocp[i].lcid);
 
@@ -1163,7 +1163,7 @@ static void test_threadcp(void)
     }
 
     /* IsDBCSLeadByteEx - locales with codepage */
-    for (i = 0; i < sizeof(isleads)/sizeof(isleads[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(isleads); i++)
     {
         SetThreadLocale(isleads[i].lcid);
 
@@ -1194,7 +1194,7 @@ static void test_dbcs_to_widechar(void)
         MB_COMPOSITE  |MB_ERR_INVALID_CHARS|MB_USEGLYPHCHARS,
     };
 
-    for (i = 0; i < sizeof(flags)/sizeof(DWORD); ++i)
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
     {
         memset(wbuf, 0xff, sizeof(wbuf));
         count = MultiByteToWideChar(936, flags[i], (char*)&buf[0], 2, NULL, 0);
@@ -1206,7 +1206,7 @@ static void test_dbcs_to_widechar(void)
         ok(wbuf[1] == 0xffff, "%04x: returned %04x (expected ffff)\n", flags[i], wbuf[1]);
     }
 
-    for (i = 0; i < sizeof(flags)/sizeof(DWORD); ++i)
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
     {
         memset(wbuf, 0xff, sizeof(wbuf));
         count = MultiByteToWideChar(936, flags[i], (char*)&buf[0], 3, NULL, 0);
@@ -1232,7 +1232,7 @@ static void test_dbcs_to_widechar(void)
     }
 
     /* src ends with null character */
-    for (i = 0; i < sizeof(flags)/sizeof(DWORD); ++i)
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
     {
         memset(wbuf, 0xff, sizeof(wbuf));
         count = MultiByteToWideChar(936, flags[i], (char*)&buf[0], 4, NULL, 0);
@@ -1261,7 +1261,7 @@ static void test_dbcs_to_widechar(void)
     }
 
     /* src has null character, but not ends with it */
-    for (i = 0; i < sizeof(flags)/sizeof(DWORD); ++i)
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
     {
         memset(wbuf, 0xff, sizeof(wbuf));
         count = MultiByteToWideChar(936, flags[i], (char*)&buf[0], 5, NULL, 0);

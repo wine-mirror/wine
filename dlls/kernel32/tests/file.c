@@ -1836,7 +1836,7 @@ static void test_DeleteFileW( void )
 
     /* test DeleteFile on empty directory */
     ret = GetTempPathW(MAX_PATH, pathW);
-    if (ret + sizeof(dirW)/sizeof(WCHAR)-1 + sizeof(subdirW)/sizeof(WCHAR)-1 >= MAX_PATH)
+    if (ret + ARRAY_SIZE(dirW)-1 + ARRAY_SIZE(subdirW)-1 >= MAX_PATH)
     {
         ok(0, "MAX_PATH exceeded in constructing paths\n");
         return;
@@ -2366,9 +2366,9 @@ static void test_file_sharing(void)
         return;
     }
 
-    for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
+    for (a1 = 0; a1 < ARRAY_SIZE(access_modes); a1++)
     {
-        for (s1 = 0; s1 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s1++)
+        for (s1 = 0; s1 < ARRAY_SIZE(sharing_modes); s1++)
         {
             SetLastError(0xdeadbeef);
             h = CreateFileA( filename, access_modes[a1].dw, sharing_modes[s1].dw,
@@ -2378,9 +2378,9 @@ static void test_file_sharing(void)
                 ok(0,"couldn't create file \"%s\" (err=%d)\n",filename,GetLastError());
                 return;
             }
-            for (a2 = 0; a2 < sizeof(access_modes)/sizeof(access_modes[0]); a2++)
+            for (a2 = 0; a2 < ARRAY_SIZE(access_modes); a2++)
             {
-                for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
+                for (s2 = 0; s2 < ARRAY_SIZE(sharing_modes); s2++)
                 {
                     SetLastError(0xdeadbeef);
                     h2 = CreateFileA( filename, access_modes[a2].dw, sharing_modes[s2].dw,
@@ -2411,7 +2411,7 @@ static void test_file_sharing(void)
         }
     }
 
-    for (a1 = 0; a1 < sizeof(mapping_modes)/sizeof(mapping_modes[0]); a1++)
+    for (a1 = 0; a1 < ARRAY_SIZE(mapping_modes); a1++)
     {
         HANDLE m;
 
@@ -2428,9 +2428,9 @@ static void test_file_sharing(void)
         CloseHandle( h );
         if (!m) continue;
 
-        for (a2 = 0; a2 < sizeof(access_modes)/sizeof(access_modes[0]); a2++)
+        for (a2 = 0; a2 < ARRAY_SIZE(access_modes); a2++)
         {
-            for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
+            for (s2 = 0; s2 < ARRAY_SIZE(sharing_modes); s2++)
             {
                 SetLastError(0xdeadbeef);
                 h2 = CreateFileA( filename, access_modes[a2].dw, sharing_modes[s2].dw,
@@ -2861,10 +2861,10 @@ static void test_FindFirstFile_wildcards(void)
 
     CreateDirectoryA("test-dir", NULL);
     SetCurrentDirectoryA("test-dir");
-    for (i = 0; i < sizeof(files) / sizeof(files[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(files); ++i)
         _lclose(_lcreat(files[i], 0));
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         char correct[512];
         char incorrect[512];
@@ -2901,7 +2901,7 @@ static void test_FindFirstFile_wildcards(void)
            missing[0] ? missing+2 : "none");
     }
 
-    for (i = 0; i < sizeof(files) / sizeof(files[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(files); ++i)
         DeleteFileA(files[i]);
     SetCurrentDirectoryA("..");
     RemoveDirectoryA("test-dir");
@@ -3007,7 +3007,7 @@ static void test_async_file_errors(void)
     ovl.hEvent = hSem;
     completion_count = 0;
     szFile[0] = '\0';
-    GetWindowsDirectoryA(szFile, sizeof(szFile)/sizeof(szFile[0])-1-strlen("\\win.ini"));
+    GetWindowsDirectoryA(szFile, ARRAY_SIZE(szFile)-1-strlen("\\win.ini"));
     strcat(szFile, "\\win.ini");
     hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                         NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
@@ -3881,7 +3881,7 @@ todo_wine_if (i == 1)
         }
     }
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         hfile = CreateFileA(file_name, td[i].access, 0, NULL, td[i].disposition, 0, 0);
@@ -3987,7 +3987,7 @@ static void test_GetFileInformationByHandleEx(void)
     ok(directory != INVALID_HANDLE_VALUE, "GetFileInformationByHandleEx: failed to open the temp folder, "
         "got error %u.\n", GetLastError());
 
-    for (i = 0; i < sizeof(checks) / sizeof(checks[0]); i += 1)
+    for (i = 0; i < ARRAY_SIZE(checks); i += 1)
     {
         SetLastError(0xdeadbeef);
         ret = pGetFileInformationByHandleEx(directory, checks[i].handleClass, checks[i].ptr, checks[i].size);
@@ -4129,7 +4129,7 @@ static void test_OpenFileById(void)
     ok(ret2 != INVALID_FILE_ATTRIBUTES,
         "OpenFileById: GetFileAttributesA failed to find the temp file, got error %u\n", GetLastError());
 
-    ret2 = MultiByteToWideChar(CP_ACP, 0, tempFileName + strlen(tempPath), -1, tempFileNameW, sizeof(tempFileNameW)/sizeof(tempFileNameW[0]));
+    ret2 = MultiByteToWideChar(CP_ACP, 0, tempFileName + strlen(tempPath), -1, tempFileNameW, ARRAY_SIZE(tempFileNameW));
     ok(ret2, "OpenFileById: MultiByteToWideChar failed to convert tempFileName, got error %u.\n", GetLastError());
     tempFileNameLen = ret2 - 1;
 
@@ -4587,7 +4587,7 @@ static void test_file_access(void)
     GetTempPathA(MAX_PATH, path);
     GetTempFileNameA(path, "foo", 0, fname);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         SetLastError(0xdeadbeef);
         hfile = CreateFileA(fname, td[i].access, 0, NULL, CREATE_ALWAYS,
@@ -4601,7 +4601,7 @@ static void test_file_access(void)
         else
             ok(hfile != INVALID_HANDLE_VALUE, "%d: CreateFile error %d\n", i, GetLastError());
 
-        for (j = 0; j < sizeof(td)/sizeof(td[0]); j++)
+        for (j = 0; j < ARRAY_SIZE(td); j++)
         {
             SetLastError(0xdeadbeef);
             ret = DuplicateHandle(GetCurrentProcess(), hfile, GetCurrentProcess(), &hdup,
@@ -4843,7 +4843,7 @@ static void test_GetFinalPathNameByHandleW(void)
 
     success = GetVolumePathNameW(long_path, drive_part, MAX_PATH);
     ok(success, "GetVolumePathNameW error %u\n", GetLastError());
-    success = GetVolumeNameForVolumeMountPointW(drive_part, volume_path, sizeof(volume_path) / sizeof(WCHAR));
+    success = GetVolumeNameForVolumeMountPointW(drive_part, volume_path, ARRAY_SIZE(volume_path));
     ok(success, "GetVolumeNameForVolumeMountPointW error %u\n", GetLastError());
 
     /* Test for VOLUME_NAME_GUID */
@@ -4863,7 +4863,7 @@ static void test_GetFinalPathNameByHandleW(void)
        wine_dbgstr_w(file_part), wine_dbgstr_w(result_path));
 
     drive_part[lstrlenW(drive_part)-1] = 0;
-    success = QueryDosDeviceW(drive_part, nt_path, sizeof(nt_path) / sizeof(WCHAR));
+    success = QueryDosDeviceW(drive_part, nt_path, ARRAY_SIZE(nt_path));
     ok(success, "QueryDosDeviceW error %u\n", GetLastError());
 
     /* Test for VOLUME_NAME_NT */

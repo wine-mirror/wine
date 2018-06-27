@@ -533,7 +533,7 @@ static int strcmp_aw(LPCWSTR strw, const char *stra)
     WCHAR buf[1024];
 
     if (!stra) return 1;
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
     return lstrcmpW(strw, buf);
 }
 
@@ -550,7 +550,7 @@ static BOOL create_manifest_file(const char *filename, const char *manifest, int
     WCHAR path[MAX_PATH];
 
     MultiByteToWideChar( CP_ACP, 0, filename, -1, path, MAX_PATH );
-    GetFullPathNameW(path, sizeof(manifest_path)/sizeof(WCHAR), manifest_path, NULL);
+    GetFullPathNameW(path, ARRAY_SIZE(manifest_path), manifest_path, NULL);
 
     if (manifest_len == -1)
         manifest_len = strlen(manifest);
@@ -566,7 +566,7 @@ static BOOL create_manifest_file(const char *filename, const char *manifest, int
     if (depmanifest)
     {
         MultiByteToWideChar( CP_ACP, 0, depfile, -1, path, MAX_PATH );
-        GetFullPathNameW(path, sizeof(depmanifest_path)/sizeof(WCHAR), depmanifest_path, NULL);
+        GetFullPathNameW(path, ARRAY_SIZE(depmanifest_path), depmanifest_path, NULL);
         file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
         ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
@@ -2558,7 +2558,7 @@ static void init_paths(void)
     static const WCHAR backslash[] = {'\\',0};
     static const WCHAR subdir[] = {'T','e','s','t','S','u','b','d','i','r','\\',0};
 
-    GetModuleFileNameW(NULL, exe_path, sizeof(exe_path)/sizeof(WCHAR));
+    GetModuleFileNameW(NULL, exe_path, ARRAY_SIZE(exe_path));
     lstrcpyW(app_dir, exe_path);
     for(ptr=app_dir+lstrlenW(app_dir); *ptr != '\\' && *ptr != '/'; ptr--);
     ptr[1] = 0;
@@ -2570,7 +2570,7 @@ static void init_paths(void)
     lstrcpyW(work_dir_subdir, work_dir);
     lstrcatW(work_dir_subdir, subdir);
 
-    GetModuleFileNameW(NULL, app_manifest_path, sizeof(app_manifest_path)/sizeof(WCHAR));
+    GetModuleFileNameW(NULL, app_manifest_path, ARRAY_SIZE(app_manifest_path));
     lstrcpyW(app_manifest_path+lstrlenW(app_manifest_path), dot_manifest);
 }
 
@@ -2580,7 +2580,7 @@ static void write_manifest(const char *filename, const char *manifest)
     DWORD size;
     CHAR path[MAX_PATH];
 
-    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    GetTempPathA(ARRAY_SIZE(path), path);
     strcat(path, filename);
 
     file = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -2593,7 +2593,7 @@ static void delete_manifest_file(const char *filename)
 {
     CHAR path[MAX_PATH];
 
-    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    GetTempPathA(ARRAY_SIZE(path), path);
     strcat(path, filename);
     DeleteFileA(path);
 }
@@ -2604,7 +2604,7 @@ static void test_CreateActCtx(void)
     ACTCTXA actctx;
     HANDLE handle;
 
-    GetTempPathA(sizeof(path)/sizeof(CHAR), path);
+    GetTempPathA(ARRAY_SIZE(path), path);
     strcat(path, "main_wndcls.manifest");
 
     write_manifest("testdep1.manifest", manifest_wndcls1);
@@ -2621,7 +2621,7 @@ static void test_CreateActCtx(void)
     pReleaseActCtx(handle);
 
     /* with specified directory, that doesn't contain dependent assembly */
-    GetWindowsDirectoryA(dir, sizeof(dir)/sizeof(CHAR));
+    GetWindowsDirectoryA(dir, ARRAY_SIZE(dir));
 
     memset(&actctx, 0, sizeof(ACTCTXA));
     actctx.cbSize = sizeof(ACTCTXA);
@@ -2667,7 +2667,7 @@ todo_wine
 
     /* load manifest from lpAssemblyDirectory directory */
     write_manifest("testdir.manifest", manifest1);
-    GetTempPathA(sizeof(path)/sizeof(path[0]), path);
+    GetTempPathA(ARRAY_SIZE(path), path);
     SetCurrentDirectoryA(path);
     strcat(path, "assembly_dir");
     strcpy(dir, path);
@@ -3048,14 +3048,14 @@ static void test_settings(void)
     ret = pQueryActCtxSettingsW( 0, handle, namespace2005W, dpiAwareW, buffer, 80, &size );
     ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
     ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
     SetLastError( 0xdeadbeef );
     size = 0xdead;
     memset( buffer, 0xcc, sizeof(buffer) );
     ret = pQueryActCtxSettingsW( 0, handle, namespace2005W, dpiAwareW, buffer, lstrlenW(trueW) + 1, &size );
     ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
     ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
     SetLastError( 0xdeadbeef );
     size = 0xdead;
     memset( buffer, 0xcc, sizeof(buffer) );
@@ -3087,7 +3087,7 @@ static void test_settings(void)
     if (ret)
     {
         ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
-        ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+        ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
     }
     else ok( buffer[0] == 0xcccc, "got %s\n", wine_dbgstr_w(buffer) );
     SetLastError( 0xdeadbeef );
@@ -3096,7 +3096,7 @@ static void test_settings(void)
     ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, lstrlenW(trueW), &size );
     ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
     ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
     SetLastError( 0xdeadbeef );
     size = 0xdead;
     memset( buffer, 0xcc, sizeof(buffer) );
@@ -3104,7 +3104,7 @@ static void test_settings(void)
     ok( !ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
     ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
     ok( buffer[0] == 0xcccc, "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == sizeof(trueW)/sizeof(WCHAR), "wrong len %lu\n", size );
+    ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
     pReleaseActCtx(handle);
 
     create_manifest_file( "manifest_settings2.manifest", settings_manifest2, -1, NULL, NULL );

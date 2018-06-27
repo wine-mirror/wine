@@ -582,7 +582,7 @@ static void test_BuildCommDCBW(const char *string, const TEST *ptest, int initia
 	WCHAR wide_string[sizeof(ptest->string)];
 	static int reportedDCBW = 0;
 
-	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, ARRAY_SIZE(wide_string));
 
 	/* set initial conditions */
 	memset(&dcb, initial_value, sizeof(DCB));
@@ -610,7 +610,7 @@ static void test_BuildCommDCBAndTimeoutsW(const char *string, const TEST *ptest,
 	WCHAR wide_string[sizeof(ptest->string)];
 	static int reportedDCBAndTW = 0;
 
-	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, sizeof(wide_string) / sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, 0, string, -1, wide_string, ARRAY_SIZE(wide_string));
 
 	/* set initial conditions */
 	memset(&dcb, initial_value, sizeof(DCB));
