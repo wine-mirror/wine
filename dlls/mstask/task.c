@@ -481,7 +481,7 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
     TaskImpl *This = impl_from_ITask(iface);
     HRESULT hr = SCHED_S_TASK_NO_VALID_TRIGGERS;
     SYSTEMTIME st, current_st;
-    FILETIME current_ft, begin_ft, end_ft, best_ft;
+    FILETIME current_ft, trigger_ft, begin_ft, end_ft, best_ft;
     BOOL have_best_time = FALSE;
     DWORD i;
 
@@ -494,12 +494,16 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
     }
 
     GetLocalTime(&current_st);
+    SystemTimeToFileTime(&current_st, &current_ft);
 
     for (i = 0; i < This->trigger_count; i++)
     {
         if (!(This->trigger[i].rgFlags & TASK_TRIGGER_FLAG_DISABLED))
         {
             get_begin_time(&This->trigger[i], &begin_ft);
+            if (CompareFileTime(&begin_ft, &current_ft) < 0)
+                begin_ft = current_ft;
+
             get_end_time(&This->trigger[i], &end_ft);
 
             switch (This->trigger[i].TriggerType)
@@ -516,12 +520,12 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                 st.wMinute = This->trigger[i].wStartMinute;
                 st.wSecond = 0;
                 st.wMilliseconds = 0;
-                SystemTimeToFileTime(&st, &current_ft);
-                if (CompareFileTime(&begin_ft, &current_ft) <= 0 && CompareFileTime(&current_ft, &end_ft) < 0)
+                SystemTimeToFileTime(&st, &trigger_ft);
+                if (CompareFileTime(&begin_ft, &trigger_ft) <= 0 && CompareFileTime(&trigger_ft, &end_ft) < 0)
                 {
-                    if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                    if (!have_best_time || CompareFileTime(&trigger_ft, &best_ft) < 0)
                     {
-                        best_ft = current_ft;
+                        best_ft = trigger_ft;
                         have_best_time = TRUE;
                     }
                 }
@@ -533,20 +537,20 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                 st.wMinute = This->trigger[i].wStartMinute;
                 st.wSecond = 0;
                 st.wMilliseconds = 0;
-                SystemTimeToFileTime(&st, &current_ft);
-                while (CompareFileTime(&current_ft, &end_ft) < 0)
+                SystemTimeToFileTime(&st, &trigger_ft);
+                while (CompareFileTime(&trigger_ft, &end_ft) < 0)
                 {
-                    if (CompareFileTime(&current_ft, &begin_ft) >= 0)
+                    if (CompareFileTime(&trigger_ft, &begin_ft) >= 0)
                     {
-                        if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                        if (!have_best_time || CompareFileTime(&trigger_ft, &best_ft) < 0)
                         {
-                            best_ft = current_ft;
+                            best_ft = trigger_ft;
                             have_best_time = TRUE;
                         }
                         break;
                     }
 
-                    filetime_add_days(&current_ft, This->trigger[i].Type.Daily.DaysInterval);
+                    filetime_add_days(&trigger_ft, This->trigger[i].Type.Daily.DaysInterval);
                 }
                 break;
 
@@ -559,18 +563,18 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                 st.wMinute = This->trigger[i].wStartMinute;
                 st.wSecond = 0;
                 st.wMilliseconds = 0;
-                SystemTimeToFileTime(&st, &current_ft);
-                while (CompareFileTime(&current_ft, &end_ft) < 0)
+                SystemTimeToFileTime(&st, &trigger_ft);
+                while (CompareFileTime(&trigger_ft, &end_ft) < 0)
                 {
-                    FileTimeToSystemTime(&current_ft, &st);
+                    FileTimeToSystemTime(&trigger_ft, &st);
 
-                    if (CompareFileTime(&current_ft, &begin_ft) >= 0)
+                    if (CompareFileTime(&trigger_ft, &begin_ft) >= 0)
                     {
                         if (This->trigger[i].Type.Weekly.rgfDaysOfTheWeek & (1 << st.wDayOfWeek))
                         {
-                            if (!have_best_time || CompareFileTime(&current_ft, &best_ft) < 0)
+                            if (!have_best_time || CompareFileTime(&trigger_ft, &best_ft) < 0)
                             {
-                                best_ft = current_ft;
+                                best_ft = trigger_ft;
                                 have_best_time = TRUE;
                             }
                             break;
@@ -578,9 +582,9 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
                     }
 
                     if (st.wDayOfWeek == 0 && This->trigger[i].Type.Weekly.WeeksInterval > 1) /* Sunday, goto next week */
-                        filetime_add_weeks(&current_ft, This->trigger[i].Type.Weekly.WeeksInterval - 1);
+                        filetime_add_weeks(&trigger_ft, This->trigger[i].Type.Weekly.WeeksInterval - 1);
                     else /* check next weekday */
-                        filetime_add_days(&current_ft, 1);
+                        filetime_add_days(&trigger_ft, 1);
                 }
                 break;
 
