@@ -150,7 +150,6 @@ static const struct vid_mode vid_modes_test[] = {
     {0, 0, 0, 0, DM_DISPLAYFREQUENCY, 0}
     */
 };
-#define vid_modes_cnt (sizeof(vid_modes_test) / sizeof(vid_modes_test[0]))
 
 static void test_ChangeDisplaySettingsEx(void)
 {
@@ -237,7 +236,7 @@ static void test_ChangeDisplaySettingsEx(void)
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
 
-    for (i = 0; i < vid_modes_cnt; i++)
+    for (i = 0; i < ARRAY_SIZE(vid_modes_test); i++)
     {
         dm.dmPelsWidth        = vid_modes_test[i].w;
         dm.dmPelsHeight       = vid_modes_test[i].h;

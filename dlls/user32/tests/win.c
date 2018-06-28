@@ -84,8 +84,6 @@ static const char* szAWRClass = "Winsize";
 static HMENU hmenu;
 static DWORD our_pid;
 
-#define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
-
 static void dump_minmax_info( const MINMAXINFO *minmax )
 {
     trace("Reserved=%d,%d MaxSize=%d,%d MaxPos=%d,%d MinTrack=%d,%d MaxTrack=%d,%d\n",
@@ -5289,9 +5287,9 @@ static void test_AWR_window_size(BOOL menu)
     /* A exhaustive check of all the styles takes too long
      * so just do a (hopefully representative) sample
      */
-    for (i = 0; i < COUNTOF(styles); ++i)
+    for (i = 0; i < ARRAY_SIZE(styles); ++i)
         test_AWRwindow(szAWRClass, styles[i], 0, menu);
-    for (i = 0; i < COUNTOF(exStyles); ++i) {
+    for (i = 0; i < ARRAY_SIZE(exStyles); ++i) {
         test_AWRwindow(szAWRClass, WS_POPUP, exStyles[i], menu);
         test_AWRwindow(szAWRClass, WS_THICKFRAME, exStyles[i], menu);
     }
@@ -5306,13 +5304,13 @@ static void test_AWR_flags(void)
     DWORD i, j, k, style, exstyle;
     RECT rect, rect2;
 
-    for (i = 0; i < (1 << COUNTOF(styles)); i++)
+    for (i = 0; i < (1 << ARRAY_SIZE(styles)); i++)
     {
-        for (k = style = 0; k < COUNTOF(styles); k++) if (i & (1 << k)) style |= styles[k];
+        for (k = style = 0; k < ARRAY_SIZE(styles); k++) if (i & (1 << k)) style |= styles[k];
 
-        for (j = 0; j < (1 << COUNTOF(exStyles)); j++)
+        for (j = 0; j < (1 << ARRAY_SIZE(exStyles)); j++)
         {
-            for (k = exstyle = 0; k < COUNTOF(exStyles); k++) if (j & (1 << k)) exstyle |= exStyles[k];
+            for (k = exstyle = 0; k < ARRAY_SIZE(exStyles); k++) if (j & (1 << k)) exstyle |= exStyles[k];
             SetRect( &rect, 100, 100, 200, 200 );
             rect2 = rect;
             AdjustWindowRectEx( &rect, style, FALSE, exstyle );
@@ -5329,7 +5327,6 @@ static void test_AWR_flags(void)
         }
     }
 }
-#undef COUNTOF
 
 #define SHOWSYSMETRIC(SM) trace(#SM "=%d\n", GetSystemMetrics(SM))
 
