@@ -521,7 +521,7 @@ static void test_dmo(void)
     ok(hr == E_ACCESSDENIED, "Write failed: %#x\n", hr);
 
     hr = DMORegister(name, &CLSID_TestFilter, &CLSID_AudioRendererCategory, 0, 0, NULL, 0, NULL);
-    if (hr != E_ACCESSDENIED)
+    if (hr != E_FAIL)
     {
         ok(hr == S_OK, "got %#x\n", hr);
 
