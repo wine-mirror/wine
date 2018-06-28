@@ -14194,6 +14194,13 @@ static const struct message wm_lb_deletestring_reset[] =
 };
 static const struct message wm_lb_addstring[] =
 {
+    { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
+    { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
+    { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
+    { 0 }
+};
+static const struct message wm_lb_addstring_ownerdraw[] =
+{
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
@@ -14202,7 +14209,7 @@ static const struct message wm_lb_addstring[] =
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf2f2, 0xf30604ef },
     { 0 }
 };
-static const struct message wm_lb_addstring_sort[] =
+static const struct message wm_lb_addstring_sort_ownerdraw[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
@@ -14290,6 +14297,8 @@ static void test_listbox_messages(void)
 
     flush_sequence();
 
+    log_all_parent_messages++;
+
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
     ok(ret == 0, "expected 0, got %ld\n", ret);
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
@@ -14297,12 +14306,10 @@ static void test_listbox_messages(void)
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
-    ok_sequence(wm_lb_addstring, "LB_ADDSTRING", FALSE);
+    ok_sequence(wm_lb_addstring_ownerdraw, "LB_ADDSTRING", FALSE);
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
 
     flush_sequence();
-
-    log_all_parent_messages++;
 
     trace("selecting item 0\n");
     ret = SendMessageA(listbox, LB_SETCURSEL, 0, 0);
@@ -14384,7 +14391,59 @@ todo_wine
 todo_wine
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
-    ok_sequence(wm_lb_addstring_sort, "LB_ADDSTRING", TRUE);
+    ok_sequence(wm_lb_addstring_sort_ownerdraw, "LB_ADDSTRING", TRUE);
+    check_lb_state(listbox, 3, LB_ERR, 0, 0);
+
+    log_all_parent_messages--;
+
+    DestroyWindow(listbox);
+
+    /* with LBS_HASSTRINGS */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_HASSTRINGS | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+    listbox_orig_proc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (ULONG_PTR)listbox_hook_proc);
+
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+
+    flush_sequence();
+
+    log_all_parent_messages++;
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    ok_sequence(wm_lb_addstring, "LB_ADDSTRING", FALSE);
+    check_lb_state(listbox, 3, LB_ERR, 0, 0);
+
+    log_all_parent_messages--;
+
+    DestroyWindow(listbox);
+
+    /* with LBS_HASSTRINGS and LBS_SORT */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_HASSTRINGS | LBS_SORT | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+    listbox_orig_proc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (ULONG_PTR)listbox_hook_proc);
+
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+
+    flush_sequence();
+
+    log_all_parent_messages++;
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+
+    ok_sequence(wm_lb_addstring, "LB_ADDSTRING", FALSE);
     check_lb_state(listbox, 3, LB_ERR, 0, 0);
 
     log_all_parent_messages--;
