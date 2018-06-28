@@ -26,6 +26,7 @@
 
 #include "inetcpl.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
@@ -36,8 +37,64 @@ static const WCHAR internet_settings[] = {'S','o','f','t','w','a','r','e','\\',
     'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
 static const WCHAR proxy_enable[] = {'P','r','o','x','y','E','n','a','b','l','e',0};
 static const WCHAR proxy_server[] = {'P','r','o','x','y','S','e','r','v','e','r',0};
+static const WCHAR connections[] = {'C','o','n','n','e','c','t','i','o','n','s',0};
+static const WCHAR default_connection_settings[] = {'D','e','f','a','u','l','t',
+    'C','o','n','n','e','c','t','i','o','n','S','e','t','t','i','n','g','s',0};
 
 static BOOL initdialog_done;
+
+#define CONNECTION_SETTINGS_VERSION 0x46
+#define MANUAL_PROXY 0x2
+
+typedef struct {
+    DWORD version;
+    DWORD id;
+    DWORD flags;
+    BYTE data[1];
+    /* DWORD proxy_server_len; */
+    /* UTF8 proxy_server[proxy_server_len]; */
+    /* DWORD bypass_list_len; */
+    /* UTF8 bypass_list[bypass_list_len]; */
+    /* DWORD configuration_script_len; */
+    /* UTF8 configuration_script[configuration_script_len]; */
+    /* DWORD unk[8]; set to 0 */
+} connection_settings;
+
+static DWORD create_connection_settings(BOOL manual_proxy, const WCHAR *proxy_server,
+        connection_settings **ret)
+{
+    DWORD size = FIELD_OFFSET(connection_settings, data), pos;
+    DWORD proxy_server_len;
+
+    size += sizeof(DWORD);
+    if(proxy_server)
+    {
+        proxy_server_len = WideCharToMultiByte(CP_UTF8, 0, proxy_server, -1,
+                NULL, 0, NULL, NULL);
+        if(!proxy_server_len) return 0;
+        proxy_server_len--;
+    }
+    else
+        proxy_server_len = 0;
+    size += proxy_server_len;
+    size += sizeof(DWORD)*10;
+
+    *ret = heap_alloc_zero(size);
+    if(!*ret) return 0;
+
+    (*ret)->version = CONNECTION_SETTINGS_VERSION;
+    (*ret)->flags = 1;
+    if(manual_proxy) (*ret)->flags |= MANUAL_PROXY;
+    ((DWORD*)(*ret)->data)[0] = proxy_server_len;
+    pos = sizeof(DWORD);
+    if(proxy_server_len)
+    {
+        WideCharToMultiByte(CP_UTF8, 0, proxy_server, -1,
+                (char*)(*ret)->data+pos, proxy_server_len, NULL, NULL);
+        pos += proxy_server_len;
+    }
+    return size;
+}
 
 static void connections_on_initdialog(HWND hwnd)
 {
@@ -110,11 +167,12 @@ static INT_PTR connections_on_command(HWND hwnd, WPARAM wparam)
 
 static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
 {
+    connection_settings *default_connection;
     WCHAR addr[INTERNET_MAX_URL_LENGTH];
     PSHNOTIFY *psn = (PSHNOTIFY*)lparam;
-    DWORD addr_len, port_len, enabled;
+    DWORD addr_len, port_len, enabled, size;
     LRESULT res;
-    HKEY hkey;
+    HKEY hkey, con;
 
     if(psn->hdr.code != PSN_APPLY)
         return FALSE;
@@ -156,8 +214,29 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         if(res == ERROR_FILE_NOT_FOUND)
             res = ERROR_SUCCESS;
     }
+    if(res)
+    {
+        RegCloseKey(hkey);
+        return FALSE;
+    }
     TRACE("ProxtServer set to %s\n", wine_dbgstr_w(addr));
+
+    res = RegCreateKeyExW(hkey, connections, 0, NULL, 0, KEY_WRITE, NULL, &con, NULL);
     RegCloseKey(hkey);
+    if(res)
+        return FALSE;
+
+    size = create_connection_settings(enabled, addr, &default_connection);
+    if(!size)
+    {
+        RegCloseKey(con);
+        return FALSE;
+    }
+
+    res = RegSetValueExW(con, default_connection_settings, 0, REG_BINARY,
+            (BYTE*)default_connection, size);
+    heap_free(default_connection);
+    RegCloseKey(con);
     return !res;
 }
 
