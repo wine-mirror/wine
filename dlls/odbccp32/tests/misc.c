@@ -618,11 +618,19 @@ static void test_SQLGetInstalledDrivers(void)
 {
     char buffer[1000], *p;
     WORD written, len;
+    BOOL ret, sql_ret;
+    DWORD error_code;
     int found = 0;
-    BOOL ret;
 
-    SQLInstallDriverEx("Wine test\0Driver=test.dll\0\0", NULL, buffer,
-                       sizeof(buffer), &written, ODBC_INSTALL_COMPLETE, NULL);
+    ret = SQLInstallDriverEx("Wine test\0Driver=test.dll\0\0", NULL, buffer,
+        sizeof(buffer), &written, ODBC_INSTALL_COMPLETE, NULL);
+    ok(ret, "SQLInstallDriverEx failed: %d\n", ret);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    if (sql_ret && error_code == ODBC_ERROR_WRITING_SYSINFO_FAILED)
+    {
+        skip("not enough privileges\n");
+        return;
+    }
 
     ret = SQLGetInstalledDrivers(NULL, sizeof(buffer), &written);
     ok(!ret, "got %d\n", ret);
