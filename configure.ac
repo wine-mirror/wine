@@ -789,7 +789,6 @@ case $host_os in
         LIBS="$LIBS $SECURITY_LIBS"
         AC_CHECK_FUNCS(SSLCopyPeerCertificates)
         LIBS="$ac_save_LIBS"
-        with_gnutls=${with_gnutls:-no}
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
     then
