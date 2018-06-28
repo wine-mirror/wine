@@ -268,9 +268,9 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
 {
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
     UNIVERSAL_NAME_INFOW *info;
+    DWORD sz, longsz;
     WCHAR *path;
     DWORD res;
-    DWORD sz;
 
     FIXME("%p, %s\n", This, debugstr_w(image));
 
@@ -298,8 +298,18 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
     sz = GetFullPathNameW(image, 0, NULL, NULL);
     if (!(path = heap_alloc(++sz * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
-
     GetFullPathNameW(image, sz, path, NULL);
+
+    longsz = GetLongPathNameW(path, path, sz);
+    if (longsz > sz)
+    {
+        if (!(path = heap_realloc(path, longsz * sizeof(WCHAR))))
+        {
+            heap_free(path);
+            return E_OUTOFMEMORY;
+        }
+        GetLongPathNameW(path, path, longsz);
+    }
 
     SysFreeString( This->filename );
     This->filename = SysAllocString(path);

@@ -140,6 +140,7 @@ static void test_NetFwAuthorizedApplication(void)
     SysFreeString(bstr);
 
     GetFullPathNameW(image, ARRAY_SIZE(fullpath), fullpath, NULL);
+    GetLongPathNameW(fullpath, fullpath, ARRAY_SIZE(fullpath));
 
     info = (UNIVERSAL_NAME_INFOW *)&netpath;
     sz = sizeof(netpath);
