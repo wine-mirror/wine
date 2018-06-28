@@ -3419,6 +3419,34 @@ msgstr "인증서..."
 msgid "Publishers..."
 msgstr "발행자..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "랜 연결"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "지역 서버(&L)"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "주소"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "포트가 없음"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "인터넷 설정"

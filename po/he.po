@@ -3424,6 +3424,33 @@ msgstr "אישורים..."
 msgid "Publishers..."
 msgstr "מפיצים..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "חיבור רשת מקומית"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "שגיאה מקומית"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "כתובת"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "No Ports"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "הגדרות אינטרנט"

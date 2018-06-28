@@ -3392,6 +3392,34 @@ msgstr "憑證..."
 msgid "Publishers..."
 msgstr "發行者..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "區域網路連線"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "本機伺服器(&L)"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "位址"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "無連接埠"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "網際網路設定"

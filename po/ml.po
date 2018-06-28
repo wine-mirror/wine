@@ -3341,6 +3341,26 @@ msgstr "വി_വരം"
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+msgid "Connections"
+msgstr ""
+
+#: inetcpl.rc:125
+msgid "Proxy server"
+msgstr ""
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+msgid "Address:"
+msgstr ""
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr ""
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""

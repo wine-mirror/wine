@@ -3420,6 +3420,34 @@ msgstr "الشهادات..."
 msgid "Publishers..."
 msgstr "الناشرون..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "اتصالات الشبكة المحلية"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "الخاد&وم المحلي"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "العنوان"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "لا منافذ"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "إعدادات الشابكة"

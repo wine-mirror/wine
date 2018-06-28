@@ -3435,6 +3435,34 @@ msgstr "Sertifikater..."
 msgid "Publishers..."
 msgstr "Utgivere..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "Lokal nettverksforbindelse"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "&Lokal tjener"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Adresse"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "Ingen porter"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Internett-innstillinger"

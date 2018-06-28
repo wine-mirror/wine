@@ -3381,6 +3381,29 @@ msgstr "ปรับแต่งนาฬิกา"
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+#, fuzzy
+msgid "Connections"
+msgstr "รายละเอียด"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "ฮาร์ดดิสก์เครื่องส่วนตัว"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+msgid "Address:"
+msgstr "ฮาร์ดดิสก์เครื่องส่วนตัว"
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr ""
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""

@@ -3341,6 +3341,34 @@ msgstr "Atestiloj..."
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "LAN konektiĝo"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "Loka servilo"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "&Address bar"
+msgid "Address:"
+msgstr "&Adresa zono"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "Local Port"
+msgid "Port:"
+msgstr "Loka Pordo"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""

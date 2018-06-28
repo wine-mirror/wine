@@ -3383,6 +3383,32 @@ msgstr "Certifikáty..."
 msgid "Publishers..."
 msgstr "Distribútori..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "Activation"
+msgid "Connections"
+msgstr "Aktivácia"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "Lokálny server"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Adresa"
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr ""
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Nastavenia internetu"

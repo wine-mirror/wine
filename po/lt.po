@@ -3432,6 +3432,34 @@ msgstr "Liudijimai..."
 msgid "Publishers..."
 msgstr "Publikuotojai..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "Vietinio tinklo ryšys"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "&Vietinis serveris"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Adresas"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "Be prievadų"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Interneto nuostatos"

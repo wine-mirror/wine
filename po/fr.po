@@ -3451,6 +3451,34 @@ msgstr "Certificats..."
 msgid "Publishers..."
 msgstr "Éditeurs..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "Connexion réseau local (LAN)"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "Serveur &local"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Adresse"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "Aucun port"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Paramètres Internet"

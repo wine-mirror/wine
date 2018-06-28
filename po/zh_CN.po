@@ -3378,6 +3378,34 @@ msgstr "证书..."
 msgid "Publishers..."
 msgstr "发布者..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "局域网连接"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "本地服务器(&L)"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "地址"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "没有端口"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Internet 设置"

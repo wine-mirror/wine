@@ -3,6 +3,7 @@ IMPORTS   = comctl32 shlwapi user32 advapi32
 DELAYIMPORTS = cryptui wininet ole32 urlmon shell32
 
 C_SRCS = \
+	connections.c \
 	content.c \
 	general.c \
 	inetcpl.c \

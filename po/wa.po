@@ -3395,6 +3395,29 @@ msgstr "&Propietés"
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "Direction"
+msgid "Connections"
+msgstr "Direccion"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "&Sicrîre..."
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+msgid "Address:"
+msgstr ""
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr ""
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""

@@ -3534,6 +3534,33 @@ msgstr "Sertifikati..."
 msgid "Publishers..."
 msgstr "Izdavači..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "LAN veza"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "Lokalna greška"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Adresa"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "Local Port"
+msgid "Port:"
+msgstr "Lokalni port"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Postavke interneta"

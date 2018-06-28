@@ -3441,6 +3441,32 @@ msgstr "&Свойства на клетката"
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "LAN връзка"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "Локален порт"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+msgid "Address:"
+msgstr "Локален порт"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "Local Port"
+msgid "Port:"
+msgstr "Локален порт"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""

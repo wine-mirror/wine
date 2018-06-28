@@ -3457,6 +3457,33 @@ msgstr "Сертификати..."
 msgid "Publishers..."
 msgstr "Издавачи..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "LAN веза"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "Локална грешка"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Адреса"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "Local Port"
+msgid "Port:"
+msgstr "Локални порт"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Поставке интернета"

@@ -3437,6 +3437,34 @@ msgstr "Сертификаты..."
 msgid "Publishers..."
 msgstr "Издатели..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "Сетевое подключение"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "&Локальный сервер"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "Адрес"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "Порт не указан"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Параметры Интернета"

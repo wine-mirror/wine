@@ -3421,6 +3421,34 @@ msgstr "証明書..."
 msgid "Publishers..."
 msgstr "発行元..."
 
+#: inetcpl.rc:123
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connections"
+msgstr "LAN 接続"
+
+#: inetcpl.rc:125
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "ローカル サーバ(&L)"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+#| msgid "Address"
+msgid "Address:"
+msgstr "アドレス"
+
+#: inetcpl.rc:129
+#, fuzzy
+#| msgid "No Ports"
+msgid "Port:"
+msgstr "ポートなし"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "インターネット設定"

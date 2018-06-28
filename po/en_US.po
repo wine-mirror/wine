@@ -3429,6 +3429,26 @@ msgstr "Certificates..."
 msgid "Publishers..."
 msgstr "Publishers..."
 
+#: inetcpl.rc:123
+msgid "Connections"
+msgstr "Connections"
+
+#: inetcpl.rc:125
+msgid "Proxy server"
+msgstr "Proxy server"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr "Use a proxy server"
+
+#: inetcpl.rc:127
+msgid "Address:"
+msgstr "Address:"
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr "Port:"
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr "Internet Settings"

@@ -3365,6 +3365,29 @@ msgstr ""
 msgid "Publishers..."
 msgstr ""
 
+#: inetcpl.rc:123
+#, fuzzy
+msgid "Connections"
+msgstr "Επιλογές"
+
+#: inetcpl.rc:125
+#, fuzzy
+msgid "Proxy server"
+msgstr "Τοπικοί Σκληροί Δίσκοι"
+
+#: inetcpl.rc:126
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:127
+#, fuzzy
+msgid "Address:"
+msgstr "Τοπικοί Σκληροί Δίσκοι"
+
+#: inetcpl.rc:129
+msgid "Port:"
+msgstr ""
+
 #: inetcpl.rc:31
 msgid "Internet Settings"
 msgstr ""
