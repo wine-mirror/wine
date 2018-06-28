@@ -943,7 +943,18 @@ DEFINE_GUID(GUID_COMPARTMENT_TIPUISTATUS,           0x148ca3ec,0x0366,0x401c,0x8
 static HRESULT initialize(void)
 {
     HRESULT hr;
+    HKEY hkey;
+
     CoInitialize(NULL);
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\CTF\\TIP", 0,
+                      KEY_READ|KEY_WRITE, &hkey) != ERROR_SUCCESS)
+    {
+        skip("Not enough permission to register input processor\n");
+        return E_FAIL;
+    }
+    RegCloseKey(hkey);
+
     hr = CoCreateInstance (&CLSID_TF_InputProcessorProfiles, NULL,
           CLSCTX_INPROC_SERVER, &IID_ITfInputProcessorProfiles, (void**)&g_ipp);
     if (SUCCEEDED(hr))
