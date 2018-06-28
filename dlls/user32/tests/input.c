@@ -943,8 +943,7 @@ static void test_Input_blackbox(void)
     i.u.ki.time = 0;
     i.u.ki.dwExtraInfo = 0;
 
-    for (ii = 0; ii < sizeof(sendinput_test)/sizeof(struct sendinput_test_s)-1;
-         ii++) {
+    for (ii = 0; ii < ARRAY_SIZE(sendinput_test)-1; ii++) {
         GetKeyboardState(ks1);
         i.u.ki.wScan = ii+1 /* useful for debugging */;
         i.u.ki.dwFlags = sendinput_test[ii].dwFlags;
@@ -1520,12 +1519,12 @@ static void test_GetRawInputDeviceList(void)
     ok(ret > 0, "expected non-zero\n");
 
     /* check if variable changes from larger to smaller value */
-    devcount = odevcount = sizeof(devices) / sizeof(devices[0]);
+    devcount = odevcount = ARRAY_SIZE(devices);
     oret = ret = pGetRawInputDeviceList(devices, &odevcount, sizeof(devices[0]));
     ok(ret > 0, "expected non-zero\n");
     ok(devcount == odevcount, "expected %d, got %d\n", devcount, odevcount);
     devcount = odevcount;
-    odevcount = sizeof(devices) / sizeof(devices[0]);
+    odevcount = ARRAY_SIZE(devices);
     ret = pGetRawInputDeviceList(NULL, &odevcount, sizeof(devices[0]));
     ok(ret == 0, "expected 0, got %d\n", ret);
     ok(odevcount == oret, "expected %d, got %d\n", oret, odevcount);
@@ -1567,7 +1566,7 @@ static void test_key_map(void)
        "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
 
     /* test that MAPVK_VSC_TO_VK prefers the non-numpad vkey if there's ambiguity */
-    for (i = 0; i < sizeof(numpad_collisions)/sizeof(numpad_collisions[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(numpad_collisions); i++)
     {
         UINT numpad_scan = MapVirtualKeyExA(numpad_collisions[i][0],  MAPVK_VK_TO_VSC, kl);
         UINT other_scan  = MapVirtualKeyExA(numpad_collisions[i][1],  MAPVK_VK_TO_VSC, kl);
@@ -1665,7 +1664,7 @@ static void test_ToUnicode(void)
            "ToUnicode didn't null-terminate the buffer when there was room.\n");
     }
 
-    for (i = 0; i < sizeof(utests) / sizeof(utests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(utests); i++)
     {
         UINT vk = utests[i].vk, mod = utests[i].modifiers, scan;
 
@@ -1808,7 +1807,7 @@ static void test_key_names(void)
     ok( buffer[0] == 0, "wrong string '%s'\n", buffer );
 
     memset( bufferW, 0xcc, sizeof(bufferW) );
-    ret = GetKeyNameTextW( lparam, bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+    ret = GetKeyNameTextW( lparam, bufferW, ARRAY_SIZE(bufferW));
     ok( ret > 0, "wrong len %u for %s\n", ret, wine_dbgstr_w(bufferW) );
     ok( ret == lstrlenW(bufferW), "wrong len %u for %s\n", ret, wine_dbgstr_w(bufferW) );
 

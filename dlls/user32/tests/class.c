@@ -169,7 +169,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     }
 
     /* check GetClassName */
-    i = GetClassNameW(hTestWnd, str, sizeof(str)/sizeof(str[0]));
+    i = GetClassNameW(hTestWnd, str, ARRAY_SIZE(str));
     ok(i == lstrlenW(className),
         "GetClassName returned incorrect length\n");
     ok(!lstrcmpW(className,str),
@@ -725,7 +725,7 @@ static void test_builtinproc(void)
     ok(IsWindowUnicode(hwnd) ||
        broken(!IsWindowUnicode(hwnd)) /* Windows 8 and 10 */,
        "Windows should be Unicode\n");
-    SendMessageW(hwnd, WM_GETTEXT, sizeof(buf) / sizeof(buf[0]), (LPARAM)buf);
+    SendMessageW(hwnd, WM_GETTEXT, ARRAY_SIZE(buf), (LPARAM)buf);
     if (IsWindowUnicode(hwnd))
         ok(memcmp(buf, unistring, sizeof(unistring)) == 0, "WM_GETTEXT invalid return\n");
     else
@@ -939,7 +939,7 @@ static const struct
 static void test_extra_values(void)
 {
     int i;
-    for(i=0; i< sizeof(extra_values)/sizeof(extra_values[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(extra_values); i++)
     {
         WNDCLASSEXA wcx;
         BOOL ret = GetClassInfoExA(NULL,extra_values[i].name,&wcx);
@@ -1133,7 +1133,7 @@ static void test_comctl32_class( const char *name )
 
         name++;
 
-        GetTempPathA(sizeof(path)/sizeof(path[0]), path);
+        GetTempPathA(ARRAY_SIZE(path), path);
         strcat(path, "comctl32_class.manifest");
 
         create_manifest_file(path, comctl32_manifest);
@@ -1161,7 +1161,7 @@ static void test_comctl32_class( const char *name )
         if (!ret)
             goto skiptest;
 
-        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW)/sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE(nameW));
         ret = GetClassInfoW( 0, nameW, &wcW );
         ok( ret, "GetClassInfoW failed for %s\n", name );
         module = GetModuleHandleA( "comctl32" );
@@ -1187,7 +1187,7 @@ static void test_comctl32_class( const char *name )
         ret = GetClassInfoA( 0, name, &wcA );
         ok( ret || broken(!ret) /* <= winxp */, "GetClassInfoA failed for %s\n", name );
         if (!ret) return;
-        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW)/sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE(nameW));
         ret = GetClassInfoW( 0, nameW, &wcW );
         ok( ret, "GetClassInfoW failed for %s\n", name );
         module = GetModuleHandleA( "comctl32" );
@@ -1243,7 +1243,7 @@ static void test_comctl32_classes(void)
     };
 
     winetest_get_mainargs( &argv );
-    for (i = 0; i < sizeof(classes) / sizeof(classes[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(classes); i++)
     {
         memset( &startup, 0, sizeof(startup) );
         startup.cb = sizeof( startup );
@@ -1322,7 +1322,7 @@ static void test_actctx_classes(void)
     HWND hwnd;
     char path[MAX_PATH];
 
-    GetTempPathA(sizeof(path)/sizeof(path[0]), path);
+    GetTempPathA(ARRAY_SIZE(path), path);
     strcat(path, "actctx_classes.manifest");
 
     create_manifest_file(path, main_manifest);

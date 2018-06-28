@@ -398,7 +398,7 @@ static void test_monitors(void)
 
     /* tests for cbSize in MONITORINFO */
     monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
-    for (i = 0; i < (sizeof(testdatami) / sizeof(testdatami[0])); i++)
+    for (i = 0; i < ARRAY_SIZE(testdatami); i++)
     {
         memset( &mi, 0, sizeof(mi) );
         mi.cbSize = testdatami[i].cbSize;
@@ -420,7 +420,7 @@ static void test_monitors(void)
     }
 
     /* tests for cbSize in MONITORINFOEXA */
-    for (i = 0; i < (sizeof(testdatamiexa) / sizeof(testdatamiexa[0])); i++)
+    for (i = 0; i < ARRAY_SIZE(testdatamiexa); i++)
     {
         memset( &miexa, 0, sizeof(miexa) );
         miexa.cbSize = testdatamiexa[i].cbSize;
@@ -433,7 +433,7 @@ static void test_monitors(void)
     }
 
     /* tests for cbSize in MONITORINFOEXW */
-    for (i = 0; i < (sizeof(testdatamiexw) / sizeof(testdatamiexw[0])); i++)
+    for (i = 0; i < ARRAY_SIZE(testdatamiexw); i++)
     {
         memset( &miexw, 0, sizeof(miexw) );
         miexw.cbSize = testdatamiexw[i].cbSize;

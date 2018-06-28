@@ -765,7 +765,7 @@ static void test_CharToOem_OemToChar(void)
     char oem;
     WCHAR uni, expect;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         const char *expected = tests[i].ret ? helloWorld : "";
         const char *src = tests[i].src ? helloWorld : NULL;
@@ -792,7 +792,7 @@ static void test_CharToOem_OemToChar(void)
         ok(!strcmp(buf, expected), "test %d: got '%s'\n", i, buf);
     }
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         const char *expected = tests[i].ret ? helloWorld : "";
         const WCHAR *src = tests[i].src ? helloWorldW : NULL;
@@ -804,12 +804,12 @@ static void test_CharToOem_OemToChar(void)
         ok(!strcmp(buf, expected), "test %d: got '%s'\n", i, buf);
 
         memset(buf, 0, sizeof(buf));
-        ret = CharToOemBuffW(src, dst, sizeof(helloWorldW)/sizeof(WCHAR));
+        ret = CharToOemBuffW(src, dst, ARRAY_SIZE(helloWorldW));
         ok(ret == tests[i].ret, "test %d: expected %d, got %d\n", i, tests[i].ret, ret);
         ok(!strcmp(buf, expected), "test %d: got '%s'\n", i, buf);
     }
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         const WCHAR *expected = tests[i].ret ? helloWorldW : emptyW;
         const char *src = tests[i].src ? helloWorld : NULL;

@@ -2533,7 +2533,7 @@ static void test_PrivateExtractIcons(void)
 
     static const test_icon_entries_t icon_desc[] = {{0,0,TRUE}, {16,16,TRUE}, {32,32}, {64,64,TRUE}};
 
-    create_ico_file("extract.ico", icon_desc, sizeof(icon_desc)/sizeof(*icon_desc));
+    create_ico_file("extract.ico", icon_desc, ARRAY_SIZE(icon_desc));
 
     ret = PrivateExtractIconsA("extract.ico", 0, 32, 32, &icon, NULL, 1, 0);
     ok(ret == 1, "PrivateExtractIconsA returned %u\n", ret);

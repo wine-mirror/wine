@@ -291,7 +291,7 @@ static void test_WM_LBUTTONDOWN(void)
     hCombo = CreateWindowA("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|CBS_DROPDOWN,
             0, 0, 200, 150, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 
-    for (i = 0; i < sizeof(choices)/sizeof(UINT); i++){
+    for (i = 0; i < ARRAY_SIZE(choices); i++){
         sprintf(buffer, stringFormat, choices[i]);
         result = SendMessageA(hCombo, CB_ADDSTRING, 0, (LPARAM)buffer);
         ok(result == i,
@@ -709,7 +709,7 @@ static void test_listbox_size(DWORD style)
         {10, 100, TRUE},
     };
 
-    for(test = 0; test < sizeof(info_height) / sizeof(info_height[0]); test++)
+    for(test = 0; test < ARRAY_SIZE(info_height); test++)
     {
         const struct list_size_info *info_test = &info_height[test];
         int height_item; /* Height of a list item */

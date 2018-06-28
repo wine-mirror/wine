@@ -5062,7 +5062,7 @@ static void test_WM_DEVICECHANGE(HWND hwnd)
                                      DBT_DEVICETYPESPECIFIC,
                                      DBT_CUSTOMEVENT};
 
-    for (i = 0; i < sizeof(wparams)/sizeof(wparams[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(wparams); i++)
     {
         SetLastError(0xdeadbeef);
         ret = PostMessageA(hwnd, WM_DEVICECHANGE, wparams[i], 0);
@@ -6369,7 +6369,7 @@ static void test_button_messages(void)
     hfont2 = CreateFontIndirectA(&logfont);
     ok(hfont2 != NULL, "Failed to create Tahoma font\n");
 
-    for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(button); i++)
     {
         MSG msg;
         DWORD style, state;
@@ -6782,7 +6782,7 @@ static void test_static_messages(void)
 
     subclass_static();
 
-    for (i = 0; i < sizeof(static_ctrl)/sizeof(static_ctrl[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(static_ctrl); i++)
     {
 	hwnd = CreateWindowExA(0, "my_static_class", "test", static_ctrl[i].style | WS_POPUP,
 			       0, 0, 50, 14, 0, 0, 0, NULL);
@@ -9825,13 +9825,13 @@ static void test_timers_no_wnd(void)
         win_skip("SetCoalescableTimer not available.\n");
 
     /* Check what happens when we're running out of timers */
-    for (i=0; i<sizeof(ids)/sizeof(ids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(ids); i++)
     {
         SetLastError(0xdeadbeef);
         ids[i] = SetTimer(NULL, 0, USER_TIMER_MAXIMUM, tfunc);
         if (!ids[i]) break;
     }
-    ok(i != sizeof(ids)/sizeof(ids[0]), "all timers were created successfully\n");
+    ok(i != ARRAY_SIZE(ids), "all timers were created successfully\n");
     ok(GetLastError()==ERROR_NO_MORE_USER_HANDLES || broken(GetLastError()==0xdeadbeef),
             "GetLastError() = %d\n", GetLastError());
     while (i > 0) KillTimer(NULL, ids[--i]);
@@ -10209,7 +10209,7 @@ static void test_winevents(void)
     ok_sequence(WmEmptySeq, "empty notify winevents", FALSE);
     }
 
-    for (i = 0; i < sizeof(WmWinEventsSeq)/sizeof(WmWinEventsSeq[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(WmWinEventsSeq); i++)
 	pNotifyWinEvent(events[i].message, hwnd, events[i].wParam, events[i].lParam);
 
     ok_sequence(WmWinEventsSeq, "notify winevents", FALSE);
@@ -12893,7 +12893,7 @@ static void test_ShowWindow(void)
     ok(EqualRect(&win_rc, &wp.rcNormalPosition), "expected %s got %s\n", wine_dbgstr_rect(&win_rc),
        wine_dbgstr_rect(&wp.rcNormalPosition));
 
-    for (i = 0; i < sizeof(sw)/sizeof(sw[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(sw); i++)
     {
         static const char * const sw_cmd_name[13] =
         {
@@ -14871,20 +14871,20 @@ static void test_defwinproc(void)
     flush_events();
 
     buffA[0] = 0;
-    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    GetWindowTextA(hwnd, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
 
     /* Zero high word of the lParam */
     res = DefWindowProcA(hwnd, WM_SETTEXT, 0, 0x1234);
     ok(res == 0, "WM_SETTEXT was expected to fail, %ld\n", res);
 
-    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    GetWindowTextA(hwnd, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
 
     res = DefWindowProcW(hwnd, WM_SETTEXT, 0, 0x1234);
     ok(res == 0, "WM_SETTEXT was expected to fail, %ld\n", res);
 
-    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    GetWindowTextA(hwnd, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
 
     GetCursorPos(&pos);
@@ -15144,7 +15144,7 @@ static void test_PostMessage(void)
     PostMessageA(hwnd, WM_USER+1, 0x1234, 0x5678);
     PostMessageA(0, WM_USER+2, 0x5678, 0x1234);
 
-    for (i = 0; i < sizeof(data)/sizeof(data[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(data); i++)
     {
         memset(&msg, 0xab, sizeof(msg));
         ret = PeekMessageA(&msg, data[i].hwnd, 0, 0, PM_NOREMOVE);
@@ -15202,7 +15202,7 @@ static void test_broadcast(void)
     oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)broadcast_test_proc);
     SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
-    for (i = 0; i < sizeof(messages)/sizeof(messages[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(messages); i++)
     {
         BOOL ret;
         MSG msg;
@@ -15532,7 +15532,7 @@ static void test_WaitForInputIdle( char *argv0 )
 
     thread = CreateThread( NULL, 0, wait_idle_thread, NULL, 0, &id );
 
-    for (i = 0; i < sizeof(wait_idle_expect)/sizeof(wait_idle_expect[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(wait_idle_expect); i++)
     {
         ResetEvent( start_event );
         ResetEvent( end_event );

@@ -710,7 +710,7 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     POINT proj_change7[] = { {6, 6}, {14, 6}, {32, 6}, {40, 40}, {44, 40}, {400, 400} };
     POINT proj_change8[] = { {6, 6}, {28, 6}, {32, 6}, {40, 40}, {44, 40}, {400, 400} };
 
-    int nchange = sizeof( req_change ) / sizeof( POINT );
+    int nchange = ARRAY_SIZE(req_change);
 
     trace("testing SPI_{GET,SET}MOUSE\n");
     SetLastError(0xdeadbeef);
@@ -875,7 +875,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDSPEED"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -964,7 +964,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
     if (!test_error_msg(rc,"SPI_{GET,SET}SCREENSAVETIMEOUT"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -1001,7 +1001,7 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
     if (!test_error_msg(rc,"SPI_{GET,SET}SCREENSAVEACTIVE"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -1042,7 +1042,7 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
     if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDDELAY"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT delay;
         char buf[10];
@@ -1143,7 +1143,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     if (!test_error_msg(rc,"SPI_{GET,SET}ICONTITLEWRAP"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         UINT regval;
@@ -1187,7 +1187,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
     if (!test_error_msg(rc,"SPI_{GET,SET}MENUDROPALIGNMENT"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -1223,7 +1223,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     trace("testing SPI_{GET,SET}DOUBLECLKWIDTH\n");
     old_width = GetSystemMetrics( SM_CXDOUBLECLK );
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         char buf[10];
 
@@ -1257,7 +1257,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     trace("testing SPI_{GET,SET}DOUBLECLKHEIGHT\n");
     old_height = GetSystemMetrics( SM_CYDOUBLECLK );
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         char buf[10];
 
@@ -1347,7 +1347,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
     trace("testing SPI_{GET,SET}MOUSEBUTTONSWAP\n");
     old_b = GetSystemMetrics( SM_SWAPBUTTON );
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, vals[i], 0,
@@ -1402,7 +1402,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     if (!test_error_msg(rc,"SPI_{GET,SET}DRAGFULLWINDOWS"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -1925,7 +1925,7 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     if (!test_error_msg(rc,"SPI_{GET,SET}SHOWSOUNDS"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -1962,7 +1962,7 @@ static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
     if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDPREF"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         BOOL v;
 
@@ -1997,7 +1997,7 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
     if (!test_error_msg(rc,"SPI_{GET,SET}SCREENREADER"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         BOOL v;
 
@@ -2036,7 +2036,7 @@ static void test_SPI_SETFONTSMOOTHING( void )         /*     75 */
     SystemParametersInfoA( SPI_GETFONTSMOOTHINGCONTRAST, 0, &old_contrast, 0 );
     SystemParametersInfoA( SPI_GETFONTSMOOTHINGORIENTATION, 0, &old_orient, 0 );
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -2113,7 +2113,7 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
     if (!test_error_msg(rc,"SPI_{GET,SET}LOWPOWERACTIVE"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -2151,7 +2151,7 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
     if (!test_error_msg(rc,"SPI_{GET,SET}POWEROFFACTIVE"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -2189,7 +2189,7 @@ static void test_SPI_SETSNAPTODEFBUTTON( void )         /*     95 */
     if (!test_error_msg(rc,"SPI_GETSNAPTODEFBUTTON"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
 
@@ -2224,7 +2224,7 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERWIDTH"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2261,7 +2261,7 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERHEIGHT"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2302,7 +2302,7 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
     if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERTIME"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2341,7 +2341,7 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
     if (!test_error_msg(rc,"SPI_{GET,SET}WHEELSCROLLLINES"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2380,7 +2380,7 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
     if (!test_error_msg(rc,"SPI_{GET,SET}MENUSHOWDELAY"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2419,7 +2419,7 @@ static void test_SPI_SETWHEELSCROLLCHARS( void )      /*     108 */
     if (!test_error_msg(rc,"SPI_{GET,SET}WHEELSCROLLCHARS"))
         return;
 
-    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    for (i=0;i<ARRAY_SIZE(vals);i++)
     {
         UINT v;
         char buf[10];
@@ -2489,7 +2489,7 @@ static void test_WM_DISPLAYCHANGE(void)
 
     displaychange_sem = CreateSemaphoreW(NULL, 0, 1, NULL);
 
-    for(i = 0; i < sizeof(test_bpps)/sizeof(test_bpps[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(test_bpps); i++) {
         last_bpp = -1;
 
         memset(&mode, 0, sizeof(mode));

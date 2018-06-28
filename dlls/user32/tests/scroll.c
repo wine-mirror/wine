@@ -514,7 +514,7 @@ static void scrollbar_test_init(void)
     wc.lpfnWndProc   = scroll_init_proc;
     RegisterClassExA(&wc);
 
-    for(i = 0; i < sizeof style / sizeof style[0]; i++)
+    for(i = 0; i < ARRAY_SIZE(style); i++)
     {
         /* need not to destroy these windows due creation abort */
         CreateWindowExA(0, cls_name, NULL, style[i],

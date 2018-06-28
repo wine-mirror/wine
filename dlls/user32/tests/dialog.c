@@ -161,7 +161,7 @@ static BOOL CreateWindows (HINSTANCE hinst)
          */
         if (p->id >= numwnds)
         {
-            if (p->id >=  sizeof(hwnd)/sizeof(hwnd[0]))
+            if (p->id >=  ARRAY_SIZE(hwnd))
             {
                 trace ("Control %ld is out of range\n", p->id);
                 return FALSE;
@@ -1045,7 +1045,7 @@ static void test_GetDlgItemText(void)
     BOOL ret;
 
     strcpy(string, "Overwrite Me");
-    ret = GetDlgItemTextA(NULL, 0, string, sizeof(string)/sizeof(string[0]));
+    ret = GetDlgItemTextA(NULL, 0, string, ARRAY_SIZE(string));
     ok(!ret, "GetDlgItemText(NULL) shouldn't have succeeded\n");
 
     ok(string[0] == '\0' || broken(!strcmp(string, "Overwrite Me")),
@@ -1461,7 +1461,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
            (BYTE)buff[0], (BYTE)buff[1], len);
 
         memset(buffW, 0xff, sizeof(buffW));
-        len = GetWindowTextW(hdlg, buffW, sizeof(buffW)/sizeof(buffW[0]));
+        len = GetWindowTextW(hdlg, buffW, ARRAY_SIZE(buffW));
         ok(buffW[0] == 'W' && buffW[1] == 0xffff && len == 0, "Unexpected window text %#x, %#x, len %d\n",
             buffW[0], buffW[1], len);
 
@@ -1567,7 +1567,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
         ok(!strcmp(buff, testtext) && len == 0, "Unexpected window text %s, len %d\n", buff, len);
 
         memset(buffW, 0xff, sizeof(buffW));
-        len = GetWindowTextW(hdlg, buffW, sizeof(buffW)/sizeof(buffW[0]));
+        len = GetWindowTextW(hdlg, buffW, ARRAY_SIZE(buffW));
         ok(buffW[0] == 0 && buffW[1] == 0xffff && len == 0, "Unexpected window text %#x, %#x, len %d\n",
             buffW[0], buffW[1], len);
 

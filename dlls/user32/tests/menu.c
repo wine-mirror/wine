@@ -668,7 +668,7 @@ static void test_menu_ownerdraw(void)
             ok( ret, "AppendMenu failed for %d\n", k-1);
         }
     MOD_maxid = k-1;
-    assert( k <= sizeof(MOD_rc)/sizeof(RECT));
+    assert( k <= ARRAY_SIZE(MOD_rc));
     /* display the menu */
     TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
 
@@ -986,14 +986,14 @@ static void test_menu_bmp_and_string(void)
     for( ispop=1; ispop >= 0; ispop--){
         static SIZE bmsizes[]= {
             {10,10},{38,38},{1,30},{55,5}};
-        for( szidx=0; szidx < sizeof( bmsizes) / sizeof( SIZE); szidx++) {
+        for( szidx=0; szidx < ARRAY_SIZE(bmsizes); szidx++) {
             HBITMAP hbm = CreateBitmap( bmsizes[szidx].cx, bmsizes[szidx].cy,1,1,bmfill);
             HBITMAP bitmaps[] = { HBMMENU_CALLBACK, hbm, HBMMENU_POPUP_CLOSE, NULL  };
             ok( hbm != 0, "CreateBitmap failed err %d\n", GetLastError());
-            for( txtidx = 0; txtidx < sizeof(MOD_txtsizes)/sizeof(MOD_txtsizes[0]); txtidx++) {
+            for( txtidx = 0; txtidx < ARRAY_SIZE(MOD_txtsizes); txtidx++) {
                 for( hassub = 0; hassub < 2 ; hassub++) { /* add submenu item */
                     for( mnuopt = 0; mnuopt < 3 ; mnuopt++){ /* test MNS_NOCHECK/MNS_CHECKORBMP */
-                        for( bmpidx = 0; bmpidx <sizeof(bitmaps)/sizeof(HBITMAP); bmpidx++) {
+                        for( bmpidx = 0; bmpidx <ARRAY_SIZE(bitmaps); bmpidx++) {
                             /* no need to test NULL bitmaps of several sizes */
                             if( !bitmaps[bmpidx] && szidx > 0) continue;
                             /* the HBMMENU_POPUP not to test for menu bars */
@@ -2757,9 +2757,8 @@ static void test_menu_resource_layout(void)
     ok(ret, "AppendMenu failed\n");
 
     count = GetMenuItemCount(hmenu);
-    ok(count == sizeof(menu_data)/sizeof(menu_data[0]),
-       "expected %u menu items, got %u\n",
-       (UINT)(sizeof(menu_data)/sizeof(menu_data[0])), count);
+    ok(count == ARRAY_SIZE(menu_data), "expected %u menu items, got %u\n",
+       (UINT) ARRAY_SIZE(menu_data), count);
 
     for (i = 0; i < count; i++)
     {
@@ -2978,9 +2977,9 @@ static void test_InsertMenu(void)
     };
     HMENU hmenu;
 
-#define create_menu(a) create_menu_from_data((a), sizeof(a)/sizeof((a)[0]))
-#define create_menuitem(a) create_menuitem_from_data((a), sizeof(a)/sizeof((a)[0]))
-#define compare_menu(h, a) compare_menu_data((h), (a), sizeof(a)/sizeof((a)[0]))
+#define create_menu(a) create_menu_from_data((a), ARRAY_SIZE(a))
+#define create_menuitem(a) create_menuitem_from_data((a), ARRAY_SIZE(a))
+#define compare_menu(h, a) compare_menu_data((h), (a), ARRAY_SIZE(a))
 
     hmenu = create_menu(in1);
     compare_menu(hmenu, out1);
