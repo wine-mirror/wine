@@ -3,3 +3,6 @@ IMPORTS   = ole32 user32
 
 C_SRCS = \
 	inputprocessor.c
+
+RC_SRCS = \
+	msctf.rc
