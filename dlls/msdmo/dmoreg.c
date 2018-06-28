@@ -208,7 +208,7 @@ HRESULT WINAPI DMORegister(
     ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, NULL,
         REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hrkey, NULL);
     if (ret)
-        return HRESULT_FROM_WIN32(ret);
+        return E_FAIL;
 
     /* Create clsidDMO key under MediaObjects */ 
     ret = RegCreateKeyExW(hrkey, GUIDToString(szguid, clsidDMO), 0, NULL,
