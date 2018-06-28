@@ -2276,9 +2276,7 @@ static void add_message_(int line, const struct recvd_message *msg)
 
                 ok(msg->wParam == cis->CtlID, "expected %#x, got %#lx\n", cis->CtlID, msg->wParam);
                 ok(cis->hwndItem == ctrl, "expected %p, got %p\n", ctrl, cis->hwndItem);
-todo_wine
                 ok((int)cis->itemID1 >= 0, "expected >= 0, got %d\n", cis->itemID1);
-todo_wine
                 ok((int)cis->itemID2 == -1, "expected -1, got %d\n", cis->itemID2);
 
                 sprintf( seq->output, "%s: %p WM_COMPAREITEM: CtlType %#x, CtlID %#x, itemID1 %#x, itemData1 %#lx, itemID2 %#x, itemData2 %#lx",
@@ -14385,10 +14383,8 @@ static void test_listbox_messages(void)
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
     ok(ret == 0, "expected 0, got %ld\n", ret);
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
-todo_wine
     ok(ret == 1, "expected 1, got %ld\n", ret);
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
-todo_wine
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
     ok_sequence(wm_lb_addstring_sort_ownerdraw, "LB_ADDSTRING", TRUE);
