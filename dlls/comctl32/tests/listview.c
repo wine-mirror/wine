@@ -5490,7 +5490,7 @@ static void test_header_notification2(void)
     memset(&itemW, 0, sizeof(itemW));
     itemW.mask = HDI_WIDTH | HDI_ORDER | HDI_TEXT;
     itemW.pszText = buffer;
-    itemW.cchTextMax = sizeof(buffer);
+    itemW.cchTextMax = ARRAY_SIZE(buffer);
     ret = SendMessageW(header, HDM_GETITEMW, 0, (LPARAM)&itemW);
     expect(1, ret);
 
