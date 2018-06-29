@@ -1236,7 +1236,7 @@ static HRESULT shellex_run_context_menu_default( IShellExtInit *obj,
         info.cbSize = sizeof info;
         info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE | MIIM_DATA | MIIM_ID;
         info.dwTypeData = string;
-        info.cch = sizeof string;
+        info.cch = ARRAY_SIZE(string);
         string[0] = 0;
         GetMenuItemInfoW( hmenu, i, TRUE, &info );
 
