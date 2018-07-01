@@ -589,6 +589,11 @@ static void test_enum_fmtetc(IDataObject *src)
     hr = IDataObject_EnumFormatEtc(data, DATADIR_GET, &enum_fmt);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(DataObjectImpl_EnumFormatEtc_calls == 0, "EnumFormatEtc was called\n");
+    if (FAILED(hr))
+    {
+        skip("EnumFormatEtc failed, skipping tests.\n");
+        return;
+    }
 
     if(src) IDataObject_EnumFormatEtc(src, DATADIR_GET, &src_enum);
 
@@ -1422,6 +1427,11 @@ static void test_nonole_clipboard(void)
     ok(hr == S_OK, "got %08x\n", hr);
     hr = IDataObject_EnumFormatEtc(get, DATADIR_GET, &enum_fmt);
     ok(hr == S_OK, "got %08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("EnumFormatEtc failed, skipping tests.\n");
+        return;
+    }
 
     hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
