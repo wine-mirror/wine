@@ -667,6 +667,7 @@ _FUNCTION_ {
                         else {
                             _UNLOCK_FILE_(file);
                             *str = 0;
+                            HeapFree(GetProcessHeap(), 0, Mask);
                             return rd;
                         }
                     }
