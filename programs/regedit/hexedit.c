@@ -35,6 +35,7 @@
 #include "commctrl.h"
 
 #include "wine/heap.h"
+#include "wine/unicode.h"
 #include "main.h"
 
 /* spaces dividing hex and ASCII */
@@ -94,7 +95,7 @@ static LPWSTR HexEdit_GetLineText(int offset, BYTE *pData, LONG cbData, LONG pad
     for (i = 0; i < cbData; i++)
     {
         /* (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER) */
-        if (isprint(pData[offset + i]))
+        if (isprintW(pData[offset + i]))
             lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = pData[offset + i];
         else
             lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = '.';
