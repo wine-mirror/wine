@@ -64,6 +64,7 @@ static const char * const builtin_only[] =
     "ntoskrnl.exe",
     "opengl32",
     "sane.ds",
+    "secur32",
     "twain_32",
     "unicows",
     "user32",
