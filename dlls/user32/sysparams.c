@@ -3387,8 +3387,15 @@ BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
  */
 BOOL WINAPI GetAutoRotationState( AR_STATE *state )
 {
-    FIXME("(%p): stub\n", state);
-    *state = AR_NOT_SUPPORTED;
+    TRACE("(%p)\n", state);
+
+    if (!state)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    *state = AR_NOSENSOR;
     return TRUE;
 }
 

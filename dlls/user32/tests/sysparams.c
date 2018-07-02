@@ -55,6 +55,7 @@ static INT (WINAPI *pGetSystemMetricsForDpi)(INT,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
 static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
+static LONG (WINAPI *pGetAutoRotationState)(PAR_STATE);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -3621,6 +3622,27 @@ static void test_dpi_window(void)
     pSetThreadDpiAwarenessContext( orig );
 }
 
+static void test_GetAutoRotationState(void)
+{
+    AR_STATE state;
+    BOOL ret;
+
+    if (!pGetAutoRotationState)
+    {
+        win_skip("GetAutoRotationState not supported\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pGetAutoRotationState(NULL);
+    ok(!ret, "Expected GetAutoRotationState to fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    state = 0;
+    ret = pGetAutoRotationState(&state);
+    ok(ret, "Expected GetAutoRotationState to succeed, error %d\n", GetLastError());
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -3650,6 +3672,7 @@ START_TEST(sysparams)
     pSystemParametersInfoForDpi = (void*)GetProcAddress(hdll, "SystemParametersInfoForDpi");
     pLogicalToPhysicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "LogicalToPhysicalPointForPerMonitorDPI");
     pPhysicalToLogicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "PhysicalToLogicalPointForPerMonitorDPI");
+    pGetAutoRotationState = (void*)GetProcAddress(hdll, "GetAutoRotationState");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
@@ -3671,6 +3694,7 @@ START_TEST(sysparams)
     test_metrics_for_dpi( 192 );
     test_EnumDisplaySettings( );
     test_GetSysColorBrush( );
+    test_GetAutoRotationState( );
 
     change_counter = 0;
     change_last_param = 0;
