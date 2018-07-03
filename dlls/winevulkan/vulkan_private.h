@@ -36,10 +36,6 @@
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 #define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
 
 struct vulkan_func

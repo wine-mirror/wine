@@ -32,8 +32,6 @@
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 #define WM_SYSTIMER	    0x0118
 #define WM_POPUPSYSTEMMENU  0x0313
 

@@ -38,8 +38,6 @@
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 extern WCHAR* current_app; /* NULL means editing global settings  */
 
 /* Use get_reg_key and set_reg_key to alter registry settings. The changes made through

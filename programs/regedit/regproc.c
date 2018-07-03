@@ -43,8 +43,6 @@ static HKEY reg_class_keys[] = {
             HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_DYN_DATA
         };
 
-#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
-
 void *heap_xalloc(size_t size)
 {
     void *buf = heap_alloc(size);

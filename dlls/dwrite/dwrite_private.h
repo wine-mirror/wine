@@ -24,8 +24,6 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static const DWRITE_MATRIX identity =
 {
     1.0f, 0.0f,

@@ -39,8 +39,6 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 /*******************************************
 *  global SHELL32.DLL variables
 */

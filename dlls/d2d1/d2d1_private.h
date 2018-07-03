@@ -31,10 +31,6 @@
 #endif
 #include "dwrite_2.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
 enum d2d_brush_type
 {
     D2D_BRUSH_TYPE_SOLID,

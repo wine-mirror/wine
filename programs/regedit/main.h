@@ -30,8 +30,6 @@
 
 #define	SPLIT_WIDTH	5
 
-#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
-
 #define MAX_NEW_KEY_LEN  128
 #define KEY_MAX_LEN      1024
 

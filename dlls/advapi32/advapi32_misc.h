@@ -25,8 +25,6 @@
 #include "winnls.h"
 #include "wine/heap.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 const char * debugstr_sid(PSID sid) DECLSPEC_HIDDEN;
 BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName) DECLSPEC_HIDDEN;
 BOOL ADVAPI_GetComputerSid(PSID sid) DECLSPEC_HIDDEN;

@@ -42,7 +42,6 @@
 #include "dmusicf.h"
 #include "dmusics.h"
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* dmloader.dll global (for DllCanUnloadNow) */
