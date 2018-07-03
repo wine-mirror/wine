@@ -141,6 +141,37 @@ HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
     return EnumPins_Construct(This, This->pFuncsTable->pfnGetPin, This->pFuncsTable->pfnGetPinCount, BaseFilterImpl_GetPinVersion, ppEnum);
 }
 
+HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **ret)
+{
+    BaseFilter *This = impl_from_IBaseFilter(iface);
+    PIN_INFO info;
+    HRESULT hr;
+    IPin *pin;
+    int i;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), ret);
+
+    for (i = 0; i < This->pFuncsTable->pfnGetPinCount(This); ++i)
+    {
+        pin = This->pFuncsTable->pfnGetPin(This, i);
+        hr = IPin_QueryPinInfo(pin, &info);
+        if (FAILED(hr))
+        {
+            IPin_Release(pin);
+            return hr;
+        }
+
+        if (!strcmpW(id, info.achName))
+        {
+            *ret = pin;
+            return S_OK;
+        }
+
+        IPin_Release(pin);
+    }
+
+    return VFW_E_NOT_FOUND;
+}
 
 HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
