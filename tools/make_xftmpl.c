@@ -35,8 +35,6 @@
 #include "windef.h"
 #include "guiddef.h"
 
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))
-
 #define TOKEN_NAME         1
 #define TOKEN_STRING       2
 #define TOKEN_INTEGER      3
