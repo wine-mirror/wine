@@ -1470,12 +1470,6 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
     }
 }
 
-static HRESULT WINAPI GST_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    FIXME("(%p)->(%s,%p) stub\n", iface, debugstr_w(Id), ppPin);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl GST_Vtbl = {
     GST_QueryInterface,
     BaseFilterImpl_AddRef,
@@ -1488,7 +1482,7 @@ static const IBaseFilterVtbl GST_Vtbl = {
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    GST_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
