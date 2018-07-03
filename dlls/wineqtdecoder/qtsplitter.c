@@ -794,12 +794,6 @@ static HRESULT WINAPI QT_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, 
     return S_OK;
 }
 
-static HRESULT WINAPI QT_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    FIXME("(%p)->(%s,%p) stub\n", iface, debugstr_w(Id), ppPin);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl QT_Vtbl = {
     QT_QueryInterface,
     BaseFilterImpl_AddRef,
@@ -812,7 +806,7 @@ static const IBaseFilterVtbl QT_Vtbl = {
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    QT_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
