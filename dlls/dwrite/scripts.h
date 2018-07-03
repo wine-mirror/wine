@@ -1,5 +1,5 @@
 /* Unicode Script IDs */
-/* generated from http://www.unicode.org/Public/10.0.0/ucd/Scripts.txt */
+/* generated from http://www.unicode.org/Public/11.0.0/ucd/Scripts.txt */
 /* DO NOT EDIT!! */
 
 enum unicode_script_id {
@@ -141,5 +141,9 @@ enum unicode_script_id {
     Script_Osage = 135,
     Script_SignWriting = 136,
     Script_Tangut = 137,
-    Script_LastId = 137
+    Script_Masaram_Gondi = 138,
+    Script_Nushu = 139,
+    Script_Soyombo = 140,
+    Script_Zanabazar_Square = 141,
+    Script_LastId = 141
 };
