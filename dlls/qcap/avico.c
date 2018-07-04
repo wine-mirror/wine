@@ -211,13 +211,6 @@ static HRESULT WINAPI AVICompressor_Run(IBaseFilter *iface, REFERENCE_TIME tStar
     return S_OK;
 }
 
-static HRESULT WINAPI AVICompressor_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(Id), ppPin);
-    return VFW_E_NOT_FOUND;
-}
-
 static HRESULT WINAPI AVICompressor_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *pInfo)
 {
     AVICompressor *This = impl_from_IBaseFilter(iface);
@@ -244,7 +237,7 @@ static const IBaseFilterVtbl AVICompressorVtbl = {
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    AVICompressor_FindPin,
+    BaseFilterImpl_FindPin,
     AVICompressor_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     AVICompressor_QueryVendorInfo

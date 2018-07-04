@@ -298,13 +298,6 @@ static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     return qcap_driver_run(This->driver_info, &This->filter.state);
 }
 
-/** IBaseFilter methods **/
-static HRESULT WINAPI VfwCapture_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    FIXME("(%s, %p) - stub\n", debugstr_w(Id), ppPin);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl VfwCapture_Vtbl =
 {
     VfwCapture_QueryInterface,
@@ -318,7 +311,7 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    VfwCapture_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo

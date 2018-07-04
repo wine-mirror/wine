@@ -180,26 +180,6 @@ static HRESULT WINAPI SmartTeeFilter_Run(IBaseFilter *iface, REFERENCE_TIME tSta
     return hr;
 }
 
-static HRESULT WINAPI SmartTeeFilter_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(Id), ppPin);
-    if (lstrcmpW(Id, This->input->pin.pinInfo.achName) == 0) {
-        *ppPin = &This->input->pin.IPin_iface;
-        IPin_AddRef(*ppPin);
-        return S_OK;
-    } else if (lstrcmpW(Id, This->capture->pin.pinInfo.achName) == 0) {
-        *ppPin = &This->capture->pin.IPin_iface;
-        IPin_AddRef(*ppPin);
-        return S_OK;
-    } else if (lstrcmpW(Id, This->preview->pin.pinInfo.achName) == 0) {
-        *ppPin = &This->preview->pin.IPin_iface;
-        IPin_AddRef(*ppPin);
-        return S_OK;
-    }
-    return VFW_E_NOT_FOUND;
-}
-
 static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     SmartTeeFilter_QueryInterface,
     SmartTeeFilter_AddRef,
@@ -212,7 +192,7 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    SmartTeeFilter_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo

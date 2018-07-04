@@ -152,13 +152,6 @@ static HRESULT WINAPI AudioRecord_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI AudioRecord_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_w(Id), ppPin);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl AudioRecordVtbl = {
     AudioRecord_QueryInterface,
     AudioRecord_AddRef,
@@ -171,7 +164,7 @@ static const IBaseFilterVtbl AudioRecordVtbl = {
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    AudioRecord_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
