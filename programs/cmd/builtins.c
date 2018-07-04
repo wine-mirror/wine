@@ -4923,7 +4923,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
               LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer,
                           sizeof(msgbuffer)/sizeof(WCHAR));
             }
-            WCMD_output_stderr(msgbuffer, keyValue);
+            WCMD_output_stderr(msgbuffer, args);
             errorlevel = 2;
           }
 
