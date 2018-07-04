@@ -2091,6 +2091,12 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     old_client_rect = win->client_rect;
     old_surface = win->surface;
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
+    if (new_surface == &dummy_surface) swp_flags |= SWP_NOREDRAW;
+    else if (old_surface == &dummy_surface)
+    {
+        swp_flags |= SWP_NOCOPYBITS;
+        valid_rects = NULL;
+    }
 
     SERVER_START_REQ( set_window_pos )
     {
