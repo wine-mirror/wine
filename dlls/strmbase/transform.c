@@ -427,15 +427,6 @@ HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *s
 
 /** IBaseFilter implementation **/
 
-HRESULT WINAPI TransformFilterImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    TransformFilter *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_w(Id), ppPin);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 {
     BaseInputPin* This = impl_BaseInputPin_from_IPin(iface);
