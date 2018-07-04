@@ -1588,6 +1588,13 @@ PATH=try2
 PATH=try3
 ------------ Testing start /W ------------
 start /W seems to really wait
+------------ Testing changing the drive letter ----------
+Normal:
+Normal+space
+Normal+space+garbage
+Quoted should fail
+Normal+tab
+Normal+tab+garbage
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball

@@ -3042,6 +3042,41 @@ echo ------------ Testing start /W ------------
 echo start /W failed to wait>foobar.txt
 start /W "" cmd /C "ping -n1 & echo start /W seems to really wait>foobar.txt"& type foobar.txt& del foobar.txt
 
+echo ------------ Testing changing the drive letter ----------
+pushd C:\
+
+echo Normal:
+call :setError 0
+C:
+if errorlevel 1 echo Normal drive change failed
+
+echo Normal+space
+call :setError 0
+C:@space@
+if errorlevel 1 echo Normal+space drive change failed
+
+echo Normal+space+garbage
+call :setError 0
+C: garbage
+if errorlevel 1 echo Normal+space+garbage drive change failed
+
+call :setError 0
+echo Quoted should fail
+"C:"
+if not errorlevel 1 echo quoted drive change unexpectedly worked
+
+echo Normal+tab
+call :setError 0
+C:@tab@
+if errorlevel 1 echo Normal+tab drive change failed
+
+echo Normal+tab+garbage
+call :setError 0
+C:@tab@garbagetab
+if errorlevel 1 echo Normal+tab+garbage drive change failed
+
+popd
+
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd
