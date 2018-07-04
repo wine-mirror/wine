@@ -241,7 +241,7 @@ static void test_legacy_filter_registration(void)
     /* Register* functions need a filter class key to write pin and pin media
      * type data to. Create a bogus class key for it. */
     CoCreateGuid(&clsid);
-    StringFromGUID2(&clsid, clsidstring, sizeof(clsidstring));
+    StringFromGUID2(&clsid, clsidstring, ARRAY_SIZE(clsidstring));
     lstrcpyW(key_name, clsidW);
     lstrcatW(key_name, clsidstring);
     ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, key_name, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL);
