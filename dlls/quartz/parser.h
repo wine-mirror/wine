@@ -70,7 +70,6 @@ extern HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTime
 extern HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
 extern HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
 extern HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum);
-extern HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin);
 extern HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
 extern HRESULT WINAPI Parser_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName);
 extern HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);

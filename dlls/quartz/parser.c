@@ -402,16 +402,6 @@ HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
     return BaseFilterImpl_EnumPins(iface,ppEnum);
 }
 
-HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    ParserImpl *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%s,%p)\n", This, debugstr_w(Id), ppPin);
-
-    /* FIXME: critical section */
-
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
     return BaseFilterImpl_QueryFilterInfo(iface, pInfo);

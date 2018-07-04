@@ -431,7 +431,7 @@ static const IBaseFilterVtbl AVIDec_Vtbl =
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    TransformFilterImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo

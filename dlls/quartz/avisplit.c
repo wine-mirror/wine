@@ -1421,7 +1421,7 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
     Parser_SetSyncSource,
     Parser_GetSyncSource,
     Parser_EnumPins,
-    Parser_FindPin,
+    BaseFilterImpl_FindPin,
     Parser_QueryFilterInfo,
     Parser_JoinFilterGraph,
     Parser_QueryVendorInfo

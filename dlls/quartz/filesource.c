@@ -547,27 +547,6 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
     return S_OK;
 }
 
-/** IBaseFilter methods **/
-
-static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-    TRACE("%p->(%s, %p)\n", This, debugstr_w(Id), ppPin);
-
-    if (!Id || !ppPin)
-        return E_POINTER;
-
-    if (strcmpW(Id, wszOutputPinName))
-    {
-        *ppPin = NULL;
-        return VFW_E_NOT_FOUND;
-    }
-
-    *ppPin = This->pOutputPin;
-    IPin_AddRef(*ppPin);
-    return S_OK;
-}
-
 static const IBaseFilterVtbl AsyncReader_Vtbl =
 {
     AsyncReader_QueryInterface,
@@ -581,7 +560,7 @@ static const IBaseFilterVtbl AsyncReader_Vtbl =
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    AsyncReader_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
