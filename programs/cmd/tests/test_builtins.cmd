@@ -3027,6 +3027,57 @@ echo FAILURE at dest 10
 :dest10:this is also ignored
 echo Correctly ignored trailing information
 
+rem Testing which label is reached when there are many options
+echo Begin:
+set nextlabel=
+call :sub
+set nextlabel=middle
+goto :sub
+
+:sub
+echo ..First sub
+if not "%nextlabel%"=="" goto :%nextlabel%
+goto :EOF
+
+:sub
+echo ..Second sub
+if not "%nextlabel%"=="" goto :%nextlabel%
+goto :EOF
+
+:middle
+echo Middle:
+set nextlabel=
+call :sub
+set nextlabel=nearend
+goto :sub
+
+:sub
+echo ..Third sub
+if not "%nextlabel%"=="" goto :%nextlabel%
+goto :EOF
+
+:nearend
+echo Near end:
+set nextlabel=
+call :sub
+set nextlabel=end
+goto :sub
+
+:sub
+echo ..Fourth sub
+if not "%nextlabel%"=="" goto :%nextlabel%
+goto :EOF
+
+:end
+echo At end:
+set nextlabel=
+call :sub
+set nextlabel=done
+goto :sub
+
+:done
+echo Finished
+
 echo ------------ Testing PATH ------------
 set WINE_backup_path=%path%
 set path=original

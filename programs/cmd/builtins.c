@@ -2582,30 +2582,61 @@ void WCMD_goto (CMD_LIST **cmdList) {
     if (labelend) *labelend = 0x00;
     WINE_TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
 
-    SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
-    while (*paramStart &&
-           WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h)) {
-      str = string;
+    /* Loop through potentially twice - once from current file position
+       through to the end, and second time from start to current file
+       position                                                         */
+    if (*paramStart) {
+        int loop;
+        LARGE_INTEGER startli;
+        for (loop=0; loop<2; loop++) {
+            if (loop==0) {
+              /* On first loop, save the file size */
+              startli.QuadPart = 0;
+              startli.u.LowPart = SetFilePointer(context -> h, startli.u.LowPart,
+                                                 &startli.u.HighPart, FILE_CURRENT);
+            } else {
+              /* On second loop, start at the beginning of the file */
+              WINE_TRACE("Label not found, trying from beginning of file\n");
+              if (loop==1) SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
+            }
 
-      /* Ignore leading whitespace or no-echo character */
-      while (*str=='@' || isspaceW (*str)) str++;
+            while (WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h)) {
+              str = string;
 
-      /* If the first real character is a : then this is a label */
-      if (*str == ':') {
-        str++;
+              /* Ignore leading whitespace or no-echo character */
+              while (*str=='@' || isspaceW (*str)) str++;
 
-        /* Skip spaces between : and label */
-        while (isspaceW (*str)) str++;
-        WINE_TRACE("str before brk %s\n", wine_dbgstr_w(str));
+              /* If the first real character is a : then this is a label */
+              if (*str == ':') {
+                str++;
 
-        /* Label ends at whitespace or redirection characters */
-        labelend = strpbrkW(str, labelEndsW);
-        if (labelend) *labelend = 0x00;
-        WINE_TRACE("comparing found label %s\n", wine_dbgstr_w(str));
+                /* Skip spaces between : and label */
+                while (isspaceW (*str)) str++;
+                WINE_TRACE("str before brk %s\n", wine_dbgstr_w(str));
 
-        if (lstrcmpiW (str, paramStart) == 0) return;
-      }
+                /* Label ends at whitespace or redirection characters */
+                labelend = strpbrkW(str, labelEndsW);
+                if (labelend) *labelend = 0x00;
+                WINE_TRACE("comparing found label %s\n", wine_dbgstr_w(str));
+
+                if (lstrcmpiW (str, paramStart) == 0) return;
+              }
+
+              /* See if we have gone beyond the end point if second time through */
+              if (loop==1) {
+                LARGE_INTEGER curli;
+                curli.QuadPart = 0;
+                curli.u.LowPart = SetFilePointer(context -> h, curli.u.LowPart,
+                                                &curli.u.HighPart, FILE_CURRENT);
+                if (curli.QuadPart > startli.QuadPart) {
+                  WINE_TRACE("Reached wrap point, label not found\n");
+                  break;
+                }
+              }
+            }
+        }
     }
+
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
     context -> skip_rest = TRUE;
   }

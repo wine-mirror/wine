@@ -1582,6 +1582,19 @@ goto with redirections worked
 Ignoring double colons worked
 label with mixed whitespace and no echo worked
 Correctly ignored trailing information
+Begin:
+..First sub
+..First sub
+Middle:
+..Third sub
+..Third sub
+Near end:
+..Fourth sub
+..Fourth sub
+At end:
+..First sub
+..First sub
+Finished
 ------------ Testing PATH ------------
 PATH=original
 PATH=try2
