@@ -570,15 +570,25 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                         ret = RC_WRITEERROR;
                         goto cleanup;
                     }
-                }
+                } else {
 
-                /* If /M supplied, remove the archive bit after successful copy */
-                if (!skipFile) {
-                    if ((srcAttribs & FILE_ATTRIBUTE_ARCHIVE) &&
-                        (flags & OPT_REMOVEARCH)) {
-                        SetFileAttributesW(copyFrom, (srcAttribs & ~FILE_ATTRIBUTE_ARCHIVE));
+                    if (!skipFile) {
+                        /* If keeping attributes, update the destination attributes
+                           otherwise remove the read only attribute                 */
+                        if (flags & OPT_KEEPATTRS) {
+                            SetFileAttributesW(copyTo, srcAttribs | FILE_ATTRIBUTE_ARCHIVE);
+                        } else {
+                            SetFileAttributesW(copyTo,
+                                     (GetFileAttributesW(copyTo) & ~FILE_ATTRIBUTE_READONLY));
+                        }
+
+                        /* If /M supplied, remove the archive bit after successful copy */
+                        if ((srcAttribs & FILE_ATTRIBUTE_ARCHIVE) &&
+                            (flags & OPT_REMOVEARCH)) {
+                            SetFileAttributesW(copyFrom, (srcAttribs & ~FILE_ATTRIBUTE_ARCHIVE));
+                        }
+                        filesCopied++;
                     }
-                    filesCopied++;
                 }
             }
         }
@@ -764,6 +774,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                 case 'N': flags |= OPT_SHORTNAME;     break;
                 case 'U': flags |= OPT_MUSTEXIST;     break;
                 case 'R': flags |= OPT_REPLACEREAD;   break;
+                case 'K': flags |= OPT_KEEPATTRS;     break;
                 case 'H': flags |= OPT_COPYHIDSYS;    break;
                 case 'C': flags |= OPT_IGNOREERRORS;  break;
                 case 'P': flags |= OPT_SRCPROMPT;     break;

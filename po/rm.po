@@ -15095,7 +15095,7 @@ msgctxt "Directory key"
 msgid "D"
 msgstr ""
 
-#: xcopy.rc:80
+#: xcopy.rc:81
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -15125,6 +15125,7 @@ msgid ""
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
+"[/K]  Copy file attributes, without this attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

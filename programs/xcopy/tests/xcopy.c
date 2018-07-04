@@ -108,6 +108,30 @@ static void test_parms_syntax(void)
     RemoveDirectoryA("xcopytest2");
 }
 
+static void test_keep_attributes(void)
+{
+    DWORD rc;
+
+    SetFileAttributesA("xcopy1", FILE_ATTRIBUTE_READONLY);
+
+    rc = runcmd("xcopy xcopy1 xcopytest");
+    ok(rc == 0, "xcopy failed to copy read only file\n");
+    ok((GetFileAttributesA("xcopytest\\xcopy1") & FILE_ATTRIBUTE_READONLY) != FILE_ATTRIBUTE_READONLY,
+       "xcopy should not have copied file permissions\n");
+    SetFileAttributesA("xcopytest\\xcopy1", FILE_ATTRIBUTE_NORMAL);
+    DeleteFileA("xcopytest\\xcopy1");
+
+    rc = runcmd("xcopy /K xcopy1 xcopytest");
+    ok(rc == 0, "xcopy failed to copy read only file with /k\n");
+    ok((GetFileAttributesA("xcopytest\\xcopy1") & FILE_ATTRIBUTE_READONLY) == FILE_ATTRIBUTE_READONLY,
+       "xcopy did not keep file permissions\n");
+    SetFileAttributesA("xcopytest\\xcopy1", FILE_ATTRIBUTE_NORMAL);
+    DeleteFileA("xcopytest\\xcopy1");
+
+    SetFileAttributesA("xcopy1", FILE_ATTRIBUTE_NORMAL);
+
+    }
+
 START_TEST(xcopy)
 {
     char tmpdir[MAX_PATH];
@@ -130,6 +154,7 @@ START_TEST(xcopy)
 
     test_date_format();
     test_parms_syntax();
+    test_keep_attributes();
 
     DeleteFileA("xcopy1");
     RemoveDirectoryA("xcopytest");
