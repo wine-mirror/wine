@@ -1804,6 +1804,22 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
 }
 
 
+static WNDPROC desktop_orig_wndproc;
+
+#define WM_WINE_NOTIFY_ACTIVITY WM_USER
+
+static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_WINE_NOTIFY_ACTIVITY:
+        XResetScreenSaver( gdi_display );
+        XFlush( gdi_display );
+        break;
+    }
+    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+}
+
 /**********************************************************************
  *		CreateWindow   (X11DRV.@)
  */
@@ -1813,6 +1829,9 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
     {
         struct x11drv_thread_data *data = x11drv_init_thread_data();
         XSetWindowAttributes attr;
+
+        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
+                                                           (LONG_PTR)desktop_wndproc_wrapper );
 
         /* create the cursor clipping window */
         attr.override_redirect = TRUE;
