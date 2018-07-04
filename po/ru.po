@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-06-15 13:16+0300\n"
+"PO-Revision-Date: 2018-07-04 13:51+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -3438,32 +3438,24 @@ msgid "Publishers..."
 msgstr "Издатели..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Сетевое подключение"
+msgstr "Подключения"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Локальный сервер"
+msgstr "Прокси-сервер"
 
 #: inetcpl.rc:126
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Использовать прокси-сервер"
 
 #: inetcpl.rc:127
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Адрес"
+msgstr "Адрес:"
 
 #: inetcpl.rc:129
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Порт не указан"
+msgstr "Порт:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -14802,6 +14794,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Программа неожиданно перестала работать, но WineDbg не смог подключиться к "
+"процессу и получить более подробную информацию."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
