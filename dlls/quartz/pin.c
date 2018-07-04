@@ -138,18 +138,6 @@ out:
     return hr;
 }
 
-
-static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
-{
-    /* Tempting to just do a memcpy, but the name field is
-       128 characters long! We will probably never exceed 10
-       most of the time, so we are better off copying 
-       each field manually */
-    strcpyW(pDest->achName, pSrc->achName);
-    pDest->dir = pSrc->dir;
-    pDest->pFilter = pSrc->pFilter;
-}
-
 static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 {
     return IPin_EndOfStream( pin );
@@ -179,15 +167,20 @@ static HRESULT deliver_newsegment(IPin *pin, LPVOID data)
 
 /*** PullPin implementation ***/
 
-static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData,
-                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
+static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO *info,
+    SAMPLEPROC_PULL pSampleProc, void *pUserData, QUERYACCEPTPROC pQueryAccept,
+    CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone,
+    LPCRITICAL_SECTION pCritSec, PullPin *pPinImpl)
 {
     /* Common attributes */
     pPinImpl->pin.IPin_iface.lpVtbl = PullPin_Vtbl;
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
-    Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
+    /* avoid copying uninitialized data */
+    strcpyW(pPinImpl->pin.pinInfo.achName, info->achName);
+    pPinImpl->pin.pinInfo.dir = info->dir;
+    pPinImpl->pin.pinInfo.pFilter = info->pFilter;
     ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
 
     /* Input pin attributes */
