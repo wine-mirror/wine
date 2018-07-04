@@ -3424,32 +3424,24 @@ msgid "Publishers..."
 msgstr "Julkaisijat..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Lähiverkkoyhteys"
+msgstr "Yhteydet"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Paikallinen palvelin"
+msgstr "Välityspalvelin"
 
 #: inetcpl.rc:126
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Käytä välityspalvelinta"
 
 #: inetcpl.rc:127
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Osoite"
+msgstr "Osoite:"
 
 #: inetcpl.rc:129
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Kohdeporttivirheitä"
+msgstr "Portti:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
