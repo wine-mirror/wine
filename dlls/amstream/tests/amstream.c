@@ -468,7 +468,7 @@ static void test_media_streams(void)
 
                 /* Pin name is "I{guid MSPID_PrimaryVideo or MSPID_PrimaryAudio}" */
                 id[0] = 'I';
-                StringFromGUID2(i ? &MSPID_PrimaryAudio : &MSPID_PrimaryVideo, id + 1, 40);
+                StringFromGUID2(i ? &MSPID_PrimaryAudio : &MSPID_PrimaryVideo, id + 1, 39);
 
                 hr = IPin_ConnectedTo(pins[i], &pin);
                 ok(hr == VFW_E_NOT_CONNECTED, "IPin_ConnectedTo returned: %x\n", hr);
