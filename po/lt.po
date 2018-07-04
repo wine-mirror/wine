@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-06-26 08:26+0300\n"
+"PO-Revision-Date: 2018-07-04 20:40+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3433,32 +3433,24 @@ msgid "Publishers..."
 msgstr "Publikuotojai..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Vietinio tinklo ryšys"
+msgstr "Ryšiai"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Vietinis serveris"
+msgstr "Įgaliotasis serveris"
 
 #: inetcpl.rc:126
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Naudoti įgaliotąjį serverį"
 
 #: inetcpl.rc:127
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adresas"
+msgstr "Adresas:"
 
 #: inetcpl.rc:129
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Be prievadų"
+msgstr "Prievadas:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
