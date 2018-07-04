@@ -1327,12 +1327,17 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     cmd = new_cmd;
 
 /*
- *	Changing default drive has to be handled as a special case.
+ * Changing default drive has to be handled as a special case, anything
+ * else if it exists after whitespace is ignored
  */
 
-    if ((strlenW(cmd) == 2) && (cmd[1] == ':') && IsCharAlphaW(cmd[0])) {
+    if ((cmd[1] == ':') && IsCharAlphaW(cmd[0]) &&
+        (!cmd[2] || cmd[2] == ' ' || cmd[2] == '\t')) {
       WCHAR envvar[5];
       WCHAR dir[MAX_PATH];
+
+      /* Ignore potential garbage on the same line */
+      cmd[2]=0x00;
 
       /* According to MSDN CreateProcess docs, special env vars record
          the current directory on each drive, in the form =C:
