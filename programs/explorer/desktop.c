@@ -599,6 +599,8 @@ static BOOL start_screensaver( void )
     return FALSE;
 }
 
+static WNDPROC desktop_orig_wndproc;
+
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
@@ -660,10 +662,9 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
             EndPaint( hwnd, &ps );
         }
         return 0;
-
-    default:
-        return DefWindowProcW( hwnd, message, wp, lp );
     }
+
+    return desktop_orig_wndproc( hwnd, message, wp, lp );
 }
 
 /* create the desktop and the associated driver window, and make it the current desktop */
@@ -978,7 +979,8 @@ void manage_desktop( WCHAR *arg )
         CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                          0, 0, 100, 100, 0, 0, 0, NULL );
 
-        SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
+        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
+            (LONG_PTR)desktop_wnd_proc );
         using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
