@@ -30,6 +30,51 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 #include "v6util.h"
+#include "msg.h"
+
+enum seq_index
+{
+    PARENT_SEQ_INDEX,
+    NUM_MSG_SEQUENCES
+};
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+/* encoded MEASUREITEMSTRUCT into a WPARAM */
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            UINT CtlType : 4;
+            UINT CtlID   : 4;
+            UINT itemID  : 4;
+            UINT wParam  : 20;
+        } item;
+        WPARAM wp;
+    } u;
+} MEASURE_ITEM_STRUCT;
+
+static unsigned hash_Ly_W(const WCHAR *str)
+{
+    unsigned hash = 0;
+
+    for (; *str; str++)
+        hash = hash * 1664525u + (unsigned char)(*str) + 1013904223u;
+
+    return hash;
+}
+
+static unsigned hash_Ly(const char *str)
+{
+    unsigned hash = 0;
+
+    for (; *str; str++)
+        hash = hash * 1664525u + (unsigned char)(*str) + 1013904223u;
+
+    return hash;
+}
 
 static const char * const strings[4] = {
     "First added",
@@ -43,14 +88,7 @@ static const char * const strings[4] = {
 
 static const char BAD_EXTENSION[] = "*.badtxt";
 
-static int strcmp_aw(LPCWSTR strw, const char *stra)
-{
-    WCHAR buf[1024];
-
-    if (!stra) return 1;
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
+#define ID_LISTBOX 1
 
 static HWND create_listbox(DWORD add_style, HWND parent)
 {
@@ -58,7 +96,7 @@ static HWND create_listbox(DWORD add_style, HWND parent)
     HWND handle;
 
     if (parent)
-      ctl_id=1;
+        ctl_id = ID_LISTBOX;
 
     handle = CreateWindowA(WC_LISTBOXA, "TestList", (LBS_STANDARD & ~LBS_SORT) | add_style, 0, 0, 100, 100,
         parent, (HMENU)ctl_id, NULL, 0);
@@ -234,41 +272,87 @@ static void test_item_height(void)
 
 static int got_selchange;
 
-static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static LONG defwndproc_counter = 0;
+    struct message m = { 0 };
+    LRESULT ret;
+
+    m.message = msg;
+    m.flags = sent|wparam|lparam;
+    if (defwndproc_counter) m.flags |= defwinproc;
+    m.wParam = wParam;
+    m.lParam = lParam;
+
     switch (msg)
     {
     case WM_MEASUREITEM:
     {
-        DWORD style = GetWindowLongA(GetWindow(hwnd, GW_CHILD), GWL_STYLE);
-        MEASUREITEMSTRUCT *mi = (void*)lparam;
+        MEASUREITEMSTRUCT *mis = (void *)lParam;
+        BOOL is_unicode_data = FALSE;
+        MEASURE_ITEM_STRUCT mi;
 
-        ok(wparam == mi->CtlID, "got wParam=%08lx, expected %08x\n", wparam, mi->CtlID);
-        ok(mi->CtlType == ODT_LISTBOX, "mi->CtlType = %u\n", mi->CtlType);
-        ok(mi->CtlID == 1, "mi->CtlID = %u\n", mi->CtlID);
-        ok(mi->itemHeight, "mi->itemHeight = 0\n");
-
-        if (mi->itemID > 4 || style & LBS_OWNERDRAWFIXED)
-            break;
-
-        if (style & LBS_HASSTRINGS)
+        if (mis->CtlType == ODT_LISTBOX)
         {
-            ok(!strcmp_aw((WCHAR*)mi->itemData, strings[mi->itemID]),
-                    "mi->itemData = %s (%d)\n", wine_dbgstr_w((WCHAR*)mi->itemData), mi->itemID);
+            HWND ctrl = GetDlgItem(hwnd, mis->CtlID);
+            is_unicode_data = GetWindowLongA(ctrl, GWL_STYLE) & LBS_HASSTRINGS;
+        }
+
+        mi.u.wp = 0;
+        mi.u.item.CtlType = mis->CtlType;
+        mi.u.item.CtlID = mis->CtlID;
+        mi.u.item.itemID = mis->itemID;
+        mi.u.item.wParam = wParam;
+
+        m.wParam = mi.u.wp;
+        if (is_unicode_data)
+            m.lParam = mis->itemData ? hash_Ly_W((const WCHAR *)mis->itemData) : 0;
+        else
+            m.lParam = mis->itemData ? hash_Ly((const char *)mis->itemData) : 0;
+        add_message(sequences, PARENT_SEQ_INDEX, &m);
+
+        ok(wParam == mis->CtlID, "got wParam=%08lx, expected %08x\n", wParam, mis->CtlID);
+        ok(mis->CtlType == ODT_LISTBOX, "mi->CtlType = %u\n", mis->CtlType);
+        ok(mis->CtlID == 1, "mi->CtlID = %u\n", mis->CtlID);
+        ok(mis->itemHeight, "mi->itemHeight = 0\n");
+
+        break;
+    }
+    case WM_COMPAREITEM:
+    {
+        COMPAREITEMSTRUCT *cis = (COMPAREITEMSTRUCT *)lParam;
+        HWND ctrl = GetDlgItem(hwnd, cis->CtlID);
+        BOOL is_unicode_data = TRUE;
+
+        ok(wParam == cis->CtlID, "expected %#x, got %#lx\n", cis->CtlID, wParam);
+        ok(cis->hwndItem == ctrl, "expected %p, got %p\n", ctrl, cis->hwndItem);
+todo_wine
+        ok((int)cis->itemID1 >= 0, "expected >= 0, got %d\n", cis->itemID1);
+todo_wine
+        ok((int)cis->itemID2 == -1, "expected -1, got %d\n", cis->itemID2);
+
+        if (cis->CtlType == ODT_LISTBOX)
+            is_unicode_data = GetWindowLongA(ctrl, GWL_STYLE) & LBS_HASSTRINGS;
+
+        if (is_unicode_data)
+        {
+            m.wParam = cis->itemData1 ? hash_Ly_W((const WCHAR *)cis->itemData1) : 0;
+            m.lParam = cis->itemData2 ? hash_Ly_W((const WCHAR *)cis->itemData2) : 0;
         }
         else
         {
-            ok((void*)mi->itemData == strings[mi->itemID],
-                    "mi->itemData = %08lx, expected %p\n", mi->itemData, strings[mi->itemID]);
+            m.wParam = cis->itemData1 ? hash_Ly((const char *)cis->itemData1) : 0;
+            m.lParam = cis->itemData2 ? hash_Ly((const char *)cis->itemData2) : 0;
         }
+        add_message(sequences, PARENT_SEQ_INDEX, &m);
         break;
     }
     case WM_DRAWITEM:
     {
         RECT rc_item, rc_client, rc_clip;
-        DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lparam;
+        DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lParam;
 
-        ok(wparam == dis->CtlID, "got wParam=%08lx instead of %08x\n", wparam, dis->CtlID);
+        ok(wParam == dis->CtlID, "got wParam=%08lx instead of %08x\n", wParam, dis->CtlID);
         ok(dis->CtlType == ODT_LISTBOX, "wrong CtlType %04x\n", dis->CtlType);
 
         GetClientRect(dis->hwndItem, &rc_client);
@@ -284,14 +368,18 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     }
 
     case WM_COMMAND:
-        if (HIWORD( wparam ) == LBN_SELCHANGE) got_selchange++;
+        if (HIWORD( wParam ) == LBN_SELCHANGE) got_selchange++;
         break;
 
     default:
         break;
     }
 
-    return DefWindowProcA(hwnd, msg, wparam, lparam);
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, msg, wParam, lParam);
+    defwndproc_counter--;
+
+    return msg == WM_COMPAREITEM ? -1 : ret;
 }
 
 static HWND create_parent( void )
@@ -1871,10 +1959,34 @@ static void test_listbox(void)
     run_test(EMS_NS);
 }
 
+static const struct message lb_addstring_ownerdraw_parent_seq[] =
+{
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1012, 0xf30604ed },
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1112, 0xf30604ee },
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1212, 0xf30604ef },
+    { 0 }
+};
+
+static const struct message lb_addstring_sort_parent_seq[] =
+{
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1012, 0xf30604ed },
+    { WM_COMPAREITEM, sent|wparam|lparam, 0xf30604ed, 0xf30604ee },
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1112, 0xf30604ee },
+    { WM_COMPAREITEM, sent|wparam|lparam, 0xf30604ed, 0xf30604ef },
+    { WM_COMPAREITEM, sent|wparam|lparam, 0xf30604ee, 0xf30604ef },
+    { WM_MEASUREITEM, sent|wparam|lparam, 0x1212, 0xf30604ef },
+    { 0 }
+};
+
+static const struct message empty_seq[] =
+{
+    { 0 }
+};
+
 static void test_WM_MEASUREITEM(void)
 {
     HWND parent, listbox;
-    LRESULT data;
+    LRESULT data, ret;
 
     parent = create_parent();
     listbox = create_listbox(WS_CHILD | LBS_OWNERDRAWVARIABLE, parent);
@@ -1888,6 +2000,79 @@ static void test_WM_MEASUREITEM(void)
 
     data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
     ok(!data, "data = %08lx\n", data);
+
+    /* LBS_HASSTRINGS */
+    parent = create_parent();
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, WC_LISTBOXA, NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE | LBS_HASSTRINGS | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, lb_addstring_ownerdraw_parent_seq,
+        "LB_ADDSTRING (LBS_HASSTRINGS, ownerdraw)", FALSE);
+    DestroyWindow(listbox);
+
+    /* LBS_SORT, no LBS_HASSTRINGS */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, WC_LISTBOXA, NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE | LBS_SORT | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+todo_wine
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+todo_wine
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, lb_addstring_sort_parent_seq, "LB_ADDSTRING (LBS_SORT)", TRUE);
+    DestroyWindow(listbox);
+
+    /* LBS_HASSTRINGS */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, WC_LISTBOXA, NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_HASSTRINGS | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "LB_ADDSTRING (LBS_HASSTRINGS)", FALSE);
+    DestroyWindow(listbox);
+
+    /* LBS_HASSTRINGS, LBS_SORT */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, WC_LISTBOXA, NULL,
+                              WS_CHILD | LBS_NOTIFY | LBS_HASSTRINGS | LBS_SORT | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "LB_ADDSTRING (LBS_HASSTRINGS, LBS_SORT)", FALSE);
+    DestroyWindow(listbox);
+
     DestroyWindow(parent);
 }
 
@@ -1898,6 +2083,8 @@ START_TEST(listbox)
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_listbox();
     test_item_height();
