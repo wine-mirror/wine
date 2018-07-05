@@ -349,14 +349,12 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_IFLIST)
     {
         int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_IFLIST, if_nametoindex(name)};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
-
         size_t needed;
         char *buf = NULL, *end;
         struct if_msghdr *ifm;
         struct if_data ifdata;
 
-        if(sysctl(mib, MIB_LEN, NULL, &needed, NULL, 0) == -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), NULL, &needed, NULL, 0) == -1)
         {
             ERR ("failed to get size of iflist\n");
             goto done;
@@ -367,7 +365,7 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
             ret = ERROR_OUTOFMEMORY;
             goto done;
         }
-        if(sysctl(mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), buf, &needed, NULL, 0) == -1)
         {
             ERR ("failed to get iflist\n");
             goto done;
@@ -514,12 +512,11 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS) && (defined(HAVE_STRUCT_ICMPSTAT_ICPS_INHIST) || defined(HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST))
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
         struct icmpstat icmp_stat;
         size_t needed  = sizeof(icmp_stat);
         int i;
 
-        if(sysctl(mib, MIB_LEN, &icmp_stat, &needed, NULL, 0) != -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), &icmp_stat, &needed, NULL, 0) != -1)
         {
 #ifdef HAVE_STRUCT_ICMPSTAT_ICPS_INHIST
             /*in stats */
@@ -922,7 +919,6 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS) && (defined(HAVE_STRUCT_IPSTAT_IPS_TOTAL) || defined(HAVE_STRUCT_IP_STATS_IPS_TOTAL))
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
         int ip_ttl, ip_forwarding;
 #if defined(HAVE_STRUCT_IPSTAT_IPS_TOTAL)
         struct ipstat ip_stat;
@@ -932,7 +928,7 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
         size_t needed;
 
         needed = sizeof(ip_stat);
-        if(sysctl(mib, MIB_LEN, &ip_stat, &needed, NULL, 0) == -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), &ip_stat, &needed, NULL, 0) == -1)
         {
             ERR ("failed to get ipstat\n");
             return ERROR_NOT_SUPPORTED;
@@ -1103,7 +1099,6 @@ DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS stats, DWORD family)
 #define TCPTV_REXMTMAX 128
 #endif
         int mib[] = {CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
 #define hz 1000
 #if defined(HAVE_STRUCT_TCPSTAT_TCPS_CONNATTEMPT)
         struct tcpstat tcp_stat;
@@ -1112,7 +1107,7 @@ DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS stats, DWORD family)
 #endif
         size_t needed = sizeof(tcp_stat);
 
-        if(sysctl(mib, MIB_LEN, &tcp_stat, &needed, NULL, 0) != -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), &tcp_stat, &needed, NULL, 0) != -1)
         {
             stats->u.RtoAlgorithm = MIB_TCP_RTO_VANJ;
             stats->dwRtoMin = TCPTV_MIN;
@@ -1286,12 +1281,11 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS) && defined(HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS)
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
         struct udpstat udp_stat;
         MIB_UDPTABLE *udp_table;
         size_t needed = sizeof(udp_stat);
 
-        if(sysctl(mib, MIB_LEN, &udp_stat, &needed, NULL, 0) != -1)
+        if(sysctl(mib, ARRAY_SIZE(mib), &udp_stat, &needed, NULL, 0) != -1)
         {
             stats->dwInDatagrams = udp_stat.udps_ipackets;
             stats->dwOutDatagrams = udp_stat.udps_opackets;
@@ -1742,14 +1736,13 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BO
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
     {
       int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO};
-#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
       size_t needed;
       char *buf = NULL, *lim, *next;
       struct rt_msghdr *rtm;
       struct sockaddr_inarp *sinarp;
       struct sockaddr_dl *sdl;
 
-      if (sysctl (mib, MIB_LEN,  NULL, &needed, NULL, 0) == -1)
+      if (sysctl (mib, ARRAY_SIZE(mib),  NULL, &needed, NULL, 0) == -1)
       {
          ERR ("failed to get arp table\n");
          ret = ERROR_NOT_SUPPORTED;
@@ -1763,7 +1756,7 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable, BO
           goto done;
       }
 
-      if (sysctl (mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
+      if (sysctl (mib, ARRAY_SIZE(mib), buf, &needed, NULL, 0) == -1)
       {
          ret = ERROR_NOT_SUPPORTED;
          goto done;
