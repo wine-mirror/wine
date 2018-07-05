@@ -1087,7 +1087,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user)
 {
     gchar *strcaps = gst_caps_to_string(caps);
-    ERR("Could not find a filter for caps: %s\n", strcaps);
+    ERR("Could not find a filter for caps: %s\n", debugstr_a(strcaps));
     g_free(strcaps);
 }
 
