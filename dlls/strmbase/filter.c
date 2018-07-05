@@ -160,6 +160,7 @@ HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin 
             IPin_Release(pin);
             return hr;
         }
+        if (info.pFilter) IBaseFilter_Release(info.pFilter);
 
         if (!strcmpW(id, info.achName))
         {
