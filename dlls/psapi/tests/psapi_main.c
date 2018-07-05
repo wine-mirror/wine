@@ -819,23 +819,24 @@ START_TEST(psapi_main)
         IsWow64Process(GetCurrentProcess(), &wow64);
 
     hpSR = OpenProcess(STANDARD_RIGHTS_REQUIRED, FALSE, pid);
+    ok(!!hpSR, "got error %u\n", GetLastError());
     hpQI = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+    ok(!!hpQI, "got error %u\n", GetLastError());
     hpVR = OpenProcess(PROCESS_VM_READ, FALSE, pid);
+    ok(!!hpVR, "got error %u\n", GetLastError());
     hpQV = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    ok(!!hpQV, "got error %u\n", GetLastError());
 
-    if(hpSR && hpQI && hpVR && hpQV)
-        {
-	    test_EnumProcesses();
-	    test_EnumProcessModules();
-	    test_GetModuleInformation();
-            test_GetPerformanceInfo();
-	    test_GetProcessMemoryInfo();
-            test_GetMappedFileName();
-            test_GetProcessImageFileName();
-            test_GetModuleFileNameEx();
-            test_GetModuleBaseName();
-	    test_ws_functions();
-	}
+    test_EnumProcesses();
+    test_EnumProcessModules();
+    test_GetModuleInformation();
+    test_GetPerformanceInfo();
+    test_GetProcessMemoryInfo();
+    test_GetMappedFileName();
+    test_GetProcessImageFileName();
+    test_GetModuleFileNameEx();
+    test_GetModuleBaseName();
+    test_ws_functions();
 
     CloseHandle(hpSR);
     CloseHandle(hpQI);
