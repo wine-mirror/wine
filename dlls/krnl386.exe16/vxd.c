@@ -80,8 +80,6 @@ static struct vxdcall_service vxd_services[] =
     { {'v','w','i','n','3','2','.','v','x','d',0}, 0x002a, NULL, NULL }
 };
 
-#define NB_VXD_SERVICES  (sizeof(vxd_services)/sizeof(vxd_services[0]))
-
 #define W32S_APP2WINE(addr) ((addr)? (DWORD)(addr) + W32S_offset : 0)
 #define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
 
@@ -293,7 +291,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_VxDCall( CONTEXT *context )
     DWORD service = stack32_pop( context );
 
     RtlEnterCriticalSection( &vxd_section );
-    for (i = 0; i < NB_VXD_SERVICES; i++)
+    for (i = 0; i < ARRAY_SIZE(vxd_services); i++)
     {
         if (HIWORD(service) != vxd_services[i].service) continue;
         if (!vxd_services[i].module)  /* need to load it */
