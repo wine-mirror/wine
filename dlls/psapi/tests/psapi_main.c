@@ -199,16 +199,16 @@ static void test_EnumProcessModules(void)
         ok(!!hMod, "expected non-NULL module\n");
         ok(cbNeeded % sizeof(hMod) == 0, "got %u\n", cbNeeded);
 
-        ret = GetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
+        ret = pGetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
         ok(ret, "got error %u\n", GetLastError());
         ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
 
-        ret = GetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
+        ret = pGetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
         ok(ret, "got error %u\n", GetLastError());
 todo_wine
         ok(!strcmp(name, buffer), "got %s\n", name);
 
-        ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
+        ret = pGetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
         ok(ret, "got error %u\n", GetLastError());
         ok(info.lpBaseOfDll == hMod, "expected %p, got %p\n", hMod, info.lpBaseOfDll);
         ok(info.SizeOfImage, "image size was 0\n");
