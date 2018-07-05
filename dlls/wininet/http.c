@@ -145,8 +145,6 @@ static const WCHAR emptyW[] = {0};
 
 #define COLLECT_TIME 60000
 
-#define ARRAYSIZE(array) (sizeof(array)/sizeof((array)[0]))
-
 struct HttpAuthInfo
 {
     LPWSTR scheme;
@@ -810,12 +808,12 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue, LPWSTR *pszRealm )
     static const WCHAR szBasic[] = {'B','a','s','i','c'}; /* Note: not nul-terminated */
     static const WCHAR szRealm[] = {'r','e','a','l','m'}; /* Note: not nul-terminated */
     BOOL is_basic;
-    is_basic = !strncmpiW(pszAuthValue, szBasic, ARRAYSIZE(szBasic)) &&
-        ((pszAuthValue[ARRAYSIZE(szBasic)] == ' ') || !pszAuthValue[ARRAYSIZE(szBasic)]);
+    is_basic = !strncmpiW(pszAuthValue, szBasic, ARRAY_SIZE(szBasic)) &&
+        ((pszAuthValue[ARRAY_SIZE(szBasic)] == ' ') || !pszAuthValue[ARRAY_SIZE(szBasic)]);
     if (is_basic && pszRealm)
     {
         LPCWSTR token;
-        LPCWSTR ptr = &pszAuthValue[ARRAYSIZE(szBasic)];
+        LPCWSTR ptr = &pszAuthValue[ARRAY_SIZE(szBasic)];
         LPCWSTR realm;
         ptr++;
         *pszRealm=NULL;
@@ -825,8 +823,8 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue, LPWSTR *pszRealm )
         realm = ptr;
         while (*realm == ' ')
             realm++;
-        if(!strncmpiW(realm, szRealm, ARRAYSIZE(szRealm)) &&
-            (realm[ARRAYSIZE(szRealm)] == ' ' || realm[ARRAYSIZE(szRealm)] == '='))
+        if(!strncmpiW(realm, szRealm, ARRAY_SIZE(szRealm)) &&
+            (realm[ARRAY_SIZE(szRealm)] == ' ' || realm[ARRAY_SIZE(szRealm)] == '='))
         {
             token++;
             while (*token == ' ')
@@ -1566,9 +1564,9 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
     {
         signed char in[4];
 
-        if (base64[0] >= ARRAYSIZE(HTTP_Base64Dec) ||
+        if (base64[0] >= ARRAY_SIZE(HTTP_Base64Dec) ||
             ((in[0] = HTTP_Base64Dec[base64[0]]) == -1) ||
-            base64[1] >= ARRAYSIZE(HTTP_Base64Dec) ||
+            base64[1] >= ARRAY_SIZE(HTTP_Base64Dec) ||
             ((in[1] = HTTP_Base64Dec[base64[1]]) == -1))
         {
             WARN("invalid base64: %s\n", debugstr_w(base64));
@@ -1580,7 +1578,7 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
 
         if ((base64[2] == '=') && (base64[3] == '='))
             break;
-        if (base64[2] > ARRAYSIZE(HTTP_Base64Dec) ||
+        if (base64[2] > ARRAY_SIZE(HTTP_Base64Dec) ||
             ((in[2] = HTTP_Base64Dec[base64[2]]) == -1))
         {
             WARN("invalid base64: %s\n", debugstr_w(&base64[2]));
@@ -1592,7 +1590,7 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
 
         if (base64[3] == '=')
             break;
-        if (base64[3] > ARRAYSIZE(HTTP_Base64Dec) ||
+        if (base64[3] > ARRAY_SIZE(HTTP_Base64Dec) ||
             ((in[3] = HTTP_Base64Dec[base64[3]]) == -1))
         {
             WARN("invalid base64: %s\n", debugstr_w(&base64[3]));
