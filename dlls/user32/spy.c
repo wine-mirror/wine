@@ -39,7 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 
 #define SPY_MAX_MSGNUM   WM_USER
 #define SPY_INDENT_UNIT  4  /* 4 spaces */
-#define ARRAYSIZE(a) ((sizeof(a) / sizeof((a)[0])))
 
 #define DEBUG_SPY 0
 
@@ -1778,14 +1777,15 @@ static const USER_MSG richedit_array[] = {
 #undef USM
 
 static const CONTROL_CLASS cc_array[] = {
-    {WC_COMBOBOXEXW,    comboex_array,  ARRAYSIZE(comboex_array) },
-    {WC_PROPSHEETW,     propsht_array,  ARRAYSIZE(propsht_array) },
-    {REBARCLASSNAMEW,   rebar_array,    ARRAYSIZE(rebar_array) },
-    {TOOLBARCLASSNAMEW, toolbar_array,  ARRAYSIZE(toolbar_array) },
-    {TOOLTIPS_CLASSW,   tooltips_array, ARRAYSIZE(tooltips_array) },
-    {UPDOWN_CLASSW,     updown_array,   ARRAYSIZE(updown_array) },
-    {RICHEDIT_CLASS20W, richedit_array, ARRAYSIZE(richedit_array) },
-    {0, 0, 0} };
+    {WC_COMBOBOXEXW,    comboex_array,  ARRAY_SIZE(comboex_array)},
+    {WC_PROPSHEETW,     propsht_array,  ARRAY_SIZE(propsht_array)},
+    {REBARCLASSNAMEW,   rebar_array,    ARRAY_SIZE(rebar_array)},
+    {TOOLBARCLASSNAMEW, toolbar_array,  ARRAY_SIZE(toolbar_array)},
+    {TOOLTIPS_CLASSW,   tooltips_array, ARRAY_SIZE(tooltips_array)},
+    {UPDOWN_CLASSW,     updown_array,   ARRAY_SIZE(updown_array)},
+    {RICHEDIT_CLASS20W, richedit_array, ARRAY_SIZE(richedit_array)},
+    {0, 0, 0}
+};
 
 
 /************************************************************************/
@@ -2278,7 +2278,7 @@ const char *SPY_GetVKeyName(WPARAM wParam)
  */
 static const SPY_NOTIFY *SPY_Bsearch_Notify( UINT code)
 {
-    int low = 0, high = ARRAYSIZE(spnfy_array) - 1;
+    int low = 0, high = ARRAY_SIZE(spnfy_array) - 1;
 
     while (low <= high)
     {
