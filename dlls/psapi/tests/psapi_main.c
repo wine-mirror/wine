@@ -238,11 +238,6 @@ static void test_GetPerformanceInfo(void)
     ok(!ret, "GetPerformanceInfo unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_BAD_LENGTH, "expected error=ERROR_BAD_LENGTH but got %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = GetPerformanceInfo(&info, sizeof(info));
-    ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
-    ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
-
     if (!pNtQuerySystemInformation)
         win_skip("NtQuerySystemInformation not found, skipping tests\n");
     else
@@ -259,6 +254,10 @@ static void test_GetPerformanceInfo(void)
         ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
         ok(size >= sizeof(SYSTEM_PERFORMANCE_INFORMATION), "incorrect length %d\n", size);
 
+        SetLastError(0xdeadbeef);
+        ret = GetPerformanceInfo(&info, sizeof(info));
+        ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
+        ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
 
         ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  288),
            "expected approximately %ld but got %d\n", info.CommitTotal, sys_performance_info->TotalCommittedPages);
