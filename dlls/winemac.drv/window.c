@@ -23,6 +23,13 @@
 
 #include "config.h"
 
+#include <IOKit/pwr_mgt/IOPMLib.h>
+#define GetCurrentThread Mac_GetCurrentThread
+#define LoadResource Mac_LoadResource
+#include <CoreServices/CoreServices.h>
+#undef GetCurrentThread
+#undef LoadResource
+
 #include "macdrv.h"
 #include "winuser.h"
 #include "wine/unicode.h"
@@ -1551,13 +1558,44 @@ BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd)
 }
 
 
+static WNDPROC desktop_orig_wndproc;
+
+#define WM_WINE_NOTIFY_ACTIVITY WM_USER
+
+static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_WINE_NOTIFY_ACTIVITY:
+    {
+        /* This wakes from display sleep, but doesn't affect the screen saver. */
+        static IOPMAssertionID assertion;
+        IOPMAssertionDeclareUserActivity(CFSTR("Wine user input"), kIOPMUserActiveLocal, &assertion);
+
+        /* This prevents the screen saver, but doesn't wake from display sleep. */
+        /* It's deprecated, but there's no better alternative. */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        UpdateSystemActivity(UsrActivity);
+#pragma clang diagnostic pop
+        break;
+    }
+    }
+    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+}
+
 /**********************************************************************
  *              CreateWindow   (MACDRV.@)
  */
 BOOL CDECL macdrv_CreateWindow(HWND hwnd)
 {
     if (hwnd == GetDesktopWindow())
+    {
+        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(),
+            GWLP_WNDPROC, (LONG_PTR)desktop_wndproc_wrapper );
+
         macdrv_init_clipboard();
+    }
     return TRUE;
 }
 
