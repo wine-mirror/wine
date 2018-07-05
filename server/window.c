@@ -114,6 +114,8 @@ struct user_handle_array
     int            total;
 };
 
+static const rectangle_t empty_rect;
+
 /* global window pointers */
 static struct window *shell_window;
 static struct window *shell_listview;
@@ -431,8 +433,7 @@ struct process *get_top_window_owner( struct desktop *desktop )
 void get_top_window_rectangle( struct desktop *desktop, rectangle_t *rect )
 {
     struct window *win = desktop->top_window;
-    if (!win) rect->left = rect->top = rect->right = rect->bottom = 0;
-    else *rect = win->window_rect;
+    *rect = win ? win->window_rect : empty_rect;
 }
 
 /* post a message to the desktop window */
@@ -447,7 +448,6 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 static struct window *create_window( struct window *parent, struct window *owner,
                                      atom_t atom, mod_handle_t instance )
 {
-    static const rectangle_t empty_rect;
     int extra_bytes;
     struct window *win = NULL;
     struct desktop *desktop;
@@ -665,8 +665,7 @@ static inline int is_point_in_window( struct window *win, int x, int y )
         return 0;  /* disabled child */
     if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
         return 0;  /* transparent */
-    if (x < win->visible_rect.left || x >= win->visible_rect.right ||
-        y < win->visible_rect.top || y >= win->visible_rect.bottom)
+    if (!point_in_rect( &win->visible_rect, x, y ))
         return 0;  /* not in window */
     if (win->win_region &&
         !point_in_region( win->win_region, x - win->window_rect.left, y - win->window_rect.top ))
@@ -710,9 +709,7 @@ static struct window *child_window_from_point( struct window *parent, int x, int
         if (ptr->style & (WS_MINIMIZE|WS_DISABLED)) return ptr;
 
         /* if point is not in client area, return at once */
-        if (x < ptr->client_rect.left || x >= ptr->client_rect.right ||
-            y < ptr->client_rect.top || y >= ptr->client_rect.bottom)
-            return ptr;
+        if (!point_in_rect( &ptr->client_rect, x, y )) return ptr;
 
         return child_window_from_point( ptr, x - ptr->client_rect.left, y - ptr->client_rect.top );
     }
@@ -730,9 +727,7 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
         if (!is_point_in_window( ptr, x, y )) continue;  /* skip it */
 
         /* if point is in client area, and window is not minimized or disabled, check children */
-        if (!(ptr->style & (WS_MINIMIZE|WS_DISABLED)) &&
-            x >= ptr->client_rect.left && x < ptr->client_rect.right &&
-            y >= ptr->client_rect.top && y < ptr->client_rect.bottom)
+        if (!(ptr->style & (WS_MINIMIZE|WS_DISABLED)) && point_in_rect( &ptr->client_rect, x, y ))
         {
             if (!get_window_children_from_point( ptr, x - ptr->client_rect.left,
                                                  y - ptr->client_rect.top, array ))
@@ -794,9 +789,7 @@ static int all_windows_from_point( struct window *top, int x, int y, struct user
     if (!is_point_in_window( top, x, y )) return 1;
 
     /* if point is in client area, and window is not minimized or disabled, check children */
-    if (!(top->style & (WS_MINIMIZE|WS_DISABLED)) &&
-        x >= top->client_rect.left && x < top->client_rect.right &&
-        y >= top->client_rect.top && y < top->client_rect.bottom)
+    if (!(top->style & (WS_MINIMIZE|WS_DISABLED)) && point_in_rect( &top->client_rect, x, y ))
     {
         if (!is_desktop_window(top))
         {
@@ -907,12 +900,7 @@ static inline void client_to_screen( struct window *win, int *x, int *y )
 static inline void client_to_screen_rect( struct window *win, rectangle_t *rect )
 {
     for ( ; win && !is_desktop_window(win); win = win->parent)
-    {
-        rect->left   += win->client_rect.left;
-        rect->right  += win->client_rect.left;
-        rect->top    += win->client_rect.top;
-        rect->bottom += win->client_rect.top;
-    }
+        offset_rect( rect, win->client_rect.left, win->client_rect.top );
 }
 
 /* map the region from window to screen coordinates */
@@ -953,16 +941,6 @@ static struct region *clip_children( struct window *parent, struct window *last,
     }
     free_region( tmp );
     return region;
-}
-
-
-/* offset the coordinates of a rectangle */
-static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
-{
-    rect->left   += offset_x;
-    rect->top    += offset_y;
-    rect->right  += offset_x;
-    rect->bottom += offset_y;
 }
 
 
