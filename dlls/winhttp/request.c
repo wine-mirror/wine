@@ -851,8 +851,6 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
 }
 
 
-#define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 static const WCHAR basicW[]     = {'B','a','s','i','c',0};
 static const WCHAR ntlmW[]      = {'N','T','L','M',0};
 static const WCHAR passportW[]  = {'P','a','s','s','p','o','r','t',0};
@@ -867,11 +865,11 @@ static const struct
 }
 auth_schemes[] =
 {
-    { basicW,     ARRAYSIZE(basicW) - 1,     WINHTTP_AUTH_SCHEME_BASIC },
-    { ntlmW,      ARRAYSIZE(ntlmW) - 1,      WINHTTP_AUTH_SCHEME_NTLM },
-    { passportW,  ARRAYSIZE(passportW) - 1,  WINHTTP_AUTH_SCHEME_PASSPORT },
-    { digestW,    ARRAYSIZE(digestW) - 1,    WINHTTP_AUTH_SCHEME_DIGEST },
-    { negotiateW, ARRAYSIZE(negotiateW) - 1, WINHTTP_AUTH_SCHEME_NEGOTIATE }
+    { basicW,     ARRAY_SIZE(basicW) - 1,     WINHTTP_AUTH_SCHEME_BASIC },
+    { ntlmW,      ARRAY_SIZE(ntlmW) - 1,      WINHTTP_AUTH_SCHEME_NTLM },
+    { passportW,  ARRAY_SIZE(passportW) - 1,  WINHTTP_AUTH_SCHEME_PASSPORT },
+    { digestW,    ARRAY_SIZE(digestW) - 1,    WINHTTP_AUTH_SCHEME_DIGEST },
+    { negotiateW, ARRAY_SIZE(negotiateW) - 1, WINHTTP_AUTH_SCHEME_NEGOTIATE }
 };
 static const unsigned int num_auth_schemes = sizeof(auth_schemes)/sizeof(auth_schemes[0]);
 
