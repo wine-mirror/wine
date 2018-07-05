@@ -91,7 +91,6 @@ static const struct { GLuint err; const char *str; } errors[] =
     { GLU_NURBS_ERROR36, "null control point reference" },
     { GLU_NURBS_ERROR37, "duplicate point on piecewise linear trimming curve" },
 };
-#define NB_ERRORS (sizeof(errors) / sizeof(errors[0]))
 
 typedef void (*_GLUfuncptr)(void);
 
@@ -148,7 +147,7 @@ const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
 {
     unsigned int i;
 
-    for (i = 0; i < NB_ERRORS; i++)
+    for (i = 0; i < ARRAY_SIZE(errors); i++)
         if (errors[i].err == errCode) return (const GLubyte *)errors[i].str;
 
     return NULL;
@@ -159,10 +158,10 @@ const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
  */
 const WCHAR * WINAPI wine_gluErrorUnicodeStringEXT( GLenum errCode )
 {
-    static WCHAR errorsW[NB_ERRORS][64];
+    static WCHAR errorsW[ARRAY_SIZE(errors)][64];
     unsigned int i, j;
 
-    for (i = 0; i < NB_ERRORS; i++)
+    for (i = 0; i < ARRAY_SIZE(errors); i++)
     {
         if (errors[i].err != errCode) continue;
         if (!errorsW[i][0])  /* errors use only ASCII, do a simple mapping */
