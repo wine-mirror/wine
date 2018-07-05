@@ -56,7 +56,7 @@ static BOOL init_func_ptrs(void)
     return TRUE;
 }
 
-static HANDLE hpSR, hpQI, hpVR, hpQV, hpAA;
+static HANDLE hpSR, hpQI, hpVR, hpQV;
 static const HANDLE hBad = (HANDLE)0xdeadbeef;
 
 static void test_EnumProcesses(void)
@@ -726,9 +726,14 @@ static void test_ws_functions(void)
 {
     PSAPI_WS_WATCH_INFORMATION wswi[4096];
     ULONG_PTR pages[4096];
+    HANDLE ws_handle;
     char *addr;
     unsigned int i;
     BOOL ret;
+
+    ws_handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA |
+        PROCESS_SET_INFORMATION, FALSE, GetCurrentProcessId());
+    ok(!!ws_handle, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     EmptyWorkingSet(NULL);
@@ -739,7 +744,7 @@ static void test_ws_functions(void)
     todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = EmptyWorkingSet(hpAA);
+    ret = EmptyWorkingSet(ws_handle);
     ok(ret == 1, "failed with %d\n", GetLastError());
 
     SetLastError( 0xdeadbeef );
@@ -755,7 +760,7 @@ static void test_ws_functions(void)
         ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
     }
     SetLastError(0xdeadbeef);
-    ret = InitializeProcessForWsWatch(hpAA);
+    ret = InitializeProcessForWsWatch(ws_handle);
     ok(ret == 1, "failed with %d\n", GetLastError());
     
     addr = VirtualAlloc(NULL, 1, MEM_COMMIT, PAGE_READWRITE);
@@ -817,9 +822,8 @@ START_TEST(psapi_main)
     hpQI = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
     hpVR = OpenProcess(PROCESS_VM_READ, FALSE, pid);
     hpQV = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    hpAA = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
-    if(hpSR && hpQI && hpVR && hpQV && hpAA)
+    if(hpSR && hpQI && hpVR && hpQV)
         {
 	    test_EnumProcesses();
 	    test_EnumProcessModules();
@@ -837,5 +841,4 @@ START_TEST(psapi_main)
     CloseHandle(hpQI);
     CloseHandle(hpVR);
     CloseHandle(hpQV);
-    CloseHandle(hpAA);
 }
