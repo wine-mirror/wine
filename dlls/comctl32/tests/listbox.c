@@ -2032,7 +2032,7 @@ static void test_WM_MEASUREITEM(void)
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, lb_addstring_sort_parent_seq, "LB_ADDSTRING (LBS_SORT)", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, lb_addstring_sort_parent_seq, "LB_ADDSTRING (LBS_SORT)", FALSE);
     DestroyWindow(listbox);
 
     /* LBS_HASSTRINGS */
