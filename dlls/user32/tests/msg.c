@@ -4760,7 +4760,7 @@ static void test_showwindow(void)
     flush_sequence();
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok_sequence(WmShowMaxPopupResizedSeq_todo,
-            "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized and resized popup TODO", TRUE);
+            "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized and resized popup TODO", FALSE);
     DestroyWindow(hwnd);
     flush_sequence();
 
@@ -5339,7 +5339,7 @@ static void test_messages(void)
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test Popup", WS_POPUP | WS_VISIBLE,
                              -10, -10, 10000, 10000, NULL, 0, 0, NULL );
     ok (hwnd != 0, "Failed to create popup window\n");
-    ok_sequence(WmShowPopupExtremeLocationSeq, "RedrawWindow:show_popup_extreme_location", TRUE);
+    ok_sequence(WmShowPopupExtremeLocationSeq, "RedrawWindow:show_popup_extreme_location", FALSE);
     DestroyWindow(hwnd);
 
 

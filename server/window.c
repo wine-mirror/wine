@@ -1141,27 +1141,20 @@ struct window_class* get_window_class( user_handle_t window )
 /* the returned rectangle is in window coordinates; return 0 if rectangle is empty */
 static int get_window_visible_rect( struct window *win, rectangle_t *rect, int frame )
 {
-    int offset_x = 0, offset_y = 0;
-
-    if (!(win->style & WS_VISIBLE)) return 0;
+    int offset_x = win->window_rect.left, offset_y = win->window_rect.top;
 
     *rect = frame ? win->window_rect : win->client_rect;
-    if (!is_desktop_window(win))
-    {
-        offset_x = win->window_rect.left;
-        offset_y = win->window_rect.top;
-    }
 
-    while (win->parent)
+    if (!(win->style & WS_VISIBLE)) return 0;
+    if (is_desktop_window( win )) return 1;
+
+    while (!is_desktop_window( win->parent ))
     {
         win = win->parent;
         if (!(win->style & WS_VISIBLE) || win->style & WS_MINIMIZE) return 0;
-        if (!is_desktop_window(win))
-        {
-            offset_x += win->client_rect.left;
-            offset_y += win->client_rect.top;
-            offset_rect( rect, win->client_rect.left, win->client_rect.top );
-        }
+        offset_x += win->client_rect.left;
+        offset_y += win->client_rect.top;
+        offset_rect( rect, win->client_rect.left, win->client_rect.top );
         if (!intersect_rect( rect, rect, &win->client_rect )) return 0;
         if (!intersect_rect( rect, rect, &win->window_rect )) return 0;
     }
