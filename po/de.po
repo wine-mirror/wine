@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-05-18 15:21+0200\n"
+"PO-Revision-Date: 2018-07-05 11:58+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3437,32 +3437,24 @@ msgid "Publishers..."
 msgstr "Herausgeber..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "LAN-Verbindung"
+msgstr "Verbindungen"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Lokaler Server"
+msgstr "Proxyserver"
 
 #: inetcpl.rc:126
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Proxy verwenden"
 
 #: inetcpl.rc:127
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adresse"
+msgstr "Adresse:"
 
 #: inetcpl.rc:129
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Keine Ports"
+msgstr "Port:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -12919,10 +12911,8 @@ msgid "Confirm Value Delete"
 msgstr "Löschen des Wertes bestätigen"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Sind Sie sicher, dass Sie den Wert '%1' löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie den ausgewählten Wert löschen möchten?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -14911,6 +14901,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Ein Programm auf Ihrem System ist abgestürzt, aber WineDbg konnte nicht an "
+"den Prozess anknüpfen, um eine Backtrace zu erstellen."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
