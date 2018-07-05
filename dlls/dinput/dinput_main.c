@@ -92,7 +92,6 @@ static const struct dinput_device *dinput_devices[] =
     &joystick_linux_device,
     &joystick_osx_device
 };
-#define NB_DINPUT_DEVICES (sizeof(dinput_devices)/sizeof(dinput_devices[0]))
 
 static HINSTANCE DINPUT_instance = NULL;
 
@@ -409,7 +408,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
     if (!This->initialized)
         return DIERR_NOTINITIALIZED;
 
-    for (i = 0; i < NB_DINPUT_DEVICES; i++) {
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = S_OK; SUCCEEDED(r); j++) {
             devInstance.dwSize = sizeof(devInstance);
@@ -449,7 +448,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
     if (!This->initialized)
         return DIERR_NOTINITIALIZED;
 
-    for (i = 0; i < NB_DINPUT_DEVICES; i++) {
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++) {
         if (!dinput_devices[i]->enum_deviceW) continue;
         for (j = 0, r = S_OK; SUCCEEDED(r); j++) {
             devInstance.dwSize = sizeof(devInstance);
@@ -750,7 +749,7 @@ static HRESULT create_device(IDirectInputImpl *This, REFGUID rguid, REFIID riid,
         return DIERR_NOTINITIALIZED;
 
     /* Loop on all the devices to see if anyone matches the given GUID */
-    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
         HRESULT ret;
 
@@ -1006,7 +1005,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
     }
 
     /* Enumerate all the joysticks */
-    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
         HRESULT enumSuccess;
 
@@ -1107,7 +1106,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     didevi.dwSize = sizeof(didevi);
 
     /* Enumerate all the joysticks */
-    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
         HRESULT enumSuccess;
 
@@ -1330,7 +1329,7 @@ static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UI
 #undef X
 
     /* Enumerate all joysticks in order */
-    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
         if (!dinput_devices[i]->enum_deviceA) continue;
 
