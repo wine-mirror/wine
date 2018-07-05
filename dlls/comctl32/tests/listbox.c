@@ -326,9 +326,7 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
         ok(wParam == cis->CtlID, "expected %#x, got %#lx\n", cis->CtlID, wParam);
         ok(cis->hwndItem == ctrl, "expected %p, got %p\n", ctrl, cis->hwndItem);
-todo_wine
         ok((int)cis->itemID1 >= 0, "expected >= 0, got %d\n", cis->itemID1);
-todo_wine
         ok((int)cis->itemID2 == -1, "expected -1, got %d\n", cis->itemID2);
 
         if (cis->CtlType == ODT_LISTBOX)
@@ -2030,10 +2028,8 @@ static void test_WM_MEASUREITEM(void)
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 0");
     ok(ret == 0, "expected 0, got %ld\n", ret);
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 1");
-todo_wine
     ok(ret == 1, "expected 1, got %ld\n", ret);
     ret = SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item 2");
-todo_wine
     ok(ret == 2, "expected 2, got %ld\n", ret);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, lb_addstring_sort_parent_seq, "LB_ADDSTRING (LBS_SORT)", TRUE);
