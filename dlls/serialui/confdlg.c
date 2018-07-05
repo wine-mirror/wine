@@ -112,36 +112,34 @@ typedef struct tagPARAM2STR
 } PARAM2STR, *LPPARAM2STR;
 typedef const PARAM2STR *LPCPARAM2STR;
 
-#define SERIALUI_TABLESIZE(x) ((sizeof (x))/(sizeof (x[0])))
-
 static PARAM2STRDATA SERIALUI_Baud2StrData[]={
   {110, "110"}, {300, "300"}, {600, "600"}, {1200, "1200"},
   {2400, "2400"}, {4800, "4800"}, {9600, "9600"}, {14400, "14400"},
   {19200, "19200"}, {38400L, "38400"}, {56000L, "56000"}, {57600L, "57600"},
   {115200L, "115200"}, {128000L, "128000"}, {256000L, "256000"}
 };
-static PARAM2STR SERIALUI_Baud2Str={ SERIALUI_TABLESIZE(SERIALUI_Baud2StrData),SERIALUI_Baud2StrData };
+static PARAM2STR SERIALUI_Baud2Str={ ARRAY_SIZE(SERIALUI_Baud2StrData), SERIALUI_Baud2StrData };
 
 static PARAM2STRDATA SERIALUI_Parity2StrData[]={
   {NOPARITY,"None"}, {ODDPARITY,"Odd"}, {EVENPARITY,"Even"}, {MARKPARITY,"Mark"},
   {SPACEPARITY,"Space"}
 };
-static PARAM2STR SERIALUI_Parity2Str={ SERIALUI_TABLESIZE(SERIALUI_Parity2StrData),SERIALUI_Parity2StrData };
+static PARAM2STR SERIALUI_Parity2Str={ ARRAY_SIZE(SERIALUI_Parity2StrData), SERIALUI_Parity2StrData };
 
 static PARAM2STRDATA SERIALUI_Stop2StrData[]={
   {ONESTOPBIT,"1"}, {ONE5STOPBITS,"1.5"}, {TWOSTOPBITS,"2"}
 };
-static PARAM2STR SERIALUI_Stop2Str={ SERIALUI_TABLESIZE(SERIALUI_Stop2StrData),SERIALUI_Stop2StrData };
+static PARAM2STR SERIALUI_Stop2Str={ ARRAY_SIZE(SERIALUI_Stop2StrData), SERIALUI_Stop2StrData };
 
 static PARAM2STRDATA SERIALUI_Data2StrData[]={
   {5,"5"}, {6,"6"}, {7,"7"}, {8, "8"}, {16,"16"}
 };
-static PARAM2STR SERIALUI_Data2Str={ SERIALUI_TABLESIZE(SERIALUI_Data2StrData),SERIALUI_Data2StrData };
+static PARAM2STR SERIALUI_Data2Str={ ARRAY_SIZE(SERIALUI_Data2StrData), SERIALUI_Data2StrData };
 
 static PARAM2STRDATA SERIALUI_Flow2StrData[]={
   {0,"None"}, {1,"Hardware (RTS/CTS)"}, {2,"Software (XON/XOFF)"}
 };
-static PARAM2STR SERIALUI_Flow2Str={ SERIALUI_TABLESIZE(SERIALUI_Flow2StrData),SERIALUI_Flow2StrData };
+static PARAM2STR SERIALUI_Flow2Str={ ARRAY_SIZE(SERIALUI_Flow2StrData), SERIALUI_Flow2StrData };
 
 /*
  * Add all the fields to a combo box and highlight the current value
