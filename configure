@@ -18687,6 +18687,7 @@ wine_fn_config_makefile dlls/d3dxof/tests enable_tests
 wine_fn_config_makefile dlls/davclnt enable_davclnt
 wine_fn_config_makefile dlls/dbgeng enable_dbgeng
 wine_fn_config_makefile dlls/dbghelp enable_dbghelp
+wine_fn_config_makefile dlls/dbghelp/tests enable_tests
 wine_fn_config_makefile dlls/dciman32 enable_dciman32
 wine_fn_config_makefile dlls/ddeml.dll16 enable_win16
 wine_fn_config_makefile dlls/ddraw enable_ddraw
