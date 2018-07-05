@@ -341,8 +341,6 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
     }
 }
 
-#define TESTLEN(x) (sizeof(x) / sizeof((x)[0]))
-
 static void test_keylength(void)
 {
     HCRYPTPROV hProv = 0;
@@ -359,7 +357,7 @@ static void test_keylength(void)
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
-    test_keylength_array(hProv, baseDSS_keylength, TESTLEN(baseDSS_keylength));
+    test_keylength_array(hProv, baseDSS_keylength, ARRAY_SIZE(baseDSS_keylength));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of CSP provider.\n");
@@ -370,7 +368,7 @@ static void test_keylength(void)
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
-    test_keylength_array(hProv, dssDH_keylength, TESTLEN(dssDH_keylength));
+    test_keylength_array(hProv, dssDH_keylength, ARRAY_SIZE(dssDH_keylength));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of CSP provider.\n");
@@ -387,7 +385,7 @@ static void test_keylength(void)
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
-    test_keylength_array(hProv, dssENH_keylength, TESTLEN(dssENH_keylength));
+    test_keylength_array(hProv, dssENH_keylength, ARRAY_SIZE(dssENH_keylength));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of CSP provider.\n");
@@ -398,7 +396,7 @@ static void test_keylength(void)
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
-    test_keylength_array(hProv, dssENH_keylength, TESTLEN(dssENH_keylength));
+    test_keylength_array(hProv, dssENH_keylength, ARRAY_SIZE(dssENH_keylength));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of CSP provider.\n");
@@ -982,7 +980,7 @@ static void test_verify_signature(void)
     }
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
+    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -991,7 +989,7 @@ static void test_verify_signature(void)
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
+    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1007,7 +1005,7 @@ static void test_verify_signature(void)
     }
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
+    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1016,7 +1014,7 @@ static void test_verify_signature(void)
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, 0);
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, TESTLEN(dssSign_data));
+    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1376,7 +1374,7 @@ static void test_key_exchange(void)
     }
     ok(result, "Failed to acquire CSP.\n");
 
-    test_keyExchange_baseDSS(hProv, baseDSSkey_data, TESTLEN(baseDSSkey_data));
+    test_keyExchange_baseDSS(hProv, baseDSSkey_data, ARRAY_SIZE(baseDSSkey_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1386,7 +1384,7 @@ static void test_key_exchange(void)
         CRYPT_VERIFYCONTEXT);
     ok(result, "Failed to acquire CSP.\n");
 
-    test_keyExchange_dssDH(hProv,  dssDHkey_data, TESTLEN(dssDHkey_data));
+    test_keyExchange_dssDH(hProv,  dssDHkey_data, ARRAY_SIZE(dssDHkey_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1401,7 +1399,7 @@ static void test_key_exchange(void)
     }
     ok(result, "Failed to acquire CSP.\n");
 
-    test_keyExchange_dssDH(hProv, dssDHkey_data, TESTLEN(dssDHkey_data));
+    test_keyExchange_dssDH(hProv, dssDHkey_data, ARRAY_SIZE(dssDHkey_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1411,7 +1409,7 @@ static void test_key_exchange(void)
         CRYPT_VERIFYCONTEXT);
     ok(result, "Failed to acquire CSP.\n");
 
-    test_keyExchange_dssDH(hProv, dssDHkey_data, TESTLEN(dssDHkey_data));
+    test_keyExchange_dssDH(hProv, dssDHkey_data, ARRAY_SIZE(dssDHkey_data));
 
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Failed to release CSP provider.\n");
@@ -1421,9 +1419,9 @@ START_TEST(dssenh)
 {
     test_acquire_context();
     test_keylength();
-    test_hash(hash_data, TESTLEN(hash_data));
-    test_data_encryption(encrypt_data, TESTLEN(encrypt_data));
-    test_cipher_modes(ciphermode_data, TESTLEN(ciphermode_data));
+    test_hash(hash_data, ARRAY_SIZE(hash_data));
+    test_data_encryption(encrypt_data, ARRAY_SIZE(encrypt_data));
+    test_cipher_modes(ciphermode_data, ARRAY_SIZE(ciphermode_data));
     test_verify_signature();
     test_key_exchange();
 }
