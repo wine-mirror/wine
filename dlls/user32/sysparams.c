@@ -2938,8 +2938,7 @@ BOOL WINAPI SetSysColors( INT count, const INT *colors, const COLORREF *values )
 
     /* Repaint affected portions of all visible windows */
 
-    RedrawWindow( GetDesktopWindow(), NULL, 0,
-                RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
+    RedrawWindow( 0, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
     return TRUE;
 }
 

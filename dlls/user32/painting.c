@@ -1227,8 +1227,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     static const RECT empty;
     BOOL ret;
 
-    if (!hwnd) hwnd = GetDesktopWindow();
-
     if (TRACE_ON(win))
     {
         if (hrgn)
@@ -1271,6 +1269,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
             ret = redraw_window_rects( hwnd, flags, (const RECT *)data->Buffer, data->rdh.nCount );
         HeapFree( GetProcessHeap(), 0, data );
     }
+
+    if (!hwnd) hwnd = GetDesktopWindow();
 
     if (flags & RDW_UPDATENOW) update_now( hwnd, flags );
     else if (flags & RDW_ERASENOW) erase_now( hwnd, flags );

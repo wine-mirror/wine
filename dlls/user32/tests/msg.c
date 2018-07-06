@@ -7229,7 +7229,8 @@ void dump_region(HRGN hrgn)
     HeapFree( GetProcessHeap(), 0, data );
 }
 
-static void check_update_rgn( HWND hwnd, HRGN hrgn )
+#define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, hwnd, hrgn )
+static void check_update_rgn_( int line, HWND hwnd, HRGN hrgn )
 {
     INT ret;
     RECT r1, r2;
@@ -7240,13 +7241,13 @@ static void check_update_rgn( HWND hwnd, HRGN hrgn )
     ok( ret != ERROR, "GetUpdateRgn failed\n" );
     if (ret == NULLREGION)
     {
-        ok( !hrgn, "Update region shouldn't be empty\n" );
+        ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
     }
     else
     {
         if (CombineRgn( tmp, hrgn, update, RGN_XOR ) != NULLREGION)
         {
-            ok( 0, "Regions are different\n" );
+            ok_(__FILE__,line)( 0, "Regions are different\n" );
             if (winetest_debug > 0)
             {
                 printf( "Update region: " );
@@ -7258,8 +7259,8 @@ static void check_update_rgn( HWND hwnd, HRGN hrgn )
     }
     GetRgnBox( update, &r1 );
     GetUpdateRect( hwnd, &r2, FALSE );
-    ok( EqualRect( &r1, &r2 ), "Rectangles are different: %s / %s\n", wine_dbgstr_rect( &r1 ),
-        wine_dbgstr_rect( &r2 ));
+    ok_(__FILE__,line)( EqualRect( &r1, &r2 ), "Rectangles are different: %s / %s\n",
+                        wine_dbgstr_rect( &r1 ), wine_dbgstr_rect( &r2 ));
 
     DeleteObject( tmp );
     DeleteObject( update );
@@ -7455,9 +7456,76 @@ static void test_paint_messages(void)
     /* MSDN: if hwnd parameter is NULL, InvalidateRect invalidates and redraws
      * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
      */
-    trace("testing InvalidateRect(0, NULL, FALSE)\n");
     SetRectEmpty( &rect );
-    ok(InvalidateRect(0, &rect, FALSE), "InvalidateRect(0, &rc, FALSE) should fail\n");
+    ok(InvalidateRect(0, &rect, FALSE), "InvalidateRect(0, &rc, FALSE) failed\n");
+    check_update_rgn( hwnd, hrgn );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    flush_events();
+    ok_sequence( WmPaint, "Paint", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+
+    SetRectEmpty( &rect );
+    ok(RedrawWindow(0, &rect, 0, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, 0 );
+
+    SetRectEmpty( &rect );
+    ok(RedrawWindow(0, &rect, 0, RDW_ALLCHILDREN | RDW_VALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, 0 );
+
+    GetWindowRect( hwnd, &rect );
+    ok(RedrawWindow(0, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, 0 );
+
+    flush_events();
+    ok(RedrawWindow(0, &rect, 0, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, hrgn );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    flush_events();
+    ok_sequence( WmPaint, "Paint", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+
+    ok(RedrawWindow(GetDesktopWindow(), &rect, 0,
+                    RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    ret = GetUpdateRgn( hwnd, hrgn2, FALSE );
+    ok( ret == NULLREGION || broken(ret == SIMPLEREGION), /* <= win7 */
+        "region should be null (%d)\n", ret );
+    if (ret == SIMPLEREGION) ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    flush_events();
+
+    ok(RedrawWindow(GetDesktopWindow(), NULL, 0,
+                    RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    ret = GetUpdateRgn( hwnd, hrgn2, FALSE );
+    ok( ret == NULLREGION || broken(ret == SIMPLEREGION), /* <= win7 */
+        "region should be null (%d)\n", ret );
+    if (ret == SIMPLEREGION) ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    flush_events();
+
+    SetRectRgn( hrgn2, rect.left, rect.top, rect.right, rect.bottom );
+    ok(RedrawWindow(0, NULL, hrgn2, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, hrgn );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+    flush_events();
+    ok_sequence( WmPaint, "Paint", FALSE );
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+
+    ok(RedrawWindow(0, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
+    check_update_rgn( hwnd, 0 );
+
+    ok(RedrawWindow(0, NULL, 0, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW ),
+       "RedrawWindow failed\n");
     check_update_rgn( hwnd, hrgn );
     ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
     flush_events();
@@ -7468,7 +7536,6 @@ static void test_paint_messages(void)
     /* MSDN: if hwnd parameter is NULL, ValidateRect invalidates and redraws
      * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
      */
-    trace("testing ValidateRect(0, NULL)\n");
     SetRectEmpty( &rect );
     if (ValidateRect(0, &rect) && /* not supported on Win9x */
         GetUpdateRect(hwnd, NULL, FALSE))  /* or >= Win 8 */
@@ -7481,7 +7548,6 @@ static void test_paint_messages(void)
         check_update_rgn( hwnd, 0 );
     }
 
-    trace("testing InvalidateRgn(0, NULL, FALSE)\n");
     SetLastError(0xdeadbeef);
     ok(!InvalidateRgn(0, NULL, FALSE), "InvalidateRgn(0, NULL, FALSE) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || GetLastError() == 0xdeadbeef,
@@ -7490,7 +7556,6 @@ static void test_paint_messages(void)
     flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
 
-    trace("testing ValidateRgn(0, NULL)\n");
     SetLastError(0xdeadbeef);
     ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
@@ -7500,7 +7565,6 @@ static void test_paint_messages(void)
     flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
 
-    trace("testing UpdateWindow(NULL)\n");
     SetLastError(0xdeadbeef);
     ok(!UpdateWindow(NULL), "UpdateWindow(NULL) should fail\n");
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||

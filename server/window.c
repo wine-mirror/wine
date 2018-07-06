@@ -2634,13 +2634,23 @@ DECL_HANDLER(update_window_zorder)
 /* mark parts of a window as needing a redraw */
 DECL_HANDLER(redraw_window)
 {
+    unsigned int flags = req->flags;
     struct region *region = NULL;
-    struct window *win = get_window( req->window );
+    struct window *win;
 
-    if (!win) return;
+    if (!req->window)
+    {
+        if (!(win = get_desktop_window( current ))) return;
+    }
+    else
+    {
+        if (!(win = get_window( req->window ))) return;
+        if (is_desktop_window( win )) flags &= ~RDW_ALLCHILDREN;
+    }
+
     if (!is_visible( win )) return;  /* nothing to do */
 
-    if (req->flags & (RDW_VALIDATE|RDW_INVALIDATE))
+    if (flags & (RDW_VALIDATE|RDW_INVALIDATE))
     {
         if (get_req_data_size())  /* no data means whole rectangle */
         {
@@ -2650,8 +2660,7 @@ DECL_HANDLER(redraw_window)
         }
     }
 
-    redraw_window( win, region, (req->flags & RDW_INVALIDATE) && (req->flags & RDW_FRAME),
-                   req->flags );
+    redraw_window( win, region, (flags & RDW_INVALIDATE) && (flags & RDW_FRAME), flags );
     if (region) free_region( region );
 }
 
