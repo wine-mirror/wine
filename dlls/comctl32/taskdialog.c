@@ -488,7 +488,7 @@ static void taskdialog_add_radio_buttons(struct taskdialog_info *dialog_info)
         textW = taskdialog_gettext(dialog_info, TRUE, taskconfig->pRadioButtons[i].pszButtonText);
         dialog_info->radio_buttons[i] =
             CreateWindowW(WC_BUTTONW, textW, i == 0 ? style | WS_GROUP : style, 0, 0, 0, 0, dialog_info->hwnd,
-                          (HMENU)taskconfig->pRadioButtons[i].nButtonID, 0, NULL);
+                          ULongToHandle(taskconfig->pRadioButtons[i].nButtonID), 0, NULL);
         SendMessageW(dialog_info->radio_buttons[i], WM_SETFONT, (WPARAM)dialog_info->font, 0);
         Free(textW);
     }
@@ -514,7 +514,7 @@ static void taskdialog_add_command_links(struct taskdialog_info *dialog_info)
         style = is_default ? default_style | BS_DEFCOMMANDLINK : default_style | BS_COMMANDLINK;
         textW = taskdialog_gettext(dialog_info, TRUE, taskconfig->pButtons[i].pszButtonText);
         dialog_info->command_links[i] = CreateWindowW(WC_BUTTONW, textW, style, 0, 0, 0, 0, dialog_info->hwnd,
-                                                      (HMENU)taskconfig->pButtons[i].nButtonID, 0, NULL);
+                                                      ULongToHandle(taskconfig->pButtons[i].nButtonID), 0, NULL);
         SendMessageW(dialog_info->command_links[i], WM_SETFONT, (WPARAM)dialog_info->font, 0);
         Free(textW);
 
