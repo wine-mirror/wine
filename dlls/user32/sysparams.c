@@ -70,6 +70,7 @@ enum parameter_key
     SHOWSOUNDS_KEY,
     KEYBOARDPREF_KEY,
     SCREENREADER_KEY,
+    AUDIODESC_KEY,
     NB_PARAM_KEYS
 };
 
@@ -94,6 +95,9 @@ static const WCHAR KEYBOARDPREF_REGKEY[] = {'C','o','n','t','r','o','l',' ','P',
 static const WCHAR SCREENREADER_REGKEY[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                             'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
                                             'B','l','i','n','d',' ','A','c','c','e','s','s',0};
+static const WCHAR AUDIODESC_REGKEY[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                            'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
+                                            'A','u','d','i','o','D','e','s','c','r','i','p','t','i','o','n',0};
 
 static const WCHAR *parameter_key_names[NB_PARAM_KEYS] =
 {
@@ -107,6 +111,7 @@ static const WCHAR *parameter_key_names[NB_PARAM_KEYS] =
     SHOWSOUNDS_REGKEY,
     KEYBOARDPREF_REGKEY,
     SCREENREADER_REGKEY,
+    AUDIODESC_REGKEY,
 };
 
 /* parameter key values; the first char is actually an enum parameter_key to specify the key */
@@ -217,6 +222,8 @@ static const WCHAR COLOR_GRADIENTACTIVECAPTION_VALNAME[] = {COLORS_KEY,'G','r','
 static const WCHAR COLOR_GRADIENTINACTIVECAPTION_VALNAME[] = {COLORS_KEY,'G','r','a','d','i','e','n','t','I','n','a','c','t','i','v','e','T','i','t','l','e',0};
 static const WCHAR COLOR_MENUHILIGHT_VALNAME[] =       {COLORS_KEY,'M','e','n','u','H','i','l','i','g','h','t',0};
 static const WCHAR COLOR_MENUBAR_VALNAME[] =           {COLORS_KEY,'M','e','n','u','B','a','r',0};
+static const WCHAR AUDIODESC_LOCALE_VALNAME[] =        {AUDIODESC_KEY,'L','o','c','a','l','e',0};
+static const WCHAR AUDIODESC_ON_VALNAME[] =            {AUDIODESC_KEY,'O','n',0};
 
 /* FIXME - real value */
 static const WCHAR SCREENSAVERRUNNING_VALNAME[]=  {DESKTOP_KEY,'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
@@ -1240,6 +1247,7 @@ static BOOL_ENTRY( SCREENSAVERRUNNING, FALSE );
 static BOOL_ENTRY( SHOWSOUNDS, FALSE );
 static BOOL_ENTRY( SNAPTODEFBUTTON, FALSE );
 static BOOL_ENTRY_MIRROR( ICONTITLEWRAP, TRUE );
+static BOOL_ENTRY( AUDIODESC_ON, FALSE);
 
 static YESNO_ENTRY( BEEP, TRUE );
 
@@ -1269,6 +1277,7 @@ static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( LOGPIXELS, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
+static DWORD_ENTRY( AUDIODESC_LOCALE, 0 );
 
 static PATH_ENTRY( DESKPATTERN );
 static PATH_ENTRY( DESKWALLPAPER );
@@ -1399,6 +1408,8 @@ static union sysparam_all_entry * const default_entries[] =
     (union sysparam_all_entry *)&entry_USERPREFERENCESMASK,
     (union sysparam_all_entry *)&entry_WHEELSCROLLCHARS,
     (union sysparam_all_entry *)&entry_WHEELSCROLLLINES,
+    (union sysparam_all_entry *)&entry_AUDIODESC_LOCALE,
+    (union sysparam_all_entry *)&entry_AUDIODESC_ON,
 };
 
 /***********************************************************************
@@ -2334,7 +2345,26 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETFONTSMOOTHINGORIENTATION:
         ret = set_entry( &entry_FONTSMOOTHINGORIENTATION, uiParam, pvParam, fWinIni );
         break;
-
+    case SPI_GETAUDIODESCRIPTION:
+    {
+        AUDIODESCRIPTION *audio = pvParam;
+        if (audio && audio->cbSize == sizeof(AUDIODESCRIPTION) && uiParam == sizeof(AUDIODESCRIPTION) )
+        {
+            ret = get_entry( &entry_AUDIODESC_ON, 0, &audio->Enabled ) &&
+                  get_entry( &entry_AUDIODESC_LOCALE, 0, &audio->Locale );
+        }
+        break;
+    }
+    case SPI_SETAUDIODESCRIPTION:
+    {
+        AUDIODESCRIPTION *audio = pvParam;
+        if (audio && audio->cbSize == sizeof(AUDIODESCRIPTION) && uiParam == sizeof(AUDIODESCRIPTION) )
+        {
+            ret = set_entry( &entry_AUDIODESC_ON, 0, &audio->Enabled, fWinIni) &&
+                  set_entry( &entry_AUDIODESC_LOCALE, 0, &audio->Locale, fWinIni );
+        }
+        break;
+    }
     default:
 	FIXME( "Unknown action: %u\n", uiAction );
 	SetLastError( ERROR_INVALID_SPI_VALUE );
