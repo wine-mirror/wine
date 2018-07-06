@@ -555,37 +555,19 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
 					      OLE_HANDLE *phandle)
 {
-  OLEPictureImpl *This = impl_from_IPicture(iface);
-  HRESULT hres;
-  TRACE("(%p)->(%p)\n", This, phandle);
+    OLEPictureImpl *This = impl_from_IPicture(iface);
 
-  if (!phandle)
-    return E_POINTER;
+    TRACE("(%p)->(%p)\n", This, phandle);
 
-  switch (This->desc.picType) {
-    case (UINT)PICTYPE_UNINITIALIZED:
-    case PICTYPE_NONE:
-      *phandle = 0;
-      hres = S_FALSE;
-      break;
-    case PICTYPE_BITMAP:
-      *phandle = HandleToUlong(This->desc.u.bmp.hpal);
-      hres = S_OK;
-      break;
-    case PICTYPE_METAFILE:
-      hres = E_FAIL;
-      break;
-    case PICTYPE_ICON:
-    case PICTYPE_ENHMETAFILE:
-    default:
-      FIXME("unimplemented for type %d. Returning 0 palette.\n",
-           This->desc.picType);
-      *phandle = 0;
-      hres = S_OK;
-  }
+    if (!phandle) return E_POINTER;
 
-  TRACE("returning 0x%08x, palette handle %08x\n", hres, *phandle);
-  return hres;
+    if (This->desc.picType == PICTYPE_BITMAP)
+    {
+        *phandle = HandleToUlong(This->desc.u.bmp.hpal);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 /************************************************************************
