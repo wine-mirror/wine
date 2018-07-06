@@ -774,37 +774,6 @@ static const struct message WmCreateInvisibleMaxPopupSeq[] = {
     { 0 }
 };
 /* ShowWindow(SW_SHOWMAXIMIZED) for a resized not visible popup window */
-static const struct message WmShowMaxPopupResizedSeq_todo[] = {
-    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
-    { WM_GETMINMAXINFO, sent },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED },
-    { WM_NCCALCSIZE, sent|wparam, TRUE },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
-    { HCBT_ACTIVATE, hook },
-    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
-    { WM_NCPAINT, sent|wparam|optional, 1 },
-    { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { HCBT_SETFOCUS, hook },
-    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
-    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
-    { WM_GETTEXT, sent|optional },
-    { WM_NCPAINT, sent|wparam|optional, 1 },
-    { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent },
-    /* WinNT4.0 sends WM_MOVE */
-    { WM_MOVE, sent|defwinproc|optional },
-    { WM_SIZE, sent|defwinproc|wparam, SIZE_MAXIMIZED },
-    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { 0 }
-};
 static const struct message WmShowMaxPopupResizedSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
@@ -827,7 +796,7 @@ static const struct message WmShowMaxPopupResizedSeq[] = {
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_GETTEXT, sent|optional },
-    { WM_NCPAINT, sent|optional }, /* We'll check WM_NCPAINT behaviour in another test */
+    { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent },
     /* WinNT4.0 sends WM_MOVE */
@@ -4749,18 +4718,6 @@ static void test_showwindow(void)
     ok( rc.right-rc.left == GetSystemMetrics(SM_CXSCREEN) &&
         rc.bottom-rc.top == GetSystemMetrics(SM_CYSCREEN),
         "Invalid maximized size after ShowWindow %s\n", wine_dbgstr_rect( &rc ));
-    DestroyWindow(hwnd);
-    flush_sequence();
-
-    /* Test again, this time the NC_PAINT message */
-    hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE,
-                           100, 100, 200, 200, 0, 0, 0, NULL);
-    ok (hwnd != 0, "Failed to create popup window\n");
-    SetWindowPos(hwnd, 0, 10, 10, 200, 200, SWP_NOZORDER | SWP_NOACTIVATE);
-    flush_sequence();
-    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-    ok_sequence(WmShowMaxPopupResizedSeq_todo,
-            "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized and resized popup TODO", FALSE);
     DestroyWindow(hwnd);
     flush_sequence();
 
