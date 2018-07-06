@@ -539,12 +539,61 @@ static void test_Invoke(void)
     IPictureDisp_Release(picdisp);
 }
 
+static HRESULT create_picture(short type, IPicture **pict)
+{
+    PICTDESC desc;
+
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = type;
+
+    switch (type)
+    {
+    case PICTYPE_UNINITIALIZED:
+        return OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void **)pict);
+
+    case PICTYPE_NONE:
+        break;
+
+    case PICTYPE_BITMAP:
+        desc.u.bmp.hbitmap = CreateBitmap(1, 1, 1, 1, NULL);
+        desc.u.bmp.hpal = (HPALETTE)0xbeefdead;
+        break;
+
+    case PICTYPE_ICON:
+        desc.u.icon.hicon = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+        break;
+
+    case PICTYPE_METAFILE:
+    {
+        HDC hdc = CreateMetaFileA(NULL);
+        desc.u.wmf.hmeta = CloseMetaFile(hdc);
+        desc.u.wmf.xExt = 1;
+        desc.u.wmf.yExt = 1;
+        break;
+    }
+
+    case PICTYPE_ENHMETAFILE:
+    {
+        HDC hdc = CreateEnhMetaFileA(0, NULL, NULL, NULL);
+        desc.u.emf.hemf = CloseEnhMetaFile(hdc);
+        break;
+    }
+
+    default:
+        ok(0, "picture type %d is not supported\n", type);
+        return E_NOTIMPL;
+    }
+
+    return OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (void **)pict);
+}
+
 static void test_OleCreatePictureIndirect(void)
 {
+    PICTDESC desc;
     OLE_HANDLE handle;
     IPicture *pict;
     HRESULT hr;
-    short type;
+    short type, i;
 
 if (0)
 {
@@ -552,20 +601,52 @@ if (0)
     OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
 }
 
-    hr = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
-    ok(hr == S_OK, "hr %08x\n", hr);
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_UNINITIALIZED;
+    pict = (void *)0xdeadbeef;
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (void **)&pict);
+    ok(hr == E_UNEXPECTED, "got %#x\n", hr);
+    ok(pict == NULL, "got %p\n", pict);
 
-    type = PICTYPE_NONE;
-    hr = IPicture_get_Type(pict, &type);
-    ok(hr == S_OK, "hr %08x\n", hr);
-    ok(type == PICTYPE_UNINITIALIZED, "type %d\n", type);
+    for (i = PICTYPE_UNINITIALIZED; i <= PICTYPE_ENHMETAFILE; i++)
+    {
+        hr = create_picture(i, &pict);
+        ok(hr == S_OK, "%d: got %#x\n", i, hr);
 
-    handle = 0xdeadbeef;
-    hr = IPicture_get_Handle(pict, &handle);
-    ok(hr == S_OK, "hr %08x\n", hr);
-    ok(handle == 0, "handle %08x\n", handle);
+        type = 0xdead;
+        hr = IPicture_get_Type(pict, &type);
+        ok(hr == S_OK, "%d: got %#x\n", i, hr);
+        ok(type == i, "%d: got %d\n", i, type);
 
-    IPicture_Release(pict);
+        handle = 0xdeadbeef;
+        hr = IPicture_get_Handle(pict, &handle);
+        ok(hr == S_OK, "%d: got %#x\n", i, hr);
+        if (type == PICTYPE_UNINITIALIZED || type == PICTYPE_NONE)
+            ok(handle == 0, "%d: got %#x\n", i, handle);
+        else
+            ok(handle != 0 && handle != 0xdeadbeef, "%d: got %#x\n", i, handle);
+
+        handle = 0xdeadbeef;
+        hr = IPicture_get_hPal(pict, &handle);
+        if (type == PICTYPE_BITMAP)
+        {
+            ok(hr == S_OK, "%d: got %#x\n", i, hr);
+            ok(handle == 0xbeefdead, "%d: got %#x\n", i, handle);
+        }
+        else
+        {
+            ok(hr == E_FAIL, "%d: got %#x\n", i, hr);
+            ok(handle == 0xdeadbeef || handle == 0 /* win64 */, "%d: got %#x\n", i, handle);
+        }
+
+        hr = IPicture_set_hPal(pict, HandleToUlong(GetStockObject(DEFAULT_PALETTE)));
+        if (type == PICTYPE_BITMAP)
+            ok(hr == S_OK, "%d: got %#x\n", i, hr);
+        else
+            ok(hr == E_FAIL, "%d: got %#x\n", i, hr);
+
+        IPicture_Release(pict);
+    }
 }
 
 static void test_apm(void)
