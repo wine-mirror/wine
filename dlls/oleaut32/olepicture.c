@@ -739,10 +739,18 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 static HRESULT WINAPI OLEPictureImpl_set_hPal(IPicture *iface,
 					      OLE_HANDLE hpal)
 {
-  OLEPictureImpl *This = impl_from_IPicture(iface);
-  FIXME("(%p)->(%08x): stub\n", This, hpal);
-  OLEPicture_SendNotify(This,DISPID_PICT_HPAL);
-  return E_NOTIMPL;
+    OLEPictureImpl *This = impl_from_IPicture(iface);
+
+    TRACE("(%p)->(%08x)\n", This, hpal);
+
+    if (This->desc.picType == PICTYPE_BITMAP)
+    {
+        This->desc.u.bmp.hpal = ULongToHandle(hpal);
+        OLEPicture_SendNotify(This,DISPID_PICT_HPAL);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 /************************************************************************
