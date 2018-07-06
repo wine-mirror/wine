@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-06-09 23:18+0200\n"
+"PO-Revision-Date: 2018-07-06 19:05+0200\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -3436,32 +3436,24 @@ msgid "Publishers..."
 msgstr "Utgivere..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Lokal nettverksforbindelse"
+msgstr "Nettverksforbindelser"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Lokal tjener"
+msgstr "Mellomtjener"
 
 #: inetcpl.rc:126
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Bruk en mellomtjener"
 
 #: inetcpl.rc:127
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adresse"
+msgstr "Adresse:"
 
 #: inetcpl.rc:129
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Ingen porter"
+msgstr "Port:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -4451,7 +4443,7 @@ msgstr "Katalognavnet er ugyldig.\n"
 
 #: winerror.mc:918
 msgid "Extended attributes didn't fit.\n"
-msgstr "De utvidede atributtene fikk ikke plass.\n"
+msgstr "De utvidede egenskapene fikk ikke plass.\n"
 
 #: winerror.mc:923
 msgid "Extended attribute file corrupt.\n"
@@ -4467,7 +4459,7 @@ msgstr "Ugyldig referanse for utvidet atributt.\n"
 
 #: winerror.mc:938
 msgid "Extended attributes not supported.\n"
-msgstr "Utvidede atributter støttes ikke.\n"
+msgstr "Utvidede egenskaper støttes ikke.\n"
 
 #: winerror.mc:943
 msgid "Mutex not owned by caller.\n"
@@ -6799,7 +6791,7 @@ msgstr "&Format:"
 
 #: msacm32.rc:47
 msgid "&Attributes:"
-msgstr "&Attributter:"
+msgstr "&Egenskaper:"
 
 #: mshtml.rc:39
 msgid "Hyperlink"
@@ -8559,7 +8551,7 @@ msgstr "Dato opprettet:"
 
 #: shell32.rc:369 shell32.rc:406
 msgid "Attributes:"
-msgstr "Attributter:"
+msgstr "Egenskaper:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8599,7 +8591,7 @@ msgstr "Endret"
 
 #: shell32.rc:141 winefile.rc:172 winefile.rc:114
 msgid "Attributes"
-msgstr "Attributter"
+msgstr "Egenskaper"
 
 #: shell32.rc:143
 msgid "Size available"
@@ -9241,10 +9233,12 @@ msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"SSL-sertifikatdato som ble mottatt fra tjeneren er feil. Sertifikatet er "
+"utgått.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL-sertifikatets vertsnavn-felt er feil.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
@@ -12020,7 +12014,7 @@ msgstr "Kopier program:"
 
 #: progman.rc:152
 msgid "Program Group Attributes"
-msgstr "Programgruppeattributter"
+msgstr "Programgruppe-egenskaper"
 
 #: progman.rc:156
 msgid "&Group file:"
@@ -12028,7 +12022,7 @@ msgstr "&Gruppefil:"
 
 #: progman.rc:168
 msgid "Program Attributes"
-msgstr "Programattributter"
+msgstr "Programegenskaper"
 
 #: progman.rc:172 progman.rc:212
 msgid "&Command line:"
@@ -15664,41 +15658,6 @@ msgid "D"
 msgstr "K"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -15762,6 +15721,7 @@ msgstr ""
 "[/A]  Bare kopier filer som er markert som arkiv.\n"
 "[/M]  Bare kopier filer som er markert som arkiv; fjern denne\n"
 "\tmerkingen etterpå.\n"
+"[/K]  Kopier filegenskaper, uten denne blir ikke egenskapene preservert.\n"
 "[/D | /D:m-d-å] Kopier nye filer eller de som er endret etter\n"
 "\t\tden oppgitte datoen. Hvis ingen dato oppgis kopieres det bare hvis\n"
 "\t\tmålet er eldre enn kilden.\n"
