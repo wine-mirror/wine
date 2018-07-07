@@ -68,7 +68,6 @@ static BOOL drivers_loaded;
 static int MMDrvsHi;
 static WINE_MM_DRIVER	MMDrvs[8];
 static LPWINE_MLD	MM_MLDrvs[40];
-#define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
 
 static void MMDRV_Init(void);
 
@@ -146,9 +145,9 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     if (!mld)	return NULL;
 
     /* find an empty slot in MM_MLDrvs table */
-    for (i = 0; i < MAX_MM_MLDRVS; i++) if (!MM_MLDrvs[i]) break;
+    for (i = 0; i < ARRAY_SIZE(MM_MLDrvs); i++) if (!MM_MLDrvs[i]) break;
 
-    if (i == MAX_MM_MLDRVS) {
+    if (i == ARRAY_SIZE(MM_MLDrvs)) {
 	/* the MM_MLDrvs table could be made growable in the future if needed */
 	ERR("Too many open drivers\n");
         HeapFree(GetProcessHeap(), 0, mld);
