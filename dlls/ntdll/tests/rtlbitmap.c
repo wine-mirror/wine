@@ -635,7 +635,6 @@ static void test_RtlFindNextForwardRunSet(void)
 
   pRtlInitializeBitMap(&bm, mask, 62);
   ulCount = pRtlFindNextForwardRunSet(&bm, ulStart, &lpPos);
-  todo_wine
   ok(ulCount == 6, "Invalid length of found set run: %d, expected 6\n", ulCount);
   ok(lpPos == 56, "Invalid position of found set run: %d, expected 56\n", lpPos);
 }
@@ -650,7 +649,6 @@ static void test_RtlFindNextForwardRunClear(void)
 
   pRtlInitializeBitMap(&bm, mask, 62);
   ulCount = pRtlFindNextForwardRunClear(&bm, ulStart, &lpPos);
-  todo_wine
   ok(ulCount == 6, "Invalid length of found clear run: %d, expected 6\n", ulCount);
   ok(lpPos == 56, "Invalid position of found clear run: %d, expected 56\n", lpPos);
 }

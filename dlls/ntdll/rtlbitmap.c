@@ -731,6 +731,12 @@ static ULONG NTDLL_FindSetRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSize)
       return ~0U;
   }
 
+  /* Check if reached the end of bitmap */
+  if (ulStart >= lpBits->SizeOfBitMap) {
+    *lpSize = ulCount - (ulStart - lpBits->SizeOfBitMap);
+    return ulFoundAt;
+  }
+
   /* Count blocks of 8 set bits */
   while (*lpOut == 0xff)
   {
@@ -820,6 +826,12 @@ static ULONG NTDLL_FindClearRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSiz
     lpOut++;
     if (ulStart >= lpBits->SizeOfBitMap)
       return ~0U;
+  }
+
+  /* Check if reached the end of bitmap */
+  if (ulStart >= lpBits->SizeOfBitMap) {
+    *lpSize = ulCount - (ulStart - lpBits->SizeOfBitMap);
+    return ulFoundAt;
   }
 
   /* Count blocks of 8 clear bits */
