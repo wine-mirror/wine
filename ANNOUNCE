@@ -1,16 +1,16 @@
-The Wine development release 3.11 is now available.
+The Wine development release 3.12 is now available.
 
 What's new in this release (see below for details):
-  - More debugger support for Wow64 processes.
-  - Support for sha256/sha384 hashes in ECDSA signatures.
-  - Better reporting of hyper-threaded CPUs.
-  - Improvements to the standard Task Dialog.
+  - Unicode data updated to Unicode 11.0.0.
+  - Proxy configuration dialog in the Internet control panel.
+  - Syntax fixes in the Cmd.exe command intepreter.
+  - Some more glyphs in the Wingdings font.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.x/wine-3.11.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.x/wine-3.11.tar.xz
+  https://dl.winehq.org/wine/source/3.x/wine-3.12.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.x/wine-3.12.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -26,250 +26,297 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.11 (total 12):
+Bugs fixed in 3.12 (total 40):
 
-  27708  GetThreadSelectorEntry fails
-  28251  Shadows do not appear in Mafia II
-  41174  DDS Converter (DX11) crashes with an error message "Failed init D3D device"
-  43579  starting any wine process on armv7l: Bus error (core dumped)
-  44557  Chuckie Egg: The Next Batch v1.2 regression on Wine 3.2 (CSMT)
-  45109  Implement debugging 32-bit processes using 64-bit winedbg
-  45156  autohotkey can't seem to click buttons any more (breaking winetricks -q dirac et al)
-  45284  Multiple Microsoft Office installers crash with Windows 8+ setting due to missing 'user32.RegisterPointerDeviceNotifications' stub (Office 2013)
-  45294  64-bit Mod Organizer 2.1.2 dev6-Silarn-prerelease fails to load 'usvfs_x64.dll', needs 'ntdll.RtlReleaseRelativeName'
-  45299  Adobe flash player online installer fails the download
-  45302  Multiple Microsoft Office installers crash with Windows 8+ setting due to missing 'user32.GetPointerDevices' stub (Office 2013)
-  45303  Multiple Microsoft Office installers crash with Windows 8+ setting due to missing 'user32.RegisterTouchHitTestingWindow' stub (Office 2013)
+  18164  dlls/iphlpapi/ifenum.c: compiler warnings on NetBSD
+  18560  No crosshairs in Starfleet Academy
+  20986  Euler fails to make a computation with maxima.exe: maxima.exe fails to start
+  23048  Unreal Tournament 3 fails and locks up
+  24641  ProPresenter 4.x (.NET 3.5 WPF app) fails on startup (devenum CreateInstance() doesn't support IID_IUnknown)
+  27497  Regedit mangles registry keys containing embedded NULLs
+  29325  Stranded II: laggy mouse pointer in the inventory screen
+  30910  Lighting incorrectly drawn in Alien Shooter
+  34365  Splinter Cell: Blacklist error with d3d_texture:wined3d_texture_apply_state_changes
+  34916  cmd:batch fails on Windows 8 and 8.1
+  35427  Diplomacy (1999) crashes on startup
+  35706  Splinter Cell: Blacklist crashes with Field AO & SSAO
+  35902  Certificates signed using ECDSA signature can not be verified (>= Win Vista - affects EA Origin, Uplay, Blizzard App, MoonBot)
+  36798  kernel32/change.c fails on 3.16.x kernels
+  38599  Heroes of Might & Magic III HD Edition becomes unresponsive after starting a scenario
+  38689  Duke Nukem Forever: intense flickering, screen covered with grey
+  38849  valgrind shows an uninitialized variable in programs/cmd/tests/batch.c:WCMD_assoc
+  39218  advpack:advpack fails if privileges not high enough
+  39222  mstask:task_scheduler fails if privileges not high enough
+  39228  House of Caravan light sources are broken with ARB shaders enabled
+  39238  mscft:inputprocessor fails if privileges not high enough
+  39457  "for /R" tests fail when run in a directory containing spaces
+  40694  Invalid behavior of "C: && echo haha" or "C: & echo haha"
+  40706  FolderMerger cmd not valued, xcopy needs /k support
+  42602  ::CompareItem(LPCOMPAREITEMSTRUCT lpCompareItemStruct) bad sort compared to Windows
+  42823  cmd.exe behaves differently from Win7 regarding redefined labels
+  42931  CMD START: invalid argument
+  43049  League of Legends: massive performance regression
+  44585  Multiple applications and games need ntdll.LdrRegisterDllNotification/LdrUnregisterDllNotification implementation (Firefox 60+, Diablo III v2. 6. 1. 49286+, World of Warcraft, Overwatch)
+  44720  Intel Asteroids Direct3D12 sample requires ninput.dll.CreateInteractionContext
+  44967  xcopy does not copy empty subdirectories if options /s and /e without space
+  45051  cmd.exe for loop does not resolve wildcards with subdirectory
+  45052  cmd.exe: if-statement does not resolve wildcards
+  45355  FrameMaker 8: Abort with specific document due to USER lock error
+  45359  SHGetKnownFolderPath doesn't handle flag KF_FLAG_DONT_UNEXPAND
+  45387  arm64_map_dwarf_register: Don't know how to map register (64-66)
+  45389  odbccp32:misc fails if privileges are not high enough
+  45390  devenum:devenum fails if privileges are not high enough
+  45403  dwarf2_parse_variable(): Assertion `subpgm->func' failed
+  45410  Muv-Luv (Steam) wants USER32.dll.GetAutoRotationState semi-stub
 
 ----------------------------------------------------------------
 
-Changes since 3.10:
+Changes since 3.11:
 
-Alexandre Julliard (6):
-      ntdll: Pass the server context to get/set_thread_context().
-      winedbg: Fix some compiler warnings.
-      winex11: Fix exposing partially off-screen windows.
-      ntdll: Implement RtlExpandEnvironmentStrings().
-      user32: Don't remap DPI for font size in points when saving.
-      user32: Check the DpiScalingVer registry key to enable DPI scaling.
+Alex Henrie (5):
+      include: Add definitions of SERVICES_*_DATABASEW for generic compilers.
+      include: Add missing type declaration to CERT_EFSBLOB_VALUE_NAME.
+      iphlpapi: Cast caddr_t to char* before doing pointer arithmetic.
+      gdi32: Add DECLSPEC_HOTPATCH to GetDIBits.
+      include: Add SYSTEM_FIRMWARE_TABLE_INFORMATION to winternl.h.
 
-Alistair Leslie-Hughes (1):
-      winex11: Correct compile without vulkan support.
+Alexander Morozov (1):
+      ntoskrnl.exe: Improve KeInitializeTimerEx stub.
 
-Andrew Eikum (1):
-      winex11.drv: Refcount the vulkan surface window.
+Alexandre Julliard (8):
+      schedsvc: Only restart the directory watch once we've received data.
+      user32: Don't copy window bits to or from the dummy surface.
+      server: Add a couple of rectangle helper functions.
+      server: Don't clip update regions to the desktop window.
+      comdlg32/filedlg: Resize the Places toolbar along with the dialog.
+      comctl32/taskdialog: Fix pointer cast warnings.
+      user32/tests: Remove a duplicate todo test.
+      user32: Update RedrawWindow behavior with explicit desktop window handle.
+
+Alistair Leslie-Hughes (2):
+      user32: Support SPI_S/GETAUDIODESCRIPTION in SystemParametersInfo.
+      ntoskrnl.exe/tests: Add KeInitializeTimerEx tests.
 
 Andrey Gusev (1):
-      winex11.drv: Move condition to the proper place.
+      msi: Remove checks for negative value.
 
-André Hentschel (1):
-      ws2_32/tests: Use the available ARRAY_SIZE() macro.
+André Hentschel (4):
+      dbghelp: Map SIMD dwarf registers on ARM64.
+      dbghelp: Recompute location after fixing it.
+      ole32/tests: Don't crash if EnumFormatEtc failed.
+      advpack: Use ARRAY_SIZE() macro.
 
-Dmitry Timoshkov (6):
-      mstask: Retry opening a .job file only in case of sharing violation.
-      schedsvc: Retry opening a .job file only in case of sharing violation.
-      mstask: Implement ITask::SetWorkItemData().
-      mstask: Implement ITask::GetWorkItemData().
-      mstask/tests: Add some tests for workitem data.
-      gdi32: For symbol fonts check whether the char has been converted to Unicode.
+Aurimas Fišeras (3):
+      po: Update Lithuanian translation.
+      po: Update Lithuanian translation.
+      po: Update Lithuanian translation.
 
-Fabian Maurer (1):
-      ntdll: Add stub for WinSqmSetDWORD.
+Austin English (1):
+      winecfg: Recommend against overriding secur32.
 
-François Gouget (2):
-      winetest: Don't show dll=skipped messages for skipped tests.
-      wsdapi: Add a trailing '\n' to a WARN() message.
+Dmitry Timoshkov (18):
+      fonts: Add clock images to Wingdings font.
+      mstask: Use current time as trigger begin time when necessary.
+      mstask: Avoid an infinite loop.
+      schedsvc: Minor cleanup.
+      schedsvc: Avoid an infinite loop.
+      schedsvc: Use current time as trigger begin time when necessary.
+      user32/tests: Add a test for WM_MEASUREITEM when inserting an item to an owner-drawn listbox.
+      user32/tests: Add a message test for an owner-drawn sorted listbox.
+      user32/tests: Add some message tests for not an owner-drawn listbox.
+      user32: Fix order of items passed in WM_COMPAREITEM data.
+      user32: Fix the listbox sorting algorithm.
+      user32: For an owner-drawn listbox without strings WM_MEASUREITEM still needs correct itemData.
+      comctl32/listbox: Fix order of items passed in WM_COMPAREITEM data.
+      comctl32/listbox: Fix the listbox sorting algorithm.
+      oleaut32: Don't accept unsupported picture types in OleCreatePictureIndirect.
+      oleaut32: IPicture::get_hPal() supports only bitmaps.
+      oleaut32: IPicture::set_hPal() supports only bitmaps.
+      oleaut32/tests: Add tests for IPicture::get_hPal() and IPicture::set_hPal().
 
-Hans Leidekker (5):
-      webservices: Avoid a warning from HeapDestroy.
-      webservices: Avoid accessing the old user buffer in WsSetOutput/ToBuffer.
-      webservices: Implement WsShutdownSessionChannel.
-      webservices: Use the static dictionary only while writing the message header.
-      webservices: Send incremental string table updates with messages in the same session.
+Fabian Maurer (6):
+      msvcrt: Use already existent oneexit_table functions for _onexit and _c_exit.
+      user32: Always release menu item in EnableMenuItem.
+      msvcrt: Use cdecl calling convention for atexit callback.
+      ucrtbase: Add _crt_at_quick_exit stub.
+      ucrtbase: Add quick_exit.
+      ucrtbase: Implement quick_exit and _crt_at_quick_exit.
 
-Hua Meng (4):
-      msvcp120: Add test for Concurrent_vector_copy.
-      msvcp120: Add test for Concurrent_vector_assign.
-      msvcp120/tests: Add test for Concurrent_vector_swap.
-      msvcp120: Add test for Concurrent_vector_Internal_compact.
+Hans Leidekker (1):
+      configure: Allow building bcrypt with GnuTLS support on macOS.
 
-Jacek Caban (5):
-      jscript: Use global accumulator for storing function call results.
-      mshtml: Support input event.
-      mshtml.idl: Added IHTMLPerformance declaration.
-      mshtml.idl: Added IHTMLPerformance test.
-      mshtml: Added IHTMLWindow7::performance property implementation.
+Hua Meng (3):
+      msvcp120: Add test for Concurrent_vector_grow_by.
+      msvcp120: Add test for Concurrent_vector_grow_to_at_least_with_result.
+      msvcp120: Add test for Concurrent_vector_Internal_resize and reverse.
 
-Józef Kucia (26):
-      d3d11: Normalize 1D texture view descriptions.
-      wined3d: Get rid of WINED3DCAPS typedef.
-      wined3d: Remove "Reserved" fields from wined3d_caps.
-      wined3d: Store feature level in d3d_info.
-      wined3d: Expose feature level in wined3d caps.
-      dxgi: Get supported feature levels from wined3d caps.
-      winedbg: Get rid of ifdefs.
-      d3d11: Introduce get_resource_properties() helper function.
-      wined3d: Initialize depth/stencil texture data.
-      d3d9/tests: Add test for depth stencil initialization.
-      wined3d: Reduce nesting in texture2d_load_sysmem().
-      wined3d: Use WINED3D_LOCATION_DISCARDED before initializing buffers with data.
-      wined3d: Call wined3d_cs_emit_update_sub_resource() directly in buffer_init().
-      wrc: Accept hyphens in identificators.
-      vulkan-1/tests: Add tests.
-      include: Add POINTER_INPUT_TYPE.
-      include: Add interactioncontext.h.
-      ninput: Implement CreateInteractionContext().
-      ninput: Add ProcessInertiaInteractionContext() stub.
-      ninput: Implement SetPropertyInteractionContext().
-      ninput: Add SetInteractionConfigurationInteractionContext() stub.
-      ninput: Add RegisterOutputCallbackInteractionContext() stub.
-      shell32: Accept more flags in SHGetKnownFolderPath().
-      shell32/tests: Reorder known_folders table definition.
-      shell32/tests: Add tests for SHGetKnownFolderPath() flags.
-      shell32/tests: Remove empty element from known_folders[].
+Huw D. M. Davies (1):
+      ntdll/tests: Skip the map protect tests if we can't disable no-exec.
 
-Kieran Duggan (1):
-      d3dx9/tests: Add initial tests for ID3DXFont::DrawText().
+Jason Edmeades (9):
+      cmd: Add support for wildcards in if exist.
+      cmd: Fix subdirectory prefix in for loops.
+      xcopy: Handle multiple switches concatenated without whitespace.
+      xcopy: Return code 1 for no files is never returned.
+      xcopy: Fix copying empty directories.
+      cmd: Support "c:<space>" etc when changing drive letters.
+      cmd: Call and goto finds the next matching label.
+      cmd: Fix issue in WCMD_assoc highlighted by valgrind.
+      xcopy: Add support for xcopy /k.
 
-Lauri Kenttä (1):
+Julian Rüger (1):
+      po: Update German translation.
+
+Józef Kucia (4):
+      include/d3d12: Fix typos.
+      dxgi: Avoid possible NULL pointer access in d3d11_swapchain_SetFullscreenState().
+      wined3d: Fix snorm/unorm immediate values for UAV writes.
+      d3d11/tests: Add test for unorm/snorm immediate constants.
+
+Kim Malmo (1):
+      po: Update Norwegian translation.
+
+Lauri Kenttä (2):
+      po: Update Finnish translation.
       po: Update Finnish translation.
 
+Louis Lenders (1):
+      ntoskrnl.exe: Add stub for IoUnregisterPlugPlayNotification.
+
+Marcus Meissner (13):
+      hnetcfg: GetModuleFileNameW gets characters, not bytes (Coverity).
+      shell32: Use characters as arguments to GetTempPathW and GetLongPathNameW.
+      kernel32: GetCalendarInfoW gets character sizes.
+      kernel32: GetVolumePathNamesForVolumeNameW gets character as buffer size.
+      psapi: GetProcessImageFileName gets character count as argument.
+      shlwapi: SHGetIniStringW buffer size is in characters.
+      icinfo: vsnprintfw takes characters as buffer size not bytes.
+      d3dx9/tests: Fix string size to MultiByteToWideChar().
+      comctl32/tests: Header item struct gets characters not bytes.
+      comctl32: Treeview item gets characters not bytes passed in.
+      shell32: Set size in characters in MENUITEMINFOW struct.
+      quartz: StringFromGUID2 gets character counts, not bytes.
+      amstream/tests: Use correct buffer size for StringFromGUID2.
+
+Mark Jansen (1):
+      ntdll/tests: Tests for RtlIpv6StringToAddress.
+
 Matteo Bruni (2):
-      wined3d: Generate shader epilogue before conditional returns.
-      wined3d: Set stream stride and offset even when buffer is NULL.
+      d3dx10: Turn some ERR() into WARN().
+      wined3d: Declare the correct number and type of fragment shader color outputs.
 
 Michael Müller (4):
-      crypt32: Implement decoding of X509_OBJECT_IDENTIFIER.
-      crypt32: Implement decoding of X509_ECC_SIGNATURE.
-      crypt32/tests: Add a basic test for ecdsa oid.
-      crypt32: Add oids for sha256ECDSA and sha384ECDSA.
+      crypt32: Implement verification of ECDSA signatures.
+      ntdll: Implement LdrRegisterDllNotification and LdrUnregisterDllNotification.
+      user32: Add semi-stub for GetAutoRotationState.
+      msvcr120: Add stub for _SetWinRTOutOfMemoryExceptionCallback.
 
-Michael Stefaniuc (31):
-      windowscodecs/tests: Use the available ARRAY_SIZE() macro.
-      winhttp/tests: Use the available ARRAY_SIZE() macro.
-      vcomp/tests: Use the available ARRAY_SIZE() macro.
-      msi/tests: Avoid ARRAY_SIZE-like macros.
-      msxml3/tests: Use the available ARRAY_SIZE() macro.
-      ole32/tests: Use the available ARRAY_SIZE() macro.
-      include: Add an option to disable line numbers in the tests.
-      dsound/tests: Avoid ARRAY_SIZE-like macros.
-      dsound/tests: Use the available ARRAY_SIZE() macro.
-      winmm/tests: Avoid and ARRAY_SIZE-like macro.
-      winmm/tests: Use the available ARRAY_SIZE() macro.
-      shell32/tests: Avoid sizeof in a trace.
-      shell32/tests: Use the available ARRAY_SIZE() macro.
-      setupapi/tests: Use the available ARRAY_SIZE() macro.
-      msi/tests: Use the available ARRAY_SIZE() macro.
-      winedbg: Use the available ARRAY_SIZE() macro.
-      oleaut32/tests: Use the available ARRAY_SIZE() macro.
-      oleaut32/tests: Avoid an ARRAY_SIZE-like macro.
-      oleaut32/tests: Use a better type to avoid a cast.
-      riched32/tests: Use the available ARRAY_SIZE() macro.
-      riched20/tests: Use the available ARRAY_SIZE() macro.
-      urlmon/tests: Use the available ARRAY_SIZE() macro.
-      wininet/tests: Use the correct array size in a notification_data test.
-      msvcrt: Rename a macro to ARRAY_SIZE().
-      msvcrt/tests: Use the available ARRAY_SIZE() macro.
-      wininet/tests: Use the available ARRAY_SIZE() macro.
-      ntdll/tests: Use the available ARRAY_SIZE() macro.
-      ntdll/tests: Avoid ARRAY_SIZE-like macros.
+Michael Stefaniuc (32):
+      gdi32/tests: Use the available ARRAY_SIZE() macro.
+      shlwapi/tests: Use the available ARRAY_SIZE() macro.
+      shlwapi/tests: Pass the correct buffer size to PathUnExpandEnvStringsW().
+      shlwapi/tests: Pass the correct buffer size to WideCharToMultiByte().
       kernel32/tests: Use the available ARRAY_SIZE() macro.
-      crypt32: Use the available ARRAY_SIZE() macro.
-      crypt32/tests: Use the available ARRAY_SIZE() macro.
+      comdlg32/tests: Don't undefine ARRAY_SIZE().
+      user32/tests: Don't undefine ARRAY_SIZE().
+      user32/tests: Avoid a variable that holds an ARRAY_SIZE().
+      kernel32/tests: Avoid ARRAY_SIZE-like macros.
+      user32/tests: Avoid ARRAY_SIZE-like macros.
+      user32/tests: Use the available ARRAY_SIZE() macro.
+      include: Add a generic available ARRAY_SIZE().
+      quartz: Use the more common ARRAY_SIZE spelling.
+      user32: Use the more common ARRAY_SIZE spelling.
+      dinput: Avoid ARRAY_SIZE-like macros.
+      iphlpapi: Avoid ARRAY_SIZE-like macros.
+      mscoree: Use the more common ARRAY_SIZE spelling.
+      wininet: Use the more common ARRAY_SIZE spelling.
+      winhttp: Use the more common ARRAY_SIZE spelling.
+      dssenh/test: Replace a macro with ARRAY_SIZE.
+      serialui: Replace a macro with ARRAY_SIZE.
+      glu32: Avoid an ARRAY_SIZE-like macro.
+      krnl386.exe16: Avoid ARRAY_SIZE-like macros.
+      ole32: Use the more common ARRAY_SIZE spelling.
+      shell32: Avoid ARRAY_SIZE-like macros.
+      winex11.drv: Avoid ARRAY_SIZE-like macros.
+      msvcr100/test: Replace a macro with ARRAY_SIZE.
+      cryptui: Use the ARRAY_SIZE() macro.
+      view: Use the ARRAY_SIZE() macro.
+      oleview: Use the ARRAY_SIZE() macro.
+      netapi32: Use the ARRAY_SIZE() macro.
+      credui: Use the ARRAY_SIZE() macro.
 
-Nikolay Sivov (4):
-      user32: Fix returned class name for other process windows.
+Michał Janiszewski (3):
+      ntdll: Only set owned bits in RTL_BITMAP.
+      msvcrt: Don't forget to free the buffer in scanf.
+      msvcrt: Update size checks for secure scanf versions.
+
+Nikolay Sivov (7):
+      crypt32: Correctly return how the issuer of a self signed certificate was matched.
+      crypt32: Fix string arguments tracing.
+      tools: Update to Unicode 11.0.0.
       po: Update Russian translation.
-      crypt32: Use ARRAY_SIZE macro.
-      crypt32/tests: Compact existing OID tests.
+      comctl32/tests: Add some tests for ownerdrawn listbox.
+      po: Update Russian translation.
+      urlmon: Use ARRAY_SIZE() macro.
 
-Owen Rudge (10):
-      wsdapi: Add support for listening for UDP multicast broadcasts.
-      wsdapi: Add critical section around notification sinks.
-      wsdapi: Add stub for Probe message parsing, prepare notification sink message.
-      wsdapi: Add initial support for reading messages; identify Probe message.
-      wsdapi: Return "any" headers in read_message.
-      wsdapi: Implement probe message parsing.
-      wsdapi: Build types list when parsing Probe message.
-      wsdapi: Add support for parsing AppSequence header.
-      wsdapi/tests: Add tests for AppSequence in Probe message.
-      wsdapi/tests: Add tests for MatchProbeEx.
+Piotr Caban (4):
+      inetcpl.cpl: Add proxy server settings dialog.
+      inetcpl.cpl: Add partial support for writing DefaultConnectionSettings registry setting.
+      ucrtbase: Test child process exit code.
+      ucrtbase: Report child process test failures in exit() tests.
 
-Piotr Caban (11):
-      msvcr100: Fix lldiv implementation.
-      msvcp120: Fix function passed to _Concurrent_vector_base_v4::_Internal_clear.
-      msvcp120: Add alloc/free count validation tests in _Concurrent_vector_base_v4.
-      msi/tests: Add package minor/major upgrade tests.
-      msi: Add support for ProductToBeRegistered property.
-      msi: Re-publish product if previous installation with different package is detected.
-      msi: Add REINSTALLMODE=v installation mode test.
-      msi: Add ProductToBeRegistered property tests.
-      msi: Report error when cached installer has different version.
-      msi: Add support for re-caching package.
-      appwiz.cpl: Support installing minor updates when installing addons.
+Rafał Mużyło (1):
+      d3d9: Expand rectangles in debug strings.
 
-Roderick Colenbrander (5):
-      ntdll: Derive number of logical CPU cores from core mask.
-      ntdll: Store core information by core on macOS.
-      ntdll: Report physical cores once with proper thread mask.
-      ntdll: GetLogicalProcessorInformationEx report LTP_PC_SMT for SMT cores.
-      ntdll: GetLogicalProcessorInformation report LPT_PC_SMT for SMT cores.
+Sebastian Lackner (1):
+      kernel32: Fill stack with meaningful values in call_process_entry mis-align workaround.
 
-Zebediah Figura (37):
-      ntdll: Implement RtlWow64GetThreadContext().
-      ntdll: Implement RtlWow64SetThreadContext().
-      kernel32: Implement Wow64GetThreadContext().
-      kernel32: Implement Wow64SetThreadContext().
-      msvcrt: Avoid using inline assembly in call_unwind_func().
-      msvcrt: Don't reimplement call_unwind_func().
-      ndrtypes.h: Add more constants.
-      rpcrt4: Use publicly defined NDR constants.
-      widl: Use publicly defined NDR constants.
-      winedbg: Make be_cpu process-specific.
-      winedbg/gdbproxy: Remove unnecessary checks for supported context flags.
-      winedbg: Use WOW64_CONTEXT instead of CONTEXT for i386 backend.
-      winedbg: Add a backend-specific vector for retrieving a thread's context.
-      winedbg: Add a backend-specific vector for setting a thread's context.
-      winedbg: Implement debugging 32-bit processes on x86_64.
-      winedbg/gdbproxy: Store the register map inside the be_cpu struct.
-      winedbg: Always start the interactive debugger in 64-bit mode if in a 64-bit prefix.
-      dbghelp: Determine the target Mach-O architecture from the process's architecture.
-      dbghelp: Read the 32-bit Mach-O header.
-      dbghelp: Pass an image_file_map to macho_enum_load_commands().
-      dbghelp: Read the Mach-O segment command corresponding to the target's architecture.
-      dbghelp: Translate the 32-bit Mach-O section header to the 64-bit one.
-      dbghelp: Read the stabs nlist entry corresponding to the target's architecture.
-      winedbg/gdbproxy: Handle VS thread renaming.
-      msi: Mark exported wine functions CDECL.
-      vbscript: Treat \r as a newline separator.
-      hnetcfg/tests: Fix BSTR usage in test_NetFwAuthorizedApplication().
-      hnetcfg: Store the UNC path in INetFwAuthorizedApplication_put_ProcessImageFileName().
-      winetest: Increase maximum tag length.
-      user32/tests: Ignore all non-keyboard messages in test_Input_blackbox().
-      user32/tests: Skip tests for window messages if we failed to receive foreground status.
-      winedbg: Provide a more helpful error message when unable to attach to a process.
-      oleaut32: Correct some comments.
-      winedbg: Suppress all message boxes if ShowCrashDialog is disabled.
-      shell32/tests: Don't test CommandLineToArgv() in test_argify().
-      gdi32/tests: Test writing to the default palette.
-      psapi/tests: Add todo_wine to a failing test.
+Zebediah Figura (39):
+      devenum: Implement parsing and reading DMO monikers.
+      devenum: Implement enumerating DMOs.
+      wine.inf: Register mp3dmod DMO.
+      mp3dmod: Support COM aggregation.
+      hnetcfg: Store the full path in INetFwAuthorizedApplication_put_ProcessImageFileName().
+      devenum: Merge factory.c into devenum_main.c.
+      devenum: Use separate factories for CLSID_SystemDeviceEnum and CLSID_CDeviceMoniker.
+      devenum: Make some variables static.
+      devenum: Remove an unused typedef.
+      include: Make fil_data.idl a common header.
+      devenum/tests: DMORegister() returns E_FAIL if unable to access the registry.
+      msdmo: DMORegister() returns E_FAIL if unable to access the registry.
+      odbccp32/tests: Skip SQLGetInstalledDrivers() test if limited.
+      odbccp32/tests: Set requestedExecutionLevel to asInvoker to prevent virtualization.
+      msctf/tests: Set requestedExecutionLevel to asInvoker to prevent virtualization.
+      msctf/tests: Skip tests if limited.
+      hnetcfg: Store the long path in INetFwAuthorizedApplication_put_ProcessImageFileName().
+      regedit: Print Latin-1 characters.
+      dinput: Notify the desktop window when device input is received.
+      strmbase: Implement CBaseFilter::FindPin().
+      winegstreamer: Use CBaseFilter::FindPin().
+      wineqtdecoder: Use CBaseFilter::FindPin().
+      explorer: Wrap the desktop window procedure instead of replacing it.
+      winex11.drv: Wake up the display on user input.
+      strmbase: Update comment for copying pin info.
+      quartz: Inline copying pin info and update comment.
+      psapi/tests: Avoid linking statically to kernel32 functions.
+      winegstreamer: Add a missing debugstr_a.
+      dbghelp/tests: Add a simple test for StackWalk64().
+      winemac.drv: Wake up the display on user input.
+      psapi/tests: Link statically to psapi.
+      psapi/tests: Avoid using PROCESS_ALL_ACCESS.
+      psapi/tests: Avoid failing silently.
+      psapi/tests: Call GetPerformanceInfo() after NtQuerySystemInformation().
+      strmbase: Avoid leaking pFilter in CBaseFilter::FindPin().
+      quartz: Use CBaseFilter::FindPin().
+      strmbase: Use CBaseFilter::FindPin().
+      qcap: Use CBaseFilter::FindPin().
+      amstream: Use CBaseFilter::FindPin().
 
-Zhiyi Zhang (15):
-      comctl32/taskdialog: Zero out taskdialog_info at initialization.
-      comctl32/taskdialog: Remove unused parameter.
-      comctl32/taskdialog: Add taskdialog_destroy().
-      comctl32/taskdialog: Support dynamic layout.
-      comctl32/taskdialog: Create main instruction without templates.
-      comctl32/taskdialog: Create content without templates.
-      comctl32/taskdialog: Create buttons without templates.
-      comctl32/taskdialog: Add support for TDM_ENABLE_BUTTON.
-      comctl32/taskdialog: Add support for main icon.
-      comctl32/taskdialog: Add support for loading standard icons.
-      comctl32/taskdialog: Add support for hyperlink.
-      comctl32/taskdialog: Add support for progress bar.
-      gdiplus: Fix a memory leak.
-      gdiplus: Report error for brush_fill_path().
-      gdiplus: Avoid calling GdipFillPath() with an empty path.
+Zhiyi Zhang (4):
+      comctl32/taskdialog: Fix buttons might disappear.
+      comctl32/taskdialog: Use dynamic buffer for taskdialog_get_label_size().
+      comctl32/taskdialog: Add support for radio buttons.
+      comctl32/taskdialog: Add support for command links.
 
 --
 Alexandre Julliard
