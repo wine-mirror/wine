@@ -252,12 +252,11 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
         if (swapchain->target)
             IDXGIOutput_Release(swapchain->target);
         swapchain->target = target;
-    }
-    else
-    {
-        IDXGIOutput_Release(target);
+        return S_OK;
     }
 
+    if (target)
+        IDXGIOutput_Release(target);
     return hr;
 }
 
