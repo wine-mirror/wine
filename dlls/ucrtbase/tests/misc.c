@@ -769,16 +769,41 @@ static void test_asctime(void)
     ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
 }
 
+static LONG* get_failures_counter(HANDLE *map)
+{
+    *map = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
+            0, sizeof(LONG), "winetest_failures_counter");
+    return MapViewOfFile(*map, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LONG));
+}
+
+static void free_failures_counter(LONG *mem, HANDLE map)
+{
+    UnmapViewOfFile(mem);
+    CloseHandle(map);
+}
+
+static void set_failures_counter(LONG add)
+{
+    HANDLE failures_map;
+    LONG *failures;
+
+    failures = get_failures_counter(&failures_map);
+    *failures = add;
+    free_failures_counter(failures, failures_map);
+}
+
 static void test_exit(const char *argv0)
 {
     PROCESS_INFORMATION proc;
     STARTUPINFOA startup = {0};
     char path[MAX_PATH];
-    HANDLE exit_event;
+    HANDLE failures_map, exit_event;
+    LONG *failures;
     DWORD ret;
 
     exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
 
+    failures = get_failures_counter(&failures_map);
     sprintf(path, "%s misc exit", argv0);
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &proc);
@@ -788,6 +813,9 @@ static void test_exit(const char *argv0)
     ok(ret == 1, "child process exited with code %d\n", ret);
     CloseHandle(proc.hProcess);
     CloseHandle(proc.hThread);
+    ok(!*failures, "%d tests failed in child process\n", *failures);
+    free_failures_counter(failures, failures_map);
+
 
     ret = WaitForSingleObject(exit_event, 0);
     ok(ret == WAIT_OBJECT_0, "exit_event was not set (%x)\n", ret);
@@ -805,18 +833,21 @@ static void CDECL at_exit_func1(void)
     atexit_called++;
     SetEvent(exit_event);
     CloseHandle(exit_event);
+    set_failures_counter(winetest_get_failures());
 }
 
 static void CDECL at_exit_func2(void)
 {
     ok(!atexit_called, "atexit_called = %d\n", atexit_called);
     atexit_called++;
+    set_failures_counter(winetest_get_failures());
 }
 
 static void test_call_exit(void)
 {
     ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
     ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+    set_failures_counter(winetest_get_failures());
     p_exit(1);
 }
 
