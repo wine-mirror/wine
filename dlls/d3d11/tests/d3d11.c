@@ -18542,10 +18542,13 @@ static void test_uav_store_immediate_constant(void)
 {
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11UnorderedAccessView *uav;
     ID3D11DeviceContext *context;
     struct resource_readback rb;
+    ID3D11Texture2D *texture;
     ID3D11ComputeShader *cs;
+    unsigned int uint_data;
     ID3D11Device *device;
     ID3D11Buffer *buffer;
     float float_data;
@@ -18587,6 +18590,42 @@ static void test_uav_store_immediate_constant(void)
         0x0400089c, 0x0011e000, 0x00000000, 0x00005555, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
         0x0d0000a4, 0x0011e0f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00004002, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, 0x0100003e,
+    };
+    static const DWORD cs_store_unorm_code[] =
+    {
+#if 0
+        RWTexture2D<unorm float> u;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            u[uint2(0, 0)] = 0.5f;
+        }
+#endif
+        0x43425844, 0x3623f1de, 0xe847109e, 0x8e3da13f, 0xb6787b06, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x0400189c, 0x0011e000, 0x00000000, 0x00001111, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
+        0x0d0000a4, 0x0011e0f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
+    };
+    static const DWORD cs_store_snorm_code[] =
+    {
+#if 0
+        RWTexture2D<snorm float> u;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            u[uint2(0, 0)] = -0.5f;
+        }
+#endif
+        0x43425844, 0xce5397fc, 0x7464bc06, 0xc79aa56c, 0x881bd7ef, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x0400189c, 0x0011e000, 0x00000000, 0x00002222, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
+        0x0d0000a4, 0x0011e0f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00004002, 0xbf000000, 0xbf000000, 0xbf000000, 0xbf000000, 0x0100003e,
     };
     static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     static const unsigned int zero[4] = {0};
@@ -18635,7 +18674,57 @@ static void test_uav_store_immediate_constant(void)
     ok(float_data == 1.0f, "Got unexpected value %.8e.\n", float_data);
     release_resource_readback(&rb);
 
+    texture_desc.Width = 64;
+    texture_desc.Height = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ID3D11UnorderedAccessView_Release(uav);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+
+    ID3D11ComputeShader_Release(cs);
+    hr = ID3D11Device_CreateComputeShader(device, cs_store_unorm_code, sizeof(cs_store_unorm_code), NULL, &cs);
+    ok(hr == S_OK, "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_texture_readback(texture, 0, &rb);
+    uint_data = get_readback_color(&rb, 0, 0, 0);
+    ok(compare_color(uint_data, 0x80808080, 1), "Got unexpected color 0x%08x.\n", uint_data);
+    release_resource_readback(&rb);
+
+    ID3D11Texture2D_Release(texture);
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ID3D11UnorderedAccessView_Release(uav);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+
+    ID3D11ComputeShader_Release(cs);
+    hr = ID3D11Device_CreateComputeShader(device, cs_store_snorm_code, sizeof(cs_store_snorm_code), NULL, &cs);
+    ok(hr == S_OK, "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_texture_readback(texture, 0, &rb);
+    uint_data = get_readback_color(&rb, 0, 0, 0);
+    ok(compare_color(uint_data, 0xc0c0c0c0, 1), "Got unexpected color 0x%08x.\n", uint_data);
+    release_resource_readback(&rb);
+
     ID3D11Buffer_Release(buffer);
+    ID3D11Texture2D_Release(texture);
     ID3D11ComputeShader_Release(cs);
     ID3D11UnorderedAccessView_Release(uav);
     release_test_context(&test_context);
