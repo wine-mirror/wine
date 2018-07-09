@@ -578,4 +578,12 @@ void CDECL MSVCRT__crtSleep(DWORD timeout)
   TRACE("(%u)\n", timeout);
   Sleep(timeout);
 }
+
+/*********************************************************************
+ * _SetWinRTOutOfMemoryExceptionCallback (MSVCR120.@)
+ */
+void CDECL MSVCR120__SetWinRTOutOfMemoryExceptionCallback(void *callback)
+{
+    FIXME("(%p): stub\n", callback);
+}
 #endif

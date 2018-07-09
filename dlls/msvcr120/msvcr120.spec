@@ -844,7 +844,7 @@
 @ stub -arch=i386 _NLG_Return
 @ stub -arch=i386 _NLG_Return2
 @ stub -arch=arm,win64 __NLG_Return2
-@ stub _SetWinRTOutOfMemoryExceptionCallback
+@ cdecl _SetWinRTOutOfMemoryExceptionCallback(ptr) MSVCR120__SetWinRTOutOfMemoryExceptionCallback
 @ stub -arch=win64 _SetImageBase
 @ stub -arch=win64 _SetThrowImageBase
 @ cdecl _Strftime(ptr long str ptr ptr)

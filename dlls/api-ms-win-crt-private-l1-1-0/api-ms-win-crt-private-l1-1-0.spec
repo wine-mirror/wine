@@ -10,7 +10,7 @@
 @ stub _NLG_Return2
 @ stub _SetImageBase
 @ stub _SetThrowImageBase
-@ stub _SetWinRTOutOfMemoryExceptionCallback
+@ cdecl _SetWinRTOutOfMemoryExceptionCallback(ptr) ucrtbase._SetWinRTOutOfMemoryExceptionCallback
 @ cdecl __AdjustPointer(ptr ptr) ucrtbase.__AdjustPointer
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
