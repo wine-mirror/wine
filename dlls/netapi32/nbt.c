@@ -1095,8 +1095,7 @@ static UCHAR NetBTSend(void *adapt, void *sess, PNCB ncb)
     wsaBufs[1].len = ncb->ncb_length;
     wsaBufs[1].buf = (char*)ncb->ncb_buffer;
 
-    r = WSASend(session->fd, wsaBufs, sizeof(wsaBufs) / sizeof(wsaBufs[0]),
-     &bytesSent, 0, NULL, NULL);
+    r = WSASend(session->fd, wsaBufs, ARRAY_SIZE(wsaBufs), &bytesSent, 0, NULL, NULL);
     if (r == SOCKET_ERROR)
     {
         NetBIOSHangupSession(ncb);
@@ -1523,10 +1522,9 @@ void NetBTInit(void)
         char nsString[16];
         DWORD size, ndx;
 
-        for (ndx = 0; ndx < sizeof(nsValueNames) / sizeof(nsValueNames[0]);
-         ndx++)
+        for (ndx = 0; ndx < ARRAY_SIZE(nsValueNames); ndx++)
         {
-            size = sizeof(nsString) / sizeof(char);
+            size = ARRAY_SIZE(nsString);
             if (RegQueryValueExA(hKey, nsValueNames[ndx], NULL, NULL,
              (LPBYTE)nsString, &size) == ERROR_SUCCESS)
             {

@@ -135,7 +135,7 @@ BOOL NetBIOSRegisterTransport(ULONG id, NetBIOSTransport *transport)
     TRACE(": transport 0x%08x, p %p\n", id, transport);
     if (!transport)
         ret = FALSE;
-    else if (gNumTransports >= sizeof(gTransports) / sizeof(gTransports[0]))
+    else if (gNumTransports >= ARRAY_SIZE(gTransports))
     {
         FIXME("Too many transports %d\n", gNumTransports + 1);
         ret = FALSE;

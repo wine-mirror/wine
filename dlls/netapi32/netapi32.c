@@ -923,7 +923,7 @@ static NET_API_STATUS wksta_getinfo(  LMSTR servername, DWORD level, LPBYTE *buf
 static BOOL NETAPI_IsLocalComputer( LMCSTR name )
 {
     WCHAR buf[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD size = sizeof(buf) / sizeof(buf[0]);
+    DWORD size = ARRAY_SIZE(buf);
     BOOL ret;
 
     if (!name || !name[0]) return TRUE;
@@ -2360,7 +2360,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
 {
     NET_API_STATUS status;
     WCHAR user[UNLEN + 1];
-    DWORD size, len = sizeof(user)/sizeof(user[0]);
+    DWORD size, len = ARRAY_SIZE(user);
 
     TRACE("(%s, %u, 0x%x, %p, %u, %p, %p, %p)\n", debugstr_w(servername), level,
           filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
@@ -3477,8 +3477,8 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
     TRACE("(%s %p %p)\n", debugstr_w(http_path), buf, buflen);
 
     while (*p && *p != ':') { p++; len++; };
-    if (len == sizeof(httpW)/sizeof(httpW[0]) && !memicmpW( http_path, httpW, len )) ssl = FALSE;
-    else if (len == sizeof(httpsW)/sizeof(httpsW[0]) && !memicmpW( http_path, httpsW, len )) ssl = TRUE;
+    if (len == ARRAY_SIZE(httpW) && !memicmpW( http_path, httpW, len )) ssl = FALSE;
+    else if (len == ARRAY_SIZE(httpsW) && !memicmpW( http_path, httpsW, len )) ssl = TRUE;
     else return ERROR_INVALID_PARAMETER;
 
     if (p[0] != ':' || p[1] != '/' || p[2] != '/') return ERROR_INVALID_PARAMETER;
@@ -3506,7 +3506,7 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
     len = len_server + 2; /* \\ */
     if (ssl) len += 4; /* @SSL */
     if (port) len += len_port + 1 /* @ */;
-    len += sizeof(davrootW)/sizeof(davrootW[0]);
+    len += ARRAY_SIZE(davrootW);
     len += len_path + 1; /* nul */
 
     if (*buflen < len)
@@ -3531,7 +3531,7 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
         buf += len_port;
     }
     memcpy( buf, davrootW, sizeof(davrootW) );
-    buf += sizeof(davrootW)/sizeof(davrootW[0]);
+    buf += ARRAY_SIZE(davrootW);
     for (i = 0; i < len_path; i++)
     {
         if (path[i] == '/') *buf++ = '\\';
