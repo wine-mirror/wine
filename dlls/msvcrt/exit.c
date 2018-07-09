@@ -415,6 +415,15 @@ int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
 }
 
 /*********************************************************************
+ *             quick_exit (MSVCRT.@)
+ */
+void CDECL MSVCRT_quick_exit(int exitcode)
+{
+  FIXME("(%d) semi-stub\n", exitcode);
+  MSVCRT__exit(exitcode);
+}
+
+/*********************************************************************
  *		_crt_atexit (UCRTBASE.@)
  */
 int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))

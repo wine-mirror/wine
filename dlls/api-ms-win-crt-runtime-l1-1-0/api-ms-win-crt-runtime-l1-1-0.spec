@@ -97,7 +97,7 @@
 @ cdecl fesetround(long) ucrtbase.fesetround
 @ stub fetestexcept
 @ cdecl perror(str) ucrtbase.perror
-@ stub quick_exit
+@ cdecl quick_exit(long) ucrtbase.quick_exit
 @ cdecl raise(long) ucrtbase.raise
 @ cdecl set_terminate(ptr) ucrtbase.set_terminate
 @ cdecl signal(long long) ucrtbase.signal
