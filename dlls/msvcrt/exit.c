@@ -397,7 +397,7 @@ void CDECL MSVCRT_exit(int exitcode)
 /*********************************************************************
  *		atexit (MSVCRT.@)
  */
-int CDECL MSVCRT_atexit(void (*func)(void))
+int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
@@ -408,7 +408,7 @@ int CDECL MSVCRT_atexit(void (*func)(void))
 /*********************************************************************
  *		_crt_atexit (UCRTBASE.@)
  */
-int CDECL MSVCRT__crt_atexit(void (*func)(void))
+int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
