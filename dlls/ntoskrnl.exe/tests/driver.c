@@ -172,6 +172,21 @@ todo_wine
     IoFreeMdl(mdl);
 }
 
+static void test_init_funcs(void)
+{
+    KTIMER timer, timer2;
+
+    KeInitializeTimerEx(&timer, NotificationTimer);
+    ok(timer.Header.Type == 8, "got: %u\n", timer.Header.Type);
+    ok(timer.Header.Size == 0 || timer.Header.Size == 10, "got: %u\n", timer.Header.Size);
+    ok(timer.Header.SignalState == 0, "got: %u\n", timer.Header.SignalState);
+
+    KeInitializeTimerEx(&timer2, SynchronizationTimer);
+    ok(timer2.Header.Type == 9, "got: %u\n", timer2.Header.Type);
+    ok(timer2.Header.Size == 0 || timer2.Header.Size == 10, "got: %u\n", timer2.Header.Size);
+    ok(timer2.Header.SignalState == 0, "got: %u\n", timer2.Header.SignalState);
+}
+
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -197,6 +212,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 
     test_currentprocess();
     test_mdl_map();
+    test_init_funcs();
 
     /* print process report */
     if (test_input->winetest_debug)
