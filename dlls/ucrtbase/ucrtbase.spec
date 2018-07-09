@@ -240,7 +240,7 @@
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
 @ cdecl _create_locale(long str) MSVCRT__create_locale
-@ stub _crt_at_quick_exit
+@ cdecl _crt_at_quick_exit(ptr) MSVCRT__crt_at_quick_exit
 @ cdecl _crt_atexit(ptr) MSVCRT__crt_atexit
 @ cdecl _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
 @ cdecl _ctime32(ptr) MSVCRT__ctime32

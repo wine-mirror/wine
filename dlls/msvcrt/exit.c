@@ -406,6 +406,15 @@ int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
 #if _MSVCR_VER>=140
 
 /*********************************************************************
+ *             _crt_at_quick_exit (UCRTBASE.@)
+ */
+int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
+{
+  FIXME("(%p) stub\n", func);
+  return -1;
+}
+
+/*********************************************************************
  *		_crt_atexit (UCRTBASE.@)
  */
 int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))
