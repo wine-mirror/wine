@@ -782,7 +782,12 @@ static void test_exit(const char *argv0)
     sprintf(path, "%s misc exit", argv0);
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &proc);
-    winetest_wait_child_process(proc.hProcess);
+    ret = WaitForSingleObject(proc.hProcess, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "child process wait failed\n");
+    GetExitCodeProcess(proc.hProcess, &ret);
+    ok(ret == 1, "child process exited with code %d\n", ret);
+    CloseHandle(proc.hProcess);
+    CloseHandle(proc.hThread);
 
     ret = WaitForSingleObject(exit_event, 0);
     ok(ret == WAIT_OBJECT_0, "exit_event was not set (%x)\n", ret);
@@ -812,7 +817,7 @@ static void test_call_exit(void)
 {
     ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
     ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
-    p_exit(0);
+    p_exit(1);
 }
 
 START_TEST(misc)
