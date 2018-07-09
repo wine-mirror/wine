@@ -1776,20 +1776,30 @@ static void test_mapprotection(void)
     NTSTATUS status;
     SIZE_T retlen, count;
     void (*f)(void);
+    BOOL reset_flags = FALSE;
 
-    if (!pNtClose) {
-        skip("No NtClose ... Win98\n");
-        return;
-    }
     /* Switch to being a noexec unaware process */
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof (oldflags), &flagsize);
-    if (status == STATUS_INVALID_PARAMETER) {
-        skip("Invalid Parameter on ProcessExecuteFlags query?\n");
+    if (status == STATUS_INVALID_PARAMETER)
+    {
+        skip("Unable to query process execute flags on this platform\n");
         return;
     }
-    ok( (status == STATUS_SUCCESS) || (status == STATUS_INVALID_INFO_CLASS), "Expected STATUS_SUCCESS, got %08x\n", status);
-    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
-    ok( (status == STATUS_SUCCESS) || (status == STATUS_INVALID_INFO_CLASS), "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+    trace("Process execute flags %08x\n", oldflags);
+
+    if (oldflags & MEM_EXECUTE_OPTION_DISABLE)
+    {
+        if (oldflags & MEM_EXECUTE_OPTION_PERMANENT)
+        {
+            skip("Unable to turn off noexec\n");
+            return;
+        }
+
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+        reset_flags = TRUE;
+    }
 
     size.u.LowPart  = 0x2000;
     size.u.HighPart = 0;
@@ -1832,8 +1842,8 @@ static void test_mapprotection(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     pNtClose (h);
 
-    /* Switch back */
-    pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof(oldflags) );
+    if (reset_flags)
+        pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof(oldflags) );
 }
 
 static void test_queryvirtualmemory(void)
