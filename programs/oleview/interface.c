@@ -96,10 +96,9 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 hRes = IPersistStream_IsDirty((IPersistStream *)unk);
                 IUnknown_Release(unk);
                 if(hRes == S_OK)
-                    LoadStringW(globals.hMainInst, IDS_FALSE, wszBuf,
-                            sizeof(wszBuf)/sizeof(wszBuf[0]));
-                else LoadStringW(globals.hMainInst, IDS_TRUE, wszBuf,
-                        sizeof(wszBuf)/sizeof(wszBuf[0]));
+                    LoadStringW(globals.hMainInst, IDS_FALSE, wszBuf, ARRAY_SIZE(wszBuf));
+                else
+                    LoadStringW(globals.hMainInst, IDS_TRUE, wszBuf, ARRAY_SIZE(wszBuf));
                 hObject = GetDlgItem(hDlgWnd, IDC_ISDIRTY);
                 SetWindowTextW(hObject, wszBuf);
                 return TRUE;
@@ -107,8 +106,7 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 unk = GetInterface();
                 IPersistStream_GetSizeMax((IPersistStream *)unk, &size);
                 IUnknown_Release(unk);
-                LoadStringW(globals.hMainInst, IDS_BYTES, wszBuf,
-                        sizeof(wszBuf)/sizeof(wszBuf[0]));
+                LoadStringW(globals.hMainInst, IDS_BYTES, wszBuf, ARRAY_SIZE(wszBuf));
                 wsprintfW(wszSize, wszFormat, U(size).LowPart, wszBuf);
                 hObject = GetDlgItem(hDlgWnd, IDC_GETSIZEMAX);
                 SetWindowTextW(hObject, wszSize);

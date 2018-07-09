@@ -51,7 +51,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
     while(TRUE)
     {
-        lenName = sizeof(wszName)/sizeof(WCHAR);
+        lenName = ARRAY_SIZE(wszName);
         lenData = sizeof(wszData);
 
         retEnum = RegEnumValueW(hKey, i, wszName, &lenName,
@@ -120,7 +120,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     {
         i++;
 
-        if(RegEnumKeyW(hKey, i, wszName, sizeof(wszName)/sizeof(WCHAR)) != ERROR_SUCCESS) break;
+        if(RegEnumKeyW(hKey, i, wszName, ARRAY_SIZE(wszName)) != ERROR_SUCCESS) break;
 
         if(RegOpenKeyW(hKey, wszName, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -296,14 +296,12 @@ void RefreshDetails(HTREEITEM item)
             memset(&tci, 0, sizeof(TCITEMW));
             tci.mask = TCIF_TEXT;
             tci.pszText = wszBuf;
-            tci.cchTextMax = sizeof(wszBuf)/sizeof(wszBuf[0]);
+            tci.cchTextMax = ARRAY_SIZE(wszBuf);
 
-            LoadStringW(globals.hMainInst, IDS_TAB_IMPL,
-                    wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
+            LoadStringW(globals.hMainInst, IDS_TAB_IMPL, wszBuf, ARRAY_SIZE(wszBuf));
             SendMessageW(details.hTab, TCM_INSERTITEMW, 1, (LPARAM)&tci);
 
-            LoadStringW(globals.hMainInst, IDS_TAB_ACTIV,
-                    wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
+            LoadStringW(globals.hMainInst, IDS_TAB_ACTIV, wszBuf, ARRAY_SIZE(wszBuf));
             SendMessageW(details.hTab, TCM_INSERTITEMW, 2, (LPARAM)&tci);
         }
     }
@@ -331,13 +329,13 @@ static void CreateTabCtrl(HWND hWnd)
     memset(&tci, 0, sizeof(TCITEMW));
     tci.mask = TCIF_TEXT;
     tci.pszText = buffer;
-    tci.cchTextMax = sizeof(buffer)/sizeof(buffer[0]);
+    tci.cchTextMax = ARRAY_SIZE(buffer);
 
     details.hTab = CreateWindowW(WC_TABCONTROLW, NULL, WS_CHILD|WS_VISIBLE,
             0, 0, 0, 0, hWnd, (HMENU)TAB_WINDOW, globals.hMainInst, NULL);
     ShowWindow(details.hTab, SW_HIDE);
 
-    LoadStringW(globals.hMainInst, IDS_TAB_REG, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    LoadStringW(globals.hMainInst, IDS_TAB_REG, buffer, ARRAY_SIZE(buffer));
     SendMessageW(details.hTab, TCM_INSERTITEMW, 0, (LPARAM)&tci);
 
     details.hReg = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, NULL,

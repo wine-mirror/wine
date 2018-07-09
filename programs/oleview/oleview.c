@@ -286,8 +286,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
     switch(wParam)
     {
         case IDM_ABOUT:
-            LoadStringW(globals.hMainInst, IDS_ABOUT, wszAbout,
-                    sizeof(wszAbout)/sizeof(wszAbout[0]));
+            LoadStringW(globals.hMainInst, IDS_ABOUT, wszAbout, ARRAY_SIZE(wszAbout));
             ShellAboutW(hWnd, wszAbout, NULL, NULL);
             break;
         case IDM_COPYCLSID:
@@ -380,7 +379,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             PROCESS_INFORMATION pi;
             WCHAR app[MAX_PATH];
 
-            GetWindowsDirectoryW( app, MAX_PATH - sizeof(wszRegEdit)/sizeof(WCHAR) );
+            GetWindowsDirectoryW(app, MAX_PATH - ARRAY_SIZE(wszRegEdit));
             lstrcatW( app, wszRegEdit );
             memset(&si, 0, sizeof(si));
             si.cb = sizeof(si);
@@ -416,9 +415,9 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             static WCHAR wszName[MAX_LOAD_STRING];
             WCHAR filter_typelib[MAX_LOAD_STRING], filter_all[MAX_LOAD_STRING], filter[MAX_PATH];
 
-            LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
-            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_TYPELIB, filter_typelib, sizeof(filter_typelib)/sizeof(WCHAR));
-            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_ALL, filter_all, sizeof(filter_all)/sizeof(WCHAR));
+            LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, ARRAY_SIZE(wszTitle));
+            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_TYPELIB, filter_typelib, ARRAY_SIZE(filter_typelib));
+            LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_ALL, filter_all, ARRAY_SIZE(filter_all));
             wsprintfW( filter, filterW, filter_typelib, 0, 0, filter_all, 0, 0 );
             InitOpenFileName(hWnd, &ofn, filter, wszTitle, wszName);
             if(GetOpenFileNameW(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
@@ -441,8 +440,8 @@ static void UpdateStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
-    if(!LoadStringW(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
-        LoadStringW(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
+    if(!LoadStringW(globals.hMainInst, itemID, info, ARRAY_SIZE(info)))
+        LoadStringW(globals.hMainInst, IDS_READY, info, ARRAY_SIZE(info));
 
     SendMessageW(globals.hStatusBar, SB_SETTEXTW, 0, (LPARAM)info);
 }
@@ -491,7 +490,7 @@ static BOOL InitApplication(HINSTANCE hInst)
     WNDCLASSW wc;
     WCHAR wszAppName[MAX_LOAD_STRING];
 
-    LoadStringW(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
+    LoadStringW(hInst, IDS_APPNAME, wszAppName, ARRAY_SIZE(wszAppName));
 
     memset(&wc, 0, sizeof(WNDCLASSW));
     wc.lpfnWndProc = WndProc;
@@ -524,8 +523,8 @@ static BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
         {5, IDM_VIEW, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0}
     };
 
-    LoadStringW(hInst, IDS_APPNAME, wszAppName, sizeof(wszAppName)/sizeof(wszAppName[0]));
-    LoadStringW(hInst, IDS_APPTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
+    LoadStringW(hInst, IDS_APPNAME, wszAppName, ARRAY_SIZE(wszAppName));
+    LoadStringW(hInst, IDS_APPTITLE, wszTitle, ARRAY_SIZE(wszTitle));
 
     hWnd = CreateWindowW(wszAppName, wszTitle, WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInst, NULL);
