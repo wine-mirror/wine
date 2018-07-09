@@ -943,7 +943,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
             }else {
                 static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d'};
 
-                hres = strbuf_append(&ret, undefinedW, sizeof(undefinedW)/sizeof(WCHAR));
+                hres = strbuf_append(&ret, undefinedW, ARRAY_SIZE(undefinedW));
                 if(FAILED(hres))
                     break;
             }
@@ -1595,7 +1595,7 @@ static const builtin_prop_t String_props[] = {
 static const builtin_info_t String_info = {
     JSCLASS_STRING,
     {NULL, NULL,0, String_get_value},
-    sizeof(String_props)/sizeof(*String_props),
+    ARRAY_SIZE(String_props),
     String_props,
     String_destructor,
     NULL
@@ -1608,7 +1608,7 @@ static const builtin_prop_t StringInst_props[] = {
 static const builtin_info_t StringInst_info = {
     JSCLASS_STRING,
     {NULL, NULL,0, String_get_value},
-    sizeof(StringInst_props)/sizeof(*StringInst_props),
+    ARRAY_SIZE(StringInst_props),
     StringInst_props,
     String_destructor,
     NULL,
@@ -1726,7 +1726,7 @@ static const builtin_prop_t StringConstr_props[] = {
 static const builtin_info_t StringConstr_info = {
     JSCLASS_FUNCTION,
     DEFAULT_FUNCTION_VALUE,
-    sizeof(StringConstr_props)/sizeof(*StringConstr_props),
+    ARRAY_SIZE(StringConstr_props),
     StringConstr_props,
     NULL,
     NULL

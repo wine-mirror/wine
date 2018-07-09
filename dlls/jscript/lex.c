@@ -162,7 +162,7 @@ static int hex_to_int(WCHAR c)
 
 static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
 {
-    int min = 0, max = sizeof(keywords)/sizeof(keywords[0])-1, r, i;
+    int min = 0, max = ARRAY_SIZE(keywords)-1, r, i;
 
     while(min <= max) {
         i = (min+max)/2;

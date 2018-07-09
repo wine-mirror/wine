@@ -252,7 +252,7 @@ static const builtin_prop_t Object_props[] = {
 static const builtin_info_t Object_info = {
     JSCLASS_OBJECT,
     {NULL, NULL,0, Object_get_value},
-    sizeof(Object_props)/sizeof(*Object_props),
+    ARRAY_SIZE(Object_props),
     Object_props,
     Object_destructor,
     NULL
@@ -528,7 +528,7 @@ static const builtin_prop_t ObjectConstr_props[] = {
 static const builtin_info_t ObjectConstr_info = {
     JSCLASS_FUNCTION,
     DEFAULT_FUNCTION_VALUE,
-    sizeof(ObjectConstr_props)/sizeof(*ObjectConstr_props),
+    ARRAY_SIZE(ObjectConstr_props),
     ObjectConstr_props,
     NULL,
     NULL

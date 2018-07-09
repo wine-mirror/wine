@@ -526,8 +526,8 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
         ptr++;
     }
 
-    if(!strncmpW(ptr, infinityW, sizeof(infinityW)/sizeof(WCHAR))) {
-        ptr += sizeof(infinityW)/sizeof(WCHAR);
+    if(!strncmpW(ptr, infinityW, ARRAY_SIZE(infinityW))) {
+        ptr += ARRAY_SIZE(infinityW);
         while(*ptr && isspaceW(*ptr))
             ptr++;
 
@@ -701,7 +701,7 @@ static jsstr_t *int_to_string(int i)
         i = -i;
     }
 
-    p = buf + sizeof(buf)/sizeof(*buf)-1;
+    p = buf + ARRAY_SIZE(buf)-1;
     *p-- = 0;
     while(i) {
         *p-- = i%10 + '0';

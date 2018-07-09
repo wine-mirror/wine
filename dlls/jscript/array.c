@@ -1020,7 +1020,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
         return hres;
 
     if(argc) {
-        buf_end = buf + sizeof(buf)/sizeof(WCHAR)-1;
+        buf_end = buf + ARRAY_SIZE(buf)-1;
         *buf_end-- = 0;
         i = length;
 
@@ -1118,7 +1118,7 @@ static const builtin_prop_t Array_props[] = {
 static const builtin_info_t Array_info = {
     JSCLASS_ARRAY,
     {NULL, NULL,0, Array_get_value},
-    sizeof(Array_props)/sizeof(*Array_props),
+    ARRAY_SIZE(Array_props),
     Array_props,
     Array_destructor,
     Array_on_put
@@ -1131,7 +1131,7 @@ static const builtin_prop_t ArrayInst_props[] = {
 static const builtin_info_t ArrayInst_info = {
     JSCLASS_ARRAY,
     {NULL, NULL,0, Array_get_value},
-    sizeof(ArrayInst_props)/sizeof(*ArrayInst_props),
+    ARRAY_SIZE(ArrayInst_props),
     ArrayInst_props,
     Array_destructor,
     Array_on_put
@@ -1238,7 +1238,7 @@ static const builtin_prop_t ArrayConstr_props[] = {
 static const builtin_info_t ArrayConstr_info = {
     JSCLASS_FUNCTION,
     DEFAULT_FUNCTION_VALUE,
-    sizeof(ArrayConstr_props)/sizeof(*ArrayConstr_props),
+    ARRAY_SIZE(ArrayConstr_props),
     ArrayConstr_props,
     NULL,
     NULL
