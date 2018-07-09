@@ -127,6 +127,8 @@ static int* (CDECL *p_errno)(void);
 static char* (CDECL *p_asctime)(const struct tm *);
 static void (CDECL *p_exit)(int);
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
+static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
+static void (__cdecl *p_quick_exit)(int exitcode);
 
 static void test__initialize_onexit_table(void)
 {
@@ -433,6 +435,8 @@ static BOOL init(void)
     p_asctime = (void*)GetProcAddress(module, "asctime");
     p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
     p_exit = (void*)GetProcAddress(module, "exit");
+    p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
+    p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
 
     return TRUE;
 }
@@ -797,11 +801,12 @@ static void test_exit(const char *argv0)
     PROCESS_INFORMATION proc;
     STARTUPINFOA startup = {0};
     char path[MAX_PATH];
-    HANDLE failures_map, exit_event;
+    HANDLE failures_map, exit_event, quick_exit_event;
     LONG *failures;
     DWORD ret;
 
     exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
+    quick_exit_event = CreateEventA(NULL, FALSE, FALSE, "quick_exit_event");
 
     failures = get_failures_counter(&failures_map);
     sprintf(path, "%s misc exit", argv0);
@@ -819,11 +824,15 @@ static void test_exit(const char *argv0)
 
     ret = WaitForSingleObject(exit_event, 0);
     ok(ret == WAIT_OBJECT_0, "exit_event was not set (%x)\n", ret);
+    ret = WaitForSingleObject(quick_exit_event, 0);
+    ok(ret == WAIT_TIMEOUT, "quick_exit_event should not have be set (%x)\n", ret);
 
     CloseHandle(exit_event);
+    CloseHandle(quick_exit_event);
 }
 
 static int atexit_called;
+
 static void CDECL at_exit_func1(void)
 {
     HANDLE exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
@@ -843,12 +852,83 @@ static void CDECL at_exit_func2(void)
     set_failures_counter(winetest_get_failures());
 }
 
+static int atquick_exit_called;
+
+static void CDECL at_quick_exit_func1(void)
+{
+    HANDLE quick_exit_event = CreateEventA(NULL, FALSE, FALSE, "quick_exit_event");
+
+    ok(quick_exit_event != NULL, "CreateEvent failed: %d\n", GetLastError());
+    ok(atquick_exit_called == 1, "atquick_exit_called = %d\n", atquick_exit_called);
+    atquick_exit_called++;
+    SetEvent(quick_exit_event);
+    CloseHandle(quick_exit_event);
+    set_failures_counter(winetest_get_failures());
+}
+
+static void CDECL at_quick_exit_func2(void)
+{
+    ok(!atquick_exit_called, "atquick_exit_called = %d\n", atquick_exit_called);
+    atquick_exit_called++;
+    set_failures_counter(winetest_get_failures());
+}
+
 static void test_call_exit(void)
 {
     ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
     ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+
+    ok(!p_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
+    ok(!p_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
+
     set_failures_counter(winetest_get_failures());
     p_exit(1);
+}
+
+static void test_call_quick_exit(void)
+{
+    ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
+    ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+
+    ok(!p_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
+    ok(!p_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
+
+    set_failures_counter(winetest_get_failures());
+    p_quick_exit(2);
+}
+
+static void test_quick_exit(const char *argv0)
+{
+    PROCESS_INFORMATION proc;
+    STARTUPINFOA startup = {0};
+    char path[MAX_PATH];
+    HANDLE failures_map, exit_event, quick_exit_event;
+    LONG *failures;
+    DWORD ret;
+
+    exit_event = CreateEventA(NULL, FALSE, FALSE, "exit_event");
+    quick_exit_event = CreateEventA(NULL, FALSE, FALSE, "quick_exit_event");
+
+    failures = get_failures_counter(&failures_map);
+    sprintf(path, "%s misc quick_exit", argv0);
+    startup.cb = sizeof(startup);
+    CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &proc);
+    ret = WaitForSingleObject(proc.hProcess, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "child process wait failed\n");
+    GetExitCodeProcess(proc.hProcess, &ret);
+    ok(ret == 2, "child process exited with code %d\n", ret);
+    CloseHandle(proc.hProcess);
+    CloseHandle(proc.hThread);
+    ok(!*failures, "%d tests failed in child process\n", *failures);
+    free_failures_counter(failures, failures_map);
+
+    ret = WaitForSingleObject(quick_exit_event, 0);
+    ok(ret == WAIT_OBJECT_0, "quick_exit_event was not set (%x)\n", ret);
+    ret = WaitForSingleObject(exit_event, 0);
+    ok(ret == WAIT_TIMEOUT, "exit_event should not have be set (%x)\n", ret);
+
+    CloseHandle(exit_event);
+    CloseHandle(quick_exit_event);
 }
 
 START_TEST(misc)
@@ -865,6 +945,8 @@ START_TEST(misc)
             test__get_narrow_winmain_command_line(NULL);
         else if(!strcmp(arg_v[2], "exit"))
             test_call_exit();
+        else if(!strcmp(arg_v[2], "quick_exit"))
+            test_call_quick_exit();
         return;
     }
 
@@ -881,4 +963,5 @@ START_TEST(misc)
     test_math_errors();
     test_asctime();
     test_exit(arg_v[0]);
+    test_quick_exit(arg_v[0]);
 }
