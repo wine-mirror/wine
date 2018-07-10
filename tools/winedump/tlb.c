@@ -283,25 +283,47 @@ static void print_ctl2(const char *name)
     printf("\n");
 }
 
-static void dump_binary(int n)
+static int tlb_isprint(unsigned char c)
 {
-    int i;
+    return c >= 32;
+}
 
-    for(i = 1; i <= n; i++) {
-        switch(i & 0x0f) {
-        case 0:
-            printf("%02x\n", tlb_read_byte());
-            break;
-        case 1:
-            print_offset();
-            /* fall through */
-        default:
-            printf("%02x ", tlb_read_byte());
+static void dump_binary(int size)
+{
+    const unsigned char *ptr;
+    int i, j;
+
+    if (!size) return;
+
+    ptr = tlb_read(size);
+    if (!ptr) return;
+
+    print_offset();
+    printf("%08x: ", offset - size);
+
+    for (i = 0; i < size; i++)
+    {
+        printf("%02x%c", ptr[i], (i % 16 == 7) ? '-' : ' ');
+        if ((i % 16) == 15)
+        {
+            printf( " " );
+            for (j = 0; j < 16; j++)
+                printf("%c", tlb_isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.');
+            if (i < size-1)
+            {
+                printf("\n");
+                print_offset();
+                printf("%08x: ", offset - size + i + 1);
+            }
         }
     }
-
-    if(n&0x0f)
-        printf("\n");
+    if (i % 16)
+    {
+        printf("%*s ", 3 * (16-(i%16)), "");
+        for (j = 0; j < i % 16; j++)
+            printf("%c", tlb_isprint(ptr[i-(i%16)+j]) ? ptr[i-(i%16)+j] : '.');
+    }
+    printf("\n");
 }
 
 static int dump_msft_varflags(void)
