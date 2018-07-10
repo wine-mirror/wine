@@ -429,7 +429,7 @@ static HWND taskdialog_create_label(struct taskdialog_info *dialog_info, const W
     if (syslink) style |= WS_TABSTOP;
     textW = taskdialog_gettext(dialog_info, TRUE, text);
     hwnd = CreateWindowW(class, textW, style, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, NULL);
-    if (textW) Free(textW);
+    Free(textW);
 
     SendMessageW(hwnd, WM_SETFONT, (WPARAM)font, 0);
     return hwnd;
@@ -825,9 +825,9 @@ static void taskdialog_destroy(struct taskdialog_info *dialog_info)
     if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER) KillTimer(dialog_info->hwnd, ID_TIMER);
     if (dialog_info->font) DeleteObject(dialog_info->font);
     if (dialog_info->main_instruction_font) DeleteObject(dialog_info->main_instruction_font);
-    if (dialog_info->buttons) Free(dialog_info->buttons);
-    if (dialog_info->radio_buttons) Free(dialog_info->radio_buttons);
-    if (dialog_info->command_links) Free(dialog_info->command_links);
+    Free(dialog_info->buttons);
+    Free(dialog_info->radio_buttons);
+    Free(dialog_info->command_links);
 }
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
