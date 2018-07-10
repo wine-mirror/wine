@@ -160,7 +160,7 @@ static int tlb_read_int(void)
 
 static int tlb_read_short(void)
 {
-    const short *ret = tlb_read(sizeof(short));
+    const unsigned short *ret = tlb_read(sizeof(short));
     return ret ? *ret : -1;
 }
 
