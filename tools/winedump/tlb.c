@@ -109,7 +109,7 @@ typedef struct seg_t {
     int offset;
     int length;
 } seg_t;
-static seg_t segdir[];
+static seg_t segdir[15];
 
 enum SEGDIRTYPE {
     SEGDIR_TYPEINFO,
