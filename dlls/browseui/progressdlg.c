@@ -403,7 +403,16 @@ static HRESULT WINAPI ProgressDialog_SetTitle(IProgressDialog *iface, LPCWSTR pw
 
 static HRESULT WINAPI ProgressDialog_SetAnimation(IProgressDialog *iface, HINSTANCE hInstance, UINT uiResourceId)
 {
-    FIXME("(%p, %p, %d) - stub\n", iface, hInstance, uiResourceId);
+    ProgressDialog *This = impl_from_IProgressDialog(iface);
+
+    TRACE("(%p, %p, %u)\n", iface, hInstance, uiResourceId);
+
+    if (IS_INTRESOURCE(uiResourceId))
+    {
+        if (!SendDlgItemMessageW(This->hwnd, IDC_ANIMATION, ACM_OPENW, (WPARAM)hInstance, uiResourceId))
+            WARN("Failed to load animation\n");
+    }
+
     return S_OK;
 }
 
