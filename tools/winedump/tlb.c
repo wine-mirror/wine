@@ -321,10 +321,10 @@ static int dump_msft_varflags(void)
 
 static void dump_msft_version(void)
 {
-    int version;
+    unsigned version;
     print_offset();
     version = tlb_read_int();
-    printf("version = %d.%d\n", version & 0xff, version >> 16);
+    printf("version = %u.%u\n", version & 0xffff, version >> 16);
 }
 
 static void dump_msft_header(void)
