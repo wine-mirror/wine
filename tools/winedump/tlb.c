@@ -517,11 +517,17 @@ static BOOL dump_msft_namehashtab(seg_t *seg)
     return TRUE;
 }
 
-static void dump_string(int len, int align_off)
+static void print_string(int len)
 {
     printf("\"");
     fwrite(tlb_read(len), len, 1, stdout);
-    printf("\" ");
+    printf("\"");
+}
+
+static void dump_string(int len, int align_off)
+{
+    print_string(len);
+    printf(" ");
     while((len++ + align_off) & 3)
         printf("\\%2.2x", tlb_read_byte());
 }
