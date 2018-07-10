@@ -204,7 +204,7 @@ static int print_hex(const char *name)
 {
     int ret;
     print_offset();
-    printf("%s = %08x\n", name, ret=tlb_read_int());
+    printf("%s = %08xh\n", name, ret=tlb_read_int());
     return ret;
 }
 
@@ -219,7 +219,7 @@ static int print_short_hex(const char *name)
 {
     int ret;
     print_offset();
-    printf("%s = %xh\n", name, ret=tlb_read_short());
+    printf("%s = %04xh\n", name, ret=tlb_read_short());
     return ret;
 }
 
