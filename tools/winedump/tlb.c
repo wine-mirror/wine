@@ -173,9 +173,6 @@ static int tlb_read_byte(void)
 static void print_offset(void)
 {
     int i;
-
-    printf("%04x:   ", offset);
-
     for(i=0; i<indent; i++)
         printf("    ");
 }
