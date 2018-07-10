@@ -2,6 +2,7 @@
  *  Dump a typelib (tlb) file
  *
  *  Copyright 2006 Jacek Caban
+ *  Copyright 2015 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@
 #include "winedump.h"
 
 #define MSFT_MAGIC 0x5446534d
+#define SLTG_MAGIC 0x47544c53
 #define HELPDLLFLAG 0x0100
 
 enum TYPEKIND {
@@ -141,6 +143,12 @@ static int msft_typeinfo_impltypes[1000];
 static int msft_typeinfo_elemcnt[1000];
 static int msft_typeinfo_cnt = 0;
 
+static const char * const tkind[TKIND_MAX] = {
+    "TKIND_ENUM", "TKIND_RECORD", "TKIND_MODULE",
+    "TKIND_INTERFACE", "TKIND_DISPATCH", "TKIND_COCLASS",
+    "TKIND_ALIAS", "TKIND_UNION"
+};
+
 static const void *tlb_read(int size) {
     const void *ret = PRD(offset, size);
 
@@ -196,8 +204,14 @@ static void print_end_block(void)
     indent--;
     print_offset();
     printf("}\n");
+}
+
+static int print_byte(const char *name)
+{
+    unsigned char ret;
     print_offset();
-    printf("\n");
+    printf("%s = %02xh\n", name, ret=tlb_read_byte());
+    return ret;
 }
 
 static int print_hex(const char *name)
@@ -220,6 +234,14 @@ static int print_short_hex(const char *name)
     int ret;
     print_offset();
     printf("%s = %04xh\n", name, ret=tlb_read_short());
+    return ret;
+}
+
+static int print_short_dec(const char *name)
+{
+    int ret;
+    print_offset();
+    printf("%s = %d\n", name, ret=tlb_read_short());
     return ret;
 }
 
@@ -380,11 +402,6 @@ static void dump_msft_header(void)
 
 static int dump_msft_typekind(void)
 {
-    static const char *tkind[TKIND_MAX] = {
-      "TKIND_ENUM", "TKIND_RECORD", "TKIND_MODULE",
-      "TKIND_INTERFACE", "TKIND_DISPATCH", "TKIND_COCLASS",
-      "TKIND_ALIAS", "TKIND_UNION"
-    };
     int ret, typekind;
 
     print_offset();
@@ -537,6 +554,25 @@ static BOOL dump_msft_namehashtab(seg_t *seg)
 
     print_end_block();
     return TRUE;
+}
+
+static void print_string0(void)
+{
+    unsigned char c;
+
+    printf("\"");
+    while ((c = tlb_read_byte()) != 0)
+    {
+        if (isprint(c))
+            fwrite(&c, 1, 1, stdout);
+        else
+        {
+            char buf[16];
+            sprintf(buf, "\\%u", c);
+            fwrite(buf, 1, strlen(buf), stdout);
+        }
+    }
+    printf("\"");
 }
 
 static void print_string(int len)
@@ -985,13 +1021,7 @@ static BOOL dump_offset(void)
     return FALSE;
 }
 
-enum FileSig get_kind_msft(void)
-{
-    const DWORD *sig = PRD(0, sizeof(DWORD));
-    return sig && *sig == MSFT_MAGIC ? SIG_MSFT : SIG_UNKNOWN;
-}
-
-void msft_dump(void)
+static void msft_dump(void)
 {
     int i;
 
@@ -1011,4 +1041,1093 @@ void msft_dump(void)
         if(!dump_offset())
             print_hex("unknown");
     }
+}
+
+/****************************** SLTG Typelibs ******************************/
+
+struct block_entry
+{
+    DWORD len;
+    WORD index_string;
+    WORD next;
+};
+
+struct bitstream
+{
+    const BYTE *buffer;
+    DWORD       length;
+    WORD        current;
+};
+
+#include "pshpack1.h"
+struct sltg_typeinfo_header
+{
+    short magic;
+    int href_table;
+    int res06;
+    int elem_table;
+    int res0e;
+    int version;
+    int res16;
+    struct
+    {
+        unsigned unknown1  : 3;
+        unsigned flags     : 16;
+        unsigned unknown2  : 5;
+        unsigned typekind  : 8;
+    } misc;
+    int res1e;
+};
+
+struct sltg_member_header
+{
+    short res00;
+    short res02;
+    char res04;
+    int extra;
+};
+
+struct sltg_tail
+{
+    unsigned short cFuncs;
+    unsigned short cVars;
+    unsigned short cImplTypes;
+    unsigned short res06; /* always 0000 */
+    unsigned short funcs_off; /* offset to functions (starting from the member header) */
+    unsigned short vars_off; /* offset to vars (starting from the member header) */
+    unsigned short impls_off; /* offset to implemented types (starting from the member header) */
+    unsigned short funcs_bytes; /* bytes used by function data */
+    unsigned short vars_bytes; /* bytes used by var data */
+    unsigned short impls_bytes; /* bytes used by implemented type data */
+    unsigned short tdescalias_vt; /* for TKIND_ALIAS */
+    unsigned short res16; /* always ffff */
+    unsigned short res18; /* always 0000 */
+    unsigned short res1a; /* always 0000 */
+    unsigned short simple_alias; /* tdescalias_vt is a vt rather than an offset? */
+    unsigned short res1e; /* always 0000 */
+    unsigned short cbSizeInstance;
+    unsigned short cbAlignment;
+    unsigned short res24;
+    unsigned short res26;
+    unsigned short cbSizeVft;
+    unsigned short res2a; /* always ffff */
+    unsigned short res2c; /* always ffff */
+    unsigned short res2e; /* always ffff */
+    unsigned short res30; /* always ffff */
+    unsigned short res32;
+    unsigned short res34;
+};
+
+struct sltg_variable
+{
+  char magic; /* 0x0a */
+  char flags;
+  short next;
+  short name;
+  short byte_offs; /* pos in struct, or offset to const type or const data (if flags & 0x08) */
+  short type; /* if flags & 0x02 this is the type, else offset to type */
+  int memid;
+  short helpcontext; /* ?? */
+  short helpstring; /* ?? */
+#if 0
+  short varflags; /* only present if magic & 0x20 */
+#endif
+};
+#include "poppack.h"
+
+static const char *lookup_code(const BYTE *table, DWORD table_size, struct bitstream *bits)
+{
+    const BYTE *p = table;
+
+    while (p < table + table_size && *p == 0x80)
+    {
+        if (p + 2 >= table + table_size) return NULL;
+
+        if (!(bits->current & 0xff))
+        {
+            if (!bits->length) return NULL;
+            bits->current = (*bits->buffer << 8) | 1;
+            bits->buffer++;
+            bits->length--;
+        }
+
+        if (bits->current & 0x8000)
+        {
+            p += 3;
+        }
+        else
+        {
+            p = table + (*(p + 2) | (*(p + 1) << 8));
+        }
+
+        bits->current <<= 1;
+    }
+
+    if (p + 1 < table + table_size && *(p + 1))
+    {
+        /* FIXME: Whats the meaning of *p? */
+        const BYTE *q = p + 1;
+        while (q < table + table_size && *q) q++;
+        return (q < table + table_size) ? (const char *)(p + 1) : NULL;
+    }
+
+    return NULL;
+}
+
+static const char *decode_string(const BYTE *table, const char *stream, DWORD stream_length, DWORD *read_bytes)
+{
+    char *buf;
+    DWORD buf_size, table_size;
+    const char *p;
+    struct bitstream bits;
+
+    bits.buffer = (const BYTE *)stream;
+    bits.length = stream_length;
+    bits.current = 0;
+
+    buf_size = *(const WORD *)table;
+    table += sizeof(WORD);
+    table_size = *(const DWORD *)table;
+    table += sizeof(DWORD);
+
+    buf = malloc(buf_size);
+    buf[0] = 0;
+
+    while ((p = lookup_code(table, table_size, &bits)))
+    {
+        if (buf[0]) strcat(buf, " ");
+        assert(strlen(buf) + strlen(p) + 1 <= buf_size);
+        strcat(buf, p);
+    }
+
+    if (read_bytes) *read_bytes = stream_length - bits.length;
+
+    return buf;
+}
+
+static void print_sltg_name(const char *name)
+{
+    unsigned short len = tlb_read_short();
+    print_offset();
+    printf("%s = %#x (", name, len);
+    if (len != 0xffff) print_string(len);
+    printf(")\n");
+}
+
+static int dump_sltg_header(int *sltg_first_blk, int *size_of_index)
+{
+    int n_file_blocks;
+
+    print_begin_block("Header");
+
+    print_hex("magic");
+    n_file_blocks = print_short_dec("# file blocks");
+    print_short_hex("res06");
+    *size_of_index = print_short_hex("size of index");
+    *sltg_first_blk = print_short_dec("first block");
+    print_guid("guid");
+    print_hex("res1c");
+    print_hex("res20");
+
+    print_end_block();
+
+    return n_file_blocks;
+}
+
+static void dump_sltg_index(int count)
+{
+    int i;
+
+    printf("index:\n");
+
+    print_string0();
+    printf("\n");
+    print_string0();
+    printf("\n");
+
+    for (i = 0; i < count - 2; i++)
+    {
+        print_string0();
+        printf("\n");
+    }
+
+    printf("\n");
+}
+
+static void dump_sltg_pad9(void)
+{
+    printf("pad9:\n");
+    dump_binary(9);
+    printf("\n");
+}
+
+static void dump_sltg_block_entry(int idx, const char *index)
+{
+    char name[32];
+    short index_offset;
+
+    sprintf(name, "Block entry %d", idx);
+    print_begin_block(name);
+
+    print_hex("len");
+    index_offset = tlb_read_short();
+    print_offset();
+    printf("index string = %xh \"%s\"\n", index_offset, index + index_offset);
+    print_short_hex("next");
+
+    print_end_block();
+}
+
+static void dump_sltg_library_block(void)
+{
+    print_begin_block("Library block entry");
+
+    print_short_hex("magic");
+    print_short_hex("res02");
+    print_sltg_name("name");
+    print_short_hex("res06");
+    print_sltg_name("helpstring");
+    print_sltg_name("helpfile");
+    print_hex("helpcontext");
+    print_short_hex("syskind");
+    print_short_hex("lcid");
+    print_hex("res12");
+    print_short_hex("libflags");
+    dump_msft_version();
+    print_guid("uuid");
+
+    print_end_block();
+}
+
+static void skip_sltg_library_block(void)
+{
+    unsigned short skip;
+
+    tlb_read_short();
+    tlb_read_short();
+    skip = tlb_read_short();
+    if (skip != 0xffff) tlb_read(skip);
+    tlb_read_short();
+    skip = tlb_read_short();
+    if (skip != 0xffff) tlb_read(skip);
+    skip = tlb_read_short();
+    if (skip != 0xffff) tlb_read(skip);
+    tlb_read_int();
+    tlb_read_short();
+    tlb_read_short();
+    tlb_read_int();
+    tlb_read_short();
+    tlb_read_int();
+    tlb_read(sizeof(GUID));
+}
+
+static void dump_sltg_other_typeinfo(int idx, const char *hlp_strings)
+{
+    int hlpstr_len, saved_offset;
+    char name[32];
+
+    sprintf(name, "Other typeinfo %d", idx);
+    print_begin_block(name);
+
+    print_sltg_name("index name");
+    print_sltg_name("other name");
+    print_short_hex("res1a");
+    print_short_hex("name offset");
+
+    print_offset();
+    hlpstr_len = tlb_read_short();
+    if (hlpstr_len)
+    {
+        const char *str;
+
+        saved_offset = offset;
+        str = tlb_read(hlpstr_len);
+        str = decode_string((const BYTE *)hlp_strings, str, hlpstr_len, NULL);
+        printf("helpstring: \"%s\"\n", str);
+
+        offset = saved_offset;
+        print_offset();
+        printf("helpstring encoded bits: %d bytes\n", hlpstr_len);
+        dump_binary(hlpstr_len);
+    }
+    else
+        printf("helpstring: \"\"\n");
+
+    print_short_hex("res20");
+    print_hex("helpcontext");
+    print_short_hex("res26");
+    print_guid("uuid");
+    print_short_dec("typekind");
+
+    print_end_block();
+}
+
+static void skip_sltg_other_typeinfo(void)
+{
+    unsigned short skip;
+
+    skip = tlb_read_short();
+    if (skip != 0xffff) tlb_read(skip);
+    skip = tlb_read_short();
+    if (skip != 0xffff) tlb_read(skip);
+    tlb_read_short();
+    tlb_read_short();
+    skip = tlb_read_short();
+    if (skip) tlb_read(skip);
+    tlb_read_short();
+    tlb_read_int();
+    tlb_read_short();
+    tlb_read(sizeof(GUID));
+    tlb_read_short();
+}
+
+static void sltg_print_simple_type(short type)
+{
+    print_offset();
+    if ((type & 0x0f00) == 0x0e00)
+        printf("*");
+    printf("%04x | (%d)\n", type & 0xff80, type & 0x7f);
+}
+
+static void dump_safe_array(int array_offset)
+{
+    int i, cDims, saved_offset = offset;
+
+    offset = array_offset;
+
+    print_offset();
+    printf("safe array starts at %#x\n", offset);
+
+    cDims = print_short_dec("cDims");
+    print_short_hex("fFeatures");
+    print_dec("cbElements");
+    print_dec("cLocks");
+    print_hex("pvData");
+
+    for (i = 0; i < cDims; i++)
+        dump_binary(8); /* sizeof(SAFEARRAYBOUND) */
+
+    print_offset();
+    printf("safe array ends at %#x\n", offset);
+    offset = saved_offset;
+}
+
+static int sltg_print_compound_type(int vars_start_offset, int type_offset)
+{
+    short type, vt;
+    int type_bytes, saved_offset = offset;
+
+    offset = vars_start_offset + type_offset;
+    print_offset();
+    printf("type description starts at %#x\n", offset);
+
+    for (;;)
+    {
+        do
+        {
+            type = tlb_read_short();
+            vt = type & 0x7f;
+
+            if (vt == VT_PTR)
+            {
+                print_offset();
+                printf("%04x | VT_PTR\n", type & 0xff80);
+            }
+        } while (vt == VT_PTR);
+
+        if (vt == VT_USERDEFINED)
+        {
+            short href = tlb_read_short();
+            print_offset();
+            if ((type & 0x0f00) == 0x0e00)
+                printf("*");
+            printf("%04x | VT_USERDEFINED (href %d)\n", type & 0xff80, href);
+            break;
+        }
+        else if (vt == VT_CARRAY)
+        {
+            short off;
+
+            off = tlb_read_short();
+            print_offset();
+            printf("VT_CARRAY: offset %#x (+%#x=%#x)\n",
+                   off, vars_start_offset, off + vars_start_offset);
+            dump_safe_array(vars_start_offset + off);
+
+            /* type description follows */
+            print_offset();
+            printf("array element type:\n");
+            continue;
+        }
+        else if (vt == VT_SAFEARRAY)
+        {
+            short off;
+
+            off = tlb_read_short();
+            print_offset();
+            printf("VT_SAFEARRAY: offset %#x (+%#x=%#x)\n",
+                   off, vars_start_offset, off + vars_start_offset);
+            dump_safe_array(vars_start_offset + off);
+            break;
+        }
+        else
+        {
+            sltg_print_simple_type(type);
+            break;
+        }
+    }
+
+    print_offset();
+    printf("type description ends at %#x\n", offset);
+    type_bytes =  offset - saved_offset;
+    offset = saved_offset;
+
+    return type_bytes;
+}
+
+static void dump_type(int len, const char *hlp_strings)
+{
+    union
+    {
+        struct
+        {
+            unsigned unknown1  : 3;
+            unsigned flags     : 13;
+            unsigned unknown2  : 8;
+            unsigned typekind  : 8;
+        } s;
+        unsigned flags;
+    } misc;
+    int typeinfo_start_offset, extra, member_offset, href_offset, i;
+    int vars_header_bytes = 0, vars_bytes = 0, saved_offset;
+    const void *block;
+    const struct sltg_typeinfo_header *ti;
+    const struct sltg_member_header *mem;
+    const struct sltg_tail *tail;
+
+    typeinfo_start_offset = offset;
+    block = tlb_read(len);
+    offset = typeinfo_start_offset;
+
+    ti = block;
+    mem = (const struct sltg_member_header *)((char *)block + ti->elem_table);
+    tail = (const struct sltg_tail *)((char *)(mem + 1) + mem->extra);
+
+    typeinfo_start_offset = offset;
+
+    print_short_hex("magic");
+    href_offset = tlb_read_int();
+    print_offset();
+    if (href_offset != -1)
+        printf("href offset = %#x (+%#x=%#x)\n",
+               href_offset, typeinfo_start_offset, href_offset + typeinfo_start_offset);
+    else
+        printf("href offset = ffffffffh\n");
+    print_hex("res06");
+    member_offset = tlb_read_int();
+    print_offset();
+    printf("member offset = %#x (+%#x=%#x)\n",
+           member_offset, typeinfo_start_offset, member_offset + typeinfo_start_offset);
+    print_hex("res0e");
+    print_hex("version");
+    print_hex("res16");
+    misc.flags = print_hex("misc");
+    print_offset();
+    printf("misc: unknown1 %02x, flags %04x, unknown2 %02x, typekind %u (%s)\n",
+           misc.s.unknown1, misc.s.flags, misc.s.unknown2, misc.s.typekind,
+           misc.s.typekind < TKIND_MAX ? tkind[misc.s.typekind] : "unknown");
+    print_hex("res1e");
+
+    if (href_offset != -1)
+    {
+        int i, number;
+
+        print_begin_block("href_table");
+
+        print_short_hex("magic");
+        print_hex("res02");
+        print_hex("res06");
+        print_hex("res0a");
+        print_hex("res0e");
+        print_hex("res12");
+        print_hex("res16");
+        print_hex("res1a");
+        print_hex("res1e");
+        print_hex("res22");
+        print_hex("res26");
+        print_hex("res2a");
+        print_hex("res2e");
+        print_hex("res32");
+        print_hex("res36");
+        print_hex("res3a");
+        print_hex("res3e");
+        print_short_hex("res42");
+        number = print_hex("number");
+
+        for (i = 0; i < number; i += 8)
+            dump_binary(8);
+
+        print_short_hex("res50");
+        print_byte("res52");
+        print_hex("res53");
+
+        for (i = 0; i < number/8; i++)
+            print_sltg_name("name");
+
+        print_byte("resxx");
+
+        print_end_block();
+    }
+
+    print_offset();
+    printf("member_header starts at %#x, current offset = %#x\n", typeinfo_start_offset + member_offset, offset);
+    member_offset = offset;
+    print_short_hex("res00");
+    print_short_hex("res02");
+    print_byte("res04");
+    extra = print_hex("extra");
+
+    if (misc.s.typekind == TKIND_RECORD || misc.s.typekind == TKIND_ENUM)
+    {
+        int vars_start_offset = offset;
+
+        for (i = 0; i < tail->cVars; i++)
+        {
+            char name[32];
+            int saved_off;
+            char magic, flags;
+            short next, value;
+
+            sprintf(name, "variable %d", i);
+            print_begin_block(name);
+
+            saved_off = offset;
+            dump_binary(sizeof(struct sltg_variable));
+            offset = saved_off;
+
+            magic = print_byte("magic");
+            flags = print_byte("flags");
+            next = tlb_read_short();
+            print_offset();
+            if (next != -1)
+                printf("next offset = %#x (+%#x=%#x)\n",
+                       next, vars_start_offset, next + vars_start_offset);
+            else
+                printf("next offset = ffffh\n");
+            print_short_hex("name");
+
+            if (flags & 0x40)
+                print_short_hex("dispatch");
+            else if (flags & 0x10)
+            {
+                if (flags & 0x08)
+                    print_short_hex("const value");
+                else
+                {
+                    value = tlb_read_short();
+                    print_offset();
+                    printf("byte offset = %#x (+%#x=%#x)\n",
+                           value, vars_start_offset, value + vars_start_offset);
+                }
+            }
+            else
+                print_short_hex("oInst");
+
+            value = tlb_read_short();
+            if (!(flags & 0x02))
+            {
+                print_offset();
+                printf("type offset = %#x (+%#x=%#x)\n",
+                       value, vars_start_offset, value + vars_start_offset);
+                print_offset();
+                printf("type:\n");
+                vars_bytes += sltg_print_compound_type(vars_start_offset, value);
+            }
+            else
+            {
+                print_offset();
+                printf("type:\n");
+                sltg_print_simple_type(value);
+            }
+
+            print_hex("memid");
+            print_short_hex("helpcontext");
+
+            value = tlb_read_short();
+            print_offset();
+            if (value != -1)
+            {
+                const char *str;
+                DWORD hlpstr_maxlen;
+
+                printf("helpstring offset = %#x (+%#x=%#x)\n",
+                       value, vars_start_offset, value + vars_start_offset);
+
+                saved_offset = offset;
+
+                offset = value + vars_start_offset;
+
+                hlpstr_maxlen = member_offset + sizeof(struct sltg_member_header) + mem->extra - offset;
+
+                str = tlb_read(hlpstr_maxlen);
+                str = decode_string((const BYTE *)hlp_strings, str, hlpstr_maxlen, &hlpstr_maxlen);
+                print_offset();
+                printf("helpstring: \"%s\"\n", str);
+
+                offset = value + vars_start_offset;
+                print_offset();
+                printf("helpstring encoded bits: %d bytes\n", hlpstr_maxlen);
+                dump_binary(hlpstr_maxlen);
+
+                offset = saved_offset;
+            }
+            else
+                printf("helpstring offset = ffffh\n");
+
+            if (magic & 0x20)
+            {
+                print_short_hex("varflags");
+                vars_header_bytes += 2;
+            }
+
+            vars_header_bytes += sizeof(struct sltg_variable);
+
+            if (next != -1)
+            {
+                if (offset != vars_start_offset + next)
+                    dump_binary(vars_start_offset + next - offset);
+            }
+
+            print_end_block();
+        }
+    }
+    else if (misc.s.typekind == TKIND_INTERFACE || misc.s.typekind == TKIND_COCLASS)
+    {
+        short next, i;
+        int funcs_start_offset = offset;
+
+        for (i = 0; i < tail->cImplTypes; i++)
+        {
+            char name[64];
+
+            sprintf(name, "impl.type %d (current offset %#x)", i, offset);
+            print_begin_block(name);
+
+            print_short_hex("res00");
+            next = tlb_read_short();
+            print_offset();
+            if (next != -1)
+                printf("next offset = %#x (+%#x=%#x)\n",
+                       next, funcs_start_offset, next + funcs_start_offset);
+            else
+                printf("next offset = ffffh\n");
+            print_short_hex("res04");
+            print_byte("impltypeflags");
+            print_byte("res07");
+            print_short_hex("res08");
+            print_short_hex("ref");
+            print_short_hex("res0c");
+            print_short_hex("res0e");
+            print_short_hex("res10");
+            print_short_hex("res12");
+            print_short_hex("pos in table");
+
+            print_end_block();
+        }
+
+        for (i = 0; i < tail->cFuncs; i++)
+        {
+            char name[64];
+            BYTE magic, flags;
+            short args_off, value, n_params, j;
+
+            sprintf(name, "function %d (current offset %#x)", i, offset);
+            print_begin_block(name);
+
+            magic = print_byte("magic");
+            flags = tlb_read_byte();
+            print_offset();
+            printf("invoke_kind = %u\n", flags >> 4);
+            next = tlb_read_short();
+            print_offset();
+            if (next != -1)
+                printf("next offset = %#x (+%#x=%#x)\n",
+                       next, funcs_start_offset, next + funcs_start_offset);
+            else
+                printf("next offset = ffffh\n");
+            print_short_hex("name");
+            print_hex("dispid");
+            print_short_hex("helpcontext");
+
+            value = tlb_read_short();
+            print_offset();
+            if (value != -1)
+            {
+                const char *str;
+                DWORD hlpstr_maxlen;
+
+                printf("helpstring offset = %#x (+%#x=%#x)\n",
+                       value, funcs_start_offset, value + funcs_start_offset);
+
+                saved_offset = offset;
+
+                offset = value + funcs_start_offset;
+
+                hlpstr_maxlen = member_offset + sizeof(struct sltg_member_header) + mem->extra - offset;
+
+                str = tlb_read(hlpstr_maxlen);
+                str = decode_string((const BYTE *)hlp_strings, str, hlpstr_maxlen, &hlpstr_maxlen);
+                print_offset();
+                printf("helpstring: \"%s\"\n", str);
+
+                offset = value + funcs_start_offset;
+                print_offset();
+                printf("helpstring encoded bits: %d bytes\n", hlpstr_maxlen);
+                dump_binary(hlpstr_maxlen);
+
+                offset = saved_offset;
+            }
+            else
+                printf("helpstring offset = ffffh\n");
+
+            args_off = tlb_read_short();
+            print_offset();
+            if (args_off != -1)
+                printf("args off = %#x (+%#x=%#x)\n",
+                       args_off, funcs_start_offset, args_off + funcs_start_offset);
+            else
+                printf("args off = ffffh\n");
+            flags = tlb_read_byte();
+            n_params = flags >> 3;
+            print_offset();
+            printf("callconv %u, cParams %u\n", flags & 0x7, n_params);
+
+            flags = tlb_read_byte();
+            print_offset();
+            printf("retnextop %02x, cParamsOpt %u\n", flags, (flags & 0x7e) >> 1);
+
+            value = print_short_hex("rettype");
+            if (!(flags & 0x80))
+            {
+                print_offset();
+                printf("rettype offset = %#x (+%#x=%#x)\n",
+                       value, funcs_start_offset, value + funcs_start_offset);
+                print_offset();
+                printf("rettype:\n");
+                sltg_print_compound_type(funcs_start_offset, value);
+            }
+            else
+            {
+                print_offset();
+                printf("rettype:\n");
+                sltg_print_simple_type(value);
+            }
+
+            print_short_hex("vtblpos");
+            if (magic & 0x20)
+                print_short_hex("funcflags");
+
+            if (n_params)
+            {
+                offset = args_off + funcs_start_offset;
+                print_offset();
+                printf("arguments start at %#x\n", offset);
+            }
+
+            for (j = 0; j < n_params; j++)
+            {
+                char name[32];
+                unsigned short name_offset;
+
+                sprintf(name, "arg %d", j);
+                print_begin_block(name);
+
+                name_offset = tlb_read_short();
+                print_offset();
+                printf("name: %04xh\n", name_offset);
+
+                value = tlb_read_short();
+                print_offset();
+                printf("type/offset %04xh\n", value);
+                if (name_offset & 1) /* type follows */
+                {
+                    print_offset();
+                    printf("type follows, using current offset for type\n");
+                    offset -= 2;
+                    value = offset - funcs_start_offset;
+                }
+
+                print_offset();
+                printf("arg[%d] off = %#x (+%#x=%#x)\n",
+                       j, value, funcs_start_offset, value + funcs_start_offset);
+                print_offset();
+                printf("type:\n");
+                value = sltg_print_compound_type(funcs_start_offset, value);
+                if (name_offset & 1)
+                    offset += value;
+
+                print_end_block();
+            }
+
+            if (n_params)
+            {
+                print_offset();
+                printf("arguments end at %#x\n", offset);
+            }
+
+            if (next != -1)
+            {
+                if (offset != funcs_start_offset + next)
+                    dump_binary(funcs_start_offset + next - offset);
+            }
+
+            print_end_block();
+        }
+    }
+    else
+    {
+        printf("skipping %#x bytes\n", extra);
+        dump_binary(extra);
+    }
+
+    if (offset < member_offset + sizeof(struct sltg_member_header) + mem->extra)
+    {
+        print_offset();
+        printf("skipping %d bytes\n", member_offset + (int)sizeof(struct sltg_member_header) + mem->extra - offset);
+        dump_binary(member_offset + sizeof(struct sltg_member_header) + mem->extra - offset);
+    }
+
+    print_offset();
+    printf("dumped %d (%#x) bytes\n", offset - typeinfo_start_offset, offset - typeinfo_start_offset);
+    len -= offset - typeinfo_start_offset;
+    print_offset();
+    printf("sltg_tail %d (%#x) bytes:\n", len, len);
+    saved_offset = offset;
+    dump_binary(len);
+    offset = saved_offset;
+    print_short_hex("cFuncs");
+    print_short_hex("cVars");
+    print_short_hex("cImplTypes");
+    print_short_hex("res06");
+    print_short_hex("funcs_off");
+    print_short_hex("vars_off");
+    print_short_hex("impls_off");
+    print_short_hex("funcs_bytes");
+    print_short_hex("vars_bytes");
+    print_short_hex("impls_bytes");
+    print_short_hex("tdescalias_vt");
+    print_short_hex("res16");
+    print_short_hex("res18");
+    print_short_hex("res1a");
+    print_short_hex("simple_alias");
+    print_short_hex("res1e");
+    print_short_hex("cbSizeInstance");
+    print_short_hex("cbAlignment");
+    print_short_hex("res24");
+    print_short_hex("res26");
+    print_short_hex("cbSizeVft");
+    print_short_hex("res2a");
+    print_short_hex("res2c");
+    print_short_hex("res2e");
+    print_short_hex("res30");
+    print_short_hex("res32");
+    print_short_hex("res34");
+    offset = saved_offset + len;
+}
+
+static void sltg_dump(void)
+{
+    int i, n_file_blocks, n_first_blk, size_of_index;
+    int name_table_start, name_table_size, saved_offset;
+    int libblk_start, libblk_len, hlpstr_len, len;
+    const char *index, *hlp_strings;
+    const struct block_entry *entry;
+
+    n_file_blocks = dump_sltg_header(&n_first_blk, &size_of_index);
+
+    saved_offset = offset;
+    entry = tlb_read((n_file_blocks - 1) * sizeof(*entry));
+    if (!entry) return;
+    index = tlb_read(size_of_index);
+    if (!index) return;
+    offset = saved_offset;
+
+    for (i = 0; i < n_file_blocks - 1; i++)
+        dump_sltg_block_entry(i, index);
+
+    saved_offset = offset;
+    dump_sltg_index(n_file_blocks);
+    assert(offset - saved_offset == size_of_index);
+
+    dump_sltg_pad9();
+
+    /* read the helpstrings for later decoding */
+    saved_offset = offset;
+
+    for (i = n_first_blk - 1; entry[i].next != 0; i = entry[i].next - 1)
+        tlb_read(entry[i].len);
+
+    libblk_start = offset;
+    skip_sltg_library_block();
+    tlb_read(0x40);
+    typeinfo_cnt = tlb_read_short();
+
+    for (i = 0; i < typeinfo_cnt; i++)
+        skip_sltg_other_typeinfo();
+
+    len = tlb_read_int();
+    hlpstr_len = (libblk_start + len) - offset;
+    hlp_strings = tlb_read(hlpstr_len);
+    assert(hlp_strings != NULL);
+    /* check the helpstrings header values */
+    len = *(int *)(hlp_strings + 2);
+    assert(hlpstr_len == len + 6);
+
+    offset = saved_offset;
+
+    for (i = n_first_blk - 1; entry[i].next != 0; i = entry[i].next - 1)
+    {
+        short magic;
+        char name[32];
+
+        saved_offset = offset;
+
+        sprintf(name, "Block %d", i);
+        print_begin_block(name);
+        magic = tlb_read_short();
+        assert(magic == 0x0501);
+        offset -= 2;
+        dump_binary(entry[i].len);
+        print_end_block();
+
+        offset = saved_offset;
+
+        print_begin_block(name);
+        dump_type(entry[i].len, hlp_strings);
+        print_end_block();
+
+        offset = saved_offset + entry[i].len;
+    }
+
+    libblk_len = entry[i].len;
+
+    libblk_start = offset;
+    dump_sltg_library_block();
+
+    printf("skipping 0x40 bytes\n");
+    dump_binary(0x40);
+    printf("\n");
+    typeinfo_cnt = print_short_dec("typeinfo count");
+    printf("\n");
+
+    for (i = 0; i < typeinfo_cnt; i++)
+        dump_sltg_other_typeinfo(i, hlp_strings);
+
+    len = print_hex("offset from start of library block to name table");
+    printf("%#x + %#x = %#x\n", libblk_start, len, libblk_start + len);
+    len = (libblk_start + len) - offset;
+    printf("skipping %#x bytes (encoded/compressed helpstrings)\n", len);
+    printf("max string length: %#x, strings length %#x\n", *(short *)hlp_strings, *(int *)(hlp_strings + 2));
+    dump_binary(len);
+    printf("\n");
+
+    len = print_short_hex("name table jump");
+    if (len == 0xffff)
+    {
+        printf("skipping 0x000a bytes\n");
+        dump_binary(0x000a);
+        printf("\n");
+    }
+    else if (len == 0x0200)
+    {
+        printf("skipping 0x002a bytes\n");
+        dump_binary(0x002a);
+        printf("\n");
+    }
+    else
+    {
+        printf("FIXME: please report! (%#x)\n", len);
+        assert(0);
+    }
+
+    printf("skipping 0x200 bytes\n");
+    dump_binary(0x200);
+    printf("\n");
+
+    name_table_size = print_hex("name table size");
+
+    name_table_start = offset;
+    printf("name table offset = %#x\n\n", offset);
+
+    while (offset < name_table_start + name_table_size)
+    {
+        int aligned_len;
+
+        dump_binary(8);
+        print_string0();
+        printf("\n");
+
+        len = offset - name_table_start;
+        aligned_len = (len + 0x1f) & ~0x1f;
+        if (aligned_len - len < 4)
+            dump_binary(aligned_len - len);
+        else
+            dump_binary(len & 1);
+        printf("\n");
+    }
+
+    print_hex("01ffff01");
+    len = print_hex("length");
+    printf("skipping %#x bytes\n", len);
+    dump_binary(len);
+    printf("\n");
+
+    len = (libblk_start + libblk_len) - offset;
+    printf("skipping libblk remainder %#x bytes\n", len);
+    dump_binary(len);
+    printf("\n");
+
+    /* FIXME: msodumper/olestream.py parses this block differently
+    print_short_hex("unknown");
+    print_short_hex("byte order mark");
+    i = tlb_read_short();
+    printf("version = %u.%u\n", i & 0xff, i >> 8);
+    print_short_hex("system identifier");
+    print_hex("unknown");
+    printf("\n");
+    */
+    printf("skipping 12 bytes\n");
+    dump_binary(12);
+    printf("\n");
+
+    print_guid("uuid");
+    printf("\n");
+
+    /* 0x0008,"TYPELIB",0 */
+    dump_binary(12);
+    printf("\n");
+
+    printf("skipping 12 bytes\n");
+    dump_binary(12);
+    printf("\n");
+
+    printf("skipping remainder 0x10 bytes\n");
+    dump_binary(0x10);
+    printf("\n");
+}
+
+void tlb_dump(void)
+{
+    const DWORD *sig = PRD(0, sizeof(DWORD));
+    if (*sig == MSFT_MAGIC)
+        msft_dump();
+    else
+        sltg_dump();
+}
+
+enum FileSig get_kind_tlb(void)
+{
+    const DWORD *sig = PRD(0, sizeof(DWORD));
+    if (sig && (*sig == MSFT_MAGIC || *sig == SLTG_MAGIC)) return SIG_TLB;
+    return SIG_UNKNOWN;
 }
