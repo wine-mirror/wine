@@ -91,6 +91,8 @@ static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, L
 static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressA)(PCSTR, BOOLEAN, PCSTR *, IN_ADDR *);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressA)(PCSTR, PCSTR *, struct in6_addr *);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressW)(PCWSTR, PCWSTR *, struct in6_addr *);
+static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExA)(PCSTR, struct in6_addr *, PULONG, PUSHORT);
+static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExW)(PCWSTR, struct in6_addr *, PULONG, PUSHORT);
 static NTSTATUS  (WINAPI *pLdrAddRefDll)(ULONG, HMODULE);
 static NTSTATUS  (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG*, ULONG_PTR*);
 static NTSTATUS  (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
@@ -157,6 +159,8 @@ static void InitFunctionPtrs(void)
         pRtlIpv4StringToAddressA = (void *)GetProcAddress(hntdll, "RtlIpv4StringToAddressA");
         pRtlIpv6StringToAddressA = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressA");
         pRtlIpv6StringToAddressW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressW");
+        pRtlIpv6StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExA");
+        pRtlIpv6StringToAddressExW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExW");
         pLdrAddRefDll = (void *)GetProcAddress(hntdll, "LdrAddRefDll");
         pLdrLockLoaderLock = (void *)GetProcAddress(hntdll, "LdrLockLoaderLock");
         pLdrUnlockLoaderLock = (void *)GetProcAddress(hntdll, "LdrUnlockLoaderLock");
@@ -1598,7 +1602,6 @@ static const struct
 };
 const unsigned int ipv6_testcount = sizeof(ipv6_tests) / sizeof(ipv6_tests[0]);
 
-
 static void init_ip6(IN6_ADDR* addr, const int src[8])
 {
     unsigned int j;
@@ -1737,6 +1740,269 @@ static void test_RtlIpv6StringToAddress(void)
         ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
            "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
            ipv6_tests[i].address,
+           ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
+           ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
+           expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
+           expected_ip.s6_words[4], expected_ip.s6_words[5], expected_ip.s6_words[6], expected_ip.s6_words[7]);
+    }
+}
+
+static void compare_RtlIpv6StringToAddressExW(PCSTR name_a, const struct in6_addr *addr_a, HRESULT res_a, ULONG scope_a, USHORT port_a)
+{
+    WCHAR name[512];
+    NTSTATUS res;
+    IN6_ADDR ip;
+    ULONG scope = 0xbadf00d;
+    USHORT port = 0xbeef;
+
+    if (!pRtlIpv6StringToAddressExW)
+        return;
+
+    pRtlMultiByteToUnicodeN(name, sizeof(name), NULL, name_a, strlen(name_a) + 1);
+
+    init_ip6(&ip, NULL);
+    res = pRtlIpv6StringToAddressExW(name, &ip, &scope, &port);
+
+    ok(res == res_a, "[W:%s] res = 0x%08x, expected 0x%08x\n", name_a, res, res_a);
+    ok(scope == scope_a, "[W:%s] scope = 0x%08x, expected 0x%08x\n", name_a, scope, scope_a);
+    ok(port == port_a, "[W:%s] port = 0x%08x, expected 0x%08x\n", name_a, port, port_a);
+
+    ok(!memcmp(&ip, addr_a, sizeof(ip)),
+       "[W:%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+       name_a,
+       ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
+       ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
+       addr_a->s6_words[0], addr_a->s6_words[1], addr_a->s6_words[2], addr_a->s6_words[3],
+       addr_a->s6_words[4], addr_a->s6_words[5], addr_a->s6_words[6], addr_a->s6_words[7]);
+}
+
+static void test_RtlIpv6StringToAddressEx(void)
+{
+    NTSTATUS res;
+    IN6_ADDR ip, expected_ip;
+    ULONG scope;
+    USHORT port;
+    static const struct
+    {
+        PCSTR address;
+        NTSTATUS res;
+        ULONG scope;
+        USHORT port;
+        int ip[8];
+    } ipv6_ex_tests[] =
+    {
+        { "[::]",                                           STATUS_SUCCESS,             0,          0,
+            { 0, 0, 0, 0, 0, 0, 0, 0 } },
+        { "[::1]:8080",                                     STATUS_SUCCESS,             0,          0x901f,
+            { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]:0x80",                                     STATUS_SUCCESS,             0,          0x8000,
+            { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]:0X80",                                     STATUS_SUCCESS,             0,          0x8000,
+            { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]:080",                                      STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]:800000000080",                             STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80",   STATUS_SUCCESS,             0,          0x5000,
+            { 0xdcfe, 0x98ba, 0x5476, 0x1032, 0xdcfe, 0x98ba, 0x5476, 0x1032 } },
+        { "[1080:0:0:0:8:800:200C:417A]:1234",              STATUS_SUCCESS,             0,          0xd204,
+            { 0x8010, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[3ffe:2a00:100:7031::1]:8080",                   STATUS_SUCCESS,             0,          0x901f,
+            { 0xfe3f, 0x2a, 1, 0x3170, 0, 0, 0, 0x100 } },
+        { "[ 3ffe:2a00:100:7031::1]:8080",                  STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { -1 } },
+        { "[3ffe:2a00:100:7031::1 ]:8080",                  STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0xfe3f, 0x2a, 1, 0x3170, 0, 0, 0, 0x100 } },
+        { "[3ffe:2a00:100:7031::1].8080",                   STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0xfe3f, 0x2a, 1, 0x3170, 0, 0, 0, 0x100 } },
+        { "[1080::8:800:200C:417A]:8080",                   STATUS_SUCCESS,             0,          0x901f,
+            { 0x8010, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[1080::8:800:200C:417A]!8080",                   STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x8010, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[::FFFF:129.144.52.38]:80",                      STATUS_SUCCESS,             0,          0x5000,
+            { 0, 0, 0, 0, 0, 0xffff, 0x9081, 0x2634 } },
+        { "[::FFFF:129.144.52.38]:-80",                     STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0, 0, 0, 0, 0, 0xffff, 0x9081, 0x2634 } },
+        { "[::FFFF:129.144.52.38]:999999999999",            STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0, 0, 0, 0, 0, 0xffff, 0x9081, 0x2634 } },
+        { "[::FFFF:129.144.52.38%-8]:80",                   STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0, 0, 0, 0, 0, 0xffff, 0x9081, 0x2634 } },
+        { "[::FFFF:129.144.52.38]:80",                      STATUS_SUCCESS,             0,          0x5000,
+            { 0, 0, 0, 0, 0, 0xffff, 0x9081, 0x2634 } },
+        { "[12345::6:7:8]:80",                              STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { -1 } },
+        { "[ff01::8:800:200C:417A%16]:8080",                STATUS_SUCCESS,             16,         0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%100]:8080",               STATUS_SUCCESS,             100,        0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%1000]:8080",              STATUS_SUCCESS,             1000,       0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%10000]:8080",             STATUS_SUCCESS,             10000,      0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%1000000]:8080",           STATUS_SUCCESS,             1000000,    0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%4294967295]:8080",        STATUS_SUCCESS,             0xffffffff, 0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%4294967296]:8080",        STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%-1]:8080",                STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%0]:8080",                 STATUS_SUCCESS,             0,          0x901f,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%1",                       STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A%0x1000]:8080",            STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+        { "[ff01::8:800:200C:417A/16]:8080",                STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
+            { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
+    };
+    const unsigned int ipv6_ex_testcount = sizeof(ipv6_ex_tests) / sizeof(ipv6_ex_tests[0]);
+    const char *simple_ip = "::";
+    unsigned int i;
+
+    if (!pRtlIpv6StringToAddressExW)
+    {
+        skip("RtlIpv6StringToAddressExW not available\n");
+        /* we can continue, just not test W */
+    }
+
+    if (!pRtlIpv6StringToAddressExA)
+    {
+        skip("RtlIpv6StringToAddressExA not available\n");
+        return;
+    }
+
+    res = pRtlIpv6StringToAddressExA(simple_ip, &ip, &scope, &port);
+    ok(res == STATUS_SUCCESS, "[validate] res = 0x%08x, expected STATUS_SUCCESS\n", res);
+
+    init_ip6(&ip, NULL);
+    init_ip6(&expected_ip, NULL);
+    scope = 0xbadf00d;
+    port = 0xbeef;
+    res = pRtlIpv6StringToAddressExA(NULL, &ip, &scope, &port);
+    ok(res == STATUS_INVALID_PARAMETER,
+       "[null string] res = 0x%08x, expected STATUS_INVALID_PARAMETER\n", res);
+    ok(scope == 0xbadf00d, "[null string] scope = 0x%08x, expected 0xbadf00d\n", scope);
+    ok(port == 0xbeef, "[null string] port = 0x%08x, expected 0xbeef\n", port);
+    ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+       "[null string] ip is changed, expected it not to change\n");
+
+
+    init_ip6(&ip, NULL);
+    scope = 0xbadf00d;
+    port = 0xbeef;
+    res = pRtlIpv6StringToAddressExA(simple_ip, NULL, &scope, &port);
+    ok(res == STATUS_INVALID_PARAMETER,
+       "[null result] res = 0x%08x, expected STATUS_INVALID_PARAMETER\n", res);
+    ok(scope == 0xbadf00d, "[null result] scope = 0x%08x, expected 0xbadf00d\n", scope);
+    ok(port == 0xbeef, "[null result] port = 0x%08x, expected 0xbeef\n", port);
+    ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+       "[null result] ip is changed, expected it not to change\n");
+
+    init_ip6(&ip, NULL);
+    scope = 0xbadf00d;
+    port = 0xbeef;
+    res = pRtlIpv6StringToAddressExA(simple_ip, &ip, NULL, &port);
+    ok(res == STATUS_INVALID_PARAMETER,
+       "[null scope] res = 0x%08x, expected STATUS_INVALID_PARAMETER\n", res);
+    ok(scope == 0xbadf00d, "[null scope] scope = 0x%08x, expected 0xbadf00d\n", scope);
+    ok(port == 0xbeef, "[null scope] port = 0x%08x, expected 0xbeef\n", port);
+    ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+       "[null scope] ip is changed, expected it not to change\n");
+
+    init_ip6(&ip, NULL);
+    scope = 0xbadf00d;
+    port = 0xbeef;
+    res = pRtlIpv6StringToAddressExA(simple_ip, &ip, &scope, NULL);
+    ok(res == STATUS_INVALID_PARAMETER,
+       "[null port] res = 0x%08x, expected STATUS_INVALID_PARAMETER\n", res);
+    ok(scope == 0xbadf00d, "[null port] scope = 0x%08x, expected 0xbadf00d\n", scope);
+    ok(port == 0xbeef, "[null port] port = 0x%08x, expected 0xbeef\n", port);
+    ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+       "[null port] ip is changed, expected it not to change\n");
+
+    /* sanity check */
+    ok(sizeof(ip) == sizeof(USHORT)* 8, "sizeof(ip)\n");
+
+    /* first we run all ip related tests, to make sure someone didnt accidentally reimplement instead of re-use. */
+    for (i = 0; i < ipv6_testcount; i++)
+    {
+        ULONG scope = 0xbadf00d;
+        USHORT port = 0xbeef;
+        NTSTATUS expect_ret = (ipv6_tests[i].flags & ex_fail_6) ? STATUS_INVALID_PARAMETER : ipv6_tests[i].res;
+
+        if (ipv6_tests[i].flags & ex_skip_6)
+            continue;
+
+        init_ip6(&ip, NULL);
+        res = pRtlIpv6StringToAddressExA(ipv6_tests[i].address, &ip, &scope, &port);
+        compare_RtlIpv6StringToAddressExW(ipv6_tests[i].address, &ip, res, scope, port);
+
+        /* make sure nothing was changed if this function fails. */
+        if (res == STATUS_INVALID_PARAMETER)
+        {
+            ok(scope == 0xbadf00d, "[%s] scope = 0x%08x, expected 0xbadf00d\n",
+               ipv6_tests[i].address, scope);
+            ok(port == 0xbeef, "[%s] port = 0x%08x, expected 0xbeef\n",
+               ipv6_tests[i].address, port);
+        }
+        else
+        {
+            ok(scope != 0xbadf00d, "[%s] scope = 0x%08x, not expected 0xbadf00d\n",
+               ipv6_tests[i].address, scope);
+            ok(port != 0xbeef, "[%s] port = 0x%08x, not expected 0xbeef\n",
+               ipv6_tests[i].address, port);
+        }
+
+        if (ipv6_tests[i].flags & win_broken_6)
+        {
+            ok(res == expect_ret || broken(res == STATUS_INVALID_PARAMETER),
+               "[%s] res = 0x%08x, expected 0x%08x\n", ipv6_tests[i].address, res, expect_ret);
+
+            if (res == STATUS_INVALID_PARAMETER)
+                continue;
+        }
+        else
+        {
+            ok(res == expect_ret, "[%s] res = 0x%08x, expected 0x%08x\n",
+               ipv6_tests[i].address, res, expect_ret);
+        }
+
+        /* If ex fails but non-ex does not we cannot check if the part that is converted
+           before it failed was correct, since there is no data for it in the table. */
+        if (res == expect_ret)
+        {
+            init_ip6(&expected_ip, ipv6_tests[i].ip);
+            ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+               "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+               ipv6_tests[i].address,
+               ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
+               ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
+               expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
+               expected_ip.s6_words[4], expected_ip.s6_words[5], expected_ip.s6_words[6], expected_ip.s6_words[7]);
+        }
+    }
+
+    /* now we run scope / port related tests */
+    for (i = 0; i < ipv6_ex_testcount; i++)
+    {
+        scope = 0xbadf00d;
+        port = 0xbeef;
+        init_ip6(&ip, NULL);
+        res = pRtlIpv6StringToAddressExA(ipv6_ex_tests[i].address, &ip, &scope, &port);
+        compare_RtlIpv6StringToAddressExW(ipv6_ex_tests[i].address, &ip, res, scope, port);
+
+        ok(res == ipv6_ex_tests[i].res, "[%s] res = 0x%08x, expected 0x%08x\n",
+           ipv6_ex_tests[i].address, res, ipv6_ex_tests[i].res);
+        ok(scope == ipv6_ex_tests[i].scope, "[%s] scope = 0x%08x, expected 0x%08x\n",
+           ipv6_ex_tests[i].address, scope, ipv6_ex_tests[i].scope);
+        ok(port == ipv6_ex_tests[i].port, "[%s] port = 0x%08x, expected 0x%08x\n",
+           ipv6_ex_tests[i].address, port, ipv6_ex_tests[i].port);
+
+        init_ip6(&expected_ip, ipv6_ex_tests[i].ip);
+        ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+           "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+           ipv6_ex_tests[i].address,
            ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
            ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
            expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
@@ -2971,6 +3237,7 @@ START_TEST(rtl)
     test_RtlIpv4AddressToStringEx();
     test_RtlIpv4StringToAddress();
     test_RtlIpv6StringToAddress();
+    test_RtlIpv6StringToAddressEx();
     test_LdrAddRefDll();
     test_LdrLockLoaderLock();
     test_RtlCompressBuffer();
