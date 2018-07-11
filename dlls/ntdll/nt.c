@@ -88,6 +88,16 @@ struct smbios_bios {
     UINT64 characteristics;
 };
 
+struct smbios_system {
+    BYTE type;
+    BYTE length;
+    WORD handle;
+    BYTE vendor;
+    BYTE product;
+    BYTE version;
+    BYTE serial;
+};
+
 #include "poppack.h"
 
 /* Firmware table providers */
@@ -1963,21 +1973,32 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
         {
             char bios_vendor[128], bios_version[128], bios_date[128];
             size_t bios_vendor_len, bios_version_len, bios_date_len;
+            char system_vendor[128], system_product[128], system_version[128], system_serial[128];
+            size_t system_vendor_len, system_product_len, system_version_len, system_serial_len;
             char *buffer = (char*)sfti->TableBuffer;
             BYTE string_count;
             struct smbios_prologue *prologue;
             struct smbios_bios *bios;
+            struct smbios_system *system;
 
 #define S(s) s, sizeof(s)
             bios_vendor_len = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
             bios_version_len = get_smbios_string("/sys/class/dmi/id/bios_version", S(bios_version));
             bios_date_len = get_smbios_string("/sys/class/dmi/id/bios_date", S(bios_date));
+            system_vendor_len = get_smbios_string("/sys/class/dmi/id/sys_vendor", S(system_vendor));
+            system_product_len = get_smbios_string("/sys/class/dmi/id/product", S(system_product));
+            system_version_len = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
+            system_serial_len = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
 #undef S
 
             *required_len = sizeof(struct smbios_prologue);
 
             *required_len += sizeof(struct smbios_bios);
             *required_len += max(bios_vendor_len + bios_version_len + bios_date_len + 4, 2);
+
+            *required_len += sizeof(struct smbios_system);
+            *required_len += max(system_vendor_len + system_product_len + system_version_len +
+                                 system_serial_len + 5, 2);
 
             sfti->TableBufferLength = *required_len;
 
@@ -2010,6 +2031,24 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             copy_smbios_string(&buffer, bios_vendor, bios_vendor_len);
             copy_smbios_string(&buffer, bios_version, bios_version_len);
             copy_smbios_string(&buffer, bios_date, bios_date_len);
+            if (!string_count) *buffer++ = 0;
+            *buffer++ = 0;
+
+            string_count = 0;
+            system = (struct smbios_system*)buffer;
+            system->type = 1;
+            system->length = sizeof(struct smbios_system);
+            system->handle = 0;
+            system->vendor = system_vendor_len ? ++string_count : 0;
+            system->product = system_product_len ? ++string_count : 0;
+            system->version = system_version_len ? ++string_count : 0;
+            system->serial = system_serial_len ? ++string_count : 0;
+            buffer += sizeof(struct smbios_system);
+
+            copy_smbios_string(&buffer, system_vendor, system_vendor_len);
+            copy_smbios_string(&buffer, system_product, system_product_len);
+            copy_smbios_string(&buffer, system_version, system_version_len);
+            copy_smbios_string(&buffer, system_serial, system_serial_len);
             if (!string_count) *buffer++ = 0;
             *buffer++ = 0;
 
