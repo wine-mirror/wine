@@ -1582,8 +1582,12 @@ error:
 
 static DWORD collect_data(struct perf_provider *provider, const WCHAR *query, void **data, DWORD *size, DWORD *obj_count)
 {
+    static const WCHAR globalW[] = { 'G','l','o','b','a','l',0 };
     WCHAR *linkage = provider->linkage[0] ? provider->linkage : NULL;
     DWORD err;
+
+    if (!query || !query[0])
+        query = globalW;
 
     err = provider->pOpen(linkage);
     if (err != ERROR_SUCCESS)
