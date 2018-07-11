@@ -919,6 +919,7 @@ typedef struct WINE_MIDIStream {
     DWORD			dwPulses;
     DWORD			dwStartTicks;
     DWORD			dwElapsedMS;
+    DWORD			dwLastPositionMS;
     WORD			wFlags;
     WORD			status;
     HANDLE			hEvent;
@@ -1008,6 +1009,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             lpMidiStrm->dwPulses = 0;
             lpMidiStrm->dwElapsedMS = 0;
             lpMidiStrm->position_usec = 0;
+            lpMidiStrm->dwLastPositionMS = 0;
             LeaveCriticalSection(&lpMidiStrm->lock);
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
@@ -1181,7 +1183,6 @@ start_header:
 	if (me->dwDeltaTime) {
 	    EnterCriticalSection(&lpMidiStrm->lock);
 	    lpMidiStrm->position_usec += MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
-	    lpMidiStrm->dwPulses += me->dwDeltaTime;
 	    LeaveCriticalSection(&lpMidiStrm->lock);
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->position_usec / 1000;
@@ -1205,6 +1206,10 @@ start_header:
 		    break;
 		}
 	    }
+	    EnterCriticalSection(&lpMidiStrm->lock);
+	    lpMidiStrm->dwPulses += me->dwDeltaTime;
+	    lpMidiStrm->dwLastPositionMS = midistream_get_playing_position(lpMidiStrm);
+	    LeaveCriticalSection(&lpMidiStrm->lock);
 	}
 	switch (MEVT_EVENTTYPE(me->dwEvent & ~MEVT_F_CALLBACK)) {
 	case MEVT_COMMENT:
@@ -1332,6 +1337,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpMidiStrm->dwTempo = 500000;  /* microseconds per quarter note, i.e. 120 BPM */
     lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
     lpMidiStrm->position_usec = 0;
+    lpMidiStrm->dwLastPositionMS = 0;
     lpMidiStrm->status = MSM_STATUS_PAUSED;
     lpMidiStrm->dwElapsedMS = 0;
 
@@ -1467,6 +1473,24 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
     return midistream_post_message_and_wait(lpMidiStrm, WINE_MSM_PAUSE, 0);
 }
 
+static DWORD midistream_get_current_pulse(WINE_MIDIStream* lpMidiStrm)
+{
+    DWORD pulses = 0;
+    DWORD now = midistream_get_playing_position(lpMidiStrm);
+    DWORD delta = now - lpMidiStrm->dwLastPositionMS;
+    if (lpMidiStrm->dwTimeDiv > 0x8000) {
+        /* SMPTE, unchecked FIXME */
+        BYTE nf = 256 - HIBYTE(lpMidiStrm->dwTimeDiv);
+        BYTE nsf = LOBYTE(lpMidiStrm->dwTimeDiv);
+        pulses = (delta * nf * nsf) / 1000;
+    }
+    else if (lpMidiStrm->dwTimeDiv) {
+        pulses = (DWORD)((double)(delta * lpMidiStrm->dwTimeDiv) *
+                         1000.0 / (double)lpMidiStrm->dwTempo);
+    }
+    return lpMidiStrm->dwPulses + pulses;
+}
+
 /**************************************************************************
  * 				midiStreamPosition		[WINMM.@]
  */
@@ -1496,7 +1520,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	    TRACE("=> %d ms\n", lpMMT->u.ms);
 	    break;
 	case TIME_TICKS:
-	    lpMMT->u.ticks = lpMidiStrm->dwPulses;
+	    lpMMT->u.ticks = midistream_get_current_pulse(lpMidiStrm);
 	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
 	    break;
 	}

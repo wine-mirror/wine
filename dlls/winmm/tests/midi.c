@@ -893,7 +893,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     expected = ret;
 
     ret = get_position(hm, TIME_TICKS);
-    todo_wine ok(ret > strmNopsWithDelta[0].dwDeltaTime && ret < strmNopsWithDelta[1].dwDeltaTime,
+    ok(ret > strmNopsWithDelta[0].dwDeltaTime && ret < strmNopsWithDelta[1].dwDeltaTime,
        "TIME_TICKS position is continuous, got %u\n", ret);
 
     /* shouldn't set time division property while playing */
