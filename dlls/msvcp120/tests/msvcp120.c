@@ -2888,6 +2888,7 @@ static void test_vector_base_v4(void)
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
     CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(size == 3, "_Internal_clear returned %ld expected 3\n", (long)size);
     concurrent_vector_int_dtor(&v2);
 
     concurrent_vector_int_ctor(&v2);
@@ -2921,6 +2922,7 @@ static void test_vector_base_v4(void)
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
     CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(size == 3, "_Internal_clear returned %ld expected 3\n", (long)size);
     concurrent_vector_int_dtor(&v2);
 
     concurrent_vector_int_ctor(&v2);
@@ -2954,6 +2956,7 @@ static void test_vector_base_v4(void)
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
     CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(size == 2, "_Internal_clear returned %ld expected 2\n", (long)size);
     concurrent_vector_int_dtor(&v2);
 
     /* test for _Internal_compact */
@@ -3032,6 +3035,7 @@ static void test_vector_base_v4(void)
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
     CHECK_CALLED(concurrent_vector_int_destroy);
+    ok(size == 4, "_Internal_clear returned %ld expected 4\n", (long)size);
     concurrent_vector_int_dtor(&v2);
 
     /* test for Internal_grow_by */
