@@ -404,14 +404,18 @@ struct DWRITE_GLYPH_RUN
     UINT32 bidiLevel;
 };
 
-typedef struct DWRITE_GLYPH_RUN_DESCRIPTION
+cpp_quote("#ifndef __d2d1_1_h__")
+typedef struct DWRITE_GLYPH_RUN_DESCRIPTION DWRITE_GLYPH_RUN_DESCRIPTION;
+cpp_quote("#endif /* __d2d1_1_h__ */")
+
+struct DWRITE_GLYPH_RUN_DESCRIPTION
 {
     WCHAR const* localeName;
     WCHAR const* string;
     UINT32 stringLength;
     UINT16 const* clusterMap;
     UINT32 textPosition;
-} DWRITE_GLYPH_RUN_DESCRIPTION;
+};
 
 typedef struct DWRITE_UNDERLINE
 {
