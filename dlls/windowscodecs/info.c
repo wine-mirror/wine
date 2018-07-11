@@ -2155,7 +2155,7 @@ void ReleaseComponentInfos(void)
         IWICComponentInfo_Release(&info->IWICComponentInfo_iface);
 }
 
-HRESULT get_decoder_info(const CLSID *clsid, IWICBitmapDecoderInfo **info)
+HRESULT get_decoder_info(REFCLSID clsid, IWICBitmapDecoderInfo **info)
 {
     IWICComponentInfo *compinfo;
     HRESULT hr;
