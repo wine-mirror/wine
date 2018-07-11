@@ -54,6 +54,11 @@ static DWORD one_before_last_pid = 0;
     } \
   } while(0)
 
+/* Firmware table providers */
+#define ACPI 0x41435049
+#define FIRM 0x4649524D
+#define RSMB 0x52534D42
+
 static BOOL InitFunctionPtrs(void)
 {
     /* All needed functions are NT based, so using GetModuleHandle is a good check */
@@ -824,6 +829,57 @@ static void test_query_logicalprocex(void)
         HeapFree(GetProcessHeap(), 0, infoex);
         HeapFree(GetProcessHeap(), 0, infoex2);
     }
+}
+
+static void test_query_firmware(void)
+{
+    static const ULONG min_sfti_len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
+    ULONG len1, len2;
+    NTSTATUS status;
+    SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti;
+
+    sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
+    ok(!!sfti, "Failed to allocate memory\n");
+
+    sfti->ProviderSignature = 0;
+    sfti->Action = 0;
+    sfti->TableID = 0;
+
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len - 1, &len1);
+todo_wine
+    ok(status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* xp */,
+       "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    if (len1 == 0) /* xp, 2003 */
+    {
+        skip("SystemFirmwareTableInformation is not available\n");
+        HeapFree(GetProcessHeap(), 0, sfti);
+        return;
+    }
+    ok(len1 == min_sfti_len, "Expected length %u, got %u\n", min_sfti_len, len1);
+
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &len1);
+    ok(status == STATUS_NOT_IMPLEMENTED, "Expected STATUS_NOT_IMPLEMENTED, got %08x\n", status);
+    ok(len1 == 0, "Expected length 0, got %u\n", len1);
+
+    sfti->ProviderSignature = RSMB;
+    sfti->Action = SystemFirmwareTable_Get;
+
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &len1);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Expected STATUS_BUFFER_TOO_SMALL, got %08x\n", status);
+    ok(len1 >= min_sfti_len, "Expected length >= %u, got %u\n", min_sfti_len, len1);
+    ok(sfti->TableBufferLength == len1 - min_sfti_len,
+       "Expected length %u, got %u\n", len1 - min_sfti_len, sfti->TableBufferLength);
+
+    sfti = HeapReAlloc(GetProcessHeap(), 0, sfti, len1);
+    ok(!!sfti, "Failed to allocate memory\n");
+
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, len1, &len2);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(len2 == len1, "Expected length %u, got %u\n", len1, len2);
+    ok(sfti->TableBufferLength == len1 - min_sfti_len,
+       "Expected length %u, got %u\n", len1 - min_sfti_len, sfti->TableBufferLength);
+
+    HeapFree(GetProcessHeap(), 0, sfti);
 }
 
 static void test_query_processor_power_info(void)
@@ -2276,6 +2332,10 @@ START_TEST(info)
     /* 0x1F ProcessDebugFlags */
     trace("Starting test_process_debug_flags()\n");
     test_query_process_debug_flags(argc, argv);
+
+    /* 0x4C SystemFirmwareTableInformation */
+    trace("Starting test_query_firmware()\n");
+    test_query_firmware();
 
     /* belongs to its own file */
     trace("Starting test_readvirtualmemory()\n");
