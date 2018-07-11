@@ -3637,10 +3637,10 @@ static void test_RegQueryValueExPerformanceData(void)
 
     /* Test with data == NULL */
     dwret = RegQueryValueExA( HKEY_PERFORMANCE_DATA, "Global", NULL, NULL, NULL, &cbData );
-    todo_wine ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
+    ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
 
     dwret = RegQueryValueExW( HKEY_PERFORMANCE_DATA, globalW, NULL, NULL, NULL, &cbData );
-    todo_wine ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
+    ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
 
     /* Test ERROR_MORE_DATA, start with small buffer */
     len = 10;
@@ -3648,8 +3648,7 @@ static void test_RegQueryValueExPerformanceData(void)
     cbData = len;
     type = 0xdeadbeef;
     dwret = RegQueryValueExA( HKEY_PERFORMANCE_DATA, "Global", NULL, &type, value, &cbData );
-    todo_wine ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
-todo_wine
+    ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
     ok(type == REG_BINARY, "got %u\n", type);
     while( dwret == ERROR_MORE_DATA && limit)
     {
@@ -3662,14 +3661,13 @@ todo_wine
     }
     ok(limit > 0, "too many times ERROR_MORE_DATA returned\n");
 
-    todo_wine ok(dwret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", dwret);
-todo_wine
+    ok(dwret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", dwret);
     ok(type == REG_BINARY, "got %u\n", type);
 
     /* Check returned data */
     if (dwret == ERROR_SUCCESS)
     {
-        todo_wine ok(len >= sizeof(PERF_DATA_BLOCK), "got size %d\n", len);
+        ok(len >= sizeof(PERF_DATA_BLOCK), "got size %d\n", len);
         if (len >= sizeof(PERF_DATA_BLOCK)) {
             pdb = (PERF_DATA_BLOCK*) value;
             ok(pdb->Signature[0] == 'P', "expected Signature[0] = 'P', got 0x%x\n", pdb->Signature[0]);
@@ -3686,13 +3684,11 @@ todo_wine
     {
         cbData = 0xdeadbeef;
         dwret = RegQueryValueExA(HKEY_PERFORMANCE_DATA, names[i], NULL, NULL, NULL, &cbData);
-todo_wine
         ok(dwret == ERROR_MORE_DATA, "%u/%s: got %u\n", i, names[i], dwret);
         ok(cbData == 0, "got %u\n", cbData);
 
         cbData = 0;
         dwret = RegQueryValueExA(HKEY_PERFORMANCE_DATA, names[i], NULL, NULL, NULL, &cbData);
-todo_wine
         ok(dwret == ERROR_MORE_DATA, "%u/%s: got %u\n", i, names[i], dwret);
         ok(cbData == 0, "got %u\n", cbData);
 
@@ -3725,9 +3721,7 @@ todo_wine
     type = 0xdeadbeef;
     cbData = sizeof(buf);
     dwret = RegQueryValueExA(HKEY_PERFORMANCE_DATA, "invalid counter name", NULL, &type, buf, &cbData);
-todo_wine
     ok(dwret == ERROR_SUCCESS, "got %u\n", dwret);
-todo_wine
     ok(type == REG_BINARY, "got %u\n", type);
     if (dwret == ERROR_SUCCESS)
     {
@@ -3757,6 +3751,7 @@ todo_wine
         ok(pdb->TotalByteLength == len, "got %u vs %u\n", pdb->TotalByteLength, len);
         ok(pdb->HeaderLength == pdb->TotalByteLength, "got %u\n", pdb->HeaderLength);
         ok(pdb->NumObjectTypes == 0, "got %u\n", pdb->NumObjectTypes);
+todo_wine
         ok(pdb->DefaultObject != 0, "got %u\n", pdb->DefaultObject);
         ok(pdb->SystemTime.wYear == st.wYear, "got %u\n", pdb->SystemTime.wYear);
         ok(pdb->SystemTime.wMonth == st.wMonth, "got %u\n", pdb->SystemTime.wMonth);
