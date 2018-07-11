@@ -26,10 +26,16 @@
 #include "winternl.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
+static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
 #define GET_PROC(func)                                     \
     p##func = (void *)GetProcAddress(hmod, #func);
+
+/* Firmware table providers */
+#define ACPI 0x41435049
+#define FIRM 0x4649524D
+#define RSMB 0x52534D42
 
 static void init_function_pointers(void)
 {
@@ -41,6 +47,7 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("ntdll.dll");
 
+    GET_PROC(NtQuerySystemInformation);
     GET_PROC(RtlGetVersion);
 }
 
@@ -697,6 +704,44 @@ static void test_VerifyVersionInfo(void)
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 }
 
+static void test_GetSystemFirmwareTable(void)
+{
+    static const ULONG min_sfti_len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
+    ULONG expected_len;
+    UINT len;
+    SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
+    UCHAR *smbios_table;
+
+    ok(!!sfti, "Failed to allocate memory\n");
+    sfti->ProviderSignature = RSMB;
+    sfti->Action = SystemFirmwareTable_Get;
+    sfti->TableID = 0;
+    pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
+    if (expected_len == 0) /* xp, 2003 */
+    {
+        skip("SystemFirmwareTableInformation is not available\n");
+        HeapFree(GetProcessHeap(), 0, sfti);
+        return;
+    }
+    sfti = HeapReAlloc(GetProcessHeap(), 0, sfti, expected_len);
+    ok(!!sfti, "Failed to allocate memory\n");
+    pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
+
+    expected_len -= min_sfti_len;
+    smbios_table = HeapAlloc(GetProcessHeap(), 0, expected_len);
+    len = GetSystemFirmwareTable(RSMB, 0, smbios_table, expected_len);
+    ok(len == expected_len, "Expected length %u, got %u\n", expected_len, len);
+    ok(len == 0 || !memcmp(smbios_table, sfti->TableBuffer, 6),
+       "Expected prologue %02x %02x %02x %02x %02x %02x, got %02x %02x %02x %02x %02x %02x\n",
+       sfti->TableBuffer[0], sfti->TableBuffer[1], sfti->TableBuffer[2],
+       sfti->TableBuffer[3], sfti->TableBuffer[4], sfti->TableBuffer[5],
+       smbios_table[0], smbios_table[1], smbios_table[2],
+       smbios_table[3], smbios_table[4], smbios_table[5]);
+
+    HeapFree(GetProcessHeap(), 0, sfti);
+    HeapFree(GetProcessHeap(), 0, smbios_table);
+}
+
 START_TEST(version)
 {
     init_function_pointers();
@@ -704,4 +749,5 @@ START_TEST(version)
     test_GetProductInfo();
     test_GetVersionEx();
     test_VerifyVersionInfo();
+    test_GetSystemFirmwareTable();
 }
