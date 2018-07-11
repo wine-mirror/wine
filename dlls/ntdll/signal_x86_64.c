@@ -2137,8 +2137,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     NTSTATUS ret;
-    DWORD needed_flags = context->ContextFlags;
+    DWORD needed_flags;
     BOOL self = (handle == GetCurrentThread());
+
+    if (!context) return STATUS_INVALID_PARAMETER;
+
+    needed_flags = context->ContextFlags;
 
     /* debug registers require a server call */
     if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)) self = FALSE;
