@@ -25,7 +25,7 @@
 @ stub CorDllMainWorker
 @ stdcall CorExitProcess(long)
 @ stub CorGetSvc
-@ stub CorIsLatestSvc
+@ stdcall CorIsLatestSvc(ptr ptr)
 @ stub CorMarkThreadInThreadPool
 @ stub CorTickleSvc
 @ stdcall CreateConfigStream(wstr ptr)
