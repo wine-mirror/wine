@@ -1485,6 +1485,7 @@ LONG WINAPI RegSetKeyValueA( HKEY hkey, LPCSTR subkey, LPCSTR name, DWORD type, 
 struct perf_provider
 {
     HMODULE perflib;
+    WCHAR linkage[MAX_PATH];
     PM_OPEN_PROC *pOpen;
     PM_CLOSE_PROC *pClose;
     PM_COLLECT_PROC *pCollect;
@@ -1510,6 +1511,8 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
 {
     static const WCHAR performanceW[] = { 'P','e','r','f','o','r','m','a','n','c','e',0 };
     static const WCHAR libraryW[] = { 'L','i','b','r','a','r','y',0 };
+    static const WCHAR linkageW[] = { 'L','i','n','k','a','g','e',0 };
+    static const WCHAR exportW[] = { 'E','x','p','o','r','t',0 };
     WCHAR buf[MAX_PATH], buf2[MAX_PATH];
     DWORD err, type, len;
     HKEY service, perf;
@@ -1517,6 +1520,21 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
     err = RegOpenKeyExW(root, name, 0, KEY_READ, &service);
     if (err != ERROR_SUCCESS)
         return FALSE;
+
+    provider->linkage[0] = 0;
+    err = RegOpenKeyExW(service, linkageW, 0, KEY_READ, &perf);
+    if (err == ERROR_SUCCESS)
+    {
+        len = sizeof(buf) - sizeof(WCHAR);
+        err = RegQueryValueExW(perf, exportW, NULL, &type, (BYTE *)buf, &len);
+        if (err == ERROR_SUCCESS && (type == REG_SZ || type == REG_MULTI_SZ))
+        {
+            memcpy(provider->linkage, buf, len);
+            provider->linkage[len / sizeof(WCHAR)] = 0;
+            TRACE("Export: %s\n", debugstr_w(provider->linkage));
+        }
+        RegCloseKey(perf);
+    }
 
     err = RegOpenKeyExW(service, performanceW, 0, KEY_READ, &perf);
     RegCloseKey(service);
@@ -1564,12 +1582,13 @@ error:
 
 static DWORD collect_data(struct perf_provider *provider, const WCHAR *query, void **data, DWORD *size, DWORD *obj_count)
 {
+    WCHAR *linkage = provider->linkage[0] ? provider->linkage : NULL;
     DWORD err;
 
-    err = provider->pOpen(NULL);
+    err = provider->pOpen(linkage);
     if (err != ERROR_SUCCESS)
     {
-        TRACE("Open error %u (%#x)\n", err, err);
+        TRACE("Open(%s) error %u (%#x)\n", debugstr_w(linkage), err, err);
         return err;
     }
 
