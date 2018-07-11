@@ -89,6 +89,7 @@ static IMAGE_BASE_RELOCATION *(WINAPI *pLdrProcessRelocationBlock)(void*,UINT,US
 static CHAR *    (WINAPI *pRtlIpv4AddressToStringA)(const IN_ADDR *, LPSTR);
 static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, LPSTR, PULONG);
 static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressA)(PCSTR, BOOLEAN, PCSTR *, IN_ADDR *);
+static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressExA)(PCSTR, BOOLEAN, IN_ADDR *, PUSHORT);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressA)(PCSTR, PCSTR *, struct in6_addr *);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressW)(PCWSTR, PCWSTR *, struct in6_addr *);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExA)(PCSTR, struct in6_addr *, PULONG, PUSHORT);
@@ -157,6 +158,7 @@ static void InitFunctionPtrs(void)
         pRtlIpv4AddressToStringA = (void *)GetProcAddress(hntdll, "RtlIpv4AddressToStringA");
         pRtlIpv4AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv4AddressToStringExA");
         pRtlIpv4StringToAddressA = (void *)GetProcAddress(hntdll, "RtlIpv4StringToAddressA");
+        pRtlIpv4StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv4StringToAddressExA");
         pRtlIpv6StringToAddressA = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressA");
         pRtlIpv6StringToAddressW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressW");
         pRtlIpv6StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExA");
@@ -1154,97 +1156,108 @@ static void test_RtlIpv4AddressToStringEx(void)
         res, size, buffer);
 }
 
+static struct
+{
+    PCSTR address;
+    NTSTATUS res;
+    int terminator_offset;
+    int ip[4];
+    enum { normal_4, strict_diff_4 = 1, ex_fail_4 = 2 } flags;
+    NTSTATUS res_strict;
+    int terminator_offset_strict;
+    int ip_strict[4];
+} ipv4_tests[] =
+{
+    { "",                       STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { " ",                      STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "1.1.1.1",                STATUS_SUCCESS,            7, {   1,   1,   1,   1 } },
+    { "0.0.0.0",                STATUS_SUCCESS,            7, {   0,   0,   0,   0 } },
+    { "255.255.255.255",        STATUS_SUCCESS,           15, { 255, 255, 255, 255 } },
+    { "255.255.255.255:123",    STATUS_SUCCESS,           15, { 255, 255, 255, 255 } },
+    { "255.255.255.256",        STATUS_INVALID_PARAMETER, 15, { -1 } },
+    { "255.255.255.4294967295", STATUS_INVALID_PARAMETER, 22, { -1 } },
+    { "255.255.255.4294967296", STATUS_INVALID_PARAMETER, 21, { -1 } },
+    { "255.255.255.4294967297", STATUS_INVALID_PARAMETER, 21, { -1 } },
+    { "a",                      STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "1.1.1.0xaA",             STATUS_SUCCESS,           10, {   1,   1,   1, 170 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0XaA",             STATUS_SUCCESS,           10, {   1,   1,   1, 170 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0x",               STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0xff",             STATUS_SUCCESS,           10, {   1,   1,   1, 255 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0x100",            STATUS_INVALID_PARAMETER, 11, { -1 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0xffffffff",       STATUS_INVALID_PARAMETER, 16, { -1 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.0x100000000",      STATUS_INVALID_PARAMETER, 16, { -1, 0, 0, 0 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "1.1.1.010",              STATUS_SUCCESS,            9, {   1,   1,   1,   8 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "1.1.1.00",               STATUS_SUCCESS,            8, {   1,   1,   1,   0 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "1.1.1.007",              STATUS_SUCCESS,            9, {   1,   1,   1,   7 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "1.1.1.08",               STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "1.1.1.008",              STATUS_SUCCESS,            8, {   1,   1,   1,   0 }, strict_diff_4 | ex_fail_4,
+                                STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "1.1.1.0a",               STATUS_SUCCESS,            7, {   1,   1,   1,   0 }, ex_fail_4 },
+    { "1.1.1.0o10",             STATUS_SUCCESS,            7, {   1,   1,   1,   0 }, ex_fail_4 },
+    { "1.1.1.0b10",             STATUS_SUCCESS,            7, {   1,   1,   1,   0 }, ex_fail_4 },
+    { "1.1.1.-2",               STATUS_INVALID_PARAMETER,  6, { -1 } },
+    { "1",                      STATUS_SUCCESS,            1, {   0,   0,   0,   1 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { "-1",                     STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "203569230",              STATUS_SUCCESS,            9, {  12,  34,  56,  78 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  9, { -1 } },
+    { "1.223756",               STATUS_SUCCESS,            8, {   1,   3, 106,  12 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  8, { -1 } },
+    { "3.4.756",                STATUS_SUCCESS,            7, {   3,   4,   2, 244 }, strict_diff_4,
+                                STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "3.4.756.1",              STATUS_INVALID_PARAMETER,  9, { -1 } },
+    { "3.4.65536",              STATUS_INVALID_PARAMETER,  9, { -1 } },
+    { "3.4.5.6.7",              STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "3.4.5.+6",               STATUS_INVALID_PARAMETER,  6, { -1 } },
+    { " 3.4.5.6",               STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "\t3.4.5.6",              STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "3.4.5.6 ",               STATUS_SUCCESS,            7, {   3,   4,   5,   6 }, ex_fail_4 },
+    { "3. 4.5.6",               STATUS_INVALID_PARAMETER,  2, { -1 } },
+    { ".",                      STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { "..",                     STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { "1.",                     STATUS_INVALID_PARAMETER,  2, { -1 } },
+    { "1..",                    STATUS_INVALID_PARAMETER,  3, { -1 } },
+    { ".1",                     STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { ".1.",                    STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { ".1.2.3",                 STATUS_INVALID_PARAMETER,  1, { -1 } },
+    { "0.1.2.3",                STATUS_SUCCESS,            7, {   0,   1,   2,   3 } },
+    { "0.1.2.3.",               STATUS_INVALID_PARAMETER,  7, { -1 } },
+    { "[0.1.2.3]",              STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { "::1",                    STATUS_INVALID_PARAMETER,  0, { -1 } },
+    { ":1",                     STATUS_INVALID_PARAMETER,  0, { -1 } },
+};
+const unsigned int ipv4_testcount = sizeof(ipv4_tests) / sizeof(ipv4_tests[0]);
+
+static void init_ip4(IN_ADDR* addr, const int src[4])
+{
+    if (!src || src[0] == -1)
+    {
+        addr->S_un.S_addr = 0xabababab;
+    }
+    else
+    {
+        addr->S_un.S_un_b.s_b1 = src[0];
+        addr->S_un.S_un_b.s_b2 = src[1];
+        addr->S_un.S_un_b.s_b3 = src[2];
+        addr->S_un.S_un_b.s_b4 = src[3];
+    }
+}
+
 static void test_RtlIpv4StringToAddress(void)
 {
     NTSTATUS res;
     IN_ADDR ip, expected_ip;
     PCSTR terminator;
     CHAR dummy;
-    struct
-    {
-        PCSTR address;
-        NTSTATUS res;
-        int terminator_offset;
-        int ip[4];
-        BOOL strict_is_different;
-        NTSTATUS res_strict;
-        int terminator_offset_strict;
-        int ip_strict[4];
-    } tests[] =
-    {
-        { "",                STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { " ",               STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "1.1.1.1",         STATUS_SUCCESS,            7, {   1,   1,   1,   1 } },
-        { "0.0.0.0",         STATUS_SUCCESS,            7, {   0,   0,   0,   0 } },
-        { "255.255.255.255", STATUS_SUCCESS,           15, { 255, 255, 255, 255 } },
-        { "255.255.255.255:123",
-                             STATUS_SUCCESS,           15, { 255, 255, 255, 255 } },
-        { "255.255.255.256", STATUS_INVALID_PARAMETER, 15, { -1 } },
-        { "255.255.255.4294967295",
-                             STATUS_INVALID_PARAMETER, 22, { -1 } },
-        { "255.255.255.4294967296",
-                             STATUS_INVALID_PARAMETER, 21, { -1 } },
-        { "255.255.255.4294967297",
-                             STATUS_INVALID_PARAMETER, 21, { -1 } },
-        { "a",               STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "1.1.1.0xaA",      STATUS_SUCCESS,           10, {   1,   1,   1, 170 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0XaA",      STATUS_SUCCESS,           10, {   1,   1,   1, 170 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0x",        STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0xff",      STATUS_SUCCESS,           10, {   1,   1,   1, 255 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0x100",     STATUS_INVALID_PARAMETER, 11, { -1 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0xffffffff",STATUS_INVALID_PARAMETER, 16, { -1 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.0x100000000",
-                             STATUS_INVALID_PARAMETER, 16, { -1, 0, 0, 0 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "1.1.1.010",       STATUS_SUCCESS,            9, {   1,   1,   1,   8 },
-                       TRUE, STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "1.1.1.00",        STATUS_SUCCESS,            8, {   1,   1,   1,   0 },
-                       TRUE, STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "1.1.1.007",       STATUS_SUCCESS,            9, {   1,   1,   1,   7 },
-                       TRUE, STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "1.1.1.08",        STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "1.1.1.008",       STATUS_SUCCESS,            8, {   1,   1,   1,   0 },
-                       TRUE, STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "1.1.1.0a",        STATUS_SUCCESS,            7, {   1,   1,   1,   0 } },
-        { "1.1.1.0o10",      STATUS_SUCCESS,            7, {   1,   1,   1,   0 } },
-        { "1.1.1.0b10",      STATUS_SUCCESS,            7, {   1,   1,   1,   0 } },
-        { "1.1.1.-2",        STATUS_INVALID_PARAMETER,  6, { -1 } },
-        { "1",               STATUS_SUCCESS,            1, {   0,   0,   0,   1 },
-                       TRUE, STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { "-1",              STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "203569230",       STATUS_SUCCESS,            9, {  12,  34,  56,  78 },
-                       TRUE, STATUS_INVALID_PARAMETER,  9, { -1 } },
-        { "1.223756",        STATUS_SUCCESS,            8, {   1,   3, 106,  12 },
-                       TRUE, STATUS_INVALID_PARAMETER,  8, { -1 } },
-        { "3.4.756",         STATUS_SUCCESS,            7, {   3,   4,   2, 244 },
-                       TRUE, STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "3.4.756.1",       STATUS_INVALID_PARAMETER,  9, { -1 } },
-        { "3.4.65536",       STATUS_INVALID_PARAMETER,  9, { -1 } },
-        { "3.4.5.6.7",       STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "3.4.5.+6",        STATUS_INVALID_PARAMETER,  6, { -1 } },
-        { " 3.4.5.6",        STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "\t3.4.5.6",       STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "3.4.5.6 ",        STATUS_SUCCESS,            7, {   3,   4,   5,   6 } },
-        { "3. 4.5.6",        STATUS_INVALID_PARAMETER,  2, { -1 } },
-        { ".",               STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { "..",              STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { "1.",              STATUS_INVALID_PARAMETER,  2, { -1 } },
-        { "1..",             STATUS_INVALID_PARAMETER,  3, { -1 } },
-        { ".1",              STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { ".1.",             STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { ".1.2.3",          STATUS_INVALID_PARAMETER,  1, { -1 } },
-        { "0.1.2.3",         STATUS_SUCCESS,            7, {   0,   1,   2,   3 } },
-        { "0.1.2.3.",        STATUS_INVALID_PARAMETER,  7, { -1 } },
-        { "[0.1.2.3]",       STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { "::1",             STATUS_INVALID_PARAMETER,  0, { -1 } },
-        { ":1",              STATUS_INVALID_PARAMETER,  0, { -1 } },
-    };
-    const int testcount = ARRAY_SIZE(tests);
     int i;
 
     if (!pRtlIpv4StringToAddressA)
@@ -1267,65 +1280,174 @@ static void test_RtlIpv4StringToAddress(void)
         */
     }
 
-    for (i = 0; i < testcount; i++)
+    for (i = 0; i < ipv4_testcount; i++)
     {
         /* non-strict */
         terminator = &dummy;
         ip.S_un.S_addr = 0xabababab;
-        res = pRtlIpv4StringToAddressA(tests[i].address, FALSE, &terminator, &ip);
-        ok(res == tests[i].res,
+        res = pRtlIpv4StringToAddressA(ipv4_tests[i].address, FALSE, &terminator, &ip);
+        ok(res == ipv4_tests[i].res,
            "[%s] res = 0x%08x, expected 0x%08x\n",
-           tests[i].address, res, tests[i].res);
-        ok(terminator == tests[i].address + tests[i].terminator_offset,
+           ipv4_tests[i].address, res, ipv4_tests[i].res);
+        ok(terminator == ipv4_tests[i].address + ipv4_tests[i].terminator_offset,
            "[%s] terminator = %p, expected %p\n",
-           tests[i].address, terminator, tests[i].address + tests[i].terminator_offset);
-        if (tests[i].ip[0] == -1)
-            expected_ip.S_un.S_addr = 0xabababab;
-        else
-        {
-            expected_ip.S_un.S_un_b.s_b1 = tests[i].ip[0];
-            expected_ip.S_un.S_un_b.s_b2 = tests[i].ip[1];
-            expected_ip.S_un.S_un_b.s_b3 = tests[i].ip[2];
-            expected_ip.S_un.S_un_b.s_b4 = tests[i].ip[3];
-        }
+           ipv4_tests[i].address, terminator, ipv4_tests[i].address + ipv4_tests[i].terminator_offset);
+
+        init_ip4(&expected_ip, ipv4_tests[i].ip);
         ok(ip.S_un.S_addr == expected_ip.S_un.S_addr,
            "[%s] ip = %08x, expected %08x\n",
-           tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
+           ipv4_tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
 
-        if (!tests[i].strict_is_different)
+        if (!(ipv4_tests[i].flags & strict_diff_4))
         {
-            tests[i].res_strict = tests[i].res;
-            tests[i].terminator_offset_strict = tests[i].terminator_offset;
-            tests[i].ip_strict[0] = tests[i].ip[0];
-            tests[i].ip_strict[1] = tests[i].ip[1];
-            tests[i].ip_strict[2] = tests[i].ip[2];
-            tests[i].ip_strict[3] = tests[i].ip[3];
+            ipv4_tests[i].res_strict = ipv4_tests[i].res;
+            ipv4_tests[i].terminator_offset_strict = ipv4_tests[i].terminator_offset;
+            ipv4_tests[i].ip_strict[0] = ipv4_tests[i].ip[0];
+            ipv4_tests[i].ip_strict[1] = ipv4_tests[i].ip[1];
+            ipv4_tests[i].ip_strict[2] = ipv4_tests[i].ip[2];
+            ipv4_tests[i].ip_strict[3] = ipv4_tests[i].ip[3];
         }
         /* strict */
         terminator = &dummy;
         ip.S_un.S_addr = 0xabababab;
-        res = pRtlIpv4StringToAddressA(tests[i].address, TRUE, &terminator, &ip);
-        ok(res == tests[i].res_strict,
+        res = pRtlIpv4StringToAddressA(ipv4_tests[i].address, TRUE, &terminator, &ip);
+        ok(res == ipv4_tests[i].res_strict,
            "[%s] res = 0x%08x, expected 0x%08x\n",
-           tests[i].address, res, tests[i].res_strict);
-        ok(terminator == tests[i].address + tests[i].terminator_offset_strict,
+           ipv4_tests[i].address, res, ipv4_tests[i].res_strict);
+        ok(terminator == ipv4_tests[i].address + ipv4_tests[i].terminator_offset_strict,
            "[%s] terminator = %p, expected %p\n",
-           tests[i].address, terminator, tests[i].address + tests[i].terminator_offset_strict);
-        if (tests[i].ip_strict[0] == -1)
-            expected_ip.S_un.S_addr = 0xabababab;
-        else
-        {
-            expected_ip.S_un.S_un_b.s_b1 = tests[i].ip_strict[0];
-            expected_ip.S_un.S_un_b.s_b2 = tests[i].ip_strict[1];
-            expected_ip.S_un.S_un_b.s_b3 = tests[i].ip_strict[2];
-            expected_ip.S_un.S_un_b.s_b4 = tests[i].ip_strict[3];
-        }
+           ipv4_tests[i].address, terminator, ipv4_tests[i].address + ipv4_tests[i].terminator_offset_strict);
+
+        init_ip4(&expected_ip, ipv4_tests[i].ip_strict);
         ok(ip.S_un.S_addr == expected_ip.S_un.S_addr,
            "[%s] ip = %08x, expected %08x\n",
-           tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
+           ipv4_tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
     }
 }
 
+static void test_RtlIpv4StringToAddressEx(void)
+{
+    NTSTATUS res;
+    IN_ADDR ip, expected_ip;
+    USHORT port;
+    static const struct
+    {
+        PCSTR address;
+        NTSTATUS res;
+        int ip[4];
+        USHORT port;
+    } ipv4_ex_tests[] =
+    {
+        { "",               STATUS_INVALID_PARAMETER,   { -1 },         0xdead },
+        { " ",              STATUS_INVALID_PARAMETER,   { -1 },         0xdead },
+        { "1.1.1.1:",       STATUS_INVALID_PARAMETER,   { 1, 1, 1, 1 }, 0xdead },
+        { "1.1.1.1+",       STATUS_INVALID_PARAMETER,   { 1, 1, 1, 1 }, 0xdead },
+        { "1.1.1.1:1",      STATUS_SUCCESS,             { 1, 1, 1, 1 }, 0x100 },
+        { "256.1.1.1:1",    STATUS_INVALID_PARAMETER,   { -1 },         0xdead },
+        { "-1.1.1.1:1",     STATUS_INVALID_PARAMETER,   { -1 },         0xdead },
+        { "0.0.0.0:0",      STATUS_INVALID_PARAMETER,   { 0, 0, 0, 0 }, 0xdead },
+        { "0.0.0.0:1",      STATUS_SUCCESS,             { 0, 0, 0, 0 }, 0x100 },
+        { "1.2.3.4:65535",  STATUS_SUCCESS,             { 1, 2, 3, 4 }, 65535 },
+        { "1.2.3.4:65536",  STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
+        { "1.2.3.4:0xffff", STATUS_SUCCESS,             { 1, 2, 3, 4 }, 65535 },
+        { "1.2.3.4:0XfFfF", STATUS_SUCCESS,             { 1, 2, 3, 4 }, 65535 },
+        { "1.2.3.4:011064", STATUS_SUCCESS,             { 1, 2, 3, 4 }, 0x3412 },
+        { "1.2.3.4:1234a",  STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
+        { "1.2.3.4:1234+",  STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
+        { "1.2.3.4: 1234",  STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
+        { "1.2.3.4:\t1234", STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
+    };
+    const unsigned int ipv4_ex_testcount = sizeof(ipv4_ex_tests) / sizeof(ipv4_ex_tests[0]);
+    unsigned int i;
+    BOOLEAN strict;
+
+    if (!pRtlIpv4StringToAddressExA)
+    {
+        skip("RtlIpv4StringToAddressEx not available\n");
+        return;
+    }
+
+    /* do not crash, and do not touch the ip / port. */
+    ip.S_un.S_addr = 0xabababab;
+    port = 0xdead;
+    res = pRtlIpv4StringToAddressExA(NULL, FALSE, &ip, &port);
+    ok(res == STATUS_INVALID_PARAMETER, "[null address] res = 0x%08x, expected 0x%08x\n",
+       res, STATUS_INVALID_PARAMETER);
+    ok(ip.S_un.S_addr == 0xabababab, "RtlIpv4StringToAddressExA should not touch the ip!, ip == %x\n", ip.S_un.S_addr);
+    ok(port == 0xdead, "RtlIpv4StringToAddressExA should not touch the port!, port == %x\n", port);
+
+    port = 0xdead;
+    res = pRtlIpv4StringToAddressExA("1.1.1.1", FALSE, NULL, &port);
+    ok(res == STATUS_INVALID_PARAMETER, "[null ip] res = 0x%08x, expected 0x%08x\n",
+       res, STATUS_INVALID_PARAMETER);
+    ok(port == 0xdead, "RtlIpv4StringToAddressExA should not touch the port!, port == %x\n", port);
+
+    ip.S_un.S_addr = 0xabababab;
+    port = 0xdead;
+    res = pRtlIpv4StringToAddressExA("1.1.1.1", FALSE, &ip, NULL);
+    ok(res == STATUS_INVALID_PARAMETER, "[null port] res = 0x%08x, expected 0x%08x\n",
+       res, STATUS_INVALID_PARAMETER);
+    ok(ip.S_un.S_addr == 0xabababab, "RtlIpv4StringToAddressExA should not touch the ip!, ip == %x\n", ip.S_un.S_addr);
+    ok(port == 0xdead, "RtlIpv4StringToAddressExA should not touch the port!, port == %x\n", port);
+
+    /* first we run the non-ex testcases on the ex function */
+    for (i = 0; i < ipv4_testcount; i++)
+    {
+        NTSTATUS expect_res = (ipv4_tests[i].flags & ex_fail_4) ? STATUS_INVALID_PARAMETER : ipv4_tests[i].res;
+
+        /* non-strict */
+        port = 0xdead;
+        ip.S_un.S_addr = 0xabababab;
+        res = pRtlIpv4StringToAddressExA(ipv4_tests[i].address, FALSE, &ip, &port);
+        ok(res == expect_res, "[%s] res = 0x%08x, expected 0x%08x\n",
+           ipv4_tests[i].address, res, expect_res);
+
+        init_ip4(&expected_ip, ipv4_tests[i].ip);
+        ok(ip.S_un.S_addr == expected_ip.S_un.S_addr, "[%s] ip = %08x, expected %08x\n",
+           ipv4_tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
+
+        if (!(ipv4_tests[i].flags & strict_diff_4))
+        {
+            ipv4_tests[i].res_strict = ipv4_tests[i].res;
+            ipv4_tests[i].terminator_offset_strict = ipv4_tests[i].terminator_offset;
+            ipv4_tests[i].ip_strict[0] = ipv4_tests[i].ip[0];
+            ipv4_tests[i].ip_strict[1] = ipv4_tests[i].ip[1];
+            ipv4_tests[i].ip_strict[2] = ipv4_tests[i].ip[2];
+            ipv4_tests[i].ip_strict[3] = ipv4_tests[i].ip[3];
+        }
+        /* strict */
+        expect_res = (ipv4_tests[i].flags & ex_fail_4) ? STATUS_INVALID_PARAMETER : ipv4_tests[i].res_strict;
+        port = 0xdead;
+        ip.S_un.S_addr = 0xabababab;
+        res = pRtlIpv4StringToAddressExA(ipv4_tests[i].address, TRUE, &ip, &port);
+        ok(res == expect_res, "[%s] res = 0x%08x, expected 0x%08x\n",
+           ipv4_tests[i].address, res, expect_res);
+
+        init_ip4(&expected_ip, ipv4_tests[i].ip_strict);
+        ok(ip.S_un.S_addr == expected_ip.S_un.S_addr, "[%s] ip = %08x, expected %08x\n",
+           ipv4_tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
+    }
+
+
+    for (i = 0; i < ipv4_ex_testcount; i++)
+    {
+        /* Strict is only relevant for the ip address, so make sure that it does not influence the port */
+        for (strict = 0; strict < 2; strict++)
+        {
+            ip.S_un.S_addr = 0xabababab;
+            port = 0xdead;
+            res = pRtlIpv4StringToAddressExA(ipv4_ex_tests[i].address, strict, &ip, &port);
+            ok(res == ipv4_ex_tests[i].res, "[%s] res = 0x%08x, expected 0x%08x\n",
+               ipv4_ex_tests[i].address, res, ipv4_ex_tests[i].res);
+
+            init_ip4(&expected_ip, ipv4_ex_tests[i].ip);
+            ok(ip.S_un.S_addr == expected_ip.S_un.S_addr, "[%s] ip = %08x, expected %08x\n",
+               ipv4_ex_tests[i].address, ip.S_un.S_addr, expected_ip.S_un.S_addr);
+            ok(port == ipv4_ex_tests[i].port, "[%s] port = %u, expected %u\n",
+               ipv4_ex_tests[i].address, port, ipv4_ex_tests[i].port);
+        }
+    }
+}
 
 /* ipv6 addresses based on the set from https://github.com/beaugunderson/javascript-ipv6/tree/master/test/data */
 static const struct
@@ -3236,6 +3358,7 @@ START_TEST(rtl)
     test_RtlIpv4AddressToString();
     test_RtlIpv4AddressToStringEx();
     test_RtlIpv4StringToAddress();
+    test_RtlIpv4StringToAddressEx();
     test_RtlIpv6StringToAddress();
     test_RtlIpv6StringToAddressEx();
     test_LdrAddRefDll();
