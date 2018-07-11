@@ -951,6 +951,17 @@ static void set_region_client_rect( struct region *region, struct window *win )
     rectangle_t rect;
 
     intersect_rect( &rect, &win->window_rect, &win->client_rect );
+    intersect_rect( &rect, &rect, &win->surface_rect );
+    set_region_rect( region, &rect );
+}
+
+
+/* set the region to the visible rect clipped by the window surface, in parent-relative coordinates */
+static void set_region_visible_rect( struct region *region, struct window *win )
+{
+    rectangle_t rect;
+
+    intersect_rect( &rect, &win->visible_rect, &win->surface_rect );
     set_region_rect( region, &rect );
 }
 
@@ -976,16 +987,22 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
 
     if (!is_visible( win )) return region;  /* empty region */
 
+    if (is_desktop_window( win ))
+    {
+        set_region_rect( region, &win->window_rect );
+        return region;
+    }
+
     /* create a region relative to the window itself */
 
-    if ((flags & DCX_PARENTCLIP) && win->parent && !is_desktop_window(win->parent))
+    if ((flags & DCX_PARENTCLIP) && !is_desktop_window( win->parent ))
     {
         set_region_client_rect( region, win->parent );
         offset_region( region, -win->parent->client_rect.left, -win->parent->client_rect.top );
     }
     else if (flags & DCX_WINDOW)
     {
-        set_region_rect( region, &win->visible_rect );
+        set_region_visible_rect( region, win );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
     }
     else
@@ -998,42 +1015,29 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
 
     if (flags & DCX_CLIPCHILDREN)
     {
-        if (is_desktop_window(win)) offset_x = offset_y = 0;
-        else
-        {
-            offset_x = win->client_rect.left;
-            offset_y = win->client_rect.top;
-        }
-        if (!clip_children( win, NULL, region, offset_x, offset_y )) goto error;
+        if (!clip_children( win, NULL, region, win->client_rect.left, win->client_rect.top )) goto error;
     }
 
     /* clip siblings of ancestors */
 
-    if (is_desktop_window(win)) offset_x = offset_y = 0;
-    else
-    {
-        offset_x = win->window_rect.left;
-        offset_y = win->window_rect.top;
-    }
+    offset_x = win->window_rect.left;
+    offset_y = win->window_rect.top;
 
     if ((tmp = create_empty_region()) != NULL)
     {
-        while (win->parent)
+        while (!is_desktop_window( win->parent ))
         {
             /* we don't clip out top-level siblings as that's up to the native windowing system */
-            if ((win->style & WS_CLIPSIBLINGS) && !is_desktop_window( win->parent ))
+            if (win->style & WS_CLIPSIBLINGS)
             {
                 if (!clip_children( win->parent, win, region, 0, 0 )) goto error;
                 if (is_region_empty( region )) break;
             }
             /* clip to parent client area */
             win = win->parent;
-            if (!is_desktop_window(win))
-            {
-                offset_x += win->client_rect.left;
-                offset_y += win->client_rect.top;
-                offset_region( region, win->client_rect.left, win->client_rect.top );
-            }
+            offset_x += win->client_rect.left;
+            offset_y += win->client_rect.top;
+            offset_region( region, win->client_rect.left, win->client_rect.top );
             set_region_client_rect( tmp, win );
             if (win->win_region && !intersect_window_region( tmp, win )) goto error;
             if (!intersect_region( region, region, tmp )) goto error;
