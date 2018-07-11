@@ -3441,11 +3441,10 @@ static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
 {
-    /* FIXME: Expose getComputedStyle and performance once they are implemented.
+    /* FIXME: Expose getComputedStyle once it's implemented.
      * Stubs break existing web sites. */
     static const dispex_hook_t window7_hooks[] = {
         {DISPID_IHTMLWINDOW7_GETCOMPUTEDSTYLE, NULL},
-        {DISPID_IHTMLWINDOW7_PERFORMANCE, NULL},
         {DISPID_UNKNOWN}
     };
     if(compat_mode >= COMPAT_MODE_IE9)

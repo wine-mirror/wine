@@ -103,6 +103,8 @@ function test_window_props() {
     test_exposed("dispatchEvent", v >= 9);
     test_exposed("getSelection", v >= 9);
     test_exposed("onfocusout", v >= 9);
+    if(v >= 9) /* FIXME: native exposes it in all compat modes */
+        test_exposed("performance", true);
 
     next_test();
 }
