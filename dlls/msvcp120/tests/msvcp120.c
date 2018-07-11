@@ -2576,10 +2576,14 @@ static void concurrent_vector_int_dtor(vector_base_v4 *this)
 
     blocks = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             this, concurrent_vector_int_destroy);
-    while(this->first_block && blocks >= this->first_block) {
+    for(blocks--; blocks >= this->first_block; blocks--) {
         vector_alloc_count--;
-        free(this->segment[blocks - this->first_block]);
-        blocks--;
+        free(this->segment[blocks]);
+    }
+
+    if(this->first_block) {
+        vector_alloc_count--;
+        free(this->segment[0]);
     }
 
     call_func1(p_vector_base_v4_dtor, this);
