@@ -70,6 +70,7 @@ struct window
     user_handle_t    last_active;     /* last active popup */
     rectangle_t      window_rect;     /* window rectangle (relative to parent client area) */
     rectangle_t      visible_rect;    /* visible part of window rect (relative to parent client area) */
+    rectangle_t      surface_rect;    /* window surface rectangle (relative to parent client area) */
     rectangle_t      client_rect;     /* client rectangle (relative to parent client area) */
     struct region   *win_region;      /* region for shaped windows (relative to window rect) */
     struct region   *update_region;   /* update region (relative to window rect) */
@@ -510,7 +511,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_alloc     = 0;
     win->properties     = NULL;
     win->nb_extra_bytes = extra_bytes;
-    win->window_rect = win->visible_rect = win->client_rect = empty_rect;
+    win->window_rect = win->visible_rect = win->surface_rect = win->client_rect = empty_rect;
     memset( win->extra_bytes, 0, extra_bytes );
     list_init( &win->children );
     list_init( &win->unlinked );
@@ -1624,7 +1625,7 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
 static void set_window_pos( struct window *win, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
                             const rectangle_t *client_rect, const rectangle_t *visible_rect,
-                            const rectangle_t *valid_rect )
+                            const rectangle_t *surface_rect, const rectangle_t *valid_rect )
 {
     struct region *old_vis_rgn = NULL, *exposed_rgn = NULL;
     const rectangle_t old_window_rect = win->window_rect;
@@ -1642,6 +1643,7 @@ static void set_window_pos( struct window *win, struct window *previous,
 
     win->window_rect  = *window_rect;
     win->visible_rect = *visible_rect;
+    win->surface_rect = *surface_rect;
     win->client_rect  = *client_rect;
     if (!(swp_flags & SWP_NOZORDER) && win->parent) link_window( win, previous );
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
@@ -1658,6 +1660,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         {
             offset_rect( &child->window_rect, new_size - old_size, 0 );
             offset_rect( &child->visible_rect, new_size - old_size, 0 );
+            offset_rect( &child->surface_rect, new_size - old_size, 0 );
             offset_rect( &child->client_rect, new_size - old_size, 0 );
         }
     }
@@ -1738,7 +1741,7 @@ static void set_window_pos( struct window *win, struct window *previous,
                           client_rect->right  - old_client_rect.right  != x_offset ||
                           client_rect->top    - old_client_rect.top    != y_offset ||
                           client_rect->bottom - old_client_rect.bottom != y_offset ||
-                          !valid_rect || memcmp( valid_rect, client_rect, sizeof(*client_rect) ));
+                          memcmp( valid_rect, client_rect, sizeof(*client_rect) ));
     }
 
     if (frame_changed || client_changed)
@@ -1746,7 +1749,7 @@ static void set_window_pos( struct window *win, struct window *previous,
         struct region *win_rgn = old_vis_rgn;  /* reuse previous region */
 
         set_region_rect( win_rgn, window_rect );
-        if (valid_rect)
+        if (!is_rect_empty( valid_rect ))
         {
             /* subtract the valid portion of client rect from the total region */
             struct region *tmp = create_empty_region();
@@ -2222,7 +2225,8 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
-    rectangle_t window_rect, client_rect, visible_rect;
+    rectangle_t window_rect, client_rect, visible_rect, surface_rect, valid_rect;
+    const rectangle_t *extra_rects = get_req_data();
     struct window *previous = NULL;
     struct window *top, *win = get_window( req->handle );
     unsigned int flags = req->swp_flags;
@@ -2269,29 +2273,28 @@ DECL_HANDLER(set_window_pos)
         return;
     }
 
-    window_rect = visible_rect = req->window;
+    window_rect = req->window;
     client_rect = req->client;
-    if (get_req_data_size() >= sizeof(rectangle_t))
-        memcpy( &visible_rect, get_req_data(), sizeof(rectangle_t) );
+    if (get_req_data_size() >= sizeof(rectangle_t)) visible_rect = extra_rects[0];
+    else visible_rect = window_rect;
+    if (get_req_data_size() >= 2 * sizeof(rectangle_t)) surface_rect = extra_rects[1];
+    else surface_rect = visible_rect;
+    if (get_req_data_size() >= 3 * sizeof(rectangle_t)) valid_rect = extra_rects[2];
+    else valid_rect = empty_rect;
     if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
     {
         mirror_rect( &win->parent->client_rect, &window_rect );
         mirror_rect( &win->parent->client_rect, &visible_rect );
         mirror_rect( &win->parent->client_rect, &client_rect );
+        mirror_rect( &win->parent->client_rect, &surface_rect );
+        mirror_rect( &win->parent->client_rect, &valid_rect );
     }
 
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
-    if (get_req_data_size() >= 2 * sizeof(rectangle_t))
-    {
-        rectangle_t valid_rect;
-        memcpy( &valid_rect, (const rectangle_t *)get_req_data() + 1, sizeof(rectangle_t) );
-        if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
-            mirror_rect( &win->parent->client_rect, &valid_rect );
-        set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, &valid_rect );
-    }
-    else set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, NULL );
+    set_window_pos( win, previous, flags, &window_rect, &client_rect,
+                    &visible_rect, &surface_rect, &valid_rect );
 
     reply->new_style = win->style;
     reply->new_ex_style = win->ex_style;

@@ -2067,7 +2067,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     WND *win;
     HWND surface_win = 0, parent = GetAncestor( hwnd, GA_PARENT );
     BOOL ret, needs_update = FALSE;
-    RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect;
+    RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface = NULL;
 
     if (!parent || parent == GetDesktopWindow())
@@ -2111,10 +2111,17 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         req->client.top    = client_rect->top;
         req->client.right  = client_rect->right;
         req->client.bottom = client_rect->bottom;
-        if (!EqualRect( window_rect, &visible_rect ) || valid_rects)
+        if (!EqualRect( window_rect, &visible_rect ) || new_surface || valid_rects)
         {
-            wine_server_add_data( req, &visible_rect, sizeof(visible_rect) );
-            if (valid_rects) wine_server_add_data( req, valid_rects, sizeof(*valid_rects) );
+            extra_rects[0] = extra_rects[1] = visible_rect;
+            if (new_surface)
+            {
+                extra_rects[1] = new_surface->rect;
+                OffsetRect( &extra_rects[1], visible_rect.left, visible_rect.top );
+            }
+            if (valid_rects) extra_rects[2] = valid_rects[0];
+            else SetRectEmpty( &extra_rects[2] );
+            wine_server_add_data( req, extra_rects, sizeof(extra_rects) );
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
         if (win->pixel_format) req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
