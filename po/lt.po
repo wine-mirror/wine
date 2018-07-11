@@ -3437,18 +3437,32 @@ msgid "Connections"
 msgstr "Ryšiai"
 
 #: inetcpl.rc:125
-msgid "Proxy server"
-msgstr "Įgaliotasis serveris"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Automatic configuration"
+msgstr "„Wine“ konfigūravimas"
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
-msgstr "Naudoti įgaliotąjį serverį"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
+msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
 msgstr "Adresas:"
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+msgid "Proxy server"
+msgstr "Įgaliotasis serveris"
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr "Naudoti įgaliotąjį serverį"
+
+#: inetcpl.rc:134
 msgid "Port:"
 msgstr "Prievadas:"
 

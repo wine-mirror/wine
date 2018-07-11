@@ -3477,21 +3477,35 @@ msgstr "Povezava LAN"
 
 #: inetcpl.rc:125
 #, fuzzy
-#| msgid "&Local server"
-msgid "Proxy server"
-msgstr "&Krajevni strežnik"
+#| msgid "Wine configuration"
+msgid "Automatic configuration"
+msgstr "Nastavitve Wine"
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
 msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 #, fuzzy
 #| msgid "Address"
 msgid "Address:"
 msgstr "Naslov"
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "&Krajevni strežnik"
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:134
 #, fuzzy
 #| msgid "Local Port"
 msgid "Port:"

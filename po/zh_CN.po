@@ -3386,21 +3386,35 @@ msgstr "局域网连接"
 
 #: inetcpl.rc:125
 #, fuzzy
-#| msgid "&Local server"
-msgid "Proxy server"
-msgstr "本地服务器(&L)"
+#| msgid "Wine configuration"
+msgid "Automatic configuration"
+msgstr "Wine 设置"
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
 msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 #, fuzzy
 #| msgid "Address"
 msgid "Address:"
 msgstr "地址"
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "本地服务器(&L)"
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:134
 #, fuzzy
 #| msgid "No Ports"
 msgid "Port:"

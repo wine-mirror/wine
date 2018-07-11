@@ -3439,21 +3439,35 @@ msgstr "Підключення по локальній мережі"
 
 #: inetcpl.rc:125
 #, fuzzy
-#| msgid "&Local server"
-msgid "Proxy server"
-msgstr "&Локальний сервер"
+#| msgid "Wine configuration"
+msgid "Automatic configuration"
+msgstr "Параметри Wine"
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
 msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 #, fuzzy
 #| msgid "Address"
 msgid "Address:"
 msgstr "Адреса"
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+#, fuzzy
+#| msgid "&Local server"
+msgid "Proxy server"
+msgstr "&Локальний сервер"
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:134
 #, fuzzy
 #| msgid "No Ports"
 msgid "Port:"

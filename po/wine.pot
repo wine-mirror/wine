@@ -3307,18 +3307,30 @@ msgid "Connections"
 msgstr ""
 
 #: inetcpl.rc:125
-msgid "Proxy server"
+msgid "Automatic configuration"
 msgstr ""
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
 msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
 msgstr ""
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+msgid "Proxy server"
+msgstr ""
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr ""
+
+#: inetcpl.rc:134
 msgid "Port:"
 msgstr ""
 

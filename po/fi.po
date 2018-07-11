@@ -3428,18 +3428,32 @@ msgid "Connections"
 msgstr "Yhteydet"
 
 #: inetcpl.rc:125
-msgid "Proxy server"
-msgstr "Välityspalvelin"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Automatic configuration"
+msgstr "Winen asetukset"
 
 #: inetcpl.rc:126
-msgid "Use a proxy server"
-msgstr "Käytä välityspalvelinta"
+msgid "Use Web Proxy Auto-Discovery (WPAD)"
+msgstr ""
 
 #: inetcpl.rc:127
+msgid "Use Proxy Auto-Config (PAC) script"
+msgstr ""
+
+#: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
 msgstr "Osoite:"
 
-#: inetcpl.rc:129
+#: inetcpl.rc:130
+msgid "Proxy server"
+msgstr "Välityspalvelin"
+
+#: inetcpl.rc:131
+msgid "Use a proxy server"
+msgstr "Käytä välityspalvelinta"
+
+#: inetcpl.rc:134
 msgid "Port:"
 msgstr "Portti:"
 
