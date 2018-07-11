@@ -659,8 +659,7 @@ static HRESULT load_track(IDirectMusicSegment8Impl *This, IStream *pClonedStream
   return S_OK;
 }
 
-static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, DWORD size, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
@@ -671,12 +670,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHU
   DMUS_IO_TRACK_EXTRAS_HEADER track_xhdr;
   IDirectMusicTrack*          pTrack = NULL;
 
-  if (pChunk->fccID != DMUS_FOURCC_TRACK_FORM) {
-    ERR_(dmfile)(": %s chunk should be a TRACK form\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
-
-  StreamSize = pChunk->dwSize - sizeof(FOURCC);
+  StreamSize = size - sizeof(FOURCC);
   StreamCount = 0;
 
   do {
@@ -819,52 +813,19 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHU
   return S_OK;
 }
 
-static HRESULT parse_track_list(IDirectMusicSegment8Impl *This, DWORD StreamSize, IStream *pStm)
+static HRESULT parse_track_list(IDirectMusicSegment8Impl *This, IStream *stream,
+        const struct chunk_entry *trkl)
 {
-  HRESULT hr = E_FAIL;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
+    struct chunk_entry chunk = {.parent = trkl};
+    HRESULT hr;
 
-  ListSize[0] = StreamSize - sizeof(FOURCC);
-  ListCount[0] = 0;
+    TRACE("Parsing track list in %p: %s\n", stream, debugstr_chunk(trkl));
 
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) { 
-    case FOURCC_RIFF: {
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      StreamSize = Chunk.dwSize - sizeof(FOURCC);
-      switch (Chunk.fccID) {
-      case  DMUS_FOURCC_TRACK_FORM: {
-	TRACE_(dmfile)(": TRACK form\n");
-        hr = parse_track_form(This, &Chunk, pStm);
-	if (FAILED(hr)) return hr;	
-	break;
-      }
-      default: {
-	TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	liMove.QuadPart = StreamSize;
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;
-      }
-      }
-      break;
-    }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+        if (chunk.id == FOURCC_RIFF && chunk.type == DMUS_FOURCC_TRACK_FORM)
+            hr = parse_track_form(This, chunk.size, stream);
 
-  return S_OK;
+    return SUCCEEDED(hr) ? S_OK : hr;
 }
 
 static inline void dump_segment_header(DMUS_IO_SEGMENT_HEADER *h, DWORD size)
@@ -920,7 +881,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, IStream *strea
                 break;
             case FOURCC_LIST:
                 if (chunk.type == DMUS_FOURCC_TRACK_LIST)
-                    if (FAILED(hr = parse_track_list(This, chunk.size, stream)))
+                    if (FAILED(hr = parse_track_list(This, stream, &chunk)))
                         return hr;
                 break;
             case FOURCC_RIFF:
