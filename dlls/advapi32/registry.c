@@ -1486,6 +1486,7 @@ struct perf_provider
 {
     HMODULE perflib;
     WCHAR linkage[MAX_PATH];
+    WCHAR objects[MAX_PATH];
     PM_OPEN_PROC *pOpen;
     PM_CLOSE_PROC *pClose;
     PM_COLLECT_PROC *pCollect;
@@ -1509,6 +1510,7 @@ static void *get_provider_entry(HKEY perf, HMODULE perflib, const char *name)
 
 static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *provider)
 {
+    static const WCHAR object_listW[] = { 'O','b','j','e','c','t',' ','L','i','s','t',0 };
     static const WCHAR performanceW[] = { 'P','e','r','f','o','r','m','a','n','c','e',0 };
     static const WCHAR libraryW[] = { 'L','i','b','r','a','r','y',0 };
     static const WCHAR linkageW[] = { 'L','i','n','k','a','g','e',0 };
@@ -1540,6 +1542,16 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
     RegCloseKey(service);
     if (err != ERROR_SUCCESS)
         return FALSE;
+
+    provider->objects[0] = 0;
+    len = sizeof(buf) - sizeof(WCHAR);
+    err = RegQueryValueExW(perf, object_listW, NULL, &type, (BYTE *)buf, &len);
+    if (err == ERROR_SUCCESS && (type == REG_SZ || type == REG_MULTI_SZ))
+    {
+        memcpy(provider->objects, buf, len);
+        provider->objects[len / sizeof(WCHAR)] = 0;
+        TRACE("Object List: %s\n", debugstr_w(provider->objects));
+    }
 
     len = sizeof(buf) - sizeof(WCHAR);
     err = RegQueryValueExW(perf, libraryW, NULL, &type, (BYTE *)buf, &len);
