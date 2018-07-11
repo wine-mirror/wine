@@ -108,6 +108,17 @@ struct smbios_board {
     BYTE serial;
 };
 
+struct smbios_chassis {
+    BYTE type;
+    BYTE length;
+    WORD handle;
+    BYTE vendor;
+    BYTE shape;
+    BYTE version;
+    BYTE serial;
+    BYTE asset_tag;
+};
+
 #include "poppack.h"
 
 /* Firmware table providers */
@@ -1987,12 +1998,15 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             size_t system_vendor_len, system_product_len, system_version_len, system_serial_len;
             char board_vendor[128], board_product[128], board_version[128], board_serial[128];
             size_t board_vendor_len, board_product_len, board_version_len, board_serial_len;
+            char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
+            size_t chassis_vendor_len, chassis_version_len, chassis_serial_len, chassis_asset_tag_len;
             char *buffer = (char*)sfti->TableBuffer;
             BYTE string_count;
             struct smbios_prologue *prologue;
             struct smbios_bios *bios;
             struct smbios_system *system;
             struct smbios_board *board;
+            struct smbios_chassis *chassis;
 
 #define S(s) s, sizeof(s)
             bios_vendor_len = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
@@ -2006,6 +2020,10 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             board_product_len = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
             board_version_len = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
             board_serial_len = get_smbios_string("/sys/class/dmi/id/board_serial", S(board_serial));
+            chassis_vendor_len = get_smbios_string("/sys/class/dmi/id/chassis_vendor", S(chassis_vendor));
+            chassis_version_len = get_smbios_string("/sys/class/dmi/id/chassis_version", S(chassis_version));
+            chassis_serial_len = get_smbios_string("/sys/class/dmi/id/chassis_serial", S(chassis_serial));
+            chassis_asset_tag_len = get_smbios_string("/sys/class/dmi/id/chassis_tag", S(chassis_asset_tag));
 #undef S
 
             *required_len = sizeof(struct smbios_prologue);
@@ -2019,6 +2037,10 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             *required_len += sizeof(struct smbios_board);
             *required_len += max(board_vendor_len + board_product_len + board_version_len + board_serial_len + 5, 2);
+
+            *required_len += sizeof(struct smbios_chassis);
+            *required_len += max(chassis_vendor_len + chassis_version_len + chassis_serial_len +
+                                 chassis_asset_tag_len + 5, 2);
 
             sfti->TableBufferLength = *required_len;
 
@@ -2087,6 +2109,25 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             copy_smbios_string(&buffer, board_product, board_product_len);
             copy_smbios_string(&buffer, board_version, board_version_len);
             copy_smbios_string(&buffer, board_serial, board_serial_len);
+            if (!string_count) *buffer++ = 0;
+            *buffer++ = 0;
+
+            string_count = 0;
+            chassis = (struct smbios_chassis*)buffer;
+            chassis->type = 3;
+            chassis->length = sizeof(struct smbios_chassis);
+            chassis->handle = 0;
+            chassis->vendor = chassis_vendor_len ? ++string_count : 0;
+            chassis->shape = 0x2; /* unknown */
+            chassis->version = chassis_version_len ? ++string_count : 0;
+            chassis->serial = chassis_serial_len ? ++string_count : 0;
+            chassis->asset_tag = chassis_asset_tag_len ? ++string_count : 0;
+            buffer += sizeof(struct smbios_chassis);
+
+            copy_smbios_string(&buffer, chassis_vendor, chassis_vendor_len);
+            copy_smbios_string(&buffer, chassis_version, chassis_version_len);
+            copy_smbios_string(&buffer, chassis_serial, chassis_serial_len);
+            copy_smbios_string(&buffer, chassis_asset_tag, chassis_asset_tag_len);
             if (!string_count) *buffer++ = 0;
             *buffer++ = 0;
 
