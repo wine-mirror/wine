@@ -98,6 +98,16 @@ struct smbios_system {
     BYTE serial;
 };
 
+struct smbios_board {
+    BYTE type;
+    BYTE length;
+    WORD handle;
+    BYTE vendor;
+    BYTE product;
+    BYTE version;
+    BYTE serial;
+};
+
 #include "poppack.h"
 
 /* Firmware table providers */
@@ -1975,11 +1985,14 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             size_t bios_vendor_len, bios_version_len, bios_date_len;
             char system_vendor[128], system_product[128], system_version[128], system_serial[128];
             size_t system_vendor_len, system_product_len, system_version_len, system_serial_len;
+            char board_vendor[128], board_product[128], board_version[128], board_serial[128];
+            size_t board_vendor_len, board_product_len, board_version_len, board_serial_len;
             char *buffer = (char*)sfti->TableBuffer;
             BYTE string_count;
             struct smbios_prologue *prologue;
             struct smbios_bios *bios;
             struct smbios_system *system;
+            struct smbios_board *board;
 
 #define S(s) s, sizeof(s)
             bios_vendor_len = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
@@ -1989,6 +2002,10 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             system_product_len = get_smbios_string("/sys/class/dmi/id/product", S(system_product));
             system_version_len = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
             system_serial_len = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
+            board_vendor_len = get_smbios_string("/sys/class/dmi/id/board_vendor", S(board_vendor));
+            board_product_len = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
+            board_version_len = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
+            board_serial_len = get_smbios_string("/sys/class/dmi/id/board_serial", S(board_serial));
 #undef S
 
             *required_len = sizeof(struct smbios_prologue);
@@ -1999,6 +2016,9 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             *required_len += sizeof(struct smbios_system);
             *required_len += max(system_vendor_len + system_product_len + system_version_len +
                                  system_serial_len + 5, 2);
+
+            *required_len += sizeof(struct smbios_board);
+            *required_len += max(board_vendor_len + board_product_len + board_version_len + board_serial_len + 5, 2);
 
             sfti->TableBufferLength = *required_len;
 
@@ -2049,6 +2069,24 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             copy_smbios_string(&buffer, system_product, system_product_len);
             copy_smbios_string(&buffer, system_version, system_version_len);
             copy_smbios_string(&buffer, system_serial, system_serial_len);
+            if (!string_count) *buffer++ = 0;
+            *buffer++ = 0;
+
+            string_count = 0;
+            board = (struct smbios_board*)buffer;
+            board->type = 2;
+            board->length = sizeof(struct smbios_board);
+            board->handle = 0;
+            board->vendor = board_vendor_len ? ++string_count : 0;
+            board->product = board_product_len ? ++string_count : 0;
+            board->version = board_version_len ? ++string_count : 0;
+            board->serial = board_serial_len ? ++string_count : 0;
+            buffer += sizeof(struct smbios_board);
+
+            copy_smbios_string(&buffer, board_vendor, board_vendor_len);
+            copy_smbios_string(&buffer, board_product, board_product_len);
+            copy_smbios_string(&buffer, board_version, board_version_len);
+            copy_smbios_string(&buffer, board_serial, board_serial_len);
             if (!string_count) *buffer++ = 0;
             *buffer++ = 0;
 
