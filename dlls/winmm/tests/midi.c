@@ -698,7 +698,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
         test_position(hm, TIME_MS,      TIME_MS);
         test_position(hm, TIME_TICKS,   TIME_TICKS);
-        todo_wine test_position(hm, TIME_MIDI,    TIME_MIDI);
+        test_position(hm, TIME_MIDI,    TIME_MIDI);
         test_position(hm, TIME_SMPTE,   TIME_MS);
         test_position(hm, TIME_SAMPLES, TIME_MS);
         test_position(hm, TIME_BYTES,   TIME_MS);
@@ -933,7 +933,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     /* TIME_MIDI value is a quarter of TIME_TICKS, rounded */
     expected = (ret + midiprop.tdiv.dwTimeDiv/8) / (midiprop.tdiv.dwTimeDiv/4);
     ret = get_position(hm, TIME_MIDI);
-    todo_wine ok(ret == expected, "expected song pointer %u, got %u\n", expected, ret);
+    ok(ret == expected, "expected song pointer %u, got %u\n", expected, ret);
 
     ok(records.count == 2, "expected 2 MM_MOM_DONE messages, got %d\n", records.count);
 

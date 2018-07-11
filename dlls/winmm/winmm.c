@@ -1508,9 +1508,17 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
     } else {
 	EnterCriticalSection(&lpMidiStrm->lock);
 	switch (lpMMT->wType) {
-	default:
-	    FIXME("Unsupported time type %x\n", lpMMT->wType);
-        /* fall through */
+	case TIME_MIDI:
+	    if (lpMidiStrm->dwTimeDiv < 0x8000) {
+		DWORD tdiv, pulses;
+		tdiv = (lpMidiStrm->dwTimeDiv > 24) ? lpMidiStrm->dwTimeDiv : 24;
+		pulses = midistream_get_current_pulse(lpMidiStrm);
+		lpMMT->u.midi.songptrpos = (pulses + tdiv/8) / (tdiv/4);
+		if (!lpMMT->u.midi.songptrpos && pulses) lpMMT->u.midi.songptrpos++;
+		TRACE("=> song position %d (pulses %u, tdiv %u)\n", lpMMT->u.midi.songptrpos, pulses, tdiv);
+		break;
+	    }
+	/* fall through */
 	case TIME_BYTES:
 	case TIME_SAMPLES:
 	    lpMMT->wType = TIME_MS;
@@ -1522,6 +1530,13 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	case TIME_TICKS:
 	    lpMMT->u.ticks = midistream_get_current_pulse(lpMidiStrm);
 	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
+	    break;
+	default:
+	    FIXME("Unsupported time type %x\n", lpMMT->wType);
+	    /* use TIME_MS instead */
+	    lpMMT->wType = TIME_MS;
+	    lpMMT->u.ms = midistream_get_playing_position(lpMidiStrm);
+	    TRACE("=> %d ms\n", lpMMT->u.ms);
 	    break;
 	}
 	LeaveCriticalSection(&lpMidiStrm->lock);
