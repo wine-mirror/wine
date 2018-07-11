@@ -509,6 +509,11 @@ static void test_position(HMIDISTRM hm, UINT typein, UINT typeout)
     case TIME_MIDI:
         trace("Stream position song pointer %u\n", mmtime.u.midi.songptrpos);
         break;
+    case TIME_SMPTE:
+        trace("Stream position %02u:%02u:%02u.%02u/%02u\n",
+              mmtime.u.smpte.hour, mmtime.u.smpte.min, mmtime.u.smpte.sec,
+              mmtime.u.smpte.frame, mmtime.u.smpte.fps);
+        break;
     }
 }
 
@@ -573,6 +578,8 @@ static DWORD get_position(HMIDISTRM hm, UINT type)
         return mmtime.u.ms;
     case TIME_TICKS:
         return mmtime.u.ticks;
+    case TIME_MIDI:
+        return mmtime.u.midi.songptrpos;
     default:
         return MAXDWORD;
     }
@@ -885,6 +892,10 @@ static void test_midiStream(UINT udev, HWND hwnd)
     ok(ret > expected && ret < expected + MARGIN, "expected greater than %ums, got %ums\n", expected, ret);
     expected = ret;
 
+    ret = get_position(hm, TIME_TICKS);
+    todo_wine ok(ret > strmNopsWithDelta[0].dwDeltaTime && ret < strmNopsWithDelta[1].dwDeltaTime,
+       "TIME_TICKS position is continuous, got %u\n", ret);
+
     /* shouldn't set time division property while playing */
     midiprop.tdiv.cbStruct  = sizeof(midiprop.tdiv);
     midiprop.tdiv.dwTimeDiv = 24;
@@ -914,6 +925,16 @@ static void test_midiStream(UINT udev, HWND hwnd)
     ok(ret >= strmNopsWithDelta[1].dwDeltaTime && ret < strmNopsWithDelta[1].dwDeltaTime + 3,
        "expected %u ticks, got %u\n", strmNopsWithDelta[1].dwDeltaTime, ret);
 
+    midiprop.tdiv.cbStruct = sizeof(midiprop.tdiv);
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_GET | MIDIPROP_TIMEDIV);
+    ok(!rc, "midiStreamProperty(GET|TIMEDIV, dev=%d) rc=%s\n", udev, mmsys_error(rc));
+    ok(midiprop.tdiv.dwTimeDiv == 24, "expected 24, got %u\n", midiprop.tdiv.dwTimeDiv);
+
+    /* TIME_MIDI value is a quarter of TIME_TICKS, rounded */
+    expected = (ret + midiprop.tdiv.dwTimeDiv/8) / (midiprop.tdiv.dwTimeDiv/4);
+    ret = get_position(hm, TIME_MIDI);
+    todo_wine ok(ret == expected, "expected song pointer %u, got %u\n", expected, ret);
+
     ok(records.count == 2, "expected 2 MM_MOM_DONE messages, got %d\n", records.count);
 
     /* Time between midiStreamPause and midiStreamRestart isn't counted.
@@ -931,6 +952,18 @@ static void test_midiStream(UINT udev, HWND hwnd)
 
     ret = get_position(hm, TIME_MS);
     ok(ret == 0, "expected 0ms, got %ums\n", ret);
+
+    midiprop.tdiv.cbStruct  = sizeof(midiprop.tdiv);
+    midiprop.tdiv.dwTimeDiv = 0xe204; /* 30 fps, 4 ticks/frame */
+    rc = midiStreamProperty(hm, (void*)&midiprop, MIDIPROP_SET | MIDIPROP_TIMEDIV);
+    ok(!rc, "midiStreamProperty(SET|TIMEDIV, dev=%d) rc=%s\n", udev, mmsys_error(rc));
+
+    test_position(hm, TIME_MS,      TIME_MS);
+    test_position(hm, TIME_TICKS,   TIME_TICKS);
+    test_position(hm, TIME_MIDI,    TIME_MS);
+    todo_wine test_position(hm, TIME_SMPTE,   TIME_SMPTE);
+    test_position(hm, TIME_SAMPLES, TIME_MS);
+    test_position(hm, TIME_BYTES,   TIME_MS);
 
     rc = midiStreamClose(hm);
     ok(!rc, "midiStreamClose(dev=%d) rc=%s\n", udev, mmsys_error(rc));
