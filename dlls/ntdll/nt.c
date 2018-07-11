@@ -66,6 +66,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
+#include "pshpack1.h"
+
+struct smbios_prologue {
+    BYTE calling_method;
+    BYTE major_version;
+    BYTE minor_version;
+    BYTE revision;
+    DWORD length;
+};
+
+struct smbios_bios {
+    BYTE type;
+    BYTE length;
+    WORD handle;
+    BYTE vendor;
+    BYTE version;
+    WORD start;
+    BYTE date;
+    BYTE size;
+    UINT64 characteristics;
+};
+
+#include "poppack.h"
+
+/* Firmware table providers */
+#define ACPI 0x41435049
+#define FIRM 0x4649524D
+#define RSMB 0x52534D42
+
 /*
  *	Token
  */
@@ -1898,6 +1927,113 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 }
 #endif
 
+#ifdef linux
+
+static inline void copy_smbios_string(char **buffer, char *s, size_t len)
+{
+    if (!len) return;
+    memcpy(*buffer, s, len + 1);
+    *buffer += len + 1;
+}
+
+static size_t get_smbios_string(const char *path, char *str, size_t size)
+{
+    FILE *file;
+    size_t len;
+
+    if (!(file = fopen(path, "r")))
+        return 0;
+
+    len = fread(str, 1, size - 1, file);
+    fclose(file);
+
+    if (len >= 1 && str[len - 1] == '\n')
+        len--;
+
+    str[len] = 0;
+
+    return len;
+}
+
+static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len, ULONG *required_len)
+{
+    switch (sfti->ProviderSignature)
+    {
+    case RSMB:
+        {
+            char bios_vendor[128], bios_version[128], bios_date[128];
+            size_t bios_vendor_len, bios_version_len, bios_date_len;
+            char *buffer = (char*)sfti->TableBuffer;
+            BYTE string_count;
+            struct smbios_prologue *prologue;
+            struct smbios_bios *bios;
+
+#define S(s) s, sizeof(s)
+            bios_vendor_len = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
+            bios_version_len = get_smbios_string("/sys/class/dmi/id/bios_version", S(bios_version));
+            bios_date_len = get_smbios_string("/sys/class/dmi/id/bios_date", S(bios_date));
+#undef S
+
+            *required_len = sizeof(struct smbios_prologue);
+
+            *required_len += sizeof(struct smbios_bios);
+            *required_len += max(bios_vendor_len + bios_version_len + bios_date_len + 4, 2);
+
+            sfti->TableBufferLength = *required_len;
+
+            *required_len += FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
+
+            if (available_len < *required_len)
+                return STATUS_BUFFER_TOO_SMALL;
+
+            prologue = (struct smbios_prologue*)buffer;
+            prologue->calling_method = 0;
+            prologue->major_version = 2;
+            prologue->minor_version = 0;
+            prologue->revision = 0;
+            prologue->length = sfti->TableBufferLength - sizeof(struct smbios_prologue);
+            buffer += sizeof(struct smbios_prologue);
+
+            string_count = 0;
+            bios = (struct smbios_bios*)buffer;
+            bios->type = 0;
+            bios->length = sizeof(struct smbios_bios);
+            bios->handle = 0;
+            bios->vendor = bios_vendor_len ? ++string_count : 0;
+            bios->version = bios_version_len ? ++string_count : 0;
+            bios->start = 0;
+            bios->date = bios_date_len ? ++string_count : 0;
+            bios->size = 0;
+            bios->characteristics = 0x4; /* not supported */
+            buffer += sizeof(struct smbios_bios);
+
+            copy_smbios_string(&buffer, bios_vendor, bios_vendor_len);
+            copy_smbios_string(&buffer, bios_version, bios_version_len);
+            copy_smbios_string(&buffer, bios_date, bios_date_len);
+            if (!string_count) *buffer++ = 0;
+            *buffer++ = 0;
+
+            return STATUS_SUCCESS;
+        }
+    default:
+        {
+            FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", sfti->ProviderSignature);
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+}
+
+#else
+
+static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len, ULONG *required_len)
+{
+    FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION\n");
+    sfti->TableBufferLength = 0;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+#endif
+
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
@@ -2405,6 +2541,28 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 else *((DWORD *)SystemInformation) = 64;
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemFirmwareTableInformation:
+        {
+            SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = (SYSTEM_FIRMWARE_TABLE_INFORMATION*)SystemInformation;
+            len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
+            if (Length < len)
+            {
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+                break;
+            }
+
+            switch (sfti->Action)
+            {
+            case SystemFirmwareTable_Get:
+                ret = get_firmware_info(sfti, Length, &len);
+                break;
+            default:
+                len = 0;
+                ret = STATUS_NOT_IMPLEMENTED;
+                FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION action %d\n", sfti->Action);
+            }
         }
         break;
     default:
