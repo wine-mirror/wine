@@ -201,6 +201,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLOptionElementFactory) \
     XIID(IHTMLPerformance) \
     XIID(IHTMLPerformanceNavigation) \
+    XIID(IHTMLPerformanceTiming) \
     XIID(IHTMLPluginsCollection) \
     XIID(IHTMLRect) \
     XIID(IHTMLScreen) \
