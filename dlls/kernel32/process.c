@@ -4128,16 +4128,6 @@ HRESULT WINAPI UnregisterApplicationRestart(void)
     return S_OK;
 }
 
-/***********************************************************************
- *           GetSystemFirmwareTable       (KERNEL32.@)
- */
-UINT WINAPI GetSystemFirmwareTable(DWORD provider, DWORD id, PVOID buffer, DWORD size)
-{
-    FIXME("(%d %d %p %d):stub\n", provider, id, buffer, size);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
 struct proc_thread_attr
 {
     DWORD_PTR attr;

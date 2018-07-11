@@ -719,7 +719,7 @@ static void test_GetSystemFirmwareTable(void)
     pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
     if (expected_len == 0) /* xp, 2003 */
     {
-        skip("SystemFirmwareTableInformation is not available\n");
+        win_skip("SystemFirmwareTableInformation is not available\n");
         HeapFree(GetProcessHeap(), 0, sfti);
         return;
     }
