@@ -2553,6 +2553,7 @@ static BOOL CNG_ImportECCPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HAN
     memcpy(ecckey + 1, pubKeyInfo->PublicKey.pbData + 1, pubKeyInfo->PublicKey.cbData - 1);
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, key, (BYTE*)ecckey, ecckey_len, 0);
+    CryptMemFree(ecckey);
 
 done:
     if (alg) BCryptCloseAlgorithmProvider(alg, 0);
