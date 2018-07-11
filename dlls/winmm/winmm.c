@@ -915,13 +915,12 @@ typedef struct WINE_MIDIStream {
     CRITICAL_SECTION		lock;
     DWORD			dwTempo;
     DWORD			dwTimeDiv;
-    DWORD			dwPositionMS;
+    ULONGLONG			position_usec;
     DWORD			dwPulses;
     DWORD			dwStartTicks;
     DWORD			dwElapsedMS;
     WORD			wFlags;
     WORD			status;
-    WORD			remainder;
     HANDLE			hEvent;
     LPMIDIHDR			lpMidiHdr;
 } WINE_MIDIStream;
@@ -1008,8 +1007,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             lpMidiStrm->status = MSM_STATUS_STOPPED;
             lpMidiStrm->dwPulses = 0;
             lpMidiStrm->dwElapsedMS = 0;
-            lpMidiStrm->dwPositionMS = 0;
-            lpMidiStrm->remainder = 0;
+            lpMidiStrm->position_usec = 0;
             LeaveCriticalSection(&lpMidiStrm->lock);
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
@@ -1181,15 +1179,12 @@ start_header:
 
 	/* do we have to wait ? */
 	if (me->dwDeltaTime) {
-	    DWORD delta;
 	    EnterCriticalSection(&lpMidiStrm->lock);
-	    delta = lpMidiStrm->remainder + MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
-	    lpMidiStrm->dwPositionMS += delta / 1000;
-	    lpMidiStrm->remainder = delta % 1000;
+	    lpMidiStrm->position_usec += MMSYSTEM_MidiStream_Convert(lpMidiStrm, me->dwDeltaTime);
 	    lpMidiStrm->dwPulses += me->dwDeltaTime;
 	    LeaveCriticalSection(&lpMidiStrm->lock);
 
-	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
+	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->position_usec / 1000;
 
 	    TRACE("%u/%u/%u\n", dwToGo, GetTickCount(), me->dwDeltaTime);
 	    while (dwToGo - (dwCurrTC = GetTickCount()) <= MAXLONG) {
@@ -1204,7 +1199,7 @@ start_header:
 			}
 		    }
 		    /* reset dwToGo because dwStartTicks might be updated */
-		    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
+		    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->position_usec / 1000;
 		} else {
 		    /* timeout, so me->dwDeltaTime is elapsed, can break the while loop */
 		    break;
@@ -1334,10 +1329,9 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     if (!lpMidiStrm)
 	return MMSYSERR_NOMEM;
 
-    lpMidiStrm->dwTempo = 500000;  /* micro seconds per quarter note, i.e. 120 BPM */
+    lpMidiStrm->dwTempo = 500000;  /* microseconds per quarter note, i.e. 120 BPM */
     lpMidiStrm->dwTimeDiv = 24;    /* ticks per quarter note */
-    lpMidiStrm->dwPositionMS = 0;
-    lpMidiStrm->remainder = 0;
+    lpMidiStrm->position_usec = 0;
     lpMidiStrm->status = MSM_STATUS_PAUSED;
     lpMidiStrm->dwElapsedMS = 0;
 
