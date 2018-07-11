@@ -49,6 +49,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static HINSTANCE MSCOREE_hInstance;
 
@@ -307,6 +308,16 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
     }
 
     return ret;
+}
+
+HRESULT WINAPI CorIsLatestSvc(int *unk1, int *unk2)
+{
+    ERR_(winediag)("If this function is called, it is likely the result of a broken .NET installation\n");
+
+    if (!unk1 || !unk2)
+        return E_POINTER;
+
+    return S_OK;
 }
 
 HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWSTR pConfigurationFile,
