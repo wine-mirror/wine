@@ -67,25 +67,106 @@
 #define PERF_DETAIL_EXPERT      300
 #define PERF_DETAIL_WIZARD      400
 
+#include <pshpack8.h>
+
 /* Performance data structure header
  * returned in answer to HKEY_PERFORMANCE_DATA request
  */
 
-typedef struct _PERF_DATA_BLOCK {
-  WCHAR         Signature[4];
-  DWORD         LittleEndian;
-  DWORD         Version;
-  DWORD         Revision;
-  DWORD         TotalByteLength;
-  DWORD         HeaderLength;
-  DWORD         NumObjectTypes;
-  DWORD         DefaultObject;
-  SYSTEMTIME    SystemTime;
-  LARGE_INTEGER PerfTime;
-  LARGE_INTEGER PerfFreq;
-  LARGE_INTEGER PerfTime100nSec;
-  DWORD         SystemNameLength;
-  DWORD         SystemNameOffset;
-} PERF_DATA_BLOCK, *PPERF_DATA_BLOCK, *LPPERF_DATA_BLOCK;
+#define PERF_DATA_VERSION 1
+#define PERF_DATA_REVISION 1
+
+typedef struct _PERF_DATA_BLOCK
+{
+    WCHAR Signature[4];
+    DWORD LittleEndian;
+    DWORD Version;
+    DWORD Revision;
+    DWORD TotalByteLength;
+    DWORD HeaderLength;
+    DWORD NumObjectTypes;
+    DWORD DefaultObject;
+    SYSTEMTIME SystemTime;
+    LARGE_INTEGER PerfTime;
+    LARGE_INTEGER PerfFreq;
+    LARGE_INTEGER PerfTime100nSec;
+    DWORD SystemNameLength;
+    DWORD SystemNameOffset;
+} PERF_DATA_BLOCK, *PPERF_DATA_BLOCK;
+
+#define PERF_NO_INSTANCES -1
+
+typedef struct _PERF_OBJECT_TYPE
+{
+    DWORD TotalByteLength;
+    DWORD DefinitionLength;
+    DWORD HeaderLength;
+    DWORD ObjectNameTitleIndex;
+#ifdef _WIN64
+    DWORD ObjectNameTitle;
+#else
+    LPWSTR ObjectNameTitle;
+#endif
+    DWORD ObjectHelpTitleIndex;
+#ifdef _WIN64
+    DWORD ObjectHelpTitle;
+#else
+    LPWSTR ObjectHelpTitle;
+#endif
+    DWORD DetailLevel;
+    DWORD NumCounters;
+    LONG DefaultCounter;
+    LONG NumInstances;
+    DWORD CodePage;
+    LARGE_INTEGER PerfTime;
+    LARGE_INTEGER PerfFreq;
+} PERF_OBJECT_TYPE, *PPERF_OBJECT_TYPE;
+
+typedef struct _PERF_COUNTER_DEFINITION
+{
+    DWORD ByteLength;
+    DWORD CounterNameTitleIndex;
+#ifdef _WIN64
+    DWORD CounterNameTitle;
+#else
+    LPWSTR CounterNameTitle;
+#endif
+    DWORD CounterHelpTitleIndex;
+#ifdef _WIN64
+    DWORD CounterHelpTitle;
+#else
+    LPWSTR CounterHelpTitle;
+#endif
+    LONG DefaultScale;
+    DWORD DetailLevel;
+    DWORD CounterType;
+    DWORD CounterSize;
+    DWORD CounterOffset;
+} PERF_COUNTER_DEFINITION, *PPERF_COUNTER_DEFINITION;
+
+#define PERF_NO_UNIQUE_ID -1
+
+typedef struct _PERF_INSTANCE_DEFINITION
+{
+    DWORD ByteLength;
+    DWORD ParentObjectTitleIndex;
+    DWORD ParentObjectInstance;
+    LONG UniqueID;
+    DWORD NameOffset;
+    DWORD NameLength;
+} PERF_INSTANCE_DEFINITION, *PPERF_INSTANCE_DEFINITION;
+
+typedef struct _PERF_COUNTER_BLOCK
+{
+    DWORD ByteLength;
+} PERF_COUNTER_BLOCK, *PPERF_COUNTER_BLOCK;
+
+
+#include <poppack.h>
+
+typedef DWORD (APIENTRY PM_OPEN_PROC)(LPWSTR);
+typedef DWORD (APIENTRY PM_COLLECT_PROC)(LPWSTR,LPVOID *,LPDWORD,LPDWORD);
+typedef DWORD (APIENTRY PM_CLOSE_PROC)(void);
+typedef DWORD (APIENTRY PM_QUERY_PROC)(LPDWORD,LPVOID *,LPDWORD,LPDWORD);
 
 #endif /* _WINPERF_ */
