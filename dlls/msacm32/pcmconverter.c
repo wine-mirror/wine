@@ -71,7 +71,6 @@ static	DWORD	PCM_drvClose(DWORD dwDevID)
     return 1;
 }
 
-#define	NUM_PCM_FORMATS	(sizeof(PCM_Formats) / sizeof(PCM_Formats[0]))
 #define	NUM_OF(a,b)	((a)/(b))
 
 /* flags for fdwDriver */
@@ -114,7 +113,7 @@ static DWORD PCM_GetFormatIndex(LPWAVEFORMATEX wfx)
     unsigned int i;
     TRACE("(%p)\n", wfx);
 
-    for (i = 0; i < NUM_PCM_FORMATS; i++) {
+    for (i = 0; i < ARRAY_SIZE(PCM_Formats); i++) {
 	if (wfx->nChannels == PCM_Formats[i].nChannels &&
 	    wfx->nSamplesPerSec == PCM_Formats[i].rate &&
 	    wfx->wBitsPerSample == PCM_Formats[i].nBits)
@@ -1035,7 +1034,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
     aftd->dwFormatTag = WAVE_FORMAT_PCM;
     aftd->cbFormatSize = sizeof(PCMWAVEFORMAT);
     aftd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CONVERTER;
-    aftd->cStandardFormats = NUM_PCM_FORMATS;
+    aftd->cStandardFormats = ARRAY_SIZE(PCM_Formats);
     aftd->szFormatTag[0] = 0;
 
     return MMSYSERR_NOERROR;
@@ -1057,7 +1056,7 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
         }
 	break;
     case ACM_FORMATDETAILSF_INDEX:
-	assert(afd->dwFormatIndex < NUM_PCM_FORMATS);
+	assert(afd->dwFormatIndex < ARRAY_SIZE(PCM_Formats));
 	afd->pwfx->wFormatTag = WAVE_FORMAT_PCM;
 	afd->pwfx->nChannels = PCM_Formats[afd->dwFormatIndex].nChannels;
 	afd->pwfx->nSamplesPerSec = PCM_Formats[afd->dwFormatIndex].rate;
