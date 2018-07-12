@@ -150,7 +150,7 @@
 @ stdcall wine_vkEnumerateDeviceLayerProperties(ptr ptr ptr)
 @ stdcall wine_vkEnumerateInstanceExtensionProperties(str ptr ptr)
 @ stub vkEnumerateInstanceVersion
-@ stub vkEnumeratePhysicalDeviceGroups
+@ stdcall wine_vkEnumeratePhysicalDeviceGroups(ptr ptr ptr)
 @ stdcall wine_vkEnumeratePhysicalDevices(ptr ptr ptr)
 @ stdcall wine_vkFlushMappedMemoryRanges(ptr long ptr)
 @ stdcall wine_vkFreeCommandBuffers(ptr int64 long ptr)

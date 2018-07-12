@@ -86,7 +86,7 @@ struct VkInstance_T
      * dispatchable objects.
      */
     struct VkPhysicalDevice_T **phys_devs;
-    uint32_t num_phys_devs;
+    uint32_t phys_dev_count;
 
     unsigned int quirks;
 };

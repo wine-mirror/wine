@@ -149,7 +149,7 @@
 @ stdcall vkEnumerateInstanceExtensionProperties(str ptr ptr)
 @ stdcall vkEnumerateInstanceLayerProperties(ptr ptr)
 @ stub vkEnumerateInstanceVersion
-@ stub vkEnumeratePhysicalDeviceGroups
+@ stdcall vkEnumeratePhysicalDeviceGroups(ptr ptr ptr) winevulkan.wine_vkEnumeratePhysicalDeviceGroups
 @ stdcall vkEnumeratePhysicalDevices(ptr ptr ptr) winevulkan.wine_vkEnumeratePhysicalDevices
 @ stdcall vkFlushMappedMemoryRanges(ptr long ptr) winevulkan.wine_vkFlushMappedMemoryRanges
 @ stdcall vkFreeCommandBuffers(ptr int64 long ptr) winevulkan.wine_vkFreeCommandBuffers

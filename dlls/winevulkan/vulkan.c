@@ -390,34 +390,31 @@ static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src
 /* Helper function which stores wrapped physical devices in the instance object. */
 static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *instance)
 {
-    VkResult res;
-    struct VkPhysicalDevice_T **tmp_phys_devs;
-    uint32_t num_phys_devs = 0;
+    VkPhysicalDevice *tmp_phys_devs;
+    uint32_t phys_dev_count;
     unsigned int i;
+    VkResult res;
 
-    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->instance, &num_phys_devs, NULL);
+    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->instance, &phys_dev_count, NULL);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to enumerate physical devices, res=%d\n", res);
         return res;
     }
+    if (!phys_dev_count)
+        return res;
 
-    /* Don't bother with any of the rest if the system just lacks devices. */
-    if (num_phys_devs == 0)
-        return VK_SUCCESS;
-
-    tmp_phys_devs = heap_calloc(num_phys_devs, sizeof(*tmp_phys_devs));
-    if (!tmp_phys_devs)
+    if (!(tmp_phys_devs = heap_calloc(phys_dev_count, sizeof(*tmp_phys_devs))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->instance, &num_phys_devs, tmp_phys_devs);
+    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->instance, &phys_dev_count, tmp_phys_devs);
     if (res != VK_SUCCESS)
     {
         heap_free(tmp_phys_devs);
         return res;
     }
 
-    instance->phys_devs = heap_calloc(num_phys_devs, sizeof(*instance->phys_devs));
+    instance->phys_devs = heap_calloc(phys_dev_count, sizeof(*instance->phys_devs));
     if (!instance->phys_devs)
     {
         heap_free(tmp_phys_devs);
@@ -425,7 +422,7 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
     }
 
     /* Wrap each native physical device handle into a dispatchable object for the ICD loader. */
-    for (i = 0; i < num_phys_devs; i++)
+    for (i = 0; i < phys_dev_count; i++)
     {
         struct VkPhysicalDevice_T *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i]);
         if (!phys_dev)
@@ -436,12 +433,28 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
         }
 
         instance->phys_devs[i] = phys_dev;
-        instance->num_phys_devs = i + 1;
+        instance->phys_dev_count = i + 1;
     }
-    instance->num_phys_devs = num_phys_devs;
+    instance->phys_dev_count = phys_dev_count;
 
     heap_free(tmp_phys_devs);
     return VK_SUCCESS;
+}
+
+static struct VkPhysicalDevice_T *wine_vk_instance_wrap_physical_device(struct VkInstance_T *instance,
+        VkPhysicalDevice physical_device)
+{
+    unsigned int i;
+
+    for (i = 0; i < instance->phys_dev_count; ++i)
+    {
+        struct VkPhysicalDevice_T *current = instance->phys_devs[i];
+        if (current->phys_dev == physical_device)
+            return current;
+    }
+
+    ERR("Unrecognized physical device %p.\n", physical_device);
+    return NULL;
 }
 
 /* Helper function used for freeing an instance structure. This function supports full
@@ -456,7 +469,7 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
     {
         unsigned int i;
 
-        for (i = 0; i < instance->num_phys_devs; i++)
+        for (i = 0; i < instance->phys_dev_count; i++)
         {
             wine_vk_physical_device_free(instance->phys_devs[i]);
         }
@@ -826,18 +839,18 @@ VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *c
 
     if (!devices)
     {
-        *count = instance->num_phys_devs;
+        *count = instance->phys_dev_count;
         return VK_SUCCESS;
     }
 
-    *count = min(*count, instance->num_phys_devs);
+    *count = min(*count, instance->phys_dev_count);
     for (i = 0; i < *count; i++)
     {
         devices[i] = instance->phys_devs[i];
     }
 
     TRACE("Returning %u devices.\n", *count);
-    return *count < instance->num_phys_devs ? VK_INCOMPLETE : VK_SUCCESS;
+    return *count < instance->phys_dev_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool, uint32_t count,
@@ -1016,6 +1029,46 @@ err:
     return res;
 }
 
+static VkResult wine_vk_enumerate_physical_device_groups(struct VkInstance_T *instance,
+        VkResult (*p_vkEnumeratePhysicalDeviceGroups)(VkInstance, uint32_t *, VkPhysicalDeviceGroupProperties *),
+        uint32_t *count, VkPhysicalDeviceGroupProperties *properties)
+{
+    unsigned int i, j;
+    VkResult res;
+
+    res = p_vkEnumeratePhysicalDeviceGroups(instance->instance, count, properties);
+    if (res < 0 || !properties)
+        return res;
+
+    for (i = 0; i < *count; ++i)
+    {
+        VkPhysicalDeviceGroupProperties *current = &properties[i];
+        for (j = 0; j < current->physicalDeviceCount; ++j)
+        {
+            VkPhysicalDevice dev = current->physicalDevices[j];
+            if (!(current->physicalDevices[j] = wine_vk_instance_wrap_physical_device(instance, dev)))
+                return VK_ERROR_INITIALIZATION_FAILED;
+        }
+    }
+
+    return res;
+}
+
+VkResult WINAPI wine_vkEnumeratePhysicalDeviceGroups(VkInstance instance,
+        uint32_t *count, VkPhysicalDeviceGroupProperties *properties)
+{
+    TRACE("%p, %p, %p\n", instance, count, properties);
+    return wine_vk_enumerate_physical_device_groups(instance,
+            instance->funcs.p_vkEnumeratePhysicalDeviceGroups, count, properties);
+}
+
+VkResult WINAPI wine_vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance,
+        uint32_t *count, VkPhysicalDeviceGroupProperties *properties)
+{
+    TRACE("%p, %p, %p\n", instance, count, properties);
+    return wine_vk_enumerate_physical_device_groups(instance,
+            instance->funcs.p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
+}
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {

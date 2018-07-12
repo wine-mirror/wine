@@ -86,6 +86,7 @@ EXT_BLOCK_SIZE = 1000
 # and need custom wrappers due to e.g. win32 / X11 specific code.
 # List of supported instance extensions.
 SUPPORTED_INSTANCE_EXTENSIONS = [
+    "VK_KHR_device_group_creation",
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
@@ -150,6 +151,7 @@ FUNCTION_OVERRIDES = {
     "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : False },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : False},
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -177,6 +179,9 @@ FUNCTION_OVERRIDES = {
     "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
+
+    # VK_KHR_device_group_creation
+    "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},
 }
 
 

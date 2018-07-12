@@ -2919,6 +2919,8 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkDestroySurfaceKHR", &wine_vkDestroySurfaceKHR},
     {"vkEnumerateDeviceExtensionProperties", &wine_vkEnumerateDeviceExtensionProperties},
     {"vkEnumerateDeviceLayerProperties", &wine_vkEnumerateDeviceLayerProperties},
+    {"vkEnumeratePhysicalDeviceGroups", &wine_vkEnumeratePhysicalDeviceGroups},
+    {"vkEnumeratePhysicalDeviceGroupsKHR", &wine_vkEnumeratePhysicalDeviceGroupsKHR},
     {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
     {"vkGetPhysicalDeviceFeatures", &wine_vkGetPhysicalDeviceFeatures},
     {"vkGetPhysicalDeviceFeatures2", &wine_vkGetPhysicalDeviceFeatures2},
@@ -3048,6 +3050,7 @@ static const char * const vk_device_extensions[] =
 
 static const char * const vk_instance_extensions[] =
 {
+    "VK_KHR_device_group_creation",
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
