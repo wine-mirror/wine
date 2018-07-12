@@ -8681,3 +8681,32 @@ HRESULT WINAPI UploadPrinterDriverPackageW( LPCWSTR server, LPCWSTR path, LPCWST
           flags, hwnd, dst, dstlen);
     return E_NOTIMPL;
 }
+
+/*****************************************************************************
+ *          PerfOpen [WINSPOOL.@]
+ */
+DWORD WINAPI PerfOpen(LPWSTR context)
+{
+    FIXME("%s: stub\n", debugstr_w(context));
+    return ERROR_SUCCESS;
+}
+
+/*****************************************************************************
+ *          PerfClose [WINSPOOL.@]
+ */
+DWORD WINAPI PerfClose(void)
+{
+    FIXME("stub\n");
+    return ERROR_SUCCESS;
+}
+
+/*****************************************************************************
+ *          PerfCollect [WINSPOOL.@]
+ */
+DWORD WINAPI PerfCollect(LPWSTR query, LPVOID *data, LPDWORD size, LPDWORD obj_count)
+{
+    FIXME("%s, %p, %p, %p: stub\n", debugstr_w(query), data, size, obj_count);
+    *size = 0;
+    *obj_count = 0;
+    return ERROR_SUCCESS;
+}

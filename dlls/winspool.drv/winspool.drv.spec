@@ -148,9 +148,9 @@
 @ stdcall IsValidDevmodeW(ptr long)
 @ stdcall OpenPrinterA(str ptr ptr)
 @ stdcall OpenPrinterW(wstr ptr ptr)
-@ stub PerfClose
-@ stub PerfCollect
-@ stub PerfOpen
+@ stdcall PerfClose()
+@ stdcall PerfCollect(wstr ptr ptr ptr)
+@ stdcall PerfOpen(wstr)
 @ stub PlayGdiScriptOnPrinterIC
 @ stub PrinterMessageBoxA
 @ stub PrinterMessageBoxW

@@ -3309,6 +3309,7 @@ StartType=3
 ErrorControl=1
 
 [SpoolerService]
+AddReg=SpoolerServiceKeys
 Description="Loads files to memory for later printing"
 DisplayName="Print Spooler"
 ServiceBinary="%11%\spoolsv.exe"
@@ -3316,6 +3317,12 @@ ServiceType=0x110
 StartType=3
 ErrorControl=1
 LoadOrderGroup="SpoolerGroup"
+
+[SpoolerServiceKeys]
+HKLM,"System\CurrentControlSet\Services\Spooler\Performance","Library",,"winspool.drv"
+HKLM,"System\CurrentControlSet\Services\Spooler\Performance","Open",,"PerfOpen"
+HKLM,"System\CurrentControlSet\Services\Spooler\Performance","Close",,"PerfClose"
+HKLM,"System\CurrentControlSet\Services\Spooler\Performance","Collect",,"PerfCollect"
 
 [TerminalServices]
 Description="Remote desktop access"
