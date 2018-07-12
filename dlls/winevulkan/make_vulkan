@@ -377,7 +377,7 @@ class VkEnumValue(object):
 
 
 class VkFunction(object):
-    def __init__(self, _type=None, name=None, params=[], extensions=[], alias=False):
+    def __init__(self, _type=None, name=None, params=[], extensions=[], alias=None):
         self.extensions = []
         self.name = name
         self.type = _type
@@ -409,7 +409,7 @@ class VkFunction(object):
         func_type = alias.type
         params = alias.params
 
-        return VkFunction(_type=func_type, name=func_name, params=params, alias=True)
+        return VkFunction(_type=func_type, name=func_name, params=params, alias=alias)
 
     @staticmethod
     def from_xml(command, types):
@@ -440,7 +440,7 @@ class VkFunction(object):
         return conversions
 
     def is_alias(self):
-        return self.alias
+        return bool(self.alias)
 
     def is_core_func(self):
         """ Returns whether the function is a Vulkan core function.
@@ -2363,6 +2363,9 @@ class VkRegistry(object):
             if type_info["category"] == "struct":
                 struct = type_info["data"]
                 mark_struct_dependencies(struct, self.types)
+
+        if func.is_alias():
+            func.alias.required = True
 
     def _parse_commands(self, root):
         """ Parse command section containing the Vulkan function calls. """
