@@ -2519,6 +2519,27 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
 
+    buf[0] = 'a';
+    buf[1] = 0x30ac;
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 0);
+    ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
+
+    SetLastError(0xdeadbeef);
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 1);
+    todo_wine ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
+
+    SetLastError(0xdeadbeef);
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 2);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
+
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 3);
+    todo_wine ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
+
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 4);
+    ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
+
     /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
     lstrcpyW(buf, lower_case);
     ret = func_ptr(LCMAP_UPPERCASE,
