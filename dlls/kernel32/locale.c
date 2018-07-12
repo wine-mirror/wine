@@ -3626,21 +3626,17 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
             {
                 /* map full-width character to half-width one,
                    e.g. U+30A2 -> U+FF71, U+30D7 -> U+FF8C U+FF9F. */
-                if (map_to_halfwidth(wch, dst_ptr, dstlen) == 2)
+                if (map_to_halfwidth(wch, dst_ptr, len) == 2)
                 {
-                    dstlen--;
+                    len--;
                     dst_ptr++;
-                    if (!dstlen)
-                    {
-                        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                        return 0;
-                    }
+                    if (!len) break;
                 }
             }
             else
                 *dst_ptr = wch;
         }
-        if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)))
+        if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)) || srclen)
             goto done;
 
         srclen = dst_ptr - dst;
