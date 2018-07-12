@@ -38,10 +38,23 @@ static VkResult create_instance(uint32_t extension_count,
     return vkCreateInstance(&create_info, NULL, vk_instance);
 }
 
-static void test_enumerate_physical_devices(void)
+static void enumerate_physical_device(VkPhysicalDevice vk_physical_device)
+{
+    VkPhysicalDeviceProperties properties;
+
+    vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
+
+    trace("Device '%s', %#x:%#x, driver version %u.%u.%u (%#x), api version %u.%u.%u.\n",
+            properties.deviceName, properties.vendorID, properties.deviceID,
+            VK_VERSION_MAJOR(properties.driverVersion), VK_VERSION_MINOR(properties.driverVersion),
+            VK_VERSION_PATCH(properties.driverVersion), properties.driverVersion,
+            VK_VERSION_MAJOR(properties.apiVersion), VK_VERSION_MINOR(properties.apiVersion),
+            VK_VERSION_PATCH(properties.apiVersion));
+}
+
+static void for_each_device(void (*test_func)(VkPhysicalDevice))
 {
     VkPhysicalDevice *vk_physical_devices;
-    VkPhysicalDeviceProperties properties;
     VkInstance vk_instance;
     unsigned int i;
     uint32_t count;
@@ -63,23 +76,13 @@ static void test_enumerate_physical_devices(void)
         return;
     }
 
-    trace("Got %u physical device(s).\n", count);
     vk_physical_devices = heap_calloc(count, sizeof(*vk_physical_devices));
     ok(!!vk_physical_devices, "Failed to allocate memory.\n");
     vr = vkEnumeratePhysicalDevices(vk_instance, &count, vk_physical_devices);
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
     for (i = 0; i < count; ++i)
-    {
-        vkGetPhysicalDeviceProperties(vk_physical_devices[i], &properties);
-
-        trace("Device '%s', %#x:%#x, driver version %u.%u.%u (%#x), api version %u.%u.%u.\n",
-                properties.deviceName, properties.vendorID, properties.deviceID,
-                VK_VERSION_MAJOR(properties.driverVersion), VK_VERSION_MINOR(properties.driverVersion),
-                VK_VERSION_PATCH(properties.driverVersion), properties.driverVersion,
-                VK_VERSION_MAJOR(properties.apiVersion), VK_VERSION_MINOR(properties.apiVersion),
-                VK_VERSION_PATCH(properties.apiVersion));
-    }
+        test_func(vk_physical_devices[i]);
 
     heap_free(vk_physical_devices);
 
@@ -88,5 +91,5 @@ static void test_enumerate_physical_devices(void)
 
 START_TEST(vulkan)
 {
-    test_enumerate_physical_devices();
+    for_each_device(enumerate_physical_device);
 }
