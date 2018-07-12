@@ -4417,9 +4417,11 @@ static void test_chunked_read(void)
         goto done;
     }
     ok( ret, "WinHttpSendRequest failed with error %u\n", GetLastError() );
+    if (!ret) goto done;
 
     ret = WinHttpReceiveResponse( req, NULL );
     ok( ret, "WinHttpReceiveResponse failed with error %u\n", GetLastError() );
+    if (!ret) goto done;
 
     header[0] = 0;
     len = sizeof(header);
