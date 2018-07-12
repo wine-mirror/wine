@@ -38,8 +38,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 struct wine_vk_structure_header
 {
     VkStructureType sType;
-    const void *pNext;
+    void *pNext;
 };
+
+#define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
+static void *wine_vk_find_struct_(void *s, VkStructureType t)
+{
+    struct wine_vk_structure_header *header;
+
+    for (header = s; header; header = header->pNext)
+    {
+        if (header->sType == t)
+            return header;
+    }
+
+    return NULL;
+}
 
 static void *wine_vk_get_global_proc_addr(const char *name);
 
@@ -182,8 +196,30 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
     return queues;
 }
 
-/* Helper function to convert win32 VkDeviceCreateInfo to host compatible. */
-static void wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
+static VkDeviceGroupDeviceCreateInfo *convert_VkDeviceGroupDeviceCreateInfo(const void *src)
+{
+    const VkDeviceGroupDeviceCreateInfo *in = src;
+    VkDeviceGroupDeviceCreateInfo *out;
+    VkPhysicalDevice *physical_devices;
+    unsigned int i;
+
+    if (!(out = heap_alloc(sizeof(*out))))
+        return NULL;
+
+    *out = *in;
+    if (!(physical_devices = heap_calloc(in->physicalDeviceCount, sizeof(*physical_devices))))
+    {
+        heap_free(out);
+        return NULL;
+    }
+    for (i = 0; i < in->physicalDeviceCount; ++i)
+        physical_devices[i] = in->pPhysicalDevices[i]->phys_dev;
+    out->pPhysicalDevices = physical_devices;
+
+    return out;
+}
+
+static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
         VkDeviceCreateInfo *dst)
 {
     unsigned int i;
@@ -192,13 +228,13 @@ static void wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
 
     /* Application and loader can pass in a chain of extensions through pNext.
      * We can't blindly pass these through as often these contain callbacks or
-     * they can even be pass structures for loader / ICD internal use. For now
-     * we ignore everything in pNext chain, but we print FIXMEs.
+     * they can even be pass structures for loader / ICD internal use.
      */
     if (src->pNext)
     {
         const struct wine_vk_structure_header *header;
 
+        dst->pNext = NULL;
         for (header = src->pNext; header; header = header->pNext)
         {
             switch (header->sType)
@@ -209,23 +245,41 @@ static void wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
                      */
                     break;
 
+                case VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO:
+                    if (!(dst->pNext = convert_VkDeviceGroupDeviceCreateInfo(header)))
+                        return VK_ERROR_OUT_OF_HOST_MEMORY;
+                    break;
+
                 default:
                     FIXME("Application requested a linked structure of type %#x.\n", header->sType);
             }
         }
     }
-    /* For now don't support anything. */
-    dst->pNext = NULL;
 
     /* Should be filtered out by loader as ICDs don't support layers. */
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    TRACE("Enabled extensions: %u\n", dst->enabledExtensionCount);
+    TRACE("Enabled extensions: %u.\n", dst->enabledExtensionCount);
     for (i = 0; i < dst->enabledExtensionCount; i++)
     {
-        TRACE("Extension %u: %s\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
+        TRACE("Extension %u: %s.\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
     }
+
+    return VK_SUCCESS;
+}
+
+static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
+{
+    VkDeviceGroupDeviceCreateInfo *group_info;
+
+    if ((group_info = wine_vk_find_struct(create_info, DEVICE_GROUP_DEVICE_CREATE_INFO)))
+    {
+        heap_free((void *)group_info->pPhysicalDevices);
+        heap_free(group_info);
+    }
+
+    create_info->pNext = NULL;
 }
 
 /* Helper function used for freeing a device structure. This function supports full
@@ -507,24 +561,30 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     VkDeviceCreateInfo create_info_host;
     uint32_t max_queue_families;
     struct VkDevice_T *object;
-    VkResult res;
     unsigned int i;
+    VkResult res;
 
-    TRACE("%p %p %p %p\n", phys_dev, create_info, allocator, device);
+    TRACE("%p, %p, %p, %p\n", phys_dev, create_info, allocator, device);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    wine_vk_device_convert_create_info(create_info, &create_info_host);
+    res = wine_vk_device_convert_create_info(create_info, &create_info_host);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to convert VkDeviceCreateInfo, res=%d.\n", res);
+        wine_vk_device_free(object);
+        return res;
+    }
 
     res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
             &create_info_host, NULL /* allocator */, &object->device);
+    wine_vk_device_free_create_info(&create_info_host);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create device.\n");
