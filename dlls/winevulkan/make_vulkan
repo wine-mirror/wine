@@ -2439,6 +2439,36 @@ class VkRegistry(object):
 
         self.enums = OrderedDict(sorted(enums.items()))
 
+    def _process_require_enum(self, enum_elem, ext=None):
+            if "bitpos" in enum_elem.keys():
+                # We need to add an extra value to an existing enum type.
+                # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
+                type_name = enum_elem.attrib["extends"]
+                enum = self.types[type_name]["data"]
+                enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
+
+            elif "offset" in enum_elem.keys():
+                # Extensions promoted to Core, have the extension number as part
+                # of the enum value. Else retrieve from the extension tag.
+                if enum_elem.attrib.get("extnumber"):
+                    ext_number = int(enum_elem.attrib.get("extnumber"))
+                else:
+                    ext_number = int(ext.attrib["number"])
+                offset = int(enum_elem.attrib["offset"])
+                value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
+
+                # Deal with negative values.
+                direction = enum_elem.attrib.get("dir")
+                if direction is not None:
+                    value = -value
+
+                type_name = enum_elem.attrib["extends"]
+                enum = self.types[type_name]["data"]
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value))
+
+            elif "value" in enum_elem.keys():
+                self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
+
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extensioin. """
         extensions = []
@@ -2489,49 +2519,19 @@ class VkRegistry(object):
             # different features (e.g. Vulkan 1.1). Parse each require section
             # separately, so we can skip sections we don't want.
             for require in ext.findall("require"):
-                feature = require.attrib.get("feature")
-                if feature == "VK_VERSION_1_1":
-                    continue
-
                 # Extensions can add enum values to Core / extension enums, so add these.
                 for enum_elem in require.findall("enum"):
-                    if "bitpos" in enum_elem.keys():
-                        # We need to add an extra value to an existing enum type.
-                        # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                        type_name = enum_elem.attrib["extends"]
-                        enum = self.types[type_name]["data"]
-                        enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
-                    elif "offset" in enum_elem.keys():
-                        # Extensions promoted to Core, have the extension number as part
-                        # of the enum value. Else retrieve from the extension tag.
-                        if enum_elem.attrib.get("extnumber") is not None:
-                            ext_number = int(enum_elem.attrib.get("extnumber"))
-                        else:
-                            ext_number = int(ext.attrib["number"])
-                        offset = int(enum_elem.attrib["offset"])
-                        value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
-
-                        # Deal with negative values.
-                        direction = enum_elem.attrib.get("dir")
-                        if direction is not None:
-                            value = -value
-
-                        type_name = enum_elem.attrib["extends"]
-                        enum = self.types[type_name]["data"]
-                        enum.add(VkEnumValue(enum_elem.attrib["name"], value))
-
-                    elif "value" in enum_elem.keys():
-                        self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
-                        continue
-                    else:
-                        # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
-                        continue
+                    self._process_require_enum(enum_elem, ext)
 
                 for t in require.findall("type"):
                     type_info = self.types[t.attrib["name"]]["data"]
                     if type_info.is_alias():
                         type_info = type_info.alias
                     type_info.required = True
+
+                feature = require.attrib.get("feature")
+                if feature == "VK_VERSION_1_1":
+                    continue
 
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
@@ -2549,37 +2549,30 @@ class VkRegistry(object):
     def _parse_features(self, root):
         """ Parse the feature section, which describes Core commands and types needed. """
 
-        # For now limit to 1.0 features as various 1.1 features need more work.
-        # In particular interop extensions promoted to Core.
-        requires = root.findall("./feature/[@name='VK_VERSION_1_0']/require")
-
-        for require in requires:
-            LOGGER.info("Including features for {0}".format(require.attrib.get("comment")))
-            for tag in require:
-                # Only deal with command. Other values which appear are enum and type for pulling in some
-                # constants and macros. Tricky to parse, so don't bother right now, we will generate them
-                # anyway for now.
-                if tag.tag == "comment":
-                    continue
-                elif tag.tag == "command":
-                    name = tag.attrib["name"]
-                    self._mark_command_required(name)
-                elif tag.tag == "enum":
-                    # We could pull in relevant constants here. Unfortunately
-                    # this only gets half of them pulled in as others indirectly
-                    # get pulled in through structures. Constants don't harm us,
-                    # so don't bother.
-                    pass
-                elif tag.tag == "type":
-                    # Pull in types which may not have been pulled in through commands.
-                    name = tag.attrib["name"]
-
-                    # Skip pull in for vk_platform.h for now.
-                    if name == "vk_platform":
+        for feature in root.findall("./feature"):
+            feature_name = feature.attrib["name"]
+            for require in feature.findall("require"):
+                LOGGER.info("Including features for {0}".format(require.attrib.get("comment")))
+                for tag in require:
+                    if tag.tag == "comment":
                         continue
+                    elif tag.tag == "command":
+                        # For now limit to 1.0 features as various 1.1 features need more work.
+                        if feature_name == "VK_VERSION_1_1":
+                            continue
+                        name = tag.attrib["name"]
+                        self._mark_command_required(name)
+                    elif tag.tag == "enum":
+                        self._process_require_enum(tag)
+                    elif tag.tag == "type":
+                        name = tag.attrib["name"]
 
-                    type_info = self.types[name]
-                    type_info["data"].required = True
+                        # Skip pull in for vk_platform.h for now.
+                        if name == "vk_platform":
+                            continue
+
+                        type_info = self.types[name]
+                        type_info["data"].required = True
 
     def _parse_types(self, root):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
