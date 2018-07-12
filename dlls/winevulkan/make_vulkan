@@ -188,7 +188,7 @@ class Direction(Enum):
 
 
 class VkBaseType(object):
-    def __init__(self, name, _type, alias=False, requires=None):
+    def __init__(self, name, _type, alias=None, requires=None):
         """ Vulkan base type class.
 
         VkBaseType is mostly used by Vulkan to define its own
@@ -213,7 +213,7 @@ class VkBaseType(object):
         return "typedef {0} {1};\n".format(self.type, self.name)
 
     def is_alias(self):
-        return self.alias
+        return bool(self.alias)
 
 
 class VkConstant(object):
@@ -291,7 +291,7 @@ class VkDefine(object):
 
 
 class VkEnum(object):
-    def __init__(self, name, values, alias=False):
+    def __init__(self, name, values, alias=None):
         self.name = name
         self.values = values
         self.required = False
@@ -300,7 +300,7 @@ class VkEnum(object):
     @staticmethod
     def from_alias(enum, alias):
         name = enum.attrib.get("name")
-        return VkEnum(name, alias.values)
+        return VkEnum(name, alias.values, alias=alias)
 
     @staticmethod
     def from_xml(enum):
@@ -353,7 +353,7 @@ class VkEnum(object):
         return text
 
     def is_alias(self):
-        return self.alias
+        return bool(self.alias)
 
 
 class VkEnumValue(object):
@@ -1477,7 +1477,7 @@ class VkParam(object):
 class VkStruct(Sequence):
     """ Class which represents the type union and struct. """
 
-    def __init__(self, name, members, returnedonly, alias=False, union=False):
+    def __init__(self, name, members, returnedonly, alias=None, union=False):
         self.name = name
         self.members = members
         self.returnedonly = returnedonly
@@ -1495,7 +1495,7 @@ class VkStruct(Sequence):
     @staticmethod
     def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        return VkStruct(name, alias.members, alias.returnedonly, alias=True)
+        return VkStruct(name, alias.members, alias.returnedonly, alias=alias)
 
     @staticmethod
     def from_xml(struct):
@@ -1602,7 +1602,7 @@ class VkStruct(Sequence):
         return text
 
     def is_alias(self):
-        return self.alias
+        return bool(self.alias)
 
     def needs_alignment(self):
         """ Check if structure needs alignment for 64-bit data.
@@ -2527,6 +2527,12 @@ class VkRegistry(object):
                         # This seems to be used to pull in constants e.g. VK_MAX_DEVICE_GROUP_KHX
                         continue
 
+                for t in require.findall("type"):
+                    type_info = self.types[t.attrib["name"]]["data"]
+                    if type_info.is_alias():
+                        type_info = type_info.alias
+                    type_info.required = True
+
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
                 for command in require.findall("command"):
@@ -2678,7 +2684,7 @@ class VkRegistry(object):
             alias = t.attrib.get("alias")
 
             if type_info["category"] == "bitmask":
-                bitmask = VkBaseType(type_info["name"], alias, alias=True)
+                bitmask = VkBaseType(type_info["name"], alias, alias=self.types[alias]["data"])
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
 
