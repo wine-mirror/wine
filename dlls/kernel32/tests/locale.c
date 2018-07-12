@@ -2516,7 +2516,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
 
     SetLastError(0xdeadbeef);
     ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 1);
-    todo_wine ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
 
     SetLastError(0xdeadbeef);
@@ -2525,7 +2525,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
        "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
 
     ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 3);
-    todo_wine ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
+    ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
 
     ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_UPPERCASE, buf, 2, buf2, 4);
     ok(ret == 3, "%s ret %d, expected value 3\n", func_name, ret);
