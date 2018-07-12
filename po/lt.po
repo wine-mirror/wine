@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-06 09:07+0300\n"
+"PO-Revision-Date: 2018-07-12 20:53+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3437,18 +3437,16 @@ msgid "Connections"
 msgstr "Ryšiai"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "„Wine“ konfigūravimas"
+msgstr "Automatinis konfigūravimas"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Naudoti įgaliotojo serverio automatinį radimą (WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Naudoti įgaliotojo serverio automatinio konfigūravimo (PAC) skriptą"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
