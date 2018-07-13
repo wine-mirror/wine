@@ -2306,6 +2306,15 @@ class VkRegistry(object):
         self.funcs = {}
         self.types = {}
 
+        self.version_regex = re.compile(
+            r'^'
+            r'VK_VERSION_'
+            r'(?P<major>[0-9])'
+            r'_'
+            r'(?P<minor>[0-9])'
+            r'$'
+        )
+
         # Overall strategy for parsing the registry is to first
         # parse all type / function definitions. Then parse
         # features and extensions to decide which types / functions
@@ -2322,6 +2331,14 @@ class VkRegistry(object):
         self._parse_extensions(root)
 
         self.copyright = root.find('./comment').text
+
+    def _is_feature_supported(self, feature):
+        version = self.version_regex.match(feature)
+        if not version:
+            return True
+
+        version = tuple(map(int, version.group('major', 'minor')))
+        return version <= WINE_VK_VERSION
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
@@ -2542,7 +2559,7 @@ class VkRegistry(object):
                     type_info.required = True
 
                 feature = require.attrib.get("feature")
-                if feature == "VK_VERSION_1_1":
+                if feature and not self._is_feature_supported(feature):
                     continue
 
                 # Pull in any commands we need. We infer types to pull in from the command
@@ -2569,8 +2586,7 @@ class VkRegistry(object):
                     if tag.tag == "comment":
                         continue
                     elif tag.tag == "command":
-                        # For now limit to 1.0 features as various 1.1 features need more work.
-                        if feature_name == "VK_VERSION_1_1":
+                        if not self._is_feature_supported(feature_name):
                             continue
                         name = tag.attrib["name"]
                         self._mark_command_required(name)
