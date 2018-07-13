@@ -1858,9 +1858,13 @@ dnl *** Check for Vulkan ***
 if test "x$with_vulkan" != "xno"
 then
     WINE_CHECK_SONAME(vulkan, vkGetInstanceProcAddr)
+    if test "x$ac_cv_lib_soname_vulkan" = "x"
+    then
+        WINE_CHECK_SONAME(MoltenVK, vkGetInstanceProcAddr)
+    fi
 fi
-WINE_NOTICE_WITH(vulkan,[test "x$ac_cv_lib_soname_vulkan" = "x"],
-                 [libvulkan ${notice_platform}development files not found, Vulkan won't be supported.])
+WINE_NOTICE_WITH(vulkan,[test "x$ac_cv_lib_soname_vulkan" = "x" -a "x$ac_cv_lib_soname_MoltenVK" = "x"],
+                 [libvulkan and libMoltenVK ${notice_platform}development files not found, Vulkan won't be supported.])
 
 dnl **** Check for vkd3d ****
 if test "x$with_vkd3d" != "xno"

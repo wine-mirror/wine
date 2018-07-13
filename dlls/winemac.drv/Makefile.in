@@ -17,6 +17,7 @@ C_SRCS = \
 	opengl.c \
 	surface.c \
 	systray.c \
+	vulkan.c \
 	window.c
 
 OBJC_SRCS = \
