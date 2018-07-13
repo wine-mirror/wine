@@ -860,6 +860,7 @@ struct vulkan_device_funcs
 #endif
     void (*p_vkGetDescriptorSetLayoutSupport)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
     void (*p_vkGetDescriptorSetLayoutSupportKHR)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
+    VkResult (*p_vkGetDeviceGroupSurfacePresentModesKHR)(VkDevice, VkSurfaceKHR, VkDeviceGroupPresentModeFlagsKHR *);
     void (*p_vkGetDeviceMemoryCommitment)(VkDevice, VkDeviceMemory, VkDeviceSize *);
     void (*p_vkGetDeviceQueue)(VkDevice, uint32_t, uint32_t, VkQueue *);
     VkResult (*p_vkGetEventStatus)(VkDevice, VkEvent);
@@ -984,6 +985,7 @@ struct vulkan_instance_funcs
     void (*p_vkGetPhysicalDeviceMemoryProperties2KHR)(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties2 *);
 #endif
     void (*p_vkGetPhysicalDeviceMultisamplePropertiesEXT)(VkPhysicalDevice, VkSampleCountFlagBits, VkMultisamplePropertiesEXT *);
+    VkResult (*p_vkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkRect2D *);
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkGetPhysicalDeviceProperties)(VkPhysicalDevice, VkPhysicalDeviceProperties_host *);
 #else
@@ -1139,6 +1141,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetBufferMemoryRequirements2KHR) \
     USE_VK_FUNC(vkGetDescriptorSetLayoutSupport) \
     USE_VK_FUNC(vkGetDescriptorSetLayoutSupportKHR) \
+    USE_VK_FUNC(vkGetDeviceGroupSurfacePresentModesKHR) \
     USE_VK_FUNC(vkGetDeviceMemoryCommitment) \
     USE_VK_FUNC(vkGetDeviceQueue) \
     USE_VK_FUNC(vkGetEventStatus) \
@@ -1200,6 +1203,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties2) \
     USE_VK_FUNC(vkGetPhysicalDeviceMemoryProperties2KHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceMultisamplePropertiesEXT) \
+    USE_VK_FUNC(vkGetPhysicalDevicePresentRectanglesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceProperties) \
     USE_VK_FUNC(vkGetPhysicalDeviceProperties2) \
     USE_VK_FUNC(vkGetPhysicalDeviceProperties2KHR) \

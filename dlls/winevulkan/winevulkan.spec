@@ -161,7 +161,7 @@
 @ stdcall wine_vkGetDescriptorSetLayoutSupport(ptr ptr ptr)
 @ stub vkGetDeviceGroupPeerMemoryFeatures
 @ stub vkGetDeviceGroupPresentCapabilitiesKHR
-@ stub vkGetDeviceGroupSurfacePresentModesKHR
+@ stdcall wine_vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 long)
 @ stdcall wine_vkGetDeviceMemoryCommitment(ptr int64 ptr)
 @ stdcall wine_vkGetDeviceProcAddr(ptr str)
 @ stdcall wine_vkGetDeviceQueue(ptr long long ptr)
@@ -190,7 +190,7 @@
 @ stdcall wine_vkGetPhysicalDeviceImageFormatProperties2(ptr ptr ptr)
 @ stdcall wine_vkGetPhysicalDeviceMemoryProperties(ptr ptr)
 @ stdcall wine_vkGetPhysicalDeviceMemoryProperties2(ptr ptr)
-@ stub vkGetPhysicalDevicePresentRectanglesKHR
+@ stdcall wine_vkGetPhysicalDevicePresentRectanglesKHR(ptr int64 ptr ptr)
 @ stdcall wine_vkGetPhysicalDeviceProperties(ptr ptr)
 @ stdcall wine_vkGetPhysicalDeviceProperties2(ptr ptr)
 @ stdcall wine_vkGetPhysicalDeviceQueueFamilyProperties(ptr ptr ptr)

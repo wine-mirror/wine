@@ -130,7 +130,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 3
+DRIVER_VERSION = 4
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -182,6 +182,10 @@ FUNCTION_OVERRIDES = {
 
     # VK_KHR_device_group_creation
     "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},
+
+    # VK_KHR_device_group
+    "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 }
 
 
@@ -397,7 +401,7 @@ class VkFunction(object):
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
-        self.required = False
+        self.required = True if self.driver else False
 
     @staticmethod
     def from_alias(command, alias):

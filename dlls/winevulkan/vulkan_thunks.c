@@ -2174,6 +2174,12 @@ static void WINAPI wine_vkGetDescriptorSetLayoutSupportKHR(VkDevice device, cons
     device->funcs.p_vkGetDescriptorSetLayoutSupportKHR(device->device, pCreateInfo, pSupport);
 }
 
+VkResult WINAPI wine_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR *pModes)
+{
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(surface), pModes);
+    return device->funcs.p_vkGetDeviceGroupSurfacePresentModesKHR(device->device, surface, pModes);
+}
+
 void WINAPI wine_vkGetDeviceMemoryCommitment(VkDevice device, VkDeviceMemory memory, VkDeviceSize *pCommittedMemoryInBytes)
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(memory), pCommittedMemoryInBytes);
@@ -2434,6 +2440,12 @@ static void WINAPI wine_vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDe
 {
     TRACE("%p, %#x, %p\n", physicalDevice, samples, pMultisampleProperties);
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMultisamplePropertiesEXT(physicalDevice->phys_dev, samples, pMultisampleProperties);
+}
+
+VkResult WINAPI wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t *pRectCount, VkRect2D *pRects)
+{
+    TRACE("%p, 0x%s, %p, %p\n", physicalDevice, wine_dbgstr_longlong(surface), pRectCount, pRects);
+    return physicalDevice->instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(physicalDevice->phys_dev, surface, pRectCount, pRects);
 }
 
 void WINAPI wine_vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties *pProperties)
@@ -2870,6 +2882,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetBufferMemoryRequirements2KHR", &wine_vkGetBufferMemoryRequirements2KHR},
     {"vkGetDescriptorSetLayoutSupport", &wine_vkGetDescriptorSetLayoutSupport},
     {"vkGetDescriptorSetLayoutSupportKHR", &wine_vkGetDescriptorSetLayoutSupportKHR},
+    {"vkGetDeviceGroupSurfacePresentModesKHR", &wine_vkGetDeviceGroupSurfacePresentModesKHR},
     {"vkGetDeviceMemoryCommitment", &wine_vkGetDeviceMemoryCommitment},
     {"vkGetDeviceProcAddr", &wine_vkGetDeviceProcAddr},
     {"vkGetDeviceQueue", &wine_vkGetDeviceQueue},
@@ -2935,6 +2948,7 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceMemoryProperties2", &wine_vkGetPhysicalDeviceMemoryProperties2},
     {"vkGetPhysicalDeviceMemoryProperties2KHR", &wine_vkGetPhysicalDeviceMemoryProperties2KHR},
     {"vkGetPhysicalDeviceMultisamplePropertiesEXT", &wine_vkGetPhysicalDeviceMultisamplePropertiesEXT},
+    {"vkGetPhysicalDevicePresentRectanglesKHR", &wine_vkGetPhysicalDevicePresentRectanglesKHR},
     {"vkGetPhysicalDeviceProperties", &wine_vkGetPhysicalDeviceProperties},
     {"vkGetPhysicalDeviceProperties2", &wine_vkGetPhysicalDeviceProperties2},
     {"vkGetPhysicalDeviceProperties2KHR", &wine_vkGetPhysicalDeviceProperties2KHR},
