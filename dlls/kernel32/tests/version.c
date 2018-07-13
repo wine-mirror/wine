@@ -26,6 +26,7 @@
 #include "winternl.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
+static UINT (WINAPI * pGetSystemFirmwareTable)(DWORD, DWORD, void *, DWORD);
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
@@ -44,6 +45,7 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("kernel32.dll");
 
     GET_PROC(GetProductInfo);
+    GET_PROC(GetSystemFirmwareTable);
 
     hmod = GetModuleHandleA("ntdll.dll");
 
@@ -709,9 +711,16 @@ static void test_GetSystemFirmwareTable(void)
     static const ULONG min_sfti_len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
     ULONG expected_len;
     UINT len;
-    SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
+    SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti;
     UCHAR *smbios_table;
 
+    if (!pGetSystemFirmwareTable)
+    {
+        win_skip("GetSystemFirmwareTable not available\n");
+        return;
+    }
+
+    sfti = HeapAlloc(GetProcessHeap(), 0, min_sfti_len);
     ok(!!sfti, "Failed to allocate memory\n");
     sfti->ProviderSignature = RSMB;
     sfti->Action = SystemFirmwareTable_Get;
@@ -729,7 +738,7 @@ static void test_GetSystemFirmwareTable(void)
 
     expected_len -= min_sfti_len;
     smbios_table = HeapAlloc(GetProcessHeap(), 0, expected_len);
-    len = GetSystemFirmwareTable(RSMB, 0, smbios_table, expected_len);
+    len = pGetSystemFirmwareTable(RSMB, 0, smbios_table, expected_len);
     ok(len == expected_len, "Expected length %u, got %u\n", expected_len, len);
     ok(len == 0 || !memcmp(smbios_table, sfti->TableBuffer, 6),
        "Expected prologue %02x %02x %02x %02x %02x %02x, got %02x %02x %02x %02x %02x %02x\n",
