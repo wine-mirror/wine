@@ -55,7 +55,7 @@ const char * WINAPI DXGetErrorString9A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
 
-    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+    for (i = ARRAY_SIZE(info); i != 0; i /= 2) {
         j = k + (i / 2);
         if (hr == info[j].hr)
             return info[j].resultA;
@@ -73,7 +73,7 @@ const WCHAR * WINAPI DXGetErrorString9W(HRESULT hr)
     static const WCHAR unknown[] = { 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0 };
     unsigned int i, j, k = 0;
 
-    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+    for (i = ARRAY_SIZE(info); i != 0; i /= 2) {
         j = k + (i / 2);
         if (hr == info[j].hr)
             return info[j].resultW;
@@ -90,7 +90,7 @@ const char * WINAPI DXGetErrorDescription9A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
 
-    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+    for (i = ARRAY_SIZE(info); i != 0; i /= 2) {
         j = k + (i / 2);
         if (hr == info[j].hr)
             return info[j].descriptionA;
@@ -108,7 +108,7 @@ const WCHAR * WINAPI DXGetErrorDescription9W(HRESULT hr)
     static const WCHAR na[] = { 'n', '/', 'a', 0 };
     unsigned int i, j, k = 0;
 
-    for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
+    for (i = ARRAY_SIZE(info); i != 0; i /= 2) {
         j = k + (i / 2);
         if (hr == info[j].hr)
             return info[j].descriptionW;
