@@ -208,12 +208,10 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
                 FillRect(ps.hdc, &ps.rcPaint, CreateSolidBrush(bkcolor));
                 SetBkColor(ps.hdc, bkcolor);
                 SetTextColor(ps.hdc, get_color(di, IDC_FNT_COLOR_FG));
-                len = LoadStringW(GetModuleHandleW(NULL), IDS_FNT_PREVIEW,
-                                  buf, sizeof(buf) / sizeof(buf[0]));
+                len = LoadStringW(GetModuleHandleW(NULL), IDS_FNT_PREVIEW, buf, ARRAY_SIZE(buf));
                 if (len)
                     TextOutW(ps.hdc, 0, 0, buf, len);
-                TextOutW(ps.hdc, 0, di->font[size_idx].height, ascii,
-                         sizeof(ascii)/sizeof(ascii[0]) - 1);
+                TextOutW(ps.hdc, 0, di->font[size_idx].height, ascii, ARRAY_SIZE(ascii) - 1);
                 SelectObject(ps.hdc, hOldFont);
             }
             EndPaint(hWnd, &ps);
@@ -366,7 +364,7 @@ static int CALLBACK font_enum_size(const LOGFONTW* lf, const TEXTMETRICW* tm,
         static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
         int i;
 
-        di->nFont = sizeof(sizes) / sizeof(sizes[0]);
+        di->nFont = ARRAY_SIZE(sizes);
         di->font = HeapAlloc(GetProcessHeap(), 0, di->nFont * sizeof(di->font[0]));
         for (i = 0; i < di->nFont; i++)
         {
@@ -459,11 +457,11 @@ static BOOL  select_font(struct dialog_info* di)
     SendDlgItemMessageW(di->hDlg, IDC_FNT_PREVIEW, WM_SETFONT, (WPARAM)hFont, TRUE);
     if (hOldFont) DeleteObject(hOldFont);
 
-    LoadStringW(GetModuleHandleW(NULL), IDS_FNT_DISPLAY, fmt, sizeof(fmt) / sizeof(fmt[0]));
+    LoadStringW(GetModuleHandleW(NULL), IDS_FNT_DISPLAY, fmt, ARRAY_SIZE(fmt));
     args[0] = config.cell_width;
     args[1] = config.cell_height;
     FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                   fmt, 0, 0, buf, sizeof(buf)/sizeof(*buf), (__ms_va_list*)args);
+                   fmt, 0, 0, buf, ARRAY_SIZE(buf), (__ms_va_list*)args);
 
     SendDlgItemMessageW(di->hDlg, IDC_FNT_FONT_INFO, WM_SETTEXT, 0, (LPARAM)buf);
 
@@ -687,10 +685,8 @@ static INT_PTR WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
                 WCHAR   cap[256];
                 WCHAR   txt[256];
 
-                LoadStringW(GetModuleHandleW(NULL), IDS_DLG_TIT_ERROR,
-                            cap, sizeof(cap) / sizeof(cap[0]));
-                LoadStringW(GetModuleHandleW(NULL), IDS_DLG_ERR_SBWINSIZE,
-                            txt, sizeof(txt) / sizeof(cap[0]));
+                LoadStringW(GetModuleHandleW(NULL), IDS_DLG_TIT_ERROR, cap, ARRAY_SIZE(cap));
+                LoadStringW(GetModuleHandleW(NULL), IDS_DLG_ERR_SBWINSIZE, txt, ARRAY_SIZE(txt));
 
                 MessageBoxW(hDlg, txt, cap, MB_OK);
                 SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);
@@ -831,9 +827,8 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     memset(&psHead, 0, sizeof(psHead));
     psHead.dwSize = sizeof(psHead);
 
-    if (!LoadStringW(GetModuleHandleW(NULL),
-                     (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT,
-                     buff, sizeof(buff) / sizeof(buff[0])))
+    if (!LoadStringW(GetModuleHandleW(NULL), (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT,
+                     buff, ARRAY_SIZE(buff)))
     {
         buff[0] = 'S';
         buff[1] = 'e';

@@ -45,7 +45,7 @@ static void printf_res(UINT uResId, ...)
     va_list args;
 
     va_start(args, uResId);
-    LoadStringW(GetModuleHandleW(NULL), uResId, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    LoadStringW(GetModuleHandleW(NULL), uResId, buffer, ARRAY_SIZE(buffer));
     WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, ansi, sizeof(ansi), NULL, NULL);
     vprintf(ansi, args);
     va_end(args);

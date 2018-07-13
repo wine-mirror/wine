@@ -340,7 +340,7 @@ static void	WCCURSES_SetTitle(const struct inner_data* data)
 {
     WCHAR   wbuf[256];
 
-    if (WINECON_GetConsoleTitle(data->hConIn, wbuf, sizeof(wbuf)/sizeof(WCHAR)))
+    if (WINECON_GetConsoleTitle(data->hConIn, wbuf, ARRAY_SIZE(wbuf)))
     {
         char        buffer[256];
 

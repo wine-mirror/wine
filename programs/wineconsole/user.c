@@ -823,25 +823,25 @@ static BOOL WCUSER_FillMenu(HMENU hMenu, BOOL sep)
     hSubMenu = CreateMenu();
     if (!hSubMenu) return FALSE;
 
-    LoadStringW(hInstance, IDS_MARK, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_MARK, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_MARK, buff);
-    LoadStringW(hInstance, IDS_COPY, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_COPY, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_COPY, buff);
-    LoadStringW(hInstance, IDS_PASTE, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_PASTE, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PASTE, buff);
-    LoadStringW(hInstance, IDS_SELECTALL, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_SELECTALL, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SELECTALL, buff);
-    LoadStringW(hInstance, IDS_SCROLL, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_SCROLL, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SCROLL, buff);
-    LoadStringW(hInstance, IDS_SEARCH, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_SEARCH, buff, ARRAY_SIZE(buff));
     InsertMenuW(hSubMenu, -1, MF_BYPOSITION|MF_STRING, IDS_SEARCH, buff);
 
     if (sep) InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
-    LoadStringW(hInstance, IDS_EDIT, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_EDIT, buff, ARRAY_SIZE(buff));
     InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING|MF_POPUP, (UINT_PTR)hSubMenu, buff);
-    LoadStringW(hInstance, IDS_DEFAULT, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_DEFAULT, buff, ARRAY_SIZE(buff));
     InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_DEFAULT, buff);
-    LoadStringW(hInstance, IDS_PROPERTIES, buff, sizeof(buff) / sizeof(buff[0]));
+    LoadStringW(hInstance, IDS_PROPERTIES, buff, ARRAY_SIZE(buff));
     InsertMenuW(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTIES, buff);
 
     return TRUE;
