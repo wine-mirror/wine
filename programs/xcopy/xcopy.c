@@ -84,7 +84,7 @@ static WCHAR *XCOPY_LoadMessage(UINT id) {
     static WCHAR msg[MAXSTRING];
     const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, sizeof(msg)/sizeof(WCHAR))) {
+    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
        WINE_FIXME("LoadString failed with %d\n", GetLastError());
        lstrcpyW(msg, failedMsg);
     }
@@ -269,7 +269,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
     }
 
     /* Process line by line */
-    while (fgetws(buffer, sizeof(buffer)/sizeof(WCHAR), inFile) != NULL) {
+    while (fgetws(buffer, ARRAY_SIZE(buffer), inFile) != NULL) {
         EXCLUDELIST *thisEntry;
         int length = lstrlenW(buffer);
 
@@ -840,9 +840,9 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                                   /* Debug info: */
                                   FileTimeToSystemTime (&dateRange, &st);
                                   GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
-                                                 sizeof(datestring)/sizeof(WCHAR));
+                                                 ARRAY_SIZE(datestring));
                                   GetTimeFormatW(0, TIME_NOSECONDS, &st,
-                                                 NULL, timestring, sizeof(timestring)/sizeof(WCHAR));
+                                                 NULL, timestring, ARRAY_SIZE(timestring));
 
                                   WINE_TRACE("Date being used is: %s %s\n",
                                              wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
@@ -987,7 +987,7 @@ static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem,
             lstrcpyW(spec, suppliedsource+2);
         } else {
             WCHAR curdir[MAXSTRING];
-            GetCurrentDirectoryW(sizeof(curdir)/sizeof(WCHAR), curdir);
+            GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
             stem[0] = curdir[0];
             stem[1] = curdir[1];
             stem[2] = 0x00;
