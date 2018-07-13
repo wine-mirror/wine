@@ -65,6 +65,7 @@ LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
 VK_XML_VERSION = "1.1.76"
+WINE_VK_VERSION = (1, 0)
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -129,7 +130,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 4
+DRIVER_VERSION = 5
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -143,6 +144,7 @@ FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : False},
 
     # Instance functions
@@ -2029,6 +2031,8 @@ class VkGenerator(object):
 
         f.write("#ifndef __WINE_VULKAN_THUNKS_H\n")
         f.write("#define __WINE_VULKAN_THUNKS_H\n\n")
+
+        f.write("#define WINE_VK_VERSION VK_API_VERSION_{0}_{1}\n\n".format(WINE_VK_VERSION[0], WINE_VK_VERSION[1]))
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")

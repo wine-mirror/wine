@@ -29,17 +29,25 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *, uint32_t *, VkExtensionProperties *);
+VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *);
 PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance, const char *);
 
 VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
-    TRACE("%p %p %p\n", layer_name, count, properties);
+    TRACE("%p, %p, %p\n", layer_name, count, properties);
 
     if (layer_name)
         return VK_ERROR_LAYER_NOT_PRESENT;
 
     return wine_vkEnumerateInstanceExtensionProperties(NULL, count, properties);
+}
+
+VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
+{
+    TRACE("%p\n", version);
+
+    return wine_vkEnumerateInstanceVersion(version);
 }
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count,
@@ -54,7 +62,7 @@ VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count,
 
 PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
-    TRACE("%p %s\n", instance, debugstr_a(name));
+    TRACE("%p, %s\n", instance, debugstr_a(name));
 
     if (!strcmp(name, "vkEnumerateInstanceExtensionProperties"))
         return (PFN_vkVoidFunction)vkEnumerateInstanceExtensionProperties;
@@ -70,7 +78,7 @@ PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char 
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
-    TRACE("(%p, %u, %p)\n", hinst, reason, reserved);
+    TRACE("%p, %u, %p\n", hinst, reason, reserved);
 
     switch (reason)
     {

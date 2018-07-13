@@ -114,6 +114,27 @@ static VkResult create_device(VkPhysicalDevice vk_physical_device,
     return vkCreateDevice(vk_physical_device, &create_info, NULL, vk_device);
 }
 
+static void test_instance_version(void)
+{
+    PFN_vkEnumerateInstanceVersion pfn_vkEnumerateInstanceVersion;
+    uint32_t version;
+    VkResult vr;
+
+    pfn_vkEnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)vkGetInstanceProcAddr(
+            NULL, "vkEnumerateInstanceVersion");
+    if (!pfn_vkEnumerateInstanceVersion)
+    {
+        skip("vkEnumerateInstanceVersion() is not available.\n");
+        return;
+    }
+
+    vr = pfn_vkEnumerateInstanceVersion(&version);
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+    ok(version >= VK_API_VERSION_1_0, "Invalid version %#x.\n", version);
+    trace("Vulkan version %u.%u.%u.\n",
+            VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version), VK_VERSION_PATCH(version));
+}
+
 static void enumerate_physical_device(VkPhysicalDevice vk_physical_device)
 {
     VkPhysicalDeviceProperties properties;
@@ -225,6 +246,7 @@ static void for_each_device(void (*test_func)(VkPhysicalDevice))
 
 START_TEST(vulkan)
 {
+    test_instance_version();
     for_each_device(enumerate_physical_device);
     test_physical_device_groups();
 }

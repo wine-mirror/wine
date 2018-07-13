@@ -831,6 +831,19 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
+VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
+{
+    VkResult res;
+
+    TRACE("%p\n", version);
+
+    res = vk_funcs->p_vkEnumerateInstanceVersion(version);
+    TRACE("API version %u.%u.%u.\n",
+            VK_VERSION_MAJOR(*version), VK_VERSION_MINOR(*version), VK_VERSION_PATCH(*version));
+    *version = min(WINE_VK_VERSION, *version);
+    return res;
+}
+
 VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *count,
         VkPhysicalDevice *devices)
 {
@@ -1086,6 +1099,7 @@ static const struct vulkan_func vk_global_dispatch_table[] =
 {
     {"vkCreateInstance", &wine_vkCreateInstance},
     {"vkEnumerateInstanceExtensionProperties", &wine_vkEnumerateInstanceExtensionProperties},
+    {"vkEnumerateInstanceVersion", &wine_vkEnumerateInstanceVersion},
     {"vkGetInstanceProcAddr", &wine_vkGetInstanceProcAddr},
 };
 
