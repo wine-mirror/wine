@@ -27,6 +27,7 @@
 #include <share.h>
 #include <fcntl.h>
 #include <time.h>
+#include <direct.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -129,6 +130,7 @@ static void (CDECL *p_exit)(int);
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
 static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
 static void (__cdecl *p_quick_exit)(int exitcode);
+static int (__cdecl *p__stat32)(const char*, struct _stat32 *buf);
 
 static void test__initialize_onexit_table(void)
 {
@@ -437,6 +439,7 @@ static BOOL init(void)
     p_exit = (void*)GetProcAddress(module, "exit");
     p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
     p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
+    p__stat32 = (void*)GetProcAddress(module, "_stat32");
 
     return TRUE;
 }
@@ -931,6 +934,48 @@ static void test_quick_exit(const char *argv0)
     CloseHandle(quick_exit_event);
 }
 
+static void test__stat32(void)
+{
+    static const char test_file[] = "\\stat_file.tst";
+    static const char test_dir[] = "\\stat_dir.tst";
+
+    char path[2*MAX_PATH];
+    struct _stat32 buf;
+    int fd, ret;
+    DWORD len;
+
+    len = GetTempPathA(MAX_PATH, path);
+    ok(len, "GetTempPathA failed\n");
+
+    ret = p__stat32("c:", &buf);
+    ok(ret == -1, "_stat32('c:') returned %d\n", ret);
+    ret = p__stat32("c:\\", &buf);
+    ok(!ret, "_stat32('c:\\') returned %d\n", ret);
+
+    memcpy(path+len, test_file, sizeof(test_file));
+    if((fd = open(path, O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE)) >= 0)
+    {
+        ret = p__stat32(path, &buf);
+        ok(!ret, "_stat32('%s') returned %d\n", path, ret);
+        strcat(path, "\\");
+        ret = p__stat32(path, &buf);
+        todo_wine ok(ret, "_stat32('%s') returned %d\n", path, ret);
+        close(fd);
+        remove(path);
+    }
+
+    memcpy(path+len, test_dir, sizeof(test_dir));
+    if(!mkdir(path))
+    {
+        ret = p__stat32(path, &buf);
+        ok(!ret, "_stat32('%s') returned %d\n", path, ret);
+        strcat(path, "\\");
+        ret = p__stat32(path, &buf);
+        ok(!ret, "_stat32('%s') returned %d\n", path, ret);
+        rmdir(path);
+    }
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -964,4 +1009,5 @@ START_TEST(misc)
     test_asctime();
     test_exit(arg_v[0]);
     test_quick_exit(arg_v[0]);
+    test__stat32();
 }

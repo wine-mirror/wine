@@ -2980,12 +2980,19 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
   while (plen && path[plen-1]==' ')
     plen--;
 
-  if (plen && (plen<2 || path[plen-2]!=':') &&
-          (path[plen-1]==':' || path[plen-1]=='\\' || path[plen-1]=='/'))
+  if (plen==2 && path[1]==':')
   {
     *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;
   }
+
+#if _MSVCR_VER<140
+  if (plen>=2 && path[plen-2]!=':' && (path[plen-1]=='\\' || path[plen-1]=='/'))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+#endif
 
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
@@ -3128,12 +3135,19 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
   while (plen && path[plen-1]==' ')
     plen--;
 
-  if(plen && (plen<2 || path[plen-2]!=':') &&
-          (path[plen-1]==':' || path[plen-1]=='\\' || path[plen-1]=='/'))
+  if (plen==2 && path[1]==':')
   {
     *MSVCRT__errno() = MSVCRT_ENOENT;
     return -1;
   }
+
+#if _MSVCR_VER<140
+  if (plen>=2 && path[plen-2]!=':' && (path[plen-1]=='\\' || path[plen-1]=='/'))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+#endif
 
   if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
   {
