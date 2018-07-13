@@ -3546,3 +3546,8 @@ BOOLEAN WINAPI SeSinglePrivilegeCheck(LUID privilege, KPROCESSOR_MODE mode)
     FIXME("stub: %08x%08x %u\n", privilege.HighPart, privilege.LowPart, mode);
     return TRUE;
 }
+
+void WINAPI KeFlushQueuedDpcs(void)
+{
+    FIXME("stub!\n");
+}
