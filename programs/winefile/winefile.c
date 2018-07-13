@@ -193,7 +193,7 @@ static LPWSTR load_string(LPWSTR buffer, DWORD size, UINT id)
 	return buffer;
 }
 
-#define RS(b, i) load_string(b, sizeof(b)/sizeof(b[0]), i)
+#define RS(b, i) load_string(b, ARRAY_SIZE(b), i)
 
 
 /* display error message for the specified WIN32 error code */
@@ -1243,9 +1243,9 @@ static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv,
 		root->drive_type = DRIVE_UNKNOWN;
 		drv[0] = '\\';
 		drv[1] = '\0';
-		load_string(root->volname, sizeof(root->volname)/sizeof(root->volname[0]), IDS_DESKTOP);
+		load_string(root->volname, ARRAY_SIZE(root->volname), IDS_DESKTOP);
 		root->fs_flags = 0;
-		load_string(root->fs, sizeof(root->fs)/sizeof(root->fs[0]), IDS_SHELL);
+		load_string(root->fs, ARRAY_SIZE(root->fs), IDS_SHELL);
 
 		return read_tree_shell(root, pidl, sortOrder, hwnd);
 	}
@@ -1257,9 +1257,9 @@ static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv,
 		root->drive_type = GetDriveTypeW(path);
 
 		lstrcatW(drv, sSlash);
-		load_string(root->volname, sizeof(root->volname)/sizeof(root->volname[0]), IDS_ROOT_FS);
+		load_string(root->volname, ARRAY_SIZE(root->volname), IDS_ROOT_FS);
 		root->fs_flags = 0;
-		load_string(root->fs, sizeof(root->fs)/sizeof(root->fs[0]), IDS_UNIXFS);
+		load_string(root->fs, ARRAY_SIZE(root->fs), IDS_UNIXFS);
 
 		lstrcpyW(root->path, sSlash);
 
@@ -1347,7 +1347,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	entry = read_tree(root, dir_path, pidl, drv, child->sortOrder, hwnd);
 
 	if (root->entry.etype == ET_SHELL)
-		load_string(root->entry.data.cFileName, sizeof(root->entry.data.cFileName)/sizeof(root->entry.data.cFileName[0]), IDS_DESKTOP);
+		load_string(root->entry.data.cFileName, ARRAY_SIZE(root->entry.data.cFileName), IDS_DESKTOP);
 	else
 		wsprintfW(root->entry.data.cFileName, sTitleFmt, drv, root->fs);
 
@@ -2649,12 +2649,12 @@ static void set_space_status(void)
 	if (GetDiskFreeSpaceExW(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
 		DWORD_PTR args[2];
 
-		args[0] = (DWORD_PTR)StrFormatByteSizeW(ulFreeBytesToCaller.QuadPart, b1, sizeof(b1)/sizeof(*b1));
-		args[1] = (DWORD_PTR)StrFormatByteSizeW(ulTotalBytes.QuadPart,        b2, sizeof(b2)/sizeof(*b2));
+		args[0] = (DWORD_PTR)StrFormatByteSizeW(ulFreeBytesToCaller.QuadPart, b1, ARRAY_SIZE(b1));
+		args[1] = (DWORD_PTR)StrFormatByteSizeW(ulTotalBytes.QuadPart, b2, ARRAY_SIZE(b2));
 
 		FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-		               RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer,
-		               sizeof(buffer)/sizeof(*buffer), (__ms_va_list*)args);
+				RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer, ARRAY_SIZE(buffer),
+				(__ms_va_list*)args);
 	} else
 		lstrcpyW(buffer, sQMarks);
 
@@ -3430,7 +3430,7 @@ static void create_drive_bar(void)
 	drivebarBtn.iString++;
 #endif
 	/* insert shell namespace button */
-	load_string(b1, sizeof(b1)/sizeof(b1[0]), IDS_SHELL);
+	load_string(b1, ARRAY_SIZE(b1), IDS_SHELL);
 	b1[lstrlenW(b1)+1] = '\0';
 	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b1);
 
@@ -4198,15 +4198,15 @@ static void InitInstance(HINSTANCE hinstance)
 	/* load column strings */
 	col = 1;
 
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_NAME);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_SIZE);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_CDATE);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_ADATE);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_MDATE);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_IDX);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_LINKS);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_ATTR);
-	load_string(g_pos_names[col++], sizeof(g_pos_names[col])/sizeof(g_pos_names[col][0]), IDS_COL_SEC);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_NAME);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_SIZE);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_CDATE);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_ADATE);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_MDATE);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_IDX);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_LINKS);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_ATTR);
+	load_string(g_pos_names[col++], ARRAY_SIZE(g_pos_names[col]), IDS_COL_SEC);
 }
 
 
@@ -4263,7 +4263,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 
 		Globals.htoolbar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE,
 			IDW_TOOLBAR, 2, Globals.hInstance, IDB_TOOLBAR, toolbarBtns,
-			sizeof(toolbarBtns)/sizeof(TBBUTTON), 16, 15, 16, 15, sizeof(TBBUTTON));
+			ARRAY_SIZE(toolbarBtns), 16, 15, 16, 15, sizeof(TBBUTTON));
 		CheckMenuItem(Globals.hMenuOptions, ID_VIEW_TOOL_BAR, MF_BYCOMMAND|MF_CHECKED);
 	}
 
