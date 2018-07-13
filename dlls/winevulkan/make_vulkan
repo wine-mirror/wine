@@ -2721,6 +2721,11 @@ class VkRegistry(object):
         self.handles = sorted(handles, key=lambda handle: handle.name)
         self.structs = sorted(structs, key=lambda struct: struct.name)
 
+def set_working_directory():
+    path = os.path.abspath(__file__)
+    path = os.path.dirname(path)
+    os.chdir(path)
+
 def download_vk_xml(filename):
     url = "https://raw.github.com/KhronosGroup/Vulkan-Docs/v{0}/xml/vk.xml".format(VK_XML_VERSION)
     if not os.path.isfile(filename):
@@ -2737,6 +2742,8 @@ def main():
         LOGGER.setLevel(logging.INFO)
     else: # > 1
         LOGGER.setLevel(logging.DEBUG)
+
+    set_working_directory()
 
     vk_xml = "vk-{0}.xml".format(VK_XML_VERSION)
     download_vk_xml(vk_xml)
