@@ -43,6 +43,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkAcquireNextImageInfoKHR_win_to_host(const VkAcquireNextImageInfoKHR *in, VkAcquireNextImageInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->swapchain = in->swapchain;
+    out->timeout = in->timeout;
+    out->semaphore = in->semaphore;
+    out->fence = in->fence;
+    out->deviceMask = in->deviceMask;
+}
+
 static inline void convert_VkDescriptorSetAllocateInfo_win_to_host(const VkDescriptorSetAllocateInfo *in, VkDescriptorSetAllocateInfo_host *out)
 {
     if (!in) return;
@@ -1121,6 +1134,23 @@ static inline void free_VkCopyDescriptorSet_array(VkCopyDescriptorSet_host *in, 
 
 #endif /* USE_STRUCT_CONVERSION */
 
+VkResult WINAPI wine_vkAcquireNextImage2KHR(VkDevice device, const VkAcquireNextImageInfoKHR *pAcquireInfo, uint32_t *pImageIndex)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkAcquireNextImageInfoKHR_host pAcquireInfo_host;
+    TRACE("%p, %p, %p\n", device, pAcquireInfo, pImageIndex);
+
+    convert_VkAcquireNextImageInfoKHR_win_to_host(pAcquireInfo, &pAcquireInfo_host);
+    result = device->funcs.p_vkAcquireNextImage2KHR(device->device, &pAcquireInfo_host, pImageIndex);
+
+    return result;
+#else
+    TRACE("%p, %p, %p\n", device, pAcquireInfo, pImageIndex);
+    return device->funcs.p_vkAcquireNextImage2KHR(device->device, pAcquireInfo, pImageIndex);
+#endif
+}
+
 VkResult WINAPI wine_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *pImageIndex)
 {
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %p\n", device, wine_dbgstr_longlong(swapchain), wine_dbgstr_longlong(timeout), wine_dbgstr_longlong(semaphore), wine_dbgstr_longlong(fence), pImageIndex);
@@ -1398,6 +1428,18 @@ void WINAPI wine_vkCmdDispatch(VkCommandBuffer commandBuffer, uint32_t groupCoun
     commandBuffer->device->funcs.p_vkCmdDispatch(commandBuffer->command_buffer, groupCountX, groupCountY, groupCountZ);
 }
 
+void WINAPI wine_vkCmdDispatchBase(VkCommandBuffer commandBuffer, uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+{
+    TRACE("%p, %u, %u, %u, %u, %u, %u\n", commandBuffer, baseGroupX, baseGroupY, baseGroupZ, groupCountX, groupCountY, groupCountZ);
+    commandBuffer->device->funcs.p_vkCmdDispatchBase(commandBuffer->command_buffer, baseGroupX, baseGroupY, baseGroupZ, groupCountX, groupCountY, groupCountZ);
+}
+
+static void WINAPI wine_vkCmdDispatchBaseKHR(VkCommandBuffer commandBuffer, uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+{
+    TRACE("%p, %u, %u, %u, %u, %u, %u\n", commandBuffer, baseGroupX, baseGroupY, baseGroupZ, groupCountX, groupCountY, groupCountZ);
+    commandBuffer->device->funcs.p_vkCmdDispatchBaseKHR(commandBuffer->command_buffer, baseGroupX, baseGroupY, baseGroupZ, groupCountX, groupCountY, groupCountZ);
+}
+
 void WINAPI wine_vkCmdDispatchIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset)
 {
     TRACE("%p, 0x%s, 0x%s\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset));
@@ -1557,6 +1599,18 @@ void WINAPI wine_vkCmdSetDepthBounds(VkCommandBuffer commandBuffer, float minDep
 {
     TRACE("%p, %f, %f\n", commandBuffer, minDepthBounds, maxDepthBounds);
     commandBuffer->device->funcs.p_vkCmdSetDepthBounds(commandBuffer->command_buffer, minDepthBounds, maxDepthBounds);
+}
+
+void WINAPI wine_vkCmdSetDeviceMask(VkCommandBuffer commandBuffer, uint32_t deviceMask)
+{
+    TRACE("%p, %u\n", commandBuffer, deviceMask);
+    commandBuffer->device->funcs.p_vkCmdSetDeviceMask(commandBuffer->command_buffer, deviceMask);
+}
+
+static void WINAPI wine_vkCmdSetDeviceMaskKHR(VkCommandBuffer commandBuffer, uint32_t deviceMask)
+{
+    TRACE("%p, %u\n", commandBuffer, deviceMask);
+    commandBuffer->device->funcs.p_vkCmdSetDeviceMaskKHR(commandBuffer->command_buffer, deviceMask);
 }
 
 static void WINAPI wine_vkCmdSetDiscardRectangleEXT(VkCommandBuffer commandBuffer, uint32_t firstDiscardRectangle, uint32_t discardRectangleCount, const VkRect2D *pDiscardRectangles)
@@ -2174,6 +2228,24 @@ static void WINAPI wine_vkGetDescriptorSetLayoutSupportKHR(VkDevice device, cons
     device->funcs.p_vkGetDescriptorSetLayoutSupportKHR(device->device, pCreateInfo, pSupport);
 }
 
+void WINAPI wine_vkGetDeviceGroupPeerMemoryFeatures(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures)
+{
+    TRACE("%p, %u, %u, %u, %p\n", device, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+    device->funcs.p_vkGetDeviceGroupPeerMemoryFeatures(device->device, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+}
+
+static void WINAPI wine_vkGetDeviceGroupPeerMemoryFeaturesKHR(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures)
+{
+    TRACE("%p, %u, %u, %u, %p\n", device, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+    device->funcs.p_vkGetDeviceGroupPeerMemoryFeaturesKHR(device->device, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+}
+
+VkResult WINAPI wine_vkGetDeviceGroupPresentCapabilitiesKHR(VkDevice device, VkDeviceGroupPresentCapabilitiesKHR *pDeviceGroupPresentCapabilities)
+{
+    TRACE("%p, %p\n", device, pDeviceGroupPresentCapabilities);
+    return device->funcs.p_vkGetDeviceGroupPresentCapabilitiesKHR(device->device, pDeviceGroupPresentCapabilities);
+}
+
 VkResult WINAPI wine_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR *pModes)
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(surface), pModes);
@@ -2756,6 +2828,7 @@ VkResult WINAPI wine_vkWaitForFences(VkDevice device, uint32_t fenceCount, const
 
 static const struct vulkan_func vk_device_dispatch_table[] =
 {
+    {"vkAcquireNextImage2KHR", &wine_vkAcquireNextImage2KHR},
     {"vkAcquireNextImageKHR", &wine_vkAcquireNextImageKHR},
     {"vkAllocateCommandBuffers", &wine_vkAllocateCommandBuffers},
     {"vkAllocateDescriptorSets", &wine_vkAllocateDescriptorSets},
@@ -2783,6 +2856,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdCopyImageToBuffer", &wine_vkCmdCopyImageToBuffer},
     {"vkCmdCopyQueryPoolResults", &wine_vkCmdCopyQueryPoolResults},
     {"vkCmdDispatch", &wine_vkCmdDispatch},
+    {"vkCmdDispatchBase", &wine_vkCmdDispatchBase},
+    {"vkCmdDispatchBaseKHR", &wine_vkCmdDispatchBaseKHR},
     {"vkCmdDispatchIndirect", &wine_vkCmdDispatchIndirect},
     {"vkCmdDraw", &wine_vkCmdDraw},
     {"vkCmdDrawIndexed", &wine_vkCmdDrawIndexed},
@@ -2807,6 +2882,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetBlendConstants", &wine_vkCmdSetBlendConstants},
     {"vkCmdSetDepthBias", &wine_vkCmdSetDepthBias},
     {"vkCmdSetDepthBounds", &wine_vkCmdSetDepthBounds},
+    {"vkCmdSetDeviceMask", &wine_vkCmdSetDeviceMask},
+    {"vkCmdSetDeviceMaskKHR", &wine_vkCmdSetDeviceMaskKHR},
     {"vkCmdSetDiscardRectangleEXT", &wine_vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetEvent", &wine_vkCmdSetEvent},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
@@ -2882,6 +2959,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetBufferMemoryRequirements2KHR", &wine_vkGetBufferMemoryRequirements2KHR},
     {"vkGetDescriptorSetLayoutSupport", &wine_vkGetDescriptorSetLayoutSupport},
     {"vkGetDescriptorSetLayoutSupportKHR", &wine_vkGetDescriptorSetLayoutSupportKHR},
+    {"vkGetDeviceGroupPeerMemoryFeatures", &wine_vkGetDeviceGroupPeerMemoryFeatures},
+    {"vkGetDeviceGroupPeerMemoryFeaturesKHR", &wine_vkGetDeviceGroupPeerMemoryFeaturesKHR},
+    {"vkGetDeviceGroupPresentCapabilitiesKHR", &wine_vkGetDeviceGroupPresentCapabilitiesKHR},
     {"vkGetDeviceGroupSurfacePresentModesKHR", &wine_vkGetDeviceGroupSurfacePresentModesKHR},
     {"vkGetDeviceMemoryCommitment", &wine_vkGetDeviceMemoryCommitment},
     {"vkGetDeviceProcAddr", &wine_vkGetDeviceProcAddr},
@@ -3032,6 +3112,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_bind_memory2",
     "VK_KHR_dedicated_allocation",
     "VK_KHR_descriptor_update_template",
+    "VK_KHR_device_group",
     "VK_KHR_draw_indirect_count",
     "VK_KHR_get_memory_requirements2",
     "VK_KHR_image_format_list",
