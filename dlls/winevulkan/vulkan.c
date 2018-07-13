@@ -828,6 +828,19 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
+VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
+{
+    TRACE("%p, %p\n", count, properties);
+
+    if (!properties)
+    {
+        *count = 0;
+        return VK_SUCCESS;
+    }
+
+    return VK_ERROR_LAYER_NOT_PRESENT;
+}
+
 VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
 {
     VkResult res;
@@ -1096,6 +1109,7 @@ static const struct vulkan_func vk_global_dispatch_table[] =
 {
     {"vkCreateInstance", &wine_vkCreateInstance},
     {"vkEnumerateInstanceExtensionProperties", &wine_vkEnumerateInstanceExtensionProperties},
+    {"vkEnumerateInstanceLayerProperties", &wine_vkEnumerateInstanceLayerProperties},
     {"vkEnumerateInstanceVersion", &wine_vkEnumerateInstanceVersion},
     {"vkGetInstanceProcAddr", &wine_vkGetInstanceProcAddr},
 };

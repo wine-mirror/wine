@@ -2258,10 +2258,6 @@ class VkGenerator(object):
             if not func.is_core_func():
                 continue
 
-            # Not an ICD level function.
-            if func.name == "vkEnumerateInstanceLayerProperties":
-                continue
-
             # We support all Core functions except for VK_KHR_display* APIs.
             # Create stubs for unsupported Core functions.
             if func.is_required():
