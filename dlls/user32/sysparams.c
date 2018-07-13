@@ -3437,3 +3437,37 @@ BOOL WINAPI GetDisplayAutoRotationPreferences( ORIENTATION_PREFERENCE *orientati
     *orientation = ORIENTATION_PREFERENCE_NONE;
     return TRUE;
 }
+
+/* physical<->logical mapping functions from win8 that are nops in later versions */
+
+/***********************************************************************
+ *              GetPhysicalCursorPos   (USER32.@)
+ */
+BOOL WINAPI GetPhysicalCursorPos( POINT *point )
+{
+    return GetCursorPos( point );
+}
+
+/***********************************************************************
+ *              SetPhysicalCursorPos   (USER32.@)
+ */
+BOOL WINAPI SetPhysicalCursorPos( INT x, INT y )
+{
+    return SetCursorPos( x, y );
+}
+
+/***********************************************************************
+ *		LogicalToPhysicalPoint (USER32.@)
+ */
+BOOL WINAPI LogicalToPhysicalPoint( HWND hwnd, POINT *point )
+{
+    return TRUE;
+}
+
+/***********************************************************************
+ *		PhysicalToLogicalPoint (USER32.@)
+ */
+BOOL WINAPI PhysicalToLogicalPoint( HWND hwnd, POINT *point )
+{
+    return TRUE;
+}
