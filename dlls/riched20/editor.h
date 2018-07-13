@@ -61,8 +61,8 @@ void ME_SaveTempStyle(ME_TextEditor *editor, ME_Style *style) DECLSPEC_HIDDEN;
 void ME_ClearTempStyle(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048]) DECLSPEC_HIDDEN;
 void ME_DumpStyle(ME_Style *s) DECLSPEC_HIDDEN;
-CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from) DECLSPEC_HIDDEN;
-void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from) DECLSPEC_HIDDEN;
+BOOL cfany_to_cf2w(CHARFORMAT2W *to, const CHARFORMAT2W *from) DECLSPEC_HIDDEN;
+BOOL cf2w_to_cfany(CHARFORMAT2W *to, const CHARFORMAT2W *from) DECLSPEC_HIDDEN;
 void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc) DECLSPEC_HIDDEN; /* only works with 2W structs */
 void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt) DECLSPEC_HIDDEN; /* ditto */
 
