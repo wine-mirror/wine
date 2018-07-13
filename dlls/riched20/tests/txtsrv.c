@@ -600,6 +600,21 @@ static void setup_thiscall_wrappers(void)
 #endif /* __i386__ */
 }
 
+static void hf_to_cf(HFONT hf, CHARFORMAT2W *cf)
+{
+    LOGFONTW lf;
+
+    GetObjectW(hf, sizeof(lf), &lf);
+    lstrcpyW(cf->szFaceName, lf.lfFaceName);
+    cf->yHeight = MulDiv(abs(lf.lfHeight), 1440, GetDeviceCaps(GetDC(NULL), LOGPIXELSY));
+    if (lf.lfWeight > FW_NORMAL) cf->dwEffects |= CFE_BOLD;
+    if (lf.lfItalic) cf->dwEffects |= CFE_ITALIC;
+    if (lf.lfUnderline) cf->dwEffects |= CFE_UNDERLINE;
+    if (lf.lfStrikeOut) cf->dwEffects |= CFE_SUBSCRIPT;
+    cf->bPitchAndFamily = lf.lfPitchAndFamily;
+    cf->bCharSet = lf.lfCharSet;
+}
+
 /*************************************************************************/
 /* Conformance test functions. */
 
@@ -697,81 +712,68 @@ static void test_TxSetText(void)
     ITextHost_Release(host);
 }
 
+#define CHECK_TXGETNATURALSIZE(res,width,height,hdc,rect,string) \
+    _check_txgetnaturalsize(res, width, height, hdc, rect, string, __LINE__)
+static void _check_txgetnaturalsize(HRESULT res, LONG width, LONG height, HDC hdc, RECT rect, LPCWSTR string, int line)
+{
+    RECT expected_rect = rect;
+    LONG expected_width, expected_height;
+
+    DrawTextW(hdc, string, -1, &expected_rect, DT_LEFT | DT_CALCRECT | DT_NOCLIP | DT_EDITCONTROL | DT_WORDBREAK);
+    expected_width = expected_rect.right - expected_rect.left;
+    expected_height = expected_rect.bottom - expected_rect.top;
+    ok_(__FILE__,line)(res == S_OK, "ITextServices_TxGetNaturalSize failed: 0x%08x.\n", res);
+    ok_(__FILE__,line)(width >= expected_width && width <= expected_width + 1,
+                       "got wrong width: %d, expected: %d {+1}.\n", width, expected_width);
+    ok_(__FILE__,line)(height == expected_height, "got wrong height: %d, expected: %d.\n",
+                       height, expected_height);
+}
+
 static void test_TxGetNaturalSize(void)
 {
     ITextServices *txtserv;
     ITextHost *host;
     HRESULT result;
-    BOOL ret;
-
-    /* This value is used when calling TxGetNaturalSize.  MSDN says
-       that this is not supported however a null pointer cannot be
-       used as it will cause a segmentation violation.  The values in
-       the structure being pointed to are required to be INT_MAX
-       otherwise calculations can give wrong values. */
-    const SIZEL psizelExtent = {INT_MAX,INT_MAX};
-
-    static const WCHAR oneA[] = {'A',0};
-
-    /* Results of measurements */
-    LONG xdim, ydim;
-
-    /* The device context to do the tests in */
+    SIZEL extent;
+    static const WCHAR test_text[] = {'T','e','s','t','S','o','m','e','T','e','x','t',0};
+    LONG width, height;
     HDC hdcDraw;
-
-    /* Variables with the text metric information */
-    INT charwidth_caps_text[26];
-    TEXTMETRICA tmInfo_text;
+    HWND hwnd;
+    RECT rect;
+    CHARFORMAT2W cf;
+    LRESULT lresult;
+    HFONT hf;
 
     if (!init_texthost(&txtserv, &host))
         return;
 
-    hdcDraw = GetDC(NULL);
-    SaveDC(hdcDraw);
-
-    /* Populate the metric strucs */
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                           0, 0, 100, 100, 0, 0, 0, NULL);
+    hdcDraw = GetDC(hwnd);
     SetMapMode(hdcDraw,MM_TEXT);
-    GetTextMetricsA(hdcDraw, &tmInfo_text);
-    SetLastError(0xdeadbeef);
-    ret = GetCharWidth32A(hdcDraw,'A','Z',charwidth_caps_text);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
-        win_skip("GetCharWidth32 is not available\n");
-        goto cleanup;
-    }
+    GetClientRect(hwnd, &rect);
 
-    /* Make measurements in MM_TEXT */
-    SetMapMode(hdcDraw,MM_TEXT);
-    xdim = 0; ydim = 0;
+    memset(&cf, 0, sizeof(cf));
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_ALL2;
+    hf = GetStockObject(DEFAULT_GUI_FONT);
+    hf_to_cf(hf, &cf);
+    result = ITextServices_TxSendMessage(txtserv, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf, &lresult);
+    ok(result == S_OK, "ITextServices_TxSendMessage failed: 0x%08x.\n", result);
+    SelectObject(hdcDraw, hf);
 
-    result = ITextServices_TxSetText(txtserv, oneA);
-    ok(result == S_OK, "ITextServices_TxSetText failed (result = %x)\n", result);
-    if (result != S_OK) {
-        skip("Could not set text\n");
-        goto cleanup;
-    }
+    result = ITextServices_TxSetText(txtserv, test_text);
+    ok(result == S_OK, "ITextServices_TxSetText failed: 0x%08x.\n", result);
 
-    SetLastError(0xdeadbeef);
-    result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT,
-                                            hdcDraw, NULL, NULL,
-                                            TXTNS_FITTOCONTENT, &psizelExtent,
-                                            &xdim, &ydim);
-    todo_wine ok(result == S_OK || broken(result == E_FAIL), /* WINXP Arabic Language */
-        "TxGetNaturalSize gave unexpected return value (result = %x)\n", result);
-    if (result == S_OK) {
-    todo_wine ok(ydim == tmInfo_text.tmHeight,
-                 "Height calculated incorrectly (expected %d, got %d)\n",
-                 tmInfo_text.tmHeight, ydim);
-    /* The native DLL adds one pixel extra when calculating widths. */
-    todo_wine ok(xdim >= charwidth_caps_text[0] && xdim <= charwidth_caps_text[0] + 1,
-                 "Width calculated incorrectly (expected %d {+1}, got %d)\n",
-                 charwidth_caps_text[0], xdim);
-    } else
-        skip("TxGetNaturalSize measurements not performed (xdim = %d, ydim = %d, result = %x, error = %x)\n",
-             xdim, ydim, result, GetLastError());
+    extent.cx = -1; extent.cy = -1;
+    width = rect.right - rect.left;
+    height = 0;
+    result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT, hdcDraw, NULL, NULL,
+                                            TXTNS_FITTOCONTENT, &extent, &width, &height);
+    todo_wine CHECK_TXGETNATURALSIZE(result, width, height, hdcDraw, rect, test_text);
 
-cleanup:
-    RestoreDC(hdcDraw,1);
-    ReleaseDC(NULL,hdcDraw);
+    ReleaseDC(hwnd, hdcDraw);
+    DestroyWindow(hwnd);
     ITextServices_Release(txtserv);
     ITextHost_Release(host);
 }
