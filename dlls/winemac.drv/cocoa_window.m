@@ -18,8 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #import <Carbon/Carbon.h>
 #import <CoreVideo/CoreVideo.h>
+#ifdef HAVE_METAL_METAL_H
+#import <Metal/Metal.h>
+#import <QuartzCore/QuartzCore.h>
+#endif
 
 #import "cocoa_window.h"
 
@@ -303,6 +309,18 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @end
 
 
+#ifdef HAVE_METAL_METAL_H
+@interface WineMetalView : WineBaseView
+{
+    id<MTLDevice> _device;
+}
+
+    - (id) initWithFrame:(NSRect)frame device:(id<MTLDevice>)device;
+
+@end
+#endif
+
+
 @interface WineContentView : WineBaseView <NSTextInputClient>
 {
     NSMutableArray* glContexts;
@@ -316,6 +334,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     NSRange markedTextSelection;
 
     int backingSize[2];
+
+#ifdef HAVE_METAL_METAL_H
+    WineMetalView *_metalView;
+#endif
 }
 
 @property (readonly, nonatomic) BOOL everHadGLContext;
@@ -326,6 +348,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void) wine_getBackingSize:(int*)outBackingSize;
     - (void) wine_setBackingSize:(const int*)newBackingSize;
+
+#ifdef HAVE_METAL_METAL_H
+    - (WineMetalView*) newMetalViewWithDevice:(id<MTLDevice>)device;
+#endif
 
 @end
 
@@ -628,6 +654,23 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
     }
 
+#ifdef HAVE_METAL_METAL_H
+    - (WineMetalView*) newMetalViewWithDevice:(id<MTLDevice>)device
+    {
+        if (_metalView) return _metalView;
+
+        WineMetalView* view = [[WineMetalView alloc] initWithFrame:[self bounds] device:device];
+        [view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [self setAutoresizesSubviews:YES];
+        [self addSubview:view positioned:NSWindowBelow relativeTo:nil];
+        _metalView = view;
+
+        [(WineWindow*)self.window windowDidDrawContent];
+
+        return _metalView;
+    }
+#endif
+
     - (void) setRetinaMode:(int)mode
     {
         double scale = mode ? 0.5 : 2.0;
@@ -693,6 +736,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             if (!view->_cachedHasGLDescendantValid || view->_cachedHasGLDescendant)
                 [self invalidateHasGLDescendant];
         }
+#ifdef HAVE_METAL_METAL_H
+        if (subview == _metalView)
+            _metalView = nil;
+#endif
         [super willRemoveSubview:subview];
     }
 
@@ -831,6 +878,53 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     }
 
 @end
+
+
+#ifdef HAVE_METAL_METAL_H
+@implementation WineMetalView
+
+    - (id) initWithFrame:(NSRect)frame device:(id<MTLDevice>)device
+    {
+        self = [super initWithFrame:frame];
+        if (self)
+        {
+            _device = [device retain];
+            self.wantsLayer = YES;
+            self.layerContentsRedrawPolicy = NSViewLayerContentsRedrawNever;
+        }
+        return self;
+    }
+
+    - (void) dealloc
+    {
+        [_device release];
+        [super dealloc];
+    }
+
+    - (void) setRetinaMode:(int)mode
+    {
+        self.layer.contentsScale = mode ? 2.0 : 1.0;
+        [super setRetinaMode:mode];
+    }
+
+    - (CALayer*) makeBackingLayer
+    {
+        CAMetalLayer *layer = [CAMetalLayer layer];
+        layer.device = _device;
+        layer.framebufferOnly = YES;
+        layer.magnificationFilter = kCAFilterNearest;
+        layer.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
+        layer.contentsScale = retina_on ? 2.0 : 1.0;
+        return layer;
+    }
+
+    - (BOOL) isOpaque
+    {
+        return YES;
+    }
+
+@end
+#endif
 
 
 @implementation WineWindow
@@ -3492,6 +3586,7 @@ macdrv_view macdrv_create_view(CGRect rect)
 
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
         [view setAutoresizesSubviews:NO];
+        [view setAutoresizingMask:NSViewNotSizable];
         [view setHidden:YES];
         [nc addObserver:view
                selector:@selector(updateGLContexts)
@@ -3678,6 +3773,52 @@ void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
 
     [pool release];
 }
+
+#ifdef HAVE_METAL_METAL_H
+macdrv_metal_device macdrv_create_metal_device(void)
+{
+    macdrv_metal_device ret;
+
+#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_11
+    if (MTLCreateSystemDefaultDevice == NULL)
+        return NULL;
+#endif
+
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    ret = (macdrv_metal_device)MTLCreateSystemDefaultDevice();
+    [pool release];
+    return ret;
+}
+
+void macdrv_release_metal_device(macdrv_metal_device d)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    [(id<MTLDevice>)d release];
+    [pool release];
+}
+
+macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d)
+{
+    id<MTLDevice> device = (id<MTLDevice>)d;
+    WineContentView* view = (WineContentView*)v;
+    __block WineMetalView *metalView;
+
+    OnMainThread(^{
+        metalView = [view newMetalViewWithDevice:device];
+    });
+
+    return (macdrv_metal_view)metalView;
+}
+
+void macdrv_view_release_metal_view(macdrv_metal_view v)
+{
+    WineMetalView* view = (WineMetalView*)v;
+    OnMainThread(^{
+        [view removeFromSuperview];
+        [view release];
+    });
+}
+#endif
 
 int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
 {
