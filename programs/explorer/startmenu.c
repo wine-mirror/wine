@@ -475,7 +475,7 @@ void do_startmenu(HWND hwnd)
     if (SUCCEEDED(SHGetSpecialFolderLocation(NULL, CSIDL_CONTROLS, &pidl)))
         add_shell_item(&root_menu, pidl);
 
-    LoadStringW(NULL, IDS_RUN, run_label, sizeof(run_label)/sizeof(run_label[0]));
+    LoadStringW(NULL, IDS_RUN, run_label, ARRAY_SIZE(run_label));
 
     mii.cbSize = sizeof(mii);
     mii.fMask = MIIM_STRING|MIIM_ID;
