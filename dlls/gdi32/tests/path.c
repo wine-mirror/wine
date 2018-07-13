@@ -1894,6 +1894,31 @@ static void test_all_functions(void)
     ReleaseDC( 0, hdc );
 }
 
+static void test_clipped_polygon_fill(void)
+{
+    const POINT pts[3] = {{-10, -10}, {10, -5}, {0, 10}};
+    HBRUSH brush, oldbrush;
+    HBITMAP bmp, oldbmp;
+    HDC hdc, memdc;
+    COLORREF col;
+
+    hdc = GetDC( 0 );
+    memdc = CreateCompatibleDC( hdc );
+    bmp = CreateCompatibleBitmap( hdc, 20, 20 );
+    brush = CreateSolidBrush( RGB( 0x11, 0x22, 0x33 ) );
+    oldbrush = SelectObject( memdc, brush );
+    oldbmp = SelectObject( memdc, bmp );
+    Polygon( memdc, pts, ARRAY_SIZE(pts) );
+    col = GetPixel( memdc, 1, 1 );
+    todo_wine ok( col == RGB( 0x11, 0x22, 0x33 ), "got %06x\n", col );
+    SelectObject( memdc, oldbrush );
+    SelectObject( memdc, oldbmp );
+    DeleteObject( brush );
+    DeleteObject( bmp );
+    DeleteDC( memdc );
+    ReleaseDC( 0, hdc );
+}
+
 START_TEST(path)
 {
     test_path_state();
@@ -1906,5 +1931,6 @@ START_TEST(path)
     test_rectangle();
     test_roundrect();
     test_ellipse();
+    test_clipped_polygon_fill();
     test_all_functions();
 }
