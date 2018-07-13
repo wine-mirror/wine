@@ -146,9 +146,9 @@
 @ stdcall vkEndCommandBuffer(ptr) winevulkan.wine_vkEndCommandBuffer
 @ stdcall vkEnumerateDeviceExtensionProperties(ptr str ptr ptr) winevulkan.wine_vkEnumerateDeviceExtensionProperties
 @ stdcall vkEnumerateDeviceLayerProperties(ptr ptr ptr) winevulkan.wine_vkEnumerateDeviceLayerProperties
-@ stdcall vkEnumerateInstanceExtensionProperties(str ptr ptr)
-@ stdcall vkEnumerateInstanceLayerProperties(ptr ptr)
-@ stdcall vkEnumerateInstanceVersion(ptr)
+@ stdcall vkEnumerateInstanceExtensionProperties(str ptr ptr) winevulkan.wine_vkEnumerateInstanceExtensionProperties
+@ stdcall vkEnumerateInstanceLayerProperties(ptr ptr) winevulkan.wine_vkEnumerateInstanceLayerProperties
+@ stdcall vkEnumerateInstanceVersion(ptr) winevulkan.wine_vkEnumerateInstanceVersion
 @ stdcall vkEnumeratePhysicalDeviceGroups(ptr ptr ptr) winevulkan.wine_vkEnumeratePhysicalDeviceGroups
 @ stdcall vkEnumeratePhysicalDevices(ptr ptr ptr) winevulkan.wine_vkEnumeratePhysicalDevices
 @ stdcall vkFlushMappedMemoryRanges(ptr long ptr) winevulkan.wine_vkFlushMappedMemoryRanges
@@ -175,7 +175,7 @@
 @ stdcall vkGetImageSparseMemoryRequirements(ptr int64 ptr ptr) winevulkan.wine_vkGetImageSparseMemoryRequirements
 @ stdcall vkGetImageSparseMemoryRequirements2(ptr ptr ptr ptr) winevulkan.wine_vkGetImageSparseMemoryRequirements2
 @ stdcall vkGetImageSubresourceLayout(ptr int64 ptr ptr) winevulkan.wine_vkGetImageSubresourceLayout
-@ stdcall vkGetInstanceProcAddr(ptr str)
+@ stdcall vkGetInstanceProcAddr(ptr str) winevulkan.wine_vkGetInstanceProcAddr
 @ stub vkGetPhysicalDeviceDisplayPlanePropertiesKHR
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
 @ stub vkGetPhysicalDeviceExternalBufferProperties
