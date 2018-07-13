@@ -299,7 +299,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @end
 
 
-@interface WineContentView : NSView <NSTextInputClient>
+@interface WineBaseView : NSView
+@end
+
+
+@interface WineContentView : WineBaseView <NSTextInputClient>
 {
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
@@ -362,6 +366,52 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) becameIneligibleChild;
 
     - (void) windowDidDrawContent;
+
+@end
+
+
+@implementation WineBaseView
+
+    - (void) setRetinaMode:(int)mode
+    {
+        for (WineBaseView* subview in [self subviews])
+        {
+            if ([subview isKindOfClass:[WineBaseView class]])
+                [subview setRetinaMode:mode];
+        }
+    }
+
+    - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
+    {
+        return YES;
+    }
+
+    - (BOOL) preservesContentDuringLiveResize
+    {
+        // Returning YES from this tells Cocoa to keep our view's content during
+        // a Cocoa-driven resize.  In theory, we're also supposed to override
+        // -setFrameSize: to mark exposed sections as needing redisplay, but
+        // user32 will take care of that in a roundabout way.  This way, we don't
+        // redraw until the window surface is flushed.
+        //
+        // This doesn't do anything when we resize the window ourselves.
+        return YES;
+    }
+
+    - (BOOL)acceptsFirstResponder
+    {
+        return [[self window] contentView] == self;
+    }
+
+    - (BOOL) mouseDownCanMoveWindow
+    {
+        return NO;
+    }
+
+    - (NSFocusRingType) focusRingType
+    {
+        return NSFocusRingTypeNone;
+    }
 
 @end
 
@@ -537,7 +587,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             return YES;
         for (WineContentView* view in [self subviews])
         {
-            if ([view hasGLDescendant])
+            if ([view isKindOfClass:[WineContentView class]] && [view hasGLDescendant])
                 return YES;
         }
         return NO;
@@ -589,38 +639,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self setFrame:frame];
         [self updateGLContexts];
 
-        for (WineContentView* subview in [self subviews])
-        {
-            if ([subview isKindOfClass:[WineContentView class]])
-                [subview setRetinaMode:mode];
-        }
-    }
-
-    - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
-    {
-        return YES;
-    }
-
-    - (BOOL) preservesContentDuringLiveResize
-    {
-        // Returning YES from this tells Cocoa to keep our view's content during
-        // a Cocoa-driven resize.  In theory, we're also supposed to override
-        // -setFrameSize: to mark exposed sections as needing redisplay, but
-        // user32 will take care of that in a roundabout way.  This way, we don't
-        // redraw until the window surface is flushed.
-        //
-        // This doesn't do anything when we resize the window ourselves.
-        return YES;
-    }
-
-    - (BOOL)acceptsFirstResponder
-    {
-        return [[self window] contentView] == self;
-    }
-
-    - (BOOL) mouseDownCanMoveWindow
-    {
-        return NO;
+        [super setRetinaMode:mode];
     }
 
     - (void) viewDidHide
@@ -653,11 +672,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [markedText deleteCharactersInRange:NSMakeRange(0, [markedText length])];
         markedTextSelection = NSMakeRange(0, 0);
         [[self inputContext] discardMarkedText];
-    }
-
-    - (NSFocusRingType) focusRingType
-    {
-        return NSFocusRingTypeNone;
     }
 
     - (void) didAddSubview:(NSView*)subview
@@ -2537,9 +2551,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (shape)
             [shape transformUsingAffineTransform:transform];
 
-        for (WineContentView* subview in [self.contentView subviews])
+        for (WineBaseView* subview in [self.contentView subviews])
         {
-            if ([subview isKindOfClass:[WineContentView class]])
+            if ([subview isKindOfClass:[WineBaseView class]])
                 [subview setRetinaMode:mode];
         }
 
