@@ -2457,8 +2457,8 @@ static unsigned int REGION_CreateEdgeTable(const INT *Count, INT nbpolygons,
 
             REGION_InsertEdgeInET(ET, pETEs, top->y, &pSLLBlock, &iSLLBlock);
 
-            if (PrevPt->y > ET->ymax) ET->ymax = PrevPt->y;
-            if (PrevPt->y < ET->ymin) ET->ymin = PrevPt->y;
+            if (top->y    < ET->ymin) ET->ymin = top->y;
+            if (bottom->y > ET->ymax) ET->ymax = bottom->y;
             pETEs++;
 	}
     }

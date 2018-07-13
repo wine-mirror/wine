@@ -1910,7 +1910,7 @@ static void test_clipped_polygon_fill(void)
     oldbmp = SelectObject( memdc, bmp );
     Polygon( memdc, pts, ARRAY_SIZE(pts) );
     col = GetPixel( memdc, 1, 1 );
-    todo_wine ok( col == RGB( 0x11, 0x22, 0x33 ), "got %06x\n", col );
+    ok( col == RGB( 0x11, 0x22, 0x33 ), "got %06x\n", col );
     SelectObject( memdc, oldbrush );
     SelectObject( memdc, oldbmp );
     DeleteObject( brush );
