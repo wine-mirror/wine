@@ -130,12 +130,12 @@ typedef GUID FMTID,*LPFMTID;
 #define REFCLSID            const CLSID &
 #define REFIID              const IID &
 #define REFFMTID            const FMTID &
-#else /* !defined(__cplusplus) && !defined(CINTERFACE) */
+#else /* !defined(__cplusplus) */
 #define REFGUID             const GUID* __MIDL_CONST
 #define REFCLSID            const CLSID* __MIDL_CONST
 #define REFIID              const IID* __MIDL_CONST
 #define REFFMTID            const FMTID* __MIDL_CONST
-#endif /* !defined(__cplusplus) && !defined(CINTERFACE) */
+#endif /* !defined(__cplusplus) */
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(&(rguid1), &(rguid2), sizeof(GUID)))
