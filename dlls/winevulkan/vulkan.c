@@ -766,17 +766,16 @@ VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_
 VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
-    VkResult res;
-    uint32_t num_properties = 0, num_host_properties = 0;
-    VkExtensionProperties *host_properties = NULL;
+    uint32_t num_properties = 0, num_host_properties;
+    VkExtensionProperties *host_properties;
     unsigned int i, j;
+    VkResult res;
 
-    TRACE("%p %p %p\n", layer_name, count, properties);
+    TRACE("%p, %p, %p\n", layer_name, count, properties);
 
-    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
     if (layer_name)
     {
-        ERR("Layer enumeration not supported from ICD.\n");
+        WARN("Layer enumeration not supported from ICD.\n");
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
@@ -784,14 +783,13 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     if (res != VK_SUCCESS)
         return res;
 
-    host_properties = heap_calloc(num_host_properties, sizeof(*host_properties));
-    if (!host_properties)
+    if (!(host_properties = heap_calloc(num_host_properties, sizeof(*host_properties))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, host_properties);
     if (res != VK_SUCCESS)
     {
-        ERR("Failed to retrieve host properties, res=%d\n", res);
+        ERR("Failed to retrieve host properties, res=%d.\n", res);
         heap_free(host_properties);
         return res;
     }
@@ -810,7 +808,7 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
 
     if (!properties)
     {
-        TRACE("Returning %u extensions\n", num_properties);
+        TRACE("Returning %u extensions.\n", num_properties);
         *count = num_properties;
         heap_free(host_properties);
         return VK_SUCCESS;
@@ -820,9 +818,8 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     {
         if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
         {
-            TRACE("Enabling extension '%s'\n", host_properties[i].extensionName);
-            properties[j] = host_properties[i];
-            j++;
+            TRACE("Enabling extension '%s'.\n", host_properties[i].extensionName);
+            properties[j++] = host_properties[i];
         }
     }
     *count = min(*count, num_properties);
