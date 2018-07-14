@@ -385,7 +385,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @property (readonly, copy, nonatomic) NSArray* childWineWindows;
 
-    - (void) updateColorSpace;
     - (void) updateForGLSubviews;
 
     - (BOOL) becameEligibleParentOrChild;
@@ -968,7 +967,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [window setShowsResizeIndicator:NO];
         [window setHasShadow:wf->shadow];
         [window setAcceptsMouseMovedEvents:YES];
-        [window setColorSpace:[NSColorSpace genericRGBColorSpace]];
         [window setDelegate:window];
         [window setBackgroundColor:[NSColor clearColor]];
         [window setOpaque:NO];
@@ -1927,9 +1925,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 if (needEnableScreenUpdates)
                     NSEnableScreenUpdates();
 
-                if (!equalSizes)
-                    [self updateColorSpace];
-
                 if (!enteringFullScreen &&
                     [[NSProcessInfo processInfo] systemUptime] - enteredFullScreenTime > 1.0)
                     nonFullscreenFrame = frame;
@@ -2601,35 +2596,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return [childWindows objectsAtIndexes:indexes];
     }
 
-    // We normally use the generic/calibrated RGB color space for the window,
-    // rather than the device color space, to avoid expensive color conversion
-    // which slows down drawing.  However, for windows displaying OpenGL, having
-    // a different color space than the screen greatly reduces frame rates, often
-    // limiting it to the display refresh rate.
-    //
-    // To avoid this, we switch back to the screen color space whenever the
-    // window is covered by a view with an attached OpenGL context.
-    - (void) updateColorSpace
-    {
-        NSRect contentRect = [[self contentView] frame];
-        BOOL coveredByGLView = FALSE;
-        WineContentView* view = (WineContentView*)[[self contentView] hitTest:NSMakePoint(NSMidX(contentRect), NSMidY(contentRect))];
-        if ([view isKindOfClass:[WineContentView class]] && view.everHadGLContext)
-        {
-            NSRect frame = [view convertRect:[view bounds] toView:nil];
-            if (NSContainsRect(frame, contentRect))
-                coveredByGLView = TRUE;
-        }
-
-        if (coveredByGLView)
-            [self setColorSpace:nil];
-        else
-            [self setColorSpace:[NSColorSpace genericRGBColorSpace]];
-    }
-
     - (void) updateForGLSubviews
     {
-        [self updateColorSpace];
         if (gl_surface_mode == GL_SURFACE_BEHIND)
             [self checkTransparency];
     }
