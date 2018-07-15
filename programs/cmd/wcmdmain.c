@@ -38,7 +38,7 @@ extern struct env_stack *pushd_directories;
 
 BATCH_CONTEXT *context = NULL;
 DWORD errorlevel;
-WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
+WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
 FOR_CONTEXT forloopcontext; /* The 'for' loop context */
 BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
