@@ -418,6 +418,7 @@ if 1==1 (echo n1) else echo n2|echo n3
 if 1==1 (echo o1) else echo o2&&echo o3
 if 1==1 (echo p1) else echo p2||echo p3
 if 1==1 (echo q1) else echo q2&echo q3
+echo ---
 echo --- chain else (if false)
 if 1==0 echo a1 else echo a2
 if 1==0 echo b1|echo b2 else echo b3
@@ -1370,6 +1371,39 @@ rem Test zero iteration skips the body of the for
 for /L %%i in (2,2,1) do (
   echo %%i
   echo FAILED
+)
+echo --- ifs inside for loops
+for %%i in (test) do (
+    echo a1
+    if 1==1 (
+        echo b1
+    ) else (
+        echo c1
+    )
+    echo d1
+)
+for %%i in (test) do (
+    echo a2
+    if 1==1 (
+        echo b2
+    ) else echo c2
+    echo d2
+)
+for %%i in (test) do (
+    echo a3
+    if 1==0 (
+        echo b3
+    ) else echo c3
+    echo d3
+)
+for %%i in (test) do (
+    echo a4
+    if 1==0 (
+        echo b4
+    ) else (
+        echo c4
+    )
+    echo d4
 )
 echo --- set /a
 goto :testseta

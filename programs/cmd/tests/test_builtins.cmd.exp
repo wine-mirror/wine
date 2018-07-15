@@ -428,6 +428,7 @@ n1
 o1
 p1
 q1
+@todo_wine@---
 --- chain else (if false)
 @todo_wine@j3
 ---
@@ -982,6 +983,19 @@ ErrorLevel 0
 -1
 1
 3
+--- ifs inside for loops
+a1
+b1
+d1
+a2
+b2
+d2
+a3
+c3
+d3
+a4
+c4
+d4
 --- set /a
 ------ individual operations
 WINE_foo correctly 3

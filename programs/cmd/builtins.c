@@ -1571,10 +1571,12 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
       /* execute all appropriate commands */
       curPosition = *cmdList;
 
-      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d)\n",
+      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d) processThese(%d)\n",
                  *cmdList,
                  (*cmdList)->prevDelim,
-                 (*cmdList)->bracketDepth, myDepth);
+                 (*cmdList)->bracketDepth,
+                 myDepth,
+                 processThese);
 
       /* Execute any statements appended to the line */
       /* FIXME: Only if previous call worked for && or failed for || */
@@ -1613,6 +1615,18 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
             if (*cmd) {
               WCMD_execute (cmd, (*cmdList)->redirects, cmdList, FALSE);
             }
+          } else {
+              /* Loop skipping all commands until we get back to the current
+                 depth, including skipping commands and their subsequent
+                 pipes (eg cmd | prog)                                       */
+              do {
+                *cmdList = (*cmdList)->nextcommand;
+              } while (*cmdList &&
+                      ((*cmdList)->bracketDepth > myDepth ||
+                      (*cmdList)->prevDelim));
+
+              /* After the else is complete, we need to now process subsequent commands */
+              processThese = TRUE;
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
         } else if (!processThese) {
