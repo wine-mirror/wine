@@ -384,7 +384,7 @@ CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_dat
 
         visrect = CGRectOffset(*rect, -surface->header.rect.left, -surface->header.rect.top);
 
-        colorspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+        colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
         bytes_per_row = get_dib_stride(width, 32);
         offset = CGRectGetMinX(visrect) * 4 + (height - CGRectGetMaxY(visrect)) * bytes_per_row;
         size = min(CGRectGetHeight(visrect) * bytes_per_row,

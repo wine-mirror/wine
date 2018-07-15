@@ -357,7 +357,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     for (i = 0; i < count; i++)
         data_bits[i] ^= xor_bits[i];
 
-    colorspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericGray);
+    colorspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericGrayGamma2_2);
     if (!colorspace)
     {
         WARN("failed to create colorspace\n");
