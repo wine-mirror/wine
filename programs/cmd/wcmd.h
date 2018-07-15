@@ -204,7 +204,7 @@ typedef struct _FOR_CONTEXT {
  * (uppercased and concatenated) and parameters entered, with environment
  * variables and batch parameters substitution already done.
  */
-extern WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
+extern WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 extern DWORD errorlevel;
 extern BATCH_CONTEXT *context;
 extern FOR_CONTEXT forloopcontext;
