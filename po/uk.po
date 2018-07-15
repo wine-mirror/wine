@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-04-12 17:02+0300\n"
+"PO-Revision-Date: 2018-07-15 16:35+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -3432,46 +3432,36 @@ msgid "Publishers..."
 msgstr "Видавці..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Підключення по локальній мережі"
+msgstr "Підключення"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Параметри Wine"
+msgstr "Автоматичне налаштування"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Використовувати автоматичне виявлення веб-проксі (WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Використовувати автоматичне налаштування проксі (PAC)"
 
 #: inetcpl.rc:128 inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Адреса"
+msgstr "Адреса:"
 
 #: inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Локальний сервер"
+msgstr "Проксі-сервер"
 
 #: inetcpl.rc:131
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Використовувати проксі-сервер"
 
 #: inetcpl.rc:134
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Нема портів"
+msgstr "Порт:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -3742,18 +3732,19 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"Властивість 'writable' не може бути встановлена на 'true' для цього об'єкта"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "Неможливо перевизначити властивість, яка не підлягає налаштуванню '|'"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "Неможливо змінити властивість, яка не підлягає запису '|'"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "Властивість не може одночасно мати доступ і значення"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -8635,10 +8626,8 @@ msgid "&Browse..."
 msgstr "&Огляд..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Тип файлу"
+msgstr "Тип файлу:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8649,14 +8638,10 @@ msgid "Size:"
 msgstr "Розмір:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Дата створення"
+msgstr "Дата створення:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
 msgstr "&Властивості:"
 
@@ -8669,28 +8654,20 @@ msgid "&Archive"
 msgstr "&Архівний"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Відкрити:"
+msgstr "Відкрити за допомогою:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "З&мінити значок..."
+msgstr "З&мінити..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Змінено"
+msgstr "Остання зміна:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Останні зміни:"
+msgstr "Останній доступ:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -12945,10 +12922,8 @@ msgid "Confirm Value Delete"
 msgstr "Підтвердження видалення значення"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Ви впевнені, що хочете видалити значення реєстру '%1'?"
+msgstr "Ви впевнені, що хочете видалити вибране значення реєстру?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -14918,6 +14893,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Програма зазнала збій, але WineDbg не вдалося приєднатись до процесу, щоб "
+"отримати більш детальну інформацію."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
@@ -15782,41 +15759,6 @@ msgid "D"
 msgstr "Д"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -15882,6 +15824,7 @@ msgstr ""
 "[/A]  Копіює лише файли з властивістю АРХІВНИЙ.\n"
 "[/M]  Копіює лише файли з властивістю АРХІВНИЙ, видаляє\n"
 "\tвластивість АРХІВНИЙ.\n"
+"[/K]  Копіює властивості файлу, без цього властивості не зберігаються.\n"
 "[/D | /D:m-d-y] Копіює лише нові файли або ті, які були змінені після "
 "вказаної дати.\n"
 "\tЯкщо дата не вказана, копіює лише ті файли, які новіші в початковій теці.\n"
