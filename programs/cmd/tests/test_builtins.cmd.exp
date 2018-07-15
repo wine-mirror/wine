@@ -1234,9 +1234,14 @@ h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o@or_broken@h=%h i=a j=b k=c l=d e f g m
 h=%h i=a j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=a j=c k= l= m= n=%n o=%o
 h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
 h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
+1:3.14,%B
+2:3.14,
 ------ parameter splitting
 :forFParameterSplittingFunc myparam1=myvalue1 myparam2=myparam2 mytest@space@@space@@space@
 :forFParameterSplittingFunc myparam1=myvalue1 myparam2=myparam2 mytest@space@@space@@space@
+4:3.14,%B
+5:3,14
+6:14,
 ------------ Testing del ------------
 deleting 'file'
 errorlevel is 0, good

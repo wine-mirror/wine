@@ -1831,6 +1831,14 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
     int nextnumber1, nextnumber2 = -1;
     WCHAR *nextchar;
 
+    /* It is valid syntax tokens=* which just means get whole line */
+    if (*pos == '*') {
+      if (doall) *doall = TRUE;
+      if (totalfound) (*totalfound)++;
+      nexttoken = 0;
+      break;
+    }
+
     /* Get the next number */
     nextnumber1 = strtoulW(pos, &nextchar, 10);
 
@@ -1959,22 +1967,22 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
    */
   lasttoken = -1;
   nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
-                                 NULL, &thisduplicate);
+                                 &starfound, &thisduplicate);
   varidx = FOR_VAR_IDX(variable);
 
   /* Empty out variables */
   for (varoffset=0;
-       varidx >= 0 && varoffset<totalfound && ((varidx+varoffset)%26);
+       varidx >= 0 && varoffset<totalfound && (((varidx%26) + varoffset) < 26);
        varoffset++) {
     forloopcontext.variable[varidx + varoffset] = (WCHAR *)nullW;
-    /* Stop if we walk beyond z or Z */
-    if (((varidx+varoffset) % 26) == 0) break;
   }
 
-  /* Loop extracting the tokens */
+  /* Loop extracting the tokens
+     Note: nexttoken of 0 means there were no tokens requested, to handle
+           the special case of tokens=*                                   */
   varoffset = 0;
   WINE_TRACE("Parsing buffer into tokens: '%s'\n", wine_dbgstr_w(buffer));
-  while (varidx >= 0 && (nexttoken > lasttoken)) {
+  while (varidx >= 0 && (nexttoken > 0 && (nexttoken > lasttoken))) {
     anyduplicates |= thisduplicate;
 
     /* Extract the token number requested and set into the next variable context */
@@ -1982,9 +1990,9 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
     WINE_TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
                varidx + varoffset, wine_dbgstr_w(parm));
     if (varidx >=0) {
-      forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
+      if (parm) forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
       varoffset++;
-      if (((varidx + varoffset) %26) == 0) break;
+      if (((varidx%26)+varoffset) >= 26) break;
     }
 
     /* Find the next token */
@@ -1995,12 +2003,12 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
 
   /* If all the rest of the tokens were requested, and there is still space in
      the variable range, write them now                                        */
-  if (!anyduplicates && starfound && varidx >= 0 && ((varidx+varoffset) % 26)) {
+  if (!anyduplicates && starfound && varidx >= 0 && (((varidx%26) + varoffset) < 26)) {
     nexttoken++;
     WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
     WINE_TRACE("Parsed allremaining tokens (%d) as parameter %s\n",
                varidx + varoffset, wine_dbgstr_w(parm));
-    forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
+    if (parm) forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
   }
 
   /* Execute the body of the foor loop with these values */

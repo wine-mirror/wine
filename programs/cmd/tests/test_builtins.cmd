@@ -1744,6 +1744,12 @@ for /f "tokens=1,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k 
 for /f "tokens=1,1,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 for /f "tokens=2,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 for /f "tokens=3,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem Special case tokens=*
+echo 3.14>testfile
+FOR /F "tokens=*"  %%A IN (testfile) DO @echo 1:%%A,%%B
+FOR /F "tokens=1*" %%A IN (testfile) DO @echo 2:%%A,%%B
+FOR /F "tokens=2*" %%A IN (testfile) DO @echo 3:%%A,%%B
+del testfile
 cd ..
 rd /s/q foobar
 echo ------ parameter splitting
@@ -1756,6 +1762,12 @@ goto :forFParameterSplittingEnd
 echo %~0 %~1 %~2 %~3 %~4 %~5
 goto :eof
 :forFParameterSplittingEnd
+echo 3.14>testfile
+FOR /F "delims=. tokens=*"  %%A IN (testfile) DO @echo 4:%%A,%%B
+FOR /F "delims=. tokens=1*" %%A IN (testfile) DO @echo 5:%%A,%%B
+FOR /F "delims=. tokens=2*" %%A IN (testfile) DO @echo 6:%%A,%%B
+FOR /F "delims=. tokens=3*" %%A IN (testfile) DO @echo 7:%%A,%%B
+del testfile
 
 echo ------------ Testing del ------------
 echo abc > file
