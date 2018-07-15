@@ -627,7 +627,7 @@ static IStream *gen_riff_stream(const FOURCC *ids)
                 ck->size = 5;
                 p += CHUNK_HDR_SIZE;
                 strcpy(p, "INAM");
-                p += ck->size;
+                p += ck->size + 1; /* WORD aligned */
                 break;
             default:
             {
@@ -700,7 +700,7 @@ static void test_parsedescriptor(void)
     stream = gen_riff_stream(empty);
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    todo_wine ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
+    ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
             desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicCollection),
@@ -708,19 +708,25 @@ static void test_parsedescriptor(void)
             wine_dbgstr_guid(&desc.guidClass));
     IStream_Release(stream);
 
+    /* NULL pointers */
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, &desc);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, NULL);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+
     /* Wrong form */
     empty[1] = DMUS_FOURCC_CONTAINER_FORM;
     stream = gen_riff_stream(empty);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    todo_wine ok(hr == DMUS_E_NOTADLSCOL,
-            "ParseDescriptor failed: %08x, expected DMUS_E_NOTADLSCOL\n", hr);
+    ok(hr == DMUS_E_NOTADLSCOL, "ParseDescriptor failed: %08x, expected DMUS_E_NOTADLSCOL\n", hr);
 
     /* All desc chunks */
     stream = gen_riff_stream(alldesc);
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    todo_wine ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_VERSION),
+    ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_VERSION),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_VERSION\n", desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicCollection),
             "Got class guid %s, expected CLSID_DirectMusicCollection\n",
@@ -759,7 +765,7 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    todo_wine ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION),
+    ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION\n",
             desc.dwValidData);
     ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
