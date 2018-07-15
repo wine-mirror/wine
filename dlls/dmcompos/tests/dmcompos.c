@@ -530,11 +530,18 @@ static void test_parsedescriptor(void)
             wine_dbgstr_guid(&desc.guidClass));
     IStream_Release(stream);
 
+    /* NULL pointers */
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirectMusicObject_ParseDescriptor(dmo, NULL, &desc);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+    hr = IDirectMusicObject_ParseDescriptor(dmo, stream, NULL);
+    ok(hr == E_POINTER, "ParseDescriptor failed: %08x, expected E_POINTER\n", hr);
+
     /* Wrong form */
     empty[1] = DMUS_FOURCC_CONTAINER_FORM;
     stream = gen_riff_stream(empty);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
-    todo_wine ok(hr == DMUS_E_CHUNKNOTFOUND,
+    ok(hr == DMUS_E_CHUNKNOTFOUND,
             "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
 
     /* All desc chunks, only DMUS_OBJ_OBJECT and DMUS_OBJ_CLASS supported */
@@ -542,7 +549,7 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    todo_wine ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS),
+    ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS),
             "Got valid data %#x, expected DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS\n", desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicChordMap),
             "Got class guid %s, expected CLSID_DirectMusicChordMap\n",
@@ -557,8 +564,8 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    todo_wine ok(desc.dwValidData == DMUS_OBJ_CLASS,
-            "Got valid data %#x, expected DMUS_OBJ_CLASS\n", desc.dwValidData);
+    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
+            desc.dwValidData);
     IStream_Release(stream);
 
     /* INFO list with INAM */
@@ -576,7 +583,7 @@ static void test_parsedescriptor(void)
     memset(&desc, 0, sizeof(desc));
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
-    todo_wine ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS),
+    ok(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS),
             "Got valid data %#x, expected DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS\n", desc.dwValidData);
     IStream_Release(stream);
 
