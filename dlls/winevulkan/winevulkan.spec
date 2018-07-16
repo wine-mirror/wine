@@ -166,7 +166,7 @@
 @ stdcall wine_vkGetDeviceMemoryCommitment(ptr int64 ptr)
 @ stdcall wine_vkGetDeviceProcAddr(ptr str)
 @ stdcall wine_vkGetDeviceQueue(ptr long long ptr)
-@ stub vkGetDeviceQueue2
+@ stdcall wine_vkGetDeviceQueue2(ptr ptr ptr)
 @ stub vkGetDisplayModePropertiesKHR
 @ stub vkGetDisplayPlaneCapabilitiesKHR
 @ stub vkGetDisplayPlaneSupportedDisplaysKHR

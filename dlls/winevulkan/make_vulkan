@@ -161,6 +161,7 @@ FUNCTION_OVERRIDES = {
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : False},
+    "vkGetDeviceQueue2" : {"dispatch": False, "driver" : False, "thunk" : False},
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface
@@ -402,7 +403,7 @@ class VkFunction(object):
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
-        self.required = True if self.driver else False
+        self.required = True if func_info else False
 
     @staticmethod
     def from_alias(command, alias):

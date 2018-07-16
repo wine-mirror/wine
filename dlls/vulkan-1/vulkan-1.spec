@@ -164,7 +164,7 @@
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr) winevulkan.wine_vkGetDeviceMemoryCommitment
 @ stdcall vkGetDeviceProcAddr(ptr str) winevulkan.wine_vkGetDeviceProcAddr
 @ stdcall vkGetDeviceQueue(ptr long long ptr) winevulkan.wine_vkGetDeviceQueue
-@ stub vkGetDeviceQueue2
+@ stdcall vkGetDeviceQueue2(ptr ptr ptr) winevulkan.wine_vkGetDeviceQueue2
 @ stub vkGetDisplayModePropertiesKHR
 @ stub vkGetDisplayPlaneCapabilitiesKHR
 @ stub vkGetDisplayPlaneSupportedDisplaysKHR

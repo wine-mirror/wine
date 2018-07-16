@@ -168,7 +168,7 @@ static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPoo
 
 /* Helper function to create queues for a given family index. */
 static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
-        uint32_t family_index, uint32_t queue_count)
+        uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags)
 {
     struct VkQueue_T *queues;
     unsigned int i;
@@ -182,15 +182,15 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
     for (i = 0; i < queue_count; i++)
     {
         struct VkQueue_T *queue = &queues[i];
+
+        queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         queue->device = device;
+        queue->flags = flags;
 
         /* The native device was already allocated with the required number of queues,
          * so just fetch them from there.
          */
         device->funcs.p_vkGetDeviceQueue(device->device, family_index, i, &queue->queue);
-
-        /* Set special header for ICD loader. */
-        queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     }
 
     return queues;
@@ -342,7 +342,7 @@ static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src
         TRACE("Application name %s, application version %#x\n",
                 debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
         TRACE("Engine name %s, engine version %#x\n", debugstr_a(app_info->pEngineName),
-                 app_info->engineVersion);
+                app_info->engineVersion);
         TRACE("API version %#x\n", app_info->apiVersion);
     }
 
@@ -633,12 +633,14 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
     {
+        uint32_t flags = create_info_host.pQueueCreateInfos[i].flags;
         uint32_t family_index = create_info_host.pQueueCreateInfos[i].queueFamilyIndex;
         uint32_t queue_count = create_info_host.pQueueCreateInfos[i].queueCount;
 
         TRACE("queueFamilyIndex %u, queueCount %u\n", family_index, queue_count);
 
-        object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index, queue_count);
+        object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index,
+                queue_count, flags);
         if (!object->queues[family_index])
         {
             ERR("Failed to allocate memory for queues\n");
@@ -928,9 +930,28 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
 void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index,
         uint32_t queue_index, VkQueue *queue)
 {
-    TRACE("%p %u %u %p\n", device, family_index, queue_index, queue);
+    TRACE("%p, %u, %u, %p\n", device, family_index, queue_index, queue);
 
     *queue = &device->queues[family_index][queue_index];
+}
+
+void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
+{
+    const struct wine_vk_structure_header *chain;
+    struct VkQueue_T *matching_queue;
+
+    TRACE("%p, %p, %p\n", device, info, queue);
+
+    if ((chain = info->pNext))
+        FIXME("Ignoring a linked structure of type %#x.\n", chain->sType);
+
+    matching_queue = &device->queues[info->queueFamilyIndex][info->queueIndex];
+    if (matching_queue->flags != info->flags)
+    {
+        WARN("No matching flags were specified %#x, %#x.\n", matching_queue->flags, info->flags);
+        matching_queue = VK_NULL_HANDLE;
+    }
+    *queue = matching_queue;
 }
 
 PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)

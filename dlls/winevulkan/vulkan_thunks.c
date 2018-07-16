@@ -2966,6 +2966,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDeviceMemoryCommitment", &wine_vkGetDeviceMemoryCommitment},
     {"vkGetDeviceProcAddr", &wine_vkGetDeviceProcAddr},
     {"vkGetDeviceQueue", &wine_vkGetDeviceQueue},
+    {"vkGetDeviceQueue2", &wine_vkGetDeviceQueue2},
     {"vkGetEventStatus", &wine_vkGetEventStatus},
     {"vkGetFenceStatus", &wine_vkGetFenceStatus},
     {"vkGetImageMemoryRequirements", &wine_vkGetImageMemoryRequirements},

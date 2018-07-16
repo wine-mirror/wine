@@ -106,6 +106,8 @@ struct VkQueue_T
     struct wine_vk_base base;
     struct VkDevice_T *device; /* parent */
     VkQueue queue; /* native queue */
+
+    VkDeviceQueueCreateFlags flags;
 };
 
 void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
