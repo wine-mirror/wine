@@ -3201,10 +3201,18 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_an(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
+    lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
+
+    if (!lpResults)
+    {
+        ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, NULL, dwFlags);
+        HeapFree(GetProcessHeap(), 0, lpStringW);
+        return ret;
+    }
+
     /* both structs are equal in size */
     memcpy(&resultsW, lpResults, sizeof(resultsW));
 
-    lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
     if(lpResults->lpOutString)
         resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*uCountW);
 
@@ -3258,6 +3266,9 @@ GetCharacterPlacementW(
 
     TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
+
+    if (!lpResults)
+        return GetTextExtentPoint32W(hdc, lpString, uCount, &size) ? MAKELONG(size.cx, size.cy) : 0;
 
     TRACE("lStructSize=%d, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
           "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",

@@ -4904,6 +4904,39 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
     ok(ratio >= 90 && ratio <= 110, "expected width/height ratio 90-110, got %d\n", ratio);
 }
 
+static void test_GetCharacterPlacement(void)
+{
+    GCP_RESULTSA result;
+    DWORD size, size2;
+    WCHAR glyphs[20];
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    ok(!!hdc, "CreateCompatibleDC failed\n");
+
+    memset(&result, 0, sizeof(result));
+    result.lStructSize = sizeof(result);
+    result.lpGlyphs = glyphs;
+    result.nGlyphs  = 20;
+
+    size = GetCharacterPlacementA(hdc, "Wine Test", 9, 0, &result, 0);
+    ok(size, "GetCharacterPlacementA failed!\n");
+
+    size2 = GetCharacterPlacementA(hdc, "Wine Test", 9, 0, NULL, 0);
+    ok(size2, "GetCharacterPlacementA failed!\n");
+    ok(size == size2, "GetCharacterPlacementA returned different result: %u vs %u\n", size2, size);
+
+    size2 = GetCharacterPlacementA(hdc, "Wine Test", 9, 1024, NULL, GCP_REORDER);
+    ok(size2, "GetCharacterPlacementA failed!\n");
+    ok(size == size2, "GetCharacterPlacementA returned different result: %u vs %u\n", size2, size);
+
+    size = GetCharacterPlacementA(hdc, "Wine Test", 9, 1024, &result, GCP_REORDER);
+    ok(size, "GetCharacterPlacementA failed!\n");
+    ok(size == size2, "GetCharacterPlacementA returned different result: %u vs %u\n", size2, size);
+
+    DeleteDC(hdc);
+}
+
 static void test_CreateFontIndirect(void)
 {
     LOGFONTA lf, getobj_lf;
@@ -6831,6 +6864,7 @@ START_TEST(font)
     test_GetTextMetrics2("Arial", -11);
     test_GetTextMetrics2("Arial", -55);
     test_GetTextMetrics2("Arial", -110);
+    test_GetCharacterPlacement();
     test_CreateFontIndirect();
     test_CreateFontIndirectEx();
     test_oemcharset();
