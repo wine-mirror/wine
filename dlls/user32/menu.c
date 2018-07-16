@@ -5306,6 +5306,7 @@ BOOL WINAPI GetMenuItemRect(HWND hwnd, HMENU hMenu, UINT uItem, RECT *rect)
 {
     POPUPMENU *menu;
     UINT pos;
+    RECT window_rect;
 
     TRACE("(%p,%p,%d,%p)\n", hwnd, hMenu, uItem, rect);
 
@@ -5324,9 +5325,17 @@ BOOL WINAPI GetMenuItemRect(HWND hwnd, HMENU hMenu, UINT uItem, RECT *rect)
 
     *rect = menu->items[pos].rect;
     OffsetRect(rect, menu->items_rect.left, menu->items_rect.top);
-    release_menu_ptr(menu);
 
-    MapWindowPoints(hwnd, 0, (POINT *)rect, 2);
+    /* Popup menu item draws in the client area */
+    if (menu->wFlags & MF_POPUP) MapWindowPoints(hwnd, 0, (POINT *)rect, 2);
+    else
+    {
+        /* Sysmenu draws in the non-client area */
+        GetWindowRect(hwnd, &window_rect);
+        OffsetRect(rect, window_rect.left, window_rect.top);
+    }
+
+    release_menu_ptr(menu);
     return TRUE;
 }
 

@@ -341,6 +341,62 @@ static void test_getmenubarinfo(void)
     DestroyWindow(hwnd);
 }
 
+static void test_GetMenuItemRect(void)
+{
+    HWND hwnd;
+    HMENU hmenu;
+    HMENU popup_hmenu;
+    RECT window_rect;
+    RECT item_rect;
+    POINT client_top_left;
+    INT caption_height;
+    BOOL ret;
+
+    hwnd = CreateWindowW((LPCWSTR)MAKEINTATOM(atomMenuCheckClass), NULL, WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL,
+                         NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed with error %d\n", GetLastError());
+    hmenu = CreateMenu();
+    ok(hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+    popup_hmenu = CreatePopupMenu();
+    ok(popup_hmenu != NULL, "CreatePopupMenu failed with error %d\n", GetLastError());
+    ret = AppendMenuA(popup_hmenu, MF_STRING, 0, "Popup");
+    ok(ret, "AppendMenu failed with error %d\n", GetLastError());
+    ret = AppendMenuA(hmenu, MF_STRING | MF_POPUP, (UINT_PTR)popup_hmenu, "Menu");
+    ok(ret, "AppendMenu failed with error %d\n", GetLastError());
+    ret = SetMenu(hwnd, hmenu);
+    ok(ret, "SetMenu failed with error %d\n", GetLastError());
+
+    /* Get the menu item rectangle of the displayed sysmenu item */
+    ret = GetMenuItemRect(hwnd, hmenu, 0, &item_rect);
+    ok(ret, "GetMenuItemRect failed with error %d\n", GetLastError());
+    GetWindowRect(hwnd, &window_rect);
+    /* Get the screen coordinate of the left top corner of the client rectangle */
+    client_top_left.x = 0;
+    client_top_left.y = 0;
+    MapWindowPoints(hwnd, 0, &client_top_left, 1);
+    caption_height = GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
+
+    ok(item_rect.left == client_top_left.x, "Expect item_rect.left %d == %d\n", item_rect.left, client_top_left.x);
+    ok(item_rect.right <= window_rect.right, "Expect item_rect.right %d <= %d\n", item_rect.right, window_rect.right);
+    /* A gap of 1 pixel is added deliberately in commit 75f9e64, so using equal operator would fail on Wine.
+     * Check that top and bottom are correct with 1 pixel margin tolerance */
+    ok(item_rect.top - (window_rect.top + caption_height) <= 1, "Expect item_rect.top %d - %d <= 1\n", item_rect.top,
+       window_rect.top + caption_height);
+    ok(item_rect.bottom - (client_top_left.y - 1) <= 1, "Expect item_rect.bottom %d - %d <= 1\n", item_rect.bottom,
+       client_top_left.y - 1);
+
+    /* Get the item rectangle of the not yet displayed popup menu item. */
+    ret = GetMenuItemRect(hwnd, popup_hmenu, 0, &item_rect);
+    ok(ret, "GetMenuItemRect failed with error %d\n", GetLastError());
+    ok(item_rect.left == client_top_left.x, "Expect item_rect.left %d == %d\n", item_rect.left, client_top_left.x);
+    ok(item_rect.right == client_top_left.x, "Expect item_rect.right %d == %d\n", item_rect.right, client_top_left.x);
+    ok(item_rect.top == client_top_left.y, "Expect item_rect.top %d == %d\n", item_rect.top, client_top_left.y);
+    ok(item_rect.bottom == client_top_left.y, "Expect item_rect.bottom %d == %d\n", item_rect.bottom,
+       client_top_left.y);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_system_menu(void)
 {
     WCHAR testW[] = {'t','e','s','t',0};
@@ -1734,7 +1790,7 @@ static void test_menu_iteminfo( void )
        Only the low word of the dwTypeData is used.
        Use a magic bitmap here (Word 95 uses this to create its MDI menu buttons) */
     TMII_INSMI( MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -1, -1, 0, 0, 0, -1,
-                (HMENU)MAKELONG(HBMMENU_MBAR_CLOSE, 0x1234), -1, 0, OK );
+                (HMENU)MAKELPARAM(HBMMENU_MBAR_CLOSE, 0x1234), -1, 0, OK );
     TMII_GMII ( MIIM_TYPE, 80,
         MFT_BITMAP | MFT_RIGHTJUSTIFY, 0, 0, 0, 0, 0, 0, HBMMENU_MBAR_CLOSE, 0, HBMMENU_MBAR_CLOSE,
         NULL, OK, OK );
@@ -1780,7 +1836,7 @@ static void test_menu_iteminfo( void )
        Only the low word of the dwTypeData is used.
        Use a magic bitmap here (Word 95 uses this to create its MDI menu buttons) */
     TMII_INSMI( MIIM_TYPE, MFT_BITMAP | MFT_RIGHTJUSTIFY, -1, -1, 0, 0, 0, -1,
-                (HMENU)MAKELONG(HBMMENU_MBAR_CLOSE, 0x1234), -1, 0, OK );
+                (HMENU)MAKELPARAM(HBMMENU_MBAR_CLOSE, 0x1234), -1, 0, OK );
     TMII_GMII ( MIIM_TYPE, 80,
         MFT_BITMAP | MFT_RIGHTJUSTIFY, 0, 0, 0, 0, 0, 0, HBMMENU_MBAR_CLOSE, 0, HBMMENU_MBAR_CLOSE,
         NULL, OK, OK );
@@ -2188,15 +2244,15 @@ static struct menu_mouse_tests_s {
     { INPUT_KEYBOARD, {{0}}, {VK_F10, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_F10, 0}, FALSE, FALSE },
 
-    { INPUT_MOUSE, {{1, 2}, {0}}, {0}, TRUE, TRUE }, /* test 20 */
+    { INPUT_MOUSE, {{1, 2}, {0}}, {0}, TRUE, FALSE }, /* test 20 */
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
-    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
-    { INPUT_MOUSE, {{1, 0}, {2, 2}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 0}, {2, 2}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE },
-    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{3, 0}, {0}}, {0}, FALSE, FALSE },
-    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, TRUE },
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
     { -1 }
@@ -4199,6 +4255,7 @@ START_TEST(menu)
     test_subpopup_locked_by_menu();
     test_menu_ownerdraw();
     test_getmenubarinfo();
+    test_GetMenuItemRect();
     test_menu_bmp_and_string();
     test_menu_getmenuinfo();
     test_menu_setmenuinfo();
