@@ -130,7 +130,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 5
+DRIVER_VERSION = 6
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -144,7 +144,7 @@ FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : False},
-    "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : True, "thunk" : False},
+    "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : False},
 
     # Instance functions

@@ -58,6 +58,7 @@ static void *wine_vk_find_struct_(void *s, VkStructureType t)
 static void *wine_vk_get_global_proc_addr(const char *name);
 
 static const struct vulkan_funcs *vk_funcs;
+static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
 
 static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
 {
@@ -321,6 +322,8 @@ static BOOL wine_vk_init(void)
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
         return FALSE;
     }
+
+    p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 
     return TRUE;
 }
@@ -849,7 +852,16 @@ VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
 
     TRACE("%p\n", version);
 
-    res = vk_funcs->p_vkEnumerateInstanceVersion(version);
+    if (p_vkEnumerateInstanceVersion)
+    {
+        res = p_vkEnumerateInstanceVersion(version);
+    }
+    else
+    {
+        *version = VK_API_VERSION_1_0;
+        res = VK_SUCCESS;
+    }
+
     TRACE("API version %u.%u.%u.\n",
             VK_VERSION_MAJOR(*version), VK_VERSION_MINOR(*version), VK_VERSION_PATCH(*version));
     *version = min(WINE_VK_VERSION, *version);
@@ -1117,6 +1129,8 @@ VkResult WINAPI wine_vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance,
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
+    TRACE("%p, %u, %p\n", hinst, reason, reserved);
+
     switch (reason)
     {
         case DLL_PROCESS_ATTACH:
