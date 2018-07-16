@@ -2253,7 +2253,7 @@ static struct menu_mouse_tests_s {
     { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{3, 0}, {0}}, {0}, FALSE, FALSE },
     { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
-    { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
     { -1 }
 };
@@ -2307,7 +2307,7 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
     for (i = 0; menu_tests[i].type != -1; i++)
     {
         BOOL ret = TRUE;
-        int elapsed = 0;
+        int elapsed;
 
         got_input = i && menu_tests[i-1].bMenuVisible;
 
@@ -2316,7 +2316,16 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
                 send_key(menu_tests[i].wVk[j]);
         else
             for (j = 0; menu_tests[i].menu_item_pairs[j].uMenu != 0; j++)
-                if (!(ret = click_menu(hWnd, &menu_tests[i].menu_item_pairs[j]))) break;
+            {
+                /* Maybe clicking too fast before menu is initialized. Sleep 100 ms and retry */
+                elapsed = 0;
+                while (!(ret = click_menu(hWnd, &menu_tests[i].menu_item_pairs[j])))
+                {
+                    if (elapsed > 1000) break;
+                    elapsed += 100;
+                    Sleep(100);
+                }
+            }
 
         if (!ret)
         {
@@ -2324,6 +2333,8 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
             PostMessageA( hWnd, WM_CANCELMODE, 0, 0 );
             return 0;
         }
+
+        elapsed = 0;
         while (menu_tests[i].bMenuVisible != bMenuVisible)
         {
             if (elapsed > 200)
