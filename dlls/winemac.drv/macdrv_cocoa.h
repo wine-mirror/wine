@@ -166,6 +166,7 @@ extern int gl_surface_mode DECLSPEC_HIDDEN;
 extern CFDictionaryRef localized_strings DECLSPEC_HIDDEN;
 extern int retina_enabled DECLSPEC_HIDDEN;  /* Whether Retina mode is enabled via registry setting. */
 extern int retina_on DECLSPEC_HIDDEN;       /* Whether Retina mode is currently active (enabled and display is in default mode). */
+extern int enable_app_nap DECLSPEC_HIDDEN;
 
 static inline CGRect cgrect_mac_from_win(CGRect rect)
 {

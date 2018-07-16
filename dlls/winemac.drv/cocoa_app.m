@@ -235,6 +235,13 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
             [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
             [NSApp activateIgnoringOtherApps:YES];
+#if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+            if (!enable_app_nap && [NSProcessInfo instancesRespondToSelector:@selector(beginActivityWithOptions:reason:)])
+            {
+                [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
+                                                                reason:@"Running Windows program"] retain]; // intentional leak
+            }
+#endif
 
             mainMenu = [[[NSMenu alloc] init] autorelease];
 

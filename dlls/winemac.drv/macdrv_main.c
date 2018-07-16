@@ -60,6 +60,7 @@ int use_precise_scrolling = TRUE;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
 int retina_enabled = FALSE;
 HMODULE macdrv_module = 0;
+int enable_app_nap = FALSE;
 
 CFDictionaryRef localized_strings;
 
@@ -196,6 +197,9 @@ static void setup_options(void)
         else
             gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
     }
+
+    if (!get_config_key(hkey, appkey, "EnableAppNap", buffer, sizeof(buffer)))
+        enable_app_nap = IS_OPTION_TRUE(buffer[0]);
 
     /* Don't use appkey.  The DPI and monitor sizes should be consistent for all
        processes in the prefix. */
