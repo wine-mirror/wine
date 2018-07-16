@@ -669,8 +669,10 @@ static BOOL install_wine_mono(void)
 {
     BOOL is_wow64 = FALSE;
     HMODULE hmsi;
+    UINT (WINAPI *pMsiEnumRelatedProductsA)(LPCSTR,DWORD,DWORD,LPSTR);
     UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
     char versionstringbuf[15];
+    char productcodebuf[39];
     UINT res;
     DWORD buffer_size;
     PROCESS_INFORMATION pi;
@@ -681,7 +683,7 @@ static BOOL install_wine_mono(void)
     BOOL ret;
 
     static const char* mono_version = "4.7.1";
-    static const char* mono_product_code = "{E45D8920-A758-4088-B6C6-31DBB276992E}";
+    static const char* mono_upgrade_code = "{DE624609-C6B5-486A-9274-EF0B854F6BC5}";
 
     static const WCHAR controlW[] = {'\\','c','o','n','t','r','o','l','.','e','x','e',0};
     static const WCHAR argsW[] =
@@ -703,11 +705,22 @@ static BOOL install_wine_mono(void)
         return FALSE;
     }
 
-    pMsiGetProductInfoA = (void*)GetProcAddress(hmsi, "MsiGetProductInfoA");
+    pMsiEnumRelatedProductsA = (void*)GetProcAddress(hmsi, "MsiEnumRelatedProductsA");
 
-    buffer_size = sizeof(versionstringbuf);
+    res = pMsiEnumRelatedProductsA(mono_upgrade_code, 0, 0, productcodebuf);
 
-    res = pMsiGetProductInfoA(mono_product_code, "VersionString", versionstringbuf, &buffer_size);
+    if (res == ERROR_SUCCESS)
+    {
+        pMsiGetProductInfoA = (void*)GetProcAddress(hmsi, "MsiGetProductInfoA");
+
+        buffer_size = sizeof(versionstringbuf);
+
+        res = pMsiGetProductInfoA(productcodebuf, "VersionString", versionstringbuf, &buffer_size);
+    }
+    else if (res != ERROR_NO_MORE_ITEMS)
+    {
+        ERR("MsiEnumRelatedProducts failed, err=%u\n", res);
+    }
 
     FreeLibrary(hmsi);
 
