@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 /* For now default to 4 as it felt like a reasonable version feature wise to support.
  * Don't support the optional vk_icdGetPhysicalDeviceProcAddr introduced in this version
  * as it is unlikely we will implement physical device extensions, which the loader is not
- * aware off. Version 5 adds more extensive version checks. Something to tackle later.
+ * aware of. Version 5 adds more extensive version checks. Something to tackle later.
  */
 #define WINE_VULKAN_ICD_VERSION 4
 
