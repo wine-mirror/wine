@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "msvcp90.h"
 
@@ -29,6 +30,173 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
+
+#if _MSVCP_VER >= 110
+/* error strings generated with glibc strerror */
+static const char str_EPERM[]           = "operation not permitted";
+static const char str_ENOENT[]          = "no such file or directory";
+static const char str_ESRCH[]           = "no such process";
+static const char str_EINTR[]           = "interrupted system call";
+static const char str_EIO[]             = "input/output error";
+static const char str_ENXIO[]           = "no such device or address";
+static const char str_E2BIG[]           = "argument list too long";
+static const char str_ENOEXEC[]         = "exec format error";
+static const char str_EBADF[]           = "bad file descriptor";
+static const char str_ECHILD[]          = "no child processes";
+static const char str_EAGAIN[]          = "resource temporarily unavailable";
+static const char str_ENOMEM[]          = "cannot allocate memory";
+static const char str_EACCES[]          = "permission denied";
+static const char str_EFAULT[]          = "bad address";
+static const char str_EBUSY[]           = "device or resource busy";
+static const char str_EEXIST[]          = "file exists";
+static const char str_EXDEV[]           = "invalid cross-device link";
+static const char str_ENODEV[]          = "no such device";
+static const char str_ENOTDIR[]         = "not a directory";
+static const char str_EISDIR[]          = "is a directory";
+static const char str_EINVAL[]          = "invalid argument";
+static const char str_ENFILE[]          = "too many open files in system";
+static const char str_EMFILE[]          = "too many open files";
+static const char str_ENOTTY[]          = "inappropriate ioctl for device";
+static const char str_EFBIG[]           = "file too large";
+static const char str_ENOSPC[]          = "no space left on device";
+static const char str_ESPIPE[]          = "illegal seek";
+static const char str_EROFS[]           = "read-only file system";
+static const char str_EMLINK[]          = "too many links";
+static const char str_EPIPE[]           = "broken pipe";
+static const char str_EDOM[]            = "numerical argument out of domain";
+static const char str_ERANGE[]          = "numerical result out of range";
+static const char str_EDEADLK[]         = "resource deadlock avoided";
+static const char str_ENAMETOOLONG[]    = "file name too long";
+static const char str_ENOLCK[]          = "no locks available";
+static const char str_ENOSYS[]          = "function not implemented";
+static const char str_ENOTEMPTY[]       = "directory not empty";
+static const char str_EILSEQ[]          = "invalid or incomplete multibyte or wide character";
+static const char str_EADDRINUSE[]      = "address already in use";
+static const char str_EADDRNOTAVAIL[]   = "cannot assign requested address";
+static const char str_EAFNOSUPPORT[]    = "address family not supported by protocol";
+static const char str_EALREADY[]        = "operation already in progress";
+static const char str_EBADMSG[]         = "not a data message";
+static const char str_ECANCELED[]       = "operation Canceled";
+static const char str_ECONNABORTED[]    = "software caused connection abort";
+static const char str_ECONNREFUSED[]    = "connection refused";
+static const char str_ECONNRESET[]      = "connection reset by peer";
+static const char str_EDESTADDRREQ[]    = "destination address required";
+static const char str_EHOSTUNREACH[]    = "no route to host";
+static const char str_EIDRM[]           = "identifier removed";
+static const char str_EINPROGRESS[]     = "operation now in progress";
+static const char str_EISCONN[]         = "transport endpoint is already connected";
+static const char str_ELOOP[]           = "too many symbolic links encountered";
+static const char str_EMSGSIZE[]        = "message too long";
+static const char str_ENETDOWN[]        = "network is down";
+static const char str_ENETRESET[]       = "network dropped connection because of reset";
+static const char str_ENETUNREACH[]     = "network is unreachable";
+static const char str_ENOBUFS[]         = "no buffer space available";
+static const char str_ENODATA[]         = "no data available";
+static const char str_ENOLINK[]         = "link has been severed";
+static const char str_ENOMSG[]          = "no message of desired type";
+static const char str_ENOPROTOOPT[]     = "protocol not available";
+static const char str_ENOSR[]           = "out of streams resources";
+static const char str_ENOSTR[]          = "device not a stream";
+static const char str_ENOTCONN[]        = "transport endpoint is not connected";
+static const char str_ENOTRECOVERABLE[] = "state not recoverable";
+static const char str_ENOTSOCK[]        = "socket operation on non-socket";
+static const char str_ENOTSUP[]         = "not supported";
+static const char str_EOPNOTSUPP[]      = "operation not supported on transport endpoint";
+static const char str_EOVERFLOW[]       = "value too large for defined data type";
+static const char str_EOWNERDEAD[]      = "owner died";
+static const char str_EPROTO[]          = "protocol error";
+static const char str_EPROTONOSUPPORT[] = "protocol not supported";
+static const char str_EPROTOTYPE[]      = "protocol wrong type for socket";
+static const char str_ETIME[]           = "timer expired";
+static const char str_ETIMEDOUT[]       = "connection timed out";
+static const char str_ETXTBSY[]         = "text file busy";
+static const char str_EWOULDBLOCK[]     = "operation would block";
+
+static struct {
+    int err;
+    const char *str;
+} syserror_map[] =
+{
+    {EPERM, str_EPERM},
+    {ENOENT, str_ENOENT},
+    {ESRCH, str_ESRCH},
+    {EINTR, str_EINTR},
+    {EIO, str_EIO},
+    {ENXIO, str_ENXIO},
+    {E2BIG, str_E2BIG},
+    {ENOEXEC, str_ENOEXEC},
+    {EBADF, str_EBADF},
+    {ECHILD, str_ECHILD},
+    {EAGAIN, str_EAGAIN},
+    {ENOMEM, str_ENOMEM},
+    {EACCES, str_EACCES},
+    {EFAULT, str_EFAULT},
+    {EBUSY, str_EBUSY},
+    {EEXIST, str_EEXIST},
+    {EXDEV, str_EXDEV},
+    {ENODEV, str_ENODEV},
+    {ENOTDIR, str_ENOTDIR},
+    {EISDIR, str_EISDIR},
+    {EINVAL, str_EINVAL},
+    {ENFILE, str_ENFILE},
+    {EMFILE, str_EMFILE},
+    {ENOTTY, str_ENOTTY},
+    {EFBIG, str_EFBIG},
+    {ENOSPC, str_ENOSPC},
+    {ESPIPE, str_ESPIPE},
+    {EROFS, str_EROFS},
+    {EMLINK, str_EMLINK},
+    {EPIPE, str_EPIPE},
+    {EDOM, str_EDOM},
+    {ERANGE, str_ERANGE},
+    {EDEADLK, str_EDEADLK},
+    {ENAMETOOLONG, str_ENAMETOOLONG},
+    {ENOLCK, str_ENOLCK},
+    {ENOSYS, str_ENOSYS},
+    {ENOTEMPTY, str_ENOTEMPTY},
+    {EILSEQ, str_EILSEQ},
+    {EADDRINUSE, str_EADDRINUSE},
+    {EADDRNOTAVAIL, str_EADDRNOTAVAIL},
+    {EAFNOSUPPORT, str_EAFNOSUPPORT},
+    {EALREADY, str_EALREADY},
+    {EBADMSG, str_EBADMSG},
+    {ECANCELED, str_ECANCELED},
+    {ECONNABORTED, str_ECONNABORTED},
+    {ECONNREFUSED, str_ECONNREFUSED},
+    {ECONNRESET, str_ECONNRESET},
+    {EDESTADDRREQ, str_EDESTADDRREQ},
+    {EHOSTUNREACH, str_EHOSTUNREACH},
+    {EIDRM, str_EIDRM},
+    {EINPROGRESS, str_EINPROGRESS},
+    {EISCONN, str_EISCONN},
+    {ELOOP, str_ELOOP},
+    {EMSGSIZE, str_EMSGSIZE},
+    {ENETDOWN, str_ENETDOWN},
+    {ENETRESET, str_ENETRESET},
+    {ENETUNREACH, str_ENETUNREACH},
+    {ENOBUFS, str_ENOBUFS},
+    {ENODATA, str_ENODATA},
+    {ENOLINK, str_ENOLINK},
+    {ENOMSG, str_ENOMSG},
+    {ENOPROTOOPT, str_ENOPROTOOPT},
+    {ENOSR, str_ENOSR},
+    {ENOSTR, str_ENOSTR},
+    {ENOTCONN, str_ENOTCONN},
+    {ENOTRECOVERABLE, str_ENOTRECOVERABLE},
+    {ENOTSOCK, str_ENOTSOCK},
+    {ENOTSUP, str_ENOTSUP},
+    {EOPNOTSUPP, str_EOPNOTSUPP},
+    {EOVERFLOW, str_EOVERFLOW},
+    {EOWNERDEAD, str_EOWNERDEAD},
+    {EPROTO, str_EPROTO},
+    {EPROTONOSUPPORT, str_EPROTONOSUPPORT},
+    {EPROTOTYPE, str_EPROTOTYPE},
+    {ETIME, str_ETIME},
+    {ETIMEDOUT, str_ETIMEDOUT},
+    {ETXTBSY, str_ETXTBSY},
+    {EWOULDBLOCK, str_EWOULDBLOCK},
+};
+#endif
 
 struct __Container_proxy;
 
@@ -2283,5 +2451,23 @@ MSVCP_bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
 {
     FIXME("() stub\n");
     return FALSE;
+}
+#endif
+
+#if _MSVCP_VER >= 110
+/* ?_Syserror_map@std@@YAPBDH@Z */
+/* ?_Syserror_map@std@@YAPEBDH@Z */
+const char* __cdecl _Syserror_map(int err)
+{
+    int i;
+
+    TRACE("(%d)\n", err);
+
+    for(i=0; i<sizeof(syserror_map)/sizeof(syserror_map[0]); i++)
+    {
+        if(syserror_map[i].err == err)
+            return syserror_map[i].str;
+    }
+    return NULL;
 }
 #endif
