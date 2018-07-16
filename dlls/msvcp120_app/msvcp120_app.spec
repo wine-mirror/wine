@@ -1737,8 +1737,8 @@
 @ cdecl -arch=win32 ?_Symlink@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) msvcp120.?_Symlink@sys@tr2@std@@YAHPB_W0@Z
 @ cdecl -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) msvcp120.?_Symlink@sys@tr2@std@@YAHPEB_W0@Z
 @ extern ?_Sync@ios_base@std@@0_NA msvcp120.?_Sync@ios_base@std@@0_NA
-@ stub -arch=win32 ?_Syserror_map@std@@YAPBDH@Z
-@ stub -arch=win64 ?_Syserror_map@std@@YAPEBDH@Z
+@ cdecl -arch=win32 ?_Syserror_map@std@@YAPBDH@Z(long) msvcp120.?_Syserror_map@std@@YAPBDH@Z
+@ cdecl -arch=win64 ?_Syserror_map@std@@YAPEBDH@Z(long) msvcp120.?_Syserror_map@std@@YAPEBDH@Z
 @ stub ?_Throw_C_error@std@@YAXH@Z
 @ stub ?_Throw_Cpp_error@std@@YAXH@Z
 @ stub -arch=win32 ?_Throw_future_error@std@@YAXABVerror_code@1@@Z
