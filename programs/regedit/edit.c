@@ -106,7 +106,8 @@ static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
     case WM_INITDIALOG:
         SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
         SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, stringValueData);
-	CheckRadioButton(hwndDlg, IDC_DWORD_HEX, IDC_DWORD_DEC, isDecimal ? IDC_DWORD_DEC : IDC_DWORD_HEX);
+        CheckRadioButton(hwndDlg, IDC_DWORD_HEX, IDC_DWORD_DEC, IDC_DWORD_HEX);
+        isDecimal = FALSE;
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -280,9 +281,8 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
         }
     } else if ( type == REG_DWORD ) {
-	const WCHAR u[] = {'%','u',0};
-	const WCHAR x[] = {'%','x',0};
-	wsprintfW(stringValueData, isDecimal ? u : x, *((DWORD*)stringValueData));
+        static const WCHAR x[] = {'%','x',0};
+        wsprintfW(stringValueData, x, *((DWORD*)stringValueData));
 	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
 	    CHAR* valueA = GetMultiByteString(stringValueData);
