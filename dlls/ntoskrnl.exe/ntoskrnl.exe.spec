@@ -436,7 +436,7 @@
 @ stdcall IoRegisterPlugPlayNotification(long long ptr ptr ptr ptr ptr)
 @ stdcall IoRegisterShutdownNotification(ptr)
 @ stdcall IoReleaseCancelSpinLock(long)
-@ stub IoReleaseRemoveLockAndWaitEx
+@ stdcall IoReleaseRemoveLockAndWaitEx(ptr ptr long)
 @ stub IoReleaseRemoveLockEx
 @ stub IoReleaseVpbSpinLock
 @ stub IoRemoveShareAccess

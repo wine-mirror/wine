@@ -3547,7 +3547,18 @@ BOOLEAN WINAPI SeSinglePrivilegeCheck(LUID privilege, KPROCESSOR_MODE mode)
     return TRUE;
 }
 
+/*********************************************************************
+ *           KeFlushQueuedDpcs    (NTOSKRNL.@)
+ */
 void WINAPI KeFlushQueuedDpcs(void)
 {
     FIXME("stub!\n");
+}
+
+/*********************************************************************
+ *           IoReleaseRemoveLockAndWaitEx    (NTOSKRNL.@)
+ */
+void WINAPI IoReleaseRemoveLockAndWaitEx(PIO_REMOVE_LOCK lock, PVOID tag, ULONG size)
+{
+    FIXME("stub: %p %p %u\n", lock, tag, size);
 }
