@@ -157,14 +157,9 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
             cbData = SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
             pData = heap_xalloc(cbData);
 
-            if (pData)
-            {
-                SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
-                lRet = RegSetValueExW(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
-                heap_free(pData);
-            }
-            else
-                lRet = ERROR_OUTOFMEMORY;
+            SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
+            lRet = RegSetValueExW(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
+            heap_free(pData);
 
             if (lRet == ERROR_SUCCESS)
                 EndDialog(hwndDlg, 1);
