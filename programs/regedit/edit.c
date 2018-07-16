@@ -40,6 +40,7 @@ struct edit_params
 {
     HKEY         hkey;
     const WCHAR *value_name;
+    DWORD        type;
     void        *data;
     DWORD        size;
 };
@@ -159,7 +160,7 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
             data = heap_xalloc(size);
 
             SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)size, (LPARAM)data);
-            lRet = RegSetValueExW(params->hkey, params->value_name, 0, REG_BINARY, data, size);
+            lRet = RegSetValueExW(params->hkey, params->value_name, 0, params->type, data, size);
             heap_free(data);
 
             if (lRet == ERROR_SUCCESS)
@@ -351,6 +352,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 
         params.hkey = hKey;
         params.value_name = valueName;
+        params.type = type;
         params.data = stringValueData;
         params.size = len;
         result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
