@@ -787,6 +787,7 @@ static void test_IsDialogMessage(void)
     ok (!IsDialogMessageA(msg.hwnd, &msg), "expected failure\n");
 
     UnhookWindowsHookEx(hook);
+    DestroyWindow(g_hwndMain);
 }
 
 
