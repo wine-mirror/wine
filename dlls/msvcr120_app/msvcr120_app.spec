@@ -1868,7 +1868,7 @@
 @ cdecl getc(ptr) msvcr120.getc
 @ cdecl getchar() msvcr120.getchar
 @ cdecl gets(str) msvcr120.gets
-@ stub gets_s
+@ cdecl gets_s(ptr long) msvcr120.gets_s
 @ cdecl getwc(ptr) msvcr120.getwc
 @ cdecl getwchar() msvcr120.getwchar
 @ stub ilogb

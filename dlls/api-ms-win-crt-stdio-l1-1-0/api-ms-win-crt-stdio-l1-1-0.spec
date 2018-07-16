@@ -140,7 +140,7 @@
 @ cdecl getc(ptr) ucrtbase.getc
 @ cdecl getchar() ucrtbase.getchar
 @ cdecl gets(str) ucrtbase.gets
-@ stub gets_s
+@ cdecl gets_s(ptr long) ucrtbase.gets_s
 @ cdecl getwc(ptr) ucrtbase.getwc
 @ cdecl getwchar() ucrtbase.getwchar
 @ cdecl putc(long ptr) ucrtbase.putc

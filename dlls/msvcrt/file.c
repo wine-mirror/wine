@@ -4705,31 +4705,53 @@ int CDECL MSVCRT_getc(MSVCRT_FILE* file)
 }
 
 /*********************************************************************
- *		gets (MSVCRT.@)
+ *		gets_s (MSVCR80.@)
+ */
+char * CDECL MSVCRT_gets_s(char *buf, MSVCRT_size_t len)
+{
+    char *buf_start = buf;
+    int cc;
+
+    if (!MSVCRT_CHECK_PMT(buf != NULL)) return NULL;
+    if (!MSVCRT_CHECK_PMT(len != 0)) return NULL;
+
+    MSVCRT__lock_file(MSVCRT_stdin);
+    for(cc = MSVCRT__fgetc_nolock(MSVCRT_stdin);
+            len != 0 && cc != MSVCRT_EOF && cc != '\n';
+            cc = MSVCRT__fgetc_nolock(MSVCRT_stdin))
+    {
+        if (cc != '\r')
+        {
+            *buf++ = (char)cc;
+            len--;
+        }
+    }
+    MSVCRT__unlock_file(MSVCRT_stdin);
+
+    if (!len)
+    {
+        *buf_start = 0;
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return NULL;
+    }
+
+    if ((cc == MSVCRT_EOF) && (buf_start == buf))
+    {
+        TRACE(":nothing read\n");
+        return NULL;
+    }
+    *buf = '\0';
+
+    TRACE("got '%s'\n", buf_start);
+    return buf_start;
+}
+
+/*********************************************************************
+ *              gets (MSVCRT.@)
  */
 char * CDECL MSVCRT_gets(char *buf)
 {
-  int    cc;
-  char * buf_start = buf;
-
-  MSVCRT__lock_file(MSVCRT_stdin);
-  for(cc = MSVCRT__fgetc_nolock(MSVCRT_stdin); cc != MSVCRT_EOF && cc != '\n';
-          cc = MSVCRT__fgetc_nolock(MSVCRT_stdin))
-  {
-      if(cc != '\r')
-          *buf++ = (char)cc;
-  }
-  MSVCRT__unlock_file(MSVCRT_stdin);
-
-  if ((cc == MSVCRT_EOF) && (buf_start == buf))
-  {
-    TRACE(":nothing read\n");
-    return NULL;
-  }
-  *buf = '\0';
-
-  TRACE("got '%s'\n", buf_start);
-  return buf_start;
+    return MSVCRT_gets_s(buf, -1);
 }
 
 /*********************************************************************
