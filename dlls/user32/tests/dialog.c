@@ -55,6 +55,7 @@ static LONG g_styleInitialFocusT1, g_styleInitialFocusT2;
 static BOOL g_bInitialFocusInitDlgResult, g_bReceivedCommand;
 
 static BOOL g_terminated;
+static BOOL g_button1Clicked;
 
 typedef struct {
     INT_PTR id;
@@ -474,6 +475,10 @@ static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
                 g_terminated = TRUE;
                 return 0;
             }
+            else if ((wParam == 100 || wParam == 0xFFFF) && lParam)
+            {
+                g_button1Clicked = TRUE;
+            }
             break;
     }
 
@@ -787,6 +792,33 @@ static void test_IsDialogMessage(void)
     ok (!IsDialogMessageA(msg.hwnd, &msg), "expected failure\n");
 
     UnhookWindowsHookEx(hook);
+    DestroyWindow(g_hwndMain);
+
+    g_hwndMain = CreateWindowA("IsDialogMessageWindowClass", "IsDialogMessageWindowClass", WS_OVERLAPPEDWINDOW,
+                               CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, g_hinst, 0);
+    SetFocus(g_hwndButton1);
+    g_button1Clicked = FALSE;
+    FormEnterMsg(&msg, g_hwndButton1);
+    ok(IsDialogMessageA(g_hwndMain, &msg), "Did not handle the ENTER\n");
+    ok(g_button1Clicked, "Did not receive button 1 click notification\n");
+
+    g_button1Clicked = FALSE;
+    FormEnterMsg(&msg, g_hwndMain);
+    ok(IsDialogMessageA(g_hwndMain, &msg), "Did not handle the ENTER\n");
+    ok(g_button1Clicked, "Did not receive button 1 click notification\n");
+
+    g_button1Clicked = FALSE;
+    FormEnterMsg(&msg, g_hwndButton2);
+    ok(IsDialogMessageA(g_hwndMain, &msg), "Did not handle the ENTER\n");
+    ok(g_button1Clicked, "Did not receive button 1 click notification\n");
+
+    /* Button with id larger than 0xFFFF should also work */
+    g_button1Clicked = FALSE;
+    FormEnterMsg(&msg, g_hwndMain);
+    SetWindowLongPtrW(g_hwndButton1, GWLP_ID, 0x1FFFF);
+    ok(IsDialogMessageA(g_hwndMain, &msg), "Did not handle the ENTER\n");
+    ok(g_button1Clicked, "Did not receive button 1 click notification\n");
+
     DestroyWindow(g_hwndMain);
 }
 
