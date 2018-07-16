@@ -458,20 +458,26 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
 struct monitor_info
 {
     int count;
+    RECT primary_rect;
     RECT virtual_rect;
 };
 
 static BOOL CALLBACK monitor_info_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
 {
+    MONITORINFO mi;
     struct monitor_info *info = (struct monitor_info *)lp;
     info->count++;
     UnionRect( &info->virtual_rect, &info->virtual_rect, rect );
+    mi.cbSize = sizeof(mi);
+    if (GetMonitorInfoW( monitor, &mi ) && (mi.dwFlags & MONITORINFOF_PRIMARY))
+        info->primary_rect = mi.rcMonitor;
     return TRUE;
 }
 
 static void get_monitors_info( struct monitor_info *info )
 {
     info->count = 0;
+    SetRectEmpty( &info->primary_rect );
     SetRectEmpty( &info->virtual_rect );
     EnumDisplayMonitors( 0, NULL, monitor_info_proc, (LPARAM)info );
 }
@@ -2527,6 +2533,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
+    struct monitor_info info;
     NONCLIENTMETRICSW ncm;
     MINIMIZEDMETRICS mm;
     ICONMETRICSW im;
@@ -2536,16 +2543,6 @@ INT WINAPI GetSystemMetrics( INT index )
     /* some metrics are dynamic */
     switch (index)
     {
-    case SM_CXSCREEN:
-        hdc = get_display_dc();
-        ret = GetDeviceCaps( hdc, HORZRES );
-        release_display_dc( hdc );
-        return ret;
-    case SM_CYSCREEN:
-        hdc = get_display_dc();
-        ret = GetDeviceCaps( hdc, VERTRES );
-        release_display_dc( hdc );
-        return ret;
     case SM_CXVSCROLL:
     case SM_CYHSCROLL:
         ncm.cbSize = sizeof(ncm);
@@ -2749,32 +2746,27 @@ INT WINAPI GetSystemMetrics( INT index )
         return 0;  /* FIXME */
     case SM_MOUSEWHEELPRESENT:
         return 1;
+    case SM_CXSCREEN:
+        get_monitors_info( &info );
+        return info.primary_rect.right - info.primary_rect.left;
+    case SM_CYSCREEN:
+        get_monitors_info( &info );
+        return info.primary_rect.bottom - info.primary_rect.top;
     case SM_XVIRTUALSCREEN:
-    {
-        RECT rect = get_virtual_screen_rect();
-        return rect.left;
-    }
+        get_monitors_info( &info );
+        return info.virtual_rect.left;
     case SM_YVIRTUALSCREEN:
-    {
-        RECT rect = get_virtual_screen_rect();
-        return rect.top;
-    }
+        get_monitors_info( &info );
+        return info.virtual_rect.top;
     case SM_CXVIRTUALSCREEN:
-    {
-        RECT rect = get_virtual_screen_rect();
-        return rect.right - rect.left;
-    }
+        get_monitors_info( &info );
+        return info.virtual_rect.right - info.virtual_rect.left;
     case SM_CYVIRTUALSCREEN:
-    {
-        RECT rect = get_virtual_screen_rect();
-        return rect.bottom - rect.top;
-    }
+        get_monitors_info( &info );
+        return info.virtual_rect.bottom - info.virtual_rect.top;
     case SM_CMONITORS:
-    {
-        struct monitor_info info;
         get_monitors_info( &info );
         return info.count;
-    }
     case SM_SAMEDISPLAYFORMAT:
         return 1;
     case SM_IMMENABLED:
