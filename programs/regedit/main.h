@@ -150,7 +150,7 @@ int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);
 HWND StartValueRename(HWND hwndLV);
 LPWSTR GetItemText(HWND hwndLV, UINT item);
-LPCWSTR GetValueName(HWND hwndLV);
+WCHAR *GetValueName(HWND hwndLV);
 BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 BOOL IsDefaultValue(HWND hwndLV, int i);
 
