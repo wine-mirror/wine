@@ -740,8 +740,7 @@ static void WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
  *
  * Get the minimized and maximized information for a window.
  */
-void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-			   POINT *minTrack, POINT *maxTrack )
+MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 {
     MINMAXINFO MinMax;
     HMONITOR monitor;
@@ -837,10 +836,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.y = max( MinMax.ptMaxTrackSize.y,
                                    MinMax.ptMinTrackSize.y );
 
-    if (maxSize) *maxSize = MinMax.ptMaxSize;
-    if (maxPos) *maxPos = MinMax.ptMaxPosition;
-    if (minTrack) *minTrack = MinMax.ptMinTrackSize;
-    if (maxTrack) *maxTrack = MinMax.ptMaxTrackSize;
+    return MinMax;
 }
 
 
@@ -943,8 +939,8 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
 UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 {
     UINT swpFlags = 0;
-    POINT size;
     LONG old_style;
+    MINMAXINFO minmax;
     WINDOWPLACEMENT wpl;
 
     TRACE("%p %u\n", hwnd, cmd );
@@ -1006,7 +1002,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         old_style = GetWindowLongW( hwnd, GWL_STYLE );
         if ((old_style & WS_MAXIMIZE) && (old_style & WS_VISIBLE)) return SWP_NOSIZE | SWP_NOMOVE;
 
-        WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
+        minmax = WINPOS_GetMinMaxInfo( hwnd );
 
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
         if (old_style & WS_MINIMIZE)
@@ -1016,8 +1012,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         }
 
         if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
-        SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y,
-                 wpl.ptMaxPosition.x +  size.x, wpl.ptMaxPosition.y + size.y );
+        SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                 minmax.ptMaxPosition.x + minmax.ptMaxSize.x, minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
         break;
 
     case SW_SHOWNOACTIVATE:
@@ -1033,11 +1029,11 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             if (win_get_flags( hwnd ) & WIN_RESTORE_MAX)
             {
                 /* Restore to maximized position */
-                WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
+                minmax = WINPOS_GetMinMaxInfo( hwnd );
                 WIN_SetStyle( hwnd, WS_MAXIMIZE, 0 );
                 swpFlags |= SWP_STATECHANGED;
-                SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y,
-                         wpl.ptMaxPosition.x + size.x, wpl.ptMaxPosition.y + size.y );
+                SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                         minmax.ptMaxPosition.x + minmax.ptMaxSize.x, minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
                 break;
             }
         }
@@ -1597,19 +1593,18 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
  */
 LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 {
-    POINT minTrack, maxTrack;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
-	if (winpos->cx > maxTrack.x) winpos->cx = maxTrack.x;
-	if (winpos->cy > maxTrack.y) winpos->cy = maxTrack.y;
+	MINMAXINFO info = WINPOS_GetMinMaxInfo( hwnd );
+        winpos->cx = min( winpos->cx, info.ptMaxTrackSize.x );
+        winpos->cy = min( winpos->cy, info.ptMaxTrackSize.y );
 	if (!(style & WS_MINIMIZE))
 	{
-	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
-	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;
+            winpos->cx = max( winpos->cx, info.ptMinTrackSize.x );
+            winpos->cy = max( winpos->cy, info.ptMinTrackSize.y );
 	}
     }
     return 0;
@@ -2727,7 +2722,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     LONG hittest = (LONG)(wParam & 0x0f);
     WPARAM syscommand = wParam & 0xfff0;
     HCURSOR hDragCursor = 0, hOldCursor = 0;
-    POINT minTrack, maxTrack;
+    MINMAXINFO minmax;
     POINT capturePoint, pt;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL    thickframe = HAS_THICKFRAME( style );
@@ -2770,7 +2765,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
       /* Get min/max info */
 
-    WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+    minmax = WINPOS_GetMinMaxInfo( hwnd );
     WIN_GetRectangles( hwnd, COORDS_PARENT, &sizingRect, NULL );
     origRect = sizingRect;
     if (style & WS_CHILD)
@@ -2789,23 +2784,23 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if (ON_LEFT_BORDER(hittest))
     {
-        mouseRect.left  = max( mouseRect.left, sizingRect.right-maxTrack.x+capturePoint.x-sizingRect.left );
-        mouseRect.right = min( mouseRect.right, sizingRect.right-minTrack.x+capturePoint.x-sizingRect.left );
+        mouseRect.left  = max( mouseRect.left, sizingRect.right-minmax.ptMaxTrackSize.x+capturePoint.x-sizingRect.left );
+        mouseRect.right = min( mouseRect.right, sizingRect.right-minmax.ptMinTrackSize.x+capturePoint.x-sizingRect.left );
     }
     else if (ON_RIGHT_BORDER(hittest))
     {
-        mouseRect.left  = max( mouseRect.left, sizingRect.left+minTrack.x+capturePoint.x-sizingRect.right );
-        mouseRect.right = min( mouseRect.right, sizingRect.left+maxTrack.x+capturePoint.x-sizingRect.right );
+        mouseRect.left  = max( mouseRect.left, sizingRect.left+minmax.ptMinTrackSize.x+capturePoint.x-sizingRect.right );
+        mouseRect.right = min( mouseRect.right, sizingRect.left+minmax.ptMaxTrackSize.x+capturePoint.x-sizingRect.right );
     }
     if (ON_TOP_BORDER(hittest))
     {
-        mouseRect.top    = max( mouseRect.top, sizingRect.bottom-maxTrack.y+capturePoint.y-sizingRect.top );
-        mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minTrack.y+capturePoint.y-sizingRect.top);
+        mouseRect.top    = max( mouseRect.top, sizingRect.bottom-minmax.ptMaxTrackSize.y+capturePoint.y-sizingRect.top );
+        mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minmax.ptMinTrackSize.y+capturePoint.y-sizingRect.top);
     }
     else if (ON_BOTTOM_BORDER(hittest))
     {
-        mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y+capturePoint.y-sizingRect.bottom );
-        mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y+capturePoint.y-sizingRect.bottom );
+        mouseRect.top    = max( mouseRect.top, sizingRect.top+minmax.ptMinTrackSize.y+capturePoint.y-sizingRect.bottom );
+        mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+minmax.ptMaxTrackSize.y+capturePoint.y-sizingRect.bottom );
     }
 
     /* Retrieve a default cache DC (without using the window style) */
