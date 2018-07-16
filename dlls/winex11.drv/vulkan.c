@@ -540,75 +540,9 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkQueuePresentKHR,
 };
 
-static void *get_vulkan_driver_device_proc_addr(const struct vulkan_funcs *vulkan_funcs,
-        const char *name)
-{
-    if (!name || name[0] != 'v' || name[1] != 'k')
-        return NULL;
-
-    name += 2;
-
-    if (!strcmp(name, "CreateSwapchainKHR"))
-        return vulkan_funcs->p_vkCreateSwapchainKHR;
-    if (!strcmp(name, "DestroySwapchainKHR"))
-        return vulkan_funcs->p_vkDestroySwapchainKHR;
-    if (!strcmp(name, "GetDeviceGroupSurfacePresentModesKHR"))
-        return vulkan_funcs->p_vkGetDeviceGroupSurfacePresentModesKHR;
-    if (!strcmp(name, "GetDeviceProcAddr"))
-        return vulkan_funcs->p_vkGetDeviceProcAddr;
-    if (!strcmp(name, "GetSwapchainImagesKHR"))
-        return vulkan_funcs->p_vkGetSwapchainImagesKHR;
-    if (!strcmp(name, "QueuePresentKHR"))
-        return vulkan_funcs->p_vkQueuePresentKHR;
-
-    return NULL;
-}
-
 static void *X11DRV_get_vk_device_proc_addr(const char *name)
 {
     return get_vulkan_driver_device_proc_addr(&vulkan_funcs, name);
-}
-
-static void *get_vulkan_driver_instance_proc_addr(const struct vulkan_funcs *vulkan_funcs,
-        VkInstance instance, const char *name)
-{
-    if (!name || name[0] != 'v' || name[1] != 'k')
-        return NULL;
-
-    name += 2;
-
-    if (!strcmp(name, "CreateInstance"))
-        return vulkan_funcs->p_vkCreateInstance;
-    if (!strcmp(name, "EnumerateInstanceExtensionProperties"))
-        return vulkan_funcs->p_vkEnumerateInstanceExtensionProperties;
-
-    if (!instance)
-        return NULL;
-
-    if (!strcmp(name, "CreateWin32SurfaceKHR"))
-        return vulkan_funcs->p_vkCreateWin32SurfaceKHR;
-    if (!strcmp(name, "DestroyInstance"))
-        return vulkan_funcs->p_vkDestroyInstance;
-    if (!strcmp(name, "DestroySurfaceKHR"))
-        return vulkan_funcs->p_vkDestroySurfaceKHR;
-    if (!strcmp(name, "GetInstanceProcAddr"))
-        return vulkan_funcs->p_vkGetInstanceProcAddr;
-    if (!strcmp(name, "GetPhysicalDevicePresentRectanglesKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDevicePresentRectanglesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilitiesKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceSupportKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR;
-    if (!strcmp(name, "GetPhysicalDeviceWin32PresentationSupportKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
-
-    name -= 2;
-
-    return get_vulkan_driver_device_proc_addr(vulkan_funcs, name);
 }
 
 static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *name)
