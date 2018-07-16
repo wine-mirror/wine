@@ -38,10 +38,10 @@ static BOOL isDecimal;
 
 struct edit_params
 {
-    HKEY    hKey;
-    LPCWSTR lpszValueName;
-    void   *pData;
-    LONG    cbData;
+    HKEY         hkey;
+    const WCHAR *value_name;
+    void        *data;
+    DWORD        size;
 };
 
 static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_list va_args)
@@ -136,31 +136,31 @@ static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     struct edit_params *params;
-    LPBYTE pData;
-    LONG cbData;
+    BYTE *data;
+    LONG size;
     LONG lRet;
 
     switch(uMsg) {
     case WM_INITDIALOG:
         params = (struct edit_params *)lParam;
         SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
-        if (params->lpszValueName)
-            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
+        if (params->value_name)
+            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->value_name);
         else
             SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
-        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
+        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->size, (LPARAM)params->data);
         SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, WM_SETFONT, (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
             params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
-            cbData = SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
-            pData = heap_xalloc(cbData);
+            size = SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
+            data = heap_xalloc(size);
 
-            SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
-            lRet = RegSetValueExW(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
-            heap_free(pData);
+            SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)size, (LPARAM)data);
+            lRet = RegSetValueExW(params->hkey, params->value_name, 0, REG_BINARY, data, size);
+            heap_free(data);
 
             if (lRet == ERROR_SUCCESS)
                 EndDialog(hwndDlg, 1);
@@ -349,10 +349,10 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     {
         struct edit_params params;
 
-        params.hKey = hKey;
-        params.lpszValueName = valueName;
-        params.pData = stringValueData;
-        params.cbData = len;
+        params.hkey = hKey;
+        params.value_name = valueName;
+        params.data = stringValueData;
+        params.size = len;
         result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
                                  bin_modify_dlgproc, (LPARAM)&params);
     }
