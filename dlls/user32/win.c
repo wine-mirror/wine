@@ -2157,9 +2157,13 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
  */
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
-    return !(GetWindowLongW( hWnd, GWL_STYLE ) & WS_DISABLED);
-}
+    LONG ret;
 
+    SetLastError(NO_ERROR);
+    ret = GetWindowLongW( hWnd, GWL_STYLE );
+    if (!ret && GetLastError() != NO_ERROR) return FALSE;
+    return !(ret & WS_DISABLED);
+}
 
 /***********************************************************************
  *		IsWindowUnicode (USER32.@)

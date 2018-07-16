@@ -10700,6 +10700,27 @@ static void test_destroy_quit(void)
     CloseHandle( thread1 );
 }
 
+static void test_IsWindowEnabled(void)
+{
+    BOOL ret;
+    HWND hwnd;
+
+    ret = IsWindowEnabled(NULL);
+    ok(!ret, "Expect IsWindowEnabled() return FALSE\n");
+
+    hwnd = GetDesktopWindow();
+    ret = IsWindowEnabled(hwnd);
+    ok(ret, "Expect IsWindowEnabled() return TRUE\n");
+
+    hwnd = create_tool_window(WS_CHILD | WS_VISIBLE, hwndMain);
+    ret = IsWindowEnabled(hwnd);
+    ok(ret, "Expect IsWindowEnabled() return TRUE\n");
+    EnableWindow(hwnd, FALSE);
+    ret = IsWindowEnabled(hwnd);
+    ok(!ret, "Expect IsWindowEnabled() return FALSE\n");
+    DestroyWindow(hwnd);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -10856,6 +10877,7 @@ START_TEST(win)
     test_hide_window();
     test_minimize_window(hwndMain);
     test_destroy_quit();
+    test_IsWindowEnabled();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
