@@ -790,10 +790,16 @@ static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *st
     if (!stream)
         return E_POINTER;
 
-    if (stream_get_chunk(stream, &riff) != S_OK || riff.id != FOURCC_RIFF)
+    if (stream_get_chunk(stream, &riff) != S_OK ||
+            (riff.id != FOURCC_RIFF && riff.id != mmioFOURCC('M','T','h','d')))
         return DMUS_E_UNSUPPORTED_STREAM;
-
     stream_reset_chunk_start(stream, &riff);
+
+    if (riff.id == mmioFOURCC('M','T','h','d')) {
+        FIXME("MIDI file loading not supported\n");
+        return S_OK;
+    }
+
     hr = IDirectMusicObject_ParseDescriptor(&This->dmobj.IDirectMusicObject_iface, stream,
             &This->dmobj.desc);
     if (FAILED(hr))
