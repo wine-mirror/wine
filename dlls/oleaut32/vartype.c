@@ -3781,7 +3781,7 @@ HRESULT WINAPI VarCyFromUI8(ULONG64 ullIn, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyAdd(const CY cyLeft, const CY cyRight, CY* pCyOut)
+HRESULT WINAPI VarCyAdd(CY cyLeft, CY cyRight, CY* pCyOut)
 {
   double l,r;
   _VarR8FromCy(cyLeft, &l);
@@ -3804,7 +3804,7 @@ HRESULT WINAPI VarCyAdd(const CY cyLeft, const CY cyRight, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyMul(const CY cyLeft, const CY cyRight, CY* pCyOut)
+HRESULT WINAPI VarCyMul(CY cyLeft, CY cyRight, CY* pCyOut)
 {
   double l,r;
   _VarR8FromCy(cyLeft, &l);
@@ -3827,7 +3827,7 @@ HRESULT WINAPI VarCyMul(const CY cyLeft, const CY cyRight, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyMulI4(const CY cyLeft, LONG lRight, CY* pCyOut)
+HRESULT WINAPI VarCyMulI4(CY cyLeft, LONG lRight, CY* pCyOut)
 {
   double d;
 
@@ -3850,7 +3850,7 @@ HRESULT WINAPI VarCyMulI4(const CY cyLeft, LONG lRight, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCySub(const CY cyLeft, const CY cyRight, CY* pCyOut)
+HRESULT WINAPI VarCySub(CY cyLeft, CY cyRight, CY* pCyOut)
 {
   double l,r;
   _VarR8FromCy(cyLeft, &l);
@@ -3872,7 +3872,7 @@ HRESULT WINAPI VarCySub(const CY cyLeft, const CY cyRight, CY* pCyOut)
  *  Success: S_OK. pCyOut contains the absolute value.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyAbs(const CY cyIn, CY* pCyOut)
+HRESULT WINAPI VarCyAbs(CY cyIn, CY* pCyOut)
 {
   if (cyIn.s.Hi == (int)0x80000000 && !cyIn.s.Lo)
     return DISP_E_OVERFLOW;
@@ -3898,7 +3898,7 @@ HRESULT WINAPI VarCyAbs(const CY cyIn, CY* pCyOut)
  *  - The difference between this function and VarCyInt() is that VarCyInt() rounds
  *    negative numbers away from 0, while this function rounds them towards zero.
  */
-HRESULT WINAPI VarCyFix(const CY cyIn, CY* pCyOut)
+HRESULT WINAPI VarCyFix(CY cyIn, CY* pCyOut)
 {
   pCyOut->int64 = cyIn.int64 / CY_MULTIPLIER;
   pCyOut->int64 *= CY_MULTIPLIER;
@@ -3922,7 +3922,7 @@ HRESULT WINAPI VarCyFix(const CY cyIn, CY* pCyOut)
  *  - The difference between this function and VarCyFix() is that VarCyFix() rounds
  *    negative numbers towards 0, while this function rounds them away from zero.
  */
-HRESULT WINAPI VarCyInt(const CY cyIn, CY* pCyOut)
+HRESULT WINAPI VarCyInt(CY cyIn, CY* pCyOut)
 {
   pCyOut->int64 = cyIn.int64 / CY_MULTIPLIER;
   pCyOut->int64 *= CY_MULTIPLIER;
@@ -3947,7 +3947,7 @@ HRESULT WINAPI VarCyInt(const CY cyIn, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyNeg(const CY cyIn, CY* pCyOut)
+HRESULT WINAPI VarCyNeg(CY cyIn, CY* pCyOut)
 {
   if (cyIn.s.Hi == (int)0x80000000 && !cyIn.s.Lo)
     return DISP_E_OVERFLOW;
@@ -3970,7 +3970,7 @@ HRESULT WINAPI VarCyNeg(const CY cyIn, CY* pCyOut)
  *  Success: S_OK.
  *  Failure: E_INVALIDARG, if cDecimals is less than 0.
  */
-HRESULT WINAPI VarCyRound(const CY cyIn, int cDecimals, CY* pCyOut)
+HRESULT WINAPI VarCyRound(CY cyIn, int cDecimals, CY* pCyOut)
 {
   if (cDecimals < 0)
     return E_INVALIDARG;
@@ -4008,7 +4008,7 @@ HRESULT WINAPI VarCyRound(const CY cyIn, int cDecimals, CY* pCyOut)
  *           compare is less, equal or greater than source respectively.
  *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
-HRESULT WINAPI VarCyCmp(const CY cyLeft, const CY cyRight)
+HRESULT WINAPI VarCyCmp(CY cyLeft, CY cyRight)
 {
   HRESULT hRet;
   CY result;
@@ -4042,7 +4042,7 @@ HRESULT WINAPI VarCyCmp(const CY cyLeft, const CY cyRight)
  *           less than, equal to or greater than cyLeft respectively.
  *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
-HRESULT WINAPI VarCyCmpR8(const CY cyLeft, double dblRight)
+HRESULT WINAPI VarCyCmpR8(CY cyLeft, double dblRight)
 {
   HRESULT hRet;
   CY cyRight;
@@ -4069,7 +4069,7 @@ HRESULT WINAPI VarCyCmpR8(const CY cyLeft, double dblRight)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarCyMulI8(const CY cyLeft, LONG64 llRight, CY* pCyOut)
+HRESULT WINAPI VarCyMulI8(CY cyLeft, LONG64 llRight, CY* pCyOut)
 {
   double d;
 
