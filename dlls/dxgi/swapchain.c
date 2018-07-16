@@ -1526,7 +1526,6 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkDevice vk_device)
         return FALSE;
     }
 
-    dxgi->p_vkAcquireNextImageKHR = vk->p_vkAcquireNextImageKHR;
     dxgi->p_vkCreateSwapchainKHR = vk->p_vkCreateSwapchainKHR;
     dxgi->p_vkCreateWin32SurfaceKHR = vk->p_vkCreateWin32SurfaceKHR;
     dxgi->p_vkDestroySurfaceKHR = vk->p_vkDestroySurfaceKHR;
@@ -1547,10 +1546,11 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkDevice vk_device)
         ERR("Failed to get device proc "#name".\n"); \
         return FALSE; \
     }
+    LOAD_DEVICE_PFN(vkAcquireNextImageKHR)
     LOAD_DEVICE_PFN(vkCreateFence)
-    LOAD_DEVICE_PFN(vkWaitForFences)
-    LOAD_DEVICE_PFN(vkResetFences)
     LOAD_DEVICE_PFN(vkDestroyFence)
+    LOAD_DEVICE_PFN(vkResetFences)
+    LOAD_DEVICE_PFN(vkWaitForFences)
 #undef LOAD_DEVICE_PFN
 
     return TRUE;

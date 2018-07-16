@@ -74,7 +74,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR
     Window window;
 } VkXlibSurfaceCreateInfoKHR;
 
-static VkResult (*pvkAcquireNextImageKHR)(VkDevice, VkSwapchainKHR, uint64_t, VkSemaphore, VkFence, uint32_t *);
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
@@ -114,7 +113,6 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 
 #define LOAD_FUNCPTR(f) if (!(p##f = wine_dlsym(vulkan_handle, #f, NULL, 0))) goto fail;
 #define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(vulkan_handle, #f, NULL, 0);
-    LOAD_FUNCPTR(vkAcquireNextImageKHR)
     LOAD_FUNCPTR(vkCreateInstance)
     LOAD_FUNCPTR(vkCreateSwapchainKHR)
     LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
@@ -221,16 +219,6 @@ void wine_vk_surface_destroy(HWND hwnd)
     }
     XDeleteContext(gdi_display, (XID)hwnd, vulkan_hwnd_context);
     LeaveCriticalSection(&context_section);
-}
-
-static VkResult X11DRV_vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
-        uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *index)
-{
-    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %p\n", device,
-            wine_dbgstr_longlong(swapchain), wine_dbgstr_longlong(timeout),
-            wine_dbgstr_longlong(semaphore), wine_dbgstr_longlong(fence), index);
-
-    return pvkAcquireNextImageKHR(device, swapchain, timeout, semaphore, fence, index);
 }
 
 static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -532,7 +520,6 @@ static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *
 
 static const struct vulkan_funcs vulkan_funcs =
 {
-    X11DRV_vkAcquireNextImageKHR,
     X11DRV_vkCreateInstance,
     X11DRV_vkCreateSwapchainKHR,
     X11DRV_vkCreateWin32SurfaceKHR,
@@ -561,8 +548,6 @@ static void *get_vulkan_driver_device_proc_addr(const struct vulkan_funcs *vulka
 
     name += 2;
 
-    if (!strcmp(name, "AcquireNextImageKHR"))
-        return vulkan_funcs->p_vkAcquireNextImageKHR;
     if (!strcmp(name, "CreateSwapchainKHR"))
         return vulkan_funcs->p_vkCreateSwapchainKHR;
     if (!strcmp(name, "DestroySwapchainKHR"))

@@ -130,7 +130,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 6
+DRIVER_VERSION = 7
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -176,7 +176,6 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_swapchain
-    "vkAcquireNextImageKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
