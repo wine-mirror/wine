@@ -935,7 +935,7 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
         return func;
     }
 
-    TRACE("Function %s not found.\n", debugstr_a(name));
+    WARN("Unsupported device function: %s.\n", debugstr_a(name));
     return NULL;
 }
 
@@ -970,7 +970,7 @@ PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const 
 {
     void *func;
 
-    TRACE("%p %s\n", instance, debugstr_a(name));
+    TRACE("%p, %s\n", instance, debugstr_a(name));
 
     if (!name)
         return NULL;
@@ -985,7 +985,7 @@ PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const 
     }
     if (!instance)
     {
-        FIXME("Global function %s not found.\n", debugstr_a(name));
+        WARN("Global function %s not found.\n", debugstr_a(name));
         return NULL;
     }
 
@@ -996,13 +996,13 @@ PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const 
     func = wine_vk_get_device_proc_addr(name);
     if (func) return func;
 
-    FIXME("Unsupported device or instance function: %s.\n", debugstr_a(name));
+    WARN("Unsupported device or instance function: %s.\n", debugstr_a(name));
     return NULL;
 }
 
 void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *name)
 {
-    TRACE("%p %s\n", instance, debugstr_a(name));
+    TRACE("%p, %s\n", instance, debugstr_a(name));
 
     /* Initial version of the Vulkan ICD spec required vkGetInstanceProcAddr to be
      * exported. vk_icdGetInstanceProcAddr was added later to separate ICD calls from
