@@ -1197,7 +1197,7 @@ static HRESULT get_priv_data(ole_priv_data **data)
         for(cf = 0; (cf = EnumClipboardFormats(cf)) != 0; count++)
         {
             WCHAR buf[256];
-            if (GetClipboardFormatNameW(cf, buf, sizeof(buf) / sizeof(WCHAR)))
+            if (GetClipboardFormatNameW(cf, buf, ARRAY_SIZE(buf)))
                 TRACE("cf %04x %s\n", cf, debugstr_w(buf));
             else
                 TRACE("cf %04x\n", cf);

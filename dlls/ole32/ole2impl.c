@@ -135,7 +135,7 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf, BOOL 
 
     if (other_fmts)
     {
-        for (i = 0; i < sizeof(fmt_id)/sizeof(fmt_id[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(fmt_id); i++)
         {
             init_fmtetc(&fmt, fmt_id[i], TYMED_ISTORAGE);
             hr = IDataObject_QueryGetData(data, &fmt);

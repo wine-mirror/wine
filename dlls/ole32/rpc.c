@@ -1658,7 +1658,7 @@ static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
     static const WCHAR  embedding[] = { ' ', '-','E','m','b','e','d','d','i','n','g',0 };
     HKEY                key;
     HRESULT             hres;
-    WCHAR               command[MAX_PATH+sizeof(embedding)/sizeof(WCHAR)];
+    WCHAR               command[MAX_PATH+ARRAY_SIZE(embedding)];
     DWORD               size = (MAX_PATH+1) * sizeof(WCHAR);
     STARTUPINFOW        sinfo;
     PROCESS_INFORMATION pinfo;
@@ -1799,7 +1799,7 @@ static void get_localserver_pipe_name(WCHAR *pipefn, REFCLSID rclsid)
 {
     static const WCHAR wszPipeRef[] = {'\\','\\','.','\\','p','i','p','e','\\',0};
     strcpyW(pipefn, wszPipeRef);
-    StringFromGUID2(rclsid, pipefn + sizeof(wszPipeRef)/sizeof(wszPipeRef[0]) - 1, CHARS_IN_GUID);
+    StringFromGUID2(rclsid, pipefn + ARRAY_SIZE(wszPipeRef) - 1, CHARS_IN_GUID);
 }
 
 /* FIXME: should call to rpcss instead */
