@@ -1063,6 +1063,10 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data,
         prop->u.bVal = *data;
         TRACE("Read byte 0x%x\n", prop->u.bVal);
         break;
+    case VT_BOOL:
+        StorageUtl_ReadWord(data, 0, (WORD*)&prop->u.boolVal);
+        TRACE("Read bool %d\n", prop->u.boolVal);
+        break;
     case VT_I2:
         StorageUtl_ReadWord(data, 0, (WORD*)&prop->u.iVal);
         TRACE("Read short %d\n", prop->u.iVal);
@@ -1080,6 +1084,18 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data,
     case VT_UI4:
         StorageUtl_ReadDWord(data, 0, &prop->u.ulVal);
         TRACE("Read ulong %d\n", prop->u.ulVal);
+        break;
+    case VT_I8:
+        StorageUtl_ReadULargeInteger(data, 0, (ULARGE_INTEGER *)&prop->u.hVal);
+        TRACE("Read long long %s\n", wine_dbgstr_longlong(prop->u.hVal.QuadPart));
+        break;
+    case VT_UI8:
+        StorageUtl_ReadULargeInteger(data, 0, &prop->u.uhVal);
+        TRACE("Read ulong long %s\n", wine_dbgstr_longlong(prop->u.uhVal.QuadPart));
+        break;
+    case VT_R8:
+        memcpy(&prop->u.dblVal, data, sizeof(double));
+        TRACE("Read double %f\n", prop->u.dblVal);
         break;
     case VT_LPSTR:
     {
