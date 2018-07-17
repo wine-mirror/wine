@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -3562,49 +3563,79 @@ BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
     return ret;
 }
 
+struct enum_mon_data
+{
+    MONITORENUMPROC proc;
+    LPARAM lparam;
+    HDC hdc;
+    POINT origin;
+    RECT limit;
+};
+
 #ifdef __i386__
 /* Some apps pass a non-stdcall callback to EnumDisplayMonitors,
  * so we need a small assembly wrapper to call it.
  * MJ's Help Diagnostic expects that %ecx contains the address to the rect.
  */
-struct enumdisplaymonitors_lparam
-{
-    MONITORENUMPROC proc;
-    LPARAM lparam;
-};
-
-extern BOOL CALLBACK enumdisplaymonitors_callback_wrapper(HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lparam);
-__ASM_STDCALL_FUNC( enumdisplaymonitors_callback_wrapper, 16,
+extern BOOL enum_mon_callback_wrapper( HMONITOR monitor, LPRECT rect, struct enum_mon_data *data );
+__ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
     "pushl %ebp\n\t"
     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
     __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
     "movl %esp,%ebp\n\t"
     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
     "subl $8,%esp\n\t"
-    "movl 20(%ebp),%eax\n\t"    /* struct enumdisplaymonitors_lparam *orig = (struct enumdisplaymonitors_lparam*)lparam */
-    "pushl 4(%eax)\n\t"         /* push orig->lparam */
-    "pushl 16(%ebp)\n\t"
-    "pushl 12(%ebp)\n\t"
-    "pushl 8(%ebp)\n\t"
-    "movl 16(%ebp),%ecx\n\t"
-    "call *(%eax)\n\t"          /* call orig->proc */
+    "movl 16(%ebp),%eax\n\t"    /* data */
+    "movl 12(%ebp),%ecx\n\t"    /* rect */
+    "pushl 4(%eax)\n\t"         /* data->lparam */
+    "pushl %ecx\n\t"            /* rect */
+    "pushl 8(%eax)\n\t"         /* data->hdc */
+    "pushl 8(%ebp)\n\t"         /* monitor */
+    "call *(%eax)\n\t"          /* data->proc */
     "leave\n\t"
     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
     __ASM_CFI(".cfi_same_value %ebp\n\t")
-    "ret $16" )
+    "ret" )
 #endif /* __i386__ */
+
+static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    struct enum_mon_data *data = (struct enum_mon_data *)lp;
+    RECT monrect = *rect;
+
+    OffsetRect( &monrect, -data->origin.x, -data->origin.y );
+    if (!IntersectRect( &monrect, &monrect, &data->limit )) return TRUE;
+#ifdef __i386__
+    return enum_mon_callback_wrapper( monitor, &monrect, data );
+#else
+    return data->proc( monitor, data->hdc, &monrect, data->lparam );
+#endif
+}
 
 /***********************************************************************
  *		EnumDisplayMonitors (USER32.@)
  */
 BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
-#ifdef __i386__
-    struct enumdisplaymonitors_lparam orig = { proc, lp };
-    proc = enumdisplaymonitors_callback_wrapper;
-    lp = (LPARAM)&orig;
-#endif
-    return USER_Driver->pEnumDisplayMonitors( hdc, rect, proc, lp );
+    struct enum_mon_data data;
+
+    data.proc = proc;
+    data.lparam = lp;
+    data.hdc = hdc;
+
+    if (hdc)
+    {
+        if (!GetDCOrgEx( hdc, &data.origin )) return FALSE;
+        if (GetClipBox( hdc, &data.limit ) == ERROR) return FALSE;
+    }
+    else
+    {
+        data.origin.x = data.origin.y = 0;
+        data.limit.left = data.limit.top = INT_MIN;
+        data.limit.right = data.limit.bottom = INT_MAX;
+    }
+    if (rect && !IntersectRect( &data.limit, &data.limit, rect )) return TRUE;
+    return USER_Driver->pEnumDisplayMonitors( 0, NULL, enum_mon_callback, (LPARAM)&data );
 }
 
 
