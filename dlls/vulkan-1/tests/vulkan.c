@@ -149,6 +149,28 @@ static void enumerate_physical_device(VkPhysicalDevice vk_physical_device)
             VK_VERSION_PATCH(properties.apiVersion));
 }
 
+static void enumerate_device_queues(VkPhysicalDevice vk_physical_device)
+{
+    VkPhysicalDeviceProperties device_properties;
+    VkQueueFamilyProperties *properties;
+    uint32_t i, count;
+
+    vkGetPhysicalDeviceProperties(vk_physical_device, &device_properties);
+
+    vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, NULL);
+    properties = heap_calloc(count, sizeof(*properties));
+    ok(!!properties, "Failed to allocate memory.\n");
+    vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, properties);
+
+    for (i = 0; i < count; ++i)
+    {
+        trace("Device '%s', queue family %u: flags %#x count %u.\n",
+                device_properties.deviceName, i, properties[i].queueFlags, properties[i].queueCount);
+    }
+
+    heap_free(properties);
+}
+
 static void test_physical_device_groups(void)
 {
     PFN_vkEnumeratePhysicalDeviceGroupsKHR vkEnumeratePhysicalDeviceGroupsKHR;
@@ -248,5 +270,6 @@ START_TEST(vulkan)
 {
     test_instance_version();
     for_each_device(enumerate_physical_device);
+    for_each_device(enumerate_device_queues);
     test_physical_device_groups();
 }
