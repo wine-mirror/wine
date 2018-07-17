@@ -316,8 +316,8 @@ static void taskdialog_get_radio_button_size(struct taskdialog_info *dialog_info
     hfont = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
     old_hfont = SelectObject(hdc, hfont);
 
-    radio_box_width = 12 * GetDeviceCaps(hdc, LOGPIXELSX) / 96 + 1;
-    radio_box_height = 12 * GetDeviceCaps(hdc, LOGPIXELSY) / 96 + 1;
+    radio_box_width = 12 * GetDpiForWindow(hwnd) / 96 + 1;
+    radio_box_height = 12 * GetDpiForWindow(hwnd) / 96 + 1;
     GetCharWidthW(hdc, '0', '0', &text_offset);
     text_offset /= 2;
 
