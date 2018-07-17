@@ -1239,7 +1239,6 @@ static struct
     { "::1",                    STATUS_INVALID_PARAMETER,  0, { -1 } },
     { ":1",                     STATUS_INVALID_PARAMETER,  0, { -1 } },
 };
-const unsigned int ipv4_testcount = sizeof(ipv4_tests) / sizeof(ipv4_tests[0]);
 
 static void init_ip4(IN_ADDR* addr, const int src[4])
 {
@@ -1284,7 +1283,7 @@ static void test_RtlIpv4StringToAddress(void)
         */
     }
 
-    for (i = 0; i < ipv4_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv4_tests); i++)
     {
         /* non-strict */
         terminator = &dummy;
@@ -1361,7 +1360,6 @@ static void test_RtlIpv4StringToAddressEx(void)
         { "1.2.3.4: 1234",  STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
         { "1.2.3.4:\t1234", STATUS_INVALID_PARAMETER,   { 1, 2, 3, 4 }, 0xdead },
     };
-    const unsigned int ipv4_ex_testcount = sizeof(ipv4_ex_tests) / sizeof(ipv4_ex_tests[0]);
     unsigned int i;
     BOOLEAN strict;
 
@@ -1395,7 +1393,7 @@ static void test_RtlIpv4StringToAddressEx(void)
     ok(port == 0xdead, "RtlIpv4StringToAddressExA should not touch the port!, port == %x\n", port);
 
     /* first we run the non-ex testcases on the ex function */
-    for (i = 0; i < ipv4_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv4_tests); i++)
     {
         NTSTATUS expect_res = (ipv4_tests[i].flags & ex_fail_4) ? STATUS_INVALID_PARAMETER : ipv4_tests[i].res;
 
@@ -1433,7 +1431,7 @@ static void test_RtlIpv4StringToAddressEx(void)
     }
 
 
-    for (i = 0; i < ipv4_ex_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv4_ex_tests); i++)
     {
         /* Strict is only relevant for the ip address, so make sure that it does not influence the port */
         for (strict = 0; strict < 2; strict++)
@@ -1726,7 +1724,6 @@ static const struct
     { "[::]",                                           STATUS_INVALID_PARAMETER,   0,
             { -1 }, ex_skip_6 },
 };
-const unsigned int ipv6_testcount = sizeof(ipv6_tests) / sizeof(ipv6_tests[0]);
 
 static void init_ip6(IN6_ADDR* addr, const int src[8])
 {
@@ -1824,7 +1821,6 @@ static void test_RtlIpv6AddressToString(void)
         { "2001:0:1234::c1c0:abcd:876",                 { 0x120, 0, 0x3412, 0, 0, 0xc0c1, 0xcdab, 0x7608 } },
         { "2001::ffd3",                                 { 0x120, 0, 0, 0, 0, 0, 0, 0xd3ff } },
     };
-    const size_t testcount = sizeof(tests) / sizeof(tests[0]);
     unsigned int i;
 
     if (!pRtlIpv6AddressToStringA)
@@ -1846,7 +1842,7 @@ static void test_RtlIpv6AddressToString(void)
     ok(result == (LPCSTR)~0 || broken(result == (LPCSTR)len) /* WinXP / Win2k3 */,
        "got %p, expected %p\n", result, (LPCSTR)~0);
 
-    for (i = 0; i < testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         init_ip6(&ip, tests[i].ip);
         memset(buffer, '#', sizeof(buffer));
@@ -1927,7 +1923,6 @@ static void test_RtlIpv6AddressToStringEx(void)
         { "[2001::ffd3%4294949819]:256",                                0xffffbbbb, 1, { 0x120, 0, 0, 0, 0, 0, 0, 0xd3ff } },
         { "[2001::ffd3]:256",                                           0,          1, { 0x120, 0, 0, 0, 0, 0, 0, 0xd3ff } },
     };
-    const size_t testcount = sizeof(tests) / sizeof(tests[0]);
     unsigned int i;
 
     if (!pRtlIpv6AddressToStringExA)
@@ -1968,7 +1963,7 @@ static void test_RtlIpv6AddressToStringEx(void)
     ok(buffer[0] == '#', "got first char %c (expected '#')\n", buffer[0]);
     ok(len == 3, "got len %d (expected len 3)\n", len);
 
-    for (i = 0; i < testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         init_ip6(&ip, tests[i].ip);
         len = sizeof(buffer);
@@ -2058,7 +2053,7 @@ static void test_RtlIpv6StringToAddress(void)
     /* sanity check */
     ok(sizeof(ip) == sizeof(USHORT)* 8, "sizeof(ip)\n");
 
-    for (i = 0; i < ipv6_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv6_tests); i++)
     {
         init_ip6(&ip, NULL);
         terminator = (void *)0xdeadbeef;
@@ -2222,7 +2217,6 @@ static void test_RtlIpv6StringToAddressEx(void)
         { "[ff01::8:800:200C:417A/16]:8080",                STATUS_INVALID_PARAMETER,   0xbadf00d,  0xbeef,
             { 0x1ff, 0, 0, 0, 0x800, 8, 0xc20, 0x7a41 } },
     };
-    const unsigned int ipv6_ex_testcount = sizeof(ipv6_ex_tests) / sizeof(ipv6_ex_tests[0]);
     const char *simple_ip = "::";
     unsigned int i;
 
@@ -2291,7 +2285,7 @@ static void test_RtlIpv6StringToAddressEx(void)
     ok(sizeof(ip) == sizeof(USHORT)* 8, "sizeof(ip)\n");
 
     /* first we run all ip related tests, to make sure someone didnt accidentally reimplement instead of re-use. */
-    for (i = 0; i < ipv6_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv6_tests); i++)
     {
         ULONG scope = 0xbadf00d;
         USHORT port = 0xbeef;
@@ -2350,7 +2344,7 @@ static void test_RtlIpv6StringToAddressEx(void)
     }
 
     /* now we run scope / port related tests */
-    for (i = 0; i < ipv6_ex_testcount; i++)
+    for (i = 0; i < ARRAY_SIZE(ipv6_ex_tests); i++)
     {
         scope = 0xbadf00d;
         port = 0xbeef;
