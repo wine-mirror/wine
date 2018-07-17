@@ -39,6 +39,7 @@
 #include "winerror.h"
 
 #include "controls.h"
+#include "win.h"
 #include "user_private.h"
 #include "wine/gdi_driver.h"
 #include "wine/unicode.h"
@@ -3192,7 +3193,16 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 /**********************************************************************
  *              get_monitor_dpi
  */
-UINT get_monitor_dpi( HWND hwnd )
+UINT get_monitor_dpi( HMONITOR monitor )
+{
+    /* FIXME: use the monitor DPI instead */
+    return system_dpi;
+}
+
+/**********************************************************************
+ *              get_win_monitor_dpi
+ */
+UINT get_win_monitor_dpi( HWND hwnd )
 {
     /* FIXME: use the monitor DPI instead */
     return system_dpi;
@@ -3324,12 +3334,22 @@ UINT WINAPI GetDpiForSystem(void)
  */
 BOOL WINAPI GetDpiForMonitorInternal( HMONITOR monitor, UINT type, UINT *x, UINT *y )
 {
-    UINT dpi = system_dpi;
-
-    WARN( "(%p, %u, %p, %p): semi-stub\n", monitor, type, x, y );
-
-    if (x) *x = dpi;
-    if (y) *y = dpi;
+    if (type > 2)
+    {
+        SetLastError( ERROR_BAD_ARGUMENTS );
+        return FALSE;
+    }
+    if (!x || !y)
+    {
+        SetLastError( ERROR_INVALID_ADDRESS );
+        return FALSE;
+    }
+    switch (GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ))
+    {
+    case DPI_AWARENESS_UNAWARE:      *x = *y = USER_DEFAULT_SCREEN_DPI; break;
+    case DPI_AWARENESS_SYSTEM_AWARE: *x = *y = system_dpi; break;
+    default:                         *x = *y = get_monitor_dpi( monitor ); break;
+    }
     return TRUE;
 }
 

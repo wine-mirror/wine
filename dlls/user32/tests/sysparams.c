@@ -46,6 +46,7 @@ static BOOL (WINAPI *pGetProcessDpiAwarenessInternal)(HANDLE,DPI_AWARENESS*);
 static BOOL (WINAPI *pSetProcessDpiAwarenessInternal)(DPI_AWARENESS);
 static UINT (WINAPI *pGetDpiForSystem)(void);
 static UINT (WINAPI *pGetDpiForWindow)(HWND);
+static BOOL (WINAPI *pGetDpiForMonitorInternal)(HMONITOR,UINT,UINT*,UINT*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
@@ -3549,6 +3550,26 @@ static void test_dpi_window(void)
         dpi = pGetDpiForWindow( hwnd );
         ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
             "%lu: got %u / %u\n", i, dpi, real_dpi );
+        if (pGetDpiForMonitorInternal)
+        {
+            BOOL res;
+            SetLastError( 0xdeadbeef );
+            res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 0, &dpi, NULL );
+            ok( !res, "succeeded\n" );
+            ok( GetLastError() == ERROR_INVALID_ADDRESS, "wrong error %u\n", GetLastError() );
+            SetLastError( 0xdeadbeef );
+            res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 3, &dpi, &dpi );
+            ok( !res, "succeeded\n" );
+            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %u\n", GetLastError() );
+            SetLastError( 0xdeadbeef );
+            res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 3, &dpi, NULL );
+            ok( !res, "succeeded\n" );
+            ok( GetLastError() == ERROR_BAD_ARGUMENTS, "wrong error %u\n", GetLastError() );
+            res = pGetDpiForMonitorInternal( MonitorFromWindow( hwnd, 0 ), 0, &dpi, &dpi );
+            ok( res, "failed err %u\n", GetLastError() );
+            ok( dpi == (i == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
+                "%lu: got %u / %u\n", i, dpi, real_dpi );
+        }
         msg.hwnd = hwnd;
         for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
         {
@@ -3660,6 +3681,7 @@ START_TEST(sysparams)
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
     pGetDpiForSystem = (void*)GetProcAddress(hdll, "GetDpiForSystem");
     pGetDpiForWindow = (void*)GetProcAddress(hdll, "GetDpiForWindow");
+    pGetDpiForMonitorInternal = (void*)GetProcAddress(hdll, "GetDpiForMonitorInternal");
     pSetProcessDpiAwarenessContext = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessContext");
     pGetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "GetProcessDpiAwarenessInternal");
     pSetProcessDpiAwarenessInternal = (void*)GetProcAddress(hdll, "SetProcessDpiAwarenessInternal");

@@ -2240,11 +2240,15 @@ UINT WINAPI GetDpiForWindow( HWND hwnd )
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (win == WND_DESKTOP) return get_monitor_dpi( GetDesktopWindow() );
+    if (win == WND_DESKTOP)
+    {
+        POINT pt = { 0, 0 };
+        return get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY ));
+    }
     if (win != WND_OTHER_PROCESS)
     {
         ret = win->dpi;
-        if (!ret) ret = get_monitor_dpi( hwnd );
+        if (!ret) ret = get_win_monitor_dpi( hwnd );
         WIN_ReleasePtr( win );
     }
     else
