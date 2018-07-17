@@ -1468,25 +1468,28 @@ TRACKBAR_SetUnicodeFormat (TRACKBAR_INFO *infoPtr, BOOL fUnicode)
     return bTemp;
 }
 
+static int get_scaled_metric(const TRACKBAR_INFO *infoPtr, int value)
+{
+    return MulDiv(value, GetDpiForWindow(infoPtr->hwndSelf), 96);
+}
 
 static LRESULT
 TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
 {
+    int client_size;
     RECT rect;
-    int clientWidth, clientMetric;
 
-    /* initial thumb length */
-    clientMetric = (infoPtr->dwStyle & TBS_ENABLESELRANGE) ? 23 : 21;
+    infoPtr->uThumbLen = get_scaled_metric(infoPtr, infoPtr->dwStyle & TBS_ENABLESELRANGE ? 23 : 21);
+
     GetClientRect(infoPtr->hwndSelf,&rect);
-    if (infoPtr->dwStyle & TBS_VERT) {
-	clientWidth = rect.right - rect.left;
-    } else {
-	clientWidth = rect.bottom - rect.top;
-    }
-    if (clientWidth >= clientMetric)
-        infoPtr->uThumbLen = clientMetric;
+    if (infoPtr->dwStyle & TBS_VERT)
+        client_size = rect.right - rect.left;
     else
-        infoPtr->uThumbLen = clientWidth > 9 ? clientWidth - 6 : 4;
+        client_size = rect.bottom - rect.top;
+
+    if (client_size < infoPtr->uThumbLen)
+        infoPtr->uThumbLen = client_size > get_scaled_metric(infoPtr, 9) ?
+            client_size - get_scaled_metric(infoPtr, 5) : get_scaled_metric(infoPtr, 4);
 
     TRACKBAR_CalcChannel (infoPtr);
     TRACKBAR_UpdateThumb (infoPtr);
