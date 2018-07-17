@@ -33,6 +33,9 @@
 
 static char* (CDECL *p_setlocale)(int category, const char* locale);
 
+static unsigned int (CDECL *p_CurrentScheduler_GetNumberOfVirtualProcessors)(void);
+static unsigned int (CDECL *p__CurrentScheduler__GetNumberOfVirtualProcessors)(void);
+
 static BOOL init(void)
 {
     HMODULE module;
@@ -45,7 +48,28 @@ static BOOL init(void)
     }
 
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
+    p_CurrentScheduler_GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ");
+    p__CurrentScheduler__GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ");
+
     return TRUE;
+}
+
+static void test_CurrentScheduler(void)
+{
+    unsigned int ncpus;
+    unsigned int expect;
+    SYSTEM_INFO si;
+
+    expect = ~0;
+    ncpus = p_CurrentScheduler_GetNumberOfVirtualProcessors();
+    ok(ncpus == expect, "expected %x, got %x\n", expect, ncpus);
+
+    GetSystemInfo(&si);
+    expect = si.dwNumberOfProcessors;
+    ncpus = p__CurrentScheduler__GetNumberOfVirtualProcessors();
+    todo_wine ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
+    ncpus = p_CurrentScheduler_GetNumberOfVirtualProcessors();
+    todo_wine ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
 }
 
 static void test_setlocale(void)
@@ -76,5 +100,6 @@ static void test_setlocale(void)
 START_TEST(msvcr110)
 {
     if (!init()) return;
+    test_CurrentScheduler(); /* MUST be first (at least among Concurrency tests) */
     test_setlocale();
 }
