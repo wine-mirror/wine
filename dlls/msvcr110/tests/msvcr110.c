@@ -67,9 +67,9 @@ static void test_CurrentScheduler(void)
     GetSystemInfo(&si);
     expect = si.dwNumberOfProcessors;
     ncpus = p__CurrentScheduler__GetNumberOfVirtualProcessors();
-    todo_wine ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
+    ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
     ncpus = p_CurrentScheduler_GetNumberOfVirtualProcessors();
-    todo_wine ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
+    ok(ncpus == expect, "expected %u, got %u\n", expect, ncpus);
 }
 
 static void test_setlocale(void)
