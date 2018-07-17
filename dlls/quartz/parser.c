@@ -109,7 +109,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = &pParser->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
+    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
 
     if (!start)
         start = Parser_ChangeStart;

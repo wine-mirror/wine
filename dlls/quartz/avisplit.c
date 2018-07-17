@@ -794,7 +794,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         case ckidSTREAMNAME:
             TRACE("processing stream name\n");
             /* FIXME: this doesn't exactly match native version (we omit the "##)" prefix), but hey... */
-            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pChunk + 1), pChunk->cb, piOutput.achName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pChunk + 1), pChunk->cb, piOutput.achName, ARRAY_SIZE(piOutput.achName));
             break;
         case ckidSTREAMHANDLERDATA:
             FIXME("process stream handler data\n");

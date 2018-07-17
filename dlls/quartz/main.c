@@ -185,7 +185,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     if (IsEqualGUID( &IID_IClassFactory, riid ) || IsEqualGUID( &IID_IUnknown, riid))
     {
-        for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(object_creation); i++)
         {
             if (IsEqualGUID(object_creation[i].clsid, rclsid))
             {
@@ -313,7 +313,7 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
     if (!buffer)
         return 0;
 
-    res = AMGetErrorTextW(hr, errorW, sizeof(errorW)/sizeof(*errorW));
+    res = AMGetErrorTextW(hr, errorW, ARRAY_SIZE(errorW));
     return WideCharToMultiByte(CP_ACP, 0, errorW, res, buffer, maxlen, 0, 0);
 }
 

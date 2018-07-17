@@ -1322,7 +1322,7 @@ static BOOL CALLBACK get_available_monitors_proc(HMONITOR hmon, HDC hdc, LPRECT 
             info->hMon          = hmon;
             info->dwFlags       = mi.dwFlags;
 
-            lstrcpynW(info->szDevice, mi.szDevice, sizeof(info->szDevice)/sizeof(WCHAR));
+            lstrcpynW(info->szDevice, mi.szDevice, ARRAY_SIZE(info->szDevice));
 
             /* FIXME: how to get these values? */
             info->szDescription[0] = 0;
@@ -1339,7 +1339,7 @@ static BOOL CALLBACK get_available_monitors_proc(HMONITOR hmon, HDC hdc, LPRECT 
             info->hMon          = hmon;
             info->dwFlags       = mi.dwFlags;
 
-            lstrcpynW(info->szDevice, mi.szDevice, sizeof(info->szDevice)/sizeof(WCHAR));
+            lstrcpynW(info->szDevice, mi.szDevice, ARRAY_SIZE(info->szDevice));
 
             /* FIXME: how to get these values? */
             info->szDescription[0] = 0;
@@ -2958,7 +2958,7 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(VMR9DefaultAllocatorPrese
     width = This->info.dwWidth;
     height = This->info.dwHeight;
 
-    for (i = 0; i < sizeof(t_vert) / sizeof(t_vert[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(t_vert); ++i)
     {
         if (i % 2)
         {

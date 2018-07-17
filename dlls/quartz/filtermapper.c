@@ -703,7 +703,7 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
      * the + 1 is for the separator ('\\'). The -1 is
      * because CHARS_IN_GUID includes the null terminator
      */
-    nameLen = sizeof(wszDevice)/sizeof(wszDevice[0]) + CHARS_IN_GUID - 1 + 1;
+    nameLen = ARRAY_SIZE(wszDevice) + CHARS_IN_GUID - 1 + 1;
 
     if (szInstance)
         nameLen += strlenW(szInstance);

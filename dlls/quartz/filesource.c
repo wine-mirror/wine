@@ -282,7 +282,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
         {
             HKEY hkeyMajor;
             WCHAR wszMajorKeyName[CHARS_IN_GUID];
-            DWORD dwKeyNameLength = sizeof(wszMajorKeyName) / sizeof(wszMajorKeyName[0]);
+            DWORD dwKeyNameLength = ARRAY_SIZE(wszMajorKeyName);
             static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
 
             if (RegEnumKeyExW(hkeyMediaType, indexMajor, wszMajorKeyName, &dwKeyNameLength, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
@@ -304,7 +304,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                 {
                     HKEY hkeyMinor;
                     WCHAR wszMinorKeyName[CHARS_IN_GUID];
-                    DWORD dwMinorKeyNameLen = sizeof(wszMinorKeyName) / sizeof(wszMinorKeyName[0]);
+                    DWORD dwMinorKeyNameLen = ARRAY_SIZE(wszMinorKeyName);
                     WCHAR wszSourceFilterKeyName[CHARS_IN_GUID];
                     DWORD dwSourceFilterKeyNameLen = sizeof(wszSourceFilterKeyName);
                     DWORD maxValueLen;
@@ -326,7 +326,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                         DWORD dwType;
                         WCHAR wszValueName[14]; /* longest name we should encounter will be "Source Filter" */
                         LPWSTR wszPatternString = HeapAlloc(GetProcessHeap(), 0, maxValueLen);
-                        DWORD dwValueNameLen = sizeof(wszValueName) / sizeof(wszValueName[0]); /* remember this is in chars */
+                        DWORD dwValueNameLen = ARRAY_SIZE(wszValueName);
                         DWORD dwDataLen = maxValueLen; /* remember this is in bytes */
 
                         if (RegEnumValueW(hkeyMinor, indexValue, wszValueName, &dwValueNameLen, NULL, &dwType, (LPBYTE)wszPatternString, &dwDataLen) != ERROR_SUCCESS)
