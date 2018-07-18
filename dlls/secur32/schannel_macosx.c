@@ -429,7 +429,7 @@ static const struct cipher_suite cipher_suites[] = {
 static const struct cipher_suite* get_cipher_suite(SSLCipherSuite cipher_suite)
 {
     int i;
-    for (i = 0; i < sizeof(cipher_suites)/sizeof(cipher_suites[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cipher_suites); i++)
     {
         if (cipher_suites[i].suite == cipher_suite)
             return &cipher_suites[i];
@@ -767,7 +767,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
         goto fail;
     }
 
-    for(i=0; i < sizeof(protocol_priority_flags)/sizeof(*protocol_priority_flags); i++) {
+    for(i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++) {
         if(!(protocol_priority_flags[i].enable_flag & supported_protocols))
            continue;
 

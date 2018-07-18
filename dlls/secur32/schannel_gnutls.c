@@ -177,7 +177,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     }
 
     p = priority + strlen(priority);
-    for(i=0; i < sizeof(protocol_priority_flags)/sizeof(*protocol_priority_flags); i++) {
+    for(i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++) {
         *p++ = ':';
         *p++ = (cred->enabled_protocols & protocol_priority_flags[i].enable_flag) ? '+' : '-';
         strcpy(p, protocol_priority_flags[i].gnutls_flag);

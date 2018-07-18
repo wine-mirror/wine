@@ -195,7 +195,7 @@ static void read_config(void)
     if(res == ERROR_SUCCESS) {
         DWORD type, size, value;
 
-        for(i=0; i < sizeof(protocol_config_keys)/sizeof(*protocol_config_keys); i++) {
+        for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
             strcpyW(subkey_name, protocol_config_keys[i].key_name);
             strcatW(subkey_name, clientW);
             res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
@@ -229,7 +229,7 @@ static void read_config(void)
         }
     }else {
         /* No config, enable all known protocols. */
-        for(i=0; i < sizeof(protocol_config_keys)/sizeof(*protocol_config_keys); i++) {
+        for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
             if(protocol_config_keys[i].enabled)
                 enabled |= protocol_config_keys[i].prot_client_flag;
             if(protocol_config_keys[i].disabled_by_default)
@@ -986,7 +986,7 @@ static void *get_alg_name(ALG_ID id, BOOL wide)
     };
     unsigned i;
 
-    for (i = 0; i < sizeof(alg_name_map)/sizeof(alg_name_map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(alg_name_map); i++)
         if (alg_name_map[i].alg_id == id)
             return wide ? (void*)alg_name_map[i].nameW : (void*)alg_name_map[i].name;
 
@@ -1545,7 +1545,7 @@ void SECUR32_initSchannelSP(void)
         goto fail;
     }
 
-    SECUR32_addPackages(provider, sizeof(info) / sizeof(info[0]), NULL, info);
+    SECUR32_addPackages(provider, ARRAY_SIZE(info), NULL, info);
 
     return;
 
