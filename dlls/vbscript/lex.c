@@ -179,7 +179,7 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word)
 
 static int check_keywords(parser_ctx_t *ctx)
 {
-    int min = 0, max = sizeof(keywords)/sizeof(keywords[0])-1, r, i;
+    int min = 0, max = ARRAY_SIZE(keywords)-1, r, i;
 
     while(min <= max) {
         i = (min+max)/2;

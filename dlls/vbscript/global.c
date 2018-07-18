@@ -334,7 +334,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
                 return E_OUTOFMEMORY;
 
             memcpy(title_buf, vbscriptW, sizeof(vbscriptW));
-            ptr = title_buf + sizeof(vbscriptW)/sizeof(WCHAR)-1;
+            ptr = title_buf + ARRAY_SIZE(vbscriptW)-1;
 
             *ptr++ = ':';
             *ptr++ = ' ';
@@ -2446,7 +2446,7 @@ HRESULT init_global(script_ctx_t *ctx)
     HRESULT hres;
 
     ctx->global_desc.ctx = ctx;
-    ctx->global_desc.builtin_prop_cnt = sizeof(global_props)/sizeof(*global_props);
+    ctx->global_desc.builtin_prop_cnt = ARRAY_SIZE(global_props);
     ctx->global_desc.builtin_props = global_props;
 
     hres = get_typeinfo(GlobalObj_tid, &ctx->global_desc.typeinfo);
@@ -2462,7 +2462,7 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     ctx->err_desc.ctx = ctx;
-    ctx->err_desc.builtin_prop_cnt = sizeof(err_props)/sizeof(*err_props);
+    ctx->err_desc.builtin_prop_cnt = ARRAY_SIZE(err_props);
     ctx->err_desc.builtin_props = err_props;
 
     hres = get_typeinfo(ErrObj_tid, &ctx->err_desc.typeinfo);
