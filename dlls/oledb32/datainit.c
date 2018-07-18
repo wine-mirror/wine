@@ -328,8 +328,8 @@ static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
     };
     struct mode_propval *prop;
 
-    if ((prop = bsearch(src, mode_propvals, sizeof(mode_propvals) / sizeof(*mode_propvals),
-        sizeof(struct mode_propval), dbmodeprop_compare)))
+    if ((prop = bsearch(src, mode_propvals, ARRAY_SIZE(mode_propvals),
+                        sizeof(struct mode_propval), dbmodeprop_compare)))
     {
         V_VT(dest) = VT_I4;
         V_I4(dest) = prop->value;
@@ -511,7 +511,7 @@ static const struct dbproperty *get_known_dprop_descr(BSTR name)
     int min, max, n;
 
     min = 0;
-    max = sizeof(dbproperties)/sizeof(struct dbproperty) - 1;
+    max = ARRAY_SIZE(dbproperties) - 1;
 
     while (min <= max)
     {
@@ -662,7 +662,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
         WCHAR *start, *progid;
         int len;
 
-        prov += sizeof(providerW)/sizeof(WCHAR)-1;
+        prov += ARRAY_SIZE(providerW)-1;
         start = prov;
         while (*prov && *prov != ';')
             ++prov;
