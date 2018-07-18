@@ -555,7 +555,7 @@ static HRESULT WINAPI IMILBitmapImpl_GetPixelFormat(IMILBitmapSource *iface,
 
     *format = 0;
 
-    for (i = 0; i < sizeof(pixel_fmt_map)/sizeof(pixel_fmt_map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(pixel_fmt_map); i++)
     {
         if (IsEqualGUID(pixel_fmt_map[i].WIC_format, &This->pixelformat))
         {

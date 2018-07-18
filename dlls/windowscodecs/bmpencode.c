@@ -529,7 +529,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (ppIEncoderOptions)
     {
-        hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
+        hr = CreatePropertyBag2(opts, ARRAY_SIZE(opts), ppIEncoderOptions);
         if (FAILED(hr)) return hr;
     }
 

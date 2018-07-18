@@ -1441,7 +1441,7 @@ static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
 
     if (pIEncoderOptions)
     {
-        hr = IPropertyBag2_Read(pIEncoderOptions, sizeof(opts)/sizeof(opts[0]), opts, NULL, opt_values, opt_hres);
+        hr = IPropertyBag2_Read(pIEncoderOptions, ARRAY_SIZE(opts), opts, NULL, opt_values, opt_hres);
 
         if (FAILED(hr))
             return hr;
@@ -2046,7 +2046,7 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (ppIEncoderOptions)
     {
-        hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
+        hr = CreatePropertyBag2(opts, ARRAY_SIZE(opts), ppIEncoderOptions);
         if (FAILED(hr))
         {
             LeaveCriticalSection(&This->lock);
