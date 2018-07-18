@@ -21,9 +21,18 @@
 #define __BCRYPT_INTERNAL_H
 
 #include <stdarg.h>
+#ifdef HAVE_GNUTLS_CIPHER_INIT
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+#include <gnutls/abstract.h>
+#elif HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
+#include <AvailabilityMacros.h>
+#include <CommonCrypto/CommonCryptor.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
+#include "bcrypt.h"
 
 typedef struct
 {
@@ -95,5 +104,133 @@ typedef struct
 VOID WINAPI A_SHAInit(SHA_CTX *ctx);
 VOID WINAPI A_SHAUpdate(SHA_CTX *ctx, const UCHAR *buffer, UINT size);
 VOID WINAPI A_SHAFinal(SHA_CTX *ctx, PULONG result);
+
+struct buffer
+{
+    BYTE  *buffer;
+    DWORD  length;
+    DWORD  pos;
+    BOOL   error;
+};
+
+void buffer_init( struct buffer * ) DECLSPEC_HIDDEN;
+void buffer_free( struct buffer * ) DECLSPEC_HIDDEN;
+void buffer_append_asn1_r_s( struct buffer *, BYTE *, DWORD, BYTE *, DWORD ) DECLSPEC_HIDDEN;
+
+#define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
+#define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
+#define MAGIC_KEY  (('K' << 24) | ('E' << 16) | ('Y' << 8) | '0')
+struct object
+{
+    ULONG magic;
+};
+
+enum alg_id
+{
+    ALG_ID_AES,
+    ALG_ID_MD2,
+    ALG_ID_MD4,
+    ALG_ID_MD5,
+    ALG_ID_RNG,
+    ALG_ID_RSA,
+    ALG_ID_SHA1,
+    ALG_ID_SHA256,
+    ALG_ID_SHA384,
+    ALG_ID_SHA512,
+    ALG_ID_ECDSA_P256,
+    ALG_ID_ECDSA_P384,
+};
+
+enum mode_id
+{
+    MODE_ID_ECB,
+    MODE_ID_CBC,
+    MODE_ID_GCM
+};
+
+struct algorithm
+{
+    struct object hdr;
+    enum alg_id   id;
+    enum mode_id  mode;
+    BOOL          hmac;
+};
+
+#if defined(HAVE_GNUTLS_CIPHER_INIT)
+struct key_symmetric
+{
+    enum mode_id        mode;
+    ULONG               block_size;
+    gnutls_cipher_hd_t  handle;
+    UCHAR              *secret;
+    ULONG               secret_len;
+};
+
+struct key_asymmetric
+{
+    UCHAR *pubkey;
+    ULONG  pubkey_len;
+};
+
+struct key
+{
+    struct object hdr;
+    enum alg_id   alg_id;
+    union
+    {
+        struct key_symmetric  s;
+        struct key_asymmetric a;
+    } u;
+};
+#elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+struct key_symmetric
+{
+    enum mode_id   mode;
+    ULONG          block_size;
+    CCCryptorRef   ref_encrypt;
+    CCCryptorRef   ref_decrypt;
+    UCHAR         *secret;
+    ULONG          secret_len;
+};
+
+struct key_asymmetric
+{
+    UCHAR *pubkey;
+    ULONG  pubkey_len;
+};
+
+struct key
+{
+    struct object hdr;
+    enum alg_id   alg_id;
+    union
+    {
+        struct key_symmetric  s;
+        struct key_asymmetric a;
+    } u;
+};
+#else
+struct key
+{
+    struct object hdr;
+};
+#endif
+
+NTSTATUS get_alg_property( const struct algorithm *, const WCHAR *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
+
+NTSTATUS key_set_property( struct key *, const WCHAR *, UCHAR *, ULONG, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_init( struct key *, struct algorithm *, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_set_params( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_set_auth_data( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_encrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_decrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_get_tag( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
+NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;
+BOOL key_is_symmetric( struct key * ) DECLSPEC_HIDDEN;
+
+BOOL gnutls_initialize(void) DECLSPEC_HIDDEN;
+void gnutls_uninitialize(void) DECLSPEC_HIDDEN;
 
 #endif /* __BCRYPT_INTERNAL_H */

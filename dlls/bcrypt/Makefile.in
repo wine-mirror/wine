@@ -5,6 +5,7 @@ EXTRAINCL = $(GNUTLS_CFLAGS)
 
 C_SRCS = \
 	bcrypt_main.c \
+	gnutls.c \
 	md2.c \
 	sha256.c \
 	sha512.c
