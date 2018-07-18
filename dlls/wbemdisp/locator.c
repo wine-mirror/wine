@@ -1641,7 +1641,7 @@ static HRESULT WINAPI services_DeleteAsync(
 static BSTR build_query_string( const WCHAR *class )
 {
     static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
-    UINT len = strlenW(class) + sizeof(selectW) / sizeof(selectW[0]);
+    UINT len = strlenW(class) + ARRAY_SIZE(selectW);
     BSTR ret;
 
     if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
@@ -2074,7 +2074,7 @@ static BSTR build_resource_string( BSTR server, BSTR namespace )
     if (server && *server) len_server = strlenW( server );
     else len_server = 1;
     if (namespace && *namespace) len_namespace = strlenW( namespace );
-    else len_namespace = sizeof(defaultW) / sizeof(defaultW[0]) - 1;
+    else len_namespace = ARRAY_SIZE(defaultW) - 1;
 
     if (!(ret = SysAllocStringLen( NULL, 2 + len_server + 1 + len_namespace ))) return NULL;
 
