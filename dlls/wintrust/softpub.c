@@ -522,11 +522,9 @@ static LPCSTR filetime_to_str(const FILETIME *time)
 
     if (!time) return NULL;
 
-    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
-     sizeof(dateFmt) / sizeof(dateFmt[0]));
+    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt, ARRAY_SIZE(dateFmt));
     FileTimeToSystemTime(time, &sysTime);
-    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
-     sizeof(date) / sizeof(date[0]));
+    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date, ARRAY_SIZE(date));
     return date;
 }
 
