@@ -652,12 +652,12 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
     if (whole_rgn)
     {
-        RECT client, update;
+        RECT client, window, update;
         INT type;
 
         /* check if update rgn overlaps with nonclient area */
         type = GetRgnBox( whole_rgn, &update );
-        WIN_GetRectangles( hwnd, COORDS_SCREEN, 0, &client );
+        WIN_GetRectangles( hwnd, COORDS_SCREEN, &window, &client );
 
         if ((*flags & UPDATE_NONCLIENT) ||
             update.left < client.left || update.top < client.top ||
@@ -667,15 +667,10 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
             CombineRgn( client_rgn, client_rgn, whole_rgn, RGN_AND );
 
             /* check if update rgn contains complete nonclient area */
-            if (type == SIMPLEREGION)
+            if (type == SIMPLEREGION && EqualRect( &window, &update ))
             {
-                RECT window;
-                GetWindowRect( hwnd, &window );
-                if (EqualRect( &window, &update ))
-                {
-                    DeleteObject( whole_rgn );
-                    whole_rgn = (HRGN)1;
-                }
+                DeleteObject( whole_rgn );
+                whole_rgn = (HRGN)1;
             }
         }
         else
