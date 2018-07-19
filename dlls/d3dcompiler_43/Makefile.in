@@ -1,5 +1,4 @@
 MODULE    = d3dcompiler_43.dll
-IMPORTLIB = d3dcompiler
 IMPORTS   = dxguid uuid
 EXTRALIBS = -lwpp
 
