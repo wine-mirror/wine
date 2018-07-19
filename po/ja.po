@@ -57,7 +57,7 @@ msgstr "削除(&R)"
 msgid "Support Information"
 msgstr "サポート情報"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:65 comctl32.rc:55 comdlg32.rc:232
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
 #: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:359 comdlg32.rc:398
 #: comdlg32.rc:452 credui.rc:52 cryptui.rc:263 cryptui.rc:275 cryptui.rc:365
 #: dinput.rc:46 ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49
@@ -137,8 +137,8 @@ msgstr ""
 msgid "&Install"
 msgstr "インストール(&I)"
 
-#: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:40 comctl32.rc:66
-#: comctl32.rc:81 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
+#: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:40 comctl32.rc:72
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
 #: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
@@ -308,48 +308,48 @@ msgstr "未圧縮"
 msgid "Canceling..."
 msgstr "キャンセル中..."
 
-#: comctl32.rc:62 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
 msgstr "%sのプロパティ"
 
-#: comctl32.rc:67 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:264
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: comctl32.rc:68 comctl32.rc:82 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
 msgid "Help"
 msgstr "ヘルプ"
 
-#: comctl32.rc:75
+#: comctl32.rc:81
 msgid "Wizard"
 msgstr "ウィザード"
 
-#: comctl32.rc:78
+#: comctl32.rc:84
 msgid "< &Back"
 msgstr "< 戻る(&B)"
 
-#: comctl32.rc:79
+#: comctl32.rc:85
 msgid "&Next >"
 msgstr "次へ(&N) >"
 
-#: comctl32.rc:80
+#: comctl32.rc:86
 msgid "Finish"
 msgstr "完了"
 
-#: comctl32.rc:91
+#: comctl32.rc:97
 msgid "Customize Toolbar"
 msgstr "ツール バーのカスタマイズ"
 
-#: comctl32.rc:94 comctl32.rc:57 cryptui.rc:351 ieframe.rc:43 oleview.rc:83
+#: comctl32.rc:100 comctl32.rc:57 cryptui.rc:351 ieframe.rc:43 oleview.rc:83
 #: oleview.rc:187 oleview.rc:200 oleview.rc:212 taskmgr.rc:139
 msgid "&Close"
 msgstr "閉じる(&C)"
 
-#: comctl32.rc:95
+#: comctl32.rc:101
 msgid "R&eset"
 msgstr "リセット(R&)"
 
-#: comctl32.rc:96 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
+#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
 #: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:361 comdlg32.rc:479
 #: comdlg32.rc:505 comdlg32.rc:528 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96
 #: shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72
@@ -359,27 +359,27 @@ msgstr "リセット(R&)"
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
-#: comctl32.rc:97
+#: comctl32.rc:103
 msgid "Move &Up"
 msgstr "上へ(&U)"
 
-#: comctl32.rc:98
+#: comctl32.rc:104
 msgid "Move &Down"
 msgstr "下へ(&D)"
 
-#: comctl32.rc:99
+#: comctl32.rc:105
 msgid "A&vailable buttons:"
 msgstr "利用可能なボタン(&V):"
 
-#: comctl32.rc:101
+#: comctl32.rc:107
 msgid "&Add ->"
 msgstr "追加(&A) ->"
 
-#: comctl32.rc:102
+#: comctl32.rc:108
 msgid "<- &Remove"
 msgstr "<- 削除(&R)"
 
-#: comctl32.rc:103
+#: comctl32.rc:109
 msgid "&Toolbar buttons:"
 msgstr "ツール バーのボタン(&T):"
 
@@ -403,6 +403,18 @@ msgstr "いいえ(&N)"
 #: comctl32.rc:54 user32.rc:82
 msgid "&Retry"
 msgstr "再試行(&R)"
+
+#: comctl32.rc:62
+#, fuzzy
+#| msgid "Hide &Tabs"
+msgid "Hide details"
+msgstr "タブを隠す(&T)"
+
+#: comctl32.rc:63
+#, fuzzy
+#| msgid "Details"
+msgid "See details"
+msgstr "詳細"
 
 #: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180

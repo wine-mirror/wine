@@ -107,6 +107,10 @@ extern HBRUSH  COMCTL32_hPattern55AABrush DECLSPEC_HIDDEN;
 #define IDS_BUTTON_CANCEL 3004
 #define IDS_BUTTON_CLOSE  3005
 
+/* Task dialog expando control default text */
+#define IDS_TD_EXPANDED   3020
+#define IDS_TD_COLLAPSED  3021
+
 #define WM_SYSTIMER     0x0118
 
 enum combobox_state_flags
