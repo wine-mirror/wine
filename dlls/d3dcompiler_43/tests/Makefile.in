@@ -1,5 +1,5 @@
 TESTDLL   = d3dcompiler_43.dll
-IMPORTS   = d3dcompiler d3d9 d3dx9 user32
+IMPORTS   = d3d9 d3dx9 user32
 
 C_SRCS = \
 	asm.c \

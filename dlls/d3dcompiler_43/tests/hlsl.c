@@ -22,6 +22,8 @@
 
 #include <math.h>
 
+static pD3DCompile ppD3DCompile;
+
 struct vertex
 {
     float x, y, z;
@@ -134,7 +136,7 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned: %08x\n", hr);
 
     /* Create a simple vertex shader to just pass through the values */
-    hr = D3DCompile(vshader_passthru_hlsl, strlen(vshader_passthru_hlsl), NULL,
+    hr = ppD3DCompile(vshader_passthru_hlsl, strlen(vshader_passthru_hlsl), NULL,
             NULL, NULL, "vshader", "vs_1_1", 0, 0, &compiled, &errors);
     if (FAILED(hr))
     {
@@ -173,7 +175,7 @@ static IDirect3DPixelShader9 *compile_pixel_shader9(IDirect3DDevice9 *device, co
     IDirect3DPixelShader9 *pshader;
     HRESULT hr;
 
-    hr = D3DCompile(shader, strlen(shader), NULL, NULL,
+    hr = ppD3DCompile(shader, strlen(shader), NULL, NULL,
             NULL, "test", profile, /* test is the name of the entry point of our shader */
             0, 0, &compiled, &errors);
     ok(hr == D3D_OK, "Pixel shader %s compilation failed: %s\n", shader,
@@ -599,7 +601,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob *compiled = NULL, *errors = NULL;
     HRESULT hr;
 
-    hr = D3DCompile(undefined_variable_shader, strlen(undefined_variable_shader), NULL, NULL, NULL,
+    hr = ppD3DCompile(undefined_variable_shader, strlen(undefined_variable_shader), NULL, NULL, NULL,
             "test", "ps_2_0", 0, 0, &compiled, &errors);
     ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with undefined variable\n");
     ok(errors != NULL, "No errors returned for a shader with undefined variables\n");
@@ -608,7 +610,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob_Release(errors);
     errors = NULL;
 
-    hr = D3DCompile(invalid_swizzle_shader, strlen(invalid_swizzle_shader), NULL, NULL, NULL,
+    hr = ppD3DCompile(invalid_swizzle_shader, strlen(invalid_swizzle_shader), NULL, NULL, NULL,
             "test","ps_2_0", 0, 0, &compiled, &errors);
     ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid swizzle mask\n");
     ok(errors != NULL, "No errors returned for a shader with an invalid swizzle mask\n");
@@ -617,7 +619,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob_Release(errors);
     errors = NULL;
 
-    hr = D3DCompile(invalid_conversion_shader, strlen(invalid_conversion_shader), NULL, NULL, NULL,
+    hr = ppD3DCompile(invalid_conversion_shader, strlen(invalid_conversion_shader), NULL, NULL, NULL,
              "test", "ps_2_0", 0, 0, &compiled, &errors);
     ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid type "
             "conversion\n");
@@ -627,7 +629,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob_Release(errors);
     errors = NULL;
 
-    hr = D3DCompile(invalid_syntax_shader, strlen(invalid_syntax_shader), NULL, NULL, NULL, "test",
+    hr = ppD3DCompile(invalid_syntax_shader, strlen(invalid_syntax_shader), NULL, NULL, NULL, "test",
             "ps_2_0", 0, 0, &compiled, &errors);
     ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with blatantly invalid "
             "syntax\n");
@@ -637,7 +639,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob_Release(errors);
     errors = NULL;
 
-    hr = D3DCompile(invalid_identifiers_shader, strlen(invalid_identifiers_shader), NULL, NULL,
+    hr = ppD3DCompile(invalid_identifiers_shader, strlen(invalid_identifiers_shader), NULL, NULL,
             NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
     ok(hr != D3D_OK, "Pixel shader compilation successful on a shader with invalid variable and "
             "function names\n");
@@ -649,6 +651,16 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ID3D10Blob_Release(errors);
 }
 
+static BOOL load_d3dcompiler(void)
+{
+    HMODULE module;
+
+    if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
+
+    ppD3DCompile = (void*)GetProcAddress(module, "D3DCompile");
+    return TRUE;
+}
+
 START_TEST(hlsl)
 {
     D3DCAPS9 caps;
@@ -657,6 +669,12 @@ START_TEST(hlsl)
     IDirect3DVertexDeclaration9 *vdeclaration;
     IDirect3DVertexBuffer9 *quad_geometry;
     IDirect3DVertexShader9 *vshader_passthru;
+
+    if (!load_d3dcompiler())
+    {
+        win_skip("Could not load d3dcompiler_43.dll\n");
+        return;
+    }
 
     device = init_d3d9(&vdeclaration, &quad_geometry, &vshader_passthru);
     if (!device) return;

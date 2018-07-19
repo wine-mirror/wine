@@ -38,6 +38,8 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
+static typeof(D3DReflect) *pD3DReflect;
+
 /* Creator string for comparison - Version 9.29.952.3111 (43) */
 static DWORD shader_creator[] = {
 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d,
@@ -79,7 +81,7 @@ static void test_reflection_references(void)
     ID3D10ShaderReflection *ref10;
     ID3D10ShaderReflection1 *ref10_1;
 
-    hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed, got %x, expected %x\n", hr, S_OK);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D11ShaderReflection, (void **)&ref11_test);
@@ -98,35 +100,35 @@ static void test_reflection_references(void)
     ok(count == 0, "Release failed %u\n", count);
 
     /* check invalid cases */
-    hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
+    hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
     ok(hr == E_NOINTERFACE, "D3DReflect failed, got %x, expected %x\n", hr, E_NOINTERFACE);
 
-    hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
+    hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == E_NOINTERFACE, "D3DReflect failed, got %x, expected %x\n", hr, E_NOINTERFACE);
 
-    hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
+    hr = pD3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(NULL, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
 
     /* returns different errors with different sizes */
-    hr = D3DReflect(test_reflection_blob, 31, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
+    hr = pD3DReflect(test_reflection_blob, 31, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
+    hr = pD3DReflect(test_reflection_blob,  32, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
 
-    hr = D3DReflect(test_reflection_blob, test_reflection_blob[6]-1, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
+    hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6]-1, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
 
-    hr = D3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_blob,  32, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
 
-    hr = D3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
 }
 
@@ -295,7 +297,7 @@ static void test_reflection_desc_vs(void)
     UINT ret;
     unsigned int i;
 
-    hr = D3DReflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, NULL);
@@ -582,7 +584,7 @@ static void test_reflection_desc_ps(void)
     UINT ret;
     unsigned int i;
 
-    hr = D3DReflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
@@ -901,7 +903,7 @@ static void test_reflection_desc_ps_output(void)
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_output_result); ++i)
     {
-        hr = D3DReflect(test_reflection_desc_ps_output_blob[i], test_reflection_desc_ps_output_blob[i][6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+        hr = pD3DReflect(test_reflection_desc_ps_output_blob[i], test_reflection_desc_ps_output_blob[i][6], &IID_ID3D11ShaderReflection, (void **)&ref11);
         ok(hr == S_OK, "(%u): D3DReflect failed %x\n", i, hr);
 
         pdesc = &test_reflection_desc_ps_output_result[i];
@@ -1013,7 +1015,7 @@ static void test_reflection_bound_resources(void)
     const D3D11_SHADER_INPUT_BIND_DESC *pdesc;
     unsigned int i;
 
-    hr = D3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     /* check invalid cases */
@@ -1230,7 +1232,7 @@ static void test_reflection_constant_buffer(void)
     unsigned int i;
     LPCSTR string;
 
-    hr = D3DReflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
@@ -1505,8 +1507,24 @@ static void test_reflection_constant_buffer(void)
     ok(count == 0, "Release failed %u\n", count);
 }
 
+static BOOL load_d3dcompiler(void)
+{
+    HMODULE module;
+
+    if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
+
+    pD3DReflect = (void*)GetProcAddress(module, "D3DReflect");
+    return TRUE;
+}
+
 START_TEST(reflection)
 {
+    if (!load_d3dcompiler())
+    {
+        win_skip("Could not load d3dcompiler_43.dll\n");
+        return;
+    }
+
     test_reflection_references();
     test_reflection_desc_vs();
     test_reflection_desc_ps();
