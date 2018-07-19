@@ -458,7 +458,12 @@ static char *get_lib_dir( struct options *opts )
         while (p > buffer && p[-1] == '/') p--;
         strcpy( p, libwine );
         if (check_platform( opts, buffer )) goto found;
-        if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 ))) p -= 2;
+        if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 )))
+        {
+            p -= 2;
+            strcpy( p, libwine );
+            if (check_platform( opts, buffer )) goto found;
+        }
         if (opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64)
         {
             strcpy( p, "32" );
