@@ -62,6 +62,7 @@ struct taskdialog_info
     INT radio_button_count;
     HWND *command_links;
     INT command_link_count;
+    HWND expanded_info;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -74,6 +75,7 @@ struct taskdialog_info
         LONG v_spacing;
     } m;
     INT selected_radio_id;
+    BOOL expanded;
 };
 
 struct button_layout_info
@@ -530,6 +532,18 @@ static void taskdialog_add_command_links(struct taskdialog_info *dialog_info)
     }
 }
 
+static void taskdialog_add_expanded_info(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+
+    if (!taskconfig->pszExpandedInformation) return;
+
+    dialog_info->expanded = taskconfig->dwFlags & TDF_EXPANDED_BY_DEFAULT;
+    dialog_info->expanded_info = taskdialog_create_label(dialog_info, taskconfig->pszExpandedInformation,
+                                                         dialog_info->font, taskdialog_hyperlink_enabled(dialog_info));
+    ShowWindow(dialog_info->expanded_info, dialog_info->expanded ? SW_SHOWDEFAULT : SW_HIDE);
+}
+
 static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT_PTR id, const WCHAR *text,
                                   BOOL custom_button)
 {
@@ -643,6 +657,11 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
 
     /* Content */
     taskdialog_label_layout(dialog_info, dialog_info->content, main_icon_right, dialog_width, &dialog_height, syslink);
+
+    /* Expanded information */
+    if (!(taskconfig->dwFlags & TDF_EXPAND_FOOTER_AREA) && dialog_info->expanded)
+        taskdialog_label_layout(dialog_info, dialog_info->expanded_info, main_icon_right, dialog_width, &dialog_height,
+                                syslink);
 
     /* Progress bar */
     if (dialog_info->progress_bar)
@@ -763,6 +782,10 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     Free(button_layout_infos);
     Free(line_widths);
 
+    /* Expanded information */
+    if ((taskconfig->dwFlags & TDF_EXPAND_FOOTER_AREA) && dialog_info->expanded)
+        taskdialog_label_layout(dialog_info, dialog_info->expanded_info, 0, dialog_width, &dialog_height, syslink);
+
     /* Add height for spacing, title height and frame height */
     dialog_height += v_spacing;
     dialog_height += GetSystemMetrics(SM_CYCAPTION);
@@ -812,6 +835,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_main_icon(dialog_info);
     taskdialog_add_main_instruction(dialog_info);
     taskdialog_add_content(dialog_info);
+    taskdialog_add_expanded_info(dialog_info);
     taskdialog_add_progress_bar(dialog_info);
     taskdialog_add_radio_buttons(dialog_info);
     taskdialog_add_command_links(dialog_info);
@@ -926,7 +950,8 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         {
             PNMLINK pnmLink = (PNMLINK)lParam;
             HWND hwndFrom = pnmLink->hdr.hwndFrom;
-            if ((taskdialog_hyperlink_enabled(dialog_info)) && (hwndFrom == dialog_info->content)
+            if ((taskdialog_hyperlink_enabled(dialog_info))
+                && (hwndFrom == dialog_info->content || hwndFrom == dialog_info->expanded_info)
                 && (pnmLink->hdr.code == NM_CLICK || pnmLink->hdr.code == NM_RETURN))
             {
                 taskdialog_notify(dialog_info, TDN_HYPERLINK_CLICKED, 0, (LPARAM)pnmLink->item.szUrl);
