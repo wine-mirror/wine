@@ -15630,9 +15630,6 @@ int __cdecl tr2_sys__Rename_wchar(WCHAR const* old_path, WCHAR const* new_path)
 {
     TRACE("(%s %s)\n", debugstr_w(old_path), debugstr_w(new_path));
 
-    if(!old_path || !new_path)
-        return ERROR_INVALID_PARAMETER;
-
     if(MoveFileExW(old_path, new_path, MOVEFILE_COPY_ALLOWED))
         return ERROR_SUCCESS;
     return GetLastError();
