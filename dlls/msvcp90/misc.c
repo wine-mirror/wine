@@ -391,7 +391,7 @@ unsigned short __cdecl wctype(const char *property)
     };
     unsigned int i;
 
-    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(properties); i++)
         if(!strcmp(property, properties[i].name))
             return properties[i].mask;
 
@@ -2440,7 +2440,7 @@ void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*
 
     TRACE("(%p %lu)\n", this, idx);
 
-    if(idx < sizeof(exceptions)/sizeof(exceptions[0]))
+    if(idx < ARRAY_SIZE(exceptions))
         throw_exception(exceptions[idx].type, exceptions[idx].msg);
 }
 #endif
@@ -2463,7 +2463,7 @@ const char* __cdecl _Syserror_map(int err)
 
     TRACE("(%d)\n", err);
 
-    for(i=0; i<sizeof(syserror_map)/sizeof(syserror_map[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(syserror_map); i++)
     {
         if(syserror_map[i].err == err)
             return syserror_map[i].str;
