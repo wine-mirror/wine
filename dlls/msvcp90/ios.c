@@ -8823,9 +8823,6 @@ fpos_mbstatet* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpo
     if(basic_istream_char_sentry_create(this, TRUE)) {
         basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
                 ret, 0, SEEKDIR_cur, OPENMODE_in);
-
-        if(ret->off==-1 && ret->pos==0 && MBSTATET_TO_INT(&ret->state)==0)
-            basic_ios_char_setstate(base, IOSTATE_failbit);
     }else {
         ret->off = -1;
         ret->pos = 0;
@@ -8842,9 +8839,6 @@ fpos_mbstatet* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpo
 
     basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
             ret, 0, SEEKDIR_cur, OPENMODE_in);
-
-    if(ret->off==-1 && ret->pos==0 && MBSTATET_TO_INT(&ret->state)==0)
-        basic_ios_char_setstate(base, IOSTATE_failbit);
 #endif
 
     return ret;
@@ -10398,9 +10392,6 @@ fpos_mbstatet* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, f
     if(basic_istream_wchar_sentry_create(this, TRUE)) {
         basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
                 ret, 0, SEEKDIR_cur, OPENMODE_in);
-
-        if(ret->off==-1 && ret->pos==0 && MBSTATET_TO_INT(&ret->state)==0)
-            basic_ios_wchar_setstate(base, IOSTATE_failbit);
     }else {
         ret->off = -1;
         ret->pos = 0;
@@ -10417,8 +10408,6 @@ fpos_mbstatet* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, f
 
     basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
             ret, 0, SEEKDIR_cur, OPENMODE_in);
-    if(ret->off==-1 && ret->pos==0 && MBSTATET_TO_INT(&ret->state)==0)
-        basic_ios_wchar_setstate(base, IOSTATE_failbit);
 #endif
     return ret;
 }
