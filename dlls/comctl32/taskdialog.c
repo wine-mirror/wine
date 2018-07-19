@@ -68,6 +68,7 @@ struct taskdialog_info
     HWND expando_button;
     HWND verification_box;
     HWND footer_icon;
+    HWND footer_text;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -737,6 +738,12 @@ static void taskdialog_add_footer_icon(struct taskdialog_info *dialog_info)
     taskdialog_set_icon(dialog_info, TDIE_ICON_FOOTER, dialog_info->taskconfig->u2.hFooterIcon);
 }
 
+static void taskdialog_add_footer_text(struct taskdialog_info *dialog_info)
+{
+    dialog_info->footer_text = taskdialog_create_label(dialog_info, dialog_info->taskconfig->pszFooter,
+                                                       dialog_info->font, taskdialog_hyperlink_enabled(dialog_info));
+}
+
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
                                     LONG *dialog_height, BOOL syslink)
 {
@@ -766,6 +773,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     struct button_layout_info *button_layout_infos;
     LONG button_min_width, button_height;
     LONG *line_widths, line_count, align;
+    LONG footer_icon_right, footer_icon_bottom;
     LONG x, y;
     SIZE size;
     INT i;
@@ -952,6 +960,8 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     Free(line_widths);
 
     /* Footer icon */
+    footer_icon_right = 0;
+    footer_icon_bottom = dialog_height;
     if (dialog_info->footer_icon)
     {
         x = h_spacing;
@@ -959,8 +969,14 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         size.cx = GetSystemMetrics(SM_CXSMICON);
         size.cy = GetSystemMetrics(SM_CYSMICON);
         SetWindowPos(dialog_info->footer_icon, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
-        dialog_height = y + size.cy;
+        footer_icon_right = x + size.cx;
+        footer_icon_bottom = y + size.cy;
     }
+
+    /* Footer text */
+    taskdialog_label_layout(dialog_info, dialog_info->footer_text, footer_icon_right, dialog_width, &dialog_height,
+                            syslink);
+    dialog_height = max(dialog_height, footer_icon_bottom);
 
     /* Expanded information */
     if ((taskconfig->dwFlags & TDF_EXPAND_FOOTER_AREA) && dialog_info->expanded)
@@ -1058,6 +1074,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_verification_box(dialog_info);
     taskdialog_add_buttons(dialog_info);
     taskdialog_add_footer_icon(dialog_info);
+    taskdialog_add_footer_text(dialog_info);
 
     /* Set default button */
     if (!dialog_info->default_button && dialog_info->command_links)
@@ -1184,7 +1201,8 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             PNMLINK pnmLink = (PNMLINK)lParam;
             HWND hwndFrom = pnmLink->hdr.hwndFrom;
             if ((taskdialog_hyperlink_enabled(dialog_info))
-                && (hwndFrom == dialog_info->content || hwndFrom == dialog_info->expanded_info)
+                && (hwndFrom == dialog_info->content || hwndFrom == dialog_info->expanded_info
+                    || hwndFrom == dialog_info->footer_text)
                 && (pnmLink->hdr.code == NM_CLICK || pnmLink->hdr.code == NM_RETURN))
             {
                 taskdialog_notify(dialog_info, TDN_HYPERLINK_CLICKED, 0, (LPARAM)pnmLink->item.szUrl);
