@@ -1428,6 +1428,10 @@ static void test_istream_tellg(void)
         ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
         ok(tpos.pos == 0, "wrong position, expected = 0 found = %s\n", wine_dbgstr_longlong(tpos.pos));
         ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
+        if(tests[i].seekoff == -1) {
+            ok(ss.basic_ios.base.state == IOSTATE_goodbit,
+                    "ss.basic_ios.base.state = %x\n", ss.basic_ios.base.state);
+        }
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
         call_func1(p_basic_string_char_dtor, &str);
@@ -1453,6 +1457,10 @@ static void test_istream_tellg(void)
         ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
         ok(tpos.pos == 0, "wrong position, expected = 0 found = %s\n", wine_dbgstr_longlong(tpos.pos));
         ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
+        if(tests[i].seekoff == -1) {
+            ok(ss.basic_ios.base.state == IOSTATE_goodbit,
+                    "ss.basic_ios.base.state = %x\n", ss.basic_ios.base.state);
+        }
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
         call_func1(p_basic_string_wchar_dtor, &wstr);
