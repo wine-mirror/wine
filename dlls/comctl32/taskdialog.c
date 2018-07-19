@@ -67,6 +67,7 @@ struct taskdialog_info
     HWND expanded_info;
     HWND expando_button;
     HWND verification_box;
+    HWND footer_icon;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -446,17 +447,24 @@ static ULONG_PTR taskdialog_get_standard_icon(LPCWSTR icon)
 static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element, HICON icon)
 {
     DWORD flags = dialog_info->taskconfig->dwFlags;
+    INT cx = 0, cy = 0;
     HICON hicon;
 
     if (!icon) return;
 
-    if ((flags & TDF_USE_HICON_MAIN) && element == TDIE_ICON_MAIN)
+    if (((flags & TDF_USE_HICON_MAIN) && element == TDIE_ICON_MAIN)
+        || ((flags & TDF_USE_HICON_FOOTER) && element == TDIE_ICON_FOOTER))
         hicon = icon;
     else
     {
-        hicon = LoadImageW(dialog_info->taskconfig->hInstance, (LPCWSTR)icon, IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+        if (element == TDIE_ICON_FOOTER)
+        {
+            cx = GetSystemMetrics(SM_CXSMICON);
+            cy = GetSystemMetrics(SM_CYSMICON);
+        }
+        hicon = LoadImageW(dialog_info->taskconfig->hInstance, (LPCWSTR)icon, IMAGE_ICON, cx, cy, LR_SHARED | LR_DEFAULTSIZE);
         if (!hicon)
-            hicon = LoadImageW(NULL, (LPCWSTR)taskdialog_get_standard_icon((LPCWSTR)icon), IMAGE_ICON, 0, 0,
+            hicon = LoadImageW(NULL, (LPCWSTR)taskdialog_get_standard_icon((LPCWSTR)icon), IMAGE_ICON, cx, cy,
                                LR_SHARED | LR_DEFAULTSIZE);
     }
 
@@ -467,6 +475,8 @@ static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element
         SendMessageW(dialog_info->hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hicon);
         SendMessageW(dialog_info->main_icon, STM_SETICON, (WPARAM)hicon, 0);
     }
+    else if (element == TDIE_ICON_FOOTER)
+        SendMessageW(dialog_info->footer_icon, STM_SETICON, (WPARAM)hicon, 0);
 }
 
 static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialog_info)
@@ -718,6 +728,15 @@ static void taskdialog_add_buttons(struct taskdialog_info *dialog_info)
     dialog_info->button_count = count;
 }
 
+static void taskdialog_add_footer_icon(struct taskdialog_info *dialog_info)
+{
+    if (!dialog_info->taskconfig->u2.hFooterIcon) return;
+
+    dialog_info->footer_icon =
+        CreateWindowW(WC_STATICW, NULL, WS_CHILD | WS_VISIBLE | SS_ICON, 0, 0, 0, 0, dialog_info->hwnd, NULL, 0, 0);
+    taskdialog_set_icon(dialog_info, TDIE_ICON_FOOTER, dialog_info->taskconfig->u2.hFooterIcon);
+}
+
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
                                     LONG *dialog_height, BOOL syslink)
 {
@@ -932,6 +951,17 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     Free(button_layout_infos);
     Free(line_widths);
 
+    /* Footer icon */
+    if (dialog_info->footer_icon)
+    {
+        x = h_spacing;
+        y = dialog_height + v_spacing;
+        size.cx = GetSystemMetrics(SM_CXSMICON);
+        size.cy = GetSystemMetrics(SM_CYSMICON);
+        SetWindowPos(dialog_info->footer_icon, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        dialog_height = y + size.cy;
+    }
+
     /* Expanded information */
     if ((taskconfig->dwFlags & TDF_EXPAND_FOOTER_AREA) && dialog_info->expanded)
         taskdialog_label_layout(dialog_info, dialog_info->expanded_info, 0, dialog_width, &dialog_height, syslink);
@@ -1027,6 +1057,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_expando_button(dialog_info);
     taskdialog_add_verification_box(dialog_info);
     taskdialog_add_buttons(dialog_info);
+    taskdialog_add_footer_icon(dialog_info);
 
     /* Set default button */
     if (!dialog_info->default_button && dialog_info->command_links)
