@@ -229,6 +229,48 @@ static const struct message_info msg_return_press_negative_id_radio_button[] =
     { 0 }
 };
 
+static const struct message_info msg_return_default_verification_unchecked[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
+static const struct message_info msg_return_default_verification_checked[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
+static const struct message_info msg_uncheck_verification[] =
+{
+    { TDM_CLICK_VERIFICATION, FALSE, 0 },
+    { 0 }
+};
+
+static const struct message_info msg_return_verification_unchecked[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_uncheck_verification },
+    { TDN_VERIFICATION_CLICKED, FALSE, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
+static const struct message_info msg_check_verification[] =
+{
+    { TDM_CLICK_VERIFICATION, TRUE, 0 },
+    { 0 }
+};
+
+static const struct message_info msg_return_verification_checked[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_check_verification },
+    { TDN_VERIFICATION_CLICKED, TRUE, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
 static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct message *msg)
 {
     msg->message = WM_TD_CALLBACK;
@@ -239,17 +281,18 @@ static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct
     msg->stage = 0;
 }
 
-#define run_test(info, expect_button, expect_radio_button, seq, context) \
-        run_test_(info, expect_button, expect_radio_button, seq, context, \
-                  ARRAY_SIZE(seq) - 1, __FILE__, __LINE__)
+#define run_test(info, expect_button, expect_radio_button, verification_checked, seq, context) \
+        run_test_(info, expect_button, expect_radio_button, verification_checked, seq, context, \
+                   ARRAY_SIZE(seq) - 1, __FILE__, __LINE__)
 
-static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radio_button,
+static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radio_button, BOOL verification_checked,
                       const struct message_info *test_messages, const char *context, int test_messages_len,
                       const char *file, int line)
 {
     struct message *msg, *msg_start;
     int ret_button = 0;
     int ret_radio = 0;
+    BOOL ret_verification = FALSE;
     HRESULT hr;
     int i;
 
@@ -266,7 +309,7 @@ static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radi
     current_message_info = test_messages;
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    hr = pTaskDialogIndirect(info, &ret_button, &ret_radio, NULL);
+    hr = pTaskDialogIndirect(info, &ret_button, &ret_radio, &ret_verification);
     ok_(file, line)(hr == S_OK, "TaskDialogIndirect() failed, got %#x.\n", hr);
 
     ok_sequence_(sequences, TASKDIALOG_SEQ_INDEX, msg_start, context, FALSE, file, line);
@@ -331,7 +374,7 @@ static void test_callback(void)
     info.pfCallback = taskdialog_callback_proc;
     info.lpCallbackData = test_ref_data;
 
-    run_test(&info, IDOK, 0, msg_return_press_ok, "Press VK_RETURN.");
+    run_test(&info, IDOK, 0, FALSE, msg_return_press_ok, "Press VK_RETURN.");
 }
 
 static void test_buttons(void)
@@ -376,16 +419,16 @@ static void test_buttons(void)
     info.nDefaultButton = 0; /* Should default to first created button */
     info.dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_YES_BUTTON | TDCBF_NO_BUTTON
             | TDCBF_CANCEL_BUTTON | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
-    run_test(&info, IDOK, 0, msg_return_press_ok, "default button: unset default");
+    run_test(&info, IDOK, 0, FALSE, msg_return_press_ok, "default button: unset default");
     info.dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON
             | TDCBF_CANCEL_BUTTON | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
-    run_test(&info, IDYES, 0, msg_return_press_yes, "default button: unset default");
+    run_test(&info, IDYES, 0, FALSE, msg_return_press_yes, "default button: unset default");
     info.dwCommonButtons = TDCBF_NO_BUTTON | TDCBF_CANCEL_BUTTON | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
-    run_test(&info, IDNO, 0, msg_return_press_no, "default button: unset default");
+    run_test(&info, IDNO, 0, FALSE, msg_return_press_no, "default button: unset default");
     info.dwCommonButtons = TDCBF_CANCEL_BUTTON | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
-    run_test(&info, IDRETRY, 0, msg_return_press_retry, "default button: unset default");
+    run_test(&info, IDRETRY, 0, FALSE, msg_return_press_retry, "default button: unset default");
     info.dwCommonButtons = TDCBF_CANCEL_BUTTON | TDCBF_CLOSE_BUTTON;
-    run_test(&info, IDCANCEL, 0, msg_return_press_cancel, "default button: unset default");
+    run_test(&info, IDCANCEL, 0, FALSE, msg_return_press_cancel, "default button: unset default");
 
     /* Custom buttons could be command links */
     for (i = 0; i < ARRAY_SIZE(command_link_flags); i++)
@@ -396,30 +439,30 @@ static void test_buttons(void)
         info.nDefaultButton = 0xff; /* Random ID, should also default to first created button */
         info.cButtons = TEST_NUM_BUTTONS;
         info.pButtons = custom_buttons;
-        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+        run_test(&info, ID_START_BUTTON, 0, FALSE, msg_return_press_custom1,
                  "default button: invalid default, with common buttons - 1");
 
         info.nDefaultButton = -1; /* Should work despite button ID -1 */
-        run_test(&info, -1, 0, msg_return_press_custom10, "default button: invalid default, with common buttons - 2");
+        run_test(&info, -1, 0, FALSE, msg_return_press_custom10, "default button: invalid default, with common buttons - 2");
 
         info.nDefaultButton = -2; /* Should also default to first created button */
-        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+        run_test(&info, ID_START_BUTTON, 0, FALSE, msg_return_press_custom1,
                  "default button: invalid default, with common buttons - 3");
 
         /* Test with only custom buttons and invalid default ID */
         info.dwCommonButtons = 0;
-        run_test(&info, ID_START_BUTTON, 0, msg_return_press_custom1,
+        run_test(&info, ID_START_BUTTON, 0, FALSE, msg_return_press_custom1,
                  "default button: invalid default, no common buttons");
 
         /* Test with common and custom buttons and valid default ID */
         info.dwCommonButtons = TDCBF_OK_BUTTON | TDCBF_YES_BUTTON | TDCBF_NO_BUTTON | TDCBF_CANCEL_BUTTON
                                | TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON;
         info.nDefaultButton = IDRETRY;
-        run_test(&info, IDRETRY, 0, msg_return_press_retry, "default button: valid default - 1");
+        run_test(&info, IDRETRY, 0, FALSE, msg_return_press_retry, "default button: valid default - 1");
 
         /* Test with common and custom buttons and valid default ID */
         info.nDefaultButton = ID_START_BUTTON + 3;
-        run_test(&info, ID_START_BUTTON + 3, 0, msg_return_press_custom4, "default button: valid default - 2");
+        run_test(&info, ID_START_BUTTON + 3, 0, FALSE, msg_return_press_custom4, "default button: valid default - 2");
     }
 
     /* Test radio buttons */
@@ -431,44 +474,52 @@ static void test_buttons(void)
     info.pRadioButtons = radio_buttons;
 
     /* Test default first radio button */
-    run_test(&info, IDOK, ID_START_RADIO_BUTTON, msg_return_default_radio_button_1, "default radio button: default first radio button");
+    run_test(&info, IDOK, ID_START_RADIO_BUTTON, FALSE, msg_return_default_radio_button_1,
+             "default radio button: default first radio button");
 
     /* Test default radio button */
     info.nDefaultRadioButton = ID_START_RADIO_BUTTON + 1;
-    run_test(&info, IDOK, info.nDefaultRadioButton, msg_return_default_radio_button_2, "default radio button: default radio button");
+    run_test(&info, IDOK, info.nDefaultRadioButton, FALSE, msg_return_default_radio_button_2,
+             "default radio button: default radio button");
 
     /* Test default radio button with -2 */
     info.nDefaultRadioButton = -2;
-    run_test(&info, IDOK, info.nDefaultRadioButton, msg_return_default_radio_button_3, "default radio button: default radio button with id -2");
+    run_test(&info, IDOK, info.nDefaultRadioButton, FALSE, msg_return_default_radio_button_3,
+             "default radio button: default radio button with id -2");
 
     /* Test default radio button after clicking the first, messages still work even radio button is disabled */
     info.nDefaultRadioButton = ID_START_RADIO_BUTTON + 1;
-    run_test(&info, IDOK, ID_START_RADIO_BUTTON, msg_return_first_radio_button, "default radio button: radio button after clicking");
+    run_test(&info, IDOK, ID_START_RADIO_BUTTON, FALSE, msg_return_first_radio_button,
+             "default radio button: radio button after clicking");
 
     /* Test radio button after disabling and clicking the first */
     info.nDefaultRadioButton = ID_START_RADIO_BUTTON + 1;
-    run_test(&info, IDOK, ID_START_RADIO_BUTTON, msg_return_default_radio_button_clicking_disabled, "default radio button: disable radio button before clicking");
+    run_test(&info, IDOK, ID_START_RADIO_BUTTON, FALSE, msg_return_default_radio_button_clicking_disabled,
+             "default radio button: disable radio button before clicking");
 
     /* Test no default radio button, TDF_NO_DEFAULT_RADIO_BUTTON is set, TDN_RADIO_BUTTON_CLICKED will still be received, just radio button not selected */
     info.nDefaultRadioButton = ID_START_RADIO_BUTTON;
     info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
-    run_test(&info, IDOK, info.nDefaultRadioButton, msg_return_no_default_radio_button_flag, "default radio button: no default radio flag");
+    run_test(&info, IDOK, info.nDefaultRadioButton, FALSE, msg_return_no_default_radio_button_flag,
+             "default radio button: no default radio flag");
 
     /* Test no default radio button, TDF_NO_DEFAULT_RADIO_BUTTON is set and nDefaultRadioButton is 0.
      * TDN_RADIO_BUTTON_CLICKED will not be sent, and just radio button not selected */
     info.nDefaultRadioButton = 0;
     info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
-    run_test(&info, IDOK, 0, msg_return_no_default_radio_button_id_and_flag, "default radio button: no default radio id and flag");
+    run_test(&info, IDOK, 0, FALSE, msg_return_no_default_radio_button_id_and_flag,
+             "default radio button: no default radio id and flag");
 
     /* Test no default radio button, TDF_NO_DEFAULT_RADIO_BUTTON is set and nDefaultRadioButton is invalid.
      * TDN_RADIO_BUTTON_CLICKED will not be sent, and just radio button not selected */
     info.nDefaultRadioButton = 0xff;
     info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
-    run_test(&info, IDOK, 0, msg_return_no_default_radio_button_id_and_flag, "default radio button: no default flag, invalid id");
+    run_test(&info, IDOK, 0, FALSE, msg_return_no_default_radio_button_id_and_flag,
+             "default radio button: no default flag, invalid id");
 
     info.nDefaultRadioButton = 0;
     info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
-    run_test(&info, IDOK, -2, msg_return_press_negative_id_radio_button,
+    run_test(&info, IDOK, -2, FALSE, msg_return_press_negative_id_radio_button,
              "radio button: manually click radio button with negative id");
 }
 
@@ -481,7 +532,7 @@ static void test_help(void)
     info.lpCallbackData = test_ref_data;
     info.dwCommonButtons = TDCBF_OK_BUTTON;
 
-    run_test(&info, IDOK, 0, msg_got_tdn_help, "send f1");
+    run_test(&info, IDOK, 0, FALSE, msg_got_tdn_help, "send f1");
 }
 
 struct timer_notification_data
@@ -601,6 +652,36 @@ static void test_progress_bar(void)
     pTaskDialogIndirect(&info, NULL, NULL, NULL);
 }
 
+static void test_verification_box(void)
+{
+    TASKDIALOGCONFIG info = {0};
+    WCHAR textW[] = {'t', 'e', 'x', 't', 0};
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG);
+    info.pfCallback = taskdialog_callback_proc;
+    info.lpCallbackData = test_ref_data;
+    info.dwCommonButtons = TDCBF_OK_BUTTON;
+
+    /* TDF_VERIFICATION_FLAG_CHECKED works even if pszVerificationText is not set */
+    run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_unchecked, "default verification box: unchecked");
+
+    info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
+    run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_checked, "default verification box: checked");
+
+    info.pszVerificationText = textW;
+    run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_unchecked, "default verification box: unchecked");
+
+    info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
+    run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_checked, "default verification box: checked");
+
+    run_test(&info, IDOK, 0, FALSE, msg_return_verification_unchecked,
+             "default verification box: default checked and then unchecked");
+
+    info.dwFlags = 0;
+    run_test(&info, IDOK, 0, FALSE, msg_return_verification_checked,
+             "default verification box: default unchecked and then checked");
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -640,6 +721,7 @@ START_TEST(taskdialog)
     test_help();
     test_timer();
     test_progress_bar();
+    test_verification_box();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

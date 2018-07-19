@@ -66,6 +66,7 @@ struct taskdialog_info
     INT command_link_count;
     HWND expanded_info;
     HWND expando_button;
+    HWND verification_box;
     HWND *buttons;
     INT button_count;
     HWND default_button;
@@ -78,6 +79,7 @@ struct taskdialog_info
         LONG v_spacing;
     } m;
     INT selected_radio_id;
+    BOOL verification_checked;
     BOOL expanded;
     WCHAR *expanded_text;
     WCHAR *collapsed_text;
@@ -244,6 +246,13 @@ static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND
     {
         taskdialog_toggle_expando_control(dialog_info);
         taskdialog_notify(dialog_info, TDN_EXPANDO_BUTTON_CLICKED, dialog_info->expanded, 0);
+        return;
+    }
+
+    if (hwnd == dialog_info->verification_box)
+    {
+        dialog_info->verification_checked = !dialog_info->verification_checked;
+        taskdialog_notify(dialog_info, TDN_VERIFICATION_CLICKED, dialog_info->verification_checked, 0);
         return;
     }
 
@@ -636,6 +645,26 @@ static void taskdialog_add_expando_button(struct taskdialog_info *dialog_info)
     SendMessageW(dialog_info->expando_button, WM_SETFONT, (WPARAM)dialog_info->font, 0);
 }
 
+static void taskdialog_add_verification_box(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    static const DWORD style = BS_AUTOCHECKBOX | BS_MULTILINE | BS_LEFT | BS_TOP | WS_CHILD | WS_VISIBLE | WS_TABSTOP;
+    WCHAR *textW;
+
+    /* TDF_VERIFICATION_FLAG_CHECKED works even if pszVerificationText is not set */
+    if (taskconfig->dwFlags & TDF_VERIFICATION_FLAG_CHECKED) dialog_info->verification_checked = TRUE;
+
+    if (!taskconfig->pszVerificationText) return;
+
+    textW = taskdialog_gettext(dialog_info, TRUE, taskconfig->pszVerificationText);
+    dialog_info->verification_box = CreateWindowW(WC_BUTTONW, textW, style, 0, 0, 0, 0, dialog_info->hwnd, 0, 0, 0);
+    SendMessageW(dialog_info->verification_box, WM_SETFONT, (WPARAM)dialog_info->font, 0);
+    Free(textW);
+
+    if (taskconfig->dwFlags & TDF_VERIFICATION_FLAG_CHECKED)
+        SendMessageW(dialog_info->verification_box, BM_SETCHECK, BST_CHECKED, 0);
+}
+
 static void taskdialog_add_button(struct taskdialog_info *dialog_info, HWND *button, INT_PTR id, const WCHAR *text,
                                   BOOL custom_button)
 {
@@ -803,6 +832,19 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         taskdialog_get_expando_size(dialog_info, dialog_info->expando_button, &size);
         SetWindowPos(dialog_info->expando_button, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         expando_right = x + size.cx;
+        expando_bottom = y + size.cy;
+    }
+
+    /* Verification box */
+    if (dialog_info->verification_box)
+    {
+        x = h_spacing;
+        y = expando_bottom + v_spacing;
+        size.cx = DIALOG_MIN_WIDTH / 2;
+        taskdialog_du_to_px(dialog_info, &size.cx, NULL);
+        taskdialog_get_radio_button_size(dialog_info, dialog_info->verification_box, size.cx, &size);
+        SetWindowPos(dialog_info->verification_box, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
+        expando_right = max(expando_right, x + size.cx);
         expando_bottom = y + size.cy;
     }
 
@@ -983,6 +1025,7 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_add_radio_buttons(dialog_info);
     taskdialog_add_command_links(dialog_info);
     taskdialog_add_expando_button(dialog_info);
+    taskdialog_add_verification_box(dialog_info);
     taskdialog_add_buttons(dialog_info);
 
     /* Set default button */
@@ -1063,6 +1106,19 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case TDM_ENABLE_RADIO_BUTTON:
             taskdialog_enable_radio_button(dialog_info, wParam, lParam);
             break;
+        case TDM_CLICK_VERIFICATION:
+        {
+            BOOL checked = (BOOL)wParam;
+            BOOL focused = (BOOL)lParam;
+            dialog_info->verification_checked = checked;
+            if (dialog_info->verification_box)
+            {
+                SendMessageW(dialog_info->verification_box, BM_SETCHECK, checked ? BST_CHECKED : BST_UNCHECKED, 0);
+                taskdialog_notify(dialog_info, TDN_VERIFICATION_CLICKED, checked, 0);
+                if (focused) SetFocus(dialog_info->verification_box);
+            }
+            break;
+        }
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
 
@@ -1151,7 +1207,7 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *taskconfig, int *butto
 
     if (button) *button = ret;
     if (radio_button) *radio_button = dialog_info.selected_radio_id;
-    if (verification_flag_checked) *verification_flag_checked = TRUE;
+    if (verification_flag_checked) *verification_flag_checked = dialog_info.verification_checked;
 
     return S_OK;
 }
