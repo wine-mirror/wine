@@ -3694,7 +3694,7 @@
 @ cdecl -ret64 _Query_perf_frequency()
 @ cdecl _Read_dir(ptr ptr ptr) tr2_sys__Read_dir_wchar
 @ cdecl _Remove_dir(wstr) tr2_sys__Remove_dir_wchar
-@ stub _Rename
+@ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
 @ stub _Resize
 @ stub _Set_last_write_time
 @ stub _Sinh

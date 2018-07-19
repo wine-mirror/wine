@@ -176,6 +176,7 @@ static int (__cdecl *p_Make_dir)(WCHAR const*);
 static void* (__cdecl *p_Open_dir)(WCHAR*, WCHAR const*, int *, enum file_type*);
 static WCHAR* (__cdecl *p_Read_dir)(WCHAR*, void*, enum file_type*);
 static MSVCP_bool (__cdecl *p_Remove_dir)(WCHAR const*);
+static int (__cdecl *p_Rename)(WCHAR const*, WCHAR const*);
 static enum file_type (__cdecl *p_Stat)(WCHAR const *, int *);
 static int (__cdecl *p_Symlink)(WCHAR const*, WCHAR const*);
 static WCHAR* (__cdecl *p_Temp_get)(WCHAR *);
@@ -259,6 +260,7 @@ static BOOL init(void)
     SET(p_Open_dir, "_Open_dir");
     SET(p_Read_dir, "_Read_dir");
     SET(p_Remove_dir, "_Remove_dir");
+    SET(p_Rename, "_Rename");
     SET(p_Stat, "_Stat");
     SET(p_Symlink, "_Symlink");
     SET(p_Temp_get, "_Temp_get");
@@ -1085,6 +1087,100 @@ static void test_Temp_get(void)
     todo_wine ok(path[len + 1] == 0xaaaa, "Too many bytes were zeroed - %x\n", path[len + 1]);
 }
 
+static void test_Rename(void)
+{
+    int ret, i;
+    HANDLE file, h1, h2;
+    BY_HANDLE_FILE_INFORMATION info1, info2;
+    WCHAR temp_path[MAX_PATH], current_path[MAX_PATH];
+    LARGE_INTEGER file_size;
+    static const WCHAR wine_test_dirW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    static const WCHAR f1W[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1',0};
+    static const WCHAR f1_renameW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1','_','r','e','n','a','m','e',0};
+    static const WCHAR f1_rename2W[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1','_','r','e','n','a','m','e','2',0};
+    static const WCHAR not_existW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','n','o','t','_','e','x','i','s','t',0};
+    static const WCHAR not_exist2W[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','n','o','t','_','e','x','i','s','t','2',0};
+    static const WCHAR invalidW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','?','?','i','n','v','a','l','i','d','>',0};
+    static const struct {
+        const WCHAR *old_path;
+        const WCHAR *new_path;
+        int val;
+    } tests[] = {
+        { f1W, f1_renameW, ERROR_SUCCESS },
+        { f1W, NULL, ERROR_FILE_NOT_FOUND },
+        { f1W, f1_renameW, ERROR_FILE_NOT_FOUND },
+        { NULL, f1_rename2W, ERROR_PATH_NOT_FOUND },
+        { f1_renameW, invalidW, ERROR_INVALID_NAME },
+        { not_existW, not_exist2W, ERROR_FILE_NOT_FOUND },
+        { not_existW, invalidW, ERROR_FILE_NOT_FOUND }
+    };
+
+    memset(current_path, 0, MAX_PATH);
+    GetCurrentDirectoryW(MAX_PATH, current_path);
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathW(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+    ret = p_Make_dir(wine_test_dirW);
+
+    ok(ret == 1, "_Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileW(f1W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    ret = p_Rename(f1W, f1W);
+    todo_wine ok(ERROR_SUCCESS == ret, "_Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        errno = 0xdeadbeef;
+        if(tests[i].val == ERROR_SUCCESS) {
+            h1 = CreateFileW(tests[i].old_path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, 0, 0);
+            ok(h1 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+            ok(GetFileInformationByHandle(h1, &info1), "GetFileInformationByHandle failed\n");
+            CloseHandle(h1);
+        }
+        SetLastError(0xdeadbeef);
+        ret = p_Rename(tests[i].old_path, tests[i].new_path);
+        ok(ret == tests[i].val, "_Rename(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
+        ok(errno == 0xdeadbeef, "_Rename(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+        if(ret == ERROR_SUCCESS) {
+            h2 = CreateFileW(tests[i].new_path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, 0, 0);
+            ok(h2 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+            ok(GetFileInformationByHandle(h2, &info2), "GetFileInformationByHandle failed\n");
+            CloseHandle(h2);
+            ok(info1.nFileIndexHigh == info2.nFileIndexHigh
+                    && info1.nFileIndexLow == info2.nFileIndexLow,
+                    "test_tr2_sys__Rename(): test %d expect two files equivalent\n", i+1);
+        }
+    }
+
+    file = CreateFileW(f1W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+    ret = p_Rename(f1W, f1_renameW);
+    ok(ret == ERROR_ALREADY_EXISTS, "_Rename(): expect: ERROR_ALREADY_EXISTS, got %d\n", ret);
+    ok(p_File_size(f1W) == 7, "_Rename(): expect: 7, got %s\n",
+            wine_dbgstr_longlong(p_File_size(f1W)));
+    ok(p_File_size(f1_renameW) == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",
+            wine_dbgstr_longlong(p_File_size(f1_renameW)));
+
+    ok(DeleteFileW(f1_renameW), "expect f1_rename to exist\n");
+    ok(DeleteFileW(f1W), "expect f1 to exist\n");
+    ret = p_Remove_dir(wine_test_dirW);
+    ok(ret == 1, "_Remove_dir(): expect %d got %d\n", 1, ret);
+    ok(SetCurrentDirectoryW(current_path), "SetCurrentDirectoryW failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1104,5 +1200,6 @@ START_TEST(msvcp140)
     test_dir_operation();
     test_Unlink();
     test_Temp_get();
+    test_Rename();
     FreeLibrary(msvcp);
 }
