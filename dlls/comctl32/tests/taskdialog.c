@@ -215,6 +215,20 @@ static const struct message_info msg_return_no_default_radio_button_id_and_flag[
     { 0 }
 };
 
+static const struct message_info msg_select_negative_id_radio_button[] =
+{
+    { TDM_CLICK_RADIO_BUTTON, -2, 0 },
+    { 0 }
+};
+
+static const struct message_info msg_return_press_negative_id_radio_button[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_select_negative_id_radio_button },
+    { TDN_RADIO_BUTTON_CLICKED, -2, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
 static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct message *msg)
 {
     msg->message = WM_TD_CALLBACK;
@@ -451,6 +465,11 @@ static void test_buttons(void)
     info.nDefaultRadioButton = 0xff;
     info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
     run_test(&info, IDOK, 0, msg_return_no_default_radio_button_id_and_flag, "default radio button: no default flag, invalid id");
+
+    info.nDefaultRadioButton = 0;
+    info.dwFlags = TDF_NO_DEFAULT_RADIO_BUTTON;
+    run_test(&info, IDOK, -2, msg_return_press_negative_id_radio_button,
+             "radio button: manually click radio button with negative id");
 }
 
 static void test_help(void)

@@ -82,6 +82,8 @@ struct button_layout_info
     LONG line;
 };
 
+static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd);
+
 static void taskdialog_du_to_px(struct taskdialog_info *dialog_info, LONG *width, LONG *height)
 {
     if (width) *width = MulDiv(*width, dialog_info->m.x_baseunit, 4);
@@ -191,6 +193,13 @@ static void taskdialog_enable_button(const struct taskdialog_info *dialog_info, 
     if (hwnd) EnableWindow(hwnd, enable);
 }
 
+static void taskdialog_click_button(struct taskdialog_info *dialog_info, INT id)
+{
+    HWND hwnd = taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, id);
+    if (!hwnd) hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
+    if (hwnd) taskdialog_on_button_click(dialog_info, hwnd);
+}
+
 static void taskdialog_enable_radio_button(const struct taskdialog_info *dialog_info, INT id, BOOL enable)
 {
     HWND hwnd = taskdialog_find_button(dialog_info->radio_buttons, dialog_info->radio_button_count, id);
@@ -211,8 +220,9 @@ static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notif
                : S_OK;
 }
 
-static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, INT command_id)
+static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd)
 {
+    INT command_id = GetWindowLongW(hwnd, GWLP_ID);
     HWND radio_button;
 
     radio_button = taskdialog_find_button(dialog_info->radio_buttons, dialog_info->radio_button_count, command_id);
@@ -389,7 +399,6 @@ static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialo
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
     HWND default_button;
-    INT id;
 
     if (!dialog_info->radio_button_count) return;
 
@@ -402,8 +411,7 @@ static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialo
     if (default_button)
     {
         SendMessageW(default_button, BM_SETCHECK, BST_CHECKED, 0);
-        id = GetWindowLongW(default_button, GWLP_ID);
-        taskdialog_on_button_click(dialog_info, id);
+        taskdialog_on_button_click(dialog_info, default_button);
     }
 }
 
@@ -844,7 +852,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     switch (msg)
     {
         case TDM_CLICK_BUTTON:
-            taskdialog_on_button_click(dialog_info, LOWORD(wParam));
+            taskdialog_click_button(dialog_info, wParam);
             break;
         case TDM_ENABLE_BUTTON:
             taskdialog_enable_button(dialog_info, wParam, lParam);
@@ -899,7 +907,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                taskdialog_on_button_click(dialog_info, LOWORD(wParam));
+                taskdialog_on_button_click(dialog_info, (HWND)lParam);
                 break;
             }
             return FALSE;
