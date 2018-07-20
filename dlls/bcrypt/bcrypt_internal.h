@@ -105,18 +105,6 @@ VOID WINAPI A_SHAInit(SHA_CTX *ctx);
 VOID WINAPI A_SHAUpdate(SHA_CTX *ctx, const UCHAR *buffer, UINT size);
 VOID WINAPI A_SHAFinal(SHA_CTX *ctx, PULONG result);
 
-struct buffer
-{
-    BYTE  *buffer;
-    DWORD  length;
-    DWORD  pos;
-    BOOL   error;
-};
-
-void buffer_init( struct buffer * ) DECLSPEC_HIDDEN;
-void buffer_free( struct buffer * ) DECLSPEC_HIDDEN;
-void buffer_append_asn1_r_s( struct buffer *, BYTE *, DWORD, BYTE *, DWORD ) DECLSPEC_HIDDEN;
-
 #define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
 #define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
 #define MAGIC_KEY  (('K' << 24) | ('E' << 16) | ('Y' << 8) | '0')
