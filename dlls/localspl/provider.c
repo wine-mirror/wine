@@ -275,7 +275,7 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
         target[serverlen] = '\0';
     }
 
-    len = sizeof(buffer) / sizeof(buffer[0]);
+    len = ARRAY_SIZE(buffer);
     if (GetComputerNameW(buffer, &len)) {
         if ((serverlen == len) && (strncmpiW(server, buffer, len) == 0)) {
             /* The requested Servername is our computername */
@@ -693,7 +693,7 @@ static const  printenv_t * validate_envW(LPCWSTR env)
     TRACE("(%s)\n", debugstr_w(env));
     if (env && env[0])
     {
-        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(all_printenv); i++)
         {
             if (lstrcmpiW(env, all_printenv[i]->envname) == 0)
             {
@@ -749,7 +749,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
     ptr = (LPWSTR) &pMonitors[len];
 
     numentries = 0;
-    len = sizeof(buffer)/sizeof(buffer[0]);
+    len = ARRAY_SIZE(buffer);
     buffer[0] = '\0';
 
     /* Windows creates the "Monitors"-Key on reboot / start "spooler" */
@@ -802,7 +802,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
                 }
             }
             index++;
-            len = sizeof(buffer)/sizeof(buffer[0]);
+            len = ARRAY_SIZE(buffer);
             buffer[0] = '\0';
         }
         RegCloseKey(hroot);
@@ -838,7 +838,7 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
     ptr = (LPWSTR) &pPPInfo[len];
 
     numentries = 0;
-    len = sizeof(buffer)/sizeof(buffer[0]);
+    len = ARRAY_SIZE(buffer);
     buffer[0] = '\0';
 
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, regpathW, &hroot) == ERROR_SUCCESS) {
@@ -852,7 +852,7 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
             TRACE("%p: writing PRINTPROCESSOR_INFO_1W #%d\n", ppi, numentries);
             ppi->pName = ptr;
             lstrcpyW(ptr, winprintW);      /* Name of the Print Processor */
-            ptr += sizeof(winprintW) / sizeof(WCHAR);
+            ptr += ARRAY_SIZE(winprintW);
         }
 
         /* Scan all Printprocessor Keys */
@@ -888,7 +888,7 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
                 }
             }
             index++;
-            len = sizeof(buffer)/sizeof(buffer[0]);
+            len = ARRAY_SIZE(buffer);
             buffer[0] = '\0';
         }
         RegCloseKey(hroot);
@@ -1196,7 +1196,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         printer = NULL;
     }
     if (printername) {
-        len = sizeof(XcvMonitorW)/sizeof(WCHAR) - 1;
+        len = ARRAY_SIZE(XcvMonitorW) - 1;
         if (strncmpW(printername, XcvMonitorW, len) == 0) {
             /* OpenPrinter(",XcvMonitor ", ...) detected */
             TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
@@ -1210,7 +1210,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         }
         else
         {
-            len = sizeof(XcvPortW)/sizeof(WCHAR) - 1;
+            len = ARRAY_SIZE(XcvPortW) - 1;
             if (strncmpW( printername, XcvPortW, len) == 0) {
                 /* OpenPrinter(",XcvPort ", ...) detected */
                 TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
@@ -1303,7 +1303,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
        DRIVER_INFO, that the caller supplied */
 
     ZeroMemory(&di, sizeof(di));
-    if (pDriverInfo && (level < (sizeof(di_sizeof) / sizeof(di_sizeof[0])))) {
+    if (pDriverInfo && (level < ARRAY_SIZE(di_sizeof))) {
         memcpy(&di, pDriverInfo, di_sizeof[level]);
     }
 

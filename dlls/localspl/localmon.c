@@ -279,10 +279,10 @@ static DWORD get_type_from_name(LPCWSTR name)
 {
     HANDLE  hfile;
 
-    if (!strncmpW(name, portname_LPT, sizeof(portname_LPT) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_LPT, ARRAY_SIZE(portname_LPT) - 1))
         return PORT_IS_LPT;
 
-    if (!strncmpW(name, portname_COM, sizeof(portname_COM) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_COM, ARRAY_SIZE(portname_COM) - 1))
         return PORT_IS_COM;
 
     if (!strcmpW(name, portname_FILE))
@@ -294,10 +294,10 @@ static DWORD get_type_from_name(LPCWSTR name)
     if (name[0] == '|')
         return PORT_IS_PIPE;
 
-    if (!strncmpW(name, portname_CUPS, sizeof(portname_CUPS) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) - 1))
         return PORT_IS_CUPS;
 
-    if (!strncmpW(name, portname_LPR, sizeof(portname_LPR) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_LPR, ARRAY_SIZE(portname_LPR) - 1))
         return PORT_IS_LPR;
 
     /* Must be a file or a directory. Does the file exist ? */
@@ -704,7 +704,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
         {
             ptr =  ((xcv_t *)hXcv)->nameW;
         }
-        lstrcpynW(buffer, ptr, sizeof(buffer)/sizeof(WCHAR));
+        lstrcpynW(buffer, ptr, ARRAY_SIZE(buffer));
         if (buffer[0]) buffer[lstrlenW(buffer)-1] = '\0';  /* remove the ':' */
         res = SetDefaultCommConfigW(buffer, (LPCOMMCONFIG) pInputData, cbInputData);
         TRACE("got %u with %u\n", res, GetLastError() );
