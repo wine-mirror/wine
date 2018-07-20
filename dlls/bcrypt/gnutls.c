@@ -42,7 +42,7 @@
 #include "wine/library.h"
 #include "wine/unicode.h"
 
-#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
+#ifdef HAVE_GNUTLS_CIPHER_INIT
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 

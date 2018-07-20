@@ -815,7 +815,6 @@ void buffer_append_asn1_r_s( struct buffer *buffer, BYTE *r, DWORD r_len, BYTE *
 }
 #endif
 
-
 #if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
 BOOL key_is_symmetric( struct key *key )
 {
@@ -1421,14 +1420,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         instance = hinst;
         DisableThreadLibraryCalls( hinst );
-#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
+#ifdef HAVE_GNUTLS_CIPHER_INIT
         gnutls_initialize();
 #endif
         break;
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
+#ifdef HAVE_GNUTLS_CIPHER_INIT
         gnutls_uninitialize();
 #endif
         break;

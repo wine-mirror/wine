@@ -41,7 +41,7 @@
 #include "wine/library.h"
 #include "wine/unicode.h"
 
-#if defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080 && !defined(HAVE_GNUTLS_CIPHER_INIT)
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
 NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
