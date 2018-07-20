@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-05-20 10:58+0800\n"
+"PO-Revision-Date: 2018-07-20 08:10-0500\n"
 "Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.0.9\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:58
@@ -391,16 +391,12 @@ msgid "&Retry"
 msgstr "重试(&R)"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "隐藏标签页(&T)"
+msgstr "隐藏详情"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "详细资料"
+msgstr "显示详情"
 
 #: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -3391,46 +3387,36 @@ msgid "Publishers..."
 msgstr "发布者..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "局域网连接"
+msgstr "连接"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Wine 设置"
+msgstr "自动配置"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "使用网络代理自动发现协议 (WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "使用自动代理服务器配置 (PAC) 脚本"
 
 #: inetcpl.rc:128 inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "地址"
+msgstr "地址："
 
 #: inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "本地服务器(&L)"
+msgstr "代理服务器"
 
 #: inetcpl.rc:131
 msgid "Use a proxy server"
-msgstr ""
+msgstr "使用代理服务器"
 
 #: inetcpl.rc:134
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "没有端口"
+msgstr "端口："
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -12634,10 +12620,8 @@ msgid "Confirm Value Delete"
 msgstr "确认删除值"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "您真的要删除注册表键值 '%1' 吗?"
+msgstr "您真的要删除选中的注册表键值吗?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -14579,7 +14563,7 @@ msgstr ""
 msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
-msgstr ""
+msgstr "您系统中的一个程序崩溃了，但是 WineDbg 无法挂载到进程以获取堆栈回溯。"
 
 #: winedbg.rc:41
 msgid "(unidentified)"
@@ -15439,41 +15423,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -15535,6 +15484,7 @@ msgstr ""
 "[/C] 即使拷贝时出现错误，仍然继续。\n"
 "[/A] 只拷贝有归档属性的文件。\n"
 "[/M] 只拷贝有归档属性的文件，拷贝后移除归档属性。\n"
+"[/K] 同时拷贝文件属性，不指定此参数则不会保存文件属性。\n"
 "[/D | /D:m-d-y] 拷贝在指定时间后创建或修改的文件。\n"
 "\t\t如果没有提供日期，将会只拷贝目标位置中比源位置旧的文件。\n"
 "\n"
