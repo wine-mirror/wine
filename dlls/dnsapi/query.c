@@ -618,7 +618,7 @@ static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options, PDNS_RECOR
         goto exit;
     }
 
-    for (i = 0; i < sizeof(sections)/sizeof(sections[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(sections); i++)
     {
         for (num = 0; num < ns_msg_count( msg, sections[i] ); num++)
         {
@@ -771,7 +771,7 @@ static DNS_STATUS dns_get_hostname_a( COMPUTER_NAME_FORMAT format,
                                       PSTR buffer, PDWORD len )
 {
     char name[256];
-    DWORD size = sizeof(name)/sizeof(name[0]);
+    DWORD size = ARRAY_SIZE(name);
 
     if (!GetComputerNameExA( format, name, &size ))
         return DNS_ERROR_NAME_DOES_NOT_EXIST;
@@ -790,7 +790,7 @@ static DNS_STATUS dns_get_hostname_w( COMPUTER_NAME_FORMAT format,
                                       PWSTR buffer, PDWORD len )
 {
     WCHAR name[256];
-    DWORD size = sizeof(name)/sizeof(name[0]);
+    DWORD size = ARRAY_SIZE(name);
 
     if (!GetComputerNameExW( format, name, &size ))
         return DNS_ERROR_NAME_DOES_NOT_EXIST;
