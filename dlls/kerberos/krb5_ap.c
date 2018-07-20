@@ -1331,7 +1331,7 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
 
 static NTSTATUS NTAPI kerberos_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *dll_function_table, void **user_functions)
 {
-    FIXME("%u,%p,%p: stub\n", version, dll_function_table, user_functions);
+    TRACE("%#x,%p,%p\n", version, dll_function_table, user_functions);
 
     return STATUS_SUCCESS;
 }
