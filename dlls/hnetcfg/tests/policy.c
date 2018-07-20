@@ -144,7 +144,7 @@ static void test_NetFwAuthorizedApplication(void)
 
     info = (UNIVERSAL_NAME_INFOW *)&netpath;
     sz = sizeof(netpath);
-    hr = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
+    hr = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, info, &sz);
     if (hr != NO_ERROR)
     {
         info->lpUniversalName = netpath + sizeof(*info)/sizeof(WCHAR);
