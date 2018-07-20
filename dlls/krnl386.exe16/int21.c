@@ -814,8 +814,8 @@ static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
         return 0;
     }
     memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + sizeof(prefixW)/sizeof(WCHAR), len );
-    len += sizeof(prefixW) / sizeof(WCHAR);
+    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + ARRAY_SIZE(prefixW), len );
+    len += ARRAY_SIZE(prefixW);
     nameW.Buffer[len-1] = '/';
     strcpyW( nameW.Buffer + len, name );
 
@@ -3264,7 +3264,7 @@ static BOOL INT21_NetworkFunc (CONTEXT *context)
     case 0x00: /* Get machine name. */
         {
             WCHAR dstW[MAX_COMPUTERNAME_LENGTH + 1];
-            DWORD s = sizeof(dstW) / sizeof(WCHAR);
+            DWORD s = ARRAY_SIZE(dstW);
             int len;
 
             char *dst = CTX_SEG_OFF_TO_LIN (context,context->SegDs,context->Edx);

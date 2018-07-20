@@ -345,7 +345,7 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
     int args32[20];
 
     /* look for the ret instruction */
-    for (j = 0; j < sizeof(call->ret)/sizeof(call->ret[0]); j++)
+    for (j = 0; j < ARRAY_SIZE(call->ret); j++)
         if (call->ret[j] == 0xca66 || call->ret[j] == 0xcb66) break;
 
     if (call->ret[j] == 0xcb66)  /* cdecl */
@@ -449,7 +449,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *conte
     TRACE( "\1Call %s.%d: %s(", module, ordinal, func );
 
     /* look for the ret instruction */
-    for (j = 0; j < sizeof(call->ret)/sizeof(call->ret[0]); j++)
+    for (j = 0; j < ARRAY_SIZE(call->ret); j++)
         if (call->ret[j] == 0xca66 || call->ret[j] == 0xcb66) break;
 
     if (call->ret[j] == 0xcb66)  /* cdecl */

@@ -262,10 +262,10 @@ static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context) {
 		return; /* oops */
 	}
 	while (*rets) {
-		for (i=0;i<sizeof((*rets)->entry)/sizeof((*rets)->entry[0]);i++)
+		for (i=0;i<ARRAY_SIZE((*rets)->entry);i++)
 			if (!(*rets)->entry[i].origreturn)
 				break;
-		if (i!=sizeof((*rets)->entry)/sizeof((*rets)->entry[0]))
+		if (i!=ARRAY_SIZE((*rets)->entry))
 			break;
 		rets = &((*rets)->next);
 	}
