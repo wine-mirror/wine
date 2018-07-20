@@ -15734,6 +15734,12 @@ enum file_type __cdecl _Lstat(WCHAR const* path, int* permissions)
     return _Stat(path, permissions);
 }
 
+WCHAR * __cdecl _Temp_get(WCHAR *dst)
+{
+    GetTempPathW(MAX_PATH, dst);
+    return dst;
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

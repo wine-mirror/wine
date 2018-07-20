@@ -3718,7 +3718,7 @@
 @ stub _Strxfrm
 @ cdecl _Symlink(wstr wstr) tr2_sys__Symlink_wchar
 @ stub _Symlink_get
-@ stub _Temp_get
+@ cdecl _Temp_get(ptr)
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) _Thrd_create
 @ cdecl -norelay _Thrd_current()

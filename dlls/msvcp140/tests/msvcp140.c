@@ -178,6 +178,7 @@ static WCHAR* (__cdecl *p_Read_dir)(WCHAR*, void*, enum file_type*);
 static MSVCP_bool (__cdecl *p_Remove_dir)(WCHAR const*);
 static enum file_type (__cdecl *p_Stat)(WCHAR const *, int *);
 static int (__cdecl *p_Symlink)(WCHAR const*, WCHAR const*);
+static WCHAR* (__cdecl *p_Temp_get)(WCHAR *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
 static int (__cdecl *p_Unlink)(WCHAR const*);
@@ -260,6 +261,7 @@ static BOOL init(void)
     SET(p_Remove_dir, "_Remove_dir");
     SET(p_Stat, "_Stat");
     SET(p_Symlink, "_Symlink");
+    SET(p_Temp_get, "_Temp_get");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
     SET(p_Unlink, "_Unlink");
@@ -1060,6 +1062,29 @@ static void test_Unlink(void)
     ok(SetCurrentDirectoryW(current_path), "SetCurrentDirectoryW failed\n");
 }
 
+static void test_Temp_get(void)
+{
+    WCHAR path[MAX_PATH + 1], temp_path[MAX_PATH];
+    WCHAR *retval;
+    DWORD len;
+
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+
+    /* This crashes on Windows, the input pointer is not validated. */
+    if (0)
+    {
+        retval = p_Temp_get(NULL);
+        ok(!retval, "_Temp_get(): Got %p\n", retval);
+    }
+
+    memset(path, 0xaa, sizeof(path));
+    retval = p_Temp_get(path);
+    ok(retval == path, "_Temp_get(): Got %p, expected %p\n", retval, path);
+    ok(!wcscmp(path, temp_path), "Expected path %s, got %s\n", wine_dbgstr_w(temp_path), wine_dbgstr_w(path));
+    len = wcslen(path);
+    todo_wine ok(path[len + 1] == 0xaaaa, "Too many bytes were zeroed - %x\n", path[len + 1]);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1078,5 +1103,6 @@ START_TEST(msvcp140)
     test_Stat();
     test_dir_operation();
     test_Unlink();
+    test_Temp_get();
     FreeLibrary(msvcp);
 }
