@@ -3859,17 +3859,23 @@ BOOL WINAPI HiliteMenuItem( HWND hWnd, HMENU hMenu, UINT wItemID,
 {
     POPUPMENU *menu;
     UINT pos;
+    HMENU handle_menu;
+    UINT focused_item;
 
     TRACE("(%p, %p, %04x, %04x);\n", hWnd, hMenu, wItemID, wHilite);
 
     if (!(menu = find_menu_item(hMenu, wItemID, wHilite, &pos))) return FALSE;
 
-    if (menu->FocusedItem != pos)
-    {
-        MENU_HideSubPopups( hWnd, menu->obj.handle, FALSE, 0 );
-        MENU_SelectItem( hWnd, menu->obj.handle, pos, TRUE, 0 );
-    }
+    handle_menu = menu->obj.handle;
+    focused_item = menu->FocusedItem;
     release_menu_ptr(menu);
+
+    if (focused_item != pos)
+    {
+        MENU_HideSubPopups( hWnd, handle_menu, FALSE, 0 );
+        MENU_SelectItem( hWnd, handle_menu, pos, TRUE, 0 );
+    }
+
     return TRUE;
 }
 
