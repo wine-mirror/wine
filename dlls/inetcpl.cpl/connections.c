@@ -273,13 +273,12 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
     }
     TRACE("ProxyEnable set to %x\n", use_proxy);
 
-    proxy_len = GetDlgItemTextW(hwnd, IDC_EDIT_PROXY_SERVER,
-            proxy, sizeof(proxy)/sizeof(proxy[0]));
+    proxy_len = GetDlgItemTextW(hwnd, IDC_EDIT_PROXY_SERVER, proxy, ARRAY_SIZE(proxy));
     if(proxy_len)
     {
         proxy[proxy_len++] = ':';
-        port_len = GetDlgItemTextW(hwnd, IDC_EDIT_PROXY_PORT,
-            proxy+proxy_len, sizeof(proxy)/sizeof(proxy[0])-proxy_len);
+        port_len = GetDlgItemTextW(hwnd, IDC_EDIT_PROXY_PORT, proxy+proxy_len,
+                ARRAY_SIZE(proxy)-proxy_len);
         if(!port_len)
         {
             proxy[proxy_len++] = '8';
@@ -305,7 +304,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     use_pac_script = IsDlgButtonChecked(hwnd, IDC_USE_PAC_SCRIPT);
     pac_script_len = GetDlgItemTextW(hwnd, IDC_EDIT_PAC_SCRIPT,
-            pac_script, sizeof(pac_script)/sizeof(pac_script[0]));
+            pac_script, ARRAY_SIZE(pac_script));
     if(!pac_script_len) use_pac_script = FALSE;
     if(use_pac_script)
     {
