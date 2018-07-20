@@ -2385,6 +2385,7 @@ DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
         size = sizeof(*info) + (lstrlenW(lpLocalPath) + 1) * sizeof(WCHAR);
         if (*lpBufferSize < size)
         {
+            *lpBufferSize = size;
             err = WN_MORE_DATA;
             break;
         }

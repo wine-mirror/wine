@@ -51,11 +51,14 @@ static void test_WNetGetUniversalName(void)
 
         ok(info_size == sizeof(buffer), "Got wrong size: %u\n", info_size);
 
-        fail_size = 0;
+        fail_size = 1;
         ret = WNetGetUniversalNameA(driveA, UNIVERSAL_NAME_INFO_LEVEL,
                 buffer, &fail_size);
         if(drive_type == DRIVE_REMOTE)
+        {
             todo_wine ok(ret == WN_BAD_VALUE || ret == WN_MORE_DATA, "WNetGetUniversalNameA failed: %08x\n", ret);
+            ok(fail_size > 1, "Got %d\n", fail_size);
+        }
         else
             ok(ret == WN_NOT_CONNECTED || ret == WN_NO_NET_OR_BAD_PATH,
                 "(%s) WNetGetUniversalNameW gave wrong error: %u\n", driveA, ret);
