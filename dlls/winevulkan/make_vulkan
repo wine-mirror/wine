@@ -2490,11 +2490,12 @@ class VkRegistry(object):
         self.enums = OrderedDict(sorted(enums.items()))
 
     def _process_require_enum(self, enum_elem, ext=None):
+        if "extends" in enum_elem.keys():
+            enum = self.types[enum_elem.attrib["extends"]]["data"]
+
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
                 # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                type_name = enum_elem.attrib["extends"]
-                enum = self.types[type_name]["data"]
                 enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
 
             elif "offset" in enum_elem.keys():
@@ -2512,12 +2513,13 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                type_name = enum_elem.attrib["extends"]
-                enum = self.types[type_name]["data"]
                 enum.add(VkEnumValue(enum_elem.attrib["name"], value))
 
             elif "value" in enum_elem.keys():
-                self.consts.append(VkConstant(enum_elem.attrib.get("name"), enum_elem.attrib.get("value")))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], int(enum_elem.attrib["value"])))
+
+        elif "value" in enum_elem.keys():
+            self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
 
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extensioin. """
