@@ -1139,7 +1139,7 @@ static const struct d3d10_effect_state_property_info *get_property_info(UINT id)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(property_info) / sizeof(*property_info); ++i)
+    for (i = 0; i < ARRAY_SIZE(property_info); ++i)
     {
         if (property_info[i].id == id)
             return &property_info[i];
@@ -1152,7 +1152,7 @@ static const struct d3d10_effect_state_storage_info *get_storage_info(D3D_SHADER
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(d3d10_effect_state_storage_info) / sizeof(*d3d10_effect_state_storage_info); ++i)
+    for (i = 0; i < ARRAY_SIZE(d3d10_effect_state_storage_info); ++i)
     {
         if (d3d10_effect_state_storage_info[i].id == id)
             return &d3d10_effect_state_storage_info[i];
