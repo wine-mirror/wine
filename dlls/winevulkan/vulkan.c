@@ -513,7 +513,7 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
                 wine_dbgstr_longlong(allocate_info_host.commandPool),
                 allocate_info_host.level);
 
-        if (!(buffers[i] = heap_alloc_zero(sizeof(*buffers))))
+        if (!(buffers[i] = heap_alloc_zero(sizeof(**buffers))))
         {
             res = VK_ERROR_OUT_OF_HOST_MEMORY;
             break;
