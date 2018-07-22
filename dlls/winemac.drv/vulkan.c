@@ -342,7 +342,7 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
     unsigned int i;
     VkResult res;
 
-    TRACE("layer_name %p, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
+    TRACE("layer_name %s, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
 
     /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
     if (layer_name)
