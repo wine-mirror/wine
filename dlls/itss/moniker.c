@@ -287,7 +287,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_GetDisplayName(
     ITS_IMonikerImpl *This = impl_from_IMoniker(iface);
     static const WCHAR szFormat[] = {
         'm','s','-','i','t','s',':','%','s',':',':','%','s',0 };
-    DWORD len = sizeof szFormat / sizeof(WCHAR);
+    DWORD len;
     LPWSTR str;
 
     TRACE("%p %p %p %p\n", iface, pbc, pmkToLeft, ppszDisplayName);
