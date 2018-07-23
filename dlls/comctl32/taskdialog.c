@@ -2,6 +2,7 @@
  * Task dialog control
  *
  * Copyright 2017 Fabian Maurer
+ * Copyright 2018 Zhiyi Zhang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1101,8 +1102,8 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
 
     if (first_time)
     {
-        x = (ref_rect.left + ref_rect.right + dialog_width) / 2;
-        y = (ref_rect.top + ref_rect.bottom + dialog_height) / 2;
+        x = (ref_rect.left + ref_rect.right - dialog_width) / 2;
+        y = (ref_rect.top + ref_rect.bottom - dialog_height) / 2;
         SetWindowPos(dialog_info->hwnd, 0, x, y, dialog_width, dialog_height, SWP_NOZORDER);
         first_time = FALSE;
     }
