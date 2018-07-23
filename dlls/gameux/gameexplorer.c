@@ -150,7 +150,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     if(gameInstanceId)
     {
         if(SUCCEEDED(hr))
-            hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
+            hr = (StringFromGUID2(gameInstanceId, sInstanceId, ARRAY_SIZE(sInstanceId)) ? S_OK : E_FAIL);
 
         if(SUCCEEDED(hr))
         {
@@ -219,7 +219,7 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
     hr = GAMEUX_buildGameRegistryPath(GameData->installScope, &GameData->guidInstanceId, &lpRegistryKey);
 
     if(SUCCEEDED(hr))
-        hr = (StringFromGUID2(&GameData->guidApplicationId, sGameApplicationId, sizeof(sGameApplicationId)/sizeof(sGameApplicationId[0])) ? S_OK : E_FAIL);
+        hr = (StringFromGUID2(&GameData->guidApplicationId, sGameApplicationId, ARRAY_SIZE(sGameApplicationId)) ? S_OK : E_FAIL);
 
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey,
