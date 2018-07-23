@@ -1306,6 +1306,9 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE:
             taskdialog_button_set_shield(dialog_info, wParam, lParam);
             break;
+        case TDM_UPDATE_ICON:
+            taskdialog_set_icon(dialog_info, wParam, (HICON)lParam);
+            break;
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
 
