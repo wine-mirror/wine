@@ -435,7 +435,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_ParseDisplayName(
 {
     static const WCHAR szPrefix[] = { 
         '@','M','S','I','T','S','t','o','r','e',':',0 };
-    const DWORD prefix_len = (sizeof szPrefix/sizeof szPrefix[0])-1;
+    const DWORD prefix_len = ARRAY_SIZE(szPrefix)-1;
     DWORD n;
 
     ITS_IParseDisplayNameImpl *This = impl_from_IParseDisplayName(iface);
