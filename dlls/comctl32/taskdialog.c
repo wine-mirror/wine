@@ -212,6 +212,13 @@ static void taskdialog_click_button(struct taskdialog_info *dialog_info, INT id)
     if (hwnd) taskdialog_on_button_click(dialog_info, hwnd);
 }
 
+static void taskdialog_button_set_shield(const struct taskdialog_info *dialog_info, INT id, BOOL elevate)
+{
+    HWND hwnd = taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, id);
+    if (!hwnd) hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
+    if (hwnd) SendMessageW(hwnd, BCM_SETSHIELD, 0, elevate);
+}
+
 static void taskdialog_enable_radio_button(const struct taskdialog_info *dialog_info, INT id, BOOL enable)
 {
     HWND hwnd = taskdialog_find_button(dialog_info->radio_buttons, dialog_info->radio_button_count, id);
@@ -1239,6 +1246,9 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             }
             break;
         }
+        case TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE:
+            taskdialog_button_set_shield(dialog_info, wParam, lParam);
+            break;
         case WM_INITDIALOG:
             dialog_info = (struct taskdialog_info *)lParam;
 
