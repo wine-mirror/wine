@@ -542,6 +542,28 @@ static void taskdialog_set_icon(struct taskdialog_info *dialog_info, INT element
         SendMessageW(dialog_info->footer_icon, STM_SETICON, (WPARAM)hicon, 0);
 }
 
+static void taskdialog_set_element_text(struct taskdialog_info *dialog_info, TASKDIALOG_ELEMENTS element,
+                                        const WCHAR *text)
+{
+    HWND hwnd = NULL;
+    WCHAR *textW;
+
+    if (element == TDE_CONTENT)
+        hwnd = dialog_info->content;
+    else if (element == TDE_EXPANDED_INFORMATION)
+        hwnd = dialog_info->expanded_info;
+    else if (element == TDE_FOOTER)
+        hwnd = dialog_info->footer_text;
+    else if (element == TDE_MAIN_INSTRUCTION)
+        hwnd = dialog_info->main_instruction;
+
+    if (!hwnd) return;
+
+    textW = taskdialog_gettext(dialog_info, TRUE, text);
+    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW);
+    Free(textW);
+}
+
 static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialog_info)
 {
     const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
@@ -1226,6 +1248,13 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             break;
         case TDM_SET_PROGRESS_BAR_MARQUEE:
             SendMessageW(dialog_info->progress_bar, PBM_SETMARQUEE, wParam, lParam);
+            break;
+        case TDM_SET_ELEMENT_TEXT:
+            taskdialog_set_element_text(dialog_info, wParam, (const WCHAR *)lParam);
+            taskdialog_layout(dialog_info);
+            break;
+        case TDM_UPDATE_ELEMENT_TEXT:
+            taskdialog_set_element_text(dialog_info, wParam, (const WCHAR *)lParam);
             break;
         case TDM_CLICK_RADIO_BUTTON:
             taskdialog_click_radio_button(dialog_info, wParam);
