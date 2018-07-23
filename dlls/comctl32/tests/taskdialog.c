@@ -271,6 +271,25 @@ static const struct message_info msg_return_verification_checked[] =
     { 0 }
 };
 
+static TASKDIALOGCONFIG navigated_info = {0};
+
+static const struct message_info msg_send_navigate[] =
+{
+    { TDM_NAVIGATE_PAGE, 0, (LPARAM)&navigated_info, 0},
+    { 0 }
+};
+
+static const struct message_info msg_return_navigated_page[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, NULL },
+    { TDN_RADIO_BUTTON_CLICKED, ID_START_RADIO_BUTTON, 0, S_OK, msg_send_navigate },
+    { TDN_DIALOG_CONSTRUCTED, 0, 0, S_OK, NULL },
+    { TDN_RADIO_BUTTON_CLICKED, ID_START_RADIO_BUTTON, 0, S_OK, NULL },
+    { TDN_NAVIGATED, 0, 0, S_OK, msg_send_click_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
 static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct message *msg)
 {
     msg->message = WM_TD_CALLBACK;
@@ -682,6 +701,44 @@ static void test_verification_box(void)
              "default verification box: default unchecked and then checked");
 }
 
+static void test_navigate_page(void)
+{
+    TASKDIALOGCONFIG info = {0};
+    static const WCHAR textW[] = {'t', 'e', 'x', 't', 0};
+    static const WCHAR button_format[] = {'%', '0', '2', 'd', 0};
+    TASKDIALOG_BUTTON radio_buttons[TEST_NUM_RADIO_BUTTONS];
+    WCHAR radio_button_titles[TEST_NUM_BUTTONS * 3];
+    int i;
+
+    /* Init radio buttons */
+    for (i = 0; i < TEST_NUM_RADIO_BUTTONS; i++)
+    {
+        WCHAR *text = &radio_button_titles[i * 3];
+        wsprintfW(text, button_format, i);
+
+        radio_buttons[i].pszButtonText = text;
+        radio_buttons[i].nButtonID = ID_START_RADIO_BUTTON + i;
+    }
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG);
+    info.pfCallback = taskdialog_callback_proc;
+    info.lpCallbackData = test_ref_data;
+    info.dwCommonButtons = TDCBF_OK_BUTTON;
+    info.cRadioButtons = TEST_NUM_RADIO_BUTTONS;
+    info.pRadioButtons = radio_buttons;
+
+    navigated_info = info;
+    navigated_info.pszVerificationText = textW;
+    navigated_info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
+
+    run_test(&info, IDOK, ID_START_RADIO_BUTTON, TRUE, msg_return_navigated_page, "navigate page: default");
+
+    /* TDM_NAVIGATE_PAGE doesn't check cbSize.
+     * And null taskconfig pointer crash applicatioin, thus doesn't check pointer either */
+    navigated_info.cbSize = 0;
+    run_test(&info, IDOK, ID_START_RADIO_BUTTON, TRUE, msg_return_navigated_page, "navigate page: invalid taskconfig cbSize");
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -722,6 +779,7 @@ START_TEST(taskdialog)
     test_timer();
     test_progress_bar();
     test_verification_box();
+    test_navigate_page();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

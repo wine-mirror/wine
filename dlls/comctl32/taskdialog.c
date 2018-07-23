@@ -1142,8 +1142,16 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     taskdialog_layout(dialog_info);
 }
 
+static BOOL CALLBACK takdialog_destroy_control(HWND hwnd, LPARAM lParam)
+{
+    DestroyWindow(hwnd);
+    return TRUE;
+}
+
 static void taskdialog_destroy(struct taskdialog_info *dialog_info)
 {
+    EnumChildWindows(dialog_info->hwnd, takdialog_destroy_control, 0);
+
     if (dialog_info->taskconfig->dwFlags & TDF_CALLBACK_TIMER) KillTimer(dialog_info->hwnd, ID_TIMER);
     if (dialog_info->font) DeleteObject(dialog_info->font);
     if (dialog_info->main_instruction_font) DeleteObject(dialog_info->main_instruction_font);
@@ -1167,6 +1175,15 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
     switch (msg)
     {
+        case TDM_NAVIGATE_PAGE:
+            dialog_info->taskconfig = (const TASKDIALOGCONFIG *)lParam;
+            taskdialog_destroy(dialog_info);
+            taskdialog_init(dialog_info, hwnd);
+            taskdialog_notify(dialog_info, TDN_DIALOG_CONSTRUCTED, 0, 0);
+            /* Default radio button click notification is sent before TDN_NAVIGATED */
+            taskdialog_check_default_radio_buttons(dialog_info);
+            taskdialog_notify(dialog_info, TDN_NAVIGATED, 0, 0);
+            break;
         case TDM_CLICK_BUTTON:
             taskdialog_click_button(dialog_info, wParam);
             break;
