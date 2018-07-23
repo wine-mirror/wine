@@ -828,6 +828,36 @@ static void taskdialog_add_footer_text(struct taskdialog_info *dialog_info)
                                                        dialog_info->font, taskdialog_hyperlink_enabled(dialog_info));
 }
 
+static LONG taskdialog_get_dialog_width(struct taskdialog_info *dialog_info)
+{
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    BOOL syslink = taskdialog_hyperlink_enabled(dialog_info);
+    LONG max_width, main_icon_width, screen_width;
+    RECT rect;
+    SIZE size;
+
+    screen_width = taskdialog_get_reference_rect(taskconfig, &rect);
+    if ((taskconfig->dwFlags & TDF_SIZE_TO_CONTENT) && !taskconfig->cxWidth)
+    {
+        max_width = DIALOG_MIN_WIDTH;
+        taskdialog_du_to_px(dialog_info, &max_width, NULL);
+        main_icon_width = dialog_info->m.h_spacing;
+        if (dialog_info->main_icon) main_icon_width += GetSystemMetrics(SM_CXICON);
+        if (dialog_info->content)
+        {
+            taskdialog_get_label_size(dialog_info, dialog_info->content, 0, &size, syslink);
+            max_width = max(max_width, size.cx + main_icon_width + dialog_info->m.h_spacing * 2);
+        }
+    }
+    else
+    {
+        max_width = max(taskconfig->cxWidth, DIALOG_MIN_WIDTH);
+        taskdialog_du_to_px(dialog_info, &max_width, NULL);
+    }
+    max_width = min(max_width, screen_width);
+    return max_width;
+}
+
 static void taskdialog_label_layout(struct taskdialog_info *dialog_info, HWND hwnd, INT start_x, LONG dialog_width,
                                     LONG *dialog_height, BOOL syslink)
 {
@@ -850,7 +880,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     BOOL syslink = taskdialog_hyperlink_enabled(dialog_info);
     static BOOL first_time = TRUE;
     RECT ref_rect;
-    LONG screen_width, dialog_width, dialog_height = 0;
+    LONG dialog_width, dialog_height = 0;
     LONG h_spacing, v_spacing;
     LONG main_icon_right, main_icon_bottom;
     LONG expando_right, expando_bottom;
@@ -862,10 +892,8 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     SIZE size;
     INT i;
 
-    screen_width = taskdialog_get_reference_rect(dialog_info->taskconfig, &ref_rect);
-    dialog_width = max(taskconfig->cxWidth, DIALOG_MIN_WIDTH);
-    taskdialog_du_to_px(dialog_info, &dialog_width, 0);
-    dialog_width = min(dialog_width, screen_width);
+    taskdialog_get_reference_rect(dialog_info->taskconfig, &ref_rect);
+    dialog_width = taskdialog_get_dialog_width(dialog_info);
 
     h_spacing = dialog_info->m.h_spacing;
     v_spacing = dialog_info->m.v_spacing;
