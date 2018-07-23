@@ -36,7 +36,7 @@ static WCHAR *ATTRIB_LoadMessage(UINT id)
     static WCHAR msg[MAXSTRING];
     const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, sizeof(msg)/sizeof(WCHAR))) {
+    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         lstrcpyW(msg, failedMsg);
     }
@@ -236,7 +236,7 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
                 strcpyW(buffer, rootdir);
                 strcatW(buffer, fd.cFileName);
                 ATTRIB_wprintf(fmt, flags, buffer);
-                for (count = 0; count < (sizeof(flags)/sizeof(WCHAR) - 1); count++) flags[count] = ' ';
+                for (count = 0; count < (ARRAY_SIZE(flags) - 1); count++) flags[count] = ' ';
                 found = TRUE;
             }
         } while (FindNextFileW(hff, &fd) != 0);
@@ -302,7 +302,7 @@ int wmain(int argc, WCHAR *argv[])
     /* Name may be a relative or explicit path, so calculate curdir based on
        current locations, stripping off the filename                         */
     WINE_TRACE("Supplied name: '%s'\n", wine_dbgstr_w(originalname));
-    GetFullPathNameW(originalname, sizeof(curdir)/sizeof(WCHAR), curdir, &namepart);
+    GetFullPathNameW(originalname, ARRAY_SIZE(curdir), curdir, &namepart);
     WINE_TRACE("Result: '%s'\n", wine_dbgstr_w(curdir));
     if (namepart) {
         strcpyW(name, namepart);
