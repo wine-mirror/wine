@@ -141,7 +141,7 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 	static const WCHAR    wszFormatDigit[] = {'%','u',0};
 	WCHAR    wszMemUsage[255];
 
-	LoadStringW(hInst, IDS_STATUS_BAR_MEMORY_USAGE, wszMemUsage, sizeof(wszMemUsage)/sizeof(WCHAR));
+        LoadStringW(hInst, IDS_STATUS_BAR_MEMORY_USAGE, wszMemUsage, ARRAY_SIZE(wszMemUsage));
 
 	/*  Create the event */
 	hPerformancePageEvent = CreateEventW(NULL, TRUE, TRUE, NULL);
@@ -190,7 +190,7 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			args[1] = CommitChargeLimit;
 			FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 			               wszMemUsage, 0, 0, Text,
-			               sizeof(Text)/sizeof(*Text), (__ms_va_list*)args);
+                                       ARRAY_SIZE(Text), (__ms_va_list*)args);
 			SendMessageW(hStatusWnd, SB_SETTEXTW, 2, (LPARAM)Text);
 
 			/* 

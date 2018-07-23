@@ -113,7 +113,7 @@ static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_
     int         index;
     HWND        hChannelLV = user;
 
-    MultiByteToWideChar(CP_ACP, 0, channel->name, sizeof(channel->name), nameW, sizeof(nameW)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, channel->name, sizeof(channel->name), nameW, ARRAY_SIZE(nameW));
 
     lvitem.mask = LVIF_TEXT;
     lvitem.pszText = nameW;
@@ -231,7 +231,7 @@ static void DebugChannels_OnCreate(HWND hwndDlg)
     LVCOLUMNW   lvc;
     WCHAR debug_channelW[255];
 
-    LoadStringW(hInst, IDS_DEBUG_CHANNEL, debug_channelW, sizeof(debug_channelW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL, debug_channelW, ARRAY_SIZE(debug_channelW));
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_LEFT;
@@ -293,8 +293,8 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
                 unsigned        bitmask = 1 << (lhti.iSubItem - 1);
                 struct cce_user user;
 
-                ListView_GetItemTextA(hChannelLV, lhti.iItem, 0, name, sizeof(name) / sizeof(name[0]));
-                ListView_GetItemTextW(hChannelLV, lhti.iItem, lhti.iSubItem, val, sizeof(val) / sizeof(val[0]));
+                ListView_GetItemTextA(hChannelLV, lhti.iItem, 0, name, ARRAY_SIZE(name));
+                ListView_GetItemTextW(hChannelLV, lhti.iItem, lhti.iSubItem, val, ARRAY_SIZE(val));
                 user.name = name;
                 user.value = (val[0] == 'x') ? 0 : bitmask;
                 user.mask = bitmask;

@@ -384,8 +384,8 @@ static DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
     WCHAR    wszCPU_Usage[255];
     WCHAR    wszProcesses[255];
 
-    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_STATUS_BAR_PROCESSES, wszProcesses, sizeof(wszProcesses)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, ARRAY_SIZE(wszCPU_Usage));
+    LoadStringW(hInst, IDS_STATUS_BAR_PROCESSES, wszProcesses, ARRAY_SIZE(wszProcesses));
 
     /* Create the event */
     hProcessPageEvent = CreateEventW(NULL, TRUE, TRUE, NULL);

@@ -51,9 +51,9 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
          * the number of CPUs present in the system
          */
         if (!GetProcessAffinityMask(hProcessAffinityHandle, &dwProcessAffinityMask, &dwSystemAffinityMask))    {
-            GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+            GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
             EndDialog(hDlg, 0);
-            LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, sizeof(wszUnable2Access)/sizeof(WCHAR));
+            LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, ARRAY_SIZE(wszUnable2Access));
             MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Access, MB_OK|MB_ICONSTOP);
         }
 
@@ -291,8 +291,8 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             if (!dwProcessAffinityMask) {
                 WCHAR wszErrorMsg[255];
                 WCHAR wszErrorTitle[255];
-                LoadStringW(hInst, IDS_AFFINITY_ERROR_MESSAGE, wszErrorMsg, sizeof(wszErrorMsg)/sizeof(WCHAR));
-                LoadStringW(hInst, IDS_AFFINITY_ERROR_TITLE, wszErrorTitle, sizeof(wszErrorTitle)/sizeof(WCHAR));
+                LoadStringW(hInst, IDS_AFFINITY_ERROR_MESSAGE, wszErrorMsg, ARRAY_SIZE(wszErrorMsg));
+                LoadStringW(hInst, IDS_AFFINITY_ERROR_TITLE, wszErrorTitle, ARRAY_SIZE(wszErrorTitle));
                 MessageBoxW(hDlg, wszErrorMsg, wszErrorTitle, MB_OK|MB_ICONSTOP);
                 return TRUE;
             }
@@ -301,9 +301,9 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
              * Try to set the process affinity
              */
             if (!SetProcessAffinityMask(hProcessAffinityHandle, dwProcessAffinityMask)) {
-                GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+                GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
                 EndDialog(hDlg, LOWORD(wParam));
-                LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, sizeof(wszUnable2Access)/sizeof(WCHAR));
+                LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, ARRAY_SIZE(wszUnable2Access));
                 MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Access, MB_OK|MB_ICONSTOP);
             }
 
@@ -341,8 +341,8 @@ void ProcessPage_OnSetAffinity(void)
         return;
     hProcessAffinityHandle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_SET_INFORMATION, FALSE, dwProcessId);
     if (!hProcessAffinityHandle) {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
-        LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, sizeof(wszUnable2Access)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
+        LoadStringW(hInst, IDS_AFFINITY_UNABLE2ACCESS, wszUnable2Access, ARRAY_SIZE(wszUnable2Access));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Access, MB_OK|MB_ICONSTOP);
         return;
     }

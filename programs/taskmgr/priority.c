@@ -44,9 +44,9 @@ static void DoSetPriority(DWORD priority)
     WCHAR    wszWarnTitle[255];
     WCHAR    wszUnable2Change[255];
 
-    LoadStringW(hInst, IDS_PRIORITY_CHANGE_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PRIORITY_UNABLE2CHANGE, wszUnable2Change, sizeof(wszUnable2Change)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PRIORITY_CHANGE_MESSAGE, wszWarnMsg, ARRAY_SIZE(wszWarnMsg));
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, ARRAY_SIZE(wszWarnTitle));
+    LoadStringW(hInst, IDS_PRIORITY_UNABLE2CHANGE, wszUnable2Change, ARRAY_SIZE(wszUnable2Change));
 
     Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
     for (Index=0; Index<Count; Index++)
@@ -74,14 +74,14 @@ static void DoSetPriority(DWORD priority)
 
     if (!hProcess)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Change, MB_OK|MB_ICONSTOP);
         return;
     }
 
     if (!SetPriorityClass(hProcess, priority))
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Change, MB_OK|MB_ICONSTOP);
     }
 

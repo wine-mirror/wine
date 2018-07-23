@@ -57,9 +57,9 @@ void ProcessPage_OnDebug(void)
                                          'A','e','D','e','b','u','g',0};
     static const WCHAR    wszDebugger[] = {'D','e','b','u','g','g','e','r',0};
 
-    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_DEBUG_UNABLE2DEBUG, wszUnable2Debug, sizeof(wszUnable2Debug)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_DEBUG_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, ARRAY_SIZE(wszWarnTitle));
+    LoadStringW(hInst, IDS_DEBUG_UNABLE2DEBUG, wszUnable2Debug, ARRAY_SIZE(wszUnable2Debug));
+    LoadStringW(hInst, IDS_DEBUG_MESSAGE, wszWarnMsg, ARRAY_SIZE(wszWarnMsg));
 
     Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
     for (Index=0; Index<Count; Index++)
@@ -82,14 +82,14 @@ void ProcessPage_OnDebug(void)
 
     if (MessageBoxW(hMainWnd, wszWarnMsg, wszWarnTitle, MB_YESNO|MB_ICONWARNING) != IDYES)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
         return;
     }
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszSubKey, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
         return;
     }
@@ -97,7 +97,7 @@ void ProcessPage_OnDebug(void)
     dwDebuggerSize = 260;
     if (RegQueryValueExW(hKey, wszDebugger, NULL, NULL, (LPBYTE)wstrDebugger, &dwDebuggerSize) != ERROR_SUCCESS)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
         RegCloseKey(hKey);
         return;
@@ -108,7 +108,7 @@ void ProcessPage_OnDebug(void)
     hDebugEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (!hDebugEvent)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
         return;
     }
@@ -120,7 +120,7 @@ void ProcessPage_OnDebug(void)
     si.cb = sizeof(STARTUPINFOW);
     if (!CreateProcessW(NULL, wstrDebugPath, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
     }
 

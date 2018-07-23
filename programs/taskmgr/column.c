@@ -63,31 +63,31 @@ static WCHAR wszIOOtherBytes[255];
 
 static void load_column_headers(void)
 {
-    LoadStringW(hInst, IDS_IMAGENAME, wszImageName, sizeof(wszImageName)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PID, wszPID, sizeof(wszPID)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_USERNAME, wszUserName, sizeof(wszUserName)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_SESSIONID, wszSessionID, sizeof(wszSessionID)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_CPUUSAGE, wszCPU, sizeof(wszCPU)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_CPUTIME, wszCPUTime, sizeof(wszCPUTime)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_MEMORYUSAGE, wszMemUsage, sizeof(wszMemUsage)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PEAKMEMORYUSAGE, wszPeakMemUsage, sizeof(wszPeakMemUsage)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_MEMORYUSAGEDELTA, wszMemDelta, sizeof(wszMemDelta)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PAGEFAULTS, wszPageFaults, sizeof(wszPageFaults)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PAGEFAULTSDELTA, wszPFDelta, sizeof(wszPFDelta)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_VIRTUALMEMORYSIZE, wszVMSize, sizeof(wszVMSize)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_PAGEDPOOL, wszPagedPool, sizeof(wszPagedPool)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_NONPAGEDPOOL, wszNPPool, sizeof(wszNPPool)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_BASEPRIORITY, wszBasePri, sizeof(wszBasePri)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_HANDLECOUNT, wszHandles, sizeof(wszHandles)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_THREADCOUNT, wszThreads, sizeof(wszThreads)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_USEROBJECTS, wszUSERObjects, sizeof(wszUSERObjects)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_GDIOBJECTS, wszGDIObjects, sizeof(wszGDIObjects)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOREADS, wszIOReads, sizeof(wszIOReads)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOWRITES, wszIOWrites, sizeof(wszIOWrites)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOOTHER, wszIOOther, sizeof(wszIOOther)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOREADBYTES, wszIOReadBytes, sizeof(wszIOReadBytes)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOWRITEBYTES, wszIOWriteBytes, sizeof(wszIOWriteBytes)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_IOOTHERBYTES, wszIOOtherBytes, sizeof(wszIOOtherBytes)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IMAGENAME, wszImageName, ARRAY_SIZE(wszImageName));
+    LoadStringW(hInst, IDS_PID, wszPID, ARRAY_SIZE(wszPID));
+    LoadStringW(hInst, IDS_USERNAME, wszUserName, ARRAY_SIZE(wszUserName));
+    LoadStringW(hInst, IDS_SESSIONID, wszSessionID, ARRAY_SIZE(wszSessionID));
+    LoadStringW(hInst, IDS_CPUUSAGE, wszCPU, ARRAY_SIZE(wszCPU));
+    LoadStringW(hInst, IDS_CPUTIME, wszCPUTime, ARRAY_SIZE(wszCPUTime));
+    LoadStringW(hInst, IDS_MEMORYUSAGE, wszMemUsage, ARRAY_SIZE(wszMemUsage));
+    LoadStringW(hInst, IDS_PEAKMEMORYUSAGE, wszPeakMemUsage, ARRAY_SIZE(wszPeakMemUsage));
+    LoadStringW(hInst, IDS_MEMORYUSAGEDELTA, wszMemDelta, ARRAY_SIZE(wszMemDelta));
+    LoadStringW(hInst, IDS_PAGEFAULTS, wszPageFaults, ARRAY_SIZE(wszPageFaults));
+    LoadStringW(hInst, IDS_PAGEFAULTSDELTA, wszPFDelta, ARRAY_SIZE(wszPFDelta));
+    LoadStringW(hInst, IDS_VIRTUALMEMORYSIZE, wszVMSize, ARRAY_SIZE(wszVMSize));
+    LoadStringW(hInst, IDS_PAGEDPOOL, wszPagedPool, ARRAY_SIZE(wszPagedPool));
+    LoadStringW(hInst, IDS_NONPAGEDPOOL, wszNPPool, ARRAY_SIZE(wszNPPool));
+    LoadStringW(hInst, IDS_BASEPRIORITY, wszBasePri, ARRAY_SIZE(wszBasePri));
+    LoadStringW(hInst, IDS_HANDLECOUNT, wszHandles, ARRAY_SIZE(wszHandles));
+    LoadStringW(hInst, IDS_THREADCOUNT, wszThreads, ARRAY_SIZE(wszThreads));
+    LoadStringW(hInst, IDS_USEROBJECTS, wszUSERObjects, ARRAY_SIZE(wszUSERObjects));
+    LoadStringW(hInst, IDS_GDIOBJECTS, wszGDIObjects, ARRAY_SIZE(wszGDIObjects));
+    LoadStringW(hInst, IDS_IOREADS, wszIOReads, ARRAY_SIZE(wszIOReads));
+    LoadStringW(hInst, IDS_IOWRITES, wszIOWrites, ARRAY_SIZE(wszIOWrites));
+    LoadStringW(hInst, IDS_IOOTHER, wszIOOther, ARRAY_SIZE(wszIOOther));
+    LoadStringW(hInst, IDS_IOREADBYTES, wszIOReadBytes, ARRAY_SIZE(wszIOReadBytes));
+    LoadStringW(hInst, IDS_IOWRITEBYTES, wszIOWriteBytes, ARRAY_SIZE(wszIOWriteBytes));
+    LoadStringW(hInst, IDS_IOOTHERBYTES, wszIOOtherBytes, ARRAY_SIZE(wszIOOtherBytes));
 }
 
 static int InsertColumn(int nCol, LPCWSTR lpszColumnHeading, int nFormat, int nWidth, int nSubItem)

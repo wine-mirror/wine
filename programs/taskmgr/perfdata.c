@@ -248,7 +248,7 @@ void PerfDataRefresh(void)
         else
         {
             WCHAR idleW[255];
-            LoadStringW(hInst, IDS_SYSTEM_IDLE_PROCESS, idleW, sizeof(idleW)/sizeof(WCHAR));
+            LoadStringW(hInst, IDS_SYSTEM_IDLE_PROCESS, idleW, ARRAY_SIZE(idleW));
             lstrcpyW(pPerfData[Idx].ImageName, idleW );
         }
 

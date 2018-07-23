@@ -249,10 +249,8 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
         return TRUE;
 
     /* Check and see if this is a top-level app window */
-    if (!GetWindowTextW(hWnd, wszText, sizeof(wszText)/sizeof(WCHAR)) ||
-        !IsWindowVisible(hWnd) ||
-        (GetParent(hWnd) != NULL) ||
-        (GetWindow(hWnd, GW_OWNER) != NULL) ||
+    if (!GetWindowTextW(hWnd, wszText, ARRAY_SIZE(wszText)) || !IsWindowVisible(hWnd) ||
+        (GetParent(hWnd) != NULL) || (GetWindow(hWnd, GW_OWNER) != NULL) ||
         (GetWindowLongW(hWnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW))
     {
         return TRUE; /* Skip this window */
@@ -415,8 +413,8 @@ static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
     WCHAR    wszNotResponding[255];
     WCHAR    wszRunning[255];
 
-    LoadStringW(hInst, IDS_APPLICATION_NOT_RESPONDING, wszNotResponding, sizeof(wszNotResponding)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_APPLICATION_RUNNING, wszRunning, sizeof(wszRunning)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_APPLICATION_NOT_RESPONDING, wszNotResponding, ARRAY_SIZE(wszNotResponding));
+    LoadStringW(hInst, IDS_APPLICATION_RUNNING, wszRunning, ARRAY_SIZE(wszRunning));
 
     pnmh = (LPNMHDR) lParam;
     pnmdi = (LV_DISPINFOW*) lParam;
@@ -842,8 +840,8 @@ ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     WCHAR wszTask[255];
     WCHAR wszStatus[255];
 
-    LoadStringW(hInst, IDS_APPLICATION_TASK, wszTask, sizeof(wszTask)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_APPLICATION_STATUS, wszStatus, sizeof(wszStatus)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_APPLICATION_TASK, wszTask, ARRAY_SIZE(wszTask));
+    LoadStringW(hInst, IDS_APPLICATION_STATUS, wszStatus, ARRAY_SIZE(wszStatus));
 
     switch (message) {
     case WM_INITDIALOG:

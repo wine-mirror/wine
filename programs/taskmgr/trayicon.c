@@ -140,7 +140,7 @@ BOOL TrayIcon_ShellAddTrayIcon(void)
     BOOL            bRetVal;
     WCHAR           wszCPU_Usage[255];
 
-    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, ARRAY_SIZE(wszCPU_Usage));
 
     memset(&nid, 0, sizeof(NOTIFYICONDATAW));
 
@@ -187,8 +187,8 @@ BOOL TrayIcon_ShellUpdateTrayIcon(void)
     BOOL            bRetVal;
     WCHAR           wszCPU_Usage[255];
 
-    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
-    
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, ARRAY_SIZE(wszCPU_Usage));
+
     memset(&nid, 0, sizeof(NOTIFYICONDATAW));
     
     hIcon = TrayIcon_GetProcessorUsageIcon();

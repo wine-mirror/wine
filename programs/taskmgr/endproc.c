@@ -38,9 +38,9 @@ static WCHAR wszUnable2Terminate[255];
 
 static void load_message_strings(void)
 {
-    LoadStringW(hInst, IDS_TERMINATE_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_TERMINATE_UNABLE2TERMINATE, wszUnable2Terminate, sizeof(wszUnable2Terminate)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_TERMINATE_MESSAGE, wszWarnMsg, ARRAY_SIZE(wszWarnMsg));
+    LoadStringW(hInst, IDS_TERMINATE_UNABLE2TERMINATE, wszUnable2Terminate, ARRAY_SIZE(wszUnable2Terminate));
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, ARRAY_SIZE(wszWarnTitle));
 }
 
 void ProcessPage_OnEndProcess(void)
@@ -79,14 +79,14 @@ void ProcessPage_OnEndProcess(void)
 
     if (!hProcess)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
         return;
     }
 
     if (!TerminateProcess(hProcess, 0))
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
     }
 
@@ -129,14 +129,14 @@ void ProcessPage_OnEndProcessTree(void)
 
     if (!hProcess)
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
         return;
     }
 
     if (!TerminateProcess(hProcess, 0))
     {
-        GetLastErrorText(wstrErrorText, sizeof(wstrErrorText)/sizeof(WCHAR));
+        GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
     }
 
