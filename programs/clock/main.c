@@ -72,7 +72,7 @@ static VOID CLOCK_UpdateWindowCaption(VOID)
     /* Set frame caption */
     if (Globals.bDate) {
 	chars = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
-                               szCaption, sizeof(szCaption)/sizeof(WCHAR));
+                               szCaption, ARRAY_SIZE(szCaption));
         if (chars) {
 	    --chars;
 	    szCaption[chars++] = ' ';
@@ -255,7 +255,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         }
             /* show "about" box */
         case IDM_ABOUT: {
-            LoadStringW(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp)/sizeof(WCHAR));
+            LoadStringW(Globals.hInstance, IDS_CLOCK, szApp, ARRAY_SIZE(szApp));
             lstrcpyW(szAppRelease,szApp);
             ShellAboutW(Globals.hMainWnd, szApp, szAppRelease, 0);
             break;

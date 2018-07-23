@@ -187,7 +187,7 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONTW* font)
     int chars;
 
     chars = GetTimeFormatW(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-                           NULL, szTime, sizeof(szTime)/sizeof(WCHAR));
+                           NULL, szTime, ARRAY_SIZE(szTime));
     if (!chars)
 	return 0;
 
@@ -219,7 +219,7 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     int chars;
 
     chars = GetTimeFormatW(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-                           NULL, szTime, sizeof(szTime)/sizeof(WCHAR));
+                           NULL, szTime, ARRAY_SIZE(szTime));
     if (!chars)
 	return;
     --chars;
