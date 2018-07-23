@@ -33,7 +33,7 @@ static int mywprintf(const WCHAR *format, ...)
     HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
     va_start(parms, format);
-    vsnprintfW(output_bufW, sizeof(output_bufW)/sizeof(output_bufW[0]), format, parms);
+    vsnprintfW(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
     va_end(parms);
 
     /* Try to write as unicode whenever we think it's a console */
