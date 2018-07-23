@@ -939,7 +939,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     for (i = 0; i < dialog_info->radio_button_count; i++)
     {
         x = main_icon_right + h_spacing;
-        y = dialog_height;
+        y = dialog_height + v_spacing;
         taskdialog_get_radio_button_size(dialog_info, dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         SetWindowPos(dialog_info->radio_buttons[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
