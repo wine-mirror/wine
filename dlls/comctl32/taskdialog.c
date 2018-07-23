@@ -232,11 +232,66 @@ static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notif
                : S_OK;
 }
 
+static void taskdialog_move_controls_vertically(HWND parent, HWND *controls, INT count, INT offset)
+{
+    RECT rect;
+    POINT pt;
+    INT i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (!controls[i]) continue;
+
+        GetWindowRect(controls[i], &rect);
+        pt.x = rect.left;
+        pt.y = rect.top;
+        MapWindowPoints(HWND_DESKTOP, parent, &pt, 1);
+        SetWindowPos(controls[i], 0, pt.x, pt.y + offset, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    }
+}
+
 static void taskdialog_toggle_expando_control(struct taskdialog_info *dialog_info)
 {
+    const TASKDIALOGCONFIG *taskconfig = dialog_info->taskconfig;
+    const WCHAR *text;
+    RECT info_rect, rect;
+    INT height, offset;
+
     dialog_info->expanded = !dialog_info->expanded;
+    text = dialog_info->expanded ? dialog_info->expanded_text : dialog_info->collapsed_text;
+    SendMessageW(dialog_info->expando_button, WM_SETTEXT, 0, (LPARAM)text);
     ShowWindow(dialog_info->expanded_info, dialog_info->expanded ? SW_SHOWDEFAULT : SW_HIDE);
-    taskdialog_layout(dialog_info);
+
+    GetWindowRect(dialog_info->expanded_info, &info_rect);
+    /* If expanded information starts up not expanded, call taskdialog_layout()
+     * to to set size for expanded information control at least once */
+    if (IsRectEmpty(&info_rect))
+    {
+        taskdialog_layout(dialog_info);
+        return;
+    }
+    height = info_rect.bottom - info_rect.top + dialog_info->m.v_spacing;
+    offset = dialog_info->expanded ? height : -height;
+
+    /* Update vertical layout, move all controls after expanded information */
+    /* Move dialog */
+    GetWindowRect(dialog_info->hwnd, &rect);
+    SetWindowPos(dialog_info->hwnd, 0, 0, 0, rect.right - rect.left, rect.bottom - rect.top + offset,
+                 SWP_NOMOVE | SWP_NOZORDER);
+    /* Move controls */
+    if (!(taskconfig->dwFlags & TDF_EXPAND_FOOTER_AREA))
+    {
+        taskdialog_move_controls_vertically(dialog_info->hwnd, &dialog_info->progress_bar, 1, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, &dialog_info->expando_button, 1, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, &dialog_info->verification_box, 1, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, &dialog_info->footer_icon, 1, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, &dialog_info->footer_text, 1, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, dialog_info->buttons, dialog_info->button_count, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, dialog_info->radio_buttons,
+                                            dialog_info->radio_button_count, offset);
+        taskdialog_move_controls_vertically(dialog_info->hwnd, dialog_info->command_links,
+                                            dialog_info->command_link_count, offset);
+    }
 }
 
 static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd)
