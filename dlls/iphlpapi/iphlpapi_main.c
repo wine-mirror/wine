@@ -1717,7 +1717,7 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
  */
 DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
 {
-    DWORD ret, len = sizeof(row2->Description)/sizeof(row2->Description[0]);
+    DWORD ret, len = ARRAY_SIZE(row2->Description);
     char buf[MAX_ADAPTER_NAME], *name;
     MIB_IFROW row;
 

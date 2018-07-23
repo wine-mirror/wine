@@ -666,7 +666,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
                         continue;
                     }
 
-                    for (i = 0; i < sizeof(icmpinstatlist)/sizeof(icmpinstatlist[0]); i++)
+                    for (i = 0; i < ARRAY_SIZE(icmpinstatlist); i++)
                     {
                         if (!strcasecmp(buf, icmpinstatlist[i].name))
                         {
@@ -688,7 +688,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
                         continue;
                     }
 
-                    for (i = 0; i < sizeof(icmpoutstatlist)/sizeof(icmpoutstatlist[0]); i++)
+                    for (i = 0; i < ARRAY_SIZE(icmpoutstatlist); i++)
                     {
                         if (!strcasecmp(buf, icmpoutstatlist[i].name))
                         {
@@ -819,7 +819,7 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
                     if ((ptr = strchr(value, '\n')))
                         *ptr='\0';
 
-                    for (i = 0; i < sizeof(ipstatlist)/sizeof(ipstatlist[0]); i++)
+                    for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
                         if (!strcasecmp(buf, ipstatlist[i].name))
                         {
                             if (sscanf(value, "%d", &res)) *ipstatlist[i].elem = res;
@@ -1209,7 +1209,7 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
                     if ((ptr = strchr(value, '\n')))
                         *ptr='\0';
 
-                    for (i = 0; i < sizeof(udpstatlist)/sizeof(udpstatlist[0]); i++)
+                    for (i = 0; i < ARRAY_SIZE(udpstatlist); i++)
                         if (!strcasecmp(buf, udpstatlist[i].name))
                         {
                             if (sscanf(value, "%d", &res)) *udpstatlist[i].elem = res;
