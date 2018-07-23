@@ -90,8 +90,7 @@ static int hostname_message_printfW(int msg, ...)
     WCHAR msg_buffer[8192];
     int len;
 
-    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
-        sizeof(msg_buffer)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
     va_start(va_args, msg);
     len = hostname_vprintfW(msg_buffer, va_args);
@@ -105,8 +104,7 @@ static int hostname_message(int msg)
     static const WCHAR formatW[] = {'%','s',0};
     WCHAR msg_buffer[8192];
 
-    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
-        sizeof(msg_buffer)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
     return hostname_printfW(formatW, msg_buffer);
 }
@@ -119,7 +117,7 @@ static void display_computer_name(void)
     WCHAR nameW[256];
 
     gethostname(nameA, sizeof(nameA));
-    MultiByteToWideChar(CP_UNIXCP, 0, nameA, sizeof(nameA), nameW, sizeof(nameW)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, nameA, sizeof(nameA), nameW, ARRAY_SIZE(nameW));
 
     hostname_printfW(fmtW, nameW);
 }
@@ -132,7 +130,7 @@ int wmain(int argc, WCHAR *argv[])
 
         unsigned int i;
 
-        if (!strncmpW(argv[1], slashHelpW, sizeof(slashHelpW)/sizeof(WCHAR) - 1))
+        if (!strncmpW(argv[1], slashHelpW, ARRAY_SIZE(slashHelpW) - 1))
         {
             hostname_message(STRING_USAGE);
             return 1;
