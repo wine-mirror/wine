@@ -250,7 +250,7 @@ static void set_caption(LPCWSTR wszNewFileName)
     memcpy(wszCaption, wszNewFileName, lstrlenW(wszNewFileName)*sizeof(WCHAR));
     length += lstrlenW(wszNewFileName);
     memcpy(wszCaption + length, wszSeparator, sizeof(wszSeparator));
-    length += sizeof(wszSeparator) / sizeof(WCHAR);
+    length += ARRAY_SIZE(wszSeparator);
     memcpy(wszCaption + length, wszAppTitle, sizeof(wszAppTitle));
 
     SetWindowTextW(hMainWnd, wszCaption);
@@ -398,7 +398,7 @@ static void populate_size_list(HWND hSizeListWnd)
                                GetDeviceCaps(hdc, LOGPIXELSY)));
     } else
     {
-        for(i = 0; i < sizeof(choices)/sizeof(choices[0]); i++)
+        for(i = 0; i < ARRAY_SIZE(choices); i++)
             add_size(hSizeListWnd, choices[i]);
     }
 
@@ -1124,7 +1124,7 @@ static void dialog_viewproperties(void)
     psp[0].lParam = reg_formatindex(SF_TEXT);
     psp[0].pfnCallback = NULL;
     psp[0].pszTitle = MAKEINTRESOURCEW(STRING_VIEWPROPS_TEXT);
-    for(i = 1; i < sizeof(psp)/sizeof(psp[0]); i++)
+    for(i = 1; i < ARRAY_SIZE(psp); i++)
     {
         psp[i].dwSize = psp[0].dwSize;
         psp[i].dwFlags = psp[0].dwFlags;
@@ -1141,7 +1141,7 @@ static void dialog_viewproperties(void)
     psh.hwndParent = hMainWnd;
     psh.hInstance = hInstance;
     psh.pszCaption = MAKEINTRESOURCEW(STRING_VIEWPROPS_TITLE);
-    psh.nPages = sizeof(psp)/sizeof(psp[0]);
+    psh.nPages = ARRAY_SIZE(psp);
     U3(psh).ppsp = ppsp;
     U(psh).pszIcon = MAKEINTRESOURCEW(IDI_WORDPAD);
 
@@ -1235,7 +1235,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         if (pFr->lpstrFindWhat != custom_data->findBuffer)
         {
             lstrcpynW(custom_data->findBuffer, pFr->lpstrFindWhat,
-                      sizeof(custom_data->findBuffer) / sizeof(WCHAR));
+                      ARRAY_SIZE(custom_data->findBuffer));
             pFr->lpstrFindWhat = custom_data->findBuffer;
         }
 
@@ -1885,8 +1885,8 @@ static LRESULT OnCreate( HWND hWnd )
     font = (HFONT)SendMessageW(hFontListWnd, WM_GETFONT, 0, 0);
     hdc = GetDC(hFontListWnd);
     font = SelectObject(hdc, font);
-    GetTextExtentPointW(hdc, font_text, sizeof(font_text) / sizeof(font_text[0]) - 1, &name_sz);
-    GetTextExtentPointW(hdc, size_text, sizeof(size_text) / sizeof(size_text[0]) - 1, &size_sz);
+    GetTextExtentPointW(hdc, font_text, ARRAY_SIZE(font_text) - 1, &name_sz);
+    GetTextExtentPointW(hdc, size_text, ARRAY_SIZE(size_text) - 1, &size_sz);
     font = SelectObject(hdc, font);
     ReleaseDC(hFontListWnd, hdc);
     rbb.hwndChild = hFontListWnd;
