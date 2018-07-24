@@ -401,7 +401,7 @@ static void create_volatile_environment_registry_key(void)
         set_reg_value( hkey, HomeDriveW, path );
     }
 
-    size = sizeof(path)/sizeof(path[0]);
+    size = ARRAY_SIZE(path);
     if (GetUserNameW( path, &size )) set_reg_value( hkey, UserNameW, path );
 
     set_reg_value( hkey, HomeShareW, EmptyW );
@@ -410,7 +410,7 @@ static void create_volatile_environment_registry_key(void)
     if (SUCCEEDED(hr))
         set_reg_value( hkey, LocalAppDataW, path );
 
-    size = (sizeof(computername)/sizeof(WCHAR)) - 2;
+    size = ARRAY_SIZE(computername) - 2;
     if (GetComputerNameW(&computername[2], &size))
     {
         set_reg_value( hkey, UserDomainW, &computername[2] );
@@ -433,7 +433,7 @@ static BOOL wininit(void)
     static const WCHAR wininitbakW[] = {'w','i','n','i','n','i','t','.','b','a','k',0};
     WCHAR initial_buffer[1024];
     WCHAR *str, *buffer = initial_buffer;
-    DWORD size = sizeof(initial_buffer)/sizeof(WCHAR);
+    DWORD size = ARRAY_SIZE(initial_buffer);
     DWORD res;
 
     for (;;)
@@ -948,7 +948,7 @@ static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
     static const WCHAR wowinstall[] = {' ','W','o','w','6','4','I','n','s','t','a','l','l',0};
     static const WCHAR inf[] = {' ','1','2','8',' ','\\','\\','?','\\','u','n','i','x',0 };
 
-    WCHAR app[MAX_PATH + sizeof(rundll)/sizeof(WCHAR)];
+    WCHAR app[MAX_PATH + ARRAY_SIZE(rundll)];
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     WCHAR *buffer;
