@@ -658,7 +658,7 @@ static void create_drive_devices(void)
             if (!RegQueryValueExW( drives_key, driveW, NULL, &type, (BYTE *)buffer, &size ) &&
                 type == REG_SZ)
             {
-                for (j = 0; j < sizeof(drive_types)/sizeof(drive_types[0]); j++)
+                for (j = 0; j < ARRAY_SIZE(drive_types); j++)
                     if (drive_types[j][0] && !strcmpiW( buffer, drive_types[j] ))
                     {
                         drive_type = j;
@@ -1123,7 +1123,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         p[1] = 'o';
         p[2] = 'm';
         search_paths = serial_search_paths;
-        num_search_paths = sizeof(serial_search_paths)/sizeof(serial_search_paths[0]);
+        num_search_paths = ARRAY_SIZE(serial_search_paths);
         windows_ports_key_name = serialcomm_keyW;
     }
     else
@@ -1132,7 +1132,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         p[1] = 'p';
         p[2] = 't';
         search_paths = parallel_search_paths;
-        num_search_paths = sizeof(parallel_search_paths)/sizeof(parallel_search_paths[0]);
+        num_search_paths = ARRAY_SIZE(parallel_search_paths);
         windows_ports_key_name = parallel_ports_keyW;
     }
     p += 3;
