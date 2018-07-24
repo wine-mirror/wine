@@ -547,7 +547,7 @@ report (enum report_type t, ...)
     }
         
     va_start (ap, t);
-    if (t < sizeof text_funcs / sizeof text_funcs[0]) ret = funcs[t](ap);
+    if (t < ARRAY_SIZE(text_funcs)) ret = funcs[t](ap);
     else report (R_WARNING, "unimplemented report type: %d", t);
     va_end (ap);
     return ret;

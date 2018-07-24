@@ -461,7 +461,7 @@ static void print_language(void)
     if (pGetSystemPreferredUILanguages && !running_under_wine())
     {
         WCHAR langW[32];
-        ULONG num, size = sizeof(langW)/sizeof(langW[0]);
+        ULONG num, size = ARRAY_SIZE(langW);
         if (pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &num, langW, &size))
         {
             char lang[32], *p = lang;
@@ -1263,7 +1263,7 @@ int main( int argc, char *argv[] )
             exit (0);
         }
         else if ((argv[i][0] != '-' && argv[i][0] != '/') || argv[i][2]) {
-            if (nb_filters == sizeof(filters)/sizeof(filters[0]))
+            if (nb_filters == ARRAY_SIZE(filters))
             {
                 report (R_ERROR, "Too many test filters specified");
                 exit (2);
