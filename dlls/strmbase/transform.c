@@ -51,11 +51,6 @@ static inline BaseInputPin *impl_BaseInputPin_from_BasePin( BasePin *iface )
     return CONTAINING_RECORD(iface, BaseInputPin, pin);
 }
 
-static inline BasePin *impl_BasePin_from_IPin( IPin *iface )
-{
-    return CONTAINING_RECORD(iface, BasePin, IPin_iface);
-}
-
 static inline BaseInputPin *impl_BaseInputPin_from_IPin( IPin *iface )
 {
     return CONTAINING_RECORD(iface, BaseInputPin, pin.IPin_iface);
