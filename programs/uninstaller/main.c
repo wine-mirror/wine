@@ -102,7 +102,7 @@ static void WINAPIV output_message(unsigned int id, ...)
     WCHAR fmt[1024];
     __ms_va_list va_args;
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         return;
@@ -342,8 +342,8 @@ static void UninstallProgram(void)
             WCHAR sUninstallFailed[MAX_STRING_LEN];
             HINSTANCE hInst = GetModuleHandleW(0);
 
-            LoadStringW(hInst, IDS_APPNAME, sAppName, sizeof(sAppName)/sizeof(WCHAR));
-            LoadStringW(hInst, IDS_UNINSTALLFAILED, sUninstallFailed, sizeof(sUninstallFailed)/sizeof(WCHAR));
+            LoadStringW(hInst, IDS_APPNAME, sAppName, ARRAY_SIZE(sAppName));
+            LoadStringW(hInst, IDS_UNINSTALLFAILED, sUninstallFailed, ARRAY_SIZE(sUninstallFailed));
             wsprintfW(errormsg, sUninstallFailed, entries[i].command);
             if(MessageBoxW(0, errormsg, sAppName, MB_YESNO | MB_ICONQUESTION)==IDYES)
             {
