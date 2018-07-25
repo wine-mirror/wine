@@ -1223,7 +1223,7 @@ void msvcrt_free_io(void)
     MSVCRT__flushall();
     MSVCRT__fcloseall();
 
-    for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
+    for(i=0; i<ARRAY_SIZE(MSVCRT___pioinfo); i++)
     {
         if(!MSVCRT___pioinfo[i])
             continue;
@@ -1246,7 +1246,7 @@ void msvcrt_free_io(void)
         }
     }
 
-    for(i=0; i<sizeof(MSVCRT_fstream)/sizeof(MSVCRT_fstream[0]); i++)
+    for(i=0; i<ARRAY_SIZE(MSVCRT_fstream); i++)
         MSVCRT_free(MSVCRT_fstream[i]);
 }
 
@@ -1606,29 +1606,29 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
 
     mode++;
     while(*mode == ' ') mode++;
-    if(!MSVCRT_CHECK_PMT(!strncmpW(ccs, mode, sizeof(ccs)/sizeof(ccs[0]))))
+    if(!MSVCRT_CHECK_PMT(!strncmpW(ccs, mode, ARRAY_SIZE(ccs))))
       return -1;
-    mode += sizeof(ccs)/sizeof(ccs[0]);
+    mode += ARRAY_SIZE(ccs);
     while(*mode == ' ') mode++;
     if(!MSVCRT_CHECK_PMT(*mode == '='))
         return -1;
     mode++;
     while(*mode == ' ') mode++;
 
-    if(!strncmpiW(utf8, mode, sizeof(utf8)/sizeof(utf8[0])))
+    if(!strncmpiW(utf8, mode, ARRAY_SIZE(utf8)))
     {
       *open_flags |= MSVCRT__O_U8TEXT;
-      mode += sizeof(utf8)/sizeof(utf8[0]);
+      mode += ARRAY_SIZE(utf8);
     }
-    else if(!strncmpiW(utf16le, mode, sizeof(utf16le)/sizeof(utf16le[0])))
+    else if(!strncmpiW(utf16le, mode, ARRAY_SIZE(utf16le)))
     {
       *open_flags |= MSVCRT__O_U16TEXT;
-      mode += sizeof(utf16le)/sizeof(utf16le[0]);
+      mode += ARRAY_SIZE(utf16le);
     }
-    else if(!strncmpiW(unicode, mode, sizeof(unicode)/sizeof(unicode[0])))
+    else if(!strncmpiW(unicode, mode, ARRAY_SIZE(unicode)))
     {
       *open_flags |= MSVCRT__O_WTEXT;
-      mode += sizeof(unicode)/sizeof(unicode[0]);
+      mode += ARRAY_SIZE(unicode);
     }
     else
     {

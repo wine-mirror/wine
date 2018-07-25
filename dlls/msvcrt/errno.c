@@ -123,7 +123,7 @@ char *MSVCRT__sys_errlist[] =
     str_generic_error
 };
 
-unsigned int MSVCRT__sys_nerr = sizeof(MSVCRT__sys_errlist)/sizeof(MSVCRT__sys_errlist[0]) - 1;
+unsigned int MSVCRT__sys_nerr = ARRAY_SIZE(MSVCRT__sys_errlist) - 1;
 
 static MSVCRT_invalid_parameter_handler invalid_parameter_handler = NULL;
 

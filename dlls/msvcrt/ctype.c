@@ -493,7 +493,7 @@ unsigned short __cdecl wctype(const char *property)
     };
     unsigned int i;
 
-    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
+    for(i=0; i<ARRAY_SIZE(properties); i++)
         if(!strcmp(property, properties[i].name))
             return properties[i].mask;
 

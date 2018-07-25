@@ -345,7 +345,7 @@ static MSVCRT_wchar_t *msvcrt_get_comspec(void)
   MSVCRT_wchar_t *ret;
   unsigned int len;
 
-  if (!(len = GetEnvironmentVariableW(comspec, NULL, 0))) len = sizeof(cmd)/sizeof(MSVCRT_wchar_t);
+  if (!(len = GetEnvironmentVariableW(comspec, NULL, 0))) len = ARRAY_SIZE(cmd);
   if ((ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
   {
     if (!GetEnvironmentVariableW(comspec, ret, len)) strcpyW(ret, cmd);

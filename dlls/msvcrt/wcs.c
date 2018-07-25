@@ -2109,7 +2109,7 @@ static int wctoint(WCHAR c, int base)
             0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
         };
         int i;
-        for (i = 0; i < sizeof(zeros)/sizeof(zeros[0]) && c >= zeros[i]; ++i) {
+        for (i = 0; i < ARRAY_SIZE(zeros) && c >= zeros[i]; ++i) {
             if (zeros[i] <= c && c <= zeros[i] + 9) {
                 v = c - zeros[i];
                 break;

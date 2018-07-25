@@ -344,7 +344,7 @@ static void ExternalContextBase_dtor(ExternalContextBase *this)
     int i;
 
     /* TODO: move the allocator cache to scheduler so it can be reused */
-    for(i=0; i<sizeof(this->allocator_cache)/sizeof(this->allocator_cache[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(this->allocator_cache); i++) {
         for(cur = this->allocator_cache[i]; cur; cur=next) {
             next = cur->free.next;
             MSVCRT_operator_delete(cur);
@@ -413,10 +413,10 @@ void * CDECL Concurrency_Alloc(MSVCRT_size_t size)
         int i;
 
         C_ASSERT(sizeof(union allocator_cache_entry) <= 1 << 4);
-        for(i=0; i<sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0]); i++)
+        for(i=0; i<ARRAY_SIZE(context->allocator_cache); i++)
             if (1 << (i+4) >= size) break;
 
-        if(i==sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0])) {
+        if(i==ARRAY_SIZE(context->allocator_cache)) {
             p = MSVCRT_operator_new(size);
             p->alloc.bucket = -1;
         }else if (context->allocator_cache[i]) {
@@ -446,7 +446,7 @@ void CDECL Concurrency_Free(void* mem)
     if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
         MSVCRT_operator_delete(p);
     }else {
-        if(bucket >= 0 && bucket < sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0]) &&
+        if(bucket >= 0 && bucket < ARRAY_SIZE(context->allocator_cache) &&
             (!context->allocator_cache[bucket] || context->allocator_cache[bucket]->free.depth < 20)) {
             p->free.next = context->allocator_cache[bucket];
             p->free.depth = p->free.next ? p->free.next->free.depth+1 : 0;

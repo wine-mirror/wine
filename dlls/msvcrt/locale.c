@@ -94,7 +94,7 @@ static const char * const _country_synonyms[] =
 static void remap_synonym(char *name)
 {
   unsigned int i;
-  for (i = 0; i < sizeof(_country_synonyms)/sizeof(char*); i += 2 )
+  for (i = 0; i < ARRAY_SIZE(_country_synonyms); i += 2)
   {
     if (!strcasecmp(_country_synonyms[i],name))
     {
@@ -595,7 +595,7 @@ void* CDECL _Gettnames(void)
 
     TRACE("\n");
 
-    for(i=0; i<sizeof(cur->str.str)/sizeof(cur->str.str[0]); i++)
+    for(i=0; i<ARRAY_SIZE(cur->str.str); i++)
         size += strlen(cur->str.str[i])+1;
 
     ret = MSVCRT_malloc(size);
@@ -604,7 +604,7 @@ void* CDECL _Gettnames(void)
     memcpy(ret, cur, size);
 
     size = 0;
-    for(i=0; i<sizeof(cur->str.str)/sizeof(cur->str.str[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(cur->str.str); i++) {
         ret->str.str[i] = &ret->data[size];
         size += strlen(&ret->data[size])+1;
     }
@@ -1605,7 +1605,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
 
         size = sizeof(MSVCRT___lc_time_data);
         lcid_tmp = lcid[MSVCRT_LC_TIME] ? lcid[MSVCRT_LC_TIME] : MAKELCID(LANG_ENGLISH, SORT_DEFAULT);
-        for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        for(i=0; i<ARRAY_SIZE(time_data); i++) {
             if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
                 size += sizeof(cloc_short_date) + sizeof(cloc_short_dateW);
             }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
@@ -1637,7 +1637,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         }
 
         ret = 0;
-        for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        for(i=0; i<ARRAY_SIZE(time_data); i++) {
             locinfo->lc_time_curr->str.str[i] = &locinfo->lc_time_curr->data[ret];
             if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
                 memcpy(&locinfo->lc_time_curr->data[ret], cloc_short_date, sizeof(cloc_short_date));
@@ -1653,7 +1653,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                     &locinfo->lc_time_curr->data[ret], size-ret);
             }
         }
-        for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        for(i=0; i<ARRAY_SIZE(time_data); i++) {
             locinfo->lc_time_curr->wstr.wstr[i] = (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret];
             if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
                 memcpy(&locinfo->lc_time_curr->data[ret], cloc_short_dateW, sizeof(cloc_short_dateW));

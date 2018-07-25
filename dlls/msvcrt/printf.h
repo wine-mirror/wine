@@ -518,7 +518,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             flags.PadZero = '0';
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
-            FUNC_NAME(pf_integer_conv)(buf, sizeof(buf)/sizeof(APICHAR), &flags,
+            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &flags,
                                        (ULONG_PTR)pf_args(args_ctx, pos, VT_PTR, valist).get_ptr);
             flags.PadZero = 0;
             flags.Precision = i;
@@ -549,7 +549,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 flags.Precision = flags.FieldLength - 2;
 
             max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
-            if(max_len > sizeof(buf)/sizeof(APICHAR))
+            if(max_len > ARRAY_SIZE(buf))
                 tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
             if(!tmp)
                 return -1;

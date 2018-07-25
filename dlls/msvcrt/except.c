@@ -136,8 +136,7 @@ static LONG msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
                 int float_signal = MSVCRT__FPE_INVALID;
 
                 sighandlers[MSVCRT_SIGFPE] = MSVCRT_SIG_DFL;
-                for (i = 0; i < sizeof(float_exception_map) /
-                         sizeof(float_exception_map[0]); i++)
+                for (i = 0; i < ARRAY_SIZE(float_exception_map); i++)
                 {
                     if (float_exception_map[i].status ==
                         except->ExceptionRecord->ExceptionCode)

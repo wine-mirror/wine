@@ -124,7 +124,7 @@ static BOOL handle_enhanced_keys(INPUT_RECORD *ir, unsigned char *ch1, unsigned 
 {
     int i;
 
-    for (i = 0; i < sizeof(enh_map) / sizeof(enh_map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(enh_map); i++)
     {
         if (ir->Event.KeyEvent.wVirtualScanCode == enh_map[i].vk)
         {
