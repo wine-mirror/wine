@@ -751,7 +751,7 @@ static BOOL install_wine_mono(void)
         }
     }
 
-    len = GetSystemDirectoryW(app, MAX_PATH-sizeof(controlW)/sizeof(WCHAR));
+    len = GetSystemDirectoryW(app, MAX_PATH - ARRAY_SIZE(controlW));
     memcpy(app+len, controlW, sizeof(controlW));
 
     args = HeapAlloc(GetProcessHeap(), 0, (len*sizeof(WCHAR) + sizeof(controlW) + sizeof(argsW)));
@@ -759,7 +759,7 @@ static BOOL install_wine_mono(void)
         return FALSE;
 
     memcpy(args, app, len*sizeof(WCHAR) + sizeof(controlW));
-    memcpy(args + len + sizeof(controlW)/sizeof(WCHAR)-1, argsW, sizeof(argsW));
+    memcpy(args + len + ARRAY_SIZE(controlW) - 1, argsW, sizeof(argsW));
 
     TRACE("starting %s\n", debugstr_w(args));
 

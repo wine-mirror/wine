@@ -138,7 +138,7 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *conf
 
     if (!config_path)
     {
-        DWORD len = sizeof(config_dir)/sizeof(*config_dir);
+        DWORD len = ARRAY_SIZE(config_dir);
 
         static const WCHAR machine_configW[] = {'\\','C','O','N','F','I','G','\\','m','a','c','h','i','n','e','.','c','o','n','f','i','g',0};
 
@@ -159,7 +159,7 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *conf
         goto end;
     }
 
-    GetModuleFileNameW(NULL, base_dir, sizeof(base_dir) / sizeof(*base_dir));
+    GetModuleFileNameW(NULL, base_dir, ARRAY_SIZE(base_dir));
     base_dirA = WtoA(base_dir);
     if (!base_dirA)
     {
@@ -1674,7 +1674,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
         if (res != ERROR_SUCCESS || numKeys == 0)
             goto cleanup;
         numKeys--;
-        keyLength = sizeof(subkeyName) / sizeof(WCHAR);
+        keyLength = ARRAY_SIZE(subkeyName);
         res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
         if (res != ERROR_SUCCESS)
             goto cleanup;
