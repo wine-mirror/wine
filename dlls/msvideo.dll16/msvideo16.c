@@ -889,7 +889,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 	RegQueryInfoKeyA( hKey, 0, 0, 0, &cnt, 0, 0, 0, 0, 0, 0, 0);
 	for (i = 0; i < cnt; i++)
 	{
-	    bufLen = sizeof(buf) / sizeof(buf[0]);
+            bufLen = ARRAY_SIZE(buf);
 	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
 	    if (lRet != ERROR_SUCCESS) continue;
 	    if (strncasecmp(buf, "vid", 3)) continue;
