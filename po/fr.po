@@ -2235,7 +2235,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Nom du fichier :"
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
 msgid "B&rowse..."
 msgstr "Parcou&rir..."
 
@@ -10380,7 +10380,7 @@ msgstr "Ana&logique"
 msgid "Digi&tal"
 msgstr "&Numérique"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Police..."
 
@@ -14638,10 +14638,18 @@ msgid "C&olor:"
 msgstr "Couleu&r :"
 
 #: winecfg.rc:304
+msgid "MIME types"
+msgstr ""
+
+#: winecfg.rc:305
+msgid "Manage file &associations"
+msgstr ""
+
+#: winecfg.rc:308
 msgid "Folders"
 msgstr "Dossiers"
 
-#: winecfg.rc:307
+#: winecfg.rc:311
 msgid "&Link to:"
 msgstr "&Lier à :"
 

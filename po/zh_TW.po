@@ -2213,7 +2213,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "檔案名稱(&F)："
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
 msgid "B&rowse..."
 msgstr "瀏覽(&R)..."
 
@@ -10248,7 +10248,7 @@ msgstr "類比時鐘(&L)"
 msgid "Digi&tal"
 msgstr "數位時鐘(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "字型(&F)..."
 
@@ -14522,10 +14522,18 @@ msgid "C&olor:"
 msgstr "顏色(&O)："
 
 #: winecfg.rc:304
+msgid "MIME types"
+msgstr ""
+
+#: winecfg.rc:305
+msgid "Manage file &associations"
+msgstr ""
+
+#: winecfg.rc:308
 msgid "Folders"
 msgstr "資料夾"
 
-#: winecfg.rc:307
+#: winecfg.rc:311
 msgid "&Link to:"
 msgstr "連結至(&L)："
 

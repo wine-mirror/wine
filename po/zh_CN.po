@@ -2203,7 +2203,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "文件名(&F)："
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
 msgid "B&rowse..."
 msgstr "浏览(&R)..."
 
@@ -10000,7 +10000,7 @@ msgstr "模拟时钟(&L)"
 msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "字体(&F)..."
 
@@ -13961,10 +13961,18 @@ msgid "C&olor:"
 msgstr "颜色(&O)："
 
 #: winecfg.rc:304
+msgid "MIME types"
+msgstr ""
+
+#: winecfg.rc:305
+msgid "Manage file &associations"
+msgstr ""
+
+#: winecfg.rc:308
 msgid "Folders"
 msgstr "文件夹"
 
-#: winecfg.rc:307
+#: winecfg.rc:311
 msgid "&Link to:"
 msgstr "映射至(&L)："
 

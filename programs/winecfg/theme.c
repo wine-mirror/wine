@@ -1168,6 +1168,26 @@ static void on_select_font(HWND hDlg)
         SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
 }
 
+static void init_mime_types(HWND hDlg)
+{
+    char *buf = get_reg_key(config_key, keypath("FileOpenAssociations"), "Enable", "Y");
+    int state = IS_OPTION_TRUE(*buf) ? BST_CHECKED : BST_UNCHECKED;
+
+    CheckDlgButton(hDlg, IDC_ENABLE_FILE_ASSOCIATIONS, state);
+
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
+static void update_mime_types(HWND hDlg)
+{
+    const char *state = "Y";
+
+    if (IsDlgButtonChecked(hDlg, IDC_ENABLE_FILE_ASSOCIATIONS) != BST_CHECKED)
+        state = "N";
+
+    set_reg_key(config_key, keypath("FileOpenAssociations"), "Enable", state);
+}
+
 INT_PTR CALLBACK
 ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1177,8 +1197,9 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             init_shell_folder_listview_headers(hDlg);
             update_shell_folder_listview(hDlg);
             read_sysparams(hDlg);
+            init_mime_types(hDlg);
             break;
-        
+
         case WM_DESTROY:
             free_theme_files();
             break;
@@ -1186,7 +1207,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_SHOWWINDOW:
             set_window_title(hDlg);
             break;
-            
+
         case WM_COMMAND:
             switch(HIWORD(wParam)) {
                 case CBN_SELCHANGE: {
@@ -1296,6 +1317,10 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             }
                             break;
                         }
+
+                        case IDC_ENABLE_FILE_ASSOCIATIONS:
+                            update_mime_types(hDlg);
+                            break;
                     }
                     break;
             }
@@ -1314,6 +1339,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     apply_sysparams();
                     read_shell_folder_link_targets();
                     update_shell_folder_listview(hDlg);
+                    update_mime_types(hDlg);
                     SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
                     break;
                 }

@@ -176,6 +176,7 @@
 #define IDC_SYSPARAM_COLOR_TEXT         1415
 #define IDC_SYSPARAM_COLOR              1416
 #define IDC_SYSPARAM_FONT               1417
+#define IDC_ENABLE_FILE_ASSOCIATIONS    1418
 
 #define IDC_SYSPARAMS_BUTTON            8400
 #define IDC_SYSPARAMS_BUTTON_TEXT       8401

@@ -2207,7 +2207,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "แฟ้ม"
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
 msgid "B&rowse..."
 msgstr ""
 
@@ -10101,7 +10101,7 @@ msgstr "ธรรมดา"
 msgid "Digi&tal"
 msgstr "ดิจิตัล"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -13847,11 +13847,19 @@ msgid "C&olor:"
 msgstr ""
 
 #: winecfg.rc:304
+msgid "MIME types"
+msgstr ""
+
+#: winecfg.rc:305
+msgid "Manage file &associations"
+msgstr ""
+
+#: winecfg.rc:308
 #, fuzzy
 msgid "Folders"
 msgstr "ขอบกระดาษ"
 
-#: winecfg.rc:307
+#: winecfg.rc:311
 msgid "&Link to:"
 msgstr ""
 

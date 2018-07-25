@@ -2186,7 +2186,7 @@ msgstr ""
 msgid "&File name:"
 msgstr ""
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
 msgid "B&rowse..."
 msgstr ""
 
@@ -9888,7 +9888,7 @@ msgstr "_അനലോഗ്"
 msgid "Digi&tal"
 msgstr "_ഡിജിറ്റല്‍"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "_അക്ഷരസഞ്ചയം..."
 
@@ -13540,10 +13540,18 @@ msgid "C&olor:"
 msgstr ""
 
 #: winecfg.rc:304
+msgid "MIME types"
+msgstr ""
+
+#: winecfg.rc:305
+msgid "Manage file &associations"
+msgstr ""
+
+#: winecfg.rc:308
 msgid "Folders"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:311
 msgid "&Link to:"
 msgstr ""
 
