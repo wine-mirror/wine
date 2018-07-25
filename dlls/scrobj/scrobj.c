@@ -102,7 +102,7 @@ static void release_typelib(void)
     if (!typelib)
         return;
 
-    for (i = 0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+    for (i = 0; i < ARRAY_SIZE(typeinfos); i++)
         if (typeinfos[i])
             ITypeInfo_Release(typeinfos[i]);
 
@@ -369,7 +369,7 @@ static HRESULT WINAPI scriptlet_typelib_get_GUID(IGenScriptletTLib *iface, BSTR 
         if (FAILED(hr))
             return hr;
 
-        hr = StringFromGUID2(&guid, guidW, sizeof(guidW)/sizeof(guidW[0]));
+        hr = StringFromGUID2(&guid, guidW, ARRAY_SIZE(guidW));
         if (FAILED(hr))
             return hr;
 
