@@ -1106,7 +1106,7 @@ static void test_convert(void)
     MMRESULT mmr;
     unsigned i;
 
-    for (i = 0; i < sizeof(expected_output)/sizeof(struct stream_output); i++)
+    for (i = 0; i < ARRAY_SIZE(expected_output); i++)
     {
         mmr = acmStreamOpen(&has, NULL, (WAVEFORMATEX *)&expected_output[i].src, (WAVEFORMATEX *)&expected_output[i].dst, NULL, 0, 0, 0);
         ok(mmr == MMSYSERR_NOERROR, "#%d: open failed: 0x%x\n", i, mmr);
