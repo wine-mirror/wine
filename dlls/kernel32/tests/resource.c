@@ -24,6 +24,7 @@
 #include "wine/test.h"
 
 static const char filename[] = "test_.exe";
+static const WCHAR filenameW[] = {'t','e','s','t','_','.','e','x','e',0};
 static DWORD GLE;
 
 enum constants {
@@ -463,6 +464,30 @@ static void test_find_resource(void)
     ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %u\n", GetLastError() );
 }
 
+typedef struct
+{
+    void *unknown[6];
+    HGLOBAL pFileName;
+} QUEUEDUPDATES;
+
+static void test_internal_structure(void)
+{
+    HANDLE res;
+    QUEUEDUPDATES *res_data;
+    WCHAR *res_filenameW;
+
+    res = BeginUpdateResourceW( filenameW, FALSE );
+    ok( res != NULL, "BeginUpdateResourceW failed\n" );
+    res_data = GlobalLock(res);
+    ok( res_data != NULL, "GlobalLock failed\n" );
+    res_filenameW = GlobalLock( res_data->pFileName );
+    ok( res_filenameW != NULL, "GlobalLock for res_filenameW failed\n" );
+    ok( !lstrcmpW( res_filenameW, filenameW ), "Filename fields do not match\n" );
+    ok( GlobalUnlock( res_filenameW ), "GlobalUnlock res_filenamed failed\n" );
+    ok( GlobalUnlock( res_data ), "GlobalUnlock res_data failed\n" );
+    ok( EndUpdateResourceW( res, TRUE ), "EndUpdateResourceW failed\n");
+}
+
 START_TEST(resource)
 {
     DWORD i;
@@ -482,6 +507,7 @@ START_TEST(resource)
     {
         const struct _sec_variants *sec = &sec_variants[i];
         build_exe( &sec->build );
+        test_internal_structure();
         update_resources_none();
         check_exe( &sec->chk_none );
         update_resources_delete();

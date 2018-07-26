@@ -635,6 +635,7 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 
 typedef struct
 {
+    void *unknown[6];
     LPWSTR pFileName;
     BOOL bDeleteExistingResources;
     struct list root;
