@@ -8101,7 +8101,7 @@ basic_istream_char* __thiscall basic_istream_char_ignore(basic_istream_char *thi
                 break;
             }
 
-            if(ch==(unsigned char)delim)
+            if(ch==delim)
                 break;
 
             this->count++;
