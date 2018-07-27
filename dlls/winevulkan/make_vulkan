@@ -647,7 +647,7 @@ class VkFunction(object):
         spec = ""
         params = " ".join([p.spec() for p in self.params])
         if prefix is not None:
-            spec += "@ stdcall {0}{1}({2})".format(prefix, self.name, params)
+            spec += "@ stdcall -private {0}{1}({2})".format(prefix, self.name, params)
         else:
             spec += "@ stdcall {0}({1})".format(self.name, params)
 
@@ -2280,8 +2280,8 @@ class VkGenerator(object):
 
     def generate_vulkan_spec(self, f):
         self._generate_copyright(f, spec_file=True)
-        f.write("@ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
-        f.write("@ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
+        f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
+        f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
         f.write("@ cdecl -norelay native_vkGetInstanceProcAddrWINE(ptr str)\n")
 
         # Export symbols for all Vulkan Core functions.
