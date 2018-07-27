@@ -36,6 +36,7 @@
 
 @ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr
 @ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion
+@ cdecl -norelay native_vkGetInstanceProcAddrWINE(ptr str)
 @ stdcall wine_vkAcquireNextImage2KHR(ptr ptr ptr)
 @ stdcall wine_vkAcquireNextImageKHR(ptr int64 int64 int64 int64 ptr)
 @ stdcall wine_vkAllocateCommandBuffers(ptr ptr ptr)

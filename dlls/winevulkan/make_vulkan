@@ -2282,6 +2282,7 @@ class VkGenerator(object):
         self._generate_copyright(f, spec_file=True)
         f.write("@ stdcall vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
         f.write("@ stdcall vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
+        f.write("@ cdecl -norelay native_vkGetInstanceProcAddrWINE(ptr str)\n")
 
         # Export symbols for all Vulkan Core functions.
         for func in self.registry.funcs.values():
