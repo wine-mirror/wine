@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "guiddef.h"
 #include "setupapi.h"
+#include "cfgmgr32.h"
 
 #include "wine/test.h"
 
@@ -1355,6 +1356,26 @@ static void testSetupDiGetINFClassA(void)
     }
 }
 
+static void test_devnode(void)
+{
+    HDEVINFO set;
+    SP_DEVINFO_DATA device = { sizeof(SP_DEVINFO_DATA) };
+    char buffer[50];
+    DWORD ret;
+
+    set = SetupDiGetClassDevsA(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevs failed: %#x\n", GetLastError());
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL,
+        NULL, 0, &device);
+    ok(ret, "SetupDiCreateDeviceInfo failed: %#x\n", GetLastError());
+
+    ret = CM_Get_Device_IDA(device.DevInst, buffer, sizeof(buffer), 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(!strcmp(buffer, "ROOT\\LEGACY_BOGUS\\0000"), "got %s\n", buffer);
+
+    SetupDiDestroyDeviceInfoList(set);
+}
+
 START_TEST(devinst)
 {
     HKEY hkey;
@@ -1392,4 +1413,5 @@ START_TEST(devinst)
     testDeviceRegistryPropertyA();
     testDeviceRegistryPropertyW();
     testSetupDiGetINFClassA();
+    test_devnode();
 }

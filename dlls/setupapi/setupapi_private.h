@@ -45,6 +45,11 @@
 
 extern HINSTANCE SETUPAPI_hInstance DECLSPEC_HIDDEN;
 
+static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
+}
+
 static inline WCHAR *strdupW( const WCHAR *str )
 {
     WCHAR *ret = NULL;

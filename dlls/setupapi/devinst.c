@@ -33,6 +33,7 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "cfgmgr32.h"
@@ -139,6 +140,52 @@ struct DeviceInfo
     LPWSTR                instanceId;
     struct list           interfaces;
 };
+
+static struct DeviceInfo **devnode_table;
+static unsigned int devnode_table_size;
+
+static DEVINST alloc_devnode(struct DeviceInfo *device)
+{
+    unsigned int i;
+
+    for (i = 0; i < devnode_table_size; ++i)
+    {
+        if (!devnode_table[i])
+            break;
+    }
+
+    if (i == devnode_table_size)
+    {
+        if (devnode_table)
+        {
+            devnode_table_size *= 2;
+            devnode_table = heap_realloc_zero(devnode_table,
+                devnode_table_size * sizeof(*devnode_table));
+        }
+        else
+        {
+            devnode_table_size = 256;
+            devnode_table = heap_alloc_zero(devnode_table_size * sizeof(*devnode_table));
+        }
+    }
+
+    devnode_table[i] = device;
+    return i;
+}
+
+static void free_devnode(DEVINST devnode)
+{
+    devnode_table[devnode] = NULL;
+}
+
+static struct DeviceInfo *get_devnode_device(DEVINST devnode)
+{
+    if (devnode < devnode_table_size)
+        return devnode_table[devnode];
+
+    WARN("device node %u not found\n", devnode);
+    return NULL;
+}
 
 static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
 {
@@ -460,15 +507,12 @@ static HKEY SETUPDI_CreateDrvKey(struct DeviceInfo *devInfo)
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
         DWORD devId, LPCWSTR instanceId, BOOL phantom)
 {
-    struct DeviceInfo *devInfo = NULL;
-    HANDLE devInst = GlobalAlloc(GMEM_FIXED, sizeof(struct DeviceInfo));
-    if (devInst)
-        devInfo = GlobalLock(devInst);
+    struct DeviceInfo *devInfo = heap_alloc(sizeof(*devInfo));
 
     if (devInfo)
     {
         devInfo->set = set;
-        devInfo->devId = (DWORD)devInst;
+        devInfo->devId = alloc_devnode(devInfo);
 
         devInfo->instanceId = HeapAlloc(GetProcessHeap(), 0,
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
@@ -486,12 +530,10 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
                             (LPBYTE)&phantom, sizeof(phantom));
             }
             list_init(&devInfo->interfaces);
-            GlobalUnlock(devInst);
         }
         else
         {
-            GlobalUnlock(devInst);
-            GlobalFree(devInst);
+            heap_free(devInfo);
             devInfo = NULL;
         }
     }
@@ -525,7 +567,8 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
         SETUPDI_FreeInterfaceInstances(iface);
         HeapFree(GetProcessHeap(), 0, iface);
     }
-    GlobalFree((HANDLE)devInfo->devId);
+    free_devnode(devInfo->devId);
+    heap_free(devInfo);
 }
 
 /* Adds a device with GUID guid and identifier devInst to set.  Allocates a
@@ -3979,63 +4022,50 @@ BOOL WINAPI SetupDiDeleteDevRegKey(
 /***********************************************************************
  *              CM_Get_Device_IDA  (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST dnDevInst, PSTR Buffer,
-                                   ULONG  BufferLen, ULONG  ulFlags)
+CONFIGRET WINAPI CM_Get_Device_IDA(DEVINST devnode, char *buffer, ULONG len, ULONG flags)
 {
-    struct DeviceInfo *devInfo = GlobalLock((HANDLE)dnDevInst);
+    struct DeviceInfo *device = get_devnode_device(devnode);
 
-    TRACE("%x->%p, %p, %u %u\n", dnDevInst, devInfo, Buffer, BufferLen, ulFlags);
+    TRACE("%u, %p, %u, %#x\n", devnode, buffer, len, flags);
 
-    if (!devInfo)
+    if (!device)
         return CR_NO_SUCH_DEVINST;
 
-    WideCharToMultiByte(CP_ACP, 0, devInfo->instanceId, -1, Buffer, BufferLen, 0, 0);
-    TRACE("Returning %s\n", debugstr_a(Buffer));
+    WideCharToMultiByte(CP_ACP, 0, device->instanceId, -1, buffer, len, 0, 0);
+    TRACE("Returning %s\n", debugstr_a(buffer));
     return CR_SUCCESS;
 }
 
 /***********************************************************************
  *              CM_Get_Device_IDW  (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Get_Device_IDW( DEVINST dnDevInst, LPWSTR Buffer,
-                                   ULONG  BufferLen, ULONG  ulFlags)
+CONFIGRET WINAPI CM_Get_Device_IDW(DEVINST devnode, WCHAR *buffer, ULONG len, ULONG flags)
 {
-    struct DeviceInfo *devInfo = GlobalLock((HANDLE)dnDevInst);
+    struct DeviceInfo *device = get_devnode_device(devnode);
 
-    TRACE("%x->%p, %p, %u %u\n", dnDevInst, devInfo, Buffer, BufferLen, ulFlags);
+    TRACE("%u, %p, %u, %#x\n", devnode, buffer, len, flags);
 
-    if (!devInfo)
-    {
-        WARN("dev instance %d not found!\n", dnDevInst);
+    if (!device)
         return CR_NO_SUCH_DEVINST;
-    }
 
-    lstrcpynW(Buffer, devInfo->instanceId, BufferLen);
-    TRACE("Returning %s\n", debugstr_w(Buffer));
-    GlobalUnlock((HANDLE)dnDevInst);
+    lstrcpynW(buffer, device->instanceId, len);
+    TRACE("Returning %s\n", debugstr_w(buffer));
     return CR_SUCCESS;
 }
-
-
 
 /***********************************************************************
  *              CM_Get_Device_ID_Size  (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
-                                        ULONG  ulFlags)
+CONFIGRET WINAPI CM_Get_Device_ID_Size(ULONG *len, DEVINST devnode, ULONG flags)
 {
-    struct DeviceInfo *ppdevInfo = GlobalLock((HANDLE)dnDevInst);
+    struct DeviceInfo *device = get_devnode_device(devnode);
 
-    TRACE("%x->%p, %p, %u\n", dnDevInst, ppdevInfo, pulLen, ulFlags);
+    TRACE("%p, %u, %#x\n", len, devnode, flags);
 
-    if (!ppdevInfo)
-    {
-        WARN("dev instance %d not found!\n", dnDevInst);
+    if (!device)
         return CR_NO_SUCH_DEVINST;
-    }
 
-    *pulLen = lstrlenW(ppdevInfo->instanceId);
-    GlobalUnlock((HANDLE)dnDevInst);
+    *len = lstrlenW(device->instanceId);
     return CR_SUCCESS;
 }
 
