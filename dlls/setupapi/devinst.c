@@ -201,8 +201,75 @@ static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
         guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
+static WCHAR *get_iface_key_path(SP_DEVICE_INTERFACE_DATA *iface)
+{
+    const WCHAR slashW[] = {'\\',0};
+    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
+    WCHAR *path, *ptr;
+    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(info->symbolicLink);
+
+    if (!(path = heap_alloc((len + 1) * sizeof(WCHAR))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return NULL;
+    }
+
+    strcpyW(path, DeviceClasses);
+    strcatW(path, slashW);
+    SETUPDI_GuidToString(&iface->InterfaceClassGuid, path + strlenW(path));
+    strcatW(path, slashW);
+    ptr = path + strlenW(path);
+    strcatW(path, info->symbolicLink);
+    if (strlenW(info->symbolicLink) > 3)
+        ptr[0] = ptr[1] = ptr[3] = '#';
+
+    ptr = strchrW(ptr, '\\');
+    if (ptr) *ptr = 0;
+
+    return path;
+}
+
+static WCHAR *get_refstr_key_path(SP_DEVICE_INTERFACE_DATA *iface)
+{
+    const WCHAR hashW[] = {'#',0};
+    const WCHAR slashW[] = {'\\',0};
+    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
+    WCHAR *path, *ptr;
+    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(info->symbolicLink) + 1 + 1;
+
+    if (info->referenceString)
+        len += strlenW(info->referenceString);
+
+    if (!(path = heap_alloc((len + 1) * sizeof(WCHAR))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return NULL;
+    }
+
+    strcpyW(path, DeviceClasses);
+    strcatW(path, slashW);
+    SETUPDI_GuidToString(&iface->InterfaceClassGuid, path + strlenW(path));
+    strcatW(path, slashW);
+    ptr = path + strlenW(path);
+    strcatW(path, info->symbolicLink);
+    if (strlenW(info->symbolicLink) > 3)
+        ptr[0] = ptr[1] = ptr[3] = '#';
+
+    ptr = strchrW(ptr, '\\');
+    if (ptr) *ptr = 0;
+
+    strcatW(path, slashW);
+    strcatW(path, hashW);
+
+    if (info->referenceString)
+        strcatW(path, info->referenceString);
+
+    return path;
+}
+
 static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
 {
+    WCHAR *path;
     DWORD i;
 
     for (i = 0; i < instances->cInstances; i++)
@@ -212,8 +279,11 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
 
         if (ifaceInfo->device && ifaceInfo->device->phantom)
         {
-            SetupDiDeleteDeviceInterfaceRegKey(ifaceInfo->device->set,
-                        &instances->instances[i], 0);
+            if ((path = get_refstr_key_path(&instances->instances[i])))
+            {
+                RegDeleteKeyW(HKEY_LOCAL_MACHINE, path);
+                heap_free(path);
+            }
         }
         HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
         HeapFree(GetProcessHeap(), 0, ifaceInfo->symbolicLink);
@@ -399,6 +469,7 @@ static BOOL SETUPDI_AddInterfaceInstance(struct device *devInfo,
                         ifaceInfo->referenceString = NULL;
                     if (ret)
                     {
+                        WCHAR *path;
                         HKEY key;
 
                         iface->cInstances++;
@@ -409,15 +480,30 @@ static BOOL SETUPDI_AddInterfaceInstance(struct device *devInfo,
                         instance->Reserved = (ULONG_PTR)ifaceInfo;
                         if (newInterface)
                             iface->guid = *InterfaceClassGuid;
-                        key = SetupDiCreateDeviceInterfaceRegKeyW(devInfo->set,
-                                instance, 0, KEY_WRITE, NULL, NULL);
-                        if (key != INVALID_HANDLE_VALUE)
+
+                        if ((path = get_iface_key_path(instance)))
                         {
-                            RegSetValueExW(key, SymbolicLink, 0, REG_SZ,
-                                    (BYTE *)ifaceInfo->symbolicLink,
-                                    lstrlenW(ifaceInfo->symbolicLink) *
-                                    sizeof(WCHAR));
-                            RegCloseKey(key);
+                            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key))
+                            {
+                                RegSetValueExW(key, DeviceInstance, 0, REG_SZ,
+                                    (BYTE *)devInfo->instanceId,
+                                    lstrlenW(devInfo->instanceId) * sizeof(WCHAR));
+                                RegCloseKey(key);
+                            }
+                            heap_free(path);
+                        }
+
+                        if ((path = get_refstr_key_path(instance)))
+                        {
+                            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key))
+                            {
+                                RegSetValueExW(key, SymbolicLink, 0, REG_SZ,
+                                        (BYTE *)ifaceInfo->symbolicLink,
+                                        lstrlenW(ifaceInfo->symbolicLink) *
+                                        sizeof(WCHAR));
+                                RegCloseKey(key);
+                            }
+                            heap_free(path);
                         }
                         if (ifaceData)
                             *ifaceData = instance;
