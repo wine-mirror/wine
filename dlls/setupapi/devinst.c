@@ -76,6 +76,7 @@ static const WCHAR Enum[] = {'S','y','s','t','e','m','\\',
 				  'E','n','u','m',0};
 static const WCHAR DeviceDesc[] = {'D','e','v','i','c','e','D','e','s','c',0};
 static const WCHAR DeviceInstance[] = {'D','e','v','i','c','e','I','n','s','t','a','n','c','e',0};
+static const WCHAR DeviceParameters[] = {'D','e','v','i','c','e',' ','P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR HardwareId[] = {'H','a','r','d','w','a','r','e','I','D',0};
 static const WCHAR CompatibleIDs[] = {'C','o','m','p','a','t','i','b','l','e','I','d','s',0};
 static const WCHAR Service[] = {'S','e','r','v','i','c','e',0};
@@ -2559,111 +2560,63 @@ static PWSTR SETUPDI_GetInstancePath(struct device_iface *iface)
 /***********************************************************************
  *		SetupDiCreateDeviceInterfaceRegKeyW (SETUPAPI.@)
  */
-HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
-        HDEVINFO DeviceInfoSet,
-        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-        DWORD Reserved,
-        REGSAM samDesired,
-        HINF InfHandle,
-        PCWSTR InfSectionName)
+HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
+    SP_DEVICE_INTERFACE_DATA *iface_data, DWORD reserved, REGSAM access,
+    HINF hinf, const WCHAR *section)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
-    HKEY key = INVALID_HANDLE_VALUE, interfacesKey;
-    LONG l;
+    struct DeviceInfoSet *set = devinfo;
+    struct device_iface *iface;
+    HKEY refstr_key, params_key;
+    WCHAR *path;
+    LONG ret;
 
-    TRACE("%p %p %d %08x %p %p\n", DeviceInfoSet, DeviceInterfaceData, Reserved,
-            samDesired, InfHandle, InfSectionName);
+    TRACE("%p %p %d %#x %p %s\n", devinfo, iface_data, reserved, access, hinf,
+        debugstr_w(section));
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
+    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return INVALID_HANDLE_VALUE;
     }
-    if (!DeviceInterfaceData ||
-            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !DeviceInterfaceData->Reserved)
+    if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !iface_data->Reserved)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
-    if (InfHandle && !InfSectionName)
+    if (hinf && !section)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
-    if (!(l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, DeviceClasses, 0, NULL, 0,
-                    samDesired, NULL, &interfacesKey, NULL)))
+
+    iface = (struct device_iface *)iface_data->Reserved;
+    if (!(path = get_refstr_key_path(iface)))
     {
-        HKEY parent;
-        WCHAR bracedGuidString[39];
-
-        SETUPDI_GuidToString(&DeviceInterfaceData->InterfaceClassGuid,
-                bracedGuidString);
-        if (!(l = RegCreateKeyExW(interfacesKey, bracedGuidString, 0, NULL, 0,
-                        samDesired, NULL, &parent, NULL)))
-        {
-            struct device_iface *ifaceInfo =
-                (struct device_iface *)DeviceInterfaceData->Reserved;
-            PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
-            PWSTR interfKeyName = HeapAlloc(GetProcessHeap(), 0,
-                    (lstrlenW(ifaceInfo->symlink) + 1) * sizeof(WCHAR));
-            HKEY interfKey;
-            WCHAR *ptr;
-
-            lstrcpyW(interfKeyName, ifaceInfo->symlink);
-            if (lstrlenW(ifaceInfo->symlink) > 3)
-            {
-                interfKeyName[0] = '#';
-                interfKeyName[1] = '#';
-                interfKeyName[3] = '#';
-            }
-            ptr = strchrW(interfKeyName, '\\');
-            if (ptr)
-                *ptr = 0;
-            l = RegCreateKeyExW(parent, interfKeyName, 0, NULL, 0,
-                    samDesired, NULL, &interfKey, NULL);
-            if (!l)
-            {
-                struct device *device = ifaceInfo->device;
-
-                l = RegSetValueExW(interfKey, DeviceInstance, 0, REG_SZ,
-                        (BYTE *)device->instanceId,
-                        (lstrlenW(device->instanceId) + 1) * sizeof(WCHAR));
-                if (!l)
-                {
-                    if (instancePath)
-                    {
-                        LONG l;
-
-                        l = RegCreateKeyExW(interfKey, instancePath, 0, NULL, 0,
-                                samDesired, NULL, &key, NULL);
-                        if (l)
-                        {
-                            SetLastError(l);
-                            key = INVALID_HANDLE_VALUE;
-                        }
-                        else if (InfHandle)
-                            FIXME("INF section installation unsupported\n");
-                    }
-                }
-                else
-                    SetLastError(l);
-                RegCloseKey(interfKey);
-            }
-            else
-                SetLastError(l);
-            HeapFree(GetProcessHeap(), 0, interfKeyName);
-            HeapFree(GetProcessHeap(), 0, instancePath);
-            RegCloseKey(parent);
-        }
-        else
-            SetLastError(l);
-        RegCloseKey(interfacesKey);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return INVALID_HANDLE_VALUE;
     }
-    else
-        SetLastError(l);
-    return key;
+
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, path, 0, NULL, 0, 0, NULL,
+        &refstr_key, NULL);
+    heap_free(path);
+    if (ret)
+    {
+        SetLastError(ret);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    ret = RegCreateKeyExW(refstr_key, DeviceParameters, 0, NULL, 0, access,
+        NULL, &params_key, NULL);
+    RegCloseKey(refstr_key);
+    if (ret)
+    {
+        SetLastError(ret);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    return params_key;
 }
 
 /***********************************************************************
