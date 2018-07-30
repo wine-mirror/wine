@@ -68,6 +68,7 @@ static void test_devenum(IBindCtx *bind_ctx)
     IMoniker *moniker;
     BOOL have_mrle = FALSE;
     GUID cat_guid, clsid;
+    WCHAR *displayname;
     VARIANT var;
     HRESULT hr;
 
@@ -84,18 +85,18 @@ static void test_devenum(IBindCtx *bind_ctx)
         ok(hr == S_OK, "IMoniker_BindToStorage failed: %#x\n", hr);
 
         VariantInit(&var);
-        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
-        ok(hr == S_OK, "Failed to read FriendlyName: %#x\n", hr);
-
-        if (winetest_debug > 1)
-            trace("%s:\n", wine_dbgstr_w(V_BSTR(&var)));
-
-        VariantClear(&var);
         hr = IPropertyBag_Read(prop_bag, clsidW, &var, NULL);
         ok(hr == S_OK, "Failed to read CLSID: %#x\n", hr);
 
         hr = CLSIDFromString(V_BSTR(&var), &cat_guid);
         ok(hr == S_OK, "got %#x\n", hr);
+
+        VariantClear(&var);
+        hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
+        ok(hr == S_OK, "Failed to read FriendlyName: %#x\n", hr);
+
+        if (winetest_debug > 1)
+            trace("%s %s:\n", wine_dbgstr_guid(&cat_guid), wine_dbgstr_w(V_BSTR(&var)));
 
         IPropertyBag_Release(prop_bag);
         IMoniker_Release(moniker);
@@ -107,6 +108,9 @@ static void test_devenum(IBindCtx *bind_ctx)
         {
             while (IEnumMoniker_Next(enum_moniker, 1, &moniker, NULL) == S_OK)
             {
+                hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &displayname);
+                ok(hr == S_OK, "got %#x\n", hr);
+
                 hr = IMoniker_GetClassID(moniker, NULL);
                 ok(hr == E_INVALIDARG, "IMoniker_GetClassID should failed %x\n", hr);
 
@@ -123,7 +127,7 @@ static void test_devenum(IBindCtx *bind_ctx)
                 ok(hr == S_OK, "IPropertyBag_Read failed: %#x\n", hr);
 
                 if (winetest_debug > 1)
-                    trace("  %s\n", wine_dbgstr_w(V_BSTR(&var)));
+                    trace("  %s %s\n", wine_dbgstr_w(displayname), wine_dbgstr_w(V_BSTR(&var)));
 
                 if (IsEqualGUID(&CLSID_VideoCompressorCategory, &cat_guid)) {
                     /* Test well known compressor to ensure that we really enumerate codecs */
@@ -139,6 +143,7 @@ static void test_devenum(IBindCtx *bind_ctx)
                 hr = IMoniker_BindToObject(moniker, bind_ctx, NULL, &IID_IUnknown, NULL);
                 ok(hr == E_POINTER, "got %#x\n", hr);
 
+                CoTaskMemFree(displayname);
                 IPropertyBag_Release(prop_bag);
                 IMoniker_Release(moniker);
             }
