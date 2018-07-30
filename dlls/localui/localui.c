@@ -375,7 +375,7 @@ static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LP
             status = FALSE;
             res = GetDlgItemInt(hwnd, LPTCONFIG_EDIT, (BOOL *) &status, FALSE);
             /* length is in WCHAR, including the '\0' */
-            GetDlgItemTextW(hwnd, LPTCONFIG_EDIT, bufferW, sizeof(bufferW) / sizeof(bufferW[0]));
+            GetDlgItemTextW(hwnd, LPTCONFIG_EDIT, bufferW, ARRAY_SIZE(bufferW));
             TRACE("got %s and %u (translated: %u)\n", debugstr_w(bufferW), res, status);
 
             /* native localui.dll use the same limits */
@@ -416,10 +416,10 @@ static DWORD get_type_from_name(LPCWSTR name)
 {
     HANDLE  hfile;
 
-    if (!strncmpiW(name, portname_LPT, sizeof(portname_LPT) / sizeof(WCHAR) -1))
+    if (!strncmpiW(name, portname_LPT, ARRAY_SIZE(portname_LPT) -1))
         return PORT_IS_LPT;
 
-    if (!strncmpiW(name, portname_COM, sizeof(portname_COM) / sizeof(WCHAR) -1))
+    if (!strncmpiW(name, portname_COM, ARRAY_SIZE(portname_COM) -1))
         return PORT_IS_COM;
 
     if (!strcmpiW(name, portname_FILE))
@@ -431,10 +431,10 @@ static DWORD get_type_from_name(LPCWSTR name)
     if (name[0] == '|')
         return PORT_IS_PIPE;
 
-    if (!strncmpW(name, portname_CUPS, sizeof(portname_CUPS) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) -1))
         return PORT_IS_CUPS;
 
-    if (!strncmpW(name, portname_LPR, sizeof(portname_LPR) / sizeof(WCHAR) -1))
+    if (!strncmpW(name, portname_LPR, ARRAY_SIZE(portname_LPR) -1))
         return PORT_IS_LPR;
 
     /* Must be a file or a directory. Does the file exist ? */
