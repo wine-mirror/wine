@@ -1245,6 +1245,7 @@ static BOOL action_type_matches_script( UINT type, UINT script )
     switch (script)
     {
     case SCRIPT_NONE:
+        return FALSE;
     case SCRIPT_INSTALL:
         return !(type & msidbCustomActionTypeCommit) && !(type & msidbCustomActionTypeRollback);
     case SCRIPT_COMMIT:
