@@ -116,24 +116,14 @@ struct device
     struct list           entry;
 };
 
-/* Pointed to by SP_DEVICE_INTERFACE_DATA's Reserved member */
-struct InterfaceInfo
+struct device_iface
 {
-    LPWSTR           referenceString;
-    LPWSTR           symbolicLink;
+    WCHAR           *refstr;
+    WCHAR           *symlink;
     struct device   *device;
-};
-
-/* A device may have multiple instances of the same interface, so this holds
- * each instance belonging to a particular interface.
- */
-struct InterfaceInstances
-{
-    GUID                      guid;
-    DWORD                     cInstances;
-    DWORD                     cInstancesAllocated;
-    SP_DEVICE_INTERFACE_DATA *instances;
-    struct list               entry;
+    GUID             class;
+    DWORD            flags;
+    struct list      entry;
 };
 
 static inline void copy_device_data(SP_DEVINFO_DATA *data, const struct device *device)
@@ -141,6 +131,14 @@ static inline void copy_device_data(SP_DEVINFO_DATA *data, const struct device *
     data->ClassGuid = device->class;
     data->DevInst = device->devnode;
     data->Reserved = (ULONG_PTR)device;
+}
+
+static inline void copy_device_iface_data(SP_DEVICE_INTERFACE_DATA *data,
+    const struct device_iface *iface)
+{
+    data->InterfaceClassGuid = iface->class;
+    data->Flags = iface->flags;
+    data->Reserved = (ULONG_PTR)iface;
 }
 
 static struct device **devnode_table;
@@ -201,12 +199,11 @@ static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
         guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
-static WCHAR *get_iface_key_path(SP_DEVICE_INTERFACE_DATA *iface)
+static WCHAR *get_iface_key_path(struct device_iface *iface)
 {
     const WCHAR slashW[] = {'\\',0};
-    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
     WCHAR *path, *ptr;
-    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(info->symbolicLink);
+    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(iface->symlink);
 
     if (!(path = heap_alloc((len + 1) * sizeof(WCHAR))))
     {
@@ -216,11 +213,11 @@ static WCHAR *get_iface_key_path(SP_DEVICE_INTERFACE_DATA *iface)
 
     strcpyW(path, DeviceClasses);
     strcatW(path, slashW);
-    SETUPDI_GuidToString(&iface->InterfaceClassGuid, path + strlenW(path));
+    SETUPDI_GuidToString(&iface->class, path + strlenW(path));
     strcatW(path, slashW);
     ptr = path + strlenW(path);
-    strcatW(path, info->symbolicLink);
-    if (strlenW(info->symbolicLink) > 3)
+    strcatW(path, iface->symlink);
+    if (strlenW(iface->symlink) > 3)
         ptr[0] = ptr[1] = ptr[3] = '#';
 
     ptr = strchrW(ptr, '\\');
@@ -229,16 +226,15 @@ static WCHAR *get_iface_key_path(SP_DEVICE_INTERFACE_DATA *iface)
     return path;
 }
 
-static WCHAR *get_refstr_key_path(SP_DEVICE_INTERFACE_DATA *iface)
+static WCHAR *get_refstr_key_path(struct device_iface *iface)
 {
     const WCHAR hashW[] = {'#',0};
     const WCHAR slashW[] = {'\\',0};
-    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
     WCHAR *path, *ptr;
-    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(info->symbolicLink) + 1 + 1;
+    size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(iface->symlink) + 1 + 1;
 
-    if (info->referenceString)
-        len += strlenW(info->referenceString);
+    if (iface->refstr)
+        len += strlenW(iface->refstr);
 
     if (!(path = heap_alloc((len + 1) * sizeof(WCHAR))))
     {
@@ -248,11 +244,11 @@ static WCHAR *get_refstr_key_path(SP_DEVICE_INTERFACE_DATA *iface)
 
     strcpyW(path, DeviceClasses);
     strcatW(path, slashW);
-    SETUPDI_GuidToString(&iface->InterfaceClassGuid, path + strlenW(path));
+    SETUPDI_GuidToString(&iface->class, path + strlenW(path));
     strcatW(path, slashW);
     ptr = path + strlenW(path);
-    strcatW(path, info->symbolicLink);
-    if (strlenW(info->symbolicLink) > 3)
+    strcatW(path, iface->symlink);
+    if (strlenW(iface->symlink) > 3)
         ptr[0] = ptr[1] = ptr[3] = '#';
 
     ptr = strchrW(ptr, '\\');
@@ -261,98 +257,10 @@ static WCHAR *get_refstr_key_path(SP_DEVICE_INTERFACE_DATA *iface)
     strcatW(path, slashW);
     strcatW(path, hashW);
 
-    if (info->referenceString)
-        strcatW(path, info->referenceString);
+    if (iface->refstr)
+        strcatW(path, iface->refstr);
 
     return path;
-}
-
-static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
-{
-    WCHAR *path;
-    DWORD i;
-
-    for (i = 0; i < instances->cInstances; i++)
-    {
-        struct InterfaceInfo *ifaceInfo =
-            (struct InterfaceInfo *)instances->instances[i].Reserved;
-
-        if (ifaceInfo->device && ifaceInfo->device->phantom)
-        {
-            if ((path = get_refstr_key_path(&instances->instances[i])))
-            {
-                RegDeleteKeyW(HKEY_LOCAL_MACHINE, path);
-                heap_free(path);
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
-        HeapFree(GetProcessHeap(), 0, ifaceInfo->symbolicLink);
-        HeapFree(GetProcessHeap(), 0, ifaceInfo);
-    }
-    HeapFree(GetProcessHeap(), 0, instances->instances);
-}
-
-/* Finds the interface with interface class InterfaceClassGuid in the device.
- * Returns TRUE if found, and updates *interface to point to device's
- * interfaces member where the given interface was found.
- * Returns FALSE if not found.
- */
-static BOOL SETUPDI_FindInterface(const struct device *device,
-        const GUID *InterfaceClassGuid, struct InterfaceInstances **iface_ret)
-{
-    BOOL found = FALSE;
-    struct InterfaceInstances *iface;
-
-    TRACE("%s\n", debugstr_guid(InterfaceClassGuid));
-
-    LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct InterfaceInstances,
-            entry)
-    {
-        if (IsEqualGUID(&iface->guid, InterfaceClassGuid))
-        {
-            *iface_ret = iface;
-            found = TRUE;
-            break;
-        }
-    }
-    TRACE("returning %d (%p)\n", found, found ? *iface_ret : NULL);
-    return found;
-}
-
-/* Finds the interface instance with reference string ReferenceString in the
- * interface instance map.  Returns TRUE if found, and updates instanceIndex to
- * the index of the interface instance's instances member
- * where the given instance was found.  Returns FALSE if not found.
- */
-static BOOL SETUPDI_FindInterfaceInstance(
-        const struct InterfaceInstances *instances,
-        LPCWSTR ReferenceString, DWORD *instanceIndex)
-{
-    BOOL found = FALSE;
-    DWORD i;
-
-    TRACE("%s\n", debugstr_w(ReferenceString));
-
-    for (i = 0; !found && i < instances->cInstances; i++)
-    {
-        SP_DEVICE_INTERFACE_DATA *ifaceData = &instances->instances[i];
-        struct InterfaceInfo *ifaceInfo =
-            (struct InterfaceInfo *)ifaceData->Reserved;
-
-        if (!ReferenceString && !ifaceInfo->referenceString)
-        {
-            *instanceIndex = i;
-            found = TRUE;
-        }
-        else if (ReferenceString && ifaceInfo->referenceString &&
-                !lstrcmpiW(ifaceInfo->referenceString, ReferenceString))
-        {
-            *instanceIndex = i;
-            found = TRUE;
-        }
-    }
-    TRACE("returning %d (%d)\n", found, found ? *instanceIndex : 0);
-    return found;
 }
 
 static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
@@ -390,159 +298,93 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
     return ret;
 }
 
-/* Adds an interface with the given interface class and reference string to
- * the device, if it doesn't already exist in the device.  If iface is not
- * NULL, returns a pointer to the newly added (or already existing) interface.
- */
-static BOOL SETUPDI_AddInterfaceInstance(struct device *devInfo,
-        const GUID *InterfaceClassGuid, LPCWSTR ReferenceString,
-        SP_DEVICE_INTERFACE_DATA **ifaceData)
+static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
+        const GUID *class, const WCHAR *refstr)
 {
-    BOOL newInterface = FALSE, ret;
-    struct InterfaceInstances *iface = NULL;
+    struct device_iface *iface = NULL;
+    WCHAR *refstr2 = NULL, *symlink = NULL, *path = NULL;
+    HKEY key = NULL;
+    LONG ret;
 
-    TRACE("%p %s %s %p\n", devInfo, debugstr_guid(InterfaceClassGuid),
-            debugstr_w(ReferenceString), iface);
+    TRACE("%p %s %s\n", device, debugstr_guid(class), debugstr_w(refstr));
 
-    if (!(ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &iface)))
+    /* check if it already exists */
+    LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
     {
-        iface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                sizeof(struct InterfaceInstances));
-        if (iface)
-        {
-            list_add_tail(&devInfo->interfaces, &iface->entry);
-            newInterface = TRUE;
-        }
+        if (IsEqualGUID(&iface->class, class) && !lstrcmpiW(iface->refstr, refstr))
+            return iface;
     }
-    if (iface)
+
+    iface = heap_alloc(sizeof(*iface));
+    symlink = SETUPDI_CreateSymbolicLinkPath(device->instanceId, class, refstr);
+
+    if (!iface || !symlink)
     {
-        DWORD instanceIndex = 0;
-
-        if (!(ret = SETUPDI_FindInterfaceInstance(iface, ReferenceString,
-                        &instanceIndex)))
-        {
-            SP_DEVICE_INTERFACE_DATA *instance = NULL;
-
-            if (!iface->cInstancesAllocated)
-            {
-                iface->instances = HeapAlloc(GetProcessHeap(), 0,
-                        sizeof(SP_DEVICE_INTERFACE_DATA));
-                if (iface->instances)
-                    instance = &iface->instances[iface->cInstancesAllocated++];
-            }
-            else if (iface->cInstances == iface->cInstancesAllocated)
-            {
-                iface->instances = HeapReAlloc(GetProcessHeap(), 0,
-                        iface->instances,
-                        (iface->cInstancesAllocated + 1) *
-                        sizeof(SP_DEVICE_INTERFACE_DATA));
-                if (iface->instances)
-                    instance = &iface->instances[iface->cInstancesAllocated++];
-            }
-            else
-                instance = &iface->instances[iface->cInstances];
-            if (instance)
-            {
-                struct InterfaceInfo *ifaceInfo = HeapAlloc(GetProcessHeap(),
-                        0, sizeof(struct InterfaceInfo));
-
-                if (ifaceInfo)
-                {
-                    ret = TRUE;
-                    ifaceInfo->device = devInfo;
-                    ifaceInfo->symbolicLink = SETUPDI_CreateSymbolicLinkPath(
-                            devInfo->instanceId, InterfaceClassGuid,
-                            ReferenceString);
-                    if (ReferenceString)
-                    {
-                        ifaceInfo->referenceString =
-                            HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(ReferenceString) + 1) *
-                                sizeof(WCHAR));
-                        if (ifaceInfo->referenceString)
-                            lstrcpyW(ifaceInfo->referenceString,
-                                    ReferenceString);
-                        else
-                            ret = FALSE;
-                    }
-                    else
-                        ifaceInfo->referenceString = NULL;
-                    if (ret)
-                    {
-                        WCHAR *path;
-                        HKEY key;
-
-                        iface->cInstances++;
-                        instance->cbSize =
-                            sizeof(SP_DEVICE_INTERFACE_DATA);
-                        instance->InterfaceClassGuid = *InterfaceClassGuid;
-                        instance->Flags = SPINT_ACTIVE; /* FIXME */
-                        instance->Reserved = (ULONG_PTR)ifaceInfo;
-                        if (newInterface)
-                            iface->guid = *InterfaceClassGuid;
-
-                        if ((path = get_iface_key_path(instance)))
-                        {
-                            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key))
-                            {
-                                RegSetValueExW(key, DeviceInstance, 0, REG_SZ,
-                                    (BYTE *)devInfo->instanceId,
-                                    lstrlenW(devInfo->instanceId) * sizeof(WCHAR));
-                                RegCloseKey(key);
-                            }
-                            heap_free(path);
-                        }
-
-                        if ((path = get_refstr_key_path(instance)))
-                        {
-                            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key))
-                            {
-                                RegSetValueExW(key, SymbolicLink, 0, REG_SZ,
-                                        (BYTE *)ifaceInfo->symbolicLink,
-                                        lstrlenW(ifaceInfo->symbolicLink) *
-                                        sizeof(WCHAR));
-                                RegCloseKey(key);
-                            }
-                            heap_free(path);
-                        }
-                        if (ifaceData)
-                            *ifaceData = instance;
-                    }
-                    else
-                        HeapFree(GetProcessHeap(), 0, ifaceInfo);
-                }
-            }
-        }
-        else
-        {
-            if (ifaceData)
-                *ifaceData = &iface->instances[instanceIndex];
-        }
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto err;
     }
-    else
-        ret = FALSE;
-    TRACE("returning %d\n", ret);
-    return ret;
+
+    if (refstr && !(refstr2 = strdupW(refstr)))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto err;
+    }
+    iface->refstr = refstr2;
+    iface->symlink = symlink;
+    iface->device = device;
+    iface->class = *class;
+    iface->flags = SPINT_ACTIVE; /* FIXME */
+
+    if (!(path = get_iface_key_path(iface)))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto err;
+    }
+
+    if ((ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key)))
+    {
+        SetLastError(ret);
+        goto err;
+    }
+    RegSetValueExW(key, DeviceInstance, 0, REG_SZ, (BYTE *)device->instanceId,
+        lstrlenW(device->instanceId) * sizeof(WCHAR));
+    RegCloseKey(key);
+    heap_free(path);
+
+    if (!(path = get_refstr_key_path(iface)))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto err;
+    }
+
+    if ((ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, path, &key)))
+    {
+        SetLastError(ret);
+        goto err;
+    }
+    RegSetValueExW(key, SymbolicLink, 0, REG_SZ, (BYTE *)iface->symlink,
+        lstrlenW(iface->symlink) * sizeof(WCHAR));
+    RegCloseKey(key);
+    heap_free(path);
+
+    list_add_tail(&device->interfaces, &iface->entry);
+    return iface;
+
+err:
+    heap_free(iface);
+    heap_free(refstr2);
+    heap_free(symlink);
+    heap_free(path);
+    return NULL;
 }
 
-static BOOL SETUPDI_SetInterfaceSymbolicLink(SP_DEVICE_INTERFACE_DATA *iface,
-        LPCWSTR symbolicLink)
+static BOOL SETUPDI_SetInterfaceSymbolicLink(struct device_iface *iface,
+    const WCHAR *symlink)
 {
-    struct InterfaceInfo *info = (struct InterfaceInfo *)iface->Reserved;
-    BOOL ret = FALSE;
-
-    if (info)
-    {
-        HeapFree(GetProcessHeap(), 0, info->symbolicLink);
-        info->symbolicLink = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(symbolicLink) + 1) * sizeof(WCHAR));
-        if (info->symbolicLink)
-        {
-            lstrcpyW(info->symbolicLink, symbolicLink);
-            ret = TRUE;
-        }
-    }
-    return ret;
+    heap_free(iface->symlink);
+    if ((iface->symlink = strdupW(symlink)))
+        return TRUE;
+    return FALSE;
 }
 
 static HKEY SETUPDI_CreateDevKey(struct device *device)
@@ -633,7 +475,8 @@ static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
 
 static void SETUPDI_RemoveDevice(struct device *device)
 {
-    struct InterfaceInstances *iface, *next;
+    struct device_iface *iface, *next;
+    WCHAR *path;
 
     if (device->key != INVALID_HANDLE_VALUE)
         RegCloseKey(device->key);
@@ -652,11 +495,17 @@ static void SETUPDI_RemoveDevice(struct device *device)
     }
     heap_free(device->instanceId);
     LIST_FOR_EACH_ENTRY_SAFE(iface, next, &device->interfaces,
-            struct InterfaceInstances, entry)
+            struct device_iface, entry)
     {
         list_remove(&iface->entry);
-        SETUPDI_FreeInterfaceInstances(iface);
-        HeapFree(GetProcessHeap(), 0, iface);
+        if ((path = get_refstr_key_path(iface)))
+        {
+            RegDeleteKeyW(HKEY_LOCAL_MACHINE, path);
+            heap_free(path);
+        }
+        heap_free(iface->refstr);
+        heap_free(iface->symlink);
+        heap_free(iface);
     }
     free_devnode(device->devnode);
     list_remove(&device->entry);
@@ -2124,12 +1973,12 @@ static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key, const G
         if (!l)
         {
             HKEY subKey;
-            SP_DEVICE_INTERFACE_DATA *iface = NULL;
+            struct device_iface *iface;
 
             if (*subKeyName == '#')
             {
                 /* The subkey name is the reference string, with a '#' prepended */
-                SETUPDI_AddInterfaceInstance(device, guid, subKeyName + 1, &iface);
+                iface = SETUPDI_CreateDeviceInterface(device, guid, subKeyName + 1);
                 l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
                 if (!l)
                 {
@@ -2593,16 +2442,15 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         const GUID *InterfaceClassGuid,
         PCWSTR ReferenceString,
         DWORD CreationFlags,
-        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+        SP_DEVICE_INTERFACE_DATA *iface_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct device *device;
-    SP_DEVICE_INTERFACE_DATA *iface = NULL;
-    BOOL ret;
+    struct device_iface *iface;
 
     TRACE("%p %p %s %s %08x %p\n", DeviceInfoSet, DeviceInfoData,
             debugstr_guid(InterfaceClassGuid), debugstr_w(ReferenceString),
-            CreationFlags, DeviceInterfaceData);
+            CreationFlags, iface_data);
 
     if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
     {
@@ -2631,21 +2479,21 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    if ((ret = SETUPDI_AddInterfaceInstance(device, InterfaceClassGuid,
-                    ReferenceString, &iface)))
+    if (!(iface = SETUPDI_CreateDeviceInterface(device, InterfaceClassGuid,
+                    ReferenceString)))
+        return FALSE;
+
+    if (iface_data)
     {
-        if (DeviceInterfaceData)
+        if (iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
         {
-            if (DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
-            {
-                SetLastError(ERROR_INVALID_USER_BUFFER);
-                ret = FALSE;
-            }
-            else
-                *DeviceInterfaceData = *iface;
+            SetLastError(ERROR_INVALID_USER_BUFFER);
+            return FALSE;
         }
+
+        copy_device_iface_data(iface_data, iface);
     }
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2682,19 +2530,18 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
     return key;
 }
 
-static PWSTR SETUPDI_GetInstancePath(struct InterfaceInfo *ifaceInfo)
+static PWSTR SETUPDI_GetInstancePath(struct device_iface *iface)
 {
     static const WCHAR hash[] = {'#',0};
     PWSTR instancePath = NULL;
 
-    if (ifaceInfo->referenceString)
+    if (iface->refstr)
     {
-        instancePath = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(ifaceInfo->referenceString) + 2) * sizeof(WCHAR));
+        instancePath = heap_alloc((lstrlenW(iface->refstr) + 2) * sizeof(WCHAR));
         if (instancePath)
         {
             lstrcpyW(instancePath, hash);
-            lstrcatW(instancePath, ifaceInfo->referenceString);
+            lstrcatW(instancePath, iface->refstr);
         }
         else
             SetLastError(ERROR_OUTOFMEMORY);
@@ -2756,16 +2603,16 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
         if (!(l = RegCreateKeyExW(interfacesKey, bracedGuidString, 0, NULL, 0,
                         samDesired, NULL, &parent, NULL)))
         {
-            struct InterfaceInfo *ifaceInfo =
-                (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+            struct device_iface *ifaceInfo =
+                (struct device_iface *)DeviceInterfaceData->Reserved;
             PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
             PWSTR interfKeyName = HeapAlloc(GetProcessHeap(), 0,
-                    (lstrlenW(ifaceInfo->symbolicLink) + 1) * sizeof(WCHAR));
+                    (lstrlenW(ifaceInfo->symlink) + 1) * sizeof(WCHAR));
             HKEY interfKey;
             WCHAR *ptr;
 
-            lstrcpyW(interfKeyName, ifaceInfo->symbolicLink);
-            if (lstrlenW(ifaceInfo->symbolicLink) > 3)
+            lstrcpyW(interfKeyName, ifaceInfo->symlink);
+            if (lstrlenW(ifaceInfo->symlink) > 3)
             {
                 interfKeyName[0] = '#';
                 interfKeyName[1] = '#';
@@ -2850,8 +2697,8 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
             KEY_ALL_ACCESS, DIOCR_INTERFACE, NULL, NULL);
     if (parent != INVALID_HANDLE_VALUE)
     {
-        struct InterfaceInfo *ifaceInfo =
-            (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
+        struct device_iface *ifaceInfo =
+            (struct device_iface *)DeviceInterfaceData->Reserved;
         PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
 
         if (instancePath)
@@ -2892,88 +2739,78 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
  *   Success: non-zero value.
  *   Failure: FALSE.  Call GetLastError() for more info.
  */
-BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData,
-        const GUID *InterfaceClassGuid, DWORD MemberIndex,
-        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO devinfo,
+    SP_DEVINFO_DATA *device_data, const GUID *class, DWORD index,
+    SP_DEVICE_INTERFACE_DATA *iface_data)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
-    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = devinfo;
+    struct device *device;
+    struct device_iface *iface;
+    DWORD i = 0;
 
-    TRACE("%p, %p, %s, %d, %p\n", DeviceInfoSet, DeviceInfoData,
-     debugstr_guid(InterfaceClassGuid), MemberIndex, DeviceInterfaceData);
+    TRACE("%p, %p, %s, %u, %p\n", devinfo, device_data, debugstr_guid(class),
+        index, iface_data);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
+    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if (DeviceInfoData && (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA) ||
-                !DeviceInfoData->Reserved))
+    if (device_data && (device_data->cbSize != sizeof(SP_DEVINFO_DATA) ||
+                !device_data->Reserved))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (!DeviceInterfaceData ||
-            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
+    if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     /* In case application fails to check return value, clear output */
-    memset(DeviceInterfaceData, 0, sizeof(*DeviceInterfaceData));
-    DeviceInterfaceData->cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+    memset(iface_data, 0, sizeof(*iface_data));
+    iface_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
-    if (DeviceInfoData)
+    if (device_data)
     {
-        struct device *device = (struct device *)DeviceInfoData->Reserved;
-        struct InterfaceInstances *iface;
+        device = (struct device *)device_data->Reserved;
 
-        if ((ret = SETUPDI_FindInterface(device, InterfaceClassGuid, &iface)))
+        LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
         {
-            if (MemberIndex < iface->cInstances)
-                *DeviceInterfaceData = iface->instances[MemberIndex];
-            else
+            if (IsEqualGUID(&iface->class, class))
             {
-                SetLastError(ERROR_NO_MORE_ITEMS);
-                ret = FALSE;
+                if (i == index)
+                {
+                    copy_device_iface_data(iface_data, iface);
+                    return TRUE;
+                }
+                i++;
             }
         }
-        else
-            SetLastError(ERROR_NO_MORE_ITEMS);
     }
     else
     {
-        struct device *device;
-        DWORD cEnumerated = 0;
-        BOOL found = FALSE;
-
         LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
-            struct InterfaceInstances *iface;
-
-            if (found || cEnumerated >= MemberIndex + 1)
-                break;
-            if (SETUPDI_FindInterface(device, InterfaceClassGuid, &iface))
+            LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
             {
-                if (cEnumerated + iface->cInstances < MemberIndex + 1)
-                    cEnumerated += iface->cInstances;
-                else
+                if (IsEqualGUID(&iface->class, class))
                 {
-                    DWORD instanceIndex = MemberIndex - cEnumerated;
-
-                    *DeviceInterfaceData = iface->instances[instanceIndex];
-                    cEnumerated += instanceIndex + 1;
-                    found = TRUE;
-                    ret = TRUE;
+                    if (i == index)
+                    {
+                        copy_device_iface_data(iface_data, iface);
+                        return TRUE;
+                    }
+                    i++;
                 }
             }
         }
-        if (!found)
-            SetLastError(ERROR_NO_MORE_ITEMS);
     }
-    return ret;
+
+    SetLastError(ERROR_NO_MORE_ITEMS);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -3029,7 +2866,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
-    struct InterfaceInfo *info;
+    struct device_iface *iface;
     DWORD bytesNeeded = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
     BOOL ret = FALSE;
 
@@ -3061,14 +2898,14 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    info = (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
-    if (info->symbolicLink)
-        bytesNeeded += WideCharToMultiByte(CP_ACP, 0, info->symbolicLink, -1,
+    iface = (struct device_iface *)DeviceInterfaceData->Reserved;
+    if (iface->symlink)
+        bytesNeeded += WideCharToMultiByte(CP_ACP, 0, iface->symlink, -1,
                 NULL, 0, NULL, NULL);
     if (DeviceInterfaceDetailDataSize >= bytesNeeded)
     {
-        if (info->symbolicLink)
-            WideCharToMultiByte(CP_ACP, 0, info->symbolicLink, -1,
+        if (iface->symlink)
+            WideCharToMultiByte(CP_ACP, 0, iface->symlink, -1,
                     DeviceInterfaceDetailData->DevicePath,
                     DeviceInterfaceDetailDataSize -
                     offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath),
@@ -3077,7 +2914,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
 
         if (device_data && device_data->cbSize == sizeof(SP_DEVINFO_DATA))
-            copy_device_data(device_data, info->device);
+            copy_device_data(device_data, iface->device);
 
         ret = TRUE;
     }
@@ -3102,7 +2939,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
-    struct InterfaceInfo *info;
+    struct device_iface *iface;
     DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath)
         + sizeof(WCHAR); /* include NULL terminator */
     BOOL ret = FALSE;
@@ -3136,18 +2973,18 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    info = (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
-    if (info->symbolicLink)
-        bytesNeeded += sizeof(WCHAR)*lstrlenW(info->symbolicLink);
+    iface = (struct device_iface *)DeviceInterfaceData->Reserved;
+    if (iface->symlink)
+        bytesNeeded += sizeof(WCHAR) * lstrlenW(iface->symlink);
     if (DeviceInterfaceDetailDataSize >= bytesNeeded)
     {
-        if (info->symbolicLink)
-            lstrcpyW(DeviceInterfaceDetailData->DevicePath, info->symbolicLink);
+        if (iface->symlink)
+            lstrcpyW(DeviceInterfaceDetailData->DevicePath, iface->symlink);
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
 
         if (device_data && device_data->cbSize == sizeof(SP_DEVINFO_DATA))
-            copy_device_data(device_data, info->device);
+            copy_device_data(device_data, iface->device);
 
         ret = TRUE;
     }
