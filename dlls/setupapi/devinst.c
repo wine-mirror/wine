@@ -2531,32 +2531,6 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
     return key;
 }
 
-static PWSTR SETUPDI_GetInstancePath(struct device_iface *iface)
-{
-    static const WCHAR hash[] = {'#',0};
-    PWSTR instancePath = NULL;
-
-    if (iface->refstr)
-    {
-        instancePath = heap_alloc((lstrlenW(iface->refstr) + 2) * sizeof(WCHAR));
-        if (instancePath)
-        {
-            lstrcpyW(instancePath, hash);
-            lstrcatW(instancePath, iface->refstr);
-        }
-        else
-            SetLastError(ERROR_OUTOFMEMORY);
-    }
-    else
-    {
-        instancePath = HeapAlloc(GetProcessHeap(), 0,
-                (lstrlenW(hash) + 1) * sizeof(WCHAR));
-        if (instancePath)
-            lstrcpyW(instancePath, hash);
-    }
-    return instancePath;
-}
-
 /***********************************************************************
  *		SetupDiCreateDeviceInterfaceRegKeyW (SETUPAPI.@)
  */
@@ -2622,51 +2596,55 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
 /***********************************************************************
  *		SetupDiDeleteDeviceInterfaceRegKey (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(
-        HDEVINFO DeviceInfoSet,
-        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-        DWORD Reserved)
+BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO devinfo,
+    SP_DEVICE_INTERFACE_DATA *iface_data, DWORD reserved)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
-    HKEY parent;
-    BOOL ret = FALSE;
+    struct DeviceInfoSet *set = devinfo;
+    struct device_iface *iface;
+    HKEY refstr_key;
+    WCHAR *path;
+    LONG ret;
 
-    TRACE("%p %p %d\n", DeviceInfoSet, DeviceInterfaceData, Reserved);
+    TRACE("%p %p %d\n", devinfo, iface_data, reserved);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
+    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if (!DeviceInterfaceData ||
-            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !DeviceInterfaceData->Reserved)
+    if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
+            !iface_data->Reserved)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    parent = SetupDiOpenClassRegKeyExW(&DeviceInterfaceData->InterfaceClassGuid,
-            KEY_ALL_ACCESS, DIOCR_INTERFACE, NULL, NULL);
-    if (parent != INVALID_HANDLE_VALUE)
+
+    iface = (struct device_iface *)iface_data->Reserved;
+    if (!(path = get_refstr_key_path(iface)))
     {
-        struct device_iface *ifaceInfo =
-            (struct device_iface *)DeviceInterfaceData->Reserved;
-        PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
-
-        if (instancePath)
-        {
-            LONG l = RegDeleteKeyW(parent, instancePath);
-
-            if (l)
-                SetLastError(l);
-            else
-                ret = TRUE;
-            HeapFree(GetProcessHeap(), 0, instancePath);
-        }
-        RegCloseKey(parent);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
     }
-    return ret;
+
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, path, 0, NULL, 0, 0, NULL,
+        &refstr_key, NULL);
+    heap_free(path);
+    if (ret)
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
+
+    ret = RegDeleteKeyW(refstr_key, DeviceParameters);
+    RegCloseKey(refstr_key);
+    if (ret)
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

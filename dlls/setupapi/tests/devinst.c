@@ -1419,11 +1419,9 @@ static void test_device_interface_key(void)
     RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInterfaceRegKey(set, &iface, 0);
-todo_wine
     ok(ret, "got error %u\n", GetLastError());
 
     ret = RegOpenKeyA(parent, "#\\Device Parameters", &key);
-todo_wine
     ok(ret == ERROR_FILE_NOT_FOUND, "key shouldn't exist\n");
 
     RegCloseKey(parent);
