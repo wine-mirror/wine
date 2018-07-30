@@ -504,6 +504,50 @@ static HKEY SETUPDI_CreateDrvKey(struct DeviceInfo *devInfo)
     return key;
 }
 
+struct PropertyMapEntry
+{
+    DWORD   regType;
+    LPCSTR  nameA;
+    LPCWSTR nameW;
+};
+
+static const struct PropertyMapEntry PropertyMap[] = {
+    { REG_SZ, "DeviceDesc", DeviceDesc },
+    { REG_MULTI_SZ, "HardwareId", HardwareId },
+    { REG_MULTI_SZ, "CompatibleIDs", CompatibleIDs },
+    { 0, NULL, NULL }, /* SPDRP_UNUSED0 */
+    { REG_SZ, "Service", Service },
+    { 0, NULL, NULL }, /* SPDRP_UNUSED1 */
+    { 0, NULL, NULL }, /* SPDRP_UNUSED2 */
+    { REG_SZ, "Class", Class },
+    { REG_SZ, "ClassGUID", ClassGUID },
+    { REG_SZ, "Driver", Driver },
+    { REG_DWORD, "ConfigFlags", ConfigFlags },
+    { REG_SZ, "Mfg", Mfg },
+    { REG_SZ, "FriendlyName", FriendlyName },
+    { REG_SZ, "LocationInformation", LocationInformation },
+    { 0, NULL, NULL }, /* SPDRP_PHYSICAL_DEVICE_OBJECT_NAME */
+    { REG_DWORD, "Capabilities", Capabilities },
+    { REG_DWORD, "UINumber", UINumber },
+    { REG_MULTI_SZ, "UpperFilters", UpperFilters },
+    { REG_MULTI_SZ, "LowerFilters", LowerFilters },
+};
+
+static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct DeviceInfo *device,
+    DWORD prop, const BYTE *buffer, DWORD size)
+{
+    if (prop < ARRAY_SIZE(PropertyMap) && PropertyMap[prop].nameW)
+    {
+        LONG ret = RegSetValueExW(device->key, PropertyMap[prop].nameW, 0,
+                PropertyMap[prop].regType, buffer, size);
+        if (!ret)
+            return TRUE;
+
+        SetLastError(ret);
+    }
+    return FALSE;
+}
+
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
         DWORD devId, LPCWSTR instanceId, BOOL phantom)
 {
@@ -3090,35 +3134,6 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
     return ret;
 }
 
-struct PropertyMapEntry
-{
-    DWORD   regType;
-    LPCSTR  nameA;
-    LPCWSTR nameW;
-};
-
-static const struct PropertyMapEntry PropertyMap[] = {
-    { REG_SZ, "DeviceDesc", DeviceDesc },
-    { REG_MULTI_SZ, "HardwareId", HardwareId },
-    { REG_MULTI_SZ, "CompatibleIDs", CompatibleIDs },
-    { 0, NULL, NULL }, /* SPDRP_UNUSED0 */
-    { REG_SZ, "Service", Service },
-    { 0, NULL, NULL }, /* SPDRP_UNUSED1 */
-    { 0, NULL, NULL }, /* SPDRP_UNUSED2 */
-    { REG_SZ, "Class", Class },
-    { REG_SZ, "ClassGUID", ClassGUID },
-    { REG_SZ, "Driver", Driver },
-    { REG_DWORD, "ConfigFlags", ConfigFlags },
-    { REG_SZ, "Mfg", Mfg },
-    { REG_SZ, "FriendlyName", FriendlyName },
-    { REG_SZ, "LocationInformation", LocationInformation },
-    { 0, NULL, NULL }, /* SPDRP_PHYSICAL_DEVICE_OBJECT_NAME */
-    { REG_DWORD, "Capabilities", Capabilities },
-    { REG_DWORD, "UINumber", UINumber },
-    { REG_MULTI_SZ, "UpperFilters", UpperFilters },
-    { REG_MULTI_SZ, "LowerFilters", LowerFilters },
-};
-
 /***********************************************************************
  *		SetupDiGetDeviceRegistryPropertyA (SETUPAPI.@)
  */
@@ -3296,21 +3311,15 @@ BOOL WINAPI SetupDiSetDeviceRegistryPropertyA(
 /***********************************************************************
  *		SetupDiSetDeviceRegistryPropertyW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiSetDeviceRegistryPropertyW(
-	HDEVINFO DeviceInfoSet,
-	PSP_DEVINFO_DATA DeviceInfoData,
-	DWORD Property,
-	const BYTE *PropertyBuffer,
-	DWORD PropertyBufferSize)
+BOOL WINAPI SetupDiSetDeviceRegistryPropertyW(HDEVINFO devinfo,
+    SP_DEVINFO_DATA *device_data, DWORD prop, const BYTE *buffer, DWORD size)
 {
-    BOOL ret = FALSE;
-    struct DeviceInfoSet *set = DeviceInfoSet;
-    struct DeviceInfo *devInfo;
+    struct DeviceInfoSet *set = devinfo;
+    struct DeviceInfo *device;
 
-    TRACE("%p %p %d %p %d\n", DeviceInfoSet, DeviceInfoData, Property,
-        PropertyBuffer, PropertyBufferSize);
+    TRACE("%p %p %d %p %d\n", devinfo, device_data, prop, buffer, size);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
+    if (!devinfo || devinfo == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -3320,25 +3329,15 @@ BOOL WINAPI SetupDiSetDeviceRegistryPropertyW(
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if (!DeviceInfoData || DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA)
-            || !DeviceInfoData->Reserved)
+    if (!device_data || device_data->cbSize != sizeof(SP_DEVINFO_DATA)
+            || !device_data->Reserved)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
-    if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
-        && PropertyMap[Property].nameW)
-    {
-        LONG l = RegSetValueExW(devInfo->key, PropertyMap[Property].nameW, 0,
-                PropertyMap[Property].regType, PropertyBuffer,
-                PropertyBufferSize);
-        if (!l)
-            ret = TRUE;
-        else
-            SetLastError(l);
-    }
-    return ret;
+
+    device = (struct DeviceInfo *)device_data->Reserved;
+    return SETUPDI_SetDeviceRegistryPropertyW(device, prop, buffer, size);
 }
 
 /***********************************************************************
