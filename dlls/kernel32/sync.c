@@ -1594,7 +1594,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 
     if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
         nt_name.Length < sizeof(leadin) ||
-        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(WCHAR)) != 0)
+        strncmpiW( nt_name.Buffer, leadin, ARRAY_SIZE( leadin )) != 0)
     {
         RtlFreeUnicodeString( &nt_name );
         SetLastError( ERROR_PATH_NOT_FOUND );
@@ -1630,8 +1630,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     else
         pipe_wait->Timeout.QuadPart = (ULONGLONG)nTimeOut * -10000;
     pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
-    memcpy(pipe_wait->Name, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
-           pipe_wait->NameLength);
+    memcpy( pipe_wait->Name, nt_name.Buffer + ARRAY_SIZE( leadin ), pipe_wait->NameLength );
     RtlFreeUnicodeString( &nt_name );
 
     status = NtFsControlFile( pipe_dev, NULL, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,
@@ -2084,8 +2083,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
          '\\','W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l',
          'u','.','%','0','8','u','\0' };
 
-        snprintfW(name, sizeof(name) / sizeof(name[0]), nameFmt,
-                  GetCurrentProcessId(), ++index);
+        snprintfW(name, ARRAY_SIZE(name), nameFmt, GetCurrentProcessId(), ++index);
         RtlInitUnicodeString(&nt_name, name);
         status = NtCreateNamedPipeFile(&hr, GENERIC_READ | SYNCHRONIZE, &attr, &iosb,
                                        FILE_SHARE_WRITE, FILE_OVERWRITE_IF,

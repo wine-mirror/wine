@@ -355,8 +355,7 @@ static UINT find_charset( const WCHAR *name )
         if (isalnum((unsigned char)name[i])) charset_name[j++] = name[i];
     charset_name[j] = 0;
 
-    entry = bsearch( charset_name, charset_names,
-                     sizeof(charset_names)/sizeof(charset_names[0]),
+    entry = bsearch( charset_name, charset_names, ARRAY_SIZE( charset_names ),
                      sizeof(charset_names[0]), charset_cmp );
     if (entry) return entry->codepage;
     return 0;
@@ -395,8 +394,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
 
     /* first check exact name */
     if (data->win_name[0] &&
-        GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE,
-                        buffer, sizeof(buffer)/sizeof(WCHAR) ))
+        GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, buffer, ARRAY_SIZE( buffer )))
     {
         if (!strcmpiW( data->win_name, buffer ))
         {
@@ -406,7 +404,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     }
 
     if (!GetLocaleInfoW( lcid, LOCALE_SISO639LANGNAME | LOCALE_NOUSEROVERRIDE,
-                         buffer, sizeof(buffer)/sizeof(WCHAR) ))
+                         buffer, ARRAY_SIZE( buffer )))
         return TRUE;
     if (strcmpiW( buffer, data->lang )) return TRUE;
     matches++;  /* language name matched */
@@ -414,7 +412,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     if (data->script)
     {
         if (GetLocaleInfoW( lcid, LOCALE_SSCRIPTS | LOCALE_NOUSEROVERRIDE,
-                            buffer, sizeof(buffer)/sizeof(WCHAR) ))
+                            buffer, ARRAY_SIZE( buffer )))
         {
             const WCHAR *p = buffer;
             unsigned int len = strlenW( data->script );
@@ -432,7 +430,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     if (data->country)
     {
         if (GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
-                            buffer, sizeof(buffer)/sizeof(WCHAR) ))
+                            buffer, ARRAY_SIZE( buffer )))
         {
             if (strcmpiW( buffer, data->country )) goto done;
             matches++;  /* country name matched */
@@ -490,7 +488,7 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
     name->matches = 0;
     name->codepage = 0;
     name->win_name[0] = 0;
-    lstrcpynW( name->lang, str, sizeof(name->lang)/sizeof(WCHAR) );
+    lstrcpynW( name->lang, str, ARRAY_SIZE( name->lang ));
 
     if (!*name->lang)
     {
@@ -816,8 +814,7 @@ static BOOL locale_update_registry( HKEY hkey, const WCHAR *name, LCID lcid,
 
     for (i = 0; i < nb_values; i++)
     {
-        GetLocaleInfoW( lcid, values[i] | LOCALE_NOUSEROVERRIDE, bufferW,
-                        sizeof(bufferW)/sizeof(WCHAR) );
+        GetLocaleInfoW( lcid, values[i] | LOCALE_NOUSEROVERRIDE, bufferW, ARRAY_SIZE( bufferW ));
         SetLocaleInfoW( lcid, values[i], bufferW );
     }
     return TRUE;
@@ -905,19 +902,19 @@ void LOCALE_InitRegistry(void)
         return;  /* don't do anything if we can't create the registry key */
 
     locale_update_registry( hkey, localeW, lcid_LC_MESSAGES, lc_messages_values,
-                            sizeof(lc_messages_values)/sizeof(lc_messages_values[0]) );
+                            ARRAY_SIZE( lc_messages_values ));
     locale_update_registry( hkey, lc_monetaryW, lcid_LC_MONETARY, lc_monetary_values,
-                            sizeof(lc_monetary_values)/sizeof(lc_monetary_values[0]) );
+                            ARRAY_SIZE( lc_monetary_values ));
     locale_update_registry( hkey, lc_numericW, lcid_LC_NUMERIC, lc_numeric_values,
-                            sizeof(lc_numeric_values)/sizeof(lc_numeric_values[0]) );
+                            ARRAY_SIZE( lc_numeric_values ));
     locale_update_registry( hkey, lc_timeW, lcid_LC_TIME, lc_time_values,
-                            sizeof(lc_time_values)/sizeof(lc_time_values[0]) );
+                            ARRAY_SIZE( lc_time_values ));
     locale_update_registry( hkey, lc_measurementW, lcid_LC_MEASUREMENT, lc_measurement_values,
-                            sizeof(lc_measurement_values)/sizeof(lc_measurement_values[0]) );
+                            ARRAY_SIZE( lc_measurement_values ));
     locale_update_registry( hkey, lc_telephoneW, lcid_LC_TELEPHONE, lc_telephone_values,
-                            sizeof(lc_telephone_values)/sizeof(lc_telephone_values[0]) );
+                            ARRAY_SIZE( lc_telephone_values ));
     locale_update_registry( hkey, lc_paperW, lcid_LC_PAPER, lc_paper_values,
-                            sizeof(lc_paper_values)/sizeof(lc_paper_values[0]) );
+                            ARRAY_SIZE( lc_paper_values ));
 
     if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
     {
@@ -943,10 +940,10 @@ void LOCALE_InitRegistry(void)
         nameW.Length = len * sizeof(WCHAR);
         if (!NtCreateKey( &nls_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
         {
-            for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
+            for (i = 0; i < ARRAY_SIZE( update_cp_values ); i++)
             {
                 count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
-                                        bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+                                        bufferW, ARRAY_SIZE( bufferW ));
                 RtlInitUnicodeString( &nameW, update_cp_values[i].name );
                 NtSetValueKey( nls_key, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
             }
@@ -1112,7 +1109,7 @@ static UINT setup_unix_locales(void)
 
     if ((locale = get_locale( LC_CTYPE, "LC_CTYPE" )))
     {
-        strcpynAtoW( ctype_buff, locale, sizeof(ctype_buff)/sizeof(WCHAR) );
+        strcpynAtoW( ctype_buff, locale, ARRAY_SIZE( ctype_buff ));
         parse_locale_name( ctype_buff, &locale_name );
         lcid_LC_CTYPE = locale_name.lcid;
         unix_cp = locale_name.codepage;
@@ -1126,7 +1123,7 @@ static UINT setup_unix_locales(void)
 #define GET_UNIX_LOCALE(cat) do \
     if ((locale = get_locale( cat, #cat ))) \
     { \
-        strcpynAtoW( buffer, locale, sizeof(buffer)/sizeof(WCHAR) ); \
+        strcpynAtoW( buffer, locale, ARRAY_SIZE(buffer) ); \
         if (!strcmpW( buffer, ctype_buff )) lcid_##cat = lcid_LC_CTYPE; \
         else { \
             parse_locale_name( buffer, &locale_name );  \
@@ -1444,7 +1441,7 @@ INT WINAPI LCIDToLocaleName( LCID lcid, LPWSTR name, INT count, DWORD flags )
 static struct registry_value *get_locale_registry_value( DWORD lctype )
 {
     int i;
-    for (i=0; i < sizeof(registry_values)/sizeof(registry_values[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( registry_values ); i++)
         if (registry_values[i].lctype == lctype)
             return &registry_values[i];
     return NULL;
@@ -1698,7 +1695,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
             if (lcflags & LOCALE_RETURN_NUMBER)
             {
                 WCHAR tmp[16];
-                ret = get_registry_locale_info( value, tmp, sizeof(tmp)/sizeof(WCHAR) );
+                ret = get_registry_locale_info( value, tmp, ARRAY_SIZE( tmp ));
                 if (ret > 0)
                 {
                     WCHAR *end;
@@ -2219,7 +2216,7 @@ BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD dwFlags, LPCPINFOEXW cpinfo )
             cpinfo->CodePage = table->info.codepage;
             cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
             MultiByteToWideChar( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
-                                 sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+                                 ARRAY_SIZE( cpinfo->CodePageName ));
             break;
         }
     }
@@ -2269,7 +2266,7 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD fla
     for (;;)
     {
         if (!(table = wine_cp_enum_table( index++ ))) break;
-        p = buffer + sizeof(buffer)/sizeof(WCHAR);
+        p = buffer + ARRAY_SIZE( buffer );
         *--p = 0;
         page = table->info.codepage;
         do
@@ -2989,7 +2986,7 @@ static BOOL CALLBACK enum_locale_ex_proc( HMODULE module, LPCWSTR type,
     unsigned int flags;
 
     GetLocaleInfoW( MAKELCID( lang, SORT_DEFAULT ), LOCALE_SNAME | LOCALE_NOUSEROVERRIDE,
-                    buffer, sizeof(buffer) / sizeof(WCHAR) );
+                    buffer, ARRAY_SIZE( buffer ));
     if (!GetLocaleInfoW( MAKELCID( lang, SORT_DEFAULT ),
                          LOCALE_INEUTRAL | LOCALE_NOUSEROVERRIDE | LOCALE_RETURN_NUMBER,
                          (LPWSTR)&neutral, sizeof(neutral) / sizeof(WCHAR) ))
@@ -3254,7 +3251,7 @@ static INT compose_katakana( LPCWSTR src, INT srclen, LPWSTR dst )
     default:
     {
         int shift = *src - 0xff61;
-        if (shift < 0 || shift >= sizeof(katakana_map)/sizeof(katakana_map[0]) )
+        if (shift < 0 || shift >= ARRAY_SIZE( katakana_map ))
             return 0;
         else
             *dst = katakana_map[shift] | 0x3000;
@@ -3362,7 +3359,7 @@ static INT decompose_katakana( WCHAR c, LPWSTR dst, INT dstlen )
     INT len = 0, shift = c - 0x3099;
     BYTE k;
 
-    if (shift < 0 || shift >= sizeof(katakana_map)/sizeof(katakana_map[0]))
+    if (shift < 0 || shift >= ARRAY_SIZE( katakana_map ))
         return 0;
 
     k = katakana_map[shift];
@@ -4382,7 +4379,7 @@ static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
             {
                 WCHAR szGrpName[48];
 
-                if (!NLS_GetLanguageGroupName( lgrpid, szGrpName, sizeof(szGrpName) / sizeof(WCHAR) ))
+                if (!NLS_GetLanguageGroupName( lgrpid, szGrpName, ARRAY_SIZE( szGrpName )))
                     szGrpName[0] = '\0';
 
                 if (lpProcs->procW)
@@ -4390,7 +4387,7 @@ static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
                                                 lpProcs->lParam );
                 else
                 {
-                    char szNumberA[sizeof(szNumber)/sizeof(WCHAR)];
+                    char szNumberA[ARRAY_SIZE( szNumber )];
                     char szGrpNameA[48];
 
                     /* FIXME: MSDN doesn't say which code page the W->A translation uses,
@@ -4584,7 +4581,7 @@ static BOOL NLS_EnumLanguageGroupLocales(ENUMLANGUAGEGROUPLOCALE_CALLBACKS *lpPr
                     bContinue = lpProcs->procW( lgrpid, lcid, szNumber, lpProcs->lParam );
                 else
                 {
-                    char szNumberA[sizeof(szNumber)/sizeof(WCHAR)];
+                    char szNumberA[ARRAY_SIZE( szNumber )];
 
                     WideCharToMultiByte(CP_ACP, 0, szNumber, -1, szNumberA, sizeof(szNumberA), 0, 0);
 
@@ -5174,7 +5171,7 @@ static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
     int min, max;
 
     min = 0;
-    max = sizeof(geoinfodata)/sizeof(struct geoinfo_t)-1;
+    max = ARRAY_SIZE(geoinfodata)-1;
 
     while (min <= max) {
         const struct geoinfo_t *ptr;
@@ -5324,7 +5321,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumpr
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(geoinfodata)/sizeof(struct geoinfo_t); i++) {
+    for (i = 0; i < ARRAY_SIZE(geoinfodata); i++) {
         const struct geoinfo_t *ptr = &geoinfodata[i];
 
         if (geoclass == GEOCLASS_NATION && (ptr->kind == LOCATION_REGION))
@@ -5682,8 +5679,7 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
             }
         }
 
-        norm_len = FoldStringW(MAP_FOLDCZONE, map_str, map_len,
-                norm_str, sizeof(norm_str)/sizeof(WCHAR)-1);
+        norm_len = FoldStringW(MAP_FOLDCZONE, map_str, map_len, norm_str, ARRAY_SIZE(norm_str)-1);
         if(map_str != buf)
             HeapFree(GetProcessHeap(), 0, map_str);
         if(!norm_len) {

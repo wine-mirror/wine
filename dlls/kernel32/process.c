@@ -377,7 +377,7 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
         }
         /* PATH is magic */
         if (env_name.Length == sizeof(pathW) &&
-            !memicmpW( env_name.Buffer, pathW, sizeof(pathW)/sizeof(WCHAR) ) &&
+            !memicmpW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
             !RtlQueryEnvironmentVariable_U( NULL, &env_name, &tmp ))
         {
             RtlAppendUnicodeToString( &tmp, sep );
@@ -528,7 +528,7 @@ static void set_additional_environment(void)
     DWORD len;
 
     /* ComputerName */
-    len = sizeof(buf) / sizeof(WCHAR);
+    len = ARRAY_SIZE( buf );
     if (GetComputerNameW( buf, &len ))
         SetEnvironmentVariableW( computernameW, buf );
 
@@ -606,7 +606,7 @@ static void set_wow64_environment(void)
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
-    if (GetEnvironmentVariableW( arch6432W, arch, sizeof(arch)/sizeof(WCHAR) ))
+    if (GetEnvironmentVariableW( arch6432W, arch, ARRAY_SIZE( arch )))
     {
         if (is_win64)
         {
@@ -614,7 +614,7 @@ static void set_wow64_environment(void)
             SetEnvironmentVariableW( arch6432W, NULL );
         }
     }
-    else if (GetEnvironmentVariableW( archW, arch, sizeof(arch)/sizeof(WCHAR) ))
+    else if (GetEnvironmentVariableW( archW, arch, ARRAY_SIZE( arch )))
     {
         if (is_wow64)
         {
@@ -1002,7 +1002,7 @@ static void start_wineboot( HANDLE handles[2] )
         PROCESS_INFORMATION pi;
         void *redir;
         WCHAR app[MAX_PATH];
-        WCHAR cmdline[MAX_PATH + (sizeof(wineboot) + sizeof(args)) / sizeof(WCHAR)];
+        WCHAR cmdline[MAX_PATH + ARRAY_SIZE( wineboot ) + ARRAY_SIZE( args )];
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
@@ -1011,7 +1011,7 @@ static void start_wineboot( HANDLE handles[2] )
         si.hStdOutput = 0;
         si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
-        GetSystemDirectoryW( app, MAX_PATH - sizeof(wineboot)/sizeof(WCHAR) );
+        GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE( wineboot ));
         lstrcatW( app, wineboot );
 
         Wow64DisableWow64FsRedirection( &redir );
@@ -1291,7 +1291,7 @@ void CDECL __wine_kernel_init(void)
         }
         args[0] = (DWORD_PTR)main_exe_name;
         FormatMessageW( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                        NULL, error, 0, msgW, sizeof(msgW)/sizeof(WCHAR), (__ms_va_list *)args );
+                        NULL, error, 0, msgW, ARRAY_SIZE( msgW ), (__ms_va_list *)args );
         WideCharToMultiByte( CP_UNIXCP, 0, msgW, -1, msg, sizeof(msg), NULL, NULL );
         MESSAGE( "wine: %s", msg );
         ExitProcess( error );
@@ -1440,7 +1440,7 @@ static char **build_envp( const WCHAR *envW )
     for (p = env; *p; p += strlen(p) + 1)
         if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
 
-    for (i = 0; i < sizeof(unix_vars)/sizeof(unix_vars[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
     {
         if (!(p = getenv(unix_vars[i]))) continue;
         length += strlen(unix_vars[i]) + strlen(p) + 2;
@@ -1453,7 +1453,7 @@ static char **build_envp( const WCHAR *envW )
         char *dst = (char *)(envp + count);
 
         /* some variables must not be modified, so we get them directly from the unix env */
-        for (i = 0; i < sizeof(unix_vars)/sizeof(unix_vars[0]); i++)
+        for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
         {
             if (!(p = getenv(unix_vars[i]))) continue;
             *envptr++ = strcpy( dst, unix_vars[i] );
@@ -2048,7 +2048,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     while (*env_end)
     {
         static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
-        if (!winedebug && !strncmpW( env_end, WINEDEBUG, sizeof(WINEDEBUG)/sizeof(WCHAR) - 1 ))
+        if (!winedebug && !strncmpW( env_end, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
         {
             DWORD len = WideCharToMultiByte( CP_UNIXCP, 0, env_end, -1, NULL, 0, NULL, NULL );
             if ((winedebug = HeapAlloc( GetProcessHeap(), 0, len )))
@@ -2219,7 +2219,7 @@ static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env, L
     WCHAR *newcmdline;
     BOOL ret;
 
-    if (!GetEnvironmentVariableW( comspecW, comspec, sizeof(comspec)/sizeof(WCHAR) ))
+    if (!GetEnvironmentVariableW( comspecW, comspec, ARRAY_SIZE( comspec )))
         return FALSE;
     if (!(newcmdline = HeapAlloc( GetProcessHeap(), 0,
                                   (strlenW(comspec) + 7 + strlenW(cmd_line) + 2) * sizeof(WCHAR))))
@@ -2340,7 +2340,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
 
     TRACE("app %s cmdline %s\n", debugstr_w(app_name), debugstr_w(cmd_line) );
 
-    if (!(tidy_cmdline = get_file_name( app_name, cmd_line, name, sizeof(name)/sizeof(WCHAR),
+    if (!(tidy_cmdline = get_file_name( app_name, cmd_line, name, ARRAY_SIZE( name ),
                                         &hFile, &binary_info )))
         return FALSE;
     if (hFile == INVALID_HANDLE_VALUE) goto done;
@@ -3624,7 +3624,7 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
         drive[0] = result->Buffer[0];
         drive[1] = ':';
         drive[2] = 0;
-        if (!QueryDosDeviceW(drive, device, sizeof(device)/sizeof(*device)))
+        if (!QueryDosDeviceW(drive, device, ARRAY_SIZE(device)))
         {
             status = STATUS_NO_SUCH_DEVICE;
             goto cleanup;

@@ -373,7 +373,7 @@ static BOOL TERM_BuildKeyDB(void)
     struct dbkey_descr descr;
     char tmp[64];
 
-    for (i = 0; i < sizeof(TERM_dbkey_init) / sizeof(TERM_dbkey_init[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(TERM_dbkey_init); i++)
     {
         if (!TERM_AddKeyDescr(tigetstr((char *)TERM_dbkey_init[i].string_normal), &TERM_dbkey_init[i].descr))
             return FALSE;

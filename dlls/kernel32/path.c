@@ -893,7 +893,7 @@ static NTSTATUS find_actctx_dllpath(const WCHAR *libname, WCHAR **path)
     strcpyW( p, DIR_Windows );
     p += strlenW(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
-    p += sizeof(winsxsW) / sizeof(WCHAR);
+    p += ARRAY_SIZE( winsxsW );
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
     p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
     *p++ = '\\';

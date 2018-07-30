@@ -1156,7 +1156,7 @@ static enum read_console_input_return bare_console_fetch_input(HANDLE handle, in
                 break;
             case -1:
                 /* we haven't found the string into key-db, push full input string into server */
-                idxw = MultiByteToWideChar(CP_UNIXCP, 0, input, idx, inputw, sizeof(inputw) / sizeof(inputw[0]));
+                idxw = MultiByteToWideChar(CP_UNIXCP, 0, input, idx, inputw, ARRAY_SIZE(inputw));
 
                 /* we cannot translate yet... likely we need more chars (wait max 1/2s for next char) */
                 if (idxw == 0)
@@ -1831,7 +1831,7 @@ BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR name)
     }
 
     RtlEnterCriticalSection(&CONSOLE_CritSect);
-    if (strlenW(name) < sizeof(input_exe)/sizeof(WCHAR)) strcpyW(input_exe, name);
+    if (strlenW(name) < ARRAY_SIZE(input_exe)) strcpyW(input_exe, name);
     RtlLeaveCriticalSection(&CONSOLE_CritSect);
 
     return TRUE;

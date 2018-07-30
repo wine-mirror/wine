@@ -538,9 +538,9 @@ static WCHAR netbios_char ( WCHAR wc )
     static const WCHAR special[] = {'!','@','#','$','%','^','&','\'',')','(','-','_','{','}','~'};
     static const WCHAR deflt = '_';
     unsigned int i;
-    
+
     if ( isalnumW ( wc ) ) return wc;
-    for ( i = 0; i < sizeof (special) / sizeof (WCHAR); i++ )
+    for ( i = 0; i < ARRAY_SIZE( special ); i++ )
         if ( wc == special[i] ) return wc;
     return deflt;
 }

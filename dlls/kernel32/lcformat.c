@@ -104,7 +104,7 @@ static DWORD NLS_GetLocaleNumber(LCID lcid, DWORD dwFlags)
   DWORD dwVal = 0;
 
   szBuff[0] = '\0';
-  GetLocaleInfoW(lcid, dwFlags, szBuff, sizeof(szBuff) / sizeof(WCHAR));
+  GetLocaleInfoW(lcid, dwFlags, szBuff, ARRAY_SIZE(szBuff));
 
   if (szBuff[0] && szBuff[1] == ';' && szBuff[2] != '0')
     dwVal = (szBuff[0] - '0') * 10 + (szBuff[2] - '0');
@@ -129,7 +129,7 @@ static WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
   DWORD dwLen;
 
   szBuff[0] = '\0';
-  GetLocaleInfoW(lcid, dwFlags, szBuff, sizeof(szBuff) / sizeof(WCHAR));
+  GetLocaleInfoW(lcid, dwFlags, szBuff, ARRAY_SIZE(szBuff));
   dwLen = strlenW(szBuff) + 1;
   str = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
   if (str)
@@ -258,7 +258,7 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
     GET_LOCALE_STRING(new_node->cyfmt.lpCurrencySymbol, LOCALE_SCURRENCY);
 
     /* Date/Time Format info, negative character, etc */
-    for (i = 0; i < sizeof(NLS_LocaleIndices)/sizeof(NLS_LocaleIndices[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(NLS_LocaleIndices); i++)
     {
       GET_LOCALE_STRING(new_node->lppszStrings[i], NLS_LocaleIndices[i]);
     }
@@ -302,7 +302,7 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
       /* We raced and lost: The node was already added by another thread.
        * node points to the currently cached node, so free new_node.
        */
-      for (i = 0; i < sizeof(NLS_LocaleIndices)/sizeof(NLS_LocaleIndices[0]); i++)
+      for (i = 0; i < ARRAY_SIZE(NLS_LocaleIndices); i++)
         HeapFree(GetProcessHeap(), 0, new_node->lppszStrings[i]);
       HeapFree(GetProcessHeap(), 0, new_node->fmt.lpDecimalSep);
       HeapFree(GetProcessHeap(), 0, new_node->fmt.lpThousandSep);
@@ -677,7 +677,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
       {
         static const WCHAR fmtW[] = {'%','.','*','d',0};
         /* We have a numeric value to add */
-        snprintfW(buff, sizeof(buff)/sizeof(WCHAR), fmtW, count, dwVal);
+        snprintfW(buff, ARRAY_SIZE(buff), fmtW, count, dwVal);
       }
 
       dwLen = szAdd ? strlenW(szAdd) : 0;
@@ -773,10 +773,10 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
   }
 
   if (lpFormat)
-    MultiByteToWideChar(cp, 0, lpFormat, -1, szFormat, sizeof(szFormat)/sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, lpFormat, -1, szFormat, ARRAY_SIZE(szFormat));
 
-  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
-    cchOut = sizeof(szOut)/sizeof(WCHAR);
+  if (cchOut > (int) ARRAY_SIZE(szOut))
+    cchOut = ARRAY_SIZE(szOut);
 
   szOut[0] = '\0';
 
@@ -1063,21 +1063,21 @@ INT WINAPI GetNumberFormatA(LCID lcid, DWORD dwFlags,
     pfmt = &fmt;
     if (lpFormat->lpDecimalSep)
     {
-      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, sizeof(szDec)/sizeof(WCHAR));
+      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, ARRAY_SIZE(szDec));
       fmt.lpDecimalSep = szDec;
     }
     if (lpFormat->lpThousandSep)
     {
-      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, sizeof(szGrp)/sizeof(WCHAR));
+      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, ARRAY_SIZE(szGrp));
       fmt.lpThousandSep = szGrp;
     }
   }
 
   if (lpszValue)
-    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, sizeof(szIn)/sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, ARRAY_SIZE(szIn));
 
-  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
-    cchOut = sizeof(szOut)/sizeof(WCHAR);
+  if (cchOut > (int) ARRAY_SIZE(szOut))
+    cchOut = ARRAY_SIZE(szOut);
 
   szOut[0] = '\0';
 
@@ -1112,7 +1112,7 @@ INT WINAPI GetNumberFormatW(LCID lcid, DWORD dwFlags,
                             LPCWSTR lpszValue,  const NUMBERFMTW *lpFormat,
                             LPWSTR lpNumberStr, int cchOut)
 {
-  WCHAR szBuff[128], *szOut = szBuff + sizeof(szBuff) / sizeof(WCHAR) - 1;
+  WCHAR szBuff[128], *szOut = szBuff + ARRAY_SIZE(szBuff) - 1;
   WCHAR szNegBuff[8];
   const WCHAR *lpszNeg = NULL, *lpszNegStart, *szSrc;
   DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0;
@@ -1140,7 +1140,7 @@ INT WINAPI GetNumberFormatW(LCID lcid, DWORD dwFlags,
   else
   {
     GetLocaleInfoW(lcid, LOCALE_SNEGATIVESIGN|(dwFlags & LOCALE_NOUSEROVERRIDE),
-                   szNegBuff, sizeof(szNegBuff)/sizeof(WCHAR));
+                   szNegBuff, ARRAY_SIZE(szNegBuff));
     lpszNegStart = lpszNeg = szNegBuff;
   }
   lpszNeg = lpszNeg + strlenW(lpszNeg) - 1;
@@ -1427,26 +1427,26 @@ INT WINAPI GetCurrencyFormatA(LCID lcid, DWORD dwFlags,
     pfmt = &fmt;
     if (lpFormat->lpDecimalSep)
     {
-      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, sizeof(szDec)/sizeof(WCHAR));
+      MultiByteToWideChar(cp, 0, lpFormat->lpDecimalSep, -1, szDec, ARRAY_SIZE(szDec));
       fmt.lpDecimalSep = szDec;
     }
     if (lpFormat->lpThousandSep)
     {
-      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, sizeof(szGrp)/sizeof(WCHAR));
+      MultiByteToWideChar(cp, 0, lpFormat->lpThousandSep, -1, szGrp, ARRAY_SIZE(szGrp));
       fmt.lpThousandSep = szGrp;
     }
     if (lpFormat->lpCurrencySymbol)
     {
-      MultiByteToWideChar(cp, 0, lpFormat->lpCurrencySymbol, -1, szCy, sizeof(szCy)/sizeof(WCHAR));
+      MultiByteToWideChar(cp, 0, lpFormat->lpCurrencySymbol, -1, szCy, ARRAY_SIZE(szCy));
       fmt.lpCurrencySymbol = szCy;
     }
   }
 
   if (lpszValue)
-    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, sizeof(szIn)/sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, lpszValue, -1, szIn, ARRAY_SIZE(szIn));
 
-  if (cchOut > (int)(sizeof(szOut)/sizeof(WCHAR)))
-    cchOut = sizeof(szOut)/sizeof(WCHAR);
+  if (cchOut > (int) ARRAY_SIZE(szOut))
+    cchOut = ARRAY_SIZE(szOut);
 
   szOut[0] = '\0';
 
@@ -1502,7 +1502,7 @@ INT WINAPI GetCurrencyFormatW(LCID lcid, DWORD dwFlags,
     CF_CY_LEFT|CF_CY_SPACE,  /* $ 1.1 */
     CF_CY_RIGHT|CF_CY_SPACE, /* 1.1 $ */
   };
-  WCHAR szBuff[128], *szOut = szBuff + sizeof(szBuff) / sizeof(WCHAR) - 1;
+  WCHAR szBuff[128], *szOut = szBuff + ARRAY_SIZE(szBuff) - 1;
   WCHAR szNegBuff[8];
   const WCHAR *lpszNeg = NULL, *lpszNegStart, *szSrc, *lpszCy, *lpszCyStart;
   DWORD dwState = 0, dwDecimals = 0, dwGroupCount = 0, dwCurrentGroupCount = 0, dwFmt;
@@ -1533,7 +1533,7 @@ INT WINAPI GetCurrencyFormatW(LCID lcid, DWORD dwFlags,
   else
   {
     GetLocaleInfoW(lcid, LOCALE_SNEGATIVESIGN|(dwFlags & LOCALE_NOUSEROVERRIDE),
-                   szNegBuff, sizeof(szNegBuff)/sizeof(WCHAR));
+                   szNegBuff, ARRAY_SIZE(szNegBuff));
     lpszNegStart = lpszNeg = szNegBuff;
   }
   dwFlags &= (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
@@ -1841,9 +1841,9 @@ static BOOL NLS_EnumDateFormats(const struct enumdateformats_context *ctxt)
 
     lctype |= ctxt->flags & LOCALE_USE_CP_ACP;
     if (ctxt->unicode)
-        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, sizeof(bufW)/sizeof(bufW[0]));
+        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, ARRAY_SIZE(bufW));
     else
-        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, sizeof(bufA)/sizeof(bufA[0]));
+        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, ARRAY_SIZE(bufA));
 
     if (ret)
     {
@@ -1994,9 +1994,9 @@ static BOOL NLS_EnumTimeFormats(struct enumtimeformats_context *ctxt)
 
     lctype |= ctxt->flags & LOCALE_USE_CP_ACP;
     if (ctxt->unicode)
-        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, sizeof(bufW)/sizeof(bufW[0]));
+        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, ARRAY_SIZE(bufW));
     else
-        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, sizeof(bufA)/sizeof(bufA[0]));
+        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, ARRAY_SIZE(bufA));
 
     if (ret)
     {

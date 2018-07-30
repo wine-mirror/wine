@@ -772,7 +772,7 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
     else
     {
         LPWSTR dummy;
-        GetFullPathNameW(filename, sizeof(buffer)/sizeof(buffer[0]), buffer, &dummy);
+        GetFullPathNameW(filename, ARRAY_SIZE(buffer), buffer, &dummy);
     }
         
     TRACE("path: %s\n", debugstr_w(buffer));
@@ -1238,9 +1238,8 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
     UNICODE_STRING bufferW;
     ULONG result;
 
-    if (GetPrivateProfileStringW( section, entry, emptystringW,
-                                   buffer, sizeof(buffer)/sizeof(WCHAR),
-                                   filename ) == 0)
+    if (GetPrivateProfileStringW( section, entry, emptystringW, buffer, ARRAY_SIZE( buffer ),
+                                  filename ) == 0)
         return def_val;
 
     /* FIXME: if entry can be found but it's empty, then Win16 is
