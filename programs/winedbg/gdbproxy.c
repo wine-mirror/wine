@@ -356,6 +356,8 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
             ERR("Cannot set name of thread %04x\n", threadname->dwThreadID);
         return DBG_CONTINUE;
     }
+    case EXCEPTION_INVALID_HANDLE:
+        return DBG_CONTINUE;
     default:
         fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
         gdbctx->last_sig = SIGABRT;

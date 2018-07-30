@@ -239,6 +239,8 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             dbg_printf("Thread ID=%04x renamed using MS VC6 extension (name==\"%.9s\")\n",
                        pThread->tid, pThread->name);
         return DBG_CONTINUE;
+    case EXCEPTION_INVALID_HANDLE:
+        return DBG_CONTINUE;
     }
 
     if (first_chance && !is_debug && !DBG_IVAR(BreakOnFirstChance) &&
