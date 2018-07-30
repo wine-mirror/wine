@@ -1065,7 +1065,8 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
     } /* if(defaultAction >=0) */
 
     wait_for_debuggee(gdbctx);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
+    if (gdbctx->process)
+        gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
 
