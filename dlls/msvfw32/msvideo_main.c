@@ -223,6 +223,15 @@ static int compare_fourcc(DWORD fcc1, DWORD fcc2)
   return strncasecmp(fcc_str1, fcc_str2, 4);
 }
 
+static DWORD get_size_image(LONG width, LONG height, WORD depth)
+{
+    DWORD ret = width * depth;
+    ret = (ret + 7) / 8;    /* divide by byte size, rounding up */
+    ret = (ret + 3) & ~3;   /* align to 4 bytes */
+    ret *= abs(height);
+    return ret;
+}
+
 typedef BOOL (*enum_handler_t)(const char *name, const char *driver, unsigned int index, void *param);
 
 static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
@@ -715,57 +724,98 @@ HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
 /***********************************************************************
  *		ICGetDisplayFormat			[MSVFW32.@]
  */
-HIC VFWAPI ICGetDisplayFormat(
-	HIC hic,LPBITMAPINFOHEADER lpbiIn,LPBITMAPINFOHEADER lpbiOut,
-	INT depth,INT dx,INT dy)
+HIC VFWAPI ICGetDisplayFormat(HIC hic, BITMAPINFOHEADER *in, BITMAPINFOHEADER *out,
+                              int depth, int width, int height)
 {
-	HIC	tmphic = hic;
+    HIC tmphic = hic;
 
-	TRACE("(%p,%p,%p,%d,%d,%d)!\n",hic,lpbiIn,lpbiOut,depth,dx,dy);
+    TRACE("(%p, %p, %p, %d, %d, %d)\n", hic, in, out, depth, width, height);
 
-	if (!tmphic) {
-		tmphic=ICLocate(ICTYPE_VIDEO,0,lpbiIn,NULL,ICMODE_DECOMPRESS);
-		if (!tmphic)
-			return tmphic;
-	}
-	if ((dy == lpbiIn->biHeight) && (dx == lpbiIn->biWidth))
-		dy = dx = 0; /* no resize needed */
+    if (!tmphic)
+    {
+        tmphic = ICLocate(ICTYPE_VIDEO, 0, in, NULL, ICMODE_DECOMPRESS);
+        if (!tmphic)
+            return NULL;
+    }
 
-	/* Can we decompress it ? */
-	if (ICDecompressQuery(tmphic,lpbiIn,NULL) != 0)
-		goto errout; /* no, sorry */
+    if (ICDecompressQuery(tmphic, in, NULL))
+        goto err;
 
-	ICSendMessage(tmphic, ICM_DECOMPRESS_GET_FORMAT, (DWORD_PTR)lpbiIn, (DWORD_PTR)lpbiOut);
+    if (width <= 0 || height <= 0)
+    {
+        width = in->biWidth;
+        height = in->biHeight;
+    }
 
-	if (lpbiOut->biCompression != 0) {
-           FIXME("Ooch, how come decompressor outputs compressed data (%d)??\n",
-			 lpbiOut->biCompression);
-	}
-	if (lpbiOut->biSize < sizeof(*lpbiOut)) {
-           FIXME("Ooch, size of output BIH is too small (%d)\n",
-			 lpbiOut->biSize);
-	   lpbiOut->biSize = sizeof(*lpbiOut);
-	}
-	if (!depth) {
-		HDC	hdc;
+    if (!depth)
+        depth = 32;
 
-		hdc = GetDC(0);
-		depth = GetDeviceCaps(hdc,BITSPIXEL)*GetDeviceCaps(hdc,PLANES);
-		ReleaseDC(0,hdc);
-		if (depth==15)	depth = 16;
-		if (depth<8)	depth =  8;
-	}
-	if (lpbiIn->biBitCount == 8)
-		depth = 8;
+    *out = *in;
+    out->biSize = sizeof(*out);
+    out->biWidth = width;
+    out->biHeight = height;
+    out->biCompression = BI_RGB;
+    out->biSizeImage = get_size_image(width, height, depth);
 
-	TRACE("=> %p\n", tmphic);
-	return tmphic;
-errout:
-	if (hic!=tmphic)
-		ICClose(tmphic);
+    /* first try the given depth */
+    out->biBitCount = depth;
+    out->biSizeImage = get_size_image(width, height, out->biBitCount);
+    if (!ICDecompressQuery(tmphic, in, out))
+    {
+        if (depth == 8)
+            ICDecompressGetPalette(tmphic, in, out);
+        return tmphic;
+    }
 
-	TRACE("=> 0\n");
-	return 0;
+    /* then try 16, both with BI_RGB and BI_BITFIELDS */
+    if (depth <= 16)
+    {
+        out->biBitCount = 16;
+        out->biSizeImage = get_size_image(width, height, out->biBitCount);
+        if (!ICDecompressQuery(tmphic, in, out))
+            return tmphic;
+
+        out->biCompression = BI_BITFIELDS;
+        if (!ICDecompressQuery(tmphic, in, out))
+            return tmphic;
+        out->biCompression = BI_RGB;
+    }
+
+    /* then try 24 */
+    if (depth <= 24)
+    {
+        out->biBitCount = 24;
+        out->biSizeImage = get_size_image(width, height, out->biBitCount);
+        if (!ICDecompressQuery(tmphic, in, out))
+            return tmphic;
+    }
+
+    /* then try 32 */
+    if (depth <= 32)
+    {
+        out->biBitCount = 32;
+        out->biSizeImage = get_size_image(width, height, out->biBitCount);
+        if (!ICDecompressQuery(tmphic, in, out))
+            return tmphic;
+    }
+
+    /* as a last resort, try 32 bpp with the original width and height */
+    out->biWidth = in->biWidth;
+    out->biHeight = in->biHeight;
+    out->biBitCount = 32;
+    out->biSizeImage = get_size_image(out->biWidth, out->biHeight, out->biBitCount);
+    if (!ICDecompressQuery(tmphic, in, out))
+        return tmphic;
+
+    /* finally, ask the compressor for its default output format */
+    if (!ICSendMessage(tmphic, ICM_DECOMPRESS_GET_FORMAT, (DWORD_PTR)in, (DWORD_PTR)out))
+        return tmphic;
+
+err:
+    if (hic != tmphic)
+        ICClose(tmphic);
+
+    return NULL;
 }
 
 /***********************************************************************
@@ -1358,7 +1408,7 @@ HANDLE VFWAPI ICImageDecompress(
 
 	biSizeImage = lpbiOut->bmiHeader.biSizeImage;
 	if ( biSizeImage == 0 )
-		biSizeImage = ((((lpbiOut->bmiHeader.biWidth * lpbiOut->bmiHeader.biBitCount + 7) >> 3) + 3) & (~3)) * abs(lpbiOut->bmiHeader.biHeight);
+		biSizeImage = get_size_image(lpbiOut->bmiHeader.biWidth, lpbiOut->bmiHeader.biHeight, lpbiOut->bmiHeader.biBitCount);
 
 	TRACE( "call ICDecompressBegin\n" );
 

@@ -325,10 +325,258 @@ static void test_ICInfo(void)
     ok(info.fccHandler == mmioFOURCC('f','a','k','e'), "got 0x%08x\n", info.fccHandler);
 }
 
+static int get_display_format_test;
+
+static DWORD get_size_image(LONG width, LONG height, WORD depth)
+{
+    DWORD ret = width * depth;
+    ret = (ret + 7) / 8;    /* divide by byte size, rounding up */
+    ret = (ret + 3) & ~3;   /* align to 4 bytes */
+    ret *= abs(height);
+    return ret;
+}
+
+static const RGBQUAD color_yellow = {0x00, 0xff, 0xff, 0x00};
+
+static BITMAPINFOHEADER gdf_in, *gdf_out;
+
+LRESULT CALLBACK gdf_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
+    LPARAM lparam1, LPARAM lparam2)
+{
+    LRESULT ret = 0;
+
+    if (winetest_debug > 1)
+        trace("(%#lx, %p, %#x, %#lx, %#lx)\n", id, driver, msg, lparam1, lparam2);
+
+    switch(msg)
+    {
+    case DRV_LOAD:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_FREE:
+        return 1;
+    case ICM_DECOMPRESS_QUERY:
+    {
+        BITMAPINFOHEADER *out = (BITMAPINFOHEADER *)lparam2;
+        DWORD expected_size;
+
+        ok(lparam1 == (LPARAM)&gdf_in, "got input %#lx\n", lparam1);
+
+        if (!out)
+            return ICERR_OK;
+
+        ok(out == gdf_out, "got output %p\n", out);
+
+        ok(out->biSize == sizeof(*out), "got size %d\n", out->biSize);
+        expected_size = get_size_image(out->biWidth, out->biHeight, out->biBitCount);
+        ok(out->biSizeImage == expected_size, "expected image size %d, got %d\n",
+            expected_size, out->biSizeImage);
+
+        ok(out->biPlanes == 0xcccc, "got planes %d\n", out->biPlanes);
+        ok(out->biXPelsPerMeter == 0xcccccccc && out->biYPelsPerMeter == 0xcccccccc,
+            "got resolution %dx%d\n", out->biXPelsPerMeter, out->biYPelsPerMeter);
+        ok(out->biClrUsed == 0xcccccccc, "got biClrUsed %u\n", out->biClrUsed);
+        ok(out->biClrImportant == 0xcccccccc, "got biClrImportant %u\n", out->biClrImportant);
+
+        switch (get_display_format_test)
+        {
+            case 0:
+                return ICERR_OK;
+            case 1:
+                if (out->biWidth == 30 && out->biHeight == 40 && out->biCompression == BI_RGB && out->biBitCount == 16)
+                    return ICERR_OK;
+                break;
+            case 2:
+                if (out->biWidth == 30 && out->biHeight == 40 && out->biCompression == BI_BITFIELDS && out->biBitCount == 16)
+                    return ICERR_OK;
+                break;
+            case 3:
+                if (out->biWidth == 30 && out->biHeight == 40 && out->biCompression == BI_RGB && out->biBitCount == 24)
+                    return ICERR_OK;
+                break;
+            case 4:
+                if (out->biWidth == 30 && out->biHeight == 40 && out->biCompression == BI_RGB && out->biBitCount == 32)
+                    return ICERR_OK;
+                break;
+            case 5:
+                if (out->biWidth == 10 && out->biHeight == 20 && out->biCompression == BI_RGB && out->biBitCount == 32)
+                    return ICERR_OK;
+                break;
+            case 6:
+                break;
+        }
+
+        return ICERR_BADFORMAT;
+    }
+    case ICM_DECOMPRESS_GET_FORMAT:
+    {
+        BITMAPINFOHEADER *out = (BITMAPINFOHEADER *)lparam2;
+
+        ok(lparam1 == (LPARAM)&gdf_in, "got input %#lx\n", lparam1);
+        if (out)
+        {
+            ok(out == gdf_out, "got output %p\n", out);
+
+            memset(out, 0x55, sizeof(*out));
+            out->biWidth = 50;
+            out->biHeight = 60;
+            out->biBitCount = 0xdead;
+            out->biCompression = 0xbeef;
+            out->biSizeImage = 0;
+
+            return ICERR_OK;
+        }
+    }
+    case ICM_DECOMPRESS_GET_PALETTE:
+    {
+        BITMAPINFO *out = (BITMAPINFO *)lparam2;
+
+        ok(lparam1 == (LPARAM)&gdf_in, "got input %#lx\n", lparam1);
+        if (out)
+        {
+            ok(out == (BITMAPINFO *)gdf_out, "got output %p\n", out);
+
+            out->bmiHeader.biClrUsed = 1;
+            out->bmiColors[0] = color_yellow;
+
+            return 0xdeadbeef;
+        }
+    }
+    }
+
+    return ret;
+}
+
+static void check_bitmap_header_(int line, BITMAPINFOHEADER *header, LONG width, LONG height, WORD depth, DWORD compression)
+{
+    ok_(__FILE__, line)(header->biWidth == width, "expected %d, got %d\n", width, header->biWidth);
+    ok_(__FILE__, line)(header->biHeight == height, "expected %d, got %d\n", height, header->biHeight);
+    ok_(__FILE__, line)(header->biBitCount == depth, "expected %d, got %d\n", depth, header->biBitCount);
+    ok_(__FILE__, line)(header->biCompression == compression, "expected %#x, got %#x\n", compression, header->biCompression);
+}
+#define check_bitmap_header(a,b,c,d,e) check_bitmap_header_(__LINE__,a,b,c,d,e)
+
+static void test_ICGetDisplayFormat(void)
+{
+    static const DWORD testcc = mmioFOURCC('t','e','s','t');
+    char outbuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *out_bmi;
+    LRESULT lres;
+    BOOL ret;
+    HIC hic;
+
+    memset(&gdf_in, 0xcc, sizeof(gdf_in));
+    gdf_in.biSize = sizeof(gdf_in);
+    gdf_in.biWidth = 10;
+    gdf_in.biHeight = 20;
+    gdf_in.biBitCount = 1;
+    gdf_in.biCompression = testcc;
+
+    ret = ICInstall(ICTYPE_VIDEO, testcc, (LPARAM)gdf_driver_proc, NULL, ICINSTALL_FUNCTION);
+    ok(ret, "ICInstall failed\n");
+
+    hic = ICOpen(ICTYPE_VIDEO, testcc, ICMODE_DECOMPRESS);
+    ok(ret, "ICOpen failed\n");
+
+    memset(outbuf, 0, sizeof(outbuf));
+    gdf_out = (BITMAPINFOHEADER *)outbuf;
+
+    /* ICGetDisplayFormat tries several default formats; make sure those work */
+    get_display_format_test = 0;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 1, BI_RGB);
+
+    get_display_format_test = 1;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 16, BI_RGB);
+
+    get_display_format_test = 2;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 16, BI_BITFIELDS);
+
+    get_display_format_test = 3;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 24, BI_RGB);
+
+    get_display_format_test = 4;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 32, BI_RGB);
+
+    get_display_format_test = 5;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 10, 20, 32, BI_RGB);
+
+    /* if every default format is rejected, the output of
+     * ICM_DECOMPRESS_GET_FORMAT is returned */
+    get_display_format_test = 6;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 50, 60, 0xdead, 0xbeef);
+
+    /* given bpp is treated as a lower bound */
+    get_display_format_test = 1;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 24, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 50, 60, 0xdead, 0xbeef);
+
+    get_display_format_test = 3;
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 24, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 24, BI_RGB);
+
+    get_display_format_test = 0;
+
+    /* width or height <= 0 causes the input width and height to be supplied */
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 0, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 10, 20, 1, BI_RGB);
+
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, 0);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 10, 20, 1, BI_RGB);
+
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, -10, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 10, 20, 1, BI_RGB);
+
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 1, 30, -10);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 10, 20, 1, BI_RGB);
+
+    /* zero bpp causes 32 bpp to be supplied */
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 0, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    ok(gdf_out->biBitCount == 32 || gdf_out->biBitCount == 24,
+        "got %d\n", gdf_out->biBitCount);
+    ok(gdf_out->biCompression == BI_RGB, "got %#x\n", gdf_out->biCompression);
+
+    /* specifying 8 bpp yields a request for palette colours */
+    hic = ICGetDisplayFormat(hic, &gdf_in, gdf_out, 8, 30, 40);
+    ok(hic != NULL, "ICGetDisplayFormat failed\n");
+    check_bitmap_header(gdf_out, 30, 40, 8, BI_RGB);
+    ok(gdf_out->biClrUsed == 1, "got biClrUsed %u\n", gdf_out->biClrUsed);
+    out_bmi = (BITMAPINFO *)gdf_out;
+    ok(!memcmp(&out_bmi->bmiColors[0], &color_yellow, sizeof(color_yellow)),
+        "got wrong colour\n");
+
+    lres = ICClose(hic);
+    ok(lres == ICERR_OK, "got %ld\n", lres);
+
+    ret = ICRemove(ICTYPE_VIDEO, testcc, 0);
+    ok(ret, "ICRemove failed\n");
+}
+
 START_TEST(msvfw)
 {
     test_OpenCase();
     test_Locate();
     test_ICSeqCompress();
     test_ICInfo();
+    test_ICGetDisplayFormat();
 }
