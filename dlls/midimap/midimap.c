@@ -172,7 +172,7 @@ static BOOL	MIDIMAP_LoadSettingsScheme(MIDIMAPDATA* mom, const WCHAR* scheme)
 	return FALSE;
     }
 
-    for (idx = 0; !RegEnumKeyW(hKey, idx, buffer, sizeof(buffer)/sizeof(buffer[0])); idx++)
+    for (idx = 0; !RegEnumKeyW(hKey, idx, buffer, ARRAY_SIZE(buffer)); idx++)
     {
 	if (RegOpenKeyW(hKey, buffer, &hPortKey)) continue;
 
