@@ -1070,55 +1070,17 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
     return packet_reply_status(gdbctx);
 }
 
-struct verbose_defail
-{
-    const char*         name;
-    unsigned            len;
-    enum packet_return  (*handler)(struct gdb_context*);
-} verbose_details[] =
-{
-    /* {"Attach",           6}, */
-    {"Cont",             4, packet_verbose_cont},
-    /* {"File",             4},
-    {"FlashErase",      10},
-    {"FlashWrite",      10},
-    {"FlashDone",        9},
-    {"Kill",             4},
-    {"Run",              3},
-    {"Stopped",          7},*/
-};
-
 static enum packet_return packet_verbose(struct gdb_context* gdbctx)
 {
-    unsigned i;
-    unsigned klen;
-
-    for (klen = 0; ; klen++)
+    if (gdbctx->in_packet_len >= 4 && !memcmp(gdbctx->in_packet, "Cont", 4))
     {
-        if (klen == gdbctx->in_packet_len ||
-            gdbctx->in_packet[klen] == ';' ||
-            gdbctx->in_packet[klen] == ':' ||
-            gdbctx->in_packet[klen] == '?')
-        {
-            TRACE("Trying to process verbose packet %s\n",
-                debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
-            for (i = 0; i < ARRAY_SIZE(verbose_details); i++)
-            {
-                if (klen == verbose_details[i].len &&
-                    !memcmp(gdbctx->in_packet, verbose_details[i].name, verbose_details[i].len))
-                {
-                    return verbose_details[i].handler(gdbctx);
-                }
-            }
-            /* no matching handler found, abort */
-            break;
-        }
+        return packet_verbose_cont(gdbctx);
     }
 
-    WARN("No support for verbose packet %s\n",
+    WARN("Unhandled verbose packet %s\n",
         debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
     return packet_error;
- }
+}
 
 static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 {
