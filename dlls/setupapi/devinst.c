@@ -111,7 +111,8 @@ struct device
     BOOL                  phantom;
     WCHAR                *instanceId;
     struct list           interfaces;
-    SP_DEVINFO_DATA       data;
+    GUID                  class;
+    DEVINST               devnode;
     struct list           entry;
 };
 
@@ -120,7 +121,7 @@ struct InterfaceInfo
 {
     LPWSTR           referenceString;
     LPWSTR           symbolicLink;
-    PSP_DEVINFO_DATA device;
+    struct device   *device;
 };
 
 /* A device may have multiple instances of the same interface, so this holds
@@ -134,6 +135,13 @@ struct InterfaceInstances
     SP_DEVICE_INTERFACE_DATA *instances;
     struct list               entry;
 };
+
+static inline void copy_device_data(SP_DEVINFO_DATA *data, const struct device *device)
+{
+    data->ClassGuid = device->class;
+    data->DevInst = device->devnode;
+    data->Reserved = (ULONG_PTR)device;
+}
 
 static struct device **devnode_table;
 static unsigned int devnode_table_size;
@@ -202,12 +210,9 @@ static void SETUPDI_FreeInterfaceInstances(struct InterfaceInstances *instances)
         struct InterfaceInfo *ifaceInfo =
             (struct InterfaceInfo *)instances->instances[i].Reserved;
 
-        if (ifaceInfo->device && ifaceInfo->device->Reserved)
+        if (ifaceInfo->device && ifaceInfo->device->phantom)
         {
-            struct device *device = (struct device *)ifaceInfo->device->Reserved;
-
-            if (device->phantom)
-                SetupDiDeleteDeviceInterfaceRegKey(device->set,
+            SetupDiDeleteDeviceInterfaceRegKey(ifaceInfo->device->set,
                         &instances->instances[i], 0);
         }
         HeapFree(GetProcessHeap(), 0, ifaceInfo->referenceString);
@@ -319,11 +324,10 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
  * the device, if it doesn't already exist in the device.  If iface is not
  * NULL, returns a pointer to the newly added (or already existing) interface.
  */
-static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
+static BOOL SETUPDI_AddInterfaceInstance(struct device *devInfo,
         const GUID *InterfaceClassGuid, LPCWSTR ReferenceString,
         SP_DEVICE_INTERFACE_DATA **ifaceData)
 {
-    struct device *devInfo = (struct device *)DeviceInfoData->Reserved;
     BOOL newInterface = FALSE, ret;
     struct InterfaceInstances *iface = NULL;
 
@@ -375,7 +379,7 @@ static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
                 if (ifaceInfo)
                 {
                     ret = TRUE;
-                    ifaceInfo->device = &devInfo->data;
+                    ifaceInfo->device = devInfo;
                     ifaceInfo->symbolicLink = SETUPDI_CreateSymbolicLinkPath(
                             devInfo->instanceId, InterfaceClassGuid,
                             ReferenceString);
@@ -489,7 +493,7 @@ static HKEY SETUPDI_CreateDrvKey(struct device *device)
         static const WCHAR fmt[] = { '%','0','4','u',0 };
         WCHAR devId[10];
 
-        sprintfW(devId, fmt, device->data.DevInst);
+        sprintfW(devId, fmt, device->devnode);
         RegCreateKeyExW(classKey, devId, 0, NULL, 0, KEY_READ | KEY_WRITE,
                 NULL, &key, NULL);
         RegCloseKey(classKey);
@@ -568,12 +572,12 @@ static void SETUPDI_RemoveDevice(struct device *device)
         SETUPDI_FreeInterfaceInstances(iface);
         HeapFree(GetProcessHeap(), 0, iface);
     }
-    free_devnode(device->data.DevInst);
+    free_devnode(device->devnode);
     list_remove(&device->entry);
     heap_free(device);
 }
 
-static SP_DEVINFO_DATA *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
+static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     const GUID *class, const WCHAR *instanceid, BOOL phantom)
 {
     struct device *device;
@@ -600,17 +604,15 @@ static SP_DEVINFO_DATA *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     device->key = SETUPDI_CreateDevKey(device);
     device->phantom = phantom;
     list_init(&device->interfaces);
-    device->data.cbSize = sizeof(SP_DEVINFO_DATA);
-    device->data.ClassGuid = *class;
-    device->data.DevInst = alloc_devnode(device);
-    device->data.Reserved = (ULONG_PTR)device;
+    device->class = *class;
+    device->devnode = alloc_devnode(device);
     list_add_tail(&set->devices, &device->entry);
     set->cDevices++;
 
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
         (const BYTE *)guidstr, sizeof(guidstr));
-    return &device->data;
+    return device;
 }
 
 /***********************************************************************
@@ -1406,7 +1408,7 @@ static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
  */
 BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceName,
         const GUID *ClassGuid, PCWSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
-        PSP_DEVINFO_DATA DeviceInfoData)
+        SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     BOOL ret = FALSE, allocatedInstanceId = FALSE;
@@ -1414,7 +1416,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceName,
 
     TRACE("%p %s %s %s %p %x %p\n", DeviceInfoSet, debugstr_w(DeviceName),
         debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
-        hwndParent, CreationFlags, DeviceInfoData);
+        hwndParent, CreationFlags, device_data);
 
     if (!DeviceName)
     {
@@ -1505,23 +1507,23 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceName,
     }
     if (ret)
     {
-        SP_DEVINFO_DATA *dev = NULL;
+        struct device *device = NULL;
 
-        if ((dev = SETUPDI_CreateDeviceInfo(set, ClassGuid, instanceId, TRUE)))
+        if ((device = SETUPDI_CreateDeviceInfo(set, ClassGuid, instanceId, TRUE)))
         {
             if (DeviceDescription)
-                SetupDiSetDeviceRegistryPropertyW(DeviceInfoSet,
-                    dev, SPDRP_DEVICEDESC, (const BYTE *)DeviceDescription,
+                SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_DEVICEDESC,
+                    (const BYTE *)DeviceDescription,
                     lstrlenW(DeviceDescription) * sizeof(WCHAR));
-            if (DeviceInfoData)
+            if (device_data)
             {
-                if (DeviceInfoData->cbSize != sizeof(SP_DEVINFO_DATA))
+                if (device_data->cbSize != sizeof(SP_DEVINFO_DATA))
                 {
                     SetLastError(ERROR_INVALID_USER_BUFFER);
                     ret = FALSE;
                 }
                 else
-                    *DeviceInfoData = *dev;
+                    copy_device_data(device_data, device);
             }
         }
     }
@@ -1633,7 +1635,7 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
                     {
                         if (i++ == index)
                         {
-                            *info = device->data;
+                            copy_device_data(info, device);
                             break;
                         }
                     }
@@ -2023,8 +2025,7 @@ end:
     return ret;
 }
 
-static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
-        const GUID *guid)
+static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key, const GUID *guid)
 {
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
@@ -2042,7 +2043,7 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
             if (*subKeyName == '#')
             {
                 /* The subkey name is the reference string, with a '#' prepended */
-                SETUPDI_AddInterfaceInstance(dev, guid, subKeyName + 1, &iface);
+                SETUPDI_AddInterfaceInstance(device, guid, subKeyName + 1, &iface);
                 l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
                 if (!l)
                 {
@@ -2115,14 +2116,14 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                                     deviceClassStr[37] == '}')
                             {
                                 GUID deviceClass;
-                                SP_DEVINFO_DATA *dev;
+                                struct device *device;
 
                                 deviceClassStr[37] = 0;
                                 UuidFromStringW(&deviceClassStr[1],
                                         &deviceClass);
-                                if ((dev = SETUPDI_CreateDeviceInfo(set,
+                                if ((device = SETUPDI_CreateDeviceInfo(set,
                                         &deviceClass, deviceInst, FALSE)))
-                                    SETUPDI_AddDeviceInterfaces(dev, subKey, guid);
+                                    SETUPDI_AddDeviceInterfaces(device, subKey, guid);
                             }
                             RegCloseKey(deviceKey);
                         }
@@ -2544,7 +2545,7 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    if ((ret = SETUPDI_AddInterfaceInstance(DeviceInfoData, InterfaceClassGuid,
+    if ((ret = SETUPDI_AddInterfaceInstance(device, InterfaceClassGuid,
                     ReferenceString, &iface)))
     {
         if (DeviceInterfaceData)
@@ -2691,8 +2692,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
                     samDesired, NULL, &interfKey, NULL);
             if (!l)
             {
-                struct device *device =
-                        (struct device *)ifaceInfo->device->Reserved;
+                struct device *device = ifaceInfo->device;
 
                 l = RegSetValueExW(interfKey, DeviceInstance, 0, REG_SZ,
                         (BYTE *)device->instanceId,
@@ -2940,7 +2940,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       PSP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
       PDWORD RequiredSize,
-      PSP_DEVINFO_DATA DeviceInfoData)
+      SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct InterfaceInfo *info;
@@ -2949,7 +2949,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 
     TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
-     DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
+     DeviceInterfaceDetailDataSize, RequiredSize, device_data);
 
     if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
@@ -2989,8 +2989,10 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
                     NULL, NULL);
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
-        if (DeviceInfoData && DeviceInfoData->cbSize == sizeof(SP_DEVINFO_DATA))
-            *DeviceInfoData = *info->device;
+
+        if (device_data && device_data->cbSize == sizeof(SP_DEVINFO_DATA))
+            copy_device_data(device_data, info->device);
+
         ret = TRUE;
     }
     else
@@ -3011,7 +3013,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       PSP_DEVICE_INTERFACE_DETAIL_DATA_W DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
       PDWORD RequiredSize,
-      PSP_DEVINFO_DATA DeviceInfoData)
+      SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct InterfaceInfo *info;
@@ -3021,7 +3023,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
 
     TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
-     DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
+     DeviceInterfaceDetailDataSize, RequiredSize, device_data);
 
     if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
             set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
@@ -3057,8 +3059,10 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
             lstrcpyW(DeviceInterfaceDetailData->DevicePath, info->symbolicLink);
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
-        if (DeviceInfoData && DeviceInfoData->cbSize == sizeof(SP_DEVINFO_DATA))
-            *DeviceInfoData = *info->device;
+
+        if (device_data && device_data->cbSize == sizeof(SP_DEVINFO_DATA))
+            copy_device_data(device_data, info->device);
+
         ret = TRUE;
     }
     else
@@ -3750,7 +3754,7 @@ static HKEY SETUPDI_OpenDrvKey(struct device *device, REGSAM samDesired)
         static const WCHAR fmt[] = { '%','0','4','u',0 };
         WCHAR devId[10];
 
-        sprintfW(devId, fmt, device->data.DevInst);
+        sprintfW(devId, fmt, device->devnode);
         l = RegOpenKeyExW(classKey, devId, 0, samDesired, &key);
         RegCloseKey(classKey);
         if (l)
@@ -3870,7 +3874,7 @@ static BOOL SETUPDI_DeleteDrvKey(struct device *device)
         static const WCHAR fmt[] = { '%','0','4','u',0 };
         WCHAR devId[10];
 
-        sprintfW(devId, fmt, device->data.DevInst);
+        sprintfW(devId, fmt, device->devnode);
         ret = RegDeleteTreeW(classKey, devId);
         RegCloseKey(classKey);
     }
