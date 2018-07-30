@@ -3092,7 +3092,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
-    TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
+    TRACE("%p %p %d %p %p %d %p\n", DeviceInfoSet, DeviceInfoData,
         Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
         RequiredSize);
 
@@ -3155,7 +3155,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
     struct DeviceInfoSet *set = DeviceInfoSet;
     struct DeviceInfo *devInfo;
 
-    TRACE("%04x %p %d %p %p %d %p\n", (DWORD)DeviceInfoSet, DeviceInfoData,
+    TRACE("%p %p %d %p %p %d %p\n", DeviceInfoSet, DeviceInfoData,
         Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
         RequiredSize);
 
