@@ -295,7 +295,7 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 
     if (machine || !size) return FALSE;
 
-    GetSystemDirectoryW( colordir, sizeof(colordir) / sizeof(WCHAR) );
+    GetSystemDirectoryW( colordir, ARRAY_SIZE( colordir ));
     lstrcatW( colordir, colorsubdir );
 
     len = lstrlenW( colordir ) * sizeof(WCHAR);
