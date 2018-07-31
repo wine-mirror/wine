@@ -1154,7 +1154,7 @@ static BOOL expr_compatible_data_types(struct hlsl_type *t1, struct hlsl_type *t
 
 static enum hlsl_base_type expr_common_base_type(enum hlsl_base_type t1, enum hlsl_base_type t2)
 {
-    enum hlsl_base_type types[] =
+    static const enum hlsl_base_type types[] =
     {
         HLSL_TYPE_BOOL,
         HLSL_TYPE_INT,
