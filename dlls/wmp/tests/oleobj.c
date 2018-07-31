@@ -889,7 +889,6 @@ static void test_ConnectionPoint(IOleObject *unk)
     IConnectionPoint_Release(point);
 }
 
-
 static void test_wmp_ifaces(IOleObject *oleobj)
 {
     IWMPSettings *settings, *settings_qi;
@@ -899,6 +898,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPControls *controls;
     VARIANT_BOOL vbool;
     IWMPNetwork *network;
+    IUnknown *unk;
     HRESULT hres;
     BSTR filename;
     BSTR url;
@@ -913,8 +913,14 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 
     player = NULL;
     hres = IWMPControls_QueryInterface(controls, &IID_IWMPPlayer, (void**)&player);
-    ok(hres != S_OK, "Getting IWMPPlayer from IWMPControls SUCCEEDED\n");
+    ok(hres == E_NOINTERFACE, "Getting IWMPPlayer from IWMPControls SUCCEEDED\n");
     ok(player == NULL, "player != NULL\n");
+
+    unk = NULL;
+    hres = IWMPControls_QueryInterface(controls, &IID_IUnknown, (void **)&unk);
+    ok(hres == S_OK, "Failed to get IUnknown, hr %#x.\n", hres);
+    ok(unk != NULL, "Unexpected interface pointer.\n");
+    IUnknown_Release(unk);
 
     IWMPControls_Release(controls);
 
