@@ -6453,7 +6453,7 @@ HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 
   if (lIn < 0)
   {
-    ul64 = (ULONG)-lIn;
+    ul64 = -(LONG64)lIn;
     dwFlags |= VAR_NEGATIVE;
   }
   return VARIANT_BstrFromUInt(ul64, lcid, dwFlags, pbstrOut);

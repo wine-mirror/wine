@@ -4556,7 +4556,7 @@ static void test_VarBstrFromI4(void)
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
-    todo_wine ok(memcmp(bstr, int_min, sizeof(int_min)) == 0, "string different\n");
+    ok(memcmp(bstr, int_min, sizeof(int_min)) == 0, "string different\n");
     SysFreeString(bstr);
   }
 
