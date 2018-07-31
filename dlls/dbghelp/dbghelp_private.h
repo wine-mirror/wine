@@ -693,7 +693,7 @@ extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offse
                                  const struct elf_thunk_area* thunks,
                                  struct image_file_map* fmap) DECLSPEC_HIDDEN;
 extern BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
-    union ctx *ctx, ULONG_PTR *cfa) DECLSPEC_HIDDEN;
+    union ctx *ctx, DWORD64 *cfa) DECLSPEC_HIDDEN;
 
 /* stack.c */
 extern BOOL         sw_read_mem(struct cpu_stack_walk* csw, DWORD64 addr, void* ptr, DWORD sz) DECLSPEC_HIDDEN;
