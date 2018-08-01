@@ -255,6 +255,8 @@ static const WCHAR prop_interfacetypeW[] =
     {'I','n','t','e','r','f','a','c','e','T','y','p','e',0};
 static const WCHAR prop_intvalueW[] =
     {'I','n','t','e','g','e','r','V','a','l','u','e',0};
+static const WCHAR prop_ipaddressW[] =
+    {'I','P','A','d','d','r','e','s','s',0};
 static const WCHAR prop_ipconnectionmetricW[] =
     {'I','P','C','o','n','n','e','c','t','i','o','n','M','e','t','r','i','c',0};
 static const WCHAR prop_ipenabledW[] =
@@ -553,6 +555,7 @@ static const struct column col_networkadapterconfig[] =
     { prop_dnshostnameW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_dnsserversearchorderW, CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_indexW,                CIM_UINT32|COL_FLAG_KEY, VT_I4 },
+    { prop_ipaddressW,            CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_ipconnectionmetricW,   CIM_UINT32, VT_I4 },
     { prop_ipenabledW,            CIM_BOOLEAN },
     { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC },
@@ -970,6 +973,7 @@ struct record_networkadapterconfig
     const WCHAR        *dnshostname;
     const struct array *dnsserversearchorder;
     UINT32              index;
+    const struct array *ipaddress;
     UINT32              ipconnectionmetric;
     int                 ipenabled;
     const WCHAR        *mac_address;
@@ -2426,6 +2430,38 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
     ret->ptr   = ptr;
     return ret;
 }
+static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
+{
+    IP_ADAPTER_UNICAST_ADDRESS_LH *address;
+    struct array *ret;
+    ULONG buflen, i = 0, count = 0;
+    WCHAR **ptr, buf[54]; /* max IPv6 address length */
+
+    if (!list) return NULL;
+    for (address = list; address; address = address->Next) count++;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    for (address = list; address; address = address->Next)
+    {
+        buflen = sizeof(buf)/sizeof(buf[0]);
+        if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
+                                 NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
+        {
+            for (; i > 0; i--) heap_free( ptr[i - 1] );
+            heap_free( ptr );
+            heap_free( ret );
+            return NULL;
+        }
+    }
+    ret->count = count;
+    ret->ptr   = ptr;
+    return ret;
+}
 static WCHAR *get_settingid( UINT32 index )
 {
     GUID guid;
@@ -2475,6 +2511,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         rec->dnshostname          = get_dnshostname( aa->FirstUnicastAddress );
         rec->dnsserversearchorder = get_dnsserversearchorder( aa->FirstDnsServerAddress );
         rec->index                = aa->u.s.IfIndex;
+        rec->ipaddress            = get_ipaddress( aa->FirstUnicastAddress );
         rec->ipconnectionmetric   = 20;
         rec->ipenabled            = -1;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
