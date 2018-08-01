@@ -49,6 +49,7 @@
 #include "wbemcli.h"
 #include "wbemprov.h"
 #include "iphlpapi.h"
+#include "netioapi.h"
 #include "tlhelp32.h"
 #include "d3d10.h"
 #include "winternl.h"
@@ -261,6 +262,8 @@ static const WCHAR prop_ipconnectionmetricW[] =
     {'I','P','C','o','n','n','e','c','t','i','o','n','M','e','t','r','i','c',0};
 static const WCHAR prop_ipenabledW[] =
     {'I','P','E','n','a','b','l','e','d',0};
+static const WCHAR prop_ipsubnet[] =
+    {'I','P','S','u','b','n','e','t',0};
 static const WCHAR prop_lastbootuptimeW[] =
     {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
 static const WCHAR prop_levelW[] =
@@ -558,6 +561,7 @@ static const struct column col_networkadapterconfig[] =
     { prop_ipaddressW,            CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_ipconnectionmetricW,   CIM_UINT32, VT_I4 },
     { prop_ipenabledW,            CIM_BOOLEAN },
+    { prop_ipsubnet,              CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_settingidW,            CIM_STRING|COL_FLAG_DYNAMIC }
 };
@@ -976,6 +980,7 @@ struct record_networkadapterconfig
     const struct array *ipaddress;
     UINT32              ipconnectionmetric;
     int                 ipenabled;
+    const struct array *ipsubnet;
     const WCHAR        *mac_address;
     const WCHAR        *settingid;
 };
@@ -2462,6 +2467,58 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     ret->ptr   = ptr;
     return ret;
 }
+static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
+{
+    IP_ADAPTER_UNICAST_ADDRESS_LH *address;
+    struct array *ret;
+    ULONG i = 0, count = 0;
+    WCHAR **ptr;
+
+    if (!list) return NULL;
+    for (address = list; address; address = address->Next) count++;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    for (address = list; address; address = address->Next)
+    {
+        if (address->Address.lpSockaddr->sa_family == AF_INET)
+        {
+            WCHAR buf[INET_ADDRSTRLEN];
+            SOCKADDR_IN addr;
+            ULONG buflen = sizeof(buf)/sizeof(buf[0]);
+
+            memset( &addr, 0, sizeof(addr) );
+            addr.sin_family = AF_INET;
+            if (ConvertLengthToIpv4Mask( address->OnLinkPrefixLength, &addr.sin_addr.S_un.S_addr ) != NO_ERROR
+                    || WSAAddressToStringW( (SOCKADDR*)&addr, sizeof(addr), NULL, buf, &buflen))
+                ptr[i] = NULL;
+            else
+                ptr[i] = heap_strdupW( buf );
+        }
+        else
+        {
+            static const WCHAR fmtW[] = {'%','u',0};
+            WCHAR buf[11];
+
+            sprintfW(buf, fmtW, address->OnLinkPrefixLength);
+            ptr[i] = heap_strdupW( buf );
+        }
+        if (!ptr[i++])
+        {
+            for (; i > 0; i--) heap_free( ptr[i - 1] );
+            heap_free( ptr );
+            heap_free( ret );
+            return NULL;
+        }
+    }
+    ret->count = count;
+    ret->ptr   = ptr;
+    return ret;
+}
 static WCHAR *get_settingid( UINT32 index )
 {
     GUID guid;
@@ -2514,6 +2571,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         rec->ipaddress            = get_ipaddress( aa->FirstUnicastAddress );
         rec->ipconnectionmetric   = 20;
         rec->ipenabled            = -1;
+        rec->ipsubnet             = get_ipsubnet( aa->FirstUnicastAddress );
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         rec->settingid            = get_settingid( rec->index );
         if (!match_row( table, row, cond, &status ))
