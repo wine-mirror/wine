@@ -2226,11 +2226,37 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
 /* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_resize, 28)
 void __thiscall _Concurrent_vector_base_v4__Internal_resize(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t len1, MSVCP_size_t len2,
-        MSVCP_size_t len3, void (__cdecl *clear)(void*, MSVCP_size_t),
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t resize, MSVCP_size_t element_size,
+        MSVCP_size_t max_size, void (__cdecl *clear)(void*, MSVCP_size_t),
         void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
 {
-    FIXME("(%p %ld %ld %ld %p %p %p) stub\n", this, len1, len2, len3, clear, copy, v);
+    MSVCP_size_t size, seg_no, end_seg_no, clear_element;
+
+    TRACE("(%p %ld %ld %ld %p %p %p)\n", this, resize, element_size, max_size, clear, copy, v);
+
+    if(resize > max_size) _vector_base_v4__Internal_throw_exception(this, 0);
+    size = this->early_size;
+    if(resize > size)
+        _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result(this,
+                resize, element_size, copy, v);
+    else if(resize == 0)
+        _Concurrent_vector_base_v4__Internal_clear(this, clear);
+    else if(resize < size)
+    {
+        seg_no = _vector_base_v4__Segment_index_of(size - 1);
+        end_seg_no = _vector_base_v4__Segment_index_of(resize - 1);
+        clear_element = size - (seg_no ? 1 << seg_no : 2);
+        if(clear_element > 0)
+            clear(this->segment[seg_no], clear_element);
+        if(seg_no) seg_no--;
+        for(; seg_no > end_seg_no; seg_no--)
+            clear(this->segment[seg_no], 1 << seg_no);
+        clear_element = (1 << (end_seg_no + 1)) - resize;
+        if(clear_element > 0)
+            clear((BYTE**)this->segment[end_seg_no] + element_size * (resize - ((1 << end_seg_no) & ~1)),
+                    clear_element);
+        this->early_size = resize;
+    }
 }
 
 /* ?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IAEXAAV123@@Z */
