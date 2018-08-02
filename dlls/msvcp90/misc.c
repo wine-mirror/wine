@@ -1780,6 +1780,9 @@ typedef struct __Concurrent_vector_base_v4
     void **segment;
 } _Concurrent_vector_base_v4;
 
+#define STORAGE_SIZE (sizeof(this->storage) / sizeof(this->storage[0]))
+#define SEGMENT_SIZE (sizeof(void*) * 8)
+
 /* ??1_Concurrent_vector_base_v4@details@Concurrency@@IAE@XZ */
 /* ??1_Concurrent_vector_base_v4@details@Concurrency@@IEAA@XZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4_dtor, 4)
@@ -1810,8 +1813,18 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_capacity, 4)
 MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
         const _Concurrent_vector_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    MSVCP_size_t last_block;
+    int i;
+
+    TRACE("(%p)\n", this);
+
+    last_block = (this->segment == this->storage ? STORAGE_SIZE : SEGMENT_SIZE);
+    for(i = 0; i < last_block; i++)
+    {
+        if(!this->segment[i])
+            return !i ? 0 : 1 << i;
+    }
+    return 1 << i;
 }
 
 /* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IAEIP6AXPAXI@Z@Z */
