@@ -1912,18 +1912,6 @@ void __thiscall _Concurrent_vector_base_v4_dtor(
         free(this->segment);
 }
 
-/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z */
-/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z */
-DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_assign, 24)
-void __thiscall _Concurrent_vector_base_v4__Internal_assign(
-        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
-        MSVCP_size_t len, void (__cdecl *func0)(void*, MSVCP_size_t),
-        void (__cdecl *func1)(void*, const void*, MSVCP_size_t),
-        void (__cdecl *func2)(void*, const void*, MSVCP_size_t))
-{
-    FIXME("(%p %p %ld %p %p %p) stub\n", this, v, len, func0, func1, func2);
-}
-
 /* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IBEIXZ */
 /* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_capacity, 4)
@@ -2040,6 +2028,68 @@ void __thiscall _Concurrent_vector_base_v4__Internal_copy(
     for(i = 0; i < seg_no; i++)
         copy(this->segment[i], v->segment[i], i ? 1 << i : 2);
     copy(this->segment[i], v->segment[i], v_size - (1 << i & ~1));
+    this->early_size = v_size;
+}
+
+/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z */
+/* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_assign, 24)
+void __thiscall _Concurrent_vector_base_v4__Internal_assign(
+        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
+        MSVCP_size_t element_size, void (__cdecl *clear)(void*, MSVCP_size_t),
+        void (__cdecl *assign)(void*, const void*, MSVCP_size_t),
+        void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+{
+    MSVCP_size_t v_size, seg_no, v_seg_no, remain_element;
+    int i;
+
+    TRACE("(%p %p %ld %p %p %p)\n", this, v, element_size, clear, assign, copy);
+
+    v_size = v->early_size;
+    if(!v_size) {
+        _Concurrent_vector_base_v4__Internal_clear(this, clear);
+        return;
+    }
+    if(!this->early_size) {
+        _Concurrent_vector_base_v4__Internal_copy(this, v, element_size, copy);
+        return;
+    }
+    seg_no = _vector_base_v4__Segment_index_of(this->early_size - 1);
+    v_seg_no = _vector_base_v4__Segment_index_of(v_size - 1);
+
+    for(i = 0; i < min(seg_no, v_seg_no); i++)
+        assign(this->segment[i], v->segment[i], i ? 1 << i : 2);
+    remain_element = min(this->early_size, v_size) - (1 << i & ~1);
+    if(remain_element != 0)
+        assign(this->segment[i], v->segment[i], remain_element);
+
+    if(this->early_size > v_size)
+    {
+        if((i ? 1 << i : 2) - remain_element > 0)
+            clear((BYTE**)this->segment[i] + element_size * remain_element,
+                    (i ? 1 << i : 2) - remain_element);
+        if(i < seg_no)
+        {
+            for(i++; i < seg_no; i++)
+                clear(this->segment[i], 1 << i);
+            clear(this->segment[i], this->early_size - (1 << i));
+        }
+    }
+    else if(this->early_size < v_size)
+    {
+        if((i ? 1 << i : 2) - remain_element > 0)
+            copy((BYTE**)this->segment[i] + element_size * remain_element,
+                    (BYTE**)v->segment[i] + element_size * remain_element,
+                    (i ? 1 << i : 2) - remain_element);
+        if(i < v_seg_no)
+        {
+            _Concurrent_vector_base_v4__Internal_reserve(this, v_size,
+                    element_size, MSVCP_SIZE_T_MAX / element_size);
+            for(i++; i < v_seg_no; i++)
+                copy(this->segment[i], v->segment[i], 1 << i);
+            copy(this->segment[i], v->segment[i], v->early_size - (1 << i));
+        }
+   }
     this->early_size = v_size;
 }
 
