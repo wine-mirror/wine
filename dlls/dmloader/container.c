@@ -194,11 +194,6 @@ static const IDirectMusicContainerVtbl dmcontainer_vtbl = {
 };
 
 /* IDirectMusicObject part: */
-static inline IDirectMusicContainerImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicContainerImpl, dmobj.IDirectMusicObject_iface);
-}
-
 static HRESULT WINAPI cont_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
