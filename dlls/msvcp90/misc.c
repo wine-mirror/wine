@@ -2184,9 +2184,19 @@ void __thiscall _Concurrent_vector_base_v4__Internal_resize(
 /* ?_Internal_swap@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEAV123@@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_swap, 8)
 void __thiscall _Concurrent_vector_base_v4__Internal_swap(
-        _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v)
+        _Concurrent_vector_base_v4 *this, _Concurrent_vector_base_v4 *v)
 {
-    FIXME("(%p %p) stub\n", this, v);
+    _Concurrent_vector_base_v4 temp;
+
+    TRACE("(%p %p)\n", this, v);
+
+    temp = *this;
+    *this = *v;
+    *v = temp;
+    if(v->segment == this->storage)
+        v->segment = v->storage;
+    if(this->segment == v->storage)
+        this->segment = this->storage;
 }
 #endif
 
