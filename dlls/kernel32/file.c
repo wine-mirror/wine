@@ -1560,6 +1560,8 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         options |= FILE_SYNCHRONOUS_IO_NONALERT;
     if (attributes & FILE_FLAG_RANDOM_ACCESS)
         options |= FILE_RANDOM_ACCESS;
+    if (attributes & FILE_FLAG_WRITE_THROUGH)
+        options |= FILE_WRITE_THROUGH;
     attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
 
     attr.Length = sizeof(attr);
