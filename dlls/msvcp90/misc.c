@@ -1771,6 +1771,7 @@ DEFINE_RTTI_DATA0(_Runtime_object, 0, ".?AV_Runtime_object@details@Concurrency@@
 
 #endif
 
+#if _MSVCP_VER >= 100
 typedef struct __Concurrent_vector_base_v4
 {
     void* (__cdecl *allocator)(struct __Concurrent_vector_base_v4 *, MSVCP_size_t);
@@ -1782,6 +1783,122 @@ typedef struct __Concurrent_vector_base_v4
 
 #define STORAGE_SIZE (sizeof(this->storage) / sizeof(this->storage[0]))
 #define SEGMENT_SIZE (sizeof(void*) * 8)
+
+/* based on wined3d_log2i from wined3d.h */
+/* Return the integer base-2 logarithm of (x|1). Result is 0 for x == 0. */
+static inline unsigned int log2i(unsigned int x)
+{
+#ifdef HAVE___BUILTIN_CLZ
+    return __builtin_clz(x|1) ^ 0x1f;
+#else
+    static const unsigned int l[] =
+    {
+        ~0u, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+          4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    };
+    unsigned int i;
+
+    x |= 1;
+    return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24 : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
+#endif
+}
+
+/* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z */
+/* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z */
+MSVCP_size_t __cdecl _vector_base_v4__Segment_index_of(MSVCP_size_t x)
+{
+    unsigned int half;
+
+    TRACE("(%lu)\n", x);
+
+    if((sizeof(x) == 8) && (half = x >> 32))
+        return log2i(half) + 32;
+
+    return log2i(x);
+}
+
+/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBEXI@Z */
+/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IEBAX_K@Z */
+DEFINE_THISCALL_WRAPPER(_vector_base_v4__Internal_throw_exception, 8)
+void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, MSVCP_size_t idx)
+{
+    static const struct {
+        exception_type type;
+        const char *msg;
+    } exceptions[] = {
+        { EXCEPTION_OUT_OF_RANGE, "Index out of range" },
+        { EXCEPTION_OUT_OF_RANGE, "Index out of segments table range" },
+        { EXCEPTION_RANGE_ERROR,  "Index is inside segment which failed to be allocated" },
+    };
+
+    TRACE("(%p %lu)\n", this, idx);
+
+    if(idx < ARRAY_SIZE(exceptions))
+        throw_exception(exceptions[idx].type, exceptions[idx].msg);
+}
+
+#ifdef _WIN64
+#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchangeSize((MSVCP_size_t *)dest, (MSVCP_size_t)exchange, (MSVCP_size_t)cmp)
+static MSVCP_size_t InterlockedCompareExchangeSize(MSVCP_size_t volatile *dest, MSVCP_size_t exchange, MSVCP_size_t cmp)
+{
+    MSVCP_size_t v;
+
+    v = InterlockedCompareExchange64((LONGLONG*)dest, exchange, cmp);
+
+    return v;
+}
+#else
+#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchange((LONG*)dest, (MSVCP_size_t)exchange, (MSVCP_size_t)cmp)
+#endif
+
+#define SEGMENT_ALLOC_MARKER ((void*)1)
+
+static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
+        MSVCP_size_t seg, MSVCP_size_t element_size)
+{
+    int spin;
+
+    while(!this->segment[seg] || this->segment[seg] == SEGMENT_ALLOC_MARKER)
+    {
+        spin = 0;
+        while(this->segment[seg] == SEGMENT_ALLOC_MARKER)
+            spin_wait(&spin);
+        if(!InterlockedCompareExchangeSizeT((this->segment + seg),
+                    SEGMENT_ALLOC_MARKER, 0))
+        __TRY
+        {
+            if(seg == 0)
+                this->segment[seg] = this->allocator(this, element_size * (1 << this->first_block));
+            else if(seg < this->first_block)
+                this->segment[seg] = (BYTE**)this->segment[0]
+                        + element_size * (1 << seg);
+            else
+                this->segment[seg] = this->allocator(this, element_size * (1 << seg));
+        }
+        __EXCEPT_ALL
+        {
+            this->segment[seg] = NULL;
+            throw_exception(EXCEPTION_RERAISE, NULL);
+        }
+        __ENDTRY
+        if(!this->segment[seg])
+            _vector_base_v4__Internal_throw_exception(this, 2);
+    }
+}
 
 /* ??1_Concurrent_vector_base_v4@details@Concurrency@@IAE@XZ */
 /* ??1_Concurrent_vector_base_v4@details@Concurrency@@IEAA@XZ */
@@ -1825,6 +1942,43 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
             return !i ? 0 : 1 << i;
     }
     return 1 << i;
+}
+
+/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIII@Z */
+/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_reserve, 16)
+void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t size,
+        MSVCP_size_t element_size, MSVCP_size_t max_size)
+{
+    MSVCP_size_t block_idx, capacity;
+    int i;
+    void **new_segment;
+
+    TRACE("(%p %ld %ld %ld)\n", this, size, element_size, max_size);
+
+    if(size > max_size) _vector_base_v4__Internal_throw_exception(this, 0);
+    capacity = _Concurrent_vector_base_v4__Internal_capacity(this);
+    if(size <= capacity) return;
+    block_idx = _vector_base_v4__Segment_index_of(size - 1);
+    if(!this->first_block)
+        InterlockedCompareExchangeSizeT(&this->first_block, block_idx + 1, 0);
+    i = _vector_base_v4__Segment_index_of(capacity);
+    if(this->storage == this->segment) {
+        for(; i <= block_idx && i < STORAGE_SIZE; i++)
+            concurrent_vector_alloc_segment(this, i, element_size);
+        if(block_idx >= STORAGE_SIZE) {
+            new_segment = malloc(SEGMENT_SIZE * sizeof(void*));
+            if(new_segment == NULL) _vector_base_v4__Internal_throw_exception(this, 2);
+            memset(new_segment, 0, SEGMENT_SIZE * sizeof(*new_segment));
+            memcpy(new_segment, this->storage, STORAGE_SIZE * sizeof(*new_segment));
+            if(InterlockedCompareExchangePointer((void*)&this->segment, new_segment,
+                        this->storage) != this->storage)
+                free(new_segment);
+        }
+    }
+    for(; i <= block_idx; i++)
+        concurrent_vector_alloc_segment(this, i, element_size);
 }
 
 /* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IAEIP6AXPAXI@Z@Z */
@@ -1891,16 +2045,6 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
     return NULL;
 }
 
-/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIII@Z */
-/* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00@Z */
-DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_reserve, 16)
-void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t len1,
-        MSVCP_size_t len2, MSVCP_size_t len3)
-{
-    FIXME("(%p %ld %ld %ld) stub\n", this, len1, len2, len3);
-}
-
 /* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIIIP6AXPAXI@ZP6AX0PBXI@Z2@Z */
 /* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_resize, 28)
@@ -1920,6 +2064,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_swap(
 {
     FIXME("(%p %p) stub\n", this, v);
 }
+#endif
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -2390,75 +2535,6 @@ _Ph _Ph_1 = {0}, _Ph_2 = {0}, _Ph_3 = {0}, _Ph_4 = {0}, _Ph_5 = {0};
 _Ph _Ph_6 = {0}, _Ph_7 = {0}, _Ph_8 = {0}, _Ph_9 = {0}, _Ph_10 = {0};
 _Ph _Ph_11 = {0}, _Ph_12 = {0}, _Ph_13 = {0}, _Ph_14 = {0}, _Ph_15 = {0};
 _Ph _Ph_16 = {0}, _Ph_17 = {0}, _Ph_18 = {0}, _Ph_19 = {0}, _Ph_20 = {0};
-#endif
-
-#if _MSVCP_VER >= 100
-/* based on wined3d_log2i from wined3d.h */
-/* Return the integer base-2 logarithm of (x|1). Result is 0 for x == 0. */
-static inline unsigned int log2i(unsigned int x)
-{
-#ifdef HAVE___BUILTIN_CLZ
-    return __builtin_clz(x|1) ^ 0x1f;
-#else
-    static const unsigned int l[] =
-    {
-        ~0u, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
-          4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-          5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-          6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-          7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    };
-    unsigned int i;
-
-    x |= 1;
-    return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24 : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
-#endif
-}
-
-/* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z */
-/* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z */
-MSVCP_size_t __cdecl _vector_base_v4__Segment_index_of(MSVCP_size_t x)
-{
-    unsigned int half;
-
-    TRACE("(%lu)\n", x);
-
-    if((sizeof(x) == 8) && (half = x >> 32))
-        return log2i(half) + 32;
-
-    return log2i(x);
-}
-
-/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBEXI@Z */
-/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IEBAX_K@Z */
-DEFINE_THISCALL_WRAPPER(_vector_base_v4__Internal_throw_exception, 8)
-void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, MSVCP_size_t idx)
-{
-    static const struct {
-        exception_type type;
-        const char *msg;
-    } exceptions[] = {
-        { EXCEPTION_OUT_OF_RANGE, "Index out of range" },
-        { EXCEPTION_OUT_OF_RANGE, "Index out of segments table range" },
-        { EXCEPTION_RANGE_ERROR,  "Index is inside segment which failed to be allocated" },
-    };
-
-    TRACE("(%p %lu)\n", this, idx);
-
-    if(idx < ARRAY_SIZE(exceptions))
-        throw_exception(exceptions[idx].type, exceptions[idx].msg);
-}
 #endif
 
 #if _MSVCP_VER >= 140
