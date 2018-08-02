@@ -207,11 +207,6 @@ static const IDirectMusicStyle8Vtbl dmstyle8_vtbl = {
 };
 
 /* IDirectMusicStyle8Impl IDirectMusicObject part: */
-static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicStyle8Impl, dmobj.IDirectMusicObject_iface);
-}
-
 static HRESULT WINAPI style_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
