@@ -829,6 +829,11 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         }
         break;  /* Unable to emulate it */
     }
+
+    case 0xfa: /* cli */
+    case 0xfb: /* sti */
+        context->Rip += prefixlen + 1;
+        return ExceptionContinueExecution;
     }
     return ExceptionContinueSearch;  /* Unable to emulate it */
 }
