@@ -1786,7 +1786,10 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4_dtor, 4)
 void __thiscall _Concurrent_vector_base_v4_dtor(
         _Concurrent_vector_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    if(this->segment != this->storage)
+        free(this->segment);
 }
 
 /* ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z */
