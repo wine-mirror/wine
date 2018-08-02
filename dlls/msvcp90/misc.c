@@ -1987,8 +1987,22 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_clear, 8)
 MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
         _Concurrent_vector_base_v4 *this, void (__cdecl *clear)(void*, MSVCP_size_t))
 {
-    FIXME("(%p %p) stub\n", this, clear);
-    return 0;
+    MSVCP_size_t seg_no, elems;
+    int i;
+
+    TRACE("(%p %p)\n", this, clear);
+
+    seg_no = this->early_size  ? _vector_base_v4__Segment_index_of(this->early_size) + 1 : 0;
+    for(i = seg_no - 1; i >= 0; i--) {
+        elems = this->early_size - (1 << i & ~1);
+        clear(this->segment[i], elems);
+        this->early_size -= elems;
+    }
+    while(seg_no < (this->segment == this->storage ? STORAGE_SIZE : SEGMENT_SIZE)) {
+        if(!this->segment[seg_no]) break;
+        seg_no++;
+    }
+    return seg_no;
 }
 
 /* ?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IAEPAXIPAXP6AX0I@ZP6AX0PBXI@Z@Z */
