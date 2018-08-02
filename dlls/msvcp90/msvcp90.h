@@ -25,6 +25,7 @@
 typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
 
+#define MSVCP_SIZE_T_MAX (~(MSVCP_size_t)0)
 #if _MSVCP_VER >= 100
 typedef __int64 DECLSPEC_ALIGN(8) streamoff;
 typedef __int64 DECLSPEC_ALIGN(8) streamsize;

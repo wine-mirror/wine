@@ -2022,9 +2022,25 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_copy, 16)
 void __thiscall _Concurrent_vector_base_v4__Internal_copy(
         _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
-        MSVCP_size_t len, void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+        MSVCP_size_t element_size, void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
 {
-    FIXME("(%p %p %ld %p) stub\n", this, v, len, copy);
+    MSVCP_size_t seg_no, v_size;
+    int i;
+
+    TRACE("(%p %p %ld %p)\n", this, v, element_size, copy);
+
+    v_size = v->early_size;
+    if(!v_size) {
+        this->early_size = 0;
+       return;
+    }
+    _Concurrent_vector_base_v4__Internal_reserve(this, v_size,
+            element_size, MSVCP_SIZE_T_MAX / element_size);
+    seg_no = _vector_base_v4__Segment_index_of(v_size - 1);
+    for(i = 0; i < seg_no; i++)
+        copy(this->segment[i], v->segment[i], i ? 1 << i : 2);
+    copy(this->segment[i], v->segment[i], v_size - (1 << i & ~1));
+    this->early_size = v_size;
 }
 
 /* ?_Internal_grow_by@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
