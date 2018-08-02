@@ -1784,6 +1784,13 @@ typedef struct __Concurrent_vector_base_v4
 #define STORAGE_SIZE (sizeof(this->storage) / sizeof(this->storage[0]))
 #define SEGMENT_SIZE (sizeof(void*) * 8)
 
+typedef struct compact_block
+{
+    MSVCP_size_t first_block;
+    void *blocks[SEGMENT_SIZE];
+    int size_check;
+}compact_block;
+
 /* based on wined3d_log2i from wined3d.h */
 /* Return the integer base-2 logarithm of (x|1). Result is 0 for x == 0. */
 static inline unsigned int log2i(unsigned int x)
@@ -1997,12 +2004,58 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
 /* ?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KPEAXP6AX10@ZP6AX1PEBX0@Z@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_compact, 20)
 void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t len, void *v,
+        _Concurrent_vector_base_v4 *this, MSVCP_size_t element_size, void *v,
         void (__cdecl *clear)(void*, MSVCP_size_t),
         void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
 {
-    FIXME("(%p %ld %p %p %p) stub\n", this, len, v, clear, copy);
-    return NULL;
+    compact_block *b;
+    MSVCP_size_t size, alloc_size, seg_no, alloc_seg, copy_element, clear_element;
+    int i;
+
+    TRACE("(%p %ld %p %p %p)\n", this, element_size, v, clear, copy);
+
+    size = this->early_size;
+    alloc_size = _Concurrent_vector_base_v4__Internal_capacity(this);
+    if(alloc_size == 0) return NULL;
+    alloc_seg = _vector_base_v4__Segment_index_of(alloc_size - 1);
+    if(!size) {
+        this->first_block = 0;
+        b = v;
+        b->first_block = alloc_seg + 1;
+        memset(b->blocks, 0, sizeof(b->blocks));
+        memcpy(b->blocks, this->segment,
+                (alloc_seg + 1) * sizeof(this->segment[0]));
+        memset(this->segment, 0, sizeof(this->segment[0]) * (alloc_seg + 1));
+        return v;
+    }
+    seg_no = _vector_base_v4__Segment_index_of(size - 1);
+    if(this->first_block == (seg_no + 1) && seg_no == alloc_seg) return NULL;
+    b = v;
+    b->first_block = this->first_block;
+    memset(b->blocks, 0, sizeof(b->blocks));
+    memcpy(b->blocks, this->segment,
+            (alloc_seg + 1) * sizeof(this->segment[0]));
+    if(this->first_block == (seg_no + 1) && seg_no != alloc_seg) {
+        memset(b->blocks, 0, sizeof(b->blocks[0]) * (seg_no + 1));
+        memset(&this->segment[seg_no + 1], 0, sizeof(this->segment[0]) * (alloc_seg - seg_no));
+        return v;
+    }
+    memset(this->segment, 0,
+            (alloc_seg + 1) * sizeof(this->segment[0]));
+    this->first_block = 0;
+    _Concurrent_vector_base_v4__Internal_reserve(this, size, element_size,
+            MSVCP_SIZE_T_MAX / element_size);
+    for(i = 0; i < seg_no; i++)
+        copy(this->segment[i], b->blocks[i], i ? 1 << i : 2);
+    copy_element = size - ((1 << seg_no) & ~1);
+    if(copy_element > 0)
+        copy(this->segment[seg_no], b->blocks[seg_no], copy_element);
+    for(i = 0; i < seg_no; i++)
+        clear(b->blocks[i], i ? 1 << i : 2);
+    clear_element = size - ((1 << seg_no) & ~1);
+    if(clear_element > 0)
+        clear(b->blocks[seg_no], clear_element);
+    return v;
 }
 
 /* ?_Internal_copy@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXPBXI@Z@Z */
