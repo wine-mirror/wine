@@ -475,6 +475,9 @@ foo
 'jim fred'
 'jim'
 'apple"banana"grape'
+I'm here!@space@
+I'm here!@space@
+I'm here!@space@
 ------------ Testing variable expansion ------------
 ~p0 should be path containing batch file
 @path@

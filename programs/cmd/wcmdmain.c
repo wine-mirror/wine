@@ -1099,24 +1099,41 @@ void WCMD_run_program (WCHAR *command, BOOL called)
              wine_dbgstr_w(stemofsearch));
   while (pathposn) {
     WCHAR  thisDir[MAX_PATH] = {'\0'};
+    int    length            = 0;
     WCHAR *pos               = NULL;
     BOOL  found             = FALSE;
+    BOOL inside_quotes      = FALSE;
 
     /* Work on the first directory on the search path */
-    pos = strchrW(pathposn, ';');
-    if (pos) {
+    pos = pathposn;
+    while ((inside_quotes || *pos != ';') && *pos != 0)
+    {
+        if (*pos == '"')
+            inside_quotes = !inside_quotes;
+        pos++;
+    }
+
+    if (*pos) { /* Reached semicolon */
       memcpy(thisDir, pathposn, (pos-pathposn) * sizeof(WCHAR));
       thisDir[(pos-pathposn)] = 0x00;
       pathposn = pos+1;
-
-    } else {
+    } else {    /* Reached string end */
       strcpyW(thisDir, pathposn);
       pathposn = NULL;
     }
 
+    /* Remove quotes */
+    length = strlenW(thisDir);
+    if (thisDir[length - 1] == '"')
+        thisDir[length - 1] = 0;
+
+    if (*thisDir != '"')
+        strcpyW(temp, thisDir);
+    else
+        strcpyW(temp, thisDir + 1);
+
     /* Since you can have eg. ..\.. on the path, need to expand
        to full information                                      */
-    strcpyW(temp, thisDir);
     GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
 
     /* 1. If extension supplied, see if that file exists */

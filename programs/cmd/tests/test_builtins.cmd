@@ -507,6 +507,23 @@ rem Only the final quote ends the string
 set "WINE_FOO=apple"banana"grape"orange
 echo '%WINE_FOO%'
 set WINE_FOO=
+rem set PATH must work with quotes
+set PATH_BACKUP=%PATH%
+mkdir folder
+mkdir "fol;der"
+echo echo I'm here! > "fol;der\sub1.bat"
+echo echo I'm here! > folder\sub1.bat
+set PATH=nothing;"fol;der"
+call sub1
+set PATH="folder
+call sub1
+set PATH=folder"
+call sub1
+del "fol;der\sub1.bat"
+del folder\sub1.bat
+rmdir "fol;der"
+rmdir folder
+PATH=%PATH_BACKUP%
 
 echo ------------ Testing variable expansion ------------
 call :setError 0
