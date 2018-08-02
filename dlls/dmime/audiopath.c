@@ -39,11 +39,6 @@ static inline struct IDirectMusicAudioPathImpl *impl_from_IDirectMusicAudioPath(
     return CONTAINING_RECORD(iface, struct IDirectMusicAudioPathImpl, IDirectMusicAudioPath_iface);
 }
 
-static inline struct IDirectMusicAudioPathImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
-{
-    return CONTAINING_RECORD(iface, struct IDirectMusicAudioPathImpl, dmobj.IDirectMusicObject_iface);
-}
-
 static inline struct IDirectMusicAudioPathImpl *impl_from_IPersistStream(IPersistStream *iface)
 {
     return CONTAINING_RECORD(iface, struct IDirectMusicAudioPathImpl, dmobj.IPersistStream_iface);

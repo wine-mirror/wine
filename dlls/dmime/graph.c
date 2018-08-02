@@ -35,11 +35,6 @@ static inline IDirectMusicGraphImpl *impl_from_IDirectMusicGraph(IDirectMusicGra
     return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, IDirectMusicGraph_iface);
 }
 
-static inline IDirectMusicGraphImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IDirectMusicObject_iface);
-}
-
 static inline IDirectMusicGraphImpl *impl_from_IPersistStream(IPersistStream *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IPersistStream_iface);
