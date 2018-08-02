@@ -2100,8 +2100,30 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
         _Concurrent_vector_base_v4 *this, MSVCP_size_t count, MSVCP_size_t element_size,
         void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
 {
-    FIXME("(%p %ld %ld %p %p) stub\n", this, count, element_size, copy, v);
-    return 0;
+    MSVCP_size_t size, seg_no, last_seg_no, remain_size;
+
+    TRACE("(%p %ld %ld %p %p)\n", this, count, element_size, copy, v);
+
+    if(count == 0) return this->early_size;
+    do {
+        size = this->early_size;
+        _Concurrent_vector_base_v4__Internal_reserve(this, size + count, element_size,
+                MSVCP_SIZE_T_MAX / element_size);
+    } while(InterlockedCompareExchangeSizeT(&this->early_size, size + count, size) != size);
+
+    seg_no = size ? _vector_base_v4__Segment_index_of(size - 1) : 0;
+    last_seg_no = _vector_base_v4__Segment_index_of(size + count - 1);
+    remain_size = min(size + count, 1 << (seg_no + 1)) - size;
+    if(remain_size > 0)
+        copy(((BYTE**)this->segment[seg_no] + element_size * (size - ((1 << seg_no) & ~1))), v,
+            remain_size);
+    if(seg_no != last_seg_no)
+    {
+        for(seg_no++; seg_no < last_seg_no; seg_no++)
+            copy(this->segment[seg_no], v, 1 << seg_no);
+        copy(this->segment[last_seg_no], v, size + count - (1 << last_seg_no));
+    }
+    return size;
 }
 
 /* ?_Internal_grow_to_at_least_with_result@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
