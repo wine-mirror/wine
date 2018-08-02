@@ -2216,10 +2216,24 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_wi
 /* ?_Internal_push_back@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KAEA_K@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_push_back, 12)
 void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
-       _Concurrent_vector_base_v4 *this, MSVCP_size_t len1, MSVCP_size_t *len2)
+       _Concurrent_vector_base_v4 *this, MSVCP_size_t element_size, MSVCP_size_t *idx)
 {
-    FIXME("(%p %ld %p) stub\n", this, len1, len2);
-    return NULL;
+    MSVCP_size_t index, seg, segment_base;
+    void *data;
+
+    TRACE("(%p %ld %p)\n", this, element_size, idx);
+
+    do {
+        index = this->early_size;
+        _Concurrent_vector_base_v4__Internal_reserve(this, index + 1,
+                element_size, MSVCP_SIZE_T_MAX / element_size);
+    } while(InterlockedCompareExchangeSizeT(&this->early_size, index + 1, index) != index);
+    seg = _vector_base_v4__Segment_index_of(index);
+    segment_base = (seg == 0) ? 0 : (1 << seg);
+    data = (BYTE*)this->segment[seg] + element_size * (index - segment_base);
+    *idx = index;
+
+    return data;
 }
 
 /* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIIIP6AXPAXI@ZP6AX0PBXI@Z2@Z */
