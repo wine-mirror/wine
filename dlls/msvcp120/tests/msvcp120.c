@@ -2868,7 +2868,8 @@ static void test_vector_base_v4(void)
             (long)vector.first_block);
     ok(vector.early_size == 1, "vector.early_size got %ld expected 1\n",
             (long)vector.early_size);
-
+    ok(vector.segment == vector.storage, "vector.segment got %p expected %p\n",
+            vector.segment, vector.storage);
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &vector);
     ok(size == 2, "size of vector got %ld expected 2\n", (long)size);
 
@@ -2892,11 +2893,12 @@ static void test_vector_base_v4(void)
     ok(idx == 2, "idx got %ld expected 2\n", (long)idx);
     vector_elem_count++;
     *data = 3;
+    ok(vector.segment == vector.storage, "vector.segment got %p expected %p\n",
+            vector.segment, vector.storage);
     ok(vector.first_block == 1, "vector.first_block got %ld expected 1\n",
             (long)vector.first_block);
     ok(vector.early_size == 3, "vector.early_size got %ld expected 3\n",
             (long)vector.early_size);
-
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &vector);
     ok(size == 4, "size of vector got %ld expected %d\n", (long)size, 4);
 
@@ -2912,9 +2914,11 @@ static void test_vector_base_v4(void)
     data = call_func3(p_vector_base_v4__Internal_push_back, &vector, sizeof(int), &idx);
     CHECK_CALLED(concurrent_vector_int_alloc);
     ok(data != NULL, "_Internal_push_back returned NULL\n");
-    ok(idx == 4, "idx got %ld expected 2\n", (long)idx);
+    ok(idx == 4, "idx got %ld expected 4\n", (long)idx);
     vector_elem_count++;
     *data = 5;
+    ok(vector.segment == vector.storage, "vector.segment got %p expected %p\n",
+            vector.segment, vector.storage);
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &vector);
     ok(size == 8, "size of vector got %ld expected 8\n", (long)size);
 
@@ -2929,7 +2933,8 @@ static void test_vector_base_v4(void)
             (long)v2.first_block);
     ok(v2.early_size == 5, "v2.early_size got %ld expected 5\n",
             (long)v2.early_size);
-
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
@@ -2963,7 +2968,8 @@ static void test_vector_base_v4(void)
             (long)v2.first_block);
     ok(v2.early_size == 5, "v2.early_size got %ld expected 5\n",
             (long)v2.early_size);
-
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
@@ -3018,6 +3024,8 @@ static void test_vector_base_v4(void)
     }
     ok(v2.first_block == 1, "v2.first_block got %ld expected 1\n", (long)v2.first_block);
     ok(v2.early_size == 4, "v2.early_size got %ld expected 4\n", (long)v2.early_size);
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     memset(&b, 0xff, sizeof(b));
     SET_EXPECT(concurrent_vector_int_alloc);
     SET_EXPECT(concurrent_vector_int_copy);
@@ -3031,6 +3039,8 @@ static void test_vector_base_v4(void)
     ok(v2.first_block == 2, "v2.first_block got %ld expected 2\n", (long)v2.first_block);
     ok(v2.early_size == 4,"v2.early_size got %ld expected 4\n", (long)v2.early_size);
     ok(b.first_block == 1, "b.first_block got %ld expected 1\n", (long)b.first_block);
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     for(i=0; i<2; i++){
         ok(b.blocks[i] != NULL, "b.blocks[%d] got NULL\n", i);
         free(b.blocks[i]);
@@ -3055,6 +3065,10 @@ static void test_vector_base_v4(void)
     vector_elem_count += 5;
     ok(v2.first_block == 2, "v2.first_block got %ld expected 2\n", (long)v2.first_block);
     ok(v2.early_size == 9, "v2.early_size got %ld expected 9\n", (long)v2.early_size);
+    ok(v2.segment != v2.storage, "v2.segment got %p expected %p\n", v2.segment, v2.storage);
+    for(i = 4;i < 32;i++)
+        ok(v2.segment[i] == 0, "v2.segment[%d] got %p expected 0\n",
+                i, v2.segment[i]);
     memset(&b, 0xff, sizeof(b));
     SET_EXPECT(concurrent_vector_int_alloc);
     SET_EXPECT(concurrent_vector_int_copy);
@@ -3068,6 +3082,10 @@ static void test_vector_base_v4(void)
     ok(v2.first_block == 4, "v2.first_block got %ld expected 4\n", (long)v2.first_block);
     ok(v2.early_size == 9, "v2.early_size got %ld expected 9\n", (long)v2.early_size);
     ok(b.first_block == 2, "b.first_block got %ld expected 2\n", (long)b.first_block);
+    ok(v2.segment != v2.storage, "v2.segment got %p expected %p\n", v2.segment, v2.storage);
+    for(i = 4;i < 32;i++)
+        ok(v2.segment[i] == 0, "v2.segment[%d] got %p\n",
+                i, v2.segment[i]);
     for(i=0; i<4; i++){
         ok(b.blocks[i] != NULL, "b.blocks[%d] got NULL\n", i);
         /* only b.blocks[0] and b.blocks[>=b.first_block] are used */
@@ -3176,6 +3194,8 @@ static void test_vector_base_v4(void)
     CHECK_CALLED(concurrent_vector_int_alloc);
     ok(v2.first_block == 1, "v2.first_block got %ld expected 1\n", (long)v2.first_block);
     ok(v2.early_size == 2, "v2.early_size got %ld expected 2\n", (long)v2.early_size);
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &v2);
     ok(size == 4, "size of vector got %ld expected 4\n", (long)size);
     SET_EXPECT(concurrent_vector_int_alloc);
@@ -3184,12 +3204,27 @@ static void test_vector_base_v4(void)
     CHECK_CALLED(concurrent_vector_int_alloc);
     ok(v2.first_block == 1, "v2.first_block got %ld expected 1\n", (long)v2.first_block);
     ok(v2.early_size == 2, "v2.early_size got %ld expected 2\n", (long)v2.early_size);
+    ok(v2.segment == v2.storage, "v2.segment got %p expected %p\n",
+            v2.segment, v2.storage);
     size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &v2);
     ok(size == 8, "size of vector got %ld expected 8\n", (long)size);
+    SET_EXPECT(concurrent_vector_int_alloc);
+    call_func4(p_vector_base_v4__Internal_reserve,
+            &v2, 9, sizeof(int), 16);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    ok(v2.first_block == 1, "v2.first_block got %ld expected 1\n", (long)v2.first_block);
+    ok(v2.early_size == 2, "v2.early_size got %ld expected 2\n", (long)v2.early_size);
+    ok(v2.segment != v2.storage, "v2.segment got %p expected %p\n", v2.segment, v2.storage);
+    for(i = 4;i < 32;i++)
+        ok(v2.segment[i] == 0, "v2.segment[%d] got %p\n",
+            i, v2.segment[i]);
+    size = (size_t)call_func1(p_vector_base_v4__Internal_capacity, &v2);
+    ok(size == 16, "size of vector got %ld expected 8\n", (long)size);
+
     SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
-    ok(size == 3, "_Internal_clear returned %ld expected 3\n", (long)size);
+    ok(size == 4, "_Internal_clear returned %ld expected 4\n", (long)size);
     CHECK_CALLED(concurrent_vector_int_destroy);
     concurrent_vector_int_dtor(&v2);
 
