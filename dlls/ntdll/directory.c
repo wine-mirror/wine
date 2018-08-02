@@ -1008,7 +1008,7 @@ struct vol_caps
 static struct fs_cache *look_up_fs_cache( dev_t dev )
 {
     int i;
-    for (i = 0; i < sizeof(fs_cache)/sizeof(fs_cache[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( fs_cache ); i++)
         if (fs_cache[i].dev == dev)
             return fs_cache+i;
     return NULL;
@@ -1033,7 +1033,7 @@ static void add_fs_cache( dev_t dev, fsid_t fsid, BOOLEAN case_sensitive )
     }
 
     /* Add a new entry */
-    for (i = 0; i < sizeof(fs_cache)/sizeof(fs_cache[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( fs_cache ); i++)
         if (fs_cache[i].dev == 0)
         {
             /* This entry is empty, use it */
@@ -1455,8 +1455,8 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     if (short_name)
     {
         short_len = ntdll_umbstowcs( 0, short_name, strlen(short_name),
-                                     short_nameW, sizeof(short_nameW) / sizeof(WCHAR) - 1 );
-        if (short_len == -1) short_len = sizeof(short_nameW) / sizeof(WCHAR) - 1;
+                                     short_nameW, ARRAY_SIZE( short_nameW ) - 1 );
+        if (short_len == -1) short_len = ARRAY_SIZE( short_nameW ) - 1;
         for (i = 0; i < short_len; i++) short_nameW[i] = toupperW( short_nameW[i] );
     }
     else  /* generate a short name if necessary */
@@ -2291,7 +2291,7 @@ static void init_redirects(void)
     {
         windir.dev = st.st_dev;
         windir.ino = st.st_ino;
-        nb_redirects = sizeof(redirects) / sizeof(redirects[0]);
+        nb_redirects = ARRAY_SIZE( redirects );
         for (i = 0; i < nb_redirects; i++)
         {
             if (!redirects[i].dos_target) continue;
@@ -2473,11 +2473,11 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 
     if (name->Length >= sizeof(nt_prefixW) &&
         !memcmp( name->Buffer, nt_prefixW, sizeof(nt_prefixW) ))
-        return sizeof(nt_prefixW) / sizeof(WCHAR);
+        return ARRAY_SIZE( nt_prefixW );
 
     if (name->Length >= sizeof(dosdev_prefixW) &&
-        !memicmpW( name->Buffer, dosdev_prefixW, sizeof(dosdev_prefixW)/sizeof(WCHAR) ))
-        return sizeof(dosdev_prefixW) / sizeof(WCHAR);
+        !memicmpW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
+        return ARRAY_SIZE( dosdev_prefixW );
 
     return 0;
 }

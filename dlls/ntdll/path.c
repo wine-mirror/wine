@@ -1116,12 +1116,12 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
                 goto done;
             }
             memcpy( nt->Buffer, unix_prefixW, sizeof(unix_prefixW) );
-            ntdll_umbstowcs( 0, path, lenA, nt->Buffer + sizeof(unix_prefixW)/sizeof(WCHAR), lenW );
-            lenW += sizeof(unix_prefixW)/sizeof(WCHAR);
+            ntdll_umbstowcs( 0, path, lenA, nt->Buffer + ARRAY_SIZE( unix_prefixW ), lenW );
+            lenW += ARRAY_SIZE( unix_prefixW );
             nt->Buffer[lenW] = 0;
             nt->Length = lenW * sizeof(WCHAR);
             nt->MaximumLength = nt->Length + sizeof(WCHAR);
-            for (p = nt->Buffer + sizeof(unix_prefixW)/sizeof(WCHAR); *p; p++) if (*p == '/') *p = '\\';
+            for (p = nt->Buffer + ARRAY_SIZE( unix_prefixW ); *p; p++) if (*p == '/') *p = '\\';
             status = STATUS_SUCCESS;
         }
         goto done;
@@ -1138,12 +1138,12 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
 
     memcpy( nt->Buffer, prefixW, sizeof(prefixW) );
     nt->Buffer[4] += drive;
-    ntdll_umbstowcs( 0, path, lenA, nt->Buffer + sizeof(prefixW)/sizeof(WCHAR), lenW );
-    lenW += sizeof(prefixW)/sizeof(WCHAR);
+    ntdll_umbstowcs( 0, path, lenA, nt->Buffer + ARRAY_SIZE( prefixW ), lenW );
+    lenW += ARRAY_SIZE( prefixW );
     nt->Buffer[lenW] = 0;
     nt->Length = lenW * sizeof(WCHAR);
     nt->MaximumLength = nt->Length + sizeof(WCHAR);
-    for (p = nt->Buffer + sizeof(prefixW)/sizeof(WCHAR); *p; p++) if (*p == '/') *p = '\\';
+    for (p = nt->Buffer + ARRAY_SIZE( prefixW ); *p; p++) if (*p == '/') *p = '\\';
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, cwd );

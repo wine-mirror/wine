@@ -605,8 +605,7 @@ static BOOL match_tz_name(const char* tz_name,
         return TRUE;
 
     strcpyW(key.key_name, reg_tzi->TimeZoneKeyName);
-    match = bsearch(&key, mapping, sizeof(mapping)/sizeof(mapping[0]),
-                    sizeof(mapping[0]), compare_tz_key);
+    match = bsearch(&key, mapping, ARRAY_SIZE(mapping), sizeof(mapping[0]), compare_tz_key);
     if (!match)
         return TRUE;
 

@@ -208,7 +208,7 @@ static const char *iocodex(DWORD code)
 {
    unsigned int i;
    static char buffer[25];
-   for(i=0; i<sizeof(iocodextable)/sizeof(struct iocodexs); i++)
+   for(i=0; i<ARRAY_SIZE(iocodextable); i++)
       if (code==iocodextable[i].code)
 	 return iocodextable[i].codex;
    sprintf(buffer, "IOCTL_CODE_%x", (int)code);

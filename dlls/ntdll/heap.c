@@ -124,7 +124,7 @@ static const SIZE_T HEAP_freeListSizes[] =
 {
     0x200, 0x400, 0x1000, ~0UL
 };
-#define HEAP_NB_FREE_LISTS (sizeof(HEAP_freeListSizes) / sizeof(HEAP_freeListSizes[0]) + HEAP_NB_SMALL_FREE_LISTS)
+#define HEAP_NB_FREE_LISTS (ARRAY_SIZE( HEAP_freeListSizes ) + HEAP_NB_SMALL_FREE_LISTS)
 
 typedef union
 {

@@ -1878,7 +1878,7 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
     if (!relocs->Size) return STATUS_SUCCESS;
     if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
 
-    if (nt->FileHeader.NumberOfSections > sizeof(protect_old)/sizeof(protect_old[0]))
+    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( protect_old ))
         return STATUS_INVALID_IMAGE_FORMAT;
 
     sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
@@ -2275,7 +2275,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
     strcpyW( p, user_shared_data->NtSystemRoot );
     p += strlenW(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
-    p += sizeof(winsxsW) / sizeof(WCHAR);
+    p += ARRAY_SIZE( winsxsW );
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
     p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
     *p++ = '\\';
@@ -2840,7 +2840,7 @@ NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LP
                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                      'I','m','a','g','e',' ','F','i','l','e',' ',
                                      'E','x','e','c','u','t','i','o','n',' ','O','p','t','i','o','n','s','\\'};
-    WCHAR path[MAX_PATH + sizeof(optionsW)/sizeof(WCHAR)];
+    WCHAR path[MAX_PATH + ARRAY_SIZE( optionsW )];
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name_str;
     HANDLE hkey;
@@ -2862,7 +2862,7 @@ NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LP
     name_str.Length = sizeof(optionsW) + len;
     name_str.MaximumLength = name_str.Length;
     memcpy( path, optionsW, sizeof(optionsW) );
-    memcpy( path + sizeof(optionsW)/sizeof(WCHAR), p, len );
+    memcpy( path + ARRAY_SIZE( optionsW ), p, len );
     if ((status = NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))) return status;
 
     if (type == REG_DWORD)

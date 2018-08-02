@@ -3256,7 +3256,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         }
         break;
     case FileFsAttributeInformation:
-        if (length < offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName[sizeof(ntfsW)/sizeof(WCHAR)] ))
+        if (length < offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName[ARRAY_SIZE( ntfsW )] ))
             io->u.Status = STATUS_BUFFER_TOO_SMALL;
         else
         {

@@ -1556,7 +1556,7 @@ static OLEMISC get_olemisc_value(const WCHAR *str, int len)
     int min, max;
 
     min = 0;
-    max = sizeof(olemisc_values)/sizeof(struct olemisc_entry) - 1;
+    max = ARRAY_SIZE(olemisc_values) - 1;
 
     while (min <= max)
     {
@@ -3131,7 +3131,7 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
             tmp = strchrW(tmp, '_') + 1;
             tmp = strchrW(tmp, '_') + 1;
             if (dir_info->FileNameLength - (tmp - dir_info->FileName) * sizeof(WCHAR) == sizeof(wine_trailerW) &&
-                !memicmpW( tmp, wine_trailerW, sizeof(wine_trailerW) / sizeof(WCHAR) ))
+                !memicmpW( tmp, wine_trailerW, ARRAY_SIZE( wine_trailerW )))
             {
                 /* prefer a non-Wine manifest if we already have one */
                 /* we'll still load the builtin dll if specified through DllOverrides */

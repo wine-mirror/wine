@@ -1416,7 +1416,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T m
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) goto error;
     header_start = (char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader;
-    if (nt->FileHeader.NumberOfSections > sizeof(sections)/sizeof(*sections)) goto error;
+    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( sections )) goto error;
     if (header_start + sizeof(*sections) * nt->FileHeader.NumberOfSections > header_end) goto error;
     /* Some applications (e.g. the Steam version of Borderlands) map over the top of the section headers,
      * copying the headers into local memory is necessary to properly load such applications. */
