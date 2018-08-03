@@ -1088,6 +1088,13 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
     }
 
     if(info->format->wFormatTag == WAVE_FORMAT_PCM){
+
+        if (info->format->nSamplesPerSec == 0)
+        {
+            ret = MMSYSERR_INVALPARAM;
+            goto error;
+        }
+
         /* we aren't guaranteed that the struct in lpFormat is a full
          * WAVEFORMATEX struct, which IAC::IsFormatSupported requires */
         device->orig_fmt = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEFORMATEX));
