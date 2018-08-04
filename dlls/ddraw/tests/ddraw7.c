@@ -14748,6 +14748,139 @@ static void test_device_load(void)
     DestroyWindow(window);
 }
 
+static void test_color_vertex(void)
+{
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    D3DMATERIAL7 material;
+    D3DCOLOR colour;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+        DWORD specular;
+    }
+    quad_2c[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000, 0xff00ff00},
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000, 0xff00ff00},
+        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000, 0xff00ff00},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffff0000, 0xff00ff00},
+    };
+    static struct
+    {
+        struct vec3 position;
+        DWORD colour;
+    }
+    quad_1c[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffff0000},
+    };
+    static struct
+    {
+        struct vec3 position;
+    }
+    quad_0c[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}},
+    };
+
+    /* The idea here is to set up ambient light parameters in a way that the
+     * ambient colour from the material is just passed through. The emissive
+     * colour is just passed through anyway. The sum of ambient + emissive
+     * should allow deduction of where the material colour came from. */
+    static const struct
+    {
+        DWORD fvf, color_vertex, ambient, emissive, result;
+        void *vtx;
+    }
+    tests[] =
+    {
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, FALSE, D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0, quad_2c},
+
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ffff00, quad_2c},
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x0000ff80, quad_2c},
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040, quad_2c},
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR1,   0x00ff0000, quad_2c},
+        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR2,   D3DMCS_COLOR2,   0x0000ff00, quad_2c},
+
+        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0080, quad_1c},
+        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x000000c0, quad_1c},
+        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x00ff0080, quad_1c},
+        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0040, quad_1c},
+        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040, quad_1c},
+        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR2,   D3DMCS_MATERIAL, 0x000000c0, quad_1c},
+
+        {0,                                TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0, quad_0c},
+    };
+
+    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_AMBIENT, 0xffffffff);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    U3(U1(material).ambient).b = 0.5f;
+    U3(U3(material).emissive).b = 0.25f;
+    hr = IDirect3DDevice7_SetMaterial(device, &material);
+    ok(SUCCEEDED(hr), "Failed to set material, hr %#x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_COLORVERTEX, tests[i].color_vertex);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_AMBIENTMATERIALSOURCE, tests[i].ambient);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_EMISSIVEMATERIALSOURCE, tests[i].emissive);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear depth/stencil, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+                D3DFVF_XYZ | tests[i].fvf, tests[i].vtx, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        colour = get_surface_color(rt, 320, 240);
+        ok(compare_color(colour, tests[i].result, 1),
+                "Expected colour 0x%08x for test %u, got 0x%08x.\n",
+                tests[i].result, i, colour);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -14884,4 +15017,5 @@ START_TEST(ddraw7)
     test_enum_surfaces();
     test_viewport();
     test_device_load();
+    test_color_vertex();
 }
