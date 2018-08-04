@@ -34,8 +34,7 @@ int wmain(int argc, WCHAR *argv[])
         WINE_FIXME(" %s", wine_dbgstr_w(argv[i]));
     WINE_FIXME("\n");
 
-    LoadStringW(GetModuleHandleW(NULL), STRING_SYSTEM_INFO,
-                system_info, sizeof(system_info)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), STRING_SYSTEM_INFO, system_info, ARRAY_SIZE(system_info));
     ShellAboutW(NULL, system_info, NULL, NULL);
 
     return 0;
