@@ -889,7 +889,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
             StringFromGUID2(&This->class, buffer + CHARS_IN_GUID - 1, CHARS_IN_GUID);
         }
         /* try DirectShow filters */
-        else if (!(res = RegEnumKeyW(This->sw_key, This->sw_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
+        else if (!(res = RegEnumKeyW(This->sw_key, This->sw_index, buffer, ARRAY_SIZE(buffer))))
         {
             This->sw_index++;
             if ((res = RegOpenKeyExW(This->sw_key, buffer, 0, KEY_QUERY_VALUE, &hkey)))
@@ -908,7 +908,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
             strcpyW(pMoniker->name, buffer);
         }
         /* then try codecs */
-        else if (!(res = RegEnumKeyW(This->cm_key, This->cm_index, buffer, sizeof(buffer)/sizeof(WCHAR))))
+        else if (!(res = RegEnumKeyW(This->cm_key, This->cm_index, buffer, ARRAY_SIZE(buffer))))
         {
             This->cm_index++;
 

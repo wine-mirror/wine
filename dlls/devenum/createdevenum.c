@@ -155,7 +155,7 @@ static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS2 *rgPin)
     {
         HKEY hkeyMajorType = NULL;
         WCHAR wszMajorTypeName[64];
-        DWORD cName = sizeof(wszMajorTypeName) / sizeof(WCHAR);
+        DWORD cName = ARRAY_SIZE(wszMajorTypeName);
         DWORD dwMinorTypes, i1;
 
         if (RegEnumKeyExW(hkeyTypes, i, wszMajorTypeName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
@@ -175,7 +175,7 @@ static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS2 *rgPin)
             CLSID *clsMajorType = NULL, *clsMinorType = NULL;
             HRESULT hr;
 
-            cName = sizeof(wszMinorTypeName) / sizeof(WCHAR);
+            cName = ARRAY_SIZE(wszMinorTypeName);
             if (RegEnumKeyExW(hkeyMajorType, i1, wszMinorTypeName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
             clsMinorType = CoTaskMemAlloc(sizeof(CLSID));
@@ -261,7 +261,7 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
     {
         HKEY hkeyPinKey = NULL;
         WCHAR wszPinName[MAX_PATH];
-        DWORD cName = sizeof(wszPinName) / sizeof(WCHAR);
+        DWORD cName = ARRAY_SIZE(wszPinName);
         REGFILTERPINS2 *rgPin = &rgPins[rgf2->u.s2.cPins2];
         DWORD value, size, Type;
         LONG lRet;
@@ -408,7 +408,7 @@ static void register_legacy_filters(void)
         for (i = 0; i < dwFilterSubkeys; i++)
         {
             WCHAR wszFilterSubkeyName[64];
-            DWORD cName = sizeof(wszFilterSubkeyName) / sizeof(WCHAR);
+            DWORD cName = ARRAY_SIZE(wszFilterSubkeyName);
             IPropertyBag *prop_bag = NULL;
             WCHAR wszRegKey[MAX_PATH];
             HKEY classkey = NULL;
@@ -944,7 +944,7 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
 
     strcpyW(wszRegKey, wszActiveMovieKey);
 
-    if (!StringFromGUID2(clsidCategory, wszRegKey + strlenW(wszRegKey), sizeof(wszRegKey)/sizeof(wszRegKey[0]) - strlenW(wszRegKey)))
+    if (!StringFromGUID2(clsidCategory, wszRegKey + strlenW(wszRegKey), ARRAY_SIZE(wszRegKey) - strlenW(wszRegKey)))
         res = E_INVALIDARG;
 
     if (SUCCEEDED(res))
@@ -1016,13 +1016,12 @@ static HRESULT register_codecs(void)
             {
                 WCHAR szDeviceName[32], szDeviceVersion[32], szDevicePath[10];
 
-                if (capGetDriverDescriptionW ((WORD) i,
-                                              szDeviceName, sizeof(szDeviceName)/sizeof(WCHAR),
-                                              szDeviceVersion, sizeof(szDeviceVersion)/sizeof(WCHAR)))
+                if (capGetDriverDescriptionW (i, szDeviceName, ARRAY_SIZE(szDeviceName),
+                                              szDeviceVersion, ARRAY_SIZE(szDeviceVersion)))
                 {
                     IMoniker * pMoniker = NULL;
                     WCHAR dprintf[] = { 'v','i','d','e','o','%','d',0 };
-                    snprintfW(szDevicePath, sizeof(szDevicePath)/sizeof(WCHAR), dprintf, i);
+                    snprintfW(szDevicePath, ARRAY_SIZE(szDevicePath), dprintf, i);
                     /* The above code prevents 1 device with a different ID overwriting another */
 
                     rfp2.nMediaTypes = 1;
