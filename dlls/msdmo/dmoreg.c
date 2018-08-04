@@ -316,7 +316,7 @@ HRESULT WINAPI DMOUnregister(REFCLSID dmo, REFGUID category)
     /* remove from all categories */
     if (IsEqualGUID(category, &GUID_NULL))
     {
-        DWORD index = 0, len = sizeof(catW)/sizeof(WCHAR);
+        DWORD index = 0, len = ARRAY_SIZE(catW);
 
         while (!RegEnumKeyExW(categorieskey, index++, catW, &len, NULL, NULL, NULL, NULL))
             hr = unregister_dmo_from_category(dmoW, catW, categorieskey);
