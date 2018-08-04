@@ -63,6 +63,8 @@ HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver
 
         switch (driver_type)
         {
+            case D3D10_DRIVER_TYPE_WARP:
+                FIXME("WARP driver not implemented, falling back to hardware.\n");
             case D3D10_DRIVER_TYPE_HARDWARE:
             {
                 hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
