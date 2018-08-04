@@ -14267,6 +14267,487 @@ static void test_viewport(void)
     DestroyWindow(window);
 }
 
+static unsigned int validate_loaded_surface(IDirectDrawSurface7 *surface, unsigned int face,
+        unsigned int level, const RECT *src_rect, const POINT *dst_point)
+{
+    DDSURFACEDESC2 surface_desc;
+    unsigned int diff, x, y;
+    HRESULT hr;
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to map surface, hr %#x.\n", hr);
+
+    for (y = 0, diff = 0; y < surface_desc.dwHeight; ++y)
+    {
+        DWORD *texture_row = (DWORD *)((char *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+
+        for (x = 0; x < surface_desc.dwWidth; ++x)
+        {
+            DWORD colour = texture_row[x];
+            DWORD r = (colour & 0xff0000) >> 16;
+            DWORD g = (colour & 0xff00) >> 8;
+            DWORD b = (colour & 0xff);
+
+            if (x < dst_point->x || x >= dst_point->x + src_rect->right - src_rect->left
+                    || y < dst_point->y || y >= dst_point->y + src_rect->bottom - src_rect->top)
+            {
+                if (colour & 0xffffff)
+                    ++diff;
+            }
+            else
+            {
+                if (r != ((face << 4) | level)
+                        || g != x + src_rect->left - dst_point->x
+                        || b != y + src_rect->top - dst_point->y)
+                    ++diff;
+            }
+        }
+    }
+
+    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to unmap surface, hr %#x.\n", hr);
+
+    return diff;
+}
+
+static void test_device_load(void)
+{
+    IDirectDrawSurface7 *src_surface, *dst_surface, *surface, *tmp;
+    DDSCAPS2 mip_caps = {0, DDSCAPS2_MIPMAPSUBLEVEL, 0, {0}};
+    IDirectDrawPalette *src_palette, *dst_palette, *palette;
+    unsigned int i, j, k, l, x, y;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    PALETTEENTRY table1[256];
+    D3DDEVICEDESC7 d3d_caps;
+    DDCOLORKEY colour_key;
+    IDirectDraw7 *ddraw;
+    BOOL cube_support;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    HWND window;
+    DDBLTFX fx;
+    HRESULT hr;
+
+#define TEX_MIP     0x01
+#define TEX_CUBE    0x02
+#define NULL_COORDS 0x04
+
+    /* Creating partial cube maps (e.g. created with just
+     * DDSCAPS2_CUBEMAP_POSITIVEX) BSODs some Windows machines. (Radeon X1600,
+     * Windows XP, Catalyst 10.2 driver, 6.14.10.6925)
+     *
+     * Passing non-toplevel surfaces to IDirect3DDevice7_Load() crashes on
+     * native. (Windows XP / NVIDIA, Windows 98 / RGB software rasteriser) */
+    static const struct
+    {
+        unsigned int src_w, src_h, src_mip_count;
+        RECT src_rect;
+        DWORD src_flags;
+        unsigned int dst_w, dst_h, dst_mip_count;
+        POINT dst_point;
+        DWORD dst_flags;
+        HRESULT hr;
+    }
+    tests[] =
+    {
+        {128, 128, 0, { 0,  0,   0,   0},            TEX_MIP, 128, 128, 0, { 0,  0},                TEX_MIP, DDERR_INVALIDPARAMS},
+        {128, 128, 0, { 0,  0, 100, 100},            TEX_MIP, 128, 128, 0, {50, 50},                TEX_MIP, DDERR_INVALIDPARAMS},
+        {128, 128, 0, {30, 20,  93,  52},            TEX_MIP, 128, 128, 0, {31, 31},                TEX_MIP, D3D_OK},
+        {128, 128, 0, { 0,  0,   0,   0},        NULL_COORDS, 128, 128, 0, { 0,  0},            NULL_COORDS, D3D_OK},
+        {128, 128, 0, { 0,  0,   0,   0},        NULL_COORDS, 256, 128, 0, { 0,  0},            NULL_COORDS, DDERR_INVALIDPARAMS},
+        {256, 128, 0, { 0,  0,   0,   0},        NULL_COORDS, 128, 128, 0, { 0,  0},            NULL_COORDS, DDERR_INVALIDPARAMS},
+        {128, 128, 0, {30, 20,  93,  52}, TEX_MIP | TEX_CUBE, 128, 128, 0, {10, 10},     TEX_MIP | TEX_CUBE, D3D_OK},
+        {128, 128, 0, { 0,  0,   0,   0},        NULL_COORDS, 128, 128, 0, { 0,  0}, TEX_CUBE | NULL_COORDS, DDERR_INVALIDPARAMS},
+        {128, 128, 0, {30, 20,  93,  52},            TEX_MIP, 128, 128, 4, {31, 31},                TEX_MIP, D3D_OK},
+        {128, 128, 4, {30, 20,  93,  52},            TEX_MIP, 128, 128, 0, {31, 31},                TEX_MIP, DDERR_INVALIDPARAMS},
+        {128, 128, 0, {32, 32,  96,  96},            TEX_MIP,  32,  32, 0, {32, 32},                      0, D3D_OK},
+        {128, 128, 0, { 0,  0,  64,  64},            TEX_MIP,  32,  32, 4, { 0,  0},                TEX_MIP, D3D_OK},
+    };
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    memset(&d3d_caps, 0, sizeof(d3d_caps));
+    hr = IDirect3DDevice7_GetCaps(device, &d3d_caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    cube_support = d3d_caps.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        unsigned int src_count, dst_count;
+        POINT dst_point, dst_point_broken;
+        RECT src_rect, src_rect_broken;
+
+        if ((tests[i].src_flags | tests[i].dst_flags) & TEX_CUBE && !cube_support)
+        {
+            skip("No cubemap support, skipping test %u.\n", i);
+            continue;
+        }
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        if (tests[i].src_mip_count)
+            surface_desc.dwFlags |= DDSD_MIPMAPCOUNT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        if (tests[i].src_flags & (TEX_MIP | TEX_CUBE))
+            surface_desc.ddsCaps.dwCaps |= DDSCAPS_COMPLEX;
+        if (tests[i].src_flags & TEX_MIP)
+            surface_desc.ddsCaps.dwCaps |= DDSCAPS_MIPMAP;
+        if (tests[i].src_flags & TEX_CUBE)
+            surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+        surface_desc.dwWidth = tests[i].src_w;
+        surface_desc.dwHeight = tests[i].src_h;
+        U2(surface_desc).dwMipMapCount = tests[i].src_mip_count;
+        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+        U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+        U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create source surface, hr %#x.\n", i, hr);
+
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        if (tests[i].dst_mip_count)
+            surface_desc.dwFlags |= DDSD_MIPMAPCOUNT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        if (tests[i].dst_flags & (TEX_MIP | TEX_CUBE))
+            surface_desc.ddsCaps.dwCaps |= DDSCAPS_COMPLEX;
+        if (tests[i].dst_flags & TEX_MIP)
+            surface_desc.ddsCaps.dwCaps |= DDSCAPS_MIPMAP;
+        surface_desc.ddsCaps.dwCaps2 = 0;
+        if (tests[i].dst_flags & TEX_CUBE)
+            surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+        surface_desc.dwWidth = tests[i].dst_w;
+        surface_desc.dwHeight = tests[i].dst_h;
+        U2(surface_desc).dwMipMapCount = tests[i].dst_mip_count;
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create destination surface, hr %#x.\n", i, hr);
+
+        src_count = dst_count = 1;
+        if (tests[i].src_flags & TEX_MIP)
+            src_count = tests[i].src_mip_count ? tests[i].src_mip_count : 8;
+        if (tests[i].dst_flags & TEX_MIP)
+            dst_count = tests[i].dst_mip_count ? tests[i].dst_mip_count : 8;
+
+        surface = src_surface;
+        IDirectDrawSurface7_AddRef(surface);
+        for (j = 0;;)
+        {
+            DDSCAPS2 face_caps = {0, 0, 0, {0}};
+
+            /* Check the number of created mipmaps. */
+            if (tests[i].src_flags & TEX_MIP)
+            {
+                memset(&surface_desc, 0, sizeof(surface_desc));
+                surface_desc.dwSize = sizeof(surface_desc);
+                hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
+                ok(SUCCEEDED(hr), "Test %u: Failed to get surface description, hr %#x.\n", i, hr);
+                ok(U2(surface_desc).dwMipMapCount == src_count,
+                        "Test %u: Got unexpected mip count %u, expected %u.\n",
+                        i, U2(surface_desc).dwMipMapCount, src_count);
+            }
+
+            for (k = 0; ; ++k)
+            {
+                memset(&surface_desc, 0, sizeof(surface_desc));
+                surface_desc.dwSize = sizeof(surface_desc);
+                hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+                ok(SUCCEEDED(hr), "Test %u: Failed to map surface, hr %#x.\n", i, hr);
+
+                for (y = 0; y < surface_desc.dwHeight; ++y)
+                {
+                    DWORD *texture_row = (DWORD *)((BYTE *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+
+                    for (x = 0; x < surface_desc.dwWidth; ++x)
+                    {
+                        /* The face number is stored in the high 4 bits of the
+                         * red component, the mip-level in the low 4 bits. The
+                         * x-coordinate is stored in the green component, and
+                         * the y-coordinate in the blue component. */
+                        texture_row[x] = (j << 20) | (k << 16) | (x << 8) | y;
+                    }
+                }
+
+                hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                ok(SUCCEEDED(hr), "Test %u: Failed to unmap surface, hr %#x.\n", i, hr);
+
+                hr = IDirectDrawSurface7_GetAttachedSurface(surface, &mip_caps, &tmp);
+                IDirectDrawSurface7_Release(surface);
+                if (FAILED(hr))
+                    break;
+                surface = tmp;
+            }
+
+            if (!(tests[i].src_flags & TEX_CUBE) || ++j >= 6)
+                break;
+
+            face_caps.dwCaps2 = DDSCAPS2_CUBEMAP | (DDSCAPS2_CUBEMAP_POSITIVEX << j);
+            hr = IDirectDrawSurface7_GetAttachedSurface(src_surface, &face_caps, &surface);
+            ok(SUCCEEDED(hr), "Test %u: Failed to get face %u.\n", i, j);
+        }
+
+        surface = dst_surface;
+        IDirectDrawSurface7_AddRef(surface);
+        for (j = 0;;)
+        {
+            DDSCAPS2 face_caps = {0, 0, 0, {0}};
+
+            /* Check the number of created mipmaps. */
+            if (tests[i].dst_flags & TEX_MIP)
+            {
+                memset(&surface_desc, 0, sizeof(surface_desc));
+                surface_desc.dwSize = sizeof(surface_desc);
+                hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
+                ok(SUCCEEDED(hr), "Test %u: Failed to get surface description, hr %#x.\n", i, hr);
+                ok(U2(surface_desc).dwMipMapCount == dst_count,
+                        "Test %u: Got unexpected mip count %u, expected %u.\n",
+                        i, U2(surface_desc).dwMipMapCount, dst_count);
+            }
+
+            for (;;)
+            {
+                memset(&fx, 0, sizeof(fx));
+                fx.dwSize = sizeof(fx);
+                U5(fx).dwFillColor = 0x00000000;
+                hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+                ok(SUCCEEDED(hr), "Test %u: Failed to clear surface, hr %#x.\n", i, hr);
+
+                hr = IDirectDrawSurface7_GetAttachedSurface(surface, &mip_caps, &tmp);
+                IDirectDrawSurface7_Release(surface);
+                if (FAILED(hr))
+                    break;
+                surface = tmp;
+            }
+
+            if (!(tests[i].dst_flags & TEX_CUBE) || ++j >= 6)
+                break;
+
+            face_caps.dwCaps2 = DDSCAPS2_CUBEMAP | (DDSCAPS2_CUBEMAP_POSITIVEX << j);
+            hr = IDirectDrawSurface7_GetAttachedSurface(dst_surface, &face_caps, &surface);
+            ok(SUCCEEDED(hr), "Test %u: Failed to get face %u.\n", i, j);
+        }
+
+        src_rect = tests[i].src_rect;
+        dst_point = tests[i].dst_point;
+        hr = IDirect3DDevice7_Load(device,
+                dst_surface, tests[i].dst_flags & NULL_COORDS ? NULL : &dst_point,
+                src_surface, tests[i].src_flags & NULL_COORDS ? NULL : &src_rect,
+                tests[i].dst_flags & TEX_CUBE ? DDSCAPS2_CUBEMAP_ALLFACES : 0);
+        ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+        {
+            unsigned int level_offset, level_offset_broken;
+
+            for (level_offset = 0, k = tests[i].src_w; k > tests[i].dst_w; ++level_offset, k /= 2);
+            level_offset_broken = src_count - dst_count;
+
+            surface = dst_surface;
+            IDirectDrawSurface7_AddRef(surface);
+            for (j = 0;;)
+            {
+                DDSCAPS2 face_caps = {0, 0, 0, {0}};
+
+                if (tests[i].src_flags & NULL_COORDS)
+                    SetRect(&src_rect, 0, 0, tests[i].src_w, tests[i].src_h);
+                else
+                    src_rect = tests[i].src_rect;
+
+                if (tests[i].dst_flags & NULL_COORDS)
+                    dst_point.x = dst_point.y = 0;
+                else
+                    dst_point = tests[i].dst_point;
+
+                for (k = 0; k < level_offset; ++k)
+                {
+                    dst_point.x /= 2;
+                    dst_point.y /= 2;
+                    src_rect.top /= 2;
+                    src_rect.left /= 2;
+                    src_rect.right = (src_rect.right + 1) / 2;
+                    src_rect.bottom = (src_rect.bottom + 1) / 2;
+                }
+
+                for (k = 0; ; ++k)
+                {
+                    unsigned int diff, diff2, diff3;
+
+                    diff = validate_loaded_surface(surface, j, k + level_offset, &src_rect, &dst_point);
+
+                    /* On some newer (XP+) versions of Windows, it appears the
+                     * source/destination coordinates are divided too often.
+                     * This works correctly on Windows 98 with the RGB
+                     * software rasteriser. */
+                    src_rect_broken = src_rect;
+                    dst_point_broken = dst_point;
+                    for (l = 0; l < level_offset; ++l)
+                    {
+                        dst_point_broken.x /= 2;
+                        dst_point_broken.y /= 2;
+                        src_rect_broken.top /= 2;
+                        src_rect_broken.left /= 2;
+                        src_rect_broken.right = (src_rect_broken.right + 1) / 2;
+                        src_rect_broken.bottom = (src_rect_broken.bottom + 1) / 2;
+                    }
+                    diff2 = validate_loaded_surface(surface, j, k + level_offset,
+                            &src_rect_broken, &dst_point_broken);
+
+                    /* On Windows 8+ things are slightly worse still. Instead
+                     * of applying the correct level offset twice, like on
+                     * XP+, an incorrect offset is applied in addition to the
+                     * correct one. Additionally, on Windows 8+, this offset
+                     * also affects the selected source mip-level, as opposed
+                     * to Windows XP+ where it only affects the
+                     * source/destination coordinates. */
+                    src_rect_broken = src_rect;
+                    dst_point_broken = dst_point;
+                    for (l = 0; l < level_offset_broken; ++l)
+                    {
+                        dst_point_broken.x /= 2;
+                        dst_point_broken.y /= 2;
+                        src_rect_broken.top /= 2;
+                        src_rect_broken.left /= 2;
+                        src_rect_broken.right = (src_rect_broken.right + 1) / 2;
+                        src_rect_broken.bottom = (src_rect_broken.bottom + 1) / 2;
+                    }
+                    diff3 = validate_loaded_surface(surface, j, k + level_offset_broken,
+                            &src_rect_broken, &dst_point_broken);
+
+                    ok(!diff || broken(!diff2 || !diff3), "Test %u, face %u, level %u: "
+                            "Unexpected destination texture level pixels; %u/%u/%u differences.\n",
+                            i, j, k, diff, diff2, diff3);
+
+                    hr = IDirectDrawSurface7_GetAttachedSurface(surface, &mip_caps, &tmp);
+                    IDirectDrawSurface7_Release(surface);
+                    if (FAILED(hr))
+                        break;
+                    surface = tmp;
+
+                    dst_point.x /= 2;
+                    dst_point.y /= 2;
+                    src_rect.top /= 2;
+                    src_rect.left /= 2;
+                    src_rect.right = (src_rect.right + 1) / 2;
+                    src_rect.bottom = (src_rect.bottom + 1) / 2;
+                }
+
+                if (!(tests[i].dst_flags & TEX_CUBE) || ++j >= 6)
+                    break;
+
+                face_caps.dwCaps2 = DDSCAPS2_CUBEMAP | (DDSCAPS2_CUBEMAP_POSITIVEX << j);
+                hr = IDirectDrawSurface7_GetAttachedSurface(dst_surface, &face_caps, &surface);
+                ok(SUCCEEDED(hr), "Test %u: Failed to get face %u.\n", i, j);
+            }
+        }
+
+        IDirectDrawSurface7_Release(dst_surface);
+        IDirectDrawSurface7_Release(src_surface);
+    }
+#undef TEX_MIP
+#undef TEX_CUBE
+#undef NULL_COORDS
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 8;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source surface, hr %#x.\n", hr);
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetAttachedSurface(src_surface, &mip_caps, &surface);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+
+    /* Test palette copying. */
+    memset(table1, 0, sizeof(table1));
+    table1[0].peBlue = 1;
+    hr = IDirectDraw7_CreatePalette(ddraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, table1, &src_palette, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source palette, hr %#x.\n", hr);
+    table1[0].peBlue = 3;
+    hr = IDirectDraw7_CreatePalette(ddraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, table1, &dst_palette, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination palette, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_SetPalette(src_surface, src_palette);
+    ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Load(device, dst_surface, NULL, src_surface, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to load texture, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetPalette(surface, &palette);
+    ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetPalette(dst_surface, &palette);
+    ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_SetPalette(surface, src_palette);
+    ok(hr == DDERR_NOTONMIPMAPSUBLEVEL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetPalette(dst_surface, dst_palette);
+    ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Load(device, dst_surface, NULL, src_surface, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to load texture, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetPalette(dst_surface, &palette);
+    ok(SUCCEEDED(hr), "Failed to get palette, hr %#x.\n", hr);
+    ok(palette == dst_palette, "Got unexpected palette %p, expected %p.\n", palette, dst_palette);
+    memset(table1, 0, sizeof(table1));
+    hr = IDirectDrawPalette_GetEntries(palette, 0, 0, 256, table1);
+    ok(SUCCEEDED(hr), "Failed to retrieve palette entries, hr %#x.\n", hr);
+    ok(table1[0].peBlue == 1, "Got unexpected palette colour %#x.\n", (unsigned int)table1[0].peBlue);
+    IDirectDrawPalette_Release(palette);
+
+    IDirectDrawPalette_Release(dst_palette);
+    IDirectDrawPalette_Release(src_palette);
+
+    /* Test colour-key copying. */
+    colour_key.dwColorSpaceLowValue = 32;
+    colour_key.dwColorSpaceHighValue = 64;
+    hr = IDirectDrawSurface7_SetColorKey(src_surface, DDCKEY_SRCBLT, &colour_key);
+    ok(SUCCEEDED(hr), "Failed to set colour-key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetColorKey(surface, DDCKEY_SRCBLT, &colour_key);
+    ok(hr == DDERR_NOTONMIPMAPSUBLEVEL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetColorKey(dst_surface, DDCKEY_SRCBLT, &colour_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Load(device, dst_surface, NULL, src_surface, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to load texture, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetColorKey(dst_surface, DDCKEY_SRCBLT, &colour_key);
+    ok(SUCCEEDED(hr), "Failed to get colour-key, hr %#x.\n", hr);
+    ok(colour_key.dwColorSpaceLowValue == 32, "Got unexpected value %u.\n", colour_key.dwColorSpaceLowValue);
+    ok(colour_key.dwColorSpaceHighValue == 32, "Got unexpected value %u.\n", colour_key.dwColorSpaceHighValue);
+
+    IDirectDrawSurface7_Release(surface);
+    IDirectDrawSurface7_Release(dst_surface);
+    IDirectDrawSurface7_Release(src_surface);
+
+    IDirectDraw7_Release(ddraw);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -14402,4 +14883,5 @@ START_TEST(ddraw7)
     test_clear();
     test_enum_surfaces();
     test_viewport();
+    test_device_load();
 }
