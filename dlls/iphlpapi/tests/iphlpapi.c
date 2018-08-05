@@ -951,6 +951,8 @@ static void testIcmpSendEcho(void)
     char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
     DWORD ret, error, replysz = sizeof(replydata);
     IPAddr address;
+    ICMP_ECHO_REPLY *reply;
+    INT i;
 
     if (!pIcmpSendEcho || !pIcmpCreateFile)
     {
@@ -1038,12 +1040,10 @@ todo_wine
     replysz = sizeof(replydata) - 1;
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
-    todo_wine {
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
     ok (error == IP_GENERAL_FAILURE
         || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
         "expected 11050, got %d\n", error);
-    }
 
     SetLastError(0xdeadbeef);
     replysz = sizeof(ICMP_ECHO_REPLY);
@@ -1056,7 +1056,6 @@ todo_wine
     replysz = sizeof(ICMP_ECHO_REPLY) + ICMP_MINLEN;
     ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN, NULL, replydata, replysz, 1000);
     error = GetLastError();
-todo_wine
     ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
 
     SetLastError(0xdeadbeef);
@@ -1064,7 +1063,6 @@ todo_wine
     ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN + 1, NULL, replydata, replysz, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
-todo_wine
     ok (error == IP_GENERAL_FAILURE
         || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
         "expected 11050, got %d\n", error);
@@ -1111,6 +1109,21 @@ todo_wine
     {
         skip ("Failed to ping with error %d, is lo interface down?.\n", error);
     }
+
+    /* check reply data */
+    SetLastError(0xdeadbeef);
+    address = htonl(INADDR_LOOPBACK);
+    for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = i & 0xff;
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    reply = (ICMP_ECHO_REPLY *)replydata;
+    ok(ret, "IcmpSendEcho failed unexpectedly\n");
+    todo_wine ok(error == NO_ERROR, "Expect last error:0x%08x, got:0x%08x\n", NO_ERROR, error);
+    ok(INADDR_LOOPBACK == ntohl(reply->Address), "Address mismatch, expect:%s, got: %s\n", ntoa(INADDR_LOOPBACK),
+       ntoa(reply->Address));
+    ok(reply->Status == IP_SUCCESS, "Expect status:0x%08x, got:0x%08x\n", IP_SUCCESS, reply->Status);
+    ok(reply->DataSize == sizeof(senddata), "Got size:%d\n", reply->DataSize);
+    ok(!memcmp(senddata, reply->Data, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
 }
 
 /*

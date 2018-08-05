@@ -113,6 +113,9 @@ typedef struct {
 #define IP_OPTS_DEFAULT     1
 #define IP_OPTS_CUSTOM      2
 
+#define MAXIPLEN            60
+#define MAXICMPLEN          76
+
 /* The sequence number is unique process wide, so that all threads
  * have a distinct sequence number.
  */
@@ -268,15 +271,14 @@ DWORD WINAPI IcmpSendEcho(
     )
 {
     icmp_t* icp=(icmp_t*)IcmpHandle;
-    unsigned char* reqbuf;
-    int reqsize;
+    unsigned char *buffer;
+    int reqsize, repsize;
 
     struct icmp_echo_reply* ier;
     struct ip* ip_header;
     struct icmp* icmp_header;
     char* endbuf;
     int ip_header_len;
-    int maxlen;
     struct pollfd fdr;
     DWORD send_time,recv_time;
     struct sockaddr_in addr;
@@ -306,20 +308,23 @@ DWORD WINAPI IcmpSendEcho(
     seq=InterlockedIncrement(&icmp_sequence) & 0xFFFF;
 
     reqsize=ICMP_MINLEN+RequestSize;
-    reqbuf=HeapAlloc(GetProcessHeap(), 0, reqsize);
-    if (reqbuf==NULL) {
+    /* max ip header + max icmp header and error data + reply size(max 65535 on Windows) */
+    /* FIXME: request size of 65535 is not supported yet because max buffer size of raw socket on linux is 32767 */
+    repsize = MAXIPLEN + MAXICMPLEN + min( 65535, ReplySize );
+    buffer = HeapAlloc(GetProcessHeap(), 0, max( repsize, reqsize ));
+    if (buffer == NULL) {
         SetLastError(ERROR_OUTOFMEMORY);
         return 0;
     }
 
-    icmp_header=(struct icmp*)reqbuf;
+    icmp_header=(struct icmp*)buffer;
     icmp_header->icmp_type=ICMP_ECHO;
     icmp_header->icmp_code=0;
     icmp_header->icmp_cksum=0;
     icmp_header->icmp_id=id;
     icmp_header->icmp_seq=seq;
-    memcpy(reqbuf+ICMP_MINLEN, RequestData, RequestSize);
-    icmp_header->icmp_cksum=cksum=in_cksum((u_short*)reqbuf,reqsize);
+    memcpy(buffer+ICMP_MINLEN, RequestData, RequestSize);
+    icmp_header->icmp_cksum=cksum=in_cksum((u_short*)buffer,reqsize);
 
     addr.sin_family=AF_INET;
     addr.sin_addr.s_addr=DestinationAddress;
@@ -367,26 +372,22 @@ DWORD WINAPI IcmpSendEcho(
     fdr.events = POLLIN;
     addrlen=sizeof(addr);
     ier=ReplyBuffer;
-    ip_header=(struct ip *) ((char *) ReplyBuffer+sizeof(ICMP_ECHO_REPLY));
     endbuf=(char *) ReplyBuffer+ReplySize;
-    maxlen=ReplySize-sizeof(ICMP_ECHO_REPLY);
 
     /* Send the packet */
     TRACE("Sending %d bytes (RequestSize=%d) to %s\n", reqsize, RequestSize, inet_ntoa(addr.sin_addr));
 #if 0
     if (TRACE_ON(icmp)){
-        unsigned char* buf=(unsigned char*)reqbuf;
         int i;
         printf("Output buffer:\n");
         for (i=0;i<reqsize;i++)
-            printf("%2x,", buf[i]);
+            printf("%2x,", buffer[i]);
         printf("\n");
     }
 #endif
 
     send_time = GetTickCount();
-    res=sendto(icp->sid, reqbuf, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
-    HeapFree(GetProcessHeap (), 0, reqbuf);
+    res=sendto(icp->sid, buffer, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
     if (res<0) {
         if (errno==EMSGSIZE)
             SetLastError(IP_PACKET_TOO_BIG);
@@ -403,14 +404,16 @@ DWORD WINAPI IcmpSendEcho(
                 SetLastError(IP_GENERAL_FAILURE);
             }
         }
+        HeapFree(GetProcessHeap(), 0, buffer);
         return 0;
     }
 
     /* Get the reply */
+    ip_header=(struct ip*)buffer;
     ip_header_len=0; /* because gcc was complaining */
     while (poll(&fdr,1,Timeout)>0) {
         recv_time = GetTickCount();
-        res=recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
+        res=recvfrom(icp->sid, buffer, repsize, 0, (struct sockaddr*)&addr, &addrlen);
         TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
         ier->Status=IP_REQ_TIMED_OUT;
 
@@ -508,6 +511,12 @@ DWORD WINAPI IcmpSendEcho(
             else             Timeout = 0;
             continue;
         } else {
+            /* Check free space, should be large enough for an ICMP_ECHO_REPLY and remainning icmp data */
+            if (endbuf-(char *)ier < sizeof(struct icmp_echo_reply)+(res-ip_header_len-ICMP_MINLEN)) {
+                res=ier-(ICMP_ECHO_REPLY *)ReplyBuffer;
+                SetLastError(IP_GENERAL_FAILURE);
+                goto done;
+            }
             /* This is a reply to our packet */
             memcpy(&ier->Address,&ip_header->ip_src,sizeof(IPAddr));
             /* Status is already set */
@@ -515,7 +524,7 @@ DWORD WINAPI IcmpSendEcho(
             ier->DataSize=res-ip_header_len-ICMP_MINLEN;
             ier->Reserved=0;
             ier->Data=endbuf-ier->DataSize;
-            memmove(ier->Data,((char*)ip_header)+ip_header_len+ICMP_MINLEN,ier->DataSize);
+            memcpy(ier->Data, ((char *)ip_header)+ip_header_len+ICMP_MINLEN, ier->DataSize);
             ier->Options.Ttl=ip_header->ip_ttl;
             ier->Options.Tos=ip_header->ip_tos;
             ier->Options.Flags=ip_header->ip_off >> 13;
@@ -523,7 +532,7 @@ DWORD WINAPI IcmpSendEcho(
             if (ier->Options.OptionsSize!=0) {
                 ier->Options.OptionsData=(unsigned char *) ier->Data-ier->Options.OptionsSize;
                 /* FIXME: We are supposed to rearrange the option's 'source route' data */
-                memmove(ier->Options.OptionsData,((char*)ip_header)+ip_header_len,ier->Options.OptionsSize);
+                memcpy(ier->Options.OptionsData, ((char *)ip_header)+ip_header_len, ier->Options.OptionsSize);
                 endbuf=(char*)ier->Options.OptionsData;
             } else {
                 ier->Options.OptionsData=NULL;
@@ -531,9 +540,8 @@ DWORD WINAPI IcmpSendEcho(
             }
 
             /* Prepare for the next packet */
+            endbuf-=ier->DataSize;
             ier++;
-            ip_header=(struct ip*)(((char*)ip_header)+sizeof(ICMP_ECHO_REPLY));
-            maxlen=endbuf-(char*)ip_header;
 
             /* Check out whether there is more but don't wait this time */
             Timeout=0;
@@ -542,6 +550,8 @@ DWORD WINAPI IcmpSendEcho(
     res=ier-(ICMP_ECHO_REPLY*)ReplyBuffer;
     if (res==0)
         SetLastError(IP_REQ_TIMED_OUT);
+done:
+    HeapFree(GetProcessHeap(), 0, buffer);
     TRACE("received %d replies\n",res);
     return res;
 }
