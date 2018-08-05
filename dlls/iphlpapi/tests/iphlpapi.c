@@ -1118,7 +1118,7 @@ todo_wine
     error = GetLastError();
     reply = (ICMP_ECHO_REPLY *)replydata;
     ok(ret, "IcmpSendEcho failed unexpectedly\n");
-    todo_wine ok(error == NO_ERROR, "Expect last error:0x%08x, got:0x%08x\n", NO_ERROR, error);
+    ok(error == NO_ERROR, "Expect last error:0x%08x, got:0x%08x\n", NO_ERROR, error);
     ok(INADDR_LOOPBACK == ntohl(reply->Address), "Address mismatch, expect:%s, got: %s\n", ntoa(INADDR_LOOPBACK),
        ntoa(reply->Address));
     ok(reply->Status == IP_SUCCESS, "Expect status:0x%08x, got:0x%08x\n", IP_SUCCESS, reply->Status);

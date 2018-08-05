@@ -424,7 +424,10 @@ DWORD WINAPI IcmpSendEcho(
             TRACE("received an ICMP packet of type,code=%d,%d\n",icmp_header->icmp_type,icmp_header->icmp_code);
             if (icmp_header->icmp_type==ICMP_ECHOREPLY) {
                 if ((icmp_header->icmp_id==id) && (icmp_header->icmp_seq==seq))
+                {
                     ier->Status=IP_SUCCESS;
+                    SetLastError(NO_ERROR);
+                }
             } else {
                 switch (icmp_header->icmp_type) {
                 case ICMP_UNREACH:
