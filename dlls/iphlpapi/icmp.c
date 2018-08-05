@@ -288,11 +288,16 @@ DWORD WINAPI IcmpSendEcho(
 
     if (IcmpHandle==INVALID_HANDLE_VALUE) {
         /* FIXME: in fact win98 seems to ignore the handle value !!! */
-        SetLastError(ERROR_INVALID_HANDLE);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
 
-    if (ReplySize<sizeof(ICMP_ECHO_REPLY)+ICMP_MINLEN) {
+    if (!ReplyBuffer||!ReplySize) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (ReplySize<sizeof(ICMP_ECHO_REPLY)) {
         SetLastError(IP_BUF_TOO_SMALL);
         return 0;
     }

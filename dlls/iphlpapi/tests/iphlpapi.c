@@ -966,7 +966,6 @@ static void testIcmpSendEcho(void)
     ret = pIcmpSendEcho(INVALID_HANDLE_VALUE, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
-todo_wine
     ok (error == ERROR_INVALID_PARAMETER
         || broken(error == ERROR_INVALID_HANDLE) /* <= 2003 */,
         "expected 87, got %d\n", error);
@@ -1009,20 +1008,16 @@ todo_wine
     error = GetLastError();
     ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
 
-    if (0) /* crashes in wine, remove IF when fixed */
-    {
     SetLastError(0xdeadbeef);
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, NULL, replysz, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
     ok (error == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", error);
-    }
 
     SetLastError(0xdeadbeef);
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, 0, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
-todo_wine
     ok (error == ERROR_INVALID_PARAMETER
         || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
         "expected 87, got %d\n", error);
@@ -1031,7 +1026,6 @@ todo_wine
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, NULL, 0, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
-todo_wine
     ok (error == ERROR_INVALID_PARAMETER
         || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
         "expected 87, got %d\n", error);
@@ -1049,7 +1043,6 @@ todo_wine
     replysz = sizeof(ICMP_ECHO_REPLY);
     ret = pIcmpSendEcho(icmp, address, senddata, 0, NULL, replydata, replysz, 1000);
     error = GetLastError();
-todo_wine
     ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
 
     SetLastError(0xdeadbeef);
@@ -1071,7 +1064,6 @@ todo_wine
     ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN, NULL, replydata, replysz - 1, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
-todo_wine
     ok (error == IP_GENERAL_FAILURE
         || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
         "expected 11050, got %d\n", error);
