@@ -49,6 +49,12 @@ static VOID WINAPI UnloadDriver(DRIVER_OBJECT *driver)
     md = find_minidriver(driver);
     if (md)
     {
+        hid_device *device, *next;
+        TRACE("%i devices to unload\n", list_count(&md->device_list));
+        LIST_FOR_EACH_ENTRY_SAFE(device, next, &md->device_list, hid_device, entry)
+        {
+            PNP_RemoveDevice(md, device->device, NULL);
+        }
         if (md->DriverUnload)
             md->DriverUnload(md->minidriver.DriverObject);
         list_remove(&md->entry);
@@ -81,6 +87,8 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
 
     driver->minidriver = *registration;
     list_add_tail(&minidriver_list, &driver->entry);
+
+    list_init(&driver->device_list);
 
     return STATUS_SUCCESS;
 }
