@@ -59,6 +59,7 @@
 #include "sddl.h"
 #include "ntsecapi.h"
 #include "winspool.h"
+#include "setupapi.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -104,6 +105,8 @@ static const WCHAR class_physicalmediaW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','d','i','a',0};
 static const WCHAR class_physicalmemoryW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+static const WCHAR class_pnpentityW[] =
+    {'W','i','n','3','2','_','P','n','P','E','n','t','i','t','y',0};
 static const WCHAR class_printerW[] =
     {'W','i','n','3','2','_','P','r','i','n','t','e','r',0};
 static const WCHAR class_process_getowner_outW[] =
@@ -612,6 +615,10 @@ static const struct column col_physicalmemory[] =
     { prop_capacityW,   CIM_UINT64 },
     { prop_memorytypeW, CIM_UINT16, VT_I4 }
 };
+static const struct column col_pnpentity[] =
+{
+    { prop_deviceidW, CIM_STRING|COL_FLAG_DYNAMIC },
+};
 static const struct column col_printer[] =
 {
     { prop_attributesW,           CIM_UINT32 },
@@ -1030,6 +1037,10 @@ struct record_physicalmemory
 {
     UINT64 capacity;
     UINT16 memorytype;
+};
+struct record_pnpentity
+{
+    const WCHAR *device_id;
 };
 struct record_printer
 {
@@ -2608,6 +2619,53 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     return status;
 }
 
+static enum fill_status fill_pnpentity( struct table *table, const struct expr *cond )
+{
+    struct record_pnpentity *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    HDEVINFO device_info_set;
+    SP_DEVINFO_DATA devinfo = {0};
+    DWORD idx;
+
+    device_info_set = SetupDiGetClassDevsW( NULL, NULL, NULL, DIGCF_ALLCLASSES|DIGCF_PRESENT );
+
+    devinfo.cbSize = sizeof(devinfo);
+
+    idx = 0;
+    while (SetupDiEnumDeviceInfo( device_info_set, idx++, &devinfo ))
+    {
+        /* noop */
+    }
+
+    resize_table( table, idx, sizeof(*rec) );
+    table->num_rows = 0;
+    rec = (struct record_pnpentity *)table->data;
+
+    idx = 0;
+    while (SetupDiEnumDeviceInfo( device_info_set, idx++, &devinfo ))
+    {
+        WCHAR device_id[MAX_PATH];
+        if (SetupDiGetDeviceInstanceIdW( device_info_set, &devinfo, device_id,
+                    ARRAY_SIZE(device_id), NULL ))
+        {
+            rec->device_id = heap_strdupW( device_id );
+
+            table->num_rows++;
+            if (!match_row( table, table->num_rows - 1, cond, &status ))
+            {
+                free_row_values( table, table->num_rows - 1 );
+                table->num_rows--;
+            }
+            else
+                rec++;
+        }
+    }
+
+    SetupDiDestroyDeviceInfoList( device_info_set );
+
+    return status;
+}
+
 static enum fill_status fill_printer( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'P','r','i','n','t','e','r','%','d',0};
@@ -3477,6 +3535,7 @@ static struct table builtin_classes[] =
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
     { class_physicalmediaW, SIZEOF(col_physicalmedia), col_physicalmedia, SIZEOF(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
     { class_physicalmemoryW, SIZEOF(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
+    { class_pnpentityW, SIZEOF(col_pnpentity), col_pnpentity, 0, 0, NULL, fill_pnpentity },
     { class_printerW, SIZEOF(col_printer), col_printer, 0, 0, NULL, fill_printer },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
