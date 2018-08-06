@@ -1368,25 +1368,28 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    type = 0xdeadbeef;
-    VariantInit( &val );
-    hr = IWbemClassObject_Get( obj, capacityW, 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get capacity %08x\n", hr );
-    ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_UINT64, "unexpected type 0x%x\n", type );
-    trace( "capacity %s\n", wine_dbgstr_w(V_BSTR( &val )) );
-    VariantClear( &val );
+    if (count > 0)
+    {
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, capacityW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "failed to get capacity %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT64, "unexpected type 0x%x\n", type );
+        trace( "capacity %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
 
-    type = 0xdeadbeef;
-    VariantInit( &val );
-    hr = IWbemClassObject_Get( obj, memorytypeW, 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get memory type %08x\n", hr );
-    ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
-    trace( "memorytype %u\n", V_I4( &val ) );
-    VariantClear( &val );
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, memorytypeW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "failed to get memory type %08x\n", hr );
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+        trace( "memorytype %u\n", V_I4( &val ) );
+        VariantClear( &val );
 
-    IWbemClassObject_Release( obj );
+        IWbemClassObject_Release( obj );
+    }
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
