@@ -55,7 +55,6 @@ static CRITICAL_SECTION context_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static XContext vulkan_hwnd_context;
 
-typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
 
 struct wine_vk_surface
