@@ -2169,6 +2169,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
              * doesn't call the DLL entry point on process detach either.
              */
             HeapLock(GetProcessHeap());
+todo_wine
             ok(0, "dll_entry_point: process should already deadlock\n");
             break;
         }
@@ -3023,6 +3024,7 @@ static void test_ExitProcess(void)
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 5000);
+todo_wine
     ok(ret == WAIT_TIMEOUT || broken(ret == WAIT_OBJECT_0) /* XP */, "child process should fail to terminate\n");
     if (ret != WAIT_OBJECT_0)
     {
@@ -3032,6 +3034,7 @@ static void test_ExitProcess(void)
     ret = WaitForSingleObject(pi.hProcess, 1000);
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
+todo_wine
     ok(ret == 201 || broken(ret == 1) /* XP */, "expected exit code 201, got %u\n", ret);
     if (*child_failures)
     {
@@ -3047,7 +3050,6 @@ static void test_ExitProcess(void)
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 5000);
-todo_wine
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     if (ret != WAIT_OBJECT_0)
     {
