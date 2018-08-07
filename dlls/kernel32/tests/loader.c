@@ -2006,13 +2006,15 @@ static void test_import_resolution(void)
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT];
 static DWORD attached_thread_count;
-HANDLE stop_event, event, mutex, semaphore, loader_lock_event, peb_lock_event, heap_lock_event, ack_event;
-static int test_dll_phase, inside_loader_lock, inside_peb_lock, inside_heap_lock;
+static HANDLE event, mutex, semaphore;
+static HANDLE stop_event, loader_lock_event, peb_lock_event, heap_lock_event, cs_lock_event, ack_event;
+static CRITICAL_SECTION cs_lock;
+static int test_dll_phase, inside_loader_lock, inside_peb_lock, inside_heap_lock, inside_cs_lock;
 static LONG fls_callback_count;
 
 static DWORD WINAPI mutex_thread_proc(void *param)
 {
-    HANDLE wait_list[4];
+    HANDLE wait_list[5];
     DWORD ret;
 
     ret = WaitForSingleObject(mutex, 0);
@@ -2024,6 +2026,7 @@ static DWORD WINAPI mutex_thread_proc(void *param)
     wait_list[1] = loader_lock_event;
     wait_list[2] = peb_lock_event;
     wait_list[3] = heap_lock_event;
+    wait_list[4] = cs_lock_event;
 
     trace("%04x: mutex_thread_proc: starting\n", GetCurrentThreadId());
     while (1)
@@ -2051,6 +2054,13 @@ static DWORD WINAPI mutex_thread_proc(void *param)
             trace("%04x: mutex_thread_proc: Entering heap lock\n", GetCurrentThreadId());
             HeapLock(GetProcessHeap());
             inside_heap_lock++;
+            SetEvent(ack_event);
+        }
+        else if (ret == WAIT_OBJECT_0 + 4)
+        {
+            trace("%04x: mutex_thread_proc: Entering CS lock\n", GetCurrentThreadId());
+            EnterCriticalSection(&cs_lock);
+            inside_cs_lock++;
             SetEvent(ack_event);
         }
     }
@@ -2162,14 +2172,19 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ok(0, "dll_entry_point: process should already deadlock\n");
             break;
         }
+        else if (test_dll_phase == 7)
+        {
+            EnterCriticalSection(&cs_lock);
+        }
 
-        if (test_dll_phase == 0 || test_dll_phase == 1 || test_dll_phase == 3)
+        if (test_dll_phase == 0 || test_dll_phase == 1 || test_dll_phase == 3 || test_dll_phase == 7)
             ok(param != NULL, "dll: param %p\n", param);
         else
             ok(!param, "dll: param %p\n", param);
 
         if (test_dll_phase == 0 || test_dll_phase == 1) expected_code = 195;
         else if (test_dll_phase == 3) expected_code = 196;
+        else if (test_dll_phase == 7) expected_code = 199;
         else expected_code = STILL_ACTIVE;
 
         if (test_dll_phase == 3)
@@ -2487,6 +2502,11 @@ static void child_process(const char *dll_name, DWORD target_offset)
     heap_lock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(heap_lock_event != 0, "CreateEvent error %d\n", GetLastError());
 
+    InitializeCriticalSection(&cs_lock);
+    SetLastError(0xdeadbeef);
+    cs_lock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(cs_lock_event != 0, "CreateEvent error %d\n", GetLastError());
+
     SetLastError(0xdeadbeef);
     ack_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(ack_event != 0, "CreateEvent error %d\n", GetLastError());
@@ -2700,6 +2720,20 @@ static void child_process(const char *dll_name, DWORD target_offset)
         /* calling ExitProcess should cause a deadlock */
         trace("call ExitProcess(1)\n");
         ExitProcess(1);
+        ok(0, "ExitProcess should not return\n");
+        break;
+
+    case 7:
+        trace("setting cs_lock_event\n");
+        SetEvent(cs_lock_event);
+        WaitForSingleObject(ack_event, 1000);
+        ok(inside_cs_lock != 0, "inside_cs_lock is not set\n");
+
+        *child_failures = winetest_get_failures();
+
+        /* calling ExitProcess should not cause a deadlock */
+        trace("call ExitProcess(199)\n");
+        ExitProcess(199);
         ok(0, "ExitProcess should not return\n");
         break;
 
@@ -2999,6 +3033,31 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     ok(ret == 201 || broken(ret == 1) /* XP */, "expected exit code 201, got %u\n", ret);
+    if (*child_failures)
+    {
+        trace("%d failures in child process\n", *child_failures);
+        winetest_add_failures(*child_failures);
+    }
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    /* phase 7 */
+    *child_failures = -1;
+    sprintf(cmdline, "\"%s\" loader %s %u 7", argv[0], dll_name, target_offset);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 5000);
+todo_wine
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    if (ret != WAIT_OBJECT_0)
+    {
+        trace("terminating child process\n");
+        TerminateProcess(pi.hProcess, 199);
+    }
+    ret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
+    GetExitCodeProcess(pi.hProcess, &ret);
+    ok(ret == 199, "expected exit code 199, got %u\n", ret);
     if (*child_failures)
     {
         trace("%d failures in child process\n", *child_failures);
