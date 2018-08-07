@@ -1448,6 +1448,15 @@ DWORD WINAPI GetDynamicTimeZoneInformation(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo
 }
 
 /***********************************************************************
+ *           GetDynamicTimeZoneInformationEffectiveYears   (KERNEL32.@)
+ */
+DWORD WINAPI GetDynamicTimeZoneInformationEffectiveYears(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo, DWORD *first_year, DWORD *last_year)
+{
+    FIXME("(%p, %p, %p): stub!\n", tzinfo, first_year, last_year);
+    return ERROR_FILE_NOT_FOUND;
+}
+
+/***********************************************************************
  *           QueryProcessCycleTime   (KERNEL32.@)
  */
 BOOL WINAPI QueryProcessCycleTime(HANDLE process, PULONG64 cycle)

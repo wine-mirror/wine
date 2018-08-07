@@ -657,6 +657,7 @@
 # @ stub GetDurationFormat
 # @ stub GetDurationFormatEx
 @ stdcall GetDynamicTimeZoneInformation(ptr)
+@ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
 @ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures()
 @ stdcall GetEnvironmentStrings() GetEnvironmentStringsA
 @ stdcall GetEnvironmentStringsA()

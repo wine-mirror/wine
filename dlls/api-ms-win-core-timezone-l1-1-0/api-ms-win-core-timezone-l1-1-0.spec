@@ -1,7 +1,7 @@
 @ stub EnumDynamicTimeZoneInformation
 @ stdcall FileTimeToSystemTime(ptr ptr) kernel32.FileTimeToSystemTime
 @ stdcall GetDynamicTimeZoneInformation(ptr) kernel32.GetDynamicTimeZoneInformation
-@ stub GetDynamicTimeZoneInformationEffectiveYears
+@ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr) kernel32.GetDynamicTimeZoneInformationEffectiveYears
 @ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
 @ stub SetDynamicTimeZoneInformation
