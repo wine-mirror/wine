@@ -1290,7 +1290,6 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
     ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (!status)
-        todo_wine
         ok(peek_buf.NamedPipeState == state, "NamedPipeState = %u, expected %u\n",
            peek_buf.NamedPipeState, state);
 

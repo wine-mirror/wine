@@ -66,6 +66,7 @@ struct pipe_end
     struct object        obj;        /* object header */
     struct fd           *fd;         /* pipe file descriptor */
     unsigned int         flags;      /* pipe flags */
+    unsigned int         state;      /* pipe state */
     struct pipe_end     *connection; /* the other end of the pipe */
     process_id_t         client_pid; /* process that created the client */
     process_id_t         server_pid; /* process that created the server */
@@ -394,6 +395,8 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
 
     pipe_end->connection = NULL;
 
+    pipe_end->state = status == STATUS_PIPE_DISCONNECTED
+        ? FILE_PIPE_DISCONNECTED_STATE : FILE_PIPE_CLOSING_STATE;
     fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
     async_wake_up( &pipe_end->read_q, status );
     LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
@@ -883,7 +886,7 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     }
 
     if (!(buffer = set_reply_data_size( offsetof( FILE_PIPE_PEEK_BUFFER, Data[reply_size] )))) return 0;
-    buffer->NamedPipeState    = 0;  /* FIXME */
+    buffer->NamedPipeState    = pipe_end->state;
     buffer->ReadDataAvailable = avail;
     buffer->NumberOfMessages  = 0;  /* FIXME */
     buffer->MessageLength     = message_length;
@@ -1005,6 +1008,7 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         case ps_idle_server:
         case ps_wait_connect:
             fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT );
+            server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
             set_server_state( server, ps_wait_open );
             async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
             set_error( STATUS_PENDING );
@@ -1100,6 +1104,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->options = options;
     init_pipe_end( &server->pipe_end, pipe_flags, pipe->insize );
+    server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
     server->pipe_end.server_pid = get_process_id( current->process );
 
     list_add_head( &pipe->servers, &server->entry );
@@ -1126,6 +1131,7 @@ static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int 
     client->server = NULL;
     client->flags = flags;
     init_pipe_end( &client->pipe_end, pipe_flags, buffer_size );
+    client->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
     client->pipe_end.client_pid = get_process_id( current->process );
 
     client->pipe_end.fd = alloc_pseudo_fd( &pipe_client_fd_ops, &client->pipe_end.obj, options );
@@ -1204,6 +1210,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         allow_fd_caching( server->pipe_end.fd );
         if (server->state == ps_wait_open)
             fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+        server->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
         set_server_state( server, ps_connected_server );
         server->client = client;
         client->server = server;
