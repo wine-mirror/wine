@@ -1638,15 +1638,73 @@ static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
     return S_OK;
 }
 
+static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
+        ID3D12Device *device, const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    struct vkd3d_image_resource_create_info resource_info;
+    VkSwapchainKHR vk_swapchain = swapchain->vk_swapchain;
+    VkImage vk_images[DXGI_MAX_SWAP_CHAIN_BUFFERS];
+    VkDevice vk_device = swapchain->vk_device;
+    uint32_t image_count;
+    unsigned int i;
+    VkResult vr;
+    HRESULT hr;
+
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+    if (image_count != swapchain_desc->BufferCount)
+        FIXME("Got %u swapchain images, expected %u.\n", image_count, swapchain_desc->BufferCount);
+    if (image_count > ARRAY_SIZE(vk_images))
+        return E_FAIL;
+    swapchain->buffer_count = image_count;
+    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, vk_images)) < 0)
+    {
+        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+
+    resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
+    resource_info.next = NULL;
+    resource_info.desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    resource_info.desc.Alignment = 0;
+    resource_info.desc.Width = swapchain_desc->Width;
+    resource_info.desc.Height = swapchain_desc->Height;
+    resource_info.desc.DepthOrArraySize = 1;
+    resource_info.desc.MipLevels = 1;
+    resource_info.desc.Format = swapchain_desc->Format;
+    resource_info.desc.SampleDesc.Count = 1;
+    resource_info.desc.SampleDesc.Quality = 0;
+    resource_info.desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    resource_info.desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    resource_info.flags = VKD3D_RESOURCE_INITIAL_STATE_TRANSITION | VKD3D_RESOURCE_PRESENT_STATE_TRANSITION;
+    resource_info.present_state = D3D12_RESOURCE_STATE_PRESENT;
+    for (i = 0; i < image_count; ++i)
+    {
+        resource_info.vk_image = vk_images[i];
+        if (FAILED(hr = vkd3d_create_image_resource(device, &resource_info, &swapchain->buffers[i])))
+        {
+            WARN("Failed to create vkd3d resource for Vulkan image %u, hr %#x.\n", i, hr);
+            return hr;
+        }
+
+        vkd3d_resource_incref(swapchain->buffers[i]);
+        ID3D12Resource_Release(swapchain->buffers[i]);
+    }
+
+    return S_OK;
+}
+
 static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGIFactory *factory,
         ID3D12Device *device, ID3D12CommandQueue *queue, HWND window,
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
-    struct vkd3d_image_resource_create_info resource_info;
     struct VkSwapchainCreateInfoKHR vk_swapchain_desc;
     struct VkWin32SurfaceCreateInfoKHR surface_desc;
-    VkImage vk_images[DXGI_MAX_SWAP_CHAIN_BUFFERS];
     VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
     VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
     VkSurfaceCapabilitiesKHR surface_caps;
@@ -1654,7 +1712,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     VkFence vk_fence = VK_NULL_HANDLE;
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
-    unsigned int image_count, i;
     VkImageUsageFlags usage;
     VkInstance vk_instance;
     VkBool32 supported;
@@ -1823,25 +1880,10 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     }
     swapchain->vk_fence = vk_fence;
 
-    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
-    {
-        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        d3d12_swapchain_destroy(swapchain);
-        return hresult_from_vk_result(vr);
-    }
-    if (image_count != swapchain_desc->BufferCount)
-        FIXME("Got %u swapchain images, expected %u.\n", image_count, swapchain_desc->BufferCount);
-    if (image_count > ARRAY_SIZE(vk_images))
+    if (FAILED(hr = d3d12_swapchain_create_buffers(swapchain, device, swapchain_desc)))
     {
         d3d12_swapchain_destroy(swapchain);
-        return E_FAIL;
-    }
-    swapchain->buffer_count = image_count;
-    if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, vk_images)) < 0)
-    {
-        WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        d3d12_swapchain_destroy(swapchain);
-        return hresult_from_vk_result(vr);
+        return hr;
     }
 
     if (FAILED(hr = d3d12_swapchain_acquire_next_image(swapchain)))
@@ -1849,37 +1891,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         WARN("Failed to acquire Vulkan image, hr %#x.\n", hr);
         d3d12_swapchain_destroy(swapchain);
         return hr;
-    }
-
-    resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
-    resource_info.next = NULL;
-    resource_info.desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    resource_info.desc.Alignment = 0;
-    resource_info.desc.Width = swapchain_desc->Width;
-    resource_info.desc.Height = swapchain_desc->Height;
-    resource_info.desc.DepthOrArraySize = 1;
-    resource_info.desc.MipLevels = 1;
-    resource_info.desc.Format = swapchain_desc->Format;
-    resource_info.desc.SampleDesc.Count = 1;
-    resource_info.desc.SampleDesc.Quality = 0;
-    resource_info.desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    resource_info.desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-    resource_info.flags = VKD3D_RESOURCE_INITIAL_STATE_TRANSITION | VKD3D_RESOURCE_PRESENT_STATE_TRANSITION;
-    resource_info.present_state = D3D12_RESOURCE_STATE_PRESENT;
-    for (i = 0; i < image_count; ++i)
-    {
-        resource_info.vk_image = vk_images[i];
-        if (SUCCEEDED(hr = vkd3d_create_image_resource(device, &resource_info, &swapchain->buffers[i])))
-        {
-            vkd3d_resource_incref(swapchain->buffers[i]);
-            ID3D12Resource_Release(swapchain->buffers[i]);
-        }
-        else
-        {
-            ERR("Failed to create vkd3d resource for Vulkan image %u, hr %#x.\n", i, hr);
-            d3d12_swapchain_destroy(swapchain);
-            return hr;
-        }
     }
 
     ID3D12CommandQueue_AddRef(swapchain->command_queue = queue);
