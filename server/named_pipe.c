@@ -338,20 +338,6 @@ static struct fd *pipe_end_get_fd( struct object *obj )
 static void set_server_state( struct pipe_server *server, enum pipe_state state )
 {
     server->state = state;
-
-    switch(state)
-    {
-    case ps_connected_server:
-    case ps_wait_disconnect:
-        break;
-    case ps_wait_open:
-    case ps_idle_server:
-        set_no_fd_status( server->pipe_end.fd, STATUS_PIPE_LISTENING );
-        break;
-    case ps_wait_connect:
-        set_no_fd_status( server->pipe_end.fd, STATUS_PIPE_DISCONNECTED );
-        break;
-    }
 }
 
 
@@ -1232,7 +1218,6 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
 
     if ((client = create_pipe_client( options, pipe->flags, pipe->outsize, options )))
     {
-        set_no_fd_status( server->pipe_end.fd, STATUS_BAD_DEVICE_TYPE );
         allow_fd_caching( server->pipe_end.fd );
         if (server->state == ps_wait_open)
             fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );

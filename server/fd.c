@@ -1713,12 +1713,6 @@ struct fd *get_fd_object_for_mapping( struct fd *fd, unsigned int access, unsign
     return NULL;
 }
 
-/* set the status to return when the fd has no associated unix fd */
-void set_no_fd_status( struct fd *fd, unsigned int status )
-{
-    fd->no_fd_status = status;
-}
-
 /* sets the user of an fd that previously had no user */
 void set_fd_user( struct fd *fd, const struct fd_ops *user_ops, struct object *user )
 {

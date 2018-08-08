@@ -1481,14 +1481,12 @@ static void pipe_for_each_state(HANDLE (*create_server)(void),
     ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
     test(server, TRUE, FILE_PIPE_DISCONNECTED_STATE);
 
-    if(broken(1)) { /* FIXME: Remove once Wine can handle this case */
     status = listen_pipe(server, event, &iosb, FALSE);
     ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
     client = connect_client(server);
     test(server, TRUE, FILE_PIPE_CONNECTED_STATE);
     test(client, FALSE, FILE_PIPE_CONNECTED_STATE);
     CloseHandle(client);
-    }
     CloseHandle(server);
 
     CloseHandle(event);
