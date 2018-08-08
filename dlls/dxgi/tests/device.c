@@ -3645,9 +3645,8 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         swapchain_desc.SwapEffect = tests[i].swap_effect;
-        expected_hr = !is_d3d12 || tests[i].supported_in_d3d12 ? S_OK : DXGI_ERROR_INVALID_CALL;
+        expected_hr = is_d3d12 && !tests[i].supported_in_d3d12 ? DXGI_ERROR_INVALID_CALL : S_OK;
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-        todo_wine_if(is_d3d12 && tests[i].supported_in_d3d12)
         ok(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
         if (FAILED(hr))
             continue;
