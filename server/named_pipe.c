@@ -1126,6 +1126,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
         release_object( server );
         return NULL;
     }
+    allow_fd_caching( server->pipe_end.fd );
     set_fd_signaled( server->pipe_end.fd, 1 );
     set_server_state( server, ps_idle_server );
     return server;
@@ -1218,7 +1219,6 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
 
     if ((client = create_pipe_client( options, pipe->flags, pipe->outsize, options )))
     {
-        allow_fd_caching( server->pipe_end.fd );
         if (server->state == ps_wait_open)
             fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
         server->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
