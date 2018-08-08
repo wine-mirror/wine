@@ -118,7 +118,7 @@ static const WCHAR testpipe[] = { '\\', '\\', '.', '\\', 'p', 'i', 'p', 'e', '\\
 static const WCHAR testpipe_nt[] = { '\\', '?', '?', '\\', 'p', 'i', 'p', 'e', '\\',
                                      't', 'e', 's', 't', 'p', 'i', 'p', 'e', 0 };
 
-static NTSTATUS create_pipe(PHANDLE handle, ULONG sharing, ULONG options)
+static NTSTATUS create_pipe(PHANDLE handle, ULONG access, ULONG sharing, ULONG options)
 {
     IO_STATUS_BLOCK iosb;
     OBJECT_ATTRIBUTES attr;
@@ -137,8 +137,8 @@ static NTSTATUS create_pipe(PHANDLE handle, ULONG sharing, ULONG options)
 
     timeout.QuadPart = -100000000;
 
-    res = pNtCreateNamedPipeFile(handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, sharing,  2 /*FILE_CREATE*/,
-                                 options, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
+    res = pNtCreateNamedPipeFile(handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE | access, &attr, &iosb, sharing,
+                                 FILE_CREATE, options, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
     return res;
 }
 
@@ -235,7 +235,7 @@ static void test_create(void)
             HANDLE hclient;
             BOOL should_succeed = TRUE;
 
-            res  = create_pipe(&hserver, sharing[j], 0);
+            res  = create_pipe(&hserver, 0, sharing[j], 0);
             if (res) {
                 ok(0, "NtCreateNamedPipeFile returned %x, sharing: %x\n", res, sharing[j]);
                 continue;
@@ -290,7 +290,7 @@ static void test_overlapped(void)
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     memset(&iosb, 0x55, sizeof(iosb));
@@ -313,7 +313,7 @@ static void test_overlapped(void)
     CloseHandle(hPipe);
     CloseHandle(hClient);
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
@@ -385,7 +385,7 @@ static void test_alertable(void)
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_ALERT);
+    res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_ALERT);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
 /* queue an user apc before calling listen */
@@ -455,7 +455,7 @@ static void test_nonalertable(void)
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     hThread = CreateThread(NULL, 0, &thread, 0, 0, 0);
@@ -497,7 +497,7 @@ static void test_cancelio(void)
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     memset(&iosb, 0x55, sizeof(iosb));
@@ -521,7 +521,7 @@ static void test_cancelio(void)
 
     if (pNtCancelIoFileEx)
     {
-        res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+        res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
         ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
         memset(&iosb, 0x55, sizeof(iosb));
@@ -1221,6 +1221,283 @@ static void _test_file_name(unsigned line, HANDLE pipe)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile failed: %x\n", status );
 }
 
+static HANDLE create_pipe_server(void)
+{
+    HANDLE handle;
+    NTSTATUS status;
+
+    status = create_pipe(&handle, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
+    ok(status == STATUS_SUCCESS, "create_pipe failed: %x\n", status);
+    return handle;
+}
+
+static HANDLE connect_pipe(HANDLE server)
+{
+    HANDLE client;
+
+    client = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
+                         FILE_FLAG_OVERLAPPED, 0);
+    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %u\n", GetLastError());
+
+    return client;
+}
+
+static HANDLE connect_and_write_pipe(HANDLE server)
+{
+    BYTE buf[10] = {0};
+    HANDLE client;
+    DWORD written;
+    BOOL res;
+
+    client = connect_pipe(server);
+
+    res = WriteFile(client, buf, sizeof(buf), &written, NULL);
+    ok(res, "WriteFile failed: %u\n", GetLastError());
+    res = WriteFile(server, buf, sizeof(buf), &written, NULL);
+    ok(res, "WriteFile failed: %u\n", GetLastError());
+
+    return client;
+}
+
+static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
+{
+    FILE_PIPE_PEEK_BUFFER peek_buf;
+    IO_STATUS_BLOCK io;
+    static char buf[] = "test";
+    NTSTATUS status, expected_status;
+
+    memset(&peek_buf, 0xcc, sizeof(peek_buf));
+    memset(&io, 0xcc, sizeof(io));
+    status = NtFsControlFile(pipe, NULL, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0, &peek_buf, sizeof(peek_buf));
+    if (!status || status == STATUS_PENDING)
+        status = io.Status;
+    switch (state)
+    {
+    case FILE_PIPE_DISCONNECTED_STATE:
+        expected_status = is_server ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED;
+        break;
+    case FILE_PIPE_LISTENING_STATE:
+        expected_status = STATUS_INVALID_PIPE_STATE;
+        break;
+    case FILE_PIPE_CONNECTED_STATE:
+        expected_status = STATUS_SUCCESS;
+        break;
+    default:
+        expected_status = STATUS_PIPE_BROKEN;
+        break;
+    }
+    todo_wine_if(expected_status && expected_status != STATUS_PIPE_BROKEN)
+    ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
+       status, expected_status, is_server ? "server" : "client", state);
+    if (!status)
+        todo_wine
+        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %u, expected %u\n",
+           peek_buf.NamedPipeState, state);
+
+    if (state != FILE_PIPE_CONNECTED_STATE)
+    {
+        if (state == FILE_PIPE_CLOSING_STATE)
+            expected_status = STATUS_INVALID_PIPE_STATE;
+        status = NtFsControlFile(pipe, NULL, NULL, NULL, &io, FSCTL_PIPE_TRANSCEIVE,
+                                 buf, 1, buf+1, 1);
+        if (!status || status == STATUS_PENDING)
+            status = io.Status;
+        todo_wine
+        ok(status == expected_status,
+            "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    }
+
+    memset(&io, 0xcc, sizeof(io));
+    status = NtFlushBuffersFile(pipe, &io);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+    {
+        todo_wine
+        ok(status == STATUS_PIPE_DISCONNECTED, "status = %x in %s state %u\n",
+           status, is_server ? "server" : "client", state);
+    }
+    else
+    {
+        ok(status == STATUS_SUCCESS, "status = %x in %s state %u\n",
+           status, is_server ? "server" : "client", state);
+        todo_wine
+        ok(io.Status == status, "io.Status = %x\n", io.Status);
+    }
+
+    if (state != FILE_PIPE_CONNECTED_STATE)
+    {
+        switch (state)
+        {
+        case FILE_PIPE_DISCONNECTED_STATE:
+            expected_status = STATUS_PIPE_DISCONNECTED;
+            break;
+        case FILE_PIPE_LISTENING_STATE:
+            expected_status = STATUS_PIPE_LISTENING;
+            break;
+        default:
+            expected_status = STATUS_PIPE_BROKEN;
+            break;
+        }
+        status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
+        todo_wine_if(state == FILE_PIPE_DISCONNECTED_STATE && !is_server)
+        ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    }
+}
+
+static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
+{
+    FILE_PIPE_LOCAL_INFORMATION local_info;
+    FILE_PIPE_INFORMATION pipe_info;
+    FILE_PIPE_PEEK_BUFFER peek_buf;
+    IO_STATUS_BLOCK io;
+    char buf[] = "test";
+    NTSTATUS status, expected_status;
+
+    memset(&io, 0xcc, sizeof(io));
+    status = pNtQueryInformationFile(pipe, &io, &local_info, sizeof(local_info), FilePipeLocalInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        todo_wine
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    if (!status)
+        todo_wine
+        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
+            is_server ? "server" : "client", local_info.NamedPipeState, state);
+
+    status = pNtQueryInformationFile(pipe, &io, &pipe_info, sizeof(pipe_info), FilePipeInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        todo_wine
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+
+    memset(&peek_buf, 0xcc, sizeof(peek_buf));
+    memset(&io, 0xcc, sizeof(io));
+    status = NtFsControlFile(pipe, NULL, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0, &peek_buf, sizeof(peek_buf));
+    if (!status || status == STATUS_PENDING)
+        status = io.Status;
+    switch (state)
+    {
+    case FILE_PIPE_DISCONNECTED_STATE:
+        expected_status = is_server ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED;
+        break;
+    case FILE_PIPE_LISTENING_STATE:
+        expected_status = STATUS_INVALID_PIPE_STATE;
+        break;
+    default:
+        expected_status = STATUS_BUFFER_OVERFLOW;
+        break;
+    }
+    todo_wine
+    ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
+       status, expected_status, is_server ? "server" : "client", state);
+    if (status == STATUS_BUFFER_OVERFLOW)
+        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %u, expected %u\n",
+           peek_buf.NamedPipeState, state);
+
+    switch (state)
+    {
+    case FILE_PIPE_DISCONNECTED_STATE:
+        expected_status = STATUS_PIPE_DISCONNECTED;
+        break;
+    case FILE_PIPE_LISTENING_STATE:
+        expected_status = STATUS_PIPE_LISTENING;
+        break;
+    case FILE_PIPE_CONNECTED_STATE:
+        expected_status = STATUS_SUCCESS;
+        break;
+    default:
+        expected_status = STATUS_PIPE_CLOSING;
+        break;
+    }
+    status = NtWriteFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
+    todo_wine_if(expected_status == STATUS_PIPE_CLOSING)
+    ok(status == expected_status, "NtWriteFile failed in %s state %u: %x\n",
+        is_server ? "server" : "client", state, status);
+
+    if (state == FILE_PIPE_CLOSING_STATE)
+        expected_status = STATUS_SUCCESS;
+    status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
+    todo_wine_if(state == FILE_PIPE_DISCONNECTED_STATE && status != STATUS_PIPE_DISCONNECTED)
+    ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
+        is_server ? "server" : "client", state, status);
+}
+
+static void pipe_for_each_state(HANDLE (*create_server)(void),
+                                HANDLE (*connect_client)(HANDLE),
+                                void (*test)(HANDLE pipe, BOOL is_server, DWORD pipe_state))
+{
+    HANDLE client, server;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    HANDLE event;
+    BOOL ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    server = create_server();
+    test(server, TRUE, FILE_PIPE_LISTENING_STATE);
+
+    status = listen_pipe(server, event, &iosb, FALSE);
+    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    test(server, TRUE, FILE_PIPE_LISTENING_STATE);
+
+    client = connect_client(server);
+    test(server, TRUE, FILE_PIPE_CONNECTED_STATE);
+    test(client, FALSE, FILE_PIPE_CONNECTED_STATE);
+
+    /* server closed, but not disconnected */
+    CloseHandle(server);
+    test(client, FALSE, FILE_PIPE_CLOSING_STATE);
+    CloseHandle(client);
+
+    server = create_server();
+    status = listen_pipe(server, event, &iosb, FALSE);
+    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+
+    client = connect_client(server);
+    ret = DisconnectNamedPipe(server);
+    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    test(server, TRUE, FILE_PIPE_DISCONNECTED_STATE);
+    test(client, FALSE, FILE_PIPE_DISCONNECTED_STATE);
+    CloseHandle(server);
+    test(client, FALSE, FILE_PIPE_DISCONNECTED_STATE);
+    CloseHandle(client);
+
+    server = create_server();
+    status = listen_pipe(server, event, &iosb, FALSE);
+    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+
+    client = connect_client(server);
+    CloseHandle(client);
+    test(server, TRUE, FILE_PIPE_CLOSING_STATE);
+    ret = DisconnectNamedPipe(server);
+    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    test(server, TRUE, FILE_PIPE_DISCONNECTED_STATE);
+
+    if(broken(1)) { /* FIXME: Remove once Wine can handle this case */
+    status = listen_pipe(server, event, &iosb, FALSE);
+    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    client = connect_client(server);
+    test(server, TRUE, FILE_PIPE_CONNECTED_STATE);
+    test(client, FALSE, FILE_PIPE_CONNECTED_STATE);
+    CloseHandle(client);
+    }
+    CloseHandle(server);
+
+    CloseHandle(event);
+}
+
 static void test_file_info(void)
 {
     HANDLE server, client;
@@ -1497,4 +1774,7 @@ START_TEST(pipe)
     test_volume_info();
     test_file_info();
     test_security_info();
+
+    pipe_for_each_state(create_pipe_server, connect_pipe, test_pipe_state);
+    pipe_for_each_state(create_pipe_server, connect_and_write_pipe, test_pipe_with_data_state);
 }
