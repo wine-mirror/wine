@@ -106,20 +106,20 @@ static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_
 
     for (index = 0; ; index++)
     {
-        size = sizeof(name)/sizeof(WCHAR);
+        size = ARRAY_SIZE(name);
         ret = RegEnumValueW(hkey, index, name, &size, NULL, NULL, NULL, NULL);
         if (ret != ERROR_SUCCESS)
             break;
 
-        if (!memicmpW(name, SystemRootW, sizeof(SystemRootW)/sizeof(WCHAR)))
+        if (!memicmpW(name, SystemRootW, ARRAY_SIZE(SystemRootW)))
             continue;
-        if (!memicmpW(name, SystemDriveW, sizeof(SystemDriveW)/sizeof(WCHAR)))
+        if (!memicmpW(name, SystemDriveW, ARRAY_SIZE(SystemDriveW)))
             continue;
 
         RtlInitUnicodeString(&us_name, name);
         us_value.Buffer = value;
         us_value.MaximumLength = sizeof(value);
-        if (!memicmpW(name, PATHW, sizeof(PATHW)/sizeof(WCHAR)) &&
+        if (!memicmpW(name, PATHW, ARRAY_SIZE(PATHW)) &&
                 !RtlQueryEnvironmentVariable_U(*env, &us_name, &us_value))
         {
             if (!set_path)
@@ -339,7 +339,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
         RegCloseKey(hkey);
     }
 
-    len = sizeof(buf)/sizeof(WCHAR);
+    len = ARRAY_SIZE(buf);
     if (GetComputerNameW(buf, &len))
     {
         RtlInitUnicodeString(&us_name, COMPUTERNAMEW);
