@@ -2177,4 +2177,6 @@ typedef HRESULT (__stdcall *PFN_D3D12_CREATE_DEVICE)(IUnknown *adapter,
 [local] HRESULT __stdcall D3D12CreateDevice(IUnknown *adapter,
         D3D_FEATURE_LEVEL minimum_feature_level, REFIID iid, void **device);
 
+typedef HRESULT (__stdcall *PFN_D3D12_GET_DEBUG_INTERFACE)(REFIID iid, void **debug);
+
 [local] HRESULT __stdcall D3D12GetDebugInterface(REFIID iid, void **debug);
