@@ -937,16 +937,16 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     struct pipe_message *message;
     struct iosb *iosb;
 
+    if (!pipe_end->connection)
+    {
+        set_error( STATUS_INVALID_PIPE_STATE );
+        return 0;
+    }
+
     if ((pipe_end->flags & (NAMED_PIPE_MESSAGE_STREAM_WRITE | NAMED_PIPE_MESSAGE_STREAM_READ))
         != (NAMED_PIPE_MESSAGE_STREAM_WRITE | NAMED_PIPE_MESSAGE_STREAM_READ))
     {
         set_error( STATUS_INVALID_READ_MODE );
-        return 0;
-    }
-
-    if (!pipe_end->connection)
-    {
-        set_error( STATUS_PIPE_BROKEN );
         return 0;
     }
 

@@ -1301,7 +1301,7 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
                                  buf, 1, buf+1, 1);
         if (!status || status == STATUS_PENDING)
             status = io.Status;
-        todo_wine
+        todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
         ok(status == expected_status,
             "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
