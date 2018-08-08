@@ -57,7 +57,7 @@ static HMODULE load_desktop_driver( HWND hwnd )
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
-    WCHAR key[(sizeof(key_pathW) + sizeof(displayW)) / sizeof(WCHAR) + 40];
+    WCHAR key[ARRAY_SIZE(key_pathW) + ARRAY_SIZE(displayW) + 40];
     UINT guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
 
     USER_CheckNotLock();

@@ -2049,8 +2049,8 @@ HWND WINAPI GetDesktopWindow(void)
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
         WCHAR windir[MAX_PATH];
-        WCHAR app[MAX_PATH + sizeof(explorer)/sizeof(WCHAR)];
-        WCHAR cmdline[MAX_PATH + (sizeof(explorer) + sizeof(args))/sizeof(WCHAR)];
+        WCHAR app[MAX_PATH + ARRAY_SIZE( explorer )];
+        WCHAR cmdline[MAX_PATH + ARRAY_SIZE( explorer ) + ARRAY_SIZE( args )];
         WCHAR desktop[MAX_PATH];
         void *redir;
 

@@ -335,7 +335,7 @@ DWORD WINAPI CharLowerBuffA( LPSTR str, DWORD len )
     if (!str) return 0; /* YES */
 
     lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
-    if (lenW > sizeof(buffer)/sizeof(WCHAR))
+    if (lenW > ARRAY_SIZE(buffer))
     {
         strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
         if (!strW) return 0;
@@ -370,7 +370,7 @@ DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
     if (!str) return 0; /* YES */
 
     lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
-    if (lenW > sizeof(buffer)/sizeof(WCHAR))
+    if (lenW > ARRAY_SIZE(buffer))
     {
         strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
         if (!strW) return 0;

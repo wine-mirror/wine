@@ -169,7 +169,7 @@ static const WCHAR *get_default_desktop(void)
     static const WCHAR app_defaultsW[] = {'S','o','f','t','w','a','r','e','\\',
                                           'W','i','n','e','\\',
                                           'A','p','p','D','e','f','a','u','l','t','s',0};
-    static WCHAR buffer[MAX_PATH + sizeof(explorerW)/sizeof(WCHAR)];
+    static WCHAR buffer[MAX_PATH + ARRAY_SIZE(explorerW)];
     WCHAR *p, *appname = buffer;
     const WCHAR *ret = defaultW;
     DWORD len;
@@ -433,7 +433,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
     STARTUPINFOW si;
     void *redir;
 
-    GetSystemDirectoryW( app, MAX_PATH - sizeof(winebootW)/sizeof(WCHAR) );
+    GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE( winebootW ));
     strcatW( app, winebootW );
     strcpyW( cmdline, app );
 
