@@ -1149,7 +1149,7 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
         SetLastError(ERROR_SUCCESS);
         success = WriteFile(hnp, buf, readden, &written, &oWrite);
         err = GetLastError();
-        todo_wine_if (!success && err == ERROR_PIPE_NOT_CONNECTED) ok(!success && err == ERROR_NO_DATA,
+        ok(!success && err == ERROR_NO_DATA,
             "overlapped WriteFile on disconnected pipe returned %u, err=%i\n", success, err);
 
         /* No completion status is queued on immediate error. */
@@ -1605,7 +1605,7 @@ static void test_CloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, testdata, sizeof(testdata), &numbytes, NULL);
     ok(!ret, "WriteFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
 
     CloseHandle(hfile);
 
@@ -1650,7 +1650,7 @@ static void test_CloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, testdata, sizeof(testdata), &numbytes, NULL);
     ok(!ret, "WriteFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
 
     CloseHandle(hfile);
 
@@ -1715,7 +1715,7 @@ static void test_CloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = WriteFile(hpipe, testdata, sizeof(testdata), &numbytes, NULL);
     ok(!ret, "WriteFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
 
     CloseHandle(hpipe);
 
@@ -1760,7 +1760,7 @@ static void test_CloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = WriteFile(hpipe, testdata, sizeof(testdata), &numbytes, NULL);
     ok(!ret, "WriteFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_DATA, "expected ERROR_NO_DATA, got %u\n", GetLastError());
 
     CloseHandle(hpipe);
 }

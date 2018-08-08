@@ -1419,7 +1419,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         break;
     }
     status = NtWriteFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-    todo_wine_if(expected_status == STATUS_PIPE_CLOSING)
     ok(status == expected_status, "NtWriteFile failed in %s state %u: %x\n",
         is_server ? "server" : "client", state, status);
 

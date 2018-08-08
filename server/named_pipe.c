@@ -826,9 +826,18 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
     struct pipe_message *message;
     struct iosb *iosb;
 
-    if (!pipe_end->connection)
+    switch (pipe_end->state)
     {
+    case FILE_PIPE_CONNECTED_STATE:
+        break;
+    case FILE_PIPE_DISCONNECTED_STATE:
         set_error( STATUS_PIPE_DISCONNECTED );
+        return 0;
+    case FILE_PIPE_LISTENING_STATE:
+        set_error( STATUS_PIPE_LISTENING );
+        return 0;
+    case FILE_PIPE_CLOSING_STATE:
+        set_error( STATUS_PIPE_CLOSING );
         return 0;
     }
 
