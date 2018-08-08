@@ -1624,6 +1624,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     unsigned int image_count, i, j;
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
+    VkImageUsageFlags usage;
     VkInstance vk_instance;
     VkBool32 supported;
     VkDevice vk_device;
@@ -1738,6 +1739,12 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         goto fail;
     }
 
+    usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (!(usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) || !(usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
+        WARN("Transfer not supported for swapchain images.\n");
+
     vk_swapchain_desc.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     vk_swapchain_desc.pNext = NULL;
     vk_swapchain_desc.flags = 0;
@@ -1748,7 +1755,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     vk_swapchain_desc.imageExtent.width = swapchain_desc->Width;
     vk_swapchain_desc.imageExtent.height = swapchain_desc->Height;
     vk_swapchain_desc.imageArrayLayers = 1;
-    vk_swapchain_desc.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    vk_swapchain_desc.imageUsage = usage;
     vk_swapchain_desc.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     vk_swapchain_desc.queueFamilyIndexCount = 0;
     vk_swapchain_desc.pQueueFamilyIndices = NULL;
