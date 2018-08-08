@@ -891,7 +891,7 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
                 { "glVertexAttribDivisor", "glVertexAttribDivisorARB"},  /* needed by Caffeine */
             };
 
-            for (i = 0; i < sizeof(alternatives)/sizeof(alternatives[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(alternatives); i++)
             {
                 if (strcmp( name, alternatives[i].name )) continue;
                 WARN("Extension %s required for %s not supported, trying %s\n",
