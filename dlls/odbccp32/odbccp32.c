@@ -71,7 +71,7 @@ static const WCHAR odbc_error_invalid_keyword[] = {'I','n','v','a','l','i','d','
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
 {
-    if (num_errors < sizeof error_code/sizeof error_code[0])
+    if (num_errors < ARRAY_SIZE(error_code))
     {
         error_code[num_errors] = code;
         error_msg[num_errors] = msg;
