@@ -361,8 +361,8 @@ static void DSPROPERTY_descWto1(const DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W
                                 DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA *data1)
 {
     data1->DeviceId = dataW->DeviceId;
-    lstrcpynW(data1->ModuleW, dataW->Module, sizeof(data1->ModuleW)/sizeof(*data1->ModuleW));
-    lstrcpynW(data1->DescriptionW, dataW->Description, sizeof(data1->DescriptionW)/sizeof(*data1->DescriptionW));
+    lstrcpynW(data1->ModuleW, dataW->Module, ARRAY_SIZE(data1->ModuleW));
+    lstrcpynW(data1->DescriptionW, dataW->Description, ARRAY_SIZE(data1->DescriptionW));
     WideCharToMultiByte(CP_ACP, 0, data1->DescriptionW, -1, data1->DescriptionA, sizeof(data1->DescriptionA)-1, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, data1->ModuleW, -1, data1->ModuleA, sizeof(data1->ModuleA)-1, NULL, NULL);
     data1->DescriptionA[sizeof(data1->DescriptionA)-1] = 0;

@@ -85,7 +85,7 @@ static void _dump_DSCAPS(DWORD xmask) {
     };
     unsigned int     i;
 
-    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(flags); i++)
         if ((flags[i].mask & xmask) == flags[i].mask)
             TRACE("%s ",flags[i].name);
 }
@@ -113,7 +113,7 @@ static void _dump_DSBCAPS(DWORD xmask) {
     };
     unsigned int     i;
 
-    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(flags); i++)
         if ((flags[i].mask & xmask) == flags[i].mask)
             TRACE("%s ",flags[i].name);
 }
