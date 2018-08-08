@@ -37,6 +37,7 @@ static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
 static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **factory);
 
 static PFN_D3D12_CREATE_DEVICE pD3D12CreateDevice;
+static PFN_D3D12_GET_DEBUG_INTERFACE pD3D12GetDebugInterface;
 
 static ULONG get_refcount(IUnknown *iface)
 {
@@ -4042,7 +4043,9 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 START_TEST(device)
 {
     HMODULE dxgi_module, d3d12_module;
+    BOOL enable_debug_layer = FALSE;
     unsigned int argc, i;
+    ID3D12Debug *debug;
     char **argv;
 
     dxgi_module = GetModuleHandleA("dxgi.dll");
@@ -4055,7 +4058,9 @@ START_TEST(device)
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "--warp"))
+        if (!strcmp(argv[i], "--validate"))
+            enable_debug_layer = TRUE;
+        else if (!strcmp(argv[i], "--warp"))
             use_warp_adapter = TRUE;
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
@@ -4091,6 +4096,13 @@ START_TEST(device)
     }
 
     pD3D12CreateDevice = (void *)GetProcAddress(d3d12_module, "D3D12CreateDevice");
+    pD3D12GetDebugInterface = (void *)GetProcAddress(d3d12_module, "D3D12GetDebugInterface");
+
+    if (enable_debug_layer && SUCCEEDED(pD3D12GetDebugInterface(&IID_ID3D12Debug, (void **)&debug)))
+    {
+        ID3D12Debug_EnableDebugLayer(debug);
+        ID3D12Debug_Release(debug);
+    }
 
     run_on_d3d12(test_swapchain_backbuffer_index);
 
