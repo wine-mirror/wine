@@ -826,8 +826,10 @@ static PFN_vkd3d_resource_incref vkd3d_resource_incref;
 struct dxgi_vk_funcs
 {
     PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
+    PFN_vkCreateFence p_vkCreateFence;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroyFence p_vkDestroyFence;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
@@ -839,10 +841,9 @@ struct dxgi_vk_funcs
     PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
     PFN_vkGetSwapchainImagesKHR p_vkGetSwapchainImagesKHR;
     PFN_vkQueuePresentKHR p_vkQueuePresentKHR;
-    PFN_vkCreateFence p_vkCreateFence;
-    PFN_vkWaitForFences p_vkWaitForFences;
+    PFN_vkQueueWaitIdle p_vkQueueWaitIdle;
     PFN_vkResetFences p_vkResetFences;
-    PFN_vkDestroyFence p_vkDestroyFence;
+    PFN_vkWaitForFences p_vkWaitForFences;
 };
 
 static HRESULT hresult_from_vk_result(VkResult vr)
@@ -929,10 +930,25 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
 static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkQueue vk_queue;
     unsigned int i;
 
     if (swapchain->command_queue)
+    {
+        if ((vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
+        {
+            vk_funcs->p_vkQueueWaitIdle(vk_queue);
+
+            vkd3d_release_vk_queue(swapchain->command_queue);
+        }
+        else
+        {
+            WARN("Failed to acquire Vulkan queue.\n");
+        }
+
         ID3D12CommandQueue_Release(swapchain->command_queue);
+    }
+
     if (swapchain->factory)
         IWineDXGIFactory_Release(swapchain->factory);
 
@@ -1563,6 +1579,7 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkDevice vk_device)
     LOAD_DEVICE_PFN(vkAcquireNextImageKHR)
     LOAD_DEVICE_PFN(vkCreateFence)
     LOAD_DEVICE_PFN(vkDestroyFence)
+    LOAD_DEVICE_PFN(vkQueueWaitIdle)
     LOAD_DEVICE_PFN(vkResetFences)
     LOAD_DEVICE_PFN(vkWaitForFences)
 #undef LOAD_DEVICE_PFN
