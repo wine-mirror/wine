@@ -214,7 +214,7 @@ static BOOL SERIALUI_MakeBaudDword(LPDWORD lpdwBaudRate)
 {
     unsigned int i;
 
-    for(i=0; i<(sizeof(SERIALUI_BaudConvertTable)/sizeof(DWORD)); i+=2)
+    for(i=0; i<ARRAY_SIZE(SERIALUI_BaudConvertTable); i+=2)
     {
         if(*lpdwBaudRate == SERIALUI_BaudConvertTable[i])
         {
@@ -229,7 +229,7 @@ static BOOL SERIALUI_MakeBaudEnum(LPDWORD lpdwBaudRate)
 {
     unsigned int i;
 
-    for(i=0; i<(sizeof(SERIALUI_BaudConvertTable)/sizeof(DWORD)); i+=2)
+    for(i=0; i<ARRAY_SIZE(SERIALUI_BaudConvertTable); i+=2)
     {
         if(*lpdwBaudRate == SERIALUI_BaudConvertTable[i+1])
         {
@@ -352,8 +352,8 @@ static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM w
         if(!info)
             return FALSE;
         SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
-        GetWindowTextW(hWnd, format, sizeof(format)/sizeof(WCHAR));
-        snprintfW( szTitle, sizeof(szTitle)/sizeof(WCHAR), format, info->lpszDevice );
+        GetWindowTextW(hWnd, format, ARRAY_SIZE(format));
+        snprintfW(szTitle, ARRAY_SIZE(szTitle), format, info->lpszDevice);
         SetWindowTextW(hWnd, szTitle);
         SERIALUI_DCBToDialogInfo(hWnd, info);
         return TRUE;
@@ -501,7 +501,7 @@ BOOL WINAPI drvSetDefaultCommConfigW(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    snprintfW(szKeyName, sizeof(szKeyName)/sizeof(WCHAR), fmt, lpszCommKey ,lpszDevice);
+    snprintfW(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
     r = RegCreateKeyW(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {
@@ -556,7 +556,7 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     }
 
     /* only "com1" - "com9" is allowed */
-    r = sizeof(comW) / sizeof(WCHAR);       /* len of "com\0" */
+    r = ARRAY_SIZE(comW);       /* len of "com\0" */
     lstrcpynW(szKeyName, lpszDevice, r);    /* simulate a lstrcmpnW */
     r--;
 
@@ -574,7 +574,7 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     r = RegConnectRegistryW(NULL, HKEY_LOCAL_MACHINE, &hKeyReg);
     if(r != ERROR_SUCCESS) return r;
 
-    snprintfW(szKeyName, sizeof(szKeyName)/sizeof(WCHAR), fmt, lpszCommKey ,lpszDevice);
+    snprintfW(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
     r = RegOpenKeyW(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {
