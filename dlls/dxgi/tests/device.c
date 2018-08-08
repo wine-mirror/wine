@@ -502,6 +502,47 @@ static ID3D12CommandQueue *create_d3d12_direct_queue(ID3D12Device *device)
     return queue;
 }
 
+static HRESULT wait_for_fence(ID3D12Fence *fence, UINT64 value)
+{
+    HANDLE event;
+    HRESULT hr;
+    DWORD ret;
+
+    if (ID3D12Fence_GetCompletedValue(fence) >= value)
+        return S_OK;
+
+    if (!(event = CreateEventA(NULL, FALSE, FALSE, NULL)))
+        return E_FAIL;
+
+    if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(fence, value, event)))
+    {
+        CloseHandle(event);
+        return hr;
+    }
+
+    ret = WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
+    return ret == WAIT_OBJECT_0 ? S_OK : E_FAIL;
+}
+
+#define wait_queue_idle(a, b) wait_queue_idle_(__LINE__, a, b)
+static void wait_queue_idle_(unsigned int line, ID3D12Device *device, ID3D12CommandQueue *queue)
+{
+    ID3D12Fence *fence;
+    HRESULT hr;
+
+    hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE,
+            &IID_ID3D12Fence, (void **)&fence);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+
+    hr = ID3D12CommandQueue_Signal(queue, fence, 1);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+    hr = wait_for_fence(fence, 1);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+
+    ID3D12Fence_Release(fence);
+}
+
 #define get_factory(a, b, c) get_factory_(__LINE__, a, b, c)
 static void get_factory_(unsigned int line, IUnknown *device, BOOL is_d3d12, IDXGIFactory **factory)
 {
@@ -3989,6 +4030,8 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     queue = create_d3d12_direct_queue(device);
 
     test_func((IUnknown *)queue, TRUE);
+
+    wait_queue_idle(device, queue);
 
     refcount = ID3D12CommandQueue_Release(queue);
     ok(!refcount, "Command queue has %u references left.\n", refcount);
