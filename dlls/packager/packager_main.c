@@ -463,7 +463,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
             goto exit;
     }else{
         len = MultiByteToWideChar(CP_ACP, 0, filenameA, filenameA_len,
-                filenameW, sizeof(filenameW) / sizeof(*filenameW));
+                filenameW, ARRAY_SIZE(filenameW));
     }
 
     stream_filename = filenameW + len - 1;
@@ -474,7 +474,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
         ++stream_filename;
     stream_filename_len = len - (stream_filename - filenameW);
 
-    len = GetTempPathW(sizeof(This->filename)/sizeof(WCHAR), This->filename);
+    len = GetTempPathW(ARRAY_SIZE(This->filename), This->filename);
     memcpy(This->filename + len, stream_filename, stream_filename_len * sizeof(WCHAR));
     This->filename[len + stream_filename_len] = 0;
 
