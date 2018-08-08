@@ -3852,7 +3852,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     if (!is_variant_null(&user) || !is_variant_null(&domain) || !is_variant_null(&password))
         FIXME("user/domain/password are ignored\n");
 
-    len = sizeof(comp_name)/sizeof(comp_name[0]);
+    len = ARRAY_SIZE(comp_name);
     if (!GetComputerNameW(comp_name, &len))
         return HRESULT_FROM_WIN32(GetLastError());
 
