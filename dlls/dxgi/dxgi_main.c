@@ -248,3 +248,11 @@ HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, U
 
     return S_OK;
 }
+
+HRESULT WINAPI DXGIGetDebugInterface1(UINT flags, REFIID iid, void **debug)
+{
+    TRACE("flags %#x, iid %s, debug %p.\n", flags, debugstr_guid(iid), debug);
+
+    WARN("Returning E_NOINTERFACE.\n");
+    return E_NOINTERFACE;
+}
