@@ -523,7 +523,7 @@ void CDECL _vcomp_reduction_i1(unsigned int flags, char *dest, char val)
         _vcomp_atomic_bool_or_i1,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
@@ -617,7 +617,7 @@ void CDECL _vcomp_reduction_i2(unsigned int flags, short *dest, short val)
         _vcomp_atomic_bool_or_i2,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
@@ -711,7 +711,7 @@ void CDECL _vcomp_reduction_i4(unsigned int flags, int *dest, int val)
         _vcomp_atomic_bool_or_i4,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
@@ -807,7 +807,7 @@ void CDECL _vcomp_reduction_i8(unsigned int flags, LONG64 *dest, LONG64 val)
         _vcomp_atomic_bool_or_i8,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
@@ -891,7 +891,7 @@ void CDECL _vcomp_reduction_r4(unsigned int flags, float *dest, float val)
         _vcomp_atomic_bool_or_r4,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
@@ -975,7 +975,7 @@ void CDECL _vcomp_reduction_r8(unsigned int flags, double *dest, double val)
         _vcomp_atomic_bool_or_r8,
     };
     unsigned int op = (flags >> 8) & 0xf;
-    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    op = min(op, ARRAY_SIZE(funcs) - 1);
     funcs[op](dest, val);
 }
 
