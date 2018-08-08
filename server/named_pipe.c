@@ -868,9 +868,16 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     }
     reply_size -= offsetof( FILE_PIPE_PEEK_BUFFER, Data );
 
-    if (!pipe_end->connection && list_empty( &pipe_end->message_queue ))
+    switch (pipe_end->state)
     {
+    case FILE_PIPE_CONNECTED_STATE:
+        break;
+    case FILE_PIPE_CLOSING_STATE:
+        if (!list_empty( &pipe_end->message_queue )) break;
         set_error( STATUS_PIPE_BROKEN );
+        return 0;
+    default:
+        set_error( STATUS_INVALID_PIPE_STATE );
         return 0;
     }
 

@@ -214,7 +214,6 @@ static void test_CreateNamedPipe(int pipemode)
     test_signaled(hnp);
 
     ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_BAD_PIPE, "PeekNamedPipe returned %x (%u)\n",
        ret, GetLastError());
 
@@ -1463,7 +1462,6 @@ static int test_DisconnectNamedPipe(void)
         ok(!ret && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "PeekNamedPipe returned %x (%u)\n",
            ret, GetLastError());
         ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_BAD_PIPE, "PeekNamedPipe returned %x (%u)\n",
            ret, GetLastError());
         ok(CloseHandle(hFile), "CloseHandle\n");
