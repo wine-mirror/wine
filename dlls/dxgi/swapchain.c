@@ -926,33 +926,47 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
     return refcount;
 }
 
+static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    unsigned int i;
+
+    if (swapchain->command_queue)
+        ID3D12CommandQueue_Release(swapchain->command_queue);
+    if (swapchain->factory)
+        IWineDXGIFactory_Release(swapchain->factory);
+
+    wined3d_private_store_cleanup(&swapchain->private_store);
+
+    for (i = 0; i < swapchain->buffer_count; ++i)
+    {
+        if (swapchain->buffers[i])
+            vkd3d_resource_decref(swapchain->buffers[i]);
+    }
+
+    if (swapchain->vk_device)
+    {
+        vk_funcs->p_vkDestroyFence(swapchain->vk_device, swapchain->vk_fence, NULL);
+        vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
+    }
+
+    if (swapchain->vk_instance)
+        vk_funcs->p_vkDestroySurfaceKHR(swapchain->vk_instance, swapchain->vk_surface, NULL);
+
+    if (swapchain->device)
+        ID3D12Device_Release(swapchain->device);
+}
+
 static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
-    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     ULONG refcount = InterlockedDecrement(&swapchain->refcount);
-    unsigned int i;
 
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
 
     if (!refcount)
     {
-        ID3D12CommandQueue_Release(swapchain->command_queue);
-        IWineDXGIFactory_Release(swapchain->factory);
-
-        wined3d_private_store_cleanup(&swapchain->private_store);
-
-        for (i = 0; i < swapchain->buffer_count; ++i)
-        {
-            vkd3d_resource_decref(swapchain->buffers[i]);
-        }
-
-        vk_funcs->p_vkDestroyFence(swapchain->vk_device, swapchain->vk_fence, NULL);
-        vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
-        vk_funcs->p_vkDestroySurfaceKHR(swapchain->vk_instance, swapchain->vk_surface, NULL);
-
-        ID3D12Device_Release(swapchain->device);
-
+        d3d12_swapchain_destroy(swapchain);
         heap_free(swapchain);
     }
 
@@ -1621,9 +1635,9 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     VkSurfaceCapabilitiesKHR surface_caps;
     VkPhysicalDevice vk_physical_device;
     VkFence vk_fence = VK_NULL_HANDLE;
-    unsigned int image_count, i, j;
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
+    unsigned int image_count, i;
     VkImageUsageFlags usage;
     VkInstance vk_instance;
     VkBool32 supported;
@@ -1677,8 +1691,13 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     vk_physical_device = vkd3d_get_vk_physical_device(device);
     vk_device = vkd3d_get_vk_device(device);
 
+    swapchain->vk_instance = vk_instance;
+    swapchain->vk_device = vk_device;
+
     if (!init_vk_funcs(&swapchain->vk_funcs, vk_device))
         return E_FAIL;
+
+    wined3d_private_store_init(&swapchain->private_store);
 
     surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_desc.pNext = NULL;
@@ -1688,28 +1707,32 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if ((vr = vk_funcs->p_vkCreateWin32SurfaceKHR(vk_instance, &surface_desc, NULL, &vk_surface)) < 0)
     {
         WARN("Failed to create Vulkan surface, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
+    swapchain->vk_surface = vk_surface;
 
     queue_family_index = vkd3d_get_vk_queue_family_index(queue);
     if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device,
             queue_family_index, vk_surface, &supported)) < 0 || !supported)
     {
         FIXME("Queue family does not support presentation, vr %d.\n", vr);
-        hr = DXGI_ERROR_UNSUPPORTED;
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return DXGI_ERROR_UNSUPPORTED;
     }
 
     if (FAILED(hr = select_vk_format(vk_funcs, vk_physical_device, vk_surface, swapchain_desc, &vk_format)))
-        goto fail;
+    {
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
+    }
 
     if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device,
             vk_surface, &surface_caps)) < 0)
     {
         WARN("Failed to get surface capabilities, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
 
     if (surface_caps.maxImageCount && (swapchain_desc->BufferCount > surface_caps.maxImageCount
@@ -1717,8 +1740,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     {
         WARN("Buffer count %u is not supported (%u-%u).\n", swapchain_desc->BufferCount,
                 surface_caps.minImageCount, surface_caps.maxImageCount);
-        hr = DXGI_ERROR_UNSUPPORTED;
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return DXGI_ERROR_UNSUPPORTED;
     }
 
     if (swapchain_desc->Width > surface_caps.maxImageExtent.width
@@ -1735,8 +1758,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if (!(surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR))
     {
         FIXME("Unsupported alpha mode.\n");
-        hr = DXGI_ERROR_UNSUPPORTED;
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return DXGI_ERROR_UNSUPPORTED;
     }
 
     usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -1767,9 +1790,10 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if ((vr = vk_funcs->p_vkCreateSwapchainKHR(vk_device, &vk_swapchain_desc, NULL, &vk_swapchain)) < 0)
     {
         WARN("Failed to create Vulkan swapchain, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
+    swapchain->vk_swapchain = vk_swapchain;
 
     fence_desc.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_desc.pNext = NULL;
@@ -1777,40 +1801,37 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if ((vr = vk_funcs->p_vkCreateFence(vk_device, &fence_desc, NULL, &vk_fence)) < 0)
     {
         WARN("Failed to create Vulkan fence, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
+    swapchain->vk_fence = vk_fence;
 
     if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, NULL)) < 0)
     {
         WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
     if (image_count != swapchain_desc->BufferCount)
         FIXME("Got %u swapchain images, expected %u.\n", image_count, swapchain_desc->BufferCount);
     if (image_count > ARRAY_SIZE(vk_images))
     {
-        hr = E_FAIL;
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return E_FAIL;
     }
+    swapchain->buffer_count = image_count;
     if ((vr = vk_funcs->p_vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &image_count, vk_images)) < 0)
     {
         WARN("Failed to get Vulkan swapchain images, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hresult_from_vk_result(vr);
     }
-
-    swapchain->vk_swapchain = vk_swapchain;
-    swapchain->vk_surface = vk_surface;
-    swapchain->vk_fence = vk_fence;
-    swapchain->vk_instance = vk_instance;
-    swapchain->vk_device = vk_device;
 
     if (FAILED(hr = d3d12_swapchain_acquire_next_image(swapchain)))
     {
         WARN("Failed to acquire Vulkan image, hr %#x.\n", hr);
-        goto fail;
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
     }
 
     resource_info.type = VKD3D_STRUCTURE_TYPE_IMAGE_RESOURCE_CREATE_INFO;
@@ -1839,28 +1860,16 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         else
         {
             ERR("Failed to create vkd3d resource for Vulkan image %u, hr %#x.\n", i, hr);
-            for (j = 0; j < i; ++j)
-            {
-                vkd3d_resource_decref(swapchain->buffers[j]);
-            }
-            goto fail;
+            d3d12_swapchain_destroy(swapchain);
+            return hr;
         }
     }
-    swapchain->buffer_count = image_count;
-
-    wined3d_private_store_init(&swapchain->private_store);
 
     ID3D12CommandQueue_AddRef(swapchain->command_queue = queue);
     ID3D12Device_AddRef(swapchain->device = device);
     IWineDXGIFactory_AddRef(swapchain->factory = factory);
 
     return S_OK;
-
-fail:
-    vk_funcs->p_vkDestroyFence(vk_device, vk_fence, NULL);
-    vk_funcs->p_vkDestroySwapchainKHR(vk_device, vk_swapchain, NULL);
-    vk_funcs->p_vkDestroySurfaceKHR(vk_instance, vk_surface, NULL);
-    return hr;
 }
 
 HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
