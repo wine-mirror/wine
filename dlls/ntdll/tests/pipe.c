@@ -1338,7 +1338,6 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
             break;
         }
         status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-        todo_wine_if(state == FILE_PIPE_DISCONNECTED_STATE && !is_server)
         ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
     }
@@ -1427,7 +1426,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
     if (state == FILE_PIPE_CLOSING_STATE)
         expected_status = STATUS_SUCCESS;
     status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-    todo_wine_if(state == FILE_PIPE_DISCONNECTED_STATE && status != STATUS_PIPE_DISCONNECTED)
     ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
         is_server ? "server" : "client", state, status);
 }

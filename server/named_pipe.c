@@ -798,8 +798,18 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
 
-    if (!pipe_end->connection && list_empty( &pipe_end->message_queue ))
+    switch (pipe_end->state)
     {
+    case FILE_PIPE_CONNECTED_STATE:
+        break;
+    case FILE_PIPE_DISCONNECTED_STATE:
+        set_error( STATUS_PIPE_DISCONNECTED );
+        return 0;
+    case FILE_PIPE_LISTENING_STATE:
+        set_error( STATUS_PIPE_LISTENING );
+        return 0;
+    case FILE_PIPE_CLOSING_STATE:
+        if (!list_empty( &pipe_end->message_queue )) break;
         set_error( STATUS_PIPE_BROKEN );
         return 0;
     }
