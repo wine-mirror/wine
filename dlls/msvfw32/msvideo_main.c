@@ -319,8 +319,7 @@ static BOOL ICInfo_enum_handler(const char *name, const char *driver, unsigned i
     lpicinfo->dwVersionICM = ICVERSION;
     lpicinfo->szName[0] = 0;
     lpicinfo->szDescription[0] = 0;
-    MultiByteToWideChar(CP_ACP, 0, driver, -1, lpicinfo->szDriver,
-			sizeof(lpicinfo->szDriver)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, driver, -1, lpicinfo->szDriver, ARRAY_SIZE(lpicinfo->szDriver));
 
     return TRUE;
 }
