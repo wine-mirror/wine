@@ -230,9 +230,8 @@ static LRESULT OSS_MidiInit(void)
             MidiOutDev[i].caps.wTechnology = MOD_MIDIPORT;
             MidiOutDev[i].bEnabled = FALSE;
 	} else {
-            MultiByteToWideChar( CP_UNIXCP, 0, sinfo.name, -1,
-                                 MidiOutDev[i].caps.szPname,
-                                 sizeof(MidiOutDev[i].caps.szPname)/sizeof(WCHAR) );
+            MultiByteToWideChar(CP_UNIXCP, 0, sinfo.name, -1, MidiOutDev[i].caps.szPname,
+                                ARRAY_SIZE(MidiOutDev[i].caps.szPname));
             MidiOutDev[i].caps.wTechnology = MIDI_UnixToWindowsDeviceType(sinfo.synth_type);
 
             if (MOD_MIDIPORT != MidiOutDev[i].caps.wTechnology) {
@@ -313,7 +312,7 @@ static LRESULT OSS_MidiInit(void)
         } else {
             MultiByteToWideChar(CP_UNIXCP, 0, minfo.name, -1,
                                 MidiOutDev[numsynthdevs + i].caps.szPname,
-                                sizeof(MidiOutDev[numsynthdevs + i].caps.szPname) / sizeof(WCHAR));
+                                ARRAY_SIZE(MidiOutDev[numsynthdevs + i].caps.szPname));
             MidiOutDev[numsynthdevs + i].bEnabled = TRUE;
         }
 	MidiOutDev[numsynthdevs + i].caps.wTechnology = MOD_MIDIPORT;
@@ -338,9 +337,8 @@ static LRESULT OSS_MidiInit(void)
             wsprintfW(MidiInDev[i].caps.szPname, fmt, numsynthdevs + i);
             MidiInDev[i].state = -1;
         } else {
-            MultiByteToWideChar(CP_UNIXCP, 0, minfo.name, -1,
-                                MidiInDev[i].caps.szPname,
-                                sizeof(MidiInDev[i].caps.szPname) / sizeof(WCHAR));
+            MultiByteToWideChar(CP_UNIXCP, 0, minfo.name, -1, MidiInDev[i].caps.szPname,
+                                ARRAY_SIZE(MidiInDev[i].caps.szPname));
             MidiInDev[i].state = 0;
         }
 	MidiInDev[i].caps.dwSupport   = 0; /* mandatory with MIDIINCAPS */

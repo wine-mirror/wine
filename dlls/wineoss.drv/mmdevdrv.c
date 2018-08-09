@@ -349,8 +349,7 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
     else
         key_name[0] = '0';
     key_name[1] = ',';
-    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2,
-            (sizeof(key_name) / sizeof(*key_name)) - 2);
+    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
@@ -543,11 +542,11 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
             len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
             if(flow == eRender){
                 prefix = outW;
-                prefix_len = (sizeof(outW) / sizeof(*outW)) - 1;
+                prefix_len = ARRAY_SIZE(outW) - 1;
                 len += prefix_len;
             }else{
                 prefix = inW;
-                prefix_len = (sizeof(inW) / sizeof(*inW)) - 1;
+                prefix_len = ARRAY_SIZE(inW) - 1;
                 len += prefix_len;
             }
             (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
