@@ -130,7 +130,7 @@ int ASPI_GetNumControllers(void)
         ERR("Could not open HKLM\\%s\n", debugstr_w(wDevicemapScsi));
         return 0;
     }
-    while (RegEnumKeyW(hkeyScsi, i++, wPortName, sizeof(wPortName)/sizeof(wPortName[0])) == ERROR_SUCCESS)
+    while (RegEnumKeyW(hkeyScsi, i++, wPortName, ARRAY_SIZE(wPortName)) == ERROR_SUCCESS)
     {
         if (RegOpenKeyExW(hkeyScsi, wPortName, 0, KEY_QUERY_VALUE, &hkeyPort) == ERROR_SUCCESS)
         {
@@ -192,7 +192,7 @@ DWORD ASPI_GetHCforController( int controller )
         ERR("Could not open HKLM\\%s\n", debugstr_w(wDevicemapScsi));
         return 0xFFFFFFFF;
     }
-    while (RegEnumKeyW(hkeyScsi, i++, wPortName, sizeof(wPortName)/sizeof(wPortName[0])) == ERROR_SUCCESS)
+    while (RegEnumKeyW(hkeyScsi, i++, wPortName, ARRAY_SIZE(wPortName)) == ERROR_SUCCESS)
     {
         if (RegOpenKeyExW(hkeyScsi, wPortName, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS,
                           &hkeyPort) == ERROR_SUCCESS)
@@ -215,7 +215,7 @@ DWORD ASPI_GetHCforController( int controller )
         return 0xFFFFFFFF;
     }
 
-    if (RegEnumKeyW(hkeyPort, -num_ha, wBusName, sizeof(wBusName)/sizeof(wBusName[0])) != ERROR_SUCCESS)
+    if (RegEnumKeyW(hkeyPort, -num_ha, wBusName, ARRAY_SIZE(wBusName)) != ERROR_SUCCESS)
     {
         ERR("Failed to enumerate keys\n");
         RegCloseKey(hkeyPort);
