@@ -198,7 +198,7 @@ static const char* debugstr_cf(CFTypeRef t)
     if (!ret)
     {
         UniChar buf[200];
-        int len = min(CFStringGetLength(s), sizeof(buf)/sizeof(buf[0]));
+        int len = min(CFStringGetLength(s), ARRAY_SIZE(buf));
         CFStringGetCharacters(s, CFRangeMake(0, len), buf);
         ret = debugstr_wn(buf, len);
     }
@@ -284,7 +284,7 @@ static CFDictionaryRef create_osx_device_match(int usage)
 
     if (values[0] && values[1])
     {
-        result = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, sizeof(values) / sizeof(values[0]),
+        result = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, ARRAY_SIZE(values),
                                     &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 
         if (!result)
@@ -293,7 +293,7 @@ static CFDictionaryRef create_osx_device_match(int usage)
     else
         ERR("CFNumberCreate failed.\n");
 
-    for (i = 0; i < sizeof(values) / sizeof(values[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(values); i++)
         if (values[i]) CFRelease(values[i]);
 
     return result;
@@ -393,7 +393,7 @@ static int find_osx_devices(void)
     IOHIDManagerRef hid_manager;
     int usages[] = { kHIDUsage_GD_Joystick, kHIDUsage_GD_GamePad, kHIDUsage_GD_MultiAxisController };
     int i;
-    CFDictionaryRef matching_dicts[sizeof(usages) / sizeof(usages[0])];
+    CFDictionaryRef matching_dicts[ARRAY_SIZE(usages)];
     CFArrayRef matching;
     CFSetRef devset;
 
@@ -407,7 +407,7 @@ static int find_osx_devices(void)
         return 0;
     }
 
-    for (i = 0; i < sizeof(matching_dicts) / sizeof(matching_dicts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(matching_dicts); i++)
     {
         matching_dicts[i] = create_osx_device_match(usages[i]);
         if (!matching_dicts[i])
@@ -418,10 +418,10 @@ static int find_osx_devices(void)
         }
     }
 
-    matching = CFArrayCreate(NULL, (const void**)matching_dicts, sizeof(matching_dicts) / sizeof(matching_dicts[0]),
+    matching = CFArrayCreate(NULL, (const void**)matching_dicts, ARRAY_SIZE(matching_dicts),
                              &kCFTypeArrayCallBacks);
 
-    for (i = 0; i < sizeof(matching_dicts) / sizeof(matching_dicts[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(matching_dicts); i++)
         CFRelease(matching_dicts[i]);
 
     IOHIDManagerSetDeviceMatchingMultiple(hid_manager, matching);
