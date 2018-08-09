@@ -1177,9 +1177,8 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	} else {
 	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
 	}
-	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
-                            MidiOutDev[MODM_NumDevs].caps.szPname,
-                            sizeof(MidiOutDev[MODM_NumDevs].caps.szPname) / sizeof(WCHAR));
+        MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1, MidiOutDev[MODM_NumDevs].caps.szPname,
+                            ARRAY_SIZE(MidiOutDev[MODM_NumDevs].caps.szPname));
 
 	MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
 
@@ -1244,9 +1243,8 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	} else {
 	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN);
         }
-	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
-                            MidiInDev[MIDM_NumDevs].caps.szPname,
-                            sizeof(MidiInDev[MIDM_NumDevs].caps.szPname) / sizeof(WCHAR));
+        MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1, MidiInDev[MIDM_NumDevs].caps.szPname,
+                            ARRAY_SIZE(MidiInDev[MIDM_NumDevs].caps.szPname));
 	MidiInDev[MIDM_NumDevs].state = 0;
 
 	TRACE("MidiIn [%d]\tname='%s' support=%d\n"

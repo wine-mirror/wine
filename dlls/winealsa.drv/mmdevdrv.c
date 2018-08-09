@@ -311,8 +311,7 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
     else
         key_name[0] = '0';
     key_name[1] = ',';
-    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2,
-            (sizeof(key_name) / sizeof(*key_name)) - 2);
+    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
@@ -362,17 +361,17 @@ static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const cha
     DWORD len_wchars = 0, chunk1_len = 0, copied = 0, prefix_len;
 
     static const WCHAR dashW[] = {' ','-',' ',0};
-    static const size_t dashW_len = (sizeof(dashW) / sizeof(*dashW)) - 1;
+    static const size_t dashW_len = ARRAY_SIZE(dashW) - 1;
     static const WCHAR outW[] = {'O','u','t',':',' ',0};
     static const WCHAR inW[] = {'I','n',':',' ',0};
 
     if(flow == eRender){
         prefix = outW;
-        prefix_len = (sizeof(outW) / sizeof(*outW)) - 1;
+        prefix_len = ARRAY_SIZE(outW) - 1;
         len_wchars += prefix_len;
     }else{
         prefix = inW;
-        prefix_len = (sizeof(inW) / sizeof(*inW)) - 1;
+        prefix_len = ARRAY_SIZE(inW) - 1;
         len_wchars += prefix_len;
     }
     if(chunk1){
@@ -724,7 +723,7 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
         DWORD size, type;
         GUID reg_guid;
 
-        key_name_size = sizeof(key_name)/sizeof(WCHAR);
+        key_name_size = ARRAY_SIZE(key_name);
         if(RegEnumKeyExW(devices_key, i++, key_name, &key_name_size, NULL,
                 NULL, NULL, NULL) != ERROR_SUCCESS)
             break;
