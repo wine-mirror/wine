@@ -599,15 +599,15 @@ static const BaseInputPinFuncTable DirectDrawMediaStreamInputPin_FuncTable =
 };
 
 HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        STREAM_TYPE stream_type, IAMMediaStream **media_stream)
+        IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     DirectDrawMediaStreamImpl *object;
     PIN_INFO pin_info;
     HRESULT hr;
 
-    TRACE("(%p,%s,%p)\n", parent, debugstr_guid(purpose_id), media_stream);
+    TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DirectDrawMediaStreamImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -632,6 +632,10 @@ HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
     object->parent = parent;
     object->purpose_id = *purpose_id;
     object->stream_type = stream_type;
+
+    if (stream_object
+            && FAILED(hr = IUnknown_QueryInterface(stream_object, &IID_IDirectDraw7, (void **)&object->ddraw)))
+        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
 
     *media_stream = &object->IAMMediaStream_iface;
 
@@ -1139,15 +1143,18 @@ static const BaseInputPinFuncTable AudioMediaStreamInputPin_FuncTable =
 };
 
 HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        STREAM_TYPE stream_type, IAMMediaStream **media_stream)
+        IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     AudioMediaStreamImpl *object;
     PIN_INFO pin_info;
     HRESULT hr;
 
-    TRACE("(%p,%s,%p)\n", parent, debugstr_guid(purpose_id), media_stream);
+    TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AudioMediaStreamImpl));
+    if (stream_object)
+        FIXME("Specifying a stream object is not yet supported.\n");
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 

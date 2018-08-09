@@ -339,9 +339,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
 
-    if (stream_object)
-        FIXME("Specifying a stream object in params is not yet supported\n");
-
     if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
     {
         if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
@@ -367,9 +364,9 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     }
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
-        hr = ddrawmediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
+        hr = ddrawmediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
     else
-        hr = audiomediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
+        hr = audiomediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
     {
         pNewStreams = CoTaskMemRealloc(This->pStreams, (This->nbStreams+1) * sizeof(IAMMediaStream*));
