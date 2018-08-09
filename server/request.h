@@ -176,6 +176,7 @@ DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
 DECL_HANDLER(get_console_renderer_events);
 DECL_HANDLER(open_console);
+DECL_HANDLER(attach_console);
 DECL_HANDLER(get_console_wait_event);
 DECL_HANDLER(get_console_mode);
 DECL_HANDLER(set_console_mode);
@@ -471,6 +472,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_free_console,
     (req_handler)req_get_console_renderer_events,
     (req_handler)req_open_console,
+    (req_handler)req_attach_console,
     (req_handler)req_get_console_wait_event,
     (req_handler)req_get_console_mode,
     (req_handler)req_set_console_mode,
@@ -1120,6 +1122,12 @@ C_ASSERT( FIELD_OFFSET(struct open_console_request, share) == 24 );
 C_ASSERT( sizeof(struct open_console_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct open_console_reply, handle) == 8 );
 C_ASSERT( sizeof(struct open_console_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct attach_console_request, pid) == 12 );
+C_ASSERT( sizeof(struct attach_console_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct attach_console_reply, std_in) == 8 );
+C_ASSERT( FIELD_OFFSET(struct attach_console_reply, std_out) == 12 );
+C_ASSERT( FIELD_OFFSET(struct attach_console_reply, std_err) == 16 );
+C_ASSERT( sizeof(struct attach_console_reply) == 24 );
 C_ASSERT( sizeof(struct get_console_wait_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_console_wait_event_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_console_wait_event_reply) == 16 );

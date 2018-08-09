@@ -1463,6 +1463,16 @@ struct console_renderer_event
 @END
 
 
+/* Attach to a other process's console */
+@REQ(attach_console)
+    process_id_t pid;           /* pid of attached console process */
+@REPLY
+    obj_handle_t std_in;        /* attached stdin */
+    obj_handle_t std_out;       /* attached stdout */
+    obj_handle_t std_err;       /* attached stderr */
+@END
+
+
 /* Get the input queue wait event */
 @REQ(get_console_wait_event)
 @REPLY

@@ -2909,8 +2909,23 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
  */
 BOOL WINAPI AttachConsole(DWORD dwProcessId)
 {
-    FIXME("stub %x\n",dwProcessId);
-    return TRUE;
+    BOOL ret;
+
+    TRACE("(%x)\n", dwProcessId);
+
+    SERVER_START_REQ( attach_console )
+    {
+        req->pid = dwProcessId;
+        ret = !wine_server_call_err( req );
+        if (ret)
+        {
+            SetStdHandle(STD_INPUT_HANDLE,  wine_server_ptr_handle(reply->std_in));
+            SetStdHandle(STD_OUTPUT_HANDLE, wine_server_ptr_handle(reply->std_out));
+            SetStdHandle(STD_ERROR_HANDLE,  wine_server_ptr_handle(reply->std_err));
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************

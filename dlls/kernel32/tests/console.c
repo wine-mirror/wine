@@ -208,19 +208,29 @@ static void testEmptyWrite(HANDLE hCon)
     okCURSOR(hCon, c);
 }
 
-static void testWriteSimple(HANDLE hCon)
+static void simple_write_console(HANDLE console, const char *text)
 {
-    COORD		c;
-    DWORD		len;
-    const char*		mytest = "abcdefg";
-    const int	mylen = strlen(mytest);
+    DWORD len;
+    COORD c = {0, 0};
+    BOOL ret;
 
     /* single line write */
     c.X = c.Y = 0;
-    ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left\n");
+    ok(SetConsoleCursorPosition(console, c) != 0, "Cursor in upper-left\n");
 
-    ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
-    c.Y = 0;
+    ret = WriteConsoleA(console, text, strlen(text), &len, NULL);
+    ok(ret, "WriteConsoleA failed: %u\n", GetLastError());
+    ok(len == strlen(text), "unexpected len %u\n", len);
+}
+
+static void testWriteSimple(HANDLE hCon)
+{
+    const char*	mytest = "abcdefg";
+    int mylen = strlen(mytest);
+    COORD c = {0, 0};
+
+    simple_write_console(hCon, mytest);
+
     for (c.X = 0; c.X < mylen; c.X++)
     {
         okCHAR(hCon, c, mytest[c.X], TEST_ATTRIB);
@@ -3019,6 +3029,98 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 }
 
+static void test_AttachConsole_child(DWORD console_pid)
+{
+    HANDLE pipe_in, pipe_out;
+    COORD c = {0,0};
+    HANDLE console;
+    char buf[32];
+    DWORD len;
+    BOOL res;
+
+    res = CreatePipe(&pipe_in, &pipe_out, NULL, 0);
+    ok(res, "CreatePipe failed: %u\n", GetLastError());
+
+    res = AttachConsole(console_pid);
+    ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
+       "AttachConsole returned: %x(%u)\n", res, GetLastError());
+
+    res = FreeConsole();
+    ok(res, "FreeConsole failed: %u\n", GetLastError());
+
+    SetStdHandle(STD_ERROR_HANDLE, pipe_out);
+
+    res = AttachConsole(console_pid);
+    ok(res, "AttachConsole failed: %u\n", GetLastError());
+
+    ok(pipe_out != GetStdHandle(STD_ERROR_HANDLE), "std handle not set to console\n");
+
+    console = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(console != INVALID_HANDLE_VALUE, "Could not open console\n");
+
+    res = ReadConsoleOutputCharacterA(console, buf, 6, c, &len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
+    ok(len == 6, "len = %u\n", len);
+    ok(!memcmp(buf, "Parent", 6), "Unexpected console output\n");
+
+    res = FreeConsole();
+    ok(res, "FreeConsole failed: %u\n", GetLastError());
+
+    SetStdHandle(STD_INPUT_HANDLE, pipe_in);
+    SetStdHandle(STD_OUTPUT_HANDLE, pipe_out);
+
+    res = AttachConsole(ATTACH_PARENT_PROCESS);
+    ok(res, "AttachConsole failed: %u\n", GetLastError());
+
+    ok(pipe_in != GetStdHandle(STD_INPUT_HANDLE), "std handle not set to console\n");
+    ok(pipe_out != GetStdHandle(STD_OUTPUT_HANDLE), "std handle not set to console\n");
+
+    console = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(console != INVALID_HANDLE_VALUE, "Could not open console\n");
+
+    res = ReadConsoleOutputCharacterA(console, buf, 6, c, &len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
+    ok(len == 6, "len = %u\n", len);
+    ok(!memcmp(buf, "Parent", 6), "Unexpected console output\n");
+
+    simple_write_console(console, "Child");
+    CloseHandle(console);
+
+    res = FreeConsole();
+    ok(res, "FreeConsole failed: %u\n", GetLastError());
+
+    res = CloseHandle(pipe_in);
+    ok(res, "pipe_in is no longer valid\n");
+    res = CloseHandle(pipe_out);
+    ok(res, "pipe_out is no longer valid\n");
+}
+
+static void test_AttachConsole(HANDLE console)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION info;
+    char **argv, buf[MAX_PATH];
+    COORD c = {0,0};
+    DWORD len;
+    BOOL res;
+
+    simple_write_console(console, "Parent console");
+
+    winetest_get_mainargs(&argv);
+    sprintf(buf, "\"%s\" console attach_console %x", argv[0], GetCurrentProcessId());
+    res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0, NULL, NULL, &si, &info);
+    ok(res, "CreateProcess failed: %u\n", GetLastError());
+    CloseHandle(info.hThread);
+
+    winetest_wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+
+    res = ReadConsoleOutputCharacterA(console, buf, 5, c, &len);
+    ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
+    ok(len == 5, "len = %u\n", len);
+    ok(!memcmp(buf, "Child", 5), "Unexpected console output\n");
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -3030,8 +3132,20 @@ START_TEST(console)
     char old_font[LF_FACESIZE];
     BOOL delete = FALSE;
     DWORD size;
+    char **argv;
+    int argc;
 
     init_function_pointers();
+
+    argc = winetest_get_mainargs(&argv);
+
+    if (argc > 3 && !strcmp(argv[2], "attach_console"))
+    {
+        DWORD parent_pid;
+        sscanf(argv[3], "%x", &parent_pid);
+        test_AttachConsole_child(parent_pid);
+        return;
+    }
 
     /* be sure we have a clean console (and that's our own)
      * FIXME: this will make the test fail (currently) if we don't run
@@ -3170,4 +3284,5 @@ START_TEST(console)
     test_GetConsoleFontInfo(hConOut);
     test_SetConsoleFont(hConOut);
     test_GetConsoleScreenBufferInfoEx(hConOut);
+    test_AttachConsole(hConOut);
 }
