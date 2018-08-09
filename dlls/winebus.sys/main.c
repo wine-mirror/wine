@@ -696,7 +696,7 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid)
     if (vid != VID_MICROSOFT)
         return FALSE;
 
-    for (i = 0; i < sizeof(PID_XBOX_CONTROLLERS)/sizeof(*PID_XBOX_CONTROLLERS); i++)
+    for (i = 0; i < ARRAY_SIZE(PID_XBOX_CONTROLLERS); i++)
         if (pid == PID_XBOX_CONTROLLERS[i]) return TRUE;
 
     return FALSE;

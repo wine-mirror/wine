@@ -295,7 +295,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
     version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
-    if (str) CFStringToWSTR(str, serial_string, sizeof(serial_string) / sizeof(WCHAR));
+    if (str) CFStringToWSTR(str, serial_string, ARRAY_SIZE(serial_string));
 
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
