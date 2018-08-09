@@ -105,6 +105,23 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 #endif
 
+#if XAUDIO2_VER <= 3
+static XAUDIO2_SEND_DESCRIPTOR *convert_send_descriptors23(const XAUDIO23_VOICE_SENDS *sends)
+{
+    XAUDIO2_SEND_DESCRIPTOR *ret;
+    DWORD i;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sends->OutputCount * sizeof(XAUDIO2_SEND_DESCRIPTOR));
+
+    for(i = 0; i < sends->OutputCount; ++i){
+        ret[i].Flags = 0;
+        ret[i].pOutputVoice = sends->pOutputVoices[i];
+    }
+
+    return ret;
+}
+#endif
+
 /* BEGIN IXAudio2SourceVoice */
 #if XAUDIO2_VER == 0
 static XA2SourceImpl *impl_from_IXAudio20SourceVoice(IXAudio20SourceVoice *iface)
@@ -129,22 +146,21 @@ static HRESULT WINAPI XA20SRC_SetOutputVoices(IXAudio20SourceVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2SourceImpl *This = impl_from_IXAudio20SourceVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2SourceVoice_SetOutputVoices(&This->IXAudio2SourceVoice_iface, &sends);
+    hr = IXAudio2SourceVoice_SetOutputVoices(&This->IXAudio2SourceVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -387,22 +403,21 @@ static HRESULT WINAPI XA23SRC_SetOutputVoices(IXAudio23SourceVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2SourceVoice_SetOutputVoices(&This->IXAudio2SourceVoice_iface, &sends);
+    hr = IXAudio2SourceVoice_SetOutputVoices(&This->IXAudio2SourceVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -908,22 +923,21 @@ static HRESULT WINAPI XA20SUB_SetOutputVoices(IXAudio20SubmixVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2SubmixImpl *This = impl_from_IXAudio20SubmixVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, &sends);
+    hr = IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -1094,22 +1108,21 @@ static HRESULT WINAPI XA23SUB_SetOutputVoices(IXAudio23SubmixVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, &sends);
+    hr = IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -1470,22 +1483,21 @@ static HRESULT WINAPI XA20M_SetOutputVoices(IXAudio20MasteringVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     IXAudio2Impl *This = impl_from_IXAudio20MasteringVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, &sends);
+    hr = IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -1656,22 +1668,21 @@ static HRESULT WINAPI XA23M_SetOutputVoices(IXAudio23MasteringVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
-    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
-    DWORD i;
 
     TRACE("%p, %p\n", This, pSendList);
 
-    sends.SendCount = pSendList->OutputCount;
-    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
-    for(i = 0; i < sends.SendCount; ++i){
-        sends.pSends[i].Flags = 0;
-        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
     }
 
-    hr = IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, &sends);
+    hr = IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, psends);
 
-    HeapFree(GetProcessHeap(), 0, sends.pSends);
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
 
     return hr;
 }
@@ -2151,25 +2162,53 @@ static void WINAPI XA20_UnregisterForCallbacks(IXAudio20 *iface,
 static HRESULT WINAPI XA20_CreateSourceVoice(IXAudio20 *iface,
         IXAudio2SourceVoice **ppSourceVoice, const WAVEFORMATEX *pSourceFormat,
         UINT32 flags, float maxFrequencyRatio,
-        IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList,
+        IXAudio2VoiceCallback *pCallback, const XAUDIO23_VOICE_SENDS *pSendList,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio20(iface);
-    return IXAudio2_CreateSourceVoice(&This->IXAudio2_iface, ppSourceVoice,
-            pSourceFormat, flags, maxFrequencyRatio, pCallback, pSendList,
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
+    HRESULT hr;
+
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
+    }
+
+    hr = IXAudio2_CreateSourceVoice(&This->IXAudio2_iface, ppSourceVoice,
+            pSourceFormat, flags, maxFrequencyRatio, pCallback, psends,
             pEffectChain);
+
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
 }
 
 static HRESULT WINAPI XA20_CreateSubmixVoice(IXAudio20 *iface,
         IXAudio2SubmixVoice **ppSubmixVoice, UINT32 inputChannels,
         UINT32 inputSampleRate, UINT32 flags, UINT32 processingStage,
-        const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO23_VOICE_SENDS *pSendList,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio20(iface);
-    return IXAudio2_CreateSubmixVoice(&This->IXAudio2_iface, ppSubmixVoice,
-            inputChannels, inputSampleRate, flags, processingStage, pSendList,
+    XAUDIO2_VOICE_SENDS sends, *psends;
+    HRESULT hr;
+
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
+    }
+
+    hr = IXAudio2_CreateSubmixVoice(&This->IXAudio2_iface, ppSubmixVoice,
+            inputChannels, inputSampleRate, flags, processingStage, psends,
             pEffectChain);
+
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
 }
 
 static HRESULT WINAPI XA20_CreateMasteringVoice(IXAudio20 *iface,
@@ -2406,25 +2445,53 @@ static void WINAPI XA22_UnregisterForCallbacks(IXAudio22 *iface,
 static HRESULT WINAPI XA22_CreateSourceVoice(IXAudio22 *iface,
         IXAudio2SourceVoice **ppSourceVoice, const WAVEFORMATEX *pSourceFormat,
         UINT32 flags, float maxFrequencyRatio,
-        IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList,
+        IXAudio2VoiceCallback *pCallback, const XAUDIO23_VOICE_SENDS *pSendList,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio22(iface);
-    return IXAudio2_CreateSourceVoice(&This->IXAudio2_iface, ppSourceVoice,
-            pSourceFormat, flags, maxFrequencyRatio, pCallback, pSendList,
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
+    HRESULT hr;
+
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
+    }
+
+    hr = IXAudio2_CreateSourceVoice(&This->IXAudio2_iface, ppSourceVoice,
+            pSourceFormat, flags, maxFrequencyRatio, pCallback, psends,
             pEffectChain);
+
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
 }
 
 static HRESULT WINAPI XA22_CreateSubmixVoice(IXAudio22 *iface,
         IXAudio2SubmixVoice **ppSubmixVoice, UINT32 inputChannels,
         UINT32 inputSampleRate, UINT32 flags, UINT32 processingStage,
-        const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO23_VOICE_SENDS *pSendList,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio22(iface);
-    return IXAudio2_CreateSubmixVoice(&This->IXAudio2_iface, ppSubmixVoice,
-            inputChannels, inputSampleRate, flags, processingStage, pSendList,
+    XAUDIO2_VOICE_SENDS sends, *psends;
+    HRESULT hr;
+
+    if(pSendList){
+        sends.SendCount = pSendList->OutputCount;
+        sends.pSends = convert_send_descriptors23(pSendList);
+        psends = &sends;
+    }
+
+    hr = IXAudio2_CreateSubmixVoice(&This->IXAudio2_iface, ppSubmixVoice,
+            inputChannels, inputSampleRate, flags, processingStage, psends,
             pEffectChain);
+
+    if(pSendList)
+        HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
 }
 
 static HRESULT WINAPI XA22_CreateMasteringVoice(IXAudio22 *iface,

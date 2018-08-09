@@ -956,7 +956,7 @@ interface IXAudio20 : IUnknown
         [in, defaultvalue(0)] UINT32 Flags,
         [in, defaultvalue(XAUDIO2_DEFAULT_FREQ_RATIO)] float MaxFrequencyRatio,
         [in, defaultvalue(NULL)] IXAudio2VoiceCallback* pCallback,
-        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
         [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
 
     HRESULT CreateSubmixVoice(
@@ -965,7 +965,7 @@ interface IXAudio20 : IUnknown
         [in] UINT32 InputSampleRate,
         [in, defaultvalue(0)] UINT32 Flags,
         [in, defaultvalue(0)] UINT32 ProcessingStage,
-        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
         [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
 
     HRESULT CreateMasteringVoice(
@@ -1017,7 +1017,7 @@ interface IXAudio22 : IUnknown
         [in, defaultvalue(0)] UINT32 Flags,
         [in, defaultvalue(XAUDIO2_DEFAULT_FREQ_RATIO)] float MaxFrequencyRatio,
         [in, defaultvalue(NULL)] IXAudio2VoiceCallback* pCallback,
-        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
         [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
 
     HRESULT CreateSubmixVoice(
@@ -1026,7 +1026,7 @@ interface IXAudio22 : IUnknown
         [in] UINT32 InputSampleRate,
         [in, defaultvalue(0)] UINT32 Flags,
         [in, defaultvalue(0)] UINT32 ProcessingStage,
-        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
         [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
 
     HRESULT CreateMasteringVoice(
