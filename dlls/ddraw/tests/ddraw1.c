@@ -9046,6 +9046,133 @@ static void test_blt_z_alpha(void)
     DestroyWindow(window);
 }
 
+static void test_cross_device_blt(void)
+{
+    IDirectDrawSurface *surface, *surface2, *sysmem_surface;
+    IDirect3DDevice *device, *device2;
+    IDirectDraw *ddraw, *ddraw2;
+    DDSURFACEDESC surface_desc;
+    HWND window, window2;
+    ULONG refcount;
+    D3DCOLOR color;
+    DDBLTFX fx;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    if (!(device = create_device(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    window2 = create_window();
+    ddraw2 = create_ddraw();
+    if (!(device2 = create_device(ddraw2, window2, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirectDraw_Release(ddraw2);
+        IDirect3DDevice_Release(device);
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        DestroyWindow(window2);
+        return;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &sysmem_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_VIDEOMEMORY;
+    U5(surface_desc).dwBackBufferCount = 2;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0x00007c00;
+    U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x000003e0;
+    U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x0000001f;
+    hr = IDirectDraw_CreateSurface(ddraw2, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0xff0000ff;
+    hr = IDirectDrawSurface_Blt(surface2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Blt(surface, NULL, surface2, NULL, DDBLT_WAIT, NULL);
+    ok(hr == E_NOTIMPL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_Blt(surface, NULL, surface2, NULL, DDBLT_WAIT, NULL);
+    ok(hr == E_NOTIMPL, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(surface, 320, 240);
+    ok(color == 0x00000000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirectDrawSurface_Blt(sysmem_surface, NULL, surface2, NULL, DDBLT_WAIT, NULL);
+    ok(hr == E_NOTIMPL, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(sysmem_surface, 320, 240);
+    ok(color == 0x00000000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Blt(sysmem_surface, NULL, surface2, NULL, DDBLT_WAIT, NULL);
+    ok(hr == E_NOTIMPL, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(sysmem_surface, 320, 240);
+    ok(color == 0x00000000, "Got unexpected color 0x%08x.\n", color);
+
+    IDirectDrawSurface_Release(surface2);
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw_CreateSurface(ddraw2, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Blt(sysmem_surface, NULL, surface2, NULL, DDBLT_WAIT, NULL);
+    todo_wine ok(hr == D3D_OK, "Failed to blit, hr %#x.\n", hr);
+    color = get_surface_color(sysmem_surface, 320, 240);
+    todo_wine ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirectDrawSurface_Release(surface);
+    IDirectDrawSurface_Release(surface2);
+    IDirectDrawSurface_Release(sysmem_surface);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirect3DDevice_Release(device2);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw_Release(ddraw);
+    IDirectDraw_Release(ddraw2);
+    DestroyWindow(window);
+    DestroyWindow(window2);
+}
+
 static void test_getdc(void)
 {
     IDirectDrawSurface *surface, *surface2, *tmp;
@@ -11677,6 +11804,7 @@ START_TEST(ddraw1)
     test_overlay_rect();
     test_blt();
     test_blt_z_alpha();
+    test_cross_device_blt();
     test_getdc();
     test_transform_vertices();
     test_display_mode_surface_pixel_format();
