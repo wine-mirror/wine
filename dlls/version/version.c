@@ -1313,7 +1313,7 @@ DWORD WINAPI VerFindFileW( DWORD flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
     /* Figure out where the file should go; shared files default to the
        system directory */
 
-    GetSystemDirectoryW(systemDir, sizeof(systemDir)/sizeof(WCHAR));
+    GetSystemDirectoryW(systemDir, ARRAY_SIZE(systemDir));
     curDir = &emptyW;
 
     if(flags & VFFF_ISSHAREDFILE)
