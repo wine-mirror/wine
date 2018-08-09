@@ -12989,8 +12989,9 @@ static void test_viewport(void)
 
     destroy_material(black_background);
     refcount = IDirect3DDevice2_Release(device);
-    IDirect3D2_Release(d3d);
     ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D2_Release(d3d);
+    IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 

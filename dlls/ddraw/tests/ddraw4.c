@@ -15083,8 +15083,9 @@ static void test_viewport(void)
     }
 
     refcount = IDirect3DDevice3_Release(device);
-    IDirect3D3_Release(d3d);
     ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D3_Release(d3d);
+    IDirectDraw4_Release(ddraw);
     DestroyWindow(window);
 }
 

@@ -14399,6 +14399,7 @@ static void test_viewport(void)
 
     refcount = IDirect3DDevice7_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw7_Release(ddraw);
     DestroyWindow(window);
 }
 
