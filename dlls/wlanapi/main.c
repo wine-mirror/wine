@@ -49,7 +49,7 @@ static struct wine_wlan* handle_index(HANDLE handle)
 {
     ULONG_PTR i = (ULONG_PTR)handle - 1;
 
-    if (i < sizeof(handle_table) / sizeof(handle_table[0]) && handle_table[i].magic == WLAN_MAGIC)
+    if (i < ARRAY_SIZE(handle_table) && handle_table[i].magic == WLAN_MAGIC)
         return &handle_table[i];
 
     return NULL;
@@ -59,7 +59,7 @@ static HANDLE handle_new(struct wine_wlan **entry)
 {
     ULONG_PTR i;
 
-    for (i = 0; i < sizeof(handle_table) / sizeof(handle_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(handle_table); i++)
     {
         if (handle_table[i].magic == 0)
         {
