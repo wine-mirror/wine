@@ -70,7 +70,7 @@ static const OTTable tables_templ[] = {
 };
 
 struct tagTYPE42 {
-    OTTable tables[sizeof(tables_templ)/sizeof(tables_templ[0])];
+    OTTable tables[ARRAY_SIZE(tables_templ)];
     int glyf_tab, loca_tab, head_tab; /* indices of glyf, loca and head tables */
     int hmtx_tab, maxp_tab;
     int num_of_written_tables;
@@ -138,7 +138,7 @@ TYPE42 *T42_download_header(PHYSDEV dev, char *ps_name,
                             RECT *bbox, UINT emsize)
 {
     DWORD i, j, tablepos, nb_blocks, glyf_off = 0, loca_off = 0, cur_off;
-    WORD num_of_tables = sizeof(tables_templ) / sizeof(tables_templ[0]) - 1;
+    WORD num_of_tables = ARRAY_SIZE(tables_templ) - 1;
     char *buf;
     TYPE42 *t42;
     static const char start[] = /* name, fontbbox */

@@ -93,27 +93,27 @@ HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patter
     switch(physDev->pen.style) {
     case PS_DASH:
         memcpy( physDev->pen.dash, PEN_dash, sizeof(PEN_dash) );
-        physDev->pen.dash_len = sizeof(PEN_dash) / sizeof(DWORD);
+        physDev->pen.dash_len = ARRAY_SIZE( PEN_dash );
 	break;
 
     case PS_DOT:
         memcpy( physDev->pen.dash, PEN_dot, sizeof(PEN_dot) );
-        physDev->pen.dash_len = sizeof(PEN_dot) / sizeof(DWORD);
+        physDev->pen.dash_len = ARRAY_SIZE( PEN_dot );
 	break;
 
     case PS_DASHDOT:
         memcpy( physDev->pen.dash, PEN_dashdot, sizeof(PEN_dashdot) );
-        physDev->pen.dash_len = sizeof(PEN_dashdot) / sizeof(DWORD);
+        physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdot );
 	break;
 
     case PS_DASHDOTDOT:
         memcpy( physDev->pen.dash, PEN_dashdotdot, sizeof(PEN_dashdotdot) );
-        physDev->pen.dash_len = sizeof(PEN_dashdotdot) / sizeof(DWORD);
+        physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdotdot );
 	break;
 
     case PS_ALTERNATE:
         memcpy( physDev->pen.dash, PEN_alternate, sizeof(PEN_alternate) );
-        physDev->pen.dash_len = sizeof(PEN_alternate) / sizeof(DWORD);
+        physDev->pen.dash_len = ARRAY_SIZE( PEN_alternate );
 	break;
 
     case PS_USERSTYLE:

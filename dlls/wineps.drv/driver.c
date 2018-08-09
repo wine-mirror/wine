@@ -285,7 +285,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         res = di->pi->ppd->DefaultResolution;
         len = sprintfW(buf, resW, res);
         buf[len++] = ' ';
-        LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, sizeof(buf)/sizeof(buf[0]) - len);
+        LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
         SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
         SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_SETITEMDATA, 0, MAKELONG(res, res));
         Cursel = 0;
@@ -317,7 +317,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             else
                 len = sprintfW(buf, resxyW, res->resx, res->resy);
             buf[len++] = ' ';
-            LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, sizeof(buf)/sizeof(buf[0]) - len);
+            LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
             idx = SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
             SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_SETITEMDATA, idx, MAKELONG(res->resx, res->resy));
 
@@ -557,7 +557,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     WCHAR SetupW[64];
     static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
 
-    LoadStringW(PSDRV_hInstance, IDS_SETUP, SetupW, sizeof(SetupW)/sizeof(SetupW[0]));
+    LoadStringW(PSDRV_hInstance, IDS_SETUP, SetupW, ARRAY_SIZE(SetupW));
     hinstComctl32 = LoadLibraryA("comctl32.dll");
     pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
 						    "CreatePropertySheetPageW");
