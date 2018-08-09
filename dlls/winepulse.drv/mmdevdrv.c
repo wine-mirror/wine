@@ -469,7 +469,7 @@ static HRESULT pulse_connect(void)
     if (pulse_ctx)
         pa_context_unref(pulse_ctx);
 
-    GetModuleFileNameW(NULL, path, sizeof(path)/sizeof(*path));
+    GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     name = strrchrW(path, '\\');
     if (!name)
         name = path;
@@ -537,7 +537,7 @@ static HRESULT pulse_test_connect(void)
 
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
 
-    GetModuleFileNameW(NULL, path, sizeof(path)/sizeof(*path));
+    GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     name = strrchrW(path, '\\');
     if (!name)
         name = path;
@@ -1283,7 +1283,7 @@ static HRESULT pulse_spec_from_waveformat(ACImpl *This, const WAVEFORMATEX *fmt)
         This->map.channels = fmt->nChannels;
         if (!mask || (mask & (SPEAKER_ALL|SPEAKER_RESERVED)))
             mask = get_channel_mask(fmt->nChannels);
-        for (j = 0; j < sizeof(pulse_pos_from_wfx)/sizeof(*pulse_pos_from_wfx) && i < fmt->nChannels; ++j) {
+        for (j = 0; j < ARRAY_SIZE(pulse_pos_from_wfx) && i < fmt->nChannels; ++j) {
             if (mask & (1 << j))
                 This->map.map[i++] = pulse_pos_from_wfx[j];
         }
