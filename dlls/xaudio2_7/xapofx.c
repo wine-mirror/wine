@@ -145,11 +145,10 @@ static HRESULT WINAPI VUMXAPO_Initialize(IXAPO *iface, const void *data,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VUMXAPO_Reset(IXAPO *iface)
+static void WINAPI VUMXAPO_Reset(IXAPO *iface)
 {
     VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
     TRACE("%p\n", This);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI VUMXAPO_LockForProcess(IXAPO *iface,
@@ -347,11 +346,10 @@ static HRESULT WINAPI RVBXAPO_Initialize(IXAPO *iface, const void *data,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI RVBXAPO_Reset(IXAPO *iface)
+static void WINAPI RVBXAPO_Reset(IXAPO *iface)
 {
     ReverbImpl *This = ReverbImpl_from_IXAPO(iface);
     TRACE("%p\n", This);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI RVBXAPO_LockForProcess(IXAPO *iface, UINT32 in_params_count,
@@ -548,11 +546,10 @@ static HRESULT WINAPI EQXAPO_Initialize(IXAPO *iface, const void *data,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI EQXAPO_Reset(IXAPO *iface)
+static void WINAPI EQXAPO_Reset(IXAPO *iface)
 {
     EQImpl *This = EQImpl_from_IXAPO(iface);
     TRACE("%p\n", This);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI EQXAPO_LockForProcess(IXAPO *iface, UINT32 in_params_count,

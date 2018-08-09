@@ -110,7 +110,7 @@ interface IXAPO : IUnknown
 
     HRESULT Initialize(const void *data, UINT32 data_len);
 
-    HRESULT Reset(void);
+    void Reset(void);
 
     HRESULT LockForProcess(UINT32 in_params_count, const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *in_params,
         UINT32 out_params_count, const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *out_params);
