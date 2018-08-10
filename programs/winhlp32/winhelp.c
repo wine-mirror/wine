@@ -595,7 +595,7 @@ static void WINHELP_RememberPage(WINHELP_WINDOW* win, WINHELP_WNDPAGE* wpage)
 
     if (!Globals.history.index || Globals.history.set[0].page != wpage->page)
     {
-        num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
+        num = ARRAY_SIZE(Globals.history.set);
         /* we're full, remove latest entry */
         if (Globals.history.index == num)
         {
@@ -610,7 +610,7 @@ static void WINHELP_RememberPage(WINHELP_WINDOW* win, WINHELP_WNDPAGE* wpage)
     }
     if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
 
-    num = sizeof(win->back.set) / sizeof(win->back.set[0]);
+    num = ARRAY_SIZE(win->back.set);
     if (win->back.index == num)
     {
         /* we're full, remove latest entry */
@@ -1136,7 +1136,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         GetWindowRect(hWnd, &r);
 
         r.right = r.left + 30 * tm.tmAveCharWidth;
-        r.bottom = r.top + (sizeof(Globals.history.set) / sizeof(Globals.history.set[0])) * tm.tmHeight;
+        r.bottom = r.top + ARRAY_SIZE(Globals.history.set) * tm.tmHeight;
         AdjustWindowRect(&r, GetWindowLongW(hWnd, GWL_STYLE), FALSE);
         if (r.left < 0) {r.right -= r.left; r.left = 0;}
         if (r.top < 0) {r.bottom -= r.top; r.top = 0;}
