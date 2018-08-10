@@ -144,7 +144,7 @@ static WCHAR *NETSTAT_load_message(UINT id) {
     static WCHAR msg[2048];
     static const WCHAR failedW[]  = {'F','a','i','l','e','d','!','\0'};
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, sizeof(msg)/sizeof(WCHAR))) {
+    if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         strcpyW(msg, failedW);
     }
