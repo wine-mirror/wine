@@ -66,19 +66,18 @@ static void WINHELP_InitFonts(HWND hWnd)
         {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
         {-10, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
         { -8, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}}};
-#define FONTS_LEN (sizeof(logfontlist)/sizeof(*logfontlist))
 
-    static HFONT fonts[FONTS_LEN];
+    static HFONT fonts[ARRAY_SIZE(logfontlist)];
     static BOOL init = FALSE;
 
-    win->fonts_len = FONTS_LEN;
+    win->fonts_len = ARRAY_SIZE(logfontlist);
     win->fonts = fonts;
 
     if (!init)
     {
         UINT i;
 
-        for (i = 0; i < FONTS_LEN; i++)
+        for (i = 0; i < ARRAY_SIZE(logfontlist); i++)
 	{
             fonts[i] = CreateFontIndirectW(&logfontlist[i]);
 	}
