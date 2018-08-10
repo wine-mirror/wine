@@ -49,7 +49,7 @@ static void WINAPIV output_write(UINT id, ...)
 
     if (Silent) return;
 
-    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         return;
