@@ -1807,7 +1807,7 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
 
     WINE_TRACE("%s\n", wine_dbgstr_w(filename));
 
-    for( i=0; i<sizeof(locations)/sizeof(locations[0]); i++ )
+    for( i=0; i<ARRAY_SIZE( locations ); i++ )
     {
         if (!SHGetSpecialFolderPathW( 0, buffer, locations[i], FALSE ))
             continue;
