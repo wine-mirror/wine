@@ -306,14 +306,11 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
         return E_FAIL;
     }
 
-    if (hr == S_OK)
-    {
-        pWAVEParser->StartOfFile = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFCHUNK));
-        pWAVEParser->EndOfFile = MEDIATIME_FROM_BYTES(pos + chunk.cb + sizeof(RIFFCHUNK));
-    }
-
     if (hr != S_OK)
         return E_FAIL;
+
+    pWAVEParser->StartOfFile = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFCHUNK));
+    pWAVEParser->EndOfFile = MEDIATIME_FROM_BYTES(pos + chunk.cb + sizeof(RIFFCHUNK));
 
     props->cbAlign = ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
     props->cbPrefix = 0;
