@@ -650,7 +650,7 @@ static BOOL is_local_machineA( const CHAR *server )
 {
     static const CHAR dot[] = ".";
     CHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD len = sizeof(buffer) / sizeof(buffer[0]);
+    DWORD len = ARRAY_SIZE( buffer );
 
     if (!server || !strcmp( server, dot )) return TRUE;
     if (GetComputerNameA( buffer, &len ) && !lstrcmpiA( server, buffer )) return TRUE;
@@ -660,7 +660,7 @@ static BOOL is_local_machineW( const WCHAR *server )
 {
     static const WCHAR dotW[] = {'.',0};
     WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD len = sizeof(buffer) / sizeof(buffer[0]);
+    DWORD len = ARRAY_SIZE( buffer );
 
     if (!server || !strcmpW( server, dotW )) return TRUE;
     if (GetComputerNameW( buffer, &len ) && !strcmpiW( server, buffer )) return TRUE;
