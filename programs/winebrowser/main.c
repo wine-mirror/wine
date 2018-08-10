@@ -334,7 +334,7 @@ static WCHAR *encode_unix_path(const char *src)
     const char safe_chars[] = "/-_.~@&=+$,:";
     const char hex_digits[] = "0123456789ABCDEF";
     const WCHAR schema[] = {'f','i','l','e',':','/','/',0};
-    int len = sizeof(schema)/sizeof(schema[0]);
+    int len = ARRAY_SIZE(schema);
 
     tmp_src = src;
 
