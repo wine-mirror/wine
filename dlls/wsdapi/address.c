@@ -150,7 +150,7 @@ static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddressEx(IWSDUdpAddress *T
     switch (((SOCKADDR_IN *) &impl->sockAddr)->sin_family)
     {
         case AF_INET:
-            size = sizeof(impl->ipv4Address) / sizeof(WCHAR);
+            size = ARRAY_SIZE(impl->ipv4Address);
 
             if (WSAAddressToStringW((LPSOCKADDR) &impl->sockAddr, sizeof(SOCKADDR_IN), NULL, impl->ipv4Address, &size) == 0)
             {
@@ -161,7 +161,7 @@ static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddressEx(IWSDUdpAddress *T
             break;
 
         case AF_INET6:
-            size = sizeof(impl->ipv6Address) / sizeof(WCHAR);
+            size = ARRAY_SIZE(impl->ipv6Address);
 
             /* Copy the SOCKADDR structure so we can remove the scope ID if not required */
             memcpy(&storage, &impl->sockAddr, sizeof(SOCKADDR_IN6));
