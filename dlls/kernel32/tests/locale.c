@@ -1839,6 +1839,8 @@ static const struct comparestringa_entry comparestringa_data[] = {
 
 static void test_CompareStringA(void)
 {
+  static const char ABC_EE[] = {'A','B','C',0,0xEE};
+  static const char ABC_FF[] = {'A','B','C',0,0xFF};
   int ret, i;
   char a[256];
   LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
@@ -1980,10 +1982,23 @@ static void test_CompareStringA(void)
     ret = CompareStringA(lcid, 0, a, sizeof(a), a, sizeof(a));
     ok (GetLastError() == 0xdeadbeef && ret == CSTR_EQUAL,
         "ret %d, error %d, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
+
+    ret = CompareStringA(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringA(CP_ACP, 0, ABC_EE, 5, ABC_FF, 3);
+    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+    ret = CompareStringA(CP_ACP, 0, ABC_EE, 3, ABC_FF, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringA(CP_ACP, 0, ABC_EE, 5, ABC_FF, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringA(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
+    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
 }
 
 static void test_CompareStringW(void)
 {
+    static const WCHAR ABC_EE[] = {'A','B','C',0,0xEE};
+    static const WCHAR ABC_FF[] = {'A','B','C',0,0xFF};
     WCHAR *str1, *str2;
     SYSTEM_INFO si;
     DWORD old_prot;
@@ -2010,6 +2025,17 @@ static void test_CompareStringW(void)
 
     success = VirtualFree(buf, 0, MEM_RELEASE);
     ok(success, "VirtualFree failed with %u\n", GetLastError());
+
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 5, ABC_FF, 3);
+    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 5, ABC_FF, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
+    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
 }
 
 struct comparestringex_test {
