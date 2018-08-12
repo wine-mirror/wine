@@ -2175,20 +2175,64 @@ struct _ITEM_DATA
     HTREEITEM  parent; /* for root value of parent field is unidetified */
     HTREEITEM  nextsibling;
     HTREEITEM  firstchild;
+    void      *unk[2];
+    DWORD      unk2;
+    WORD       pad;
+    WORD       width;
 };
 
-static void _check_item(HTREEITEM item, HTREEITEM parent, HTREEITEM nextsibling, HTREEITEM firstchild, int line)
+struct _ITEM_DATA_V6
 {
-    struct _ITEM_DATA *data = (struct _ITEM_DATA*)item;
+    HTREEITEM  parent; /* for root value of parent field is unidetified */
+    HTREEITEM  nextsibling;
+    HTREEITEM  firstchild;
+    void      *unk[3];
+    DWORD      unk2[2];
+    WORD       pad;
+    WORD       width;
+};
 
-    ok_(__FILE__, line)(data->parent == parent, "parent %p, got %p\n", parent, data->parent);
-    ok_(__FILE__, line)(data->nextsibling == nextsibling, "sibling %p, got %p\n", nextsibling, data->nextsibling);
-    ok_(__FILE__, line)(data->firstchild == firstchild, "firstchild %p, got %p\n", firstchild, data->firstchild);
+static void _check_item(HWND hwnd, HTREEITEM item, BOOL is_version_6, int line)
+{
+    struct _ITEM_DATA *data = (struct _ITEM_DATA *)item;
+    HTREEITEM parent, nextsibling, firstchild, root;
+    RECT rect;
+    BOOL ret;
+
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM)item);
+    parent = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)item);
+    nextsibling = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)item);
+    firstchild = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)item);
+
+    *(HTREEITEM*)&rect = item;
+    ret = SendMessageA(hwnd, TVM_GETITEMRECT, TRUE, (LPARAM)&rect);
+
+    ok_(__FILE__, line)(item == root ? data->parent != NULL : data->parent == parent,
+            "Unexpected parent item %p, got %p, %p\n", parent, data->parent, hwnd);
+    ok_(__FILE__, line)(data->nextsibling == nextsibling, "Unexpected sibling %p, got %p\n",
+            nextsibling, data->nextsibling);
+    ok_(__FILE__, line)(data->firstchild == firstchild, "Unexpected first child %p, got %p\n",
+            firstchild, data->firstchild);
+    if (ret)
+    {
+        WORD width;
+
+        if (is_version_6)
+        {
+            struct _ITEM_DATA_V6 *data_v6 = (struct _ITEM_DATA_V6 *)item;
+            width = data_v6->width;
+        }
+        else
+            width = data->width;
+    todo_wine
+        ok_(__FILE__, line)(width == (rect.right - rect.left), "Width %d, rect width %d.\n",
+            width, rect.right - rect.left);
+    }
 }
 
-#define check_item(a, b, c, d) _check_item(a, b, c, d, __LINE__)
+#define CHECK_ITEM(a, b) _check_item(a, b, is_version_6, __LINE__)
 
-static void test_htreeitem_layout(void)
+static void test_htreeitem_layout(BOOL is_version_6)
 {
     TVINSERTSTRUCTA ins;
     HTREEITEM item1, item2;
@@ -2198,27 +2242,27 @@ static void test_htreeitem_layout(void)
     fill_tree(hTree);
 
     /* root has some special pointer in parent field */
-    check_item(hRoot, ((struct _ITEM_DATA*)hRoot)->parent, 0, hChild);
-    check_item(hChild, hRoot, 0, 0);
+    CHECK_ITEM(hTree, hRoot);
+    CHECK_ITEM(hTree, hChild);
 
     ins.hParent = hChild;
     ins.hInsertAfter = TVI_FIRST;
     U(ins).item.mask = 0;
     item1 = TreeView_InsertItemA(hTree, &ins);
 
-    check_item(item1, hChild, 0, 0);
+    CHECK_ITEM(hTree, item1);
 
     ins.hParent = hRoot;
     ins.hInsertAfter = TVI_FIRST;
     U(ins).item.mask = 0;
     item2 = TreeView_InsertItemA(hTree, &ins);
 
-    check_item(item2, hRoot, hChild, 0);
+    CHECK_ITEM(hTree, item2);
 
     SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hChild);
 
     /* without children now */
-    check_item(hRoot, ((struct _ITEM_DATA*)hRoot)->parent, 0, item2);
+    CHECK_ITEM(hTree, hRoot);
 
     DestroyWindow(hTree);
 }
@@ -2870,7 +2914,7 @@ START_TEST(treeview)
     test_WM_PAINT();
     test_delete_items();
     test_cchildren();
-    test_htreeitem_layout();
+    test_htreeitem_layout(FALSE);
     test_TVS_CHECKBOXES();
     test_TVM_GETNEXTITEM();
     test_TVM_HITTEST();
@@ -2907,7 +2951,7 @@ START_TEST(treeview)
     test_treeview_classinfo();
     test_delete_items();
     test_cchildren();
-    test_htreeitem_layout();
+    test_htreeitem_layout(TRUE);
     test_TVM_GETNEXTITEM();
     test_TVM_HITTEST();
     test_WM_GETDLGCODE();
