@@ -431,20 +431,24 @@ void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
 {
     RECT r = *lprc;
     UINT border = BDR_SUNKENOUTER;
+    COLORREF oldbkcolor;
 
     if (style & SBT_POPOUT)
         border = BDR_RAISEDOUTER;
     else if (style & SBT_NOBORDERS)
         border = 0;
 
-    DrawEdge (hdc, &r, border, BF_RECT|BF_ADJUST);
+    oldbkcolor = SetBkColor (hdc, comctl32_color.clrBtnFace);
+    DrawEdge (hdc, &r, border, BF_MIDDLE|BF_RECT|BF_ADJUST);
 
     /* now draw text */
     if (text) {
         int oldbkmode = SetBkMode (hdc, TRANSPARENT);
+        COLORREF oldtextcolor;
         UINT align = DT_LEFT;
         int strCnt = 0;
 
+        oldtextcolor = SetTextColor (hdc, comctl32_color.clrBtnText);
         if (style & SBT_RTLREADING)
             FIXME("Unsupported RTL style!\n");
         r.left += 3;
@@ -464,8 +468,11 @@ void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
         } while(*text++);
 
         if (strCnt) DrawTextW (hdc, text - strCnt, -1, &r, align|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX);
-	SetBkMode(hdc, oldbkmode);
+        SetBkMode (hdc, oldbkmode);
+        SetTextColor (hdc, oldtextcolor);
     }
+
+    SetBkColor (hdc, oldbkcolor);
 }
 
 
