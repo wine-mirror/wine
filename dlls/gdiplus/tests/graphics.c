@@ -2194,6 +2194,7 @@ static void test_clip_xform(void)
     expect(0xff, color);
 
     GdipDeleteGraphics(graphics);
+    GdipDeleteRegion(clip);
     ReleaseDC(hwnd, hdc);
 }
 
