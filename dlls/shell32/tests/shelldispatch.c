@@ -382,7 +382,7 @@ static void test_items(void)
     FolderItems3 *items3 = NULL;
     FolderItem *item = (FolderItem*)0xdeadbeef, *item2;
     FolderItemVerbs *verbs = (FolderItemVerbs*)0xdeadbeef;
-    VARIANT var, int_index, str_index, str_index2;
+    VARIANT var, var2, int_index, str_index, str_index2;
     IDispatch *disp, *disp2;
     LONG count = -1;
     IUnknown *unk;
@@ -543,12 +543,14 @@ static void test_items(void)
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
     ok(count == ARRAY_SIZE(file_defs), "got %d files\n", count);
 
+    /* VT_EMPTY */
     V_VT(&var) = VT_EMPTY;
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, var, &item);
     ok(r == E_NOTIMPL, "expected E_NOTIMPL, got %08x\n", r);
     ok(!item, "item is not null\n");
 
+    /* VT_I2 */
     V_VT(&var) = VT_I2;
     V_I2(&var) = 0;
 
@@ -571,6 +573,20 @@ static void test_items(void)
 
     FolderItem_Release(item);
 
+    /* VT_VARIANT | VT_BYREF */
+    V_VT(&var2) = VT_I2;
+    V_I2(&var2) = 0;
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VARIANTREF(&var) = &var2;
+
+    item = NULL;
+    r = FolderItems_Item(items, var, &item);
+    ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
+    ok(!!item, "item is null\n");
+    FolderItem_Release(item);
+
+    /* VT_I4 */
     V_VT(&var) = VT_I4;
     V_I4(&var) = 0;
     item = NULL;

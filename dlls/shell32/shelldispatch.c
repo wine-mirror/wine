@@ -1129,18 +1129,23 @@ static HRESULT WINAPI FolderItemsImpl_get_Parent(FolderItems3 *iface, IDispatch 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, FolderItem **item)
+static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT var, FolderItem **item)
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
     BSTR display_name = NULL;
+    VARIANT index;
     HRESULT hr;
 
-    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&index), item);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&var), item);
 
     *item = NULL;
 
     if (!shellfolder_exists(This->folder->path))
         return S_FALSE;
+
+    VariantInit(&index);
+    if (FAILED(hr = VariantCopyInd(&index, &var)))
+        return hr;
 
     switch (V_VT(&index))
     {
@@ -1163,8 +1168,9 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             if (!V_BSTR(&index))
                 return S_FALSE;
 
-            if (FAILED(hr = IShellFolder2_ParseDisplayName(This->folder->folder, NULL, NULL, V_BSTR(&index),
-                    NULL, &pidl, NULL)))
+            hr = IShellFolder2_ParseDisplayName(This->folder->folder, NULL, NULL, V_BSTR(&index), NULL, &pidl, NULL);
+            VariantClear(&index);
+            if (FAILED(hr))
                 return S_FALSE;
 
             if (IShellFolder2_GetDisplayNameOf(This->folder->folder, pidl, SHGDN_FORPARSING, &strret) == S_OK)
@@ -1176,7 +1182,8 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             break;
 
         default:
-            FIXME("Index type %d not handled.\n", V_VT(&index));
+            FIXME("Index type %#x not handled.\n", V_VT(&index));
+            VariantClear(&index);
             /* fall through */
         case VT_EMPTY:
             return E_NOTIMPL;
