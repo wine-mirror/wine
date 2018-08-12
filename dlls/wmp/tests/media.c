@@ -309,7 +309,7 @@ static BOOL test_wmp(void)
     LONG progress;
     IWMPMedia *media;
     static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
-    BSTR bstrcurrentPosition = SysAllocString(currentPosition);
+    BSTR bstrcurrentPosition;
 
     hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
     if(hres == REGDB_E_CLASSNOTREG) {
@@ -344,6 +344,7 @@ static BOOL test_wmp(void)
     ok(hres == S_OK, "get_controls failed: %08x\n", hres);
     ok(controls != NULL, "controls = NULL\n");
 
+    bstrcurrentPosition = SysAllocString(currentPosition);
     hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
     ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
     ok(vbool == VARIANT_FALSE, "unexpected value\n");
