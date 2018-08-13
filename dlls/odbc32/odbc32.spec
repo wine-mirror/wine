@@ -136,7 +136,7 @@
 233 stub    SQLGetDescFieldA
 234 stub    SQLGetDescRecA
 235 stub    SQLGetDiagFieldA
-236 stub    SQLGetDiagRecA
+236 stdcall SQLGetDiagRecA(long long long ptr ptr ptr long ptr) ODBC32_SQLGetDiagRecA
 238 stub    SQLGetStmtAttrA
 239 stub    SQLSetConnectAttrA
 240 stub    SQLColumnsA

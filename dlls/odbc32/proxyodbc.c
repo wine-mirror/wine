@@ -167,6 +167,8 @@ static SQLRETURN (*pSQLTablePrivilegesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR
 static SQLRETURN (*pSQLTables)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
 static SQLRETURN (*pSQLTablesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
 static SQLRETURN (*pSQLTransact)(SQLHENV,SQLHDBC,SQLUSMALLINT);
+static SQLRETURN (*pSQLGetDiagRecA)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLCHAR*,SQLINTEGER*,
+                                    SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
 
 #define ERROR_FREE 0
 #define ERROR_SQLERROR  1
@@ -617,6 +619,7 @@ static BOOL ODBC_LoadDMFunctions(void)
     LOAD_FUNC(SQLGetDiagField);
     LOAD_FUNC(SQLGetDiagFieldW);
     LOAD_FUNC(SQLGetDiagRec);
+    LOAD_FUNC(SQLGetDiagRecA);
     LOAD_FUNC(SQLGetDiagRecW);
     LOAD_FUNC(SQLGetEnvAttr);
     LOAD_FUNC(SQLGetFunctions);
@@ -2728,5 +2731,19 @@ SQLRETURN WINAPI ODBC32_SQLSetStmtAttrW(SQLHSTMT StatementHandle,
         return iResult;
 }
 
+/*************************************************************************
+ *				SQLGetDiagRecA           [ODBC32.236]
+ */
+SQLRETURN WINAPI ODBC32_SQLGetDiagRecA(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
+                                       SQLCHAR *sql_state, SQLINTEGER *native_error,
+                                       SQLCHAR *error_msg, SQLSMALLINT error_msg_max,
+                                       SQLSMALLINT *error_msg_size)
+{
+    TRACE("\n");
+
+    if (!pSQLGetDiagRecA) return SQL_ERROR;
+    return pSQLGetDiagRecA(handle_type, handle, record, sql_state, native_error, error_msg,
+                           error_msg_max, error_msg_size);
+}
 
 /* End of file */
