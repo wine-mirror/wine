@@ -2089,7 +2089,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     */
     if (layout->len == 0)
         hr = layout_set_dummy_line_metrics(layout, 0);
-    else if (layout->clustermetrics[layout->cluster_count - 1].isNewline)
+    else if (layout->cluster_count && layout->clustermetrics[layout->cluster_count - 1].isNewline)
         hr = layout_set_dummy_line_metrics(layout, layout->len - 1);
     if (FAILED(hr))
         return hr;
