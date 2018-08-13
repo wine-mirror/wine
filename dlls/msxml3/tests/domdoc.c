@@ -12792,6 +12792,44 @@ static void test_transformNodeToObject(void)
     free_bstrs();
 }
 
+static void test_normalize_attribute_values(void)
+{
+    IXMLDOMDocument2 *doc;
+    VARIANT var;
+    HRESULT hr;
+
+    if (!is_clsid_supported(&CLSID_DOMDocument60, &IID_IXMLDOMDocument2))
+    {
+        win_skip("NormalizeAttributeValues is not supported.\n");
+        return;
+    }
+
+    doc = create_document_version(60, &IID_IXMLDOMDocument2);
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 10;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("NormalizeAttributeValues"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
+    ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_BOOL(&var) == VARIANT_FALSE, "Unexpected property value.\n");
+}
+    V_VT(&var) = VT_BOOL;
+    V_BOOL(&var) = VARIANT_TRUE;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("NormalizeAttributeValues"), var);
+    ok(hr == S_OK, "Failed to set property, hr %#x.\n", hr);
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 10;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("NormalizeAttributeValues"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
+    ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_BOOL(&var) == VARIANT_TRUE, "Unexpected property value.\n");
+}
+    IXMLDOMDocument2_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -12875,6 +12913,7 @@ START_TEST(domdoc)
     test_url();
     test_merging_text();
     test_transformNodeToObject();
+    test_normalize_attribute_values();
 
     test_xsltemplate();
     test_xsltext();
