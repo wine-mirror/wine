@@ -145,11 +145,11 @@ static int add_data(struct Vector * v, const BYTE * pData, int size)
     int index = v->current;
     if (v->current + size > v->capacity)
     {
-        LPBYTE pOldData = v->pData;
-        v->capacity = (v->capacity + size) * 2;
-        v->pData = CoTaskMemAlloc(v->capacity);
-        memcpy(v->pData, pOldData, v->current);
-        CoTaskMemFree(pOldData);
+        int new_capacity = (v->capacity + size) * 2;
+        BYTE *new_data = CoTaskMemRealloc(v->pData, new_capacity);
+        if (!new_data) return -1;
+        v->capacity = new_capacity;
+        v->pData = new_data;
     }
     memcpy(v->pData + v->current, pData, size);
     v->current += size;
