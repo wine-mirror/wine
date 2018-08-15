@@ -3666,7 +3666,7 @@
 @ extern _LNan _LNan
 @ stub _LSinh
 @ extern _LSnan _LSnan
-@ stub _Last_write_time
+@ cdecl _Last_write_time(int64)
 @ cdecl _Link(wstr wstr) tr2_sys__Link_wchar
 @ cdecl _Lock_shared_ptr_spin_lock()
 @ cdecl _Lstat(wstr ptr)
@@ -3696,7 +3696,7 @@
 @ cdecl _Remove_dir(wstr) tr2_sys__Remove_dir_wchar
 @ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
 @ stub _Resize
-@ stub _Set_last_write_time
+@ cdecl _Set_last_write_time(wstr int64)
 @ stub _Sinh
 @ extern _Snan _Snan
 @ cdecl _Stat(wstr ptr)
