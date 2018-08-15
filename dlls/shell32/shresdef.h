@@ -166,6 +166,7 @@
 #define IDD_TREEVIEW		0x3741
 
 #define IDI_SHELL_FILE               1
+#define IDI_SHELL_DOCUMENT           2
 #define IDI_SHELL_FOLDER             4
 #define IDI_SHELL_FOLDER_OPEN        5
 #define IDI_SHELL_5_12_FLOPPY        6
