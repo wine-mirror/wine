@@ -10136,8 +10136,28 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_time(const time_get_ch
         istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
         ios_base *base, int *err, struct tm *t)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
-    return NULL;
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    *err |= time_get_char__Getint(this, &s, &e, 0, 23, &t->tm_hour);
+    if (*err || istreambuf_iterator_char_val(&s)!=':')
+        *err |= IOSTATE_failbit;
+
+    if (!*err)
+    {
+        istreambuf_iterator_char_inc(&s);
+        *err |= time_get_char__Getint(this, &s, &e, 0, 59, &t->tm_min);
+    }
+    if (*err || istreambuf_iterator_char_val(&s)!=':')
+        *err |= IOSTATE_failbit;
+
+    if (!*err)
+    {
+        istreambuf_iterator_char_inc(&s);
+        *err |= time_get_char__Getint(this, &s, &e, 0, 59, &t->tm_sec);
+    }
+
+    *ret = s;
+    return ret;
 }
 
 /* ?get_time@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
