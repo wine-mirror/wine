@@ -265,6 +265,7 @@ static enum file_type (__cdecl *p_tr2_sys__Stat_wchar)(WCHAR const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat_wchar)(WCHAR const*, int *);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
+static __int64 (__cdecl *p_tr2_sys__Last_write_time_wchar)(WCHAR const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 static void* (__cdecl *p_tr2_sys__Open_dir)(char*, char const*, int *, enum file_type*);
 static char* (__cdecl *p_tr2_sys__Read_dir)(char*, void*, enum file_type*);
@@ -513,6 +514,8 @@ static BOOL init(void)
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z");
         SET(p_tr2_sys__Last_write_time,
                 "?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z");
+        SET(p_tr2_sys__Last_write_time_wchar,
+                "?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z");
         SET(p_tr2_sys__Open_dir,
@@ -638,6 +641,8 @@ static BOOL init(void)
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z");
         SET(p_tr2_sys__Last_write_time,
                 "?_Last_write_time@sys@tr2@std@@YA_JPBD@Z");
+        SET(p_tr2_sys__Last_write_time_wchar,
+                "?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z");
         SET(p_tr2_sys__Open_dir,
@@ -1727,6 +1732,7 @@ static void test_tr2_sys__Last_write_time(void)
     HANDLE file;
     int ret;
     __int64 last_write_time, newtime;
+    static const WCHAR fileW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
     ret = p_tr2_sys__Make_dir("tr2_test_dir");
     ok(ret == 1, "tr2_sys__Make_dir() expect 1 got %d\n", ret);
 
@@ -1735,6 +1741,9 @@ static void test_tr2_sys__Last_write_time(void)
     CloseHandle(file);
 
     last_write_time = p_tr2_sys__Last_write_time("tr2_test_dir/f1");
+    newtime = p_tr2_sys__Last_write_time_wchar(fileW);
+    ok(last_write_time == newtime, "last_write_time = %s, newtime = %s\n",
+            wine_dbgstr_longlong(last_write_time), wine_dbgstr_longlong(newtime));
     newtime = last_write_time + 123456789;
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
     todo_wine ok(last_write_time == p_tr2_sys__Last_write_time("tr2_test_dir/f1"),

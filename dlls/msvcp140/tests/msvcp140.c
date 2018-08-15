@@ -25,6 +25,12 @@
 #include "wine/test.h"
 #include "winbase.h"
 
+#define SECSPERDAY        86400
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+#define TICKSPERSEC       10000000
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -170,6 +176,8 @@ static void (__cdecl *p_Close_dir)(void*);
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
+static __int64 (__cdecl *p_Last_write_time)(WCHAR const*);
+static void (__cdecl *p_Set_last_write_time)(WCHAR const*, __int64);
 static int (__cdecl *p_Link)(WCHAR const*, WCHAR const*);
 static enum file_type (__cdecl *p_Lstat)(WCHAR const *, int *);
 static int (__cdecl *p_Make_dir)(WCHAR const*);
@@ -254,6 +262,8 @@ static BOOL init(void)
     SET(p_Current_get, "_Current_get");
     SET(p_Current_set, "_Current_set");
     SET(p_File_size, "_File_size");
+    SET(p_Last_write_time, "_Last_write_time");
+    SET(p_Set_last_write_time, "_Set_last_write_time");
     SET(p_Link, "_Link");
     SET(p_Lstat, "_Lstat");
     SET(p_Make_dir, "_Make_dir");
@@ -1181,6 +1191,96 @@ static void test_Rename(void)
     ok(SetCurrentDirectoryW(current_path), "SetCurrentDirectoryW failed\n");
 }
 
+static void test_Last_write_time(void)
+{
+    HANDLE file;
+    int ret;
+    FILETIME lwt;
+    __int64 last_write_time, newtime, margin_of_error = 10 * TICKSPERSEC;
+    static const WCHAR test_dirW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    static const WCHAR f1W[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1',0};
+    static const WCHAR not_existW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','n','o','t','_','e','x','i','s','t',0};
+    WCHAR temp_path[MAX_PATH], origin_path[MAX_PATH];
+
+    GetCurrentDirectoryW(ARRAY_SIZE(origin_path), origin_path);
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+
+    ret = p_Make_dir(test_dirW);
+    ok(ret == 1, "_Make_dir() expect 1 got %d\n", ret);
+
+    file = CreateFileW(f1W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    last_write_time = p_Last_write_time(f1W);
+    newtime = last_write_time + 222222;
+    p_Set_last_write_time(f1W, newtime);
+    ok(last_write_time != p_Last_write_time(f1W),
+            "last_write_time should have changed: %s\n",
+            wine_dbgstr_longlong(last_write_time));
+
+    /* test the formula */
+    file = CreateFileW(f1W, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(GetFileTime(file, 0, 0, &lwt), "GetFileTime failed\n");
+    CloseHandle(file);
+    last_write_time = (((__int64)lwt.dwHighDateTime)<< 32) + lwt.dwLowDateTime;
+    last_write_time -= TICKS_1601_TO_1970;
+    ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
+            "don't fit the formula, last_write_time is %s expected %s\n",
+            wine_dbgstr_longlong(newtime), wine_dbgstr_longlong(last_write_time));
+
+    newtime = 0;
+    p_Set_last_write_time(f1W, newtime);
+    newtime = p_Last_write_time(f1W);
+    file = CreateFileW(f1W, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(GetFileTime(file, 0, 0, &lwt), "GetFileTime failed\n");
+    CloseHandle(file);
+    last_write_time = (((__int64)lwt.dwHighDateTime)<< 32) + lwt.dwLowDateTime;
+    last_write_time -= TICKS_1601_TO_1970;
+    ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
+            "don't fit the formula, last_write_time is %s expected %s\n",
+            wine_dbgstr_longlong(newtime), wine_dbgstr_longlong(last_write_time));
+
+    newtime = 123456789;
+    p_Set_last_write_time(f1W, newtime);
+    newtime = p_Last_write_time(f1W);
+    file = CreateFileW(f1W, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(GetFileTime(file, 0, 0, &lwt), "GetFileTime failed\n");
+    CloseHandle(file);
+    last_write_time = (((__int64)lwt.dwHighDateTime)<< 32) + lwt.dwLowDateTime;
+    last_write_time -= TICKS_1601_TO_1970;
+    ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
+            "don't fit the formula, last_write_time is %s expected %s\n",
+            wine_dbgstr_longlong(newtime), wine_dbgstr_longlong(last_write_time));
+
+    errno = 0xdeadbeef;
+    last_write_time = p_Last_write_time(not_existW);
+    ok(errno == 0xdeadbeef, "_Set_last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
+    ok(last_write_time == -1, "expect -1 got %s\n", wine_dbgstr_longlong(last_write_time));
+    last_write_time = p_Last_write_time(NULL);
+    ok(last_write_time == -1, "expect -1 got %s\n", wine_dbgstr_longlong(last_write_time));
+
+    errno = 0xdeadbeef;
+    p_Set_last_write_time(not_existW, newtime);
+    ok(errno == 0xdeadbeef, "_Set_last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
+    p_Set_last_write_time(NULL, newtime);
+    ok(errno == 0xdeadbeef, "_Set_last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
+
+    ok(DeleteFileW(f1W), "expect wine_test_dir/f1 to exist\n");
+    ret = p_Remove_dir(test_dirW);
+    ok(ret == 1, "p_Remove_dir(): expect 1 got %d\n", ret);
+    ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1201,5 +1301,6 @@ START_TEST(msvcp140)
     test_Unlink();
     test_Temp_get();
     test_Rename();
+    test_Last_write_time();
     FreeLibrary(msvcp);
 }
