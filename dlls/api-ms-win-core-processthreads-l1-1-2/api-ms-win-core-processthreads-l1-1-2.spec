@@ -49,7 +49,7 @@
 @ stdcall ResumeThread(long) kernel32.ResumeThread
 @ stdcall SetPriorityClass(long long) kernel32.SetPriorityClass
 @ stdcall SetProcessAffinityUpdateMode(long long) kernel32.SetProcessAffinityUpdateMode
-@ stub SetProcessMitigationPolicy
+@ stdcall SetProcessMitigationPolicy(long ptr long) kernel32.SetProcessMitigationPolicy
 @ stdcall SetProcessPriorityBoost(long long) kernel32.SetProcessPriorityBoost
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
 @ stdcall SetThreadContext(long ptr) kernel32.SetThreadContext

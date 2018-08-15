@@ -1428,6 +1428,7 @@
 @ stdcall SetProcessAffinityMask(long long)
 @ stdcall SetProcessAffinityUpdateMode(long long)
 @ stdcall SetProcessDEPPolicy(long)
+@ stdcall SetProcessMitigationPolicy(long ptr long)
 # @ stub SetProcessPreferredUILanguages
 @ stdcall SetProcessPriorityBoost(long long)
 @ stdcall SetProcessShutdownParameters(long long)

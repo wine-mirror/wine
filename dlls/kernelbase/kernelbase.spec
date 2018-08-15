@@ -1456,7 +1456,7 @@
 # @ stub SetProcessDefaultCpuSets
 # @ stub SetProcessGroupAffinity
 # @ stub SetProcessInformation
-# @ stub SetProcessMitigationPolicy
+@ stdcall SetProcessMitigationPolicy(long ptr long) kernel32.SetProcessMitigationPolicy
 # @ stub SetProcessPreferredUILanguages
 @ stdcall SetProcessPriorityBoost(long long) kernel32.SetProcessPriorityBoost
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters

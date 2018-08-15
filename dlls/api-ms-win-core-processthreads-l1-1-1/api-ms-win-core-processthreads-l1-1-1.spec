@@ -44,7 +44,7 @@
 @ stdcall ResumeThread(long) kernel32.ResumeThread
 @ stdcall SetPriorityClass(long long) kernel32.SetPriorityClass
 @ stdcall SetProcessAffinityUpdateMode(long long) kernel32.SetProcessAffinityUpdateMode
-@ stub SetProcessMitigationPolicy
+@ stdcall SetProcessMitigationPolicy(long ptr long) kernel32.SetProcessMitigationPolicy
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
 @ stdcall SetThreadContext(long ptr) kernel32.SetThreadContext
 @ stdcall SetThreadIdealProcessorEx(long ptr ptr) kernel32.SetThreadIdealProcessorEx
