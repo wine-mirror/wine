@@ -3104,6 +3104,29 @@ static void test_vector_base_v4(void)
     }
     for(; i<ARRAY_SIZE(b.blocks); i++)
         ok(!b.blocks[i], "b.blocks[%d] != NULL\n", i);
+    SET_EXPECT(concurrent_vector_int_alloc);
+    call_func4(p_vector_base_v4__Internal_reserve,
+            &v2, 17, sizeof(int), 32);
+    CHECK_CALLED(concurrent_vector_int_alloc);
+    data = call_func5(p_vector_base_v4__Internal_compact,
+            &v2, sizeof(int), &b, concurrent_vector_int_destroy,
+            concurrent_vector_int_copy);
+    ok(v2.first_block == 4, "v2.first_block got %ld expected 4\n", (long)v2.first_block);
+    ok(v2.early_size == 9, "v2.early_size got %ld expected 9\n", (long)v2.early_size);
+    ok(b.first_block == 4, "b.first_block got %ld expected 2\n", (long)b.first_block);
+    ok(v2.segment != v2.storage, "v2.segment got %p expected %p\n", v2.segment, v2.storage);
+    for(i = 4; i < 32; i++)
+        ok(v2.segment[i] == 0, "v2.segment[%d] got %p\n",
+                i, v2.segment[i]);
+    for(i=0; i<4; i++)
+        ok(!b.blocks[i], "b.blocks[%d] != NULL\n", i);
+    for(; i < 5; i++) {
+        ok(b.blocks[i] != NULL, "b.blocks[%d] got NULL\n", i);
+        free(b.blocks[i]);
+        vector_alloc_count--;
+    }
+    for(; i<ARRAY_SIZE(b.blocks); i++)
+        ok(!b.blocks[i], "b.blocks[%d] != NULL\n", i);
     SET_EXPECT(concurrent_vector_int_destroy);
     size = (size_t)call_func2(p_vector_base_v4__Internal_clear,
             &v2, concurrent_vector_int_destroy);
