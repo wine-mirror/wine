@@ -14845,14 +14845,26 @@ enum file_type __cdecl tr2_sys__Lstat(char const* path, int* err_code)
     return tr2_sys__Stat(path, err_code);
 }
 
+static __int64 get_last_write_time(HANDLE h)
+{
+    FILETIME wt;
+    __int64 ret;
+
+    if(!GetFileTime(h, 0, 0, &wt))
+        return 0;
+
+    ret = (((__int64)wt.dwHighDateTime)<< 32) + wt.dwLowDateTime;
+    ret -= TICKS_1601_TO_1970;
+    return ret;
+}
+
 /* ?_Last_write_time@sys@tr2@std@@YA_JPBD@Z */
 /* ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z */
 __int64 __cdecl tr2_sys__Last_write_time(char const* path)
 {
     HANDLE handle;
-    FILETIME lwt;
-    int ret;
-    __int64 last_write_time;
+    __int64 ret;
+
     TRACE("(%s)\n", debugstr_a(path));
 
     handle = CreateFileA(path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -14860,15 +14872,38 @@ __int64 __cdecl tr2_sys__Last_write_time(char const* path)
     if(handle == INVALID_HANDLE_VALUE)
         return 0;
 
-    ret = GetFileTime(handle, 0, 0, &lwt);
+    ret = get_last_write_time(handle);
     CloseHandle(handle);
-    if(!ret)
+    return ret / TICKSPERSEC;
+}
+
+/* ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z */
+/* ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z */
+__int64 __cdecl tr2_sys__Last_write_time_wchar(const wchar_t *path)
+{
+    HANDLE handle;
+    __int64 ret;
+
+    TRACE("(%s)\n", debugstr_w(path));
+
+    handle = CreateFileW(path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if(handle == INVALID_HANDLE_VALUE)
         return 0;
 
-    last_write_time = (((__int64)lwt.dwHighDateTime)<< 32) + lwt.dwLowDateTime;
-    last_write_time -= TICKS_1601_TO_1970;
-    last_write_time /= TICKSPERSEC;
-    return last_write_time;
+    ret = get_last_write_time(handle);
+    CloseHandle(handle);
+    return ret / TICKSPERSEC;
+}
+
+static int set_last_write_time(HANDLE h, __int64 time)
+{
+    FILETIME wt;
+
+    time += TICKS_1601_TO_1970;
+    wt.dwLowDateTime = (DWORD)time;
+    wt.dwHighDateTime = (DWORD)(time >> 32);
+    return SetFileTime(h, 0, 0, &wt);
 }
 
 /* ?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z */
@@ -14876,7 +14911,7 @@ __int64 __cdecl tr2_sys__Last_write_time(char const* path)
 void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
 {
     HANDLE handle;
-    FILETIME lwt;
+
     TRACE("(%s)\n", debugstr_a(path));
 
     handle = CreateFileA(path, FILE_WRITE_ATTRIBUTES,
@@ -14889,12 +14924,25 @@ void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
      * According to the test of msvcp120,
      * msvcp120's implementation does nothing. Obviously, this is a bug of windows.
      */
+    set_last_write_time(handle, newtime * TICKSPERSEC);
+    CloseHandle(handle);
+}
 
-    newtime *= TICKSPERSEC;
-    newtime += TICKS_1601_TO_1970;
-    lwt.dwLowDateTime = (DWORD)(newtime);
-    lwt.dwHighDateTime = (DWORD)(newtime >> 32);
-    SetFileTime(handle, 0, 0, &lwt);
+/* ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z */
+/* ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z */
+void __cdecl tr2_sys__Last_write_time_set_wchar(const wchar_t *path, __int64 time)
+{
+    HANDLE handle;
+
+    TRACE("(%s)\n", debugstr_w(path));
+
+    handle = CreateFileW(path, FILE_WRITE_ATTRIBUTES,
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if(handle == INVALID_HANDLE_VALUE)
+        return;
+
+    set_last_write_time(handle, time * TICKSPERSEC);
     CloseHandle(handle);
 }
 
