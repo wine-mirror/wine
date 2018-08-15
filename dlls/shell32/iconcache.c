@@ -467,19 +467,19 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
         ImageList_SetBkColor(ShellBigIconList, CLR_NONE);
 
         /* Load the document icon, which is used as the default if an icon isn't found. */
-        hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
+        hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_FILE),
                                 IMAGE_ICON, cx_small, cy_small, LR_SHARED);
-        hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
+        hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_FILE),
                                 IMAGE_ICON, cx_large, cy_large, LR_SHARED);
 
         if (!hSm || !hLg) 
         {
-          FIXME("Failed to load IDI_SHELL_DOCUMENT icon!\n");
+          FIXME("Failed to load IDI_SHELL_FILE icon!\n");
           return FALSE;
         }
 
-        SIC_IconAppend (swShell32Name, IDI_SHELL_DOCUMENT-1, hSm, hLg, 0);
-        SIC_IconAppend (swShell32Name, -IDI_SHELL_DOCUMENT, hSm, hLg, 0);
+        SIC_IconAppend (swShell32Name, IDI_SHELL_FILE-1, hSm, hLg, 0);
+        SIC_IconAppend (swShell32Name, -IDI_SHELL_FILE, hSm, hLg, 0);
    
 	TRACE("hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
 
@@ -1005,7 +1005,7 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
     GetSystemDirectoryW(sii->szPath, MAX_PATH);
 
     /* no icons defined: use default */
-    sii->iIcon = -IDI_SHELL_DOCUMENT;
+    sii->iIcon = -IDI_SHELL_FILE;
     lstrcatW(sii->szPath, shell32dll);
 
     if (flags)
