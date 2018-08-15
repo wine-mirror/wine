@@ -448,7 +448,7 @@ static void keyboard_tests(DWORD version)
 
 START_TEST(keyboard)
 {
-    pDirectInputCreateA = (void *)GetProcAddress(LoadLibraryA("dinput.dll"), "DirectInputCreateA");
+    pDirectInputCreateA = (void *)GetProcAddress(GetModuleHandleA("dinput.dll"), "DirectInputCreateA");
 
     CoInitialize(NULL);
 
