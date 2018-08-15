@@ -186,6 +186,13 @@ typedef struct {
     locale *loc;
 } basic_streambuf_char;
 
+/* class istreambuf_iterator<char> */
+typedef struct {
+    basic_streambuf_char *strbuf;
+    MSVCP_bool      got;
+    char            val;
+} istreambuf_iterator_char;
+
 /* class basic_streambuf<wchar> */
 typedef struct {
     const vtable_ptr *vtable;
@@ -435,6 +442,23 @@ typedef struct {
     double imag;
 } complex_double;
 
+typedef enum {
+    DATEORDER_no_order,
+    DATEORDER_dmy,
+    DATEORDER_mdy,
+    DATEORDER_ymd,
+    DATEORDER_ydm
+} dateorder;
+
+/* class time_get<char> */
+typedef struct {
+    locale_facet facet;
+    const char *days;
+    const char *months;
+    dateorder dateorder;
+    _Cvtvec cvt;
+} time_get_char;
+
 /* stringstream */
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor)(basic_stringstream_char*);
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor_str)(basic_stringstream_char*, const basic_string_char*, int, MSVCP_bool);
@@ -521,6 +545,17 @@ static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
 static const wchar_t* (__thiscall *p_basic_string_wchar_cstr)(basic_string_wchar*);
 static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
+
+/* basic_istringstream */
+static basic_istringstream_char* (__thiscall *p_basic_istringstream_char_ctor_str)(
+        basic_istringstream_char*, const basic_string_char*, int, MSVCP_bool);
+static void (__thiscall *p_basic_istringstream_char_dtor)(basic_ios_char*);
+
+/* time_get */
+static time_get_char* (__thiscall *p_time_get_char_ctor)(time_get_char*);
+static void (__thiscall *p_time_get_char_dtor)(time_get_char*);
+static int (__cdecl *p_time_get_char__Getint)(const time_get_char*,
+        istreambuf_iterator_char*, istreambuf_iterator_char*, int, int, int*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -769,6 +804,19 @@ static BOOL init(void)
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
+
+        SET(p_basic_istringstream_char_ctor_str,
+                "??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?"
+                "$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z");
+        SET(p_basic_istringstream_char_dtor,
+                "??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ");
+        SET(p_time_get_char_ctor,
+                "??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ");
+        SET(p_time_get_char_dtor,
+                "??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ");
+        SET(p_time_get_char__Getint,
+                "?_Getint@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std"
+                "@@AEBAHAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@0HHAEAH@Z");
     } else {
 #ifdef __arm__
         SET(p_basic_stringstream_char_ctor,
@@ -909,6 +957,16 @@ static BOOL init(void)
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
+
+        SET(p_basic_istringstream_char_ctor_str,
+                "??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@"
+                "QAA@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z");
+        SET(p_basic_istringstream_char_dtor,
+                "??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAA@XZ");
+        SET(p_time_get_char_ctor,
+                "??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAAXXZ");
+        SET(p_time_get_char_dtor,
+                "??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAA@XZ");
 #else
         SET(p_basic_stringstream_char_ctor,
             "??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
@@ -1048,7 +1106,20 @@ static BOOL init(void)
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
+
+        SET(p_basic_istringstream_char_ctor_str,
+                "??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@"
+                "QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z");
+        SET(p_basic_istringstream_char_dtor,
+                "??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ");
+        SET(p_time_get_char_ctor,
+                "??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ");
+        SET(p_time_get_char_dtor,
+                "??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ");
 #endif
+        SET(p_time_get_char__Getint,
+                "?_Getint@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std"
+                "@@ABAHAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@0HHAAH@Z");
     }
 
     init_thiscall_thunk();
@@ -2382,6 +2453,57 @@ static void test_basic_ios(void)
     call_func1(p_basic_ios_char_dtor, &bi);
 }
 
+static void test_time_get__Getint(void)
+{
+    const struct {
+        const char *str;
+        int min;
+        int max;
+        int ret;
+        int val;
+    } tests[] = {
+        { "0", 0, 0, IOSTATE_eofbit, 0 },
+        { "0000", 0, 0, IOSTATE_eofbit, 0 },
+        { "1234", 0, 2000, IOSTATE_eofbit, 1234 },
+        { "+016", 0, 20, IOSTATE_eofbit, 16 },
+        { "0x12", 0, 20, IOSTATE_goodbit, 0 },
+        { " 0", 0, 0, IOSTATE_failbit, -1 },
+        { "0 ", 0, 0, IOSTATE_goodbit, 0 },
+        { "-13", -50, -12, IOSTATE_eofbit, -13 }
+    };
+
+    struct {
+        basic_istringstream_char basic_istringstream;
+        basic_ios_char basic_ios;
+    } ss;
+    istreambuf_iterator_char beg, end;
+    basic_string_char str;
+    time_get_char time_get;
+    int i, ret, v;
+
+    call_func1(p_time_get_char_ctor, &time_get);
+    for(i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        memset(&beg, 0, sizeof(beg));
+        memset(&end, 0, sizeof(end));
+        v = -1;
+
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_istringstream_char_ctor_str, &ss.basic_istringstream, &str, 0, TRUE);
+        call_func1(p_basic_string_char_dtor, &str);
+        beg.strbuf = &ss.basic_istringstream.strbuf.base;
+
+        ret = p_time_get_char__Getint(&time_get, &beg, &end,
+                tests[i].min, tests[i].max, &v);
+        ok(ret == tests[i].ret, "%d) ret = %d, expected %d\n", i, ret, tests[i].ret);
+        ok(v == tests[i].val, "%d) v = %d, expected %d\n", i, v, tests[i].val);
+
+        call_func1(p_basic_istringstream_char_dtor, &ss.basic_ios);
+        call_func1(p_basic_ios_char_dtor, &ss.basic_ios);
+    }
+    call_func1(p_time_get_char_dtor, &time_get);
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -2408,6 +2530,7 @@ START_TEST(ios)
     test_ostream_print_complex_ldouble();
     test_istream_read_complex_double();
     test_basic_ios();
+    test_time_get__Getint();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 

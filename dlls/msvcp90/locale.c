@@ -9946,10 +9946,55 @@ static time_get_char* time_get_char_use_facet(const locale *loc)
 /* ?_Getint@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@0HHAEAH@Z */
 int __cdecl time_get_char__Getint(const time_get_char *this,
         istreambuf_iterator_char *b, istreambuf_iterator_char *e,
-        int unk1, int unk2, int *val)
+        int min_val, int max_val, int *val)
 {
-    FIXME("(%p %p %p %d %d %p) stub\n", this, b, e, unk1, unk2, val);
-    return 0;
+    BOOL got_digit = FALSE;
+    int len = 0, ret = 0;
+    char buf[16];
+
+    TRACE("(%p %p %p %d %d %p)\n", this, b, e, min_val, max_val, val);
+
+    istreambuf_iterator_char_val(b);
+    if(b->strbuf && (b->val == '-' || b->val == '+'))
+    {
+        buf[len++] = b->val;
+        istreambuf_iterator_char_inc(b);
+    }
+
+    if (b->strbuf && b->val == '0')
+    {
+        got_digit = TRUE;
+        buf[len++] = '0';
+        istreambuf_iterator_char_inc(b);
+    }
+    while (b->strbuf && b->val == '0')
+        istreambuf_iterator_char_inc(b);
+
+    for (; b->strbuf && b->val >= '0' && b->val <= '9';
+            istreambuf_iterator_char_inc(b))
+    {
+        if(len < ARRAY_SIZE(buf)-1)
+            buf[len] = b->val;
+        got_digit = TRUE;
+        len++;
+    }
+
+    if (!b->strbuf)
+        ret |= IOSTATE_eofbit;
+    if (got_digit && len < ARRAY_SIZE(buf)-1)
+    {
+        int v, err;
+
+        buf[len] = 0;
+        v = _Stolx(buf, NULL, 10, &err);
+        if(err || v < min_val || v > max_val)
+            ret |= IOSTATE_failbit;
+        else
+            *val = v;
+    }
+    else
+        ret |= IOSTATE_failbit;
+    return ret;
 }
 
 /* ?do_date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AW4dateorder@time_base@2@XZ */
@@ -9994,8 +10039,8 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get(const time_get_char *t
     return NULL;
 }
 
-/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
-/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@DD@Z */
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@DD@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_get, 44)
 istreambuf_iterator_char* __thiscall time_get_char_get(const time_get_char *this,
         istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
@@ -10614,7 +10659,7 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * messages, money_get, money_put, moneypunct, moneypunct, time_get
+ * messages, money_get, money_put, moneypunct, moneypunct
  */
 void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {

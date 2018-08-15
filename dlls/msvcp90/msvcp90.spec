@@ -672,7 +672,8 @@
 @ cdecl -arch=arm ??0?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAA@W4_Uninitialized@1@@Z(ptr long long) basic_istream_wchar_ctor_uninitialized
 @ thiscall -arch=i386 ??0?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE@W4_Uninitialized@1@@Z(ptr long long) basic_istream_wchar_ctor_uninitialized
 @ cdecl -arch=win64 ??0?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA@W4_Uninitialized@1@@Z(ptr long long) basic_istream_wchar_ctor_uninitialized
-@ thiscall -arch=win32 ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z(ptr ptr long long) basic_istringstream_char_ctor_str
+@ cdecl -arch=arm ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAA@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z(ptr ptr long long) basic_istringstream_char_ctor_str
+@ thiscall -arch=i386 ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z(ptr ptr long long) basic_istringstream_char_ctor_str
 @ cdecl -arch=win64 ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z(ptr ptr long long) basic_istringstream_char_ctor_str
 @ thiscall -arch=win32 ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@H@Z(ptr long long) basic_istringstream_char_ctor_mode
 @ cdecl -arch=win64 ??0?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@H@Z(ptr long long) basic_istringstream_char_ctor_mode
@@ -1268,7 +1269,8 @@
 @ cdecl -arch=arm ??1?$basic_istream@_WU?$char_traits@_W@std@@@std@@UAA@XZ(ptr) basic_istream_wchar_dtor
 @ thiscall -arch=i386 ??1?$basic_istream@_WU?$char_traits@_W@std@@@std@@UAE@XZ(ptr) basic_istream_wchar_dtor
 @ cdecl -arch=win64 ??1?$basic_istream@_WU?$char_traits@_W@std@@@std@@UEAA@XZ(ptr) basic_istream_wchar_dtor
-@ thiscall -arch=win32 ??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ(ptr) basic_istringstream_char_dtor
+@ cdecl -arch=arm ??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAA@XZ(ptr) basic_istringstream_char_dtor
+@ thiscall -arch=i386 ??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ(ptr) basic_istringstream_char_dtor
 @ cdecl -arch=win64 ??1?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ(ptr) basic_istringstream_char_dtor
 @ thiscall -arch=win32 ??1?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@UAE@XZ(ptr) basic_istringstream_wchar_dtor
 @ cdecl -arch=win64 ??1?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@UEAA@XZ(ptr) basic_istringstream_wchar_dtor
@@ -1400,7 +1402,8 @@
 @ cdecl -arch=win64 ??1?$numpunct@G@std@@MEAA@XZ(ptr) numpunct_wchar_dtor
 @ thiscall -arch=win32 ??1?$numpunct@_W@std@@MAE@XZ(ptr) numpunct_wchar_dtor
 @ cdecl -arch=win64 ??1?$numpunct@_W@std@@MEAA@XZ(ptr) numpunct_wchar_dtor
-@ thiscall -arch=win32 ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ(ptr) time_get_char_dtor
+@ cdecl -arch=arm ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAA@XZ(ptr) time_get_char_dtor
+@ thiscall -arch=i386 ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ(ptr) time_get_char_dtor
 @ cdecl -arch=win64 ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ(ptr) time_get_char_dtor
 @ stub -arch=win32 ??1?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MAE@XZ
 @ stub -arch=win64 ??1?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEAA@XZ
@@ -2307,7 +2310,8 @@
 @ cdecl -arch=win64 ??_F?$numpunct@G@std@@QEAAXXZ(ptr) numpunct_short_ctor
 @ thiscall -arch=win32 ??_F?$numpunct@_W@std@@QAEXXZ(ptr) numpunct_wchar_ctor
 @ cdecl -arch=win64 ??_F?$numpunct@_W@std@@QEAAXXZ(ptr) numpunct_wchar_ctor
-@ thiscall -arch=win32 ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ(ptr) time_get_char_ctor
+@ cdecl -arch=arm ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAAXXZ(ptr) time_get_char_ctor
+@ thiscall -arch=i386 ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ(ptr) time_get_char_ctor
 @ cdecl -arch=win64 ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ(ptr) time_get_char_ctor
 @ stub -arch=win32 ??_F?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAAXXZ
