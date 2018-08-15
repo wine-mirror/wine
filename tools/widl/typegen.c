@@ -3714,7 +3714,7 @@ static unsigned int get_required_buffer_size_type(
     {
     case TGT_USER_TYPE:
     {
-        const char *uname;
+        const char *uname = NULL;
         const type_t *utype = get_user_type(type, &uname);
         return get_required_buffer_size_type(utype, uname, NULL, FALSE, alignment);
     }
