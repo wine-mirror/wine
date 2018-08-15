@@ -988,16 +988,19 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
 {
     char name[MAX_PATH];
     char friendly[32];
+    IOHIDDeviceRef device;
 
     TRACE("dwDevType %u dwFlags 0x%08x version 0x%04x id %d\n", dwDevType, dwFlags, version, id);
 
     if (id >= find_joystick_devices()) return E_FAIL;
 
+    device = get_device_ref(id);
+
     if ((dwDevType == 0) ||
     ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
     (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
+
         if (dwFlags & DIEDFL_FORCEFEEDBACK) {
-            IOHIDDeviceRef device = get_device_ref(id);
             if(!device)
                 return S_FALSE;
             if(get_ff(device, NULL) != S_OK)
