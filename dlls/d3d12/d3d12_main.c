@@ -39,9 +39,10 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 HRESULT WINAPI D3D12GetDebugInterface(REFIID iid, void **debug)
 {
-    FIXME("iid %s, debug %p stub!\n", debugstr_guid(iid), debug);
+    TRACE("iid %s, debug %p.\n", debugstr_guid(iid), debug);
 
-    return E_NOTIMPL;
+    WARN("Returning DXGI_ERROR_SDK_COMPONENT_MISSING.\n");
+    return DXGI_ERROR_SDK_COMPONENT_MISSING;
 }
 
 static HRESULT d3d12_signal_event(HANDLE event)
