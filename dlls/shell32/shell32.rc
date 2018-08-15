@@ -376,6 +376,14 @@ IDI_SHELL_FOLDER_OPEN_LARGE ICON folder_open.ico
 /* @makedep: folder_open.ico */
 IDI_SHELL_FOLDER_SMALL_XP ICON folder_open.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: floppy.ico */
+IDI_SHELL_5_12_FLOPPY ICON floppy.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: floppy.ico */
+IDI_SHELL_3_14_FLOPPY ICON floppy.ico
+
 /* @makedep: floppy.ico */
 IDI_SHELL_FLOPPY ICON floppy.ico
 
