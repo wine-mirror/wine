@@ -10090,6 +10090,52 @@ istreambuf_iterator_char* __thiscall time_get_char_get_date(const time_get_char 
     return call_time_get_char_do_get_date(this, ret, s, e, base, err, t);
 }
 
+static int find_longest_match(istreambuf_iterator_char *iter, const char *str)
+{
+    int i, len = 0, last_match = -1, match = -1;
+    const char *p, *end;
+    char buf[64];
+
+    for(istreambuf_iterator_char_val(iter); iter->strbuf && len<ARRAY_SIZE(buf);
+            istreambuf_iterator_char_inc(iter))
+    {
+        BOOL got_prefix = FALSE;
+
+        buf[len++] = iter->val;
+        last_match = match;
+        match = -1;
+        for(p=str+1, i=0; *p; p = (*end ? end+1 : end), i++)
+        {
+            end = strchr(p, ':');
+            if (!end)
+                end = p + strlen(p);
+
+            if (end-p >= len && !memcmp(p, buf, len))
+            {
+                if (end-p == len)
+                    match = i;
+                else
+                    got_prefix = TRUE;
+            }
+        }
+
+        if (!got_prefix)
+        {
+            if (match != -1)
+            {
+                istreambuf_iterator_char_inc(iter);
+                return match;
+            }
+            break;
+        }
+    }
+    if (len == ARRAY_SIZE(buf))
+        FIXME("temporary buffer is too small\n");
+    if (!iter->strbuf)
+        return match;
+    return last_match;
+}
+
 /* ?do_get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
 /* ?do_get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_do_get_monthname, 36) /* virtual */
@@ -10186,8 +10232,17 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_weekday(const time_get
         istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
         ios_base *base, int *err, struct tm *t)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
-    return NULL;
+    int match;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    if ((match = find_longest_match(&s, this->days)) != -1)
+        t->tm_wday = match / 2;
+    else
+        *err |= IOSTATE_failbit;
+
+    *ret = s;
+    return ret;
 }
 
 /* ?get_weekday@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
