@@ -1522,12 +1522,12 @@
 @ cdecl -arch=win64 ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEAD_K@Z(ptr ptr ptr ptr long ptr long) msvcp120.?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEAD_K@Z
 @ cdecl -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z(str int64) msvcp120.?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z
 @ cdecl -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z(str int64) msvcp120.?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z
-@ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z
-@ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z
+@ cdecl -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z(wstr int64) msvcp120.?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z
+@ cdecl -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z(wstr int64) msvcp120.?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z
 @ cdecl -ret64 -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPBD@Z(str) msvcp120.?_Last_write_time@sys@tr2@std@@YA_JPBD@Z
 @ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z(str) msvcp120.?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z
-@ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z
-@ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z
+@ cdecl -ret64 -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z(wstr) msvcp120.?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z
+@ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z(wstr) msvcp120.?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z
 @ cdecl -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z
 @ thiscall -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z
 @ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z

@@ -1561,12 +1561,12 @@
 @ cdecl -arch=win64 ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEAD_K@Z(ptr ptr ptr ptr long ptr long) num_put_wchar__Iput
 @ cdecl -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z(str int64) tr2_sys__Last_write_time_set
 @ cdecl -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z(str int64) tr2_sys__Last_write_time_set
-@ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z
-@ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z
+@ cdecl -arch=win32 ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z(wstr int64) tr2_sys__Last_write_time_set_wchar
+@ cdecl -arch=win64 ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z(wstr int64) tr2_sys__Last_write_time_set_wchar
 @ cdecl -ret64 -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPBD@Z(str) tr2_sys__Last_write_time
 @ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z(str) tr2_sys__Last_write_time
-@ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z
-@ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z
+@ cdecl -ret64 -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z(wstr) tr2_sys__Last_write_time_wchar
+@ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z(wstr) tr2_sys__Last_write_time_wchar
 @ cdecl -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
 @ thiscall -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
 @ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
