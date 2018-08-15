@@ -11,6 +11,7 @@
 @ stdcall IsPwrShutdownAllowed ()
 @ stdcall IsPwrSuspendAllowed ()
 @ stdcall PowerDeterminePlatformRole ()
+@ stdcall PowerEnumerate(long ptr ptr long long ptr ptr)
 @ stdcall PowerGetActiveScheme (ptr ptr)
 @ stdcall PowerSetActiveScheme (ptr ptr)
 @ stdcall PowerReadDCValue (ptr ptr ptr ptr ptr ptr ptr)
