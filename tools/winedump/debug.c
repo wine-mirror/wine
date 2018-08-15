@@ -709,7 +709,7 @@ void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, 
                 stabbufflen += 65536;
                 stabbuff = realloc(stabbuff, stabbufflen);
             }
-            strncat(stabbuff, ptr, len - 1);
+            strcat(stabbuff, ptr);
             continue;
         }
         else if (stabbuff[0] != '\0')
