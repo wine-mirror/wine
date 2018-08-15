@@ -10152,8 +10152,17 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_monthname(const time_g
         istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
         ios_base *base, int *err, struct tm *t)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
-    return NULL;
+    int match;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    if ((match = find_longest_match(&s, this->months)) != -1)
+        t->tm_mon = match / 2;
+    else
+        *err |= IOSTATE_failbit;
+
+    *ret = s;
+    return ret;
 }
 
 /* ?get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
