@@ -846,7 +846,6 @@ struct dxgi_vk_funcs
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
     PFN_vkEndCommandBuffer p_vkEndCommandBuffer;
     PFN_vkFreeMemory p_vkFreeMemory;
-    PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
     PFN_vkGetImageMemoryRequirements p_vkGetImageMemoryRequirements;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
     PFN_vkGetPhysicalDeviceMemoryProperties p_vkGetPhysicalDeviceMemoryProperties;
@@ -1640,19 +1639,7 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
         return FALSE;
     }
 
-    dxgi->p_vkCreateSwapchainKHR = vk->p_vkCreateSwapchainKHR;
-    dxgi->p_vkCreateWin32SurfaceKHR = vk->p_vkCreateWin32SurfaceKHR;
-    dxgi->p_vkDestroySurfaceKHR = vk->p_vkDestroySurfaceKHR;
-    dxgi->p_vkDestroySwapchainKHR = vk->p_vkDestroySwapchainKHR;
-    dxgi->p_vkGetDeviceProcAddr = (PFN_vkGetDeviceProcAddr)vk->p_vkGetDeviceProcAddr;
     dxgi->p_vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)vk->p_vkGetInstanceProcAddr;
-    dxgi->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR = vk->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
-    dxgi->p_vkGetPhysicalDeviceSurfaceFormatsKHR = vk->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
-    dxgi->p_vkGetPhysicalDeviceSurfacePresentModesKHR = vk->p_vkGetPhysicalDeviceSurfacePresentModesKHR;
-    dxgi->p_vkGetPhysicalDeviceSurfaceSupportKHR = vk->p_vkGetPhysicalDeviceSurfaceSupportKHR;
-    dxgi->p_vkGetPhysicalDeviceWin32PresentationSupportKHR = vk->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
-    dxgi->p_vkGetSwapchainImagesKHR = vk->p_vkGetSwapchainImagesKHR;
-    dxgi->p_vkQueuePresentKHR = vk->p_vkQueuePresentKHR;
 
 #define LOAD_INSTANCE_PFN(name) \
     if (!(dxgi->p_##name = vk->p_vkGetInstanceProcAddr(vk_instance, #name))) \
@@ -1660,7 +1647,14 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
         ERR("Failed to get instance proc "#name".\n"); \
         return FALSE; \
     }
+    LOAD_INSTANCE_PFN(vkCreateWin32SurfaceKHR)
+    LOAD_INSTANCE_PFN(vkDestroySurfaceKHR)
     LOAD_INSTANCE_PFN(vkGetPhysicalDeviceMemoryProperties)
+    LOAD_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
+    LOAD_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceFormatsKHR)
+    LOAD_INSTANCE_PFN(vkGetPhysicalDeviceSurfacePresentModesKHR)
+    LOAD_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceSupportKHR)
+    LOAD_INSTANCE_PFN(vkGetPhysicalDeviceWin32PresentationSupportKHR)
 #undef LOAD_INSTANCE_PFN
 
 #define LOAD_DEVICE_PFN(name) \
@@ -1680,13 +1674,17 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
     LOAD_DEVICE_PFN(vkCreateFence)
     LOAD_DEVICE_PFN(vkCreateImage)
     LOAD_DEVICE_PFN(vkCreateSemaphore)
+    LOAD_DEVICE_PFN(vkCreateSwapchainKHR)
     LOAD_DEVICE_PFN(vkDestroyCommandPool)
     LOAD_DEVICE_PFN(vkDestroyFence)
     LOAD_DEVICE_PFN(vkDestroyImage)
     LOAD_DEVICE_PFN(vkDestroySemaphore)
+    LOAD_DEVICE_PFN(vkDestroySwapchainKHR)
     LOAD_DEVICE_PFN(vkEndCommandBuffer)
     LOAD_DEVICE_PFN(vkFreeMemory)
     LOAD_DEVICE_PFN(vkGetImageMemoryRequirements)
+    LOAD_DEVICE_PFN(vkGetSwapchainImagesKHR)
+    LOAD_DEVICE_PFN(vkQueuePresentKHR)
     LOAD_DEVICE_PFN(vkQueueSubmit)
     LOAD_DEVICE_PFN(vkQueueWaitIdle)
     LOAD_DEVICE_PFN(vkResetFences)
