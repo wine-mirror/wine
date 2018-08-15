@@ -169,7 +169,7 @@
 #define IDD_TITLE		0x3742
 #define IDD_TREEVIEW		0x3741
 
-#define IDI_SHELL_DOCUMENT           1
+#define IDI_SHELL_FILE               1
 #define IDI_SHELL_FOLDER             4
 #define IDI_SHELL_FOLDER_OPEN        5
 #define IDI_SHELL_5_12_FLOPPY        6

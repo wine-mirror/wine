@@ -467,8 +467,8 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
         shell_imagelists[i] = ImageList_Create(sizes[i].cx, sizes[i].cy, ILC_COLOR32 | ILC_MASK, 0, 0x20);
         ImageList_SetBkColor(shell_imagelists[i], CLR_NONE);
 
-        /* Load the document icon, which is used as the default if an icon isn't found. */
-        if (!(hicons[i] = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
+        /* Load the generic file icon, which is used as the default if an icon isn't found. */
+        if (!(hicons[i] = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_FILE),
             IMAGE_ICON, sizes[i].cx, sizes[i].cy, LR_SHARED)))
         {
             failed = TRUE;
@@ -477,12 +477,12 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
 
     if (failed)
     {
-        FIXME("Failed to load IDI_SHELL_DOCUMENT icon!\n");
+        FIXME("Failed to load IDI_SHELL_FILE icon!\n");
         return FALSE;
     }
 
-    SIC_IconAppend(swShell32Name, IDI_SHELL_DOCUMENT - 1, hicons, 0);
-    SIC_IconAppend(swShell32Name, -IDI_SHELL_DOCUMENT, hicons, 0);
+    SIC_IconAppend(swShell32Name, IDI_SHELL_FILE - 1, hicons, 0);
+    SIC_IconAppend(swShell32Name, -IDI_SHELL_FILE, hicons, 0);
 
     TRACE("small list=%p, large list=%p\n", shell_imagelists[SHIL_SMALL], shell_imagelists[SHIL_LARGE]);
 
@@ -1014,7 +1014,7 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
     GetSystemDirectoryW(sii->szPath, MAX_PATH);
 
     /* no icons defined: use default */
-    sii->iIcon = -IDI_SHELL_DOCUMENT;
+    sii->iIcon = -IDI_SHELL_FILE;
     lstrcatW(sii->szPath, shell32dll);
 
     if (flags)

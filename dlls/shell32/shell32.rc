@@ -418,8 +418,9 @@ BEGIN
 	VK_F5, FCIDM_SHVIEW_REFRESH, VIRTKEY
 END
 
+/* FIXME: Following resource is not yet added */
 /* @makedep: document.ico */
-IDI_SHELL_DOCUMENT ICON document.ico
+IDI_SHELL_FILE ICON document.ico
 
 /* @makedep: folder.ico */
 IDI_SHELL_FOLDER ICON folder.ico
