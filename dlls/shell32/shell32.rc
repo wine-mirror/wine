@@ -359,6 +359,9 @@ IDI_SHELL_FILE ICON document.ico
 /* @makedep: document.ico */
 IDI_SHELL_DOCUMENT ICON document.ico
 
+/* @makedep: window.ico */
+IDI_SHELL_WINDOW ICON window.ico
+
 /* @makedep: folder.ico */
 IDI_SHELL_FOLDER ICON folder.ico
 
