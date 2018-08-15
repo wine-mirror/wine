@@ -475,17 +475,127 @@ static void test_LB_SETCURSEL(void)
 
     SendMessageA(hLB, LB_SETITEMHEIGHT, 0, 32);
 
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
     ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
     ok(ret == 2, "LB_SETCURSEL returned %d instead of 2\n", ret);
     ret = GetScrollPos(hLB, SB_VERT);
     ok(ret == 0, "expected vscroll 0, got %d\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
 
     ret = SendMessageA(hLB, LB_SETCURSEL, 3, 0);
     ok(ret == 3, "LB_SETCURSEL returned %d instead of 3\n", ret);
     ret = GetScrollPos(hLB, SB_VERT);
     ok(ret == 1, "expected vscroll 1, got %d\n", ret);
 
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
     DestroyWindow(hLB);
+
+    hLB = create_listbox(0, 0);
+    ok(hLB != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 1, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    DestroyWindow(hLB);
+
+    /* LBS_EXTENDEDSEL */
+    hLB = create_listbox(LBS_EXTENDEDSEL, 0);
+    ok(hLB != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
+    ok(ret == -1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    DestroyWindow(hLB);
+
+    /* LBS_MULTIPLESEL */
+    hLB = create_listbox(LBS_MULTIPLESEL, 0);
+    ok(hLB != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
+    ok(ret == -1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    DestroyWindow(hLB);
+}
+
+static void test_LB_SETSEL(void)
+{
+    HWND list;
+    int ret;
+
+    /* LBS_EXTENDEDSEL */
+    list = create_listbox(LBS_EXTENDEDSEL, 0);
+    ok(list != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 0, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+
+    DestroyWindow(list);
+
+    /* LBS_MULTIPLESEL */
+    list = create_listbox(LBS_MULTIPLESEL, 0);
+    ok(list != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+    ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 0, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+
+    ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
+todo_wine
+    ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+
+    DestroyWindow(list);
 }
 
 static void test_listbox_height(void)
@@ -1960,4 +2070,5 @@ START_TEST(listbox)
   test_missing_lbuttonup();
   test_extents();
   test_WM_MEASUREITEM();
+  test_LB_SETSEL();
 }
