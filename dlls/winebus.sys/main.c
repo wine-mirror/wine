@@ -603,9 +603,6 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
             ext->buffer_size = length;
     }
 
-    if (!ext->last_report_read)
-        ERR_(hid_report)("Device reports coming in too fast, last report not read yet!\n");
-
     memcpy(ext->last_report, report, length);
     ext->last_report_size = length;
     ext->last_report_read = FALSE;
