@@ -611,19 +611,16 @@ static void test_LB_SETSEL(void)
     ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 0, "Unexpected anchor index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
 
     DestroyWindow(list);
@@ -638,19 +635,16 @@ todo_wine
     ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 0, "Unexpected anchor index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
-todo_wine
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
 
     DestroyWindow(list);
