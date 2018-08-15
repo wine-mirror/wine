@@ -456,7 +456,7 @@ static DWORD get_lcid(CFStringRef lang)
     WCHAR str[10];
 
     range.location = 0;
-    range.length = min(CFStringGetLength(lang), sizeof(str) / sizeof(str[0]) - 1);
+    range.length = min(CFStringGetLength(lang), ARRAY_SIZE(str) - 1);
     CFStringGetCharacters(lang, range, str);
     str[range.length] = 0;
     return LocaleNameToLCID(str, 0);
@@ -593,7 +593,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         optionKey >> 8,
         (shiftKey | optionKey) >> 8,
     };
-    UniChar map[128][sizeof(modifier_combos) / sizeof(modifier_combos[0])][4 + 1];
+    UniChar map[128][ARRAY_SIZE(modifier_combos)][4 + 1];
     int combo;
     BYTE vkey_used[256];
     int ignore_diacritics;
@@ -673,7 +673,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     memset(thread_data->keyc2vkey, 0, sizeof(thread_data->keyc2vkey));
     memset(vkey_used, 0, sizeof(vkey_used));
 
-    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
         thread_data->keyc2scan[keyc] = default_map[keyc].scan;
         if (default_map[keyc].fixed)
@@ -708,14 +708,14 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Using the keyboard layout, build a map of key code + modifiers -> characters. */
     memset(map, 0, sizeof(map));
-    for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
     {
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* assigned a fixed vkey */
 
         TRACE("keyc 0x%04x: ", keyc);
 
-        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
+        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
         {
             UInt32 deadKeyState;
             UniCharCount len;
@@ -724,8 +724,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
             deadKeyState = 0;
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, modifier_combos[combo],
                 thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
-                &deadKeyState, sizeof(map[keyc][combo])/sizeof(map[keyc][combo][0]) - 1,
-                &len, map[keyc][combo]);
+                &deadKeyState, ARRAY_SIZE(map[keyc][combo]) - 1, &len, map[keyc][combo]);
             if (status != noErr)
                 map[keyc][combo][0] = 0;
 
@@ -741,14 +740,14 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
        second pass, accept matches with diacritical marks. */
     for (ignore_diacritics = 0; ignore_diacritics <= 1; ignore_diacritics++)
     {
-        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
+        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
         {
             for (vkey = 'A'; vkey <= 'Z'; vkey++)
             {
                 if (vkey_used[vkey])
                     continue;
 
-                for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
+                for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
                 {
                     if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
                         continue;
@@ -767,14 +766,14 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     }
 
     /* Next try to match key codes to the vkeys for the digits 0 through 9. */
-    for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
+    for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
     {
         for (vkey = '0'; vkey <= '9'; vkey++)
         {
             if (vkey_used[vkey])
                 continue;
 
-            for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
+            for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
             {
                 if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
                     continue;
@@ -793,16 +792,16 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Now try to match key codes for certain common punctuation characters to
        the most common OEM vkeys (e.g. '.' to VK_OEM_PERIOD). */
-    for (i = 0; i < sizeof(symbol_vkeys) / sizeof(symbol_vkeys[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(symbol_vkeys); i++)
     {
         vkey = symbol_vkeys[i].vkey;
 
         if (vkey_used[vkey])
             continue;
 
-        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
+        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
         {
-            for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
+            for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
             {
                 if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
                 if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
@@ -825,7 +824,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* For those key codes still without a vkey, try to use the default vkey
        from the default map, if it's still available. */
-    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
         DWORD vkey = default_map[keyc].vkey;
 
@@ -844,7 +843,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
        map, but whose normal letter vkey wasn't available, try to find a
        different letter. */
     vkey = 'A';
-    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
         if (default_map[keyc].vkey < 'A' || 'Z' < default_map[keyc].vkey)
             continue; /* not a letter in ANSI layout */
@@ -864,7 +863,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Same thing but with the digits. */
     vkey = '0';
-    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
         if (default_map[keyc].vkey < '0' || '9' < default_map[keyc].vkey)
             continue; /* not a digit in ANSI layout */
@@ -885,7 +884,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     /* Last chance.  Assign any available vkey. */
     vkey_range = 0;
     vkey = vkey_ranges[vkey_range].first;
-    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* already assigned */
@@ -1012,7 +1011,7 @@ void macdrv_key_event(HWND hwnd, const macdrv_event *event)
 
     thread_data->last_modifiers = event->key.modifiers;
 
-    if (event->key.keycode < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+    if (event->key.keycode < ARRAY_SIZE(thread_data->keyc2vkey))
     {
         vkey = thread_data->keyc2vkey[event->key.keycode];
         scan = thread_data->keyc2scan[event->key.keycode];
@@ -1072,7 +1071,7 @@ void macdrv_hotkey_press(const macdrv_event *event)
                 event->hotkey_press.vkey, event->hotkey_press.mod_flags, event->hotkey_press.keycode,
                 event->hotkey_press.time_ms);
 
-    if (event->hotkey_press.keycode < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]))
+    if (event->hotkey_press.keycode < ARRAY_SIZE(thread_data->keyc2vkey))
     {
         WORD scan = thread_data->keyc2scan[event->hotkey_press.keycode];
         BYTE keystate[256];
@@ -1144,10 +1143,10 @@ void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
         flags &= ~(NX_COMMANDMASK | NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK);
 
     /* Find the Mac keycode corresponding to the scan code */
-    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
         if (thread_data->keyc2vkey[keyc] == vkey) break;
 
-    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
         return;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
@@ -1223,7 +1222,7 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
     int scan, keyc;
 
     scan = (lparam >> 16) & 0x1FF;
-    for (keyc = 0; keyc < sizeof(thread_data->keyc2scan)/sizeof(thread_data->keyc2scan[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2scan); keyc++)
     {
         if (thread_data->keyc2scan[keyc] == scan)
         {
@@ -1264,7 +1263,7 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
             if (scan & 0x100) vkey |= 0x100;
 
-            for (i = 0; i < sizeof(vkey_names) / sizeof(vkey_names[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(vkey_names); i++)
             {
                 if (vkey_names[i].vkey == vkey)
                 {
@@ -1382,7 +1381,7 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
             }
 
             /* vkey -> keycode -> scan */
-            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
             {
                 if (thread_data->keyc2vkey[keyc] == wCode)
                 {
@@ -1395,7 +1394,7 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
         case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */
         case MAPVK_VSC_TO_VK_EX:
             /* scan -> keycode -> vkey */
-            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
                 if ((thread_data->keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
                 {
                     ret = thread_data->keyc2vkey[keyc];
@@ -1445,10 +1444,10 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
             uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
 
             /* Find the Mac keycode corresponding to the vkey */
-            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
                 if (thread_data->keyc2vkey[keyc] == wCode) break;
 
-            if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+            if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
             {
                 WARN("Unknown virtual key %X\n", wCode);
                 break;
@@ -1458,15 +1457,14 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
             deadKeyState = 0;
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
-                thread_data->keyboard_type, 0, &deadKeyState,
-                sizeof(s)/sizeof(s[0]), &len, s);
+                thread_data->keyboard_type, 0, &deadKeyState, ARRAY_SIZE(s), &len, s);
             if (status == noErr && !len && deadKeyState)
             {
                 deadKey = TRUE;
                 deadKeyState = 0;
                 status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
                     thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
-                    &deadKeyState, sizeof(s)/sizeof(s[0]), &len, s);
+                    &deadKeyState, ARRAY_SIZE(s), &len, s);
             }
 
             if (status == noErr && len)
@@ -1496,10 +1494,10 @@ BOOL CDECL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
     TRACE_(key)("hwnd %p mod_flags 0x%04x vkey 0x%04x\n", hwnd, mod_flags, vkey);
 
     /* Find the Mac keycode corresponding to the vkey */
-    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
         if (thread_data->keyc2vkey[keyc] == vkey) break;
 
-    if (keyc >= sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]))
+    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
     {
         WARN_(key)("ignoring unknown virtual key 0x%04x\n", vkey);
         return TRUE;
@@ -1641,10 +1639,10 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
         modifierKeyState |= (optionKey >> 8);
 
     /* Find the Mac keycode corresponding to the vkey */
-    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
         if (thread_data->keyc2vkey[keyc] == virtKey) break;
 
-    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
     {
         WARN_(key)("Unknown virtual key 0x%04x\n", virtKey);
         goto done;
@@ -1780,7 +1778,7 @@ SHORT CDECL macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
                 modifierKeyState |= (cmdKey >> 8);
         }
 
-        for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]); keyc++)
+        for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
         {
             UInt32 deadKeyState = 0;
             UniChar uchar;

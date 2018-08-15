@@ -280,7 +280,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
     {
         WCHAR buffer[256];
 
-        if (!GetClipboardFormatNameW(format->format_id, buffer, sizeof(buffer) / sizeof(buffer[0])))
+        if (!GetClipboardFormatNameW(format->format_id, buffer, ARRAY_SIZE(buffer)))
         {
             WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id), GetLastError());
             HeapFree(GetProcessHeap(), 0, format);
@@ -347,7 +347,7 @@ static void register_builtin_formats(void)
     WINE_CLIPFORMAT *format;
 
     /* Register built-in formats */
-    for (i = 0; i < sizeof(builtin_format_ids)/sizeof(builtin_format_ids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(builtin_format_ids); i++)
     {
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
         format->format_id       = builtin_format_ids[i].id;
@@ -360,7 +360,7 @@ static void register_builtin_formats(void)
     }
 
     /* Register known mappings between Windows formats and Mac types */
-    for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(builtin_format_names); i++)
     {
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
         format->format_id       = RegisterClipboardFormatW(builtin_format_names[i].name);
@@ -1841,12 +1841,12 @@ static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
 static BOOL wait_clipboard_mutex(void)
 {
     static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
-    WCHAR buffer[MAX_PATH + sizeof(prefix) / sizeof(WCHAR)];
+    WCHAR buffer[MAX_PATH + ARRAY_SIZE(prefix)];
     HANDLE mutex;
 
     memcpy(buffer, prefix, sizeof(prefix));
     if (!GetUserObjectInformationW(GetProcessWindowStation(), UOI_NAME,
-                                   buffer + sizeof(prefix) / sizeof(WCHAR),
+                                   buffer + ARRAY_SIZE(prefix),
                                    sizeof(buffer) - sizeof(prefix), NULL))
     {
         ERR("failed to get winstation name\n");
@@ -1873,7 +1873,7 @@ static BOOL CALLBACK init_pipe_name(INIT_ONCE* once, void* param, void** context
 
     memcpy(clipboard_pipe_name, prefix, sizeof(prefix));
     if (!GetUserObjectInformationW(GetProcessWindowStation(), UOI_NAME,
-                                   clipboard_pipe_name + sizeof(prefix) / sizeof(WCHAR),
+                                   clipboard_pipe_name + ARRAY_SIZE(prefix),
                                    sizeof(clipboard_pipe_name) - sizeof(prefix), NULL))
     {
         ERR("failed to get winstation name\n");

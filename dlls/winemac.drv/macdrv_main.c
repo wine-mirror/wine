@@ -90,7 +90,7 @@ const char* debugstr_cf(CFTypeRef t)
     if (!ret)
     {
         UniChar buf[200];
-        int len = min(CFStringGetLength(s), sizeof(buf)/sizeof(buf[0]));
+        int len = min(CFStringGetLength(s), ARRAY_SIZE(buf));
         CFStringGetCharacters(s, CFRangeMake(0, len), buf);
         ret = debugstr_wn(buf, len);
     }
@@ -242,7 +242,7 @@ static void load_strings(HINSTANCE instance)
         return;
     }
 
-    for (i = 0; i < sizeof(ids) / sizeof(ids[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(ids); i++)
     {
         LPCWSTR str;
         int len = LoadStringW(instance, ids[i], (LPWSTR)&str, 0);

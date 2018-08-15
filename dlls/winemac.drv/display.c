@@ -519,7 +519,7 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
             CFSTR("pixel_encoding"),
             CFSTR("refresh_rate"),
         };
-        const void* values[sizeof(keys) / sizeof(keys[0])] = {
+        const void* values[ARRAY_SIZE(keys)] = {
             cf_io_flags,
             cf_width,
             cf_height,
@@ -527,7 +527,7 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
             cf_refresh,
         };
 
-        ret = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, sizeof(keys) / sizeof(keys[0]),
+        ret = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, ARRAY_SIZE(keys),
                                  &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     }
 
@@ -1182,7 +1182,7 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     struct macdrv_display *displays;
     int num_displays;
     uint32_t mac_entries;
-    int win_entries = sizeof(r->red) / sizeof(r->red[0]);
+    int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
     CGError err;
     int win_entry;
@@ -1316,7 +1316,7 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     DDGAMMARAMP *r = ramp;
     struct macdrv_display *displays;
     int num_displays;
-    int win_entries = sizeof(r->red) / sizeof(r->red[0]);
+    int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
     int i;
     CGError err = kCGErrorFailure;

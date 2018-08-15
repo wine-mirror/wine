@@ -710,7 +710,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     set_cocoa_window_properties(data);
 
     /* set the window text */
-    if (!InternalGetWindowText(data->hwnd, text, sizeof(text)/sizeof(WCHAR))) text[0] = 0;
+    if (!InternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text))) text[0] = 0;
     macdrv_set_cocoa_window_title(data->cocoa_window, text, strlenW(text));
 
     /* set the window region */

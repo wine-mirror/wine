@@ -225,7 +225,7 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
             }
 
             /* Make sure it's one of the appropriate NSCursor class methods. */
-            for (i = 0; i < sizeof(cocoa_cursor_names) / sizeof(cocoa_cursor_names[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(cocoa_cursor_names); i++)
                 if (CFEqual(cursor_name, cocoa_cursor_names[i]))
                     goto done;
 
@@ -238,9 +238,9 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     if (info->szResName[0]) goto done;  /* only integer resources are supported here */
     if (!(module = GetModuleHandleW(info->szModName))) goto done;
 
-    for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(module_cursors); i++)
         if (GetModuleHandleW(module_cursors[i].name) == module) break;
-    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) goto done;
+    if (i == ARRAY_SIZE(module_cursors)) goto done;
 
     cursors = module_cursors[i].cursors;
     for (i = 0; cursors[i].id; i++)
@@ -276,7 +276,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     CGPoint hot_spot;
     CFDictionaryRef hot_spot_dict;
     const CFStringRef keys[] = { CFSTR("image"), CFSTR("hotSpot") };
-    CFTypeRef values[sizeof(keys) / sizeof(keys[0])];
+    CFTypeRef values[ARRAY_SIZE(keys)];
     CFDictionaryRef frame;
     CFArrayRef frames;
 
@@ -444,7 +444,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
 
     values[0] = cgmasked;
     values[1] = hot_spot_dict;
-    frame = CFDictionaryCreate(NULL, (const void**)keys, values, sizeof(keys) / sizeof(keys[0]),
+    frame = CFDictionaryCreate(NULL, (const void**)keys, values, ARRAY_SIZE(keys),
                                &kCFCopyStringDictionaryKeyCallBacks,
                                &kCFTypeDictionaryValueCallBacks);
     CFRelease(hot_spot_dict);

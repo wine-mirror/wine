@@ -147,7 +147,7 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
     }
     if (nid->uFlags & NIF_TIP)
     {
-        lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
+        lstrcpynW(icon->tiptext, nid->szTip, ARRAY_SIZE(icon->tiptext));
         if (icon->status_item)
             update_tooltip = TRUE;
     }
