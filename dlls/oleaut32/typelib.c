@@ -6307,6 +6307,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
 #ifdef __i386__
 
 extern LONGLONG call_method( void *func, int nb_args, const DWORD *args, int *stack_offset );
+extern double call_double_method( void *func, int nb_args, const DWORD *args, int *stack_offset );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -6341,9 +6342,8 @@ __ASM_GLOBAL_FUNC( call_method,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
-
-/* same function but returning floating point */
-static double (* const call_double_method)(void*,int,const DWORD*,int*) = (void *)call_method;
+__ASM_GLOBAL_FUNC( call_double_method,
+                   "jmp " __ASM_NAME("call_method") )
 
 /* ITypeInfo::Invoke
  *
@@ -6380,6 +6380,7 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
 #elif defined(__x86_64__)
 
 extern DWORD_PTR CDECL call_method( void *func, int nb_args, const DWORD_PTR *args );
+extern double CDECL call_double_method( void *func, int nb_args, const DWORD_PTR *args );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
@@ -6419,13 +6420,14 @@ __ASM_GLOBAL_FUNC( call_method,
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
-
-/* same function but returning floating point */
-static double (CDECL * const call_double_method)(void*,int,const DWORD_PTR*) = (void *)call_method;
+__ASM_GLOBAL_FUNC( call_double_method,
+                   "jmp " __ASM_NAME("call_method") )
 
 #elif defined(__arm__)
 
 extern LONGLONG CDECL call_method( void *func, int nb_stk_args, const DWORD *stk_args, const DWORD *reg_args );
+extern float CDECL call_float_method( void *func, int nb_stk_args, const DWORD *stk_args, const DWORD *reg_args );
+extern double CDECL call_double_method( void *func, int nb_stk_args, const DWORD *stk_args, const DWORD *reg_args );
 __ASM_GLOBAL_FUNC( call_method,
                     /* r0 = *func
                      * r1 = nb_stk_args
@@ -6456,12 +6458,12 @@ __ASM_GLOBAL_FUNC( call_method,
                     "mov sp, fp\n\t"                /* Clean the stack using fp */
                     "pop {fp, pc}\n\t"              /* Restore fp and return */
                 )
+__ASM_GLOBAL_FUNC( call_float_method,
+                   "b " __ASM_NAME("call_method") )
+__ASM_GLOBAL_FUNC( call_double_method,
+                   "b " __ASM_NAME("call_method") )
 
-/* same function but returning single/double floating point */
-static float (CDECL * const call_float_method)(void *, int, const DWORD *, const DWORD *) = (void *)call_method;
-static double (CDECL * const call_double_method)(void *, int, const DWORD *, const DWORD *) = (void *)call_method;
-
-#endif  /* __x86_64__ */
+#endif  /* __arm__ */
 
 static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt)
 {
