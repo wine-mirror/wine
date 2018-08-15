@@ -14851,7 +14851,7 @@ static __int64 get_last_write_time(HANDLE h)
     __int64 ret;
 
     if(!GetFileTime(h, 0, 0, &wt))
-        return 0;
+        return -1;
 
     ret = (((__int64)wt.dwHighDateTime)<< 32) + wt.dwLowDateTime;
     ret -= TICKS_1601_TO_1970;
@@ -14877,9 +14877,8 @@ __int64 __cdecl tr2_sys__Last_write_time(char const* path)
     return ret / TICKSPERSEC;
 }
 
-/* ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z */
-/* ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z */
-__int64 __cdecl tr2_sys__Last_write_time_wchar(const wchar_t *path)
+/* _Last_write_time */
+__int64 __cdecl _Last_write_time(const wchar_t *path)
 {
     HANDLE handle;
     __int64 ret;
@@ -14889,11 +14888,19 @@ __int64 __cdecl tr2_sys__Last_write_time_wchar(const wchar_t *path)
     handle = CreateFileW(path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     if(handle == INVALID_HANDLE_VALUE)
-        return 0;
+        return -1;
 
     ret = get_last_write_time(handle);
     CloseHandle(handle);
-    return ret / TICKSPERSEC;
+    return ret;
+}
+
+/* ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z */
+/* ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z */
+__int64 __cdecl tr2_sys__Last_write_time_wchar(const wchar_t *path)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+    return _Last_write_time(path) / TICKSPERSEC;
 }
 
 static int set_last_write_time(HANDLE h, __int64 time)
@@ -14928,11 +14935,11 @@ void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
     CloseHandle(handle);
 }
 
-/* ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z */
-/* ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z */
-void __cdecl tr2_sys__Last_write_time_set_wchar(const wchar_t *path, __int64 time)
+/* _Set_last_write_time */
+int __cdecl _Set_last_write_time(const wchar_t *path, __int64 time)
 {
     HANDLE handle;
+    int ret;
 
     TRACE("(%s)\n", debugstr_w(path));
 
@@ -14940,10 +14947,19 @@ void __cdecl tr2_sys__Last_write_time_set_wchar(const wchar_t *path, __int64 tim
             FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     if(handle == INVALID_HANDLE_VALUE)
-        return;
+        return 0;
 
-    set_last_write_time(handle, time * TICKSPERSEC);
+    ret = set_last_write_time(handle, time);
     CloseHandle(handle);
+    return ret;
+}
+
+/* ?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z */
+/* ?_Last_write_time@sys@tr2@std@@YAXPEB_W_J@Z */
+void __cdecl tr2_sys__Last_write_time_set_wchar(const wchar_t *path, __int64 time)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+    _Set_last_write_time(path, time * TICKSPERSEC);
 }
 
 /* ??_Open_dir@sys@tr2@std@@YAPAXPA_WPB_WAAHAAW4file_type@123@@Z */
