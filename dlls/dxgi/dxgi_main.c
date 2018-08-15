@@ -253,6 +253,6 @@ HRESULT WINAPI DXGIGetDebugInterface1(UINT flags, REFIID iid, void **debug)
 {
     TRACE("flags %#x, iid %s, debug %p.\n", flags, debugstr_guid(iid), debug);
 
-    WARN("Returning E_NOINTERFACE.\n");
-    return E_NOINTERFACE;
+    WARN("Returning DXGI_ERROR_SDK_COMPONENT_MISSING.\n");
+    return DXGI_ERROR_SDK_COMPONENT_MISSING;
 }
