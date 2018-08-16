@@ -1831,7 +1831,7 @@ static void test_security_info(void)
 
     CloseHandle(server);
     /* SD is preserved after closing server object */
-    test_group(client, local_sid, TRUE);
+    test_group(client, local_sid, FALSE);
     CloseHandle(client);
 
     server = server2;

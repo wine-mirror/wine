@@ -147,6 +147,9 @@ static const struct object_ops named_pipe_ops =
 /* common server and client pipe end functions */
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static struct fd *pipe_end_get_fd( struct object *obj );
+static struct security_descriptor *pipe_end_get_sd( struct object *obj );
+static int pipe_end_set_sd( struct object *obj, const struct security_descriptor *sd,
+                            unsigned int set_info );
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
@@ -155,9 +158,6 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
-static struct security_descriptor *pipe_server_get_sd( struct object *obj );
-static int pipe_server_set_sd( struct object *obj, const struct security_descriptor *sd,
-                               unsigned int set_info );
 static void pipe_server_destroy( struct object *obj);
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void pipe_server_get_file_info( struct fd *fd, unsigned int info_class );
@@ -174,8 +174,8 @@ static const struct object_ops pipe_server_ops =
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
     default_fd_map_access,        /* map_access */
-    pipe_server_get_sd,           /* get_sd */
-    pipe_server_set_sd,           /* set_sd */
+    pipe_end_get_sd,              /* get_sd */
+    pipe_end_set_sd,              /* set_sd */
     no_lookup_name,               /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
@@ -201,9 +201,6 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
-static struct security_descriptor *pipe_client_get_sd( struct object *obj );
-static int pipe_client_set_sd( struct object *obj, const struct security_descriptor *sd,
-                               unsigned int set_info );
 static void pipe_client_destroy( struct object *obj );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void pipe_client_get_file_info( struct fd *fd, unsigned int info_class );
@@ -220,8 +217,8 @@ static const struct object_ops pipe_client_ops =
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
     default_fd_map_access,        /* map_access */
-    pipe_client_get_sd,           /* get_sd */
-    pipe_client_set_sd,           /* set_sd */
+    pipe_end_get_sd,              /* get_sd */
+    pipe_end_set_sd,              /* set_sd */
     no_lookup_name,               /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
@@ -601,32 +598,19 @@ static void pipe_end_get_file_info( struct fd *fd, struct named_pipe *pipe, unsi
     }
 }
 
-static struct security_descriptor *pipe_server_get_sd( struct object *obj )
+static struct security_descriptor *pipe_end_get_sd( struct object *obj )
 {
-    struct pipe_server *server = (struct pipe_server *) obj;
-    return default_get_sd( &server->pipe->obj );
-}
-
-static struct security_descriptor *pipe_client_get_sd( struct object *obj )
-{
-    struct pipe_client *client = (struct pipe_client *) obj;
-    if (client->server) return default_get_sd( &client->server->pipe->obj );
+    struct pipe_end *pipe_end = (struct pipe_end *) obj;
+    if (pipe_end->pipe) return default_get_sd( &pipe_end->pipe->obj );
     set_error( STATUS_PIPE_DISCONNECTED );
     return NULL;
 }
 
-static int pipe_server_set_sd( struct object *obj, const struct security_descriptor *sd,
-                               unsigned int set_info )
+static int pipe_end_set_sd( struct object *obj, const struct security_descriptor *sd,
+                            unsigned int set_info )
 {
-    struct pipe_server *server = (struct pipe_server *) obj;
-    return default_set_sd( &server->pipe->obj, sd, set_info );
-}
-
-static int pipe_client_set_sd( struct object *obj, const struct security_descriptor *sd,
-                               unsigned int set_info )
-{
-    struct pipe_client *client = (struct pipe_client *) obj;
-    if (client->server) return default_set_sd( &client->server->pipe->obj, sd, set_info );
+    struct pipe_end *pipe_end = (struct pipe_end *) obj;
+    if (pipe_end->pipe) return default_set_sd( &pipe_end->pipe->obj, sd, set_info );
     set_error( STATUS_PIPE_DISCONNECTED );
     return 0;
 }
