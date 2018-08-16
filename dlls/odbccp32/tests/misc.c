@@ -171,6 +171,9 @@ static void test_SQLWritePrivateProfileString(void)
    {
         HKEY hkey;
 
+        ret = SQLWritePrivateProfileString("wineodbc", "testing" , NULL, "odbc.ini");
+        ok(ret, "SQLWritePrivateProfileString failed\n");
+
         reg_ret = RegOpenKeyExW(HKEY_CURRENT_USER, odbc_key, 0, KEY_READ, &hkey);
         ok(reg_ret == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
         if(reg_ret == ERROR_SUCCESS)
