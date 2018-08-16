@@ -1781,7 +1781,7 @@ typedef struct __Concurrent_vector_base_v4
     void **segment;
 } _Concurrent_vector_base_v4;
 
-#define STORAGE_SIZE (sizeof(this->storage) / sizeof(this->storage[0]))
+#define STORAGE_SIZE ARRAY_SIZE(this->storage)
 #define SEGMENT_SIZE (sizeof(void*) * 8)
 
 typedef struct compact_block

@@ -786,11 +786,11 @@ int __cdecl _Getdateorder(void)
 
 #if _MSVCP_VER < 110
     if(!GetLocaleInfoW(___lc_handle_func()[LC_TIME], LOCALE_ILDATE,
-                date_fmt, sizeof(date_fmt)/sizeof(*date_fmt)))
+                date_fmt, ARRAY_SIZE(date_fmt)))
         return DATEORDER_no_order;
 #else
     if(!GetLocaleInfoEx(___lc_locale_name_func()[LC_TIME], LOCALE_ILDATE,
-                date_fmt, sizeof(date_fmt)/sizeof(*date_fmt)))
+                date_fmt, ARRAY_SIZE(date_fmt)))
         return DATEORDER_no_order;
 #endif
 

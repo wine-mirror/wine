@@ -3237,10 +3237,10 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
 
     TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
 
-    for(mode_idx=0; mode_idx<sizeof(str_mode)/sizeof(str_mode[0]); mode_idx++)
+    for(mode_idx=0; mode_idx<ARRAY_SIZE(str_mode); mode_idx++)
         if(str_mode[mode_idx].mode == real_mode)
             break;
-    if(mode_idx == sizeof(str_mode)/sizeof(str_mode[0]))
+    if(mode_idx == ARRAY_SIZE(str_mode))
         return NULL;
 
     if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, rW)))
@@ -3469,7 +3469,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
         return c;
 
     buf_next = buf;
-    for(i=0; i < sizeof(buf)/sizeof(buf[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(buf); i++) {
         buf[i] = c;
 
         switch(codecvt_char_in(this->cvt, &this->state, buf_next,
@@ -4112,7 +4112,7 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
         return fgetwc(this->file);
 
     buf_next = buf;
-    for(i=0; i < sizeof(buf)/sizeof(buf[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(buf); i++) {
         if((c = fgetc(this->file)) == EOF)
             return WEOF;
         buf[i] = c;
