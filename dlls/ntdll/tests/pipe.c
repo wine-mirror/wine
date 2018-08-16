@@ -1349,7 +1349,7 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
     FILE_PIPE_INFORMATION pipe_info;
     FILE_PIPE_PEEK_BUFFER peek_buf;
     IO_STATUS_BLOCK io;
-    char buf[] = "test";
+    char buf[256] = "test";
     NTSTATUS status, expected_status;
 
     memset(&io, 0xcc, sizeof(io));
@@ -1378,6 +1378,15 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         ok(status == STATUS_SUCCESS,
             "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
+
+    status = NtQueryInformationFile(pipe, &io, buf, sizeof(buf), FileNameInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        ok(status == STATUS_PIPE_DISCONNECTED,
+           "NtQueryInformationFile(FileNameInformation) failed: %x\n", status);
+    else
+        todo_wine_if(!is_server && state == FILE_PIPE_CLOSING_STATE)
+        ok(status == STATUS_SUCCESS,
+           "NtQueryInformationFile(FileNameInformation) failed: %x\n", status);
 
     memset(&peek_buf, 0xcc, sizeof(peek_buf));
     memset(&io, 0xcc, sizeof(io));
@@ -1490,6 +1499,154 @@ static void pipe_for_each_state(HANDLE (*create_server)(void),
     CloseHandle(server);
 
     CloseHandle(event);
+}
+
+static HANDLE create_local_info_test_pipe(void)
+{
+    IO_STATUS_BLOCK iosb;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    LARGE_INTEGER timeout;
+    HANDLE pipe;
+    NTSTATUS status;
+
+    pRtlInitUnicodeString(&name, testpipe_nt);
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &name;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    timeout.QuadPart = -100000000;
+
+    status = pNtCreateNamedPipeFile(&pipe, FILE_READ_ATTRIBUTES | SYNCHRONIZE | GENERIC_WRITE,
+                                    &attr, &iosb, FILE_SHARE_READ, FILE_CREATE, 0, 1, 0, 0, 1,
+                                    100, 200, &timeout);
+    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %x\n", status);
+
+    return pipe;
+}
+
+static HANDLE connect_pipe_reader(HANDLE server)
+{
+    HANDLE client;
+
+    client = CreateFileW(testpipe, GENERIC_READ, 0, 0, OPEN_EXISTING,
+                         FILE_FLAG_OVERLAPPED, 0);
+    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %u\n", GetLastError());
+
+    return client;
+}
+
+static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
+{
+    FILE_PIPE_LOCAL_INFORMATION local_info;
+    FILE_PIPE_INFORMATION pipe_info;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    LARGE_INTEGER timeout;
+    HANDLE new_pipe;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    memset(&iosb, 0xcc, sizeof(iosb));
+    memset(&local_info, 0xcc, sizeof(local_info));
+    status = pNtQueryInformationFile(pipe, &iosb, &local_info, sizeof(local_info), FilePipeLocalInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        todo_wine
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    if (!status)
+    {
+        ok(local_info.NamedPipeType == 1, "NamedPipeType = %u\n", local_info.NamedPipeType);
+        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
+        ok(local_info.NamedPipeConfiguration == 1, "NamedPipeConfiguration = %u\n",
+           local_info.NamedPipeConfiguration);
+        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
+        ok(local_info.MaximumInstances == 1, "MaximumInstances = %u\n", local_info.MaximumInstances);
+        if (!is_server && state == FILE_PIPE_CLOSING_STATE)
+            ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
+               "CurrentInstances = %u\n", local_info.CurrentInstances);
+        else
+            todo_wine_if(!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+            ok(local_info.CurrentInstances == 1,
+               "CurrentInstances = %u\n", local_info.CurrentInstances);
+        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
+        ok(local_info.InboundQuota == 100, "InboundQuota = %u\n", local_info.InboundQuota);
+        ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable = %u\n",
+           local_info.ReadDataAvailable);
+        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
+        ok(local_info.OutboundQuota == 200, "OutboundQuota = %u\n", local_info.OutboundQuota);
+        todo_wine
+        ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %u\n",
+           local_info.WriteQuotaAvailable);
+        todo_wine
+        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
+           is_server ? "server" : "client", local_info.NamedPipeState, state);
+        ok(local_info.NamedPipeEnd == is_server, "NamedPipeEnd = %u\n", local_info.NamedPipeEnd);
+
+        /* try to create another, incompatible, instance of pipe */
+        pRtlInitUnicodeString(&name, testpipe_nt);
+
+        attr.Length                   = sizeof(attr);
+        attr.RootDirectory            = 0;
+        attr.ObjectName               = &name;
+        attr.Attributes               = OBJ_CASE_INSENSITIVE;
+        attr.SecurityDescriptor       = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        timeout.QuadPart = -100000000;
+
+        status = pNtCreateNamedPipeFile(&new_pipe, FILE_READ_ATTRIBUTES | SYNCHRONIZE | GENERIC_READ,
+                                        &attr, &iosb, FILE_SHARE_WRITE, FILE_CREATE, 0, 0, 0, 0, 1,
+                                        100, 200, &timeout);
+        if (!local_info.CurrentInstances)
+            todo_wine_if(status) /* FIXME */
+            ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %x\n", status);
+        else
+            ok(status == STATUS_INSTANCE_NOT_AVAILABLE, "NtCreateNamedPipeFile failed: %x\n", status);
+        if (!status) CloseHandle(new_pipe);
+
+        memset(&iosb, 0xcc, sizeof(iosb));
+        status = pNtQueryInformationFile(pipe, &iosb, &local_info, sizeof(local_info),
+                                         FilePipeLocalInformation);
+        ok(status == STATUS_SUCCESS,
+           "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+           is_server ? "server" : "client", state, status);
+
+        if (!is_server && state == FILE_PIPE_CLOSING_STATE)
+            ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
+               "CurrentInstances = %u\n", local_info.CurrentInstances);
+        else
+            todo_wine_if(!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+            ok(local_info.CurrentInstances == 1,
+               "CurrentInstances = %u\n", local_info.CurrentInstances);
+    }
+
+    memset(&iosb, 0xcc, sizeof(iosb));
+    status = pNtQueryInformationFile(pipe, &iosb, &pipe_info, sizeof(pipe_info), FilePipeInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        todo_wine
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+
+    if (!status)
+    {
+        ok(pipe_info.ReadMode == 0, "ReadMode = %u\n", pipe_info.ReadMode);
+        ok(pipe_info.CompletionMode == 0, "CompletionMode = %u\n", pipe_info.CompletionMode);
+    }
 }
 
 static void test_file_info(void)
@@ -1771,4 +1928,5 @@ START_TEST(pipe)
 
     pipe_for_each_state(create_pipe_server, connect_pipe, test_pipe_state);
     pipe_for_each_state(create_pipe_server, connect_and_write_pipe, test_pipe_with_data_state);
+    pipe_for_each_state(create_local_info_test_pipe, connect_pipe_reader, test_pipe_local_info);
 }
