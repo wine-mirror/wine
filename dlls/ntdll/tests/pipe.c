@@ -1355,7 +1355,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
     memset(&io, 0xcc, sizeof(io));
     status = pNtQueryInformationFile(pipe, &io, &local_info, sizeof(local_info), FilePipeLocalInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
-        todo_wine
         ok(status == STATUS_PIPE_DISCONNECTED,
             "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
@@ -1370,7 +1369,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
 
     status = pNtQueryInformationFile(pipe, &io, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
-        todo_wine
         ok(status == STATUS_PIPE_DISCONNECTED,
             "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
@@ -1555,7 +1553,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
     memset(&local_info, 0xcc, sizeof(local_info));
     status = pNtQueryInformationFile(pipe, &iosb, &local_info, sizeof(local_info), FilePipeLocalInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
-        todo_wine
         ok(status == STATUS_PIPE_DISCONNECTED,
             "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
@@ -1566,23 +1563,18 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
     if (!status)
     {
         ok(local_info.NamedPipeType == 1, "NamedPipeType = %u\n", local_info.NamedPipeType);
-        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
         ok(local_info.NamedPipeConfiguration == 1, "NamedPipeConfiguration = %u\n",
            local_info.NamedPipeConfiguration);
-        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
         ok(local_info.MaximumInstances == 1, "MaximumInstances = %u\n", local_info.MaximumInstances);
         if (!is_server && state == FILE_PIPE_CLOSING_STATE)
             ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
                "CurrentInstances = %u\n", local_info.CurrentInstances);
         else
-            todo_wine_if(!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
             ok(local_info.CurrentInstances == 1,
                "CurrentInstances = %u\n", local_info.CurrentInstances);
-        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
         ok(local_info.InboundQuota == 100, "InboundQuota = %u\n", local_info.InboundQuota);
         ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable = %u\n",
            local_info.ReadDataAvailable);
-        todo_wine_if(!is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_DISCONNECTED_STATE))
         ok(local_info.OutboundQuota == 200, "OutboundQuota = %u\n", local_info.OutboundQuota);
         todo_wine
         ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %u\n",
@@ -1608,7 +1600,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
                                         &attr, &iosb, FILE_SHARE_WRITE, FILE_CREATE, 0, 0, 0, 0, 1,
                                         100, 200, &timeout);
         if (!local_info.CurrentInstances)
-            todo_wine_if(status) /* FIXME */
             ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %x\n", status);
         else
             ok(status == STATUS_INSTANCE_NOT_AVAILABLE, "NtCreateNamedPipeFile failed: %x\n", status);
@@ -1625,7 +1616,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
             ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
                "CurrentInstances = %u\n", local_info.CurrentInstances);
         else
-            todo_wine_if(!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
             ok(local_info.CurrentInstances == 1,
                "CurrentInstances = %u\n", local_info.CurrentInstances);
     }
@@ -1633,7 +1623,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
     memset(&iosb, 0xcc, sizeof(iosb));
     status = pNtQueryInformationFile(pipe, &iosb, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
-        todo_wine
         ok(status == STATUS_PIPE_DISCONNECTED,
             "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);

@@ -1354,39 +1354,35 @@ DECL_HANDLER(create_named_pipe)
 
 DECL_HANDLER(get_named_pipe_info)
 {
-    struct pipe_server *server;
-    struct pipe_client *client = NULL;
+    struct pipe_end *pipe_end;
 
-    server = get_pipe_server_obj( current->process, req->handle, FILE_READ_ATTRIBUTES );
-    if (!server)
+    pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
+                                                  FILE_READ_ATTRIBUTES, &pipe_server_ops );
+    if (!pipe_end)
     {
         if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
             return;
 
         clear_error();
-        client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
-                                                       0, &pipe_client_ops );
-        if (!client) return;
-        server = client->server;
+        pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
+                                                      0, &pipe_client_ops );
+        if (!pipe_end) return;
     }
 
-    reply->flags = client ? client->pipe_end.flags : server->pipe_end.flags;
-    if (server)
+    if (pipe_end->pipe)
     {
-        reply->sharing      = server->pipe->sharing;
-        reply->maxinstances = server->pipe->maxinstances;
-        reply->instances    = server->pipe->instances;
-        reply->insize       = server->pipe->insize;
-        reply->outsize      = server->pipe->outsize;
-    }
+        reply->flags        = pipe_end->flags;
+        reply->sharing      = pipe_end->pipe->sharing;
+        reply->maxinstances = pipe_end->pipe->maxinstances;
+        reply->instances    = pipe_end->pipe->instances;
+        reply->insize       = pipe_end->pipe->insize;
+        reply->outsize      = pipe_end->pipe->outsize;
 
-    if (client)
-        release_object(client);
-    else
-    {
-        reply->flags |= NAMED_PIPE_SERVER_END;
-        release_object(server);
+        if (pipe_end->obj.ops == &pipe_server_ops) reply->flags |= NAMED_PIPE_SERVER_END;
     }
+    else set_error( STATUS_PIPE_DISCONNECTED );
+
+    release_object( pipe_end );
 }
 
 DECL_HANDLER(set_named_pipe_info)
