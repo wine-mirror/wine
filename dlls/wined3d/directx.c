@@ -6641,14 +6641,6 @@ static BOOL wined3d_adapter_opengl_init(struct wined3d_adapter *adapter, DWORD w
     glEnableWINE = gl_info->gl_ops.gl.p_glEnable;
     glDisableWINE = gl_info->gl_ops.gl.p_glDisable;
 
-    if (!AllocateLocallyUniqueId(&adapter->luid))
-    {
-        ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
-        return FALSE;
-    }
-    TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
-            adapter->luid.HighPart, adapter->luid.LowPart, adapter);
-
     if (!wined3d_caps_gl_ctx_create(adapter, &caps_gl_ctx))
     {
         ERR("Failed to get a GL context for adapter %p.\n", adapter);
@@ -6751,6 +6743,14 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int o
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("Display device: %s\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->DeviceName, display_device.DeviceName);
+
+    if (!AllocateLocallyUniqueId(&adapter->luid))
+    {
+        ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
+        return FALSE;
+    }
+    TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
+            adapter->luid.HighPart, adapter->luid.LowPart, adapter);
 
     if (wined3d_creation_flags & WINED3D_NO3D)
         return wined3d_adapter_no3d_init(adapter);
