@@ -1222,12 +1222,25 @@ static HRESULT WINAPI dwritefactory_CreateNumberSubstitution(IDWriteFactory5 *if
     return create_numbersubstitution(method, locale, ignore_user_override, substitution);
 }
 
+static inline void dwrite_matrix_multiply(DWRITE_MATRIX *a, const DWRITE_MATRIX *b)
+{
+    DWRITE_MATRIX tmp = *a;
+
+    a->m11 = tmp.m11 * b->m11 + tmp.m12 * b->m21;
+    a->m12 = tmp.m11 * b->m12 + tmp.m12 * b->m22;
+    a->m21 = tmp.m21 * b->m11 + tmp.m22 * b->m21;
+    a->m22 = tmp.m21 * b->m12 + tmp.m22 * b->m22;
+    a->dx = tmp.dx * b->m11 + tmp.dy * b->m21 + b->dx;
+    a->dy = tmp.dy * b->m12 + tmp.dy * b->m22 + b->dx;
+}
+
 static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory5 *iface, DWRITE_GLYPH_RUN const *run,
     FLOAT ppdip, DWRITE_MATRIX const* transform, DWRITE_RENDERING_MODE rendering_mode,
     DWRITE_MEASURING_MODE measuring_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
     struct glyphrunanalysis_desc desc;
+    DWRITE_MATRIX m, scale = { 0 };
 
     TRACE("(%p)->(%p %.2f %p %d %d %.2f %.2f %p)\n", This, run, ppdip, transform, rendering_mode,
         measuring_mode, originX, originY, analysis);
@@ -1237,15 +1250,18 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory5 *ifac
         return E_INVALIDARG;
     }
 
+    m = transform ? *transform : identity;
+    scale.m11 = ppdip;
+    scale.m22 = ppdip;
+    dwrite_matrix_multiply(&m, &scale);
     desc.run = run;
-    desc.ppdip = ppdip;
-    desc.transform = transform;
+    desc.transform = &m;
     desc.rendering_mode = (DWRITE_RENDERING_MODE1)rendering_mode;
     desc.measuring_mode = measuring_mode;
     desc.gridfit_mode = DWRITE_GRID_FIT_MODE_DEFAULT;
     desc.aa_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
-    desc.origin_x = originX;
-    desc.origin_y = originY;
+    desc.origin.x = originX;
+    desc.origin.y = originY;
     return create_glyphrunanalysis(&desc, analysis);
 }
 
@@ -1363,27 +1379,35 @@ static HRESULT WINAPI dwritefactory2_CreateCustomRenderingParams(IDWriteFactory5
     return hr;
 }
 
+static HRESULT factory_create_glyphrun_analysis(const DWRITE_GLYPH_RUN *run, const DWRITE_MATRIX *transform,
+    DWRITE_RENDERING_MODE1 rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GRID_FIT_MODE gridfit_mode,
+    DWRITE_TEXT_ANTIALIAS_MODE aa_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **analysis)
+{
+    struct glyphrunanalysis_desc desc;
+
+    desc.run = run;
+    desc.transform = transform;
+    desc.rendering_mode = rendering_mode;
+    desc.measuring_mode = measuring_mode;
+    desc.gridfit_mode = gridfit_mode;
+    desc.aa_mode = aa_mode;
+    desc.origin.x = originX;
+    desc.origin.y = originY;
+    return create_glyphrunanalysis(&desc, analysis);
+}
+
 static HRESULT WINAPI dwritefactory2_CreateGlyphRunAnalysis(IDWriteFactory5 *iface, const DWRITE_GLYPH_RUN *run,
     const DWRITE_MATRIX *transform, DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
     DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode, FLOAT originX, FLOAT originY,
     IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
-    struct glyphrunanalysis_desc desc;
 
     TRACE("(%p)->(%p %p %d %d %d %d %.2f %.2f %p)\n", This, run, transform, rendering_mode, measuring_mode,
         gridfit_mode, aa_mode, originX, originY, analysis);
 
-    desc.run = run;
-    desc.ppdip = 1.0f;
-    desc.transform = transform;
-    desc.rendering_mode = (DWRITE_RENDERING_MODE1)rendering_mode;
-    desc.measuring_mode = measuring_mode;
-    desc.gridfit_mode = gridfit_mode;
-    desc.aa_mode = aa_mode;
-    desc.origin_x = originX;
-    desc.origin_y = originY;
-    return create_glyphrunanalysis(&desc, analysis);
+    return factory_create_glyphrun_analysis(run, transform, (DWRITE_RENDERING_MODE1)rendering_mode, measuring_mode,
+        gridfit_mode, aa_mode, originX, originY, analysis);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateGlyphRunAnalysis(IDWriteFactory5 *iface, DWRITE_GLYPH_RUN const *run,
@@ -1392,21 +1416,12 @@ static HRESULT WINAPI dwritefactory3_CreateGlyphRunAnalysis(IDWriteFactory5 *ifa
     IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
-    struct glyphrunanalysis_desc desc;
 
     TRACE("(%p)->(%p %p %d %d %d %d %.2f %.2f %p)\n", This, run, transform, rendering_mode, measuring_mode,
         gridfit_mode, aa_mode, originX, originY, analysis);
 
-    desc.run = run;
-    desc.ppdip = 1.0f;
-    desc.transform = transform;
-    desc.rendering_mode = rendering_mode;
-    desc.measuring_mode = measuring_mode;
-    desc.gridfit_mode = gridfit_mode;
-    desc.aa_mode = aa_mode;
-    desc.origin_x = originX;
-    desc.origin_y = originY;
-    return create_glyphrunanalysis(&desc, analysis);
+    return factory_create_glyphrun_analysis(run, transform, rendering_mode, measuring_mode, gridfit_mode,
+        aa_mode, originX, originY, analysis);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateCustomRenderingParams(IDWriteFactory5 *iface, FLOAT gamma, FLOAT contrast,

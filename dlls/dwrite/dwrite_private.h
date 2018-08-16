@@ -117,9 +117,7 @@ struct glyphrunanalysis_desc
     DWRITE_MEASURING_MODE measuring_mode;
     DWRITE_GRID_FIT_MODE gridfit_mode;
     DWRITE_TEXT_ANTIALIAS_MODE aa_mode;
-    FLOAT origin_x;
-    FLOAT origin_y;
-    FLOAT ppdip;
+    D2D_POINT_2F origin;
 };
 
 struct fontface_desc
