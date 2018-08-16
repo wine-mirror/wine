@@ -6601,7 +6601,7 @@ static DWORD get_max_gl_version(const struct wined3d_gl_info *gl_info, DWORD fla
     return wined3d_settings.max_gl_version;
 }
 
-static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, DWORD wined3d_creation_flags)
+static BOOL wined3d_adapter_opengl_init(struct wined3d_adapter *adapter, DWORD wined3d_creation_flags)
 {
     static const DWORD supported_gl_versions[] =
     {
@@ -6611,13 +6611,10 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     };
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
     struct wined3d_caps_gl_ctx caps_gl_ctx = {0};
-    unsigned int i;
-    DISPLAY_DEVICEW display_device;
     DWORD max_gl_version;
+    unsigned int i;
 
-    TRACE("adapter %p, ordinal %u.\n", adapter, ordinal);
-
-    adapter->ordinal = ordinal;
+    TRACE("adapter %p, wined3d_creation_flags %#x.\n", adapter, wined3d_creation_flags);
 
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
@@ -6716,11 +6713,6 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->vram_bytes));
 
-    display_device.cb = sizeof(display_device);
-    EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
-    TRACE("DeviceName: %s\n", debugstr_w(display_device.DeviceName));
-    strcpyW(adapter->DeviceName, display_device.DeviceName);
-
     wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
 
     wined3d_adapter_init_ffp_attrib_ops(adapter);
@@ -6728,12 +6720,9 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     return TRUE;
 }
 
-static BOOL wined3d_adapter_no3d_init(struct wined3d_adapter *adapter, UINT ordinal)
+static BOOL wined3d_adapter_no3d_init(struct wined3d_adapter *adapter)
 {
-    DISPLAY_DEVICEW display_device;
-
-    memset(adapter, 0, sizeof(*adapter));
-    adapter->ordinal = ordinal;
+    TRACE("adapter %p.\n", adapter);
 
     adapter->driver_info.name = "Display";
     adapter->driver_info.description = "WineD3D DirectDraw Emulation";
@@ -6749,12 +6738,23 @@ static BOOL wined3d_adapter_no3d_init(struct wined3d_adapter *adapter, UINT ordi
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->shader_backend = &none_shader_backend;
 
+    return TRUE;
+}
+
+static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal, DWORD wined3d_creation_flags)
+{
+    DISPLAY_DEVICEW display_device;
+
+    adapter->ordinal = ordinal;
+
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
-    TRACE("DeviceName: %s\n", debugstr_w(display_device.DeviceName));
+    TRACE("Display device: %s\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->DeviceName, display_device.DeviceName);
 
-    return TRUE;
+    if (wined3d_creation_flags & WINED3D_NO3D)
+        return wined3d_adapter_no3d_init(adapter);
+    return wined3d_adapter_opengl_init(adapter, wined3d_creation_flags);
 }
 
 static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}
@@ -6766,20 +6766,14 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 
 HRESULT wined3d_init(struct wined3d *wined3d, DWORD flags)
 {
-    BOOL ret;
-
     wined3d->ref = 1;
     wined3d->flags = flags;
 
-    TRACE("Initializing adapters.\n");
+    TRACE("Initialising adapters.\n");
 
-    if (flags & WINED3D_NO3D)
-        ret = wined3d_adapter_no3d_init(&wined3d->adapters[0], 0);
-    else
-        ret = wined3d_adapter_init(&wined3d->adapters[0], 0, flags);
-    if (!ret)
+    if (!wined3d_adapter_init(&wined3d->adapters[0], 0, flags))
     {
-        WARN("Failed to initialize adapter.\n");
+        WARN("Failed to initialise adapter.\n");
         return E_FAIL;
     }
     wined3d->adapter_count = 1;
