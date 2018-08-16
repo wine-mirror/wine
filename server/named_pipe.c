@@ -67,6 +67,7 @@ struct pipe_end
     struct fd           *fd;         /* pipe file descriptor */
     unsigned int         flags;      /* pipe flags */
     unsigned int         state;      /* pipe state */
+    struct named_pipe   *pipe;
     struct pipe_end     *connection; /* the other end of the pipe */
     process_id_t         client_pid; /* process that created the client */
     process_id_t         server_pid; /* process that created the server */
@@ -416,13 +417,19 @@ static void pipe_end_destroy( struct pipe_end *pipe_end )
     free_async_queue( &pipe_end->read_q );
     free_async_queue( &pipe_end->write_q );
     if (pipe_end->fd) release_object( pipe_end->fd );
+    if (pipe_end->pipe) release_object( pipe_end->pipe );
 }
 
 static void pipe_server_destroy( struct object *obj)
 {
     struct pipe_server *server = (struct pipe_server *)obj;
+    struct named_pipe *pipe = server->pipe_end.pipe;
 
     assert( obj->ops == &pipe_server_ops );
+
+    assert( pipe->instances );
+    if (!--pipe->instances) unlink_named_object( &pipe->obj );
+    list_remove( &server->entry );
 
     pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
 
@@ -433,11 +440,7 @@ static void pipe_server_destroy( struct object *obj)
         server->client = NULL;
     }
 
-    assert( server->pipe->instances );
-    server->pipe->instances--;
-
-    list_remove( &server->entry );
-    release_object( server->pipe );
+    release_object( pipe );
 }
 
 static void pipe_client_destroy( struct object *obj)
@@ -573,6 +576,12 @@ static void pipe_end_get_file_info( struct fd *fd, struct named_pipe *pipe, unsi
             }
 
             name = get_object_name( &pipe->obj, &name_len );
+            /* FIXME: We should be able to return on unlinked pipe */
+            if (!name)
+            {
+                set_error( STATUS_PIPE_DISCONNECTED );
+                return;
+            }
             reply_size = offsetof( FILE_NAME_INFORMATION, FileName[name_len/sizeof(WCHAR) + 1] );
             if (reply_size > get_reply_max_size())
             {
@@ -1043,7 +1052,10 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         case ps_connected_server:
             assert( server->client );
 
-            /* dump the client and server fds - client loses all waiting data */
+            /* dump the client connection - all data is lost */
+            release_object( server->pipe_end.connection->pipe );
+            server->pipe_end.connection->pipe = NULL;
+
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
             server->client->server = NULL;
             server->client = NULL;
@@ -1092,8 +1104,10 @@ static struct pipe_server *get_pipe_server_obj( struct process *process,
     return (struct pipe_server *) obj;
 }
 
-static void init_pipe_end( struct pipe_end *pipe_end, unsigned int pipe_flags, data_size_t buffer_size )
+static void init_pipe_end( struct pipe_end *pipe_end, struct named_pipe *pipe,
+                           unsigned int pipe_flags, data_size_t buffer_size )
 {
+    pipe_end->pipe = (struct named_pipe *)grab_object( pipe );
     pipe_end->fd = NULL;
     pipe_end->flags = pipe_flags;
     pipe_end->connection = NULL;
@@ -1115,7 +1129,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->pipe = pipe;
     server->client = NULL;
     server->options = options;
-    init_pipe_end( &server->pipe_end, pipe_flags, pipe->insize );
+    init_pipe_end( &server->pipe_end, pipe, pipe_flags, pipe->insize );
     server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
     server->pipe_end.server_pid = get_process_id( current->process );
 
@@ -1132,7 +1146,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     return server;
 }
 
-static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags,
+static struct pipe_client *create_pipe_client( unsigned int flags, struct named_pipe *pipe,
                                                data_size_t buffer_size, unsigned int options )
 {
     struct pipe_client *client;
@@ -1143,7 +1157,7 @@ static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int 
 
     client->server = NULL;
     client->flags = flags;
-    init_pipe_end( &client->pipe_end, pipe_flags, buffer_size );
+    init_pipe_end( &client->pipe_end, pipe, pipe->flags, buffer_size );
     client->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
     client->pipe_end.client_pid = get_process_id( current->process );
 
@@ -1217,7 +1231,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         return NULL;
     }
 
-    if ((client = create_pipe_client( options, pipe->flags, pipe->outsize, options )))
+    if ((client = create_pipe_client( options, pipe, pipe->outsize, options )))
     {
         if (server->state == ps_wait_open)
             fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
