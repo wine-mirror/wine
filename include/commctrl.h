@@ -2792,7 +2792,7 @@ typedef struct tagTVITEMCHANGE
     UINT uStateNew;
     UINT uStateOld;
     LPARAM lParam;
-} NVTVITEMCHANGE;
+} NMTVITEMCHANGE;
 
 typedef struct tagNMTVASYNCDRAW
 {
