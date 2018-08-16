@@ -259,19 +259,25 @@ static HMODULE load_config_driver(const WCHAR *driver)
         if ((ret = RegOpenKeyW(hkey, driver, &hkeydriver)) == ERROR_SUCCESS)
         {
             ret = RegGetValueW(hkeydriver, NULL, reg_driver, RRF_RT_REG_SZ, &type, NULL, &size);
-            if(ret == ERROR_MORE_DATA)
+            if(ret != ERROR_SUCCESS || type != REG_SZ)
             {
-                filename = HeapAlloc(GetProcessHeap(), 0, size);
-                if(!filename)
-                {
-                    RegCloseKey(hkeydriver);
-                    RegCloseKey(hkey);
-                    push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+                RegCloseKey(hkeydriver);
+                RegCloseKey(hkey);
+                push_error(ODBC_ERROR_INVALID_DSN, odbc_error_invalid_dsn);
 
-                    return NULL;
-                }
-                ret = RegGetValueW(hkeydriver, NULL, driver, RRF_RT_REG_SZ, &type, filename, &size);
+                return NULL;
             }
+
+            filename = HeapAlloc(GetProcessHeap(), 0, size);
+            if(!filename)
+            {
+                RegCloseKey(hkeydriver);
+                RegCloseKey(hkey);
+                push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+
+                return NULL;
+            }
+            ret = RegGetValueW(hkeydriver, NULL, reg_driver, RRF_RT_REG_SZ, &type, filename, &size);
 
             RegCloseKey(hkeydriver);
         }
