@@ -54,6 +54,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(winedbg);
 
 static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
@@ -289,15 +290,18 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 
     /* make WINEDEBUG empty in the environment */
     env = GetEnvironmentStringsA();
-    for (p = env; *p; p += strlen(p) + 1)
+    if (!TRACE_ON(winedbg))
     {
-        if (!memcmp( p, "WINEDEBUG=", sizeof("WINEDEBUG=")-1 ))
+        for (p = env; *p; p += strlen(p) + 1)
         {
-            char *next = p + strlen(p);
-            char *end = next + 1;
-            while (*end) end += strlen(end) + 1;
-            memmove( p + sizeof("WINEDEBUG=") - 1, next, end + 1 - next );
-            break;
+            if (!memcmp( p, "WINEDEBUG=", sizeof("WINEDEBUG=")-1 ))
+            {
+                char *next = p + strlen(p);
+                char *end = next + 1;
+                while (*end) end += strlen(end) + 1;
+                memmove( p + sizeof("WINEDEBUG=") - 1, next, end + 1 - next );
+                break;
+            }
         }
     }
 
