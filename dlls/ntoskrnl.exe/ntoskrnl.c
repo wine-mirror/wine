@@ -36,6 +36,9 @@
 #include "winternl.h"
 #include "excpt.h"
 #include "winioctl.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "dbt.h"
 #include "ddk/csq.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
@@ -143,6 +146,77 @@ static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
     return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
+
+static inline BOOL is_valid_hex(WCHAR c)
+{
+    if (!(((c >= '0') && (c <= '9'))  ||
+          ((c >= 'a') && (c <= 'f'))  ||
+          ((c >= 'A') && (c <= 'F'))))
+        return FALSE;
+    return TRUE;
+}
+
+static const BYTE guid_conv_table[256] =
+{
+  0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x00 */
+  0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 */
+  0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x20 */
+  0,   1,   2,   3,   4,   5,   6, 7, 8, 9, 0, 0, 0, 0, 0, 0, /* 0x30 */
+  0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x40 */
+  0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x50 */
+  0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf                             /* 0x60 */
+};
+
+static BOOL guid_from_string(const WCHAR *s, GUID *id)
+{
+    int	i;
+
+    if (!s || s[0] != '{')
+    {
+        memset( id, 0, sizeof (CLSID) );
+        return FALSE;
+    }
+
+    id->Data1 = 0;
+    for (i = 1; i < 9; i++)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data1 = (id->Data1 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[9] != '-') return FALSE;
+
+    id->Data2 = 0;
+    for (i = 10; i < 14; i++)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data2 = (id->Data2 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[14] != '-') return FALSE;
+
+    id->Data3 = 0;
+    for (i = 15; i < 19; i++)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data3 = (id->Data3 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[19] != '-') return FALSE;
+
+    for (i = 20; i < 37; i += 2)
+    {
+        if (i == 24)
+        {
+            if (s[i] != '-') return FALSE;
+            i++;
+        }
+        if (!is_valid_hex(s[i]) || !is_valid_hex(s[i+1])) return FALSE;
+        id->Data4[(i-20)/2] = guid_conv_table[s[i]] << 4 | guid_conv_table[s[i+1]];
+    }
+
+    if (s[37] == '}')
+        return TRUE;
+
+    return FALSE;
 }
 
 static HANDLE get_device_manager(void)
@@ -1208,16 +1282,21 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     const WCHAR hashW[] = {'#',0};
 
     size_t namelen = name->Length / sizeof(WCHAR);
+    DEV_BROADCAST_DEVICEINTERFACE_W *broadcast;
     HANDLE iface_key, control_key;
     OBJECT_ATTRIBUTES attr = {0};
     WCHAR *path, *refstr, *p;
     UNICODE_STRING string;
     NTSTATUS ret;
     size_t len;
+    GUID class;
 
     TRACE("(%s, %d)\n", debugstr_us(name), enable);
 
     refstr = memrchrW(name->Buffer + 4, '\\', namelen - 4);
+
+    if (!guid_from_string( (refstr ? refstr : name->Buffer + namelen) - 38, &class ))
+        return STATUS_INVALID_PARAMETER;
 
     len = strlenW(DeviceClassesW) + 38 + 1 + namelen + 2;
 
@@ -1255,6 +1334,20 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     }
 
     heap_free( path );
+
+    len = offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[namelen + 1]);
+
+    if ((broadcast = heap_alloc( len )))
+    {
+        broadcast->dbcc_size = len;
+        broadcast->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+        broadcast->dbcc_classguid = class;
+        lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
+        BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE,
+            enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, (LPARAM)broadcast );
+
+        heap_free( broadcast );
+    }
     return ret;
 }
 
