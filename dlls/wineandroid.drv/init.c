@@ -677,7 +677,7 @@ static BOOL process_attach(void)
         load_android_libs();
         (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
         class = (*jni_env)->GetObjectClass( jni_env, object );
-        (*jni_env)->RegisterNatives( jni_env, class, methods, sizeof(methods)/sizeof(methods[0]) );
+        (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
         (*jni_env)->DeleteLocalRef( jni_env, class );
 #ifdef __i386__
         wine_set_fs( old_fs );  /* the Java VM hijacks %fs for its own purposes, restore it */

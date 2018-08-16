@@ -1363,7 +1363,7 @@ static int perform( ANativeWindow *window, int operation, ... )
     case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP:
     default:
         FIXME( "unsupported perform hwnd %p op %d %s\n", win->hwnd, operation,
-               operation < sizeof(names)/sizeof(names[0]) ? names[operation] : "???" );
+               operation < ARRAY_SIZE( names ) ? names[operation] : "???" );
         break;
     }
     va_end( args );
@@ -1419,7 +1419,7 @@ void release_ioctl_window( struct ANativeWindow *window )
     if (InterlockedDecrement( &win->ref ) > 0) return;
 
     TRACE( "%p %p\n", win, win->hwnd );
-    for (i = 0; i < sizeof(win->buffers)/sizeof(win->buffers[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( win->buffers ); i++)
         if (win->buffers[i]) win->buffers[i]->buffer.common.decRef( &win->buffers[i]->buffer.common );
 
     destroy_ioctl_window( win->hwnd, win->opengl );

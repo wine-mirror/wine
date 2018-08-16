@@ -638,7 +638,7 @@ static UINT scancode_to_vkey( UINT scan )
 {
     UINT j;
 
-    for (j = 0; j < sizeof(vkey_to_scancode)/sizeof(vkey_to_scancode[0]); j++)
+    for (j = 0; j < ARRAY_SIZE( vkey_to_scancode ); j++)
         if (vkey_to_scancode[j] == scan)
             return j;
     return 0;
@@ -648,7 +648,7 @@ static const char* vkey_to_name( UINT vkey )
 {
     UINT j;
 
-    for (j = 0; j < sizeof(vkey_names)/sizeof(vkey_names[0]); j++)
+    for (j = 0; j < ARRAY_SIZE( vkey_names ); j++)
         if (vkey_names[j].vkey == vkey)
             return vkey_names[j].name;
     return NULL;
@@ -724,7 +724,7 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
 {
     union event_data data;
 
-    if ((unsigned int)keycode >= sizeof(keycode_to_vkey)/sizeof(keycode_to_vkey[0]) ||
+    if ((unsigned int)keycode >= ARRAY_SIZE( keycode_to_vkey ) ||
         !keycode_to_vkey[keycode])
     {
         p__android_log_print( ANDROID_LOG_WARN, "wine",
@@ -931,7 +931,7 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
             code = VK_LMENU;
             break;
         }
-        if (code < sizeof(vkey_to_scancode) / sizeof(vkey_to_scancode[0])) ret = vkey_to_scancode[code];
+        if (code < ARRAY_SIZE( vkey_to_scancode )) ret = vkey_to_scancode[code];
         break;
     case MAPVK_VSC_TO_VK:
     case MAPVK_VSC_TO_VK_EX:
@@ -993,7 +993,7 @@ HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
 SHORT CDECL ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl )
 {
     SHORT ret = -1;
-    if (ch < sizeof(char_vkey_map) / sizeof(char_vkey_map[0])) ret = char_vkey_map[ch];
+    if (ch < ARRAY_SIZE( char_vkey_map )) ret = char_vkey_map[ch];
     TRACE_(key)( "ch %04x hkl %p -> %04x\n", ch, hkl, ret );
     return ret;
 }
