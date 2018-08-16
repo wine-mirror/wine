@@ -83,7 +83,6 @@ struct pipe_server
     struct list          entry;      /* entry in named pipe servers list */
     enum pipe_state      state;      /* server state */
     struct pipe_client  *client;     /* client that this server is connected to */
-    struct named_pipe   *pipe;
     unsigned int         options;    /* pipe options */
 };
 
@@ -307,7 +306,7 @@ static void pipe_server_dump( struct object *obj, int verbose )
 {
     struct pipe_server *server = (struct pipe_server *) obj;
     assert( obj->ops == &pipe_server_ops );
-    fprintf( stderr, "Named pipe server pipe=%p state=%d\n", server->pipe, server->state );
+    fprintf( stderr, "Named pipe server pipe=%p state=%d\n", server->pipe_end.pipe, server->state );
 }
 
 static void pipe_client_dump( struct object *obj, int verbose )
@@ -435,8 +434,6 @@ static void pipe_server_destroy( struct object *obj)
         server->client->server = NULL;
         server->client = NULL;
     }
-
-    release_object( pipe );
 }
 
 static void pipe_client_destroy( struct object *obj)
@@ -1010,7 +1007,7 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT );
             server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
             set_server_state( server, ps_wait_open );
-            async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
+            async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
             set_error( STATUS_PENDING );
             return 1;
         case ps_connected_server:
@@ -1097,7 +1094,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     if (!server)
         return NULL;
 
-    server->pipe = pipe;
     server->client = NULL;
     server->options = options;
     init_pipe_end( &server->pipe_end, pipe, pipe_flags, pipe->insize );
@@ -1105,7 +1101,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->pipe_end.server_pid = get_process_id( current->process );
 
     list_add_head( &pipe->servers, &server->entry );
-    grab_object( pipe );
     if (!(server->pipe_end.fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->pipe_end.obj, options )))
     {
         release_object( server );
@@ -1193,7 +1188,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         return NULL;
     }
 
-    pipe_sharing = server->pipe->sharing;
+    pipe_sharing = pipe->sharing;
     if (((access & GENERIC_READ) && !(pipe_sharing & FILE_SHARE_READ)) ||
         ((access & GENERIC_WRITE) && !(pipe_sharing & FILE_SHARE_WRITE)))
     {
@@ -1337,7 +1332,7 @@ DECL_HANDLER(create_named_pipe)
     if (server)
     {
         reply->handle = alloc_handle( current->process, server, req->access, objattr->attributes );
-        server->pipe->instances++;
+        pipe->instances++;
         release_object( server );
     }
 
