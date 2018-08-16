@@ -1986,7 +1986,8 @@ end:
     return ret;
 }
 
-static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key, const GUID *guid)
+static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key,
+    const GUID *guid, DWORD flags)
 {
     DWORD i, len;
     WCHAR subKeyName[MAX_PATH];
@@ -2004,19 +2005,23 @@ static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key, const G
             if (*subKeyName == '#')
             {
                 /* The subkey name is the reference string, with a '#' prepended */
-                iface = SETUPDI_CreateDeviceInterface(device, guid, subKeyName + 1);
                 l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
                 if (!l)
                 {
                     WCHAR symbolicLink[MAX_PATH];
                     DWORD dataType;
 
-                    len = sizeof(symbolicLink);
-                    l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
-                            (BYTE *)symbolicLink, &len);
-                    if (!l && dataType == REG_SZ)
-                        SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
-                    RegCloseKey(subKey);
+                    if (!(flags & DIGCF_PRESENT) || is_linked(subKey))
+                    {
+                        iface = SETUPDI_CreateDeviceInterface(device, guid, subKeyName + 1);
+
+                        len = sizeof(symbolicLink);
+                        l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
+                                (BYTE *)symbolicLink, &len);
+                        if (!l && dataType == REG_SZ)
+                            SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
+                        RegCloseKey(subKey);
+                    }
                 }
             }
             /* Allow enumeration to continue */
@@ -2027,7 +2032,7 @@ static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key, const G
 }
 
 static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
-        HKEY key, const GUID *guid, LPCWSTR enumstr)
+        HKEY key, const GUID *guid, const WCHAR *enumstr, DWORD flags)
 {
     struct DeviceInfoSet *set = DeviceInfoSet;
     DWORD i, len;
@@ -2084,7 +2089,7 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                                         &deviceClass);
                                 if ((device = SETUPDI_CreateDeviceInfo(set,
                                         &deviceClass, deviceInst, FALSE)))
-                                    SETUPDI_AddDeviceInterfaces(device, subKey, guid);
+                                    SETUPDI_AddDeviceInterfaces(device, subKey, guid, flags);
                             }
                             RegCloseKey(deviceKey);
                         }
@@ -2139,7 +2144,7 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
                         if (!l)
                         {
                             SETUPDI_EnumerateMatchingInterfaces(DeviceInfoSet,
-                                    interfaceKey, &interfaceGuid, enumstr);
+                                    interfaceKey, &interfaceGuid, enumstr, flags);
                             RegCloseKey(interfaceKey);
                         }
                     }
@@ -2152,7 +2157,7 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
              * interface's key, so just pass that long
              */
             SETUPDI_EnumerateMatchingInterfaces(DeviceInfoSet,
-                    interfacesKey, guid, enumstr);
+                    interfacesKey, guid, enumstr, flags);
         }
         RegCloseKey(interfacesKey);
     }
@@ -2328,8 +2333,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(const GUID *class, LPCWSTR enumstr, HWND pa
 HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND parent, DWORD flags,
         HDEVINFO deviceset, PCWSTR machine, void *reserved)
 {
-    static const DWORD unsupportedFlags = DIGCF_DEFAULT | DIGCF_PRESENT |
-        DIGCF_PROFILE;
+    static const DWORD unsupportedFlags = DIGCF_DEFAULT | DIGCF_PROFILE;
     HDEVINFO set;
 
     TRACE("%s %s %p 0x%08x %p %s %p\n", debugstr_guid(class),
