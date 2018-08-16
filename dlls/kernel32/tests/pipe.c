@@ -1448,6 +1448,11 @@ static int test_DisconnectNamedPipe(void)
         ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe while messages waiting\n");
         ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL) == 0
             && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "WriteFile to disconnected pipe\n");
+        ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL) == 0
+            && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "WriteFile to disconnected pipe\n");
+        ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL) == 0
+            && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
+            "ReadFile from disconnected pipe with bytes waiting\n");
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL) == 0
             && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
             "ReadFile from disconnected pipe with bytes waiting\n");
