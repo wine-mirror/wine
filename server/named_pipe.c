@@ -1075,14 +1075,6 @@ static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
     }
 }
 
-static struct pipe_server *get_pipe_server_obj( struct process *process,
-                                obj_handle_t handle, unsigned int access )
-{
-    struct object *obj;
-    obj = get_handle_obj( process, handle, access, &pipe_server_ops );
-    return (struct pipe_server *) obj;
-}
-
 static void init_pipe_end( struct pipe_end *pipe_end, struct named_pipe *pipe,
                            unsigned int pipe_flags, data_size_t buffer_size )
 {
@@ -1387,42 +1379,30 @@ DECL_HANDLER(get_named_pipe_info)
 
 DECL_HANDLER(set_named_pipe_info)
 {
-    struct pipe_server *server;
-    struct pipe_client *client = NULL;
+    struct pipe_end *pipe_end;
 
-    server = get_pipe_server_obj( current->process, req->handle, FILE_WRITE_ATTRIBUTES );
-    if (!server)
+    pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
+                                                  FILE_WRITE_ATTRIBUTES, &pipe_server_ops );
+    if (!pipe_end)
     {
         if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
             return;
 
         clear_error();
-        client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
-                                                       0, &pipe_client_ops );
-        if (!client) return;
-        if (!(server = client->server))
-        {
-            release_object( client );
-            return;
-        }
+        pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
+                                                      0, &pipe_client_ops );
+        if (!pipe_end) return;
     }
 
     if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
-            ((req->flags & NAMED_PIPE_MESSAGE_STREAM_READ) && !(server->pipe->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)))
+            ((req->flags & NAMED_PIPE_MESSAGE_STREAM_READ) && !(pipe_end->pipe->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)))
     {
         set_error( STATUS_INVALID_PARAMETER );
     }
-    else if (client)
-    {
-        client->pipe_end.flags = server->pipe->flags | req->flags;
-    }
     else
     {
-        server->pipe_end.flags = server->pipe->flags | req->flags;
+        pipe_end->flags = pipe_end->pipe->flags | req->flags;
     }
 
-    if (client)
-        release_object(client);
-    else
-        release_object(server);
+    release_object( pipe_end );
 }
