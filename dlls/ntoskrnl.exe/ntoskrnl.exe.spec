@@ -449,7 +449,7 @@
 @ stub IoRequestDeviceEject
 @ stub IoReuseIrp
 @ stub IoSetCompletionRoutineEx
-@ stub IoSetDeviceInterfaceState
+@ stdcall IoSetDeviceInterfaceState(ptr long)
 @ stub IoSetDeviceToVerify
 @ stub IoSetFileOrigin
 @ stub IoSetHardErrorOrVerifyDevice

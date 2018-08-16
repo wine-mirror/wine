@@ -43,7 +43,7 @@
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-
+#include "wine/heap.h"
 #include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
@@ -1189,6 +1189,73 @@ NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
         NtClose( handle );
     }
     return status;
+}
+
+
+/***********************************************************************
+ *           IoSetDeviceInterfaceState   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable )
+{
+    const WCHAR DeviceClassesW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
+        'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'D','e','v','i','c','e','C','l','a','s','s','e','s','\\',0};
+    const WCHAR controlW[] = {'C','o','n','t','r','o','l',0};
+    const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
+    const WCHAR slashW[] = {'\\',0};
+    const WCHAR hashW[] = {'#',0};
+
+    size_t namelen = name->Length / sizeof(WCHAR);
+    HANDLE iface_key, control_key;
+    OBJECT_ATTRIBUTES attr = {0};
+    WCHAR *path, *refstr, *p;
+    UNICODE_STRING string;
+    NTSTATUS ret;
+    size_t len;
+
+    TRACE("(%s, %d)\n", debugstr_us(name), enable);
+
+    refstr = memrchrW(name->Buffer + 4, '\\', namelen - 4);
+
+    len = strlenW(DeviceClassesW) + 38 + 1 + namelen + 2;
+
+    if (!(path = heap_alloc( len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    strcpyW( path, DeviceClassesW );
+    lstrcpynW( path + strlenW( path ), (refstr ? refstr : name->Buffer + namelen) - 38, 39 );
+    strcatW( path, slashW );
+    p = path + strlenW( path );
+    lstrcpynW( path + strlenW( path ), name->Buffer, (refstr ? (refstr - name->Buffer) : namelen) + 1 );
+    p[0] = p[1] = p[3] = '#';
+    strcatW( path, slashW );
+    strcatW( path, hashW );
+    if (refstr)
+        lstrcpynW( path + strlenW( path ), refstr, name->Buffer + namelen - refstr + 1 );
+
+    attr.Length = sizeof(attr);
+    attr.ObjectName = &string;
+    RtlInitUnicodeString( &string, path );
+    ret = NtOpenKey( &iface_key, KEY_CREATE_SUB_KEY, &attr );
+    if (!ret)
+    {
+        attr.RootDirectory = iface_key;
+        RtlInitUnicodeString( &string, controlW );
+        ret = NtCreateKey( &control_key, KEY_SET_VALUE, &attr, 0, NULL, 0, NULL );
+        if (!ret)
+        {
+            DWORD data = enable;
+            RtlInitUnicodeString( &string, linkedW );
+            ret = NtSetValueKey( control_key, &string, 0, REG_DWORD, &data, sizeof(data) );
+            NtClose( control_key );
+        }
+        NtClose( iface_key );
+    }
+
+    heap_free( path );
+    return ret;
 }
 
 
