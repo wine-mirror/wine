@@ -1320,6 +1320,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                         case IDC_ENABLE_FILE_ASSOCIATIONS:
                             update_mime_types(hDlg);
+                            SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             break;
                     }
                     break;
