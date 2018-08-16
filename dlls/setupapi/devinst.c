@@ -91,6 +91,8 @@ static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r'
 static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
 static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
 static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
+static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
+static const WCHAR Linked[] = {'L','i','n','k','e','d',0};
 
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
@@ -299,6 +301,25 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
     return ret;
 }
 
+static BOOL is_linked(HKEY key)
+{
+    DWORD linked, type, size;
+    HKEY control_key;
+    BOOL ret = FALSE;
+
+    if (!RegOpenKeyW(key, Control, &control_key))
+    {
+        size = sizeof(DWORD);
+        if (!RegQueryValueExW(control_key, Linked, NULL, &type, (BYTE *)&linked, &size)
+                && type == REG_DWORD && linked)
+            ret = TRUE;
+
+        RegCloseKey(control_key);
+    }
+
+    return ret;
+}
+
 static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
         const GUID *class, const WCHAR *refstr)
 {
@@ -334,7 +355,7 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
     iface->symlink = symlink;
     iface->device = device;
     iface->class = *class;
-    iface->flags = SPINT_ACTIVE; /* FIXME */
+    iface->flags = 0;
 
     if (!(path = get_iface_key_path(iface)))
     {
@@ -365,6 +386,10 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
     }
     RegSetValueExW(key, SymbolicLink, 0, REG_SZ, (BYTE *)iface->symlink,
         lstrlenW(iface->symlink) * sizeof(WCHAR));
+
+    if (is_linked(key))
+        iface->flags |= SPINT_ACTIVE;
+
     RegCloseKey(key);
     heap_free(path);
 
