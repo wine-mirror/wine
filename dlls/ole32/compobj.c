@@ -1442,13 +1442,14 @@ static DWORD COM_RegReadPath(const struct class_reg_data *regdata, WCHAR *dst, D
     }
     else
     {
+        static const WCHAR dllW[] = {'.','d','l','l',0};
         ULONG_PTR cookie;
         WCHAR *nameW;
 
         *dst = 0;
         nameW = (WCHAR*)((BYTE*)regdata->u.actctx.section + regdata->u.actctx.data->name_offset);
         ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
-        ret = SearchPathW(NULL, nameW, NULL, dstlen, dst, NULL);
+        ret = SearchPathW(NULL, nameW, dllW, dstlen, dst, NULL);
         DeactivateActCtx(0, cookie);
         return !*dst;
     }
