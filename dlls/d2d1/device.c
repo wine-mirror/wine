@@ -1107,10 +1107,9 @@ static void d2d_rt_draw_glyph_run_outline(struct d2d_d3d_render_target *render_t
 
 static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_target,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
-        float ppd, DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
         DWRITE_TEXT_ANTIALIAS_MODE antialias_mode)
 {
-    D2D1_MATRIX_3X2_F prev_transform, *transform;
     ID2D1RectangleGeometry *geometry = NULL;
     ID2D1BitmapBrush *opacity_brush = NULL;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -1119,10 +1118,11 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
     DWRITE_TEXTURE_TYPE texture_type;
     D2D1_BRUSH_PROPERTIES brush_desc;
     IDWriteFactory2 *dwrite_factory;
-    DWRITE_GLYPH_RUN scaled_run;
+    D2D1_MATRIX_3X2_F *transform, m;
     void *opacity_values = NULL;
     size_t opacity_values_size;
     D2D1_SIZE_U bitmap_size;
+    float scale_x, scale_y;
     D2D1_RECT_F run_rect;
     RECT bounds;
     HRESULT hr;
@@ -1134,12 +1134,21 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         return;
     }
 
-    scaled_run = *glyph_run;
-    scaled_run.fontEmSize *= ppd;
-    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, &scaled_run,
-            (DWRITE_MATRIX *)&render_target->drawing_state.transform, rendering_mode, measuring_mode,
-            DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode, baseline_origin.x,
-            baseline_origin.y, &analysis);
+    transform = &render_target->drawing_state.transform;
+
+    scale_x = render_target->desc.dpiX / 96.0f;
+    m._11 = transform->_11 * scale_x;
+    m._21 = transform->_21 * scale_x;
+    m._31 = transform->_31 * scale_x;
+
+    scale_y = render_target->desc.dpiY / 96.0f;
+    m._12 = transform->_12 * scale_y;
+    m._22 = transform->_22 * scale_y;
+    m._32 = transform->_32 * scale_y;
+
+    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, (DWRITE_MATRIX *)&m,
+            rendering_mode, measuring_mode, DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode,
+            baseline_origin.x, baseline_origin.y, &analysis);
     IDWriteFactory2_Release(dwrite_factory);
     if (FAILED(hr))
     {
@@ -1194,13 +1203,16 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         goto done;
     }
 
+    d2d_rect_set(&run_rect, bounds.left / scale_x, bounds.top / scale_y,
+            bounds.right / scale_x, bounds.bottom / scale_y);
+
     brush_desc.opacity = 1.0f;
     brush_desc.transform._11 = 1.0f;
     brush_desc.transform._12 = 0.0f;
     brush_desc.transform._21 = 0.0f;
     brush_desc.transform._22 = 1.0f;
-    brush_desc.transform._31 = bounds.left;
-    brush_desc.transform._32 = bounds.top;
+    brush_desc.transform._31 = run_rect.left;
+    brush_desc.transform._32 = run_rect.top;
     if (FAILED(hr = d2d_d3d_render_target_CreateBitmapBrush(&render_target->ID2D1RenderTarget_iface,
             opacity_bitmap, NULL, &brush_desc, &opacity_brush)))
     {
@@ -1208,19 +1220,17 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         goto done;
     }
 
-    d2d_rect_set(&run_rect, bounds.left, bounds.top, bounds.right, bounds.bottom);
     if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(render_target->factory, &run_rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#x.\n", hr);
         goto done;
     }
 
-    transform = &render_target->drawing_state.transform;
-    prev_transform = *transform;
+    m = *transform;
     *transform = identity;
     d2d_rt_fill_geometry(render_target, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
             unsafe_impl_from_ID2D1Brush(brush), unsafe_impl_from_ID2D1Brush((ID2D1Brush *)opacity_brush));
-    *transform = prev_transform;
+    *transform = m;
 
 done:
     if (geometry)
@@ -1242,7 +1252,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
     IDWriteRenderingParams *rendering_params;
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
-    float ppd;
 
     TRACE("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, baseline_origin.x, baseline_origin.y, glyph_run, brush, measuring_mode);
@@ -1298,11 +1307,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
         ;
     }
 
-    ppd = max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f;
     if (rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
     {
         if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
-                ppd, measuring_mode, rendering_params, &rendering_mode)))
+                max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f,
+                measuring_mode, rendering_params, &rendering_mode)))
         {
             ERR("Failed to get recommended rendering mode, hr %#x.\n", hr);
             rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
@@ -1313,7 +1322,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
         d2d_rt_draw_glyph_run_outline(render_target, baseline_origin, glyph_run, brush);
     else
         d2d_rt_draw_glyph_run_bitmap(render_target, baseline_origin, glyph_run, brush,
-                ppd, rendering_mode, measuring_mode, antialias_mode);
+                rendering_mode, measuring_mode, antialias_mode);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarget *iface,
