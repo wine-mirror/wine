@@ -639,7 +639,7 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
     else return;
 
     buffer[len++] = ' ';
-    LoadStringW( SANE_instance, opt->unit, buffer + len, sizeof(buffer)/sizeof(WCHAR) - len );
+    LoadStringW( SANE_instance, opt->unit, buffer + len, ARRAY_SIZE( buffer ) - len );
 
     edit_w = GetDlgItem(hwnd,index+ID_BASE+ID_EDIT_BASE);
     if (edit_w) SetWindowTextW(edit_w,buffer);
