@@ -82,14 +82,12 @@ struct pipe_server
     struct pipe_end      pipe_end;   /* common header for pipe_client and pipe_server */
     struct list          entry;      /* entry in named pipe servers list */
     enum pipe_state      state;      /* server state */
-    struct pipe_client  *client;     /* client that this server is connected to */
     unsigned int         options;    /* pipe options */
 };
 
 struct pipe_client
 {
     struct pipe_end      pipe_end;   /* common header for pipe_client and pipe_server */
-    struct pipe_server  *server;     /* server that this client is connected to */
     unsigned int         flags;      /* file flags */
 };
 
@@ -313,7 +311,7 @@ static void pipe_client_dump( struct object *obj, int verbose )
 {
     struct pipe_client *client = (struct pipe_client *) obj;
     assert( obj->ops == &pipe_client_ops );
-    fprintf( stderr, "Named pipe client server=%p\n", client->server );
+    fprintf( stderr, "Named pipe client server=%p\n", client->pipe_end.connection );
 }
 
 static void named_pipe_destroy( struct object *obj)
@@ -429,17 +427,12 @@ static void pipe_server_destroy( struct object *obj)
     pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
 
     pipe_end_destroy( &server->pipe_end );
-    if (server->client)
-    {
-        server->client->server = NULL;
-        server->client = NULL;
-    }
 }
 
 static void pipe_client_destroy( struct object *obj)
 {
     struct pipe_client *client = (struct pipe_client *)obj;
-    struct pipe_server *server = client->server;
+    struct pipe_server *server = (struct pipe_server *)client->pipe_end.connection;
 
     assert( obj->ops == &pipe_client_ops );
 
@@ -460,9 +453,6 @@ static void pipe_client_destroy( struct object *obj)
         case ps_wait_connect:
             assert( 0 );
         }
-        assert( server->client );
-        server->client = NULL;
-        client->server = NULL;
     }
 
     pipe_end_destroy( &client->pipe_end );
@@ -1026,19 +1016,17 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         switch(server->state)
         {
         case ps_connected_server:
-            assert( server->client );
+            assert( server->pipe_end.connection );
 
             /* dump the client connection - all data is lost */
             release_object( server->pipe_end.connection->pipe );
             server->pipe_end.connection->pipe = NULL;
 
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-            server->client->server = NULL;
-            server->client = NULL;
             set_server_state( server, ps_wait_connect );
             break;
         case ps_wait_disconnect:
-            assert( !server->client );
+            assert( !server->pipe_end.connection );
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
             set_server_state( server, ps_wait_connect );
             break;
@@ -1094,7 +1082,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     if (!server)
         return NULL;
 
-    server->client = NULL;
     server->options = options;
     init_pipe_end( &server->pipe_end, pipe, pipe_flags, pipe->insize );
     server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
@@ -1121,7 +1108,6 @@ static struct pipe_client *create_pipe_client( unsigned int flags, struct named_
     if (!client)
         return NULL;
 
-    client->server = NULL;
     client->flags = flags;
     init_pipe_end( &client->pipe_end, pipe, pipe->flags, buffer_size );
     client->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
@@ -1203,8 +1189,6 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
         server->pipe_end.state = FILE_PIPE_CONNECTED_STATE;
         set_server_state( server, ps_connected_server );
-        server->client = client;
-        client->server = server;
         server->pipe_end.connection = &client->pipe_end;
         client->pipe_end.connection = &server->pipe_end;
         server->pipe_end.client_pid = client->pipe_end.client_pid;
