@@ -1406,12 +1406,8 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
     return hr;
 }
 
-/***********************************************************************
- *	COM_RegReadPath	[internal]
- *
- *	Reads a registry value and expands it when necessary
- */
-static DWORD COM_RegReadPath(const struct class_reg_data *regdata, WCHAR *dst, DWORD dstlen)
+/* Returns expanded dll path from the registry or activation context. */
+static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst, DWORD dstlen)
 {
     DWORD ret;
 
@@ -1438,7 +1434,7 @@ static DWORD COM_RegReadPath(const struct class_reg_data *regdata, WCHAR *dst, D
               lstrcpynW(dst, src, dstlen);
             }
         }
-	return ret;
+        return !ret;
     }
     else
     {
@@ -1451,7 +1447,7 @@ static DWORD COM_RegReadPath(const struct class_reg_data *regdata, WCHAR *dst, D
         ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
         ret = SearchPathW(NULL, nameW, dllW, dstlen, dst, NULL);
         DeactivateActCtx(0, cookie);
-        return !*dst;
+        return *dst != 0;
     }
 }
 
@@ -1476,7 +1472,7 @@ static HRESULT apartment_hostobject(struct apartment *apt,
 
     TRACE("clsid %s, iid %s\n", debugstr_guid(&params->clsid), debugstr_guid(&params->iid));
 
-    if (COM_RegReadPath(&params->regdata, dllpath, ARRAY_SIZE(dllpath)) != ERROR_SUCCESS)
+    if (!get_object_dll_path(&params->regdata, dllpath, ARRAY_SIZE(dllpath)))
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(&params->clsid));
@@ -2970,7 +2966,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, const struct class_reg_da
     else
         apartment_threaded = !apt->multi_threaded;
 
-    if (COM_RegReadPath(regdata, dllpath, ARRAY_SIZE(dllpath)) != ERROR_SUCCESS)
+    if (!get_object_dll_path(regdata, dllpath, ARRAY_SIZE(dllpath)))
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(rclsid));
@@ -5086,7 +5082,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         regdata.u.hkey = hkey;
         regdata.hkey = TRUE;
 
-        if (COM_RegReadPath(&regdata, dllpath, ARRAY_SIZE(dllpath)) == ERROR_SUCCESS)
+        if (get_object_dll_path(&regdata, dllpath, ARRAY_SIZE(dllpath)))
         {
             static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
             if (!strcmpiW(dllpath, wszOle32))
