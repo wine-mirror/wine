@@ -142,6 +142,7 @@
 @ stdcall NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
 @ stdcall NtCreateKeyedEvent(ptr long ptr long)
+@ stdcall NtCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr)
 @ stdcall NtCreateMailslotFile(ptr long ptr ptr long long long ptr)
 @ stdcall NtCreateMutant(ptr long ptr long)
 @ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
