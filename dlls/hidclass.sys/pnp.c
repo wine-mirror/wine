@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include "hid.h"
 #include "ddk/hidtypes.h"
+#include "ddk/wdm.h"
 #include "regstr.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -281,6 +282,17 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                     break;
             }
             break;
+        }
+        case IRP_MN_START_DEVICE:
+        {
+            BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+            UNICODE_STRING linkU;
+
+            rc = minidriver->PNPDispatch(device, irp);
+
+            RtlInitUnicodeString(&linkU, ext->link_name);
+            IoSetDeviceInterfaceState(&linkU, TRUE);
+            return rc;
         }
         case IRP_MN_REMOVE_DEVICE:
         {

@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 #include "ddk/hidsdi.h"
 #include "ddk/hidtypes.h"
+#include "ddk/wdm.h"
 
 #include "initguid.h"
 #include "devguid.h"
@@ -165,6 +166,8 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     {
         TRACE("Delete link %s\n", debugstr_w(ext->link_name));
         RtlInitUnicodeString(&linkW, ext->link_name);
+
+        IoSetDeviceInterfaceState(&linkW, FALSE);
 
         status = IoDeleteSymbolicLink(&linkW);
         if (status != STATUS_SUCCESS)
