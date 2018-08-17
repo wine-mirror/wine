@@ -133,6 +133,7 @@ static const struct object_ops named_pipe_ops =
 };
 
 /* common server and client pipe end functions */
+static void pipe_end_destroy( struct object *obj );
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static struct fd *pipe_end_get_fd( struct object *obj );
 static struct security_descriptor *pipe_end_get_sd( struct object *obj );
@@ -189,7 +190,6 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
-static void pipe_client_destroy( struct object *obj );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_client_ops =
@@ -211,7 +211,7 @@ static const struct object_ops pipe_client_ops =
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
-    pipe_client_destroy           /* destroy */
+    pipe_end_destroy              /* destroy */
 };
 
 static const struct fd_ops pipe_client_fd_ops =
@@ -382,9 +382,12 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
     }
 }
 
-static void pipe_end_destroy( struct pipe_end *pipe_end )
+static void pipe_end_destroy( struct object *obj )
 {
+    struct pipe_end *pipe_end = (struct pipe_end *)obj;
     struct pipe_message *message;
+
+    pipe_end_disconnect( pipe_end, STATUS_PIPE_BROKEN );
 
     while (!list_empty( &pipe_end->message_queue ))
     {
@@ -399,7 +402,7 @@ static void pipe_end_destroy( struct pipe_end *pipe_end )
     if (pipe_end->pipe) release_object( pipe_end->pipe );
 }
 
-static void pipe_server_destroy( struct object *obj)
+static void pipe_server_destroy( struct object *obj )
 {
     struct pipe_server *server = (struct pipe_server *)obj;
     struct named_pipe *pipe = server->pipe_end.pipe;
@@ -411,19 +414,7 @@ static void pipe_server_destroy( struct object *obj)
     list_remove( &server->entry );
 
     free_async_queue( &server->listen_q );
-    pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
-
-    pipe_end_destroy( &server->pipe_end );
-}
-
-static void pipe_client_destroy( struct object *obj)
-{
-    struct pipe_client *client = (struct pipe_client *)obj;
-
-    assert( obj->ops == &pipe_client_ops );
-
-    pipe_end_disconnect( &client->pipe_end, STATUS_PIPE_BROKEN );
-    pipe_end_destroy( &client->pipe_end );
+    pipe_end_destroy( obj );
 }
 
 static void named_pipe_device_dump( struct object *obj, int verbose )
