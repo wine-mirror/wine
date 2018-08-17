@@ -263,6 +263,7 @@ static void test_capabilities(IDirectInputA *pDI, HWND hwnd)
     HRESULT hr;
     IDirectInputDeviceA *pKeyboard = NULL;
     DIDEVCAPS caps;
+    int kbd_type, kbd_subtype, dev_subtype;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -275,8 +276,21 @@ static void test_capabilities(IDirectInputA *pDI, HWND hwnd)
     ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilities dwFlags: 0x%08x\n", caps.dwFlags);
     ok (GET_DIDEVICE_TYPE(caps.dwDevType) == DIDEVTYPE_KEYBOARD,
         "GetCapabilities invalid device type for dwDevType: 0x%08x\n", caps.dwDevType);
-    ok (GET_DIDEVICE_SUBTYPE(caps.dwDevType) != DIDEVTYPEKEYBOARD_UNKNOWN,
-        "GetCapabilities invalid device subtype for dwDevType: 0x%08x\n", caps.dwDevType);
+    kbd_type = GetKeyboardType(0);
+    kbd_subtype = GetKeyboardType(1);
+    dev_subtype = GET_DIDEVICE_SUBTYPE(caps.dwDevType);
+    if (kbd_type == 4 || (kbd_type == 7 && kbd_subtype == 0))
+        ok (dev_subtype == DIDEVTYPEKEYBOARD_PCENH,
+            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            caps.dwDevType, kbd_type, kbd_subtype);
+    else if (kbd_type == 7 && kbd_subtype == 2)
+        todo_wine ok (dev_subtype == DIDEVTYPEKEYBOARD_JAPAN106,
+            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            caps.dwDevType, kbd_type, kbd_subtype);
+    else
+        ok (dev_subtype != DIDEVTYPEKEYBOARD_UNKNOWN,
+            "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
+            caps.dwDevType, kbd_type, kbd_subtype);
 
     IUnknown_Release(pKeyboard);
 }
