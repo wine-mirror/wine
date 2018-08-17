@@ -1011,31 +1011,26 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         return 1;
 
     case FSCTL_PIPE_DISCONNECT:
-        switch(server->state)
+        switch(server->pipe_end.state)
         {
-        case ps_connected_server:
-            assert( server->pipe_end.connection );
-
+        case FILE_PIPE_CONNECTED_STATE:
             /* dump the client connection - all data is lost */
+            assert( server->pipe_end.connection );
             release_object( server->pipe_end.connection->pipe );
             server->pipe_end.connection->pipe = NULL;
-
-            pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-            set_server_state( server, ps_wait_connect );
             break;
-        case ps_wait_disconnect:
-            assert( !server->pipe_end.connection );
-            pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-            set_server_state( server, ps_wait_connect );
+        case FILE_PIPE_CLOSING_STATE:
             break;
-        case ps_idle_server:
-        case ps_wait_open:
+        case FILE_PIPE_LISTENING_STATE:
             set_error( STATUS_PIPE_LISTENING );
             return 0;
-        case ps_wait_connect:
+        case FILE_PIPE_DISCONNECTED_STATE:
             set_error( STATUS_PIPE_DISCONNECTED );
             return 0;
         }
+
+        pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
+        set_server_state( server, ps_wait_connect );
         return 1;
 
     default:
