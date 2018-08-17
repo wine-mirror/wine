@@ -448,7 +448,11 @@ static char *get_lib_dir( struct options *opts )
 {
     static const char *stdlibpath[] = { LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     static const char libwine[] = "/libwine.so";
+    const char *bit_suffix, *other_bit_suffix;
     unsigned int i;
+
+    bit_suffix = opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64 ? "64" : "32";
+    other_bit_suffix = opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64 ? "32" : "64";
 
     for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
     {
@@ -464,18 +468,9 @@ static char *get_lib_dir( struct options *opts )
             strcpy( p, libwine );
             if (check_platform( opts, buffer )) goto found;
         }
-        if (opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64)
-        {
-            strcpy( p, "32" );
-            strcat( p, libwine );
-            if (check_platform( opts, buffer )) goto found;
-        }
-        if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
-        {
-            strcpy( p, "64" );
-            strcat( p, libwine );
-            if (check_platform( opts, buffer )) goto found;
-        }
+        strcpy( p, bit_suffix );
+        strcat( p, libwine );
+        if (check_platform( opts, buffer )) goto found;
         switch(opts->target_cpu)
         {
         case CPU_x86:     strcpy( p, "/i386-linux-gnu" ); break;
@@ -488,6 +483,34 @@ static char *get_lib_dir( struct options *opts )
         }
         strcat( p, libwine );
         if (check_platform( opts, buffer )) goto found;
+
+        strcpy( buffer, stdlibpath[i] );
+        p = buffer + strlen(buffer);
+        while (p > buffer && p[-1] == '/') p--;
+        strcpy( p, libwine );
+
+        /* try to fixup each parent dirs named lib, lib32 or lib64 with target bitness suffix */
+        while (p > buffer)
+        {
+            p--;
+            while (p > buffer && *p != '/') p--;
+            if (*p != '/') break;
+            if (memcmp( p + 1, "lib", 3 )) continue;
+            if (p[4] == '/')
+            {
+                memmove( p + 6, p + 4, strlen( p + 4 ) + 1 );
+                memcpy( p + 4, bit_suffix, 2 );
+                if (check_platform( opts, buffer )) goto found;
+                memmove( p + 4, p + 6, strlen( p + 6 ) + 1 );
+            }
+            else if (!memcmp( p + 4, other_bit_suffix, 2 ) && p[6] == '/')
+            {
+                memcpy( p + 4, bit_suffix, 2 );
+                if (check_platform( opts, buffer )) goto found;
+                memcpy( p + 4, other_bit_suffix, 2 );
+            }
+        }
+
         free( buffer );
         continue;
 
