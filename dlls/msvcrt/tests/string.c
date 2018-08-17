@@ -3472,6 +3472,90 @@ static void test__tcsncoll(void)
     }
 }
 
+static void test__tcsnicoll(void)
+{
+    struct test {
+        const char *locale;
+        const char *str1;
+        const char *str2;
+        size_t count;
+        int exp;
+        BOOL todo;
+    };
+    static const struct test tests[] = {
+        { "English", "abcd", "ABCD",  4,  0 },
+        { "English", "abcd", "ABCD", 10,  0 },
+
+        { "English", "abc",  "ABCD",  3,  0 },
+        { "English", "abc",  "ABCD",  4, -1 },
+        { "English", "abc",  "ABCD", 10, -1 },
+
+        { "English", "abcd",  "ABC",  3,  0 },
+        { "English", "abcd",  "ABC",  4,  1 },
+        { "English", "abcd",  "ABC", 10,  1 },
+
+        { "English", "abcE", "ABCF",  3,  0 },
+
+        { "C",       "abcd", "ABCD",  4,  0 },
+        { "C",       "abcd", "ABCD", 10,  0 },
+
+        { "C",       "abc",  "ABCD",  3,  0 },
+        { "C",       "abc",  "ABCD", 10, -1 },
+
+        { "C",       "abcd",  "ABC",  3,  0 },
+        { "C",       "abcd",  "ABC", 10,  1 },
+
+        { "C",       "abce", "ABCf",  3,  0 },
+    };
+    WCHAR str1W[16];
+    WCHAR str2W[16];
+    char str1[16];
+    char str2[16];
+    size_t len;
+    int i, ret;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        if (!setlocale(LC_ALL, tests[i].locale))
+        {
+            win_skip("%s locale _tcsnicoll tests\n", tests[i].locale);
+            for (; i+1 < ARRAY_SIZE(tests); i++)
+                if (strcmp(tests[i].locale, tests[i+1].locale)) break;
+            continue;
+        }
+
+        memset(str1, 0xee, sizeof(str1));
+        strcpy(str1, tests[i].str1);
+
+        memset(str2, 0xff, sizeof(str2));
+        strcpy(str2, tests[i].str2);
+
+        ret = _strnicoll(str1, str2, tests[i].count);
+        if (!tests[i].exp)
+            ok(!ret, "expected 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+        else if (tests[i].exp < 0)
+            ok(ret < 0, "expected < 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+        else
+            ok(ret > 0, "expected > 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+
+        memset(str1W, 0xee, sizeof(str1W));
+        len = mbstowcs(str1W, str1, ARRAY_SIZE(str1W));
+        str1W[len] = 0;
+
+        memset(str2W, 0xff, sizeof(str2W));
+        len = mbstowcs(str2W, str2, ARRAY_SIZE(str2W));
+        str2W[len] = 0;
+
+        ret = _wcsnicoll(str1W, str2W, tests[i].count);
+        if (!tests[i].exp)
+            ok(!ret, "expected 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+        else if (tests[i].exp < 0)
+            ok(ret < 0, "expected < 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+        else
+            ok(ret > 0, "expected > 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3596,4 +3680,5 @@ START_TEST(string)
     test__memicmp_l();
     test__strupr();
     test__tcsncoll();
+    test__tcsnicoll();
 }
