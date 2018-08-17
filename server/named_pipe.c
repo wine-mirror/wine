@@ -1128,14 +1128,14 @@ static struct pipe_server *find_available_server( struct named_pipe *pipe )
     /* look for pipe servers that are listening */
     LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
     {
-        if (server->state == ps_wait_open)
+        if (server->pipe_end.state == FILE_PIPE_LISTENING_STATE && async_queued( &server->listen_q ))
             return (struct pipe_server *)grab_object( server );
     }
 
     /* fall back to pipe servers that are idle */
     LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
     {
-        if (server->state == ps_idle_server)
+        if (server->pipe_end.state == FILE_PIPE_LISTENING_STATE )
             return (struct pipe_server *)grab_object( server );
     }
 
