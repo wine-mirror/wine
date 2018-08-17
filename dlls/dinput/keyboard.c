@@ -433,6 +433,40 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A ifa
     return SysKeyboardWImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
 }
 
+static DWORD map_dik_to_scan(DWORD dik_code, DWORD subtype)
+{
+    if (dik_code == DIK_PAUSE || dik_code == DIK_NUMLOCK) dik_code ^= 0x80;
+    if (subtype == DIDEVTYPEKEYBOARD_JAPAN106)
+    {
+        switch (dik_code)
+        {
+        case DIK_CIRCUMFLEX:
+            dik_code = 0x0d;
+            break;
+        case DIK_AT:
+            dik_code = 0x1a;
+            break;
+        case DIK_LBRACKET:
+            dik_code = 0x1b;
+            break;
+        case DIK_COLON:
+            dik_code = 0x28;
+            break;
+        case DIK_KANJI:
+            dik_code = 0x29;
+            break;
+        case DIK_RBRACKET:
+            dik_code = 0x2b;
+            break;
+        case DIK_BACKSLASH:
+            dik_code = 0x73;
+            break;
+        }
+    }
+
+    return dik_code;
+}
+
 /******************************************************************************
   *     GetObjectInfo : get information about a device object such as a button
   *                     or axis
@@ -444,14 +478,14 @@ SysKeyboardAImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
     LONG scan;
 
     res = IDirectInputDevice2AImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
-    scan = DIDFT_GETINSTANCE(pdidoi->dwType);
-    if (scan == DIK_PAUSE || scan == DIK_NUMLOCK) scan ^= 0x80;
+    scan = map_dik_to_scan(DIDFT_GETINSTANCE(pdidoi->dwType), This->subtype);
     if (!GetKeyNameTextA((scan & 0x80) << 17 | (scan & 0x7f) << 16,
                          pdidoi->tszName, sizeof(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
@@ -465,14 +499,14 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 						     DWORD dwObj,
 						     DWORD dwHow)
 {
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
     LONG scan;
 
     res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
-    scan = DIDFT_GETINSTANCE(pdidoi->dwType);
-    if (scan == DIK_PAUSE || scan == DIK_NUMLOCK) scan ^= 0x80;
+    scan = map_dik_to_scan(DIDFT_GETINSTANCE(pdidoi->dwType), This->subtype);
     if (!GetKeyNameTextW((scan & 0x80) << 17 | (scan & 0x7f) << 16,
                          pdidoi->tszName, sizeof(pdidoi->tszName)/sizeof(pdidoi->tszName[0])))
         return DIERR_OBJECTNOTFOUND;
