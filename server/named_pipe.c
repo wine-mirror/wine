@@ -990,27 +990,25 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
     switch(code)
     {
     case FSCTL_PIPE_LISTEN:
-        switch(server->state)
+        switch(server->pipe_end.state)
         {
-        case ps_idle_server:
-        case ps_wait_connect:
-            fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT );
-            server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
-            set_server_state( server, ps_wait_open );
-            async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
-            set_error( STATUS_PENDING );
-            return 1;
-        case ps_connected_server:
+        case FILE_PIPE_LISTENING_STATE:
+        case FILE_PIPE_DISCONNECTED_STATE:
+            break;
+        case FILE_PIPE_CONNECTED_STATE:
             set_error( STATUS_PIPE_CONNECTED );
-            break;
-        case ps_wait_disconnect:
-            set_error( STATUS_NO_DATA_DETECTED );
-            break;
-        case ps_wait_open:
-            set_error( STATUS_INVALID_HANDLE );
-            break;
+            return 0;
+        case FILE_PIPE_CLOSING_STATE:
+            set_error( STATUS_PIPE_CLOSING );
+            return 0;
         }
-        return 0;
+
+        fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT );
+        server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
+        set_server_state( server, ps_wait_open );
+        async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
+        set_error( STATUS_PENDING );
+        return 1;
 
     case FSCTL_PIPE_DISCONNECT:
         switch(server->state)

@@ -1341,6 +1341,14 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
     }
+
+    if (is_server && (state == FILE_PIPE_CLOSING_STATE || state == FILE_PIPE_CONNECTED_STATE))
+    {
+        memset(&io, 0xcc, sizeof(io));
+        status = listen_pipe(pipe, NULL, &io, FALSE);
+        ok(status == (state == FILE_PIPE_CLOSING_STATE ? STATUS_PIPE_CLOSING : STATUS_PIPE_CONNECTED),
+           "status = %x in %u state\n", status, state);
+    }
 }
 
 static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
