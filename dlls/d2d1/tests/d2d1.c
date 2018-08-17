@@ -25,6 +25,15 @@
 #include "initguid.h"
 #include "dwrite.h"
 #include "wincodec.h"
+#include "wine/heap.h"
+
+static BOOL use_mt = TRUE;
+
+static struct test_entry
+{
+    void (*test)(void);
+} *mt_tests;
+size_t mt_tests_size, mt_test_count;
 
 struct resource_readback
 {
@@ -82,6 +91,63 @@ struct expected_geometry_figure
     unsigned int segment_count;
     const struct geometry_segment *segments;
 };
+
+static void queue_test(void (*test)(void))
+{
+    if (mt_test_count >= mt_tests_size)
+    {
+        mt_tests_size = max(16, mt_tests_size * 2);
+        mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
+    }
+    mt_tests[mt_test_count++].test = test;
+}
+
+static DWORD WINAPI thread_func(void *ctx)
+{
+    LONG *i = ctx, j;
+
+    while (*i < mt_test_count)
+    {
+        j = *i;
+        if (InterlockedCompareExchange(i, j + 1, j) == j)
+            mt_tests[j].test();
+    }
+
+    return 0;
+}
+
+static void run_queued_tests(void)
+{
+    unsigned int thread_count, i;
+    HANDLE *threads;
+    SYSTEM_INFO si;
+    LONG test_idx;
+
+    if (!use_mt)
+    {
+        for (i = 0; i < mt_test_count; ++i)
+        {
+            mt_tests[i].test();
+        }
+
+        return;
+    }
+
+    GetSystemInfo(&si);
+    thread_count = si.dwNumberOfProcessors;
+    threads = heap_calloc(thread_count, sizeof(*threads));
+    for (i = 0, test_idx = 0; i < thread_count; ++i)
+    {
+        threads[i] = CreateThread(NULL, 0, thread_func, &test_idx, 0, NULL);
+        ok(!!threads[i], "Failed to create thread %u.\n", i);
+    }
+    WaitForMultipleObjects(thread_count, threads, TRUE, INFINITE);
+    for (i = 0; i < thread_count; ++i)
+    {
+        CloseHandle(threads[i]);
+    }
+    heap_free(threads);
+}
 
 static void set_point(D2D1_POINT_2F *point, float x, float y)
 {
@@ -6465,31 +6531,43 @@ static void test_create_device(void)
 
 START_TEST(d2d1)
 {
-    test_clip();
-    test_state_block();
-    test_color_brush();
-    test_bitmap_brush();
-    test_linear_brush();
-    test_radial_brush();
-    test_path_geometry();
-    test_rectangle_geometry();
-    test_rounded_rectangle_geometry();
-    test_bitmap_formats();
-    test_alpha_mode();
-    test_shared_bitmap();
-    test_bitmap_updates();
-    test_opacity_brush();
-    test_create_target();
-    test_draw_text_layout();
-    test_dc_target();
-    test_hwnd_target();
-    test_bitmap_target();
-    test_desktop_dpi();
-    test_stroke_style();
-    test_gradient();
-    test_draw_geometry();
-    test_gdi_interop();
-    test_layer();
-    test_bezier_intersect();
-    test_create_device();
+    unsigned int argc, i;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
+    for (i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--single"))
+            use_mt = FALSE;
+    }
+
+    queue_test(test_clip);
+    queue_test(test_state_block);
+    queue_test(test_color_brush);
+    queue_test(test_bitmap_brush);
+    queue_test(test_linear_brush);
+    queue_test(test_radial_brush);
+    queue_test(test_path_geometry);
+    queue_test(test_rectangle_geometry);
+    queue_test(test_rounded_rectangle_geometry);
+    queue_test(test_bitmap_formats);
+    queue_test(test_alpha_mode);
+    queue_test(test_shared_bitmap);
+    queue_test(test_bitmap_updates);
+    queue_test(test_opacity_brush);
+    queue_test(test_create_target);
+    queue_test(test_draw_text_layout);
+    queue_test(test_dc_target);
+    queue_test(test_hwnd_target);
+    queue_test(test_bitmap_target);
+    queue_test(test_desktop_dpi);
+    queue_test(test_stroke_style);
+    queue_test(test_gradient);
+    queue_test(test_draw_geometry);
+    queue_test(test_gdi_interop);
+    queue_test(test_layer);
+    queue_test(test_bezier_intersect);
+    queue_test(test_create_device);
+
+    run_queued_tests();
 }
