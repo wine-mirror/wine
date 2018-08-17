@@ -487,6 +487,81 @@ playback_skip:
     return test_ran;
 }
 
+static void test_media_item(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    IWMPMedia *media, *media2;
+    IWMPPlayer4 *player;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
+        return;
+    }
+    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+
+    hr = IWMPPlayer4_newMedia(player, NULL, &media);
+    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    hr = IWMPMedia_get_name(media, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    media2 = (void *)0xdeadbeef;
+    hr = IWMPPlayer4_get_currentMedia(player, &media2);
+    ok(hr == S_FALSE, "Failed to get current media, hr %#x.\n", hr);
+    ok(media2 == NULL, "Unexpected media instance.\n");
+
+    hr = IWMPPlayer4_put_currentMedia(player, media);
+    ok(hr == S_OK, "Failed to set current media, hr %#x.\n", hr);
+
+    hr = IWMPPlayer4_get_currentMedia(player, &media2);
+    ok(hr == S_OK, "Failed to get current media, hr %#x.\n", hr);
+    ok(media2 != NULL && media != media2, "Unexpected media instance.\n");
+    IWMPMedia_Release(media2);
+
+    IWMPMedia_Release(media);
+
+    str = SysAllocStringLen(NULL, 0);
+    hr = IWMPPlayer4_newMedia(player, str, &media);
+    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    SysFreeString(str);
+    hr = IWMPMedia_get_name(media, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IWMPMedia_Release(media);
+
+    str = SysAllocString(mp3file);
+    hr = IWMPPlayer4_newMedia(player, str, &media);
+    ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    SysFreeString(str);
+    hr = IWMPMedia_get_name(media, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IWMPPlayer4_put_currentMedia(player, media);
+    ok(hr == S_OK, "Failed to set current media, hr %#x.\n", hr);
+    IWMPMedia_Release(media);
+
+    hr = IWMPPlayer4_get_currentMedia(player, &media2);
+    ok(hr == S_OK, "Failed to get current media, hr %#x.\n", hr);
+    ok(media2 != NULL, "Unexpected media instance.\n");
+    hr = IWMPMedia_get_name(media2, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IWMPMedia_Release(media2);
+
+    IWMPPlayer4_Release(player);
+}
+
 START_TEST(media)
 {
     CoInitialize(NULL);
@@ -494,6 +569,8 @@ START_TEST(media)
     main_thread_id = GetCurrentThreadId();
     playing_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     completed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    test_media_item();
     if (test_wmp()) {
         test_completion_event();
     } else {
