@@ -316,17 +316,23 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     {
         LANGID langid;
         const struct key2dik *map;
+        DWORD type;
     } expected[] =
     {
-        { MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), key2dik_en },
-        { MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH), key2dik_fr },
-        { MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), key2dik_de },
-        { MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), key2dik_en }
+        { MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+          key2dik_en, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH),
+          key2dik_fr, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),
+          key2dik_de, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN),
+          key2dik_en, DIDEVTYPEKEYBOARD_JAPAN106 }
     };
     const struct key2dik *map = NULL;
     UINT i;
     HRESULT hr;
     IDirectInputDeviceA *device;
+    DIDEVCAPS caps;
     HKL hkl, hkl_orig;
     MSG msg;
 
@@ -347,6 +353,14 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     ok(hr == S_OK, "SetDataFormat() failed: %08x\n", hr);
     hr = IDirectInputDevice_Acquire(device);
     ok(hr == S_OK, "Acquire() failed: %08x\n", hr);
+    caps.dwSize = sizeof( caps );
+    hr = IDirectInputDevice_GetCapabilities(device, &caps);
+    ok(hr == S_OK, "GetDeviceInstance() failed: %08x\n", hr);
+    if (expected[i].type != GET_DIDEVICE_SUBTYPE(caps.dwDevType)) {
+        skip("Keyboard type(%u) doesn't match for lang %04x\n",
+             GET_DIDEVICE_SUBTYPE(caps.dwDevType), langid);
+        goto fail;
+    }
 
     hkl = activate_keyboard_layout(langid, &hkl_orig);
     if (!hkl) goto fail;
