@@ -694,7 +694,8 @@ int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
         return strncasecmp(str1, str2, count);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
-            str1, count, str2, count)-CSTR_EQUAL;
+            str1, MSVCRT_strnlen(str1, count),
+            str2, MSVCRT_strnlen(str2, count))-CSTR_EQUAL;
 }
 
 /*********************************************************************
