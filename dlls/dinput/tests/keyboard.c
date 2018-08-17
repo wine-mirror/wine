@@ -284,7 +284,7 @@ static void test_capabilities(IDirectInputA *pDI, HWND hwnd)
             "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
             caps.dwDevType, kbd_type, kbd_subtype);
     else if (kbd_type == 7 && kbd_subtype == 2)
-        todo_wine ok (dev_subtype == DIDEVTYPEKEYBOARD_JAPAN106,
+        ok (dev_subtype == DIDEVTYPEKEYBOARD_JAPAN106,
             "GetCapabilities invalid device subtype for dwDevType: 0x%08x (%04x:%04x)\n",
             caps.dwDevType, kbd_type, kbd_subtype);
     else
