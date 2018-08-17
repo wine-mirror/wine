@@ -374,18 +374,12 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
         n = SendInput(1, &in, sizeof(in));
         ok(n == 1, "got %u\n", n);
 
-        if (!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+        if (!PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE))
         {
             win_skip("failed to queue keyboard event\n");
             break;
         }
-        ok(msg.message == WM_KEYDOWN || broken(msg.message != WM_KEYDOWN), "expected WM_KEYDOWN, got %04x\n", msg.message);
-        /* this never happens on real hardware but tesbot VMs seem to have timing issues */
-        if (msg.message != WM_KEYDOWN)
-        {
-            win_skip("failed to queue keyboard event\n");
-            break;
-        }
+        ok(msg.message == WM_KEYDOWN, "expected WM_KEYDOWN, got %04x\n", msg.message);
         DispatchMessageA(&msg);
 
         trace("keydown wParam: %#lx (%c) lParam: %#lx, MapVirtualKey(MAPVK_VK_TO_CHAR) = %c\n",
