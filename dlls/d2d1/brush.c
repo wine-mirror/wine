@@ -1087,7 +1087,7 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXT
 }
 
 static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
-        const struct d2d_d3d_render_target *render_target, struct d2d_brush_cb *cb)
+        const struct d2d_device_context *render_target, struct d2d_brush_cb *cb)
 {
     float theta, sin_theta, cos_theta;
     float dpi_scale, d, s1, s2, t, u;
@@ -1204,7 +1204,7 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
 }
 
 HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
-        BOOL outline, struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb)
+        BOOL outline, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
 {
     D3D10_SUBRESOURCE_DATA buffer_data;
     struct d2d_ps_cb cb_data = {0};

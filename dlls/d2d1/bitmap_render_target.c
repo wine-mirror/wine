@@ -728,7 +728,7 @@ static const struct ID2D1BitmapRenderTargetVtbl d2d_bitmap_render_target_vtbl =
 };
 
 HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_target,
-        const struct d2d_d3d_render_target *parent_target, const D2D1_SIZE_F *size,
+        const struct d2d_device_context *parent_target, const D2D1_SIZE_F *size,
         const D2D1_SIZE_U *pixel_size, const D2D1_PIXEL_FORMAT *pixel_format,
         D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options)
 {

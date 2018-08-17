@@ -337,7 +337,7 @@ HRESULT d2d_bitmap_create(ID2D1Factory *factory, ID3D10Device *device, D2D1_SIZE
     return *bitmap ? S_OK : E_OUTOFMEMORY;
 }
 
-HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device *target_device,
+HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *target_device,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap)
 {
     D2D1_BITMAP_PROPERTIES d;
@@ -349,7 +349,7 @@ HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device 
         ID3D10Device *device;
         HRESULT hr = S_OK;
 
-        ID2D1RenderTarget_GetFactory(render_target, &factory);
+        ID2D1DeviceContext_GetFactory(context, &factory);
         if (src_impl->factory != factory)
         {
             hr = D2DERR_WRONG_FACTORY;
@@ -437,7 +437,7 @@ HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device 
         {
             float dpi_x, dpi_y;
 
-            ID2D1RenderTarget_GetDpi(render_target, &dpi_x, &dpi_y);
+            ID2D1DeviceContext_GetDpi(context, &dpi_x, &dpi_y);
             if (d.dpiX == 0.0f)
                 d.dpiX = dpi_x;
             if (d.dpiY == 0.0f)
@@ -454,7 +454,7 @@ HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device 
         pixel_size.width = surface_desc.Width;
         pixel_size.height = surface_desc.Height;
 
-        ID2D1RenderTarget_GetFactory(render_target, &factory);
+        ID2D1DeviceContext_GetFactory(context, &factory);
         d2d_bitmap_init(*bitmap, factory, view, pixel_size, &d);
         ID3D10ShaderResourceView_Release(view);
         ID2D1Factory_Release(factory);
