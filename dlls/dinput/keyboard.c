@@ -68,11 +68,38 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardIm
     return &This->base.IDirectInputDevice8W_iface;
 }
 
-static BYTE map_dik_code(DWORD scanCode, DWORD vkCode)
+static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType)
 {
     if (!scanCode)
         scanCode = MapVirtualKeyW(vkCode, MAPVK_VK_TO_VSC);
 
+    if (subType == DIDEVTYPEKEYBOARD_JAPAN106)
+    {
+        switch (scanCode)
+        {
+        case 0x0d: /* ^ */
+            scanCode = DIK_CIRCUMFLEX;
+            break;
+        case 0x1a: /* @ */
+            scanCode = DIK_AT;
+            break;
+        case 0x1b: /* [ */
+            scanCode = DIK_LBRACKET;
+            break;
+        case 0x28: /* : */
+            scanCode = DIK_COLON;
+            break;
+        case 0x29: /* Hankaku/Zenkaku */
+            scanCode = DIK_KANJI;
+            break;
+        case 0x2b: /* ] */
+            scanCode = DIK_RBRACKET;
+            break;
+        case 0x73: /* \ */
+            scanCode = DIK_BACKSLASH;
+            break;
+        }
+    }
     return scanCode;
 }
 
@@ -98,7 +125,7 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
         case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
         case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
         default:
-            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode);
+            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype);
             if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
@@ -248,12 +275,14 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     for (i = 0; i < df->dwNumObjs; i++)
     {
         char buf[MAX_PATH];
+        BYTE dik_code;
 
         if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), buf, sizeof(buf)))
             continue;
 
-        memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[i], df->dwObjSize);
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
+        dik_code = map_dik_code(i, 0, newDevice->subtype);
+        memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[dik_code], df->dwObjSize);
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
 

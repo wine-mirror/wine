@@ -318,7 +318,7 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     key2dik_ja[] =
     {
         {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
-        {'@',DIK_AT,2}, {']',DIK_RBRACKET,2}, {'.',DIK_PERIOD}
+        {'@',DIK_AT}, {']',DIK_RBRACKET}, {'.',DIK_PERIOD}
     };
     static const struct
     {
