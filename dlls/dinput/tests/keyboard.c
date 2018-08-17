@@ -299,18 +299,26 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
 {
     static const struct key2dik
     {
-        BYTE key, dik;
+        BYTE key, dik, todo;
     } key2dik_en[] =
     {
-        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y}
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'[',DIK_LBRACKET}, {']',DIK_RBRACKET}, {'.',DIK_PERIOD}
     },
     key2dik_fr[] =
     {
-        {'A',DIK_Q}, {'Z',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y}
+        {'A',DIK_Q}, {'Z',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'^',DIK_LBRACKET}, {'$',DIK_RBRACKET}, {':',DIK_PERIOD}
     },
     key2dik_de[] =
     {
-        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Z',DIK_Y}
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Z',DIK_Y},
+        {'\xfc',DIK_LBRACKET,1}, {'+',DIK_RBRACKET}, {'.',DIK_PERIOD}
+    },
+    key2dik_ja[] =
+    {
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'@',DIK_AT,2}, {']',DIK_RBRACKET,2}, {'.',DIK_PERIOD}
     };
     static const struct
     {
@@ -326,7 +334,7 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
         { MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),
           key2dik_de, DIDEVTYPEKEYBOARD_PCENH },
         { MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN),
-          key2dik_en, DIDEVTYPEKEYBOARD_JAPAN106 }
+          key2dik_ja, DIDEVTYPEKEYBOARD_JAPAN106 }
     };
     const struct key2dik *map = NULL;
     UINT i;
@@ -372,16 +380,29 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
     {
         BYTE kbd_state[256];
         UINT n;
+        WORD vkey, scan;
         INPUT in;
 
-        n = MapVirtualKeyA(map[i].key, MAPVK_VK_TO_CHAR);
-        ok(n == map[i].key, "%u: expected %c, got %c\n", i, map[i].key, n);
-        n = MapVirtualKeyA(map[i].key, MAPVK_VK_TO_VSC);
-        ok(n == map[i].dik, "%u: expected %02x, got %02x\n", i, map[i].dik, n);
+        n = VkKeyScanExW(map[i].key, hkl);
+        todo_wine_if(map[i].todo & 1)
+        ok(n != 0xffff, "%u: failed to get virtual key value for %c(%02x)\n", i, map[i].key, map[i].key);
+        vkey = LOBYTE(n);
+        n = MapVirtualKeyExA(vkey, MAPVK_VK_TO_CHAR, hkl) & 0xff;
+        todo_wine_if(map[i].todo & 1)
+        ok(n == map[i].key, "%u: expected %c(%02x), got %c(%02x)\n", i, map[i].key, map[i].key, n, n);
+        scan = MapVirtualKeyExA(vkey, MAPVK_VK_TO_VSC, hkl);
+        /* scan codes match the DIK_ codes on US keyboard.
+           however, it isn't true for symbols and punctuations in other layouts. */
+        if (isalpha(map[i].key) || langid == MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT))
+            ok(scan == map[i].dik, "%u: expected %02x, got %02x\n", i, map[i].dik, n);
+        else
+            todo_wine_if(map[i].todo & 1)
+            ok(scan, "%u: fail to get scan code value, expected %02x (vkey=%02x)\n",
+               i, map[i].dik, vkey);
 
         in.type = INPUT_KEYBOARD;
-        U(in).ki.wVk = map[i].key;
-        U(in).ki.wScan = map[i].dik; /* scan codes match the DIK_ codes */
+        U(in).ki.wVk = vkey;
+        U(in).ki.wScan = scan;
         U(in).ki.dwFlags = 0;
         U(in).ki.dwExtraInfo = 0;
         U(in).ki.time = 0;
@@ -396,8 +417,10 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
         ok(msg.message == WM_KEYDOWN, "expected WM_KEYDOWN, got %04x\n", msg.message);
         DispatchMessageA(&msg);
 
-        trace("keydown wParam: %#lx (%c) lParam: %#lx, MapVirtualKey(MAPVK_VK_TO_CHAR) = %c\n",
-              msg.wParam, LOWORD(msg.wParam), msg.lParam, MapVirtualKeyA(msg.wParam, MAPVK_VK_TO_CHAR));
+        n = MapVirtualKeyExA(msg.wParam, MAPVK_VK_TO_CHAR, hkl);
+        trace("keydown wParam: %#08lx (%c) lParam: %#08lx, MapVirtualKey(MAPVK_VK_TO_CHAR) = %c\n",
+              msg.wParam, isprint(LOWORD(msg.wParam)) ? LOWORD(msg.wParam) : '?',
+              msg.lParam, isprint(n) ? n : '?');
 
         pump_messages();
 
@@ -411,6 +434,7 @@ static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
             break;
         }
 
+        todo_wine_if(map[i].todo)
         ok(kbd_state[map[i].dik] == 0x80, "DI key %#x has state %#x\n", map[i].dik, kbd_state[map[i].dik]);
 
         U(in).ki.dwFlags = KEYEVENTF_KEYUP;
