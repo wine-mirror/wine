@@ -917,18 +917,40 @@ DWORD WINAPI OemKeyScan( WORD oem )
 INT WINAPI GetKeyboardType(INT nTypeFlag)
 {
     TRACE_(keyboard)("(%d)\n", nTypeFlag);
-    switch(nTypeFlag)
+    if (LOWORD(GetKeyboardLayout(0)) == MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN))
     {
-    case 0:      /* Keyboard type */
-        return 4;    /* AT-101 */
-    case 1:      /* Keyboard Subtype */
-        return 0;    /* There are no defined subtypes */
-    case 2:      /* Number of F-keys */
-        return 12;   /* We're doing an 101 for now, so return 12 F-keys */
-    default:
-        WARN_(keyboard)("Unknown type\n");
-        return 0;    /* The book says 0 here, so 0 */
+        /* scan code for `_', the key left of r-shift, in Japanese 106 keyboard */
+        const UINT JP106_VSC_USCORE = 0x73;
+
+        switch(nTypeFlag)
+        {
+        case 0:      /* Keyboard type */
+            return 7;    /* Japanese keyboard */
+        case 1:      /* Keyboard Subtype */
+            /* Test keyboard mappings to detect Japanese keyboard */
+            if (MapVirtualKeyW(VK_OEM_102, MAPVK_VK_TO_VSC) == JP106_VSC_USCORE
+                && MapVirtualKeyW(JP106_VSC_USCORE, MAPVK_VSC_TO_VK) == VK_OEM_102)
+                return 2;    /* Japanese 106 */
+            else
+                return 0;    /* AT-101 */
+        case 2:      /* Number of F-keys */
+            return 12;   /* It has 12 F-keys */
+        }
     }
+    else
+    {
+        switch(nTypeFlag)
+        {
+        case 0:      /* Keyboard type */
+            return 4;    /* AT-101 */
+        case 1:      /* Keyboard Subtype */
+            return 0;    /* There are no defined subtypes */
+        case 2:      /* Number of F-keys */
+            return 12;   /* We're doing an 101 for now, so return 12 F-keys */
+        }
+    }
+    WARN_(keyboard)("Unknown type\n");
+    return 0;    /* The book says 0 here, so 0 */
 }
 
 /******************************************************************************
