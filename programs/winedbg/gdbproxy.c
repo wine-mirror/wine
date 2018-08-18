@@ -434,7 +434,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case EXCEPTION_DEBUG_EVENT:
         assert(dbg_curr_thread);
-        fprintf(stderr, "%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
+        TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
         if (fetch_context(gdbctx, dbg_curr_thread->handle, &gdbctx->context))
@@ -1286,7 +1286,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
     if (reg >= gdbctx->process->be_cpu->gdb_num_regs)
     {
-        FIXME("Unhandled register %u\n", reg);
+        WARN("Unhandled register %u\n", reg);
         return packet_error;
     }
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
@@ -1315,7 +1315,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     reg = strtoul(gdbctx->in_packet, &ptr, 16);
     if (ptr == NULL || reg >= gdbctx->process->be_cpu->gdb_num_regs || *ptr++ != '=')
     {
-        FIXME("Unhandled register %s\n",
+        WARN("Unhandled register %s\n",
             debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
