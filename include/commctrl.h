@@ -5220,6 +5220,11 @@ static const WCHAR WC_COMBOBOXW[] = { 'C','o','m','b','o','B','o','x',0 };
 #define CB_SETCUEBANNER           (CBM_FIRST + 3)
 #define CB_GETCUEBANNER           (CBM_FIRST + 4)
 
+#define ComboBox_GetMinVisible(hwnd) \
+        ((int)SendMessage((hwnd), CB_GETMINVISIBLE, 0, 0))
+#define ComboBox_SetMinVisible(hwnd, count) \
+        ((BOOL)SendMessage((hwnd), CB_SETMINVISIBLE, (WPARAM)(count), 0))
+
 /**************************************************************************
  * Edit control
  */
