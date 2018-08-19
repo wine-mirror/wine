@@ -1126,13 +1126,11 @@ static const IDirectMusicPortVtbl midi_port_vtbl = {
     midi_IDirectMusicPort_GetFormat,
 };
 
-HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
-        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
+HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params, DMUS_PORTCAPS *caps,
+        IDirectMusicPort **port)
 {
     struct midi_port *obj;
     HRESULT hr;
-
-    TRACE("(%p, %p, %p)\n", port_params, port_caps, port);
 
     if (!(obj = heap_alloc_zero(sizeof(*obj))))
         return E_OUTOFMEMORY;
@@ -1151,10 +1149,18 @@ HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_pa
     return S_OK;
 }
 
-HRESULT midi_in_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
-        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
+HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params,
+        DMUS_PORTCAPS *caps, IDirectMusicPort **port)
 {
-    FIXME("(%p, %p, %p): stub\n", port_params, port_caps, port);
+    TRACE("(%p, %p, %p, %p)\n", parent, params, caps, port);
 
-    return E_NOTIMPL;
+    return midi_port_create(parent, params, caps, port);
+}
+
+HRESULT midi_in_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params,
+        DMUS_PORTCAPS *caps, IDirectMusicPort **port)
+{
+    TRACE("(%p, %p, %p, %p)\n", parent, params, caps, port);
+
+    return midi_port_create(parent, params, caps, port);
 }
