@@ -688,25 +688,25 @@ static void test_listbox_size(DWORD style)
         int height_combo;
         BOOL todo;
     } info_height[] = {
-        {2, 24, TRUE},
+        {2, 24, FALSE},
         {2, 41, TRUE},
-        {2, 42, TRUE},
-        {2, 50, TRUE},
+        {2, 42, FALSE},
+        {2, 50, FALSE},
         {2, 60},
         {2, 80},
         {2, 89},
         {2, 90},
         {2, 100},
 
-        {10, 24, TRUE},
+        {10, 24, FALSE},
         {10, 41, TRUE},
-        {10, 42, TRUE},
-        {10, 50, TRUE},
-        {10, 60, TRUE},
-        {10, 80, TRUE},
+        {10, 42, FALSE},
+        {10, 50, FALSE},
+        {10, 60, FALSE},
+        {10, 80, FALSE},
         {10, 89, TRUE},
-        {10, 90, TRUE},
-        {10, 100, TRUE},
+        {10, 90, FALSE},
+        {10, 100, FALSE},
     };
 
     for(test = 0; test < ARRAY_SIZE(info_height); test++)
