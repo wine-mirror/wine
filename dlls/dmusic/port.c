@@ -907,6 +907,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
 struct midi_port {
     IDirectMusicPort IDirectMusicPort_iface;
     LONG ref;
+    IReferenceClock *clock;
 };
 
 static inline struct midi_port *impl_from_IDirectMusicPort(IDirectMusicPort *iface)
@@ -949,8 +950,11 @@ static ULONG WINAPI midi_IDirectMusicPort_Release(IDirectMusicPort *iface)
 
     TRACE("(%p) ref = %u\n", iface, ref);
 
-    if (!ref)
+    if (!ref) {
+        if (This->clock)
+            IReferenceClock_Release(This->clock);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -999,9 +1003,17 @@ static HRESULT WINAPI midi_IDirectMusicPort_UnloadInstrument(IDirectMusicPort *i
 static HRESULT WINAPI midi_IDirectMusicPort_GetLatencyClock(IDirectMusicPort *iface,
         IReferenceClock **clock)
 {
-    FIXME("(%p, %p) stub!\n", iface, clock);
+    struct midi_port *This = impl_from_IDirectMusicPort(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    *clock = This->clock;
+    IReferenceClock_AddRef(*clock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI midi_IDirectMusicPort_GetRunningStats(IDirectMusicPort *iface,
@@ -1118,6 +1130,7 @@ HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_pa
         DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
 {
     struct midi_port *obj;
+    HRESULT hr;
 
     TRACE("(%p, %p, %p)\n", port_params, port_caps, port);
 
@@ -1126,6 +1139,12 @@ HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_pa
 
     obj->IDirectMusicPort_iface.lpVtbl = &midi_port_vtbl;
     obj->ref = 1;
+
+    hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (void **)&obj->clock, NULL);
+    if (hr != S_OK) {
+        HeapFree(GetProcessHeap(), 0, obj);
+        return hr;
+    }
 
     *port = &obj->IDirectMusicPort_iface;
 
