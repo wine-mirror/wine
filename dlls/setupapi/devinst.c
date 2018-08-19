@@ -524,7 +524,7 @@ static void SETUPDI_RemoveDevice(struct device *device)
             struct device_iface, entry)
     {
         list_remove(&iface->entry);
-        if ((path = get_refstr_key_path(iface)))
+        if (device->phantom && (path = get_refstr_key_path(iface)))
         {
             RegDeleteKeyW(HKEY_LOCAL_MACHINE, path);
             heap_free(path);
