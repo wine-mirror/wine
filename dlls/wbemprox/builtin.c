@@ -37,6 +37,7 @@
 #ifdef __MINGW32__
 # include "winsock2.h"
 # include "ws2tcpip.h"
+# define WS_AF_INET AF_INET
 # define WS_AF_UNSPEC AF_UNSPEC
 # define WS_NI_MAXHOST NI_MAXHOST
 # define WS_NI_NAMEREQD NI_NAMEREQD
@@ -2496,14 +2497,14 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     }
     for (address = list; address; address = address->Next)
     {
-        if (address->Address.lpSockaddr->sa_family == AF_INET)
+        if (address->Address.lpSockaddr->sa_family == WS_AF_INET)
         {
             WCHAR buf[INET_ADDRSTRLEN];
             SOCKADDR_IN addr;
             ULONG buflen = sizeof(buf)/sizeof(buf[0]);
 
             memset( &addr, 0, sizeof(addr) );
-            addr.sin_family = AF_INET;
+            addr.sin_family = WS_AF_INET;
             if (ConvertLengthToIpv4Mask( address->OnLinkPrefixLength, &addr.sin_addr.S_un.S_addr ) != NO_ERROR
                     || WSAAddressToStringW( (SOCKADDR*)&addr, sizeof(addr), NULL, buf, &buflen))
                 ptr[i] = NULL;
