@@ -906,6 +906,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
 
 struct midi_port {
     IDirectMusicPort IDirectMusicPort_iface;
+    IDirectMusicThru IDirectMusicThru_iface;
     LONG ref;
     IReferenceClock *clock;
 };
@@ -918,17 +919,21 @@ static inline struct midi_port *impl_from_IDirectMusicPort(IDirectMusicPort *ifa
 static HRESULT WINAPI midi_IDirectMusicPort_QueryInterface(IDirectMusicPort *iface, REFIID riid,
         void **ret_iface)
 {
+    struct midi_port *This = impl_from_IDirectMusicPort(iface);
+
     TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicPort))
         *ret_iface = iface;
+    else if (IsEqualIID(riid, &IID_IDirectMusicThru))
+        *ret_iface = &This->IDirectMusicThru_iface;
     else {
         WARN("no interface for %s\n", debugstr_dmguid(riid));
         *ret_iface = NULL;
         return E_NOINTERFACE;
     }
 
-    IDirectMusicPort_AddRef(iface);
+    IUnknown_AddRef((IUnknown *)*ret_iface);
 
     return S_OK;
 }
@@ -1126,6 +1131,49 @@ static const IDirectMusicPortVtbl midi_port_vtbl = {
     midi_IDirectMusicPort_GetFormat,
 };
 
+static inline struct midi_port *impl_from_IDirectMusicThru(IDirectMusicThru *iface)
+{
+    return CONTAINING_RECORD(iface, struct midi_port, IDirectMusicThru_iface);
+}
+
+static HRESULT WINAPI midi_IDirectMusicThru_QueryInterface(IDirectMusicThru *iface, REFIID riid,
+        void **ret_iface)
+{
+    struct midi_port *This = impl_from_IDirectMusicThru(iface);
+
+    return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
+}
+
+static ULONG WINAPI midi_IDirectMusicThru_AddRef(IDirectMusicThru *iface)
+{
+    struct midi_port *This = impl_from_IDirectMusicThru(iface);
+
+    return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
+}
+
+static ULONG WINAPI midi_IDirectMusicThru_Release(IDirectMusicThru *iface)
+{
+    struct midi_port *This = impl_from_IDirectMusicThru(iface);
+
+    return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
+}
+
+static HRESULT WINAPI midi_IDirectMusicThru_ThruChannel(IDirectMusicThru *iface, DWORD src_group,
+        DWORD src_channel, DWORD dest_group, DWORD dest_channel, IDirectMusicPort *dest_port)
+{
+    FIXME("(%p, %u, %u, %u, %u, %p) stub!\n", iface, src_group, src_channel, dest_group,
+            dest_channel, dest_port);
+
+    return E_NOTIMPL;
+}
+
+static const IDirectMusicThruVtbl midi_thru_vtbl = {
+    midi_IDirectMusicThru_QueryInterface,
+    midi_IDirectMusicThru_AddRef,
+    midi_IDirectMusicThru_Release,
+    midi_IDirectMusicThru_ThruChannel,
+};
+
 HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params, DMUS_PORTCAPS *caps,
         IDirectMusicPort **port)
 {
@@ -1136,6 +1184,7 @@ HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params, DMU
         return E_OUTOFMEMORY;
 
     obj->IDirectMusicPort_iface.lpVtbl = &midi_port_vtbl;
+    obj->IDirectMusicThru_iface.lpVtbl = &midi_thru_vtbl;
     obj->ref = 1;
 
     hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (void **)&obj->clock, NULL);
