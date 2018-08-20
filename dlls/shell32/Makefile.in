@@ -62,24 +62,24 @@ IDL_SRCS = \
 	shell32_tlb.idl
 
 SVG_SRCS = \
-	cdrom.svg \
-	control.svg \
-	delete.svg \
-	desktop.svg \
-	document.svg \
-	drive.svg \
-	floppy.svg \
-	folder.svg \
-	folder_open.svg \
-	internet.svg \
-	mycomputer.svg \
-	mydocs.svg \
-	netdrive.svg \
-	netdrive2.svg \
-	network.svg \
-	printer.svg \
-	ramdisk.svg \
-	recent.svg \
-	shortcut.svg \
-	trash_file.svg \
-	window.svg
+	resources/cdrom.svg \
+	resources/control.svg \
+	resources/delete.svg \
+	resources/desktop.svg \
+	resources/document.svg \
+	resources/drive.svg \
+	resources/floppy.svg \
+	resources/folder.svg \
+	resources/folder_open.svg \
+	resources/internet.svg \
+	resources/mycomputer.svg \
+	resources/mydocs.svg \
+	resources/netdrive.svg \
+	resources/netdrive2.svg \
+	resources/network.svg \
+	resources/printer.svg \
+	resources/ramdisk.svg \
+	resources/recent.svg \
+	resources/shortcut.svg \
+	resources/trash_file.svg \
+	resources/window.svg
