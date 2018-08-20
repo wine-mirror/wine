@@ -480,6 +480,9 @@ IDI_SHELL_MY_COMPUTER ICON mycomputer.ico
 /* @makedep: printer.ico */
 IDI_SHELL_PRINTER ICON printer.ico
 
+/* @makedep: network.ico */
+IDI_SHELL_MY_NETWORK_PLACES ICON network.ico
+
 /* @makedep: shortcut.ico */
 IDI_SHELL_SHORTCUT ICON shortcut.ico
 
@@ -500,10 +503,6 @@ IDI_SHELL_CONFIRM_DELETE ICON delete.ico
 
 /* @makedep: mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON mydocs.ico
-
-/* FIXME: Following resource is not yet added */
-/* @makedep: mydocs.ico */
-IDI_SHELL_MY_NETWORK_PLACES ICON mydocs.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: mydocs.ico */
