@@ -370,7 +370,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
       if (usernames) {
           strcpyW (string, inputparms->dirName);
           strcatW (string, fd[i].cFileName);
-          WCMD_getfileowner(string, username, sizeof(username)/sizeof(WCHAR));
+          WCMD_getfileowner(string, username, ARRAY_SIZE(username));
       }
 
       if (dirTime == Written) {
@@ -381,10 +381,8 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         FileTimeToLocalFileTime (&fd[i].ftCreationTime, &ft);
       }
       FileTimeToSystemTime (&ft, &st);
-      GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
-			sizeof(datestring)/sizeof(WCHAR));
-      GetTimeFormatW(0, TIME_NOSECONDS, &st,
-			NULL, timestring, sizeof(timestring)/sizeof(WCHAR));
+      GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring, ARRAY_SIZE(datestring));
+      GetTimeFormatW(0, TIME_NOSECONDS, &st, NULL, timestring, ARRAY_SIZE(timestring));
 
       if (wide) {
 
@@ -612,7 +610,7 @@ void WCMD_directory (WCHAR *args)
   errorlevel = 0;
 
   /* Prefill quals with (uppercased) DIRCMD env var */
-  if (GetEnvironmentVariableW(dircmdW, string, sizeof(string)/sizeof(WCHAR))) {
+  if (GetEnvironmentVariableW(dircmdW, string, ARRAY_SIZE(string))) {
     p = string;
     while ( (*p = toupper(*p)) ) ++p;
     strcatW(string,quals);
@@ -823,7 +821,7 @@ void WCMD_directory (WCHAR *args)
       }
       WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
 
-      status = GetFullPathNameW(fullname, sizeof(path)/sizeof(WCHAR), path, NULL);
+      status = GetFullPathNameW(fullname, ARRAY_SIZE(path), path, NULL);
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the
