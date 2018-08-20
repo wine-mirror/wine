@@ -42,6 +42,8 @@ struct hid_device
 {
     WCHAR *path;
     HANDLE file;
+    RID_DEVICE_INFO_HID info;
+    PHIDP_PREPARSED_DATA data;
 };
 
 static struct hid_device *hid_devices;
@@ -63,7 +65,9 @@ static void find_hid_devices(void)
     SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     DWORD detail_size, needed;
+    HIDD_ATTRIBUTES attr;
     DWORD idx, didx;
+    HIDP_CAPS caps;
     GUID hid_guid;
     HDEVINFO set;
     HANDLE file;
@@ -145,6 +149,22 @@ static void find_hid_devices(void)
 
         hid_devices[didx].path = path;
         hid_devices[didx].file = file;
+
+        attr.Size = sizeof(HIDD_ATTRIBUTES);
+        if (!HidD_GetAttributes(file, &attr))
+            WARN_(rawinput)("Failed to get attributes.\n");
+        hid_devices[didx].info.dwVendorId = attr.VendorID;
+        hid_devices[didx].info.dwProductId = attr.ProductID;
+        hid_devices[didx].info.dwVersionNumber = attr.VersionNumber;
+
+        if (!HidD_GetPreparsedData(file, &hid_devices[didx].data))
+            WARN_(rawinput)("Failed to get preparsed data.\n");
+
+        if (!HidP_GetCaps(hid_devices[didx].data, &caps))
+            WARN_(rawinput)("Failed to get caps.\n");
+
+        hid_devices[didx].info.usUsagePage = caps.UsagePage;
+        hid_devices[didx].info.usUsage = caps.Usage;
 
         didx++;
     }
@@ -327,6 +347,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
     static const WCHAR mouse_name[] = {'\\','\\','?','\\','W','I','N','E','_','M','O','U','S','E',0};
     static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
+    struct hid_device *hid_device;
     const WCHAR *name = NULL;
     RID_DEVICE_INFO *info;
     UINT s;
@@ -334,7 +355,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
     TRACE("device %p, command %#x, data %p, data_size %p.\n",
             device, command, data, data_size);
 
-    if (!data_size || (device != WINE_MOUSE_HANDLE && device != WINE_KEYBOARD_HANDLE)) return ~0U;
+    if (!data_size) return ~0U;
 
     switch (command)
     {
@@ -382,10 +403,16 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
         info->dwType = RIM_TYPEMOUSE;
         info->u.mouse = mouse_info;
     }
-    else
+    else if (device == WINE_KEYBOARD_HANDLE)
     {
         info->dwType = RIM_TYPEKEYBOARD;
         info->u.keyboard = keyboard_info;
+    }
+    else
+    {
+        hid_device = device;
+        info->dwType = RIM_TYPEHID;
+        info->u.hid = hid_device->info;
     }
     return s;
 }
