@@ -489,6 +489,9 @@ IDI_SHELL_COMPUTERS_NEAR_ME ICON network.ico
 /* @makedep: recent.ico */
 IDI_SHELL_RECENT_DOCUMENTS ICON recent.ico
 
+/* @makedep: control.ico */
+IDI_SHELL_SETTINGS ICON control.ico
+
 /* @makedep: shortcut.ico */
 IDI_SHELL_SHORTCUT ICON shortcut.ico
 
