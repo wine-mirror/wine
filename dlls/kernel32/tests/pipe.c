@@ -140,6 +140,20 @@ static void _test_pipe_info(unsigned line, HANDLE pipe, DWORD ex_flags, DWORD ex
     ok_(__FILE__,line)(max_instances == ex_max_instances, "max_instances = %x, expected %u\n", max_instances, ex_max_instances);
 }
 
+#define test_file_access(a,b) _test_file_access(__LINE__,a,b)
+static void _test_file_access(unsigned line, HANDLE handle, DWORD expected_access)
+{
+    FILE_ACCESS_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    memset(&info, 0x11, sizeof(info));
+    status = NtQueryInformationFile(handle, &io, &info, sizeof(info), FileAccessInformation);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok_(__FILE__,line)(info.AccessFlags == expected_access, "got access %08x expected %08x\n",
+                       info.AccessFlags, expected_access);
+}
+
 static void test_CreateNamedPipe(int pipemode)
 {
     HANDLE hnp;
@@ -208,6 +222,10 @@ static void test_CreateNamedPipe(int pipemode)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
     test_signaled(hnp);
+
+    test_file_access(hnp, SYNCHRONIZE | READ_CONTROL | FILE_WRITE_ATTRIBUTES
+                     | FILE_READ_ATTRIBUTES | FILE_WRITE_PROPERTIES | FILE_READ_PROPERTIES
+                     | FILE_APPEND_DATA | FILE_WRITE_DATA | FILE_READ_DATA);
 
     ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);
     todo_wine
@@ -626,6 +644,26 @@ static void test_CreateNamedPipe(int pipemode)
     }
 
     ok(CloseHandle(hnp), "CloseHandle\n");
+
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_INBOUND, pipemode | PIPE_WAIT,
+                           1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    test_signaled(hnp);
+
+    test_file_access(hnp, SYNCHRONIZE | READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_PROPERTIES
+                     | FILE_READ_DATA);
+
+    CloseHandle(hnp);
+
+    hnp = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_OUTBOUND, pipemode | PIPE_WAIT,
+                           1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    test_signaled(hnp);
+
+    test_file_access(hnp, SYNCHRONIZE | READ_CONTROL | FILE_WRITE_ATTRIBUTES
+                     | FILE_WRITE_PROPERTIES | FILE_APPEND_DATA | FILE_WRITE_DATA);
+
+    CloseHandle(hnp);
 
     if (winetest_debug > 1) trace("test_CreateNamedPipe returning\n");
 }
