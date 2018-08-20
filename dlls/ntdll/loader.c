@@ -1175,8 +1175,8 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
         }
         __EXCEPT_ALL
         {
-            TRACE_(relay)("\1exception in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
-                          callback, module, reason_names[reason] );
+            TRACE_(relay)("\1exception %08x in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+                          GetExceptionCode(), callback, module, reason_names[reason] );
             return;
         }
         __ENDTRY
@@ -1222,9 +1222,9 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
     }
     __EXCEPT_ALL
     {
-        TRACE_(relay)("\1exception in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
-                      entry, module, reason_names[reason], lpReserved );
         status = GetExceptionCode();
+        TRACE_(relay)("\1exception %08x in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
+                      status, entry, module, reason_names[reason], lpReserved );
     }
     __ENDTRY
 
