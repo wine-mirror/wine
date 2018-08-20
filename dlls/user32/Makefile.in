@@ -3,7 +3,7 @@ MODULE    = user32.dll
 IMPORTLIB = user32
 IMPORTS   = gdi32 version advapi32
 EXTRAINCL = $(PNG_CFLAGS)
-DELAYIMPORTS = imm32 usp10
+DELAYIMPORTS = hid imm32 setupapi usp10
 
 C_SRCS = \
 	button.c \

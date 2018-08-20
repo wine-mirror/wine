@@ -27,7 +27,10 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winuser.h"
+#include "setupapi.h"
+#include "ddk/hidsdi.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 
@@ -35,11 +38,130 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
 
+struct hid_device
+{
+    WCHAR *path;
+    HANDLE file;
+};
+
+static struct hid_device *hid_devices;
+static unsigned int hid_devices_count, hid_devices_max;
+
+static CRITICAL_SECTION hid_devices_cs;
+static CRITICAL_SECTION_DEBUG hid_devices_cs_debug =
+{
+    0, 0, &hid_devices_cs,
+    { &hid_devices_cs_debug.ProcessLocksList, &hid_devices_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": hid_devices_cs") }
+};
+static CRITICAL_SECTION hid_devices_cs = { &hid_devices_cs_debug, -1, 0, 0, 0, 0 };
+
+static void find_hid_devices(void)
+{
+    static ULONGLONG last_check;
+
+    SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
+    DWORD detail_size, needed;
+    DWORD idx, didx;
+    GUID hid_guid;
+    HDEVINFO set;
+    HANDLE file;
+    WCHAR *path;
+
+    if (GetTickCount64() - last_check < 2000)
+        return;
+    last_check = GetTickCount64();
+
+    HidD_GetHidGuid(&hid_guid);
+
+    set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+
+    detail_size = sizeof(*detail) + (MAX_PATH * sizeof(WCHAR));
+    if (!(detail = heap_alloc(detail_size)))
+        return;
+    detail->cbSize = sizeof(*detail);
+
+    EnterCriticalSection(&hid_devices_cs);
+
+    /* destroy previous list */
+    for (didx = 0; didx < hid_devices_count; ++didx)
+    {
+        CloseHandle(hid_devices[didx].file);
+        heap_free(hid_devices[didx].path);
+    }
+
+    didx = 0;
+    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
+    {
+        if (!SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, detail_size, &needed, NULL))
+        {
+            if (!(detail = heap_realloc(detail, needed)))
+            {
+                ERR("Failed to allocate memory.\n");
+                goto done;
+            }
+            detail_size = needed;
+
+            SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, detail_size, NULL, NULL);
+        }
+
+        if (!(path = heap_strdupW(detail->DevicePath)))
+        {
+            ERR("Failed to allocate memory.\n");
+            goto done;
+        }
+
+        file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            ERR("Failed to open device file %s, error %u.\n", debugstr_w(path), GetLastError());
+            heap_free(path);
+            continue;
+        }
+
+        if (didx >= hid_devices_max)
+        {
+            if (hid_devices)
+            {
+                hid_devices_max *= 2;
+                hid_devices = heap_realloc(hid_devices,
+                    hid_devices_max * sizeof(hid_devices[0]));
+            }
+            else
+            {
+                hid_devices_max = 8;
+                hid_devices = heap_alloc(hid_devices_max * sizeof(hid_devices[0]));
+            }
+            if (!hid_devices)
+            {
+                ERR("Failed to allocate memory.\n");
+                goto done;
+            }
+        }
+
+        TRACE("Found HID device %s.\n", debugstr_w(path));
+
+        hid_devices[didx].path = path;
+        hid_devices[didx].file = file;
+
+        didx++;
+    }
+    hid_devices_count = didx;
+
+done:
+    LeaveCriticalSection(&hid_devices_cs);
+    heap_free(detail);
+}
+
 /***********************************************************************
  *              GetRawInputDeviceList   (USER32.@)
  */
 UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_count, UINT size)
 {
+    UINT i;
+
     TRACE("devices %p, device_count %p, size %u.\n", devices, device_count, size);
 
     if (size != sizeof(*devices))
@@ -54,16 +176,18 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
         return ~0U;
     }
 
+    find_hid_devices();
+
     if (!devices)
     {
-        *device_count = 2;
+        *device_count = 2 + hid_devices_count;
         return 0;
     }
 
-    if (*device_count < 2)
+    if (*device_count < 2 + hid_devices_count)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        *device_count = 2;
+        *device_count = 2 + hid_devices_count;
         return ~0U;
     }
 
@@ -72,7 +196,13 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
     devices[1].hDevice = WINE_KEYBOARD_HANDLE;
     devices[1].dwType = RIM_TYPEKEYBOARD;
 
-    return 2;
+    for (i = 0; i < hid_devices_count; ++i)
+    {
+        devices[2 + i].hDevice = &hid_devices[i];
+        devices[2 + i].dwType = RIM_TYPEHID;
+    }
+
+    return 2 + hid_devices_count;
 }
 
 /***********************************************************************
