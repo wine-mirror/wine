@@ -572,9 +572,6 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
     if (!AddEntryToTree(hwndTV, hRoot, hkcc, HKEY_CURRENT_CONFIG, 1)) return FALSE;
     if (!AddEntryToTree(hwndTV, hRoot, hkdd, HKEY_DYN_DATA, 1)) return FALSE;
 
-    /* expand and select host name */
-    SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot );
-    SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     return TRUE;
 }
 

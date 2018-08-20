@@ -240,15 +240,20 @@ static void get_last_key(HWND hwndTV)
 
     if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_READ, NULL, &hkey, NULL) == ERROR_SUCCESS)
     {
+        HTREEITEM selection = NULL;
         if (RegQueryValueExW(hkey, wszLastKey, NULL, NULL, (LPBYTE)wszVal, &dwSize) == ERROR_SUCCESS)
         {
-            HTREEITEM selection;
-            if (!strcmpW(wszVal, g_pChildWnd->szPath))
-                selection = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
-            else
+            if (strcmpW(wszVal, g_pChildWnd->szPath))
                 selection = FindPathInTree(hwndTV, wszVal);
-            SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)selection);
         }
+
+        if(!selection)
+        {
+            selection = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+            SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)selection );
+        }
+        else
+            SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)selection);
 
         RegCloseKey(hkey);
     }
