@@ -483,6 +483,9 @@ IDI_SHELL_PRINTER ICON printer.ico
 /* @makedep: network.ico */
 IDI_SHELL_MY_NETWORK_PLACES ICON network.ico
 
+/* @makedep: network.ico */
+IDI_SHELL_COMPUTERS_NEAR_ME ICON network.ico
+
 /* @makedep: shortcut.ico */
 IDI_SHELL_SHORTCUT ICON shortcut.ico
 
