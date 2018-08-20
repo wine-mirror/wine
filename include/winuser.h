@@ -486,7 +486,7 @@ typedef struct tagRAWINPUTDEVICELIST
 typedef struct tagRAWHID {
     DWORD dwSizeHid;
     DWORD dwCount;
-    BYTE bRawData;
+    BYTE bRawData[1];
 } RAWHID, *LPRAWHID;
 
 typedef struct tagRAWKEYBOARD {
