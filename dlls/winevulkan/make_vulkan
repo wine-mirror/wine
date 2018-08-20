@@ -161,7 +161,7 @@ FUNCTION_OVERRIDES = {
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : False},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : False},
-    "vkGetDeviceQueue2" : {"dispatch": False, "driver" : False, "thunk" : False},
+    "vkGetDeviceQueue2" : {"dispatch": True, "driver" : False, "thunk" : False},
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface

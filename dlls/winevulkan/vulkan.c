@@ -171,6 +171,7 @@ static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPoo
 static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
         uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags)
 {
+    VkDeviceQueueInfo2 queue_info;
     struct VkQueue_T *queues;
     unsigned int i;
 
@@ -188,10 +189,24 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
         queue->device = device;
         queue->flags = flags;
 
-        /* The native device was already allocated with the required number of queues,
-         * so just fetch them from there.
+        /* The Vulkan spec says:
+         *
+         * "vkGetDeviceQueue must only be used to get queues that were created
+         * with the flags parameter of VkDeviceQueueCreateInfo set to zero."
          */
-        device->funcs.p_vkGetDeviceQueue(device->device, family_index, i, &queue->queue);
+        if (flags && device->funcs.p_vkGetDeviceQueue2)
+        {
+            queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
+            queue_info.pNext = NULL;
+            queue_info.flags = flags;
+            queue_info.queueFamilyIndex = family_index;
+            queue_info.queueIndex = i;
+            device->funcs.p_vkGetDeviceQueue2(device->device, &queue_info, &queue->queue);
+        }
+        else
+        {
+            device->funcs.p_vkGetDeviceQueue(device->device, family_index, i, &queue->queue);
+        }
     }
 
     return queues;
