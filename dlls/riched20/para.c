@@ -36,6 +36,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   ME_Context c;
   CHARFORMAT2W cf;
+  const CHARFORMATW *host_cf;
   LOGFONTW lf;
   HFONT hf;
   ME_TextBuffer *text = editor->pBuffer;
@@ -75,6 +76,14 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
 
   style = ME_MakeStyle(&cf);
   text->pDefaultStyle = style;
+
+  if (ITextHost_TxGetCharFormat(editor->texthost, &host_cf) == S_OK)
+  {
+    ZeroMemory(&cf, sizeof(cf));
+    cf.cbSize = sizeof(cf);
+    cfany_to_cf2w(&cf, (CHARFORMAT2W *)host_cf);
+    ME_SetDefaultCharFormat(editor, &cf);
+  }
 
   eol_len = editor->bEmulateVersion10 ? 2 : 1;
   para->member.para.text = ME_MakeStringN( cr_lf, eol_len );

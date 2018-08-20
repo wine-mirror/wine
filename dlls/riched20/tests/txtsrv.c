@@ -85,6 +85,7 @@ typedef struct ITextHostTestImpl
 {
     ITextHost ITextHost_iface;
     LONG refCount;
+    CHARFORMAT2W char_format;
 } ITextHostTestImpl;
 
 static inline ITextHostTestImpl *impl_from_ITextHost(ITextHost *iface)
@@ -330,7 +331,8 @@ static HRESULT WINAPI ITextHostImpl_TxGetCharFormat(ITextHost *iface,
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxGetCharFormat(%p, ppCF=%p)\n", This, ppCF);
-    return E_NOTIMPL;
+    *ppCF = (CHARFORMATW *)&This->char_format;
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextHostImpl_TxGetParaFormat(ITextHost *iface,
@@ -624,6 +626,7 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
     ITextHostTestImpl *dummyTextHost;
     IUnknown *init;
     HRESULT result;
+    HFONT hf;
 
     dummyTextHost = CoTaskMemAlloc(sizeof(*dummyTextHost));
     if (dummyTextHost == NULL) {
@@ -632,6 +635,11 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
     }
     dummyTextHost->ITextHost_iface.lpVtbl = &itextHostVtbl;
     dummyTextHost->refCount = 1;
+    memset(&dummyTextHost->char_format, 0, sizeof(dummyTextHost->char_format));
+    dummyTextHost->char_format.cbSize = sizeof(dummyTextHost->char_format);
+    dummyTextHost->char_format.dwMask = CFM_ALL2;
+    hf = GetStockObject(DEFAULT_GUI_FONT);
+    hf_to_cf(hf, &dummyTextHost->char_format);
 
     /* MSDN states that an IUnknown object is returned by
        CreateTextServices which is then queried to obtain a
@@ -952,6 +960,36 @@ static void test_QueryInterface(void)
     ITextHost_Release(host);
 }
 
+static void test_default_format(void)
+{
+    ITextServices *txtserv;
+    ITextHost *host;
+    HRESULT result;
+    LRESULT lresult;
+    CHARFORMAT2W cf2;
+    const CHARFORMATW *host_cf;
+    DWORD expected_effects;
+
+    if (!init_texthost(&txtserv, &host))
+        return;
+
+    cf2.cbSize = sizeof(CHARFORMAT2W);
+    result = ITextServices_TxSendMessage(txtserv, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2, &lresult);
+    ok(result == S_OK, "ITextServices_TxSendMessage failed: 0x%08x.\n", result);
+
+    ITextHostImpl_TxGetCharFormat(host, &host_cf);
+    ok(!lstrcmpW(host_cf->szFaceName, cf2.szFaceName), "got wrong font name: %s.\n", wine_dbgstr_w(cf2.szFaceName));
+    ok(cf2.yHeight == host_cf->yHeight, "got wrong yHeight: %d, expetced %d.\n", cf2.yHeight, host_cf->yHeight);
+    expected_effects = (cf2.dwEffects & ~(CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR));
+    ok(host_cf->dwEffects == expected_effects , "got wrong dwEffects: %x, expetced %x.\n", cf2.dwEffects, expected_effects);
+    ok(cf2.bPitchAndFamily == host_cf->bPitchAndFamily, "got wrong bPitchAndFamily: %x, expected %x.\n",
+       cf2.bPitchAndFamily, host_cf->bPitchAndFamily);
+    ok(cf2.bCharSet == host_cf->bCharSet, "got wrong bCharSet: %x, expected %x.\n", cf2.bCharSet, host_cf->bCharSet);
+
+    ITextServices_Release(txtserv);
+    ITextHost_Release(host);
+}
+
 START_TEST( txtsrv )
 {
     ITextServices *txtserv;
@@ -982,6 +1020,7 @@ START_TEST( txtsrv )
         test_TxGetNaturalSize();
         test_TxDraw();
         test_QueryInterface();
+        test_default_format();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
