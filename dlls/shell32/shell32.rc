@@ -420,6 +420,9 @@ IDI_SHELL_MY_NETWORK_PLACES ICON network.ico
 /* @makedep: network.ico */
 IDI_SHELL_COMPUTERS_NEAR_ME ICON network.ico
 
+/* @makedep: recent.ico */
+IDI_SHELL_RECENT_DOCUMENTS ICON recent.ico
+
 /* @makedep: shortcut.ico */
 IDI_SHELL_SHORTCUT ICON shortcut.ico
 
