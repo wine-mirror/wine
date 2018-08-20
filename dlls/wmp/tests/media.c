@@ -562,6 +562,54 @@ todo_wine
     IWMPPlayer4_Release(player);
 }
 
+static void test_player_url(void)
+{
+    IWMPPlayer4 *player;
+    BSTR str, str2;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
+        return;
+    }
+    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+
+    hr = IWMPPlayer4_get_URL(player, &str);
+    ok(hr == S_OK, "Failed to get url, hr %#x.\n", hr);
+    ok(*str == 0, "Unexpected url %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str2 = SysAllocString(mp3file);
+    hr = IWMPPlayer4_put_URL(player, str2);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+
+    hr = IWMPPlayer4_put_URL(player, NULL);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    hr = IWMPPlayer4_get_URL(player, &str);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(*str == 0, "Unexpected url, %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* Empty url */
+    hr = IWMPPlayer4_put_URL(player, str2);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+
+    str = SysAllocStringLen(NULL, 0);
+    hr = IWMPPlayer4_put_URL(player, str);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    SysFreeString(str);
+
+    hr = IWMPPlayer4_get_URL(player, &str);
+    ok(hr == S_OK, "Failed to set url, hr %#x.\n", hr);
+    ok(*str == 0, "Unexpected url, %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    SysFreeString(str2);
+    IWMPPlayer4_Release(player);
+}
+
 START_TEST(media)
 {
     CoInitialize(NULL);
@@ -571,6 +619,7 @@ START_TEST(media)
     completed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     test_media_item();
+    test_player_url();
     if (test_wmp()) {
         test_completion_event();
     } else {

@@ -28,7 +28,7 @@ static ATOM player_msg_class;
 static INIT_ONCE class_init_once;
 static UINT WM_WMPEVENT;
 static const WCHAR WMPmessageW[] = {'_', 'W', 'M', 'P', 'M','e','s','s','a','g','e',0};
-
+static const WCHAR emptyW[] = {0};
 
 static void update_state(WindowsMediaPlayer *wmp, LONG type, LONG state)
 {
@@ -135,9 +135,8 @@ static HRESULT WINAPI WMPPlayer4_get_URL(IWMPPlayer4 *iface, BSTR *url)
 
     TRACE("(%p)->(%p)\n", This, url);
 
-    if(This->media == NULL) {
-        return S_FALSE;
-    }
+    if (!This->media)
+        return return_bstr(emptyW, url);
 
     return return_bstr(This->media->url, url);
 }
@@ -147,10 +146,8 @@ static HRESULT WINAPI WMPPlayer4_put_URL(IWMPPlayer4 *iface, BSTR url)
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
     IWMPMedia *media;
     HRESULT hres;
+
     TRACE("(%p)->(%s)\n", This, debugstr_w(url));
-    if(url == NULL) {
-        return E_POINTER;
-    }
 
     hres = create_media_from_url(url, 0.0, &media);
 
@@ -161,9 +158,8 @@ static HRESULT WINAPI WMPPlayer4_put_URL(IWMPPlayer4 *iface, BSTR url)
     }
     if (SUCCEEDED(hres)) {
         update_state(This, DISPID_WMPCOREEVENT_PLAYSTATECHANGE, wmppsReady);
-        if (This->auto_start == VARIANT_TRUE) {
-            hres = IWMPControls_play(&This->IWMPControls_iface);
-        }
+        if (This->auto_start == VARIANT_TRUE)
+            IWMPControls_play(&This->IWMPControls_iface);
     }
 
     return hres;
@@ -2025,7 +2021,6 @@ WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface)
 
 HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
 {
-    static const WCHAR emptyW[] = {0};
     WMPMedia *media;
 
     media = heap_alloc_zero(sizeof(*media));
