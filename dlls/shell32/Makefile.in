@@ -76,6 +76,7 @@ SVG_SRCS = \
 	mydocs.svg \
 	netdrive.svg \
 	netdrive2.svg \
+	network.svg \
 	printer.svg \
 	ramdisk.svg \
 	shortcut.svg \

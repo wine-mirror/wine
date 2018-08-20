@@ -405,6 +405,9 @@ IDI_SHELL_RAMDISK ICON ramdisk.ico
 /* @makedep: internet.ico */
 IDI_SHELL_ENTIRE_NETWORK ICON internet.ico
 
+/* @makedep: network.ico */
+IDI_SHELL_NETWORK ICON network.ico
+
 /* @makedep: mycomputer.ico */
 IDI_SHELL_MY_COMPUTER ICON mycomputer.ico
 
