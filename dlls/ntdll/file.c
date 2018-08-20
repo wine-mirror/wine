@@ -2310,7 +2310,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if (class != FilePipeInformation && class != FilePipeLocalInformation)
+    if (class != FilePipeInformation && class != FilePipeLocalInformation && class != FileAccessInformation)
     {
         if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
         {
