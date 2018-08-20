@@ -365,10 +365,16 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
             s = sizeof(mouse_name);
             name = mouse_name;
         }
-        else
+        else if (device == WINE_KEYBOARD_HANDLE)
         {
             s = sizeof(keyboard_name);
             name = keyboard_name;
+        }
+        else
+        {
+            hid_device = device;
+            s = (strlenW(hid_device->path) + 1) * sizeof(WCHAR);
+            name = hid_device->path;
         }
         break;
     case RIDI_DEVICEINFO:
