@@ -666,6 +666,11 @@ static void test_CreateNamedPipe(int pipemode)
     test_file_access(hnp, SYNCHRONIZE | READ_CONTROL | FILE_WRITE_ATTRIBUTES
                      | FILE_WRITE_PROPERTIES | FILE_APPEND_DATA | FILE_WRITE_DATA);
 
+    hFile = CreateFileA(PIPENAME, 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    test_file_access(hFile, SYNCHRONIZE | FILE_READ_ATTRIBUTES);
+    CloseHandle(hFile);
+
     CloseHandle(hnp);
 
     if (winetest_debug > 1) trace("test_CreateNamedPipe returning\n");

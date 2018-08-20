@@ -1582,8 +1582,8 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
-    status = NtCreateFile( &ret, access | SYNCHRONIZE, &attr, &io, NULL, attributes,
-                           sharing, nt_disposition[creation - CREATE_NEW],
+    status = NtCreateFile( &ret, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
+                           NULL, attributes, sharing, nt_disposition[creation - CREATE_NEW],
                            options, NULL, 0 );
     if (status)
     {

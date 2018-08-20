@@ -113,6 +113,20 @@ static inline BOOL is_signaled( HANDLE obj )
     return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
 }
 
+#define test_file_access(a,b) _test_file_access(__LINE__,a,b)
+static void _test_file_access(unsigned line, HANDLE handle, DWORD expected_access)
+{
+    FILE_ACCESS_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    memset(&info, 0x11, sizeof(info));
+    status = NtQueryInformationFile(handle, &io, &info, sizeof(info), FileAccessInformation);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok_(__FILE__,line)(info.AccessFlags == expected_access, "got access %08x expected %08x\n",
+                       info.AccessFlags, expected_access);
+}
+
 static const WCHAR testpipe[] = { '\\', '\\', '.', '\\', 'p', 'i', 'p', 'e', '\\',
                                   't', 'e', 's', 't', 'p', 'i', 'p', 'e', 0 };
 static const WCHAR testpipe_nt[] = { '\\', '?', '?', '\\', 'p', 'i', 'p', 'e', '\\',
@@ -562,6 +576,7 @@ static void _check_pipe_handle_state(int line, HANDLE handle, ULONG read, ULONG 
 
 static void test_filepipeinfo(void)
 {
+    FILE_PIPE_LOCAL_INFORMATION local_info;
     IO_STATUS_BLOCK iosb;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
@@ -725,6 +740,33 @@ static void test_filepipeinfo(void)
 
     check_pipe_handle_state(hServer, 1, 0);
 
+    CloseHandle(hServer);
+
+    res = pNtCreateNamedPipeFile(&hServer,
+                                 FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                                 &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,  FILE_CREATE,
+                                 0, 1, 1, 0, 0xFFFFFFFF, 500, 500, &timeout);
+    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+
+    res = NtCreateFile(&hClient, SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                       FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok(!res, "NtCreateFile returned %x\n", res);
+
+    test_file_access(hClient, SYNCHRONIZE);
+
+    res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
+                                  FilePipeLocalInformation);
+    todo_wine
+    ok(res == STATUS_ACCESS_DENIED,
+       "NtQueryInformationFile(FilePipeLocalInformation) returned: %x\n", res);
+
+    res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
+                                  FilePipeInformation);
+    todo_wine
+    ok(res == STATUS_ACCESS_DENIED,
+       "NtQueryInformationFile(FilePipeInformation) returned: %x\n", res);
+
+    CloseHandle(hClient);
     CloseHandle(hServer);
 }
 
