@@ -36,6 +36,7 @@ C_SRCS = \
 	nonclient.c \
 	painting.c \
 	property.c \
+	rawinput.c \
 	resource.c \
 	scroll.c \
 	spy.c \
