@@ -177,7 +177,7 @@ UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT
 {
     UINT ret;
 
-    TRACE("device %p, command %u, data %p, data_size %p.\n",
+    TRACE("device %p, command %#x, data %p, data_size %p.\n",
             device, command, data, data_size);
 
     ret = GetRawInputDeviceInfoW(device, command, data, data_size);
@@ -201,7 +201,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
     RID_DEVICE_INFO *info;
     UINT s;
 
-    TRACE("device %p, command %u, data %p, data_size %p.\n",
+    TRACE("device %p, command %#x, data %p, data_size %p.\n",
             device, command, data, data_size);
 
     if (!data_size || (device != WINE_MOUSE_HANDLE && device != WINE_KEYBOARD_HANDLE)) return ~0U;
