@@ -11908,6 +11908,94 @@ static void test_copy_subresource_region(void)
     release_test_context(&test_context);
 }
 
+static void test_copy_subresource_region_1d(void)
+{
+    D3D11_SUBRESOURCE_DATA resource_data[4];
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE1D_DESC texture1d_desc;
+    D3D11_TEXTURE2D_DESC texture2d_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Texture1D *texture1d;
+    ID3D11Texture2D *texture2d;
+    ID3D11Device *device;
+    unsigned int i, j;
+    D3D11_BOX box;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD bitmap_data[] =
+    {
+        0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
+        0xffff0000, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture1d_desc.Width = 4;
+    texture1d_desc.MipLevels = 1;
+    texture1d_desc.ArraySize = 4;
+    texture1d_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture1d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture1d_desc.BindFlags = 0;
+    texture1d_desc.CPUAccessFlags = 0;
+    texture1d_desc.MiscFlags = 0;
+
+    for (i = 0; i < ARRAY_SIZE(resource_data); ++i)
+    {
+        resource_data[i].pSysMem = &bitmap_data[4 * i];
+        resource_data[i].SysMemPitch = texture1d_desc.Width * sizeof(bitmap_data);
+        resource_data[i].SysMemSlicePitch = 0;
+    }
+
+    hr = ID3D11Device_CreateTexture1D(device, &texture1d_desc, resource_data, &texture1d);
+    ok(hr == S_OK, "Failed to create 1d texture, hr %#x.\n", hr);
+
+    texture2d_desc.Width = 4;
+    texture2d_desc.Height = 4;
+    texture2d_desc.MipLevels = 1;
+    texture2d_desc.ArraySize = 1;
+    texture2d_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture2d_desc.SampleDesc.Count = 1;
+    texture2d_desc.SampleDesc.Quality = 0;
+    texture2d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture2d_desc.BindFlags = 0;
+    texture2d_desc.CPUAccessFlags = 0;
+    texture2d_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
+    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+
+    set_box(&box, 0, 0, 0, 4, 1, 1);
+    for (i = 0; i < ARRAY_SIZE(resource_data); ++i)
+    {
+        ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)texture2d, 0,
+                0, i, 0, (ID3D11Resource *)texture1d, i, &box);
+    }
+
+    get_texture_readback(texture2d, 0, &rb);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            color = get_readback_color(&rb, j, i, 0);
+            ok(compare_color(color, bitmap_data[j + i * 4], 1),
+                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    color, j, i, bitmap_data[j + i * 4]);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11Texture1D_Release(texture1d);
+    ID3D11Texture2D_Release(texture2d);
+    release_test_context(&test_context);
+}
+
 static void test_copy_subresource_region_3d(void)
 {
     ID3D11ShaderResourceView *dst_srv, *src_srv;
@@ -28075,6 +28163,7 @@ START_TEST(d3d11)
     queue_test(test_fragment_coords);
     queue_test(test_update_subresource);
     queue_test(test_copy_subresource_region);
+    queue_test(test_copy_subresource_region_1d);
     queue_test(test_copy_subresource_region_3d);
     queue_test(test_resource_map);
     queue_for_each_feature_level(test_resource_access);
