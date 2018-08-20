@@ -79,6 +79,7 @@ SVG_SRCS = \
 	network.svg \
 	printer.svg \
 	ramdisk.svg \
+	recent.svg \
 	shortcut.svg \
 	trash_file.svg \
 	window.svg
