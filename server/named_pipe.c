@@ -1284,7 +1284,7 @@ DECL_HANDLER(get_named_pipe_info)
 
         clear_error();
         pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
-                                                      0, &pipe_client_ops );
+                                                      FILE_READ_ATTRIBUTES, &pipe_client_ops );
         if (!pipe_end) return;
     }
 

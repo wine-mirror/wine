@@ -756,15 +756,17 @@ static void test_filepipeinfo(void)
 
     res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
                                   FilePipeLocalInformation);
-    todo_wine
     ok(res == STATUS_ACCESS_DENIED,
        "NtQueryInformationFile(FilePipeLocalInformation) returned: %x\n", res);
 
     res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
                                   FilePipeInformation);
-    todo_wine
     ok(res == STATUS_ACCESS_DENIED,
        "NtQueryInformationFile(FilePipeInformation) returned: %x\n", res);
+
+    res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
+                                  FileNameInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile(FileNameInformation) returned: %x\n", res);
 
     CloseHandle(hClient);
     CloseHandle(hServer);
