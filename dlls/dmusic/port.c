@@ -977,7 +977,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_SetReadNotificationHandle(IDirectMus
 {
     FIXME("(%p, %p) stub!\n", iface, event);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI midi_IDirectMusicPort_Read(IDirectMusicPort *iface,
@@ -1164,7 +1164,7 @@ static HRESULT WINAPI midi_IDirectMusicThru_ThruChannel(IDirectMusicThru *iface,
     FIXME("(%p, %u, %u, %u, %u, %p) stub!\n", iface, src_group, src_channel, dest_group,
             dest_channel, dest_port);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IDirectMusicThruVtbl midi_thru_vtbl = {
