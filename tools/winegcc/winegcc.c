@@ -507,6 +507,9 @@ static char *get_lib_dir( struct options *opts )
             {
                 memcpy( p + 4, bit_suffix, 2 );
                 if (check_platform( opts, buffer )) goto found;
+                memmove( p + 4, p + 6, strlen( p + 6 ) + 1 );
+                if (check_platform( opts, buffer )) goto found;
+                memmove( p + 6, p + 4, strlen( p + 4 ) + 1 );
                 memcpy( p + 4, other_bit_suffix, 2 );
             }
         }
