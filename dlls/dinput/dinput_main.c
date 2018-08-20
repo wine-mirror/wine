@@ -165,6 +165,63 @@ HRESULT WINAPI DirectInputCreateEx(
 }
 
 /******************************************************************************
+ *	DirectInput8Create (DINPUT8.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create(HINSTANCE hinst,
+    DWORD version, REFIID iid, void **out, IUnknown *outer)
+{
+    IDirectInputImpl *This;
+    HRESULT hr;
+
+    TRACE("hinst %p, version %#x, iid %s, out %p, outer %p.\n",
+        hinst, version, debugstr_guid(iid), out, outer);
+
+    if (!out)
+        return E_POINTER;
+
+    if (!IsEqualGUID(&IID_IDirectInput8A, iid) &&
+        !IsEqualGUID(&IID_IDirectInput8W, iid) &&
+        !IsEqualGUID(&IID_IUnknown, iid))
+    {
+        *out = NULL;
+        return DIERR_NOINTERFACE;
+    }
+
+    hr = create_directinput_instance(iid, out, &This);
+
+    if (FAILED(hr))
+    {
+        ERR("Failed to create DirectInput, hr %#x.\n", hr);
+        return hr;
+    }
+
+    /* When aggregation is used, the application needs to manually call Initialize(). */
+    if (!outer && IsEqualGUID(&IID_IDirectInput8A, iid))
+    {
+        hr = IDirectInput8_Initialize(&This->IDirectInput8A_iface, hinst, version);
+        if (FAILED(hr))
+        {
+            IDirectInput8_Release(&This->IDirectInput8A_iface);
+            *out = NULL;
+            return hr;
+        }
+    }
+
+    if (!outer && IsEqualGUID(&IID_IDirectInput8W, iid))
+    {
+        hr = IDirectInput8_Initialize(&This->IDirectInput8W_iface, hinst, version);
+        if (FAILED(hr))
+        {
+            IDirectInput8_Release(&This->IDirectInput8W_iface);
+            *out = NULL;
+            return hr;
+        }
+    }
+
+    return S_OK;
+}
+
+/******************************************************************************
  *	DirectInputCreateA (DINPUT.@)
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
@@ -1519,7 +1576,10 @@ static HRESULT WINAPI DICF_CreateInstance(
 	     IsEqualGUID( &IID_IDirectInput2A, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput2W, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput7A, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput7W, riid ) ) {
+            IsEqualGUID( &IID_IDirectInput7W, riid ) ||
+            IsEqualGUID( &IID_IDirectInput8A, riid ) ||
+	     IsEqualGUID( &IID_IDirectInput8W, riid ) )
+        {
 		return create_directinput_instance(riid, ppobj, NULL);
 	}
 
