@@ -1534,6 +1534,11 @@ static void test_CreatePipe(void)
     ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
     test_pipe_info(piperead, FILE_PIPE_SERVER_END, 4096, 4096, 1);
     test_pipe_info(pipewrite, 0, 4096, 4096, 1);
+    test_file_access(piperead, SYNCHRONIZE | READ_CONTROL | FILE_WRITE_ATTRIBUTES
+                     | FILE_READ_ATTRIBUTES | FILE_READ_PROPERTIES | FILE_READ_DATA);
+    test_file_access(pipewrite, SYNCHRONIZE | READ_CONTROL | FILE_WRITE_ATTRIBUTES
+                     | FILE_READ_ATTRIBUTES | FILE_WRITE_PROPERTIES | FILE_APPEND_DATA
+                     | FILE_WRITE_DATA);
 
     ok(WriteFile(pipewrite,PIPENAME,sizeof(PIPENAME), &written, NULL), "Write to anonymous pipe failed\n");
     ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %d bytes\n", written);

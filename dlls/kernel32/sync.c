@@ -2085,8 +2085,8 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
 
         snprintfW(name, ARRAY_SIZE(name), nameFmt, GetCurrentProcessId(), ++index);
         RtlInitUnicodeString(&nt_name, name);
-        status = NtCreateNamedPipeFile(&hr, GENERIC_READ | SYNCHRONIZE, &attr, &iosb,
-                                       FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
+        status = NtCreateNamedPipeFile(&hr, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                                       &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
                                        FILE_SYNCHRONOUS_IO_NONALERT,
                                        FALSE, FALSE, FALSE, 
                                        1, size, size, &timeout);
@@ -2099,7 +2099,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     /* from completion sakeness, I think system resources might be exhausted before this happens !! */
     if (hr == INVALID_HANDLE_VALUE) return FALSE;
 
-    status = NtOpenFile(&hw, GENERIC_WRITE | SYNCHRONIZE, &attr, &iosb, 0,
+    status = NtOpenFile(&hw, GENERIC_WRITE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, 0,
                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
 
     if (status) 
