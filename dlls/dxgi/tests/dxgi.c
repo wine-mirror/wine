@@ -39,6 +39,73 @@ static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **fact
 static PFN_D3D12_CREATE_DEVICE pD3D12CreateDevice;
 static PFN_D3D12_GET_DEBUG_INTERFACE pD3D12GetDebugInterface;
 
+static unsigned int use_adapter_idx;
+static BOOL use_warp_adapter;
+static BOOL use_mt = TRUE;
+
+static struct test_entry
+{
+    void (*test)(void);
+} *mt_tests;
+size_t mt_tests_size, mt_test_count;
+
+static void queue_test(void (*test)(void))
+{
+    if (mt_test_count >= mt_tests_size)
+    {
+        mt_tests_size = max(16, mt_tests_size * 2);
+        mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
+    }
+    mt_tests[mt_test_count++].test = test;
+}
+
+static DWORD WINAPI thread_func(void *ctx)
+{
+    LONG *i = ctx, j;
+
+    while (*i < mt_test_count)
+    {
+        j = *i;
+        if (InterlockedCompareExchange(i, j + 1, j) == j)
+            mt_tests[j].test();
+    }
+
+    return 0;
+}
+
+static void run_queued_tests(void)
+{
+    unsigned int thread_count, i;
+    HANDLE *threads;
+    SYSTEM_INFO si;
+    LONG test_idx;
+
+    if (!use_mt)
+    {
+        for (i = 0; i < mt_test_count; ++i)
+        {
+            mt_tests[i].test();
+        }
+
+        return;
+    }
+
+    GetSystemInfo(&si);
+    thread_count = si.dwNumberOfProcessors;
+    threads = heap_calloc(thread_count, sizeof(*threads));
+    for (i = 0, test_idx = 0; i < thread_count; ++i)
+    {
+        threads[i] = CreateThread(NULL, 0, thread_func, &test_idx, 0, NULL);
+        ok(!!threads[i], "Failed to create thread %u.\n", i);
+    }
+    WaitForMultipleObjects(thread_count, threads, TRUE, INFINITE);
+    for (i = 0; i < thread_count; ++i)
+    {
+        CloseHandle(threads[i]);
+    }
+    heap_free(threads);
+}
+
 static ULONG get_refcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
@@ -394,9 +461,6 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
     }
 }
 
-static BOOL use_warp_adapter;
-static unsigned int use_adapter_idx;
-
 static IDXGIAdapter *create_adapter(void)
 {
     IDXGIFactory4 *factory4;
@@ -665,8 +729,9 @@ static void test_adapter_luid(void)
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 
-    is_null_luid_adapter = !device_adapter_desc.AdapterLuid.HighPart
-            && !device_adapter_desc.AdapterLuid.LowPart;
+    is_null_luid_adapter = !device_adapter_desc.AdapterLuid.LowPart
+            && !device_adapter_desc.SubSysId && !device_adapter_desc.Revision
+            && !device_adapter_desc.VendorId && !device_adapter_desc.DeviceId;
 
     hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
     ok(hr == S_OK, "Failed to create DXGI factory, hr %#x.\n", hr);
@@ -4040,7 +4105,7 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-START_TEST(device)
+START_TEST(dxgi)
 {
     HMODULE dxgi_module, d3d12_module;
     BOOL enable_debug_layer = FALSE;
@@ -4064,30 +4129,36 @@ START_TEST(device)
             use_warp_adapter = TRUE;
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--single"))
+            use_mt = FALSE;
     }
 
-    test_adapter_desc();
-    test_adapter_luid();
-    test_check_interface_support();
-    test_create_surface();
-    test_parents();
-    test_output();
-    test_find_closest_matching_mode();
+    queue_test(test_adapter_desc);
+    queue_test(test_adapter_luid);
+    queue_test(test_check_interface_support);
+    queue_test(test_create_surface);
+    queue_test(test_parents);
+    queue_test(test_output);
+    queue_test(test_find_closest_matching_mode);
+    queue_test(test_get_containing_output);
+    queue_test(test_create_factory);
+    queue_test(test_private_data);
+    queue_test(test_swapchain_resize);
+    queue_test(test_swapchain_present);
+    queue_test(test_maximum_frame_latency);
+    queue_test(test_output_desc);
+    queue_test(test_object_wrapping);
+
+    run_queued_tests();
+
+    /* These tests use full-screen swapchains, so shouldn't run in parallel. */
     test_create_swapchain();
-    test_get_containing_output();
     test_set_fullscreen();
     test_default_fullscreen_target_output();
     test_resize_target();
     test_inexact_modes();
-    test_create_factory();
-    test_private_data();
-    test_swapchain_resize();
     test_swapchain_parameters();
-    test_swapchain_present();
     run_on_d3d10(test_swapchain_backbuffer_index);
-    test_maximum_frame_latency();
-    test_output_desc();
-    test_object_wrapping();
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
