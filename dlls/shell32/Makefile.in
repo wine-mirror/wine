@@ -80,6 +80,7 @@ SVG_SRCS = \
 	resources/printer.svg \
 	resources/ramdisk.svg \
 	resources/recent.svg \
+	resources/search.svg \
 	resources/shortcut.svg \
 	resources/trash_file.svg \
 	resources/window.svg
