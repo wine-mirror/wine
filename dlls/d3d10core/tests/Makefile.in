@@ -2,4 +2,4 @@ TESTDLL   = d3d10core.dll
 IMPORTS   = d3d10 dxgi user32
 
 C_SRCS = \
-	device.c
+	d3d10core.c
