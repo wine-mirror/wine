@@ -709,7 +709,7 @@ static const WCHAR *get_default_desktop_name(void)
     WCHAR *ret = NULL;
     HKEY hkey;
 
-    if (desk && GetUserObjectInformationW( desk, UOI_NAME, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+    if (desk && GetUserObjectInformationW( desk, UOI_NAME, buffer, ARRAY_SIZE( buffer ), NULL ))
     {
         if (strcmpiW( buffer, defaultW )) return buffer;
     }
@@ -792,7 +792,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
     static const WCHAR drv_formatW[] = {'w','i','n','e','%','s','.','d','r','v',0};
 
     WCHAR buffer[MAX_PATH], libname[32], *name, *next;
-    WCHAR key[sizeof(device_keyW)/sizeof(WCHAR) + 39];
+    WCHAR key[ARRAY_SIZE( device_keyW ) + 39];
     HMODULE module = 0;
     HKEY hkey;
     char error[80];
@@ -809,7 +809,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
             RegCloseKey( hkey );
         }
     }
-    else lstrcpynW( buffer, driver, sizeof(buffer)/sizeof(WCHAR) );
+    else lstrcpynW( buffer, driver, ARRAY_SIZE( buffer ));
 
     name = buffer;
     while (name)
@@ -817,7 +817,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
         next = strchrW( name, ',' );
         if (next) *next++ = 0;
 
-        snprintfW( libname, sizeof(libname)/sizeof(WCHAR), drv_formatW, name );
+        snprintfW( libname, ARRAY_SIZE( libname ), drv_formatW, name );
         if ((module = LoadLibraryW( libname )) != 0) break;
         switch (GetLastError())
         {

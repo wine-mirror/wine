@@ -345,10 +345,8 @@ static void make_explorer_window(IShellFolder* startFolder)
 
     memset(nav_buttons,0,sizeof(nav_buttons));
 
-    LoadStringW(explorer_hInstance,IDS_EXPLORER_TITLE,explorer_title,
-                sizeof(explorer_title)/sizeof(WCHAR));
-    LoadStringW(explorer_hInstance,IDS_PATHBOX_LABEL,pathbox_label,
-                sizeof(pathbox_label)/sizeof(WCHAR));
+    LoadStringW(explorer_hInstance,IDS_EXPLORER_TITLE,explorer_title, ARRAY_SIZE( explorer_title ));
+    LoadStringW(explorer_hInstance,IDS_PATHBOX_LABEL,pathbox_label, ARRAY_SIZE( pathbox_label ));
 
     hdc = GetDC(0);
     dpix = GetDeviceCaps(hdc, LOGPIXELSX);
@@ -415,7 +413,7 @@ static void make_explorer_window(IShellFolder* startFolder)
     nav_buttons[2].fsState=TBSTATE_ENABLED;
     nav_buttons[2].fsStyle=BTNS_BUTTON|BTNS_AUTOSIZE;
     SendMessageW(nav_toolbar,TB_BUTTONSTRUCTSIZE,sizeof(TBBUTTON),0);
-    SendMessageW(nav_toolbar,TB_ADDBUTTONSW,sizeof(nav_buttons)/sizeof(TBBUTTON),(LPARAM)nav_buttons);
+    SendMessageW(nav_toolbar,TB_ADDBUTTONSW,ARRAY_SIZE( nav_buttons ),(LPARAM)nav_buttons);
 
     band_info.cbSize = sizeof(band_info);
     band_info.fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE|RBBIM_SIZE;
@@ -738,38 +736,38 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
     while (*p)
     {
         while (isspaceW(*p)) p++;
-        if (strncmpW(p, arg_n, sizeof(arg_n)/sizeof(WCHAR))==0)
+        if (strncmpW(p, arg_n, ARRAY_SIZE( arg_n ))==0)
         {
             parameters->explorer_mode = FALSE;
-            p += sizeof(arg_n)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_n );
         }
-        else if (strncmpW(p, arg_e, sizeof(arg_e)/sizeof(WCHAR))==0)
+        else if (strncmpW(p, arg_e, ARRAY_SIZE( arg_e ))==0)
         {
             parameters->explorer_mode = TRUE;
-            p += sizeof(arg_e)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_e );
         }
-        else if (strncmpW(p, arg_root, sizeof(arg_root)/sizeof(WCHAR))==0)
+        else if (strncmpW(p, arg_root, ARRAY_SIZE( arg_root ))==0)
         {
-            p += sizeof(arg_root)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_root );
             p = copy_path_string(parameters->root,p);
         }
-        else if (strncmpW(p, arg_select, sizeof(arg_select)/sizeof(WCHAR))==0)
+        else if (strncmpW(p, arg_select, ARRAY_SIZE( arg_select ))==0)
         {
-            p += sizeof(arg_select)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_select );
             p = copy_path_string(parameters->selection,p);
             if (!parameters->root[0])
                 copy_path_root(parameters->root,
                                parameters->selection);
         }
-        else if (strncmpW(p, arg_desktop, sizeof(arg_desktop)/sizeof(WCHAR))==0)
+        else if (strncmpW(p, arg_desktop, ARRAY_SIZE( arg_desktop ))==0)
         {
-            p += sizeof(arg_desktop)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_desktop );
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         /* workaround for Worms Armageddon that hardcodes a /desktop option with quotes */
-        else if (strncmpW(p, arg_desktop_quotes, sizeof(arg_desktop_quotes)/sizeof(WCHAR))==0)
+        else if (strncmpW(p, arg_desktop_quotes, ARRAY_SIZE( arg_desktop_quotes ))==0)
         {
-            p += sizeof(arg_desktop_quotes)/sizeof(WCHAR);
+            p += ARRAY_SIZE( arg_desktop_quotes );
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         else

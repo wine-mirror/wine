@@ -405,13 +405,13 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     }
     if (nid->uFlags & NIF_TIP)
     {
-        lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
+        lstrcpynW( icon->tiptext, nid->szTip, ARRAY_SIZE( icon->tiptext ));
         if (icon->display != -1) update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
-        lstrcpynW( icon->info_text, nid->szInfo, sizeof(icon->info_text)/sizeof(WCHAR) );
-        lstrcpynW( icon->info_title, nid->szInfoTitle, sizeof(icon->info_title)/sizeof(WCHAR) );
+        lstrcpynW( icon->info_text, nid->szInfo, ARRAY_SIZE( icon->info_text ));
+        lstrcpynW( icon->info_title, nid->szInfoTitle, ARRAY_SIZE( icon->info_title ));
         icon->info_flags = nid->dwInfoFlags;
         icon->info_timeout = max(min(nid->u.uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
         icon->info_icon = nid->hBalloonIcon;
@@ -933,7 +933,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         return;
     }
 
-    LoadStringW( NULL, IDS_START_LABEL, start_label, sizeof(start_label)/sizeof(WCHAR) );
+    LoadStringW( NULL, IDS_START_LABEL, start_label, ARRAY_SIZE( start_label ));
 
     add_taskbar_button( 0 );
 
