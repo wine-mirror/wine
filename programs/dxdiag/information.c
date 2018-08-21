@@ -156,7 +156,7 @@ static BOOL fill_system_information(IDxDiagContainer *container, struct dxdiag_i
 
     fill_system_property_list(dxdiag_info, property_list);
 
-    for (i = 0; i < sizeof(property_list)/sizeof(property_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(property_list); i++)
     {
         if (!property_to_string(container, property_list[i].property_name, property_list[i].output))
         {
@@ -193,7 +193,7 @@ void free_dxdiag_information(struct dxdiag_information *system_info)
     if (!system_info)
         return;
 
-    for (i = 0; i < sizeof(filler_list)/sizeof(filler_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(filler_list); i++)
         filler_list[i].free_function(system_info);
 
     HeapFree(GetProcessHeap(), 0, system_info);
@@ -230,7 +230,7 @@ struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
     if (!ret)
         goto error;
 
-    for (i = 0; i < sizeof(filler_list)/sizeof(filler_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(filler_list); i++)
     {
         IDxDiagContainer *child;
         BOOL success;

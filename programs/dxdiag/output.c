@@ -179,7 +179,7 @@ static BOOL output_text_information(struct dxdiag_information *dxdiag_info, cons
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(output_table)/sizeof(output_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(output_table); i++)
     {
         const struct text_information_field *fields = output_table[i].fields;
         unsigned int j;
@@ -313,7 +313,7 @@ static BOOL output_xml_information(struct dxdiag_information *dxdiag_info, const
     if (FAILED(hr))
         goto error;
 
-    for (i = 0; i < sizeof(output_table)/sizeof(output_table[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(output_table); i++)
     {
         IXMLDOMElement *info_element = xml_create_element(xmldoc, output_table[i].tag_name);
         const struct xml_information_field *fields = output_table[i].fields;
@@ -394,14 +394,14 @@ static struct output_backend
 
 const WCHAR *get_output_extension(enum output_type type)
 {
-    assert(type > OUTPUT_NONE && type <= sizeof(output_backends)/sizeof(output_backends[0]));
+    assert(type > OUTPUT_NONE && type <= ARRAY_SIZE(output_backends));
 
     return output_backends[type - 1].filename_ext;
 }
 
 BOOL output_dxdiag_information(struct dxdiag_information *dxdiag_info, const WCHAR *filename, enum output_type type)
 {
-    assert(type > OUTPUT_NONE && type <= sizeof(output_backends)/sizeof(output_backends[0]));
+    assert(type > OUTPUT_NONE && type <= ARRAY_SIZE(output_backends));
 
     return output_backends[type - 1].output_handler(dxdiag_info, filename);
 }
