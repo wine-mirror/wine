@@ -71,6 +71,7 @@ SVG_SRCS = \
 	resources/floppy.svg \
 	resources/folder.svg \
 	resources/folder_open.svg \
+	resources/help.svg \
 	resources/internet.svg \
 	resources/mycomputer.svg \
 	resources/mydocs.svg \
