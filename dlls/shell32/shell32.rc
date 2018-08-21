@@ -429,6 +429,9 @@ IDI_SHELL_SETTINGS ICON resources/control.ico
 /* @makedep: resources/search.ico */
 IDI_SHELL_SEARCH ICON resources/search.ico
 
+/* @makedep: resources/help.ico */
+IDI_SHELL_HELP ICON resources/help.ico
+
 /* @makedep: resources/shortcut.ico */
 IDI_SHELL_SHORTCUT ICON resources/shortcut.ico
 
