@@ -27,6 +27,71 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 HINSTANCE wmp_instance;
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static REFIID tid_ids[] = {
+#define XIID(iface) &IID_ ## iface,
+#define CTID(name) &CLSID_ ## name,
+TID_LIST
+#undef XIID
+#undef CTID
+};
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static HRESULT load_typelib(void)
+{
+    ITypeLib *tl;
+    HRESULT hr;
+
+    hr = LoadRegTypeLib(&LIBID_WMPLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if (FAILED(hr)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hr);
+        return hr;
+    }
+
+    if (InterlockedCompareExchangePointer((void **)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hr;
+}
+
+HRESULT get_typeinfo(typeinfo_id tid, ITypeInfo **typeinfo)
+{
+    HRESULT hr;
+
+    if (!typelib)
+        hr = load_typelib();
+    if (!typelib)
+        return hr;
+
+    if (!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hr = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if (FAILED(hr)) {
+            ERR("GetTypeInfoOfGuid (%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hr);
+            return hr;
+        }
+
+        if (InterlockedCompareExchangePointer((void **)(typeinfos + tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    ITypeInfo_AddRef(*typeinfo);
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(typeinfos); i++)
+        if (typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -93,6 +158,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_DETACH:
         unregister_wmp_class();
         unregister_player_msg_class();
+        release_typelib();
         break;
     }
 

@@ -760,11 +760,16 @@ static ULONG WINAPI ProvideClassInfo2_Release(IProvideClassInfo2 *iface)
     return IOleObject_Release(&This->IOleObject_iface);
 }
 
-static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ppTI)
+static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ti)
 {
     WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
-    FIXME("(%p)->(%p)\n", This, ppTI);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ti);
+
+    if (!ti)
+        return E_POINTER;
+
+    return get_typeinfo(WindowsMediaPlayer_tid, ti);
 }
 
 static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)

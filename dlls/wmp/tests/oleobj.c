@@ -1199,6 +1199,8 @@ static void test_wmp(void)
     IOleObject *oleobj;
     IWMPCore *wmpcore;
     DWORD misc_status;
+    TYPEATTR *attr;
+    ITypeInfo *ti;
     RECT pos = {0,0,100,100};
     HWND hwnd;
     GUID guid;
@@ -1231,6 +1233,14 @@ static void test_wmp(void)
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, &guid);
     ok(hres == S_OK, "GetGUID failed: %08x\n", hres);
     ok(IsEqualGUID(&guid, &IID__WMPOCXEvents), "guid = %s\n", wine_dbgstr_guid(&guid));
+
+    hres = IProvideClassInfo2_GetClassInfo(class_info, &ti);
+    ok(hres == S_OK, "Failed to get class info, hr %#x.\n", hres);
+    hres = ITypeInfo_GetTypeAttr(ti, &attr);
+    ok(hres == S_OK, "Failed to get type attributes, hr %#x.\n", hres);
+    ok(IsEqualGUID(&CLSID_WindowsMediaPlayer, &attr->guid), "Unexpected typeinfo guid %s\n", wine_dbgstr_guid(&attr->guid));
+    ITypeInfo_ReleaseTypeAttr(ti, attr);
+    ITypeInfo_Release(ti);
 
     IProvideClassInfo2_Release(class_info);
 

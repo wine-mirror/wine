@@ -25,6 +25,21 @@
 #include "dshow.h"
 #include "wmp.h"
 
+#define TID_LIST \
+    XIID(NULL) \
+    CTID(WindowsMediaPlayer)
+
+typedef enum {
+#define XIID(iface) iface ## _tid,
+#define CTID(name) name ## _tid,
+TID_LIST
+#undef XIID
+#undef CTID
+    LAST_tid
+} typeinfo_id;
+
+HRESULT get_typeinfo(typeinfo_id tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+
 typedef struct {
     IConnectionPoint IConnectionPoint_iface;
 
