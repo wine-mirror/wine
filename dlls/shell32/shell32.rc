@@ -501,6 +501,9 @@ IDI_SHELL_HELP ICON resources/help.ico
 /* @makedep: resources/window.ico */
 IDI_SHELL_RUN ICON resources/window.ico
 
+/* @makedep: resources/sleep.ico */
+IDI_SHELL_SLEEP ICON resources/sleep.ico
+
 /* @makedep: resources/shortcut.ico */
 IDI_SHELL_SHORTCUT ICON resources/shortcut.ico
 
