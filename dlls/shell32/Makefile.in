@@ -87,4 +87,5 @@ SVG_SRCS = \
 	resources/shut_down.svg \
 	resources/sleep.svg \
 	resources/trash_file.svg \
+	resources/trash_full.svg \
 	resources/window.svg
