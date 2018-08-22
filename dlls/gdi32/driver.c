@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
+#include "winuser.h"
 #include "winternl.h"
 
 #include "gdi_private.h"
@@ -59,6 +60,9 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": driver_section") }
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static typeof(GetDesktopWindow) *pGetDesktopWindow;
+static typeof(GetSystemMetrics) *pGetSystemMetrics;
 
 /**********************************************************************
  *	     create_driver
@@ -97,7 +101,7 @@ static const struct gdi_dc_funcs *get_display_driver(void)
     if (!display_driver)
     {
         HMODULE user32 = LoadLibraryA( "user32.dll" );
-        HWND (WINAPI *pGetDesktopWindow)(void) = (void *)GetProcAddress( user32, "GetDesktopWindow" );
+        pGetDesktopWindow = (void *)GetProcAddress( user32, "GetDesktopWindow" );
 
         if (!pGetDesktopWindow() || !display_driver)
         {
@@ -166,6 +170,7 @@ done:
 void CDECL __wine_set_display_driver( HMODULE module )
 {
     struct graphics_driver *driver;
+    HMODULE user32;
 
     if (!(driver = create_driver( module )))
     {
@@ -174,6 +179,9 @@ void CDECL __wine_set_display_driver( HMODULE module )
     }
     if (InterlockedCompareExchangePointer( (void **)&display_driver, driver, NULL ))
         HeapFree( GetProcessHeap(), 0, driver );
+
+    user32 = LoadLibraryA( "user32.dll" );
+    pGetSystemMetrics = (void *)GetProcAddress( user32, "GetSystemMetrics" );
 }
 
 
@@ -308,8 +316,8 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
                                          GetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
     case VERTSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, VERTRES ), 254,
                                          GetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
-    case HORZRES:         return 640;
-    case VERTRES:         return 480;
+    case HORZRES:         return pGetSystemMetrics ? pGetSystemMetrics( SM_CXSCREEN ) : 640;
+    case VERTRES:         return pGetSystemMetrics ? pGetSystemMetrics( SM_CYSCREEN ) : 480;
     case BITSPIXEL:       return 32;
     case PLANES:          return 1;
     case NUMBRUSHES:      return -1;
