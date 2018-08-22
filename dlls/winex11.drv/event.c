@@ -786,7 +786,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 /**********************************************************************
  *              focus_out
  */
- static void focus_out( Display *display , HWND hwnd )
+static void focus_out( Display *display , HWND hwnd )
  {
     HWND hwnd_tmp;
     Window focus_win;
