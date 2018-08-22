@@ -195,10 +195,6 @@ static INT ANDROID_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     switch(cap)
     {
-    case HORZRES:        return screen_width;
-    case VERTRES:        return screen_height;
-    case DESKTOPHORZRES: return virtual_screen_rect.right - virtual_screen_rect.left;
-    case DESKTOPVERTRES: return virtual_screen_rect.bottom - virtual_screen_rect.top;
     case BITSPIXEL:      return screen_bpp;
     default:
         dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
