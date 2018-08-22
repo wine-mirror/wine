@@ -84,6 +84,7 @@ SVG_SRCS = \
 	resources/recent.svg \
 	resources/search.svg \
 	resources/shortcut.svg \
+	resources/shut_down.svg \
 	resources/sleep.svg \
 	resources/trash_file.svg \
 	resources/window.svg

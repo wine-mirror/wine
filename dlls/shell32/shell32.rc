@@ -507,6 +507,9 @@ IDI_SHELL_SLEEP ICON resources/sleep.ico
 /* @makedep: resources/eject.ico */
 IDI_SHELL_EJECT ICON resources/eject.ico
 
+/* @makedep: resources/shut_down.ico */
+IDI_SHELL_SHUT_DOWN ICON resources/shut_down.ico
+
 /* @makedep: resources/shortcut.ico */
 IDI_SHELL_SHORTCUT ICON resources/shortcut.ico
 
