@@ -3193,11 +3193,14 @@ static void scale_rect_dpi( RECT *rect, UINT src_dpi, UINT target_dpi )
 static void test_dpi_mapping(void)
 {
     HWND hwnd;
+    HDC hdc;
     UINT win_dpi;
     POINT point;
     BOOL ret, todo;
-    RECT rect, orig, client, expect;
+    RECT rect, orig, client, desktop, expect;
     ULONG_PTR i, j;
+    HMONITOR monitor;
+    MONITORINFO mon_info;
     DPI_AWARENESS_CONTEXT context;
 
     if (!pLogicalToPhysicalPointForPerMonitorDPI)
@@ -3205,7 +3208,48 @@ static void test_dpi_mapping(void)
         win_skip( "LogicalToPhysicalPointForPerMonitorDPI not supported\n" );
         return;
     }
-    context = pGetThreadDpiAwarenessContext();
+    context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    GetWindowRect( GetDesktopWindow(), &desktop );
+    for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
+    {
+        pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
+        /* test desktop rect */
+        GetWindowRect( GetDesktopWindow(), &rect );
+        expect = desktop;
+        if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+        ok( EqualRect( &expect, &rect ), "%lu: wrong desktop rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ));
+        ok( EqualRect( &expect, &rect ), "%lu: wrong desktop rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ), GetSystemMetrics( SM_CYVIRTUALSCREEN ));
+        ok( EqualRect( &expect, &rect ), "%lu: wrong virt desktop rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        SetRect( &rect, 0, 0, 1, 1 );
+        monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
+        ok( monitor != 0, "failed to get monitor\n" );
+        mon_info.cbSize = sizeof(mon_info);
+        ok( GetMonitorInfoW( monitor, &mon_info ), "GetMonitorInfoExW failed\n" );
+        ok( EqualRect( &expect, &mon_info.rcMonitor ), "%lu: wrong monitor rect %s expected %s\n",
+            i, wine_dbgstr_rect(&mon_info.rcMonitor), wine_dbgstr_rect(&expect) );
+        hdc = CreateDCA( "display", NULL, NULL, NULL );
+        SetRect( &rect, 0, 0, GetDeviceCaps( hdc, HORZRES ), GetDeviceCaps( hdc, VERTRES ));
+        ok( EqualRect( &expect, &rect ), "%lu: wrong caps desktop rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
+        ok( EqualRect( &desktop, &rect ), "%lu: wrong caps virt desktop rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
+        DeleteDC( hdc );
+        /* test message window rect */
+        hwnd = CreateWindowA( "SysParamsTestClass", "test", WS_CHILD,
+                              10, 10, 20, 20, HWND_MESSAGE, 0, GetModuleHandleA(0), NULL );
+        GetWindowRect( GetAncestor( hwnd, GA_PARENT ), &rect );
+        SetRect( &expect, 0, 0, 100, 100 );
+        if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+        ok( EqualRect( &expect, &rect ), "%lu: wrong message rect %s expected %s\n",
+            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        DestroyWindow( hwnd );
+    }
     for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
     {
         pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
