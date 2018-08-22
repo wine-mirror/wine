@@ -191,6 +191,7 @@
 #define IDI_SHELL_HELP              24
 #define IDI_SHELL_RUN               25
 #define IDI_SHELL_SLEEP             26
+#define IDI_SHELL_EJECT             27
 #define IDI_SHELL_FOLDER_OPEN_LARGE 29
 #define IDI_SHELL_SHORTCUT          30
 #define IDI_SHELL_FOLDER_OPEN_SMALL 31
