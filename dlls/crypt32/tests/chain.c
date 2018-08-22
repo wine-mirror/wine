@@ -4148,6 +4148,26 @@ static void testGetCertChain(void)
 
     pCertFreeCertificateChain(chain);
 
+    /* Test revocation flags */
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_END_CERT, NULL,
+                                  &chain);
+    ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
+    ok(!chain->TrustStatus.dwErrorStatus, "chain->TrustStatus.dwErrorStatus = %x\n", chain->TrustStatus.dwErrorStatus);
+    pCertFreeCertificateChain(chain);
+
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_CHAIN, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
+    todo_wine ok(!chain->TrustStatus.dwErrorStatus
+                     || broken(chain->TrustStatus.dwErrorStatus == CERT_TRUST_REVOCATION_STATUS_UNKNOWN), /* XP */
+                 "chain->TrustStatus.dwErrorStatus = %x\n", chain->TrustStatus.dwErrorStatus);
+    pCertFreeCertificateChain(chain);
+
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
+                                  NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
+    ok(!chain->TrustStatus.dwErrorStatus, "chain->TrustStatus.dwErrorStatus = %x\n", chain->TrustStatus.dwErrorStatus);
+    pCertFreeCertificateChain(chain);
+
     /* Test HCCE_LOCAL_MACHINE */
     ret = CertGetCertificateChain(HCCE_LOCAL_MACHINE, cert, &fileTime, store, &para, 0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
