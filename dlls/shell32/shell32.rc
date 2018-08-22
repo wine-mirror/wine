@@ -516,6 +516,10 @@ IDI_SHELL_SHORTCUT ICON resources/shortcut.ico
 /* @makedep: resources/trash_full.ico */
 IDI_SHELL_FULL_RECYCLE_BIN ICON resources/trash_full.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_MODEM_FOLDER ICON resources/folder.ico
+
 /* @makedep: resources/desktop.ico */
 IDI_SHELL_DESKTOP ICON resources/desktop.ico
 
