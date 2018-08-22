@@ -189,21 +189,6 @@ static BOOL ANDROID_DeleteDC( PHYSDEV dev )
 
 
 /***********************************************************************
- *           ANDROID_GetDeviceCaps
- */
-static INT ANDROID_GetDeviceCaps( PHYSDEV dev, INT cap )
-{
-    switch(cap)
-    {
-    case BITSPIXEL:      return screen_bpp;
-    default:
-        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
-        return dev->funcs->pGetDeviceCaps( dev, cap );
-    }
-}
-
-
-/***********************************************************************
  *           ANDROID_ChangeDisplaySettingsEx
  */
 LONG CDECL ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
@@ -359,7 +344,7 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
-    ANDROID_GetDeviceCaps,              /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
     NULL,                               /* pGetFontRealizationInfo */
