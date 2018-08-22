@@ -534,6 +534,10 @@ IDI_APP_FOLDER ICON resources/folder.ico
 /* @makedep: resources/folder.ico */
 IDI_PRINTERS_FOLDER ICON resources/folder.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_FONTS_FOLDER ICON resources/folder.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
