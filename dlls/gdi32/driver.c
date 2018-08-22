@@ -63,6 +63,7 @@ static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static typeof(GetDesktopWindow) *pGetDesktopWindow;
 static typeof(GetSystemMetrics) *pGetSystemMetrics;
+static typeof(SetThreadDpiAwarenessContext) *pSetThreadDpiAwarenessContext;
 
 /**********************************************************************
  *	     create_driver
@@ -182,6 +183,7 @@ void CDECL __wine_set_display_driver( HMODULE module )
 
     user32 = LoadLibraryA( "user32.dll" );
     pGetSystemMetrics = (void *)GetProcAddress( user32, "GetSystemMetrics" );
+    pSetThreadDpiAwarenessContext = (void *)GetProcAddress( user32, "SetThreadDpiAwarenessContext" );
 }
 
 
@@ -352,8 +354,28 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case SCALINGFACTORX:  return 0;
     case SCALINGFACTORY:  return 0;
     case VREFRESH:        return GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY ? 1 : 0;
-    case DESKTOPVERTRES:  return GetDeviceCaps( dev->hdc, VERTRES );
-    case DESKTOPHORZRES:  return GetDeviceCaps( dev->hdc, HORZRES );
+    case DESKTOPHORZRES:
+        if (pGetSystemMetrics)
+        {
+            DPI_AWARENESS_CONTEXT context;
+            UINT ret;
+            context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            ret = pGetSystemMetrics( SM_CXVIRTUALSCREEN );
+            pSetThreadDpiAwarenessContext( context );
+            return ret;
+        }
+        return GetDeviceCaps( dev->hdc, HORZRES );
+    case DESKTOPVERTRES:
+        if (pGetSystemMetrics)
+        {
+            DPI_AWARENESS_CONTEXT context;
+            UINT ret;
+            context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            ret = pGetSystemMetrics( SM_CYVIRTUALSCREEN );
+            pSetThreadDpiAwarenessContext( context );
+            return ret;
+        }
+        return GetDeviceCaps( dev->hdc, VERTRES );
     case BLTALIGNMENT:    return 0;
     case SHADEBLENDCAPS:  return 0;
     case COLORMGMTCAPS:   return 0;
