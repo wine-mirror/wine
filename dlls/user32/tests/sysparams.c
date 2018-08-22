@@ -54,6 +54,7 @@ static DPI_AWARENESS (WINAPI *pGetAwarenessFromDpiAwarenessContext)(DPI_AWARENES
 static BOOL (WINAPI *pIsValidDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 static INT (WINAPI *pGetSystemMetricsForDpi)(INT,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
+static BOOL (WINAPI *pAdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
 static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 static LONG (WINAPI *pGetAutoRotationState)(PAR_STATE);
@@ -3182,6 +3183,12 @@ static void test_dpi_stock_objects( HDC hdc )
     pSetThreadDpiAwarenessContext( context );
 }
 
+static void scale_point_dpi( POINT *pt, UINT src_dpi, UINT target_dpi )
+{
+    pt->x = MulDiv( pt->x, target_dpi, src_dpi );
+    pt->y = MulDiv( pt->y, target_dpi, src_dpi );
+}
+
 static void scale_rect_dpi( RECT *rect, UINT src_dpi, UINT target_dpi )
 {
     rect->left = MulDiv( rect->left, target_dpi, src_dpi );
@@ -3190,15 +3197,33 @@ static void scale_rect_dpi( RECT *rect, UINT src_dpi, UINT target_dpi )
     rect->bottom = MulDiv( rect->bottom, target_dpi, src_dpi );
 }
 
+static void scale_point_dpi_aware( POINT *pt, DPI_AWARENESS from, DPI_AWARENESS to )
+{
+    if (from == DPI_AWARENESS_UNAWARE && to != DPI_AWARENESS_UNAWARE)
+        scale_point_dpi( pt, USER_DEFAULT_SCREEN_DPI, real_dpi );
+    else if (from != DPI_AWARENESS_UNAWARE && to == DPI_AWARENESS_UNAWARE)
+        scale_point_dpi( pt, real_dpi, USER_DEFAULT_SCREEN_DPI );
+}
+
+static void scale_rect_dpi_aware( RECT *rect, DPI_AWARENESS from, DPI_AWARENESS to )
+{
+    if (from == DPI_AWARENESS_UNAWARE && to != DPI_AWARENESS_UNAWARE)
+        scale_rect_dpi( rect, USER_DEFAULT_SCREEN_DPI, real_dpi );
+    else if (from != DPI_AWARENESS_UNAWARE && to == DPI_AWARENESS_UNAWARE)
+        scale_rect_dpi( rect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+}
+
 static void test_dpi_mapping(void)
 {
-    HWND hwnd;
+    HWND hwnd, child;
     HDC hdc;
     UINT win_dpi;
     POINT point;
-    BOOL ret, todo;
+    BOOL ret;
+    HRGN rgn, update;
     RECT rect, orig, client, desktop, expect;
-    ULONG_PTR i, j;
+    ULONG_PTR i, j, k;
+    WINDOWPLACEMENT wpl_orig, wpl;
     HMONITOR monitor;
     MONITORINFO mon_info;
     DPI_AWARENESS_CONTEXT context;
@@ -3253,38 +3278,155 @@ static void test_dpi_mapping(void)
     for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
     {
         pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
-        hwnd = CreateWindowA( "SysParamsTestClass", "test", WS_OVERLAPPEDWINDOW,
+        hwnd = CreateWindowA( "SysParamsTestClass", "test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               193, 177, 295, 303, 0, 0, GetModuleHandleA(0), NULL );
         ok( hwnd != 0, "creating window failed err %u\n", GetLastError());
+        child = CreateWindowA( "SysParamsTestClass", "child", WS_CHILD | WS_VISIBLE,
+                               50, 60, 70, 80, hwnd, 0, GetModuleHandleA(0), NULL );
+        ok( child != 0, "creating child failed err %u\n", GetLastError());
         GetWindowRect( hwnd, &orig );
-        GetClientRect( hwnd, &client );
+        SetRect( &rect, 0, 0, 0, 0 );
+        pAdjustWindowRectExForDpi( &rect, WS_OVERLAPPEDWINDOW, FALSE, 0, pGetDpiForWindow( hwnd ));
+        SetRect( &client, orig.left - rect.left, orig.top - rect.top,
+                 orig.right - rect.right, orig.bottom - rect.bottom );
+        ShowWindow( hwnd, SW_MINIMIZE );
+        ShowWindow( hwnd, SW_RESTORE );
+        GetWindowPlacement( hwnd, &wpl_orig );
+
         for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
         {
             pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+            /* test window rect */
             GetWindowRect( hwnd, &rect );
             expect = orig;
-            todo = (real_dpi != USER_DEFAULT_SCREEN_DPI);
-            if (i == DPI_AWARENESS_UNAWARE && j != DPI_AWARENESS_UNAWARE)
-                scale_rect_dpi( &expect, USER_DEFAULT_SCREEN_DPI, real_dpi );
-            else if (i != DPI_AWARENESS_UNAWARE && j == DPI_AWARENESS_UNAWARE)
-                scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-            else
-                todo = FALSE;
-            todo_wine_if (todo)
+            scale_rect_dpi_aware( &expect, i, j );
             ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong window rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            /* test client rect */
             GetClientRect( hwnd, &rect );
             expect = client;
-            MapWindowPoints( hwnd, 0, (POINT *)&expect, 2 );
-            if (i == DPI_AWARENESS_UNAWARE && j != DPI_AWARENESS_UNAWARE)
-                scale_rect_dpi( &expect, USER_DEFAULT_SCREEN_DPI, real_dpi );
-            else if (i != DPI_AWARENESS_UNAWARE && j == DPI_AWARENESS_UNAWARE)
-                scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
-            MapWindowPoints( 0, hwnd, (POINT *)&expect, 2 );
             OffsetRect( &expect, -expect.left, -expect.top );
-            todo_wine_if (todo)
+            scale_rect_dpi_aware( &expect, i, j );
             ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong client rect %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            /* test window placement */
+            GetWindowPlacement( hwnd, &wpl );
+            point = wpl_orig.ptMinPosition;
+            if (point.x != -1 || point.y != -1) scale_point_dpi_aware( &point, i, j );
+            ok( wpl.ptMinPosition.x == point.x && wpl.ptMinPosition.y == point.y,
+                "%lu/%lu: wrong placement min pos %d,%d expected %d,%d\n", i, j,
+                wpl.ptMinPosition.x, wpl.ptMinPosition.y, point.x, point.y );
+            point = wpl_orig.ptMaxPosition;
+            if (point.x != -1 || point.y != -1) scale_point_dpi_aware( &point, i, j );
+            ok( wpl.ptMaxPosition.x == point.x && wpl.ptMaxPosition.y == point.y,
+                "%lu/%lu: wrong placement max pos %d,%d expected %d,%d\n", i, j,
+                wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, point.x, point.y );
+            expect = wpl_orig.rcNormalPosition;
+            scale_rect_dpi_aware( &expect, i, j );
+            ok( EqualRect( &wpl.rcNormalPosition, &expect ),
+                "%lu/%lu: wrong placement rect %s expect %s\n", i, j,
+                wine_dbgstr_rect(&wpl.rcNormalPosition), wine_dbgstr_rect(&expect));
+            /* test DC rect */
+            hdc = GetDC( hwnd );
+            GetClipBox( hdc, &rect );
+            SetRect( &expect, 0, 0, client.right - client.left, client.bottom - client.top );
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong clip box %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            /* test DC resolution */
+            SetRect( &rect, 0, 0, GetDeviceCaps( hdc, HORZRES ), GetDeviceCaps( hdc, VERTRES ));
+            expect = desktop;
+            if (j == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong DC resolution %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
+            ok( EqualRect( &desktop, &rect ), "%lu/%lu: wrong desktop resolution %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
+            ReleaseDC( hwnd, hdc );
+            /* test DC win rect */
+            hdc = GetWindowDC( hwnd );
+            GetClipBox( hdc, &rect );
+            SetRect( &expect, 0, 0, 295, 303 );
+            todo_wine
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong clip box win DC %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            ReleaseDC( hwnd, hdc );
+            /* test window invalidation */
+            UpdateWindow( hwnd );
+            update = CreateRectRgn( 0, 0, 0, 0 );
+            ret = GetUpdateRgn( hwnd, update, FALSE );
+            ok( ret == NULLREGION, "update region not empty\n" );
+            rgn = CreateRectRgn( 20, 20, 25, 25 );
+            for (k = DPI_AWARENESS_UNAWARE; k <= DPI_AWARENESS_PER_MONITOR_AWARE; k++)
+            {
+                pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~k );
+                RedrawWindow( hwnd, 0, rgn, RDW_INVALIDATE );
+                pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+                GetUpdateRgn( hwnd, update, FALSE );
+                GetRgnBox( update, &rect );
+                SetRect( &expect, 20, 20, 25, 25 );
+                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update region %s expected %s\n",
+                    i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+                GetUpdateRect( hwnd, &rect, FALSE );
+                scale_rect_dpi_aware( &expect, i, j );
+                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update rect %s expected %s\n",
+                    i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+                UpdateWindow( hwnd );
+            }
+            for (k = DPI_AWARENESS_UNAWARE; k <= DPI_AWARENESS_PER_MONITOR_AWARE; k++)
+            {
+                RedrawWindow( hwnd, 0, rgn, RDW_INVALIDATE );
+                pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~k );
+                GetUpdateRgn( hwnd, update, FALSE );
+                pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+                GetRgnBox( update, &rect );
+                SetRect( &expect, 20, 20, 25, 25 );
+                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update region %s expected %s\n",
+                    i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+                GetUpdateRect( hwnd, &rect, FALSE );
+                scale_rect_dpi_aware( &expect, i, j );
+                ok( EqualRect( &expect, &rect ), "%lu/%lu/%lu: wrong update rect %s expected %s\n",
+                    i, j, k, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+                UpdateWindow( hwnd );
+            }
+            /* test desktop window invalidation */
+            pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            GetClientRect( hwnd, &rect );
+            InflateRect( &rect, -50, -50 );
+            expect = rect;
+            MapWindowPoints( hwnd, 0, (POINT *)&rect, 2 );
+            pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~j );
+            RedrawWindow( 0, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN );
+            GetUpdateRgn( hwnd, update, TRUE );
+            GetRgnBox( update, &rect );
+            if (i == DPI_AWARENESS_UNAWARE) scale_rect_dpi( &expect, real_dpi, USER_DEFAULT_SCREEN_DPI );
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong update region %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            GetUpdateRect( hwnd, &rect, FALSE );
+            scale_rect_dpi_aware( &expect, i, j );
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong update rect %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            UpdateWindow( hwnd );
+            DeleteObject( update );
+            /* test window points mapping */
+            SetRect( &rect, 0, 0, 100, 100 );
+            rect.right = rect.left + 100;
+            rect.bottom = rect.top + 100;
+            MapWindowPoints( hwnd, 0, (POINT *)&rect, 2 );
+            expect = client;
+            scale_rect_dpi_aware( &expect, i, j );
+            expect.right = expect.left + 100;
+            expect.bottom = expect.top + 100;
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong MapWindowPoints rect %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            SetRect( &rect, 50, 60, 70, 80 );
+            scale_rect_dpi_aware( &rect, i, j );
+            SetRect( &expect, 40, 30, 60, 80 );
+            OffsetRect( &expect, -rect.left, -rect.top );
+            SetRect( &rect, 40, 30, 60, 80 );
+            MapWindowPoints( hwnd, child, (POINT *)&rect, 2 );
+            ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong MapWindowPoints child rect %s expected %s\n",
+                i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+            /* test logical<->physical coords mapping */
             win_dpi = pGetDpiForWindow( hwnd );
             if (i == DPI_AWARENESS_UNAWARE)
                 ok( win_dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", win_dpi );
@@ -3562,8 +3704,16 @@ static LRESULT CALLBACK dpi_winproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     DPI_AWARENESS_CONTEXT ctx = pGetWindowDpiAwarenessContext( hwnd );
     DPI_AWARENESS_CONTEXT ctx2 = pGetThreadDpiAwarenessContext();
+    DWORD pos, pos2;
+
     ok( pGetAwarenessFromDpiAwarenessContext( ctx ) == pGetAwarenessFromDpiAwarenessContext( ctx2 ),
         "msg %04x wrong awareness %p / %p\n", msg, ctx, ctx2 );
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    pos = GetMessagePos();
+    pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    pos2 = GetMessagePos();
+    ok( pos == pos2, "wrong pos %08x / %08x\n", pos, pos2 );
+    pSetThreadDpiAwarenessContext( ctx2 );
     return DefWindowProcA( hwnd, msg, wp, lp );
 }
 
@@ -3736,6 +3886,7 @@ START_TEST(sysparams)
     pIsValidDpiAwarenessContext = (void*)GetProcAddress(hdll, "IsValidDpiAwarenessContext");
     pGetSystemMetricsForDpi = (void*)GetProcAddress(hdll, "GetSystemMetricsForDpi");
     pSystemParametersInfoForDpi = (void*)GetProcAddress(hdll, "SystemParametersInfoForDpi");
+    pAdjustWindowRectExForDpi = (void*)GetProcAddress(hdll, "AdjustWindowRectExForDpi");
     pLogicalToPhysicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "LogicalToPhysicalPointForPerMonitorDPI");
     pPhysicalToLogicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "PhysicalToLogicalPointForPerMonitorDPI");
     pGetAutoRotationState = (void*)GetProcAddress(hdll, "GetAutoRotationState");
