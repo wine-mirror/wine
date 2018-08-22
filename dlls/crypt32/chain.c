@@ -2708,6 +2708,11 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
                 ret = CertVerifyRevocation(X509_ASN_ENCODING,
                  CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certToCheck,
                  revocationFlags, &revocationPara, &revocationStatus);
+
+                if (!ret && chainFlags & CERT_CHAIN_REVOCATION_CHECK_CHAIN
+                    && revocationStatus.dwError == CRYPT_E_NO_REVOCATION_CHECK && revocationPara.pIssuerCert == NULL)
+                    ret = TRUE;
+
                 if (!ret)
                 {
                     PCERT_CHAIN_ELEMENT element = CRYPT_FindIthElementInChain(
