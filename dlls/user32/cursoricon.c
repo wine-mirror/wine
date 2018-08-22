@@ -1144,6 +1144,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     DWORD size, color_size, mask_size;
     HBITMAP color = 0, mask = 0, alpha = 0;
     const void *color_bits, *mask_bits;
+    void *alpha_mask_bits = NULL;
     BITMAPINFO *bmi_copy;
     BOOL ret = FALSE;
     BOOL do_stretch;
@@ -1266,7 +1267,27 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
                        color_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
 
         if (bmi_has_alpha( bmi_copy, color_bits ))
+        {
             alpha = create_alpha_bitmap( color, bmi_copy, color_bits );
+            if (!mask_size)  /* generate mask from alpha */
+            {
+                LONG x, y, dst_stride = ((bmi_width + 31) / 8) & ~3;
+
+                if ((alpha_mask_bits = heap_calloc( bmi_height, dst_stride )))
+                {
+                    static const unsigned char masks[] = { 0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1 };
+                    const DWORD *src = color_bits;
+                    unsigned char *dst = alpha_mask_bits;
+
+                    for (y = 0; y < bmi_height; y++, src += bmi_width, dst += dst_stride)
+                        for (x = 0; x < bmi_width; x++)
+                            if (src[x] >> 24 != 0xff) dst[x >> 3] |= masks[x & 7];
+
+                    mask_bits = alpha_mask_bits;
+                    mask_size = bmi_height * dst_stride;
+                }
+            }
+        }
 
         /* convert info to monochrome to copy the mask */
         if (bmi_copy->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
@@ -1301,6 +1322,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
 done:
     DeleteDC( hdc );
     HeapFree( GetProcessHeap(), 0, bmi_copy );
+    HeapFree( GetProcessHeap(), 0, alpha_mask_bits );
 
     if (ret)
         hObj = alloc_icon_handle( FALSE, 0 );
