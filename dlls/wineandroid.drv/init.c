@@ -223,30 +223,7 @@ BOOL CDECL ANDROID_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
  */
 BOOL CDECL ANDROID_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
-    if (hdc)
-    {
-        POINT origin;
-        RECT limit, monrect;
-
-        if (!GetDCOrgEx( hdc, &origin )) return FALSE;
-        if (GetClipBox( hdc, &limit ) == ERROR) return FALSE;
-
-        if (rect && !IntersectRect( &limit, &limit, rect )) return TRUE;
-
-        monrect = default_monitor.rcMonitor;
-        OffsetRect( &monrect, -origin.x, -origin.y );
-        if (IntersectRect( &monrect, &monrect, &limit ))
-            if (!proc( (HMONITOR)1, hdc, &monrect, lp ))
-                return FALSE;
-    }
-    else
-    {
-        RECT unused;
-        if (!rect || IntersectRect( &unused, &default_monitor.rcMonitor, rect ))
-            if (!proc( (HMONITOR)1, 0, &default_monitor.rcMonitor, lp ))
-                return FALSE;
-    }
-    return TRUE;
+    return proc( (HMONITOR)1, 0, &default_monitor.rcMonitor, lp );
 }
 
 
