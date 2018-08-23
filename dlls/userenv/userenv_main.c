@@ -244,7 +244,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
 
     static const WCHAR SystemRootW[] = {'S','y','s','t','e','m','R','o','o','t',0};
     static const WCHAR SystemDriveW[] = {'S','y','s','t','e','m','D','r','i','v','e',0};
-    static const WCHAR AllUsersProfileW[] = {'A','l','l','U','s','e','r','s','P','r','o','f','i','l','e',0};
+    static const WCHAR AllUsersProfileW[] = {'P','u','b','l','i','c',0};
     static const WCHAR ALLUSERSPROFILEW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
     static const WCHAR USERNAMEW[] = {'U','S','E','R','N','A','M','E',0};
     static const WCHAR USERPROFILEW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
