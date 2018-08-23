@@ -2165,7 +2165,7 @@ class VkGenerator(object):
             f.write(define.definition())
 
         for handle in self.registry.handles:
-            # For backwards compatiblity also create definitions for aliases.
+            # For backward compatibility also create definitions for aliases.
             # These types normally don't get pulled in as we use the new types
             # even in legacy functions if they are aliases.
             if handle.is_required() or handle.is_alias():
