@@ -1048,6 +1048,14 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     size -= 4;
     if (size && ptr[size - 1] != '\\') ptr[size++] = '\\';
 
+    /* convert \??\UNC\ path to \\ prefix */
+    if (size >= 4 && !strncmpiW(ptr, UncPfxW, 4))
+    {
+        ptr += 2;
+        size -= 2;
+        *ptr = '\\';
+    }
+
     memcpy( curdir->DosPath.Buffer, ptr, size * sizeof(WCHAR));
     curdir->DosPath.Buffer[size] = 0;
     curdir->DosPath.Length = size * sizeof(WCHAR);
