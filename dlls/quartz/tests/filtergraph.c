@@ -2287,6 +2287,119 @@ static void test_aggregate_filter_graph(void)
     IUnknown_Release(pgraph);
 }
 
+/* Test how methods from "control" interfaces (IBasicAudio, IBasicVideo,
+ * IVideoWindow) are delegated to filters exposing those interfaces. */
+static void test_control_delegation(void)
+{
+    IFilterGraph2 *graph = create_graph();
+    IBasicAudio *audio, *filter_audio;
+    IBaseFilter *renderer;
+    IVideoWindow *window;
+    IBasicVideo *video;
+    HRESULT hr;
+    LONG val;
+
+    /* IBasicAudio */
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicAudio, (void **)&audio);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+todo_wine {
+    hr = IBasicAudio_put_Volume(audio, -10);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_get_Volume(audio, &val);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_put_Balance(audio, 10);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_get_Balance(audio, &val);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+}
+
+    hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
+    if (hr != VFW_E_NO_AUDIO_HARDWARE)
+    {
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        hr = IBasicAudio_put_Volume(audio, -10);
+        ok(hr == S_OK, "got %#x\n", hr);
+        hr = IBasicAudio_get_Volume(audio, &val);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(val == -10, "got %d\n", val);
+        hr = IBasicAudio_put_Balance(audio, 10);
+        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "got %#x\n", hr);
+        hr = IBasicAudio_get_Balance(audio, &val);
+        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "got %#x\n", hr);
+        if (hr == S_OK)
+            ok(val == 10, "got balance %d\n", val);
+
+        hr = IBaseFilter_QueryInterface(renderer, &IID_IBasicAudio, (void **)&filter_audio);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        hr = IBasicAudio_get_Volume(filter_audio, &val);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(val == -10, "got volume %d\n", val);
+
+        hr = IFilterGraph2_RemoveFilter(graph, renderer);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        IBaseFilter_Release(renderer);
+        IBasicAudio_Release(filter_audio);
+    }
+
+todo_wine {
+    hr = IBasicAudio_put_Volume(audio, -10);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_get_Volume(audio, &val);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_put_Balance(audio, 10);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+    hr = IBasicAudio_get_Balance(audio, &val);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
+}
+
+    IBasicAudio_Release(audio);
+
+    /* IBasicVideo and IVideoWindow */
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo, (void **)&video);
+    ok(hr == S_OK, "got %#x\n", hr);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    /* Unlike IBasicAudio, these return E_NOINTERFACE. */
+    hr = IBasicVideo_get_BitRate(video, &val);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+    hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
+    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IBasicVideo_get_BitRate(video, &val);
+    ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
+    hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
+    ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
+
+    hr = IFilterGraph2_RemoveFilter(graph, renderer);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IBasicVideo_get_BitRate(video, &val);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+    hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
+    IBaseFilter_Release(renderer);
+    IBasicVideo_Release(video);
+    IVideoWindow_Release(window);
+    IFilterGraph2_Release(graph);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -2296,6 +2409,8 @@ START_TEST(filtergraph)
     test_graph_builder();
     test_render_filter_priority();
     test_aggregate_filter_graph();
+    test_control_delegation();
+
     CoUninitialize();
     test_render_with_multithread();
 }
