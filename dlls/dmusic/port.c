@@ -1174,8 +1174,8 @@ static const IDirectMusicThruVtbl midi_thru_vtbl = {
     midi_IDirectMusicThru_ThruChannel,
 };
 
-HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params, DMUS_PORTCAPS *caps,
-        IDirectMusicPort **port)
+static HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *params,
+        DMUS_PORTCAPS *caps, IDirectMusicPort **port)
 {
     struct midi_port *obj;
     HRESULT hr;
