@@ -872,7 +872,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                     goto out;
                 }
 
-                /* Unless overriden above, skip over the '/' and the first character */
+                /* Unless overridden above, skip over the '/' and the first character */
                 if (rest == NULL) rest = &word[2];
 
                 /* By now, rest should point either to the null after the
