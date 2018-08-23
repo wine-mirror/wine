@@ -331,7 +331,7 @@ static const RGBQUAD color_yellow = {0x00, 0xff, 0xff, 0x00};
 
 static BITMAPINFOHEADER gdf_in, *gdf_out;
 
-LRESULT CALLBACK gdf_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
+static LRESULT CALLBACK gdf_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
     LPARAM lparam1, LPARAM lparam2)
 {
     LRESULT ret = 0;
