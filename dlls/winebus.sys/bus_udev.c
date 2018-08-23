@@ -65,6 +65,7 @@
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -1046,7 +1047,7 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
                              DWORD *product_id, WCHAR **serial_number)
 {
     DWORD bus_type;
-    char *tmp = strdup(uevent);
+    char *tmp;
     char *saveptr = NULL;
     char *line;
     char *key;
@@ -1055,6 +1056,8 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
     int found_id = 0;
     int found_serial = 0;
 
+    tmp = heap_alloc(strlen(uevent) + 1);
+    strcpy(tmp, uevent);
     line = strtok_r(tmp, "\n", &saveptr);
     while (line != NULL)
     {
@@ -1092,7 +1095,7 @@ next_line:
         line = strtok_r(NULL, "\n", &saveptr);
     }
 
-    free(tmp);
+    heap_free(tmp);
     return (found_id && found_serial);
 }
 
