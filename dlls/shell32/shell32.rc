@@ -518,7 +518,7 @@ IDI_SHELL_FULL_RECYCLE_BIN ICON resources/trash_full.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
-IDI_MODEM_FOLDER ICON resources/folder.ico
+IDI_SHELL_MODEM_FOLDER ICON resources/folder.ico
 
 /* @makedep: resources/desktop.ico */
 IDI_SHELL_DESKTOP ICON resources/desktop.ico
@@ -528,15 +528,15 @@ IDI_SHELL_CONTROL_PANEL ICON resources/control.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
-IDI_APP_FOLDER ICON resources/folder.ico
+IDI_SHELL_APP_FOLDER ICON resources/folder.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
-IDI_PRINTERS_FOLDER ICON resources/folder.ico
+IDI_SHELL_PRINTERS_FOLDER ICON resources/folder.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
-IDI_FONTS_FOLDER ICON resources/folder.ico
+IDI_SHELL_FONTS_FOLDER ICON resources/folder.ico
 
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
