@@ -1643,6 +1643,23 @@ static void dump_winpos_flags(UINT flags)
     TRACE("\n");
 }
 
+
+/***********************************************************************
+ *           map_dpi_winpos
+ */
+static void map_dpi_winpos( WINDOWPOS *winpos )
+{
+    UINT dpi_from = get_thread_dpi();
+    UINT dpi_to = GetDpiForWindow( winpos->hwnd );
+
+    if (!dpi_from) dpi_from = get_win_monitor_dpi( winpos->hwnd );
+    if (dpi_from == dpi_to) return;
+    winpos->x  = MulDiv( winpos->x, dpi_to, dpi_from );
+    winpos->y  = MulDiv( winpos->y, dpi_to, dpi_from );
+    winpos->cx = MulDiv( winpos->cx, dpi_to, dpi_from );
+    winpos->cy = MulDiv( winpos->cy, dpi_to, dpi_from );
+}
+
 /***********************************************************************
  *           SWP_DoWinPosChanging
  */
@@ -1691,10 +1708,9 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS *pWinpos, RECT *old_window_rect, REC
     }
     pWinpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
 
-    TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x\n",
+    TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x current %s style %08x new %s\n",
            pWinpos->hwnd, pWinpos->hwndInsertAfter, pWinpos->x, pWinpos->y,
-           pWinpos->cx, pWinpos->cy, pWinpos->flags );
-    TRACE( "current %s style %08x new %s\n",
+           pWinpos->cx, pWinpos->cy, pWinpos->flags,
            wine_dbgstr_rect( old_window_rect ), wndPtr->dwStyle,
            wine_dbgstr_rect( new_window_rect ));
 
@@ -2216,7 +2232,9 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
 {
     RECT old_window_rect, old_client_rect, new_window_rect, new_client_rect, valid_rects[2];
     UINT orig_flags;
-    
+    BOOL ret = FALSE;
+    DPI_AWARENESS_CONTEXT context;
+
     orig_flags = winpos->flags;
 
     /* First, check z-order arguments.  */
@@ -2256,11 +2274,13 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
         else if (winpos->cy > 32767) winpos->cy = 32767;
     }
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( winpos->hwnd ));
+
     if (!SWP_DoWinPosChanging( winpos, &old_window_rect, &old_client_rect,
-                               &new_window_rect, &new_client_rect )) return FALSE;
+                               &new_window_rect, &new_client_rect )) goto done;
 
     /* Fix redundant flags */
-    if (!fixup_flags( winpos, &old_window_rect, parent_x, parent_y )) return FALSE;
+    if (!fixup_flags( winpos, &old_window_rect, parent_x, parent_y )) goto done;
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
@@ -2275,8 +2295,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
 
     if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags,
                          &new_window_rect, &new_client_rect, valid_rects ))
-        return FALSE;
-
+        goto done;
 
 
     if( winpos->flags & SWP_HIDEWINDOW )
@@ -2329,7 +2348,10 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos, int parent_x, int parent_y )
         winpos->cy = new_window_rect.bottom - new_window_rect.top;
         SendMessageW( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
     }
-    return TRUE;
+    ret = TRUE;
+done:
+    SetThreadDpiAwarenessContext( context );
+    return ret;
 }
 
 /***********************************************************************
@@ -2357,7 +2379,9 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     winpos.cx = cx;
     winpos.cy = cy;
     winpos.flags = flags;
-    
+
+    map_dpi_winpos( &winpos );
+
     if (WIN_IsCurrentThread( hwnd ))
         return USER_SetWindowPos( &winpos, 0, 0 );
 
