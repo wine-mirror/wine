@@ -198,8 +198,8 @@ HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
 
     static const WCHAR wine_prefixW[] = {'w','i','n','e',':'};
 
-    if(!strncmpW(nsuri, wine_prefixW, sizeof(wine_prefixW)/sizeof(WCHAR)))
-        ptr += sizeof(wine_prefixW)/sizeof(WCHAR);
+    if(!strncmpW(nsuri, wine_prefixW, ARRAY_SIZE(wine_prefixW)))
+        ptr += ARRAY_SIZE(wine_prefixW);
 
     if(*ptr || ret_empty) {
         *ret = SysAllocString(ptr);
@@ -1271,7 +1271,7 @@ static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRequestMethod));
 
     nsACString_GetData(aRequestMethod, &method);
-    for(i=0; i < sizeof(request_method_strings)/sizeof(*request_method_strings); i++) {
+    for(i=0; i < ARRAY_SIZE(request_method_strings); i++) {
         if(!strcasecmp(method, request_method_strings[i])) {
             This->request_method = i;
             return NS_OK;
@@ -1356,7 +1356,7 @@ static nsresult NSAPI nsChannel_SetReferrerWithPolicy(nsIHttpChannel *iface, nsI
 
     hres = IUri_GetDisplayUri(referrer->uri, &referrer_uri);
     if(SUCCEEDED(hres)) {
-        set_http_header(&This->request_headers, refererW, sizeof(refererW)/sizeof(WCHAR), referrer_uri, SysStringLen(referrer_uri));
+        set_http_header(&This->request_headers, refererW, ARRAY_SIZE(refererW), referrer_uri, SysStringLen(referrer_uri));
         SysFreeString(referrer_uri);
     }
 
@@ -1584,7 +1584,7 @@ static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, cpp_boo
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
-    header = find_http_header(&This->response_headers, cache_controlW, sizeof(cache_controlW)/sizeof(WCHAR));
+    header = find_http_header(&This->response_headers, cache_controlW, ARRAY_SIZE(cache_controlW));
     *_retval = header && !strcmpiW(header->data, no_storeW);
     return NS_OK;
 }
@@ -1756,8 +1756,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
             if(!ct)
                 return NS_ERROR_UNEXPECTED;
 
-            set_http_header(&This->request_headers, content_typeW,
-                    sizeof(content_typeW)/sizeof(WCHAR), ct, strlenW(ct));
+            set_http_header(&This->request_headers, content_typeW, ARRAY_SIZE(content_typeW), ct, strlenW(ct));
             heap_free(ct);
             This->post_data_contains_headers = FALSE;
         }
@@ -2840,7 +2839,7 @@ static nsresult NSAPI nsURI_SchemeIs(nsIFileURL *iface, const char *scheme, cpp_
     if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;
 
-    MultiByteToWideChar(CP_UTF8, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_UTF8, 0, scheme, -1, buf, ARRAY_SIZE(buf));
     *_retval = !strcmpW(scheme_name, buf);
     SysFreeString(scheme_name);
     return NS_OK;
@@ -3296,7 +3295,7 @@ static nsresult NSAPI nsFileURL_GetFile(nsIFileURL *iface, nsIFile **aFile)
 
     TRACE("(%p)->(%p)\n", This, aFile);
 
-    hres = CoInternetParseIUri(This->uri, PARSE_PATH_FROM_URL, 0, path, sizeof(path)/sizeof(WCHAR), &size, 0);
+    hres = CoInternetParseIUri(This->uri, PARSE_PATH_FROM_URL, 0, path, ARRAY_SIZE(path), &size, 0);
     if(FAILED(hres)) {
         WARN("CoInternetParseIUri failed: %08x\n", hres);
         return NS_ERROR_FAILURE;
@@ -3830,7 +3829,7 @@ static BOOL is_gecko_special_uri(const char *spec)
     static const char *special_schemes[] = {"chrome:", "data:", "jar:", "moz-safe-about", "resource:", "javascript:", "wyciwyg:"};
     unsigned int i;
 
-    for(i=0; i < sizeof(special_schemes)/sizeof(*special_schemes); i++) {
+    for(i=0; i < ARRAY_SIZE(special_schemes); i++) {
         if(!strncasecmp(spec, special_schemes[i], strlen(special_schemes[i])))
             return TRUE;
     }
@@ -3894,7 +3893,7 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
         SysFreeString(charset);
     }
 
-    MultiByteToWideChar(cp, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, spec, -1, new_spec, ARRAY_SIZE(new_spec));
 
     if(base_wine_uri) {
         hres = combine_url(base_wine_uri->uri, new_spec, &urlmon_uri);

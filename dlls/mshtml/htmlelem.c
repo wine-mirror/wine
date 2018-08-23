@@ -103,7 +103,7 @@ static const tag_desc_t tag_descs[] = {
 
 static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
 {
-    DWORD min=0, max=sizeof(tag_descs)/sizeof(*tag_descs)-1, i;
+    DWORD min=0, max=ARRAY_SIZE(tag_descs)-1, i;
     int r;
 
     while(min <= max) {

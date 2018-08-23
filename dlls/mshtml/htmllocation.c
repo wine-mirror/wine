@@ -355,7 +355,7 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
         WCHAR portW[6];
         WCHAR *buf;
 
-        port_len = snprintfW(portW, sizeof(portW)/sizeof(portW[0]), format, url.nPort);
+        port_len = snprintfW(portW, ARRAY_SIZE(portW), format, url.nPort);
         len = url.dwHostNameLength + 1 /* ':' */ + port_len;
         buf = *p = SysAllocStringLen(NULL, len);
         memcpy(buf, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));

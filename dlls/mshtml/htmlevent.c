@@ -230,7 +230,7 @@ static eventid_t str_to_eid(const WCHAR *str)
 {
     int i;
 
-    for(i=0; i < sizeof(event_info)/sizeof(event_info[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(event_info); i++) {
         if(!strcmpW(event_info[i].name, str))
             return i;
     }
@@ -245,7 +245,7 @@ static eventid_t attr_to_eid(const WCHAR *str)
     if((str[0] != 'o' && str[0] != 'O') || (str[1] != 'n' && str[1] != 'N'))
         return EVENTID_LAST;
 
-    for(i=0; i < sizeof(event_info)/sizeof(event_info[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(event_info); i++) {
         if(!strcmpW(event_info[i].name, str+2) && event_info[i].dispid)
             return i;
     }
@@ -2345,7 +2345,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
     }
 
     listeners_cnt = 0;
-    listeners_size = sizeof(listeners_buf)/sizeof(*listeners_buf);
+    listeners_size = ARRAY_SIZE(listeners_buf);
 
     if(container) {
         LIST_FOR_EACH_ENTRY(listener, &container->listeners, event_listener_t, entry) {
@@ -2529,7 +2529,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     IEventTarget_AddRef(&event_target->IEventTarget_iface);
 
     chain_cnt = 0;
-    chain_buf_size = sizeof(target_chain_buf)/sizeof(*target_chain_buf);
+    chain_buf_size = ARRAY_SIZE(target_chain_buf);
 
     do {
         if(chain_cnt == chain_buf_size) {

@@ -370,8 +370,8 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     TRACE("bindf %x\n", grfBINDF);
 
-    if(strlenW(szUrl)>=sizeof(wszAbout)/sizeof(WCHAR) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
-        text = szUrl + sizeof(wszAbout)/sizeof(WCHAR);
+    if(strlenW(szUrl) >= ARRAY_SIZE(wszAbout) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
+        text = szUrl + ARRAY_SIZE(wszAbout);
         if(!strcmpW(wszBlank, text))
             text = NULL;
     }
@@ -570,14 +570,14 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         return hres;
     }
 
-    if(len < sizeof(wszRes)/sizeof(wszRes[0]) || memcmp(url, wszRes, sizeof(wszRes))) {
+    if(len < ARRAY_SIZE(wszRes) || memcmp(url, wszRes, sizeof(wszRes))) {
         WARN("Wrong protocol of url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, E_INVALIDARG, 0, NULL);
         heap_free(url);
         return E_INVALIDARG;
     }
 
-    url_dll = url + sizeof(wszRes)/sizeof(wszRes[0]);
+    url_dll = url + ARRAY_SIZE(wszRes);
     if(!(res_type = strchrW(url_dll, '/'))) {
         WARN("wrong url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
@@ -692,23 +692,23 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         static const WCHAR wszFile[] = {'f','i','l','e',':','/','/'};
         static const WCHAR wszRes[] = {'r','e','s',':','/','/'};
 
-        if(strlenW(pwzUrl) <= sizeof(wszRes)/sizeof(WCHAR) || memcmp(pwzUrl, wszRes, sizeof(wszRes)))
+        if(strlenW(pwzUrl) <= ARRAY_SIZE(wszRes) || memcmp(pwzUrl, wszRes, sizeof(wszRes)))
             return E_INVALIDARG;
 
-        ptr = strchrW(pwzUrl + sizeof(wszRes)/sizeof(WCHAR), '/');
+        ptr = strchrW(pwzUrl + ARRAY_SIZE(wszRes), '/');
         if(!ptr)
             return E_INVALIDARG;
 
-        len = ptr - (pwzUrl + sizeof(wszRes)/sizeof(WCHAR));
-        if(len >= sizeof(file_part)/sizeof(WCHAR)) {
+        len = ptr - (pwzUrl + ARRAY_SIZE(wszRes));
+        if(len >= ARRAY_SIZE(file_part)) {
             FIXME("Too long URL\n");
             return MK_E_SYNTAX;
         }
 
-        memcpy(file_part, pwzUrl + sizeof(wszRes)/sizeof(WCHAR), len*sizeof(WCHAR));
+        memcpy(file_part, pwzUrl + ARRAY_SIZE(wszRes), len*sizeof(WCHAR));
         file_part[len] = 0;
 
-        len = SearchPathW(NULL, file_part, NULL, sizeof(full_path)/sizeof(WCHAR), full_path, NULL);
+        len = SearchPathW(NULL, file_part, NULL, ARRAY_SIZE(full_path), full_path, NULL);
         if(!len) {
             HMODULE module;
 
@@ -720,20 +720,20 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
                 return MK_E_SYNTAX;
             }
 
-            len = GetModuleFileNameW(module, full_path, sizeof(full_path)/sizeof(WCHAR));
+            len = GetModuleFileNameW(module, full_path, ARRAY_SIZE(full_path));
             FreeLibrary(module);
             if(!len)
                 return E_FAIL;
         }
 
-        size = sizeof(wszFile)/sizeof(WCHAR) + len + 1;
+        size = ARRAY_SIZE(wszFile) + len + 1;
         if(pcchResult)
             *pcchResult = size;
         if(size > cchResult)
             return S_FALSE;
 
         memcpy(pwzResult, wszFile, sizeof(wszFile));
-        memcpy(pwzResult + sizeof(wszFile)/sizeof(WCHAR), full_path, (len+1)*sizeof(WCHAR));
+        memcpy(pwzResult + ARRAY_SIZE(wszFile), full_path, (len+1)*sizeof(WCHAR));
         return S_OK;
     }
 

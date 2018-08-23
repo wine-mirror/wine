@@ -1054,8 +1054,8 @@ HRESULT load_script(HTMLScriptElement *script_elem, const WCHAR *src, BOOL async
 
     static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
 
-    if(strlenW(src) > sizeof(wine_schemaW)/sizeof(WCHAR) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
-        src += sizeof(wine_schemaW)/sizeof(WCHAR);
+    if(strlenW(src) > ARRAY_SIZE(wine_schemaW) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
+        src += ARRAY_SIZE(wine_schemaW);
 
     TRACE("(%p %s %x)\n", script_elem, debugstr_w(src), async);
 

@@ -126,7 +126,7 @@ static void thread_detach(void)
 static void free_strings(void)
 {
     unsigned int i;
-    for(i = 0; i < sizeof(status_strings)/sizeof(*status_strings); i++)
+    for(i = 0; i < ARRAY_SIZE(status_strings); i++)
         heap_free(status_strings[i]);
 }
 
@@ -490,7 +490,7 @@ static HRESULT register_server(BOOL do_register)
     INF_SET_CLSID(TridentAPI);
     INF_SET_ID(LIBID_MSHTML);
 
-    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++) {
+    for(i=0; i < ARRAY_SIZE(pse); i++) {
         pse[i].pszValue = heap_alloc(39);
         sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
@@ -498,7 +498,7 @@ static HRESULT register_server(BOOL do_register)
                 clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
     }
 
-    strtable.cEntries = sizeof(pse)/sizeof(pse[0]);
+    strtable.cEntries = ARRAY_SIZE(pse);
     strtable.pse = pse;
 
     hAdvpack = LoadLibraryW(wszAdvpack);
@@ -508,7 +508,7 @@ static HRESULT register_server(BOOL do_register)
 
     FreeLibrary(hAdvpack);
 
-    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
+    for(i=0; i < ARRAY_SIZE(pse); i++)
         heap_free(pse[i].pszValue);
 
     if(FAILED(hres))

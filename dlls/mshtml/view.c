@@ -411,10 +411,8 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow *window, IOleInPlaceActiveObj
 {
     static WCHAR html_documentW[30];
 
-    if(act_obj && !html_documentW[0]) {
-        LoadStringW(hInst, IDS_HTMLDOCUMENT, html_documentW,
-                    sizeof(html_documentW)/sizeof(WCHAR));
-    }
+    if(act_obj && !html_documentW[0])
+        LoadStringW(hInst, IDS_HTMLDOCUMENT, html_documentW, ARRAY_SIZE(html_documentW));
 
     return IOleInPlaceUIWindow_SetActiveObject(window, act_obj, act_obj ? html_documentW : NULL);
 }

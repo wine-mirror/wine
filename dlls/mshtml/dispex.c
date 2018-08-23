@@ -182,7 +182,7 @@ void release_typelib(void)
     if(!typelib)
         return;
 
-    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+    for(i=0; i < ARRAY_SIZE(typeinfos); i++)
         if(typeinfos[i])
             ITypeInfo_Release(typeinfos[i]);
 
@@ -774,12 +774,12 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             return E_ACCESSDENIED;
 
         name_len = SysStringLen(This->info->name);
-        ptr = str = SysAllocStringLen(NULL, name_len + (sizeof(func_prefixW)+sizeof(func_suffixW))/sizeof(WCHAR));
+        ptr = str = SysAllocStringLen(NULL, name_len + ARRAY_SIZE(func_prefixW) + ARRAY_SIZE(func_suffixW));
         if(!str)
             return E_OUTOFMEMORY;
 
         memcpy(ptr, func_prefixW, sizeof(func_prefixW));
-        ptr += sizeof(func_prefixW)/sizeof(WCHAR);
+        ptr += ARRAY_SIZE(func_prefixW);
 
         memcpy(ptr, This->info->name, name_len*sizeof(WCHAR));
         ptr += name_len;

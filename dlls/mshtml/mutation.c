@@ -131,10 +131,10 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
     ptr += 2;
 
     len = strlenW(ptr);
-    if(len < sizeof(endifW)/sizeof(WCHAR))
+    if(len < ARRAY_SIZE(endifW))
         return NULL;
 
-    end = ptr + len-sizeof(endifW)/sizeof(WCHAR);
+    end = ptr + len - ARRAY_SIZE(endifW);
     if(memcmp(end, endifW, sizeof(endifW)))
         return NULL;
 
@@ -398,7 +398,7 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 
     TRACE("%s\n", debugstr_w(p));
 
-    if(strncmpiW(ie_eqW, p, sizeof(ie_eqW)/sizeof(WCHAR)))
+    if(strncmpiW(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
         return FALSE;
     p += 3;
 

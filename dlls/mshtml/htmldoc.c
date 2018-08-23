@@ -1191,7 +1191,7 @@ static BOOL cmdid_from_string(const WCHAR *str, OLECMDID *cmdid)
 {
     int i;
 
-    for(i = 0; i < sizeof(command_names)/sizeof(*command_names); i++) {
+    for(i = 0; i < ARRAY_SIZE(command_names); i++) {
         if(!strcmpiW(command_names[i].name, str)) {
             *cmdid = command_names[i].id;
             return TRUE;

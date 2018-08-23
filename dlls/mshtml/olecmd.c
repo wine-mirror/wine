@@ -228,13 +228,10 @@ static void set_default_templates(nsIPrintSettings *settings)
     nsIPrintSettings_SetFooterStrRight(settings, empty);
     nsIPrintSettings_SetFooterStrCenter(settings, empty);
 
-    if(LoadStringW(get_shdoclc(), IDS_PRINT_HEADER_TEMPLATE, buf,
-                   sizeof(buf)/sizeof(WCHAR)))
+    if(LoadStringW(get_shdoclc(), IDS_PRINT_HEADER_TEMPLATE, buf, ARRAY_SIZE(buf)))
         set_print_template(settings, buf, TRUE);
 
-
-    if(LoadStringW(get_shdoclc(), IDS_PRINT_FOOTER_TEMPLATE, buf,
-                   sizeof(buf)/sizeof(WCHAR)))
+    if(LoadStringW(get_shdoclc(), IDS_PRINT_FOOTER_TEMPLATE, buf, ARRAY_SIZE(buf)))
         set_print_template(settings, buf, FALSE);
 
 }
@@ -838,7 +835,7 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         ULONG i;
 
         for(i=0; i<cCmds; i++) {
-            if(prgCmds[i].cmdID < OLECMDID_OPEN || prgCmds[i].cmdID >= sizeof(exec_table)/sizeof(*exec_table)) {
+            if(prgCmds[i].cmdID < OLECMDID_OPEN || prgCmds[i].cmdID >= ARRAY_SIZE(exec_table)) {
                 WARN("Unsupported cmdID = %d\n", prgCmds[i].cmdID);
                 prgCmds[i].cmdf = 0;
             }else {
@@ -909,7 +906,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     HTMLDocument *This = impl_from_IOleCommandTarget(iface);
 
     if(!pguidCmdGroup) {
-        if(nCmdID < OLECMDID_OPEN || nCmdID >= sizeof(exec_table)/sizeof(*exec_table) || !exec_table[nCmdID].func) {
+        if(nCmdID < OLECMDID_OPEN || nCmdID >= ARRAY_SIZE(exec_table) || !exec_table[nCmdID].func) {
             WARN("Unsupported cmdID = %d\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
         }

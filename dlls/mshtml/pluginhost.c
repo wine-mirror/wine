@@ -2269,10 +2269,10 @@ static BOOL parse_classid(const PRUnichar *classid, CLSID *clsid)
 
     static const PRUnichar clsidW[] = {'c','l','s','i','d',':'};
 
-    if(strncmpiW(classid, clsidW, sizeof(clsidW)/sizeof(WCHAR)))
+    if(strncmpiW(classid, clsidW, ARRAY_SIZE(clsidW)))
         return FALSE;
 
-    ptr = classid + sizeof(clsidW)/sizeof(WCHAR);
+    ptr = classid + ARRAY_SIZE(clsidW);
     len = strlenW(ptr);
 
     if(len == 38) {

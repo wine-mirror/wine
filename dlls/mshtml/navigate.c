@@ -728,13 +728,13 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
         ptr++;
 
     len = strlenW(value);
-    if(ptr + sizeof(charsetW)/sizeof(WCHAR) < value+len && !memicmpW(ptr, charsetW, sizeof(charsetW)/sizeof(WCHAR))) {
+    if(ptr + ARRAY_SIZE(charsetW) < value+len && !memicmpW(ptr, charsetW, ARRAY_SIZE(charsetW))) {
         size_t charset_len, lena;
         nsACString charset_str;
         const WCHAR *charset;
         char *charseta;
 
-        ptr += sizeof(charsetW)/sizeof(WCHAR);
+        ptr += ARRAY_SIZE(charsetW);
 
         if(*ptr == '\'') {
             FIXME("Quoted value\n");

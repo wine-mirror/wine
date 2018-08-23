@@ -140,7 +140,7 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
     }
 
     if(*color != '#') {
-        for(i=0; i < sizeof(keyword_table)/sizeof(keyword_table[0]); i++) {
+        for(i=0; i < ARRAY_SIZE(keyword_table); i++) {
             if(!strcmpiW(color, keyword_table[i].keyword))
                 rgb = keyword_table[i].rgb;
         }

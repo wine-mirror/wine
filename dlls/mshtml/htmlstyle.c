@@ -303,7 +303,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrZIndex,               DISPID_IHTMLSTYLE_ZINDEX}
 };
 
-C_ASSERT(sizeof(style_tbl)/sizeof(*style_tbl) == STYLEID_MAX_VALUE);
+C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
 
 static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
@@ -323,7 +323,7 @@ static const WCHAR emptyW[] = {0};
 
 static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
 {
-    int c, i, min = 0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
+    int c, i, min = 0, max = ARRAY_SIZE(style_tbl)-1;
 
     while(min <= max) {
         i = (min+max)/2;
@@ -388,7 +388,7 @@ static LPWSTR fix_url_value(LPCWSTR val)
 
     static const WCHAR urlW[] = {'u','r','l','('};
 
-    if(strncmpW(val, urlW, sizeof(urlW)/sizeof(WCHAR)) || !strchrW(val, '\\'))
+    if(strncmpW(val, urlW, ARRAY_SIZE(urlW)) || !strchrW(val, '\\'))
         return NULL;
 
     ret = heap_strdupW(val);
@@ -1250,7 +1250,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIA
 
             TRACE("no space in %s\n", debugstr_w(pos));
             pos = zero_pxW;
-            space = pos + sizeof(zero_pxW)/sizeof(WCHAR)-1;
+            space = pos + ARRAY_SIZE(zero_pxW)-1;
         }
 
         posx_len = space-pos;
@@ -2718,7 +2718,7 @@ static void update_filter(HTMLStyle *This)
             continue;
         }
 
-        if(ptr2 + sizeof(alphaW)/sizeof(WCHAR) == ptr && !memcmp(ptr2, alphaW, sizeof(alphaW))) {
+        if(ptr2 + ARRAY_SIZE(alphaW) == ptr && !memcmp(ptr2, alphaW, sizeof(alphaW))) {
             static const WCHAR formatW[] = {'%','f',0};
             static const WCHAR opacityW[] = {'o','p','a','c','i','t','y','='};
 
@@ -2735,11 +2735,11 @@ static void update_filter(HTMLStyle *This)
                     break;
                 }
 
-                if(ptr-ptr2 > sizeof(opacityW)/sizeof(WCHAR) && !memcmp(ptr2, opacityW, sizeof(opacityW))) {
+                if(ptr-ptr2 > ARRAY_SIZE(opacityW) && !memcmp(ptr2, opacityW, sizeof(opacityW))) {
                     float fval = 0.0f, e = 0.1f;
                     WCHAR buf[32];
 
-                    ptr2 += sizeof(opacityW)/sizeof(WCHAR);
+                    ptr2 += ARRAY_SIZE(opacityW);
 
                     while(isdigitW(*ptr2))
                         fval = fval*10.0f + (float)(*ptr2++ - '0');
@@ -2915,12 +2915,12 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
             return S_OK;
         }
 
-        for(i=0; i < sizeof(style_tbl)/sizeof(*style_tbl); i++) {
+        for(i=0; i < ARRAY_SIZE(style_tbl); i++) {
             if(dispid == style_tbl[i].dispid)
                 break;
         }
 
-        if(i == sizeof(style_tbl)/sizeof(*style_tbl))
+        if(i == ARRAY_SIZE(style_tbl))
             return remove_attribute(&This->dispex, dispid, pfSuccess);
         style_entry = style_tbl+i;
     }

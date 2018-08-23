@@ -626,8 +626,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(message));
 
-    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, title,
-                    sizeof(title)/sizeof(WCHAR))) {
+    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, title, ARRAY_SIZE(title))) {
         WARN("Could not load message box title: %d\n", GetLastError());
         return S_OK;
     }
@@ -657,8 +656,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
 
     if(!confirmed) return E_INVALIDARG;
 
-    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle,
-                sizeof(wszTitle)/sizeof(WCHAR))) {
+    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
         WARN("Could not load message box title: %d\n", GetLastError());
         *confirmed = VARIANT_TRUE;
         return S_OK;
@@ -689,8 +687,7 @@ static INT_PTR CALLBACK prompt_dlgproc(HWND hwnd, UINT msg,
             prompt_arg *arg = (prompt_arg*)lparam;
             WCHAR wszTitle[100];
 
-            if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle,
-                        sizeof(wszTitle)/sizeof(WCHAR))) {
+            if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
                 WARN("Could not load message box title: %d\n", GetLastError());
                 EndDialog(hwnd, wparam);
                 return FALSE;
