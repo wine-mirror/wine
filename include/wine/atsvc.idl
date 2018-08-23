@@ -65,7 +65,7 @@ interface atsvc
                 [in] DWORD MinJobId, [in] DWORD MaxJobId);
 
     DWORD NetrJobEnum([in,string,unique] ATSVC_HANDLE ServerName,
-                [in,out] LPAT_ENUM_CONTAINER pEnumContainer, [in] DWORD PreferedMaximumLength,
+                [in,out] LPAT_ENUM_CONTAINER pEnumContainer, [in] DWORD PreferredMaximumLength,
                 [out] LPDWORD pTotalEntries, [in,out,unique] LPDWORD pResumeHandle);
 
     DWORD NetrJobGetInfo([in,string,unique] ATSVC_HANDLE ServerName,
