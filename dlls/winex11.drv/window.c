@@ -306,33 +306,6 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
 
 
 /***********************************************************************
- *		get_x11_rect_offset
- *
- * Helper for X11DRV_window_to_X_rect and X11DRV_X_to_window_rect.
- */
-static void get_x11_rect_offset( struct x11drv_win_data *data, RECT *rect )
-{
-    DWORD style, ex_style, style_mask = 0, ex_style_mask = 0;
-    unsigned long decor;
-
-    rect->top = rect->bottom = rect->left = rect->right = 0;
-
-    style = GetWindowLongW( data->hwnd, GWL_STYLE );
-    ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    decor = get_mwm_decorations( data, style, ex_style );
-
-    if (decor & MWM_DECOR_TITLE) style_mask |= WS_CAPTION;
-    if (decor & MWM_DECOR_BORDER)
-    {
-        style_mask |= WS_DLGFRAME | WS_THICKFRAME;
-        ex_style_mask |= WS_EX_DLGMODALFRAME;
-    }
-
-    AdjustWindowRectEx( rect, style & style_mask, FALSE, ex_style & ex_style_mask );
-}
-
-
-/***********************************************************************
  *              get_window_attributes
  *
  * Fill the window attributes structure for an X window.
@@ -1185,12 +1158,26 @@ void make_window_embedded( struct x11drv_win_data *data )
  */
 static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
 {
+    DWORD style, ex_style, style_mask = 0, ex_style_mask = 0;
+    unsigned long decor;
     RECT rc;
 
     if (!data->managed) return;
     if (IsRectEmpty( rect )) return;
 
-    get_x11_rect_offset( data, &rc );
+    style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    decor = get_mwm_decorations( data, style, ex_style );
+
+    if (decor & MWM_DECOR_TITLE) style_mask |= WS_CAPTION;
+    if (decor & MWM_DECOR_BORDER)
+    {
+        style_mask |= WS_DLGFRAME | WS_THICKFRAME;
+        ex_style_mask |= WS_EX_DLGMODALFRAME;
+    }
+
+    SetRectEmpty( &rc );
+    AdjustWindowRectEx( &rc, style & style_mask, FALSE, ex_style & ex_style_mask );
 
     rect->left   -= rc.left;
     rect->right  -= rc.right;
@@ -1206,21 +1193,15 @@ static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
  *
  * Opposite of X11DRV_window_to_X_rect
  */
-void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect )
+void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect, int x, int y, int cx, int cy )
 {
-    RECT rc;
-
-    if (!data->managed) return;
-    if (IsRectEmpty( rect )) return;
-
-    get_x11_rect_offset( data, &rc );
-
-    rect->left   += rc.left;
-    rect->right  += rc.right;
-    rect->top    += rc.top;
-    rect->bottom += rc.bottom;
-    if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
-    if (rect->left >= rect->right) rect->right = rect->left + 1;
+    x += data->window_rect.left - data->whole_rect.left;
+    y += data->window_rect.top - data->whole_rect.top;
+    cx += (data->window_rect.right - data->window_rect.left) -
+          (data->whole_rect.right - data->whole_rect.left);
+    cy += (data->window_rect.bottom - data->window_rect.top) -
+          (data->whole_rect.bottom - data->whole_rect.top);
+    SetRect( rect, x, y, x + cx, y + cy );
 }
 
 
@@ -1531,8 +1512,6 @@ static void create_whole_window( struct x11drv_win_data *data )
 
     mask = get_window_attributes( data, &attr );
 
-    data->whole_rect = data->window_rect;
-    X11DRV_window_to_X_rect( data, &data->whole_rect );
     if (!(cx = data->whole_rect.right - data->whole_rect.left)) cx = 1;
     else if (cx > 65535) cx = 65535;
     if (!(cy = data->whole_rect.bottom - data->whole_rect.top)) cy = 1;
@@ -2517,11 +2496,7 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
                   &root, &x, &y, &width, &height, &border, &depth );
     XTranslateCoordinates( thread_data->display, data->whole_window, root, 0, 0, &x, &y, &top );
     pos = root_to_virtual_screen( x, y );
-    rect->left   = pos.x;
-    rect->top    = pos.y;
-    rect->right  = pos.x + width;
-    rect->bottom = pos.y + height;
-    X11DRV_X_to_window_rect( data, rect );
+    X11DRV_X_to_window_rect( data, rect, pos.x, pos.y, width, height );
     swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
 
 done:

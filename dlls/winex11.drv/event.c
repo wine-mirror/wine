@@ -1077,16 +1077,12 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     }
     else pos = root_to_virtual_screen( x, y );
 
-    rect.left   = pos.x;
-    rect.top    = pos.y;
-    rect.right  = pos.x + event->width;
-    rect.bottom = pos.y + event->height;
+    X11DRV_X_to_window_rect( data, &rect, pos.x, pos.y, event->width, event->height );
+    if (root_coords) MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
+
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
-
-    X11DRV_X_to_window_rect( data, &rect );
-    if (root_coords) MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
 
     /* Compare what has changed */
 
@@ -1155,7 +1151,8 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
 {
     XGravityEvent *event = &xev->xgravity;
     struct x11drv_win_data *data = get_win_data( hwnd );
-    RECT rect, window_rect;
+    RECT window_rect;
+    int x, y;
 
     if (!data) return FALSE;
 
@@ -1165,22 +1162,18 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
         return FALSE;
     }
 
-    rect.left   = event->x;
-    rect.top    = event->y;
-    rect.right  = rect.left + data->whole_rect.right - data->whole_rect.left;
-    rect.bottom = rect.top + data->whole_rect.bottom - data->whole_rect.top;
+    x = event->x + data->window_rect.left - data->whole_rect.left;
+    y = event->y + data->window_rect.top - data->whole_rect.top;
 
-    TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d)\n",
-           hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-           event->x, event->y );
+    TRACE( "win %p/%lx new X pos %d,%d (event %d,%d)\n",
+           hwnd, data->whole_window, x, y, event->x, event->y );
 
-    X11DRV_X_to_window_rect( data, &rect );
     window_rect = data->window_rect;
     release_win_data( data );
 
-    if (window_rect.left != rect.left || window_rect.top != rect.top)
-        SetWindowPos( hwnd, 0, rect.left, rect.top, 0, 0,
-                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
+    if (window_rect.left != x || window_rect.top != y)
+        SetWindowPos( hwnd, 0, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
+
     return TRUE;
 }
 
