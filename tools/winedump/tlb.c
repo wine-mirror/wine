@@ -1165,7 +1165,7 @@ static const char *lookup_code(const BYTE *table, DWORD table_size, struct bitst
 
     if (p + 1 < table + table_size && *(p + 1))
     {
-        /* FIXME: Whats the meaning of *p? */
+        /* FIXME: What is the meaning of *p? */
         const BYTE *q = p + 1;
         while (q < table + table_size && *q) q++;
         return (q < table + table_size) ? (const char *)(p + 1) : NULL;
