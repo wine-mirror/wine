@@ -6767,6 +6767,7 @@ static void test_device_context(void)
     ID2D1DeviceContext *device_context;
     IDXGISurface *surface, *surface2;
     ID2D1Device *device, *device2;
+    D2D1_BITMAP_OPTIONS options;
     ID2D1DCRenderTarget *dc_rt;
     ID3D10Device1 *d3d_device;
     IDXGISwapChain *swapchain;
@@ -6834,6 +6835,9 @@ if (SUCCEEDED(hr))
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
     ok(SUCCEEDED(hr), "Failed to get device context interface, hr %#x.\n", hr);
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW),
+            "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface2);
     ok(SUCCEEDED(hr), "Failed to get bitmap surface, hr %#x.\n", hr);
     ok(surface2 == surface, "Unexpected surface instance.\n");
@@ -6880,8 +6884,11 @@ if (SUCCEEDED(hr))
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
     ok(SUCCEEDED(hr), "Failed to get device context interface, hr %#x.\n", hr);
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW),
+            "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_SetTarget(device_context, NULL);
@@ -6907,8 +6914,11 @@ if (SUCCEEDED(hr))
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
     ok(SUCCEEDED(hr), "Failed to get device context interface, hr %#x.\n", hr);
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW),
+            "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(hr == D2DERR_INVALID_CALL, "Unexpected hr %#x.\n", hr);
     ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_SetTarget(device_context, NULL);
@@ -6938,8 +6948,11 @@ if (SUCCEEDED(hr))
     ok(SUCCEEDED(hr), "BindDC() failed, hr %#x.\n", hr);
 
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE),
+            "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    ok(hr == D2DERR_INVALID_CALL, "Unexpected hr %#x.\n", hr);
     ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_SetTarget(device_context, NULL);
