@@ -408,6 +408,7 @@ static void pull_events(void)
  */
 static int process_events( DWORD mask )
 {
+    DPI_AWARENESS_CONTEXT context;
     struct java_event *event, *next, *previous;
     unsigned int count = 0;
 
@@ -448,11 +449,13 @@ static int process_events( DWORD mask )
         {
         case DESKTOP_CHANGED:
             TRACE( "DESKTOP_CHANGED %ux%u\n", event->data.desktop.width, event->data.desktop.height );
+            context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
             screen_width = event->data.desktop.width;
             screen_height = event->data.desktop.height;
             init_monitors( screen_width, screen_height );
             SetWindowPos( GetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
+            SetThreadDpiAwarenessContext( context );
             break;
 
         case CONFIG_CHANGED:
@@ -472,6 +475,7 @@ static int process_events( DWORD mask )
             {
                 HWND capture = get_capture_window();
 
+                context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
                 if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
                     TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
                            event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
@@ -503,6 +507,7 @@ static int process_events( DWORD mask )
                     SERVER_END_REQ;
                 }
                 __wine_send_input( capture ? capture : event->data.motion.hwnd, &event->data.motion.input );
+                SetThreadDpiAwarenessContext( context );
             }
             break;
 
