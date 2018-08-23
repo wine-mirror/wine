@@ -2435,16 +2435,25 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
     DWP *pDWP;
     int i;
     HDWP retvalue = hdwp;
+    WINDOWPOS winpos;
 
     TRACE("hdwp %p, hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
           hdwp, hwnd, hwndAfter, x, y, cx, cy, flags);
 
-    hwnd = WIN_GetFullHandle( hwnd );
-    if (is_desktop_window( hwnd ) || !IsWindow( hwnd ))
+    winpos.hwnd = WIN_GetFullHandle( hwnd );
+    if (is_desktop_window( winpos.hwnd ) || !IsWindow( winpos.hwnd ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
+
+    winpos.hwndInsertAfter = WIN_GetFullHandle(hwndAfter);
+    winpos.flags = flags;
+    winpos.x = x;
+    winpos.y = y;
+    winpos.cx = cx;
+    winpos.cy = cy;
+    map_dpi_winpos( &winpos );
 
     if (!(pDWP = get_user_handle_ptr( hdwp, USER_DWP ))) return 0;
     if (pDWP == OBJ_OTHER_PROCESS)
@@ -2455,22 +2464,22 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
 
     for (i = 0; i < pDWP->actualCount; i++)
     {
-        if (pDWP->winPos[i].hwnd == hwnd)
+        if (pDWP->winPos[i].hwnd == winpos.hwnd)
         {
               /* Merge with the other changes */
             if (!(flags & SWP_NOZORDER))
             {
-                pDWP->winPos[i].hwndInsertAfter = WIN_GetFullHandle(hwndAfter);
+                pDWP->winPos[i].hwndInsertAfter = winpos.hwndInsertAfter;
             }
             if (!(flags & SWP_NOMOVE))
             {
-                pDWP->winPos[i].x = x;
-                pDWP->winPos[i].y = y;
+                pDWP->winPos[i].x = winpos.x;
+                pDWP->winPos[i].y = winpos.y;
             }
             if (!(flags & SWP_NOSIZE))
             {
-                pDWP->winPos[i].cx = cx;
-                pDWP->winPos[i].cy = cy;
+                pDWP->winPos[i].cx = winpos.cx;
+                pDWP->winPos[i].cy = winpos.cy;
             }
             pDWP->winPos[i].flags &= flags | ~(SWP_NOSIZE | SWP_NOMOVE |
                                                SWP_NOZORDER | SWP_NOREDRAW |
@@ -2493,14 +2502,7 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
         pDWP->suggestedCount *= 2;
         pDWP->winPos = newpos;
     }
-    pDWP->winPos[pDWP->actualCount].hwnd = hwnd;
-    pDWP->winPos[pDWP->actualCount].hwndInsertAfter = hwndAfter;
-    pDWP->winPos[pDWP->actualCount].x = x;
-    pDWP->winPos[pDWP->actualCount].y = y;
-    pDWP->winPos[pDWP->actualCount].cx = cx;
-    pDWP->winPos[pDWP->actualCount].cy = cy;
-    pDWP->winPos[pDWP->actualCount].flags = flags;
-    pDWP->actualCount++;
+    pDWP->winPos[pDWP->actualCount++] = winpos;
 END:
     release_user_handle_ptr( pDWP );
     return retvalue;
