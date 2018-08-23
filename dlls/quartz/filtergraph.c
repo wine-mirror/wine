@@ -2963,7 +2963,7 @@ static const IObjectWithSiteVtbl IObjectWithSite_VTable =
 
 static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID* ppvObj)
 {
-    HRESULT hr = E_NOINTERFACE;
+    HRESULT hr;
     int i;
     int entry;
 
@@ -3003,7 +3003,7 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
             return hr;
     }
 
-    return hr;
+    return IsEqualGUID(riid, &IID_IBasicAudio) ? E_NOTIMPL : E_NOINTERFACE;
 }
 
 static inline IFilterGraphImpl *impl_from_IBasicAudio(IBasicAudio *iface)

@@ -2304,7 +2304,6 @@ static void test_control_delegation(void)
     hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicAudio, (void **)&audio);
     ok(hr == S_OK, "got %#x\n", hr);
 
-todo_wine {
     hr = IBasicAudio_put_Volume(audio, -10);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Volume(audio, &val);
@@ -2313,7 +2312,6 @@ todo_wine {
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Balance(audio, &val);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
-}
 
     hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
     if (hr != VFW_E_NO_AUDIO_HARDWARE)
@@ -2349,7 +2347,6 @@ todo_wine {
         IBasicAudio_Release(filter_audio);
     }
 
-todo_wine {
     hr = IBasicAudio_put_Volume(audio, -10);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Volume(audio, &val);
@@ -2358,7 +2355,6 @@ todo_wine {
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Balance(audio, &val);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
-}
 
     IBasicAudio_Release(audio);
 
