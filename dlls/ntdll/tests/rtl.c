@@ -1458,9 +1458,9 @@ static const struct
     NTSTATUS res;
     int terminator_offset;
     int ip[8];
-    /* win_broken: older versions of windows do not handle this correct
+    /* win_broken: older versions of windows do not handle this correctly
         ex_fail: Ex function does need the string to be terminated, non-Ex does not.
-        ex_skip: test doesnt make sense for Ex (f.e. it's invalid for non-Ex but valid for Ex) */
+        ex_skip: test doesn't make sense for Ex (f.e. it's invalid for non-Ex but valid for Ex) */
     enum { normal_6, win_broken_6 = 1, ex_fail_6 = 2, ex_skip_6 = 4 } flags;
 } ipv6_tests[] =
 {
@@ -2284,7 +2284,7 @@ static void test_RtlIpv6StringToAddressEx(void)
     /* sanity check */
     ok(sizeof(ip) == sizeof(USHORT)* 8, "sizeof(ip)\n");
 
-    /* first we run all ip related tests, to make sure someone didnt accidentally reimplement instead of re-use. */
+    /* first we run all ip related tests, to make sure someone didn't accidentally reimplement instead of re-use. */
     for (i = 0; i < ARRAY_SIZE(ipv6_tests); i++)
     {
         ULONG scope = 0xbadf00d;
