@@ -23,7 +23,7 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 
-DWORD CALLBACK stack_walk_thread(void *arg)
+static DWORD CALLBACK stack_walk_thread(void *arg)
 {
     DWORD count = SuspendThread(GetCurrentThread());
     ok(!count, "got %d\n", count);
