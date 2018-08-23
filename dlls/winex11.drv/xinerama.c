@@ -267,34 +267,8 @@ BOOL CDECL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC pro
 {
     int i;
 
-    if (hdc)
-    {
-        POINT origin;
-        RECT limit;
+    for (i = 0; i < nb_monitors; i++)
+        if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp )) return FALSE;
 
-        if (!GetDCOrgEx( hdc, &origin )) return FALSE;
-        if (GetClipBox( hdc, &limit ) == ERROR) return FALSE;
-
-        if (rect && !IntersectRect( &limit, &limit, rect )) return TRUE;
-
-        for (i = 0; i < nb_monitors; i++)
-        {
-            RECT monrect = monitors[i].rcMonitor;
-            OffsetRect( &monrect, -origin.x, -origin.y );
-            if (IntersectRect( &monrect, &monrect, &limit ))
-                if (!proc( index_to_monitor(i), hdc, &monrect, lp ))
-                    return FALSE;
-        }
-    }
-    else
-    {
-        for (i = 0; i < nb_monitors; i++)
-        {
-            RECT unused;
-            if (!rect || IntersectRect( &unused, &monitors[i].rcMonitor, rect ))
-                if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp ))
-                    return FALSE;
-        }
-    }
     return TRUE;
 }
