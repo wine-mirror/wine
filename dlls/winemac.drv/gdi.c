@@ -42,10 +42,6 @@ static inline MACDRV_PDEVICE *get_macdrv_dev(PHYSDEV dev)
 static CGRect desktop_rect;     /* virtual desktop rectangle */
 static int horz_size;           /* horz. size of screen in millimeters */
 static int vert_size;           /* vert. size of screen in millimeters */
-static int horz_res;            /* width in pixels of screen */
-static int vert_res;            /* height in pixels of screen */
-static int desktop_horz_res;    /* width in pixels of virtual desktop */
-static int desktop_vert_res;    /* height in pixels of virtual desktop */
 static int bits_per_pixel;      /* pixel depth of screen */
 static int device_data_valid;   /* do the above variables have up-to-date values? */
 
@@ -133,9 +129,6 @@ static void device_init(void)
     {
         CFStringRef pixelEncoding = CGDisplayModeCopyPixelEncoding(mode);
 
-        horz_res = CGDisplayModeGetWidth(mode);
-        vert_res = CGDisplayModeGetHeight(mode);
-
         if (pixelEncoding)
         {
             if (CFEqual(pixelEncoding, CFSTR(IO32BitDirectPixels)))
@@ -149,21 +142,8 @@ static void device_init(void)
 
         CGDisplayModeRelease(mode);
     }
-    else
-    {
-        horz_res = CGDisplayPixelsWide(mainDisplay);
-        vert_res = CGDisplayPixelsHigh(mainDisplay);
-    }
-
-    if (retina_on)
-    {
-        horz_res *= 2;
-        vert_res *= 2;
-    }
 
     compute_desktop_rect();
-    desktop_horz_res = desktop_rect.size.width;
-    desktop_vert_res = desktop_rect.size.height;
 
     device_data_valid = TRUE;
 }
@@ -260,25 +240,18 @@ static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
     case VERTSIZE:
         ret = vert_size;
         break;
-    case HORZRES:
-        ret = horz_res;
-        break;
-    case VERTRES:
-        ret = vert_res;
-        break;
-    case DESKTOPHORZRES:
-        ret = desktop_horz_res;
-        break;
-    case DESKTOPVERTRES:
-        ret = desktop_vert_res;
-        break;
     case BITSPIXEL:
         ret = bits_per_pixel;
         break;
+    case HORZRES:
+    case VERTRES:
     default:
         LeaveCriticalSection(&device_data_section);
         dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
-        return dev->funcs->pGetDeviceCaps( dev, cap );
+        ret = dev->funcs->pGetDeviceCaps( dev, cap );
+        if ((cap == HORZRES || cap == VERTRES) && retina_on)
+            ret *= 2;
+        return ret;
     }
 
     TRACE("cap %d -> %d\n", cap, ret);
