@@ -132,6 +132,7 @@ struct ioctl_android_create_window
 {
     struct ioctl_header hdr;
     int                 parent;
+    float               scale;
 };
 
 struct ioctl_android_destroy_window
@@ -203,6 +204,7 @@ struct ioctl_android_set_window_parent
 {
     struct ioctl_header hdr;
     int                 parent;
+    float               scale;
 };
 
 struct ioctl_android_set_capture
@@ -595,10 +597,10 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
 
     TRACE( "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
 
-    if (!(object = load_java_method( &method, "createWindow", "(IZII)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( &method, "createWindow", "(IZIFI)V" ))) return STATUS_NOT_SUPPORTED;
 
     wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->hdr.opengl, res->parent, pid );
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->hdr.opengl, res->parent, res->scale, pid );
     unwrap_java_call();
     return STATUS_SUCCESS;
 }
@@ -891,10 +893,10 @@ static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size
 
     TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
 
-    if (!(object = load_java_method( &method, "setParent", "(III)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( &method, "setParent", "(IIFI)V" ))) return STATUS_NOT_SUPPORTED;
 
     wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, pid );
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, res->scale, pid );
     unwrap_java_call();
     return STATUS_SUCCESS;
 }
@@ -1370,7 +1372,7 @@ static int perform( ANativeWindow *window, int operation, ... )
     return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL );
 }
 
-struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
+struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
 {
     struct ioctl_android_create_window req;
     struct native_win_wrapper *win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*win) );
@@ -1399,6 +1401,7 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
     req.hdr.hwnd = HandleToLong( win->hwnd );
     req.hdr.opengl = win->opengl;
     req.parent = get_ioctl_win_parent( GetAncestor( hwnd, GA_PARENT ));
+    req.scale = scale;
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
 
     return &win->win;
@@ -1452,13 +1455,14 @@ int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *cl
     return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL );
 }
 
-int ioctl_set_window_parent( HWND hwnd, HWND parent )
+int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale )
 {
     struct ioctl_android_set_window_parent req;
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
     req.parent = get_ioctl_win_parent( parent );
+    req.scale = scale;
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
 

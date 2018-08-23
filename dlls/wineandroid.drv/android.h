@@ -63,14 +63,14 @@ extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;
 
 extern void start_android_device(void) DECLSPEC_HIDDEN;
 extern void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL client ) DECLSPEC_HIDDEN;
-extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl ) DECLSPEC_HIDDEN;
+extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale ) DECLSPEC_HIDDEN;
 extern struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window ) DECLSPEC_HIDDEN;
 extern void release_ioctl_window( struct ANativeWindow *window ) DECLSPEC_HIDDEN;
 extern void destroy_ioctl_window( HWND hwnd, BOOL opengl ) DECLSPEC_HIDDEN;
 extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
                                      const RECT *visible_rect, UINT style, UINT flags,
                                      HWND after, HWND owner ) DECLSPEC_HIDDEN;
-extern int ioctl_set_window_parent( HWND hwnd, HWND parent ) DECLSPEC_HIDDEN;
+extern int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale ) DECLSPEC_HIDDEN;
 extern int ioctl_set_capture( HWND hwnd ) DECLSPEC_HIDDEN;
 
 

@@ -308,6 +308,7 @@ public class WineActivity extends Activity
         protected int hwnd;
         protected int owner;
         protected int style;
+        protected float scale;
         protected boolean visible;
         protected Rect visible_rect;
         protected Rect client_rect;
@@ -326,6 +327,7 @@ public class WineActivity extends Activity
             hwnd = w;
             owner = 0;
             style = 0;
+            scale = 1.0f;
             visible = false;
             visible_rect = client_rect = new Rect( 0, 0, 0, 0 );
             this.parent = parent;
@@ -378,8 +380,10 @@ public class WineActivity extends Activity
         public View create_whole_view()
         {
             if (window_group == null) create_window_groups();
-            window_group.create_view( false ).layout( 0, 0, visible_rect.right - visible_rect.left,
-                                                      visible_rect.bottom - visible_rect.top );
+            window_group.create_view( false ).layout( 0, 0,
+                                                      Math.round( (visible_rect.right - visible_rect.left) * scale ),
+                                                      Math.round( (visible_rect.bottom - visible_rect.top) * scale ));
+            window_group.set_scale( scale );
             return window_group;
         }
 
@@ -476,10 +480,11 @@ public class WineActivity extends Activity
                                          client_rect.bottom  - visible_rect.top );
         }
 
-        public void set_parent( WineWindow new_parent )
+        public void set_parent( WineWindow new_parent, float scale )
         {
             Log.i( LOGTAG, String.format( "set parent hwnd %08x parent %08x -> %08x",
                                           hwnd, parent.hwnd, new_parent.hwnd ));
+            this.scale = scale;
             if (window_group != null)
             {
                 if (visible) remove_view_from_parent();
@@ -526,8 +531,8 @@ public class WineActivity extends Activity
 
         public void get_event_pos( MotionEvent event, int[] pos )
         {
-            pos[0] = Math.round( event.getX() + window_group.getLeft() );
-            pos[1] = Math.round( event.getY() + window_group.getTop() );
+            pos[0] = Math.round( event.getX() * scale + window_group.getLeft() );
+            pos[1] = Math.round( event.getY() * scale + window_group.getTop() );
         }
     }
 
@@ -550,6 +555,10 @@ public class WineActivity extends Activity
         /* wrapper for layout() making sure that the view is not empty */
         public void set_layout( int left, int top, int right, int bottom )
         {
+            left   *= win.scale;
+            top    *= win.scale;
+            right  *= win.scale;
+            bottom *= win.scale;
             if (right <= left + 1) right = left + 2;
             if (bottom <= top + 1) bottom = top + 2;
             layout( left, top, right, bottom );
@@ -559,6 +568,15 @@ public class WineActivity extends Activity
         protected void onLayout( boolean changed, int left, int top, int right, int bottom )
         {
             if (content_view != null) content_view.layout( 0, 0, right - left, bottom - top );
+        }
+
+        public void set_scale( float scale )
+        {
+            if (content_view == null) return;
+            content_view.setPivotX( 0 );
+            content_view.setPivotY( 0 );
+            content_view.setScaleX( scale );
+            content_view.setScaleY( scale );
         }
 
         public WineView create_view( boolean is_client )
@@ -730,12 +748,13 @@ public class WineActivity extends Activity
         wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
-    public void create_window( int hwnd, boolean opengl, int parent, int pid )
+    public void create_window( int hwnd, boolean opengl, int parent, float scale, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null)
         {
             win = new WineWindow( hwnd, get_window( parent ));
+            win.scale = scale;
             win.create_window_groups();
             if (win.parent == desktop_window) win.create_whole_view();
         }
@@ -748,11 +767,11 @@ public class WineActivity extends Activity
         if (win != null) win.destroy();
     }
 
-    public void set_window_parent( int hwnd, int parent, int pid )
+    public void set_window_parent( int hwnd, int parent, float scale, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null) return;
-        win.set_parent( get_window( parent ));
+        win.set_parent( get_window( parent ), scale );
         if (win.parent == desktop_window) win.create_whole_view();
     }
 
@@ -769,9 +788,9 @@ public class WineActivity extends Activity
         runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
     }
 
-    public void createWindow( final int hwnd, final boolean opengl, final int parent, final int pid )
+    public void createWindow( final int hwnd, final boolean opengl, final int parent, final float scale, final int pid )
     {
-        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, opengl, parent, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, opengl, parent, scale, pid ); }} );
     }
 
     public void destroyWindow( final int hwnd )
@@ -779,9 +798,9 @@ public class WineActivity extends Activity
         runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
     }
 
-    public void setParent( final int hwnd, final int parent, final int pid )
+    public void setParent( final int hwnd, final int parent, final float scale, final int pid )
     {
-        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, scale, pid ); }} );
     }
 
     public void windowPosChanged( final int hwnd, final int flags, final int insert_after,

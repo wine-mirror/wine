@@ -128,7 +128,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     gl->hwnd   = hwnd;
     gl->hdc    = hdc;
     gl->format = format;
-    gl->window = create_ioctl_window( hwnd, TRUE );
+    gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     gl->surface = 0;
     gl->pbuffer = p_eglCreatePbufferSurface( display, pixel_formats[gl->format - 1].config, attribs );
     EnterCriticalSection( &drawable_section );

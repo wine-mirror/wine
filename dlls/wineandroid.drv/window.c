@@ -103,6 +103,21 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
 }
 
 
+/**********************************************************************
+ *	     get_win_monitor_dpi
+ */
+static UINT get_win_monitor_dpi( HWND hwnd )
+{
+    DPI_AWARENESS_CONTEXT context;
+    UINT ret;
+
+    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ret = GetDpiForSystem();  /* FIXME: get monitor dpi */
+    SetThreadDpiAwarenessContext( context );
+    return ret;
+}
+
+
 /***********************************************************************
  *           alloc_win_data
  */
@@ -113,7 +128,8 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        data->window = create_ioctl_window( hwnd, FALSE );
+        data->window = create_ioctl_window( hwnd, FALSE,
+                                            (float)get_win_monitor_dpi( hwnd ) / GetDpiForWindow( hwnd ));
         EnterCriticalSection( &win_data_section );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -1176,7 +1192,7 @@ void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     TRACE( "win %p parent %p -> %p\n", hwnd, old_parent, parent );
 
     data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
-    ioctl_set_window_parent( hwnd, parent );
+    ioctl_set_window_parent( hwnd, parent, (float)get_win_monitor_dpi( hwnd ) / GetDpiForWindow( hwnd ));
     release_win_data( data );
 }
 
