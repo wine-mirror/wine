@@ -1029,20 +1029,20 @@ static void Publish_tests(void)
     another_name.LocalName = (WCHAR *) name_cider;
     another_name.Space = &ns2;
 
-    types_list.Next = malloc(sizeof(WSD_NAME_LIST));
+    types_list.Next = heap_alloc(sizeof(WSD_NAME_LIST));
     types_list.Element = &another_name;
 
     types_list.Next->Next = NULL;
     types_list.Next->Element = &header_any_name;
 
     /* Create scopes and xaddrs lists */
-    scopes_list.Next = malloc(sizeof(WSD_URI_LIST));
+    scopes_list.Next = heap_alloc(sizeof(WSD_URI_LIST));
     scopes_list.Element = uri;
 
     scopes_list.Next->Next = NULL;
     scopes_list.Next->Element = uri_more_tests;
 
-    xaddrs_list.Next = malloc(sizeof(WSD_URI_LIST));
+    xaddrs_list.Next = heap_alloc(sizeof(WSD_URI_LIST));
     xaddrs_list.Element = uri_more_tests;
 
     xaddrs_list.Next->Next = NULL;
@@ -1056,9 +1056,9 @@ static void Publish_tests(void)
     WSDFreeLinkedMemory(body_any_element);
     WSDFreeLinkedMemory(endpoint_any_element);
     WSDFreeLinkedMemory(ref_param_any_element);
-    free(types_list.Next);
-    free(scopes_list.Next);
-    free(xaddrs_list.Next);
+    heap_free(types_list.Next);
+    heap_free(scopes_list.Next);
+    heap_free(xaddrs_list.Next);
 
     ok(rc == S_OK, "Publish failed: %08x\n", rc);
 
