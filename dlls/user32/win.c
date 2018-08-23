@@ -1305,6 +1305,25 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
 #undef DUMPED_EX_STYLES
 }
 
+/***********************************************************************
+ *           map_dpi_create_struct
+ */
+static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_from, UINT dpi_to )
+{
+    if (!dpi_from && !dpi_to) return;
+    if (!dpi_from || !dpi_to)
+    {
+        POINT pt = { cs->x, cs->y };
+        UINT mon_dpi = get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTONEAREST ));
+        if (!dpi_from) dpi_from = mon_dpi;
+        else dpi_to = mon_dpi;
+    }
+    if (dpi_from == dpi_to) return;
+    cs->x = MulDiv( cs->x, dpi_to, dpi_from );
+    cs->y = MulDiv( cs->y, dpi_to, dpi_from );
+    cs->cx = MulDiv( cs->cx, dpi_to, dpi_from );
+    cs->cy = MulDiv( cs->cy, dpi_to, dpi_from );
+}
 
 /***********************************************************************
  *           WIN_CreateWindowEx
@@ -1319,6 +1338,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
     const WCHAR *p = className;
+    UINT win_dpi, thread_dpi = get_thread_dpi();
+    DPI_AWARENESS_CONTEXT context;
     MDICREATESTRUCTW mdi_cs;
     CBT_CREATEWNDW cbtc;
     CREATESTRUCTW cbcs;
@@ -1550,6 +1571,14 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     }
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
 
+    style = wndPtr->dwStyle;
+    win_dpi = wndPtr->dpi;
+    WIN_ReleasePtr( wndPtr );
+
+    if (parent) map_dpi_create_struct( cs, thread_dpi, win_dpi );
+
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
+
     /* call the WH_CBT hook */
 
     /* the window style passed to the hook must be the real window style,
@@ -1557,10 +1586,9 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
      * passed in, so we have to copy the original CREATESTRUCT and get the
      * the real style. */
     cbcs = *cs;
-    cbcs.style = wndPtr->dwStyle;
+    cbcs.style = style;
     cbtc.lpcs = &cbcs;
     cbtc.hwndInsertAfter = HWND_TOP;
-    WIN_ReleasePtr( wndPtr );
     if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode )) goto failed;
 
     /* send the WM_GETMINMAXINFO message and fix the size if needed */
@@ -1584,7 +1612,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* send WM_NCCREATE */
 
-    TRACE( "hwnd %p cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cx, cy );
+    TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs->x, cs->y, cs->cx, cs->cy, wine_dbgstr_rect(&rect) );
     if (unicode)
         result = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
     else
@@ -1618,7 +1646,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         MapWindowPoints( 0, parent, (POINT *)&client_rect, 2 );
         set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &rect, &client_rect, NULL );
     }
-    else return 0;
+    else goto failed;
 
     /* send WM_CREATE */
 
@@ -1662,7 +1690,11 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     /* Notify the parent window only */
 
     send_parent_notify( hwnd, WM_CREATE );
-    if (!IsWindow( hwnd )) return 0;
+    if (!IsWindow( hwnd ))
+    {
+        SetThreadDpiAwarenessContext( context );
+        return 0;
+    }
 
     if (parent == GetDesktopWindow())
         PostMessageW( parent, WM_PARENTNOTIFY, WM_CREATE, (LPARAM)hwnd );
@@ -1689,10 +1721,12 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
 
     TRACE("created window %p\n", hwnd);
+    SetThreadDpiAwarenessContext( context );
     return hwnd;
 
 failed:
     WIN_DestroyWindow( hwnd );
+    SetThreadDpiAwarenessContext( context );
     return 0;
 }
 

@@ -3209,6 +3209,19 @@ UINT get_win_monitor_dpi( HWND hwnd )
 }
 
 /**********************************************************************
+ *              get_thread_dpi
+ */
+UINT get_thread_dpi(void)
+{
+    switch (GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ))
+    {
+    case DPI_AWARENESS_UNAWARE:      return USER_DEFAULT_SCREEN_DPI;
+    case DPI_AWARENESS_SYSTEM_AWARE: return system_dpi;
+    default:                         return 0;  /* no scaling */
+    }
+}
+
+/**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
