@@ -3222,6 +3222,21 @@ UINT get_thread_dpi(void)
 }
 
 /**********************************************************************
+ *              map_dpi_rect
+ */
+RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
+{
+    if (dpi_from && dpi_to && dpi_from != dpi_to)
+    {
+        rect.left   = MulDiv( rect.left, dpi_to, dpi_from );
+        rect.top    = MulDiv( rect.top, dpi_to, dpi_from );
+        rect.right  = MulDiv( rect.right, dpi_to, dpi_from );
+        rect.bottom = MulDiv( rect.bottom, dpi_to, dpi_from );
+    }
+    return rect;
+}
+
+/**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
@@ -3586,13 +3601,22 @@ BOOL WINAPI GetMonitorInfoA( HMONITOR monitor, LPMONITORINFO info )
 BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
 {
     BOOL ret;
+    UINT dpi_from, dpi_to;
 
     if (info->cbSize != sizeof(MONITORINFOEXW) && info->cbSize != sizeof(MONITORINFO)) return FALSE;
 
     ret = USER_Driver->pGetMonitorInfo( monitor, info );
     if (ret)
+    {
+        if ((dpi_to = get_thread_dpi()))
+        {
+            dpi_from = get_monitor_dpi( monitor );
+            info->rcMonitor = map_dpi_rect( info->rcMonitor, dpi_from, dpi_to );
+            info->rcWork = map_dpi_rect( info->rcWork, dpi_from, dpi_to );
+        }
         TRACE( "flags %04x, monitor %s, work %s\n", info->dwFlags,
                wine_dbgstr_rect(&info->rcMonitor), wine_dbgstr_rect(&info->rcWork));
+    }
     return ret;
 }
 
@@ -3634,7 +3658,7 @@ __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
 static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
 {
     struct enum_mon_data *data = (struct enum_mon_data *)lp;
-    RECT monrect = *rect;
+    RECT monrect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), get_thread_dpi() );
 
     OffsetRect( &monrect, -data->origin.x, -data->origin.y );
     if (!IntersectRect( &monrect, &monrect, &data->limit )) return TRUE;

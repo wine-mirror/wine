@@ -131,6 +131,7 @@ extern void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam ) DECLSPEC_HIDDE
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;
 extern UINT get_win_monitor_dpi( HWND hwnd ) DECLSPEC_HIDDEN;
 extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;
+extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                             const RECT *window_rect, const RECT *client_rect,
                             const RECT *valid_rects ) DECLSPEC_HIDDEN;
