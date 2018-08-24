@@ -748,6 +748,7 @@ static void WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
  */
 MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 {
+    DPI_AWARENESS_CONTEXT context;
     MINMAXINFO MinMax;
     HMONITOR monitor;
     INT xinc, yinc;
@@ -756,6 +757,8 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
     LONG exstyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
     RECT rc;
     WND *win;
+
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
 
     /* Compute default values */
 
@@ -842,6 +845,7 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
     MinMax.ptMaxTrackSize.y = max( MinMax.ptMaxTrackSize.y,
                                    MinMax.ptMinTrackSize.y );
 
+    SetThreadDpiAwarenessContext( context );
     return MinMax;
 }
 
