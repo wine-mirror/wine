@@ -724,6 +724,18 @@ void mirror_region( const rectangle_t *client_rect, struct region *region )
 }
 
 
+/* scale a region for a given dpi factor */
+void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to )
+{
+    rectangle_t *rect, *end;
+
+    if (!region->num_rects) return;
+    for (rect = region->rects, end = rect + region->num_rects; rect < end; rect++)
+        scale_dpi_rect( rect, dpi_from, dpi_to );
+    scale_dpi_rect( &region->extents, dpi_from, dpi_to );
+}
+
+
 /* make a copy of a region; returns dst or NULL on error */
 struct region *copy_region( struct region *dst, const struct region *src )
 {

@@ -135,6 +135,7 @@ extern int is_region_empty( const struct region *region );
 extern void get_region_extents( const struct region *region, rectangle_t *rect );
 extern void offset_region( struct region *region, int x, int y );
 extern void mirror_region( const rectangle_t *client_rect, struct region *region );
+extern void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to );
 extern struct region *copy_region( struct region *dst, const struct region *src );
 extern struct region *intersect_region( struct region *dst, const struct region *src1,
                                         const struct region *src2 );

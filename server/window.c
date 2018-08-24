@@ -649,6 +649,15 @@ static void map_dpi_rect( struct window *win, rectangle_t *rect, unsigned int fr
     scale_dpi_rect( rect, from, to );
 }
 
+/* map a region between different DPI scaling levels */
+static void map_dpi_region( struct window *win, struct region *region, unsigned int from, unsigned int to )
+{
+    if (!from) from = get_monitor_dpi( win );
+    if (!to) to = get_monitor_dpi( win );
+    if (from == to) return;
+    scale_region( region, from, to );
+}
+
 /* check if window and all its ancestors are visible */
 static int is_visible( const struct window *win )
 {
@@ -1388,7 +1397,7 @@ static void validate_parents( struct window *child )
 /* add/subtract a region (in client coordinates) to the update region of the window */
 static void redraw_window( struct window *win, struct region *region, int frame, unsigned int flags )
 {
-    struct region *tmp;
+    struct region *child_rgn, *tmp;
     struct window *child;
 
     if (flags & RDW_INVALIDATE)
@@ -1450,11 +1459,19 @@ static void redraw_window( struct window *win, struct region *region, int frame,
     LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
     {
         if (!(child->style & WS_VISIBLE)) continue;
-        if (!rect_in_region( tmp, &child->window_rect )) continue;
-        offset_region( tmp, -child->client_rect.left, -child->client_rect.top );
-        redraw_window( child, tmp, 1, flags );
-        offset_region( tmp, child->client_rect.left, child->client_rect.top );
+        if (!(child_rgn = create_empty_region())) continue;
+        if (copy_region( child_rgn, tmp ))
+        {
+            map_dpi_region( child, child_rgn, win->dpi, child->dpi );
+            if (rect_in_region( child_rgn, &child->window_rect ))
+            {
+                offset_region( child_rgn, -child->client_rect.left, -child->client_rect.top );
+                redraw_window( child, child_rgn, 1, flags );
+            }
+        }
+        free_region( child_rgn );
     }
+
     free_region( tmp );
 }
 
