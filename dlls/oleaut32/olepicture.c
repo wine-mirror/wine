@@ -711,9 +711,18 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
   }
 
   case PICTYPE_ICON:
-    FIXME("Not quite correct implementation of rendering icons...\n");
-    DrawIconEx(hdc, x, y, This->desc.u.icon.hicon, cx, cy, 0, NULL, DI_NORMAL);
+  {
+    ICONINFO info;
+
+    if (!GetIconInfo(This->desc.u.icon.hicon, &info))
+        return E_FAIL;
+
+    render_masked_bitmap(This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, info.hbmMask, info.hbmColor);
+
+    DeleteObject(info.hbmMask);
+    if (info.hbmColor) DeleteObject(info.hbmColor);
     break;
+  }
 
   case PICTYPE_METAFILE:
   {
