@@ -864,7 +864,7 @@ static void test_Render(void)
     SetPixelV(hdc, 10, 10, 0x00223344);
     expected = GetPixel(hdc, 0, 0);
 
-    hres = picture_render(pic, hdc, 1, 1, 9, 9, 0, 0, pWidth, -pHeight, NULL);
+    hres = picture_render(pic, hdc, 1, 1, 9, 9, 0, pHeight, pWidth, -pHeight, NULL);
     ole_expect(hres, S_OK);
 
     if(hres != S_OK) goto done;
