@@ -483,6 +483,10 @@ IDI_SHELL_MUSIC_CD ICON resources/optical_disc.ico
 /* @makedep: resources/menu.ico */
 IDI_SHELL_TREE ICON resources/menu.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_REMOTE_FOLDER ICON resources/folder.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
