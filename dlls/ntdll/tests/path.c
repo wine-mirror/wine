@@ -266,6 +266,7 @@ static void test_RtlGetFullPathName_U(void)
     static const struct test tests[] =
         {
             { "c:/test",                     "c:\\test",         "test"},
+            { "c:/test/",                    "c:\\test\\",       NULL},
             { "c:/test     ",                "c:\\test",         "test"},
             { "c:/test.",                    "c:\\test",         "test"},
             { "c:/test  ....   ..   ",       "c:\\test",         "test"},
@@ -287,22 +288,61 @@ static void test_RtlGetFullPathName_U(void)
             { "c:/test../file",              "c:\\test.\\file",  "file",
                                              "c:\\test..\\file", "file"},  /* vista */
             { "c:\\test",                    "c:\\test",         "test"},
-            { NULL, NULL, NULL}
+            { "C:\\test",                    "C:\\test",         "test"},
+            { "c:/",                         "c:\\",             NULL},
+            { "c:.",                         "C:\\windows",      "windows"},
+            { "c:foo",                       "C:\\windows\\foo", "foo"},
+            { "c:foo/bar",                   "C:\\windows\\foo\\bar", "bar"},
+            { "c:./foo",                     "C:\\windows\\foo", "foo"},
+            { "\\foo",                       "C:\\foo",          "foo"},
+            { "foo",                         "C:\\windows\\foo", "foo"},
+            { ".",                           "C:\\windows",      "windows"},
+            { "..",                          "C:\\",             NULL},
+            { "...",                         "C:\\windows\\",    NULL},
+            { "./foo",                       "C:\\windows\\foo", "foo"},
+            { "foo/..",                      "C:\\windows",      "windows"},
+            { "AUX",                         "\\\\.\\AUX",       NULL},
+            { "COM1",                        "\\\\.\\COM1",      NULL},
+            { "?<>*\"|:",                    "C:\\windows\\?<>*\"|:", "?<>*\"|:"},
+
+            { "\\\\foo",                     "\\\\foo",          NULL},
+            { "//foo",                       "\\\\foo",          NULL},
+            { "\\/foo",                      "\\\\foo",          NULL},
+            { "//",                          "\\\\",             NULL},
+            { "//foo/",                      "\\\\foo\\",        NULL},
+
+            { "//.",                         "\\\\.\\",          NULL},
+            { "//./",                        "\\\\.\\",          NULL},
+            { "//.//",                       "\\\\.\\",          NULL},
+            { "//./foo",                     "\\\\.\\foo",       "foo"},
+            { "//./foo/",                    "\\\\.\\foo\\",     NULL},
+            { "//./foo/bar",                 "\\\\.\\foo\\bar",  "bar"},
+            { "//./foo/.",                   "\\\\.\\foo",       "foo"},
+            { "//./foo/..",                  "\\\\.\\",          NULL},
+
+            { "//?/",                        "\\\\?\\",          NULL},
+            { "//?//",                       "\\\\?\\",          NULL},
+            { "//?/foo",                     "\\\\?\\foo",       "foo"},
+            { "//?/foo/",                    "\\\\?\\foo\\",     NULL},
+            { "//?/foo/bar",                 "\\\\?\\foo\\bar",  "bar"},
+            { "//?/foo/.",                   "\\\\?\\foo",       "foo"},
+            { "//?/foo/..",                  "\\\\?\\",          NULL},
+
+            /* RtlGetFullPathName_U() can't understand the global namespace prefix */
+            { "\\??\\foo",                   "C:\\??\\foo",      "foo"},
+            { 0 }
         };
 
     const struct test *test;
     WCHAR pathbufW[2*MAX_PATH], rbufferW[MAX_PATH];
-    CHAR  rbufferA[MAX_PATH], rfileA[MAX_PATH];
+    char rbufferA[MAX_PATH], rfileA[MAX_PATH], curdir[MAX_PATH];
     ULONG ret;
     WCHAR *file_part;
     DWORD reslen;
     UINT len;
 
-    if (!pRtlGetFullPathName_U)
-    {
-        win_skip("RtlGetFullPathName_U is not available\n");
-        return;
-    }
+    GetCurrentDirectoryA(sizeof(curdir), curdir);
+    SetCurrentDirectoryA("C:\\windows\\");
 
     file_part = (WCHAR *)0xdeadbeef;
     lstrcpyW(rbufferW, deadbeefW);
@@ -348,6 +388,8 @@ static void test_RtlGetFullPathName_U(void)
             ok( !test->rfile, "Got NULL expected \"%s\"\n", test->rfile );
         }
     }
+
+    SetCurrentDirectoryA(curdir);
 }
 
 static void test_RtlDosPathNameToNtPathName_U_WithStatus(void)
