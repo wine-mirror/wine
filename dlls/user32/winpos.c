@@ -1342,9 +1342,9 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
         wndpl->flags = WPF_RESTORETOMAXIMIZED;
     else
         wndpl->flags = 0;
-    wndpl->ptMinPosition    = pWnd->min_pos;
-    wndpl->ptMaxPosition    = pWnd->max_pos;
-    wndpl->rcNormalPosition = pWnd->normal_rect;
+    wndpl->ptMinPosition = EMPTYPOINT(pWnd->min_pos) ? pWnd->min_pos : point_win_to_thread_dpi( hwnd, pWnd->min_pos );
+    wndpl->ptMaxPosition = EMPTYPOINT(pWnd->max_pos) ? pWnd->max_pos : point_win_to_thread_dpi( hwnd, pWnd->max_pos );
+    wndpl->rcNormalPosition = rect_win_to_thread_dpi( hwnd, pWnd->normal_rect );
     WIN_ReleasePtr( pWnd );
 
     TRACE( "%p: returning min %d,%d max %d,%d normal %s\n",
@@ -1419,9 +1419,9 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 
     if (!pWnd || pWnd == WND_OTHER_PROCESS || pWnd == WND_DESKTOP) return FALSE;
 
-    if( flags & PLACE_MIN ) pWnd->min_pos = wp.ptMinPosition;
-    if( flags & PLACE_MAX ) pWnd->max_pos = wp.ptMaxPosition;
-    if( flags & PLACE_RECT) pWnd->normal_rect = wp.rcNormalPosition;
+    if (flags & PLACE_MIN) pWnd->min_pos = point_thread_to_win_dpi( hwnd, wp.ptMinPosition );
+    if (flags & PLACE_MAX) pWnd->max_pos = point_thread_to_win_dpi( hwnd, wp.ptMaxPosition );
+    if (flags & PLACE_RECT) pWnd->normal_rect = rect_thread_to_win_dpi( hwnd, wp.rcNormalPosition );
 
     style = pWnd->dwStyle;
 

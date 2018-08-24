@@ -3245,6 +3245,16 @@ POINT point_win_to_thread_dpi( HWND hwnd, POINT pt )
 }
 
 /**********************************************************************
+ *              point_thread_to_win_dpi
+ */
+POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_point( pt, dpi, GetDpiForWindow( hwnd ));
+}
+
+/**********************************************************************
  *              map_dpi_rect
  */
 RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
@@ -3267,6 +3277,16 @@ RECT rect_win_to_thread_dpi( HWND hwnd, RECT rect )
     UINT dpi = get_thread_dpi();
     if (!dpi) dpi = get_win_monitor_dpi( hwnd );
     return map_dpi_rect( rect, GetDpiForWindow( hwnd ), dpi );
+}
+
+/**********************************************************************
+ *              rect_thread_to_win_dpi
+ */
+RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_rect( rect, dpi, GetDpiForWindow( hwnd ) );
 }
 
 /**********************************************************************
