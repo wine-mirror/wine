@@ -667,6 +667,7 @@ static void WinHttpCrackUrl_test( void )
     ok( ret, "WinHttpCrackUrl failed le=%u\n", GetLastError() );
     ok( !lstrcmpW( uc.lpszHostName, hostnameW ), "unexpected host name\n" );
     ok( !lstrcmpW( uc.lpszUrlPath, pathW ), "unexpected path\n" );
+    ok( uc.dwUrlPathLength == lstrlenW(pathW), "got %u\n", uc.dwUrlPathLength );
 
     uc.dwStructSize = sizeof(uc);
     uc.lpszScheme = NULL;

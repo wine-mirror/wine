@@ -2517,7 +2517,7 @@ static WCHAR *get_redirect_url( request_t *request, DWORD *len )
     query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
     if (get_last_error() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
     if (!(ret = heap_alloc( size ))) return NULL;
-    *len = size / sizeof(WCHAR);
+    *len = size / sizeof(WCHAR) - 1;
     if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
     heap_free( ret );
     return NULL;
@@ -2526,42 +2526,42 @@ static WCHAR *get_redirect_url( request_t *request, DWORD *len )
 static BOOL handle_redirect( request_t *request, DWORD status )
 {
     BOOL ret = FALSE;
-    DWORD len, len_url;
+    DWORD len, len_loc;
     URL_COMPONENTS uc;
     connect_t *connect = request->connect;
     INTERNET_PORT port;
     WCHAR *hostname = NULL, *location;
     int index;
 
-    if (!(location = get_redirect_url( request, &len_url ))) return FALSE;
+    if (!(location = get_redirect_url( request, &len_loc ))) return FALSE;
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
     uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0u;
 
-    if (!WinHttpCrackUrl( location, len_url, 0, &uc )) /* assume relative redirect */
+    if (!WinHttpCrackUrl( location, len_loc, 0, &uc )) /* assume relative redirect */
     {
         WCHAR *path, *p;
 
         if (location[0] == '/')
         {
-            len = strlenW( location );
+            len = escape_string( NULL, location, len_loc );
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            strcpyW( path, location );
+            escape_string( path, location, len_loc );
         }
         else
         {
             if ((p = strrchrW( request->path, '/' ))) *p = 0;
-            len = strlenW( request->path ) + 1 + strlenW( location );
+            len = strlenW( request->path ) + 1 + escape_string( NULL, location, len_loc );
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
             strcpyW( path, request->path );
             strcatW( path, slashW );
-            strcatW( path, location );
+            escape_string( path + strlenW(path), location, len_loc );
         }
         heap_free( request->path );
         request->path = path;
 
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_url + 1 );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_loc + 1 );
     }
     else
     {
@@ -2577,7 +2577,7 @@ static BOOL handle_redirect( request_t *request, DWORD status )
             request->hdr.flags |= WINHTTP_FLAG_SECURE;
         }
 
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_url + 1 );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_loc + 1 );
 
         len = uc.dwHostNameLength;
         if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
@@ -2607,9 +2607,9 @@ static BOOL handle_redirect( request_t *request, DWORD status )
         request->path = NULL;
         if (uc.dwUrlPathLength)
         {
-            len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
+            len = escape_string( NULL, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength );
             if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            strcpyW( request->path, uc.lpszUrlPath );
+            escape_string( request->path, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength );
         }
         else request->path = strdupW( slashW );
     }

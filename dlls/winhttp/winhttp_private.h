@@ -322,6 +322,7 @@ BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HID
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 void release_host( hostdata_t *host ) DECLSPEC_HIDDEN;
+DWORD escape_string( WCHAR *, const WCHAR *, DWORD ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;

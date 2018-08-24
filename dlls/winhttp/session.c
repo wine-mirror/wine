@@ -1142,14 +1142,14 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     if (object)
     {
         WCHAR *path, *p;
-        unsigned int len;
+        unsigned int len, len_object = strlenW(object);
 
-        len = strlenW( object ) + 1;
+        len = escape_string( NULL, object, len_object );
         if (object[0] != '/') len++;
-        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
+        if (!(p = path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
 
         if (object[0] != '/') *p++ = '/';
-        strcpyW( p, object );
+        escape_string( p, object, len_object );
         request->path = path;
     }
     else if (!(request->path = strdupW( slashW ))) goto end;

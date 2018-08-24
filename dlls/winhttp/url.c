@@ -118,7 +118,7 @@ static BOOL need_escape( WCHAR c )
     }
 }
 
-static DWORD copy_escape( WCHAR *dst, const WCHAR *src, DWORD len )
+DWORD escape_string( WCHAR *dst, const WCHAR *src, DWORD len )
 {
     static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
     DWORD ret = len;
@@ -129,38 +129,45 @@ static DWORD copy_escape( WCHAR *dst, const WCHAR *src, DWORD len )
     {
         if (need_escape( src[i] ))
         {
-            p[0] = '%';
-            p[1] = hex[(src[i] >> 4) & 0xf];
-            p[2] = hex[src[i] & 0xf];
+            if (dst)
+            {
+                p[0] = '%';
+                p[1] = hex[(src[i] >> 4) & 0xf];
+                p[2] = hex[src[i] & 0xf];
+                p += 2;
+            }
             ret += 2;
-            p += 2;
         }
-        else *p = src[i];
+        else if (dst) *p = src[i];
     }
-    dst[ret] = 0;
+    if (dst) dst[ret] = 0;
     return ret;
 }
 
-static WCHAR *escape_url( LPCWSTR url, DWORD *len )
+static WCHAR *escape_url( const WCHAR *url, DWORD *len )
 {
     WCHAR *ret;
-    const WCHAR *p, *q;
+    const WCHAR *p;
+    DWORD len_base, len_path;
 
-    if ((p = q = strrchrW( url, '/' )))
+    if ((p = strrchrW( url, '/' )))
     {
-        while (*q)
-        {
-            if (need_escape( *q )) *len += 2;
-            q++;
-        }
+        len_base = p - url;
+        len_path = escape_string( NULL, p, *len - len_base );
     }
-    if (!(ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
-    if (!p) strcpyW( ret, url );
     else
     {
-        memcpy( ret, url, (p - url) * sizeof(WCHAR) );
-        copy_escape( ret + (p - url), p, q - p );
+        len_base = *len;
+        len_path = 0;
     }
+
+    if (!(ret = heap_alloc( (len_base + len_path + 1) * sizeof(WCHAR) ))) return NULL;
+    memcpy( ret, url, len_base * sizeof(WCHAR) );
+
+    if (p) escape_string( ret + len_base, p, *len - (p - url) );
+    ret[len_base + len_path] = 0;
+
+    *len = len_base + len_path;
     return ret;
 }
 
@@ -516,7 +523,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
     if (uc->lpszUrlPath)
     {
         len = comp_length( uc->dwUrlPathLength, 0, uc->lpszUrlPath );
-        if (flags & ICU_ESCAPE) url += copy_escape( url, uc->lpszUrlPath, len );
+        if (flags & ICU_ESCAPE) url += escape_string( url, uc->lpszUrlPath, len );
         else
         {
             memcpy( url, uc->lpszUrlPath, len * sizeof(WCHAR) );
@@ -526,7 +533,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
     if (uc->lpszExtraInfo)
     {
         len = comp_length( uc->dwExtraInfoLength, 0, uc->lpszExtraInfo );
-        if (flags & ICU_ESCAPE) url += copy_escape( url, uc->lpszExtraInfo, len );
+        if (flags & ICU_ESCAPE) url += escape_string( url, uc->lpszExtraInfo, len );
         else
         {
             memcpy( url, uc->lpszExtraInfo, len * sizeof(WCHAR) );
