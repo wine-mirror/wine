@@ -3121,6 +3121,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     BOOL was_visible;
     WND *wndPtr;
     BOOL ret;
+    DPI_AWARENESS_CONTEXT context;
     RECT window_rect, old_screen_rect, new_screen_rect;
 
     TRACE("(%p %p)\n", hwnd, parent);
@@ -3164,8 +3165,11 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     wndPtr = WIN_GetPtr( hwnd );
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, NULL );
+    SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
     WIN_GetRectangles( hwnd, COORDS_SCREEN, &old_screen_rect, NULL );
+    SetThreadDpiAwarenessContext( context );
 
     SERVER_START_REQ( set_parent )
     {
@@ -3184,6 +3188,10 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     WIN_ReleasePtr( wndPtr );
     if (!ret) return 0;
 
+    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    WIN_GetRectangles( hwnd, COORDS_SCREEN, &new_screen_rect, NULL );
+    SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
+
     USER_Driver->pSetParent( full_handle, parent, old_parent );
 
     winpos.hwnd = hwnd;
@@ -3194,12 +3202,12 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     winpos.cy = 0;
     winpos.flags = SWP_NOSIZE;
 
-    WIN_GetRectangles( hwnd, COORDS_SCREEN, &new_screen_rect, NULL );
     USER_SetWindowPos( &winpos, new_screen_rect.left - old_screen_rect.left,
                        new_screen_rect.top - old_screen_rect.top );
 
     if (was_visible) ShowWindow( hwnd, SW_SHOW );
 
+    SetThreadDpiAwarenessContext( context );
     return old_parent;
 }
 
