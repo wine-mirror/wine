@@ -32,6 +32,7 @@ static HWND parent_wnd, child1_wnd, child2_wnd;
 #define CHILD1_ID 1
 #define CHILD2_ID 2
 
+static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
@@ -257,11 +258,7 @@ static void test_pager(void)
     RECT rect, rect2;
 
     pager = create_pager_control( PGS_HORZ );
-    if (!pager)
-    {
-        win_skip( "Pager control not supported\n" );
-        return;
-    }
+    ok(pager != NULL, "Fail to create pager\n");
 
     register_child_wnd_class();
 
@@ -333,11 +330,26 @@ static void test_pager(void)
     DestroyWindow( pager );
 }
 
-START_TEST(pager)
+static void init_functions(void)
 {
-    HMODULE mod = GetModuleHandleA("comctl32.dll");
+    HMODULE mod = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(mod, #f);
+    X(InitCommonControlsEx);
+#undef X
 
     pSetWindowSubclass = (void*)GetProcAddress(mod, (LPSTR)410);
+}
+
+START_TEST(pager)
+{
+    INITCOMMONCONTROLSEX iccex;
+
+    init_functions();
+
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC = ICC_PAGESCROLLER_CLASS;
+    pInitCommonControlsEx(&iccex);
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -345,4 +357,6 @@ START_TEST(pager)
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
 
     test_pager();
+
+    DestroyWindow(parent_wnd);
 }
