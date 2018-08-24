@@ -1020,6 +1020,18 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         }
         FIXME("WINHTTP_OPTION_CLIENT_CERT_CONTEXT\n");
         return TRUE;
+    case WINHTTP_OPTION_ENABLE_FEATURE:
+        if(buflen == sizeof( DWORD ) && *(DWORD *)buffer == WINHTTP_ENABLE_SSL_REVOCATION)
+        {
+            request->check_revocation = TRUE;
+            SetLastError( NO_ERROR );
+            return TRUE;
+        }
+        else
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_WINHTTP_INVALID_OPTION );

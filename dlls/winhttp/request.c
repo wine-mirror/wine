@@ -1769,7 +1769,7 @@ static BOOL open_connection( request_t *request )
 
             if (!ensure_cred_handle( connect->session ) ||
                 !netconn_secure_connect( netconn, connect->hostname, request->security_flags,
-                                         &connect->session->cred_handle ))
+                                         &connect->session->cred_handle, request->check_revocation ))
             {
                 heap_free( addressW );
                 netconn_close( netconn );

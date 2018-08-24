@@ -160,7 +160,7 @@ static int sock_recv(int fd, void *msg, size_t len, int flags)
     return ret;
 }
 
-static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags )
+static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags, BOOL check_revocation )
 {
     HCERTSTORE store = cert->hCertStore;
     BOOL ret;
@@ -173,9 +173,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD secu
     TRACE("verifying %s\n", debugstr_w( server ));
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-    if ((ret = CertGetCertificateChain( NULL, cert, NULL, store, &chainPara,
-                                        CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
-                                        NULL, &chain )))
+    ret = CertGetCertificateChain( NULL, cert, NULL, store, &chainPara,
+                                   check_revocation ? CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT : 0,
+                                   NULL, &chain );
+    if (ret)
     {
         if (chain->TrustStatus.dwErrorStatus)
         {
@@ -370,7 +371,8 @@ BOOL netconn_close( netconn_t *conn )
     return TRUE;
 }
 
-BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags, CredHandle *cred_handle )
+BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags, CredHandle *cred_handle,
+                             BOOL check_revocation)
 {
     SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
     SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
@@ -466,7 +468,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_fl
 
             status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
             if(status == SEC_E_OK) {
-                res = netconn_verify_cert(cert, hostname, security_flags);
+                res = netconn_verify_cert(cert, hostname, security_flags, check_revocation);
                 CertFreeCertificateContext(cert);
                 if(res != ERROR_SUCCESS) {
                     WARN("cert verify failed: %u\n", res);
