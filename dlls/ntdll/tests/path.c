@@ -19,6 +19,7 @@
  */
 
 #include "ntdll_test.h"
+#include "winnls.h"
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
@@ -28,6 +29,7 @@ static ULONG (WINAPI *pRtlIsDosDeviceName_U)( PCWSTR dos_name );
 static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(UNICODE_STRING *, const STRING *, BOOLEAN );
 static BOOLEAN (WINAPI *pRtlIsNameLegalDOS8Dot3)(const UNICODE_STRING*,POEM_STRING,PBOOLEAN);
 static DWORD (WINAPI *pRtlGetFullPathName_U)(const WCHAR*,ULONG,WCHAR*,WCHAR**);
+static BOOLEAN (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR*, UNICODE_STRING*, WCHAR**, CURDIR*);
 static NTSTATUS (WINAPI *pRtlDosPathNameToNtPathName_U_WithStatus)(const WCHAR*, UNICODE_STRING*, WCHAR**, CURDIR*);
 
 static void test_RtlDetermineDosPathNameType_U(void)
@@ -392,33 +394,137 @@ static void test_RtlGetFullPathName_U(void)
     SetCurrentDirectoryA(curdir);
 }
 
-static void test_RtlDosPathNameToNtPathName_U_WithStatus(void)
+static void test_RtlDosPathNameToNtPathName_U(void)
 {
-    static const WCHAR emptyW[] = { 0 };
+    char curdir[MAX_PATH];
     WCHAR path[MAX_PATH];
     UNICODE_STRING nameW;
+    WCHAR *file_part;
     NTSTATUS status;
+    BOOL ret, expect;
+    int i;
 
-    if (!pRtlDosPathNameToNtPathName_U_WithStatus)
+    static const struct
     {
-        win_skip("RtlDosPathNameToNtPathName_U_WithStatus() is not supported.\n");
-        return;
+        const char *dos;
+        const char *nt;
+        int file_offset;    /* offset to file part */
+        NTSTATUS status;
+        NTSTATUS alt_status;
+        int broken;
+    }
+    tests[] =
+    {
+        { "c:\\",           "\\??\\c:\\",                  -1, STATUS_SUCCESS },
+        { "c:/",            "\\??\\c:\\",                  -1, STATUS_SUCCESS },
+        { "c:/foo",         "\\??\\c:\\foo",                7, STATUS_SUCCESS },
+        { "c:/foo.",        "\\??\\c:\\foo",                7, STATUS_SUCCESS },
+        { "c:/foo/",        "\\??\\c:\\foo\\",             -1, STATUS_SUCCESS },
+        { "c:/foo//",       "\\??\\c:\\foo\\",             -1, STATUS_SUCCESS },
+        { "C:/foo",         "\\??\\C:\\foo",                7, STATUS_SUCCESS },
+        { "C:/foo/bar",     "\\??\\C:\\foo\\bar",          11, STATUS_SUCCESS },
+        { "C:/foo/bar",     "\\??\\C:\\foo\\bar",          11, STATUS_SUCCESS },
+        { "c:.",            "\\??\\C:\\windows",            7, STATUS_SUCCESS },
+        { "c:foo",          "\\??\\C:\\windows\\foo",      15, STATUS_SUCCESS },
+        { "c:foo/bar",      "\\??\\C:\\windows\\foo\\bar", 19, STATUS_SUCCESS },
+        { "c:./foo",        "\\??\\C:\\windows\\foo",      15, STATUS_SUCCESS },
+        { "c:/./foo",       "\\??\\c:\\foo",                7, STATUS_SUCCESS },
+        { "c:/foo/.",       "\\??\\c:\\foo",                7, STATUS_SUCCESS },
+        { "c:/foo/./bar",   "\\??\\c:\\foo\\bar",          11, STATUS_SUCCESS },
+        { "c:/foo/../bar",  "\\??\\c:\\bar",                7, STATUS_SUCCESS },
+        { "\\foo",          "\\??\\C:\\foo",                7, STATUS_SUCCESS },
+        { "foo",            "\\??\\C:\\windows\\foo",      15, STATUS_SUCCESS },
+        { ".",              "\\??\\C:\\windows",            7, STATUS_SUCCESS },
+        { "./",             "\\??\\C:\\windows\\",         -1, STATUS_SUCCESS },
+        { "..",             "\\??\\C:\\",                  -1, STATUS_SUCCESS },
+        { "...",            "\\??\\C:\\windows\\",         -1, STATUS_SUCCESS },
+        { "./foo",          "\\??\\C:\\windows\\foo",      15, STATUS_SUCCESS },
+        { "foo/..",         "\\??\\C:\\windows",            7, STATUS_SUCCESS },
+        { "AUX" ,           "\\??\\AUX",                   -1, STATUS_SUCCESS },
+        { "COM1" ,          "\\??\\COM1",                  -1, STATUS_SUCCESS },
+        { "?<>*\"|:",       "\\??\\C:\\windows\\?<>*\"|:", 15, STATUS_SUCCESS },
+
+        { "",   NULL, -1, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
+        { NULL, NULL, -1, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
+        { " ",  NULL, -1, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
+
+        { "\\\\foo",        "\\??\\UNC\\foo",              -1, STATUS_SUCCESS },
+        { "//foo",          "\\??\\UNC\\foo",              -1, STATUS_SUCCESS },
+        { "\\/foo",         "\\??\\UNC\\foo",              -1, STATUS_SUCCESS },
+        { "//",             "\\??\\UNC\\",                 -1, STATUS_SUCCESS },
+        { "//foo/",         "\\??\\UNC\\foo\\",            -1, STATUS_SUCCESS },
+
+        { "//.",            "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//./",           "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//.//",          "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//./foo",        "\\??\\foo",                    4, STATUS_SUCCESS },
+        { "//./foo/",       "\\??\\foo\\",                 -1, STATUS_SUCCESS },
+        { "//./foo/bar",    "\\??\\foo\\bar",               8, STATUS_SUCCESS },
+        { "//./foo/.",      "\\??\\foo",                    4, STATUS_SUCCESS },
+        { "//./foo/..",     "\\??\\",                      -1, STATUS_SUCCESS },
+
+        { "//?",            "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//?/",           "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//?//",          "\\??\\",                      -1, STATUS_SUCCESS },
+        { "//?/foo",        "\\??\\foo",                    4, STATUS_SUCCESS },
+        { "//?/foo/",       "\\??\\foo\\",                 -1, STATUS_SUCCESS },
+        { "//?/foo/bar",    "\\??\\foo\\bar",               8, STATUS_SUCCESS },
+        { "//?/foo/.",      "\\??\\foo",                    4, STATUS_SUCCESS },
+        { "//?/foo/..",     "\\??\\",                      -1, STATUS_SUCCESS },
+
+        { "\\\\?",           "\\??\\",                     -1, STATUS_SUCCESS },
+        { "\\\\?\\",         "\\??\\",                     -1, STATUS_SUCCESS },
+
+        { "\\\\?\\/",        "\\??\\/",                     4, STATUS_SUCCESS },
+        { "\\\\?\\foo",      "\\??\\foo",                   4, STATUS_SUCCESS },
+        { "\\\\?\\foo/",     "\\??\\foo/",                  4, STATUS_SUCCESS },
+        { "\\\\?\\foo/bar",  "\\??\\foo/bar",               4, STATUS_SUCCESS },
+        { "\\\\?\\foo/.",    "\\??\\foo/.",                 4, STATUS_SUCCESS },
+        { "\\\\?\\foo/..",   "\\??\\foo/..",                4, STATUS_SUCCESS },
+        { "\\\\?\\\\",       "\\??\\\\",                   -1, STATUS_SUCCESS },
+        { "\\\\?\\\\\\",     "\\??\\\\\\",                 -1, STATUS_SUCCESS },
+        { "\\\\?\\foo\\",    "\\??\\foo\\",                -1, STATUS_SUCCESS },
+        { "\\\\?\\foo\\bar", "\\??\\foo\\bar",              8, STATUS_SUCCESS },
+        { "\\\\?\\foo\\.",   "\\??\\foo\\.",                8, STATUS_SUCCESS },
+        { "\\\\?\\foo\\..",  "\\??\\foo\\..",               8, STATUS_SUCCESS },
+    };
+
+    GetCurrentDirectoryA(sizeof(curdir), curdir);
+    SetCurrentDirectoryA("C:\\windows\\");
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        MultiByteToWideChar(CP_ACP, 0, tests[i].dos, -1, path, sizeof(path));
+        ret = pRtlDosPathNameToNtPathName_U(path, &nameW, &file_part, NULL);
+
+        if (pRtlDosPathNameToNtPathName_U_WithStatus)
+        {
+            status = pRtlDosPathNameToNtPathName_U_WithStatus(path, &nameW, &file_part, NULL);
+            ok(status == tests[i].status || status == tests[i].alt_status,
+                "%s: Expected status %#x, got %#x.\n", tests[i].dos, tests[i].status, status);
+        }
+
+        expect = (tests[i].status == STATUS_SUCCESS);
+        ok(ret == expect, "%s: Expected %#x, got %#x.\n", tests[i].dos, expect, ret);
+
+        if (ret != TRUE) continue;
+
+        MultiByteToWideChar(CP_ACP, 0, tests[i].nt, -1, path, sizeof(path));
+        ok(!lstrcmpW(nameW.Buffer, path), "%s: Expected %s, got %s.\n",
+            tests[i].dos, tests[i].nt, wine_dbgstr_w(nameW.Buffer));
+
+        if (tests[i].file_offset > 0)
+            ok(file_part == nameW.Buffer + tests[i].file_offset,
+                "%s: Expected file part %s, got %s.\n", tests[i].dos,
+                wine_dbgstr_w(nameW.Buffer + tests[i].file_offset), wine_dbgstr_w(file_part));
+        else
+            ok(file_part == NULL, "%s: Expected NULL file part, got %s.\n",
+                tests[i].dos, wine_dbgstr_w(file_part));
+
+        RtlFreeUnicodeString(&nameW);
     }
 
-    GetCurrentDirectoryW( MAX_PATH, path );
-
-    status = pRtlDosPathNameToNtPathName_U_WithStatus( path, &nameW, NULL, NULL );
-    ok(!status, "Failed convert to nt path, %#x.\n", status);
-
-    status = pRtlDosPathNameToNtPathName_U_WithStatus( NULL, &nameW, NULL, NULL );
-    ok(status == STATUS_OBJECT_NAME_INVALID || broken(status == STATUS_OBJECT_PATH_NOT_FOUND) /* W2k3 */,
-        "Unexpected status %#x.\n", status);
-
-    status = pRtlDosPathNameToNtPathName_U_WithStatus( emptyW, &nameW, NULL, NULL );
-    ok(status == STATUS_OBJECT_NAME_INVALID || broken(status == STATUS_OBJECT_PATH_NOT_FOUND) /* W2k3 */,
-        "Unexpected status %#x.\n", status);
-
-    RtlFreeUnicodeString( &nameW );
+    SetCurrentDirectoryA(curdir);
 }
 
 START_TEST(path)
@@ -437,11 +543,12 @@ START_TEST(path)
     pRtlOemStringToUnicodeString = (void *)GetProcAddress(mod,"RtlOemStringToUnicodeString");
     pRtlIsNameLegalDOS8Dot3 = (void *)GetProcAddress(mod,"RtlIsNameLegalDOS8Dot3");
     pRtlGetFullPathName_U = (void *)GetProcAddress(mod,"RtlGetFullPathName_U");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(mod, "RtlDosPathNameToNtPathName_U");
     pRtlDosPathNameToNtPathName_U_WithStatus = (void *)GetProcAddress(mod, "RtlDosPathNameToNtPathName_U_WithStatus");
 
     test_RtlDetermineDosPathNameType_U();
     test_RtlIsDosDeviceName_U();
     test_RtlIsNameLegalDOS8Dot3();
     test_RtlGetFullPathName_U();
-    test_RtlDosPathNameToNtPathName_U_WithStatus();
+    test_RtlDosPathNameToNtPathName_U();
 }
