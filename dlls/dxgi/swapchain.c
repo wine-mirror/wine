@@ -1694,6 +1694,32 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
     return TRUE;
 }
 
+static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
+{
+    switch (vk_format)
+    {
+        case VK_FORMAT_B8G8R8A8_SRGB:  return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+        case VK_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case VK_FORMAT_R8G8B8A8_SRGB:  return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        case VK_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
+        default:
+            WARN("Unhandled format %#x.\n", vk_format);
+            return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+static VkFormat get_swapchain_fallback_format(VkFormat vk_format)
+{
+    switch (vk_format)
+    {
+        case VK_FORMAT_R8G8B8A8_SRGB:  return VK_FORMAT_B8G8R8A8_SRGB;
+        case VK_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
+        default:
+            WARN("Unhandled format %#x.\n", vk_format);
+            return VK_FORMAT_UNDEFINED;
+    }
+}
+
 static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
         VkPhysicalDevice vk_physical_device, VkSurfaceKHR vk_surface,
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, VkFormat *vk_format)
@@ -1734,10 +1760,11 @@ static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
     if (i == format_count)
     {
         /* Try to create a swapchain with format conversion. */
+        format = get_swapchain_fallback_format(format);
         WARN("Failed to find Vulkan swapchain format for %s.\n", debug_dxgi_format(swapchain_desc->Format));
         for (i = 0; i < format_count; ++i)
         {
-            if (formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            if (formats[i].format == format && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
             {
                 format = formats[i].format;
                 break;
@@ -1755,20 +1782,6 @@ static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
 
     *vk_format = format;
     return S_OK;
-}
-
-static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
-{
-    switch (vk_format)
-    {
-        case VK_FORMAT_B8G8R8A8_SRGB:  return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-        case VK_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case VK_FORMAT_R8G8B8A8_SRGB:  return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-        case VK_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
-        default:
-            FIXME("Unhandled format %#x.\n", vk_format);
-            return DXGI_FORMAT_UNKNOWN;
-    }
 }
 
 static HRESULT vk_select_memory_type(const struct dxgi_vk_funcs *vk_funcs,
