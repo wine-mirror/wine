@@ -3237,6 +3237,16 @@ RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
 }
 
 /**********************************************************************
+ *              rect_win_to_thread_dpi
+ */
+RECT rect_win_to_thread_dpi( HWND hwnd, RECT rect )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_rect( rect, GetDpiForWindow( hwnd ), dpi );
+}
+
+/**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )

@@ -198,6 +198,20 @@ static inline int point_in_rect( const rectangle_t *rect, int x, int y )
     return (x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom);
 }
 
+static inline int scale_dpi( int val, unsigned int dpi_from, unsigned int dpi_to )
+{
+    if (val >= 0) return (val * dpi_to + (dpi_from / 2)) / dpi_from;
+    return (val * dpi_to - (dpi_from / 2)) / dpi_from;
+}
+
+static inline void scale_dpi_rect( rectangle_t *rect, unsigned int dpi_from, unsigned int dpi_to )
+{
+    rect->left   = scale_dpi( rect->left, dpi_from, dpi_to );
+    rect->top    = scale_dpi( rect->top, dpi_from, dpi_to );
+    rect->right  = scale_dpi( rect->right, dpi_from, dpi_to );
+    rect->bottom = scale_dpi( rect->bottom, dpi_from, dpi_to );
+}
+
 /* offset the coordinates of a rectangle */
 static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
 {

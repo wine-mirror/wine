@@ -630,6 +630,15 @@ static inline void inc_window_paint_count( struct window *win, int incr )
     if (win->thread) inc_queue_paint_count( win->thread, incr );
 }
 
+/* map a window rectangle between different DPI scaling levels */
+static void map_dpi_rect( struct window *win, rectangle_t *rect, unsigned int from, unsigned int to )
+{
+    if (!from) from = get_monitor_dpi( win );
+    if (!to) to = get_monitor_dpi( win );
+    if (from == to) return;
+    scale_dpi_rect( rect, from, to );
+}
+
 /* check if window and all its ancestors are visible */
 static int is_visible( const struct window *win )
 {
@@ -2349,6 +2358,8 @@ DECL_HANDLER(get_window_rectangles)
         set_error( STATUS_INVALID_PARAMETER );
         break;
     }
+    map_dpi_rect( win, &reply->window, win->dpi, req->dpi );
+    map_dpi_rect( win, &reply->client, win->dpi, req->dpi );
 }
 
 

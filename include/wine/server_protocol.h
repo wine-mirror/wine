@@ -3692,7 +3692,7 @@ struct get_window_rectangles_request
     struct request_header __header;
     user_handle_t  handle;
     int            relative;
-    char __pad_20[4];
+    int            dpi;
 };
 struct get_window_rectangles_reply
 {
@@ -6533,6 +6533,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 556
+#define SERVER_PROTOCOL_VERSION 557
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

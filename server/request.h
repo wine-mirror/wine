@@ -1773,6 +1773,7 @@ C_ASSERT( FIELD_OFFSET(struct set_window_pos_reply, needs_update) == 20 );
 C_ASSERT( sizeof(struct set_window_pos_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_request, relative) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_request, dpi) == 20 );
 C_ASSERT( sizeof(struct get_window_rectangles_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_reply, window) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_reply, client) == 24 );

@@ -844,6 +844,7 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
         {
             rect.right  = 100;
             rect.bottom = 100;
+            rect = rect_win_to_thread_dpi( hwnd, rect );
         }
         else
         {
@@ -921,8 +922,8 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
             }
             break;
         }
-        if (rectWindow) *rectWindow = window_rect;
-        if (rectClient) *rectClient = client_rect;
+        if (rectWindow) *rectWindow = rect_win_to_thread_dpi( hwnd, window_rect );
+        if (rectClient) *rectClient = rect_win_to_thread_dpi( hwnd, client_rect );
         WIN_ReleasePtr( win );
         return TRUE;
     }
@@ -932,6 +933,7 @@ other_process:
     {
         req->handle = wine_server_user_handle( hwnd );
         req->relative = relative;
+        req->dpi = get_thread_dpi();
         if ((ret = !wine_server_call_err( req )))
         {
             if (rectWindow)

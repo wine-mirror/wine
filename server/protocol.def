@@ -2651,6 +2651,7 @@ enum message_type
 @REQ(get_window_rectangles)
     user_handle_t  handle;        /* handle to the window */
     int            relative;      /* coords relative to (see below) */
+    int            dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
     rectangle_t    window;        /* window rectangle */
     rectangle_t    client;        /* client rectangle */

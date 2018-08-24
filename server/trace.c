@@ -3229,6 +3229,7 @@ static void dump_get_window_rectangles_request( const struct get_window_rectangl
 {
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", relative=%d", req->relative );
+    fprintf( stderr, ", dpi=%d", req->dpi );
 }
 
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )
