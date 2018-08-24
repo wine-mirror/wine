@@ -6968,6 +6968,89 @@ if (SUCCEEDED(hr))
     ID3D10Device1_Release(d3d_device);
 }
 
+static void test_invert_matrix(void)
+{
+    static const struct
+    {
+        D2D1_MATRIX_3X2_F matrix;
+        D2D1_MATRIX_3X2_F inverse;
+        BOOL invertible;
+    }
+    invert_tests[] =
+    {
+        { { 0 }, { 0 }, FALSE },
+        {
+            {
+               1.0f, 2.0f,
+               1.0f, 2.0f,
+               4.0f, 8.0f
+            },
+            {
+               1.0f, 2.0f,
+               1.0f, 2.0f,
+               4.0f, 8.0f
+            },
+            FALSE
+        },
+        {
+            {
+               2.0f, 0.0f,
+               0.0f, 2.0f,
+               4.0f, 8.0f
+            },
+            {
+               0.5f, -0.0f,
+              -0.0f,  0.5f,
+              -2.0f, -4.0f
+            },
+            TRUE
+        },
+        {
+            {
+               2.0f, 1.0f,
+               2.0f, 2.0f,
+               4.0f, 8.0f
+            },
+            {
+               1.0f, -0.5f,
+              -1.0f,  1.0f,
+               4.0f, -6.0f
+            },
+            TRUE
+        },
+        {
+            {
+               2.0f, 1.0f,
+               3.0f, 1.0f,
+               4.0f, 8.0f
+            },
+            {
+              -1.0f,  1.0f,
+               3.0f, -2.0f,
+             -20.0f, 12.0f
+            },
+            TRUE
+        },
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(invert_tests); ++i)
+    {
+        D2D1_MATRIX_3X2_F m;
+        BOOL ret;
+
+        m = invert_tests[i].matrix;
+        ret = D2D1InvertMatrix(&m);
+        ok(ret == invert_tests[i].invertible, "%u: unexpected return value %d.\n", i, ret);
+        ok(!memcmp(&m, &invert_tests[i].inverse, sizeof(m)),
+                "%u: unexpected matrix value {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n", i,
+                m._11, m._12, m._21, m._22, m._31, m._32);
+
+        ret = D2D1IsMatrixInvertible(&invert_tests[i].matrix);
+        ok(ret == invert_tests[i].invertible, "%u: unexpected return value %d.\n", i, ret);
+    }
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -7009,6 +7092,7 @@ START_TEST(d2d1)
     queue_test(test_create_device);
     queue_test(test_bitmap_surface);
     queue_test(test_device_context);
+    queue_test(test_invert_matrix);
 
     run_queued_tests();
 }

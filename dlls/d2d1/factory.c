@@ -554,6 +554,22 @@ void WINAPI D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_
     matrix->_32 = center.y - center.x * sin_theta - center.y * cos_theta;
 }
 
+BOOL WINAPI D2D1IsMatrixInvertible(const D2D1_MATRIX_3X2_F *matrix)
+{
+    TRACE("matrix %p.\n", matrix);
+
+    return (matrix->_11 * matrix->_22 - matrix->_21 * matrix->_12) != 0.0f;
+}
+
+BOOL WINAPI D2D1InvertMatrix(D2D1_MATRIX_3X2_F *matrix)
+{
+    D2D1_MATRIX_3X2_F m = *matrix;
+
+    TRACE("matrix %p.\n", matrix);
+
+    return d2d_matrix_invert(matrix, &m);
+}
+
 static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
 {
     DWORD type, data, size;
