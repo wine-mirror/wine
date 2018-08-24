@@ -3222,6 +3222,29 @@ UINT get_thread_dpi(void)
 }
 
 /**********************************************************************
+ *              map_dpi_point
+ */
+POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
+{
+    if (dpi_from && dpi_to && dpi_from != dpi_to)
+    {
+        pt.x = MulDiv( pt.x, dpi_to, dpi_from );
+        pt.y = MulDiv( pt.y, dpi_to, dpi_from );
+    }
+    return pt;
+}
+
+/**********************************************************************
+ *              point_win_to_thread_dpi
+ */
+POINT point_win_to_thread_dpi( HWND hwnd, POINT pt )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_point( pt, GetDpiForWindow( hwnd ), dpi );
+}
+
+/**********************************************************************
  *              map_dpi_rect
  */
 RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )

@@ -1786,6 +1786,7 @@ C_ASSERT( FIELD_OFFSET(struct set_window_text_request, handle) == 12 );
 C_ASSERT( sizeof(struct set_window_text_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_windows_offset_request, from) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_windows_offset_request, to) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_windows_offset_request, dpi) == 20 );
 C_ASSERT( sizeof(struct get_windows_offset_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_windows_offset_reply, x) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_windows_offset_reply, y) == 12 );

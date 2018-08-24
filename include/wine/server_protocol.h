@@ -3743,7 +3743,7 @@ struct get_windows_offset_request
     struct request_header __header;
     user_handle_t  from;
     user_handle_t  to;
-    char __pad_20[4];
+    int            dpi;
 };
 struct get_windows_offset_reply
 {
@@ -6533,6 +6533,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 557
+#define SERVER_PROTOCOL_VERSION 558
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

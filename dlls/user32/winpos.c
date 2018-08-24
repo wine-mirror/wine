@@ -446,6 +446,7 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
                 }
             }
             if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
+            offset = point_win_to_thread_dpi( hwndFrom, offset );
         }
     }
 
@@ -460,15 +461,16 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
         if (wndPtr == WND_OTHER_PROCESS) goto other_process;
         if (wndPtr != WND_DESKTOP)
         {
+            POINT pt = { 0, 0 };
             if (wndPtr->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_to = TRUE;
-                offset.x -= wndPtr->client_rect.right - wndPtr->client_rect.left;
+                pt.x += wndPtr->client_rect.right - wndPtr->client_rect.left;
             }
             while (wndPtr->parent)
             {
-                offset.x -= wndPtr->client_rect.left;
-                offset.y -= wndPtr->client_rect.top;
+                pt.x += wndPtr->client_rect.left;
+                pt.y += wndPtr->client_rect.top;
                 hwnd = wndPtr->parent;
                 WIN_ReleasePtr( wndPtr );
                 if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
@@ -481,6 +483,9 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
                 }
             }
             if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
+            pt = point_win_to_thread_dpi( hwndTo, pt );
+            offset.x -= pt.x;
+            offset.y -= pt.y;
         }
     }
 
@@ -494,6 +499,7 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
     {
         req->from = wine_server_user_handle( hwndFrom );
         req->to   = wine_server_user_handle( hwndTo );
+        req->dpi  = get_thread_dpi();
         if ((ret = !wine_server_call_err( req )))
         {
             ret_offset->x = reply->x;
