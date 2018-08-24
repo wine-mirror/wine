@@ -1066,6 +1066,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 {
     WND *wndPtr;
     HWND parent;
+    DPI_AWARENESS_CONTEXT context;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL wasVisible = (style & WS_VISIBLE) != 0;
     BOOL showFlag = TRUE;
@@ -1074,10 +1075,12 @@ static BOOL show_window( HWND hwnd, INT cmd )
 
     TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
+
     switch(cmd)
     {
         case SW_HIDE:
-            if (!wasVisible) return FALSE;
+            if (!wasVisible) goto done;
             showFlag = FALSE;
             swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE;
             if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
@@ -1091,14 +1094,14 @@ static BOOL show_window( HWND hwnd, INT cmd )
 	case SW_SHOWMINIMIZED:
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
-            if ((style & WS_MINIMIZE) && wasVisible) return TRUE;
+            if ((style & WS_MINIMIZE) && wasVisible) goto done;
 	    break;
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             if (!wasVisible) swp |= SWP_SHOWWINDOW;
             swp |= SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
-            if ((style & WS_MAXIMIZE) && wasVisible) return TRUE;
+            if ((style & WS_MAXIMIZE) && wasVisible) goto done;
             break;
 
 	case SW_SHOWNA:
@@ -1106,7 +1109,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
             if (style & WS_CHILD) swp |= SWP_NOZORDER;
             break;
 	case SW_SHOW:
-            if (wasVisible) return TRUE;
+            if (wasVisible) goto done;
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
             if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
@@ -1126,19 +1129,19 @@ static BOOL show_window( HWND hwnd, INT cmd )
             }
             else
             {
-                if (wasVisible) return TRUE;
+                if (wasVisible) goto done;
                 swp |= SWP_NOSIZE | SWP_NOMOVE;
             }
             if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
         default:
-            return wasVisible;
+            goto done;
     }
 
     if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED && !(swp & SWP_STATECHANGED))
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
-        if (!IsWindow( hwnd )) return wasVisible;
+        if (!IsWindow( hwnd )) goto done;
     }
 
     swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp );
@@ -1176,12 +1179,12 @@ static BOOL show_window( HWND hwnd, INT cmd )
             if (parent == GetDesktopWindow()) parent = 0;
             SetFocus(parent);
         }
-        return wasVisible;
+        goto done;
     }
 
     if (IsIconic(hwnd)) WINPOS_ShowIconTitle( hwnd, TRUE );
 
-    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return wasVisible;
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) goto done;
 
     if (wndPtr->flags & WIN_NEED_SIZE)
     {
@@ -1209,6 +1212,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
     /* if previous state was minimized Windows sets focus to the window */
     if (style & WS_MINIMIZE) SetFocus( hwnd );
 
+done:
+    SetThreadDpiAwarenessContext( context );
     return wasVisible;
 }
 
