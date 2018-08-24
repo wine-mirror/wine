@@ -1160,39 +1160,17 @@ static unsigned int get_ulong_val(unsigned int val, int vt)
 
 static void write_int_value(msft_typelib_t *typelib, int *out, int vt, int value)
 {
-    switch(vt) {
-    case VT_I2:
-    case VT_I4:
-    case VT_R4:
-    case VT_BOOL:
-    case VT_I1:
-    case VT_UI1:
-    case VT_UI2:
-    case VT_UI4:
-    case VT_INT:
-    case VT_UINT:
-    case VT_HRESULT:
-    case VT_PTR:
-    case VT_UNKNOWN:
-    case VT_DISPATCH:
-      {
-        const unsigned int lv = get_ulong_val(value, vt);
-        if((lv & 0x3ffffff) == lv) {
-            *out = 0x80000000;
-            *out |= vt << 26;
-            *out |= lv;
-        } else {
-            int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, 8, 0);
-            *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
-            memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], &value, 4);
-            *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
-            *out = offset;
-        }
-        return;
-      }
-
-    default:
-        warning("can't write value of type %d yet\n", vt);
+    const unsigned int lv = get_ulong_val(value, vt);
+    if ((lv & 0x3ffffff) == lv) {
+        *out = 0x80000000;
+        *out |= vt << 26;
+        *out |= lv;
+    } else {
+        int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, 8, 0);
+        *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
+        memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], &value, 4);
+        *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
+        *out = offset;
     }
 }
 
@@ -1209,6 +1187,50 @@ static void write_string_value(msft_typelib_t *typelib, int *out, const char *va
         len++;
     }
     *out = offset;
+}
+
+static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *expr, int *out)
+{
+    int vt;
+
+    if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT) {
+        if (get_type_vt(type) != VT_BSTR)
+            error("string default value applied to non-string type\n");
+        chat("default value '%s'\n", expr->u.sval);
+        write_string_value(typelib, out, expr->u.sval);
+        return;
+    }
+
+    if (type_get_type(type) == TYPE_ENUM) {
+        vt = VT_I4;
+    } else if (is_ptr(type)) {
+        vt = get_type_vt(type_pointer_get_ref(type));
+        if (vt == VT_USERDEFINED)
+            vt = VT_I4;
+        if (expr->cval)
+            warning("non-null pointer default value\n");
+    } else {
+        vt = get_type_vt(type);
+        switch(vt) {
+        case VT_I2:
+        case VT_I4:
+        case VT_R4:
+        case VT_BOOL:
+        case VT_I1:
+        case VT_UI1:
+        case VT_UI2:
+        case VT_UI4:
+        case VT_INT:
+        case VT_UINT:
+        case VT_HRESULT:
+            break;
+        default:
+            warning("can't write value of type %d yet\n", vt);
+            return;
+        }
+    }
+
+    write_int_value(typelib, out, vt, expr->cval);
 }
 
 static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
@@ -1240,33 +1262,6 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     *offset = custoffset;
 
     return S_OK;
-}
-
-/* It's possible to have a default value for pointer arguments too.
-   In this case default value has a referenced type, e.g.
-   'LONG*' argument gets VT_I4, 'DOUBLE*' - VT_R8. IUnknown* and IDispatch*
-   are recognised too and stored as VT_UNKNOWN and VT_DISPATCH.
-   But IUnknown/IDispatch arguments can only have default value of 0
-   (or expression that resolves to zero) while other pointers can have
-   any default value. */
-static int get_defaultvalue_vt(type_t *type)
-{
-    int vt;
-    if (type_get_type(type) == TYPE_ENUM)
-        vt = VT_I4;
-    else
-   {
-        vt = get_type_vt(type);
-        if (vt == VT_PTR && is_ptr(type)) {
-            vt = get_type_vt(type_pointer_get_ref(type));
-            /* The only acceptable value for pointers to non-basic types
-               is NULL, it's stored as VT_I4 for both 32 and 64 bit typelibs. */
-            if (vt == VT_USERDEFINED)
-                vt = VT_I4;
-        }
-    }
-
-    return vt;
 }
 
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
@@ -1492,21 +1487,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             switch(attr->type) {
             case ATTR_DEFAULTVALUE:
               {
-                int vt;
-                expr_t *expr = (expr_t *)attr->u.pval;
-                vt = get_defaultvalue_vt(arg->type);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
-                if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT)
-                {
-                  if (vt != VT_BSTR) error("string default value applied to non-string type\n");
-                  chat("default value '%s'\n", expr->u.sval);
-                  write_string_value(typeinfo->typelib, defaultdata, expr->u.sval);
-                }
-                else
-                {
-                  chat("default value %d\n", expr->cval);
-                  write_int_value(typeinfo->typelib, defaultdata, vt, expr->cval);
-                }
+                write_default_value(typeinfo->typelib, arg->type, (expr_t *)attr->u.pval, defaultdata);
                 break;
               }
             case ATTR_IN:
