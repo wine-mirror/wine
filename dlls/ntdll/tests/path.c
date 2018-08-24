@@ -68,6 +68,13 @@ static void test_RtlDetermineDosPathNameType_U(void)
         { "//.foo", 1 },
         { "\\\\.", 7 },
         { "//.", 7 },
+        { "\\\\?\\foo", 6 },
+        { "//?/foo", 6 },
+        { "/\\?/foo", 6 },
+        { "\\\\?foo", 1 },
+        { "//?foo", 1 },
+        { "\\\\?", 7 },
+        { "//?", 7 },
         { NULL, 0 }
     };
 

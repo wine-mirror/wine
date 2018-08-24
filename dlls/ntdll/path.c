@@ -244,10 +244,10 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
     if (IS_SEPARATOR(path[0]))
     {
         if (!IS_SEPARATOR(path[1])) return ABSOLUTE_PATH;       /* "/foo" */
-        if (path[2] != '.') return UNC_PATH;                    /* "//foo" */
-        if (IS_SEPARATOR(path[3])) return DEVICE_PATH;          /* "//./foo" */
-        if (path[3]) return UNC_PATH;                           /* "//.foo" */
-        return UNC_DOT_PATH;                                    /* "//." */
+        if (path[2] != '.' && path[2] != '?') return UNC_PATH;  /* "//foo" */
+        if (IS_SEPARATOR(path[3])) return DEVICE_PATH;          /* "//./foo" or "//?/foo" */
+        if (path[3]) return UNC_PATH;                           /* "//.foo" or "//?foo" */
+        return UNC_DOT_PATH;                                    /* "//." or "//?" */
     }
     else
     {
