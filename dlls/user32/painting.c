@@ -421,10 +421,13 @@ static void make_dc_dirty( struct dce *dce )
  */
 void invalidate_dce( WND *win, const RECT *extra_rect )
 {
+    DPI_AWARENESS_CONTEXT context;
     RECT window_rect;
     struct dce *dce;
 
     if (!win->parent) return;
+
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( win->obj.handle ));
 
     GetWindowRect( win->obj.handle, &window_rect );
 
@@ -460,6 +463,7 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
                 make_dc_dirty( dce );
         }
     }
+    SetThreadDpiAwarenessContext( context );
 }
 
 /***********************************************************************
@@ -652,8 +656,11 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
     if (whole_rgn)
     {
+        DPI_AWARENESS_CONTEXT context;
         RECT client, window, update;
         INT type;
+
+        context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
 
         /* check if update rgn overlaps with nonclient area */
         type = GetRgnBox( whole_rgn, &update );
@@ -684,6 +691,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
             if (*flags & UPDATE_NONCLIENT) SendMessageW( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
             if (whole_rgn > (HRGN)1) DeleteObject( whole_rgn );
         }
+        SetThreadDpiAwarenessContext( context );
     }
     return client_rgn;
 }
@@ -1364,9 +1372,12 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
  */
 INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
+    DPI_AWARENESS_CONTEXT context;
     INT retval = ERROR;
     UINT flags = UPDATE_NOCHILDREN;
     HRGN update_rgn;
+
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
 
     if (erase) flags |= UPDATE_NONCLIENT | UPDATE_ERASE;
 
@@ -1381,6 +1392,7 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         /* map region to client coordinates */
         map_window_region( 0, hwnd, hrgn );
     }
+    SetThreadDpiAwarenessContext( context );
     return retval;
 }
 
@@ -1390,6 +1402,7 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
+    DPI_AWARENESS_CONTEXT context;
     UINT flags = UPDATE_NOCHILDREN;
     HRGN update_rgn;
     BOOL need_erase;
@@ -1404,7 +1417,10 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
         {
             HDC hdc = GetDCEx( hwnd, 0, DCX_USESTYLE );
             DWORD layout = SetLayout( hdc, 0 );  /* MapWindowPoints mirrors already */
+            context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
             MapWindowPoints( 0, hwnd, (LPPOINT)rect, 2 );
+            SetThreadDpiAwarenessContext( context );
+            *rect = rect_win_to_thread_dpi( hwnd, *rect );
             DPtoLP( hdc, (LPPOINT)rect, 2 );
             SetLayout( hdc, layout );
             ReleaseDC( hwnd, hdc );
@@ -1429,12 +1445,15 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
     if (ret != ERROR)
     {
+        DPI_AWARENESS_CONTEXT context;
         POINT pt;
 
+        context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
         GetDCOrgEx( hdc, &pt );
         MapWindowPoints( 0, hwnd, &pt, 1 );
         OffsetRgn( update_rgn, -pt.x, -pt.y );
         ret = ExtSelectClipRgn( hdc, update_rgn, RGN_DIFF );
+        SetThreadDpiAwarenessContext( context );
     }
     DeleteObject( update_rgn );
     return ret;
