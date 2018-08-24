@@ -446,13 +446,16 @@ static void send_parent_notify( HWND hwnd, UINT msg )
  */
 static void update_window_state( HWND hwnd )
 {
+    DPI_AWARENESS_CONTEXT context;
     RECT window_rect, client_rect, valid_rects[2];
 
+    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
     valid_rects[0] = valid_rects[1] = client_rect;
     set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
                     SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
                     &window_rect, &client_rect, valid_rects );
+    SetThreadDpiAwarenessContext( context );
 }
 
 
