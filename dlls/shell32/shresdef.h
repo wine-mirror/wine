@@ -211,6 +211,7 @@
 #define IDI_SHELL_START_MENU        40
 #define IDI_SHELL_MUSIC_CD          41
 #define IDI_SHELL_TREE              42
+#define IDI_SHELL_REMOTE_FOLDER     43
 #define IDI_SHELL_REMOTE_PRINTER   140
 #define IDI_SHELL_TO_FILE_PRINTER  141
 #define IDI_SHELL_TRASH_FILE       142
