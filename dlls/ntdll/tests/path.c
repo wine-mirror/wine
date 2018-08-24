@@ -396,6 +396,8 @@ static void test_RtlGetFullPathName_U(void)
 
 static void test_RtlDosPathNameToNtPathName_U(void)
 {
+    static const WCHAR broken_global_prefix[] = {'\\','?','?','\\','C',':','\\','?','?'};
+
     char curdir[MAX_PATH];
     WCHAR path[MAX_PATH];
     UNICODE_STRING nameW;
@@ -487,6 +489,22 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         { "\\\\?\\foo\\bar", "\\??\\foo\\bar",              8, STATUS_SUCCESS },
         { "\\\\?\\foo\\.",   "\\??\\foo\\.",                8, STATUS_SUCCESS },
         { "\\\\?\\foo\\..",  "\\??\\foo\\..",               8, STATUS_SUCCESS },
+
+        { "\\??",           "\\??\\C:\\??",                 7, STATUS_SUCCESS },
+        { "\\??\\",         "\\??\\C:\\??\\",              -1, STATUS_SUCCESS },
+
+        { "\\??\\/",        "\\??\\/",                      4, STATUS_SUCCESS },
+        { "\\??\\foo",      "\\??\\foo",                    4, STATUS_SUCCESS },
+        { "\\??\\foo/",     "\\??\\foo/",                   4, STATUS_SUCCESS },
+        { "\\??\\foo/bar",  "\\??\\foo/bar",                4, STATUS_SUCCESS },
+        { "\\??\\foo/.",    "\\??\\foo/.",                  4, STATUS_SUCCESS },
+        { "\\??\\foo/..",   "\\??\\foo/..",                 4, STATUS_SUCCESS },
+        { "\\??\\\\",       "\\??\\\\",                    -1, STATUS_SUCCESS },
+        { "\\??\\\\\\",     "\\??\\\\\\",                  -1, STATUS_SUCCESS },
+        { "\\??\\foo\\",    "\\??\\foo\\",                 -1, STATUS_SUCCESS },
+        { "\\??\\foo\\bar", "\\??\\foo\\bar",               8, STATUS_SUCCESS },
+        { "\\??\\foo\\.",   "\\??\\foo\\.",                 8, STATUS_SUCCESS },
+        { "\\??\\foo\\..",  "\\??\\foo\\..",                8, STATUS_SUCCESS },
     };
 
     GetCurrentDirectoryA(sizeof(curdir), curdir);
@@ -508,6 +526,13 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         ok(ret == expect, "%s: Expected %#x, got %#x.\n", tests[i].dos, expect, ret);
 
         if (ret != TRUE) continue;
+
+        if (!strncmp(tests[i].dos, "\\??\\", 4) && tests[i].dos[4] &&
+            broken(!memcmp(nameW.Buffer, broken_global_prefix, sizeof(broken_global_prefix))))
+        {
+            /* Windows version prior to 2003 don't interpret the \??\ prefix */
+            continue;
+        }
 
         MultiByteToWideChar(CP_ACP, 0, tests[i].nt, -1, path, sizeof(path));
         ok(!lstrcmpW(nameW.Buffer, path), "%s: Expected %s, got %s.\n",
