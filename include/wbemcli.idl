@@ -660,3 +660,46 @@ interface IWbemQualifierSet : IUnknown
 
     HRESULT EndEnumeration();
 }
+
+
+typedef [v1_enum] enum tag_WBEM_UNSECAPP_FLAG_TYPE
+{
+    WBEM_FLAG_UNSECAPP_DEFAULT_CHECK_ACCESS,
+    WBEM_FLAG_UNSECAPP_CHECK_ACCESS,
+    WBEM_FLAG_UNSECAPP_DONT_CHECK_ACCESS
+} WBEM_UNSECAPP_FLAG_TYPE;
+
+[
+    object,
+    restricted,
+    uuid(1cfaba8c-1523-11d1-ad79-00c04fd8fdff)
+]
+interface IUnsecuredApartment : IUnknown
+{
+    HRESULT CreateObjectStub(
+        [in] IUnknown *object,
+        [out] IUnknown **stub);
+};
+
+[
+    object,
+    restricted,
+    uuid(31739d04-3471-4cf4-9a7c-57a44ae71956)
+]
+interface IWbemUnsecuredApartment : IUnsecuredApartment
+{
+    HRESULT CreateSinkStub(
+        [in] IWbemObjectSink *sink,
+        [in] DWORD flags,
+        [in,unique] const WCHAR *reserved,
+        [out] IWbemObjectSink **stub);
+};
+
+[
+    uuid(49bd2028-1523-11d1-ad79-00c04fd8fdff)
+]
+coclass UnsecuredApartment
+{
+    interface IUnsecuredApartment;
+    interface IWbemUnsecuredApartment;
+};
