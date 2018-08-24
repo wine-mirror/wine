@@ -71,6 +71,7 @@ typedef struct
     HWND   hwndSelf;   /* handle of the control wnd */
     HWND   hwndChild;  /* handle of the contained wnd */
     HWND   hwndNotify; /* handle of the parent wnd */
+    BOOL   bUnicode;   /* send notifications in Unicode */
     DWORD  dwStyle;    /* styles for this control */
     COLORREF clrBk;    /* background color */
     INT    nBorder;    /* border size for the control */
@@ -555,6 +556,7 @@ static LRESULT
 PAGER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     PAGER_INFO *infoPtr;
+    INT ret;
 
     /* allocate memory for info structure */
     infoPtr = heap_alloc_zero (sizeof(*infoPtr));
@@ -580,6 +582,9 @@ PAGER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 
     if (infoPtr->dwStyle & PGS_DRAGNDROP)
         FIXME("[%p] Drag and Drop style is not implemented yet.\n", infoPtr->hwndSelf);
+
+    ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
+    infoPtr->bUnicode = (ret == NFR_UNICODE);
 
     return 0;
 }
@@ -998,6 +1003,23 @@ PAGER_StyleChanged(PAGER_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lp
     return 0;
 }
 
+static LRESULT PAGER_NotifyFormat(PAGER_INFO *infoPtr, INT command)
+{
+    INT ret;
+    switch (command)
+    {
+    case NF_REQUERY:
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
+        infoPtr->bUnicode = (ret == NFR_UNICODE);
+        return ret;
+    case NF_QUERY:
+        /* Pager always wants Unicode notifications from children */
+        return NFR_UNICODE;
+    default:
+        return 0;
+    }
+}
+
 static LRESULT WINAPI
 PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1088,6 +1110,9 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_TIMER:
             return PAGER_Timer (infoPtr, (INT)wParam);
+
+        case WM_NOTIFYFORMAT:
+            return PAGER_NotifyFormat (infoPtr, lParam);
 
         case WM_NOTIFY:
         case WM_COMMAND:

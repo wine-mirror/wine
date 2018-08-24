@@ -392,8 +392,8 @@ static void test_wm_notifyformat(void)
         /* Test parent */
         notify_query_received = FALSE;
         ret = SendMessageW(pager, WM_NOTIFYFORMAT, (WPARAM)parent, NF_REQUERY);
-        todo_wine_if(notify_format == NFR_ANSI) ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
-        todo_wine ok(notify_query_received, "Didn't receive notify\n");
+        ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
+        ok(notify_query_received, "Didn't receive notify\n");
 
         /* Send NF_QUERY directly to parent */
         notify_query_received = FALSE;
@@ -404,8 +404,8 @@ static void test_wm_notifyformat(void)
         /* Pager send notifications to its parent regardless of wParam */
         notify_query_received = FALSE;
         ret = SendMessageW(pager, WM_NOTIFYFORMAT, (WPARAM)parent_wnd, NF_REQUERY);
-        todo_wine_if(notify_format == NFR_ANSI) ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
-        todo_wine ok(notify_query_received, "Didn't receive notify\n");
+        ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
+        ok(notify_query_received, "Didn't receive notify\n");
 
         /* Pager always wants Unicode notifications from children */
         ret = SendMessageW(child, WM_NOTIFYFORMAT, (WPARAM)pager, NF_REQUERY);
