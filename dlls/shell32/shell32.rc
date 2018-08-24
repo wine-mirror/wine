@@ -484,6 +484,9 @@ IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_FAVORITES ICON resources/mydocs.ico
