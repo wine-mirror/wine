@@ -80,6 +80,7 @@ SVG_SRCS = \
 	resources/netdrive.svg \
 	resources/netdrive2.svg \
 	resources/network.svg \
+	resources/optical_disc.svg \
 	resources/printer.svg \
 	resources/ramdisk.svg \
 	resources/recent.svg \
