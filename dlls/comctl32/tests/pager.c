@@ -28,6 +28,8 @@
 #define PAGER_SEQ_INDEX     0
 
 static HWND parent_wnd, child1_wnd, child2_wnd;
+static INT notify_format;
+static BOOL notify_query_received;
 
 #define CHILD1_ID 1
 #define CHILD2_ID 2
@@ -330,6 +332,93 @@ static void test_pager(void)
     DestroyWindow( pager );
 }
 
+static LRESULT WINAPI test_notifyformat_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_NOTIFYFORMAT:
+        if (lParam == NF_QUERY)
+        {
+            notify_query_received = TRUE;
+            return notify_format;
+        }
+        else if (lParam == NF_REQUERY)
+            return SendMessageA(GetParent(hwnd), WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
+        else
+            return 0;
+    default:
+        return notify_format == NFR_UNICODE ? DefWindowProcW(hwnd, message, wParam, lParam)
+                                            : DefWindowProcA(hwnd, message, wParam, lParam);
+    }
+}
+
+static BOOL register_notifyformat_class(void)
+{
+    static const WCHAR class_w[] = {'P', 'a', 'g', 'e', 'r', ' ', 'n', 'o', 't', 'i', 'f', 'y', 'f',
+                                   'o', 'r', 'm', 'a', 't', ' ', 'c', 'l', 'a', 's', 's', 0};
+    WNDCLASSW cls = {0};
+
+    cls.lpfnWndProc = test_notifyformat_proc;
+    cls.hInstance = GetModuleHandleW(NULL);
+    cls.lpszClassName = class_w;
+    return RegisterClassW(&cls);
+}
+
+static void test_wm_notifyformat(void)
+{
+    static const WCHAR class_w[] = {'P', 'a', 'g', 'e', 'r', ' ', 'n', 'o', 't', 'i', 'f', 'y', 'f',
+                                    'o', 'r', 'm', 'a', 't', ' ', 'c', 'l', 'a', 's', 's', 0};
+    static const WCHAR parent_w[] = {'p', 'a', 'r', 'e', 'n', 't', 0};
+    static const WCHAR pager_w[] = {'p', 'a', 'g', 'e', 'r', 0};
+    static const WCHAR child_w[] = {'c', 'h', 'i', 'l', 'd', 0};
+    static const INT formats[] = {NFR_UNICODE, NFR_ANSI};
+    HWND parent, pager, child;
+    LRESULT ret;
+    INT i;
+
+    ok(register_notifyformat_class(), "Register test class failed, error 0x%08x\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
+    {
+        notify_format = formats[i];
+        parent = CreateWindowW(class_w, parent_w, WS_OVERLAPPED, 0, 0, 100, 100, 0, 0, GetModuleHandleW(0), 0);
+        ok(parent != NULL, "CreateWindow failed\n");
+        pager = CreateWindowW(WC_PAGESCROLLERW, pager_w, WS_CHILD, 0, 0, 100, 100, parent, 0, GetModuleHandleW(0), 0);
+        ok(pager != NULL, "CreateWindow failed\n");
+        child = CreateWindowW(class_w, child_w, WS_CHILD, 0, 0, 100, 100, pager, 0, GetModuleHandleW(0), 0);
+        ok(child != NULL, "CreateWindow failed\n");
+        SendMessageW(pager, PGM_SETCHILD, 0, (LPARAM)child);
+
+        /* Test parent */
+        notify_query_received = FALSE;
+        ret = SendMessageW(pager, WM_NOTIFYFORMAT, (WPARAM)parent, NF_REQUERY);
+        todo_wine_if(notify_format == NFR_ANSI) ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
+        todo_wine ok(notify_query_received, "Didn't receive notify\n");
+
+        /* Send NF_QUERY directly to parent */
+        notify_query_received = FALSE;
+        ret = SendMessageW(parent, WM_NOTIFYFORMAT, (WPARAM)pager, NF_QUERY);
+        ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
+        ok(notify_query_received, "Didn't receive notify\n");
+
+        /* Pager send notifications to its parent regardless of wParam */
+        notify_query_received = FALSE;
+        ret = SendMessageW(pager, WM_NOTIFYFORMAT, (WPARAM)parent_wnd, NF_REQUERY);
+        todo_wine_if(notify_format == NFR_ANSI) ok(ret == notify_format, "Expect %d, got %ld\n", notify_format, ret);
+        todo_wine ok(notify_query_received, "Didn't receive notify\n");
+
+        /* Pager always wants Unicode notifications from children */
+        ret = SendMessageW(child, WM_NOTIFYFORMAT, (WPARAM)pager, NF_REQUERY);
+        ok(ret == NFR_UNICODE, "Expect %d, got %ld\n", NFR_UNICODE, ret);
+        ret = SendMessageW(pager, WM_NOTIFYFORMAT, (WPARAM)child, NF_QUERY);
+        ok(ret == NFR_UNICODE, "Expect %d, got %ld\n", NFR_UNICODE, ret);
+
+        DestroyWindow(parent);
+    }
+
+    UnregisterClassW(class_w, GetModuleHandleW(NULL));
+}
+
 static void init_functions(void)
 {
     HMODULE mod = LoadLibraryA("comctl32.dll");
@@ -357,6 +446,7 @@ START_TEST(pager)
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
 
     test_pager();
+    test_wm_notifyformat();
 
     DestroyWindow(parent_wnd);
 }
