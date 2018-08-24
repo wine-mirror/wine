@@ -1158,7 +1158,7 @@ static unsigned int get_ulong_val(unsigned int val, int vt)
     return val;
 }
 
-static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *value)
+static void write_int_value(msft_typelib_t *typelib, int *out, int vt, int value)
 {
     switch(vt) {
     case VT_I2:
@@ -1176,7 +1176,7 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *v
     case VT_UNKNOWN:
     case VT_DISPATCH:
       {
-        const unsigned int lv = get_ulong_val(*(const unsigned int *)value, vt);
+        const unsigned int lv = get_ulong_val(value, vt);
         if((lv & 0x3ffffff) == lv) {
             *out = 0x80000000;
             *out |= vt << 26;
@@ -1184,33 +1184,31 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *v
         } else {
             int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, 8, 0);
             *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
-            memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], value, 4);
+            memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], &value, 4);
             *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
             *out = offset;
         }
-        return;
-      }
-    case VT_BSTR:
-      {
-        const char *s = (const char *) value;
-        int len = strlen(s), seg_len = (len + 6 + 3) & ~0x3;
-        int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
-        *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
-        memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], &len, sizeof(len));
-        memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], value, len);
-        len += 6;
-        while(len < seg_len) {
-            *((char *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+len]) = 0x57;
-            len++;
-        }
-        *out = offset;
         return;
       }
 
     default:
         warning("can't write value of type %d yet\n", vt);
     }
-    return;
+}
+
+static void write_string_value(msft_typelib_t *typelib, int *out, const char *value)
+{
+    int len = strlen(value), seg_len = (len + 6 + 3) & ~0x3;
+    int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
+    *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = VT_BSTR;
+    memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], &len, sizeof(len));
+    memcpy(&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], value, len);
+    len += 6;
+    while(len < seg_len) {
+        *((char *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+len]) = 0x57;
+        len++;
+    }
+    *out = offset;
 }
 
 static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
@@ -1228,7 +1226,10 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     guidentry.next_hash = -1;
 
     guidoffset = ctl2_alloc_guid(typelib, &guidentry);
-    write_value(typelib, &data_out, vt, value);
+    if(vt == VT_BSTR)
+        write_string_value(typelib, &data_out, value);
+    else
+        write_int_value(typelib, &data_out, vt, *(int*)value);
 
     custoffset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATAGUID, 12, 0);
 
@@ -1499,12 +1500,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
                 {
                   if (vt != VT_BSTR) error("string default value applied to non-string type\n");
                   chat("default value '%s'\n", expr->u.sval);
-                  write_value(typeinfo->typelib, defaultdata, vt, expr->u.sval);
+                  write_string_value(typeinfo->typelib, defaultdata, expr->u.sval);
                 }
                 else
                 {
                   chat("default value %d\n", expr->cval);
-                  write_value(typeinfo->typelib, defaultdata, vt, &expr->cval);
+                  write_int_value(typeinfo->typelib, defaultdata, vt, expr->cval);
                 }
                 break;
               }
@@ -1723,7 +1724,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 
     switch(typeinfo->typekind) {
     case TKIND_ENUM:
-        write_value(typeinfo->typelib, &typedata[4], VT_I4, &var->eval->cval);
+        write_int_value(typeinfo->typelib, &typedata[4], VT_I4, var->eval->cval);
         var_kind = 2; /* VAR_CONST */
         var_type_size += 16; /* sizeof(VARIANT) */
         typeinfo->datawidth = var_datawidth;
