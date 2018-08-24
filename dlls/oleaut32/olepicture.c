@@ -610,6 +610,55 @@ static HRESULT WINAPI OLEPictureImpl_get_Height(IPicture *iface,
   return S_OK;
 }
 
+static void render_masked_bitmap(OLEPictureImpl *This, HDC hdc,
+    LONG x, LONG y, LONG cx, LONG cy, OLE_XPOS_HIMETRIC xSrc, OLE_YPOS_HIMETRIC ySrc,
+    OLE_XSIZE_HIMETRIC cxSrc, OLE_YSIZE_HIMETRIC cySrc, HBITMAP hbmMask, HBITMAP hbmXor)
+{
+    HBITMAP hbmpOld;
+    HDC hdcBmp;
+
+    /* Set a mapping mode that maps bitmap pixels into HIMETRIC units.
+     * NB y-axis gets flipped
+     */
+
+    hdcBmp = CreateCompatibleDC(0);
+    SetMapMode(hdcBmp, MM_ANISOTROPIC);
+    SetWindowOrgEx(hdcBmp, 0, 0, NULL);
+    SetWindowExtEx(hdcBmp, This->himetricWidth, This->himetricHeight, NULL);
+    SetViewportOrgEx(hdcBmp, 0, This->origHeight, NULL);
+    SetViewportExtEx(hdcBmp, This->origWidth, -This->origHeight, NULL);
+
+    if (hbmMask)
+    {
+        HDC hdcMask = CreateCompatibleDC(0);
+        HBITMAP hOldbm = SelectObject(hdcMask, hbmMask);
+
+        hbmpOld = SelectObject(hdcBmp, hbmXor);
+
+        SetMapMode(hdcMask, MM_ANISOTROPIC);
+        SetWindowOrgEx(hdcMask, 0, 0, NULL);
+        SetWindowExtEx(hdcMask, This->himetricWidth, This->himetricHeight, NULL);
+        SetViewportOrgEx(hdcMask, 0, This->origHeight, NULL);
+        SetViewportExtEx(hdcMask, This->origWidth, -This->origHeight, NULL);
+
+        SetBkColor(hdc, RGB(255, 255, 255));
+        SetTextColor(hdc, RGB(0, 0, 0));
+        StretchBlt(hdc, x, y, cx, cy, hdcMask, xSrc, ySrc, cxSrc, cySrc, SRCAND);
+        StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCPAINT);
+
+        SelectObject(hdcMask, hOldbm);
+        DeleteDC(hdcMask);
+    }
+    else
+    {
+        hbmpOld = SelectObject(hdcBmp, hbmXor);
+        StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCCOPY);
+    }
+
+    SelectObject(hdcBmp, hbmpOld);
+    DeleteDC(hdcBmp);
+}
+
 /************************************************************************
  * OLEPictureImpl_Render
  */
@@ -643,48 +692,24 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
     /* nothing to do */
     return S_OK;
   case PICTYPE_BITMAP:
+  {
+    HBITMAP hbmMask, hbmXor;
+
+    if (This->hbmMask)
     {
-      HBITMAP hbmpOld;
-      HDC hdcBmp;
-
-      /* Set a mapping mode that maps bitmap pixels into HIMETRIC units.
-         NB y-axis gets flipped */
-
-      hdcBmp = CreateCompatibleDC(0);
-      SetMapMode(hdcBmp, MM_ANISOTROPIC);
-      SetWindowOrgEx(hdcBmp, 0, 0, NULL);
-      SetWindowExtEx(hdcBmp, This->himetricWidth, This->himetricHeight, NULL);
-      SetViewportOrgEx(hdcBmp, 0, This->origHeight, NULL);
-      SetViewportExtEx(hdcBmp, This->origWidth, -This->origHeight, NULL);
-
-      if (This->hbmMask) {
-	  HDC hdcMask = CreateCompatibleDC(0);
-	  HBITMAP hOldbm = SelectObject(hdcMask, This->hbmMask);
-
-          hbmpOld = SelectObject(hdcBmp, This->hbmXor);
-
-	  SetMapMode(hdcMask, MM_ANISOTROPIC);
-	  SetWindowOrgEx(hdcMask, 0, 0, NULL);
-	  SetWindowExtEx(hdcMask, This->himetricWidth, This->himetricHeight, NULL);
-	  SetViewportOrgEx(hdcMask, 0, This->origHeight, NULL);
-	  SetViewportExtEx(hdcMask, This->origWidth, -This->origHeight, NULL);
-	  
-	  SetBkColor(hdc, RGB(255, 255, 255));    
-	  SetTextColor(hdc, RGB(0, 0, 0));        
-	  StretchBlt(hdc, x, y, cx, cy, hdcMask, xSrc, ySrc, cxSrc, cySrc, SRCAND); 
-	  StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCPAINT);
-
-	  SelectObject(hdcMask, hOldbm);
-	  DeleteDC(hdcMask);
-      } else {
-          hbmpOld = SelectObject(hdcBmp, This->desc.u.bmp.hbitmap);
-	  StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCCOPY);
-      }
-
-      SelectObject(hdcBmp, hbmpOld);
-      DeleteDC(hdcBmp);
+        hbmMask = This->hbmMask;
+        hbmXor = This->hbmXor;
     }
+    else
+    {
+        hbmMask = 0;
+        hbmXor = This->desc.u.bmp.hbitmap;
+    }
+
+    render_masked_bitmap(This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, hbmMask, hbmXor);
     break;
+  }
+
   case PICTYPE_ICON:
     FIXME("Not quite correct implementation of rendering icons...\n");
     DrawIconEx(hdc, x, y, This->desc.u.icon.hicon, cx, cy, 0, NULL, DI_NORMAL);
