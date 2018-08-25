@@ -187,6 +187,29 @@ static void test_init_funcs(void)
     ok(timer2.Header.SignalState == 0, "got: %u\n", timer2.Header.SignalState);
 }
 
+static const WCHAR driver2_path[] = {
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','S','e','r','v','i','c','e','s',
+    '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r','2',0
+};
+
+static void test_load_driver(void)
+{
+    UNICODE_STRING name;
+    NTSTATUS ret;
+
+    RtlInitUnicodeString(&name, driver2_path);
+
+    ret = ZwLoadDriver(&name);
+    ok(!ret, "got %#x\n", ret);
+
+    ret = ZwUnloadDriver(&name);
+    ok(!ret, "got %#x\n", ret);
+}
+
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -213,6 +236,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     test_currentprocess();
     test_mdl_map();
     test_init_funcs();
+    test_load_driver();
 
     /* print process report */
     if (test_input->winetest_debug)
@@ -245,6 +269,23 @@ static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    BOOL *load = irp->AssociatedIrp.SystemBuffer;
+    UNICODE_STRING name;
+
+    if (!load)
+        return STATUS_ACCESS_VIOLATION;
+
+    *info = 0;
+
+    RtlInitUnicodeString(&name, driver2_path);
+    if (*load)
+        return ZwLoadDriver(&name);
+    else
+        return ZwUnloadDriver(&name);
+}
+
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     irp->IoStatus.Status = STATUS_SUCCESS;
@@ -264,6 +305,9 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_MAIN_TEST:
             status = main_test(irp, stack, &irp->IoStatus.Information);
+            break;
+        case IOCTL_WINETEST_LOAD_DRIVER:
+            status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
             break;
         default:
             break;

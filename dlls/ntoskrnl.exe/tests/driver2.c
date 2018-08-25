@@ -1,9 +1,7 @@
 /*
- * ntoskrnl.exe testing framework
+ * Second driver loaded by driver.c
  *
- * Copyright 2015 Sebastian Lackner
- * Copyright 2015 Michael Müller
- * Copyright 2015 Christian Costa
+ * Copyright 2018 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,18 +18,28 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
 
-/* All custom IOCTLs need to have a function value >= 0x800. */
-#define IOCTL_WINETEST_BASIC_IOCTL      CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_WINETEST_MAIN_TEST        CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_WINETEST_LOAD_DRIVER      CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "winioctl.h"
+#include "ddk/wdm.h"
 
-static const char teststr[] = "Wine is not an emulator";
+#include "driver.h"
 
-struct test_input
+static void WINAPI driver_Unload(DRIVER_OBJECT *driver)
 {
-    int running_under_wine;
-    int winetest_report_success;
-    int winetest_debug;
-    WCHAR path[1];
-};
+    DbgPrint("unloading driver2\n");
+}
+
+NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
+{
+    DbgPrint("loading driver2\n");
+
+    driver->DriverUnload = driver_Unload;
+
+    return STATUS_SUCCESS;
+}

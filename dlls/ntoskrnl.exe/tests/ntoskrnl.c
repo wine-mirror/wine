@@ -30,9 +30,6 @@
 
 #include "driver.h"
 
-static const char driver_name[] = "WineTestDriver";
-static const char device_path[] = "\\\\.\\WineTestDriver";
-
 static HANDLE device;
 
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
@@ -80,11 +77,9 @@ static void unload_driver(SC_HANDLE service)
     CloseServiceHandle(service);
 }
 
-static SC_HANDLE load_driver(char *filename)
+static SC_HANDLE load_driver(char *filename, const char *resname, const char *driver_name)
 {
     SC_HANDLE manager, service;
-    SERVICE_STATUS status;
-    BOOL ret;
 
     manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!manager && GetLastError() == ERROR_ACCESS_DENIED)
@@ -94,12 +89,11 @@ static SC_HANDLE load_driver(char *filename)
     }
     ok(!!manager, "OpenSCManager failed\n");
 
-    /* before we start with the actual tests, make sure to terminate
-     * any old wine test drivers. */
+    /* stop any old drivers running under this name */
     service = OpenServiceA(manager, driver_name, SERVICE_ALL_ACCESS);
     if (service) unload_driver(service);
 
-    load_resource("driver.dll", filename);
+    load_resource(resname, filename);
     trace("Trying to load driver %s\n", filename);
 
     service = CreateServiceA(manager, driver_name, driver_name,
@@ -107,7 +101,15 @@ static SC_HANDLE load_driver(char *filename)
                              SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
                              filename, NULL, NULL, NULL, NULL, NULL);
     ok(!!service, "CreateService failed: %u\n", GetLastError());
+
     CloseServiceHandle(manager);
+    return service;
+}
+
+static BOOL start_driver(HANDLE service)
+{
+    SERVICE_STATUS status;
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
     ret = StartServiceA(service, 0, NULL);
@@ -117,8 +119,7 @@ static SC_HANDLE load_driver(char *filename)
         skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
         DeleteService(service);
         CloseServiceHandle(service);
-        DeleteFileA(filename);
-        return NULL;
+        return FALSE;
     }
     ok(ret, "StartService failed: %u\n", GetLastError());
 
@@ -134,10 +135,7 @@ static SC_HANDLE load_driver(char *filename)
     ok(status.dwCurrentState == SERVICE_RUNNING,
        "expected SERVICE_RUNNING, got %d\n", status.dwCurrentState);
 
-    device = CreateFileA(device_path, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
-
-    return service;
+    return TRUE;
 }
 
 static void main_test(void)
@@ -194,22 +192,59 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, teststr), "got '%s'\n", buf);
 }
 
+static void test_load_driver(SC_HANDLE service)
+{
+    SERVICE_STATUS status;
+    BOOL load, res;
+    DWORD sz;
+
+    res = QueryServiceStatus(service, &status);
+    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
+
+    load = TRUE;
+    res = DeviceIoControl(device, IOCTL_WINETEST_LOAD_DRIVER, &load, sizeof(load), NULL, 0, &sz, NULL);
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+
+    res = QueryServiceStatus(service, &status);
+    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_RUNNING, "got state %#x\n", status.dwCurrentState);
+
+    load = FALSE;
+    res = DeviceIoControl(device, IOCTL_WINETEST_LOAD_DRIVER, &load, sizeof(load), NULL, 0, &sz, NULL);
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+
+    res = QueryServiceStatus(service, &status);
+    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
+    ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
+}
+
 START_TEST(ntoskrnl)
 {
-    char filename[MAX_PATH];
-    SC_HANDLE service;
-    BOOL ret;
+    char filename[MAX_PATH], filename2[MAX_PATH];
+    SC_HANDLE service, service2;
 
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
 
-    if (!(service = load_driver(filename)))
+    if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
+    if (!start_driver(service))
+    {
+        DeleteFileA(filename);
+        return;
+    }
+    service2 = load_driver(filename2, "driver2.dll", "WineTestDriver2");
+
+    device = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
     test_basic_ioctl();
     main_test();
+    test_load_driver(service2);
 
+    unload_driver(service2);
     unload_driver(service);
-    ret = DeleteFileA(filename);
-    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ok(DeleteFileA(filename), "DeleteFile failed: %u\n", GetLastError());
+    ok(DeleteFileA(filename2), "DeleteFile failed: %u\n", GetLastError());
 }
