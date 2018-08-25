@@ -1,7 +1,7 @@
 TESTDLL   = kernel32.dll
 IMPORTS   = user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	actctx.c \
 	atom.c \
 	change.c \
@@ -11,6 +11,8 @@ C_SRCS = \
 	debugger.c \
 	directory.c \
 	drive.c \
+	dummy.c \
+	dummy.spec \
 	environ.c \
 	fiber.c \
 	file.c \
@@ -26,6 +28,7 @@ C_SRCS = \
 	process.c \
 	profile.c \
 	resource.c \
+	resource.rc \
 	sync.c \
 	thread.c \
 	time.c \
@@ -34,5 +37,3 @@ C_SRCS = \
 	version.c \
 	virtual.c \
 	volume.c
-
-RC_SRCS = resource.rc

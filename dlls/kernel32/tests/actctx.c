@@ -2598,9 +2598,27 @@ static void delete_manifest_file(const char *filename)
     DeleteFileA(path);
 }
 
+static void extract_resource(const char *name, const char *type, const char *path)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", path, GetLastError());
+
+    res = FindResourceA(NULL, name, type);
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+}
+
 static void test_CreateActCtx(void)
 {
-    CHAR path[MAX_PATH], dir[MAX_PATH];
+    CHAR path[MAX_PATH], dir[MAX_PATH], dll[MAX_PATH];
     ACTCTXA actctx;
     HANDLE handle;
 
@@ -2636,6 +2654,22 @@ todo_wine {
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "got error %d\n", GetLastError());
 }
     if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx(handle);
+
+    /* with specified directory, that does contain dependent assembly */
+    GetTempPathA(ARRAY_SIZE(dir), dir);
+    actctx.lpAssemblyDirectory = dir;
+    handle = pCreateActCtxA(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "got handle %p\n", handle);
+    pReleaseActCtx(handle);
+
+    /* Should still work if we add a dll with the same name, but without manifest */
+    strcpy(dll, dir);
+    strcat(dll, "testdep1.dll");
+    extract_resource("dummy.dll", "TESTDLL", dll);
+    handle = pCreateActCtxA(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX) , "got error %d\n", GetLastError());
+    pReleaseActCtx(handle);
+    DeleteFileA(dll);
 
     delete_manifest_file("main_wndcls.manifest");
     delete_manifest_file("testdep1.manifest");
