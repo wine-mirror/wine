@@ -214,6 +214,7 @@ typedef struct tagDELAYED_ITEM_EDIT
 enum notification_mask
 {
   NOTIFY_MASK_ITEM_CHANGE = 0x1,
+  NOTIFY_MASK_END_LABEL_EDIT = 0x2,
   NOTIFY_MASK_UNMASK_ALL = 0xffffffff
 };
 
@@ -5922,8 +5923,12 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
     dispInfo.item.pszText = same ? NULL : pszText;
     dispInfo.item.cchTextMax = textlenT(dispInfo.item.pszText, isW);
 
+    infoPtr->notify_mask &= ~NOTIFY_MASK_END_LABEL_EDIT;
+
     /* Do we need to update the Item Text */
     res = notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW);
+
+    infoPtr->notify_mask |= NOTIFY_MASK_END_LABEL_EDIT;
 
     infoPtr->nEditLabelItem = -1;
     infoPtr->hwndEdit = 0;
@@ -11914,8 +11919,9 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	}
 	case EN_KILLFOCUS:
 	{
-	    LISTVIEW_CancelEditLabel(infoPtr);
-	    break;
+            if (infoPtr->notify_mask & NOTIFY_MASK_END_LABEL_EDIT)
+                LISTVIEW_CancelEditLabel(infoPtr);
+            break;
 	}
 
 	default:
