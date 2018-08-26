@@ -211,6 +211,12 @@ typedef struct tagDELAYED_ITEM_EDIT
   INT iItem;
 } DELAYED_ITEM_EDIT;
 
+enum notification_mask
+{
+  NOTIFY_MASK_ITEM_CHANGE = 0x1,
+  NOTIFY_MASK_UNMASK_ALL = 0xffffffff
+};
+
 typedef struct tagLISTVIEW_INFO
 {
   /* control window */
@@ -225,7 +231,7 @@ typedef struct tagLISTVIEW_INFO
   /* notification window */
   SHORT notifyFormat;
   HWND hwndNotify;
-  BOOL bDoChangeNotify;         /* send change notification messages? */
+  DWORD notify_mask;
   UINT uCallbackMask;
 
   /* tooltips */
@@ -3507,13 +3513,13 @@ Parameters:
 */
 static void LISTVIEW_ShiftFocus(LISTVIEW_INFO *infoPtr, INT focus, INT item, INT direction)
 {
-    BOOL old_change = infoPtr->bDoChangeNotify;
+    DWORD old_mask = infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE;
 
-    infoPtr->bDoChangeNotify = FALSE;
+    infoPtr->notify_mask &= ~NOTIFY_MASK_ITEM_CHANGE;
     focus = shift_item(infoPtr, focus, item, direction);
     if (focus != infoPtr->nFocusedItem)
         LISTVIEW_SetItemFocus(infoPtr, focus);
-    infoPtr->bDoChangeNotify = old_change;
+    infoPtr->notify_mask |= old_mask;
 }
 
 /**
@@ -3556,8 +3562,8 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     INT nLast = max(infoPtr->nSelectionMark, nItem);
     HWND hwndSelf = infoPtr->hwndSelf;
     NMLVODSTATECHANGE nmlv;
+    DWORD old_mask;
     LVITEMW item;
-    BOOL bOldChange;
     INT i;
 
     /* Temporarily disable change notification
@@ -3565,8 +3571,9 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
      * only one LVN_ODSTATECHANGED notification.
      * See MSDN documentation for LVN_ITEMCHANGED.
      */
-    bOldChange = infoPtr->bDoChangeNotify;
-    if (infoPtr->dwStyle & LVS_OWNERDATA) infoPtr->bDoChangeNotify = FALSE;
+    old_mask = infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE;
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+        infoPtr->notify_mask &= ~NOTIFY_MASK_ITEM_CHANGE;
 
     if (nFirst == -1) nFirst = nItem;
 
@@ -3585,7 +3592,7 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     notify_hdr(infoPtr, LVN_ODSTATECHANGED, (LPNMHDR)&nmlv);
     if (!IsWindow(hwndSelf))
         return FALSE;
-    infoPtr->bDoChangeNotify = bOldChange;
+    infoPtr->notify_mask |= old_mask;
     return TRUE;
 }
 
@@ -3604,9 +3611,9 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     RANGES selection;
+    DWORD old_mask;
     LVITEMW item;
     ITERATOR i;
-    BOOL bOldChange;
 
     if (!(selection = ranges_create(100))) return;
 
@@ -3656,8 +3663,9 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 
     /* disable per item notifications on LVS_OWNERDATA style
        FIXME: single LVN_ODSTATECHANGED should be used */
-    bOldChange = infoPtr->bDoChangeNotify;
-    if (infoPtr->dwStyle & LVS_OWNERDATA) infoPtr->bDoChangeNotify = FALSE;
+    old_mask = infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE;
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+        infoPtr->notify_mask &= ~NOTIFY_MASK_ITEM_CHANGE;
 
     LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
 
@@ -3668,8 +3676,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     /* this will also destroy the selection */
     iterator_destroy(&i);
 
-    infoPtr->bDoChangeNotify = bOldChange;
-    
+    infoPtr->notify_mask |= old_mask;
     LISTVIEW_SetItemFocus(infoPtr, nItem);
 }
 
@@ -4257,7 +4264,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
        and we are _NOT_ virtual (LVS_OWNERDATA), and change notifications
        are enabled. Even nothing really changed we still need to send this,
        in this case uChanged mask is just set to passed item mask. */
-    if(lpItem && !isNew && infoPtr->bDoChangeNotify)
+    if (lpItem && !isNew && (infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE))
     {
       HWND hwndSelf = infoPtr->hwndSelf;
 
@@ -4350,7 +4357,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     /* send LVN_ITEMCHANGED notification */
     if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
-    if (infoPtr->bDoChangeNotify) notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
+    if (infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE)
+        notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
 
     return TRUE;
 }
@@ -8973,7 +8981,7 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
     if (nItem == -1)
     {
         UINT oldstate = 0;
-        BOOL notify;
+        DWORD old_mask;
 
         /* special case optimization for recurring attempt to deselect all */
         if (lvItem.state == 0 && lvItem.stateMask == LVIS_SELECTED && !LISTVIEW_GetSelectedCount(infoPtr))
@@ -8986,10 +8994,10 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
 	/* focus all isn't allowed */
 	if (lvItem.state & lvItem.stateMask & LVIS_FOCUSED) return FALSE;
 
-        notify = infoPtr->bDoChangeNotify;
+        old_mask = infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE;
         if (infoPtr->dwStyle & LVS_OWNERDATA)
         {
-            infoPtr->bDoChangeNotify = FALSE;
+            infoPtr->notify_mask &= ~NOTIFY_MASK_ITEM_CHANGE;
             if (!(lvItem.state & LVIS_SELECTED) && LISTVIEW_GetSelectedCount(infoPtr))
                 oldstate |= LVIS_SELECTED;
             if (infoPtr->nFocusedItem != -1) oldstate |= LVIS_FOCUSED;
@@ -9003,7 +9011,7 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
         {
             NMLISTVIEW nmlv;
 
-            infoPtr->bDoChangeNotify = notify;
+            infoPtr->notify_mask |= old_mask;
 
             nmlv.iItem = -1;
             nmlv.iSubItem = 0;
@@ -9484,7 +9492,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, const CREATESTRUCTW *
   infoPtr->nHotItem = -1;
   infoPtr->redraw = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
-  infoPtr->bDoChangeNotify = TRUE;
+  infoPtr->notify_mask = NOTIFY_MASK_UNMASK_ALL;
   infoPtr->autoSpacing = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
