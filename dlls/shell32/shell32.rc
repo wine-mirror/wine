@@ -563,6 +563,9 @@ IDI_SHELL_LOG_OFF ICON resources/log_off.ico
 /* @makedep: resources/search.ico */
 IDI_SHELL_SEARCH_FOLDER ICON resources/search.ico
 
+/* @makedep: resources/update.ico */
+IDI_SHELL_UPDATE ICON resources/update.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
