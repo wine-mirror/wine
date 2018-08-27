@@ -562,6 +562,10 @@ IDI_SHELL_TRASH_FOLDER ICON resources/trash_file.ico
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_MIXED ICON resources/trash_file.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/delete.ico */
+IDI_SHELL_FILE_OVERWRITE ICON resources/delete.ico
+
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 
