@@ -3181,6 +3181,7 @@ static void dump_get_window_children_from_point_request( const struct get_window
     fprintf( stderr, " parent=%08x", req->parent );
     fprintf( stderr, ", x=%d", req->x );
     fprintf( stderr, ", y=%d", req->y );
+    fprintf( stderr, ", dpi=%d", req->dpi );
 }
 
 static void dump_get_window_children_from_point_reply( const struct get_window_children_from_point_reply *req )

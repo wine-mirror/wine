@@ -260,6 +260,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt )
             req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
+            req->dpi = get_thread_dpi();
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -289,6 +290,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 {
     int i, res;
     HWND ret, *list;
+    POINT win_pt;
 
     if (!hwndScope) hwndScope = GetDesktopWindow();
 
@@ -319,7 +321,8 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
             *hittest = HTCLIENT;
             break;
         }
-        res = SendMessageW( list[i], WM_NCHITTEST, 0, MAKELONG(pt.x,pt.y) );
+        win_pt = point_thread_to_win_dpi( list[i], pt );
+        res = SendMessageW( list[i], WM_NCHITTEST, 0, MAKELPARAM( win_pt.x, win_pt.y ));
         if (res != HTTRANSPARENT)
         {
             *hittest = res;  /* Found the window */

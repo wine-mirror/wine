@@ -2609,6 +2609,7 @@ enum message_type
     user_handle_t  parent;        /* parent window */
     int            x;             /* point in parent coordinates */
     int            y;
+    int            dpi;           /* dpi for the point coordinates */
 @REPLY
     int            count;         /* total count of children */
     VARARG(children,user_handles); /* children handles */
