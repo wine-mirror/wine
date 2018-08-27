@@ -227,6 +227,8 @@
 #define IDI_SHELL_FILES            133
 #define IDI_SHELL_FILE_SEARCH      134
 #define IDI_SHELL_SYSTEM_SEARCH    135
+/* 136 not used on Windows */
+#define IDI_SHELL_OPTIONS          137
 #define IDI_SHELL_REMOTE_PRINTER   140
 #define IDI_SHELL_TO_FILE_PRINTER  141
 #define IDI_SHELL_TRASH_FILE       142
