@@ -17,9 +17,8 @@
  */
 
 #include "config.h"
+#include "ws2tcpip.h"
 #include <stdarg.h>
-
-#include "wine/debug.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -27,6 +26,7 @@
 #include "winhttp.h"
 #include "shlwapi.h"
 
+#include "wine/debug.h"
 #include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);

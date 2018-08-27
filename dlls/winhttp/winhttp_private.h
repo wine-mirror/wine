@@ -27,23 +27,6 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_NETDB_H
-# include <netdb.h>
-#endif
-#if defined(__MINGW32__) || defined (_MSC_VER)
-# include <ws2tcpip.h>
-#else
-# define closesocket close
-# define ioctlsocket ioctl
-#endif
-
 #include "ole2.h"
 #include "sspi.h"
 #include "wincrypt.h"
@@ -301,7 +284,7 @@ DWORD get_last_error( void ) DECLSPEC_HIDDEN;
 void send_callback( object_header_t *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( request_t * ) DECLSPEC_HIDDEN;
 
-BOOL netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
+void netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
 netconn_t *netconn_create( hostdata_t *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;

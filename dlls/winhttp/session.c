@@ -17,9 +17,7 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
-
+#include "ws2tcpip.h"
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -34,9 +32,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#ifndef __MINGW32__
-#define USE_WS_PREFIX
-#endif
 #include "winsock2.h"
 #include "ws2ipdef.h"
 #include "winhttp.h"
@@ -46,6 +41,7 @@
 #include "dispex.h"
 #include "activscp.h"
 
+#include "wine/debug.h"
 #include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
@@ -649,46 +645,8 @@ static WCHAR *blob_to_str( DWORD encoding, CERT_NAME_BLOB *blob )
     return ret;
 }
 
-static BOOL convert_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *addr_storage )
+static BOOL copy_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *addr_storage )
 {
-#ifndef __MINGW32__
-    switch (addr->sa_family)
-    {
-    case AF_INET:
-    {
-        const struct sockaddr_in *addr_unix = (const struct sockaddr_in *)addr;
-        struct WS_sockaddr_in *addr_win = (struct WS_sockaddr_in *)addr_storage;
-        char *p;
-
-        addr_win->sin_family = WS_AF_INET;
-        addr_win->sin_port   = addr_unix->sin_port;
-        memcpy( &addr_win->sin_addr, &addr_unix->sin_addr, 4 );
-        p = (char *)&addr_win->sin_addr + 4;
-        memset( p, 0, sizeof(*addr_storage) - (p - (char *)addr_win) );
-        return TRUE;
-    }
-    case AF_INET6:
-    {
-        const struct sockaddr_in6 *addr_unix = (const struct sockaddr_in6 *)addr;
-        struct WS_sockaddr_in6 *addr_win = (struct WS_sockaddr_in6 *)addr_storage;
-
-        addr_win->sin6_family   = WS_AF_INET6;
-        addr_win->sin6_port     = addr_unix->sin6_port;
-        addr_win->sin6_flowinfo = addr_unix->sin6_flowinfo;
-        memcpy( &addr_win->sin6_addr, &addr_unix->sin6_addr, 16 );
-#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        addr_win->sin6_scope_id = addr_unix->sin6_scope_id;
-#else
-        addr_win->sin6_scope_id = 0;
-#endif
-        memset( addr_win + 1, 0, sizeof(*addr_storage) - sizeof(*addr_win) );
-        return TRUE;
-    }
-    default:
-        ERR("unhandled family %u\n", addr->sa_family);
-        return FALSE;
-    }
-#else
     switch (addr->sa_family)
     {
     case AF_INET:
@@ -711,7 +669,6 @@ static BOOL convert_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *add
         ERR("unhandled family %u\n", addr->sa_family);
         return FALSE;
     }
-#endif
 }
 
 static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
@@ -829,8 +786,8 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             return FALSE;
         }
         if (getsockname( request->netconn->socket, &local, &len )) return FALSE;
-        if (!convert_sockaddr( &local, &info->LocalAddress )) return FALSE;
-        if (!convert_sockaddr( remote, &info->RemoteAddress )) return FALSE;
+        if (!copy_sockaddr( &local, &info->LocalAddress )) return FALSE;
+        if (!copy_sockaddr( remote, &info->RemoteAddress )) return FALSE;
         info->cbSize = sizeof(*info);
         return TRUE;
     }
@@ -1338,11 +1295,7 @@ static BOOL is_domain_suffix( const char *domain, const char *suffix )
 
 static int reverse_lookup( const struct addrinfo *ai, char *hostname, size_t len )
 {
-    int ret = -1;
-#ifdef HAVE_GETNAMEINFO
-    ret = getnameinfo( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
-#endif
-    return ret;
+    return getnameinfo( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
 }
 
 static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
@@ -1434,7 +1387,6 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
     }
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A)
     {
-#ifdef HAVE_GETADDRINFO
         char *fqdn, *domain, *p;
 
         if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return FALSE;
@@ -1476,9 +1428,6 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
         }
         heap_free( domain );
         heap_free( fqdn );
-#else
-    FIXME("getaddrinfo not found at build time\n");
-#endif
     }
     if (!ret)
     {

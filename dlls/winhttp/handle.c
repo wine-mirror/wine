@@ -19,15 +19,14 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
-
+#include "ws2tcpip.h"
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winhttp.h"
 
+#include "wine/debug.h"
 #include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);

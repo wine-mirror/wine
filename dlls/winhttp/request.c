@@ -21,13 +21,9 @@
 
 #define COBJMACROS
 #include "config.h"
-#include "wine/port.h"
-
+#include "ws2tcpip.h"
 #include <stdarg.h>
 #include <assert.h>
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -38,9 +34,8 @@
 #include "schannel.h"
 #include "winhttp.h"
 
-#include "winhttp_private.h"
-
 #include "wine/debug.h"
+#include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
@@ -1480,10 +1475,6 @@ static BOOL secure_proxy_connect( request_t *request )
     }
     return ret;
 }
-
-#ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46
-#endif
 
 static WCHAR *addr_to_str( struct sockaddr_storage *addr )
 {
