@@ -212,6 +212,7 @@
 #define IDI_SHELL_LOG_OFF           45
 #define IDI_SHELL_SEARCH_FOLDER     46
 #define IDI_SHELL_UPDATE            47
+#define IDI_SHELL_RIGHTS            48
 #define IDI_SHELL_REMOTE_PRINTER   140
 #define IDI_SHELL_TO_FILE_PRINTER  141
 #define IDI_SHELL_TRASH_FILE       142
