@@ -592,6 +592,10 @@ IDI_SHELL_UNKNOWN_DRIVE ICON resources/drive.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_FILES ICON resources/document.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/search.ico */
+IDI_SHELL_FILE_SEARCH ICON resources/search.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
