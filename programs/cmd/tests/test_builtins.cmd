@@ -687,6 +687,15 @@ echo '%~xs1'
 goto :eof
 :endEchoFuns
 
+echo ------------ Testing parameter zero ------------
+call :func parm1 parm2
+goto :endParm0
+:func
+echo %~0 %~1
+echo [%0] [%~d0] [%~p0] [%~n0] [%~x0] [%~s0]
+goto :EOF
+:endParm0
+
 echo ------------ Testing variable delayed expansion ------------
 rem NT4 doesn't support this
 echo --- default mode (load-time expansion)

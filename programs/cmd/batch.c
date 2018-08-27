@@ -460,10 +460,19 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
   }
   if (lastModifier == firstModifier) return; /* Invalid syntax */
 
-  /* Extract the parameter to play with */
-  if (*lastModifier == '0') {
+  /* So now, firstModifier points to beginning of modifiers, lastModifier
+     points to the variable just after the modifiers. Process modifiers
+     in a specific order, remembering there could be duplicates           */
+  modifierLen = lastModifier - firstModifier;
+  finaloutput[0] = 0x00;
+
+  /* Extract the parameter to play with
+     Special case param 0 - With %~0 you get the batch label which was called
+     whereas if you start applying other modifiers to it, you get the filename
+     the batch label is in                                                     */
+  if (*lastModifier == '0' && modifierLen > 1) {
     strcpyW(outputparam, context->batchfileW);
-  } else if ((*lastModifier >= '1' && *lastModifier <= '9')) {
+  } else if ((*lastModifier >= '0' && *lastModifier <= '9')) {
     strcpyW(outputparam,
             WCMD_parameter (context -> command,
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
@@ -472,12 +481,6 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
     int foridx = FOR_VAR_IDX(*lastModifier);
     strcpyW(outputparam, forloopcontext.variable[foridx]);
   }
-
-  /* So now, firstModifier points to beginning of modifiers, lastModifier
-     points to the variable just after the modifiers. Process modifiers
-     in a specific order, remembering there could be duplicates           */
-  modifierLen = lastModifier - firstModifier;
-  finaloutput[0] = 0x00;
 
   /* 1. Handle '~' : Strip surrounding quotes */
   if (outputparam[0]=='"' &&
@@ -728,7 +731,7 @@ void WCMD_call (WCHAR *command) {
       li.QuadPart = 0;
       li.u.LowPart = SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_CURRENT);
-      WCMD_batch (param1, command, TRUE, gotoLabel, context->h);
+      WCMD_batch (context->batchfileW, command, TRUE, gotoLabel, context->h);
       SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_BEGIN);
 

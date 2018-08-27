@@ -578,6 +578,9 @@ N
 @drive@
 ''
 '.eh'@or_broken@''
+------------ Testing parameter zero ------------
+:func parm1
+[:func] [@drive@] [@path@] [test] [.cmd] [@drive@@shortpath@test.cmd]
 ------------ Testing variable delayed expansion ------------
 --- default mode (load-time expansion)
 foo
