@@ -534,6 +534,9 @@ IDI_SHELL_FILE_SEARCH ICON resources/search.ico
 /* @makedep: resources/search.ico */
 IDI_SHELL_SYSTEM_SEARCH ICON resources/search.ico
 
+/* @makedep: resources/control.ico */
+IDI_SHELL_OPTIONS ICON resources/control.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
