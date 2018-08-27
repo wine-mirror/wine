@@ -2388,6 +2388,7 @@ static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *
     }
 
     msg->lParam = (LPARAM)rawinput;
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     return TRUE;
 }
 
@@ -2463,6 +2464,7 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
         return FALSE;
     }
     accept_hardware_message( hw_id, remove );
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
 
     if ( remove && msg->message == WM_KEYDOWN )
         if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
@@ -2519,6 +2521,9 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
         accept_hardware_message( hw_id, TRUE );
         return FALSE;
     }
+
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( msg->hwnd ));
 
     /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
@@ -2693,17 +2698,22 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
                                       HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
+    DPI_AWARENESS_CONTEXT context;
+    BOOL ret = FALSE;
+
+    /* hardware messages are always in physical coords */
+    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+
     if (msg->message == WM_INPUT)
-        return process_rawinput_message( msg, msg_data );
-
-    if (is_keyboard_message( msg->message ))
-        return process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
-
-    if (is_mouse_message( msg->message ))
-        return process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
-
-    ERR( "unknown message type %x\n", msg->message );
-    return FALSE;
+        ret = process_rawinput_message( msg, msg_data );
+    else if (is_keyboard_message( msg->message ))
+        ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
+    else if (is_mouse_message( msg->message ))
+        ret = process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
+    else
+        ERR( "unknown message type %x\n", msg->message );
+    SetThreadDpiAwarenessContext( context );
+    return ret;
 }
 
 
@@ -2938,7 +2948,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     continue;  /* ignore it */
 	    }
             *msg = info.msg;
-            thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+            msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
+            thread_info->GetMessagePosVal = MAKELONG( msg->pt.x, msg->pt.y );
             thread_info->GetMessageTimeVal = info.msg.time;
             thread_info->GetMessageExtraInfoVal = 0;
             HeapFree( GetProcessHeap(), 0, buffer );

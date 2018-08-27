@@ -3235,6 +3235,22 @@ POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
 }
 
 /**********************************************************************
+ *              point_win_to_phys_dpi
+ */
+POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
+{
+    return map_dpi_point( pt, GetDpiForWindow( hwnd ), get_win_monitor_dpi( hwnd ) );
+}
+
+/**********************************************************************
+ *              point_phys_to_win_dpi
+ */
+POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
+{
+    return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), GetDpiForWindow( hwnd ));
+}
+
+/**********************************************************************
  *              point_win_to_thread_dpi
  */
 POINT point_win_to_thread_dpi( HWND hwnd, POINT pt )
@@ -3475,13 +3491,11 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
  */
 BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 {
-    UINT dpi = GetDpiForWindow( hwnd );
     RECT rect;
 
-    GetWindowRect( hwnd, &rect );
+    if (!GetWindowRect( hwnd, &rect )) return FALSE;
     if (pt->x < rect.left || pt->y < rect.top || pt->x > rect.right || pt->y > rect.bottom) return FALSE;
-    pt->x = MulDiv( pt->x, system_dpi, dpi );
-    pt->y = MulDiv( pt->y, system_dpi, dpi );
+    *pt = point_win_to_phys_dpi( hwnd, *pt );
     return TRUE;
 }
 
@@ -3491,18 +3505,18 @@ BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
 {
     DPI_AWARENESS_CONTEXT context;
-    UINT dpi = GetDpiForWindow( hwnd );
     RECT rect;
+    BOOL ret = FALSE;
 
-    /* get window rect in physical coords */
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    GetWindowRect( hwnd, &rect );
+    if (GetWindowRect( hwnd, &rect ) &&
+        pt->x >= rect.left && pt->y >= rect.top && pt->x <= rect.right && pt->y <= rect.bottom)
+    {
+        *pt = point_phys_to_win_dpi( hwnd, *pt );
+        ret = TRUE;
+    }
     SetThreadDpiAwarenessContext( context );
-
-    if (pt->x < rect.left || pt->y < rect.top || pt->x > rect.right || pt->y > rect.bottom) return FALSE;
-    pt->x = MulDiv( pt->x, dpi, system_dpi );
-    pt->y = MulDiv( pt->y, dpi, system_dpi );
-    return TRUE;
+    return ret;
 }
 
 struct monitor_enum_info
