@@ -506,6 +506,18 @@ IDI_SHELL_RIGHTS ICON resources/lock.ico
 /* @makedep: resources/shut_down.ico */
 IDI_SHELL_CONFIRM_SHUTDOWN ICON resources/shut_down.ico
 
+/* @makedep: resources/blank.ico */
+IDI_SHELL_BLANK1 ICON resources/blank.ico
+
+/* @makedep: resources/blank.ico */
+IDI_SHELL_BLANK2 ICON resources/blank.ico
+
+/* @makedep: resources/blank.ico */
+IDI_SHELL_BLANK3 ICON resources/blank.ico
+
+/* @makedep: resources/blank.ico */
+IDI_SHELL_BLANK4 ICON resources/blank.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
