@@ -273,7 +273,7 @@ extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                                  LRESULT *result, BOOL unicode, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 
 extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basename_offset,
-        BOOL register_class) DECLSPEC_HIDDEN;
+        WCHAR *combined, BOOL register_class) DECLSPEC_HIDDEN;
 
 /* message spy definitions */
 
