@@ -234,7 +234,8 @@ netconn_t *netconn_create( hostdata_t *host, const struct sockaddr_storage *sock
     if (!ret)
     {
         WARN("unable to connect to host (%u)\n", get_last_error());
-        netconn_close( conn );
+        closesocket( conn->socket );
+        heap_free( conn );
         return NULL;
     }
     return conn;
