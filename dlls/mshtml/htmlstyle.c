@@ -619,7 +619,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 
 static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_attr(This->nsstyle, sid, p, 0);
+    return get_nsstyle_attr(This->nsstyle, sid, p, style_tbl[sid].flags);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)
@@ -2291,7 +2291,7 @@ static HRESULT WINAPI HTMLStyle_get_whiteSpace(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_WHITE_SPACE, p, 0);
+    return get_style_property(This, STYLEID_WHITE_SPACE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_top(IHTMLStyle *iface, VARIANT v)
@@ -2403,7 +2403,7 @@ static HRESULT WINAPI HTMLStyle_get_pageBreakBefore(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_PAGE_BREAK_BEFORE, p, 0);
+    return get_style_property(This, STYLEID_PAGE_BREAK_BEFORE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pageBreakAfter(IHTMLStyle *iface, BSTR v)
@@ -2421,7 +2421,7 @@ static HRESULT WINAPI HTMLStyle_get_pageBreakAfter(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_PAGE_BREAK_AFTER, p, 0);
+    return get_style_property(This, STYLEID_PAGE_BREAK_AFTER, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
@@ -2663,7 +2663,7 @@ static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_CLIP, p, ATTR_REMOVE_COMMA);
+    return get_style_property(This, STYLEID_CLIP, p);
 }
 
 static void set_opacity(HTMLStyle *This, const WCHAR *val)
@@ -3221,7 +3221,7 @@ static HRESULT WINAPI HTMLStyle2_get_tableLayout(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_TABLE_LAYOUT, p, 0);
+    return get_style_property(This, STYLEID_TABLE_LAYOUT, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_borderCollapse(IHTMLStyle2 *iface, BSTR v)
@@ -3253,7 +3253,7 @@ static HRESULT WINAPI HTMLStyle2_get_direction(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_DIRECTION, p, 0);
+    return get_style_property(This, STYLEID_DIRECTION, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_behavior(IHTMLStyle2 *iface, BSTR v)
@@ -3306,7 +3306,7 @@ static HRESULT WINAPI HTMLStyle2_get_position(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_POSITION, p, 0);
+    return get_style_property(This, STYLEID_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_unicodeBidi(IHTMLStyle2 *iface, BSTR v)
@@ -3640,7 +3640,7 @@ static HRESULT WINAPI HTMLStyle2_get_overflowX(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW_X, p, 0);
+    return get_style_property(This, STYLEID_OVERFLOW_X, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_overflowY(IHTMLStyle2 *iface, BSTR v)
@@ -3658,7 +3658,7 @@ static HRESULT WINAPI HTMLStyle2_get_overflowY(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW_Y, p, 0);
+    return get_style_property(This, STYLEID_OVERFLOW_Y, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_accelerator(IHTMLStyle2 *iface, BSTR v)
@@ -3876,7 +3876,7 @@ static HRESULT WINAPI HTMLStyle3_get_wordWrap(IHTMLStyle3 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_WORD_WRAP, p, 0);
+    return get_style_property(This, STYLEID_WORD_WRAP, p);
 }
 
 static HRESULT WINAPI HTMLStyle3_put_textUnderlinePosition(IHTMLStyle3 *iface, BSTR v)
@@ -4462,7 +4462,7 @@ static HRESULT WINAPI HTMLStyle6_get_outline(IHTMLStyle6 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_OUTLINE, p, ATTR_NO_NULL);
+    return get_style_property(This, STYLEID_OUTLINE, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_outlineWidth(IHTMLStyle6 *iface, VARIANT v)
@@ -4522,7 +4522,7 @@ static HRESULT WINAPI HTMLStyle6_get_boxSizing(IHTMLStyle6 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BOX_SIZING, p, 0);
+    return get_style_property(This, STYLEID_BOX_SIZING, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_boxSpacing(IHTMLStyle6 *iface, BSTR v)
