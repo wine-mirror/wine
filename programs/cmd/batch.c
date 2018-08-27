@@ -399,6 +399,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
   WCHAR  finaloutput[MAX_PATH];
   WCHAR  fullfilename[MAX_PATH];
   WCHAR  thisoutput[MAX_PATH];
+  WCHAR  *filepart       = NULL;
   WCHAR  *pos            = *start+1;
   WCHAR  *firstModifier  = pos;
   WCHAR  *lastModifier   = NULL;
@@ -522,7 +523,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
   /* After this, we need full information on the file,
     which is valid not to exist.  */
   if (!skipFileParsing) {
-    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, NULL) == 0) {
+    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, &filepart) == 0) {
       exists = FALSE;
       fullfilename[0] = 0x00;
     } else {
@@ -598,8 +599,16 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
     /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
     if (memchrW(firstModifier, 's', modifierLen) != NULL) {
       if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
-      /* Don't flag as doneModifier - %~s on its own is processed later */
-      GetShortPathNameW(outputparam, outputparam, ARRAY_SIZE(outputparam));
+
+      /* Convert fullfilename's path to a short path - Save filename away as
+         only path is valid, name may not exist which causes GetShortPathName
+         to fail if it is provided                                            */
+      if (filepart) {
+        strcpyW(thisoutput, filepart);
+        *filepart = 0x00;
+        GetShortPathNameW(fullfilename, fullfilename, ARRAY_SIZE(fullfilename));
+        strcatW(fullfilename, thisoutput);
+      }
     }
 
     /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
@@ -673,7 +682,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
           memchrW(firstModifier, 's', modifierLen) != NULL) {
         doneModifier = TRUE;
         if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
-        strcatW(finaloutput, outputparam);
+        strcatW(finaloutput, fullfilename);
       }
     }
   }

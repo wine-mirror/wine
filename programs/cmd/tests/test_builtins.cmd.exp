@@ -530,9 +530,9 @@ N
 '.OOL'
 '.TABC'
 ''
-@todo_wine@'@drive@@shortpath@R S'@or_broken@''
-@todo_wine@'@drive@@shortpath@T'@or_broken@''
-@todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
+'@drive@@shortpath@R S'@or_broken@''
+'@drive@@shortpath@T'@or_broken@''
+'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
 ''@or_broken@'%~ai'
 ''@or_broken@'%~ai'
 '--a------'@or_broken@'--a--------'@or_broken@'--a--c---'@or_broken@'%~ai'
@@ -566,9 +566,9 @@ N
 '.OOL'
 '.TABC'
 ''
-@todo_wine@'@drive@@shortpath@R S'@or_broken@''
-@todo_wine@'@drive@@shortpath@T'@or_broken@''
-@todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
+'@drive@@shortpath@R S'@or_broken@''
+'@drive@@shortpath@T'@or_broken@''
+'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
 @drive@@path@
 @drive@@path@
 @drive@
