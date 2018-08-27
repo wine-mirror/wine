@@ -207,6 +207,12 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+#define ATTR_FIX_PX         0x0001
+#define ATTR_FIX_URL        0x0002
+#define ATTR_STR_TO_INT     0x0004
+#define ATTR_HEX_INT        0x0008
+#define ATTR_REMOVE_COMMA   0x0010
+#define ATTR_NO_NULL        0x0020
 
 static const WCHAR pxW[] = {'p','x',0};
 
@@ -549,7 +555,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     return S_OK;
 }
 
-HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p, DWORD flags)
+HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p)
 {
     nsAString str_value;
     const PRUnichar *value;
@@ -560,18 +566,19 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    hres = nsstyle_to_bstr(value, flags, p);
+    hres = nsstyle_to_bstr(value, style_tbl[sid].flags, p);
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
     return hres;
 }
 
-HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
+HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p)
 {
     nsAString str_value;
     const PRUnichar *value;
     BOOL set = FALSE;
+    unsigned flags;
     HRESULT hres = S_OK;
 
     flags = style_tbl[sid].flags;
@@ -619,12 +626,12 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 
 static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_attr(This->nsstyle, sid, p, style_tbl[sid].flags);
+    return get_nsstyle_property(This->nsstyle, sid, p);
 }
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_attr_var(This->nsstyle, sid, v, style_tbl[sid].flags);
+    return get_nsstyle_property_var(This->nsstyle, sid, v);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)
@@ -4773,7 +4780,7 @@ HRESULT get_elem_style(HTMLElement *elem, styleid_t styleid, BSTR *ret)
     if(FAILED(hres))
         return hres;
 
-    hres = get_nsstyle_attr(style, styleid, ret, 0);
+    hres = get_nsstyle_property(style, styleid, ret);
     nsIDOMCSSStyleDeclaration_Release(style);
     return hres;
 }

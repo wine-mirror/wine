@@ -123,16 +123,8 @@ typedef enum {
 
 HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
 
-HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*,DWORD) DECLSPEC_HIDDEN;
-
-HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags) DECLSPEC_HIDDEN;
+HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration*,styleid_t,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT get_elem_style(HTMLElement*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT set_elem_style(HTMLElement*,styleid_t,const WCHAR*) DECLSPEC_HIDDEN;
-
-#define ATTR_FIX_PX         0x0001
-#define ATTR_FIX_URL        0x0002
-#define ATTR_STR_TO_INT     0x0004
-#define ATTR_HEX_INT        0x0008
-#define ATTR_REMOVE_COMMA   0x0010
-#define ATTR_NO_NULL        0x0020
