@@ -556,6 +556,9 @@ IDI_SHELL_REMOTE_FOLDER ICON resources/folder.ico
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES ICON resources/favorites.ico
 
+/* @makedep: resources/log_off.ico */
+IDI_SHELL_LOG_OFF ICON resources/log_off.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
