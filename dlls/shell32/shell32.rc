@@ -553,11 +553,17 @@ IDI_SHELL_TREE ICON resources/menu.ico
 /* @makedep: resources/folder.ico */
 IDI_SHELL_REMOTE_FOLDER ICON resources/folder.ico
 
+/* @makedep: resources/favorites.ico */
+IDI_SHELL_FAVORITES ICON resources/favorites.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
+
+/* @makedep: resources/favorites.ico */
+IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
@@ -565,9 +571,8 @@ IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 
-/* FIXME: Following resource is not yet added */
-/* @makedep: resources/mydocs.ico */
-IDI_SHELL_FAVORITES ICON resources/mydocs.ico
+/* @makedep: resources/favorites.ico */
+IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
 
 /* @makedep: resources/idb_tb_large.bmp */
 IDB_TB_LARGE_LIGHT BITMAP resources/idb_tb_large.bmp
