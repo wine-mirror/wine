@@ -218,6 +218,10 @@
 #define IDI_SHELL_UPDATE            47
 #define IDI_SHELL_RIGHTS            48
 #define IDI_SHELL_CONFIRM_SHUTDOWN  49
+#define IDI_SHELL_BLANK1            50
+#define IDI_SHELL_BLANK2            51
+#define IDI_SHELL_BLANK3            52
+#define IDI_SHELL_BLANK4            53
 #define IDI_SHELL_REMOTE_PRINTER   140
 #define IDI_SHELL_TO_FILE_PRINTER  141
 #define IDI_SHELL_TRASH_FILE       142
