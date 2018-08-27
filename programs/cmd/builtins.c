@@ -2861,7 +2861,14 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
   }
   else if (!lstrcmpiW (condition, existW)) {
     WIN32_FIND_DATAW fd;
-    HANDLE hff = FindFirstFileW(WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE), &fd);
+    HANDLE hff;
+    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
+    int    len = strlenW(param);
+
+    /* FindFirstFile does not like a directory path ending in '\', append a '.' */
+    if (len && param[len-1] == '\\') strcatW(param, dotW);
+
+    hff = FindFirstFileW(param, &fd);
     test = (hff != INVALID_HANDLE_VALUE );
     if (test) FindClose(hff);
 
