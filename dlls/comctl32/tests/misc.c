@@ -345,6 +345,9 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
 
     if (GetClassInfoA( 0, name, &wc ))
     {
+        char buff[64];
+        HWND hwnd;
+
 todo_wine_if(strcmp(name, "Button") &&
                 strcmp(name, "ComboBox") &&
                 strcmp(name, "Edit") &&
@@ -356,6 +359,12 @@ todo_wine_if(strcmp(name, "Button") &&
         ok( !(wc.style & ~style), "System class %s has extra bits %x (%08x/%08x)\n",
             name, wc.style & ~style, wc.style, style );
         ok( !wc.hInstance, "System class %s has hInstance %p\n", name, wc.hInstance );
+
+        hwnd = CreateWindowA(name, 0, 0, 0, 0, 0, 0, 0, NULL, GetModuleHandleA(NULL), 0);
+        ok( hwnd != NULL, "Failed to create window for class %s.\n", name );
+        GetClassNameA(hwnd, buff, ARRAY_SIZE(buff));
+        ok( !strcmp(name, buff), "Unexpected class name %s, expected %s.\n", buff, name );
+        DestroyWindow(hwnd);
     }
     else
         ok( !must_exist, "System class %s does not exist\n", name );
