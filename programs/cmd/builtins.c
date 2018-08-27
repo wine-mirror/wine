@@ -1544,8 +1544,8 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   CMD_LIST *curPosition = *cmdList;
   int myDepth = (*cmdList)->bracketDepth;
 
-  WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d)\n", cmdList, wine_dbgstr_w(firstcmd),
-             executecmds);
+  WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d), isIF(%d)\n", cmdList,
+                wine_dbgstr_w(firstcmd), executecmds, isIF);
 
   /* Skip leading whitespace between condition and the command */
   while (firstcmd && *firstcmd && (*firstcmd==' ' || *firstcmd=='\t')) firstcmd++;
@@ -1592,7 +1592,8 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
       } else if ((*cmdList)->bracketDepth > myDepth) {
         if (processThese) {
           *cmdList = WCMD_process_commands(*cmdList, TRUE, FALSE);
-          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
+        } else {
+          WINE_TRACE("Skipping command %p due to stack depth\n", *cmdList);
         }
         if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
@@ -1626,9 +1627,16 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
               processThese = TRUE;
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+        /* If we were in an IF statement and we didnt find an else and yet we get back to
+           the same bracket depth as the IF, then the IF statement is over. This is required
+           to handle nested ifs properly                                                     */
+        } else if (isIF && (*cmdList)->bracketDepth == myDepth) {
+          WINE_TRACE("Found end of this nested IF statement, ending this if\n");
+          break;
         } else if (!processThese) {
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-          WINE_TRACE("Ignore the next command as well (next = %p)\n", *cmdList);
+          WINE_TRACE("Skipping this command, as in not process mode (next = %p)\n", *cmdList);
         } else {
           WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
           break;

@@ -179,6 +179,8 @@ if exist foo (type foo) else echo not supported
 echo --- redirections within IF statements
 if 1==1 echo foo1>bar
 type bar & del bar
+if 1==1 echo foo2>>bar
+type bar & del bar
 echo -----
 if 1==1 (echo foo2>bar) else echo baz2>bar
 type bar & del bar
@@ -924,6 +926,13 @@ if %elseIF% == 1 (
   echo else if seems to work
 ) else (
   echo else if seems to be broken
+)
+if "x" == "a" (
+  echo broken1
+) else (
+  echo expected1
+  if "y" == "b" echo broken2
+  echo expected post-embedded if
 )
 echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity

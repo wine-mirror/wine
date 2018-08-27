@@ -205,7 +205,8 @@ food21
 @todo_wine@foo7@space@@space@@or_broken@not supported@space@
 @todo_wine@foo@or_broken@not supported
 --- redirections within IF statements
-@todo_wine@foo1
+foo1
+foo2
 -----
 foo2
 foo3
@@ -430,7 +431,7 @@ p1
 q1
 @todo_wine@---
 --- chain else (if false)
-@todo_wine@j3
+j3
 ---
 k3
 l3
@@ -661,6 +662,8 @@ if seems not to detect /c as parameter
 else if seems to work
 else if seems to work
 else if seems to work
+expected1
+expected post-embedded if
 --- case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
