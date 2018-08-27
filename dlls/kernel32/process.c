@@ -3937,7 +3937,6 @@ BOOL WINAPI CmdBatNotification( BOOL bBatchRunning )
     return FALSE;
 }
 
-
 /***********************************************************************
  *           RegisterApplicationRestart       (KERNEL32.@)
  */
@@ -4005,6 +4004,15 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
     FIXME("%p, %p, %d, %d: stub\n", callback, param, pingint, flags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return E_FAIL;
+}
+
+/***********************************************************************
+ *           GetApplicationRestartSettings       (KERNEL32.@)
+ */
+HRESULT WINAPI GetApplicationRestartSettings(HANDLE process, WCHAR *cmdline, DWORD *size, DWORD *flags)
+{
+    FIXME("%p, %p, %p, %p)\n", process, cmdline, size, flags);
+    return E_NOTIMPL;
 }
 
 /**********************************************************************
