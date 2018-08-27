@@ -518,6 +518,10 @@ IDI_SHELL_BLANK3 ICON resources/blank.ico
 /* @makedep: resources/blank.ico */
 IDI_SHELL_BLANK4 ICON resources/blank.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/drive.ico */
+IDI_SHELL_UNKNOWN_DRIVE ICON resources/drive.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
