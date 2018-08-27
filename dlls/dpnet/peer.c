@@ -526,9 +526,17 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_SetCaps(IDirectPlay8Peer *iface, cons
 static HRESULT WINAPI IDirectPlay8PeerImpl_SetSPCaps(IDirectPlay8Peer *iface, const GUID * const pguidSP,
         const DPN_SP_CAPS * const pdpspCaps, const DWORD dwFlags )
 {
-    FIXME("(%p)->(%p,%p,%x): stub\n", iface, pguidSP, pdpspCaps, dwFlags);
+    IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
 
-    return DPNERR_GENERIC;
+    TRACE("(%p)->(%p,%p,%x): stub\n", iface, pguidSP, pdpspCaps, dwFlags);
+
+    if(!This->msghandler || pdpspCaps->dwSize != sizeof(DPN_SP_CAPS))
+        return DPNERR_INVALIDPARAM;
+
+    /* Only dwSystemBufferSize is set by this call. */
+    This->spcaps.dwSystemBufferSize = pdpspCaps->dwSystemBufferSize;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8PeerImpl_GetSPCaps(IDirectPlay8Peer *iface, const GUID * const pguidSP,

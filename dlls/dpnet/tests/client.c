@@ -561,6 +561,9 @@ static void test_init_dp_peer(void)
     memset(&caps, 0, sizeof(DPN_SP_CAPS));
     caps.dwSize = sizeof(DPN_SP_CAPS);
 
+    hr = IDirectPlay8Peer_SetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_INVALIDPARAM, "SetSPCaps failed with %x\n", hr);
+
     hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
     ok(hr == DPNERR_UNINITIALIZED, "GetSPCaps failed with %x\n", hr);
 
@@ -815,6 +818,28 @@ static void test_get_sp_caps_peer(void)
     ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
     ok(caps.dwSystemBufferSize == 0x10000 || broken(caps.dwSystemBufferSize == 0x2000 /* before Win8 */),
        "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
+
+    caps.dwNumThreads = 2;
+    caps.dwDefaultEnumCount = 3;
+    caps.dwDefaultEnumRetryInterval = 1400;
+    caps.dwDefaultEnumTimeout = 1400;
+    caps.dwMaxEnumPayloadSize = 900;
+    caps.dwBuffersPerThread = 2;
+    caps.dwSystemBufferSize = 0x0ffff;
+    hr = IDirectPlay8Peer_SetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "SetSPCaps failed with %x\n", hr);
+
+    hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
+
+    ok(caps.dwSize == sizeof(DPN_SP_CAPS), "got %d\n", caps.dwSize);
+    ok(caps.dwNumThreads >= 3, "got %d\n", caps.dwNumThreads);
+    ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
+    ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
+    ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
+    ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
+    ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
+    ok(caps.dwSystemBufferSize == 0x0ffff, "expected 0x0ffff, got 0x%x\n", caps.dwSystemBufferSize);
 }
 
 static void test_player_info_peer(void)
