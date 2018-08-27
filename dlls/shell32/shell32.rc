@@ -493,6 +493,10 @@ IDI_SHELL_FAVORITES ICON resources/favorites.ico
 /* @makedep: resources/log_off.ico */
 IDI_SHELL_LOG_OFF ICON resources/log_off.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/search.ico */
+IDI_SHELL_SEARCH_FOLDER ICON resources/search.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
