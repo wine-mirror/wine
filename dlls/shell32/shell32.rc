@@ -545,6 +545,10 @@ IDI_SHELL_PRINTERS_FOLDER_XP ICON resources/folder.ico
 /* @makedep: resources/printer.ico */
 IDI_SHELL_ADD_PRINTER ICON resources/printer.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_REMOTE_PRINTER ICON resources/printer.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_TRASH_FILE ICON resources/trash_file.ico
 
