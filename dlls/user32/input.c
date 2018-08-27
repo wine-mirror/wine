@@ -141,6 +141,7 @@ static void update_mouse_coords( INPUT *input )
 
     if (input->u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE)
     {
+        DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
         if (input->u.mi.dwFlags & MOUSEEVENTF_VIRTUALDESK)
         {
             RECT rc = get_virtual_screen_rect();
@@ -152,6 +153,7 @@ static void update_mouse_coords( INPUT *input )
             input->u.mi.dx = (input->u.mi.dx * GetSystemMetrics( SM_CXSCREEN )) >> 16;
             input->u.mi.dy = (input->u.mi.dy * GetSystemMetrics( SM_CYSCREEN )) >> 16;
         }
+        SetThreadDpiAwarenessContext( context );
     }
     else
     {
