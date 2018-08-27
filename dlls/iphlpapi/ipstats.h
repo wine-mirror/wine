@@ -34,5 +34,6 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry) DECLSPEC_HIDDE
 
 DWORD build_tcp_table(TCP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 DWORD build_udp_table(UDP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
+DWORD build_udp6_table(UDP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 
 #endif /* ndef WINE_IPSTATS_H_ */

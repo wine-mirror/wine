@@ -151,6 +151,9 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
+#define USE_WS_PREFIX
+#include "winsock2.h"
+#include "ws2ipdef.h"
 #include "ifenum.h"
 #include "ipstats.h"
 #include "iphlpapi.h"
@@ -2561,6 +2564,247 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
     }
     else HeapFree( heap, flags, table );
     if (size) *size = get_udp_table_sizes( class, count, NULL );
+    TRACE( "returning ret %u table %p\n", ret, table );
+    return ret;
+}
+
+static DWORD get_udp6_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
+{
+    DWORD table_size;
+
+    switch (class)
+    {
+    case UDP_TABLE_BASIC:
+    {
+        table_size = FIELD_OFFSET(MIB_UDP6TABLE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDP6ROW);
+        break;
+    }
+    case UDP_TABLE_OWNER_PID:
+    {
+        table_size = FIELD_OFFSET(MIB_UDP6TABLE_OWNER_PID, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDP6ROW_OWNER_PID);
+        break;
+    }
+    case UDP_TABLE_OWNER_MODULE:
+    {
+        table_size = FIELD_OFFSET(MIB_UDP6TABLE_OWNER_MODULE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_UDP6ROW_OWNER_MODULE);
+        break;
+    }
+    default:
+        ERR("unhandled class %u\n", class);
+        return 0;
+    }
+    return table_size;
+}
+
+static MIB_UDP6TABLE *append_udp6_row( UDP_TABLE_CLASS class, HANDLE heap, DWORD flags,
+                                       MIB_UDP6TABLE *table, DWORD *count,
+                                       const MIB_UDP6ROW_OWNER_MODULE *row, DWORD row_size )
+{
+    if (table->dwNumEntries >= *count)
+    {
+        MIB_UDP6TABLE *new_table;
+        DWORD new_count = table->dwNumEntries * 2, new_table_size;
+
+        new_table_size = get_udp6_table_sizes( class, new_count, NULL );
+        if (!(new_table = HeapReAlloc( heap, flags, table, new_table_size )))
+        {
+            HeapFree( heap, 0, table );
+            return NULL;
+        }
+        *count = new_count;
+        table = new_table;
+    }
+    memcpy( (char *)table->table + (table->dwNumEntries * row_size), row, row_size );
+    table->dwNumEntries++;
+    return table;
+}
+
+static int compare_udp6_rows(const void *a, const void *b)
+{
+    const MIB_UDP6ROW *rowA = a;
+    const MIB_UDP6ROW *rowB = b;
+    int ret;
+
+    if ((ret = memcmp(&rowA->dwLocalAddr, &rowB->dwLocalAddr, sizeof(rowA->dwLocalAddr)) != 0)) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    return rowA->dwLocalPort - rowB->dwLocalPort;
+}
+
+struct ipv6_addr_scope
+{
+    IN6_ADDR addr;
+    DWORD scope;
+};
+
+static struct ipv6_addr_scope *get_ipv6_addr_scope_table(unsigned int *size)
+{
+    struct ipv6_addr_scope *table = NULL;
+    unsigned int table_size = 0;
+
+    if (!(table = HeapAlloc( GetProcessHeap(), 0, sizeof(table[0]) )))
+        return NULL;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+        char buf[512], *ptr;
+
+        if (!(fp = fopen( "/proc/net/if_inet6", "r" )))
+            goto failed;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            WORD a[8];
+            DWORD scope;
+            struct ipv6_addr_scope *new_table;
+            struct ipv6_addr_scope *entry;
+            unsigned int i;
+
+            if (sscanf( ptr, "%4hx%4hx%4hx%4hx%4hx%4hx%4hx%4hx %*s %*s %x",
+                &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7], &scope ) != 9)
+                continue;
+
+            table_size++;
+            if (!(new_table = HeapReAlloc( GetProcessHeap(), 0, table, table_size * sizeof(table[0]) )))
+            {
+                fclose(fp);
+                goto failed;
+            }
+
+            table = new_table;
+            entry = &table[table_size - 1];
+
+            i = 0;
+            while (i < 8)
+            {
+                entry->addr.u.Word[i] = htons(a[i]);
+                i++;
+            }
+
+            entry->scope = htons(scope);
+        }
+    }
+#else
+    FIXME( "not implemented\n" );
+    goto failed;
+#endif
+
+    *size = table_size;
+    return table;
+
+failed:
+    HeapFree( GetProcessHeap(), 0, table );
+    return NULL;
+}
+
+static DWORD find_ipv6_addr_scope(const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size)
+{
+    const BYTE multicast_scope_mask = 0x0F;
+    const BYTE multicast_scope_shift = 0;
+    unsigned int i = 0;
+
+    if (WS_IN6_IS_ADDR_UNSPECIFIED(addr))
+        return 0;
+
+    if (WS_IN6_IS_ADDR_MULTICAST(addr))
+        return htons((addr->u.Byte[1] & multicast_scope_mask) >> multicast_scope_shift);
+
+    if (!table)
+        return -1;
+
+    while (i < size)
+    {
+        if (memcmp(&table[i].addr, addr, sizeof(table[i].addr)) == 0)
+            return table[i].scope;
+        i++;
+    }
+
+    return -1;
+}
+
+DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
+                        DWORD *size )
+{
+    MIB_UDP6TABLE *table;
+    MIB_UDP6ROW_OWNER_MODULE row;
+    DWORD ret = NO_ERROR, count = 16, table_size, row_size;
+
+    if (!(table_size = get_udp6_table_sizes( class, count, &row_size )))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, table_size )))
+         return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+    memset( &row, 0, sizeof(row) );
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen( "/proc/net/udp6", "r" )))
+        {
+            char buf[512], *ptr;
+            struct pid_map *map = NULL;
+            unsigned int num_entries = 0;
+            struct ipv6_addr_scope *addr_scopes;
+            unsigned int addr_scopes_size = 0;
+            unsigned int dummy;
+            int inode;
+
+            addr_scopes = get_ipv6_addr_scope_table(&addr_scopes_size);
+
+            if (class >= UDP_TABLE_OWNER_PID) map = get_pid_map( &num_entries );
+
+            /* skip header line */
+            ptr = fgets( buf, sizeof(buf), fp );
+            while ((ptr = fgets( buf, sizeof(buf), fp )))
+            {
+                DWORD in6_addr32[4];
+
+                if (sscanf( ptr, "%u: %8x%8x%8x%8x:%x %*s %*s %*s %*s %*s %*s %*s %d", &dummy,
+                    &in6_addr32[0], &in6_addr32[1], &in6_addr32[2], &in6_addr32[3],
+                    &row.dwLocalPort, &inode ) != 7)
+                    continue;
+                memcpy(&row.ucLocalAddr, in6_addr32, sizeof(row.ucLocalAddr));
+                row.dwLocalScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucLocalAddr, addr_scopes, addr_scopes_size);
+                row.dwLocalPort = htons( row.dwLocalPort );
+
+                if (class >= UDP_TABLE_OWNER_PID)
+                    row.dwOwningPid = find_owning_pid( map, num_entries, inode );
+                if (class >= UDP_TABLE_OWNER_MODULE)
+                {
+                    row.liCreateTimestamp.QuadPart = 0; /* FIXME */
+                    row.u.dwFlags = 0;
+                    memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
+                }
+                if (!(table = append_udp6_row( class, heap, flags, table, &count, &row, row_size )))
+                    break;
+            }
+            HeapFree( GetProcessHeap(), 0, map );
+            if (addr_scopes)
+                HeapFree( GetProcessHeap(), 0, addr_scopes );
+            fclose( fp );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
+#endif
+
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret)
+    {
+        if (order && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, row_size, compare_udp6_rows );
+        *tablep = table;
+    }
+    else HeapFree( heap, flags, table );
+    if (size) *size = get_udp6_table_sizes( class, count, NULL );
     TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
 }
