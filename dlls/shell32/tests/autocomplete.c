@@ -141,7 +141,7 @@ if (0)
 static IAutoComplete *test_init(void)
 {
     HRESULT r;
-    IAutoComplete *ac;
+    IAutoComplete *ac, *ac2;
     IUnknown *acSource;
     LONG_PTR user_data;
 
@@ -175,6 +175,15 @@ static IAutoComplete *test_init(void)
 
     user_data = GetWindowLongPtrA(hEdit, GWLP_USERDATA);
     ok(user_data == 0, "Expected the edit control user data to be zero\n");
+
+    /* bind a different object to the same edit control */
+    r = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER,
+                         &IID_IAutoComplete, (LPVOID*)&ac2);
+    ok(r == S_OK, "no IID_IAutoComplete (0x%08x)\n", r);
+
+    r = IAutoComplete_Init(ac2, hEdit, acSource, NULL, NULL);
+    ok(r == S_OK, "Init returned 0x%08x\n", r);
+    IAutoComplete_Release(ac2);
 
     IUnknown_Release(acSource);
 
