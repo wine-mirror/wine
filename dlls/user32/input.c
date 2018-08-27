@@ -240,6 +240,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 {
     BOOL ret;
     DWORD last_change;
+    UINT dpi;
 
     if (!pt) return FALSE;
 
@@ -256,6 +257,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 
     /* query new position from graphics driver if we haven't updated recently */
     if (ret && GetTickCount() - last_change > 100) ret = USER_Driver->pGetCursorPos( pt );
+    if (ret && (dpi = get_thread_dpi()))
+    {
+        DPI_AWARENESS_CONTEXT context;
+        context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+        *pt = map_dpi_point( *pt, get_monitor_dpi( MonitorFromPoint( *pt, MONITOR_DEFAULTTOPRIMARY )), dpi );
+        SetThreadDpiAwarenessContext( context );
+    }
     return ret;
 }
 
@@ -289,14 +297,19 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
 {
+    POINT pt = { x, y };
     BOOL ret;
     INT prev_x, prev_y, new_x, new_y;
+    UINT dpi;
+
+    if ((dpi = get_thread_dpi()))
+        pt = map_dpi_point( pt, dpi, get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY )));
 
     SERVER_START_REQ( set_cursor )
     {
         req->flags = SET_CURSOR_POS;
-        req->x     = x;
-        req->y     = y;
+        req->x     = pt.x;
+        req->y     = pt.y;
         if ((ret = !wine_server_call( req )))
         {
             prev_x = reply->prev_x;
