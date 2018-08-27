@@ -74,6 +74,7 @@ static DWORD (WINAPI *pGetTcpStatisticsEx)(PMIB_TCPSTATS,DWORD);
 static DWORD (WINAPI *pGetUdpStatisticsEx)(PMIB_UDPSTATS,DWORD);
 static DWORD (WINAPI *pGetTcpTable)(PMIB_TCPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdpTable)(PMIB_UDPTABLE,PDWORD,BOOL);
+static DWORD (WINAPI *pGetUdp6Table)(PMIB_UDP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetPerAdapterInfo)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
 static DWORD (WINAPI *pGetAdaptersAddresses)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
 static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
@@ -129,6 +130,7 @@ static void loadIPHlpApi(void)
     pGetUdpStatisticsEx = (void *)GetProcAddress(hLibrary, "GetUdpStatisticsEx");
     pGetTcpTable = (void *)GetProcAddress(hLibrary, "GetTcpTable");
     pGetUdpTable = (void *)GetProcAddress(hLibrary, "GetUdpTable");
+    pGetUdp6Table = (void *)GetProcAddress(hLibrary, "GetUdp6Table");
     pGetPerAdapterInfo = (void *)GetProcAddress(hLibrary, "GetPerAdapterInfo");
     pGetAdaptersAddresses = (void *)GetProcAddress(hLibrary, "GetAdaptersAddresses");
     pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
@@ -168,6 +170,23 @@ static const char *ntoa( DWORD ip )
 
     ip = htonl(ip);
     sprintf( buffer, "%u.%u.%u.%u", (ip >> 24) & 0xff, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff );
+    return buffer;
+}
+
+static const char *ntoa6( IN6_ADDR *ip )
+{
+    static char buffer[40];
+    char *buf = buffer;
+    unsigned short *p = ip->u.Word;
+    unsigned int i = 0;
+
+    while (i < 8)
+    {
+        if (i > 0)
+            *buf++ = ':';
+        buf += sprintf( buf, "%x", htons(p[i]) );
+        i++;
+    }
     return buffer;
 }
 
@@ -2220,6 +2239,41 @@ static void test_ConvertLengthToIpv4Mask(void)
     ok( mask == INADDR_NONE, "ConvertLengthToIpv4Mask mask value 0x%08x, expected 0x%08x\n", mask, INADDR_NONE );
 }
 
+static void test_GetUdp6Table(void)
+{
+  if (pGetUdp6Table) {
+    DWORD apiReturn;
+    ULONG dwSize = 0;
+
+    apiReturn = pGetUdp6Table(NULL, &dwSize, FALSE);
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetUdp6Table is not supported\n");
+      return;
+    }
+    ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
+     "GetUdp6Table(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
+     apiReturn);
+    if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
+      PMIB_UDP6TABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
+
+      apiReturn = pGetUdp6Table(buf, &dwSize, FALSE);
+      ok(apiReturn == NO_ERROR,
+       "GetUdp6Table(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
+       apiReturn);
+
+      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      {
+          DWORD i;
+          trace( "UDP6 table: %u entries\n", buf->dwNumEntries );
+          for (i = 0; i < buf->dwNumEntries; i++)
+              trace( "%u: %s%%%u:%u\n",
+                     i, ntoa6(&buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalScopeId), ntohs(buf->table[i].dwLocalPort) );
+      }
+      HeapFree(GetProcessHeap(), 0, buf);
+    }
+  }
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2248,6 +2302,7 @@ START_TEST(iphlpapi)
     test_GetUnicastIpAddressEntry();
     test_GetUnicastIpAddressTable();
     test_ConvertLengthToIpv4Mask();
+    test_GetUdp6Table();
     freeIPHlpApi();
   }
 }
