@@ -549,6 +549,7 @@ SOURCES = \
 	rstloc.idl \
 	rstnot.idl \
 	rtutils.h \
+	sal.h \
 	sapi.idl \
 	sapiddk.idl \
 	scarderr.h \
