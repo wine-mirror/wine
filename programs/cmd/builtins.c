@@ -2073,7 +2073,7 @@ static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd
   static const WCHAR redirOutW[]  = {'>','%','s','\0'};
   static const WCHAR cmdW[]       = {'C','M','D','\0'};
   static const WCHAR cmdslashcW[] = {'C','M','D','.','E','X','E',' ',
-                                     '/','C',' ','"','%','s','"','\0'};
+                                     '/','C',' ','%','s','\0'};
 
   /* Remove leading and trailing character */
   if ((iscmd && (itemstr[0] == '`' && usebackq)) ||

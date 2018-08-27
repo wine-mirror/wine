@@ -1724,9 +1724,11 @@ if "%CD%"=="" goto :SkipFORFcmdNT4
 for /f %%i in ('echo.Passed1') do echo %%i
 for /f "usebackq" %%i in (`echo.Passed2`) do echo %%i
 for /f usebackq %%i in (`echo.Passed3`) do echo %%i
+for /f "usebackq" %%i in (`"c:\windows\system32\cmd.exe" /C echo Passed4`) do echo %%i
+for /f "usebackq" %%i in (`""c:\windows\system32\cmd.exe" /C echo Passed5"`) do echo %%i
 goto :ContinueFORF
 :SkipFORFcmdNT4
-for /l %%i in (1,1,3) do echo Missing functionality - Broken%%i
+for /l %%i in (1,1,5) do echo Missing functionality - Broken%%i
 :ContinueFORF
 rem FIXME: Rest not testable right now in wine: not implemented and would need
 rem preliminary grep-like program implementation (e.g. like findstr or fc) even
