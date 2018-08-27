@@ -144,19 +144,14 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
     if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE) && !drag &&
         cocoa_window != macdrv_thread_data()->capture_window)
     {
-        RECT rect;
-
         /* update the wine server Z-order */
-        SetRect(&rect, x, y, x + 1, y + 1);
-        MapWindowPoints(0, top_level_hwnd, (POINT *)&rect, 2);
-
         SERVER_START_REQ(update_window_zorder)
         {
             req->window      = wine_server_user_handle(top_level_hwnd);
-            req->rect.left   = rect.left;
-            req->rect.top    = rect.top;
-            req->rect.right  = rect.right;
-            req->rect.bottom = rect.bottom;
+            req->rect.left   = x;
+            req->rect.top    = y;
+            req->rect.right  = x + 1;
+            req->rect.bottom = y + 1;
             wine_server_call(req);
         }
         SERVER_END_REQ;

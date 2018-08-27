@@ -491,7 +491,6 @@ static int process_events( DWORD mask )
             {
                 HWND capture = get_capture_window();
 
-                context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
                 if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
                     TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
                            event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
@@ -509,7 +508,6 @@ static int process_events( DWORD mask )
                     RECT rect;
                     SetRect( &rect, event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
                              event->data.motion.input.u.mi.dx + 1, event->data.motion.input.u.mi.dy + 1 );
-                    MapWindowPoints( 0, event->data.motion.hwnd, (POINT *)&rect, 2 );
 
                     SERVER_START_REQ( update_window_zorder )
                     {
@@ -523,7 +521,6 @@ static int process_events( DWORD mask )
                     SERVER_END_REQ;
                 }
                 __wine_send_input( capture ? capture : event->data.motion.hwnd, &event->data.motion.input );
-                SetThreadDpiAwarenessContext( context );
             }
             break;
 

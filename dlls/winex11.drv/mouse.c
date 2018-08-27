@@ -627,7 +627,6 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     {
         RECT rect;
         SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
-        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
 
         SERVER_START_REQ( update_window_zorder )
         {

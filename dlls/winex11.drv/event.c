@@ -858,7 +858,7 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
 static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 {
     XExposeEvent *event = &xev->xexpose;
-    RECT rect;
+    RECT rect, abs_rect;
     POINT pos;
     struct x11drv_win_data *data;
     HRGN surface_region = 0;
@@ -901,14 +901,16 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
     {
         if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             mirror_rect( &data->client_rect, &rect );
+        abs_rect = rect;
+        MapWindowPoints( hwnd, 0, (POINT *)&abs_rect, 2 );
 
         SERVER_START_REQ( update_window_zorder )
         {
             req->window      = wine_server_user_handle( hwnd );
-            req->rect.left   = rect.left;
-            req->rect.top    = rect.top;
-            req->rect.right  = rect.right;
-            req->rect.bottom = rect.bottom;
+            req->rect.left   = abs_rect.left;
+            req->rect.top    = abs_rect.top;
+            req->rect.right  = abs_rect.right;
+            req->rect.bottom = abs_rect.bottom;
             wine_server_call( req );
         }
         SERVER_END_REQ;

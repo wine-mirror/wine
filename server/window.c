@@ -2652,8 +2652,6 @@ DECL_HANDLER(update_window_zorder)
     struct window *ptr, *win = get_window( req->window );
 
     if (!win || !win->parent || !is_visible( win )) return;  /* nothing to do */
-    if (win->ex_style & WS_EX_LAYOUTRTL) mirror_rect( &win->client_rect, &rect );
-    offset_rect( &rect, win->client_rect.left, win->client_rect.top );
 
     LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
     {
@@ -2661,10 +2659,11 @@ DECL_HANDLER(update_window_zorder)
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         if (ptr->is_layered && (ptr->layered_flags & LWA_COLORKEY)) continue;
-        if (!intersect_rect( &tmp, &ptr->visible_rect, &rect )) continue;
+        tmp = rect;
+        map_dpi_rect( win, &tmp, win->parent->dpi, win->dpi );
+        if (!intersect_rect( &tmp, &tmp, &ptr->visible_rect )) continue;
         if (ptr->win_region)
         {
-            tmp = rect;
             offset_rect( &tmp, -ptr->window_rect.left, -ptr->window_rect.top );
             if (!rect_in_region( ptr->win_region, &tmp )) continue;
         }
