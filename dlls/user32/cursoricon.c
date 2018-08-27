@@ -2116,12 +2116,22 @@ HCURSOR WINAPI GetCursor(void)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
 {
+    UINT dpi;
     BOOL ret;
     RECT new_rect;
 
     TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
 
-    if (rect && (rect->left > rect->right || rect->top > rect->bottom)) return FALSE;
+    if (rect)
+    {
+        if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
+        if ((dpi = get_thread_dpi()))
+        {
+            new_rect = map_dpi_rect( *rect, dpi,
+                                     get_monitor_dpi( MonitorFromRect( rect, MONITOR_DEFAULTTOPRIMARY )));
+            rect = &new_rect;
+        }
+    }
 
     SERVER_START_REQ( set_cursor )
     {
@@ -2155,6 +2165,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
 {
+    DPI_AWARENESS_CONTEXT context;
+    UINT dpi;
     BOOL ret;
 
     if (!rect) return FALSE;
@@ -2171,6 +2183,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
         }
     }
     SERVER_END_REQ;
+
+    if (ret && (dpi = get_thread_dpi()))
+    {
+        context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+        *rect = map_dpi_rect( *rect, get_monitor_dpi( MonitorFromRect( rect, MONITOR_DEFAULTTOPRIMARY )), dpi );
+        SetThreadDpiAwarenessContext( context );
+    }
     return ret;
 }
 
