@@ -35,176 +35,176 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const WCHAR attrBackground[] =
+static const WCHAR backgroundW[] =
     {'b','a','c','k','g','r','o','u','n','d',0};
-static const WCHAR attrBackgroundAttachment[] =
+static const WCHAR background_attachmentW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','a','t','t','a','c','h','m','e','n','t',0};
-static const WCHAR attrBackgroundColor[] =
+static const WCHAR background_colorW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
-static const WCHAR attrBackgroundImage[] =
+static const WCHAR background_imageW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','i','m','a','g','e',0};
-static const WCHAR attrBackgroundPosition[] =
+static const WCHAR background_positionW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','p','o','s','i','t','i','o','n',0};
-static const WCHAR attrBackgroundPositionX[] =
+static const WCHAR background_position_xW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','p','o','s','i','t','i','o','n','-','x',0};
-static const WCHAR attrBackgroundPositionY[] =
+static const WCHAR background_position_yW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','p','o','s','i','t','i','o','n','-','y',0};
-static const WCHAR attrBackgroundRepeat[] =
+static const WCHAR background_repeatW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','r','e','p','e','a','t',0};
-static const WCHAR attrBorder[] =
+static const WCHAR borderW[] =
     {'b','o','r','d','e','r',0};
-static const WCHAR attrBorderBottom[] =
+static const WCHAR border_bottomW[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m',0};
-static const WCHAR attrBorderBottomColor[] =
+static const WCHAR border_bottom_colorW[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','c','o','l','o','r',0};
-static const WCHAR attrBorderBottomStyle[] =
+static const WCHAR border_bottom_styleW[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','s','t','y','l','e',0};
-static const WCHAR attrBorderBottomWidth[] =
+static const WCHAR border_bottom_widthW[] =
     {'b','o','r','d','e','r','-','b','o','t','t','o','m','-','w','i','d','t','h',0};
-static const WCHAR attrBorderColor[] =
+static const WCHAR border_colorW[] =
     {'b','o','r','d','e','r','-','c','o','l','o','r',0};
-static const WCHAR attrBorderLeft[] =
+static const WCHAR border_leftW[] =
     {'b','o','r','d','e','r','-','l','e','f','t',0};
-static const WCHAR attrBorderLeftColor[] =
+static const WCHAR border_left_colorW[] =
     {'b','o','r','d','e','r','-','l','e','f','t','-','c','o','l','o','r',0};
-static const WCHAR attrBorderLeftStyle[] =
+static const WCHAR border_left_styleW[] =
     {'b','o','r','d','e','r','-','l','e','f','t','-','s','t','y','l','e',0};
-static const WCHAR attrBorderLeftWidth[] =
+static const WCHAR border_left_widthW[] =
     {'b','o','r','d','e','r','-','l','e','f','t','-','w','i','d','t','h',0};
-static const WCHAR attrBorderRight[] =
+static const WCHAR border_rightW[] =
     {'b','o','r','d','e','r','-','r','i','g','h','t',0};
-static const WCHAR attrBorderRightColor[] =
+static const WCHAR border_right_colorW[] =
     {'b','o','r','d','e','r','-','r','i','g','h','t','-','c','o','l','o','r',0};
-static const WCHAR attrBorderRightStyle[] =
+static const WCHAR border_right_styleW[] =
     {'b','o','r','d','e','r','-','r','i','g','h','t','-','s','t','y','l','e',0};
-static const WCHAR attrBorderRightWidth[] =
+static const WCHAR border_right_widthW[] =
     {'b','o','r','d','e','r','-','r','i','g','h','t','-','w','i','d','t','h',0};
-static const WCHAR attrBorderTop[] =
+static const WCHAR border_topW[] =
     {'b','o','r','d','e','r','-','t','o','p',0};
-static const WCHAR attrBorderTopColor[] =
+static const WCHAR border_top_colorW[] =
     {'b','o','r','d','e','r','-','t','o','p','-','c','o','l','o','r',0};
-static const WCHAR attrBorderStyle[] =
+static const WCHAR border_styleW[] =
     {'b','o','r','d','e','r','-','s','t','y','l','e',0};
-static const WCHAR attrBorderTopStyle[] =
+static const WCHAR border_top_styleW[] =
     {'b','o','r','d','e','r','-','t','o','p','-','s','t','y','l','e',0};
-static const WCHAR attrBorderTopWidth[] =
+static const WCHAR border_top_widthW[] =
     {'b','o','r','d','e','r','-','t','o','p','-','w','i','d','t','h',0};
-static const WCHAR attrBorderWidth[] =
+static const WCHAR border_widthW[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
-static const WCHAR attrBottom[] =
+static const WCHAR bottomW[] =
     {'b','o','t','t','o','m',0};
 /* FIXME: Use unprefixed version (requires Gecko changes). */
-static const WCHAR attrBoxSizing[] =
+static const WCHAR box_sizingW[] =
     {'-','m','o','z','-','b','o','x','-','s','i','z','i','n','g',0};
-static const WCHAR attrClear[] =
+static const WCHAR clearW[] =
     {'c','l','e','a','r',0};
-static const WCHAR attrClip[] =
+static const WCHAR clipW[] =
     {'c','l','i','p',0};
-static const WCHAR attrColor[] =
+static const WCHAR colorW[] =
     {'c','o','l','o','r',0};
-static const WCHAR attrCursor[] =
+static const WCHAR cursorW[] =
     {'c','u','r','s','o','r',0};
-static const WCHAR attrDirection[] =
+static const WCHAR directionW[] =
     {'d','i','r','e','c','t','i','o','n',0};
-static const WCHAR attrDisplay[] =
+static const WCHAR displayW[] =
     {'d','i','s','p','l','a','y',0};
-static const WCHAR attrFilter[] =
+static const WCHAR filterW[] =
     {'f','i','l','e','t','e','r',0};
-static const WCHAR attrFloat[] =
+static const WCHAR floatW[] =
     {'f','l','o','a','t',0};
-static const WCHAR attrFontFamily[] =
+static const WCHAR font_familyW[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
-static const WCHAR attrFontSize[] =
+static const WCHAR font_sizeW[] =
     {'f','o','n','t','-','s','i','z','e',0};
-static const WCHAR attrFontStyle[] =
+static const WCHAR font_styleW[] =
     {'f','o','n','t','-','s','t','y','l','e',0};
-static const WCHAR attrFontVariant[] =
+static const WCHAR font_variantW[] =
     {'f','o','n','t','-','v','a','r','i','a','n','t',0};
-static const WCHAR attrFontWeight[] =
+static const WCHAR font_weightW[] =
     {'f','o','n','t','-','w','e','i','g','h','t',0};
-static const WCHAR attrHeight[] =
+static const WCHAR heightW[] =
     {'h','e','i','g','h','t',0};
-static const WCHAR attrLeft[] =
+static const WCHAR leftW[] =
     {'l','e','f','t',0};
-static const WCHAR attrLetterSpacing[] =
+static const WCHAR letter_spacingW[] =
     {'l','e','t','t','e','r','-','s','p','a','c','i','n','g',0};
-static const WCHAR attrLineHeight[] =
+static const WCHAR line_heightW[] =
     {'l','i','n','e','-','h','e','i','g','h','t',0};
-static const WCHAR attrListStyle[] =
+static const WCHAR list_styleW[] =
     {'l','i','s','t','-','s','t','y','l','e',0};
-static const WCHAR attrListStyleType[] =
+static const WCHAR list_style_typeW[] =
     {'l','i','s','t','-','s','t','y','l','e','-','t','y','p','e',0};
-static const WCHAR attrListStylePosition[] =
+static const WCHAR list_style_positionW[] =
     {'l','i','s','t','-','s','t','y','l','e','-','p','o','s','i','t','i','o','n',0};
-static const WCHAR attrMargin[] =
+static const WCHAR marginW[] =
     {'m','a','r','g','i','n',0};
-static const WCHAR attrMarginBottom[] =
+static const WCHAR margin_bottomW[] =
     {'m','a','r','g','i','n','-','b','o','t','t','o','m',0};
-static const WCHAR attrMarginLeft[] =
+static const WCHAR margin_leftW[] =
     {'m','a','r','g','i','n','-','l','e','f','t',0};
-static const WCHAR attrMarginRight[] =
+static const WCHAR margin_rightW[] =
     {'m','a','r','g','i','n','-','r','i','g','h','t',0};
-static const WCHAR attrMarginTop[] =
+static const WCHAR margin_topW[] =
     {'m','a','r','g','i','n','-','t','o','p',0};
-static const WCHAR attrMaxHeight[] =
+static const WCHAR max_heightW[] =
     {'m','a','x','-','h','e','i','g','h','t',0};
-static const WCHAR attrMaxWidth[] =
+static const WCHAR max_widthW[] =
     {'m','a','x','-','w','i','d','t','h',0};
-static const WCHAR attrMinHeight[] =
+static const WCHAR min_heightW[] =
     {'m','i','n','-','h','e','i','g','h','t',0};
-static const WCHAR attrMinWidth[] =
+static const WCHAR min_widthW[] =
     {'m','i','n','-','w','i','d','t','h',0};
-static const WCHAR attrOutline[] =
+static const WCHAR outlineW[] =
     {'o','u','t','l','i','n','e',0};
-static const WCHAR attrOverflow[] =
+static const WCHAR overflowW[] =
     {'o','v','e','r','f','l','o','w',0};
-static const WCHAR attrOverflowX[] =
+static const WCHAR overflow_xW[] =
     {'o','v','e','r','f','l','o','w','-','x',0};
-static const WCHAR attrOverflowY[] =
+static const WCHAR overflow_yW[] =
     {'o','v','e','r','f','l','o','w','-','y',0};
-static const WCHAR attrPadding[] =
+static const WCHAR paddingW[] =
     {'p','a','d','d','i','n','g',0};
-static const WCHAR attrPaddingBottom[] =
+static const WCHAR padding_bottomW[] =
     {'p','a','d','d','i','n','g','-','b','o','t','t','o','m',0};
-static const WCHAR attrPaddingLeft[] =
+static const WCHAR padding_leftW[] =
     {'p','a','d','d','i','n','g','-','l','e','f','t',0};
-static const WCHAR attrPaddingRight[] =
+static const WCHAR padding_rightW[] =
     {'p','a','d','d','i','n','g','-','r','i','g','h','t',0};
-static const WCHAR attrPaddingTop[] =
+static const WCHAR padding_topW[] =
     {'p','a','d','d','i','n','g','-','t','o','p',0};
-static const WCHAR attrPageBreakAfter[] =
+static const WCHAR page_break_afterW[] =
     {'p','a','g','e','-','b','r','e','a','k','-','a','f','t','e','r',0};
-static const WCHAR attrPageBreakBefore[] =
+static const WCHAR page_break_beforeW[] =
     {'p','a','g','e','-','b','r','e','a','k','-','b','e','f','o','r','e',0};
-static const WCHAR attrPosition[] =
+static const WCHAR positionW[] =
     {'p','o','s','i','t','i','o','n',0};
-static const WCHAR attrRight[] =
+static const WCHAR rightW[] =
     {'r','i','g','h','t',0};
-static const WCHAR attrTableLayout[] =
+static const WCHAR table_layoutW[] =
     {'t','a','b','l','e','-','l','a','y','o','u','t',0};
-static const WCHAR attrTextAlign[] =
+static const WCHAR text_alignW[] =
     {'t','e','x','t','-','a','l','i','g','n',0};
-static const WCHAR attrTextDecoration[] =
+static const WCHAR text_decorationW[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
-static const WCHAR attrTextIndent[] =
+static const WCHAR text_indentW[] =
     {'t','e','x','t','-','i','n','d','e','n','t',0};
-static const WCHAR attrTextTransform[] =
+static const WCHAR text_transformW[] =
     {'t','e','x','t','-','t','r','a','n','s','f','o','r','m',0};
-static const WCHAR attrTop[] =
+static const WCHAR topW[] =
     {'t','o','p',0};
-static const WCHAR attrVerticalAlign[] =
+static const WCHAR vertical_alignW[] =
     {'v','e','r','t','i','c','a','l','-','a','l','i','g','n',0};
-static const WCHAR attrVisibility[] =
+static const WCHAR visibilityW[] =
     {'v','i','s','i','b','i','l','i','t','y',0};
-static const WCHAR attrWhiteSpace[] =
+static const WCHAR white_spaceW[] =
     {'w','h','i','t','e','-','s','p','a','c','e',0};
-static const WCHAR attrWidth[] =
+static const WCHAR widthW[] =
     {'w','i','d','t','h',0};
-static const WCHAR attrWordSpacing[] =
+static const WCHAR word_spacingW[] =
     {'w','o','r','d','-','s','p','a','c','i','n','g',0};
-static const WCHAR attrWordWrap[] =
+static const WCHAR word_wrapW[] =
     {'w','o','r','d','-','w','r','a','p',0};
-static const WCHAR attrZIndex[] =
+static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
 
@@ -213,94 +213,95 @@ static const WCHAR pxW[] = {'p','x',0};
 typedef struct {
     const WCHAR *name;
     DISPID dispid;
+    unsigned flags;
 } style_tbl_entry_t;
 
 static const style_tbl_entry_t style_tbl[] = {
-    {attrBackground,           DISPID_IHTMLSTYLE_BACKGROUND},
-    {attrBackgroundAttachment, DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT},
-    {attrBackgroundColor,      DISPID_IHTMLSTYLE_BACKGROUNDCOLOR},
-    {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
-    {attrBackgroundPosition,   DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
-    {attrBackgroundPositionX,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX},
-    {attrBackgroundPositionY,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY},
-    {attrBackgroundRepeat,     DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
-    {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
-    {attrBorderBottom,         DISPID_IHTMLSTYLE_BORDERBOTTOM},
-    {attrBorderBottomColor,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR},
-    {attrBorderBottomStyle,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
-    {attrBorderBottomWidth,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH},
-    {attrBorderColor,          DISPID_IHTMLSTYLE_BORDERCOLOR},
-    {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
-    {attrBorderLeftColor,      DISPID_IHTMLSTYLE_BORDERLEFTCOLOR},
-    {attrBorderLeftStyle,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
-    {attrBorderLeftWidth,      DISPID_IHTMLSTYLE_BORDERLEFTWIDTH},
-    {attrBorderRight,          DISPID_IHTMLSTYLE_BORDERRIGHT},
-    {attrBorderRightColor,     DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR},
-    {attrBorderRightStyle,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE},
-    {attrBorderRightWidth,     DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH},
-    {attrBorderStyle,          DISPID_IHTMLSTYLE_BORDERSTYLE},
-    {attrBorderTop,            DISPID_IHTMLSTYLE_BORDERTOP},
-    {attrBorderTopColor,       DISPID_IHTMLSTYLE_BORDERTOPCOLOR},
-    {attrBorderTopStyle,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE},
-    {attrBorderTopWidth,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
-    {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
-    {attrBottom,               DISPID_IHTMLSTYLE2_BOTTOM},
-    {attrBoxSizing,            DISPID_IHTMLSTYLE6_BOXSIZING},
-    {attrClear,                DISPID_IHTMLSTYLE_CLEAR},
-    {attrClip,                 DISPID_IHTMLSTYLE_CLIP},
-    {attrColor,                DISPID_IHTMLSTYLE_COLOR},
-    {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
-    {attrDirection,            DISPID_IHTMLSTYLE2_DIRECTION},
-    {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
-    {attrFilter,               DISPID_IHTMLSTYLE_FILTER},
-    {attrFloat,                DISPID_IHTMLSTYLE_STYLEFLOAT},
-    {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
-    {attrFontSize,             DISPID_IHTMLSTYLE_FONTSIZE},
-    {attrFontStyle,            DISPID_IHTMLSTYLE_FONTSTYLE},
-    {attrFontVariant,          DISPID_IHTMLSTYLE_FONTVARIANT},
-    {attrFontWeight,           DISPID_IHTMLSTYLE_FONTWEIGHT},
-    {attrHeight,               DISPID_IHTMLSTYLE_HEIGHT},
-    {attrLeft,                 DISPID_IHTMLSTYLE_LEFT},
-    {attrLetterSpacing,        DISPID_IHTMLSTYLE_LETTERSPACING},
-    {attrLineHeight,           DISPID_IHTMLSTYLE_LINEHEIGHT},
-    {attrListStyle,            DISPID_IHTMLSTYLE_LISTSTYLE},
-    {attrListStylePosition,    DISPID_IHTMLSTYLE_LISTSTYLEPOSITION},
-    {attrListStyleType,        DISPID_IHTMLSTYLE_LISTSTYLETYPE},
-    {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
-    {attrMarginBottom,         DISPID_IHTMLSTYLE_MARGINBOTTOM},
-    {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
-    {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
-    {attrMarginTop,            DISPID_IHTMLSTYLE_MARGINTOP},
-    {attrMaxHeight,            DISPID_IHTMLSTYLE5_MAXHEIGHT},
-    {attrMaxWidth,             DISPID_IHTMLSTYLE5_MAXWIDTH},
-    {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
-    {attrMinWidth,             DISPID_IHTMLSTYLE5_MINWIDTH},
-    {attrOutline,              DISPID_IHTMLSTYLE6_OUTLINE},
-    {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
-    {attrOverflowX,            DISPID_IHTMLSTYLE2_OVERFLOWX},
-    {attrOverflowY,            DISPID_IHTMLSTYLE2_OVERFLOWY},
-    {attrPadding,              DISPID_IHTMLSTYLE_PADDING},
-    {attrPaddingBottom,        DISPID_IHTMLSTYLE_PADDINGBOTTOM},
-    {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
-    {attrPaddingRight,         DISPID_IHTMLSTYLE_PADDINGRIGHT},
-    {attrPaddingTop,           DISPID_IHTMLSTYLE_PADDINGTOP},
-    {attrPageBreakAfter,       DISPID_IHTMLSTYLE_PAGEBREAKAFTER},
-    {attrPageBreakBefore,      DISPID_IHTMLSTYLE_PAGEBREAKBEFORE},
-    {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
-    {attrRight,                DISPID_IHTMLSTYLE2_RIGHT},
-    {attrTableLayout,          DISPID_IHTMLSTYLE2_TABLELAYOUT},
-    {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
-    {attrTextDecoration,       DISPID_IHTMLSTYLE_TEXTDECORATION},
-    {attrTextIndent,           DISPID_IHTMLSTYLE_TEXTINDENT},
-    {attrTextTransform,        DISPID_IHTMLSTYLE_TEXTTRANSFORM},
-    {attrTop,                  DISPID_IHTMLSTYLE_TOP},
-    {attrVerticalAlign,        DISPID_IHTMLSTYLE_VERTICALALIGN},
-    {attrVisibility,           DISPID_IHTMLSTYLE_VISIBILITY},
-    {attrWhiteSpace,           DISPID_IHTMLSTYLE_WHITESPACE},
-    {attrWidth,                DISPID_IHTMLSTYLE_WIDTH},
-    {attrWordSpacing,          DISPID_IHTMLSTYLE_WORDSPACING},
-    {attrWordWrap,             DISPID_IHTMLSTYLE3_WORDWRAP},
-    {attrZIndex,               DISPID_IHTMLSTYLE_ZINDEX}
+    {backgroundW,             DISPID_IHTMLSTYLE_BACKGROUND},
+    {background_attachmentW,  DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT},
+    {background_colorW,       DISPID_IHTMLSTYLE_BACKGROUNDCOLOR,       ATTR_HEX_INT},
+    {background_imageW,       DISPID_IHTMLSTYLE_BACKGROUNDIMAGE,       ATTR_FIX_URL},
+    {background_positionW,    DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
+    {background_position_xW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX,   ATTR_FIX_PX},
+    {background_position_yW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY,   ATTR_FIX_PX},
+    {background_repeatW,      DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
+    {borderW,                 DISPID_IHTMLSTYLE_BORDER},
+    {border_bottomW,          DISPID_IHTMLSTYLE_BORDERBOTTOM,          ATTR_FIX_PX},
+    {border_bottom_colorW,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR,     ATTR_HEX_INT},
+    {border_bottom_styleW,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
+    {border_bottom_widthW,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH,     ATTR_FIX_PX},
+    {border_colorW,           DISPID_IHTMLSTYLE_BORDERCOLOR},
+    {border_leftW,            DISPID_IHTMLSTYLE_BORDERLEFT,            ATTR_FIX_PX},
+    {border_left_colorW,      DISPID_IHTMLSTYLE_BORDERLEFTCOLOR,       ATTR_HEX_INT},
+    {border_left_styleW,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
+    {border_left_widthW,      DISPID_IHTMLSTYLE_BORDERLEFTWIDTH,       ATTR_FIX_PX},
+    {border_rightW,           DISPID_IHTMLSTYLE_BORDERRIGHT,           ATTR_FIX_PX},
+    {border_right_colorW,     DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR,      ATTR_HEX_INT},
+    {border_right_styleW,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE},
+    {border_right_widthW,     DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH,      ATTR_FIX_PX},
+    {border_styleW,           DISPID_IHTMLSTYLE_BORDERSTYLE},
+    {border_topW,             DISPID_IHTMLSTYLE_BORDERTOP,             ATTR_FIX_PX},
+    {border_top_colorW,       DISPID_IHTMLSTYLE_BORDERTOPCOLOR,        ATTR_HEX_INT},
+    {border_top_styleW,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE},
+    {border_top_widthW,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
+    {border_widthW,           DISPID_IHTMLSTYLE_BORDERWIDTH},
+    {bottomW,                 DISPID_IHTMLSTYLE2_BOTTOM,               ATTR_FIX_PX},
+    {box_sizingW,             DISPID_IHTMLSTYLE6_BOXSIZING},
+    {clearW,                  DISPID_IHTMLSTYLE_CLEAR},
+    {clipW,                   DISPID_IHTMLSTYLE_CLIP,                  ATTR_REMOVE_COMMA},
+    {colorW,                  DISPID_IHTMLSTYLE_COLOR,                 ATTR_HEX_INT},
+    {cursorW,                 DISPID_IHTMLSTYLE_CURSOR},
+    {directionW,              DISPID_IHTMLSTYLE2_DIRECTION},
+    {displayW,                DISPID_IHTMLSTYLE_DISPLAY},
+    {filterW,                 DISPID_IHTMLSTYLE_FILTER},
+    {floatW,                  DISPID_IHTMLSTYLE_STYLEFLOAT},
+    {font_familyW,            DISPID_IHTMLSTYLE_FONTFAMILY},
+    {font_sizeW,              DISPID_IHTMLSTYLE_FONTSIZE,              ATTR_FIX_PX},
+    {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE},
+    {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT},
+    {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT},
+    {heightW,                 DISPID_IHTMLSTYLE_HEIGHT,                ATTR_FIX_PX},
+    {leftW,                   DISPID_IHTMLSTYLE_LEFT},
+    {letter_spacingW,         DISPID_IHTMLSTYLE_LETTERSPACING},
+    {line_heightW,            DISPID_IHTMLSTYLE_LINEHEIGHT},
+    {list_styleW,             DISPID_IHTMLSTYLE_LISTSTYLE},
+    {list_style_positionW,    DISPID_IHTMLSTYLE_LISTSTYLEPOSITION},
+    {list_style_typeW,        DISPID_IHTMLSTYLE_LISTSTYLETYPE},
+    {marginW,                 DISPID_IHTMLSTYLE_MARGIN},
+    {margin_bottomW,          DISPID_IHTMLSTYLE_MARGINBOTTOM,          ATTR_FIX_PX},
+    {margin_leftW,            DISPID_IHTMLSTYLE_MARGINLEFT,            ATTR_FIX_PX},
+    {margin_rightW,           DISPID_IHTMLSTYLE_MARGINRIGHT,           ATTR_FIX_PX},
+    {margin_topW,             DISPID_IHTMLSTYLE_MARGINTOP,             ATTR_FIX_PX},
+    {max_heightW,             DISPID_IHTMLSTYLE5_MAXHEIGHT,            ATTR_FIX_PX},
+    {max_widthW,              DISPID_IHTMLSTYLE5_MAXWIDTH,             ATTR_FIX_PX},
+    {min_heightW,             DISPID_IHTMLSTYLE4_MINHEIGHT},
+    {min_widthW,              DISPID_IHTMLSTYLE5_MINWIDTH,             ATTR_FIX_PX},
+    {outlineW,                DISPID_IHTMLSTYLE6_OUTLINE,              ATTR_NO_NULL},
+    {overflowW,               DISPID_IHTMLSTYLE_OVERFLOW},
+    {overflow_xW,             DISPID_IHTMLSTYLE2_OVERFLOWX},
+    {overflow_yW,             DISPID_IHTMLSTYLE2_OVERFLOWY},
+    {paddingW,                DISPID_IHTMLSTYLE_PADDING},
+    {padding_bottomW,         DISPID_IHTMLSTYLE_PADDINGBOTTOM,         ATTR_FIX_PX},
+    {padding_leftW,           DISPID_IHTMLSTYLE_PADDINGLEFT,           ATTR_FIX_PX},
+    {padding_rightW,          DISPID_IHTMLSTYLE_PADDINGRIGHT,          ATTR_FIX_PX},
+    {padding_topW,            DISPID_IHTMLSTYLE_PADDINGTOP,            ATTR_FIX_PX},
+    {page_break_afterW,       DISPID_IHTMLSTYLE_PAGEBREAKAFTER},
+    {page_break_beforeW,      DISPID_IHTMLSTYLE_PAGEBREAKBEFORE},
+    {positionW,               DISPID_IHTMLSTYLE2_POSITION},
+    {rightW,                  DISPID_IHTMLSTYLE2_RIGHT},
+    {table_layoutW,           DISPID_IHTMLSTYLE2_TABLELAYOUT},
+    {text_alignW,             DISPID_IHTMLSTYLE_TEXTALIGN},
+    {text_decorationW,        DISPID_IHTMLSTYLE_TEXTDECORATION},
+    {text_indentW,            DISPID_IHTMLSTYLE_TEXTINDENT,            ATTR_FIX_PX},
+    {text_transformW,         DISPID_IHTMLSTYLE_TEXTTRANSFORM},
+    {topW,                    DISPID_IHTMLSTYLE_TOP},
+    {vertical_alignW,         DISPID_IHTMLSTYLE_VERTICALALIGN,         ATTR_FIX_PX},
+    {visibilityW,             DISPID_IHTMLSTYLE_VISIBILITY},
+    {white_spaceW,            DISPID_IHTMLSTYLE_WHITESPACE},
+    {widthW,                  DISPID_IHTMLSTYLE_WIDTH,                 ATTR_FIX_PX},
+    {word_spacingW,           DISPID_IHTMLSTYLE_WORDSPACING},
+    {word_wrapW,              DISPID_IHTMLSTYLE3_WORDWRAP},
+    {z_indexW,                DISPID_IHTMLSTYLE_ZINDEX,                ATTR_STR_TO_INT}
 };
 
 C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
@@ -408,6 +409,7 @@ static HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t si
     nsresult nsres;
 
     if(value) {
+        flags = style_tbl[sid].flags;
         if(flags & ATTR_FIX_PX)
             val = fix_px_value(value);
         else if(flags & ATTR_FIX_URL)
@@ -571,6 +573,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     BOOL set = FALSE;
     HRESULT hres = S_OK;
 
+    flags = style_tbl[sid].flags;
     nsAString_Init(&str_value, NULL);
 
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
