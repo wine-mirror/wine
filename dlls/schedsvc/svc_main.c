@@ -74,14 +74,14 @@ static DWORD WINAPI tasks_monitor_thread(void *arg)
     GetWindowsDirectoryW(path, MAX_PATH);
     lstrcatW(path, tasksW);
 
+    /* Just in case it's an old Wine prefix with missing c:\windows\tasks */
+    CreateDirectoryW(path, NULL);
+
     htasks = CreateFileW(path, FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
     if (htasks == INVALID_HANDLE_VALUE)
     {
         ERR("Couldn't start monitoring %s for tasks, error %u\n", debugstr_w(path), GetLastError());
-        /* Probably this is an old prefix with disabled updates */
-        if (GetLastError() == ERROR_PATH_NOT_FOUND || GetLastError() == ERROR_FILE_NOT_FOUND)
-            ERR("Please create the directory manually\n");
         return -1;
     }
 
