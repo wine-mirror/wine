@@ -638,6 +638,9 @@ IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 /* @makedep: resources/folder.ico */
 IDI_SHELL_CHECKLIST_FOLDER ICON resources/folder.ico
 
+/* @makedep: resources/network.ico */
+IDI_SHELL_NET_CONNECTIONS ICON resources/network.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
