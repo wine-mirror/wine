@@ -207,6 +207,7 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+static const WCHAR autoW[]    = {'a','u','t','o',0};
 static const WCHAR blinkW[] = {'b','l','i','n','k',0};
 static const WCHAR boldW[] = {'b','o','l','d',0};
 static const WCHAR bolderW[] = {'b','o','l','d','e','r',0};
@@ -215,6 +216,7 @@ static const WCHAR dashedW[] = {'d','a','s','h','e','d',0};
 static const WCHAR dottedW[] = {'d','o','t','t','e','d',0};
 static const WCHAR doubleW[] = {'d','o','u','b','l','e',0};
 static const WCHAR grooveW[] = {'g','r','o','o','v','e',0};
+static const WCHAR hiddenW[]  = {'h','i','d','d','e','n',0};
 static const WCHAR insetW[]  = {'i','n','s','e','t',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
 static const WCHAR lighterW[]  = {'l','i','g','h','t','e','r',0};
@@ -229,8 +231,10 @@ static const WCHAR repeatW[]   = {'r','e','p','e','a','t',0};
 static const WCHAR repeat_xW[]  = {'r','e','p','e','a','t','-','x',0};
 static const WCHAR repeat_yW[]  = {'r','e','p','e','a','t','-','y',0};
 static const WCHAR ridgeW[]  = {'r','i','d','g','e',0};
+static const WCHAR scrollW[]  = {'s','c','r','o','l','l',0};
 static const WCHAR solidW[]  = {'s','o','l','i','d',0};
 static const WCHAR underlineW[] = {'u','n','d','e','r','l','i','n','e',0};
+static const WCHAR visibleW[] = {'v','i','s','i','b','l','e',0};
 
 static const WCHAR style100W[] = {'1','0','0',0};
 static const WCHAR style200W[] = {'2','0','0',0};
@@ -299,6 +303,14 @@ static const WCHAR *border_style_values[] = {
     outsetW,
     ridgeW,
     solidW,
+    NULL
+};
+
+static const WCHAR *overflow_values[] = {
+    autoW,
+    hiddenW,
+    scrollW,
+    visibleW,
     NULL
 };
 
@@ -379,7 +391,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {min_heightW,             DISPID_IHTMLSTYLE4_MINHEIGHT},
     {min_widthW,              DISPID_IHTMLSTYLE5_MINWIDTH,             ATTR_FIX_PX},
     {outlineW,                DISPID_IHTMLSTYLE6_OUTLINE,              ATTR_NO_NULL},
-    {overflowW,               DISPID_IHTMLSTYLE_OVERFLOW},
+    {overflowW,               DISPID_IHTMLSTYLE_OVERFLOW,              0, overflow_values},
     {overflow_xW,             DISPID_IHTMLSTYLE2_OVERFLOWX},
     {overflow_yW,             DISPID_IHTMLSTYLE2_OVERFLOWY},
     {paddingW,                DISPID_IHTMLSTYLE_PADDING},
@@ -2380,21 +2392,10 @@ static HRESULT WINAPI HTMLStyle_get_zIndex(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_overflow(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR szVisible[] = {'v','i','s','i','b','l','e',0};
-    static const WCHAR szScroll[]  = {'s','c','r','o','l','l',0};
-    static const WCHAR szHidden[]  = {'h','i','d','d','e','n',0};
-    static const WCHAR szAuto[]    = {'a','u','t','o',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* overflow can only be one of the follow values. */
-    if(!v || !*v || strcmpiW(szVisible, v) == 0 || strcmpiW(szScroll, v) == 0 ||
-             strcmpiW(szHidden, v) == 0  || strcmpiW(szAuto, v) == 0)
-    {
-        return set_style_property(This, STYLEID_OVERFLOW, v);
-    }
-
-    return E_INVALIDARG;
+    return set_style_property(This, STYLEID_OVERFLOW, v);
 }
 
 
