@@ -693,6 +693,10 @@ IDI_SHELL_DEFRAGMENT ICON resources/drive.ico
 /* @makedep: resources/menu.ico */
 IDI_SHELL_TREEVIEW ICON resources/menu.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_NETWORK_FOLDER ICON resources/folder.ico
+
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 
