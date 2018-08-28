@@ -207,6 +207,7 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+static const WCHAR capsW[]  = {'s','m','a','l','l','-','c','a','p','s',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
 static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
 static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
@@ -215,6 +216,12 @@ static const WCHAR *font_style_values[] = {
     italicW,
     normalW,
     obliqueW,
+    NULL
+};
+
+static const WCHAR *font_variant_values[] = {
+    capsW,
+    normalW,
     NULL
 };
 
@@ -276,7 +283,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {font_familyW,            DISPID_IHTMLSTYLE_FONTFAMILY},
     {font_sizeW,              DISPID_IHTMLSTYLE_FONTSIZE,              ATTR_FIX_PX},
     {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE,             0, font_style_values},
-    {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT},
+    {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT,           0, font_variant_values},
     {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT},
     {heightW,                 DISPID_IHTMLSTYLE_HEIGHT,                ATTR_FIX_PX},
     {leftW,                   DISPID_IHTMLSTYLE_LEFT},
@@ -925,17 +932,10 @@ static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontVariant(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR szCaps[]  = {'s','m','a','l','l','-','c','a','p','s',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* fontVariant can only be one of the follow values. */
-    if(!v || strcmpiW(normalW, v) == 0 || strcmpiW(szCaps, v) == 0)
-    {
-        return set_style_property(This, STYLEID_FONT_VARIANT, v);
-    }
-
-    return E_INVALIDARG;
+    return set_style_property(This, STYLEID_FONT_VARIANT, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontVariant(IHTMLStyle *iface, BSTR *p)
