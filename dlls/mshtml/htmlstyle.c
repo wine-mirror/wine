@@ -207,17 +207,22 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+static const WCHAR blinkW[] = {'b','l','i','n','k',0};
 static const WCHAR boldW[] = {'b','o','l','d',0};
 static const WCHAR bolderW[] = {'b','o','l','d','e','r',0};
 static const WCHAR capsW[]  = {'s','m','a','l','l','-','c','a','p','s',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
 static const WCHAR lighterW[]  = {'l','i','g','h','t','e','r',0};
+static const WCHAR line_throughW[] = {'l','i','n','e','-','t','h','r','o','u','g','h',0};
 static const WCHAR no_repeatW[] = {'n','o','-','r','e','p','e','a','t',0};
+static const WCHAR noneW[] = {'n','o','n','e',0};
 static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
 static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
+static const WCHAR overlineW[] = {'o','v','e','r','l','i','n','e',0};
 static const WCHAR repeatW[]   = {'r','e','p','e','a','t',0};
 static const WCHAR repeat_xW[]  = {'r','e','p','e','a','t','-','x',0};
 static const WCHAR repeat_yW[]  = {'r','e','p','e','a','t','-','y',0};
+static const WCHAR underlineW[] = {'u','n','d','e','r','l','i','n','e',0};
 
 static const WCHAR style100W[] = {'1','0','0',0};
 static const WCHAR style200W[] = {'2','0','0',0};
@@ -264,6 +269,15 @@ static const WCHAR *background_repeat_values[] = {
     repeatW,
     repeat_xW,
     repeat_yW,
+    NULL
+};
+
+static const WCHAR *text_decoration_values[] = {
+    blinkW,
+    line_throughW,
+    noneW,
+    overlineW,
+    underlineW,
     NULL
 };
 
@@ -358,7 +372,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {rightW,                  DISPID_IHTMLSTYLE2_RIGHT},
     {table_layoutW,           DISPID_IHTMLSTYLE2_TABLELAYOUT},
     {text_alignW,             DISPID_IHTMLSTYLE_TEXTALIGN},
-    {text_decorationW,        DISPID_IHTMLSTYLE_TEXTDECORATION},
+    {text_decorationW,        DISPID_IHTMLSTYLE_TEXTDECORATION,        0, text_decoration_values},
     {text_indentW,            DISPID_IHTMLSTYLE_TEXTINDENT,            ATTR_FIX_PX},
     {text_transformW,         DISPID_IHTMLSTYLE_TEXTTRANSFORM},
     {topW,                    DISPID_IHTMLSTYLE_TOP},
@@ -372,17 +386,6 @@ static const style_tbl_entry_t style_tbl[] = {
 };
 
 C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
-
-static const WCHAR valLineThrough[] =
-    {'l','i','n','e','-','t','h','r','o','u','g','h',0};
-static const WCHAR valUnderline[] =
-    {'u','n','d','e','r','l','i','n','e',0};
-static const WCHAR styleNone[] =
-    {'n','o','n','e',0};
-static const WCHAR valOverline[] =
-    {'o','v','e','r','l','i','n','e',0};
-static const WCHAR valBlink[] =
-    {'b','l','i','n','k',0};
 
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
@@ -827,7 +830,7 @@ static BOOL is_valid_border_style(BSTR v)
 
     TRACE("%s\n", debugstr_w(v));
 
-    if(!v || strcmpiW(v, styleNone)   == 0 || strcmpiW(v, styleDotted) == 0 ||
+    if(!v || strcmpiW(v, noneW)   == 0 || strcmpiW(v, styleDotted) == 0 ||
              strcmpiW(v, styleDashed) == 0 || strcmpiW(v, styleSolid)  == 0 ||
              strcmpiW(v, styleDouble) == 0 || strcmpiW(v, styleGroove) == 0 ||
              strcmpiW(v, styleRidge)  == 0 || strcmpiW(v, styleInset)  == 0 ||
@@ -1389,15 +1392,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecoration(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* textDecoration can only be one of the following */
-    if(!v || strcmpiW(styleNone, v)   == 0 || strcmpiW(valUnderline, v)   == 0 ||
-             strcmpiW(valOverline, v) == 0 || strcmpiW(valLineThrough, v) == 0 ||
-             strcmpiW(valBlink, v)    == 0)
-    {
-        return set_style_property(This, STYLEID_TEXT_DECORATION , v);
-    }
-
-    return E_INVALIDARG;
+    return set_style_property(This, STYLEID_TEXT_DECORATION , v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecoration(IHTMLStyle *iface, BSTR *p)
@@ -1415,7 +1410,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationNone(IHTMLStyle *iface, VARIAN
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? styleNone : emptyW);
+    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? noneW : emptyW);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationNone(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1424,7 +1419,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationNone(IHTMLStyle *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, styleNone, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, noneW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationUnderline(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1433,7 +1428,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationUnderline(IHTMLStyle *iface, V
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? valUnderline : emptyW);
+    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? underlineW : emptyW);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationUnderline(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1442,7 +1437,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationUnderline(IHTMLStyle *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, valUnderline, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, underlineW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1451,7 +1446,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationOverline(IHTMLStyle *iface, VA
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? valOverline : emptyW);
+    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? overlineW : emptyW);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1460,7 +1455,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VA
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, valOverline, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, overlineW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1469,7 +1464,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface,
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? valLineThrough : emptyW);
+    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? line_throughW : emptyW);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1478,7 +1473,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationLineThrough(IHTMLStyle *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, valLineThrough, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, line_throughW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationBlink(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1487,7 +1482,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationBlink(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? valBlink : emptyW);
+    return set_style_property(This, STYLEID_TEXT_DECORATION, v ? blinkW : emptyW);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationBlink(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1496,7 +1491,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationBlink(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, valBlink, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, blinkW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_verticalAlign(IHTMLStyle *iface, VARIANT v)
