@@ -60,6 +60,9 @@ static void *wine_vk_get_global_proc_addr(const char *name);
 static const struct vulkan_funcs *vk_funcs;
 static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
 
+void WINAPI wine_vkGetPhysicalDeviceProperties(VkPhysicalDevice physical_device,
+        VkPhysicalDeviceProperties *properties);
+
 static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
 {
     if (!phys_dev)
@@ -599,6 +602,17 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
+
+    if (TRACE_ON(vulkan))
+    {
+        VkPhysicalDeviceProperties properties;
+
+        wine_vkGetPhysicalDeviceProperties(phys_dev, &properties);
+
+        TRACE("Device name: %s.\n", debugstr_a(properties.deviceName));
+        TRACE("Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID);
+        TRACE("Driver version: %#x.\n", properties.driverVersion);
+    }
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
