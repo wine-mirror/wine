@@ -512,7 +512,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        MultiByteToWideChar(CP_ACP, 0, tests[i].dos, -1, path, sizeof(path));
+        MultiByteToWideChar(CP_ACP, 0, tests[i].dos, -1, path, ARRAY_SIZE(path));
         ret = pRtlDosPathNameToNtPathName_U(path, &nameW, &file_part, NULL);
 
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
@@ -534,7 +534,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
             continue;
         }
 
-        MultiByteToWideChar(CP_ACP, 0, tests[i].nt, -1, path, sizeof(path));
+        MultiByteToWideChar(CP_ACP, 0, tests[i].nt, -1, path, ARRAY_SIZE(path));
         ok(!lstrcmpW(nameW.Buffer, path), "%s: Expected %s, got %s.\n",
             tests[i].dos, tests[i].nt, wine_dbgstr_w(nameW.Buffer));
 
