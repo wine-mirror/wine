@@ -579,6 +579,9 @@ IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
+/* @makedep: resources/rename.ico */
+IDI_SHELL_RENAME ICON resources/rename.ico
+
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 
