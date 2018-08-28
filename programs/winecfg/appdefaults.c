@@ -435,6 +435,7 @@ static void on_winver_change(HWND dialog)
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuild", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
@@ -449,6 +450,7 @@ static void on_winver_change(HWND dialog)
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection].szCSDVersion);
             snprintf(Buffer, sizeof(Buffer), "%d", win_versions[selection].dwBuildNumber);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuild", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", Buffer);
             snprintf(Buffer, sizeof(Buffer), "Microsoft %s", win_versions[selection].szDescription);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", Buffer);
@@ -467,6 +469,7 @@ static void on_winver_change(HWND dialog)
         case VER_PLATFORM_WIN32s:
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuild", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);

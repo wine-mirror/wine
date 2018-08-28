@@ -3402,6 +3402,7 @@ HKLM,"System\CurrentControlSet\Services\Winsock2\Parameters\Protocol_Catalog9\Ca
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"6.1"
 HKLM,%CurrentVersionNT%,"CSDVersion",2,"Service Pack 1"
+HKLM,%CurrentVersionNT%,"CurrentBuild",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentType",2,"Uniprocessor Free"
 HKLM,%CurrentVersionNT%,"ProductName",2,"Microsoft Windows 7"
@@ -3412,6 +3413,7 @@ HKLM,%Control%\Session Manager\Environment,"OS",2,"Windows_NT"
 [VersionInfo.ntamd64]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"6.1"
 HKLM,%CurrentVersionNT%,"CSDVersion",2,"Service Pack 1"
+HKLM,%CurrentVersionNT%,"CurrentBuild",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentType",2,"Uniprocessor Free"
 HKLM,%CurrentVersionNT%,"ProductName",2,"Microsoft Windows 7"
