@@ -211,6 +211,11 @@ static const WCHAR blinkW[] = {'b','l','i','n','k',0};
 static const WCHAR boldW[] = {'b','o','l','d',0};
 static const WCHAR bolderW[] = {'b','o','l','d','e','r',0};
 static const WCHAR capsW[]  = {'s','m','a','l','l','-','c','a','p','s',0};
+static const WCHAR dashedW[] = {'d','a','s','h','e','d',0};
+static const WCHAR dottedW[] = {'d','o','t','t','e','d',0};
+static const WCHAR doubleW[] = {'d','o','u','b','l','e',0};
+static const WCHAR grooveW[] = {'g','r','o','o','v','e',0};
+static const WCHAR insetW[]  = {'i','n','s','e','t',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
 static const WCHAR lighterW[]  = {'l','i','g','h','t','e','r',0};
 static const WCHAR line_throughW[] = {'l','i','n','e','-','t','h','r','o','u','g','h',0};
@@ -218,10 +223,13 @@ static const WCHAR no_repeatW[] = {'n','o','-','r','e','p','e','a','t',0};
 static const WCHAR noneW[] = {'n','o','n','e',0};
 static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
 static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
+static const WCHAR outsetW[] = {'o','u','t','s','e','t',0};
 static const WCHAR overlineW[] = {'o','v','e','r','l','i','n','e',0};
 static const WCHAR repeatW[]   = {'r','e','p','e','a','t',0};
 static const WCHAR repeat_xW[]  = {'r','e','p','e','a','t','-','x',0};
 static const WCHAR repeat_yW[]  = {'r','e','p','e','a','t','-','y',0};
+static const WCHAR ridgeW[]  = {'r','i','d','g','e',0};
+static const WCHAR solidW[]  = {'s','o','l','i','d',0};
 static const WCHAR underlineW[] = {'u','n','d','e','r','l','i','n','e',0};
 
 static const WCHAR style100W[] = {'1','0','0',0};
@@ -281,6 +289,19 @@ static const WCHAR *text_decoration_values[] = {
     NULL
 };
 
+static const WCHAR *border_style_values[] = {
+    dashedW,
+    dottedW,
+    doubleW,
+    grooveW,
+    insetW,
+    noneW,
+    outsetW,
+    ridgeW,
+    solidW,
+    NULL
+};
+
 #define ATTR_FIX_PX         0x0001
 #define ATTR_FIX_URL        0x0002
 #define ATTR_STR_TO_INT     0x0004
@@ -309,21 +330,21 @@ static const style_tbl_entry_t style_tbl[] = {
     {borderW,                 DISPID_IHTMLSTYLE_BORDER},
     {border_bottomW,          DISPID_IHTMLSTYLE_BORDERBOTTOM,          ATTR_FIX_PX},
     {border_bottom_colorW,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR,     ATTR_HEX_INT},
-    {border_bottom_styleW,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE},
+    {border_bottom_styleW,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE,     0, border_style_values},
     {border_bottom_widthW,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH,     ATTR_FIX_PX},
     {border_colorW,           DISPID_IHTMLSTYLE_BORDERCOLOR},
     {border_leftW,            DISPID_IHTMLSTYLE_BORDERLEFT,            ATTR_FIX_PX},
     {border_left_colorW,      DISPID_IHTMLSTYLE_BORDERLEFTCOLOR,       ATTR_HEX_INT},
-    {border_left_styleW,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE},
+    {border_left_styleW,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE,       0, border_style_values},
     {border_left_widthW,      DISPID_IHTMLSTYLE_BORDERLEFTWIDTH,       ATTR_FIX_PX},
     {border_rightW,           DISPID_IHTMLSTYLE_BORDERRIGHT,           ATTR_FIX_PX},
     {border_right_colorW,     DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR,      ATTR_HEX_INT},
-    {border_right_styleW,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE},
+    {border_right_styleW,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE,      0, border_style_values},
     {border_right_widthW,     DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH,      ATTR_FIX_PX},
     {border_styleW,           DISPID_IHTMLSTYLE_BORDERSTYLE},
     {border_topW,             DISPID_IHTMLSTYLE_BORDERTOP,             ATTR_FIX_PX},
     {border_top_colorW,       DISPID_IHTMLSTYLE_BORDERTOPCOLOR,        ATTR_HEX_INT},
-    {border_top_styleW,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE},
+    {border_top_styleW,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE,        0, border_style_values},
     {border_top_widthW,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
     {border_widthW,           DISPID_IHTMLSTYLE_BORDERWIDTH},
     {bottomW,                 DISPID_IHTMLSTYLE2_BOTTOM,               ATTR_FIX_PX},
@@ -819,27 +840,11 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
 static BOOL is_valid_border_style(BSTR v)
 {
-    static const WCHAR styleDotted[] = {'d','o','t','t','e','d',0};
-    static const WCHAR styleDashed[] = {'d','a','s','h','e','d',0};
-    static const WCHAR styleSolid[]  = {'s','o','l','i','d',0};
-    static const WCHAR styleDouble[] = {'d','o','u','b','l','e',0};
-    static const WCHAR styleGroove[] = {'g','r','o','o','v','e',0};
-    static const WCHAR styleRidge[]  = {'r','i','d','g','e',0};
-    static const WCHAR styleInset[]  = {'i','n','s','e','t',0};
-    static const WCHAR styleOutset[] = {'o','u','t','s','e','t',0};
-
-    TRACE("%s\n", debugstr_w(v));
-
-    if(!v || strcmpiW(v, noneW)   == 0 || strcmpiW(v, styleDotted) == 0 ||
-             strcmpiW(v, styleDashed) == 0 || strcmpiW(v, styleSolid)  == 0 ||
-             strcmpiW(v, styleDouble) == 0 || strcmpiW(v, styleGroove) == 0 ||
-             strcmpiW(v, styleRidge)  == 0 || strcmpiW(v, styleInset)  == 0 ||
-             strcmpiW(v, styleOutset) == 0 )
-    {
-        return TRUE;
-    }
-
-    return FALSE;
+    return !v || strcmpiW(v, noneW)   == 0 || strcmpiW(v, dottedW) == 0 ||
+        strcmpiW(v, dashedW) == 0 || strcmpiW(v, solidW)  == 0 ||
+        strcmpiW(v, doubleW) == 0 || strcmpiW(v, grooveW) == 0 ||
+        strcmpiW(v, ridgeW)  == 0 || strcmpiW(v, insetW)  == 0 ||
+        strcmpiW(v, outsetW) == 0;
 }
 
 static inline HTMLStyle *impl_from_IHTMLStyle(IHTMLStyle *iface)
@@ -2065,10 +2070,6 @@ static HRESULT WINAPI HTMLStyle_put_borderTopStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    if(!is_valid_border_style(v))
-        return E_INVALIDARG;
-
     return set_style_property(This, STYLEID_BORDER_TOP_STYLE, v);
 }
 
@@ -2083,10 +2084,6 @@ static HRESULT WINAPI HTMLStyle_put_borderRightStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    if(!is_valid_border_style(v))
-        return E_INVALIDARG;
-
     return set_style_property(This, STYLEID_BORDER_RIGHT_STYLE, v);
 }
 
@@ -2101,10 +2098,6 @@ static HRESULT WINAPI HTMLStyle_put_borderBottomStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    if(!is_valid_border_style(v))
-        return E_INVALIDARG;
-
     return set_style_property(This, STYLEID_BORDER_BOTTOM_STYLE, v);
 }
 
@@ -2119,10 +2112,6 @@ static HRESULT WINAPI HTMLStyle_put_borderLeftStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    if(!is_valid_border_style(v))
-        return E_INVALIDARG;
-
     return set_style_property(This, STYLEID_BORDER_LEFT_STYLE, v);
 }
 
