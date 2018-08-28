@@ -212,8 +212,12 @@ static const WCHAR bolderW[] = {'b','o','l','d','e','r',0};
 static const WCHAR capsW[]  = {'s','m','a','l','l','-','c','a','p','s',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
 static const WCHAR lighterW[]  = {'l','i','g','h','t','e','r',0};
+static const WCHAR no_repeatW[] = {'n','o','-','r','e','p','e','a','t',0};
 static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
 static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
+static const WCHAR repeatW[]   = {'r','e','p','e','a','t',0};
+static const WCHAR repeat_xW[]  = {'r','e','p','e','a','t','-','x',0};
+static const WCHAR repeat_yW[]  = {'r','e','p','e','a','t','-','y',0};
 
 static const WCHAR style100W[] = {'1','0','0',0};
 static const WCHAR style200W[] = {'2','0','0',0};
@@ -255,6 +259,14 @@ static const WCHAR *font_weight_values[] = {
     NULL
 };
 
+static const WCHAR *background_repeat_values[] = {
+    no_repeatW,
+    repeatW,
+    repeat_xW,
+    repeat_yW,
+    NULL
+};
+
 #define ATTR_FIX_PX         0x0001
 #define ATTR_FIX_URL        0x0002
 #define ATTR_STR_TO_INT     0x0004
@@ -279,7 +291,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {background_positionW,    DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
     {background_position_xW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX,   ATTR_FIX_PX},
     {background_position_yW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY,   ATTR_FIX_PX},
-    {background_repeatW,      DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
+    {background_repeatW,      DISPID_IHTMLSTYLE_BACKGROUNDREPEAT,      0, background_repeat_values},
     {borderW,                 DISPID_IHTMLSTYLE_BORDER},
     {border_bottomW,          DISPID_IHTMLSTYLE_BORDERBOTTOM,          ATTR_FIX_PX},
     {border_bottom_colorW,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR,     ATTR_HEX_INT},
@@ -1104,21 +1116,10 @@ static HRESULT WINAPI HTMLStyle_get_backgroundImage(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_backgroundRepeat(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR styleRepeat[]   = {'r','e','p','e','a','t',0};
-    static const WCHAR styleNoRepeat[] = {'n','o','-','r','e','p','e','a','t',0};
-    static const WCHAR styleRepeatX[]  = {'r','e','p','e','a','t','-','x',0};
-    static const WCHAR styleRepeatY[]  = {'r','e','p','e','a','t','-','y',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* fontWeight can only be one of the following */
-    if(!v || strcmpiW(styleRepeat, v) == 0    || strcmpiW(styleNoRepeat, v) == 0    ||
-             strcmpiW(styleRepeatX, v) == 0 || strcmpiW(styleRepeatY, v) == 0 )
-    {
-        return set_style_property(This, STYLEID_BACKGROUND_REPEAT , v);
-    }
-
-    return E_INVALIDARG;
+    return set_style_property(This, STYLEID_BACKGROUND_REPEAT , v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundRepeat(IHTMLStyle *iface, BSTR *p)
