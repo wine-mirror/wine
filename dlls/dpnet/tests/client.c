@@ -140,6 +140,9 @@ static BOOL test_init_dp(void)
     hr = IDirectPlay8Client_Initialize(client, NULL, NULL, 0);
     ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
 
+    hr = IDirectPlay8Client_SetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_INVALIDPARAM, "SetSPCaps failed with %x\n", hr);
+
     hr = IDirectPlay8Client_Initialize(client, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "IDirectPlay8Client_Initialize failed with %x\n", hr);
 
@@ -415,6 +418,33 @@ static void test_get_sp_caps(void)
     ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
     ok(caps.dwSystemBufferSize == 0x10000 || broken(caps.dwSystemBufferSize == 0x2000 /* before Win8 */),
        "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
+
+    caps.dwNumThreads = 2;
+    caps.dwDefaultEnumCount = 3;
+    caps.dwDefaultEnumRetryInterval = 1400;
+    caps.dwDefaultEnumTimeout = 1400;
+    caps.dwMaxEnumPayloadSize = 900;
+    caps.dwBuffersPerThread = 2;
+    caps.dwSystemBufferSize = 0x0ffff;
+    hr = IDirectPlay8Client_SetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "SetSPCaps failed with %x\n", hr);
+
+    hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
+
+    ok(caps.dwSize == sizeof(DPN_SP_CAPS), "got %d\n", caps.dwSize);
+    ok(caps.dwNumThreads >= 3, "got %d\n", caps.dwNumThreads);
+    ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
+    ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
+    ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
+    ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
+    ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
+    ok(caps.dwSystemBufferSize == 0x0ffff, "expected 0x0ffff, got 0x%x\n", caps.dwSystemBufferSize);
+
+    /* Reset the System setting back to its default. */
+    caps.dwSystemBufferSize = 0x10000;
+    hr = IDirectPlay8Client_SetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "SetSPCaps failed with %x\n", hr);
 }
 
 static void test_lobbyclient(void)

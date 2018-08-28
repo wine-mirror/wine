@@ -309,9 +309,17 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetCaps(IDirectPlay8Client *iface,
 static HRESULT WINAPI IDirectPlay8ClientImpl_SetSPCaps(IDirectPlay8Client *iface,
         const GUID * const pguidSP, const DPN_SP_CAPS * const pdpspCaps, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%x): Stub\n", This, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+
+    TRACE("(%p)->(%p,%p,%x): stub\n", iface, pguidSP, pdpspCaps, dwFlags);
+
+    if(!This->msghandler || pdpspCaps->dwSize != sizeof(DPN_SP_CAPS))
+        return DPNERR_INVALIDPARAM;
+
+    /* Only dwSystemBufferSize is set by this call. */
+    This->spcaps.dwSystemBufferSize = pdpspCaps->dwSystemBufferSize;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_GetSPCaps(IDirectPlay8Client *iface,
