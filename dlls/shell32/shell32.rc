@@ -667,6 +667,10 @@ IDI_SHELL_SYSTEM_FONT ICON resources/document.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_TRUETYPE_FONT ICON resources/document.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/document.ico */
+IDI_SHELL_POSTSCRIPT_FONT ICON resources/document.ico
+
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 
