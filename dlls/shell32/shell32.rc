@@ -605,6 +605,9 @@ IDI_SHELL_TRUETYPE_FONT ICON resources/document.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_POSTSCRIPT_FONT ICON resources/document.ico
 
+/* @makedep: resources/window.ico */
+IDI_SHELL_RUN2 ICON resources/window.ico
+
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 
