@@ -1505,22 +1505,22 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, int firstID,
  */
 DWORD WINAPI GetDialogBaseUnits(void)
 {
-    static DWORD units;
+    static LONG cx, cy;
 
-    if (!units)
+    if (!cx)
     {
         HDC hdc;
-        SIZE size;
 
         if ((hdc = GetDC(0)))
         {
-            size.cx = GdiGetCharDimensions( hdc, NULL, &size.cy );
-            if (size.cx) units = MAKELONG( size.cx, size.cy );
+            cx = GdiGetCharDimensions( hdc, NULL, &cy );
             ReleaseDC( 0, hdc );
         }
-        TRACE("base units = %d,%d\n", LOWORD(units), HIWORD(units) );
+        TRACE( "base units = %d,%d\n", cx, cy );
     }
-    return units;
+
+    return MAKELONG( MulDiv( cx, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ),
+                     MulDiv( cy, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ));
 }
 
 

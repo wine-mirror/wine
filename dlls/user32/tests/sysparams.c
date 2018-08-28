@@ -3217,7 +3217,7 @@ static void test_dpi_mapping(void)
 {
     HWND hwnd, child;
     HDC hdc;
-    UINT win_dpi;
+    UINT win_dpi, units;
     POINT point;
     BOOL ret;
     HRGN rgn, update;
@@ -3292,6 +3292,7 @@ static void test_dpi_mapping(void)
         ShowWindow( hwnd, SW_MINIMIZE );
         ShowWindow( hwnd, SW_RESTORE );
         GetWindowPlacement( hwnd, &wpl_orig );
+        units = GetDialogBaseUnits();
 
         for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; j++)
         {
@@ -3407,6 +3408,13 @@ static void test_dpi_mapping(void)
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             UpdateWindow( hwnd );
             DeleteObject( update );
+            /* test dialog units */
+            ret = GetDialogBaseUnits();
+            point.x = LOWORD( units );
+            point.y = HIWORD( units );
+            scale_point_dpi_aware( &point, i, j );
+            ok( LOWORD(ret) == point.x && HIWORD(ret) == point.y, "%lu/%lu: wrong units %d,%d / %d,%d\n",
+                i, j, LOWORD(ret), HIWORD(ret), point.x, point.y );
             /* test window points mapping */
             SetRect( &rect, 0, 0, 100, 100 );
             rect.right = rect.left + 100;
