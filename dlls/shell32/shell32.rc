@@ -585,6 +585,10 @@ IDI_SHELL_CONFIG_FILE ICON resources/document.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_TEXT_FILE ICON resources/document.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/window.ico */
+IDI_SHELL_BATCH_FILE ICON resources/window.ico
+
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 
