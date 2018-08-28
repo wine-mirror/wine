@@ -619,6 +619,10 @@ IDI_SHELL_BACKUP ICON resources/copy.ico
 /* @makedep: resources/drive.ico */
 IDI_SHELL_DISK_CHECK ICON resources/drive.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/drive.ico */
+IDI_SHELL_DEFRAGMENT ICON resources/drive.ico
+
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 
