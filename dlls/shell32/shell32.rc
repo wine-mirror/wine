@@ -611,6 +611,10 @@ IDI_SHELL_RUN2 ICON resources/window.ico
 /* @makedep: resources/delete.ico */
 IDI_SHELL_CONFIRM_DELETE ICON resources/delete.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/copy.ico */
+IDI_SHELL_BACKUP ICON resources/copy.ico
+
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_FOLDER ICON resources/favorites.ico
 

@@ -247,6 +247,8 @@
 /* 158 - 159 not used on Windows */
 #define IDI_SHELL_RUN2             160
 #define IDI_SHELL_CONFIRM_DELETE   161
+/* 162 - 164 not used on Windows */
+#define IDI_SHELL_BACKUP           165
 #define IDI_SHELL_DEFAULT_PRINTER  168
 #define IDI_SHELL_DEFAULT_REMOTE_PRINTER   169
 #define IDI_SHELL_DEFAULT_TO_FILE_PRINTER  170
