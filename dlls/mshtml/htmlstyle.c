@@ -207,10 +207,23 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+static const WCHAR boldW[] = {'b','o','l','d',0};
+static const WCHAR bolderW[] = {'b','o','l','d','e','r',0};
 static const WCHAR capsW[]  = {'s','m','a','l','l','-','c','a','p','s',0};
 static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
+static const WCHAR lighterW[]  = {'l','i','g','h','t','e','r',0};
 static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
 static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
+
+static const WCHAR style100W[] = {'1','0','0',0};
+static const WCHAR style200W[] = {'2','0','0',0};
+static const WCHAR style300W[] = {'3','0','0',0};
+static const WCHAR style400W[] = {'4','0','0',0};
+static const WCHAR style500W[] = {'5','0','0',0};
+static const WCHAR style600W[] = {'6','0','0',0};
+static const WCHAR style700W[] = {'7','0','0',0};
+static const WCHAR style800W[] = {'8','0','0',0};
+static const WCHAR style900W[] = {'9','0','0',0};
 
 static const WCHAR *font_style_values[] = {
     italicW,
@@ -221,6 +234,23 @@ static const WCHAR *font_style_values[] = {
 
 static const WCHAR *font_variant_values[] = {
     capsW,
+    normalW,
+    NULL
+};
+
+static const WCHAR *font_weight_values[] = {
+    style100W,
+    style200W,
+    style300W,
+    style400W,
+    style500W,
+    style600W,
+    style700W,
+    style800W,
+    style900W,
+    boldW,
+    bolderW,
+    lighterW,
     normalW,
     NULL
 };
@@ -284,7 +314,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {font_sizeW,              DISPID_IHTMLSTYLE_FONTSIZE,              ATTR_FIX_PX},
     {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE,             0, font_style_values},
     {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT,           0, font_variant_values},
-    {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT},
+    {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT, font_weight_values},
     {heightW,                 DISPID_IHTMLSTYLE_HEIGHT,                ATTR_FIX_PX},
     {leftW,                   DISPID_IHTMLSTYLE_LEFT},
     {letter_spacingW,         DISPID_IHTMLSTYLE_LETTERSPACING},
@@ -432,7 +462,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    if(value) {
+    if(value && *value) {
         unsigned flags = style_tbl[sid].flags;
         if(flags & ATTR_FIX_PX)
             val = fix_px_value(value);
@@ -952,27 +982,8 @@ static HRESULT WINAPI HTMLStyle_get_fontVariant(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR styleBold[] = {'b','o','l','d',0};
-    static const WCHAR styleBolder[] = {'b','o','l','d','e','r',0};
-    static const WCHAR styleLighter[]  = {'l','i','g','h','t','e','r',0};
-    static const WCHAR style100[] = {'1','0','0',0};
-    static const WCHAR style200[] = {'2','0','0',0};
-    static const WCHAR style300[] = {'3','0','0',0};
-    static const WCHAR style400[] = {'4','0','0',0};
-    static const WCHAR style500[] = {'5','0','0',0};
-    static const WCHAR style600[] = {'6','0','0',0};
-    static const WCHAR style700[] = {'7','0','0',0};
-    static const WCHAR style800[] = {'8','0','0',0};
-    static const WCHAR style900[] = {'9','0','0',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    /* fontWeight can only be one of the following */
-    if(v && *v && strcmpiW(normalW, v) && strcmpiW(styleBold, v) &&  strcmpiW(styleBolder, v)
-            && strcmpiW(styleLighter, v) && strcmpiW(style100, v) && strcmpiW(style200, v)
-            && strcmpiW(style300, v) && strcmpiW(style400, v) && strcmpiW(style500, v) && strcmpiW(style600, v)
-            && strcmpiW(style700, v) && strcmpiW(style800, v) && strcmpiW(style900, v))
-        return E_INVALIDARG;
 
     return set_style_property(This, STYLEID_FONT_WEIGHT, v);
 }
