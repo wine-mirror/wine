@@ -207,6 +207,17 @@ static const WCHAR word_wrapW[] =
 static const WCHAR z_indexW[] =
     {'z','-','i','n','d','e','x',0};
 
+static const WCHAR italicW[]  = {'i','t','a','l','i','c',0};
+static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
+static const WCHAR obliqueW[]  = {'o','b','l','i','q','u','e',0};
+
+static const WCHAR *font_style_values[] = {
+    italicW,
+    normalW,
+    obliqueW,
+    NULL
+};
+
 #define ATTR_FIX_PX         0x0001
 #define ATTR_FIX_URL        0x0002
 #define ATTR_STR_TO_INT     0x0004
@@ -220,6 +231,7 @@ typedef struct {
     const WCHAR *name;
     DISPID dispid;
     unsigned flags;
+    const WCHAR **allowed_values;
 } style_tbl_entry_t;
 
 static const style_tbl_entry_t style_tbl[] = {
@@ -263,7 +275,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {floatW,                  DISPID_IHTMLSTYLE_STYLEFLOAT},
     {font_familyW,            DISPID_IHTMLSTYLE_FONTFAMILY},
     {font_sizeW,              DISPID_IHTMLSTYLE_FONTSIZE,              ATTR_FIX_PX},
-    {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE},
+    {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE,             0, font_style_values},
     {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT},
     {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT},
     {heightW,                 DISPID_IHTMLSTYLE_HEIGHT,                ATTR_FIX_PX},
@@ -316,8 +328,6 @@ static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
 static const WCHAR valUnderline[] =
     {'u','n','d','e','r','l','i','n','e',0};
-static const WCHAR szNormal[] =
-    {'n','o','r','m','a','l',0};
 static const WCHAR styleNone[] =
     {'n','o','n','e',0};
 static const WCHAR valOverline[] =
@@ -408,17 +418,31 @@ static LPWSTR fix_url_value(LPCWSTR val)
     return ret;
 }
 
-static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const WCHAR *value, unsigned flags)
+static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const WCHAR *value)
 {
     nsAString str_name, str_value, str_empty;
     LPWSTR val = NULL;
     nsresult nsres;
+    HRESULT hres = S_OK;
 
     if(value) {
+        unsigned flags = style_tbl[sid].flags;
         if(flags & ATTR_FIX_PX)
             val = fix_px_value(value);
         else if(flags & ATTR_FIX_URL)
             val = fix_url_value(value);
+
+        if(style_tbl[sid].allowed_values) {
+            const WCHAR **iter;
+            for(iter = style_tbl[sid].allowed_values; *iter; iter++) {
+                if(!strcmpiW(*iter, value))
+                    break;
+            }
+            if(!*iter) {
+                hres = E_INVALIDARG;
+                value = emptyW;
+            }
+        }
     }
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
@@ -434,7 +458,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsAString_Finish(&str_empty);
     heap_free(val);
 
-    return S_OK;
+    return hres;
 }
 
 static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, const WCHAR **ret)
@@ -477,21 +501,19 @@ static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, cons
 static HRESULT set_style_property_var(HTMLStyle *style, styleid_t sid, VARIANT *value)
 {
     const WCHAR *val;
-    unsigned flags;
     WCHAR buf[14];
     HRESULT hres;
 
-    flags = style_tbl[sid].flags;
     hres = var_to_styleval(value, sid, buf, &val);
     if(FAILED(hres))
         return hres;
 
-    return set_nsstyle_property(style->nsstyle, sid, val, flags);
+    return set_nsstyle_property(style->nsstyle, sid, val);
 }
 
 static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const WCHAR *value)
 {
-    return set_nsstyle_property(style->nsstyle, sid, value, style_tbl[sid].flags);
+    return set_nsstyle_property(style->nsstyle, sid, value);
 }
 
 static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, nsAString *value)
@@ -885,19 +907,10 @@ static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR szItalic[]  = {'i','t','a','l','i','c',0};
-    static const WCHAR szOblique[]  = {'o','b','l','i','q','u','e',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* fontStyle can only be one of the follow values. */
-    if(!v || strcmpiW(szNormal, v) == 0 || strcmpiW(szItalic, v) == 0 ||
-             strcmpiW(szOblique, v) == 0)
-    {
-        return set_style_property(This, STYLEID_FONT_STYLE, v);
-    }
-
-    return E_INVALIDARG;
+    return set_style_property(This, STYLEID_FONT_STYLE, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
@@ -917,7 +930,7 @@ static HRESULT WINAPI HTMLStyle_put_fontVariant(IHTMLStyle *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* fontVariant can only be one of the follow values. */
-    if(!v || strcmpiW(szNormal, v) == 0 || strcmpiW(szCaps, v) == 0)
+    if(!v || strcmpiW(normalW, v) == 0 || strcmpiW(szCaps, v) == 0)
     {
         return set_style_property(This, STYLEID_FONT_VARIANT, v);
     }
@@ -955,7 +968,7 @@ static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* fontWeight can only be one of the following */
-    if(v && *v && strcmpiW(szNormal, v) && strcmpiW(styleBold, v) &&  strcmpiW(styleBolder, v)
+    if(v && *v && strcmpiW(normalW, v) && strcmpiW(styleBold, v) &&  strcmpiW(styleBolder, v)
             && strcmpiW(styleLighter, v) && strcmpiW(style100, v) && strcmpiW(style200, v)
             && strcmpiW(style300, v) && strcmpiW(style400, v) && strcmpiW(style500, v) && strcmpiW(style600, v)
             && strcmpiW(style700, v) && strcmpiW(style800, v) && strcmpiW(style900, v))
@@ -4795,7 +4808,7 @@ HRESULT set_elem_style(HTMLElement *elem, styleid_t styleid, const WCHAR *val)
     if(FAILED(hres))
         return hres;
 
-    hres = set_nsstyle_property(style, styleid, val, 0);
+    hres = set_nsstyle_property(style, styleid, val);
     nsIDOMCSSStyleDeclaration_Release(style);
     return hres;
 }
