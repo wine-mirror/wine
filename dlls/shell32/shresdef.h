@@ -291,6 +291,8 @@
 /* 211 - 219 not used on Windows */
 #define IDI_SHELL_USERS            220
 #define IDI_SHELL_POWER_OFF        221
+#define IDI_SHELL_DVD              222
+#define IDI_SHELL_MUSIC_CD_95      228
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_MY_PICTURES      236
 #define IDI_SHELL_MY_MUSIC         237
@@ -299,12 +301,27 @@
 #define IDI_SHELL_COPY             243
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254
 #define IDI_SHELL_NEW_NETWORK_FOLDER       258
+#define IDI_SHELL_WRITE_DISC       260
+#define IDI_SHELL_DELETE_FILE      261
+#define IDI_SHELL_ERASE_DISC       262
 #define IDI_SHELL_TO_FOLDER        264
+#define IDI_SHELL_BURN_DISC        266
 #define IDI_SHELL_SHARED_FOLDER    267
 #define IDI_SHELL_USERS_XP         269
 #define IDI_SHELL_USERS_XP2        279
+#define IDI_SHELL_DVD_DRIVE        291
+#define IDI_SHELL_HYBRID_CD        292
+#define IDI_SHELL_UNKNOWN_DISC     293
+#define IDI_SHELL_CD_ROM           294
+#define IDI_SHELL_CD_R             295
+#define IDI_SHELL_CD_RW            296
+#define IDI_SHELL_DVD_RAM          297
+#define IDI_SHELL_DVD_R            298
 #define IDI_SHELL_OPTICAL_DISC     302
+#define IDI_SHELL_DVD_ROM          304
+#define IDI_SHELL_DVD_RW           318
 #define IDI_SHELL_NEW_FOLDER       319
+#define IDI_SHELL_BURN_DISC2       320
 #define IDI_SHELL_FAVORITES_SMALL  322
 #define IDI_SHELL_APP_FOLDER_SMALL 326
 #define IDI_SHELL_RESTRICTED2      338
