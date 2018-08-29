@@ -786,11 +786,27 @@ IDI_SHELL_NETWORK_FAX ICON resources/printer.ico
 IDI_SHELL_RESTRICTED ICON resources/restricted.ico
 
 /* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_DEFAULT_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
 /* @makedep: resources/security.ico */
 IDI_SHELL_USERS ICON resources/security.ico
 
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/mydocs.ico */
+IDI_SHELL_MY_PICTURES ICON resources/mydocs.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/mydocs.ico */
+IDI_SHELL_MY_MUSIC ICON resources/mydocs.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/mydocs.ico */
+IDI_SHELL_MY_VIDEOS ICON resources/mydocs.ico
 
 /* @makedep: resources/rename.ico */
 IDI_SHELL_RENAME ICON resources/rename.ico
@@ -800,6 +816,18 @@ IDI_SHELL_COPY ICON resources/copy.ico
 
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_NEW_NETWORK_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_TO_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_SHARED_FOLDER ICON resources/folder.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/security.ico */
@@ -812,8 +840,16 @@ IDI_SHELL_USERS_XP2 ICON resources/security.ico
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_NEW_FOLDER ICON resources/folder.ico
+
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_APP_FOLDER_SMALL ICON resources/folder.ico
 
 /* @makedep: resources/restricted.ico */
 IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
