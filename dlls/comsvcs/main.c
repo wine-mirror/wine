@@ -28,12 +28,119 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "rpcproxy.h"
-
+#include "comsvcs.h"
+#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(comsvcs);
 
 static HINSTANCE COMSVCS_hInstance;
+
+typedef struct dispensermanager
+{
+    IDispenserManager IDispenserManager_iface;
+    LONG ref;
+
+} dispensermanager;
+
+static inline dispensermanager *impl_from_IDispenserManager(IDispenserManager *iface)
+{
+    return CONTAINING_RECORD(iface, dispensermanager, IDispenserManager_iface);
+}
+
+static HRESULT WINAPI dismanager_QueryInterface(IDispenserManager *iface, REFIID riid, void **object)
+{
+    dispensermanager *This = impl_from_IDispenserManager(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), object);
+
+    *object = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDispenserManager))
+    {
+        *object = &This->IDispenserManager_iface;
+        IUnknown_AddRef( (IUnknown*)*object);
+
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),object);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dismanager_AddRef(IDispenserManager *iface)
+{
+    dispensermanager *This = impl_from_IDispenserManager(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
+{
+    dispensermanager *This = impl_from_IDispenserManager(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+       heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDispenserDriver *driver,
+                        LPCOLESTR name, IHolder **dispenser)
+{
+    dispensermanager *This = impl_from_IDispenserManager(iface);
+
+    FIXME("(%p)->(%p, %s, %p) stub\n", This, driver, debugstr_w(name), dispenser);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dismanager_GetContext(IDispenserManager *iface, INSTID *id, TRANSID *transid)
+{
+    dispensermanager *This = impl_from_IDispenserManager(iface);
+
+    FIXME("(%p)->(%p, %p) stub\n", This, id, transid);
+
+    return E_NOTIMPL;
+}
+
+struct IDispenserManagerVtbl dismanager_vtbl =
+{
+    dismanager_QueryInterface,
+    dismanager_AddRef,
+    dismanager_Release,
+    dismanager_RegisterDispenser,
+    dismanager_GetContext
+};
+
+static HRESULT WINAPI comsvcscf_CreateInstance(IClassFactory *cf,IUnknown* outer, REFIID riid,void **object)
+{
+    dispensermanager *dismanager;
+    HRESULT ret;
+
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), object);
+
+    dismanager = heap_alloc(sizeof(*dismanager));
+    if (!dismanager)
+    {
+        *object = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    dismanager->IDispenserManager_iface.lpVtbl = &dismanager_vtbl;
+    dismanager->ref = 1;
+
+    ret = dismanager_QueryInterface(&dismanager->IDispenserManager_iface, riid, object);
+    dismanager_Release(&dismanager->IDispenserManager_iface);
+
+    return ret;
+}
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID lpv)
 {
@@ -49,13 +156,67 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID lpv)
     return TRUE;
 }
 
+static HRESULT WINAPI comsvcscf_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv )
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI comsvcscf_AddRef(IClassFactory *iface )
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI comsvcscf_Release(IClassFactory *iface )
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI comsvcscf_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl comsvcscf_vtbl =
+{
+    comsvcscf_QueryInterface,
+    comsvcscf_AddRef,
+    comsvcscf_Release,
+    comsvcscf_CreateInstance,
+    comsvcscf_LockServer
+};
+
+static IClassFactory DispenserManageFactory = { &comsvcscf_vtbl };
+
 /******************************************************************
  * DllGetClassObject
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    FIXME("(%s,%s,%p) stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+    if(IsEqualGUID(&CLSID_DispenserManager, rclsid)) {
+        TRACE("(CLSID_DispenserManager %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&DispenserManageFactory, riid, ppv);
+    }
 
+    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

@@ -1,6 +1,6 @@
 MODULE    = comsvcs.dll
 IMPORTLIB = comsvcs
-IMPORTS   = ole32
+IMPORTS   = ole32 uuid
 
 C_SRCS = \
 	main.c
