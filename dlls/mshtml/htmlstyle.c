@@ -506,32 +506,10 @@ static LPWSTR fix_url_value(LPCWSTR val)
 static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const WCHAR *value)
 {
     nsAString str_name, str_value, str_empty;
-    LPWSTR val = NULL;
     nsresult nsres;
-    HRESULT hres = S_OK;
-
-    if(value && *value) {
-        unsigned flags = style_tbl[sid].flags;
-        if(flags & ATTR_FIX_PX)
-            val = fix_px_value(value);
-        else if(flags & ATTR_FIX_URL)
-            val = fix_url_value(value);
-
-        if(style_tbl[sid].allowed_values) {
-            const WCHAR **iter;
-            for(iter = style_tbl[sid].allowed_values; *iter; iter++) {
-                if(!strcmpiW(*iter, value))
-                    break;
-            }
-            if(!*iter) {
-                hres = E_INVALIDARG;
-                value = emptyW;
-            }
-        }
-    }
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
-    nsAString_InitDepend(&str_value, val ? val : value);
+    nsAString_InitDepend(&str_value, value);
     nsAString_InitDepend(&str_empty, emptyW);
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
@@ -541,9 +519,8 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_value);
     nsAString_Finish(&str_empty);
-    heap_free(val);
 
-    return hres;
+    return S_OK;
 }
 
 static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, const WCHAR **ret)
@@ -583,6 +560,38 @@ static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, cons
     }
 }
 
+static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const WCHAR *value)
+{
+    WCHAR *val = NULL;
+    HRESULT hres;
+
+    if(value && *value) {
+        unsigned flags = style_tbl[sid].flags;
+
+        if(style_tbl[sid].allowed_values) {
+            const WCHAR **iter;
+            for(iter = style_tbl[sid].allowed_values; *iter; iter++) {
+                if(!strcmpiW(*iter, value))
+                    break;
+            }
+            if(!*iter) {
+                WARN("invalid value %s\n", debugstr_w(value));
+                set_nsstyle_property(style->nsstyle, sid, emptyW);
+                return E_INVALIDARG;
+            }
+        }
+
+        if(flags & ATTR_FIX_PX)
+            val = fix_px_value(value);
+        else if(flags & ATTR_FIX_URL)
+            val = fix_url_value(value);
+    }
+
+    hres = set_nsstyle_property(style->nsstyle, sid, val ? val : value);
+    heap_free(val);
+    return hres;
+}
+
 static HRESULT set_style_property_var(HTMLStyle *style, styleid_t sid, VARIANT *value)
 {
     const WCHAR *val;
@@ -593,12 +602,7 @@ static HRESULT set_style_property_var(HTMLStyle *style, styleid_t sid, VARIANT *
     if(FAILED(hres))
         return hres;
 
-    return set_nsstyle_property(style->nsstyle, sid, val);
-}
-
-static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const WCHAR *value)
-{
-    return set_nsstyle_property(style->nsstyle, sid, value);
+    return set_style_property(style, sid, val);
 }
 
 static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, nsAString *value)
