@@ -730,6 +730,14 @@ IDI_SHELL_USERS ICON resources/security.ico
 /* @makedep: resources/shut_down.ico */
 IDI_SHELL_POWER_OFF ICON resources/shut_down.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_DVD ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_MUSIC_CD_95 ICON resources/optical_disc.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
@@ -759,8 +767,24 @@ IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 IDI_SHELL_NEW_NETWORK_FOLDER ICON resources/folder.ico
 
 /* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_WRITE_DISC ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/delete.ico */
+IDI_SHELL_DELETE_FILE ICON resources/delete.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/delete.ico */
+IDI_SHELL_ERASE_DISC ICON resources/delete.ico
+
+/* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_TO_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_BURN_DISC ICON resources/optical_disc.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
@@ -774,12 +798,56 @@ IDI_SHELL_USERS_XP ICON resources/security.ico
 /* @makedep: resources/security.ico */
 IDI_SHELL_USERS_XP2 ICON resources/security.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_drive.ico */
+IDI_SHELL_DVD_DRIVE ICON resources/optical_drive.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_HYBRID_CD ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_UNKNOWN_DISC ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_CD_ROM ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_CD_R ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_CD_RW ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_DVD_RAM ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_DVD_R ICON resources/optical_disc.ico
+
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 
 /* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_DVD_ROM ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_DVD_RW ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_NEW_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/optical_disc.ico */
+IDI_SHELL_BURN_DISC2 ICON resources/optical_disc.ico
 
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
