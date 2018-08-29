@@ -282,16 +282,26 @@
 #define IDI_SHELL_DEFAULT_NETWORK_FAX      198
 #define IDI_SHELL_NETWORK_FAX      199
 #define IDI_SHELL_RESTRICTED       200
+/* 201 - 209 not used on Windows */
+#define IDI_SHELL_DEFAULT_FOLDER   210
 /* 211 - 219 not used on Windows */
 #define IDI_SHELL_USERS            220
 #define IDI_SHELL_MY_DOCUMENTS     235
+#define IDI_SHELL_MY_PICTURES      236
+#define IDI_SHELL_MY_MUSIC         237
+#define IDI_SHELL_MY_VIDEOS        238
 #define IDI_SHELL_RENAME           242
 #define IDI_SHELL_COPY             243
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254
+#define IDI_SHELL_NEW_NETWORK_FOLDER       258
+#define IDI_SHELL_TO_FOLDER        264
+#define IDI_SHELL_SHARED_FOLDER    267
 #define IDI_SHELL_USERS_XP         269
 #define IDI_SHELL_USERS_XP2        279
 #define IDI_SHELL_OPTICAL_DISC     302
+#define IDI_SHELL_NEW_FOLDER       319
 #define IDI_SHELL_FAVORITES_SMALL  322
+#define IDI_SHELL_APP_FOLDER_SMALL 326
 #define IDI_SHELL_RESTRICTED2      338
 
 /* 
