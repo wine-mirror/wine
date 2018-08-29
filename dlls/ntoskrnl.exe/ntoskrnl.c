@@ -3722,3 +3722,9 @@ void WINAPI IoReleaseRemoveLockAndWaitEx(PIO_REMOVE_LOCK lock, PVOID tag, ULONG 
 {
     FIXME("stub: %p %p %u\n", lock, tag, size);
 }
+
+NTSTATUS WINAPI DbgQueryDebugFilterState(ULONG component, ULONG level)
+{
+    FIXME("stub: %d %d\n", component, level);
+    return STATUS_NOT_IMPLEMENTED;
+}

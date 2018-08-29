@@ -111,7 +111,7 @@
 @ varargs DbgPrintEx(long long str)
 @ stub DbgPrintReturnControlC
 @ stub DbgPrompt
-@ stub DbgQueryDebugFilterState
+@ stdcall DbgQueryDebugFilterState(long long)
 @ stub DbgSetDebugFilterState
 @ stdcall ExAcquireResourceExclusiveLite(ptr long)
 @ stub ExAcquireResourceSharedLite

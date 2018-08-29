@@ -1367,6 +1367,7 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
 #define SYMBOLIC_LINK_QUERY             0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
+NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
 void      WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX);
 PVOID     WINAPI ExAllocatePool(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
