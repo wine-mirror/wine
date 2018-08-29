@@ -1345,6 +1345,52 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     return S_OK;
 }
 
+static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkQueue vk_queue;
+    unsigned int i;
+
+    if (swapchain->command_queue)
+    {
+        if ((vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
+        {
+            vk_funcs->p_vkQueueWaitIdle(vk_queue);
+
+            vkd3d_release_vk_queue(swapchain->command_queue);
+        }
+        else
+        {
+            WARN("Failed to acquire Vulkan queue.\n");
+        }
+    }
+
+    for (i = 0; i < swapchain->buffer_count; ++i)
+    {
+        if (swapchain->buffers[i])
+        {
+            vkd3d_resource_decref(swapchain->buffers[i]);
+            swapchain->buffers[i] = NULL;
+        }
+
+        if (swapchain->vk_device)
+        {
+            vk_funcs->p_vkDestroyImage(swapchain->vk_device, swapchain->vk_images[i], NULL);
+            swapchain->vk_images[i] = VK_NULL_HANDLE;
+            vk_funcs->p_vkDestroySemaphore(swapchain->vk_device, swapchain->vk_semaphores[i], NULL);
+            swapchain->vk_semaphores[i] = VK_NULL_HANDLE;
+        }
+    }
+
+    if (swapchain->vk_device)
+    {
+        vk_funcs->p_vkFreeMemory(swapchain->vk_device, swapchain->vk_memory, NULL);
+        swapchain->vk_memory = VK_NULL_HANDLE;
+        vk_funcs->p_vkDestroyCommandPool(swapchain->vk_device, swapchain->vk_cmd_pool, NULL);
+        swapchain->vk_cmd_pool = VK_NULL_HANDLE;
+    }
+}
+
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain3(IDXGISwapChain3 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d12_swapchain, IDXGISwapChain3_iface);
@@ -1388,49 +1434,18 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
 static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
-    VkQueue vk_queue;
-    unsigned int i;
+
+    d3d12_swapchain_destroy_buffers(swapchain);
 
     if (swapchain->command_queue)
-    {
-        if ((vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-        {
-            vk_funcs->p_vkQueueWaitIdle(vk_queue);
-
-            vkd3d_release_vk_queue(swapchain->command_queue);
-        }
-        else
-        {
-            WARN("Failed to acquire Vulkan queue.\n");
-        }
-
         ID3D12CommandQueue_Release(swapchain->command_queue);
-    }
-
-    if (swapchain->factory)
-        IWineDXGIFactory_Release(swapchain->factory);
 
     wined3d_private_store_cleanup(&swapchain->private_store);
-
-    for (i = 0; i < swapchain->buffer_count; ++i)
-    {
-        if (swapchain->buffers[i])
-            vkd3d_resource_decref(swapchain->buffers[i]);
-
-        if (swapchain->vk_device)
-        {
-            vk_funcs->p_vkDestroyImage(swapchain->vk_device, swapchain->vk_images[i], NULL);
-            vk_funcs->p_vkDestroySemaphore(swapchain->vk_device, swapchain->vk_semaphores[i], NULL);
-        }
-    }
 
     if (swapchain->vk_device)
     {
         vk_funcs->p_vkDestroyFence(swapchain->vk_device, swapchain->vk_fence, NULL);
         vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
-
-        vk_funcs->p_vkFreeMemory(swapchain->vk_device, swapchain->vk_memory, NULL);
-        vk_funcs->p_vkDestroyCommandPool(swapchain->vk_device, swapchain->vk_cmd_pool, NULL);
     }
 
     if (swapchain->vk_instance)
@@ -1438,6 +1453,9 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 
     if (swapchain->device)
         ID3D12Device_Release(swapchain->device);
+
+    if (swapchain->factory)
+        IWineDXGIFactory_Release(swapchain->factory);
 }
 
 static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
