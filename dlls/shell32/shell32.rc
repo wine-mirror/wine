@@ -754,6 +754,12 @@ IDI_SHELL_ONE_CLICK_OPEN ICON resources/folder_open.ico
 /* @makedep: resources/folder_open.ico */
 IDI_SHELL_TWO_CLICK_OPEN ICON resources/folder_open.ico
 
+/* @makedep: resources/trash_file.ico */
+IDI_SHELL_EMPTY_RECYCLE_BIN_95 ICON resources/trash_file.ico
+
+/* @makedep: resources/trash_full.ico */
+IDI_SHELL_FULL_RECYCLE_BIN_95 ICON resources/trash_full.ico
+
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
@@ -765,6 +771,9 @@ IDI_SHELL_RENAME ICON resources/rename.ico
 
 /* @makedep: resources/copy.ico */
 IDI_SHELL_COPY ICON resources/copy.ico
+
+/* @makedep: resources/trash_file.ico */
+IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
