@@ -285,6 +285,7 @@
 #define IDI_SHELL_DEFAULT_FAX      197
 #define IDI_SHELL_DEFAULT_NETWORK_FAX      198
 #define IDI_SHELL_NETWORK_FAX      199
+#define IDI_SHELL_RESTRICTED       200
 /* 211 - 219 not used on Windows */
 #define IDI_SHELL_USERS            220
 #define IDI_SHELL_MY_DOCUMENTS     235
@@ -295,6 +296,7 @@
 #define IDI_SHELL_USERS_XP2        279
 #define IDI_SHELL_OPTICAL_DISC     302
 #define IDI_SHELL_FAVORITES_SMALL  322
+#define IDI_SHELL_RESTRICTED2      338
 
 /* 
 AVI resources, windows shell32 has 14 of them: 150-152 and 160-170

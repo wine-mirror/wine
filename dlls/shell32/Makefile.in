@@ -89,6 +89,7 @@ SVG_SRCS = \
 	resources/ramdisk.svg \
 	resources/recent.svg \
 	resources/rename.svg \
+	resources/restricted.svg \
 	resources/search.svg \
 	resources/security.svg \
 	resources/shortcut.svg \

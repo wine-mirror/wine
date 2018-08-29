@@ -782,6 +782,9 @@ IDI_SHELL_DEFAULT_NETWORK_FAX ICON resources/printer.ico
 /* @makedep: resources/printer.ico */
 IDI_SHELL_NETWORK_FAX ICON resources/printer.ico
 
+/* @makedep: resources/restricted.ico */
+IDI_SHELL_RESTRICTED ICON resources/restricted.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/security.ico */
 IDI_SHELL_USERS ICON resources/security.ico
@@ -811,6 +814,9 @@ IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
+
+/* @makedep: resources/restricted.ico */
+IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
 
 /* @makedep: resources/idb_tb_large.bmp */
 IDB_TB_LARGE_LIGHT BITMAP resources/idb_tb_large.bmp
