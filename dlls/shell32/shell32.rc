@@ -711,6 +711,9 @@ IDI_SHELL_NET_CONNECTIONS ICON resources/network.ico
 /* @makedep: resources/folder.ico */
 IDI_SHELL_NEW_WEB_FOLDER ICON resources/folder.ico
 
+/* @makedep: resources/control.ico */
+IDI_SHELL_VISUAL_SETTINGS ICON resources/control.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/document.ico */
 IDI_SHELL_NEW_WEB_PAGE ICON resources/document.ico
