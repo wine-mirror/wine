@@ -641,6 +641,17 @@ IDI_SHELL_CHECKLIST_FOLDER ICON resources/folder.ico
 /* @makedep: resources/network.ico */
 IDI_SHELL_NET_CONNECTIONS ICON resources/network.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder.ico */
+IDI_SHELL_NEW_WEB_FOLDER ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/document.ico */
+IDI_SHELL_NEW_WEB_PAGE ICON resources/document.ico
+
+/* @makedep: resources/internet.ico */
+IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
