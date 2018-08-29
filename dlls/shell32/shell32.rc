@@ -701,6 +701,22 @@ IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 IDI_SHELL_PASSWORDS ICON resources/security.ico
 
 /* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_FAX ICON resources/printer.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_DEFAULT_FAX ICON resources/printer.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_DEFAULT_NETWORK_FAX ICON resources/printer.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_NETWORK_FAX ICON resources/printer.ico
+
+/* FIXME: Following resource is not yet added */
 /* @makedep: resources/security.ico */
 IDI_SHELL_USERS ICON resources/security.ico
 

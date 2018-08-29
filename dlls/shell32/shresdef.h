@@ -276,6 +276,11 @@
 #define IDI_SHELL_FULL_RECYCLE_BIN_95      192
 #define IDI_SHELL_WEB_FOLDERS      193
 #define IDI_SHELL_PASSWORDS        194
+/* 195 not used on Windows */
+#define IDI_SHELL_FAX              196
+#define IDI_SHELL_DEFAULT_FAX      197
+#define IDI_SHELL_DEFAULT_NETWORK_FAX      198
+#define IDI_SHELL_NETWORK_FAX      199
 /* 211 - 219 not used on Windows */
 #define IDI_SHELL_USERS            220
 #define IDI_SHELL_MY_DOCUMENTS     235
