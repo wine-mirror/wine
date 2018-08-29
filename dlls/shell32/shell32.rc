@@ -727,6 +727,9 @@ IDI_SHELL_DEFAULT_FOLDER ICON resources/folder.ico
 /* @makedep: resources/security.ico */
 IDI_SHELL_USERS ICON resources/security.ico
 
+/* @makedep: resources/shut_down.ico */
+IDI_SHELL_POWER_OFF ICON resources/shut_down.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
