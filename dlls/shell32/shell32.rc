@@ -500,8 +500,8 @@ IDI_SHELL_SEARCH_FOLDER ICON resources/search.ico
 /* @makedep: resources/update.ico */
 IDI_SHELL_UPDATE ICON resources/update.ico
 
-/* @makedep: resources/lock.ico */
-IDI_SHELL_RIGHTS ICON resources/lock.ico
+/* @makedep: resources/security.ico */
+IDI_SHELL_SECURITY ICON resources/security.ico
 
 /* @makedep: resources/shut_down.ico */
 IDI_SHELL_CONFIRM_SHUTDOWN ICON resources/shut_down.ico
