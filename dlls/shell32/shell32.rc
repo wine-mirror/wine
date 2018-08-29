@@ -462,8 +462,8 @@ IDI_SHELL_NETDRIVE ICON resources/netdrive.ico
 /* @makedep: resources/netdrive2.ico */
 IDI_SHELL_NETDRIVE2 ICON resources/netdrive2.ico
 
-/* @makedep: resources/cdrom.ico */
-IDI_SHELL_CDROM ICON resources/cdrom.ico
+/* @makedep: resources/optical_drive.ico */
+IDI_SHELL_OPTICAL_DRIVE ICON resources/optical_drive.ico
 
 /* @makedep: resources/ramdisk.ico */
 IDI_SHELL_RAMDISK ICON resources/ramdisk.ico

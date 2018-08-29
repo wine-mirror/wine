@@ -180,7 +180,7 @@
 #define IDI_SHELL_DRIVE              9
 #define IDI_SHELL_NETDRIVE          10
 #define IDI_SHELL_NETDRIVE2         11
-#define IDI_SHELL_CDROM             12
+#define IDI_SHELL_OPTICAL_DRIVE     12
 #define IDI_SHELL_RAMDISK           13
 #define IDI_SHELL_ENTIRE_NETWORK    14
 #define IDI_SHELL_NETWORK           15

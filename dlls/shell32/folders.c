@@ -255,7 +255,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 		switch(GetDriveTypeA(sTemp))
 		{
                   case DRIVE_REMOVABLE:   icon_idx = IDI_SHELL_FLOPPY;        break;
-                  case DRIVE_CDROM:       icon_idx = IDI_SHELL_CDROM;         break;
+                  case DRIVE_CDROM:       icon_idx = IDI_SHELL_OPTICAL_DRIVE; break;
                   case DRIVE_REMOTE:      icon_idx = IDI_SHELL_NETDRIVE;      break;
                   case DRIVE_RAMDISK:     icon_idx = IDI_SHELL_RAMDISK;       break;
 		}
