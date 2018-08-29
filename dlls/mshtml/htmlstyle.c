@@ -523,7 +523,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     return S_OK;
 }
 
-static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, const WCHAR **ret)
+static HRESULT var_to_styleval(HTMLStyle *style, const VARIANT *v, styleid_t sid, WCHAR *buf, const WCHAR **ret)
 {
     switch(V_VT(v)) {
     case VT_NULL:
@@ -539,7 +539,7 @@ static HRESULT var_to_styleval(const VARIANT *v, styleid_t sid, WCHAR *buf, cons
         return S_OK;
 
     case VT_I4: {
-        unsigned flags = style_tbl[sid].flags;
+        unsigned flags = dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9 ? style_tbl[sid].flags : 0;
         static const WCHAR formatW[] = {'%','d',0};
         static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
 
@@ -598,7 +598,7 @@ static HRESULT set_style_property_var(HTMLStyle *style, styleid_t sid, VARIANT *
     WCHAR buf[14];
     HRESULT hres;
 
-    hres = var_to_styleval(value, sid, buf, &val);
+    hres = var_to_styleval(style, value, sid, buf, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1202,7 +1202,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(&v, STYLEID_BACKGROUND_POSITION_X, buf, &val);
+    hres = var_to_styleval(This, &v, STYLEID_BACKGROUND_POSITION_X, buf, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1295,7 +1295,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(&v, STYLEID_BACKGROUND_POSITION_Y, buf, &val);
+    hres = var_to_styleval(This, &v, STYLEID_BACKGROUND_POSITION, buf, &val);
     if(FAILED(hres))
         return hres;
 
