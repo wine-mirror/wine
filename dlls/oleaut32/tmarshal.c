@@ -387,8 +387,8 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo **typeinfo)
     *typeinfo = NULL;
 
     moduleW[0] = 0;
-    if (!actctx_get_typelib_module(riid, moduleW, sizeof(moduleW)/sizeof(moduleW[0]))) {
-        hres = reg_get_typelib_module(riid, moduleW, sizeof(moduleW)/sizeof(moduleW[0]));
+    if (!actctx_get_typelib_module(riid, moduleW, ARRAY_SIZE(moduleW))) {
+        hres = reg_get_typelib_module(riid, moduleW, ARRAY_SIZE(moduleW));
         if (FAILED(hres))
             return hres;
     }
@@ -1470,9 +1470,9 @@ static DWORD WINAPI xCall(int method, void **args)
 
     /* Need them for hack below */
     memset(names,0,sizeof(names));
-    if (ITypeInfo_GetNames(tinfo,fdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames))
+    if (ITypeInfo_GetNames(tinfo,fdesc->memid,names,ARRAY_SIZE(names),&nrofnames))
 	nrofnames = 0;
-    if (nrofnames > sizeof(names)/sizeof(names[0]))
+    if (nrofnames > ARRAY_SIZE(names))
 	ERR("Need more names!\n");
 
     xargs = (DWORD *)(args + 1);
@@ -2125,8 +2125,8 @@ TMStubImpl_Invoke(
 
     /* Need them for hack below */
     memset(names,0,sizeof(names));
-    ITypeInfo_GetNames(tinfo,fdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames);
-    if (nrofnames > sizeof(names)/sizeof(names[0])) {
+    ITypeInfo_GetNames(tinfo,fdesc->memid,names,ARRAY_SIZE(names),&nrofnames);
+    if (nrofnames > ARRAY_SIZE(names)) {
 	ERR("Need more names!\n");
     }
 

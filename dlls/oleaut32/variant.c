@@ -1549,7 +1549,7 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
 
   /* Local currency symbols are often 2 characters */
   lpChars->cCurrencyLocal2 = '\0';
-  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, sizeof(buff)/sizeof(WCHAR)))
+  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, ARRAY_SIZE(buff)))
   {
     case 3: lpChars->cCurrencyLocal2 = buff[1]; /* Fall through */
     case 2: lpChars->cCurrencyLocal  = buff[0];
@@ -1610,7 +1610,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   VARIANT_NUMBER_CHARS chars;
   BYTE rgbTmp[1024];
   DWORD dwState = B_EXPONENT_START|B_INEXACT_ZEROS;
-  int iMaxDigits = sizeof(rgbTmp) / sizeof(BYTE);
+  int iMaxDigits = ARRAY_SIZE(rgbTmp);
   int cchUsed = 0;
 
   TRACE("(%s,%d,0x%08x,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);

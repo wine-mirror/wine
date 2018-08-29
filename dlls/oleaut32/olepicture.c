@@ -2395,7 +2395,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
   if (strncmpW(szURLorPath, file, 5) == 0) {
       DWORD size;
       hRes = CoInternetParseUrl(szURLorPath, PARSE_PATH_FROM_URL, 0, path_buf,
-                                sizeof(path_buf)/sizeof(WCHAR), &size, 0);
+                                ARRAY_SIZE(path_buf), &size, 0);
       if (FAILED(hRes))
           return hRes;
 

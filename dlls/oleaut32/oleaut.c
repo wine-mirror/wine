@@ -122,9 +122,7 @@ static inline bstr_t *bstr_from_str(BSTR str)
 
 static inline bstr_cache_entry_t *get_cache_entry_from_idx(unsigned cache_idx)
 {
-    return bstr_cache_enabled && cache_idx < sizeof(bstr_cache)/sizeof(*bstr_cache)
-        ? bstr_cache + cache_idx
-        : NULL;
+    return bstr_cache_enabled && cache_idx < ARRAY_SIZE(bstr_cache) ? bstr_cache + cache_idx : NULL;
 }
 
 static inline bstr_cache_entry_t *get_cache_entry(size_t size)
@@ -304,7 +302,7 @@ void WINAPI SysFreeString(BSTR str)
             }
         }
 
-        if(cache_entry->cnt < sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)) {
+        if(cache_entry->cnt < ARRAY_SIZE(cache_entry->buf)) {
             cache_entry->buf[(cache_entry->head+cache_entry->cnt) % BUCKET_BUFFER_SIZE] = bstr;
             cache_entry->cnt++;
 

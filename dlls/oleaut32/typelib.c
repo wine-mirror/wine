@@ -328,7 +328,7 @@ static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
                 return TYPE_E_LIBNOTREGISTERED;
 
             nameW = (WCHAR*)((BYTE*)data.lpSectionBase + tlib->name_offset);
-            len = SearchPathW( NULL, nameW, NULL, sizeof(Path)/sizeof(WCHAR), Path, NULL );
+            len = SearchPathW( NULL, nameW, NULL, ARRAY_SIZE( Path ), Path, NULL );
             if (!len) return TYPE_E_LIBNOTREGISTERED;
 
             TRACE_(typelib)("got path from context %s\n", debugstr_w(Path));
@@ -969,11 +969,11 @@ enddeleteloop:
 
     /* check if there is anything besides the FLAGS/HELPDIR keys.
        If there is, we don't delete them */
-    tmpLength = sizeof(subKeyName)/sizeof(WCHAR);
+    tmpLength = ARRAY_SIZE(subKeyName);
     deleteOtherStuff = TRUE;
     i = 0;
     while(RegEnumKeyExW(key, i++, subKeyName, &tmpLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-        tmpLength = sizeof(subKeyName)/sizeof(WCHAR);
+        tmpLength = ARRAY_SIZE(subKeyName);
 
         /* if its not FLAGS or HELPDIR, then we must keep the rest of the key */
         if (!strcmpW(subKeyName, FLAGSW)) continue;
@@ -7751,7 +7751,7 @@ static BOOL CALLBACK search_res_tlb(HMODULE hModule, LPCWSTR lpszType, LPWSTR lp
     if (!(len = GetModuleFileNameW(hModule, szPath, MAX_PATH)))
         return TRUE;
 
-    if (snprintfW(szPath + len, sizeof(szPath)/sizeof(WCHAR) - len, formatW, LOWORD(lpszName)) < 0)
+    if (snprintfW(szPath + len, ARRAY_SIZE(szPath) - len, formatW, LOWORD(lpszName)) < 0)
         return TRUE;
 
     ret = LoadTypeLibEx(szPath, REGKIND_NONE, &pTLib);
