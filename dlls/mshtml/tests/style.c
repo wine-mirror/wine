@@ -704,7 +704,6 @@ static void test_style6(IHTMLStyle6 *style)
     if(compat_mode < COMPAT_IE9)
         ok(str && !*str, "outline = %s\n", wine_dbgstr_w(str));
     else
-        todo_wine
         ok(!str, "outline = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -2524,7 +2523,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_clip(style, &str);
     ok(hres == S_OK, "get_clip failed: %08x\n", hres);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(!strcmp_wa(str, compat_mode < COMPAT_IE9 ? "rect(0px 1px 500px 505px)" : "rect(0px, 1px, 500px, 505px)"),
        "clip = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);

@@ -123,7 +123,7 @@ typedef enum {
 
 HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
 
-HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration*,styleid_t,compat_mode_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration*,styleid_t,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT get_elem_style(HTMLElement*,styleid_t,BSTR*) DECLSPEC_HIDDEN;

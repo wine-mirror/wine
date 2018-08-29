@@ -667,7 +667,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     return S_OK;
 }
 
-HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p)
+HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, BSTR *p)
 {
     nsAString str_value;
     const PRUnichar *value;
@@ -678,7 +678,7 @@ HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    hres = nsstyle_to_bstr(value, style_tbl[sid].flags, p);
+    hres = nsstyle_to_bstr(value, compat_mode < COMPAT_MODE_IE9 ? style_tbl[sid].flags : 0, p);
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
@@ -738,7 +738,7 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
 
 static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(This->nsstyle, sid, p);
+    return get_nsstyle_property(This->nsstyle, sid, dispex_compat_mode(&This->dispex), p);
 }
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
@@ -4796,7 +4796,7 @@ HRESULT get_elem_style(HTMLElement *elem, styleid_t styleid, BSTR *ret)
     if(FAILED(hres))
         return hres;
 
-    hres = get_nsstyle_property(style, styleid, ret);
+    hres = get_nsstyle_property(style, styleid, COMPAT_MODE_IE11, ret);
     nsIDOMCSSStyleDeclaration_Release(style);
     return hres;
 }

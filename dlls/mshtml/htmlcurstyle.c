@@ -48,7 +48,7 @@ struct HTMLCurrentStyle {
 
 static inline HRESULT get_current_style_property(HTMLCurrentStyle *current_style, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(current_style->nsstyle, sid, p);
+    return get_nsstyle_property(current_style->nsstyle, sid, COMPAT_MODE_QUIRKS, p);
 }
 
 static inline HRESULT get_current_style_property_var(HTMLCurrentStyle *This, styleid_t sid, VARIANT *v)
