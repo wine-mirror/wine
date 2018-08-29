@@ -32,8 +32,9 @@
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
-static HIMAGELIST(WINAPI *pImageList_Create)(int, int, UINT, int, int);
-static int(WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
+static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
 
 /****************** button message test *************************/
 #define ID_BUTTON 0x000e
@@ -82,6 +83,7 @@ static void init_functions(void)
 #define X(f) p##f = (void *)GetProcAddress(hmod, #f);
     X(ImageList_Create);
     X(ImageList_Add);
+    X(ImageList_Destroy);
 #undef X
 }
 
@@ -1352,6 +1354,8 @@ static void test_get_set_imagelist(void)
 
         DestroyWindow(hwnd);
     }
+
+    pImageList_Destroy(himl);
 }
 
 static void test_get_set_textmargin(void)
