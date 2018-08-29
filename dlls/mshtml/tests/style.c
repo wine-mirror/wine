@@ -284,7 +284,6 @@ static void _test_border_styles(unsigned line, IHTMLStyle *pStyle, BSTR Name)
         if(compat_mode < COMPAT_IE9)
             ok_(__FILE__,line) (FAILED(hres), "invalid value passed.\n");
         else
-            todo_wine
             ok_(__FILE__,line) (hres == S_OK, "invalid value returned: %08x\n", hres);
         VariantClear(&arg);
 
@@ -361,21 +360,6 @@ static void _test_text_decoration(unsigned line, IHTMLStyle *style, const char *
         ok_(__FILE__,line)(!strcmp_wa(str, exdec), "textDecoration = %s, expected %s\n", wine_dbgstr_w(str), exdec);
     else
         ok_(__FILE__,line)(!str, "textDecoration = %s, expected NULL\n", wine_dbgstr_w(str));
-    SysFreeString(str);
-}
-
-#define test_text_decoration_todo(a,b) _test_text_decoration_todo(__LINE__,a,b)
-static void _test_text_decoration_todo(unsigned line, IHTMLStyle *style, const char *exdec)
-{
-    BSTR str;
-    HRESULT hres;
-
-    hres = IHTMLStyle_get_textDecoration(style, &str);
-    ok_(__FILE__,line)(hres == S_OK, "get_textDecoration failed: %08x\n", hres);
-    if(exdec)
-        todo_wine ok_(__FILE__,line)(!strcmp_wa(str, exdec), "textDecoration = %s, expected %s\n", wine_dbgstr_w(str), exdec);
-    else
-        todo_wine ok_(__FILE__,line)(!str, "textDecoration = %s, expected NULL\n", wine_dbgstr_w(str));
     SysFreeString(str);
 }
 
@@ -639,10 +623,7 @@ static void test_style5(IHTMLStyle5 *style5)
 
     hres = IHTMLStyle5_get_minWidth(style5, &v);
     ok(hres == S_OK, "get_minWidth failed: %08x\n", hres);
-    if(compat_mode < COMPAT_IE9)
-        test_var_bstr(&v, "10px");
-    else
-        test_var_bstr_todo(&v, "10%");
+    test_var_bstr(&v, compat_mode < COMPAT_IE9 ? "10px" : "10%");
     VariantClear(&v);
 
     hres = IHTMLStyle5_put_minWidth(style5, vdefault);
@@ -717,10 +698,7 @@ static void test_style5(IHTMLStyle5 *style5)
 
     hres = IHTMLStyle5_get_maxHeight(style5, &v);
     ok(hres == S_OK, "get_maxHeight failed: %08x\n", hres);
-    if(compat_mode < COMPAT_IE9)
-        test_var_bstr(&v, "100px");
-    else
-        test_var_bstr_todo(&v, "70%");
+    test_var_bstr(&v, compat_mode < COMPAT_IE9 ? "100px" : "70%");
     VariantClear(&v);
 
     hres = IHTMLStyle5_put_maxHeight(style5, vdefault);
@@ -873,7 +851,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("test");
     hres = IHTMLStyle_put_fontWeight(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_fontWeight failed: %08x\n", hres);
     SysFreeString(str);
@@ -971,7 +948,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("test");
     hres = IHTMLStyle_put_fontVariant(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "fontVariant failed: %08x\n", hres);
     SysFreeString(str);
@@ -1141,7 +1117,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("invalid");
     hres = IHTMLStyle_put_textDecoration(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_textDecoration failed: %08x\n", hres);
     SysFreeString(str);
@@ -1158,14 +1133,10 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("invalid");
     hres = IHTMLStyle_put_textDecoration(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_textDecoration failed: %08x\n", hres);
     SysFreeString(str);
-    if(compat_mode < COMPAT_IE9)
-        test_text_decoration(style, NULL);
-    else
-        test_text_decoration_todo(style, "blink");
+    test_text_decoration(style, compat_mode < COMPAT_IE9 ? NULL : "blink");
 
     hres = IHTMLStyle_put_textDecoration(style, sDefault);
     ok(hres == S_OK, "put_textDecoration failed: %08x\n", hres);
@@ -1799,7 +1770,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("test");
     hres = IHTMLStyle_put_fontStyle(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_fontStyle failed: %08x\n", hres);
     SysFreeString(str);
@@ -1832,7 +1802,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("test");
     hres = IHTMLStyle_put_overflow(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_overflow failed: %08x\n", hres);
     SysFreeString(str);
@@ -2111,7 +2080,6 @@ static void test_body_style(IHTMLStyle *style)
     if(compat_mode < COMPAT_IE9)
         ok(!strcmp_wa(V_BSTR(&v), "10px"), "paddingLeft = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     else
-        todo_wine
         ok(!V_BSTR(&v), "paddingLeft = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
@@ -2124,7 +2092,6 @@ static void test_body_style(IHTMLStyle *style)
 
     str = a2bstr("invalid");
     hres = IHTMLStyle_put_backgroundRepeat(style, str);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(hres == (compat_mode < COMPAT_IE9 ? E_INVALIDARG : S_OK),
        "put_backgroundRepeat failed: %08x\n", hres);
     SysFreeString(str);
@@ -2410,7 +2377,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_borderRightWidth(style, &v);
     ok(hres == S_OK, "get_borderRightWidth: %08x\n", hres);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(!strcmp_wa(V_BSTR(&v), compat_mode < COMPAT_IE9 ? "10px" : "1px"),
        "borderRightWidth = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
@@ -2431,7 +2397,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_borderBottomWidth(style, &v);
     ok(hres == S_OK, "get_borderBottomWidth: %08x\n", hres);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(!strcmp_wa(V_BSTR(&v), compat_mode < COMPAT_IE9 ? "10px" : "1px"),
        "borderBottomWidth = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
@@ -2452,7 +2417,6 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_borderLeftWidth(style, &v);
     ok(hres == S_OK, "get_borderLeftWidth: %08x\n", hres);
-    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(!strcmp_wa(V_BSTR(&v), compat_mode < COMPAT_IE9 ? "10px" : "1px"),
        "expected 10px = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);

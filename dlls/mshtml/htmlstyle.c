@@ -565,7 +565,7 @@ static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const 
     WCHAR *val = NULL;
     HRESULT hres;
 
-    if(value && *value) {
+    if(value && *value && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9) {
         unsigned flags = style_tbl[sid].flags;
 
         if(style_tbl[sid].allowed_values) {
@@ -4780,7 +4780,8 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
-    init_dispex(&style->dispex, (IUnknown*)&style->IHTMLStyle_iface, &HTMLStyle_dispex);
+    init_dispex_with_compat_mode(&style->dispex, (IUnknown*)&style->IHTMLStyle_iface, &HTMLStyle_dispex,
+                                 dispex_compat_mode(&elem->node.event_target.dispex));
 
     *ret = style;
     return S_OK;
