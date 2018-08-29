@@ -730,6 +730,22 @@ IDI_SHELL_WINDOW_ON_MONITOR ICON resources/mycomputer.ico
 /* @makedep: resources/mycomputer.ico */
 IDI_SHELL_DESKTOP_ON_MONITOR ICON resources/mycomputer.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/window.ico */
+IDI_SHELL_WINDOW_WITH_SIDEBAR ICON resources/window.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/window.ico */
+IDI_SHELL_WINDOW_WITHOUT_SIDEBAR ICON resources/window.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/window.ico */
+IDI_SHELL_MAXIMIZED_WINDOW ICON resources/window.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/window.ico */
+IDI_SHELL_FLOATING_WINDOWS ICON resources/window.ico
+
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
