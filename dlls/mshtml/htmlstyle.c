@@ -685,22 +685,21 @@ HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     return hres;
 }
 
-HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p)
+HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, VARIANT *p)
 {
+    unsigned flags = style_tbl[sid].flags;
     nsAString str_value;
     const PRUnichar *value;
     BOOL set = FALSE;
-    unsigned flags;
     HRESULT hres = S_OK;
 
-    flags = style_tbl[sid].flags;
     nsAString_Init(&str_value, NULL);
 
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
 
-    if(flags & ATTR_STR_TO_INT) {
+    if((flags & ATTR_STR_TO_INT) && (*value || compat_mode < COMPAT_MODE_IE9)) {
         const PRUnichar *ptr = value;
         BOOL neg = FALSE;
         INT i = 0;
@@ -723,7 +722,7 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
     if(!set) {
         BSTR str;
 
-        hres = nsstyle_to_bstr(value, flags, &str);
+        hres = nsstyle_to_bstr(value, compat_mode < COMPAT_MODE_IE9 ? flags : 0, &str);
         if(SUCCEEDED(hres)) {
             V_VT(p) = VT_BSTR;
             V_BSTR(p) = str;
@@ -743,7 +742,7 @@ static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_property_var(This->nsstyle, sid, v);
+    return get_nsstyle_property_var(This->nsstyle, sid, dispex_compat_mode(&This->dispex), v);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)

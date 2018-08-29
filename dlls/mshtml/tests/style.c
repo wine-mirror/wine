@@ -1715,9 +1715,7 @@ static void test_body_style(IHTMLStyle *style)
         ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
         ok(!V_I4(&v), "V_I4(v) != 0\n");
     }else {
-        todo_wine
         ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
-        if(V_VT(&v) == VT_BSTR) todo_wine
         ok(!V_BSTR(&v), "zIndex = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     }
     VariantClear(&v);

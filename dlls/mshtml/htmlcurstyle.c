@@ -53,7 +53,7 @@ static inline HRESULT get_current_style_property(HTMLCurrentStyle *current_style
 
 static inline HRESULT get_current_style_property_var(HTMLCurrentStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_property_var(This->nsstyle, sid, v);
+    return get_nsstyle_property_var(This->nsstyle, sid, COMPAT_MODE_QUIRKS, v);
 }
 
 static inline HTMLCurrentStyle *impl_from_IHTMLCurrentStyle(IHTMLCurrentStyle *iface)
