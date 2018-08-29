@@ -722,6 +722,14 @@ IDI_SHELL_NEW_WEB_PAGE ICON resources/document.ico
 /* @makedep: resources/internet.ico */
 IDI_SHELL_REMOTE_CONNECTION ICON resources/internet.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/mycomputer.ico */
+IDI_SHELL_WINDOW_ON_MONITOR ICON resources/mycomputer.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/mycomputer.ico */
+IDI_SHELL_DESKTOP_ON_MONITOR ICON resources/mycomputer.ico
+
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
