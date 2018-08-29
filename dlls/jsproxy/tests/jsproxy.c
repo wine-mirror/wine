@@ -24,6 +24,8 @@
 
 #include "wine/test.h"
 
+static BOOL old_jsproxy;
+
 static BOOL (WINAPI *pInternetInitializeAutoProxyDll)
     (DWORD, LPSTR, LPSTR, AutoProxyHelperFunctions *, AUTO_PROXY_SCRIPT_BUFFER *);
 static BOOL (WINAPI *pInternetDeInitializeAutoProxyDll)(LPSTR, DWORD);
@@ -34,6 +36,7 @@ static void test_InternetInitializeAutoProxyDll(void)
     const char url[] = "http://localhost";
     char script[] = "function FindProxyForURL(url, host) {return \"DIRECT\";}\0test";
     char script2[] = "function FindProxyForURL(url, host) {return \"PROXY 10.0.0.1:8080\";}\0test";
+    char script3[] = "function FindProxyForURL(url, host) {return \"DIRECT\";}";
     char *proxy, host[] = "localhost";
     AUTO_PROXY_SCRIPT_BUFFER buf;
     DWORD err, len;
@@ -75,6 +78,16 @@ static void test_InternetInitializeAutoProxyDll(void)
     ok( ret, "got %u\n", GetLastError() );
     ok( !strcmp( proxy, "PROXY 10.0.0.1:8080" ), "got \"%s\"\n", proxy );
     GlobalFree( proxy );
+
+    buf.lpszScriptBuffer = script3;
+    buf.dwScriptBufferSize = strlen(script3);
+    ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
+    ok( ret || broken(old_jsproxy && !ret), "got %u\n", GetLastError() );
+
+    buf.dwScriptBufferSize = 1;
+    script3[0] = 0;
+    ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
+    ok( ret, "got %u\n", GetLastError() );
 
     ret = pInternetDeInitializeAutoProxyDll( NULL, 0 );
     ok( ret, "got %u\n", GetLastError() );
@@ -149,6 +162,10 @@ START_TEST(jsproxy)
         win_skip( "InternetInitializeAutoProxyDll not available\n" );
         return;
     }
+
+    old_jsproxy = !GetProcAddress( module, "InternetGetProxyInfoEx" );
+    if (old_jsproxy)
+        trace( "InternetGetProxyInfoEx not available\n" );
 
     test_InternetInitializeAutoProxyDll();
     test_InternetGetProxyInfo();
