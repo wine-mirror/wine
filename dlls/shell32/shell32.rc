@@ -680,6 +680,14 @@ IDI_SHELL_MAXIMIZED_WINDOW ICON resources/window.ico
 /* @makedep: resources/window.ico */
 IDI_SHELL_FLOATING_WINDOWS ICON resources/window.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder_open.ico */
+IDI_SHELL_ONE_CLICK_OPEN ICON resources/folder_open.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/folder_open.ico */
+IDI_SHELL_TWO_CLICK_OPEN ICON resources/folder_open.ico
+
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
