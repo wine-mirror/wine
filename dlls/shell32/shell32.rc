@@ -697,6 +697,13 @@ IDI_SHELL_FULL_RECYCLE_BIN_95 ICON resources/trash_full.ico
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
+/* @makedep: resources/security.ico */
+IDI_SHELL_PASSWORDS ICON resources/security.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/security.ico */
+IDI_SHELL_USERS ICON resources/security.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
@@ -708,6 +715,14 @@ IDI_SHELL_COPY ICON resources/copy.ico
 
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/security.ico */
+IDI_SHELL_USERS_XP ICON resources/security.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/security.ico */
+IDI_SHELL_USERS_XP2 ICON resources/security.ico
 
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico

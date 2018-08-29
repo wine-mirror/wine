@@ -275,10 +275,15 @@
 #define IDI_SHELL_EMPTY_RECYCLE_BIN_95     191
 #define IDI_SHELL_FULL_RECYCLE_BIN_95      192
 #define IDI_SHELL_WEB_FOLDERS      193
+#define IDI_SHELL_PASSWORDS        194
+/* 211 - 219 not used on Windows */
+#define IDI_SHELL_USERS            220
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_RENAME           242
 #define IDI_SHELL_COPY             243
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254
+#define IDI_SHELL_USERS_XP         269
+#define IDI_SHELL_USERS_XP2        279
 #define IDI_SHELL_OPTICAL_DISC     302
 #define IDI_SHELL_FAVORITES_SMALL  322
 
