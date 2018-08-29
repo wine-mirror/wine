@@ -290,6 +290,7 @@
 #define IDI_SHELL_DEFAULT_FOLDER   210
 /* 211 - 219 not used on Windows */
 #define IDI_SHELL_USERS            220
+#define IDI_SHELL_POWER_OFF        221
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_MY_PICTURES      236
 #define IDI_SHELL_MY_MUSIC         237
