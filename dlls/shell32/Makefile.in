@@ -63,7 +63,6 @@ IDL_SRCS = \
 
 SVG_SRCS = \
 	resources/blank.svg \
-	resources/cdrom.svg \
 	resources/control.svg \
 	resources/copy.svg \
 	resources/delete.svg \
@@ -85,6 +84,7 @@ SVG_SRCS = \
 	resources/netdrive2.svg \
 	resources/network.svg \
 	resources/optical_disc.svg \
+	resources/optical_drive.svg \
 	resources/printer.svg \
 	resources/ramdisk.svg \
 	resources/recent.svg \
