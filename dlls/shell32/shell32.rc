@@ -652,6 +652,10 @@ IDI_SHELL_VISUAL_SETTINGS ICON resources/control.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_NEW_WEB_PAGE ICON resources/document.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_REMOTE_CONNECTION ICON resources/internet.ico
+
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_FOLDERS ICON resources/internet.ico
 
