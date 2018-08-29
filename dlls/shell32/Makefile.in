@@ -77,7 +77,6 @@ SVG_SRCS = \
 	resources/folder_open.svg \
 	resources/help.svg \
 	resources/internet.svg \
-	resources/lock.svg \
 	resources/log_off.svg \
 	resources/menu.svg \
 	resources/mycomputer.svg \
@@ -91,6 +90,7 @@ SVG_SRCS = \
 	resources/recent.svg \
 	resources/rename.svg \
 	resources/search.svg \
+	resources/security.svg \
 	resources/shortcut.svg \
 	resources/shut_down.svg \
 	resources/sleep.svg \

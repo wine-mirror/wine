@@ -216,7 +216,7 @@
 #define IDI_SHELL_LOG_OFF           45
 #define IDI_SHELL_SEARCH_FOLDER     46
 #define IDI_SHELL_UPDATE            47
-#define IDI_SHELL_RIGHTS            48
+#define IDI_SHELL_SECURITY          48
 #define IDI_SHELL_CONFIRM_SHUTDOWN  49
 #define IDI_SHELL_BLANK1            50
 #define IDI_SHELL_BLANK2            51
