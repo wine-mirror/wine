@@ -29,6 +29,8 @@
 
 #include "wine/debug.h"
 
+#include "opc_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 
 static HRESULT WINAPI opc_factory_QueryInterface(IOpcFactory *iface, REFIID iid, void **out)
@@ -82,9 +84,9 @@ static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR
 
 static HRESULT WINAPI opc_factory_CreatePackage(IOpcFactory *iface, IOpcPackage **package)
 {
-    FIXME("iface %p, package %p.\n", iface, package);
+    TRACE("iface %p, package %p.\n", iface, package);
 
-    return E_NOTIMPL;
+    return opc_package_create(package);
 }
 
 static HRESULT WINAPI opc_factory_ReadPackageFromStream(IOpcFactory *iface, IStream *stream,
