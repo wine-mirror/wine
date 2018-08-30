@@ -748,6 +748,10 @@ IDI_SHELL_AUDIO_FILE ICON resources/audio.ico
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_MUSIC_CD_95 ICON resources/optical_disc.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_CARD_READER ICON resources/disk_drive.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 

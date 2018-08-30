@@ -292,6 +292,7 @@
 #define IDI_SHELL_VIDEO_FILE       224
 #define IDI_SHELL_AUDIO_FILE       225
 #define IDI_SHELL_MUSIC_CD_95      228
+#define IDI_SHELL_CARD_READER      229
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_MY_PICTURES      236
 #define IDI_SHELL_MY_MUSIC         237
