@@ -247,6 +247,27 @@ static void test_stream_read_write(IStream *stream, DWORD mode)
         ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
 }
 
+static void test_stream_qi(IStream *stream)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = IStream_QueryInterface(stream, &IID_IStream, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IStream interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    unk = NULL;
+    hr = IStream_QueryInterface(stream, &IID_ISequentialStream, (void **)&unk);
+todo_wine
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get ISequentialStream interface, hr %#x.\n", hr);
+    if (unk)
+        IUnknown_Release(unk);
+
+    hr = IStream_QueryInterface(stream, &IID_IUnknown, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IUnknown interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+}
+
 static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
 {
     IStream * stream;
@@ -310,6 +331,7 @@ if (0) /* This test crashes on WinXP SP2 */
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_stream_qi(stream);
         test_IStream_invalid_operations(stream, mode);
 
         refcount = IStream_Release(stream);
@@ -422,6 +444,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_stream_qi(stream);
         test_IStream_invalid_operations(stream, mode);
 
         refcount = IStream_Release(stream);
@@ -551,6 +574,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_stream_qi(stream);
         test_IStream_invalid_operations(stream, mode);
 
         refcount = IStream_Release(stream);
