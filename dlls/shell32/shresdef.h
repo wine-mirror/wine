@@ -289,6 +289,7 @@
 #define IDI_SHELL_POWER_OFF        221
 #define IDI_SHELL_DVD              222
 #define IDI_SHELL_DOCUMENTS        223
+#define IDI_SHELL_VIDEO_FILE       224
 #define IDI_SHELL_MUSIC_CD_95      228
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_MY_PICTURES      236

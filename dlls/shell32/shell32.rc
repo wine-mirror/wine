@@ -738,6 +738,9 @@ IDI_SHELL_DVD ICON resources/optical_disc.ico
 /* @makedep: resources/document.ico */
 IDI_SHELL_DOCUMENTS ICON resources/document.ico
 
+/* @makedep: resources/video.ico */
+IDI_SHELL_VIDEO_FILE ICON resources/video.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_MUSIC_CD_95 ICON resources/optical_disc.ico
