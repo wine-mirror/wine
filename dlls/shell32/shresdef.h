@@ -306,6 +306,7 @@
 #define IDI_SHELL_MY_PICTURES      236
 #define IDI_SHELL_MY_MUSIC         237
 #define IDI_SHELL_MY_VIDEOS        238
+#define IDI_SHELL_MSN              239
 #define IDI_SHELL_RENAME           242
 #define IDI_SHELL_COPY             243
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254

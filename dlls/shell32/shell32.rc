@@ -852,6 +852,10 @@ IDI_SHELL_MY_MUSIC ICON resources/mydocs.ico
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_VIDEOS ICON resources/mydocs.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_MSN ICON resources/internet.ico
+
 /* @makedep: resources/rename.ico */
 IDI_SHELL_RENAME ICON resources/rename.ico
 
