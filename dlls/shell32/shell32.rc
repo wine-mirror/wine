@@ -443,15 +443,15 @@ IDI_SHELL_FOLDER_OPEN_LARGE ICON resources/folder_open.ico
 IDI_SHELL_FOLDER_SMALL_XP ICON resources/folder_open.ico
 
 /* FIXME: Following resource is not yet added */
-/* @makedep: resources/floppy.ico */
-IDI_SHELL_5_12_FLOPPY ICON resources/floppy.ico
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_5_12_FLOPPY ICON resources/disk_drive.ico
 
 /* FIXME: Following resource is not yet added */
-/* @makedep: resources/floppy.ico */
-IDI_SHELL_3_14_FLOPPY ICON resources/floppy.ico
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_3_14_FLOPPY ICON resources/disk_drive.ico
 
-/* @makedep: resources/floppy.ico */
-IDI_SHELL_FLOPPY ICON resources/floppy.ico
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_FLOPPY ICON resources/disk_drive.ico
 
 /* @makedep: resources/drive.ico */
 IDI_SHELL_DRIVE ICON resources/drive.ico

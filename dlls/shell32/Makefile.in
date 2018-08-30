@@ -68,11 +68,11 @@ SVG_SRCS = \
 	resources/copy.svg \
 	resources/delete.svg \
 	resources/desktop.svg \
+	resources/disk_drive.svg \
 	resources/document.svg \
 	resources/drive.svg \
 	resources/eject.svg \
 	resources/favorites.svg \
-	resources/floppy.svg \
 	resources/folder.svg \
 	resources/folder_open.svg \
 	resources/help.svg \
