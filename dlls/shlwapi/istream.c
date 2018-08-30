@@ -118,7 +118,7 @@ static HRESULT WINAPI IStream_fnRead(IStream *iface, void* pv, ULONG cb, ULONG* 
   ISHFileStream *This = impl_from_IStream(iface);
   DWORD dwRead = 0;
 
-  TRACE("(%p,%p,0x%08x,%p)\n", This, pv, cb, pcbRead);
+  TRACE("(%p,%p,%u,%p)\n", This, pv, cb, pcbRead);
 
   if (!ReadFile(This->hFile, pv, cb, &dwRead, NULL))
   {
@@ -138,7 +138,7 @@ static HRESULT WINAPI IStream_fnWrite(IStream *iface, const void* pv, ULONG cb, 
   ISHFileStream *This = impl_from_IStream(iface);
   DWORD dwWritten = 0;
 
-  TRACE("(%p,%p,0x%08x,%p)\n", This, pv, cb, pcbWritten);
+  TRACE("(%p,%p,%u,%p)\n", This, pv, cb, pcbWritten);
 
   switch (STGM_ACCESS_MODE(This->dwMode))
   {
@@ -166,7 +166,7 @@ static HRESULT WINAPI IStream_fnSeek(IStream *iface, LARGE_INTEGER dlibMove,
   ISHFileStream *This = impl_from_IStream(iface);
   DWORD dwPos;
 
-  TRACE("(%p,%d,%d,%p)\n", This, dlibMove.u.LowPart, dwOrigin, pNewPos);
+  TRACE("(%p,%s,%d,%p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, pNewPos);
 
   IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
   dwPos = SetFilePointer(This->hFile, dlibMove.u.LowPart, NULL, dwOrigin);
@@ -188,7 +188,7 @@ static HRESULT WINAPI IStream_fnSetSize(IStream *iface, ULARGE_INTEGER libNewSiz
 {
   ISHFileStream *This = impl_from_IStream(iface);
 
-  TRACE("(%p,%d)\n", This, libNewSize.u.LowPart);
+  TRACE("(%p,%s)\n", This, wine_dbgstr_longlong(libNewSize.QuadPart));
 
   IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
   if( ! SetFilePointer( This->hFile, libNewSize.QuadPart, NULL, FILE_BEGIN ) )
@@ -211,7 +211,7 @@ static HRESULT WINAPI IStream_fnCopyTo(IStream *iface, IStream* pstm, ULARGE_INT
   ULONGLONG ulSize;
   HRESULT hRet = S_OK;
 
-  TRACE("(%p,%p,%d,%p,%p)\n", This, pstm, cb.u.LowPart, pcbRead, pcbWritten);
+  TRACE("(%p,%p,%s,%p,%p)\n", This, pstm, wine_dbgstr_longlong(cb.QuadPart), pcbRead, pcbWritten);
 
   if (pcbRead)
     pcbRead->QuadPart = 0;
@@ -280,7 +280,7 @@ static HRESULT WINAPI IStream_fnLockUnlockRegion(IStream *iface, ULARGE_INTEGER 
                                                  ULARGE_INTEGER cb, DWORD dwLockType)
 {
   ISHFileStream *This = impl_from_IStream(iface);
-  TRACE("(%p,%d,%d,%d)\n", This, libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+  TRACE("(%p,%s,%s,%d)\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
   return E_NOTIMPL;
 }
 
@@ -327,7 +327,7 @@ static HRESULT WINAPI IStream_fnClone(IStream *iface, IStream** ppstm)
 {
   ISHFileStream *This = impl_from_IStream(iface);
 
-  TRACE("(%p)\n",This);
+  TRACE("(%p,%p)\n", This, ppstm);
   if (ppstm)
     *ppstm = NULL;
   return E_NOTIMPL;
@@ -540,7 +540,7 @@ HRESULT WINAPI SHIStream_Read(IStream *lpStream, LPVOID lpvDest, ULONG ulSize)
   ULONG ulRead;
   HRESULT hRet;
 
-  TRACE("(%p,%p,%d)\n", lpStream, lpvDest, ulSize);
+  TRACE("(%p,%p,%u)\n", lpStream, lpvDest, ulSize);
 
   hRet = IStream_Read(lpStream, lpvDest, ulSize, &ulRead);
 
