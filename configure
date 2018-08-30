@@ -1463,6 +1463,7 @@ enable_oledlg
 enable_olepro32
 enable_olesvr32
 enable_olethk32
+enable_opcservices
 enable_openal32
 enable_opencl
 enable_opengl32
@@ -19713,6 +19714,7 @@ wine_fn_config_makefile dlls/olepro32 enable_olepro32
 wine_fn_config_makefile dlls/olesvr.dll16 enable_win16
 wine_fn_config_makefile dlls/olesvr32 enable_olesvr32
 wine_fn_config_makefile dlls/olethk32 enable_olethk32
+wine_fn_config_makefile dlls/opcservices enable_opcservices
 wine_fn_config_makefile dlls/openal32 enable_openal32
 wine_fn_config_makefile dlls/opencl enable_opencl
 wine_fn_config_makefile dlls/opengl32 enable_opengl32
