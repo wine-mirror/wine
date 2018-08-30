@@ -297,6 +297,7 @@
 #define IDI_SHELL_AUDIO_FILE       225
 #define IDI_SHELL_MUSIC_CD_95      228
 #define IDI_SHELL_CARD_READER      229
+#define IDI_SHELL_ZIP_DRIVE        230
 #define IDI_SHELL_MY_DOCUMENTS     235
 #define IDI_SHELL_MY_PICTURES      236
 #define IDI_SHELL_MY_MUSIC         237
@@ -323,6 +324,7 @@
 #define IDI_SHELL_DVD_R            298
 #define IDI_SHELL_OPTICAL_DISC     302
 #define IDI_SHELL_DVD_ROM          304
+#define IDI_SHELL_ZIP_DRIVE2       313
 #define IDI_SHELL_DVD_RW           318
 #define IDI_SHELL_NEW_FOLDER       319
 #define IDI_SHELL_BURN_DISC2       320
