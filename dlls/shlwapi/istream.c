@@ -55,9 +55,6 @@ static inline ISHFileStream *impl_from_IStream(IStream *iface)
   return CONTAINING_RECORD(iface, ISHFileStream, IStream_iface);
 }
 
-static HRESULT WINAPI IStream_fnCommit(IStream*,DWORD);
-
-
 /**************************************************************************
 *  IStream_fnQueryInterface
 */
@@ -104,7 +101,7 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
   
   if (!refCount)
   {
-    IStream_fnCommit(iface, 0); /* If ever buffered, this will be needed */
+    IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
     LocalFree(This->lpszPath);
     CloseHandle(This->hFile);
     HeapFree(GetProcessHeap(), 0, This);
@@ -171,7 +168,7 @@ static HRESULT WINAPI IStream_fnSeek(IStream *iface, LARGE_INTEGER dlibMove,
 
   TRACE("(%p,%d,%d,%p)\n", This, dlibMove.u.LowPart, dwOrigin, pNewPos);
 
-  IStream_fnCommit(iface, 0); /* If ever buffered, this will be needed */
+  IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
   dwPos = SetFilePointer(This->hFile, dlibMove.u.LowPart, NULL, dwOrigin);
   if( dwPos == INVALID_SET_FILE_POINTER )
      return HRESULT_FROM_WIN32(GetLastError());
@@ -193,7 +190,7 @@ static HRESULT WINAPI IStream_fnSetSize(IStream *iface, ULARGE_INTEGER libNewSiz
 
   TRACE("(%p,%d)\n", This, libNewSize.u.LowPart);
 
-  IStream_fnCommit(iface, 0); /* If ever buffered, this will be needed */
+  IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
   if( ! SetFilePointer( This->hFile, libNewSize.QuadPart, NULL, FILE_BEGIN ) )
     return E_FAIL;
 
@@ -224,7 +221,7 @@ static HRESULT WINAPI IStream_fnCopyTo(IStream *iface, IStream* pstm, ULARGE_INT
   if (!pstm)
     return S_OK;
 
-  IStream_fnCommit(iface, 0); /* If ever buffered, this will be needed */
+  IStream_Commit(iface, 0); /* If ever buffered, this will be needed */
 
   /* Copy data */
   ulSize = cb.QuadPart;
@@ -235,7 +232,7 @@ static HRESULT WINAPI IStream_fnCopyTo(IStream *iface, IStream* pstm, ULARGE_INT
     ulLeft = ulSize > sizeof(copyBuff) ? sizeof(copyBuff) : ulSize;
 
     /* Read */
-    hRet = IStream_fnRead(iface, copyBuff, ulLeft, &ulRead);
+    hRet = IStream_Read(iface, copyBuff, ulLeft, &ulRead);
     if (FAILED(hRet) || ulRead == 0)
       break;
     if (pcbRead)
