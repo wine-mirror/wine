@@ -242,7 +242,7 @@ static HRESULT WINAPI IStream_fnCopyTo(IStream *iface, IStream* pstm, ULARGE_INT
       pcbRead->QuadPart += ulRead;
 
     /* Write */
-    hRet = IStream_fnWrite(pstm, copyBuff, ulRead, &ulWritten);
+    hRet = IStream_Write(pstm, copyBuff, ulRead, &ulWritten);
     if (pcbWritten)
       pcbWritten->QuadPart += ulWritten;
     if (FAILED(hRet) || ulWritten != ulLeft)
