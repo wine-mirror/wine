@@ -32,12 +32,113 @@ struct opc_package
 {
     IOpcPackage IOpcPackage_iface;
     LONG refcount;
+
+    IOpcPartSet *part_set;
+};
+
+struct opc_part_set
+{
+    IOpcPartSet IOpcPartSet_iface;
+    LONG refcount;
 };
 
 static inline struct opc_package *impl_from_IOpcPackage(IOpcPackage *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_package, IOpcPackage_iface);
 }
+
+static inline struct opc_part_set *impl_from_IOpcPartSet(IOpcPartSet *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_part_set, IOpcPartSet_iface);
+}
+
+static HRESULT WINAPI opc_part_set_QueryInterface(IOpcPartSet *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IOpcPartSet) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IOpcPartSet_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_part_set_AddRef(IOpcPartSet *iface)
+{
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
+    ULONG refcount = InterlockedIncrement(&part_set->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_part_set_Release(IOpcPartSet *iface)
+{
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
+    ULONG refcount = InterlockedDecrement(&part_set->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(part_set);
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_part_set_GetPart(IOpcPartSet *iface, IOpcPartUri *name, IOpcPart **part)
+{
+    FIXME("iface %p, name %p, part %p stub!\n", iface, name, part);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *name, LPCWSTR content_type,
+        OPC_COMPRESSION_OPTIONS compression_options, IOpcPart **part)
+{
+    FIXME("iface %p, name %p, content_type %s, compression_options %#x, part %p stub!\n", iface, name,
+            debugstr_w(content_type), compression_options, part);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_set_DeletePart(IOpcPartSet *iface, IOpcPartUri *name)
+{
+    FIXME("iface %p, name %p stub!\n", iface, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_set_PartExists(IOpcPartSet *iface, IOpcPartUri *name, BOOL *exists)
+{
+    FIXME("iface %p, name %p, exists %p stub!\n", iface, name, exists);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_set_GtEnumerator(IOpcPartSet *iface, IOpcPartEnumerator **enumerator)
+{
+    FIXME("iface %p, enumerator %p stub!\n", iface, enumerator);
+
+    return E_NOTIMPL;
+}
+
+static const IOpcPartSetVtbl opc_part_set_vtbl =
+{
+    opc_part_set_QueryInterface,
+    opc_part_set_AddRef,
+    opc_part_set_Release,
+    opc_part_set_GetPart,
+    opc_part_set_CreatePart,
+    opc_part_set_DeletePart,
+    opc_part_set_PartExists,
+    opc_part_set_GtEnumerator,
+};
 
 static HRESULT WINAPI opc_package_QueryInterface(IOpcPackage *iface, REFIID iid, void **out)
 {
@@ -73,16 +174,37 @@ static ULONG WINAPI opc_package_Release(IOpcPackage *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        if (package->part_set)
+            IOpcPartSet_Release(package->part_set);
         heap_free(package);
+    }
 
     return refcount;
 }
 
 static HRESULT WINAPI opc_package_GetPartSet(IOpcPackage *iface, IOpcPartSet **part_set)
 {
-    FIXME("iface %p, part_set %p stub!\n", iface, part_set);
+    struct opc_package *package = impl_from_IOpcPackage(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, part_set %p.\n", iface, part_set);
+
+    if (!package->part_set)
+    {
+        struct opc_part_set *part_set = heap_alloc_zero(sizeof(*part_set));
+        if (!part_set)
+            return E_OUTOFMEMORY;
+
+        part_set->IOpcPartSet_iface.lpVtbl = &opc_part_set_vtbl;
+        part_set->refcount = 1;
+
+        package->part_set = &part_set->IOpcPartSet_iface;
+    }
+
+    *part_set = package->part_set;
+    IOpcPartSet_AddRef(*part_set);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_package_GetRelationshipSet(IOpcPackage *iface, IOpcRelationshipSet **relationship_set)
@@ -105,7 +227,7 @@ HRESULT opc_package_create(IOpcPackage **out)
 {
     struct opc_package *package;
 
-    if (!(package = heap_alloc(sizeof(*package))))
+    if (!(package = heap_alloc_zero(sizeof(*package))))
         return E_OUTOFMEMORY;
 
     package->IOpcPackage_iface.lpVtbl = &opc_package_vtbl;
