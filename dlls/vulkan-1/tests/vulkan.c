@@ -232,6 +232,45 @@ static void test_physical_device_groups(void)
     vkDestroyInstance(vk_instance, NULL);
 }
 
+static void test_destroy_command_pool(VkPhysicalDevice vk_physical_device)
+{
+    VkCommandBufferAllocateInfo allocate_info;
+    VkCommandPoolCreateInfo pool_info;
+    VkCommandBuffer vk_cmd_buffers[4];
+    uint32_t queue_family_index;
+    VkCommandPool vk_cmd_pool;
+    VkDevice vk_device;
+    VkResult vr;
+
+    if ((vr = create_device(vk_physical_device, 0, NULL, NULL, &vk_device)) < 0)
+    {
+        skip("Failed to create device, vr %d.\n", vr);
+        return;
+    }
+
+    find_queue_family(vk_physical_device, VK_QUEUE_GRAPHICS_BIT, &queue_family_index);
+
+    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_info.pNext = NULL;
+    pool_info.flags = 0;
+    pool_info.queueFamilyIndex = queue_family_index;
+    vr = vkCreateCommandPool(vk_device, &pool_info, NULL, &vk_cmd_pool);
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+
+    allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocate_info.pNext = NULL;
+    allocate_info.commandPool = vk_cmd_pool;
+    allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocate_info.commandBufferCount = ARRAY_SIZE(vk_cmd_buffers);
+    vr = vkAllocateCommandBuffers(vk_device, &allocate_info, vk_cmd_buffers);
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+
+    vkDestroyCommandPool(vk_device, vk_cmd_pool, NULL);
+    vkDestroyCommandPool(vk_device, VK_NULL_HANDLE, NULL);
+
+    vkDestroyDevice(vk_device, NULL);
+}
+
 static void for_each_device(void (*test_func)(VkPhysicalDevice))
 {
     VkPhysicalDevice *vk_physical_devices;
@@ -272,4 +311,5 @@ START_TEST(vulkan)
     for_each_device(enumerate_physical_device);
     for_each_device(enumerate_device_queues);
     test_physical_device_groups();
+    for_each_device(test_destroy_command_pool);
 }
