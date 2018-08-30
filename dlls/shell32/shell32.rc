@@ -859,6 +859,9 @@ IDI_SHELL_MSN ICON resources/internet.ico
 /* @makedep: resources/delete.ico */
 IDI_SHELL_DELETE ICON resources/delete.ico
 
+/* @makedep: resources/move.ico */
+IDI_SHELL_MOVE ICON resources/move.ico
+
 /* @makedep: resources/rename.ico */
 IDI_SHELL_RENAME ICON resources/rename.ico
 
