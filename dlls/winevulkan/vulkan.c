@@ -165,6 +165,7 @@ static void wine_vk_free_command_buffers(struct VkDevice_T *device,
             continue;
 
         device->funcs.p_vkFreeCommandBuffers(device->device, pool->command_pool, 1, &buffers[i]->command_buffer);
+        list_remove(&buffers[i]->pool_link);
         heap_free(buffers[i]);
     }
 }
@@ -528,9 +529,8 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
         allocate_info_host.level = allocate_info->level;
         allocate_info_host.commandBufferCount = 1;
 
-        TRACE("Creating command buffer %u, pool 0x%s, level %#x\n", i,
-                wine_dbgstr_longlong(allocate_info_host.commandPool),
-                allocate_info_host.level);
+        TRACE("Allocating command buffer %u from pool 0x%s.\n",
+                i, wine_dbgstr_longlong(allocate_info_host.commandPool));
 
         if (!(buffers[i] = heap_alloc_zero(sizeof(**buffers))))
         {
@@ -544,9 +544,11 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
                 &allocate_info_host, &buffers[i]->command_buffer);
         if (res != VK_SUCCESS)
         {
-            ERR("Failed to allocate command buffer, res=%d\n", res);
+            ERR("Failed to allocate command buffer, res=%d.\n", res);
             break;
         }
+
+        list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
     }
 
     if (res != VK_SUCCESS)
@@ -1132,6 +1134,8 @@ VkResult WINAPI wine_vkCreateCommandPool(VkDevice device, const VkCommandPoolCre
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
+    list_init(&object->command_buffers);
+
     res = device->funcs.p_vkCreateCommandPool(device->device, info, NULL, &object->command_pool);
 
     if (res == VK_SUCCESS)
@@ -1146,6 +1150,7 @@ void WINAPI wine_vkDestroyCommandPool(VkDevice device, VkCommandPool handle,
         const VkAllocationCallbacks *allocator)
 {
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(handle);
+    struct VkCommandBuffer_T *buffer, *cursor;
 
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(handle), allocator);
 
@@ -1154,6 +1159,15 @@ void WINAPI wine_vkDestroyCommandPool(VkDevice device, VkCommandPool handle,
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
+
+    /* The Vulkan spec says:
+     *
+     * "When a pool is destroyed, all command buffers allocated from the pool are freed."
+     */
+    LIST_FOR_EACH_ENTRY_SAFE(buffer, cursor, &pool->command_buffers, struct VkCommandBuffer_T, pool_link)
+    {
+        heap_free(buffer);
+    }
 
     device->funcs.p_vkDestroyCommandPool(device->device, pool->command_pool, NULL);
     heap_free(pool);

@@ -27,6 +27,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
@@ -62,6 +63,8 @@ struct VkCommandBuffer_T
     struct wine_vk_base base;
     struct VkDevice_T *device; /* parent */
     VkCommandBuffer command_buffer; /* native command buffer */
+
+    struct list pool_link;
 };
 
 struct VkDevice_T
@@ -113,6 +116,8 @@ struct VkQueue_T
 struct wine_cmd_pool
 {
     VkCommandPool command_pool;
+
+    struct list command_buffers;
 };
 
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
