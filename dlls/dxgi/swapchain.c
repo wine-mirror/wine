@@ -917,6 +917,7 @@ static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
         case VK_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
         case VK_FORMAT_R8G8B8A8_SRGB:  return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case VK_FORMAT_A2B10G10R10_UNORM_PACK32: return DXGI_FORMAT_R10G10B10A2_UNORM;
         default:
             WARN("Unhandled format %#x.\n", vk_format);
             return DXGI_FORMAT_UNKNOWN;
@@ -929,6 +930,7 @@ static VkFormat get_swapchain_fallback_format(VkFormat vk_format)
     {
         case VK_FORMAT_R8G8B8A8_SRGB:  return VK_FORMAT_B8G8R8A8_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
+        case VK_FORMAT_A2B10G10R10_UNORM_PACK32: return VK_FORMAT_B8G8R8A8_UNORM;
         default:
             WARN("Unhandled format %#x.\n", vk_format);
             return VK_FORMAT_UNDEFINED;
