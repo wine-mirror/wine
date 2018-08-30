@@ -875,6 +875,9 @@ IDI_SHELL_UPLOAD ICON resources/internet.ico
 /* @makedep: resources/printer.ico */
 IDI_SHELL_PRINT ICON resources/printer.ico
 
+/* @makedep: resources/play.ico */
+IDI_SHELL_PLAY ICON resources/play.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 
