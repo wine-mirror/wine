@@ -868,6 +868,10 @@ IDI_SHELL_RENAME ICON resources/rename.ico
 /* @makedep: resources/copy.ico */
 IDI_SHELL_COPY ICON resources/copy.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_UPLOAD ICON resources/internet.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 
