@@ -62,6 +62,7 @@ IDL_SRCS = \
 	shell32_tlb.idl
 
 SVG_SRCS = \
+	resources/audio.svg \
 	resources/blank.svg \
 	resources/control.svg \
 	resources/copy.svg \
