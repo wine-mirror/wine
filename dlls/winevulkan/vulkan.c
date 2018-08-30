@@ -154,9 +154,8 @@ err:
     return NULL;
 }
 
-/* Helper function to release command buffers. */
-static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPool pool,
-        uint32_t count, const VkCommandBuffer *buffers)
+static void wine_vk_free_command_buffers(struct VkDevice_T *device,
+        struct wine_cmd_pool *pool, uint32_t count, const VkCommandBuffer *buffers)
 {
     unsigned int i;
 
@@ -165,12 +164,11 @@ static void wine_vk_command_buffers_free(struct VkDevice_T *device, VkCommandPoo
         if (!buffers[i])
             continue;
 
-        device->funcs.p_vkFreeCommandBuffers(device->device, pool, 1, &buffers[i]->command_buffer);
+        device->funcs.p_vkFreeCommandBuffers(device->device, pool->command_pool, 1, &buffers[i]->command_buffer);
         heap_free(buffers[i]);
     }
 }
 
-/* Helper function to create queues for a given family index. */
 static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
         uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags)
 {
@@ -506,10 +504,13 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
 VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
         const VkCommandBufferAllocateInfo *allocate_info, VkCommandBuffer *buffers)
 {
+    struct wine_cmd_pool *pool;
     VkResult res = VK_SUCCESS;
     unsigned int i;
 
-    TRACE("%p %p %p\n", device, allocate_info, buffers);
+    TRACE("%p, %p, %p\n", device, allocate_info, buffers);
+
+    pool = wine_cmd_pool_from_handle(allocate_info->commandPool);
 
     memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
 
@@ -523,7 +524,7 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
         /* TODO: future extensions (none yet) may require pNext conversion. */
         allocate_info_host.pNext = allocate_info->pNext;
         allocate_info_host.sType = allocate_info->sType;
-        allocate_info_host.commandPool = allocate_info->commandPool;
+        allocate_info_host.commandPool = pool->command_pool;
         allocate_info_host.level = allocate_info->level;
         allocate_info_host.commandBufferCount = 1;
 
@@ -550,7 +551,7 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
 
     if (res != VK_SUCCESS)
     {
-        wine_vk_command_buffers_free(device, allocate_info->commandPool, i, buffers);
+        wine_vk_free_command_buffers(device, pool, i, buffers);
         memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
         return res;
     }
@@ -920,12 +921,14 @@ VkResult WINAPI wine_vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *c
     return *count < instance->phys_dev_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool, uint32_t count,
-        const VkCommandBuffer *buffers)
+void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool_handle,
+        uint32_t count, const VkCommandBuffer *buffers)
 {
-    TRACE("%p 0x%s %u %p\n", device, wine_dbgstr_longlong(pool), count, buffers);
+    struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(pool_handle);
 
-    wine_vk_command_buffers_free(device, pool, count, buffers);
+    TRACE("%p, 0x%s, %u, %p\n", device, wine_dbgstr_longlong(pool_handle), count, buffers);
+
+    wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
 PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *name)
@@ -1113,6 +1116,47 @@ err:
 
     TRACE("Returning %d\n", res);
     return res;
+}
+
+VkResult WINAPI wine_vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *info,
+        const VkAllocationCallbacks *allocator, VkCommandPool *command_pool)
+{
+    struct wine_cmd_pool *object;
+    VkResult res;
+
+    TRACE("%p, %p, %p, %p\n", device, info, allocator, command_pool);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    res = device->funcs.p_vkCreateCommandPool(device->device, info, NULL, &object->command_pool);
+
+    if (res == VK_SUCCESS)
+        *command_pool = wine_cmd_pool_to_handle(object);
+    else
+        heap_free(object);
+
+    return res;
+}
+
+void WINAPI wine_vkDestroyCommandPool(VkDevice device, VkCommandPool handle,
+        const VkAllocationCallbacks *allocator)
+{
+    struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(handle);
+
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(handle), allocator);
+
+    if (!handle)
+        return;
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    device->funcs.p_vkDestroyCommandPool(device->device, pool->command_pool, NULL);
+    heap_free(pool);
 }
 
 static VkResult wine_vk_enumerate_physical_device_groups(struct VkInstance_T *instance,

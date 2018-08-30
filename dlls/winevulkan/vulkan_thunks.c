@@ -1744,12 +1744,6 @@ VkResult WINAPI wine_vkCreateBufferView(VkDevice device, const VkBufferViewCreat
 #endif
 }
 
-VkResult WINAPI wine_vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCommandPool *pCommandPool)
-{
-    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pCommandPool);
-    return device->funcs.p_vkCreateCommandPool(device->device, pCreateInfo, NULL, pCommandPool);
-}
-
 VkResult WINAPI wine_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -1977,12 +1971,6 @@ void WINAPI wine_vkDestroyBufferView(VkDevice device, VkBufferView bufferView, c
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(bufferView), pAllocator);
     device->funcs.p_vkDestroyBufferView(device->device, bufferView, NULL);
-}
-
-void WINAPI wine_vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks *pAllocator)
-{
-    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(commandPool), pAllocator);
-    device->funcs.p_vkDestroyCommandPool(device->device, commandPool, NULL);
 }
 
 void WINAPI wine_vkDestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, const VkAllocationCallbacks *pAllocator)
@@ -2744,7 +2732,7 @@ VkResult WINAPI wine_vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkComma
 VkResult WINAPI wine_vkResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags)
 {
     TRACE("%p, 0x%s, %#x\n", device, wine_dbgstr_longlong(commandPool), flags);
-    return device->funcs.p_vkResetCommandPool(device->device, commandPool, flags);
+    return device->funcs.p_vkResetCommandPool(device->device, wine_cmd_pool_from_handle(commandPool)->command_pool, flags);
 }
 
 VkResult WINAPI wine_vkResetDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorPoolResetFlags flags)
@@ -2774,13 +2762,13 @@ VkResult WINAPI wine_vkSetEvent(VkDevice device, VkEvent event)
 void WINAPI wine_vkTrimCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlags flags)
 {
     TRACE("%p, 0x%s, %#x\n", device, wine_dbgstr_longlong(commandPool), flags);
-    device->funcs.p_vkTrimCommandPool(device->device, commandPool, flags);
+    device->funcs.p_vkTrimCommandPool(device->device, wine_cmd_pool_from_handle(commandPool)->command_pool, flags);
 }
 
 static void WINAPI wine_vkTrimCommandPoolKHR(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlags flags)
 {
     TRACE("%p, 0x%s, %#x\n", device, wine_dbgstr_longlong(commandPool), flags);
-    device->funcs.p_vkTrimCommandPoolKHR(device->device, commandPool, flags);
+    device->funcs.p_vkTrimCommandPoolKHR(device->device, wine_cmd_pool_from_handle(commandPool)->command_pool, flags);
 }
 
 void WINAPI wine_vkUnmapMemory(VkDevice device, VkDeviceMemory memory)

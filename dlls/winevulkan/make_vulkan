@@ -157,6 +157,8 @@ FUNCTION_OVERRIDES = {
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkCmdExecuteCommands" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkCreateCommandPool" : {"dispatch": True, "driver" : False, "thunk" : False},
+    "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : False},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : False},
@@ -838,27 +840,31 @@ class VkHandle(object):
     def is_required(self):
         return self.required
 
-    def native_handle(self):
-        """ Provide access to the native handle of a dispatchable object.
+    def native_handle(self, name):
+        """ Provide access to the native handle of a wrapped object. """
 
-        Dispatchable objects wrap an underlying 'native' object.
-        This method provides access to the native object.
-        """
-        if not self.is_dispatchable():
-            return None
+        if self.name == "VkCommandPool":
+            return "wine_cmd_pool_from_handle({0})->command_pool".format(name)
+
+        native_handle_name = None
 
         if self.name == "VkCommandBuffer":
-            return "command_buffer"
-        elif self.name == "VkDevice":
-            return "device"
-        elif self.name == "VkInstance":
-            return "instance"
-        elif self.name == "VkPhysicalDevice":
-            return "phys_dev"
-        elif self.name == "VkQueue":
-            return "queue"
-        else:
+            native_handle_name = "command_buffer"
+        if self.name == "VkDevice":
+            native_handle_name = "device"
+        if self.name == "VkInstance":
+            native_handle_name = "instance"
+        if self.name == "VkPhysicalDevice":
+            native_handle_name = "phys_dev"
+        if self.name == "VkQueue":
+            native_handle_name = "queue"
+
+        if native_handle_name:
+            return "{0}->{1}".format(name, native_handle_name)
+
+        if self.is_dispatchable():
             LOGGER.error("Unhandled native handle for: {0}".format(self.name))
+        return None
 
 
 class VkMember(object):
@@ -1471,17 +1477,15 @@ class VkParam(object):
             LOGGER.debug("TODO: setting NULL VkAllocationCallbacks for {0}".format(self.name))
             return "NULL"
 
-        # Dispatchable objects wrap the native handle. For thunk generation we
-        # need to pass the native handle to the native Vulkan calls.
-        if self.is_dispatchable():
-            return "{0}->{1}".format(self.name, self.handle.native_handle())
-        elif conv and self.needs_conversion():
+        if conv and self.needs_conversion():
             if self.is_dynamic_array():
                 return "{0}_host".format(self.name)
             else:
                 return "&{0}_host".format(self.name)
         else:
-            return self.name
+            # We need to pass the native handle to the native Vulkan calls.
+            native_handle = self.handle.native_handle(self.name) if self.is_handle() else None
+            return native_handle if native_handle else self.name
 
 
 class VkStruct(Sequence):
