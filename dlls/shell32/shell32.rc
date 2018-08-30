@@ -830,6 +830,13 @@ IDI_SHELL_DOWNLOAD ICON resources/blank.ico
 /* @makedep: resources/blank.ico */
 IDI_SHELL_DOWNLOAD_EMBLEM ICON resources/blank.ico
 
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_REMOVABLE_DISK ICON resources/disk_drive.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/disk_drive.ico */
+IDI_SHELL_BAD_REMOVABLE_DISK ICON resources/disk_drive.ico
+
 /* @makedep: resources/mydocs.ico */
 IDI_SHELL_MY_DOCUMENTS ICON resources/mydocs.ico
 
