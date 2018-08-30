@@ -540,25 +540,24 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
 
         buffers[i]->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         buffers[i]->device = device;
+        list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
         res = device->funcs.p_vkAllocateCommandBuffers(device->device,
                 &allocate_info_host, &buffers[i]->command_buffer);
         if (res != VK_SUCCESS)
         {
             ERR("Failed to allocate command buffer, res=%d.\n", res);
+            buffers[i]->command_buffer = VK_NULL_HANDLE;
             break;
         }
-
-        list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
     }
 
     if (res != VK_SUCCESS)
     {
-        wine_vk_free_command_buffers(device, pool, i, buffers);
+        wine_vk_free_command_buffers(device, pool, i + 1, buffers);
         memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
-        return res;
     }
 
-    return VK_SUCCESS;
+    return res;
 }
 
 void WINAPI wine_vkCmdExecuteCommands(VkCommandBuffer buffer, uint32_t count,
