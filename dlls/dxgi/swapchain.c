@@ -37,6 +37,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+static DXGI_SWAP_EFFECT dxgi_swap_effect_from_wined3d(enum wined3d_swap_effect swap_effect)
+{
+    switch (swap_effect)
+    {
+        case WINED3D_SWAP_EFFECT_DISCARD:
+            return DXGI_SWAP_EFFECT_DISCARD;
+        case WINED3D_SWAP_EFFECT_SEQUENTIAL:
+            return DXGI_SWAP_EFFECT_SEQUENTIAL;
+        case WINED3D_SWAP_EFFECT_FLIP_DISCARD:
+            return DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        case WINED3D_SWAP_EFFECT_FLIP_SEQUENTIAL:
+            return DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        default:
+            FIXME("Invalid swap effect %#x.\n", swap_effect);
+            return DXGI_SWAP_EFFECT_DISCARD;
+    }
+}
+
 static inline struct d3d11_swapchain *d3d11_swapchain_from_IDXGISwapChain1(IDXGISwapChain1 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d11_swapchain, IDXGISwapChain1_iface);
@@ -297,7 +315,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc(IDXGISwapChain1 *iface,
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring ScanlineOrdering, Scaling and SwapEffect.\n");
+    FIXME("Ignoring ScanlineOrdering and Scaling.\n");
 
     desc->BufferDesc.Width = wined3d_desc.backbuffer_width;
     desc->BufferDesc.Height = wined3d_desc.backbuffer_height;
@@ -312,7 +330,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc(IDXGISwapChain1 *iface,
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->OutputWindow = wined3d_desc.device_window;
     desc->Windowed = wined3d_desc.windowed;
-    desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    desc->SwapEffect = dxgi_swap_effect_from_wined3d(wined3d_desc.swap_effect);
     desc->Flags = dxgi_swapchain_flags_from_wined3d(wined3d_desc.flags);
 
     return S_OK;
@@ -457,7 +475,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc1(IDXGISwapChain1 *iface
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring Stereo, Scaling, SwapEffect and AlphaMode.\n");
+    FIXME("Ignoring Stereo, Scaling and AlphaMode.\n");
 
     desc->Width = wined3d_desc.backbuffer_width;
     desc->Height = wined3d_desc.backbuffer_height;
@@ -468,7 +486,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc1(IDXGISwapChain1 *iface
     desc->BufferUsage = dxgi_usage_from_wined3d_usage(wined3d_desc.backbuffer_usage);
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->Scaling = DXGI_SCALING_STRETCH;
-    desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    desc->SwapEffect = dxgi_swap_effect_from_wined3d(wined3d_desc.swap_effect);
     desc->AlphaMode = DXGI_ALPHA_MODE_IGNORE;
     desc->Flags = dxgi_swapchain_flags_from_wined3d(wined3d_desc.flags);
 
