@@ -2599,9 +2599,6 @@ struct wined3d_gl_info
     HGLRC (WINAPI *p_wglCreateContextAttribsARB)(HDC dc, HGLRC share, const GLint *attribs);
     struct opengl_funcs gl_ops;
     struct wined3d_fbo_ops fbo_ops;
-
-    struct wined3d_format *formats;
-    unsigned int format_count;
 };
 
 /* The driver names reflect the lowest GPU supported
@@ -2681,6 +2678,9 @@ struct wined3d_adapter
     UINT64 vram_bytes;
     UINT64 vram_bytes_used;
     LUID luid;
+
+    struct wined3d_format *formats;
+    unsigned int format_count;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
