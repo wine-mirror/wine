@@ -399,6 +399,7 @@ SOURCES = \
 	msident.idl \
 	msinkaut.idl \
 	msiquery.h \
+	msopc.idl \
 	mssip.h \
 	msstkppg.h \
 	mstask.idl \
@@ -493,6 +494,9 @@ SOURCES = \
 	oledberr.h \
 	oledlg.h \
 	oleidl.idl \
+	opcbase.idl \
+	opcobjectmodel.idl \
+	opcparturi.idl \
 	opnrst.idl \
 	optary.idl \
 	patchapi.h \

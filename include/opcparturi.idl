@@ -1,0 +1,71 @@
+/*
+ * Copyright 2018 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "ocidl.idl";
+
+#if 0
+#pragma makedep install
+#endif
+
+interface IOpcPartUri;
+
+[
+    object,
+    uuid(bc9c1b9b-d62c-49eb-aef0-3b4e0b28ebed),
+    nonextensible,
+    pointer_default(ref)
+]
+interface IOpcUri : IUri
+{
+    HRESULT GetRelationshipsPartUri(
+        [out, retval] IOpcPartUri **part_uri
+    );
+
+    HRESULT GetRelativeUri(
+        [in] IOpcPartUri *part_uri,
+        [out, retval] IUri **relative_uri
+    );
+
+    HRESULT CombinePartUri(
+        [in] IUri *relative_uri,
+        [out, retval] IOpcPartUri **combined
+    );
+}
+
+[
+    object,
+    uuid(7d3babe7-88b2-46ba-85cb-4203cb016c87),
+    nonextensible,
+    pointer_default(ref)
+]
+interface IOpcPartUri : IOpcUri
+{
+    HRESULT ComparePartUri(
+        [in] IOpcPartUri *part_uri,
+        [out, retval] INT32 *result
+    );
+
+    HRESULT GetSourceUri(
+        [out, retval] IOpcUri **source_uri
+    );
+
+    HRESULT IsRelationshipsPartUri(
+        [out, retval] BOOL *result
+    );
+}
