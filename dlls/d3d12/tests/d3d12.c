@@ -47,6 +47,7 @@ static unsigned int format_size(DXGI_FORMAT format)
         case DXGI_FORMAT_R8G8B8A8_UNORM:
         case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
         case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
             return 4;
         default:
             trace("Unhandled format %#x.\n", format);
@@ -832,10 +833,12 @@ static void test_swapchain_draw(void)
     }
     tests[] =
     {
-        {DXGI_FORMAT_B8G8R8A8_UNORM, {1.0f, 0.0f, 0.0f, 1.0f}, 0xffff0000},
-        {DXGI_FORMAT_B8G8R8A8_UNORM, {0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
-        {DXGI_FORMAT_R8G8B8A8_UNORM, {1.0f, 0.0f, 0.0f, 1.0f}, 0xff0000ff},
-        {DXGI_FORMAT_R8G8B8A8_UNORM, {0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,    {1.0f, 0.0f, 0.0f, 1.0f}, 0xffff0000},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,    {0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,    {1.0f, 0.0f, 0.0f, 1.0f}, 0xff0000ff},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,    {0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {DXGI_FORMAT_R10G10B10A2_UNORM, {1.0f, 0.0f, 0.0f, 1.0f}, 0xc00003ff},
+        {DXGI_FORMAT_R10G10B10A2_UNORM, {0.0f, 1.0f, 0.0f, 1.0f}, 0xc00ffc00},
     };
 
     desc.no_pipeline = TRUE;
