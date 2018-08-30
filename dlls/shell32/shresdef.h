@@ -309,6 +309,7 @@
 #define IDI_SHELL_COPY             243
 #define IDI_SHELL_UPLOAD           244
 #define IDI_SHELL_PRINT            245
+#define IDI_SHELL_PLAY             246
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254
 #define IDI_SHELL_NEW_NETWORK_FOLDER       258
 #define IDI_SHELL_WRITE_DISC       260
