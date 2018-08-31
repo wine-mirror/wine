@@ -12830,6 +12830,131 @@ todo_wine {
     IXMLDOMDocument2_Release(doc);
 }
 
+typedef struct _namespace_as_attribute_t {
+    const GUID *guid;
+    const char *clsid;
+    const char *xmlns_uri;
+    BOOL todo;
+} namespace_as_attribute_t;
+
+static const namespace_as_attribute_t namespace_as_attribute_test_data[] = {
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "", FALSE },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "", FALSE },
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", "", FALSE },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "", FALSE },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "", FALSE },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "http://www.w3.org/2000/xmlns/", TRUE },
+    { 0 }
+};
+
+void test_namespaces_as_attributes(void)
+{
+    const namespace_as_attribute_t *entry = namespace_as_attribute_test_data;
+    static const char ns_as_attr_doc[] = {
+        "<?xml version=\"1.0\"?>"
+        "<a ns:b=\"b attr\" d=\"d attr\" xmlns:ns=\"nshref\" />"
+    };
+    static const char *names[] = { "ns:b", "d", "xmlns:ns" };
+    static const char *prefixes[] = { "ns", NULL, "xmlns" };
+    static const char *basenames[] = { "b", "d", "ns" };
+    static const char *uris[] = { "nshref", NULL, "" };
+    static const char *texts[] = { "b attr", "d attr", "nshref" };
+    IXMLDOMNamedNodeMap *map;
+    IXMLDOMNode *node, *item;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    LONG len, i;
+    HRESULT hr;
+    BSTR str;
+
+    while (entry->guid)
+    {
+        if (!is_clsid_supported(entry->guid, &IID_IXMLDOMDocument2))
+        {
+            entry++;
+            continue;
+        }
+
+        hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+        ok(SUCCEEDED(hr), "Failed to create document %s, hr %#x.\n", wine_dbgstr_guid(entry->guid), hr);
+
+        hr = IXMLDOMDocument_loadXML(doc, _bstr_(ns_as_attr_doc), &b);
+        ok(hr == S_OK, "Failed to load xml, hr %#x.\n", hr);
+
+        node = NULL;
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("a"), &node);
+        ok(SUCCEEDED(hr), "Failed to select a node, hr %#x.\n", hr);
+
+        hr = IXMLDOMNode_get_attributes(node, &map);
+        ok(SUCCEEDED(hr), "Failed to get attributes, hr %#x.\n", hr);
+
+        len = -1;
+        hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+        ok(SUCCEEDED(hr), "Failed to get map length, hr %#x.\n", hr);
+        todo_wine ok(len == 3, "got %d\n", len);
+
+        for (i = 0; i < len; i++)
+        {
+            item = NULL;
+            hr = IXMLDOMNamedNodeMap_get_item(map, i, &item);
+            ok(SUCCEEDED(hr), "Failed to get item, hr %#x.\n", hr);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_nodeName(item, &str);
+            ok(SUCCEEDED(hr), "Failed to get node name, hr %#x.\n", hr);
+            ok(!lstrcmpW(str, _bstr_(names[i])), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_prefix(item, &str);
+            if (prefixes[i])
+            {
+                ok(hr == S_OK, "Failed to get node name, hr %#x.\n", hr);
+                ok(!lstrcmpW(str, _bstr_(prefixes[i])), "got %s\n", wine_dbgstr_w(str));
+                SysFreeString(str);
+            }
+            else
+                ok(hr == S_FALSE, "Failed to get node name, hr %#x.\n", hr);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_baseName(item, &str);
+            ok(SUCCEEDED(hr), "Failed to get base name, hr %#x.\n", hr);
+            ok(!lstrcmpW(str, _bstr_(basenames[i])), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_namespaceURI(item, &str);
+            if (uris[i])
+            {
+                ok(hr == S_OK, "Failed to get node name, hr %#x.\n", hr);
+                if (prefixes[i] && !strcmp(prefixes[i], "xmlns"))
+                    todo_wine_if(entry->todo)
+                    ok(!lstrcmpW(str, _bstr_(entry->xmlns_uri)), "got %s\n", wine_dbgstr_w(str));
+                else
+                    ok(!lstrcmpW(str, _bstr_(uris[i])), "got %s\n", wine_dbgstr_w(str));
+                SysFreeString(str);
+            }
+            else
+                ok(hr == S_FALSE, "Failed to get node name, hr %#x.\n", hr);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_text(item, &str);
+            ok(SUCCEEDED(hr), "Failed to get node text, hr %#x.\n", hr);
+            ok(!lstrcmpW(str, _bstr_(texts[i])), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+
+            IXMLDOMNode_Release(item);
+        }
+
+        IXMLDOMNamedNodeMap_Release(map);
+        IXMLDOMNode_Release(node);
+        IXMLDOMDocument_Release(doc);
+
+        entry++;
+    }
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -12914,6 +13039,7 @@ START_TEST(domdoc)
     test_merging_text();
     test_transformNodeToObject();
     test_normalize_attribute_values();
+    test_namespaces_as_attributes();
 
     test_xsltemplate();
     test_xsltext();
