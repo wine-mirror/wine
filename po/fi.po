@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-07-20 17:38+0200\n"
+"PO-Revision-Date: 2018-08-31 07:27+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -399,16 +399,12 @@ msgid "&Retry"
 msgstr "&Uudelleen"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "P&iilota välilehdet"
+msgstr "Piilota lisätiedot"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Tiedot"
+msgstr "Näytä lisätiedot"
 
 #: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -3440,18 +3436,16 @@ msgid "Connections"
 msgstr "Yhteydet"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Winen asetukset"
+msgstr "Automaattiset asetukset"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Käytä Web Proxy Auto-Discovery (WPAD) -protokollaa"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Käytä Proxy Auto-Config (PAC) -skriptiä"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
@@ -14183,11 +14177,11 @@ msgstr "&Väri:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "MIME-tyypit"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "&Muokkaa tiedostosidoksia"
 
 #: winecfg.rc:308
 msgid "Folders"
