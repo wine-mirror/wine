@@ -966,12 +966,27 @@ IDI_SHELL_SEARCH_SMALL ICON resources/search.ico
 /* @makedep: resources/help.ico */
 IDI_SHELL_HELP_SMALL ICON resources/help.ico
 
+/* @makedep: resources/log_off.ico */
+IDI_SHELL_LOG_OFF_SMALL ICON resources/log_off.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_APP_FOLDER_SMALL ICON resources/folder.ico
 
+/* @makedep: resources/recent.ico */
+IDI_SHELL_RECENT_SMALL ICON resources/recent.ico
+
+/* @makedep: resources/window.ico */
+IDI_SHELL_RUN_SMALL ICON resources/window.ico
+
+/* @makedep: resources/shut_down.ico */
+IDI_SHELL_POWER_OFF_SMALL ICON resources/shut_down.ico
+
 /* @makedep: resources/control.ico */
 IDI_SHELL_CONTROL_PANEL_SMALL ICON resources/control.ico
+
+/* @makedep: resources/eject.ico */
+IDI_SHELL_EJECT_SMALL ICON resources/eject.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/search.ico */
