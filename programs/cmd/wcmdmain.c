@@ -2403,9 +2403,19 @@ int wmain (int argc, WCHAR *argvW[])
   static const WCHAR offW[] = {'O','F','F','\0'};
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
+  static const WCHAR comspecW[] = {'C','O','M','S','P','E','C',0};
+  static const WCHAR cmdW[] = {'\\','c','m','d','.','e','x','e',0};
+  WCHAR comspec[MAX_PATH];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
   OSVERSIONINFOW osv;
   char osver[50];
+
+  if (!GetEnvironmentVariableW(comspecW, comspec, sizeof(comspec)/sizeof(WCHAR)))
+  {
+      GetSystemDirectoryW(comspec, (sizeof(comspec) - sizeof(cmdW))/sizeof(WCHAR));
+      strcatW(comspec, cmdW);
+      SetEnvironmentVariableW(comspecW, comspec);
+  }
 
   srand(time(NULL));
 
