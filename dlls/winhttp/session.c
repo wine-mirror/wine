@@ -17,7 +17,6 @@
  */
 
 #include "config.h"
-#include "ws2tcpip.h"
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -34,6 +33,7 @@
 #include "winbase.h"
 #include "winsock2.h"
 #include "ws2ipdef.h"
+#include "ws2tcpip.h"
 #include "winhttp.h"
 #include "winreg.h"
 #define COBJMACROS
