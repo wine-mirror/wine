@@ -915,6 +915,9 @@ IDI_SHELL_DELETE_FILE ICON resources/delete.ico
 /* @makedep: resources/delete.ico */
 IDI_SHELL_ERASE_DISC ICON resources/delete.ico
 
+/* @makedep: resources/help.ico */
+IDI_SHELL_HELP2 ICON resources/help.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_TO_FOLDER ICON resources/folder.ico
@@ -943,6 +946,9 @@ IDI_SHELL_WEB_CALENDAR ICON resources/internet.ico
 
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP2 ICON resources/users.ico
+
+/* @makedep: resources/help.ico */
+IDI_SHELL_HELP_FILE ICON resources/help.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/optical_drive.ico */
@@ -1005,6 +1011,9 @@ IDI_SHELL_BURN_DISC2 ICON resources/optical_disc.ico
 
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
+
+/* @makedep: resources/help.ico */
+IDI_SHELL_HELP_SMALL ICON resources/help.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
