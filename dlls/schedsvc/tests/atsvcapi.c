@@ -118,7 +118,7 @@ START_TEST(atsvcapi)
         container.EntriesRead = 0;
         container.Buffer = NULL;
         total = start_index = 0;
-        ret = NetrJobEnum(server_name, &container, 1, &total, &start_index);
+        ret = NetrJobEnum(server_name, &container, -1, &total, &start_index);
         if (ret == ERROR_ACCESS_DENIED)
         {
             win_skip("NetrJobEnum: Access denied, skipping the tests\n");
