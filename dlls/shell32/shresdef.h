@@ -345,6 +345,7 @@
 #define IDI_SHELL_OPTICAL_DISC     302
 #define IDI_SHELL_DVD_ROM          304
 #define IDI_SHELL_INTERNET_PRINTER 311
+#define IDI_SHELL_JAZ_DRIVE        312
 #define IDI_SHELL_ZIP_DRIVE2       313
 #define IDI_SHELL_DVD_RW           318
 #define IDI_SHELL_NEW_FOLDER       319
