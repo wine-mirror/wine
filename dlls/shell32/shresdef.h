@@ -334,6 +334,8 @@
 #define IDI_SHELL_INTERNET         273
 #define IDI_SHELL_WEB_CALENDAR     276
 #define IDI_SHELL_USERS_XP2        279
+/* 280 not used on Windows */
+#define IDI_SHELL_SEARCH_WINDOW    281
 /* 285 - 288 not used on Windows */
 #define IDI_SHELL_HELP_FILE        289
 #define IDI_SHELL_DVD_DRIVE        291
@@ -352,8 +354,11 @@
 #define IDI_SHELL_NEW_FOLDER       319
 #define IDI_SHELL_BURN_DISC2       320
 #define IDI_SHELL_FAVORITES_SMALL  322
+#define IDI_SHELL_SEARCH_SMALL     323
 #define IDI_SHELL_HELP_SMALL       324
 #define IDI_SHELL_APP_FOLDER_SMALL 326
+/* 332 - 336 not used on Windows */
+#define IDI_SHELL_SEARCH_DIRECTORY 337
 #define IDI_SHELL_RESTRICTED2      338
 /* 339 - 511 not used on Windows */
 #define IDI_SHELL_WEB_BROWSER      512

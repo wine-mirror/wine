@@ -950,6 +950,10 @@ IDI_SHELL_WEB_CALENDAR ICON resources/internet.ico
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP2 ICON resources/users.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/search.ico */
+IDI_SHELL_SEARCH_WINDOW ICON resources/search.ico
+
 /* @makedep: resources/help.ico */
 IDI_SHELL_HELP_FILE ICON resources/help.ico
 
@@ -1015,12 +1019,19 @@ IDI_SHELL_BURN_DISC2 ICON resources/optical_disc.ico
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
 
+/* @makedep: resources/search.ico */
+IDI_SHELL_SEARCH_SMALL ICON resources/search.ico
+
 /* @makedep: resources/help.ico */
 IDI_SHELL_HELP_SMALL ICON resources/help.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_APP_FOLDER_SMALL ICON resources/folder.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/search.ico */
+IDI_SHELL_SEARCH_DIRECTORY ICON resources/search.ico
 
 /* @makedep: resources/restricted.ico */
 IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
