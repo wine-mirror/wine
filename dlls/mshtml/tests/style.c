@@ -738,6 +738,7 @@ static void test_style6(IHTMLStyle6 *style)
 
 static void test_body_style(IHTMLStyle *style)
 {
+    IHTMLCSSStyleDeclaration *css_style;
     IHTMLStyle2 *style2;
     IHTMLStyle3 *style3;
     IHTMLStyle4 *style4;
@@ -752,6 +753,10 @@ static void test_body_style(IHTMLStyle *style)
     BSTR sDefault;
     LONG l;
     VARIANT vDefault;
+
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLCSSStyleDeclaration, (void**)&css_style);
+    ok(hres == S_OK || broken(!is_ie9plus && hres == E_NOINTERFACE),
+       "Could not get IHTMLCSSStyleDeclaration interface: %08x\n", hres);
 
     test_style_csstext(style, NULL);
 
@@ -2703,6 +2708,9 @@ static void test_body_style(IHTMLStyle *style)
     }else {
         win_skip("IHTMLStyle6 not available\n");
     }
+
+    if(css_style)
+        IHTMLCSSStyleDeclaration_Release(css_style);
 }
 
 #define test_style_filter(a,b) _test_style_filter(__LINE__,a,b)
