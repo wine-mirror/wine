@@ -867,6 +867,9 @@ IDI_SHELL_SHARED_FOLDER ICON resources/folder.ico
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP ICON resources/users.ico
 
+/* @makedep: resources/update.ico */
+IDI_SHELL_INSTALL_XP ICON resources/update.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/printer.ico */
 IDI_SHELL_MULTIFUNCTION_PRINTER ICON resources/printer.ico
