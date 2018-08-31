@@ -784,6 +784,63 @@ static void test_body_style(IHTMLStyle *style)
     else
         ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
+    if(css_style) {
+        V_VT(&v) = VT_NULL;
+        hres = IHTMLCSSStyleDeclaration_get_marginRight(css_style, &v);
+        ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
+        if(compat_mode < COMPAT_IE9)
+            ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginRight) = %s\n",
+               wine_dbgstr_w(V_BSTR(&v)));
+        else
+            ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = 7;
+        hres = IHTMLCSSStyleDeclaration_put_marginRight(css_style, v);
+        ok(hres == S_OK, "put_marginRight failed: %08x\n", hres);
+
+        V_VT(&v) = VT_NULL;
+        hres = IHTMLCSSStyleDeclaration_get_marginRight(css_style, &v);
+        ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
+        if(compat_mode < COMPAT_IE9)
+            ok(!strcmp_wa(V_BSTR(&v), "7px"), "V_BSTR(marginRight) = %s\n",
+               wine_dbgstr_w(V_BSTR(&v)));
+        else
+            ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = a2bstr("8");
+        hres = IHTMLCSSStyleDeclaration_put_marginRight(css_style, v);
+        ok(hres == S_OK, "put_marginRight failed: %08x\n", hres);
+        SysFreeString(V_BSTR(&v));
+
+        V_VT(&v) = VT_NULL;
+        hres = IHTMLCSSStyleDeclaration_get_marginRight(css_style, &v);
+        ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
+        if(compat_mode < COMPAT_IE9)
+            ok(!strcmp_wa(V_BSTR(&v), "8px"), "V_BSTR(marginRight) = %s\n",
+               wine_dbgstr_w(V_BSTR(&v)));
+        else
+            ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = a2bstr("9px");
+        hres = IHTMLCSSStyleDeclaration_put_marginRight(css_style, v);
+        ok(hres == S_OK, "put_marginRight failed: %08x\n", hres);
+        SysFreeString(V_BSTR(&v));
+
+        V_VT(&v) = VT_NULL;
+        hres = IHTMLCSSStyleDeclaration_get_marginRight(css_style, &v);
+        ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
+        ok(!strcmp_wa(V_BSTR(&v), "9px"), "V_BSTR(marginRight) = %s\n",
+           wine_dbgstr_w(V_BSTR(&v)));
+        SysFreeString(V_BSTR(&v));
+    }
+
     V_VT(&v) = VT_NULL;
     hres = IHTMLStyle_get_marginBottom(style, &v);
     ok(hres == S_OK, "get_marginBottom failed: %08x\n", hres);
@@ -1725,6 +1782,18 @@ static void test_body_style(IHTMLStyle *style)
     }
     VariantClear(&v);
 
+    if(css_style) {
+        hres = IHTMLCSSStyleDeclaration_get_zIndex(css_style, &v);
+        ok(hres == S_OK, "get_zIndex failed: %08x\n", hres);
+        if(compat_mode < COMPAT_IE9) {
+            ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
+            ok(!V_I4(&v), "V_I4(v) != 0\n");
+        }else {
+            ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+            ok(!V_BSTR(&v), "zIndex = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+        }
+    }
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("1");
     hres = IHTMLStyle_put_zIndex(style, v);
@@ -2256,6 +2325,20 @@ static void test_body_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "backgroundPositionX = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    if(css_style) {
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = a2bstr("11px");
+        hres = IHTMLCSSStyleDeclaration_put_backgroundPositionX(css_style, v);
+        ok(hres == S_OK, "put_backgroundPositionX failed: %08x\n", hres);
+        VariantClear(&v);
+
+        hres = IHTMLCSSStyleDeclaration_get_backgroundPositionX(css_style, &v);
+        ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+        ok(!strcmp_wa(V_BSTR(&v), "11px"), "backgroundPositionX = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+    }
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("10px");
