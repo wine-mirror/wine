@@ -1020,6 +1020,9 @@ IDI_SHELL_NEW_FOLDER ICON resources/folder.ico
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_BURN_DISC2 ICON resources/optical_disc.ico
 
+/* @makedep: resources/control.ico */
+IDI_SHELL_CONTROL_PANEL_XP2 ICON resources/control.ico
+
 /* @makedep: resources/favorites.ico */
 IDI_SHELL_FAVORITES_SMALL ICON resources/favorites.ico
 
@@ -1032,6 +1035,9 @@ IDI_SHELL_HELP_SMALL ICON resources/help.ico
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
 IDI_SHELL_APP_FOLDER_SMALL ICON resources/folder.ico
+
+/* @makedep: resources/control.ico */
+IDI_SHELL_CONTROL_PANEL_SMALL ICON resources/control.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/search.ico */
