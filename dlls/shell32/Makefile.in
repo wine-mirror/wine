@@ -102,5 +102,6 @@ SVG_SRCS = \
 	resources/trash_file.svg \
 	resources/trash_full.svg \
 	resources/update.svg \
+	resources/users.svg \
 	resources/video.svg \
 	resources/window.svg
