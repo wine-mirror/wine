@@ -295,6 +295,7 @@
 #define IDI_SHELL_DOCUMENTS        223
 #define IDI_SHELL_VIDEO_FILE       224
 #define IDI_SHELL_AUDIO_FILE       225
+#define IDI_SHELL_IMAGE_FILE       226
 #define IDI_SHELL_MUSIC_CD_95      228
 #define IDI_SHELL_CARD_READER      229
 #define IDI_SHELL_ZIP_DRIVE        230

@@ -76,6 +76,7 @@ SVG_SRCS = \
 	resources/folder.svg \
 	resources/folder_open.svg \
 	resources/help.svg \
+	resources/image.svg \
 	resources/internet.svg \
 	resources/log_off.svg \
 	resources/menu.svg \
