@@ -316,6 +316,8 @@
 #define IDI_SHELL_UPLOAD           244
 #define IDI_SHELL_PRINT            245
 #define IDI_SHELL_PLAY             246
+#define IDI_SHELL_INTERNET_RADIO   247
+#define IDI_SHELL_UPLOAD_PHOTO     251
 #define IDI_SHELL_EMPTY_RECYCLE_BIN2       254
 #define IDI_SHELL_NEW_NETWORK_FOLDER       258
 #define IDI_SHELL_WRITE_DISC       260
@@ -325,6 +327,8 @@
 #define IDI_SHELL_BURN_DISC        266
 #define IDI_SHELL_SHARED_FOLDER    267
 #define IDI_SHELL_USERS_XP         269
+#define IDI_SHELL_INTERNET         273
+#define IDI_SHELL_WEB_CALENDAR     276
 #define IDI_SHELL_USERS_XP2        279
 #define IDI_SHELL_DVD_DRIVE        291
 #define IDI_SHELL_HYBRID_CD        292
@@ -343,6 +347,8 @@
 #define IDI_SHELL_FAVORITES_SMALL  322
 #define IDI_SHELL_APP_FOLDER_SMALL 326
 #define IDI_SHELL_RESTRICTED2      338
+/* 339 - 511 not used on Windows */
+#define IDI_SHELL_WEB_BROWSER      512
 
 /* 
 AVI resources, windows shell32 has 14 of them: 150-152 and 160-170

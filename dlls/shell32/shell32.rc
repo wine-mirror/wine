@@ -884,6 +884,14 @@ IDI_SHELL_PRINT ICON resources/printer.ico
 /* @makedep: resources/play.ico */
 IDI_SHELL_PLAY ICON resources/play.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_INTERNET_RADIO ICON resources/internet.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_UPLOAD_PHOTO ICON resources/internet.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 
@@ -917,6 +925,13 @@ IDI_SHELL_SHARED_FOLDER ICON resources/folder.ico
 
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP ICON resources/users.ico
+
+/* @makedep: resources/internet.ico */
+IDI_SHELL_INTERNET ICON resources/internet.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/internet.ico */
+IDI_SHELL_WEB_CALENDAR ICON resources/internet.ico
 
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP2 ICON resources/users.ico
@@ -985,6 +1000,9 @@ IDI_SHELL_APP_FOLDER_SMALL ICON resources/folder.ico
 
 /* @makedep: resources/restricted.ico */
 IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
+
+/* @makedep: resources/internet.ico */
+IDI_SHELL_WEB_BROWSER ICON resources/internet.ico
 
 /* @makedep: resources/idb_tb_large.bmp */
 IDB_TB_LARGE_LIGHT BITMAP resources/idb_tb_large.bmp
