@@ -2400,7 +2400,20 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "20%"), "backgroundPositionY = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-     /* borderTopWidth */
+    if(css_style) {
+        str = a2bstr("left 21%");
+        hres = IHTMLCSSStyleDeclaration_put_backgroundPosition(css_style, str);
+        ok(hres == S_OK, "put_backgroundPosition failed: %08x\n", hres);
+        SysFreeString(str);
+
+        str = NULL;
+        hres = IHTMLCSSStyleDeclaration_get_backgroundPosition(css_style, &str);
+        ok(hres == S_OK, "get_backgroundPosition failed: %08x\n", hres);
+        ok(!strcmp_wa(str, "left 21%"), "backgroundPosition = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
+
+    /* borderTopWidth */
     hres = IHTMLStyle_get_borderTopWidth(style, &vDefault);
     ok(hres == S_OK, "get_borderTopWidth: %08x\n", hres);
 
@@ -2632,6 +2645,18 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_pageBreakAfter(style, &str);
     ok(hres == S_OK, "get_pageBreakAfter failed: %08x\n", hres);
     ok(!str, "pageBreakAfter = %s\n", wine_dbgstr_w(str));
+
+    if(css_style) {
+        str = a2bstr("right");
+        hres = IHTMLCSSStyleDeclaration_put_pageBreakAfter(css_style, str);
+        ok(hres == S_OK, "put_pageBreakAfter failed: %08x\n", hres);
+        SysFreeString(str);
+
+        hres = IHTMLCSSStyleDeclaration_get_pageBreakAfter(css_style, &str);
+        ok(hres == S_OK, "get_pageBreakAfter failed: %08x\n", hres);
+        ok(!strcmp_wa(str, "right"), "pageBreakAfter = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
 
     str = a2bstr("always");
     hres = IHTMLStyle_put_pageBreakAfter(style, str);
