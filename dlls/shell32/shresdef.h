@@ -320,6 +320,7 @@
 #define IDI_SHELL_WRITE_DISC       260
 #define IDI_SHELL_DELETE_FILE      261
 #define IDI_SHELL_ERASE_DISC       262
+#define IDI_SHELL_HELP2            263
 #define IDI_SHELL_TO_FOLDER        264
 #define IDI_SHELL_BURN_DISC        266
 #define IDI_SHELL_SHARED_FOLDER    267
@@ -328,6 +329,8 @@
 #define IDI_SHELL_INTERNET         273
 #define IDI_SHELL_WEB_CALENDAR     276
 #define IDI_SHELL_USERS_XP2        279
+/* 285 - 288 not used on Windows */
+#define IDI_SHELL_HELP_FILE        289
 #define IDI_SHELL_DVD_DRIVE        291
 #define IDI_SHELL_HYBRID_CD        292
 #define IDI_SHELL_UNKNOWN_DISC     293
@@ -344,6 +347,7 @@
 #define IDI_SHELL_NEW_FOLDER       319
 #define IDI_SHELL_BURN_DISC2       320
 #define IDI_SHELL_FAVORITES_SMALL  322
+#define IDI_SHELL_HELP_SMALL       324
 #define IDI_SHELL_APP_FOLDER_SMALL 326
 #define IDI_SHELL_RESTRICTED2      338
 /* 339 - 511 not used on Windows */
