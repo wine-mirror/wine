@@ -826,6 +826,10 @@ IDI_SHELL_INTERNET_RADIO ICON resources/internet.ico
 /* @makedep: resources/internet.ico */
 IDI_SHELL_UPLOAD_PHOTO ICON resources/internet.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_PRINT_PHOTO ICON resources/printer.ico
+
 /* @makedep: resources/trash_file.ico */
 IDI_SHELL_EMPTY_RECYCLE_BIN2 ICON resources/trash_file.ico
 
@@ -859,6 +863,10 @@ IDI_SHELL_SHARED_FOLDER ICON resources/folder.ico
 
 /* @makedep: resources/users.ico */
 IDI_SHELL_USERS_XP ICON resources/users.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_MULTIFUNCTION_PRINTER ICON resources/printer.ico
 
 /* @makedep: resources/internet.ico */
 IDI_SHELL_INTERNET ICON resources/internet.ico
@@ -908,6 +916,10 @@ IDI_SHELL_OPTICAL_DISC ICON resources/optical_disc.ico
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/optical_disc.ico */
 IDI_SHELL_DVD_ROM ICON resources/optical_disc.ico
+
+/* FIXME: Following resource is not yet added */
+/* @makedep: resources/printer.ico */
+IDI_SHELL_INTERNET_PRINTER ICON resources/printer.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/disk_drive.ico */
