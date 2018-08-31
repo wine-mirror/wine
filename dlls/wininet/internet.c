@@ -1661,7 +1661,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
 
     if (dwFlags & ICU_DECODE)
     {
-        WCHAR *url_tmp;
+        WCHAR *url_tmp, *buffer;
         DWORD len = dwUrlLength + 1;
         BOOL ret;
 
@@ -1670,9 +1670,24 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
             SetLastError(ERROR_OUTOFMEMORY);
             return FALSE;
         }
-        ret = InternetCanonicalizeUrlW(url_tmp, url_tmp, &len, ICU_DECODE | ICU_NO_ENCODE);
+
+        buffer = url_tmp;
+        ret = InternetCanonicalizeUrlW(url_tmp, buffer, &len, ICU_DECODE | ICU_NO_ENCODE);
+        if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            buffer = heap_alloc(len * sizeof(WCHAR));
+            if (!buffer)
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                heap_free(url_tmp);
+                return FALSE;
+            }
+            ret = InternetCanonicalizeUrlW(url_tmp, buffer, &len, ICU_DECODE | ICU_NO_ENCODE);
+        }
         if (ret)
-            ret = InternetCrackUrlW(url_tmp, len, dwFlags & ~ICU_DECODE, lpUC);
+            ret = InternetCrackUrlW(buffer, len, dwFlags & ~ICU_DECODE, lpUC);
+
+        if (buffer != url_tmp) heap_free(buffer);
         heap_free(url_tmp);
         return ret;
     }
