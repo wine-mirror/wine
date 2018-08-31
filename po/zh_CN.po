@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-20 08:10-0500\n"
-"Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
+"PO-Revision-Date: 2018-08-30 00:16-0600\n"
+"Last-Translator: Zixing Liu <liushuyu011@gmail.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -13962,11 +13962,11 @@ msgstr "颜色(&O)："
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "MIME 类型"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "管理文件关联(&A)"
 
 #: winecfg.rc:308
 msgid "Folders"
