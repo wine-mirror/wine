@@ -789,9 +789,8 @@ IDI_SHELL_RESTRICTED ICON resources/restricted.ico
 /* @makedep: resources/folder.ico */
 IDI_SHELL_DEFAULT_FOLDER ICON resources/folder.ico
 
-/* FIXME: Following resource is not yet added */
-/* @makedep: resources/security.ico */
-IDI_SHELL_USERS ICON resources/security.ico
+/* @makedep: resources/users.ico */
+IDI_SHELL_USERS ICON resources/users.ico
 
 /* @makedep: resources/shut_down.ico */
 IDI_SHELL_POWER_OFF ICON resources/shut_down.ico
@@ -916,13 +915,11 @@ IDI_SHELL_BURN_DISC ICON resources/optical_disc.ico
 /* @makedep: resources/folder.ico */
 IDI_SHELL_SHARED_FOLDER ICON resources/folder.ico
 
-/* FIXME: Following resource is not yet added */
-/* @makedep: resources/security.ico */
-IDI_SHELL_USERS_XP ICON resources/security.ico
+/* @makedep: resources/users.ico */
+IDI_SHELL_USERS_XP ICON resources/users.ico
 
-/* FIXME: Following resource is not yet added */
-/* @makedep: resources/security.ico */
-IDI_SHELL_USERS_XP2 ICON resources/security.ico
+/* @makedep: resources/users.ico */
+IDI_SHELL_USERS_XP2 ICON resources/users.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/optical_drive.ico */
