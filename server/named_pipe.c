@@ -134,6 +134,7 @@ static const struct object_ops named_pipe_ops =
 
 /* common server and client pipe end functions */
 static void pipe_end_destroy( struct object *obj );
+static struct object_type *pipe_end_get_type( struct object *obj );
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static struct fd *pipe_end_get_fd( struct object *obj );
 static struct security_descriptor *pipe_end_get_sd( struct object *obj );
@@ -155,7 +156,7 @@ static const struct object_ops pipe_server_ops =
 {
     sizeof(struct pipe_server),   /* size */
     pipe_server_dump,             /* dump */
-    no_get_type,                  /* get_type */
+    pipe_end_get_type,            /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -196,7 +197,7 @@ static const struct object_ops pipe_client_ops =
 {
     sizeof(struct pipe_client),   /* size */
     pipe_client_dump,             /* dump */
-    no_get_type,                  /* get_type */
+    pipe_end_get_type,            /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -313,6 +314,13 @@ static void named_pipe_destroy( struct object *obj)
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
     free_async_queue( &pipe->waiters );
+}
+
+static struct object_type *pipe_end_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'F','i','l','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static struct fd *pipe_end_get_fd( struct object *obj )
