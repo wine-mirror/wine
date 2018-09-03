@@ -3,5 +3,4 @@ IMPORTLIB = xmllite
 
 C_SRCS = \
 	reader.c \
-	writer.c \
-	xmllite_main.c
+	writer.c
