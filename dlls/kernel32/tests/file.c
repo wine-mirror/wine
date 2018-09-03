@@ -3677,6 +3677,30 @@ static void test_ReplaceFileA(void)
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesA: error setting to normal %d\n", GetLastError());
 
+    /* re-create replacement file for pass w/ replaced opened with
+     * the same permissions as an exe (Replicating an exe trying to
+     * replace itself)
+     */
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    /* make sure that the replacement file still exists */
+    hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacementFile != INVALID_HANDLE_VALUE ||
+       broken(GetLastError() == ERROR_FILE_NOT_FOUND), /* win2k */
+       "unexpected error, replacement file should still exist %d\n", GetLastError());
+    CloseHandle(hReplacementFile);
+
+    /* make sure that the replaced file is opened like an exe*/
+    hReplacedFile = CreateFileA(replaced, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacedFile != INVALID_HANDLE_VALUE,
+       "unexpected error, replaced file should be able to be opened %d\n", GetLastError());
+    /*Calling ReplaceFileA on an exe should succeed*/
+    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    todo_wine ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    CloseHandle(hReplacedFile);
+
     /* replacement file still exists, make pass w/o "replaced" */
     ret = DeleteFileA(replaced);
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
