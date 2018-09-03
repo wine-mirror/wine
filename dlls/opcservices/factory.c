@@ -68,9 +68,9 @@ static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcU
 
 static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **part_uri)
 {
-    FIXME("iface %p, uri %s, part_uri %p stub!\n", iface, debugstr_w(uri), part_uri);
+    TRACE("iface %p, uri %s, part_uri %p.\n", iface, debugstr_w(uri), part_uri);
 
-    return E_NOTIMPL;
+    return opc_part_uri_create(uri, part_uri);
 }
 
 static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR filename,

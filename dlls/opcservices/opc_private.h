@@ -20,3 +20,4 @@
 #include "wine/heap.h"
 
 extern HRESULT opc_package_create(IOpcPackage **package) DECLSPEC_HIDDEN;
+extern HRESULT opc_part_uri_create(const WCHAR *uri, IOpcPartUri **part_uri) DECLSPEC_HIDDEN;

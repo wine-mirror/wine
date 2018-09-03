@@ -3,7 +3,8 @@ IMPORTS = uuid
 
 C_SRCS = \
 	factory.c \
-	package.c
+	package.c \
+	uri.c
 
 IDL_SRCS = \
 	opcservices.idl
