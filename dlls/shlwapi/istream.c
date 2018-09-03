@@ -274,9 +274,20 @@ static HRESULT WINAPI IStream_fnRevert(IStream *iface)
 }
 
 /**************************************************************************
- * IStream_fnLockUnlockRegion
+ * IStream_fnLockRegion
  */
-static HRESULT WINAPI IStream_fnLockUnlockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+static HRESULT WINAPI IStream_fnLockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                                 ULARGE_INTEGER cb, DWORD dwLockType)
+{
+  ISHFileStream *This = impl_from_IStream(iface);
+  TRACE("(%p,%s,%s,%d)\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
+  return E_NOTIMPL;
+}
+
+/**************************************************************************
+ * IStream_fnUnlockRegion
+ */
+static HRESULT WINAPI IStream_fnUnlockRegion(IStream *iface, ULARGE_INTEGER libOffset,
                                                  ULARGE_INTEGER cb, DWORD dwLockType)
 {
   ISHFileStream *This = impl_from_IStream(iface);
@@ -345,8 +356,8 @@ static const IStreamVtbl SHLWAPI_fsVTable =
   IStream_fnCopyTo,
   IStream_fnCommit,
   IStream_fnRevert,
-  IStream_fnLockUnlockRegion,
-  IStream_fnLockUnlockRegion,
+  IStream_fnLockRegion,
+  IStream_fnUnlockRegion,
   IStream_fnStat,
   IStream_fnClone
 };
