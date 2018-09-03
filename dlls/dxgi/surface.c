@@ -182,16 +182,43 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDesc(IDXGISurface1 *iface, DXGI
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_Map(IDXGISurface1 *iface, DXGI_MAPPED_RECT *mapped_rect, UINT flags)
 {
-    FIXME("iface %p, mapped_rect %p, flags %#x stub!\n", iface, mapped_rect, flags);
+    struct dxgi_surface *surface = impl_from_IDXGISurface1(iface);
+    struct wined3d_map_desc wined3d_map_desc;
+    DWORD wined3d_map_flags = 0;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, mapped_rect %p, flags %#x.\n", iface, mapped_rect, flags);
+
+    if (flags & DXGI_MAP_READ)
+        wined3d_map_flags |= WINED3D_MAP_READ;
+    if (flags & DXGI_MAP_WRITE)
+        wined3d_map_flags |= WINED3D_MAP_WRITE;
+    if (flags & DXGI_MAP_DISCARD)
+        wined3d_map_flags |= WINED3D_MAP_DISCARD;
+
+    wined3d_mutex_lock();
+    if (SUCCEEDED(hr = wined3d_resource_map(wined3d_texture_get_resource(surface->wined3d_texture), 0,
+            &wined3d_map_desc, NULL, wined3d_map_flags)))
+    {
+        mapped_rect->Pitch = wined3d_map_desc.row_pitch;
+        mapped_rect->pBits = wined3d_map_desc.data;
+    }
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_Unmap(IDXGISurface1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct dxgi_surface *surface = impl_from_IDXGISurface1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    wined3d_resource_unmap(wined3d_texture_get_resource(surface->wined3d_texture), 0);
+    wined3d_mutex_unlock();
+
+    return S_OK;
 }
 
 /* IDXGISurface1 methods */
