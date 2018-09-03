@@ -19715,6 +19715,7 @@ wine_fn_config_makefile dlls/olesvr.dll16 enable_win16
 wine_fn_config_makefile dlls/olesvr32 enable_olesvr32
 wine_fn_config_makefile dlls/olethk32 enable_olethk32
 wine_fn_config_makefile dlls/opcservices enable_opcservices
+wine_fn_config_makefile dlls/opcservices/tests enable_tests
 wine_fn_config_makefile dlls/openal32 enable_openal32
 wine_fn_config_makefile dlls/opencl enable_opencl
 wine_fn_config_makefile dlls/opengl32 enable_opengl32
