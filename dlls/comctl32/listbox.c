@@ -39,7 +39,7 @@
 
 #include "comctl32.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(listbox2);
+WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 
 /* Items array granularity */
 #define LB_ARRAY_GRANULARITY 16
