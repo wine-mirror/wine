@@ -20,10 +20,10 @@
 #pragma makedep install
 #endif
 
-interface IOpcPart;
 interface IOpcPartUri;
 interface IOpcUri;
 interface IOpcRelationship;
+interface IOpcRelationshipSet;
 
 typedef [v1_enum] enum
 {
@@ -37,6 +37,34 @@ typedef [v1_enum] enum
     OPC_WRITE_DEFAULT = 0,
     OPC_WRITE_FORCE_ZIP32 = 1,
 } OPC_WRITE_FLAGS;
+
+[
+    object,
+    uuid(42195949-3b79-4fc8-89c6-fc7fb979ee71),
+    pointer_default(ref)
+]
+interface IOpcPart : IUnknown
+{
+    HRESULT GetRelationshipSet(
+        [out, retval] IOpcRelationshipSet **relationship_set
+    );
+
+    HRESULT GetContentStream(
+        [out, retval] IStream **stream
+    );
+
+    HRESULT GetName(
+        [out, retval] IOpcPartUri **name
+    );
+
+    HRESULT GetContentType(
+        [out, string, retval] LPWSTR *type
+    );
+
+    HRESULT GetCompressionOptions(
+        [out, retval] OPC_COMPRESSION_OPTIONS *options
+    );
+}
 
 [
     object,

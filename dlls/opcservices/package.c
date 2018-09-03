@@ -36,6 +36,12 @@ struct opc_package
     IOpcPartSet *part_set;
 };
 
+struct opc_part
+{
+    IOpcPart IOpcPart_iface;
+    LONG refcount;
+};
+
 struct opc_part_set
 {
     IOpcPartSet IOpcPartSet_iface;
@@ -50,6 +56,112 @@ static inline struct opc_package *impl_from_IOpcPackage(IOpcPackage *iface)
 static inline struct opc_part_set *impl_from_IOpcPartSet(IOpcPartSet *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_part_set, IOpcPartSet_iface);
+}
+
+static inline struct opc_part *impl_from_IOpcPart(IOpcPart *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_part, IOpcPart_iface);
+}
+
+static HRESULT WINAPI opc_part_QueryInterface(IOpcPart *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IOpcPart) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IOpcPart_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_part_AddRef(IOpcPart *iface)
+{
+    struct opc_part *part = impl_from_IOpcPart(iface);
+    ULONG refcount = InterlockedIncrement(&part->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_part_Release(IOpcPart *iface)
+{
+    struct opc_part *part = impl_from_IOpcPart(iface);
+    ULONG refcount = InterlockedDecrement(&part->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(part);
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_part_GetRelationshipSet(IOpcPart *iface, IOpcRelationshipSet **relationship_set)
+{
+    FIXME("iface %p, relationship_set %p stub!\n", iface, relationship_set);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_GetContentStream(IOpcPart *iface, IStream **stream)
+{
+    FIXME("iface %p, stream %p stub!\n", iface, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_GetName(IOpcPart *iface, IOpcPartUri **name)
+{
+    FIXME("iface %p, name %p stub!\n", iface, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_GetContentType(IOpcPart *iface, LPWSTR *type)
+{
+    FIXME("iface %p, type %p stub!\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_part_GetCompressionOptions(IOpcPart *iface, OPC_COMPRESSION_OPTIONS *options)
+{
+    FIXME("iface %p, options %p stub!\n", iface, options);
+
+    return E_NOTIMPL;
+}
+
+static const IOpcPartVtbl opc_part_vtbl =
+{
+    opc_part_QueryInterface,
+    opc_part_AddRef,
+    opc_part_Release,
+    opc_part_GetRelationshipSet,
+    opc_part_GetContentStream,
+    opc_part_GetName,
+    opc_part_GetContentType,
+    opc_part_GetCompressionOptions,
+};
+
+static HRESULT opc_part_create(IOpcPart **out)
+{
+    struct opc_part *part;
+
+    if (!(part = heap_alloc_zero(sizeof(*part))))
+        return E_OUTOFMEMORY;
+
+    part->IOpcPart_iface.lpVtbl = &opc_part_vtbl;
+    part->refcount = 1;
+
+    *out = &part->IOpcPart_iface;
+    TRACE("Created part %p.\n", *out);
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_part_set_QueryInterface(IOpcPartSet *iface, REFIID iid, void **out)
@@ -104,7 +216,7 @@ static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *n
     FIXME("iface %p, name %p, content_type %s, compression_options %#x, part %p stub!\n", iface, name,
             debugstr_w(content_type), compression_options, part);
 
-    return E_NOTIMPL;
+    return opc_part_create(part);
 }
 
 static HRESULT WINAPI opc_part_set_DeletePart(IOpcPartSet *iface, IOpcPartUri *name)
