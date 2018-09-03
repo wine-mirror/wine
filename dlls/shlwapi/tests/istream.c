@@ -191,6 +191,7 @@ static void test_stream_read_write(IStream *stream, DWORD mode)
     HRESULT ret;
     unsigned char buf[16];
     DWORD written, count;
+    STATSTG statstg;
 
     /* IStream_Read/Write from the COBJMACROS is undefined by shlwapi.h */
 
@@ -245,6 +246,17 @@ static void test_stream_read_write(IStream *stream, DWORD mode)
     ok(count == written, "expected %u, got %u\n", written, count);
     if (count)
         ok(buf[0] == 0x5e && buf[1] == 0xa7, "expected 5ea7, got %02x%02x\n", buf[0], buf[1]);
+
+    memset(&statstg, 0xff, sizeof(statstg));
+    ret = IStream_Stat(stream, &statstg, 0);
+    ok(ret == S_OK, "Stat failed, hr %#x.\n", ret);
+    ok(statstg.pwcsName != NULL, "Unexpected name %s.\n", wine_dbgstr_w(statstg.pwcsName));
+    CoTaskMemFree(statstg.pwcsName);
+
+    memset(&statstg, 0xff, sizeof(statstg));
+    ret = IStream_Stat(stream, &statstg, STATFLAG_NONAME);
+    ok(ret == S_OK, "Stat failed, hr %#x.\n", ret);
+    ok(statstg.pwcsName == NULL, "Unexpected name %s.\n", wine_dbgstr_w(statstg.pwcsName));
 }
 
 static void test_stream_qi(IStream *stream)
