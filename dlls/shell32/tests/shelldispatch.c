@@ -1025,6 +1025,9 @@ static void test_ShellWindows(void)
 
     hr = CoCreateInstance(&CLSID_ShellWindows, NULL, CLSCTX_LOCAL_SERVER,
         &IID_IShellWindows, (void**)&shellwindows);
+#ifndef __i386__
+todo_wine
+#endif
     ok(hr == S_OK, "got 0x%08x\n", hr);
     /* TODO: remove when explorer startup with clean prefix is fixed */
     if (hr != S_OK)
