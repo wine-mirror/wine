@@ -257,6 +257,21 @@ static void create_mfpict(STGMEDIUM *med)
     med->pUnkForRelease = NULL;
 }
 
+static void create_text(STGMEDIUM *med)
+{
+    HGLOBAL handle;
+    char *p;
+
+    handle = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 5);
+    p = GlobalLock(handle);
+    strcpy(p, "test");
+    GlobalUnlock(handle);
+
+    med->tymed = TYMED_HGLOBAL;
+    U(med)->hGlobal = handle;
+    med->pUnkForRelease = NULL;
+}
+
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     CHECK_EXPECTED_METHOD("OleObject_QueryInterface");
@@ -1489,6 +1504,12 @@ static HRESULT WINAPI DataObject_GetData( IDataObject *iface, FORMATETC *fmt_in,
                 return S_OK;
             case CF_BITMAP:
                 create_bitmap( med );
+                return S_OK;
+            case CF_ENHMETAFILE:
+                create_emf( med );
+                return S_OK;
+            case CF_TEXT:
+                create_text( med );
                 return S_OK;
             default:
                 trace( "unhandled fmt %d\n", fmt->cfFormat );
@@ -4593,6 +4614,175 @@ todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_4 ||
     }
 }
 
+static void test_OleCreateStaticFromData(void)
+{
+    HRESULT hr;
+    IOleObject *ole_obj = NULL;
+    IStorage *storage;
+    ILockBytes *ilb;
+    IPersist *presist;
+    CLSID clsid;
+    STATSTG statstg;
+    int enumerated_streams, matched_streams;
+    STGMEDIUM stgmed;
+    static FORMATETC dib_fmt[] =
+    {
+        { CF_DIB, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+        { 0 }
+    };
+    static FORMATETC emf_fmt[] =
+    {
+        { CF_ENHMETAFILE, NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+        { 0 }
+    };
+    static FORMATETC text_fmt[] =
+    {
+        { CF_TEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+        { 0 }
+    };
+    static const struct expected_method methods_create_from_dib[] =
+    {
+        { "DataObject_EnumFormatEtc", TEST_TODO },
+        { "DataObject_GetDataHere", 0 },
+        { "DataObject_QueryGetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT, -1, TYMED_ISTORAGE } },
+        { NULL }
+    };
+    static const struct expected_method methods_createstatic_from_dib[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { NULL }
+    };
+    static const struct expected_method methods_createstatic_from_emf[] =
+    {
+        { "DataObject_GetData", 0, { CF_ENHMETAFILE, NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF } },
+        { NULL }
+    };
+    static const struct expected_method methods_createstatic_from_text[] =
+    {
+        { "DataObject_GetData", 0, { CF_TEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { NULL }
+    };
+    static struct storage_def stg_def_dib =
+    {
+        &CLSID_Picture_Dib, 3,
+        {{ "\1Ole", -1, 0, 0, NULL, 0 },
+         { "\1CompObj", -1, 0, 0, NULL, 0 },
+         { "CONTENTS", -1, 0, 0, NULL, 0 }}
+    };
+    static struct storage_def stg_def_emf =
+    {
+        &CLSID_Picture_EnhMetafile, 3,
+        {{ "\1Ole", -1, 0, 0, NULL, 0 },
+         { "\1CompObj", -1, 0, 0, NULL, 0 },
+         { "CONTENTS", -1, 0, 0, NULL, 0 }}
+    };
+
+
+    hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
+    ok(hr == S_OK, "CreateILockBytesOnHGlobal failed: 0x%08x.\n", hr);
+    hr = StgCreateDocfileOnILockBytes(ilb, STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_READWRITE,
+                                      0, &storage);
+    ok(hr == S_OK, "StgCreateDocfileOnILockBytes failed: 0x%08x.\n", hr);
+    ILockBytes_Release(ilb);
+
+    hr = OleCreateStaticFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT,
+                                 dib_fmt, NULL, NULL, (void **)&ole_obj);
+    ok(hr == E_INVALIDARG, "OleCreateStaticFromData should fail: 0x%08x.\n", hr);
+
+    hr = OleCreateStaticFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT,
+                                 dib_fmt, NULL, storage, NULL);
+    ok(hr == E_INVALIDARG, "OleCreateStaticFromData should fail: 0x%08x.\n", hr);
+
+    /* CF_DIB */
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_createstatic_from_dib;
+    hr = OleCreateStaticFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT,
+                                 dib_fmt, NULL, storage, (void **)&ole_obj);
+    ok(hr == S_OK, "OleCreateStaticFromData failed: 0x%08x.\n", hr);
+    hr = IOleObject_QueryInterface(ole_obj, &IID_IPersist, (void **)&presist);
+    ok(hr == S_OK, "IOleObject_QueryInterface failed: 0x%08x.\n", hr);
+    hr = IPersist_GetClassID(presist, &clsid);
+    ok(hr == S_OK, "IPersist_GetClassID failed: 0x%08x.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_Picture_Dib), "Got wrong clsid: %s, expected: %s.\n",
+       wine_dbgstr_guid(&clsid), wine_dbgstr_guid(&CLSID_Picture_Dib));
+    hr = IStorage_Stat(storage, &statstg, STATFLAG_NONAME);
+    ok_ole_success(hr, "IStorage_Stat");
+    ok(IsEqualCLSID(&CLSID_Picture_Dib, &statstg.clsid), "Wrong CLSID in storage.\n");
+    enumerated_streams = matched_streams = -1;
+    get_stgmedium(CF_DIB, &stgmed);
+    get_stgdef(&stg_def_dib, CF_DIB, &stgmed, 2);
+    check_storage_contents(storage, &stg_def_dib, &enumerated_streams, &matched_streams);
+    ok(enumerated_streams == matched_streams, "enumerated %d != matched %d\n",
+       enumerated_streams, matched_streams);
+    ok(enumerated_streams == stg_def_dib.stream_count, "created %d != def streams %d\n",
+       enumerated_streams, stg_def_dib.stream_count);
+    ReleaseStgMedium(&stgmed);
+    IPersist_Release(presist);
+    IStorage_Release(storage);
+    IOleObject_Release(ole_obj);
+
+    /* CF_ENHMETAFILE */
+    hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
+    ok(hr == S_OK, "CreateILockBytesOnHGlobal failed: 0x%08x.\n", hr);
+    hr = StgCreateDocfileOnILockBytes(ilb, STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_READWRITE,
+                                      0, &storage);
+    ok(hr == S_OK, "StgCreateDocfileOnILockBytes failed: 0x%08x.\n", hr);
+    ILockBytes_Release(ilb);
+    g_dataobject_fmts = emf_fmt;
+    expected_method_list = methods_createstatic_from_emf;
+    hr = OleCreateStaticFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT,
+                                 emf_fmt, NULL, storage, (void **)&ole_obj);
+    ok(hr == S_OK, "OleCreateStaticFromData failed: 0x%08x.\n", hr);
+    hr = IOleObject_QueryInterface(ole_obj, &IID_IPersist, (void **)&presist);
+    ok(hr == S_OK, "IOleObject_QueryInterface failed: 0x%08x.\n", hr);
+    hr = IPersist_GetClassID(presist, &clsid);
+    ok(hr == S_OK, "IPersist_GetClassID failed: 0x%08x.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_Picture_EnhMetafile), "Got wrong clsid: %s, expected: %s.\n",
+       wine_dbgstr_guid(&clsid), wine_dbgstr_guid(&CLSID_Picture_EnhMetafile));
+    hr = IStorage_Stat(storage, &statstg, STATFLAG_NONAME);
+    ok_ole_success(hr, "IStorage_Stat");
+    ok(IsEqualCLSID(&CLSID_Picture_EnhMetafile, &statstg.clsid), "Wrong CLSID in storage.\n");
+    enumerated_streams = matched_streams = -1;
+    get_stgmedium(CF_ENHMETAFILE, &stgmed);
+    get_stgdef(&stg_def_emf, CF_ENHMETAFILE, &stgmed, 2);
+    check_storage_contents(storage, &stg_def_emf, &enumerated_streams, &matched_streams);
+    ok(enumerated_streams == matched_streams, "enumerated %d != matched %d\n",
+       enumerated_streams, matched_streams);
+    ok(enumerated_streams == stg_def_emf.stream_count, "created %d != def streams %d\n",
+       enumerated_streams, stg_def_emf.stream_count);
+    ReleaseStgMedium(&stgmed);
+    IPersist_Release(presist);
+    IStorage_Release(storage);
+    IOleObject_Release(ole_obj);
+
+    /* CF_TEXT */
+    hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
+    ok(hr == S_OK, "CreateILockBytesOnHGlobal failed: 0x%08x.\n", hr);
+    hr = StgCreateDocfileOnILockBytes(ilb, STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_READWRITE,
+                                      0, &storage);
+    ok(hr == S_OK, "StgCreateDocfileOnILockBytes failed: 0x%08x.\n", hr);
+    ILockBytes_Release(ilb);
+    g_dataobject_fmts = text_fmt;
+    expected_method_list = methods_createstatic_from_text;
+    hr = OleCreateStaticFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT,
+                                 text_fmt, NULL, storage, (void **)&ole_obj);
+    ok(hr == DV_E_CLIPFORMAT, "OleCreateStaticFromData should fail: 0x%08x.\n", hr);
+    IStorage_Release(storage);
+
+    hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
+    ok(hr == S_OK, "CreateILockBytesOnHGlobal failed: 0x%08x.\n", hr);
+    hr = StgCreateDocfileOnILockBytes(ilb, STGM_SHARE_EXCLUSIVE | STGM_CREATE | STGM_READWRITE,
+                                      0, &storage);
+    ok(hr == S_OK, "StgCreateDocfileOnILockBytes failed: 0x%08x.\n", hr);
+    ILockBytes_Release(ilb);
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_create_from_dib;
+    hr = OleCreateFromData(&DataObject, &IID_IOleObject, OLERENDER_FORMAT, dib_fmt, NULL,
+                           storage, (void **)&ole_obj);
+    todo_wine ok(hr == DV_E_FORMATETC, "OleCreateFromData should failed: 0x%08x.\n", hr);
+    IStorage_Release(storage);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -4643,6 +4833,7 @@ START_TEST(ole2)
     test_data_cache_save();
     test_data_cache_save_data();
     test_data_cache_contents();
+    test_OleCreateStaticFromData();
 
     CoUninitialize();
 }
