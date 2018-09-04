@@ -33,6 +33,254 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 
+struct opc_filestream
+{
+    IStream IStream_iface;
+    LONG refcount;
+
+    HANDLE hfile;
+};
+
+static inline struct opc_filestream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_filestream, IStream_iface);
+}
+
+static HRESULT WINAPI opc_filestream_QueryInterface(IStream *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IStream) ||
+            IsEqualIID(iid, &IID_ISequentialStream) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_filestream_AddRef(IStream *iface)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedIncrement(&stream->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_filestream_Release(IStream *iface)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        CloseHandle(stream->hfile);
+        heap_free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_filestream_Read(IStream *iface, void *buff, ULONG size, ULONG *num_read)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+    DWORD read = 0;
+
+    TRACE("iface %p, buff %p, size %u, num_read %p.\n", iface, buff, size, num_read);
+
+    if (!num_read)
+        num_read = &read;
+
+    *num_read = 0;
+    if (!ReadFile(stream->hfile, buff, size, num_read, NULL))
+    {
+        WARN("Failed to read file, error %d.\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return *num_read == size ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI opc_filestream_Write(IStream *iface, const void *data, ULONG size, ULONG *num_written)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+    DWORD written = 0;
+
+    TRACE("iface %p, data %p, size %u, num_written %p.\n", iface, data, size, num_written);
+
+    if (!num_written)
+        num_written = &written;
+
+    *num_written = 0;
+    if (!WriteFile(stream->hfile, data, size, num_written, NULL))
+    {
+        WARN("Failed to write to file, error %d.\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_filestream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *newpos)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+
+    TRACE("iface %p, move %s, origin %d, newpos %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, newpos);
+
+    if (!SetFilePointerEx(stream->hfile, move, (LARGE_INTEGER *)newpos, origin))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_filestream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    FIXME("iface %p, size %s stub!\n", iface, wine_dbgstr_longlong(size.QuadPart));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *num_read, ULARGE_INTEGER *written)
+{
+    FIXME("iface %p, dest %p, size %s, num_read %p, written %p stub!\n", iface, dest,
+            wine_dbgstr_longlong(size.QuadPart), num_read, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_Commit(IStream *iface, DWORD flags)
+{
+    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_Revert(IStream *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_LockRegion(IStream *iface, ULARGE_INTEGER offset,
+        ULARGE_INTEGER size, DWORD lock_type)
+{
+    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size,
+        DWORD lock_type)
+{
+    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_filestream_Stat(IStream *iface, STATSTG *statstg, DWORD flag)
+{
+    struct opc_filestream *stream = impl_from_IStream(iface);
+    BY_HANDLE_FILE_INFORMATION fi;
+
+    TRACE("iface %p, statstg %p, flag %d.\n", iface, statstg, flag);
+
+    if (!statstg)
+        return E_POINTER;
+
+    memset(&fi, 0, sizeof(fi));
+    GetFileInformationByHandle(stream->hfile, &fi);
+
+    memset(statstg, 0, sizeof(*statstg));
+    statstg->type = STGTY_STREAM;
+    statstg->cbSize.u.LowPart = fi.nFileSizeLow;
+    statstg->cbSize.u.HighPart = fi.nFileSizeHigh;
+    statstg->mtime = fi.ftLastWriteTime;
+    statstg->ctime = fi.ftCreationTime;
+    statstg->atime = fi.ftLastAccessTime;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_filestream_Clone(IStream *iface, IStream **result)
+{
+    FIXME("iface %p, result %p stub!\n", iface, result);
+
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl opc_filestream_vtbl =
+{
+    opc_filestream_QueryInterface,
+    opc_filestream_AddRef,
+    opc_filestream_Release,
+    opc_filestream_Read,
+    opc_filestream_Write,
+    opc_filestream_Seek,
+    opc_filestream_SetSize,
+    opc_filestream_CopyTo,
+    opc_filestream_Commit,
+    opc_filestream_Revert,
+    opc_filestream_LockRegion,
+    opc_filestream_UnlockRegion,
+    opc_filestream_Stat,
+    opc_filestream_Clone,
+};
+
+static HRESULT opc_filestream_create(const WCHAR *filename, OPC_STREAM_IO_MODE io_mode, SECURITY_ATTRIBUTES *sa,
+        DWORD flags, IStream **out)
+{
+    struct opc_filestream *stream;
+    DWORD access, creation;
+
+    if (!filename || !out)
+        return E_POINTER;
+
+    switch (io_mode)
+    {
+    case OPC_STREAM_IO_READ:
+        access = GENERIC_READ;
+        creation = OPEN_EXISTING;
+        break;
+    case OPC_STREAM_IO_WRITE:
+        access = GENERIC_WRITE;
+        creation = CREATE_ALWAYS;
+        break;
+    default:
+        return E_INVALIDARG;
+    }
+
+    if (!(stream = heap_alloc_zero(sizeof(*stream))))
+        return E_OUTOFMEMORY;
+
+    stream->hfile = CreateFileW(filename, access, 0, sa, creation, flags, NULL);
+    if (stream->hfile == INVALID_HANDLE_VALUE)
+    {
+        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        heap_free(stream);
+        return hr;
+    }
+
+    stream->IStream_iface.lpVtbl = &opc_filestream_vtbl;
+    stream->refcount = 1;
+
+    *out = &stream->IStream_iface;
+    TRACE("Created file steam %p.\n", *out);
+    return S_OK;
+}
+
 static HRESULT WINAPI opc_factory_QueryInterface(IOpcFactory *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -76,10 +324,10 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
 static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR filename,
         OPC_STREAM_IO_MODE io_mode, SECURITY_ATTRIBUTES *sa, DWORD flags, IStream **stream)
 {
-    FIXME("iface %p, filename %s, io_mode %d, sa %p, flags %#x, stream %p stub!\n", iface, debugstr_w(filename),
+    TRACE("iface %p, filename %s, io_mode %d, sa %p, flags %#x, stream %p.\n", iface, debugstr_w(filename),
             io_mode, sa, flags, stream);
 
-    return E_NOTIMPL;
+    return opc_filestream_create(filename, io_mode, sa, flags, stream);
 }
 
 static HRESULT WINAPI opc_factory_CreatePackage(IOpcFactory *iface, IOpcPackage **package)

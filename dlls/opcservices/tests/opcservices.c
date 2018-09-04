@@ -107,6 +107,103 @@ todo_wine {
     IOpcFactory_Release(factory);
 }
 
+#define test_stream_stat(stream, size) test_stream_stat_(__LINE__, stream, size)
+static void test_stream_stat_(unsigned int line, IStream *stream, ULONG size)
+{
+    STATSTG statstg;
+    HRESULT hr;
+
+    hr = IStream_Stat(stream, NULL, 0);
+    ok_(__FILE__, line)(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    memset(&statstg, 0xff, sizeof(statstg));
+    hr = IStream_Stat(stream, &statstg, 0);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get stat info, hr %#x.\n", hr);
+
+    ok_(__FILE__, line)(statstg.pwcsName == NULL, "Unexpected name %s.\n", wine_dbgstr_w(statstg.pwcsName));
+    ok_(__FILE__, line)(statstg.type == STGTY_STREAM, "Unexpected type.\n");
+    ok_(__FILE__, line)(statstg.cbSize.QuadPart == size, "Unexpected size %u, expected %u.\n",
+            statstg.cbSize.LowPart, size);
+    ok_(__FILE__, line)(statstg.grfMode == STGM_READ, "Unexpected mode.\n");
+    ok_(__FILE__, line)(statstg.grfLocksSupported == 0, "Unexpected lock mode.\n");
+    ok_(__FILE__, line)(statstg.grfStateBits == 0, "Unexpected state bits.\n");
+}
+
+static void test_file_stream(void)
+{
+    static const WCHAR filereadW[] = {'o','p','c','f','i','l','e','r','e','a','d','.','e','x','t',0};
+    WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
+    IOpcFactory *factory;
+    LARGE_INTEGER move;
+    IStream *stream;
+    char buff[64];
+    HRESULT hr;
+    ULONG size;
+
+    factory = create_factory();
+
+    hr = IOpcFactory_CreateStreamOnFile(factory, NULL, OPC_STREAM_IO_READ, NULL, 0, &stream);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    GetTempPathW(ARRAY_SIZE(temppathW), temppathW);
+    lstrcpyW(pathW, temppathW);
+    lstrcatW(pathW, filereadW);
+    DeleteFileW(pathW);
+
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_READ, NULL, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    /* File does not exist */
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_READ, NULL, 0, &stream);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_WRITE, NULL, 0, &stream);
+    ok(SUCCEEDED(hr), "Failed to create a write stream, hr %#x.\n", hr);
+
+    test_stream_stat(stream, 0);
+
+    size = lstrlenW(pathW) * sizeof(WCHAR);
+    hr = IStream_Write(stream, pathW, size, NULL);
+    ok(hr == S_OK, "Stream write failed, hr %#x.\n", hr);
+
+    test_stream_stat(stream, size);
+    IStream_Release(stream);
+
+    /* Invalid I/O mode */
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, 10, NULL, 0, &stream);
+    ok(hr == E_INVALIDARG, "Failed to create a write stream, hr %#x.\n", hr);
+
+    /* Write to read-only stream. */
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_READ, NULL, 0, &stream);
+    ok(SUCCEEDED(hr), "Failed to create a read stream, hr %#x.\n", hr);
+
+    test_stream_stat(stream, size);
+    hr = IStream_Write(stream, pathW, size, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), "Stream write failed, hr %#x.\n", hr);
+    IStream_Release(stream);
+
+    /* Read from write-only stream. */
+    hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_WRITE, NULL, 0, &stream);
+    ok(SUCCEEDED(hr), "Failed to create a read stream, hr %#x.\n", hr);
+
+    test_stream_stat(stream, 0);
+    hr = IStream_Write(stream, pathW, size, NULL);
+    ok(hr == S_OK, "Stream write failed, hr %#x.\n", hr);
+    test_stream_stat(stream, size);
+
+    move.QuadPart = 0;
+    hr = IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
+    ok(SUCCEEDED(hr), "Seek failed, hr %#x.\n", hr);
+
+    hr = IStream_Read(stream, buff, sizeof(buff), NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), "Stream read failed, hr %#x.\n", hr);
+
+    IStream_Release(stream);
+
+    IOpcFactory_Release(factory);
+    DeleteFileW(pathW);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -122,6 +219,7 @@ START_TEST(opcservices)
     }
 
     test_package();
+    test_file_stream();
 
     IOpcFactory_Release(factory);
 
