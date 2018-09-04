@@ -989,6 +989,9 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
+    case WINHTTP_OPTION_CONNECT_RETRIES:
+        FIXME("WINHTTP_OPTION_CONNECT_RETRIES\n");
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_WINHTTP_INVALID_OPTION );

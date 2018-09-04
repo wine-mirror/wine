@@ -232,6 +232,11 @@ static void test_QueryOption(void)
     ok(!ret, "should fail to enable WINHTTP_ENABLE_SSL_REVOCATION with invalid parameters\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
+    feature = 6;
+    size = sizeof(feature);
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_CONNECT_RETRIES, &feature, sizeof(feature));
+    ok(ret, "failed to set WINHTTP_OPTION_CONNECT_RETRIES %u\n", GetLastError());
+
     SetLastError(0xdeadbeef);
     ret = WinHttpCloseHandle(request);
     ok(ret, "WinHttpCloseHandle failed on closing request: %u\n", GetLastError());
