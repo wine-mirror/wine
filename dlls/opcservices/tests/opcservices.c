@@ -38,6 +38,7 @@ static void test_package(void)
 {
     static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
     static const WCHAR uriW[] = {'/','u','r','i',0};
+    IOpcRelationshipSet *relset, *relset2;
     IOpcPartSet *partset, *partset2;
     IOpcPartUri *part_uri;
     IOpcFactory *factory;
@@ -81,6 +82,16 @@ todo_wine {
 }
     IOpcPartUri_Release(part_uri);
     IOpcPart_Release(part);
+
+    /* Relationships */
+    hr = IOpcPackage_GetRelationshipSet(package, &relset);
+    ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#x.\n", hr);
+
+    hr = IOpcPackage_GetRelationshipSet(package, &relset2);
+    ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#x.\n", hr);
+    ok(relset == relset2, "Expected same part set instance.\n");
+    IOpcRelationshipSet_Release(relset);
+    IOpcRelationshipSet_Release(relset2);
 
     IOpcPackage_Release(package);
 

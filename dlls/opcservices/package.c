@@ -35,6 +35,7 @@ struct opc_package
     LONG refcount;
 
     IOpcPartSet *part_set;
+    IOpcRelationshipSet *relationship_set;
 };
 
 struct opc_part
@@ -53,6 +54,12 @@ struct opc_part_set
     LONG refcount;
 };
 
+struct opc_relationship_set
+{
+    IOpcRelationshipSet IOpcRelationshipSet_iface;
+    LONG refcount;
+};
+
 static inline struct opc_package *impl_from_IOpcPackage(IOpcPackage *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_package, IOpcPackage_iface);
@@ -66,6 +73,11 @@ static inline struct opc_part_set *impl_from_IOpcPartSet(IOpcPartSet *iface)
 static inline struct opc_part *impl_from_IOpcPart(IOpcPart *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_part, IOpcPart_iface);
+}
+
+static inline struct opc_relationship_set *impl_from_IOpcRelationshipSet(IOpcRelationshipSet *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_relationship_set, IOpcRelationshipSet_iface);
 }
 
 static WCHAR *opc_strdupW(const WCHAR *str)
@@ -84,7 +96,6 @@ static WCHAR *opc_strdupW(const WCHAR *str)
 
     return ret;
 }
-
 
 static HRESULT WINAPI opc_part_QueryInterface(IOpcPart *iface, REFIID iid, void **out)
 {
@@ -299,6 +310,128 @@ static const IOpcPartSetVtbl opc_part_set_vtbl =
     opc_part_set_GtEnumerator,
 };
 
+static HRESULT WINAPI opc_relationship_set_QueryInterface(IOpcRelationshipSet *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IOpcRelationshipSet) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IOpcRelationshipSet_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_relationship_set_AddRef(IOpcRelationshipSet *iface)
+{
+    struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
+    ULONG refcount = InterlockedIncrement(&relationship_set->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
+{
+    struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
+    ULONG refcount = InterlockedDecrement(&relationship_set->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(relationship_set);
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
+        IOpcRelationship **relationship)
+{
+    FIXME("iface %p, id %s, relationship %p stub!\n", iface, debugstr_w(id), relationship);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
+        const WCHAR *type, IUri *target_uri, OPC_URI_TARGET_MODE target_mode, IOpcRelationship **relationship)
+{
+    FIXME("iface %p, id %s, type %s, target_uri %p, target_mode %d, relationship %p stub!\n", iface, debugstr_w(id),
+            debugstr_w(type), target_uri, target_mode, relationship);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_DeleteRelationship(IOpcRelationshipSet *iface, const WCHAR *id)
+{
+    FIXME("iface %p, id %s stub!\n", iface, debugstr_w(id));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_RelationshipExists(IOpcRelationshipSet *iface, const WCHAR *id, BOOL *exists)
+{
+    FIXME("iface %p, id %s, exists %p stub!\n", iface, debugstr_w(id), exists);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_GetEnumerator(IOpcRelationshipSet *iface,
+        IOpcRelationshipEnumerator **enumerator)
+{
+    FIXME("iface %p, enumerator %p stub!\n", iface, enumerator);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_GetEnumeratorForType(IOpcRelationshipSet *iface, const WCHAR *type,
+        IOpcRelationshipEnumerator **enumerator)
+{
+    FIXME("iface %p, type %s, enumerator %p stub!\n", iface, debugstr_w(type), enumerator);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_set_GetRelationshipsContentStream(IOpcRelationshipSet *iface, IStream **stream)
+{
+    FIXME("iface %p, stream %p stub!\n", iface, stream);
+
+    return E_NOTIMPL;
+}
+
+static const IOpcRelationshipSetVtbl opc_relationship_set_vtbl =
+{
+    opc_relationship_set_QueryInterface,
+    opc_relationship_set_AddRef,
+    opc_relationship_set_Release,
+    opc_relationship_set_GetRelationship,
+    opc_relationship_set_CreateRelationship,
+    opc_relationship_set_DeleteRelationship,
+    opc_relationship_set_RelationshipExists,
+    opc_relationship_set_GetEnumerator,
+    opc_relationship_set_GetEnumeratorForType,
+    opc_relationship_set_GetRelationshipsContentStream,
+};
+
+static HRESULT opc_relationship_set_create(IOpcRelationshipSet **out)
+{
+    struct opc_relationship_set *relationship_set;
+
+    if (!(relationship_set = heap_alloc_zero(sizeof(*relationship_set))))
+        return E_OUTOFMEMORY;
+
+    relationship_set->IOpcRelationshipSet_iface.lpVtbl = &opc_relationship_set_vtbl;
+    relationship_set->refcount = 1;
+
+    *out = &relationship_set->IOpcRelationshipSet_iface;
+    TRACE("Created relationship set %p.\n", *out);
+    return S_OK;
+}
+
 static HRESULT WINAPI opc_package_QueryInterface(IOpcPackage *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -336,6 +469,8 @@ static ULONG WINAPI opc_package_Release(IOpcPackage *iface)
     {
         if (package->part_set)
             IOpcPartSet_Release(package->part_set);
+        if (package->relationship_set)
+            IOpcRelationshipSet_Release(package->relationship_set);
         heap_free(package);
     }
 
@@ -368,9 +503,18 @@ static HRESULT WINAPI opc_package_GetPartSet(IOpcPackage *iface, IOpcPartSet **p
 
 static HRESULT WINAPI opc_package_GetRelationshipSet(IOpcPackage *iface, IOpcRelationshipSet **relationship_set)
 {
-    FIXME("iface %p, relationship_set %p stub!\n", iface, relationship_set);
+    struct opc_package *package = impl_from_IOpcPackage(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, relationship_set %p.\n", iface, relationship_set);
+
+    if (!package->relationship_set && FAILED(hr = opc_relationship_set_create(&package->relationship_set)))
+            return hr;
+
+    *relationship_set = package->relationship_set;
+    IOpcRelationshipSet_AddRef(*relationship_set);
+
+    return S_OK;
 }
 
 static const IOpcPackageVtbl opc_package_vtbl =
