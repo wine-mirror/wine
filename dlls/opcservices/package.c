@@ -54,6 +54,12 @@ struct opc_part_set
     LONG refcount;
 };
 
+struct opc_relationship
+{
+    IOpcRelationship IOpcRelationship_iface;
+    LONG refcount;
+};
+
 struct opc_relationship_set
 {
     IOpcRelationshipSet IOpcRelationshipSet_iface;
@@ -78,6 +84,11 @@ static inline struct opc_part *impl_from_IOpcPart(IOpcPart *iface)
 static inline struct opc_relationship_set *impl_from_IOpcRelationshipSet(IOpcRelationshipSet *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_relationship_set, IOpcRelationshipSet_iface);
+}
+
+static inline struct opc_relationship *impl_from_IOpcRelationship(IOpcRelationship *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_relationship, IOpcRelationship_iface);
 }
 
 static WCHAR *opc_strdupW(const WCHAR *str)
@@ -310,6 +321,107 @@ static const IOpcPartSetVtbl opc_part_set_vtbl =
     opc_part_set_GtEnumerator,
 };
 
+static HRESULT WINAPI opc_relationship_QueryInterface(IOpcRelationship *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IOpcRelationship) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IOpcRelationship_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_relationship_AddRef(IOpcRelationship *iface)
+{
+    struct opc_relationship *relationship = impl_from_IOpcRelationship(iface);
+    ULONG refcount = InterlockedIncrement(&relationship->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_relationship_Release(IOpcRelationship *iface)
+{
+    struct opc_relationship *relationship = impl_from_IOpcRelationship(iface);
+    ULONG refcount = InterlockedDecrement(&relationship->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(relationship);
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_relationship_GetId(IOpcRelationship *iface, WCHAR **id)
+{
+    FIXME("iface %p, id %p stub!\n", iface, id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_GetRelationshipType(IOpcRelationship *iface, WCHAR **type)
+{
+    FIXME("iface %p, type %p stub!\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_GetSourceUri(IOpcRelationship *iface, IOpcUri **uri)
+{
+    FIXME("iface %p, uri %p stub!\n", iface, uri);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_GetTargetUri(IOpcRelationship *iface, IUri **target)
+{
+    FIXME("iface %p, target %p stub!\n", iface, target);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_relationship_GetTargetMode(IOpcRelationship *iface, OPC_URI_TARGET_MODE *target_mode)
+{
+    FIXME("iface %p, target_mode %p stub!\n", iface, target_mode);
+
+    return E_NOTIMPL;
+}
+
+static const IOpcRelationshipVtbl opc_relationship_vtbl =
+{
+    opc_relationship_QueryInterface,
+    opc_relationship_AddRef,
+    opc_relationship_Release,
+    opc_relationship_GetId,
+    opc_relationship_GetRelationshipType,
+    opc_relationship_GetSourceUri,
+    opc_relationship_GetTargetUri,
+    opc_relationship_GetTargetMode,
+};
+
+static HRESULT opc_relationship_create(IOpcRelationship **out)
+{
+    struct opc_relationship *relationship;
+
+    if (!(relationship = heap_alloc_zero(sizeof(*relationship))))
+        return E_OUTOFMEMORY;
+
+    relationship->IOpcRelationship_iface.lpVtbl = &opc_relationship_vtbl;
+    relationship->refcount = 1;
+
+    *out = &relationship->IOpcRelationship_iface;
+    TRACE("Created relationship %p.\n", *out);
+    return S_OK;
+}
+
 static HRESULT WINAPI opc_relationship_set_QueryInterface(IOpcRelationshipSet *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -363,7 +475,7 @@ static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSe
     FIXME("iface %p, id %s, type %s, target_uri %p, target_mode %d, relationship %p stub!\n", iface, debugstr_w(id),
             debugstr_w(type), target_uri, target_mode, relationship);
 
-    return E_NOTIMPL;
+    return opc_relationship_create(relationship);
 }
 
 static HRESULT WINAPI opc_relationship_set_DeleteRelationship(IOpcRelationshipSet *iface, const WCHAR *id)
