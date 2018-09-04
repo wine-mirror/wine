@@ -465,7 +465,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, void *reserved)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
     return __wine_register_resources( OPC_hInstance );
 }
 
