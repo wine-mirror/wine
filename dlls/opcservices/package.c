@@ -46,6 +46,7 @@ struct opc_part
     IOpcPartUri *name;
     WCHAR *content_type;
     DWORD compression_options;
+    IOpcRelationshipSet *relationship_set;
 };
 
 struct opc_part_set
@@ -90,6 +91,8 @@ static inline struct opc_relationship *impl_from_IOpcRelationship(IOpcRelationsh
 {
     return CONTAINING_RECORD(iface, struct opc_relationship, IOpcRelationship_iface);
 }
+
+static HRESULT opc_relationship_set_create(IOpcRelationshipSet **relationship_set);
 
 static WCHAR *opc_strdupW(const WCHAR *str)
 {
@@ -143,6 +146,8 @@ static ULONG WINAPI opc_part_Release(IOpcPart *iface)
 
     if (!refcount)
     {
+        if (part->relationship_set)
+            IOpcRelationshipSet_Release(part->relationship_set);
         IOpcPartUri_Release(part->name);
         CoTaskMemFree(part->content_type);
         heap_free(part);
@@ -153,9 +158,18 @@ static ULONG WINAPI opc_part_Release(IOpcPart *iface)
 
 static HRESULT WINAPI opc_part_GetRelationshipSet(IOpcPart *iface, IOpcRelationshipSet **relationship_set)
 {
-    FIXME("iface %p, relationship_set %p stub!\n", iface, relationship_set);
+    struct opc_part *part = impl_from_IOpcPart(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, relationship_set %p.\n", iface, relationship_set);
+
+    if (!part->relationship_set && FAILED(hr = opc_relationship_set_create(&part->relationship_set)))
+        return hr;
+
+    *relationship_set = part->relationship_set;
+    IOpcRelationshipSet_AddRef(*relationship_set);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_part_GetContentStream(IOpcPart *iface, IStream **stream)

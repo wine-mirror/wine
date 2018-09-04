@@ -74,6 +74,15 @@ static void test_package(void)
     hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
     ok(SUCCEEDED(hr), "Failed to create a part, hr %#x.\n", hr);
 
+    hr = IOpcPart_GetRelationshipSet(part, &relset);
+    ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#x.\n", hr);
+
+    hr = IOpcPart_GetRelationshipSet(part, &relset2);
+    ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#x.\n", hr);
+    ok(relset == relset2, "Expected same part set instance.\n");
+    IOpcRelationshipSet_Release(relset);
+    IOpcRelationshipSet_Release(relset2);
+
     ret = FALSE;
     hr = IOpcPartSet_PartExists(partset, part_uri, &ret);
 todo_wine {
