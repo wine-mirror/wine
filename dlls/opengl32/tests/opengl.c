@@ -194,17 +194,18 @@ static void test_pbuffers(HDC hdc)
     {
         HDC pbuffer_hdc;
         HPBUFFERARB pbuffer = pwglCreatePbufferARB(hdc, iPixelFormat, 640 /* width */, 480 /* height */, NULL);
-        if(!pbuffer)
-            skip("Pbuffer creation failed!\n");
+        if(pbuffer)
+        {
+            /* Test the pixelformat returned by GetPixelFormat on a pbuffer as the behavior is not clear */
+            pbuffer_hdc = pwglGetPbufferDCARB(pbuffer);
+            res = GetPixelFormat(pbuffer_hdc);
 
-        /* Test the pixelformat returned by GetPixelFormat on a pbuffer as the behavior is not clear */
-        pbuffer_hdc = pwglGetPbufferDCARB(pbuffer);
-        res = GetPixelFormat(pbuffer_hdc);
-
-        ok(res == 1, "Unexpected iPixelFormat=%d (1 expected) returned by GetPixelFormat for offscreen format %d\n", res, iPixelFormat);
-        trace("iPixelFormat returned by GetPixelFormat: %d\n", res);
-        trace("PixelFormat from wglChoosePixelFormatARB: %d\n", iPixelFormat);
-        pwglReleasePbufferDCARB(pbuffer, hdc);
+            ok(res == 1, "Unexpected iPixelFormat=%d (1 expected) returned by GetPixelFormat for offscreen format %d\n", res, iPixelFormat);
+            trace("iPixelFormat returned by GetPixelFormat: %d\n", res);
+            trace("PixelFormat from wglChoosePixelFormatARB: %d\n", iPixelFormat);
+            pwglReleasePbufferDCARB(pbuffer, hdc);
+        }
+        else skip("Pbuffer creation failed!\n");
     }
     else skip("Pbuffer test for offscreen pixelformat skipped as no offscreen-only format with pbuffer capabilities has been found\n");
 }
