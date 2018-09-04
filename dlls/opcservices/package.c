@@ -23,6 +23,7 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "opc_private.h"
 
@@ -40,6 +41,10 @@ struct opc_part
 {
     IOpcPart IOpcPart_iface;
     LONG refcount;
+
+    IOpcPartUri *name;
+    WCHAR *content_type;
+    DWORD compression_options;
 };
 
 struct opc_part_set
@@ -62,6 +67,24 @@ static inline struct opc_part *impl_from_IOpcPart(IOpcPart *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_part, IOpcPart_iface);
 }
+
+static WCHAR *opc_strdupW(const WCHAR *str)
+{
+    WCHAR *ret = NULL;
+
+    if (str)
+    {
+        size_t size;
+
+        size = (strlenW(str) + 1) * sizeof(WCHAR);
+        ret = CoTaskMemAlloc(size);
+        if (ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 
 static HRESULT WINAPI opc_part_QueryInterface(IOpcPart *iface, REFIID iid, void **out)
 {
@@ -97,7 +120,11 @@ static ULONG WINAPI opc_part_Release(IOpcPart *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        IOpcPartUri_Release(part->name);
+        CoTaskMemFree(part->content_type);
         heap_free(part);
+    }
 
     return refcount;
 }
@@ -118,16 +145,24 @@ static HRESULT WINAPI opc_part_GetContentStream(IOpcPart *iface, IStream **strea
 
 static HRESULT WINAPI opc_part_GetName(IOpcPart *iface, IOpcPartUri **name)
 {
-    FIXME("iface %p, name %p stub!\n", iface, name);
+    struct opc_part *part = impl_from_IOpcPart(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %p.\n", iface, name);
+
+    *name = part->name;
+    IOpcPartUri_AddRef(*name);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_part_GetContentType(IOpcPart *iface, LPWSTR *type)
 {
-    FIXME("iface %p, type %p stub!\n", iface, type);
+    struct opc_part *part = impl_from_IOpcPart(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %p.\n", iface, type);
+
+    *type = opc_strdupW(part->content_type);
+    return *type ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI opc_part_GetCompressionOptions(IOpcPart *iface, OPC_COMPRESSION_OPTIONS *options)
@@ -149,15 +184,27 @@ static const IOpcPartVtbl opc_part_vtbl =
     opc_part_GetCompressionOptions,
 };
 
-static HRESULT opc_part_create(IOpcPart **out)
+static HRESULT opc_part_create(IOpcPartUri *name, const WCHAR *content_type,
+        DWORD compression_options, IOpcPart **out)
 {
     struct opc_part *part;
+
+    if (!name)
+        return E_POINTER;
 
     if (!(part = heap_alloc_zero(sizeof(*part))))
         return E_OUTOFMEMORY;
 
     part->IOpcPart_iface.lpVtbl = &opc_part_vtbl;
     part->refcount = 1;
+    part->name = name;
+    IOpcPartUri_AddRef(name);
+    part->compression_options = compression_options;
+    if (!(part->content_type = opc_strdupW(content_type)))
+    {
+        IOpcPart_Release(&part->IOpcPart_iface);
+        return E_OUTOFMEMORY;
+    }
 
     *out = &part->IOpcPart_iface;
     TRACE("Created part %p.\n", *out);
@@ -213,10 +260,10 @@ static HRESULT WINAPI opc_part_set_GetPart(IOpcPartSet *iface, IOpcPartUri *name
 static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *name, LPCWSTR content_type,
         OPC_COMPRESSION_OPTIONS compression_options, IOpcPart **part)
 {
-    FIXME("iface %p, name %p, content_type %s, compression_options %#x, part %p stub!\n", iface, name,
+    TRACE("iface %p, name %p, content_type %s, compression_options %#x, part %p.\n", iface, name,
             debugstr_w(content_type), compression_options, part);
 
-    return opc_part_create(part);
+    return opc_part_create(name, content_type, compression_options, part);
 }
 
 static HRESULT WINAPI opc_part_set_DeletePart(IOpcPartSet *iface, IOpcPartUri *name)

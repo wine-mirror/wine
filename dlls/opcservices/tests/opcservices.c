@@ -36,10 +36,15 @@ static IOpcFactory *create_factory(void)
 
 static void test_package(void)
 {
+    static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
+    static const WCHAR uriW[] = {'/','u','r','i',0};
     IOpcPartSet *partset, *partset2;
+    IOpcPartUri *part_uri;
     IOpcFactory *factory;
     IOpcPackage *package;
+    IOpcPart *part;
     HRESULT hr;
+    BOOL ret;
 
     factory = create_factory();
 
@@ -57,6 +62,25 @@ static void test_package(void)
     hr = IOpcPackage_GetPartSet(package, &partset2);
     ok(SUCCEEDED(hr), "Failed to create a part set, hr %#x.\n", hr);
     ok(partset == partset2, "Expected same part set instance.\n");
+
+    /* CreatePart */
+    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
+    ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+    hr = IOpcPartSet_CreatePart(partset, NULL, typeW, OPC_COMPRESSION_NONE, &part);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
+    ok(SUCCEEDED(hr), "Failed to create a part, hr %#x.\n", hr);
+
+    ret = FALSE;
+    hr = IOpcPartSet_PartExists(partset, part_uri, &ret);
+todo_wine {
+    ok(SUCCEEDED(hr), "Unexpected hr %#x.\n", hr);
+    ok(ret, "Expected part to exist.\n");
+}
+    IOpcPartUri_Release(part_uri);
+    IOpcPart_Release(part);
 
     IOpcPackage_Release(package);
 

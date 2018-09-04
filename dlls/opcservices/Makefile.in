@@ -1,5 +1,5 @@
 MODULE  = opcservices.dll
-IMPORTS = uuid
+IMPORTS = uuid ole32
 
 C_SRCS = \
 	factory.c \
