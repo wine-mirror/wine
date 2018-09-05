@@ -4739,7 +4739,6 @@ static void http_process_keep_alive(http_request_t *req)
 
 static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 {
-    const BOOL is_https = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) != 0;
     netconn_t *netconn = NULL;
     DWORD res;
 
@@ -4794,7 +4793,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
                           request->server->addr_str,
                           strlen(request->server->addr_str)+1);
 
-    res = create_netconn(is_https, request->proxy ? request->proxy : request->server, request->security_flags,
+    res = create_netconn(request->proxy ? request->proxy : request->server, request->security_flags,
                          (request->hdr.ErrorMask & INTERNET_ERROR_MASK_COMBINED_SEC_CERT) != 0,
                          request->connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {

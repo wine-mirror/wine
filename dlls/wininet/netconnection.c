@@ -340,7 +340,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
     return ERROR_SUCCESS;
 }
 
-DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
+DWORD create_netconn(server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
 {
     netconn_t *netconn;
     int result;
