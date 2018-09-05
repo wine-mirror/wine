@@ -1027,6 +1027,17 @@ static SIZE BUTTON_GetImageSize(const BUTTON_INFO *infoPtr)
     return size;
 }
 
+static const RECT *BUTTON_GetTextMargin(const BUTTON_INFO *infoPtr)
+{
+    static const RECT oneMargin = {1, 1, 1, 1};
+
+    /* Use text margin only when showing both image and text, and image is not imagelist */
+    if (show_image_and_text(infoPtr) && !infoPtr->imagelist.himl)
+        return &infoPtr->text_margin;
+    else
+        return &oneMargin;
+}
+
 /**********************************************************************
  *       BUTTON_CalcLayoutRects
  *
@@ -1054,7 +1065,8 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
    UINT dtStyle = BUTTON_BStoDT(style, ex_style);
    RECT labelRect, imageRect, imageRectWithMargin, textRect;
    LONG imageMarginWidth, imageMarginHeight;
-   RECT emptyMargin = {0}, oneMargin = {1, 1, 1, 1};
+   const RECT *textMargin = BUTTON_GetTextMargin(infoPtr);
+   RECT emptyMargin = {0};
    LONG maxTextWidth;
 
    /* Calculate label rectangle according to label type */
@@ -1118,7 +1130,7 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
                BUTTON_PositionRect(split_style, &boundingImageRect, &imageRect,
                                    infoPtr->imagelist.himl ? &infoPtr->imagelist.margin : &emptyMargin);
                /* Text doesn't use imagelist align */
-               BUTTON_PositionRect(style, &boundingTextRect, &textRect, &oneMargin);
+               BUTTON_PositionRect(style, &boundingTextRect, &textRect, textMargin);
            }
            else
            {
@@ -1143,17 +1155,17 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
                /* Get text rect */
                SubtractRect(&boundingTextRect, &labelRect, &boundingImageRect);
                /* Text doesn't use imagelist align */
-               BUTTON_PositionRect(style, &boundingTextRect, &textRect, &oneMargin);
+               BUTTON_PositionRect(style, &boundingTextRect, &textRect, textMargin);
            }
        }
        /* Show text only */
        else
        {
            if (get_button_type(style) != BS_GROUPBOX)
-               BUTTON_PositionRect(style, labelRc, &textRect, &oneMargin);
+               BUTTON_PositionRect(style, labelRc, &textRect, textMargin);
            else
                /* GroupBox is always top aligned */
-               BUTTON_PositionRect((style & ~BS_VCENTER) | BS_TOP, labelRc, &textRect, &oneMargin);
+               BUTTON_PositionRect((style & ~BS_VCENTER) | BS_TOP, labelRc, &textRect, textMargin);
            labelRect = textRect;
            SetRectEmpty(&imageRect);
        }
