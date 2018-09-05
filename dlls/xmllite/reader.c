@@ -1019,9 +1019,9 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     encoded_buffer *src = &readerinput->buffer->encoded;
     encoded_buffer *dest = &readerinput->buffer->utf16;
     int len, dest_len;
+    UINT cp = ~0u;
     HRESULT hr;
     WCHAR *ptr;
-    UINT cp;
 
     hr = get_code_page(enc, &cp);
     if (FAILED(hr)) return;
