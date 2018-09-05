@@ -53,6 +53,10 @@ struct opc_part_set
 {
     IOpcPartSet IOpcPartSet_iface;
     LONG refcount;
+
+    struct opc_part **parts;
+    size_t size;
+    size_t count;
 };
 
 struct opc_relationship
@@ -220,13 +224,16 @@ static const IOpcPartVtbl opc_part_vtbl =
     opc_part_GetCompressionOptions,
 };
 
-static HRESULT opc_part_create(IOpcPartUri *name, const WCHAR *content_type,
+static HRESULT opc_part_create(struct opc_part_set *set, IOpcPartUri *name, const WCHAR *content_type,
         DWORD compression_options, IOpcPart **out)
 {
     struct opc_part *part;
 
     if (!name)
         return E_POINTER;
+
+    if (!opc_array_reserve((void **)&set->parts, &set->size, set->count + 1, sizeof(*set->parts)))
+        return E_OUTOFMEMORY;
 
     if (!(part = heap_alloc_zero(sizeof(*part))))
         return E_OUTOFMEMORY;
@@ -241,6 +248,9 @@ static HRESULT opc_part_create(IOpcPartUri *name, const WCHAR *content_type,
         IOpcPart_Release(&part->IOpcPart_iface);
         return E_OUTOFMEMORY;
     }
+
+    set->parts[set->count++] = part;
+    IOpcPart_AddRef(&part->IOpcPart_iface);
 
     *out = &part->IOpcPart_iface;
     TRACE("Created part %p.\n", *out);
@@ -281,7 +291,14 @@ static ULONG WINAPI opc_part_set_Release(IOpcPartSet *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        size_t i;
+
+        for (i = 0; i < part_set->count; ++i)
+            IOpcPart_Release(&part_set->parts[i]->IOpcPart_iface);
+        heap_free(part_set->parts);
         heap_free(part_set);
+    }
 
     return refcount;
 }
@@ -296,10 +313,12 @@ static HRESULT WINAPI opc_part_set_GetPart(IOpcPartSet *iface, IOpcPartUri *name
 static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *name, LPCWSTR content_type,
         OPC_COMPRESSION_OPTIONS compression_options, IOpcPart **part)
 {
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
+
     TRACE("iface %p, name %p, content_type %s, compression_options %#x, part %p.\n", iface, name,
             debugstr_w(content_type), compression_options, part);
 
-    return opc_part_create(name, content_type, compression_options, part);
+    return opc_part_create(part_set, name, content_type, compression_options, part);
 }
 
 static HRESULT WINAPI opc_part_set_DeletePart(IOpcPartSet *iface, IOpcPartUri *name)
