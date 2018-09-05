@@ -244,7 +244,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
 
     static const WCHAR SystemRootW[] = {'S','y','s','t','e','m','R','o','o','t',0};
     static const WCHAR SystemDriveW[] = {'S','y','s','t','e','m','D','r','i','v','e',0};
-    static const WCHAR AllUsersProfileW[] = {'P','u','b','l','i','c',0};
+    static const WCHAR PublicW[] = {'P','u','b','l','i','c',0};
     static const WCHAR ALLUSERSPROFILEW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
     static const WCHAR USERNAMEW[] = {'U','S','E','R','N','A','M','E',0};
     static const WCHAR USERPROFILEW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
@@ -323,8 +323,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
                 profiles_dir[len] = '\0';
             }
 
-            memcpy(buf, profiles_dir, len*sizeof(WCHAR));
-            if (get_reg_value(env, hkey, AllUsersProfileW, buf+len, UNICODE_STRING_MAX_CHARS-len))
+            if (get_reg_value(env, hkey, PublicW, buf, UNICODE_STRING_MAX_CHARS))
             {
                 RtlInitUnicodeString(&us_name, ALLUSERSPROFILEW);
                 RtlInitUnicodeString(&us_val, buf);
