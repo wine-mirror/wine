@@ -1406,6 +1406,22 @@ static void test_get_set_textmargin(void)
     }
 }
 
+static void test_state(void)
+{
+    HWND hwnd;
+    DWORD type;
+    LONG state;
+
+    /* Initial button state */
+    for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
+    {
+        hwnd = create_button(type, NULL);
+        state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
+        ok(state == BST_UNCHECKED, "Expect state 0x%08x, got 0x%08x\n", BST_UNCHECKED, state);
+        DestroyWindow(hwnd);
+    }
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -1426,6 +1442,7 @@ START_TEST(button)
     test_bm_get_set_image();
     test_get_set_imagelist();
     test_get_set_textmargin();
+    test_state();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
