@@ -471,6 +471,12 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
         }
         else
         {
+            ok( GetDeviceCaps( ref_dc, DESKTOPHORZRES ) == GetDeviceCaps( ref_dc, HORZRES ),
+                "Got DESKTOPHORZRES %d on %s, expected %d\n",
+                GetDeviceCaps( ref_dc, DESKTOPHORZRES ), descr, GetDeviceCaps( ref_dc, HORZRES ));
+            ok( GetDeviceCaps( ref_dc, DESKTOPVERTRES ) == GetDeviceCaps( ref_dc, VERTRES ),
+                "Got DESKTOPVERTRES %d on %s, expected %d\n",
+                GetDeviceCaps( ref_dc, DESKTOPVERTRES ), descr, GetDeviceCaps( ref_dc, VERTRES ));
             SetRect( &ref_rect, 0, 0, GetDeviceCaps( ref_dc, DESKTOPHORZRES ),
                      GetDeviceCaps( ref_dc, DESKTOPVERTRES ) );
         }
