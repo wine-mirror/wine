@@ -33,6 +33,8 @@ struct opc_uri
     IOpcPartUri IOpcPartUri_iface;
     LONG refcount;
     BOOL is_part_uri;
+
+    IUri *uri;
 };
 
 static inline struct opc_uri *impl_from_IOpcPartUri(IOpcPartUri *iface)
@@ -78,7 +80,10 @@ static ULONG WINAPI opc_uri_Release(IOpcPartUri *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        IUri_Release(uri->uri);
         heap_free(uri);
+    }
 
     return refcount;
 }
@@ -86,180 +91,230 @@ static ULONG WINAPI opc_uri_Release(IOpcPartUri *iface)
 static HRESULT WINAPI opc_uri_GetPropertyBSTR(IOpcPartUri *iface, Uri_PROPERTY property,
         BSTR *value, DWORD flags)
 {
-    FIXME("iface %p, property %d, value %p, flags %#x stub!\n", iface, property, value, flags);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, property %d, value %p, flags %#x.\n", iface, property, value, flags);
+
+    return IUri_GetPropertyBSTR(uri->uri, property, value, flags);
 }
 
 static HRESULT WINAPI opc_uri_GetPropertyLength(IOpcPartUri *iface, Uri_PROPERTY property,
         DWORD *length, DWORD flags)
 {
-    FIXME("iface %p, property %d, length %p, flags %#x stub!\n", iface, property, length, flags);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, property %d, length %p, flags %#x.\n", iface, property, length, flags);
+
+    return IUri_GetPropertyLength(uri->uri, property, length, flags);
 }
 
 static HRESULT WINAPI opc_uri_GetPropertyDWORD(IOpcPartUri *iface, Uri_PROPERTY property,
         DWORD *value, DWORD flags)
 {
-    FIXME("iface %p, property %d, value %p, flags %#x stub!\n", iface, property, value, flags);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, property %d, value %p, flags %#x.\n", iface, property, value, flags);
+
+    return IUri_GetPropertyDWORD(uri->uri, property, value, flags);
 }
 
 static HRESULT WINAPI opc_uri_HasProperty(IOpcPartUri *iface, Uri_PROPERTY property,
         BOOL *has_property)
 {
-    FIXME("iface %p, property %d, has_property %p stub!\n", iface, property, has_property);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, property %d, has_property %p.\n", iface, property, has_property);
+
+    return IUri_HasProperty(uri->uri, property, has_property);
 }
 
 static HRESULT WINAPI opc_uri_GetAbsoluteUri(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetAbsoluteUri(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetAuthority(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetAuthority(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetDisplayUri(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetDisplayUri(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetDomain(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetDomain(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetExtension(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetExtension(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetFragment(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetFragment(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetHost(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetHost(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetPassword(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetPassword(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetPath(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetPath(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetPathAndQuery(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetPathAndQuery(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetQuery(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetQuery(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetRawUri(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetRawUri(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetSchemeName(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetSchemeName(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetUserInfo(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetUserInfo(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetUserName(IOpcPartUri *iface, BSTR *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetUserName(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetHostType(IOpcPartUri *iface, DWORD *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetHostType(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetPort(IOpcPartUri *iface, DWORD *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetPort(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetScheme(IOpcPartUri *iface, DWORD *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetScheme(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetZone(IOpcPartUri *iface, DWORD *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return IUri_GetZone(uri->uri, value);
 }
 
 static HRESULT WINAPI opc_uri_GetProperties(IOpcPartUri *iface, DWORD *flags)
 {
-    FIXME("iface %p, flags %p stub!\n", iface, flags);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %p.\n", iface, flags);
+
+    return IUri_GetProperties(uri->uri, flags);
 }
 
-static HRESULT WINAPI opc_uri_IsEqual(IOpcPartUri *iface, IUri *uri, BOOL *is_equal)
+static HRESULT WINAPI opc_uri_IsEqual(IOpcPartUri *iface, IUri *comparand, BOOL *is_equal)
 {
-    FIXME("iface %p, uri %p, is_equal %p stub!\n", iface, uri, is_equal);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, comparand %p, is_equal %p.\n", iface, comparand, is_equal);
+
+    return IUri_IsEqual(uri->uri, comparand, is_equal);
 }
 
 static HRESULT WINAPI opc_uri_GetRelationshipsPartUri(IOpcPartUri *iface, IOpcPartUri **part_uri)
@@ -344,16 +399,34 @@ static const IOpcPartUriVtbl opc_part_uri_vtbl =
     opc_uri_IsRelationshipsPartUri,
 };
 
+static HRESULT opc_part_uri_init(struct opc_uri *object, BOOL is_part_uri, const WCHAR *uri)
+{
+    HRESULT hr;
+
+    object->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
+    object->refcount = 1;
+    object->is_part_uri = is_part_uri;
+
+    if (FAILED(hr = CreateUri(uri, Uri_CREATE_ALLOW_RELATIVE, 0, &object->uri)))
+        return hr;
+
+    return S_OK;
+}
+
 HRESULT opc_part_uri_create(const WCHAR *str, IOpcPartUri **out)
 {
     struct opc_uri *uri;
+    HRESULT hr;
 
     if (!(uri = heap_alloc_zero(sizeof(*uri))))
         return E_OUTOFMEMORY;
 
-    uri->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
-    uri->refcount = 1;
-    uri->is_part_uri = TRUE;
+    if (FAILED(hr = opc_part_uri_init(uri, TRUE, str)))
+    {
+        WARN("Failed to init part uri, hr %#x.\n", hr);
+        heap_free(uri);
+        return hr;
+    }
 
     *out = &uri->IOpcPartUri_iface;
     TRACE("Created part uri %p.\n", *out);
@@ -363,12 +436,17 @@ HRESULT opc_part_uri_create(const WCHAR *str, IOpcPartUri **out)
 HRESULT opc_uri_create(const WCHAR *str, IOpcUri **out)
 {
     struct opc_uri *uri;
+    HRESULT hr;
 
     if (!(uri = heap_alloc_zero(sizeof(*uri))))
         return E_OUTOFMEMORY;
 
-    uri->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
-    uri->refcount = 1;
+    if (FAILED(hr = opc_part_uri_init(uri, FALSE, str)))
+    {
+        WARN("Failed to init uri, hr %#x.\n", hr);
+        heap_free(uri);
+        return hr;
+    }
 
     *out = (IOpcUri *)&uri->IOpcPartUri_iface;
     TRACE("Created part uri %p.\n", *out);
