@@ -205,16 +205,17 @@ static void test_file_stream(void)
     DeleteFileW(pathW);
 }
 
-static void test_relationship_id(void)
+static void test_relationship(void)
 {
     static const WCHAR absoluteW[] = {'f','i','l','e',':','/','/','h','o','s','t','/','f','i','l','e','.','t','x','t',0};
     static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
     static const WCHAR typeW[] = {'t','y','p','e',0};
-    IUri *target_uri, *target_uri2;
+    IUri *target_uri, *target_uri2, *uri;
     IOpcRelationshipSet *rels;
     IOpcRelationship *rel;
     IOpcFactory *factory;
     IOpcPackage *package;
+    DWORD mode;
     HRESULT hr;
     WCHAR *id;
 
@@ -257,6 +258,15 @@ todo_wine
     ok(lstrlenW(id) == 9 && *id == 'R', "Unexpected relationship id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
+    hr = IOpcRelationship_GetTargetUri(rel, &uri);
+    ok(SUCCEEDED(hr), "Failed to get target uri, hr %#x.\n", hr);
+    ok(uri == target_uri, "Unexpected uri.\n");
+    IUri_Release(uri);
+
+    hr = IOpcRelationship_GetTargetMode(rel, &mode);
+    ok(SUCCEEDED(hr), "Failed to get target mode, hr %#x.\n", hr);
+    ok(mode == OPC_URI_TARGET_MODE_INTERNAL, "Unexpected mode %d.\n", mode);
+
     IOpcRelationship_Release(rel);
 
     IOpcRelationshipSet_Release(rels);
@@ -283,7 +293,7 @@ START_TEST(opcservices)
 
     test_package();
     test_file_stream();
-    test_relationship_id();
+    test_relationship();
 
     IOpcFactory_Release(factory);
 
