@@ -1109,6 +1109,8 @@ typedef struct tagNMBCHOTITEM
   (BOOL)SNDMSG(button, BCM_GETTEXTMARGIN, 0, (LPARAM)(margin))
 #define Button_SetTextMargin(button, margin)  \
   (BOOL)SNDMSG(button, BCM_SETTEXTMARGIN, 0, (LPARAM)(margin))
+#define Button_GetIdealSize(button, size)  \
+  (BOOL)SNDMSG(button, BCM_GETIDEALSIZE, 0, (LPARAM)(size))
 
 /* Toolbar */
 

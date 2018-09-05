@@ -1422,6 +1422,301 @@ static void test_state(void)
     }
 }
 
+static void test_bcm_get_ideal_size(void)
+{
+    static const WCHAR text2_w[] = {'t', 'e', 'x', 't', '\n', 't', 'e', 'x', 't', 0};
+    static const WCHAR text_w[] = {'t', 'e', 'x', 't', 0};
+    static const DWORD imagelist_aligns[] = {BUTTON_IMAGELIST_ALIGN_LEFT, BUTTON_IMAGELIST_ALIGN_RIGHT,
+                                             BUTTON_IMAGELIST_ALIGN_TOP, BUTTON_IMAGELIST_ALIGN_BOTTOM,
+                                             BUTTON_IMAGELIST_ALIGN_CENTER};
+    static const DWORD aligns[] = {0,         BS_TOP,     BS_LEFT,        BS_RIGHT,   BS_BOTTOM,
+                                   BS_CENTER, BS_VCENTER, BS_RIGHTBUTTON, WS_EX_RIGHT};
+    DWORD default_style = WS_TABSTOP | WS_POPUP | WS_VISIBLE;
+    LONG client_width = 200, client_height = 200;
+    LONG width, height, line_count;
+    DWORD style, type;
+    BOOL ret;
+    HWND hwnd;
+    HDC hdc;
+    HFONT hfont;
+    LOGFONTA lf;
+    TEXTMETRICA tm;
+    SIZE size;
+    HBITMAP hmask, hbmp;
+    ICONINFO icon_info;
+    HICON hicon;
+    HIMAGELIST himl;
+    BUTTON_IMAGELIST biml = {0};
+    INT i, j;
+
+    /* Check for NULL pointer handling */
+    hwnd = CreateWindowW(WC_BUTTONW, text_w, BS_PUSHBUTTON | default_style, 0, 0, client_width, client_height, NULL,
+                         NULL, 0, NULL);
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, 0);
+    ok(!ret, "Expect BCM_GETIDEALSIZE message to return false.\n");
+
+    /* Set font so that the test is consistent on Wine and Windows */
+    ZeroMemory(&lf, sizeof(lf));
+    lf.lfWeight = FW_NORMAL;
+    lf.lfHeight = 20;
+    lstrcpyA(lf.lfFaceName, "Tahoma");
+    hfont = CreateFontIndirectA(&lf);
+
+    /* Get tmHeight */
+    hdc = GetDC(hwnd);
+    GetTextMetricsA(hdc, &tm);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
+    /* XP and 2003 doesn't support command links, getting ideal size with button having only text just return client size on these platforms */
+    hwnd = CreateWindowA(WC_BUTTONA, "test", BS_DEFCOMMANDLINK | default_style, 0, 0, client_width, client_height, NULL,
+                         NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    if (size.cx == client_width && size.cy == client_width)
+    {
+        /* on XP and 2003, buttons with image are not supported */
+        win_skip("Skipping further tests on XP and 2003\n");
+        return;
+    }
+
+    /* Tests for image placements */
+    /* Prepare bitmap */
+    width = 48;
+    height = 48;
+    hdc = GetDC(0);
+    hmask = CreateCompatibleBitmap(hdc, width, height);
+    hbmp = CreateCompatibleBitmap(hdc, width, height);
+
+    /* Only bitmap for push button, ideal size should be enough for image and text */
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_DEFPUSHBUTTON | BS_BITMAP | default_style, 0, 0, client_width,
+                         client_height, NULL, NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    /* Ideal size contains text rect even show bitmap only */
+    ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, width + 4 * tm.tmMaxCharWidth, size.cy,
+       max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Image alignments when button has bitmap and text*/
+    for (i = 0; i < ARRAY_SIZE(aligns); i++)
+        for (j = 0; j < ARRAY_SIZE(aligns); j++)
+        {
+            style = BS_DEFPUSHBUTTON | default_style | aligns[i] | aligns[j];
+            hwnd = CreateWindowA(WC_BUTTONA, "WWWW", style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
+            ok(hwnd != NULL, "Expect hwnd not NULL\n");
+            SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
+            SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+            ZeroMemory(&size, sizeof(size));
+            ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+            ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+            if (!(style & (BS_CENTER | BS_VCENTER)) || ((style & BS_CENTER) && (style & BS_CENTER) != BS_CENTER)
+                || !(style & BS_VCENTER) || (style & BS_VCENTER) == BS_VCENTER)
+                ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+                   "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
+                   width + 4 * tm.tmMaxCharWidth, size.cy, max(height, tm.tmHeight));
+            else
+                ok((size.cx >= max(4 * tm.tmMaxCharWidth, height) && size.cy >= height + tm.tmHeight),
+                   "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
+                   max(4 * tm.tmMaxCharWidth, height), size.cy, height + tm.tmHeight);
+            DestroyWindow(hwnd);
+        }
+
+    /* Image list alignments */
+    himl = pImageList_Create(width, height, ILC_COLOR, 1, 1);
+    pImageList_Add(himl, hbmp, 0);
+    biml.himl = himl;
+    for (i = 0; i < ARRAY_SIZE(imagelist_aligns); i++)
+    {
+        biml.uAlign = imagelist_aligns[i];
+        hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_DEFPUSHBUTTON | default_style, 0, 0, client_width, client_height,
+                             NULL, NULL, 0, NULL);
+        ok(hwnd != NULL, "Expect hwnd not NULL\n");
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+        SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+        ZeroMemory(&size, sizeof(size));
+        ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+        ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+        if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_TOP || biml.uAlign == BUTTON_IMAGELIST_ALIGN_BOTTOM)
+            ok((size.cx >= max(4 * tm.tmMaxCharWidth, height) && size.cy >= height + tm.tmHeight),
+               "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
+               max(4 * tm.tmMaxCharWidth, height), size.cy, height + tm.tmHeight);
+        else if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_LEFT || biml.uAlign == BUTTON_IMAGELIST_ALIGN_RIGHT)
+            ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+               "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
+               width + 4 * tm.tmMaxCharWidth, size.cy, max(height, tm.tmHeight));
+        else
+            ok(size.cx >= width && size.cy >= height, "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n",
+               biml.uAlign, size.cx, width, size.cy, height);
+        DestroyWindow(hwnd);
+    }
+
+    /* Icon as image */
+    /* Create icon from bitmap */
+    ZeroMemory(&icon_info, sizeof(icon_info));
+    icon_info.fIcon = TRUE;
+    icon_info.hbmMask = hmask;
+    icon_info.hbmColor = hbmp;
+    hicon = CreateIconIndirect(&icon_info);
+
+    /* Only icon, ideal size should be enough for image and text */
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_DEFPUSHBUTTON | BS_ICON | default_style, 0, 0, client_width,
+                         client_height, NULL, NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    /* Ideal size contains text rect even show icons only */
+    ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, width + 4 * tm.tmMaxCharWidth, size.cy,
+       max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Show icon and text */
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_DEFPUSHBUTTON | default_style, 0, 0, client_width, client_height, NULL,
+                         NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, width + 4 * tm.tmMaxCharWidth, size.cy,
+       max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Checkbox */
+    /* Both bitmap and text for checkbox, ideal size is only enough for text because it doesn't support image(but not image list)*/
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_AUTOCHECKBOX | default_style, 0, 0, client_width, client_height, NULL,
+                         NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    ok((size.cx <= width + 4 * tm.tmMaxCharWidth && size.cx >= 4 * tm.tmMaxCharWidth
+        && size.cy <= max(height, tm.tmHeight) && size.cy >= tm.tmHeight),
+       "Expect ideal cx %d within range (%d, %d ) and ideal cy %d within range (%d, %d )\n", size.cx,
+       4 * tm.tmMaxCharWidth, width + 4 * tm.tmMaxCharWidth, size.cy, tm.tmHeight, max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Both image list and text for checkbox, ideal size should have enough for image list and text */
+    biml.uAlign = BUTTON_IMAGELIST_ALIGN_LEFT;
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_AUTOCHECKBOX | BS_BITMAP | default_style, 0, 0, client_width,
+                         client_height, NULL, NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, width + 4 * tm.tmMaxCharWidth, size.cy,
+       max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Only bitmap for checkbox, ideal size should have enough for image and text */
+    hwnd = CreateWindowA(WC_BUTTONA, "WWWW", BS_AUTOCHECKBOX | BS_BITMAP | default_style, 0, 0, client_width,
+                         client_height, NULL, NULL, 0, NULL);
+    ok(hwnd != NULL, "Expect hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+    ZeroMemory(&size, sizeof(size));
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+    ok((size.cx >= width + 4 * tm.tmMaxCharWidth && size.cy >= max(height, tm.tmHeight)),
+       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, width + 4 * tm.tmMaxCharWidth, size.cy,
+       max(height, tm.tmHeight));
+    DestroyWindow(hwnd);
+
+    /* Test button with only text */
+    /* No text */
+    for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
+    {
+        style = type | default_style;
+        hwnd = CreateWindowA(WC_BUTTONA, "", style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
+        ok(hwnd != NULL, "Expect hwnd not NULL\n");
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+
+        ZeroMemory(&size, sizeof(size));
+        ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+        ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+
+        if (type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)
+        {
+            todo_wine ok((size.cx == 0 && size.cy > 0), "Style 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n",
+                         style, size.cx, 0, size.cy, 0);
+        }
+        else
+        {
+            ok(size.cx == client_width && size.cy == client_height,
+               "Style 0x%08x expect size.cx == %d and size.cy == %d, got size.cx: %d size.cy: %d\n", style,
+               client_width, client_height, size.cx, size.cy);
+        }
+        DestroyWindow(hwnd);
+    }
+
+    /* Single line and multiple lines text */
+    for (line_count = 1; line_count <= 2; line_count++)
+    {
+        for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
+        {
+            style = line_count > 1 ? type | BS_MULTILINE : type;
+            style |= default_style;
+
+            hwnd = CreateWindowW(WC_BUTTONW, (line_count == 2 ? text2_w : text_w), style, 0, 0, client_width,
+                                 client_height, NULL, NULL, 0, NULL);
+            ok(hwnd != NULL, "Expect hwnd not NULL\n");
+            SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+            ZeroMemory(&size, sizeof(size));
+            ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+            ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+
+            if (type == BS_3STATE || type == BS_AUTO3STATE || type == BS_GROUPBOX || type == BS_PUSHBOX
+                || type == BS_OWNERDRAW)
+            {
+                ok(size.cx == client_width && size.cy == client_height,
+                   "Style 0x%08x expect ideal size (%d,%d), got (%d,%d)\n", style, client_width, client_height, size.cx,
+                   size.cy);
+            }
+            else if (type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)
+            {
+                todo_wine ok((size.cx == 0 && size.cy > 0),
+                             "Style 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx, 0,
+                             size.cy, 0);
+            }
+            else
+            {
+                width = 0;
+                height = line_count == 2 ? 2 * tm.tmHeight : tm.tmHeight;
+                ok(size.cx >= width && size.cy >= height,
+                   "Style 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx, width, size.cy,
+                   height);
+            }
+            DestroyWindow(hwnd);
+        }
+    }
+
+    pImageList_Destroy(himl);
+    DestroyIcon(hicon);
+    DeleteObject(hbmp);
+    DeleteObject(hmask);
+    ReleaseDC(0, hdc);
+    DeleteObject(hfont);
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -1443,6 +1738,7 @@ START_TEST(button)
     test_get_set_imagelist();
     test_get_set_textmargin();
     test_state();
+    test_bcm_get_ideal_size();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
