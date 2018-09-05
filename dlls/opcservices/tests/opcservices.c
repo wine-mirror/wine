@@ -210,14 +210,18 @@ static void test_relationship(void)
     static const WCHAR absoluteW[] = {'f','i','l','e',':','/','/','h','o','s','t','/','f','i','l','e','.','t','x','t',0};
     static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
     static const WCHAR typeW[] = {'t','y','p','e',0};
+    static const WCHAR rootW[] = {'/',0};
     IUri *target_uri, *target_uri2, *uri;
     IOpcRelationshipSet *rels;
     IOpcRelationship *rel;
     IOpcFactory *factory;
     IOpcPackage *package;
+    IOpcUri *source_uri;
+    IUnknown *unk;
     DWORD mode;
     HRESULT hr;
     WCHAR *id;
+    BSTR str;
 
     factory = create_factory();
 
@@ -266,6 +270,23 @@ todo_wine
     hr = IOpcRelationship_GetTargetMode(rel, &mode);
     ok(SUCCEEDED(hr), "Failed to get target mode, hr %#x.\n", hr);
     ok(mode == OPC_URI_TARGET_MODE_INTERNAL, "Unexpected mode %d.\n", mode);
+
+    /* Source uri */
+    hr = IOpcRelationship_GetSourceUri(rel, &source_uri);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to get source uri, hr %#x.\n", hr);
+
+    hr = IOpcUri_QueryInterface(source_uri, &IID_IOpcPartUri, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    str = NULL;
+    hr = IOpcUri_GetRawUri(source_uri, &str);
+    ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(rootW, str), "Unexpected uri %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IOpcUri_Release(source_uri);
 
     IOpcRelationship_Release(rel);
 

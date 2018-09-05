@@ -32,6 +32,7 @@ struct opc_uri
 {
     IOpcPartUri IOpcPartUri_iface;
     LONG refcount;
+    BOOL is_part_uri;
 };
 
 static inline struct opc_uri *impl_from_IOpcPartUri(IOpcPartUri *iface)
@@ -41,9 +42,13 @@ static inline struct opc_uri *impl_from_IOpcPartUri(IOpcPartUri *iface)
 
 static HRESULT WINAPI opc_uri_QueryInterface(IOpcPartUri *iface, REFIID iid, void **out)
 {
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualIID(iid, &IID_IOpcPartUri) ||
+    if ((uri->is_part_uri && IsEqualIID(iid, &IID_IOpcPartUri)) ||
+            IsEqualIID(iid, &IID_IOpcUri) ||
+            IsEqualIID(iid, &IID_IUri) ||
             IsEqualIID(iid, &IID_IUnknown))
     {
         *out = iface;
@@ -348,8 +353,24 @@ HRESULT opc_part_uri_create(const WCHAR *str, IOpcPartUri **out)
 
     uri->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
     uri->refcount = 1;
+    uri->is_part_uri = TRUE;
 
     *out = &uri->IOpcPartUri_iface;
+    TRACE("Created part uri %p.\n", *out);
+    return S_OK;
+}
+
+HRESULT opc_uri_create(const WCHAR *str, IOpcUri **out)
+{
+    struct opc_uri *uri;
+
+    if (!(uri = heap_alloc_zero(sizeof(*uri))))
+        return E_OUTOFMEMORY;
+
+    uri->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
+    uri->refcount = 1;
+
+    *out = (IOpcUri *)&uri->IOpcPartUri_iface;
     TRACE("Created part uri %p.\n", *out);
     return S_OK;
 }

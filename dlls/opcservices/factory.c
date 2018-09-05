@@ -309,9 +309,11 @@ static ULONG WINAPI opc_factory_Release(IOpcFactory *iface)
 
 static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcUri **uri)
 {
-    FIXME("iface %p, uri %p stub!\n", iface, uri);
+    static const WCHAR rootW[] = {'/',0};
 
-    return E_NOTIMPL;
+    TRACE("iface %p, uri %p.\n", iface, uri);
+
+    return opc_uri_create(rootW, uri);
 }
 
 static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **part_uri)
