@@ -59,6 +59,7 @@
 #define FACILITY_PLA                         48
 #define FACILITY_FVE                         49
 #define FACILITY_WINDOWS_DEFENDER            80
+#define FACILITY_OPC                         81
 #define FACILITY_DIRECT3D11                  0x87c
 #define FACILITY_AUDCLNT                     0x889
 
