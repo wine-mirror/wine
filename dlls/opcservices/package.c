@@ -69,6 +69,10 @@ struct opc_relationship_set
 {
     IOpcRelationshipSet IOpcRelationshipSet_iface;
     LONG refcount;
+
+    struct opc_relationship **relationships;
+    size_t size;
+    size_t count;
 };
 
 static inline struct opc_package *impl_from_IOpcPackage(IOpcPackage *iface)
@@ -440,15 +444,21 @@ static const IOpcRelationshipVtbl opc_relationship_vtbl =
     opc_relationship_GetTargetMode,
 };
 
-static HRESULT opc_relationship_create(IOpcRelationship **out)
+static HRESULT opc_relationship_create(struct opc_relationship_set *set, IOpcRelationship **out)
 {
     struct opc_relationship *relationship;
+
+    if (!opc_array_reserve((void **)&set->relationships, &set->size, set->count + 1, sizeof(*set->relationships)))
+        return E_OUTOFMEMORY;
 
     if (!(relationship = heap_alloc_zero(sizeof(*relationship))))
         return E_OUTOFMEMORY;
 
     relationship->IOpcRelationship_iface.lpVtbl = &opc_relationship_vtbl;
     relationship->refcount = 1;
+
+    set->relationships[set->count++] = relationship;
+    IOpcRelationship_AddRef(&relationship->IOpcRelationship_iface);
 
     *out = &relationship->IOpcRelationship_iface;
     TRACE("Created relationship %p.\n", *out);
@@ -489,7 +499,14 @@ static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        size_t i;
+
+        for (i = 0; i < relationship_set->count; ++i)
+            IOpcRelationship_Release(&relationship_set->relationships[i]->IOpcRelationship_iface);
+        heap_free(relationship_set->relationships);
         heap_free(relationship_set);
+    }
 
     return refcount;
 }
@@ -505,10 +522,12 @@ static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *
 static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
         const WCHAR *type, IUri *target_uri, OPC_URI_TARGET_MODE target_mode, IOpcRelationship **relationship)
 {
+    struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
+
     FIXME("iface %p, id %s, type %s, target_uri %p, target_mode %d, relationship %p stub!\n", iface, debugstr_w(id),
             debugstr_w(type), target_uri, target_mode, relationship);
 
-    return opc_relationship_create(relationship);
+    return opc_relationship_create(relationship_set, relationship);
 }
 
 static HRESULT WINAPI opc_relationship_set_DeleteRelationship(IOpcRelationshipSet *iface, const WCHAR *id)
