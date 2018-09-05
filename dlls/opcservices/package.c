@@ -66,6 +66,7 @@ struct opc_relationship
     LONG refcount;
 
     WCHAR *id;
+    WCHAR *type;
     IUri *target;
     OPC_URI_TARGET_MODE target_mode;
 };
@@ -399,6 +400,7 @@ static ULONG WINAPI opc_relationship_Release(IOpcRelationship *iface)
     if (!refcount)
     {
         CoTaskMemFree(relationship->id);
+        CoTaskMemFree(relationship->type);
         IUri_Release(relationship->target);
         heap_free(relationship);
     }
@@ -418,9 +420,12 @@ static HRESULT WINAPI opc_relationship_GetId(IOpcRelationship *iface, WCHAR **id
 
 static HRESULT WINAPI opc_relationship_GetRelationshipType(IOpcRelationship *iface, WCHAR **type)
 {
-    FIXME("iface %p, type %p stub!\n", iface, type);
+    struct opc_relationship *relationship = impl_from_IOpcRelationship(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %p.\n", iface, type);
+
+    *type = opc_strdupW(relationship->type);
+    return *type ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI opc_relationship_GetSourceUri(IOpcRelationship *iface, IOpcUri **uri)
@@ -465,8 +470,8 @@ static const IOpcRelationshipVtbl opc_relationship_vtbl =
     opc_relationship_GetTargetMode,
 };
 
-static HRESULT opc_relationship_create(struct opc_relationship_set *set, const WCHAR *id, IUri *target_uri,
-        OPC_URI_TARGET_MODE target_mode, IOpcRelationship **out)
+static HRESULT opc_relationship_create(struct opc_relationship_set *set, const WCHAR *id, const WCHAR *type,
+        IUri *target_uri, OPC_URI_TARGET_MODE target_mode, IOpcRelationship **out)
 {
     struct opc_relationship *relationship;
 
@@ -478,6 +483,9 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
 
     relationship->IOpcRelationship_iface.lpVtbl = &opc_relationship_vtbl;
     relationship->refcount = 1;
+
+    relationship->target = target_uri;
+    IUri_AddRef(relationship->target);
 
     /* FIXME: test that id is unique */
     if (id)
@@ -495,14 +503,12 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
         }
     }
 
-    if (!relationship->id)
+    relationship->type = opc_strdupW(type);
+    if (!relationship->id || !relationship->type)
     {
-        heap_free(relationship);
+        IOpcRelationship_Release(&relationship->IOpcRelationship_iface);
         return E_OUTOFMEMORY;
     }
-
-    relationship->target = target_uri;
-    IUri_AddRef(relationship->target);
 
     set->relationships[set->count++] = relationship;
     IOpcRelationship_AddRef(&relationship->IOpcRelationship_iface);
@@ -577,7 +583,7 @@ static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSe
     if (!type || !target_uri)
         return E_POINTER;
 
-    return opc_relationship_create(relationship_set, id, target_uri, target_mode, relationship);
+    return opc_relationship_create(relationship_set, id, type, target_uri, target_mode, relationship);
 }
 
 static HRESULT WINAPI opc_relationship_set_DeleteRelationship(IOpcRelationshipSet *iface, const WCHAR *id)
