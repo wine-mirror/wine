@@ -219,6 +219,26 @@ static void test_load_driver(SC_HANDLE service)
     ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
 }
 
+static void test_driver3(void)
+{
+    char filename[MAX_PATH];
+    SC_HANDLE service;
+    BOOL ret;
+
+    service = load_driver(filename, "driver3.dll", "WineTestDriver3");
+    ok(service != NULL, "driver3 failed to load\n");
+
+    ret = StartServiceA(service, 0, NULL);
+    ok(!ret, "driver3 should fail to start\n");
+todo_wine
+    ok(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED || GetLastError() == ERROR_PROC_NOT_FOUND /* XP */ ||
+       GetLastError() == ERROR_FILE_NOT_FOUND /* Win7 */, "got %u\n", GetLastError());
+
+    DeleteService(service);
+    CloseServiceHandle(service);
+    DeleteFileA(filename);
+}
+
 START_TEST(ntoskrnl)
 {
     char filename[MAX_PATH], filename2[MAX_PATH];
@@ -247,4 +267,6 @@ START_TEST(ntoskrnl)
     unload_driver(service);
     ok(DeleteFileA(filename), "DeleteFile failed: %u\n", GetLastError());
     ok(DeleteFileA(filename2), "DeleteFile failed: %u\n", GetLastError());
+
+    test_driver3();
 }

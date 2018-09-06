@@ -5,10 +5,14 @@ driver_IMPORTS = winecrt0 ntoskrnl
 driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver2_IMPORTS = winecrt0 ntoskrnl
 driver2_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver3_IMPORTS = winecrt0 ntoskrnl
+driver3_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
 	driver.c \
 	driver.spec \
 	driver2.c \
 	driver2.spec \
+	driver3.c \
+	driver3.spec \
 	ntoskrnl.c
