@@ -488,7 +488,7 @@ static void test_style2(IHTMLStyle2 *style2)
     SysFreeString(str);
 }
 
-static void test_style3(IHTMLStyle3 *style3)
+static void test_style3(IHTMLStyle3 *style3, IHTMLCSSStyleDeclaration *css_style)
 {
     VARIANT v;
     BSTR str;
@@ -521,6 +521,7 @@ static void test_style3(IHTMLStyle3 *style3)
     V_BSTR(&v) = a2bstr("100%");
     hres = IHTMLStyle3_put_zoom(style3, v);
     ok(hres == S_OK, "put_zoom failed: %08x\n", hres);
+    VariantClear(&v);
 
     V_VT(&v) = VT_ERROR;
     hres = IHTMLStyle3_get_zoom(style3, &v);
@@ -528,6 +529,13 @@ static void test_style3(IHTMLStyle3 *style3)
     ok(V_VT(&v) == VT_BSTR, "V_VT(zoom) = %d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "100%"), "V_BSTR(zoom) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    if(css_style) {
+        hres = IHTMLCSSStyleDeclaration_get_zoom(css_style, &v);
+        ok(hres == S_OK, "get_zoom failed: %08x\n", hres);
+        test_var_bstr(&v, "100%");
+        VariantClear(&v);
+    }
 
     V_VT(&v) = VT_I4;
     V_I4(&v) = 1;
@@ -540,6 +548,19 @@ static void test_style3(IHTMLStyle3 *style3)
     ok(V_VT(&v) == VT_BSTR, "V_VT(zoom) = %d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "1"), "V_BSTR(zoom) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    if(css_style) {
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = a2bstr("100%");
+        hres = IHTMLCSSStyleDeclaration_put_zoom(css_style, v);
+        ok(hres == S_OK, "put_zoom failed: %08x\n", hres);
+        VariantClear(&v);
+
+        hres = IHTMLCSSStyleDeclaration_get_zoom(css_style, &v);
+        ok(hres == S_OK, "get_zoom failed: %08x\n", hres);
+        test_var_bstr(&v, "100%");
+        VariantClear(&v);
+    }
 }
 
 static void test_style4(IHTMLStyle4 *style4)
@@ -2844,7 +2865,7 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle3, (void**)&style3);
     ok(hres == S_OK, "Could not get IHTMLStyle3 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
-        test_style3(style3);
+        test_style3(style3, css_style);
         IHTMLStyle3_Release(style3);
     }
 
