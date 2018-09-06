@@ -486,40 +486,57 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     if (This->options & ACO_AUTOSUGGEST)
         create_listbox(This);
 
-    if (pwzsRegKeyPath) {
-	WCHAR *key;
-	WCHAR result[MAX_PATH];
-	WCHAR *value;
-	HKEY hKey = 0;
-	LONG res;
-	LONG len;
+    if (pwzsRegKeyPath)
+    {
+        static const HKEY roots[] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+        WCHAR *key, *value;
+        DWORD type, sz;
+        BYTE *qc;
+        HKEY hKey;
+        LSTATUS res;
+        size_t len;
+        UINT i;
 
-	/* pwszRegKeyPath contains the key as well as the value, so we split */
-	key = heap_alloc((lstrlenW(pwzsRegKeyPath)+1)*sizeof(WCHAR));
-	strcpyW(key, pwzsRegKeyPath);
-	value = strrchrW(key, '\\');
-	*value = 0;
-	value++;
-	/* Now value contains the value and buffer the key */
-	res = RegOpenKeyExW(HKEY_CURRENT_USER, key, 0, KEY_READ, &hKey);
-	if (res != ERROR_SUCCESS) {
-	    /* if the key is not found, MSDN states we must seek in HKEY_LOCAL_MACHINE */
-	    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey);  
-	}
-	if (res == ERROR_SUCCESS) {
-	    res = RegQueryValueW(hKey, value, result, &len);
-	    if (res == ERROR_SUCCESS) {
-		This->quickComplete = heap_alloc(len*sizeof(WCHAR));
-		strcpyW(This->quickComplete, result);
-	    }
-	    RegCloseKey(hKey);
-	}
-	heap_free(key);
+        /* pwszRegKeyPath contains the key as well as the value, so split it */
+        value = strrchrW(pwzsRegKeyPath, '\\');
+        len = value - pwzsRegKeyPath;
+
+        if (value && (key = heap_alloc((len+1) * sizeof(*key))) != NULL)
+        {
+            memcpy(key, pwzsRegKeyPath, len * sizeof(*key));
+            key[len] = '\0';
+            value++;
+
+            for (i = 0; i < ARRAY_SIZE(roots); i++)
+            {
+                if (RegOpenKeyExW(roots[i], key, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+                    continue;
+                sz = MAX_PATH * sizeof(WCHAR);
+
+                while ((qc = heap_alloc(sz)) != NULL)
+                {
+                    res = RegQueryValueExW(hKey, value, NULL, &type, qc, &sz);
+                    if (res == ERROR_SUCCESS && type == REG_SZ)
+                    {
+                        This->quickComplete = heap_realloc(qc, sz);
+                        i = ARRAY_SIZE(roots);
+                        break;
+                    }
+                    heap_free(qc);
+                    if (res != ERROR_MORE_DATA || type != REG_SZ)
+                        break;
+                }
+                RegCloseKey(hKey);
+            }
+            heap_free(key);
+        }
     }
 
-    if ((pwszQuickComplete) && (!This->quickComplete)) {
-	This->quickComplete = heap_alloc((lstrlenW(pwszQuickComplete)+1)*sizeof(WCHAR));
-	lstrcpyW(This->quickComplete, pwszQuickComplete);
+    if (!This->quickComplete && pwszQuickComplete)
+    {
+        size_t len = strlenW(pwszQuickComplete)+1;
+        if ((This->quickComplete = heap_alloc(len * sizeof(WCHAR))) != NULL)
+            memcpy(This->quickComplete, pwszQuickComplete, len * sizeof(WCHAR));
     }
 
     return S_OK;
