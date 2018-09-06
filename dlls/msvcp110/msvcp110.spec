@@ -3892,7 +3892,7 @@
 @ stub _Xp_sqrtx
 @ stub _Xp_subx
 @ stub _Xtime_diff_to_millis
-@ stub _Xtime_diff_to_millis2
+@ cdecl _Xtime_diff_to_millis2(ptr ptr)
 @ cdecl _Xtime_get_ticks()
 @ stub __Wcrtomb_lk
 # extern _Zero
