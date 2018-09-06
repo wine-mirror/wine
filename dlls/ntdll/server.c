@@ -1124,9 +1124,10 @@ static void start_server(void)
  *
  * Setup the wine configuration dir.
  */
-static void setup_config_dir(void)
+static int setup_config_dir(void)
 {
     const char *p, *config_dir = wine_get_config_dir();
+    int fd_cwd = open( ".", O_RDONLY );
 
     if (chdir( config_dir ) == -1)
     {
@@ -1154,7 +1155,7 @@ static void setup_config_dir(void)
 
     if (mkdir( "dosdevices", 0777 ) == -1)
     {
-        if (errno == EEXIST) return;
+        if (errno == EEXIST) goto done;
         fatal_perror( "cannot create %s/dosdevices\n", config_dir );
     }
 
@@ -1163,6 +1164,11 @@ static void setup_config_dir(void)
     mkdir( "drive_c", 0777 );
     symlink( "../drive_c", "dosdevices/c:" );
     symlink( "/", "dosdevices/z:" );
+
+done:
+    if (fd_cwd == -1) fd_cwd = open( "dosdevices/c:", O_RDONLY );
+    fcntl( fd_cwd, F_SETFD, FD_CLOEXEC );
+    return fd_cwd;
 }
 
 
@@ -1212,11 +1218,7 @@ static int server_connect(void)
     struct stat st;
     int s, slen, retry, fd_cwd;
 
-    /* retrieve the current directory */
-    fd_cwd = open( ".", O_RDONLY );
-    if (fd_cwd != -1) fcntl( fd_cwd, F_SETFD, FD_CLOEXEC );
-
-    setup_config_dir();
+    fd_cwd = setup_config_dir();
     serverdir = wine_get_server_dir();
 
     /* chdir to the server directory */
