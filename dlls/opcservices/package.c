@@ -583,9 +583,30 @@ static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
 static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
         IOpcRelationship **relationship)
 {
-    FIXME("iface %p, id %s, relationship %p stub!\n", iface, debugstr_w(id), relationship);
+    struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, id %s, relationship %p.\n", iface, debugstr_w(id), relationship);
+
+    if (!relationship)
+        return E_POINTER;
+
+    *relationship = NULL;
+
+    if (!id)
+        return E_POINTER;
+
+    for (i = 0; i < relationship_set->count; i++)
+    {
+        if (!strcmpW(id, relationship_set->relationships[i]->id))
+        {
+            *relationship = &relationship_set->relationships[i]->IOpcRelationship_iface;
+            IOpcRelationship_AddRef(*relationship);
+            break;
+        }
+    }
+
+    return *relationship ? S_OK : OPC_E_NO_SUCH_RELATIONSHIP;
 }
 
 static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSet *iface, const WCHAR *id,

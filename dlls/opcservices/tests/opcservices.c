@@ -232,8 +232,8 @@ static void test_relationship(void)
     static const WCHAR typeW[] = {'t','y','p','e',0};
     static const WCHAR rootW[] = {'/',0};
     IUri *target_uri, *target_uri2, *uri;
+    IOpcRelationship *rel, *rel2, *rel3;
     IOpcUri *source_uri, *source_uri2;
-    IOpcRelationship *rel, *rel2;
     IOpcRelationshipSet *rels;
     IOpcFactory *factory;
     IOpcPackage *package;
@@ -283,6 +283,25 @@ todo_wine
     hr = IOpcRelationship_GetId(rel, &id);
     ok(SUCCEEDED(hr), "Failed to get id, hr %#x.\n", hr);
     ok(lstrlenW(id) == 9 && *id == 'R', "Unexpected relationship id %s.\n", wine_dbgstr_w(id));
+
+    hr = IOpcRelationshipSet_GetRelationship(rels, id, &rel3);
+    ok(SUCCEEDED(hr), "Failed to get relationship, hr %#x.\n", hr);
+    IOpcRelationship_Release(rel3);
+
+    hr = IOpcRelationshipSet_GetRelationship(rels, id, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    rel3 = (void *)0xdeadbeef;
+    hr = IOpcRelationshipSet_GetRelationship(rels, NULL, &rel3);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(rel3 == NULL, "Expected null pointer.\n");
+
+    *id = 'r';
+    rel3 = (void *)0xdeadbeef;
+    hr = IOpcRelationshipSet_GetRelationship(rels, id, &rel3);
+    ok(hr == OPC_E_NO_SUCH_RELATIONSHIP, "Unexpected hr %#x.\n", hr);
+    ok(rel3 == NULL, "Expected null pointer.\n");
+
     CoTaskMemFree(id);
 
     hr = IOpcRelationship_GetTargetUri(rel, &uri);
