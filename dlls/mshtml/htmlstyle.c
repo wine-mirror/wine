@@ -156,6 +156,8 @@ static const WCHAR min_heightW[] =
     {'m','i','n','-','h','e','i','g','h','t',0};
 static const WCHAR min_widthW[] =
     {'m','i','n','-','w','i','d','t','h',0};
+static const WCHAR opacityW[] =
+    {'o','p','a','c','i','t','y',0};
 static const WCHAR outlineW[] =
     {'o','u','t','l','i','n','e',0};
 static const WCHAR overflowW[] =
@@ -393,6 +395,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {max_widthW,              DISPID_IHTMLSTYLE5_MAXWIDTH,             ATTR_FIX_PX},
     {min_heightW,             DISPID_IHTMLSTYLE4_MINHEIGHT},
     {min_widthW,              DISPID_IHTMLSTYLE5_MINWIDTH,             ATTR_FIX_PX},
+    {opacityW,                DISPID_UNKNOWN},
     {outlineW,                DISPID_IHTMLSTYLE6_OUTLINE,              ATTR_NO_NULL},
     {overflowW,               DISPID_IHTMLSTYLE_OVERFLOW,              0, overflow_values},
     {overflow_xW,             DISPID_IHTMLSTYLE2_OVERFLOWX},
@@ -6796,15 +6799,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_fontStretch(IHTMLCSSStyleDecla
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_opacity(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_OPACITY, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_opacity(IHTMLCSSStyleDeclaration *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property_var(This, STYLEID_OPACITY, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_clipPath(IHTMLCSSStyleDeclaration *iface, BSTR v)

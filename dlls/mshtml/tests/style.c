@@ -738,6 +738,7 @@ static void test_style6(IHTMLStyle6 *style)
 
 static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
 {
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -754,6 +755,31 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
     ok(hres == S_OK, "get_backgroundClip failed: %08x\n", hres);
     ok(!strcmp_wa(str, "border-box"), "backgroundClip = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
+    ok(hres == S_OK, "get_opacity failed: %08x\n", hres);
+    test_var_bstr(&v, NULL);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);
+    ok(hres == S_OK, "put_opacity failed: %08x\n", hres);
+
+    hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
+    ok(hres == S_OK, "get_opacity failed: %08x\n", hres);
+    test_var_bstr(&v, "0");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("1");
+    hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);
+    ok(hres == S_OK, "put_opacity failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
+    ok(hres == S_OK, "get_opacity failed: %08x\n", hres);
+    test_var_bstr(&v, "1");
+    VariantClear(&v);
 }
 
 static void test_body_style(IHTMLStyle *style)
@@ -1789,6 +1815,14 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_filter(style, str);
     ok(hres == S_OK, "put_filter failed: %08x\n", hres);
     SysFreeString(str);
+
+    hres = IHTMLStyle_put_filter(style, NULL);
+    ok(hres == S_OK, "put_filter failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_filter(style, &str);
+    ok(hres == S_OK, "get_filter failed: %08x\n", hres);
+    ok(!str, "filter != NULL\n");
 
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_zIndex(style, &v);
