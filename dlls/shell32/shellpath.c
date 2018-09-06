@@ -951,7 +951,8 @@ static const WCHAR Videos_Sample_VideosW[] = {'V','i','d','e','o','s','\\','S','
 static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
 static const WCHAR Windows_Sidebar_GadgetsW[] = {'W','i','n','d','o','w','s',' ','S','i','d','e','b','a','r','\\','G','a','d','g','e','t','s',0};
 static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
-static const WCHAR AllUsersProfileW[] = {'%','P','U','B','L','I','C','%',0};
+static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
+static const WCHAR PublicProfileW[] = {'%','P','U','B','L','I','C','%',0};
 static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
 static const WCHAR ProgramDataVarW[] = {'%','P','r','o','g','r','a','m','D','a','t','a','%','\0'};
 static const WCHAR SystemDriveW[] = {'%','S','y','s','t','e','m','D','r','i','v','e','%','\0'};
@@ -3474,7 +3475,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
                 strcpyW(pszPath, UserProfileW);
                 break;
             case CSIDL_Type_AllUsers:
-                strcpyW(pszPath, AllUsersProfileW);
+                strcpyW(pszPath, PublicProfileW);
                 break;
             case CSIDL_Type_ProgramData:
                 strcpyW(pszPath, ProgramDataVarW);
@@ -3811,6 +3812,17 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             hr = _SHGetProfilesValue(key, PublicW, szAllUsers, def_val);
             PathAppendW(szDest, szAllUsers);
             PathAppendW(szDest, szTemp + strlenW(AllUsersProfileW));
+        }
+        else if (!strncmpiW(szTemp, PublicProfileW, strlenW(PublicProfileW)))
+        {
+            WCHAR szAllUsers[MAX_PATH], def_val[MAX_PATH];
+
+            GetSystemDirectoryW(def_val, MAX_PATH);
+            strcpyW( def_val + 3, UsersPublicW );
+
+            hr = _SHGetProfilesValue(key, PublicW, szAllUsers, def_val);
+            PathAppendW(szDest, szAllUsers);
+            PathAppendW(szDest, szTemp + strlenW(PublicProfileW));
         }
         else if (!strncmpiW(szTemp, ProgramDataVarW, strlenW(ProgramDataVarW)))
         {
