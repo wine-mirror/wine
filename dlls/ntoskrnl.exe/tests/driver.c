@@ -75,8 +75,8 @@ static void WINAPIV ok_(const char *file, int line, int condition, const char *m
     const char *current_file;
     __ms_va_list args;
 
-    if (!(current_file = strrchr(file, '/')) &&
-        !(current_file = strrchr(file, '\\')))
+    if (!(current_file = drv_strrchr(file, '/')) &&
+        !(current_file = drv_strrchr(file, '\\')))
         current_file = file;
     else
         current_file++;

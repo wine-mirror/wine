@@ -35,3 +35,10 @@ struct test_input
     int winetest_debug;
     WCHAR path[1];
 };
+
+static inline char *drv_strrchr( const char *str, char ch )
+{
+    char *ret = NULL;
+    do { if (*str == ch) ret = (char *)(ULONG_PTR)str; } while (*str++);
+    return ret;
+}
