@@ -2358,6 +2358,18 @@ PMDL WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS lowaddress, PHYSICAL_ADDRESS 
 }
 
 /***********************************************************************
+ *           MmCreateSection   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI MmCreateSection( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                 LARGE_INTEGER *size, ULONG protect, ULONG alloc_attr,
+                                 HANDLE file, FILE_OBJECT *file_obj )
+{
+    FIXME("%p %#x %p %s %#x %#x %p %p: stub\n", handle, access, attr,
+        wine_dbgstr_longlong(size->QuadPart), protect, alloc_attr, file, file_obj);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           MmFreeNonCachedMemory   (NTOSKRNL.EXE.@)
  */
 void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )

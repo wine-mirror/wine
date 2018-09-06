@@ -669,7 +669,7 @@
 @ stub MmCanFileBeTruncated
 @ stub MmCommitSessionMappedView
 @ stub MmCreateMdl
-@ stub MmCreateSection
+@ stdcall MmCreateSection(ptr long ptr ptr long long long ptr)
 @ stub MmDisableModifiedWriteOfSection
 @ stub MmFlushImageSection
 @ stub MmForceSectionClosed
