@@ -580,11 +580,25 @@ static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
     return refcount;
 }
 
+static struct opc_relationship *opc_relationshipset_get_item(struct opc_relationship_set *relationship_set,
+        const WCHAR *id)
+{
+    size_t i;
+
+    for (i = 0; i < relationship_set->count; i++)
+    {
+        if (!strcmpW(id, relationship_set->relationships[i]->id))
+            return relationship_set->relationships[i];
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
         IOpcRelationship **relationship)
 {
     struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
-    size_t i;
+    struct opc_relationship *ret;
 
     TRACE("iface %p, id %s, relationship %p.\n", iface, debugstr_w(id), relationship);
 
@@ -596,14 +610,10 @@ static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *
     if (!id)
         return E_POINTER;
 
-    for (i = 0; i < relationship_set->count; i++)
+    if ((ret = opc_relationshipset_get_item(relationship_set, id)))
     {
-        if (!strcmpW(id, relationship_set->relationships[i]->id))
-        {
-            *relationship = &relationship_set->relationships[i]->IOpcRelationship_iface;
-            IOpcRelationship_AddRef(*relationship);
-            break;
-        }
+        *relationship = &ret->IOpcRelationship_iface;
+        IOpcRelationship_AddRef(*relationship);
     }
 
     return *relationship ? S_OK : OPC_E_NO_SUCH_RELATIONSHIP;
@@ -632,9 +642,16 @@ static HRESULT WINAPI opc_relationship_set_DeleteRelationship(IOpcRelationshipSe
 
 static HRESULT WINAPI opc_relationship_set_RelationshipExists(IOpcRelationshipSet *iface, const WCHAR *id, BOOL *exists)
 {
-    FIXME("iface %p, id %s, exists %p stub!\n", iface, debugstr_w(id), exists);
+    struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, id %s, exists %p.\n", iface, debugstr_w(id), exists);
+
+    if (!id || !exists)
+        return E_POINTER;
+
+    *exists = opc_relationshipset_get_item(relationship_set, id) != NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_relationship_set_GetEnumerator(IOpcRelationshipSet *iface,

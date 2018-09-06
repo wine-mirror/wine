@@ -241,6 +241,7 @@ static void test_relationship(void)
     DWORD mode;
     HRESULT hr;
     WCHAR *id;
+    BOOL ret;
     BSTR str;
 
     factory = create_factory();
@@ -284,6 +285,19 @@ todo_wine
     ok(SUCCEEDED(hr), "Failed to get id, hr %#x.\n", hr);
     ok(lstrlenW(id) == 9 && *id == 'R', "Unexpected relationship id %s.\n", wine_dbgstr_w(id));
 
+    ret = 123;
+    hr = IOpcRelationshipSet_RelationshipExists(rels, NULL, &ret);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(ret == 123, "Unexpected result %d.\n", ret);
+
+    hr = IOpcRelationshipSet_RelationshipExists(rels, id, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    ret = FALSE;
+    hr = IOpcRelationshipSet_RelationshipExists(rels, id, &ret);
+    ok(SUCCEEDED(hr), "Failed to get relationship, hr %#x.\n", hr);
+    ok(ret, "Unexpected result %d.\n", ret);
+
     hr = IOpcRelationshipSet_GetRelationship(rels, id, &rel3);
     ok(SUCCEEDED(hr), "Failed to get relationship, hr %#x.\n", hr);
     IOpcRelationship_Release(rel3);
@@ -301,6 +315,11 @@ todo_wine
     hr = IOpcRelationshipSet_GetRelationship(rels, id, &rel3);
     ok(hr == OPC_E_NO_SUCH_RELATIONSHIP, "Unexpected hr %#x.\n", hr);
     ok(rel3 == NULL, "Expected null pointer.\n");
+
+    ret = TRUE;
+    hr = IOpcRelationshipSet_RelationshipExists(rels, id, &ret);
+    ok(SUCCEEDED(hr), "Unexpected hr %#x.\n", hr);
+    ok(!ret, "Unexpected result %d.\n", ret);
 
     CoTaskMemFree(id);
 
