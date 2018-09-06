@@ -762,7 +762,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
         return hr;
     }
 
-    if (wine_rb_put(&device->depthstencil_states, desc, &object->entry) == -1)
+    if (wine_rb_put(&device->depthstencil_states, &tmp_desc, &object->entry) == -1)
     {
         ERR("Failed to insert depthstencil state entry.\n");
         d3d_depthstencil_state_cleanup(object);
