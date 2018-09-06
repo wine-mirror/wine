@@ -200,19 +200,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                         ShowWindow(This->hwndListBox, SW_HIDE);
                         return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
                     }
-                    if (This->options & ACO_AUTOAPPEND) {
-                        DWORD b;
-                        SendMessageW(hwnd, EM_GETSEL, (WPARAM)&b, 0);
-                        if (b>1) {
-                            hwndText[b-1] = '\0';
-                        } else {
-                            hwndText[0] = '\0';
-                            SetWindowTextW(hwnd, hwndText);
-                        }
-                    }
                     break;
-                default:
-                    ;
             }
 
             SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
