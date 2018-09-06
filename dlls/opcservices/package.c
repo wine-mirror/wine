@@ -221,9 +221,12 @@ static HRESULT WINAPI opc_part_GetContentType(IOpcPart *iface, LPWSTR *type)
 
 static HRESULT WINAPI opc_part_GetCompressionOptions(IOpcPart *iface, OPC_COMPRESSION_OPTIONS *options)
 {
-    FIXME("iface %p, options %p stub!\n", iface, options);
+    struct opc_part *part = impl_from_IOpcPart(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %p.\n", iface, options);
+
+    *options = part->compression_options;
+    return S_OK;
 }
 
 static const IOpcPartVtbl opc_part_vtbl =
