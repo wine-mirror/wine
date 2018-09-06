@@ -328,12 +328,24 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     {
         j = desc->IndependentBlendEnable ? i : 0;
         tmp_desc.RenderTarget[i].BlendEnable = desc->RenderTarget[j].BlendEnable;
-        tmp_desc.RenderTarget[i].SrcBlend = desc->RenderTarget[j].SrcBlend;
-        tmp_desc.RenderTarget[i].DestBlend = desc->RenderTarget[j].DestBlend;
-        tmp_desc.RenderTarget[i].BlendOp = desc->RenderTarget[j].BlendOp;
-        tmp_desc.RenderTarget[i].SrcBlendAlpha = desc->RenderTarget[j].SrcBlendAlpha;
-        tmp_desc.RenderTarget[i].DestBlendAlpha = desc->RenderTarget[j].DestBlendAlpha;
-        tmp_desc.RenderTarget[i].BlendOpAlpha = desc->RenderTarget[j].BlendOpAlpha;
+        if (tmp_desc.RenderTarget[i].BlendEnable)
+        {
+            tmp_desc.RenderTarget[i].SrcBlend = desc->RenderTarget[j].SrcBlend;
+            tmp_desc.RenderTarget[i].DestBlend = desc->RenderTarget[j].DestBlend;
+            tmp_desc.RenderTarget[i].BlendOp = desc->RenderTarget[j].BlendOp;
+            tmp_desc.RenderTarget[i].SrcBlendAlpha = desc->RenderTarget[j].SrcBlendAlpha;
+            tmp_desc.RenderTarget[i].DestBlendAlpha = desc->RenderTarget[j].DestBlendAlpha;
+            tmp_desc.RenderTarget[i].BlendOpAlpha = desc->RenderTarget[j].BlendOpAlpha;
+        }
+        else
+        {
+            tmp_desc.RenderTarget[i].SrcBlend = D3D11_BLEND_ONE;
+            tmp_desc.RenderTarget[i].DestBlend = D3D11_BLEND_ZERO;
+            tmp_desc.RenderTarget[i].BlendOp = D3D11_BLEND_OP_ADD;
+            tmp_desc.RenderTarget[i].SrcBlendAlpha = D3D11_BLEND_ONE;
+            tmp_desc.RenderTarget[i].DestBlendAlpha = D3D11_BLEND_ZERO;
+            tmp_desc.RenderTarget[i].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        }
         tmp_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[j].RenderTargetWriteMask;
 
         if (i > 3 && tmp_desc.RenderTarget[i].RenderTargetWriteMask != D3D11_COLOR_WRITE_ENABLE_ALL)
