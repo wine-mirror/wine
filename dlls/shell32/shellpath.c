@@ -3855,22 +3855,15 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
         }
         else
         {
-            DWORD ret = ExpandEnvironmentStringsW(szSrc, szDest, MAX_PATH);
+            DWORD ret = ExpandEnvironmentStringsW(szTemp, szDest, MAX_PATH);
 
             if (ret > MAX_PATH)
                 hr = E_NOT_SUFFICIENT_BUFFER;
             else if (ret == 0)
                 hr = HRESULT_FROM_WIN32(GetLastError());
-            else
-                hr = S_OK;
+            else if (!strcmpW( szTemp, szDest )) break;  /* nothing expanded */
         }
-        if (SUCCEEDED(hr) && szDest[0] == '%')
-            strcpyW(szTemp, szDest);
-        else
-        {
-            /* terminate loop */
-            szTemp[0] = '\0';
-        }
+        if (SUCCEEDED(hr)) strcpyW(szTemp, szDest);
     }
 end:
     if (key)
