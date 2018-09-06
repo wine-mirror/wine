@@ -1,4 +1,4 @@
-@ stub FltAcquirePushLockExclusive
+@ stdcall FltAcquirePushLockExclusive(ptr)
 @ stub FltAcquirePushLockShared
 @ stub FltAcquireResourceExclusive
 @ stub FltAcquireResourceShared
@@ -40,7 +40,7 @@
 @ stub FltDeleteContext
 @ stub FltDeleteFileContext
 @ stub FltDeleteInstanceContext
-@ stub FltDeletePushLock
+@ stdcall FltDeletePushLock(ptr)
 @ stub FltDeleteStreamContext
 @ stub FltDeleteStreamHandleContext
 @ stub FltDeleteVolumeContext
@@ -133,7 +133,7 @@
 @ stub FltReleaseContext
 @ stub FltReleaseContexts
 @ stub FltReleaseFileNameInformation
-@ stub FltReleasePushLock
+@ stdcall FltReleasePushLock(ptr)
 @ stub FltReleaseResource
 @ stub FltRequestOperationStatusCallback
 @ stub FltRetainSwappedBufferMdlAddress
