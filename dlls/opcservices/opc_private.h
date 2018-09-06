@@ -48,3 +48,11 @@ static inline BOOL opc_array_reserve(void **elements, size_t *capacity, size_t c
 extern HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **package) DECLSPEC_HIDDEN;
 extern HRESULT opc_part_uri_create(const WCHAR *uri, IOpcPartUri **part_uri) DECLSPEC_HIDDEN;
 extern HRESULT opc_uri_create(const WCHAR *uri, IOpcUri **opc_uri) DECLSPEC_HIDDEN;
+
+extern HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *stream) DECLSPEC_HIDDEN;
+
+struct zip_archive;
+extern HRESULT compress_create_archive(IStream *output, struct zip_archive **archive) DECLSPEC_HIDDEN;
+extern HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path, IStream *content,
+        OPC_COMPRESSION_OPTIONS options) DECLSPEC_HIDDEN;
+extern void compress_finalize_archive(struct zip_archive *archive) DECLSPEC_HIDDEN;

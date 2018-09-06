@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntsecapi.h"
+#include "xmllite.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -785,4 +786,58 @@ HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **out)
     *out = &package->IOpcPackage_iface;
     TRACE("Created package %p.\n", *out);
     return S_OK;
+}
+
+static HRESULT opc_package_write_contenttypes(struct zip_archive *archive, IXmlWriter *writer)
+{
+    static const WCHAR contenttypesW[] = {'[','C','o','n','t','e','n','t','_','T','y','p','e','s',']','.','x','m','l',0};
+    static const WCHAR typesW[] = {'T','y','p','e','s',0};
+    IStream *content;
+    HRESULT hr;
+
+    if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &content)))
+        return hr;
+
+    IXmlWriter_SetOutput(writer, (IUnknown *)content);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, NULL);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteEndDocument(writer);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_Flush(writer);
+
+    if (SUCCEEDED(hr))
+        hr = compress_add_file(archive, contenttypesW, content, OPC_COMPRESSION_NORMAL);
+    IStream_Release(content);
+
+    return hr;
+}
+
+HRESULT opc_package_write(IOpcPackage *input, OPC_WRITE_FLAGS flags, IStream *stream)
+{
+    struct zip_archive *archive;
+    IXmlWriter *writer;
+    HRESULT hr;
+
+    if (flags != OPC_WRITE_FORCE_ZIP32)
+        FIXME("Unsupported write flags %#x.\n", flags);
+
+    if (FAILED(hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL)))
+        return hr;
+
+    if (FAILED(hr = compress_create_archive(stream, &archive)))
+    {
+        IXmlWriter_Release(writer);
+        return hr;
+    }
+
+    /* [Content_Types].xml */
+    hr = opc_package_write_contenttypes(archive, writer);
+
+    compress_finalize_archive(archive);
+    IXmlWriter_Release(writer);
+
+    return hr;
 }

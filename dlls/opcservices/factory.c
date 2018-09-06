@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "msopc.h"
+#include "xmllite.h"
 
 #include "wine/debug.h"
 
@@ -350,9 +351,9 @@ static HRESULT WINAPI opc_factory_ReadPackageFromStream(IOpcFactory *iface, IStr
 static HRESULT WINAPI opc_factory_WritePackageToStream(IOpcFactory *iface, IOpcPackage *package, OPC_WRITE_FLAGS flags,
         IStream *stream)
 {
-    FIXME("iface %p, package %p, flags %#x, stream %p stub!\n", iface, package, flags, stream);
+    TRACE("iface %p, package %p, flags %#x, stream %p.\n", iface, package, flags, stream);
 
-    return E_NOTIMPL;
+    return opc_package_write(package, flags, stream);
 }
 
 static HRESULT WINAPI opc_factory_CreateDigitalSignatureManager(IOpcFactory *iface, IOpcPackage *package,
