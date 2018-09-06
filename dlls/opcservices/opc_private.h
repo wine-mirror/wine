@@ -45,6 +45,6 @@ static inline BOOL opc_array_reserve(void **elements, size_t *capacity, size_t c
     return TRUE;
 }
 
-extern HRESULT opc_package_create(IOpcPackage **package) DECLSPEC_HIDDEN;
+extern HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **package) DECLSPEC_HIDDEN;
 extern HRESULT opc_part_uri_create(const WCHAR *uri, IOpcPartUri **part_uri) DECLSPEC_HIDDEN;
 extern HRESULT opc_uri_create(const WCHAR *uri, IOpcUri **opc_uri) DECLSPEC_HIDDEN;

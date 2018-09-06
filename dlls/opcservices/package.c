@@ -37,6 +37,7 @@ struct opc_package
 
     IOpcPartSet *part_set;
     IOpcRelationshipSet *relationship_set;
+    IOpcUri *source_uri;
 };
 
 struct opc_part
@@ -69,6 +70,7 @@ struct opc_relationship
     WCHAR *type;
     IUri *target;
     OPC_URI_TARGET_MODE target_mode;
+    IOpcUri *source_uri;
 };
 
 struct opc_relationship_set
@@ -79,6 +81,7 @@ struct opc_relationship_set
     struct opc_relationship **relationships;
     size_t size;
     size_t count;
+    IOpcUri *source_uri;
 };
 
 static inline struct opc_package *impl_from_IOpcPackage(IOpcPackage *iface)
@@ -106,7 +109,7 @@ static inline struct opc_relationship *impl_from_IOpcRelationship(IOpcRelationsh
     return CONTAINING_RECORD(iface, struct opc_relationship, IOpcRelationship_iface);
 }
 
-static HRESULT opc_relationship_set_create(IOpcRelationshipSet **relationship_set);
+static HRESULT opc_relationship_set_create(IOpcUri *source_uri, IOpcRelationshipSet **relationship_set);
 
 static WCHAR *opc_strdupW(const WCHAR *str)
 {
@@ -177,7 +180,7 @@ static HRESULT WINAPI opc_part_GetRelationshipSet(IOpcPart *iface, IOpcRelations
 
     TRACE("iface %p, relationship_set %p.\n", iface, relationship_set);
 
-    if (!part->relationship_set && FAILED(hr = opc_relationship_set_create(&part->relationship_set)))
+    if (!part->relationship_set && FAILED(hr = opc_relationship_set_create((IOpcUri *)part->name, &part->relationship_set)))
         return hr;
 
     *relationship_set = part->relationship_set;
@@ -401,6 +404,7 @@ static ULONG WINAPI opc_relationship_Release(IOpcRelationship *iface)
     {
         CoTaskMemFree(relationship->id);
         CoTaskMemFree(relationship->type);
+        IOpcUri_Release(relationship->source_uri);
         IUri_Release(relationship->target);
         heap_free(relationship);
     }
@@ -430,9 +434,14 @@ static HRESULT WINAPI opc_relationship_GetRelationshipType(IOpcRelationship *ifa
 
 static HRESULT WINAPI opc_relationship_GetSourceUri(IOpcRelationship *iface, IOpcUri **uri)
 {
-    FIXME("iface %p, uri %p stub!\n", iface, uri);
+    struct opc_relationship *relationship = impl_from_IOpcRelationship(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, uri %p.\n", iface, uri);
+
+    *uri = relationship->source_uri;
+    IOpcUri_AddRef(*uri);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_relationship_GetTargetUri(IOpcRelationship *iface, IUri **target)
@@ -486,6 +495,8 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
 
     relationship->target = target_uri;
     IUri_AddRef(relationship->target);
+    relationship->source_uri = set->source_uri;
+    IOpcUri_AddRef(relationship->source_uri);
 
     /* FIXME: test that id is unique */
     if (id)
@@ -557,6 +568,7 @@ static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
 
         for (i = 0; i < relationship_set->count; ++i)
             IOpcRelationship_Release(&relationship_set->relationships[i]->IOpcRelationship_iface);
+        IOpcUri_Release(relationship_set->source_uri);
         heap_free(relationship_set->relationships);
         heap_free(relationship_set);
     }
@@ -637,7 +649,7 @@ static const IOpcRelationshipSetVtbl opc_relationship_set_vtbl =
     opc_relationship_set_GetRelationshipsContentStream,
 };
 
-static HRESULT opc_relationship_set_create(IOpcRelationshipSet **out)
+static HRESULT opc_relationship_set_create(IOpcUri *source_uri, IOpcRelationshipSet **out)
 {
     struct opc_relationship_set *relationship_set;
 
@@ -646,6 +658,8 @@ static HRESULT opc_relationship_set_create(IOpcRelationshipSet **out)
 
     relationship_set->IOpcRelationshipSet_iface.lpVtbl = &opc_relationship_set_vtbl;
     relationship_set->refcount = 1;
+    relationship_set->source_uri = source_uri;
+    IOpcUri_AddRef(relationship_set->source_uri);
 
     *out = &relationship_set->IOpcRelationshipSet_iface;
     TRACE("Created relationship set %p.\n", *out);
@@ -691,6 +705,8 @@ static ULONG WINAPI opc_package_Release(IOpcPackage *iface)
             IOpcPartSet_Release(package->part_set);
         if (package->relationship_set)
             IOpcRelationshipSet_Release(package->relationship_set);
+        if (package->source_uri)
+            IOpcUri_Release(package->source_uri);
         heap_free(package);
     }
 
@@ -728,8 +744,11 @@ static HRESULT WINAPI opc_package_GetRelationshipSet(IOpcPackage *iface, IOpcRel
 
     TRACE("iface %p, relationship_set %p.\n", iface, relationship_set);
 
-    if (!package->relationship_set && FAILED(hr = opc_relationship_set_create(&package->relationship_set)))
+    if (!package->relationship_set)
+    {
+        if (FAILED(hr = opc_relationship_set_create(package->source_uri, &package->relationship_set)))
             return hr;
+    }
 
     *relationship_set = package->relationship_set;
     IOpcRelationshipSet_AddRef(*relationship_set);
@@ -746,15 +765,22 @@ static const IOpcPackageVtbl opc_package_vtbl =
     opc_package_GetRelationshipSet,
 };
 
-HRESULT opc_package_create(IOpcPackage **out)
+HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **out)
 {
     struct opc_package *package;
+    HRESULT hr;
 
     if (!(package = heap_alloc_zero(sizeof(*package))))
         return E_OUTOFMEMORY;
 
     package->IOpcPackage_iface.lpVtbl = &opc_package_vtbl;
     package->refcount = 1;
+
+    if (FAILED(hr = IOpcFactory_CreatePackageRootUri(factory, &package->source_uri)))
+    {
+        heap_free(package);
+        return hr;
+    }
 
     *out = &package->IOpcPackage_iface;
     TRACE("Created package %p.\n", *out);

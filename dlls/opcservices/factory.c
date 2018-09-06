@@ -336,7 +336,7 @@ static HRESULT WINAPI opc_factory_CreatePackage(IOpcFactory *iface, IOpcPackage 
 {
     TRACE("iface %p, package %p.\n", iface, package);
 
-    return opc_package_create(package);
+    return opc_package_create(iface, package);
 }
 
 static HRESULT WINAPI opc_factory_ReadPackageFromStream(IOpcFactory *iface, IStream *stream,
