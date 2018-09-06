@@ -3792,8 +3792,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
 
         /* get the system drive */
         GetSystemDirectoryW(def_val, MAX_PATH);
-        if (def_val[1] == ':') strcpyW( def_val + 3, szDefaultProfileDirW );
-        else FIXME("non-drive system paths unsupported\n");
+        strcpyW( def_val + 3, szDefaultProfileDirW );
 
         hr = _SHGetProfilesValue(key, ProfilesDirectoryW, szProfilesPrefix, def_val );
     }
@@ -3807,8 +3806,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             WCHAR szAllUsers[MAX_PATH], def_val[MAX_PATH];
 
             GetSystemDirectoryW(def_val, MAX_PATH);
-            if (def_val[1] == ':') strcpyW( def_val + 3, UsersPublicW );
-            else FIXME("non-drive system paths unsupported\n");
+            strcpyW( def_val + 3, UsersPublicW );
 
             hr = _SHGetProfilesValue(key, PublicW, szAllUsers, def_val);
             PathAppendW(szDest, szAllUsers);
@@ -3833,8 +3831,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             if (!in_registry)
             {
                 GetSystemDirectoryW(def_val, MAX_PATH);
-                if (def_val[1] == ':') strcpyW( def_val + 3, ProgramDataW );
-                else FIXME("non-drive system paths unsupported\n");
+                strcpyW( def_val + 3, ProgramDataW );
             }
 
             hr = _SHGetProfilesValue(key, ProgramDataW, szProgramData, def_val);
@@ -3854,16 +3851,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
         else if (!strncmpiW(szTemp, SystemDriveW, strlenW(SystemDriveW)))
         {
             GetSystemDirectoryW(szDest, MAX_PATH);
-            if (szDest[1] != ':')
-            {
-                FIXME("non-drive system paths unsupported\n");
-                hr = E_FAIL;
-            }
-            else
-            {
-                strcpyW(szDest + 3, szTemp + strlenW(SystemDriveW) + 1);
-                hr = S_OK;
-            }
+            strcpyW(szDest + 3, szTemp + strlenW(SystemDriveW) + 1);
         }
         else
         {
