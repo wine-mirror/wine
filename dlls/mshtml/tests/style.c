@@ -736,6 +736,26 @@ static void test_style6(IHTMLStyle6 *style)
     SysFreeString(str);
 }
 
+static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
+{
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLCSSStyleDeclaration_get_backgroundClip(css_style, &str);
+    ok(hres == S_OK, "get_backgroundClip failed: %08x\n", hres);
+    ok(!str, "backgroundClip = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("border-box");
+    hres = IHTMLCSSStyleDeclaration_put_backgroundClip(css_style, str);
+    ok(hres == S_OK, "put_backgroundClip failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_get_backgroundClip(css_style, &str);
+    ok(hres == S_OK, "get_backgroundClip failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "border-box"), "backgroundClip = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
 static void test_body_style(IHTMLStyle *style)
 {
     IHTMLCSSStyleDeclaration *css_style;
@@ -2816,6 +2836,9 @@ static void test_body_style(IHTMLStyle *style)
     }else {
         win_skip("IHTMLStyle6 not available\n");
     }
+
+    if(compat_mode >= COMPAT_IE9)
+        test_css_style_declaration(css_style);
 
     if(css_style)
         IHTMLCSSStyleDeclaration_Release(css_style);

@@ -39,6 +39,8 @@ static const WCHAR backgroundW[] =
     {'b','a','c','k','g','r','o','u','n','d',0};
 static const WCHAR background_attachmentW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','a','t','t','a','c','h','m','e','n','t',0};
+static const WCHAR background_clipW[] =
+    {'b','a','c','k','g','r','o','u','n','d','-','c','l','i','p',0};
 static const WCHAR background_colorW[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR background_imageW[] =
@@ -333,6 +335,7 @@ typedef struct {
 static const style_tbl_entry_t style_tbl[] = {
     {backgroundW,             DISPID_IHTMLSTYLE_BACKGROUND},
     {background_attachmentW,  DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT},
+    {background_clipW,        DISPID_UNKNOWN},
     {background_colorW,       DISPID_IHTMLSTYLE_BACKGROUNDCOLOR,       ATTR_HEX_INT},
     {background_imageW,       DISPID_IHTMLSTYLE_BACKGROUNDIMAGE,       ATTR_FIX_URL},
     {background_positionW,    DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
@@ -7290,15 +7293,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssFloat(IHTMLCSSStyleDeclarat
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundClip(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_BACKGROUND_CLIP, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundClip(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_BACKGROUND_CLIP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundOrigin(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -7760,7 +7763,7 @@ static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, 
     const style_tbl_entry_t *style_entry;
 
     style_entry = lookup_style_tbl(name);
-    if(style_entry) {
+    if(style_entry && style_entry->dispid != DISPID_UNKNOWN) {
         *dispid = style_entry->dispid;
         return S_OK;
     }
