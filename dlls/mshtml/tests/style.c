@@ -806,6 +806,7 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
 static void test_body_style(IHTMLStyle *style)
 {
     IHTMLCSSStyleDeclaration *css_style;
+    IHTMLCSSStyleDeclaration2 *css_style2 = NULL;
     IHTMLStyle2 *style2;
     IHTMLStyle3 *style3;
     IHTMLStyle4 *style4;
@@ -824,6 +825,12 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLCSSStyleDeclaration, (void**)&css_style);
     ok(hres == S_OK || broken(!is_ie9plus && hres == E_NOINTERFACE),
        "Could not get IHTMLCSSStyleDeclaration interface: %08x\n", hres);
+
+    if(css_style) {
+        hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLCSSStyleDeclaration2, (void**)&css_style2);
+        ok(hres == S_OK || broken(hres == E_NOINTERFACE),
+           "Could not get IHTMLCSSStyleDeclaration2 interface: %08x\n", hres);
+    }
 
     test_style_csstext(style, NULL);
 
@@ -2895,6 +2902,8 @@ static void test_body_style(IHTMLStyle *style)
     if(compat_mode >= COMPAT_IE9)
         test_css_style_declaration(css_style);
 
+    if(css_style2)
+        IHTMLCSSStyleDeclaration2_Release(css_style2);
     if(css_style)
         IHTMLCSSStyleDeclaration_Release(css_style);
 }

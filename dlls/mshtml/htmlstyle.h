@@ -25,6 +25,7 @@ struct HTMLStyle {
     IHTMLStyle5 IHTMLStyle5_iface;
     IHTMLStyle6 IHTMLStyle6_iface;
     IHTMLCSSStyleDeclaration IHTMLCSSStyleDeclaration_iface;
+    IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
 
     LONG ref;
 

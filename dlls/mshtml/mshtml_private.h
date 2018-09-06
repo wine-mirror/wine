@@ -148,6 +148,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLBodyElement2) \
     XIID(IHTMLButtonElement) \
     XIID(IHTMLCSSStyleDeclaration) \
+    XIID(IHTMLCSSStyleDeclaration2) \
     XIID(IHTMLCommentElement) \
     XIID(IHTMLCurrentStyle) \
     XIID(IHTMLCurrentStyle2) \
