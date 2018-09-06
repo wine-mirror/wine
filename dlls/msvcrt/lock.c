@@ -1404,6 +1404,16 @@ MSVCRT_bool __thiscall _ReentrantBlockingLock__TryAcquire(_ReentrantBlockingLock
     TRACE("(%p)\n", this);
     return TryEnterCriticalSection(&this->cs);
 }
+
+/* ?wait@Concurrency@@YAXI@Z */
+void __cdecl Concurrency_wait(unsigned int time)
+{
+    static int once;
+
+    if (!once++) FIXME("(%d) stub!\n", time);
+
+    Sleep(time);
+}
 #endif
 
 #if _MSVCR_VER == 110

@@ -496,7 +496,7 @@
 @ thiscall -arch=win32 ?unlock@reader_writer_lock@Concurrency@@QAEXXZ(ptr) reader_writer_lock_unlock
 @ cdecl -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ(ptr) reader_writer_lock_unlock
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) MSVCRT_vsnwprintf
-@ stub ?wait@Concurrency@@YAXI@Z
+@ cdecl ?wait@Concurrency@@YAXI@Z(long) Concurrency_wait
 @ thiscall -arch=win32 ?wait@event@Concurrency@@QAEII@Z(ptr) event_wait
 @ cdecl -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z(ptr) event_wait
 @ cdecl -arch=win32 ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z(ptr long long long) event_wait_for_multiple
