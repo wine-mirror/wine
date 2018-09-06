@@ -3899,4 +3899,4 @@
 @ cdecl towctrans(long long)
 @ cdecl wctrans(str)
 @ cdecl wctype(str)
-@ stub xtime_get
+@ cdecl xtime_get(ptr long)
