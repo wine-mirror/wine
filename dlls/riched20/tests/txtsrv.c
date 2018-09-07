@@ -949,6 +949,25 @@ static void test_QueryInterface(void)
     ITextHost_Release(host);
 }
 
+static void test_TxGetScroll(void)
+{
+    ITextServices *txtserv;
+    ITextHost *host;
+    HRESULT ret;
+
+    if (!init_texthost(&txtserv, &host))
+        return;
+
+    ret = ITextServices_TxGetHScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
+    ok(ret == S_OK, "ITextSerHices_GetVScroll failed: 0x%08x.\n", ret);
+
+    ret = ITextServices_TxGetVScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
+    ok(ret == S_OK, "ITextServices_GetVScroll failed: 0x%08x.\n", ret);
+
+    ITextServices_Release(txtserv);
+    ITextHost_Release(host);
+}
+
 START_TEST( txtsrv )
 {
     ITextServices *txtserv;
@@ -979,6 +998,7 @@ START_TEST( txtsrv )
         test_TxGetNaturalSize();
         test_TxDraw();
         test_QueryInterface();
+        test_TxGetScroll();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
