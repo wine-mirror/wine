@@ -380,8 +380,15 @@ static void test_set_csstext(IHTMLStyle *style)
     SysFreeString(str);
 
     hres = IHTMLCSSStyleDeclaration_get_cssFloat(css_style, &str);
-    ok(hres == S_OK, "get_cssText failed: %08x\n", hres);
+    ok(hres == S_OK, "get_cssFloat failed: %08x\n", hres);
     ok(!strcmp_wa(str, "left"), "cssFloat = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_get_cssText(css_style, &str);
+    ok(hres == S_OK, "get_cssText failed: %08x\n", hres);
+    todo_wine_if(compat_mode < COMPAT_IE9)
+    ok(!strcmp_wa(str, compat_mode >= COMPAT_IE9 ? "float: left;" : "FLOAT: left"),
+       "cssFloat = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hres = IHTMLCSSStyleDeclaration_put_cssText(css_style, NULL);

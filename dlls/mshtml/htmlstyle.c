@@ -2472,26 +2472,10 @@ static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_cssText(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    nsAString text_str;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    /* FIXME: Gecko style formatting is different than IE (uppercase). */
-    nsAString_Init(&text_str, NULL);
-    nsres = nsIDOMCSSStyleDeclaration_GetCssText(This->nsstyle, &text_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *text;
-
-        nsAString_GetData(&text_str, &text);
-        *p = *text ? SysAllocString(text) : NULL;
-    }else {
-        FIXME("GetCssStyle failed: %08x\n", nsres);
-        *p = NULL;
-    }
-
-    nsAString_Finish(&text_str);
-    return S_OK;
+    return IHTMLCSSStyleDeclaration_get_cssText(&This->IHTMLCSSStyleDeclaration_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, LONG v)
@@ -5802,8 +5786,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssText(IHTMLCSSStyleDeclarati
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssText(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* NOTE: Quicks mode should use different formatting (uppercase, no ';' at the end of rule). */
+    nsAString_Init(&text_str, NULL);
+    nsres = nsIDOMCSSStyleDeclaration_GetCssText(This->nsstyle, &text_str);
+    return return_nsstr(nsres, &text_str, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cursor(IHTMLCSSStyleDeclaration *iface, BSTR v)
