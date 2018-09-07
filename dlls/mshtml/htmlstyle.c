@@ -4766,8 +4766,18 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyPriority(IHTMLCSSStyleD
 static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclaration *iface, BSTR bstrPropertyName, BSTR *pbstrPropertyValue)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
-    return E_NOTIMPL;
+    const style_tbl_entry_t *style_entry;
+    nsAString name_str, ret_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
+
+    style_entry = lookup_style_tbl(bstrPropertyName);
+    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : bstrPropertyName);
+    nsAString_Init(&ret_str, NULL);
+    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
+    nsAString_Finish(&name_str);
+    return return_nsstr(nsres, &ret_str, pbstrPropertyValue);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclaration *iface, BSTR bstrPropertyName, VARIANT *pvarPropertyValue, VARIANT *pvarPropertyPriority)
