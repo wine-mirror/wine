@@ -231,6 +231,16 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
     return hr;
 }
 
+HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
+                           UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
+                           UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types)
+{
+    FIXME("(%p, %s, %s, %x, %u, %p, %u, %p)\n", factory, debugstr_guid(category), debugstr_w(name),
+                                                flags, cinput, input_types, coutput, output_types);
+
+    return S_OK;
+}
+
 static BOOL match_type(const WCHAR *clsid_str, const WCHAR *type_str, MFT_REGISTER_TYPE_INFO *type)
 {
     HKEY htransform, hfilter;
