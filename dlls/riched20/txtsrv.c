@@ -182,11 +182,16 @@ DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetHScroll(ITextServices *iface, LONG
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
-   *plMin = This->editor->horz_si.nMin;
-   *plMax = This->editor->horz_si.nMax;
-   *plPos = This->editor->horz_si.nPos;
-   *plPage = This->editor->horz_si.nPage;
-   *pfEnabled = (This->editor->styleFlags & WS_HSCROLL) != 0;
+   if (plMin)
+      *plMin = This->editor->horz_si.nMin;
+   if (plMax)
+      *plMax = This->editor->horz_si.nMax;
+   if (plPos)
+      *plPos = This->editor->horz_si.nPos;
+   if (plPage)
+      *plPage = This->editor->horz_si.nPage;
+   if (pfEnabled)
+      *pfEnabled = (This->editor->styleFlags & WS_HSCROLL) != 0;
    return S_OK;
 }
 
@@ -195,11 +200,16 @@ DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface, LONG
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
-   *plMin = This->editor->vert_si.nMin;
-   *plMax = This->editor->vert_si.nMax;
-   *plPos = This->editor->vert_si.nPos;
-   *plPage = This->editor->vert_si.nPage;
-   *pfEnabled = (This->editor->styleFlags & WS_VSCROLL) != 0;
+   if (plMin)
+      *plMin = This->editor->vert_si.nMin;
+   if (plMax)
+      *plMax = This->editor->vert_si.nMax;
+   if (plPos)
+      *plPos = This->editor->vert_si.nPos;
+   if (plPage)
+      *plPage = This->editor->vert_si.nPage;
+   if (pfEnabled)
+      *pfEnabled = (This->editor->styleFlags & WS_VSCROLL) != 0;
    return S_OK;
 }
 
