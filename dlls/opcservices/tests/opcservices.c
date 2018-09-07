@@ -41,16 +41,18 @@ static void test_package(void)
     static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
     static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
     static const WCHAR uriW[] = {'/','u','r','i',0};
+    static const WCHAR rootW[] = {'/',0};
     IOpcRelationshipSet *relset, *relset2;
     IOpcPartSet *partset, *partset2;
     IOpcRelationship *rel;
     IOpcPartUri *part_uri;
     IOpcFactory *factory;
     IOpcPackage *package;
-    IOpcUri *source_uri;
     IUri *target_uri;
     IOpcPart *part;
+    IOpcUri *uri;
     HRESULT hr;
+    BSTR str;
     BOOL ret;
 
     factory = create_factory();
@@ -93,11 +95,11 @@ static void test_package(void)
     hr = IOpcRelationshipSet_CreateRelationship(relset, NULL, typeW, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(SUCCEEDED(hr), "Failed to create relationship, hr %#x.\n", hr);
 
-    hr = IOpcRelationship_GetSourceUri(rel, &source_uri);
+    hr = IOpcRelationship_GetSourceUri(rel, &uri);
     ok(SUCCEEDED(hr), "Failed to get source uri, hr %#x.\n", hr);
-    ok(source_uri == (IOpcUri *)part_uri, "Unexpected source uri.\n");
+    ok(uri == (IOpcUri *)part_uri, "Unexpected source uri.\n");
 
-    IOpcUri_Release(source_uri);
+    IOpcUri_Release(uri);
 
     IOpcRelationship_Release(rel);
     IUri_Release(target_uri);
@@ -125,6 +127,17 @@ todo_wine {
     IOpcRelationshipSet_Release(relset2);
 
     IOpcPackage_Release(package);
+
+    /* Root uri */
+    hr = IOpcFactory_CreatePackageRootUri(factory, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IOpcFactory_CreatePackageRootUri(factory, &uri);
+    ok(SUCCEEDED(hr), "Failed to create root uri, hr %#x.\n", hr);
+    hr = IOpcUri_GetRawUri(uri, &str);
+    ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#x.\n", hr);
+    ok(!lstrcmpW(str, rootW), "Unexpected uri %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IOpcUri_Release(uri);
 
     IOpcFactory_Release(factory);
 }

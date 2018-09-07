@@ -552,6 +552,8 @@ HRESULT opc_root_uri_create(IOpcUri **out)
     HRESULT hr;
     IUri *uri;
 
+    *out = NULL;
+
     if (!(obj = heap_alloc_zero(sizeof(*obj))))
         return E_OUTOFMEMORY;
 

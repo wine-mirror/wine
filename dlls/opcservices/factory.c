@@ -312,6 +312,9 @@ static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcU
 {
     TRACE("iface %p, uri %p.\n", iface, uri);
 
+    if (!uri)
+        return E_POINTER;
+
     return opc_root_uri_create(uri);
 }
 
