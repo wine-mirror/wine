@@ -1460,7 +1460,11 @@ void SYSPARAMS_Init(void)
 
     /* FIXME: what do the DpiScalingVer flags mean? */
     get_dword_entry( (union sysparam_all_entry *)&entry_DPISCALINGVER, 0, &dpi_scaling, 0 );
-    if (!dpi_scaling) default_awareness = DPI_AWARENESS_PER_MONITOR_AWARE;
+    if (!dpi_scaling)
+    {
+        default_awareness = DPI_AWARENESS_PER_MONITOR_AWARE;
+        if (dpi_awareness) dpi_awareness = 0x10 | default_awareness;
+    }
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
     {
