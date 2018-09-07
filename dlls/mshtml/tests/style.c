@@ -2861,6 +2861,26 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_styleFloat(style, &str);
     ok(hres == S_OK, "get_styleFloat failed: %08x\n", hres);
     ok(!strcmp_wa(str, "left"), "styleFloat = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    if(css_style) {
+        str = NULL;
+        hres = IHTMLCSSStyleDeclaration_get_cssFloat(css_style, &str);
+        ok(hres == S_OK, "get_cssFloat failed: %08x\n", hres);
+        ok(!strcmp_wa(str, "left"), "styleFloat = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        str = a2bstr("right");
+        hres = IHTMLCSSStyleDeclaration_put_cssFloat(css_style, str);
+        ok(hres == S_OK, "put_styleFloat failed: %08x\n", hres);
+        SysFreeString(str);
+
+        str = NULL;
+        hres = IHTMLCSSStyleDeclaration_get_cssFloat(css_style, &str);
+        ok(hres == S_OK, "get_cssFloat failed: %08x\n", hres);
+        ok(!strcmp_wa(str, "right"), "styleFloat = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);

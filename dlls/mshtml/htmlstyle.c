@@ -7284,15 +7284,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_clipLeft(IHTMLCSSStyleDeclarat
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssFloat(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_FLOAT, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssFloat(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_FLOAT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundClip(IHTMLCSSStyleDeclaration *iface, BSTR v)
