@@ -78,6 +78,9 @@ HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags, UINT32 cinput,
                            MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
                            MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes);
+HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
+                           UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
+                           UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types);
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
