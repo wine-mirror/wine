@@ -51,7 +51,7 @@
 @ stub MFCreateMediaEvent
 @ stdcall MFCreateMediaType(ptr)
 @ stub MFCreateMediaTypeFromRepresentation
-@ stub MFCreateMemoryBuffer
+@ stdcall MFCreateMemoryBuffer(long ptr)
 @ stub MFCreateMemoryStream
 @ stub MFCreatePathFromURL
 @ stub MFCreatePresentationDescriptor
