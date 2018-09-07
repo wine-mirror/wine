@@ -37,6 +37,7 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
+static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 
 DEFINE_GUID(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 0xa634a91c, 0x822b, 0x41b9, 0xa4, 0x94, 0x4d, 0xe4, 0x64, 0x36, 0x12, 0xb0);
 
@@ -194,6 +195,7 @@ static void init_functions(void)
 
 #define X(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return;
     X(MFCreateSourceResolver);
+    X(MFCreateMFByteStreamOnStream);
 #undef X
 }
 
@@ -250,6 +252,27 @@ static void test_MFCreateAttributes(void)
     IMFAttributes_Release(attributes);
 }
 
+static void test_MFCreateMFByteStreamOnStream(void)
+{
+    IMFByteStream *bytestream;
+    IStream *stream;
+    HRESULT hr;
+
+    if(!pMFCreateMFByteStreamOnStream)
+    {
+        win_skip("MFCreateMFByteStreamOnStream() not found\n");
+        return;
+    }
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = pMFCreateMFByteStreamOnStream(stream, &bytestream );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IStream_Release(stream);
+    IMFByteStream_Release(bytestream);
+}
 
 START_TEST(mfplat)
 {
@@ -261,6 +284,7 @@ START_TEST(mfplat)
     test_source_resolver();
     test_MFCreateMediaType();
     test_MFCreateAttributes();
+    test_MFCreateMFByteStreamOnStream();
 
     CoUninitialize();
 }
