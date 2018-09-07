@@ -45,9 +45,20 @@ static inline BOOL opc_array_reserve(void **elements, size_t *capacity, size_t c
     return TRUE;
 }
 
+struct opc_uri
+{
+    IOpcPartUri IOpcPartUri_iface;
+    LONG refcount;
+    BOOL is_part_uri;
+
+    IUri *uri;
+    IUri *rels_part_uri;
+    struct opc_uri *source_uri;
+};
+
 extern HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **package) DECLSPEC_HIDDEN;
-extern HRESULT opc_part_uri_create(const WCHAR *uri, IOpcPartUri **part_uri) DECLSPEC_HIDDEN;
-extern HRESULT opc_uri_create(const WCHAR *uri, IOpcUri **opc_uri) DECLSPEC_HIDDEN;
+extern HRESULT opc_part_uri_create(IUri *uri, struct opc_uri *source_uri, IOpcPartUri **part_uri) DECLSPEC_HIDDEN;
+extern HRESULT opc_root_uri_create(IOpcUri **opc_uri) DECLSPEC_HIDDEN;
 
 extern HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *stream) DECLSPEC_HIDDEN;
 

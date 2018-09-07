@@ -1,5 +1,5 @@
 MODULE  = opcservices.dll
-IMPORTS = uuid ole32 advapi32 urlmon xmllite
+IMPORTS = uuid ole32 advapi32 urlmon xmllite oleaut32
 EXTRALIBS = $(Z_LIBS)
 
 C_SRCS = \

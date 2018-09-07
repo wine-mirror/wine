@@ -23,24 +23,18 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "opc_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 
-struct opc_uri
-{
-    IOpcPartUri IOpcPartUri_iface;
-    LONG refcount;
-    BOOL is_part_uri;
-
-    IUri *uri;
-};
-
 static inline struct opc_uri *impl_from_IOpcPartUri(IOpcPartUri *iface)
 {
     return CONTAINING_RECORD(iface, struct opc_uri, IOpcPartUri_iface);
 }
+
+static HRESULT opc_source_uri_create(struct opc_uri *uri, IOpcUri **out);
 
 static HRESULT WINAPI opc_uri_QueryInterface(IOpcPartUri *iface, REFIID iid, void **out)
 {
@@ -81,6 +75,10 @@ static ULONG WINAPI opc_uri_Release(IOpcPartUri *iface)
 
     if (!refcount)
     {
+        if (uri->rels_part_uri)
+            IUri_Release(uri->rels_part_uri);
+        if (uri->source_uri)
+            IOpcPartUri_Release(&uri->source_uri->IOpcPartUri_iface);
         IUri_Release(uri->uri);
         heap_free(uri);
     }
@@ -319,9 +317,20 @@ static HRESULT WINAPI opc_uri_IsEqual(IOpcPartUri *iface, IUri *comparand, BOOL 
 
 static HRESULT WINAPI opc_uri_GetRelationshipsPartUri(IOpcPartUri *iface, IOpcPartUri **part_uri)
 {
-    FIXME("iface %p, part_uri %p stub!\n", iface, part_uri);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, part_uri %p.\n", iface, part_uri);
+
+    if (!part_uri)
+        return E_POINTER;
+
+    if (!uri->rels_part_uri)
+    {
+        *part_uri = NULL;
+        return OPC_E_NONCONFORMING_URI;
+    }
+
+    return opc_part_uri_create(uri->rels_part_uri, uri, part_uri);
 }
 
 static HRESULT WINAPI opc_uri_GetRelativeUri(IOpcPartUri *iface, IOpcPartUri *part_uri,
@@ -349,16 +358,25 @@ static HRESULT WINAPI opc_uri_ComparePartUri(IOpcPartUri *iface, IOpcPartUri *pa
 
 static HRESULT WINAPI opc_uri_GetSourceUri(IOpcPartUri *iface, IOpcUri **source_uri)
 {
-    FIXME("iface %p, source_uri %p stub!\n", iface, source_uri);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, source_uri %p.\n", iface, source_uri);
+
+    return opc_source_uri_create(uri, source_uri);
 }
 
 static HRESULT WINAPI opc_uri_IsRelationshipsPartUri(IOpcPartUri *iface, BOOL *result)
 {
-    FIXME("iface %p, result %p stub!\n", iface, result);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, result %p.\n", iface, result);
+
+    if (!result)
+        return E_POINTER;
+
+    *result = !uri->rels_part_uri;
+
+    return S_OK;
 }
 
 static const IOpcPartUriVtbl opc_part_uri_vtbl =
@@ -399,56 +417,161 @@ static const IOpcPartUriVtbl opc_part_uri_vtbl =
     opc_uri_IsRelationshipsPartUri,
 };
 
-static HRESULT opc_part_uri_init(struct opc_uri *object, BOOL is_part_uri, const WCHAR *uri)
+static IUri *opc_part_uri_get_rels_uri(IUri *uri)
 {
+    static const WCHAR relsdirW[] = {'/','_','r','e','l','s',0};
+    static const WCHAR relsextW[] = {'.','r','e','l','s',0};
+    WCHAR *start = NULL, *end, *ret;
+    IUri *rels_uri;
     HRESULT hr;
+    DWORD len;
+    BSTR path;
 
+    if (FAILED(IUri_GetPath(uri, &path)))
+        return NULL;
+
+    if (FAILED(IUri_GetPropertyLength(uri, Uri_PROPERTY_PATH, &len, 0)))
+    {
+        SysFreeString(path);
+        return NULL;
+    }
+
+    end = strrchrW(path, '/');
+    if (end && end >= path + ARRAY_SIZE(relsdirW) - 1)
+        start = end - ARRAY_SIZE(relsdirW) + 1;
+    if (!start)
+        start = end;
+
+    /* Test if it's already relationships uri. */
+    if (len > ARRAY_SIZE(relsextW))
+    {
+        if (!strcmpW(path + len - ARRAY_SIZE(relsextW) + 1, relsextW))
+        {
+            if (start && !memcmp(start, relsdirW, ARRAY_SIZE(relsdirW) - sizeof(WCHAR)))
+            {
+                SysFreeString(path);
+                return NULL;
+            }
+        }
+    }
+
+    ret = heap_alloc((len + ARRAY_SIZE(relsextW) + ARRAY_SIZE(relsdirW)) * sizeof(WCHAR));
+    if (!ret)
+    {
+        SysFreeString(path);
+        return NULL;
+    }
+    ret[0] = 0;
+
+    if (start != path)
+    {
+        memcpy(ret, path, (start - path) * sizeof(WCHAR));
+        ret[start - path] = 0;
+    }
+
+    strcatW(ret, relsdirW);
+    strcatW(ret, end);
+    strcatW(ret, relsextW);
+
+    if (FAILED(hr = CreateUri(ret, Uri_CREATE_ALLOW_RELATIVE, 0, &rels_uri)))
+        WARN("Failed to create rels uri, hr %#x.\n", hr);
+    heap_free(ret);
+
+    return rels_uri;
+}
+
+static HRESULT opc_part_uri_init(struct opc_uri *object, struct opc_uri *source_uri, BOOL is_part_uri, IUri *uri)
+{
     object->IOpcPartUri_iface.lpVtbl = &opc_part_uri_vtbl;
     object->refcount = 1;
     object->is_part_uri = is_part_uri;
-
-    if (FAILED(hr = CreateUri(uri, Uri_CREATE_ALLOW_RELATIVE, 0, &object->uri)))
-        return hr;
+    object->uri = uri;
+    IUri_AddRef(object->uri);
+    object->rels_part_uri = opc_part_uri_get_rels_uri(object->uri);
+    object->source_uri = source_uri;
+    if (object->source_uri)
+        IOpcPartUri_AddRef(&object->source_uri->IOpcPartUri_iface);
 
     return S_OK;
 }
 
-HRESULT opc_part_uri_create(const WCHAR *str, IOpcPartUri **out)
+static HRESULT opc_source_uri_create(struct opc_uri *uri, IOpcUri **out)
 {
-    struct opc_uri *uri;
+    struct opc_uri *obj;
     HRESULT hr;
 
-    if (!(uri = heap_alloc_zero(sizeof(*uri))))
+    if (!out)
+        return E_POINTER;
+
+    *out = NULL;
+
+    if (!uri->source_uri)
+        return OPC_E_RELATIONSHIP_URI_REQUIRED;
+
+    if (!(obj = heap_alloc_zero(sizeof(*obj))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = opc_part_uri_init(uri, TRUE, str)))
+    if (FAILED(hr = opc_part_uri_init(obj, NULL, uri->source_uri->is_part_uri, uri->source_uri->uri)))
     {
         WARN("Failed to init part uri, hr %#x.\n", hr);
-        heap_free(uri);
+        heap_free(obj);
         return hr;
     }
 
-    *out = &uri->IOpcPartUri_iface;
+    *out = (IOpcUri *)&obj->IOpcPartUri_iface;
+
+    TRACE("Created source uri %p.\n", *out);
+
+    return S_OK;
+}
+
+HRESULT opc_part_uri_create(IUri *uri, struct opc_uri *source_uri, IOpcPartUri **out)
+{
+    struct opc_uri *obj;
+    HRESULT hr;
+
+    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = opc_part_uri_init(obj, source_uri, TRUE, uri)))
+    {
+        WARN("Failed to init part uri, hr %#x.\n", hr);
+        heap_free(obj);
+        return hr;
+    }
+
+    *out = &obj->IOpcPartUri_iface;
     TRACE("Created part uri %p.\n", *out);
     return S_OK;
 }
 
-HRESULT opc_uri_create(const WCHAR *str, IOpcUri **out)
+HRESULT opc_root_uri_create(IOpcUri **out)
 {
-    struct opc_uri *uri;
+    static const WCHAR rootW[] = {'/',0};
+    struct opc_uri *obj;
     HRESULT hr;
+    IUri *uri;
 
-    if (!(uri = heap_alloc_zero(sizeof(*uri))))
+    if (!(obj = heap_alloc_zero(sizeof(*obj))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = opc_part_uri_init(uri, FALSE, str)))
+    if (FAILED(hr = CreateUri(rootW, Uri_CREATE_ALLOW_RELATIVE, 0, &uri)))
+    {
+        WARN("Failed to create rels uri, hr %#x.\n", hr);
+        heap_free(obj);
+        return hr;
+    }
+
+    hr = opc_part_uri_init(obj, NULL, FALSE, uri);
+    IUri_Release(uri);
+    if (FAILED(hr))
     {
         WARN("Failed to init uri, hr %#x.\n", hr);
         heap_free(uri);
         return hr;
     }
 
-    *out = (IOpcUri *)&uri->IOpcPartUri_iface;
+    *out = (IOpcUri *)&obj->IOpcPartUri_iface;
     TRACE("Created part uri %p.\n", *out);
     return S_OK;
 }

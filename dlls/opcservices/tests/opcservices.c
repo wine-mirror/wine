@@ -26,6 +26,7 @@
 #include "msopc.h"
 #include "urlmon.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static IOpcFactory *create_factory(void)
@@ -373,6 +374,171 @@ todo_wine
     IOpcFactory_Release(factory);
 }
 
+static WCHAR *strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+    DWORD len;
+
+    if (!str) return ret;
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = heap_alloc(len * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static void test_rel_part_uri(void)
+{
+    static const struct
+    {
+        const char *uri;
+        const char *rel_uri;
+        HRESULT hr;
+    } rel_part_uri_tests[] =
+    {
+        { "/uri", "/_rels/uri.rels" },
+        { "/uri.ext", "/_rels/uri.ext.rels" },
+        { "/", "/_rels/.rels" },
+        { "/_rels/uri.ext.rels", "", OPC_E_NONCONFORMING_URI },
+    };
+    static const struct
+    {
+        const char *uri;
+        BOOL ret;
+    } is_rel_part_tests[] =
+    {
+        { "/uri", FALSE },
+        { "/_rels/uri", FALSE },
+        { "/_rels/uri/uri", FALSE },
+        { "/_rels/uri/uri.rels", FALSE },
+        { "/uri/uri.rels", FALSE },
+        { "/uri/_rels/uri.rels", TRUE },
+        { "/_rels/.rels", TRUE },
+    };
+    static const WCHAR testuriW[] = {'/','u','r','i',0};
+    IOpcPartUri *part_uri;
+    IOpcFactory *factory;
+    IOpcUri *source_uri;
+    unsigned int i;
+    WCHAR *uriW;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IOpcFactory_CreatePartUri(factory, testuriW, &part_uri);
+    ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+    hr = IOpcPartUri_GetRelationshipsPartUri(part_uri, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartUri_IsRelationshipsPartUri(part_uri, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartUri_GetSourceUri(part_uri, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    source_uri = (void *)0xdeadbeef;
+    hr = IOpcPartUri_GetSourceUri(part_uri, &source_uri);
+    ok(hr == OPC_E_RELATIONSHIP_URI_REQUIRED, "Unexpected hr %#x.\n", hr);
+    ok(source_uri == NULL, "Expected null uri.\n");
+
+    IOpcPartUri_Release(part_uri);
+
+    for (i = 0; i < ARRAY_SIZE(rel_part_uri_tests); ++i)
+    {
+        BOOL is_root = FALSE;
+        IOpcPartUri *rel_uri;
+        IOpcUri *part_uri;
+        WCHAR *rel_uriW;
+
+        uriW = strdupAtoW(rel_part_uri_tests[i].uri);
+        rel_uriW = strdupAtoW(rel_part_uri_tests[i].rel_uri);
+
+        if (!strcmp(rel_part_uri_tests[i].uri, "/"))
+        {
+            hr = IOpcFactory_CreatePackageRootUri(factory, &part_uri);
+            is_root = TRUE;
+        }
+        else
+            hr = IOpcFactory_CreatePartUri(factory, uriW, (IOpcPartUri **)&part_uri);
+        ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+        rel_uri = (void *)0xdeadbeef;
+        hr = IOpcUri_GetRelationshipsPartUri(part_uri, &rel_uri);
+        if (SUCCEEDED(hr))
+        {
+            IOpcPartUri *rel_uri2;
+            IOpcUri *source_uri2;
+            IUnknown *unk = NULL;
+            BOOL ret;
+            BSTR str;
+
+            hr = IOpcPartUri_GetSourceUri(rel_uri, &source_uri);
+            ok(SUCCEEDED(hr), "Failed to get source uri, hr %#x.\n", hr);
+            hr = IOpcPartUri_GetSourceUri(rel_uri, &source_uri2);
+            ok(SUCCEEDED(hr), "Failed to get source uri, hr %#x.\n", hr);
+            ok(source_uri != source_uri2, "Unexpected instance.\n");
+            hr = IOpcUri_IsEqual(source_uri, (IUri *)source_uri2, &ret);
+        todo_wine {
+            ok(SUCCEEDED(hr), "IsEqual failed, hr %#x.\n", hr);
+            ok(ret, "Expected equal uris.\n");
+        }
+            hr = IOpcUri_QueryInterface(source_uri, &IID_IOpcPartUri, (void **)&unk);
+            ok(hr == (is_root ? E_NOINTERFACE : S_OK), "Unexpected hr %#x, %s.\n", hr, rel_part_uri_tests[i].uri);
+            if (unk)
+                IUnknown_Release(unk);
+
+            IOpcUri_Release(source_uri2);
+            IOpcUri_Release(source_uri);
+
+            hr = IOpcUri_GetRelationshipsPartUri(part_uri, &rel_uri2);
+            ok(SUCCEEDED(hr), "Failed to get rels part uri, hr %#x.\n", hr);
+            ok(rel_uri2 != rel_uri, "Unexpected instance.\n");
+            IOpcPartUri_Release(rel_uri2);
+
+            hr = IOpcPartUri_GetRawUri(rel_uri, &str);
+            ok(SUCCEEDED(hr), "Failed to get rel uri, hr %#x.\n", hr);
+            ok(!lstrcmpW(str, rel_uriW), "%u: unexpected rel uri %s, expected %s.\n", i, wine_dbgstr_w(str),
+                    wine_dbgstr_w(rel_uriW));
+            SysFreeString(str);
+
+            IOpcPartUri_Release(rel_uri);
+        }
+        else
+        {
+            ok(hr == rel_part_uri_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+            ok(rel_uri == NULL, "%u: unexpected out pointer.\n", i);
+        }
+
+        heap_free(uriW);
+        heap_free(rel_uriW);
+
+        IOpcUri_Release(part_uri);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(is_rel_part_tests); ++i)
+    {
+        IOpcPartUri *part_uri;
+        BOOL ret;
+
+        uriW = strdupAtoW(is_rel_part_tests[i].uri);
+
+        hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
+        ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+        ret = 123;
+        hr = IOpcPartUri_IsRelationshipsPartUri(part_uri, &ret);
+        ok(SUCCEEDED(hr), "Unexpected hr %#x.\n", hr);
+        ok(ret == is_rel_part_tests[i].ret, "%u: unexpected result %d.\n", i, ret);
+
+        heap_free(uriW);
+
+        IOpcPartUri_Release(part_uri);
+    }
+
+    IOpcFactory_Release(factory);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -390,6 +556,7 @@ START_TEST(opcservices)
     test_package();
     test_file_stream();
     test_relationship();
+    test_rel_part_uri();
 
     IOpcFactory_Release(factory);
 

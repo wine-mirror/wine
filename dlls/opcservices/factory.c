@@ -310,18 +310,25 @@ static ULONG WINAPI opc_factory_Release(IOpcFactory *iface)
 
 static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcUri **uri)
 {
-    static const WCHAR rootW[] = {'/',0};
-
     TRACE("iface %p, uri %p.\n", iface, uri);
 
-    return opc_uri_create(rootW, uri);
+    return opc_root_uri_create(uri);
 }
 
-static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **part_uri)
+static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **out)
 {
-    TRACE("iface %p, uri %s, part_uri %p.\n", iface, debugstr_w(uri), part_uri);
+    IUri *part_uri;
+    HRESULT hr;
 
-    return opc_part_uri_create(uri, part_uri);
+    TRACE("iface %p, uri %s, out %p.\n", iface, debugstr_w(uri), out);
+
+    if (FAILED(hr = CreateUri(uri, Uri_CREATE_ALLOW_RELATIVE, 0, &part_uri)))
+    {
+        WARN("Failed to create uri, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return opc_part_uri_create(part_uri, NULL, out);
 }
 
 static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR filename,
