@@ -85,6 +85,7 @@ HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
+HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
 HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);
 
 #endif /* __WINE_MFAPI_H */

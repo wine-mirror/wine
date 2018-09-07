@@ -240,6 +240,13 @@ HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWST
     return S_OK;
 }
 
+HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory)
+{
+    FIXME("(%p)\n", factory);
+
+    return S_OK;
+}
+
 static BOOL match_type(const WCHAR *clsid_str, const WCHAR *type_str, MFT_REGISTER_TYPE_INFO *type)
 {
     HKEY htransform, hfilter;

@@ -141,7 +141,7 @@
 @ stub MFTRegisterLocal(ptr ptr wstr long long  ptr long ptr)
 @ stub MFTRegisterLocalByCLSID
 @ stdcall MFTUnregister(int128)
-@ stub MFTUnregisterLocal
+@ stdcall MFTUnregisterLocal(ptr)
 @ stub MFTUnregisterLocalByCLSID
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
