@@ -2463,20 +2463,10 @@ static HRESULT WINAPI HTMLStyle_get_pageBreakAfter(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    nsAString text_str;
-    nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_InitDepend(&text_str, v);
-    nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->nsstyle, &text_str);
-    nsAString_Finish(&text_str);
-    if(NS_FAILED(nsres)) {
-        FIXME("SetCssStyle failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return IHTMLCSSStyleDeclaration_put_cssText(&This->IHTMLCSSStyleDeclaration_iface, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_cssText(IHTMLStyle *iface, BSTR *p)
@@ -5793,8 +5783,20 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_pageBreakAfter(IHTMLCSSStyleDe
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssText(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&text_str, v);
+    nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->nsstyle, &text_str);
+    nsAString_Finish(&text_str);
+    if(NS_FAILED(nsres)) {
+        FIXME("SetCssStyle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssText(IHTMLCSSStyleDeclaration *iface, BSTR *p)

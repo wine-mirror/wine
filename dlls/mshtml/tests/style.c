@@ -355,7 +355,9 @@ static void _test_text_decoration(unsigned line, IHTMLStyle *style, const char *
 
 static void test_set_csstext(IHTMLStyle *style)
 {
+    IHTMLCSSStyleDeclaration *css_style;
     VARIANT v;
+    BSTR str;
     HRESULT hres;
 
     test_style_set_csstext(style, "background-color: black;");
@@ -365,6 +367,27 @@ static void test_set_csstext(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "black"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLCSSStyleDeclaration, (void**)&css_style);
+    ok(hres == S_OK || broken(!is_ie9plus && hres == E_NOINTERFACE),
+       "Could not get IHTMLCSSStyleDeclaration interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    str = a2bstr("float: left;");
+    hres = IHTMLCSSStyleDeclaration_put_cssText(css_style, str);
+    ok(hres == S_OK, "put_cssText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_get_cssFloat(css_style, &str);
+    ok(hres == S_OK, "get_cssText failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "left"), "cssFloat = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_put_cssText(css_style, NULL);
+    ok(hres == S_OK, "put_cssText failed: %08x\n", hres);
+
+    IHTMLCSSStyleDeclaration_Release(css_style);
 }
 
 static void test_style2(IHTMLStyle2 *style2)
