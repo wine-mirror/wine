@@ -352,7 +352,7 @@ static HRESULT WINAPI opc_part_set_PartExists(IOpcPartSet *iface, IOpcPartUri *n
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI opc_part_set_GtEnumerator(IOpcPartSet *iface, IOpcPartEnumerator **enumerator)
+static HRESULT WINAPI opc_part_set_GetEnumerator(IOpcPartSet *iface, IOpcPartEnumerator **enumerator)
 {
     FIXME("iface %p, enumerator %p stub!\n", iface, enumerator);
 
@@ -368,7 +368,7 @@ static const IOpcPartSetVtbl opc_part_set_vtbl =
     opc_part_set_CreatePart,
     opc_part_set_DeletePart,
     opc_part_set_PartExists,
-    opc_part_set_GtEnumerator,
+    opc_part_set_GetEnumerator,
 };
 
 static HRESULT WINAPI opc_relationship_QueryInterface(IOpcRelationship *iface, REFIID iid, void **out)
