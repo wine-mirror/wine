@@ -3149,8 +3149,8 @@ static void test_impersonation_level(void)
     /* can't perform access check when opening object against an identification impersonation token */
     error = RegOpenKeyExA(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
     todo_wine {
-    ok(error == ERROR_INVALID_HANDLE || error == ERROR_BAD_IMPERSONATION_LEVEL,
-       "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE or ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
+    ok(error == ERROR_INVALID_HANDLE || error == ERROR_BAD_IMPERSONATION_LEVEL || error == ERROR_ACCESS_DENIED,
+       "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE, ERROR_BAD_IMPERSONATION_LEVEL or ERROR_ACCESS_DENIED instead of %d\n", error);
     }
     ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
     ok(ret, "PrivilegeCheck for SecurityIdentification failed with error %d\n", GetLastError());
