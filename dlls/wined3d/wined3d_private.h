@@ -4346,7 +4346,6 @@ struct wined3d_format
     GLenum gl_vtx_type;
     GLint gl_vtx_format;
     GLboolean gl_normalized;
-    unsigned int attribute_size;
 
     GLint glInternal;
     GLint glGammaInternal;
