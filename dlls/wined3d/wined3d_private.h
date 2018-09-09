@@ -4326,6 +4326,7 @@ struct wined3d_format
     enum wined3d_format_id id;
 
     D3DDDIFORMAT ddi_format;
+    unsigned int component_count;
     DWORD red_size;
     DWORD green_size;
     DWORD blue_size;
@@ -4343,7 +4344,6 @@ struct wined3d_format
     UINT block_byte_count;
 
     enum wined3d_ffp_emit_idx emit_idx;
-    GLint component_count;
     GLenum gl_vtx_type;
     GLint gl_vtx_format;
 
