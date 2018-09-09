@@ -4,7 +4,7 @@
  * Copyright 1999 Ulrich Weigand
  * Copyright 2004 Juan Lang
  * Copyright 2007 Maarten Lankhorst
- * Copyright 2016 Pierre Schweitzer
+ * Copyright 2016-2018 Pierre Schweitzer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2407,6 +2407,56 @@ DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
     return err;
 }
 
+/*****************************************************************
+ * WNetClearConnections [MPR.@]
+ */
+DWORD WINAPI WNetClearConnections ( HWND owner )
+{
+    HANDLE connected;
+    DWORD ret, size, count;
+    NETRESOURCEW * resources, * iter;
+
+    ret = WNetOpenEnumW(RESOURCE_CONNECTED, RESOURCETYPE_ANY, 0, NULL, &connected);
+    if (ret != WN_SUCCESS)
+    {
+        if (ret != WN_NO_NETWORK)
+        {
+            return ret;
+        }
+
+        /* Means no provider, then, clearing is OK */
+        return WN_SUCCESS;
+    }
+
+    size = 0x1000;
+    resources = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!resources)
+    {
+        WNetCloseEnum(connected);
+        return WN_OUT_OF_MEMORY;
+    }
+
+    for (;;)
+    {
+        size = 0x1000;
+        count = -1;
+
+        memset(resources, 0, size);
+        ret = WNetEnumResourceW(connected, &count, resources, &size);
+        if (ret == WN_SUCCESS || ret == WN_MORE_DATA)
+        {
+            for (iter = resources; count; count--, iter++)
+                WNetCancelConnection2W(iter->lpLocalName, 0, TRUE);
+        }
+        else
+            break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, resources);
+    WNetCloseEnum(connected);
+
+    return ret;
+}
 
 
 /*
