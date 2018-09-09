@@ -2018,9 +2018,10 @@ static void test_SafeArrayDestroyData (void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
 todo_wine
   ok(sa->fFeatures == FADF_HAVEVARTYPE, "got 0x%x\n", sa->fFeatures);
-  ok(sa->pvData != NULL, "got %p\n", sa->pvData);
-  /* There seems to be a bug on windows, especially visible on 64bit systems,
-     probably double-free of similar issue. */
+todo_wine
+  ok(sa->pvData == NULL || broken(sa->pvData != NULL), "got %p\n", sa->pvData);
+  /* There was a bug on windows, especially visible on 64bit systems,
+     probably double-free or similar issue. */
   sa->pvData = NULL;
   SafeArrayDestroy(sa);
 }
