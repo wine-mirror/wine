@@ -3163,7 +3163,8 @@ todo_wine
     if (!ret)
         ok(GetLastError() == ERROR_INVALID_PARAMETER ||
            GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
+           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
+           GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
            "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
@@ -3186,7 +3187,8 @@ todo_wine
     if (!ret)
         ok(GetLastError() == ERROR_INVALID_PARAMETER ||
            GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
+           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
+           GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
            "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
