@@ -210,7 +210,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                 int len;
 
                                 len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-                                msg = heap_alloc((len + 1)*sizeof(WCHAR));
+                                if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
+                                    return 0;
                                 SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
                                 SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
                                 SendMessageW(hwnd, EM_SETSEL, lstrlenW(msg), lstrlenW(msg));
@@ -329,7 +330,8 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             if (sel < 0)
                 break;
             len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-            msg = heap_alloc((len + 1)*sizeof(WCHAR));
+            if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
+                break;
             SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
             SendMessageW(This->hwndEdit, WM_SETTEXT, 0, (LPARAM)msg);
             SendMessageW(This->hwndEdit, EM_SETSEL, 0, lstrlenW(msg));
