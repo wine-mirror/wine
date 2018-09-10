@@ -25,7 +25,6 @@ static VkResult create_instance(uint32_t extension_count,
         const char * const *enabled_extensions, VkInstance *vk_instance)
 {
     VkInstanceCreateInfo create_info;
-    VkResult vr;
 
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pNext = NULL;
@@ -36,22 +35,32 @@ static VkResult create_instance(uint32_t extension_count,
     create_info.enabledExtensionCount = extension_count;
     create_info.ppEnabledExtensionNames = enabled_extensions;
 
-    if ((vr = vkCreateInstance(&create_info, NULL, vk_instance)) >= 0)
+    return vkCreateInstance(&create_info, NULL, vk_instance);
+}
+
+#define create_instance_skip(a, b, c) create_instance_skip_(__LINE__, a, b, c)
+static VkResult create_instance_skip_(unsigned int line, uint32_t extension_count,
+        const char * const *enabled_extensions, VkInstance *vk_instance)
+{
+    VkResult vr;
+
+    if ((vr = create_instance(extension_count, enabled_extensions, vk_instance)) >= 0)
         return vr;
 
     switch (vr)
     {
         case VK_ERROR_EXTENSION_NOT_PRESENT:
             if (extension_count == 1)
-                skip("Instance extension '%s' not supported.\n", enabled_extensions[0]);
+                skip_(__FILE__, line)("Instance extension '%s' not supported.\n", enabled_extensions[0]);
             else
-                skip("Instance extensions not supported.\n");
+                skip_(__FILE__, line)("Instance extensions not supported.\n");
             break;
 
         default:
-            skip("Failed to create Vulkan instance, vr %d.\n", vr);
+            skip_(__FILE__, line)("Failed to create Vulkan instance, vr %d.\n", vr);
             break;
     }
+
     return vr;
 }
 
@@ -186,7 +195,7 @@ static void test_physical_device_groups(void)
         VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME,
     };
 
-    if ((vr = create_instance(ARRAY_SIZE(extensions), extensions, &vk_instance)) < 0)
+    if ((vr = create_instance_skip(ARRAY_SIZE(extensions), extensions, &vk_instance)) < 0)
         return;
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
@@ -271,6 +280,26 @@ static void test_destroy_command_pool(VkPhysicalDevice vk_physical_device)
     vkDestroyDevice(vk_device, NULL);
 }
 
+static void test_unsupported_instance_extensions(void)
+{
+    VkInstance vk_instance;
+    unsigned int i;
+    VkResult vr;
+
+    static const char *extensions[] =
+    {
+        "VK_KHR_xcb_surface",
+        "VK_KHR_xlib_surface",
+    };
+
+    for (i = 0; i < ARRAY_SIZE(extensions); ++i)
+    {
+        vr = create_instance(1, &extensions[i], &vk_instance);
+        ok(vr == VK_ERROR_EXTENSION_NOT_PRESENT,
+                "Got VkResult %d for extension %s.\n", vr, extensions[i]);
+    }
+}
+
 static void for_each_device(void (*test_func)(VkPhysicalDevice))
 {
     VkPhysicalDevice *vk_physical_devices;
@@ -279,7 +308,7 @@ static void for_each_device(void (*test_func)(VkPhysicalDevice))
     uint32_t count;
     VkResult vr;
 
-    if ((vr = create_instance(0, NULL, &vk_instance)) < 0)
+    if ((vr = create_instance_skip(0, NULL, &vk_instance)) < 0)
         return;
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
@@ -312,4 +341,5 @@ START_TEST(vulkan)
     for_each_device(enumerate_device_queues);
     test_physical_device_groups();
     for_each_device(test_destroy_command_pool);
+    test_unsupported_instance_extensions();
 }
