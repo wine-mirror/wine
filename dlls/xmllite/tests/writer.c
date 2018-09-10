@@ -858,8 +858,8 @@ static void test_WriteStartElement(void)
     {
         { "prefix", "local", "uri", "<prefix:local xmlns:prefix=\"uri\" />", "<prefix:local", S_OK, 1 },
         { NULL, "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1 },
-        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1, 1 },
-        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1, 1},
+        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1 },
+        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1 },
 
         { "prefix", NULL, NULL, NULL, NULL, E_INVALIDARG },
         { NULL, NULL, "uri", NULL, NULL, E_INVALIDARG },
@@ -953,7 +953,7 @@ static void test_WriteStartElement(void)
         uriW = strdupAtoW(start_element_tests[i].uri);
 
         hr = IXmlWriter_WriteStartElement(writer, prefixW, localW, uriW);
-    todo_wine_if(i >= 7)
+    todo_wine_if(i >= 11)
         ok(hr == start_element_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
         if (SUCCEEDED(start_element_tests[i].hr))

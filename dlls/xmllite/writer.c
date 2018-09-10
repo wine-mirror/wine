@@ -20,7 +20,9 @@
  */
 #define COBJMACROS
 
+#include <assert.h>
 #include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
@@ -296,7 +298,9 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
 static HRESULT write_output_qname(xmlwriteroutput *output, const WCHAR *prefix, int prefix_len,
         const WCHAR *local_name, int local_len)
 {
-    if (prefix) {
+    assert(prefix_len >= 0 && local_len >= 0);
+
+    if (prefix_len) {
         static const WCHAR colW[] = {':'};
         write_output_buffer(output, prefix, prefix_len);
         write_output_buffer(output, colW, ARRAY_SIZE(colW));
@@ -1253,7 +1257,9 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
 static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR prefix, LPCWSTR local_name, LPCWSTR uri)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    int prefix_len, local_len;
     struct element *element;
+    HRESULT hr;
 
     TRACE("(%p)->(%s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
 
@@ -1272,6 +1278,13 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
         ;
     }
 
+    /* Validate prefix and local name */
+    if (FAILED(hr = is_valid_ncname(prefix, &prefix_len)))
+        return hr;
+
+    if (FAILED(hr = is_valid_ncname(local_name, &local_len)))
+        return hr;
+
     /* close pending element */
     if (This->starttagopen)
         write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
@@ -1289,7 +1302,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     push_element(This, element);
 
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
-    write_output_qname(This->output, prefix, -1, local_name, -1);
+    write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
     writer_inc_indent(This);
 
     return S_OK;
