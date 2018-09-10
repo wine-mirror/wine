@@ -98,7 +98,8 @@ typedef struct
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;
-    int recv_timeout;
+    int receive_timeout;
+    int receive_response_timeout;
     LPWSTR proxy_server;
     LPWSTR proxy_bypass;
     LPWSTR proxy_username;
@@ -198,7 +199,8 @@ typedef struct
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;
-    int recv_timeout;
+    int receive_timeout;
+    int receive_response_timeout;
     LPWSTR status_text;
     DWORD content_length; /* total number of bytes to be read */
     DWORD content_read;   /* bytes read so far */

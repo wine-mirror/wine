@@ -1741,7 +1741,7 @@ static BOOL open_connection( request_t *request )
             return FALSE;
         }
         netconn_set_timeout( netconn, TRUE, request->send_timeout );
-        netconn_set_timeout( netconn, FALSE, request->recv_timeout );
+        netconn_set_timeout( netconn, FALSE, request->receive_response_timeout );
         if (is_secure)
         {
             if (connect->session->proxy_server &&
@@ -1776,7 +1776,7 @@ static BOOL open_connection( request_t *request )
         TRACE("using connection %p\n", netconn);
 
         netconn_set_timeout( netconn, TRUE, request->send_timeout );
-        netconn_set_timeout( netconn, FALSE, request->recv_timeout );
+        netconn_set_timeout( netconn, FALSE, request->receive_response_timeout );
         request->netconn = netconn;
     }
 
@@ -2628,6 +2628,7 @@ static BOOL receive_response( request_t *request, BOOL async )
     BOOL ret;
     DWORD size, query, status;
 
+    netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
     for (;;)
     {
         if (!(ret = read_reply( request )))
@@ -2665,6 +2666,7 @@ static BOOL receive_response( request_t *request, BOOL async )
         break;
     }
 
+    netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
     if (request->content_length) refill_buffer( request, FALSE );
 
     if (async)

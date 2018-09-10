@@ -1383,7 +1383,7 @@ static void test_set_default_proxy_config(void)
     set_default_proxy_reg_value( saved_proxy_settings, len, type );
 }
 
-static void test_Timeouts (void)
+static void test_timeouts(void)
 {
     BOOL ret;
     DWORD value, size;
@@ -1971,6 +1971,70 @@ static void test_Timeouts (void)
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_RECEIVE_TIMEOUT, &value, &size);
     ok(ret, "%u\n", GetLastError());
     ok(value == 0xbeefdead, "Expected 0xbeefdead, got %u\n", value);
+
+    /* response timeout */
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    ok(value == ~0u, "got %u\n", value);
+
+    SetLastError(0xdeadbeef);
+    value = 30000;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, sizeof(value));
+    ok(ret, "%u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    todo_wine ok(value == 0xbeefdead, "got %u\n", value);
+
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(con, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    ok(value == ~0u, "got %u\n", value);
+
+    SetLastError(0xdeadbeef);
+    value = 30000;
+    ret = WinHttpSetOption(con, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, sizeof(value));
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(ses, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    ok(value == ~0u, "got %u\n", value);
+
+    SetLastError(0xdeadbeef);
+    value = 48878;
+    ret = WinHttpSetOption(ses, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, sizeof(value));
+    ok(ret, "%u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(ses, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    todo_wine ok(value == 48879, "got %u\n", value);
+
+    SetLastError(0xdeadbeef);
+    value = 48880;
+    ret = WinHttpSetOption(ses, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, sizeof(value));
+    ok(ret, "%u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    value = 0xdeadbeef;
+    size  = sizeof(value);
+    ret = WinHttpQueryOption(ses, WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT, &value, &size);
+    ok(ret, "%u\n", GetLastError());
+    ok(value == 48880, "got %u\n", value);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -4563,7 +4627,7 @@ START_TEST (winhttp)
     test_QueryOption();
     test_set_default_proxy_config();
     test_empty_headers_param();
-    test_Timeouts();
+    test_timeouts();
     test_resolve_timeout();
     test_credentials();
     test_IWinHttpRequest_Invoke();
