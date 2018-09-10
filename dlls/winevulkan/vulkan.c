@@ -349,7 +349,7 @@ static BOOL wine_vk_init(void)
  * This function takes care of extensions handled at winevulkan layer, a Wine graphics
  * driver is responsible for handling e.g. surface extensions.
  */
-static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
+static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
         VkInstanceCreateInfo *dst)
 {
     unsigned int i;
@@ -400,11 +400,19 @@ static void wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    TRACE("Enabled extensions: %u\n", dst->enabledExtensionCount);
+    TRACE("Enabled %u instance extensions.\n", dst->enabledExtensionCount);
     for (i = 0; i < dst->enabledExtensionCount; i++)
     {
-        TRACE("Extension %u: %s\n", i, debugstr_a(dst->ppEnabledExtensionNames[i]));
+        const char *extension_name = dst->ppEnabledExtensionNames[i];
+        TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
+        if (!wine_vk_instance_extension_supported(extension_name))
+        {
+            WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
     }
+
+    return VK_SUCCESS;
 }
 
 /* Helper function which stores wrapped physical devices in the instance object. */
@@ -710,7 +718,12 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    wine_vk_instance_convert_create_info(create_info, &create_info_host);
+    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
+    if (res != VK_SUCCESS)
+    {
+        wine_vk_instance_free(object);
+        return res;
+    }
 
     res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
     if (res != VK_SUCCESS)
