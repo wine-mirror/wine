@@ -293,15 +293,16 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
 }
 
 /* TODO: test if we need to validate char range */
-static HRESULT write_output_qname(xmlwriteroutput *output, const WCHAR *prefix, const WCHAR *local_name)
+static HRESULT write_output_qname(xmlwriteroutput *output, const WCHAR *prefix, int prefix_len,
+        const WCHAR *local_name, int local_len)
 {
     if (prefix) {
         static const WCHAR colW[] = {':'};
-        write_output_buffer(output, prefix, -1);
+        write_output_buffer(output, prefix, prefix_len);
         write_output_buffer(output, colW, ARRAY_SIZE(colW));
     }
 
-    write_output_buffer(output, local_name, -1);
+    write_output_buffer(output, local_name, local_len);
 
     return S_OK;
 }
@@ -834,10 +835,33 @@ static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR pwszName
     return E_NOTIMPL;
 }
 
+static HRESULT is_valid_ncname(const WCHAR *str, int *out)
+{
+    int len = 0;
+
+    *out = 0;
+
+    if (!str || !*str)
+        return S_OK;
+
+    while (*str)
+    {
+        if (!is_ncnamechar(*str))
+            return WC_E_NAMECHARACTER;
+        len++;
+        str++;
+    }
+
+    *out = len;
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR prefix,
                                      LPCWSTR local_name, LPCWSTR uri, LPCWSTR value)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    int prefix_len, local_len;
+    HRESULT hr;
 
     TRACE("(%p)->(%s %s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name),
                         wine_dbgstr_w(uri), wine_dbgstr_w(value));
@@ -860,17 +884,24 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     if (!local_name)
         return E_INVALIDARG;
 
+    /* Validate prefix and local name */
+    if (FAILED(hr = is_valid_ncname(prefix, &prefix_len)))
+        return hr;
+
+    if (FAILED(hr = is_valid_ncname(local_name, &local_len)))
+        return hr;
+
     write_encoding_bom(This);
     write_node_indent(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
-    write_output_qname(This->output, prefix, local_name);
+    write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
 
     if (value)
     {
         write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
         write_output_buffer(This->output, value, -1);
         write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
-        write_output_qname(This->output, prefix, local_name);
+        write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
         write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
     }
     else
@@ -1258,7 +1289,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     push_element(This, element);
 
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
-    write_output_qname(This->output, prefix, local_name);
+    write_output_qname(This->output, prefix, -1, local_name, -1);
     writer_inc_indent(This);
 
     return S_OK;

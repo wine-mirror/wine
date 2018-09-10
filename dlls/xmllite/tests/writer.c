@@ -865,6 +865,7 @@ static void test_WriteStartElement(void)
         { NULL, NULL, "uri", NULL, NULL, E_INVALIDARG },
         { NULL, NULL, NULL, NULL, NULL, E_INVALIDARG },
         { NULL, "prefix:local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
+        { "pre:fix", "local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
         { NULL, ":local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
         { ":", "local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
         { NULL, "local", "http://www.w3.org/2000/xmlns/", NULL, NULL, WR_E_XMLNSPREFIXDECLARATION },
@@ -1062,7 +1063,7 @@ static void test_WriteElementString(void)
         valueW = strdupAtoW(element_string_tests[i].value);
 
         hr = IXmlWriter_WriteElementString(writer, prefixW, localW, uriW, valueW);
-    todo_wine_if(i >= 10)
+    todo_wine_if(i >= 13)
         ok(hr == element_string_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
         if (SUCCEEDED(element_string_tests[i].hr))

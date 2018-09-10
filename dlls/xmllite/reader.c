@@ -1524,7 +1524,7 @@ static inline BOOL is_namestartchar(WCHAR ch)
 }
 
 /* [4 NS] NCName ::= Name - (Char* ':' Char*) */
-static inline BOOL is_ncnamechar(WCHAR ch)
+BOOL is_ncnamechar(WCHAR ch)
 {
     return (ch >= 'A' && ch <= 'Z') ||
            (ch == '_') || (ch >= 'a' && ch <= 'z') ||
