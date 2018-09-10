@@ -300,6 +300,27 @@ static void test_unsupported_instance_extensions(void)
     }
 }
 
+static void test_unsupported_device_extensions(VkPhysicalDevice vk_physical_device)
+{
+    VkDevice vk_device;
+    unsigned int i;
+    VkResult vr;
+
+    static const char *extensions[] =
+    {
+        "VK_KHR_external_fence_fd",
+        "VK_KHR_external_memory_fd",
+        "VK_KHR_external_semaphore_fd",
+    };
+
+    for (i = 0; i < ARRAY_SIZE(extensions); ++i)
+    {
+        vr = create_device(vk_physical_device, 1, &extensions[i], NULL, &vk_device);
+        ok(vr == VK_ERROR_EXTENSION_NOT_PRESENT,
+                "Got VkResult %d for extension %s.\n", vr, extensions[i]);
+    }
+}
+
 static void for_each_device(void (*test_func)(VkPhysicalDevice))
 {
     VkPhysicalDevice *vk_physical_devices;
@@ -342,4 +363,5 @@ START_TEST(vulkan)
     test_physical_device_groups();
     for_each_device(test_destroy_command_pool);
     test_unsupported_instance_extensions();
+    for_each_device(test_unsupported_device_extensions);
 }
