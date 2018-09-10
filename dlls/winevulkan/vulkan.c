@@ -760,9 +760,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
                 app_info->engineVersion);
         TRACE("API version %#x.\n", app_info->apiVersion);
 
-        if (app_info->pApplicationName
-                && (!strcmp(app_info->pApplicationName, "DOOM")
-                || !strcmp(app_info->pApplicationName, "Wolfenstein II The New Colossus")))
+        if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
             object->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
