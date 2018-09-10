@@ -362,16 +362,6 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
 
     *dst = *src;
 
-    if (dst->pApplicationInfo)
-    {
-        const VkApplicationInfo *app_info = dst->pApplicationInfo;
-        TRACE("Application name %s, application version %#x\n",
-                debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
-        TRACE("Engine name %s, engine version %#x\n", debugstr_a(app_info->pEngineName),
-                app_info->engineVersion);
-        TRACE("API version %#x\n", app_info->apiVersion);
-    }
-
     /* Application and loader can pass in a chain of extensions through pNext.
      * We can't blindly pass these through as often these contain callbacks or
      * they can even be pass structures for loader / ICD internal use. For now
@@ -762,10 +752,17 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         return res;
     }
 
-    if ((app_info = create_info->pApplicationInfo) && app_info->pApplicationName)
+    if ((app_info = create_info->pApplicationInfo))
     {
-        if (!strcmp(app_info->pApplicationName, "DOOM")
-                || !strcmp(app_info->pApplicationName, "Wolfenstein II The New Colossus"))
+        TRACE("Application name %s, application version %#x.\n",
+                debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
+        TRACE("Engine name %s, engine version %#x.\n", debugstr_a(app_info->pEngineName),
+                app_info->engineVersion);
+        TRACE("API version %#x.\n", app_info->apiVersion);
+
+        if (app_info->pApplicationName
+                && (!strcmp(app_info->pApplicationName, "DOOM")
+                || !strcmp(app_info->pApplicationName, "Wolfenstein II The New Colossus")))
             object->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
