@@ -1427,6 +1427,12 @@ for /L %%i in (2,2,1) do (
   echo %%i
   echo FAILED
 )
+echo --- rems inside for loops
+for /f %%i IN ("hello") DO (
+   REM foo|echo ERROR unexpected execution 1
+   @REM foo|echo ERROR unexpected execution 2
+   @     REM foo|echo ERROR unexpected execution 3
+)
 echo --- ifs inside for loops
 for %%i in (test) do (
     echo a1

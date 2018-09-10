@@ -2308,12 +2308,21 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         } while (*extraData == 0x00);
         curPos = extraSpace;
-        if (context) handleExpansion(extraSpace, FALSE, FALSE);
+
+        /* Skip preceding whitespace */
+        while (*curPos == ' ' || *curPos == '\t') curPos++;
+
+        /* Replace env vars if in a batch context */
+        if (context) handleExpansion(curPos, FALSE, FALSE);
+
         /* Continue to echo commands IF echo is on and in batch program */
-        if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
+        if (context && echo_mode && *curPos && *curPos != '@') {
           WCMD_output_asis(extraSpace);
           WCMD_output_asis(newlineW);
         }
+
+        /* Skip repeated 'no echo' characters and whitespace */
+        while (*curPos == '@' || *curPos == ' ' || *curPos == '\t') curPos++;
       }
     }
 
