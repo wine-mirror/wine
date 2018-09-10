@@ -136,7 +136,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     HRESULT hr;
     WCHAR hwndText[255];
     RECT r;
-    BOOL control, filled, displayall = FALSE;
+    BOOL displayall = FALSE;
     int cpt, height, sel;
 
     if (!This->enabled) return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
@@ -162,8 +162,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             switch(wParam) {
                 case VK_RETURN:
                     /* If quickComplete is set and control is pressed, replace the string */
-                    control = GetKeyState(VK_CONTROL) & 0x8000;
-                    if (control && This->quickComplete) {
+                    if (This->quickComplete && (GetKeyState(VK_CONTROL) & 0x8000))
+                    {
                         WCHAR *buf;
                         size_t len = strlenW(hwndText);
                         size_t sz = strlenW(This->quickComplete) + 1 + len;
@@ -249,7 +249,6 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 break;
 
             IEnumString_Reset(This->enumstr);
-            filled = FALSE;
             for(cpt = 0;;) {
                 LPOLESTR strs = NULL;
                 ULONG fetched;
@@ -259,7 +258,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                     break;
 
                 if (!strncmpiW(hwndText, strs, len)) {
-                    if (!filled && (This->options & ACO_AUTOAPPEND)) {
+                    if (cpt == 0 && (This->options & ACO_AUTOAPPEND)) {
                         WCHAR buffW[255];
 
                         strcpyW(buffW, hwndText);
@@ -272,19 +271,17 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                         }
                     }
 
-                    if (This->options & ACO_AUTOSUGGEST) {
+                    if (This->options & ACO_AUTOSUGGEST)
                         SendMessageW(This->hwndListBox, LB_ADDSTRING, 0, (LPARAM)strs);
-                        cpt++;
-                    }
 
-                    filled = TRUE;
+                    cpt++;
                 }
 
                 CoTaskMemFree(strs);
             }
 
             if (This->options & ACO_AUTOSUGGEST) {
-                if (filled) {
+                if (cpt) {
                     height = SendMessageW(This->hwndListBox, LB_GETITEMHEIGHT, 0, 0);
                     SendMessageW(This->hwndListBox, LB_CARETOFF, 0, 0);
                     GetWindowRect(hwnd, &r);
