@@ -1836,8 +1836,8 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
   if (doall) *doall = FALSE;
   if (duplicates) *duplicates = FALSE;
 
-  WINE_TRACE("Find next token after %d in %s was %d\n", lasttoken,
-             wine_dbgstr_w(tokenstr), nexttoken);
+  WINE_TRACE("Find next token after %d in %s\n", lasttoken,
+             wine_dbgstr_w(tokenstr));
 
   /* Loop through the token string, parsing it. Valid syntax is:
      token=m or x-y with comma delimiter and optionally * to finish*/
@@ -1845,11 +1845,21 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
     int nextnumber1, nextnumber2 = -1;
     WCHAR *nextchar;
 
-    /* It is valid syntax tokens=* which just means get whole line */
+    /* Remember if the next character is a star, it indicates a need to
+       show all remaining tokens and should be the last character       */
     if (*pos == '*') {
       if (doall) *doall = TRUE;
       if (totalfound) (*totalfound)++;
-      nexttoken = 0;
+      /* If we have not found a next token to return, then indicate
+         time to process the star                                   */
+      if (nexttoken == -1) {
+         if (lasttoken == -1) {
+           /* Special case the syntax of tokens=* which just means get whole line */
+           nexttoken = 0;
+         } else {
+           nexttoken = lasttoken;
+         }
+      }
       break;
     }
 
@@ -1882,8 +1892,9 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
       if (nextnumber2 >= nextnumber1 && totalfound) {
         *totalfound = *totalfound + 1 + (nextnumber2 - nextnumber1);
       }
+      pos = nextchar;
 
-    } else {
+    } else if (pos != nextchar) {
       if (totalfound) (*totalfound)++;
 
       /* See if the number found is one we have already seen */
@@ -1894,26 +1905,25 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
          ((nexttoken == -1) || (nextnumber1 < nexttoken))) {
         nexttoken = nextnumber1;
       }
+      pos = nextchar;
 
+    } else {
+      /* Step on to the next character, usually over comma */
+      if (*pos) pos++;
     }
 
-    /* Remember if it is followed by a star, and if it is indicate a need to
-       show all tokens, unless a duplicate has been found                    */
-    if (*nextchar == '*') {
-      if (doall) *doall = TRUE;
-      if (totalfound) (*totalfound)++;
-    }
-
-    /* Step on to the next character */
-    pos = nextchar;
-    if (*pos) pos++;
   }
 
   /* Return result */
-  if (nexttoken == -1) nexttoken = lasttoken;
-  WINE_TRACE("Found next token after %d was %d\n", lasttoken, nexttoken);
-  if (totalfound) WINE_TRACE("Found total tokens in total %d\n", *totalfound);
-  if (doall && *doall) WINE_TRACE("Request for all tokens found\n");
+  if (nexttoken == -1) {
+    WINE_TRACE("No next token found, previous was %d\n", lasttoken);
+    nexttoken = lasttoken;
+  } else if (nexttoken==lasttoken && doall && *doall) {
+    WINE_TRACE("Request for all remaining tokens now\n");
+  } else {
+    WINE_TRACE("Found next token after %d was %d\n", lasttoken, nexttoken);
+  }
+  if (totalfound) WINE_TRACE("Found total tokens to be %d\n", *totalfound);
   if (duplicates && *duplicates) WINE_TRACE("Duplicate numbers found\n");
   return nexttoken;
 }
