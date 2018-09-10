@@ -93,6 +93,32 @@ static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDr
     return CONTAINING_RECORD(iface, IAutoCompleteImpl, IAutoCompleteDropDown_iface);
 }
 
+static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
+{
+    /* Replace the first %s directly without using snprintf, to avoid
+       exploits since the format string can be retrieved from the registry */
+    WCHAR *base = dst;
+    UINT args = 0;
+    while (*qc != '\0')
+    {
+        if (qc[0] == '%')
+        {
+            if (args < 1 && qc[1] == 's')
+            {
+                memcpy(dst, str, str_len * sizeof(WCHAR));
+                dst += str_len;
+                qc += 2;
+                args++;
+                continue;
+            }
+            qc += (qc[1] == '%');
+        }
+        *dst++ = *qc++;
+    }
+    *dst = '\0';
+    return dst - base;
+}
+
 static void destroy_autocomplete_object(IAutoCompleteImpl *ac)
 {
     ac->hwndEdit = NULL;
@@ -109,7 +135,6 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     IAutoCompleteImpl *This = GetPropW(hwnd, autocomplete_propertyW);
     HRESULT hr;
     WCHAR hwndText[255];
-    WCHAR *hwndQCText;
     RECT r;
     BOOL control, filled, displayall = FALSE;
     int cpt, height, sel;
@@ -138,11 +163,16 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                     /* If quickComplete is set and control is pressed, replace the string */
                     control = GetKeyState(VK_CONTROL) & 0x8000;
                     if (control && This->quickComplete) {
-                        hwndQCText = heap_alloc((lstrlenW(This->quickComplete)+lstrlenW(hwndText))*sizeof(WCHAR));
-                        sel = sprintfW(hwndQCText, This->quickComplete, hwndText);
-                        SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)hwndQCText);
-                        SendMessageW(hwnd, EM_SETSEL, 0, sel);
-                        heap_free(hwndQCText);
+                        WCHAR *buf;
+                        size_t len = strlenW(hwndText);
+                        size_t sz = strlenW(This->quickComplete) + 1 + len;
+                        if ((buf = heap_alloc(sz * sizeof(WCHAR))))
+                        {
+                            len = format_quick_complete(buf, This->quickComplete, hwndText, len);
+                            SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)buf);
+                            SendMessageW(hwnd, EM_SETSEL, 0, len);
+                            heap_free(buf);
+                        }
                     }
 
                     ShowWindow(This->hwndListBox, SW_HIDE);
