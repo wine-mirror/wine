@@ -637,6 +637,7 @@ SOURCES = \
 	verrsrc.h \
 	vfw.h \
 	vfwmsgs.h \
+	virtdisk.h \
 	vmr9.idl \
 	vmrender.idl \
 	vss.idl \
