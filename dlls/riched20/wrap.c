@@ -260,7 +260,7 @@ static void layout_row( ME_DisplayItem *start, const ME_DisplayItem *end )
     TRACE("%d runs\n", num_runs);
     if (!num_runs) return;
 
-    if (num_runs > sizeof(buf) / (sizeof(buf[0]) * 5))
+    if (num_runs > ARRAY_SIZE( buf ) / 5)
         vis_to_log = heap_alloc( num_runs * sizeof(int) * 5 );
 
     log_to_vis = vis_to_log + num_runs;
@@ -766,7 +766,7 @@ static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
     ME_Run *run;
     ME_DisplayItem *di;
     SCRIPT_ITEM buf[16], *items = buf;
-    int items_passed = sizeof( buf ) / sizeof( buf[0] ), num_items, cur_item;
+    int items_passed = ARRAY_SIZE( buf ), num_items, cur_item;
     SCRIPT_CONTROL control = { LANG_USER_DEFAULT, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                                FALSE, FALSE, 0 };
     SCRIPT_STATE state = { 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 0, 0 };

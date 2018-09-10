@@ -41,7 +41,7 @@ BOOL cfany_to_cf2w(CHARFORMAT2W *to, const CHARFORMAT2W *from)
     CopyMemory(to, f, FIELD_OFFSET(CHARFORMATA, szFaceName));
     to->cbSize = sizeof(CHARFORMAT2W);
     if (f->dwMask & CFM_FACE) {
-      MultiByteToWideChar(CP_ACP, 0, f->szFaceName, -1, to->szFaceName, sizeof(to->szFaceName)/sizeof(WCHAR));
+      MultiByteToWideChar(CP_ACP, 0, f->szFaceName, -1, to->szFaceName, ARRAY_SIZE(to->szFaceName));
     }
     return TRUE;
   }
@@ -61,7 +61,7 @@ BOOL cfany_to_cf2w(CHARFORMAT2W *to, const CHARFORMAT2W *from)
     CopyMemory(to, f, FIELD_OFFSET(CHARFORMATA, szFaceName));
     /* convert face name */
     if (f->dwMask & CFM_FACE)
-      MultiByteToWideChar(CP_ACP, 0, f->szFaceName, -1, to->szFaceName, sizeof(to->szFaceName)/sizeof(WCHAR));
+      MultiByteToWideChar(CP_ACP, 0, f->szFaceName, -1, to->szFaceName, ARRAY_SIZE(to->szFaceName));
     /* copy the rest of the 2A structure to 2W */
     CopyMemory(&to->wWeight, &f->wWeight, sizeof(CHARFORMAT2A)-FIELD_OFFSET(CHARFORMAT2A, wWeight));
     to->cbSize = sizeof(CHARFORMAT2W);

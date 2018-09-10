@@ -518,8 +518,8 @@ void ME_RTFCharAttrHook(RTF_Info *info)
         RTFFont *f = RTFGetFont(info, info->rtfParam);
         if (f)
         {
-          MultiByteToWideChar(CP_ACP, 0, f->rtfFName, -1, fmt.szFaceName, sizeof(fmt.szFaceName)/sizeof(WCHAR));
-          fmt.szFaceName[sizeof(fmt.szFaceName)/sizeof(WCHAR)-1] = '\0';
+          MultiByteToWideChar(CP_ACP, 0, f->rtfFName, -1, fmt.szFaceName, ARRAY_SIZE(fmt.szFaceName));
+          fmt.szFaceName[ARRAY_SIZE(fmt.szFaceName)-1] = '\0';
           fmt.bCharSet = f->rtfFCharSet;
           fmt.dwMask = CFM_FACE | CFM_CHARSET;
           fmt.bPitchAndFamily = f->rtfFPitch | (f->rtfFFamily << 4);
@@ -5272,10 +5272,9 @@ static BOOL isurlneutral( WCHAR c )
 
     /* Some shortcuts */
     if (isalnum( c )) return FALSE;
-    if (c > neutral_chars[sizeof(neutral_chars) / sizeof(neutral_chars[0]) - 1]) return FALSE;
+    if (c > neutral_chars[ARRAY_SIZE( neutral_chars ) - 1]) return FALSE;
 
-    return !!bsearch( &c, neutral_chars, sizeof(neutral_chars) / sizeof(neutral_chars[0]),
-                      sizeof(c), wchar_comp );
+    return !!bsearch( &c, neutral_chars, ARRAY_SIZE( neutral_chars ), sizeof(c), wchar_comp );
 }
 
 /**
@@ -5408,7 +5407,7 @@ static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, const ME_Cursor *start, i
   unsigned int i;
 
   ME_GetTextW(editor, bufferW, MAX_PREFIX_LEN, start, nChars, FALSE, FALSE);
-  for (i = 0; i < sizeof(prefixes) / sizeof(*prefixes); i++)
+  for (i = 0; i < ARRAY_SIZE(prefixes); i++)
   {
     if (nChars < prefixes[i].length) continue;
     if (!memcmp(prefixes[i].text, bufferW, prefixes[i].length * sizeof(WCHAR)))

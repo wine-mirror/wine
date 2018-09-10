@@ -206,7 +206,7 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
 
         /* This is not base-26 (or 27) as zeros don't count unless they are leading zeros.
            It's simplest to start with the least significant letter, so first calculate how many letters are needed. */
-        for (i = 0, total = 0; i < sizeof(letter_base) / sizeof(letter_base[0]); i++)
+        for (i = 0, total = 0; i < ARRAY_SIZE( letter_base ); i++)
         {
             total += letter_base[i];
             if (num < total) break;
@@ -228,7 +228,7 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
     case PFN_UCROMAN:
         if (!num) num = 1;
 
-        for (i = 0; i < sizeof(roman_base) / sizeof(roman_base[0]); i++)
+        for (i = 0; i < ARRAY_SIZE( roman_base ); i++)
         {
             if (i > 0)
             {

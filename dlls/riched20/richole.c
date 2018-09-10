@@ -97,7 +97,7 @@ void release_typelib(void)
     if (!typelib)
         return;
 
-    for (i = 0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+    for (i = 0; i < ARRAY_SIZE(typeinfos); i++)
         if (typeinfos[i])
             ITypeInfo_Release(typeinfos[i]);
 
@@ -633,7 +633,7 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
 
     if (ITextFont_GetName(font, &str) == S_OK) {
         fmt.dwMask |= CFM_FACE;
-        lstrcpynW(fmt.szFaceName, str, sizeof(fmt.szFaceName)/sizeof(WCHAR));
+        lstrcpynW(fmt.szFaceName, str, ARRAY_SIZE(fmt.szFaceName));
         SysFreeString(str);
     }
 
@@ -817,7 +817,7 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
         fmt.wWeight = value->l;
         break;
     case FONT_NAME:
-        lstrcpynW(fmt.szFaceName, value->str, sizeof(fmt.szFaceName)/sizeof(WCHAR));
+        lstrcpynW(fmt.szFaceName, value->str, ARRAY_SIZE(fmt.szFaceName));
         break;
     default:
         FIXME("unhandled font property %d\n", propid);

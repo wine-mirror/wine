@@ -536,7 +536,7 @@ int ME_GetParaBorderWidth(const ME_Context* c, int flags)
   int idx = (flags >> 8) & 0xF;
   int width;
 
-  if (idx >= sizeof(border_details) / sizeof(border_details[0]))
+  if (idx >= ARRAY_SIZE(border_details))
   {
       FIXME("Unsupported border value %d\n", idx);
       return 0;
