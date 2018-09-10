@@ -144,7 +144,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     switch (uMsg)
     {
         case CB_SHOWDROPDOWN:
-            ShowWindow(This->hwndListBox, SW_HIDE);
+            if (This->options & ACO_AUTOSUGGEST)
+                ShowWindow(This->hwndListBox, SW_HIDE);
             break;
         case WM_KILLFOCUS:
             if ((This->options & ACO_AUTOSUGGEST) && ((HWND)wParam != This->hwndListBox))
@@ -175,7 +176,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                         }
                     }
 
-                    ShowWindow(This->hwndListBox, SW_HIDE);
+                    if (This->options & ACO_AUTOSUGGEST)
+                        ShowWindow(This->hwndListBox, SW_HIDE);
                     return 0;
                 case VK_LEFT:
                 case VK_RIGHT:
@@ -310,7 +312,6 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         }
         default:
             return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
-
     }
 
     return 0;
@@ -362,6 +363,8 @@ static void create_listbox(IAutoCompleteImpl *This)
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
     }
+    else
+        This->options &= ~ACO_AUTOSUGGEST;
 }
 
 /**************************************************************************
