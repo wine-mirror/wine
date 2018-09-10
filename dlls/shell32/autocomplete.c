@@ -212,13 +212,15 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                 len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
                                 if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
                                     return 0;
-                                SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
+                                len = SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
                                 SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
-                                SendMessageW(hwnd, EM_SETSEL, lstrlenW(msg), lstrlenW(msg));
+                                SendMessageW(hwnd, EM_SETSEL, len, len);
                                 heap_free(msg);
                             } else {
+                                UINT len;
                                 SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)This->txtbackup);
-                                SendMessageW(hwnd, EM_SETSEL, lstrlenW(This->txtbackup), lstrlenW(This->txtbackup));
+                                len = strlenW(This->txtbackup);
+                                SendMessageW(hwnd, EM_SETSEL, len, len);
                             }
                         }
                         return 0;
@@ -332,9 +334,9 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
             if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
                 break;
-            SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
+            len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
             SendMessageW(This->hwndEdit, WM_SETTEXT, 0, (LPARAM)msg);
-            SendMessageW(This->hwndEdit, EM_SETSEL, 0, lstrlenW(msg));
+            SendMessageW(This->hwndEdit, EM_SETSEL, 0, len);
             ShowWindow(hwnd, SW_HIDE);
             heap_free(msg);
             break;
