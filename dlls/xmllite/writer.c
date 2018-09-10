@@ -857,6 +857,9 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
         ;
     }
 
+    if (!local_name)
+        return E_INVALIDARG;
+
     write_encoding_bom(This);
     write_node_indent(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));

@@ -26,6 +26,8 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "xmllite.h"
+
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "initguid.h"
@@ -88,6 +90,19 @@ static void check_output(IStream *stream, const char *expected, BOOL todo, int l
 #define CHECK_OUTPUT(stream, expected) check_output(stream, expected, FALSE, __LINE__)
 #define CHECK_OUTPUT_TODO(stream, expected) check_output(stream, expected, TRUE, __LINE__)
 #define CHECK_OUTPUT_RAW(stream, expected, size) check_output_raw(stream, expected, size, __LINE__)
+
+static WCHAR *strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+    DWORD len;
+
+    if (!str) return ret;
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = heap_alloc(len * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
 
 static void writer_set_property(IXmlWriter *writer, XmlWriterProperty property)
 {
@@ -826,13 +841,41 @@ static void test_bom(void)
     IXmlWriter_Release(writer);
 }
 
-static void test_writestartelement(void)
+static void test_WriteStartElement(void)
 {
+    static const struct
+    {
+        const char *prefix;
+        const char *local;
+        const char *uri;
+        const char *output;
+        const char *output_partial;
+        HRESULT hr;
+        int todo;
+        int todo_partial;
+    }
+    start_element_tests[] =
+    {
+        { "prefix", "local", "uri", "<prefix:local xmlns:prefix=\"uri\" />", "<prefix:local", S_OK, 1 },
+        { NULL, "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1 },
+        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1, 1 },
+        { "", "local", "uri", "<local xmlns=\"uri\" />", "<local", S_OK, 1, 1},
+
+        { "prefix", NULL, NULL, NULL, NULL, E_INVALIDARG },
+        { NULL, NULL, "uri", NULL, NULL, E_INVALIDARG },
+        { NULL, NULL, NULL, NULL, NULL, E_INVALIDARG },
+        { NULL, "prefix:local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
+        { NULL, ":local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
+        { ":", "local", "uri", NULL, NULL, WC_E_NAMECHARACTER, 1, 1 },
+        { NULL, "local", "http://www.w3.org/2000/xmlns/", NULL, NULL, WR_E_XMLNSPREFIXDECLARATION },
+        { "prefix", "local", "http://www.w3.org/2000/xmlns/", NULL, NULL, WR_E_XMLNSURIDECLARATION },
+    };
     static const WCHAR valueW[] = {'v','a','l','u','e',0};
     static const WCHAR aW[] = {'a',0};
     static const WCHAR bW[] = {'b',0};
     IXmlWriter *writer;
     IStream *stream;
+    unsigned int i;
     HRESULT hr;
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
@@ -842,15 +885,6 @@ static void test_writestartelement(void)
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
     stream = writer_set_output(writer);
-
-    hr = IXmlWriter_WriteStartElement(writer, aW, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, aW);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -900,6 +934,161 @@ static void test_writestartelement(void)
         "<a><b>value</b><b />");
 
     IStream_Release(stream);
+
+    /* WriteStartElement */
+    for (i = 0; i < ARRAY_SIZE(start_element_tests); ++i)
+    {
+        WCHAR *prefixW, *localW, *uriW;
+
+        stream = writer_set_output(writer);
+
+        writer_set_property(writer, XmlWriterProperty_OmitXmlDeclaration);
+
+        hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+        ok(hr == S_OK, "Failed to start document, hr %#x.\n", hr);
+
+        prefixW = strdupAtoW(start_element_tests[i].prefix);
+        localW = strdupAtoW(start_element_tests[i].local);
+        uriW = strdupAtoW(start_element_tests[i].uri);
+
+        hr = IXmlWriter_WriteStartElement(writer, prefixW, localW, uriW);
+    todo_wine_if(i >= 7)
+        ok(hr == start_element_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(start_element_tests[i].hr))
+        {
+            hr = IXmlWriter_Flush(writer);
+            ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+            check_output(stream, start_element_tests[i].output_partial, start_element_tests[i].todo_partial, __LINE__);
+
+            hr = IXmlWriter_WriteEndDocument(writer);
+            ok(hr == S_OK, "Failed to end document, hr %#x.\n", hr);
+
+            hr = IXmlWriter_Flush(writer);
+            ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+            check_output(stream, start_element_tests[i].output, start_element_tests[i].todo, __LINE__);
+        }
+
+        heap_free(prefixW);
+        heap_free(localW);
+        heap_free(uriW);
+
+        IStream_Release(stream);
+    }
+
+    IXmlWriter_Release(writer);
+}
+
+static void test_WriteElementString(void)
+{
+    static const struct
+    {
+        const char *prefix;
+        const char *local;
+        const char *uri;
+        const char *value;
+        const char *output;
+        HRESULT hr;
+        int todo;
+    }
+    element_string_tests[] =
+    {
+        { "prefix", "local", "uri", "value", "<prefix:local xmlns:prefix=\"uri\">value</prefix:local>", S_OK, 1 },
+        { NULL, "local", "uri", "value", "<local xmlns=\"uri\">value</local>", S_OK, 1 },
+        { "", "local", "uri", "value", "<local xmlns=\"uri\">value</local>", S_OK, 1 },
+        { "prefix", "local", "uri", NULL, "<prefix:local xmlns:prefix=\"uri\" />", S_OK, 1 },
+        { NULL, "local", "uri", NULL, "<local xmlns=\"uri\" />", S_OK, 1 },
+        { "", "local", "uri", NULL, "<local xmlns=\"uri\" />", S_OK, 1 },
+        { NULL, "local", NULL, NULL, "<local />" },
+
+        { "prefix", NULL, NULL, "value", NULL, E_INVALIDARG },
+        { NULL, NULL, "uri", "value", NULL, E_INVALIDARG },
+        { NULL, NULL, NULL, "value", NULL, E_INVALIDARG },
+        { NULL, "prefix:local", "uri", "value", NULL, WC_E_NAMECHARACTER },
+        { NULL, ":local", "uri", "value", NULL, WC_E_NAMECHARACTER },
+        { ":", "local", "uri", "value", NULL, WC_E_NAMECHARACTER },
+        { NULL, "local", "http://www.w3.org/2000/xmlns/", "value", NULL, WR_E_XMLNSPREFIXDECLARATION },
+        { "prefix", "local", "http://www.w3.org/2000/xmlns/", "value", NULL, WR_E_XMLNSURIDECLARATION },
+    };
+    static const WCHAR valueW[] = {'v','a','l','u','e',0};
+    static const WCHAR aW[] = {'a',0};
+    static const WCHAR bW[] = {'b',0};
+    IXmlWriter *writer;
+    IStream *stream;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, valueW);
+    ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, valueW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a><b>value</b><b />");
+
+    IStream_Release(stream);
+
+    for (i = 0; i < ARRAY_SIZE(element_string_tests); ++i)
+    {
+        WCHAR *prefixW, *localW, *uriW, *valueW;
+
+        stream = writer_set_output(writer);
+
+        writer_set_property(writer, XmlWriterProperty_OmitXmlDeclaration);
+
+        hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+        ok(hr == S_OK, "Failed to start document, hr %#x.\n", hr);
+
+        prefixW = strdupAtoW(element_string_tests[i].prefix);
+        localW = strdupAtoW(element_string_tests[i].local);
+        uriW = strdupAtoW(element_string_tests[i].uri);
+        valueW = strdupAtoW(element_string_tests[i].value);
+
+        hr = IXmlWriter_WriteElementString(writer, prefixW, localW, uriW, valueW);
+    todo_wine_if(i >= 10)
+        ok(hr == element_string_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(element_string_tests[i].hr))
+        {
+            hr = IXmlWriter_Flush(writer);
+            ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+            check_output(stream, element_string_tests[i].output, element_string_tests[i].todo, __LINE__);
+
+            hr = IXmlWriter_WriteEndDocument(writer);
+            ok(hr == S_OK, "Failed to end document, hr %#x.\n", hr);
+
+            hr = IXmlWriter_Flush(writer);
+            ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+            check_output(stream, element_string_tests[i].output, element_string_tests[i].todo, __LINE__);
+        }
+
+        heap_free(prefixW);
+        heap_free(localW);
+        heap_free(uriW);
+        heap_free(valueW);
+
+        IStream_Release(stream);
+    }
+
     IXmlWriter_Release(writer);
 }
 
@@ -1313,42 +1502,94 @@ static void test_indentation(void)
 
 static void test_WriteAttributeString(void)
 {
+    static const struct
+    {
+        const char *prefix;
+        const char *local;
+        const char *uri;
+        const char *value;
+        const char *output;
+        const char *output_partial;
+        HRESULT hr;
+    }
+    attribute_tests[] =
+    {
+        { NULL, "a", NULL, "b", "<e a=\"b\" />", "<e a=\"b\"" },
+        { "prefix", "local", "uri", "b", "<e prefix:local=\"b\" xmlns:prefix=\"uri\" />", "<e prefix:local=\"b\"" },
+        { NULL, "a", "http://www.w3.org/2000/xmlns/", "defuri", "<e xmlns:a=\"defuri\" />", "<e xmlns:a=\"defuri\"" },
+
+        /* Autogenerated prefix names. */
+        { NULL, "a", "defuri", NULL, "<e p1:a=\"\" xmlns:p1=\"defuri\" />", "<e p1:a=\"\"" },
+        { NULL, "a", "defuri", "b", "<e p1:a=\"b\" xmlns:p1=\"defuri\" />", "<e p1:a=\"b\"" },
+
+        /* Failing cases. */
+        { NULL, NULL, "http://www.w3.org/2000/xmlns/", "defuri", "<e />", "<e", E_INVALIDARG },
+        { "prefix", NULL, "http://www.w3.org/2000/xmlns/", "defuri", "<e />", "<e", E_INVALIDARG },
+        { "prefix", NULL, NULL, "b", "<e />", "<e", E_INVALIDARG },
+        { "prefix", NULL, "uri", NULL, "<e />", "<e", E_INVALIDARG },
+        { "xmlns", NULL, NULL, "uri", "<e />", "<e", WR_E_NSPREFIXDECLARED },
+        { "xmlns", "a", "defuri", NULL, "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION },
+        { NULL, "xmlns", "uri", NULL, "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION },
+        { "xmlns", NULL, "uri", NULL, "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION },
+        { "prefix", "a", "http://www.w3.org/2000/xmlns/", "defuri", "<e />", "<e", WR_E_XMLNSURIDECLARATION },
+    };
+
     static const WCHAR prefixW[] = {'p','r','e','f','i','x',0};
     static const WCHAR localW[] = {'l','o','c','a','l',0};
     static const WCHAR uriW[] = {'u','r','i',0};
-    static const WCHAR uri2W[] = {'u','r','i','2',0};
-    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+    static const WCHAR elementW[] = {'e',0};
     static const WCHAR aW[] = {'a',0};
     static const WCHAR bW[] = {'b',0};
     IXmlWriter *writer;
     IStream *stream;
+    unsigned int i;
     HRESULT hr;
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    stream = writer_set_output(writer);
-
     writer_set_property(writer, XmlWriterProperty_OmitXmlDeclaration);
 
-    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    for (i = 0; i < ARRAY_SIZE(attribute_tests); ++i)
+    {
+        WCHAR *prefixW, *localW, *uriW, *valueW;
 
-    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        stream = writer_set_output(writer);
 
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, bW);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+        ok(hr == S_OK, "Failed to start document, hr %#x.\n", hr);
 
-    hr = IXmlWriter_WriteEndDocument(writer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IXmlWriter_WriteStartElement(writer, NULL, elementW, NULL);
+        ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
 
-    hr = IXmlWriter_Flush(writer);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        prefixW = strdupAtoW(attribute_tests[i].prefix);
+        localW = strdupAtoW(attribute_tests[i].local);
+        uriW = strdupAtoW(attribute_tests[i].uri);
+        valueW = strdupAtoW(attribute_tests[i].value);
 
-    CHECK_OUTPUT(stream,
-        "<a a=\"b\" />");
-    IStream_Release(stream);
+        hr = IXmlWriter_WriteAttributeString(writer, prefixW, localW, uriW, valueW);
+    todo_wine_if(i != 0)
+        ok(hr == attribute_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        hr = IXmlWriter_Flush(writer);
+        ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+        check_output(stream, attribute_tests[i].output_partial, i == 1 || i == 2 || i == 3 || i == 4, __LINE__);
+
+        hr = IXmlWriter_WriteEndDocument(writer);
+        ok(hr == S_OK, "Failed to end document, hr %#x.\n", hr);
+
+        hr = IXmlWriter_Flush(writer);
+        ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+        heap_free(prefixW);
+        heap_free(localW);
+        heap_free(uriW);
+        heap_free(valueW);
+
+        check_output(stream, attribute_tests[i].output, i == 1 || i == 2 || i == 3 || i == 4, __LINE__);
+        IStream_Release(stream);
+    }
 
     /* with namespaces */
     stream = writer_set_output(writer);
@@ -1369,14 +1610,6 @@ todo_wine
 
     hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, bW);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, xmlnsW, uri2W, NULL);
-todo_wine
-    ok(hr == WR_E_XMLNSPREFIXDECLARATION, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, xmlnsW, NULL, uri2W);
-todo_wine
-    ok(hr == WR_E_NSPREFIXDECLARED, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_WriteAttributeString(writer, prefixW, localW, NULL, bW);
 todo_wine
@@ -1585,7 +1818,8 @@ START_TEST(writer)
     test_writer_state();
     test_writeroutput();
     test_writestartdocument();
-    test_writestartelement();
+    test_WriteStartElement();
+    test_WriteElementString();
     test_writeendelement();
     test_flush();
     test_omitxmldeclaration();
