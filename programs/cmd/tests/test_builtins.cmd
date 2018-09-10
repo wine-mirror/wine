@@ -1702,7 +1702,10 @@ mkdir foobar & cd foobar
 echo ------ string argument
 rem NT4 does not support usebackq
 for /F %%i in ("a b c") do echo %%i
+for /F %%i in (  "a b c"    ) do echo X%%iX
 for /f usebackq %%i in ('a b c') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
+for /f usebackq %%i in (   'a b c'   ) do echo X%%iX>output_file
 if not exist output_file (echo no output) else (type output_file & del output_file)
 for /f %%i in ("a ") do echo %%i
 for /f usebackq %%i in ('a ') do echo %%i>output_file
@@ -1755,9 +1758,11 @@ for /f "usebackq" %%i in (`echo.Passed2`) do echo %%i
 for /f usebackq %%i in (`echo.Passed3`) do echo %%i
 for /f "usebackq" %%i in (`"c:\windows\system32\cmd.exe" /C echo Passed4`) do echo %%i
 for /f "usebackq" %%i in (`""c:\windows\system32\cmd.exe" /C echo Passed5"`) do echo %%i
+for /f %%i in (  'echo.Passed6'  ) do echo %%i
+for /f "usebackq" %%i in (   `echo.Passed7` ) do echo %%i
 goto :ContinueFORF
 :SkipFORFcmdNT4
-for /l %%i in (1,1,5) do echo Missing functionality - Broken%%i
+for /l %%i in (1,1,7) do echo Missing functionality - Broken%%i
 :ContinueFORF
 rem FIXME: Rest not testable right now in wine: not implemented and would need
 rem preliminary grep-like program implementation (e.g. like findstr or fc) even

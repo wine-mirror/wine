@@ -2069,17 +2069,22 @@ static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd
   WCHAR  temp_str[MAX_PATH];
   WCHAR  temp_file[MAX_PATH];
   WCHAR  temp_cmd[MAXSTRING];
+  WCHAR *trimmed = NULL;
   HANDLE hinput = INVALID_HANDLE_VALUE;
   static const WCHAR redirOutW[]  = {'>','%','s','\0'};
   static const WCHAR cmdW[]       = {'C','M','D','\0'};
   static const WCHAR cmdslashcW[] = {'C','M','D','.','E','X','E',' ',
                                      '/','C',' ','%','s','\0'};
 
-  /* Remove leading and trailing character */
+  /* Remove leading and trailing character (but there may be trailing whitespace too) */
   if ((iscmd && (itemstr[0] == '`' && usebackq)) ||
       (iscmd && (itemstr[0] == '\'' && !usebackq)) ||
       (!iscmd && (itemstr[0] == '"' && usebackq)))
   {
+    trimmed = WCMD_strtrim(itemstr);
+    if (trimmed) {
+      itemstr = trimmed;
+    }
     itemstr[strlenW(itemstr)-1] = 0x00;
     itemstr++;
   }
@@ -2106,6 +2111,7 @@ static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd
     hinput = CreateFileW(itemstr, GENERIC_READ, FILE_SHARE_READ,
                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   }
+  heap_free(trimmed);
   return hinput;
 }
 
