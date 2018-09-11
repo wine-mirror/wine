@@ -46,6 +46,9 @@ static const WCHAR ltW[] = {'<'};
 static const WCHAR gtW[] = {'>'};
 static const WCHAR spaceW[] = {' '};
 static const WCHAR quoteW[] = {'"'};
+static const WCHAR eqW[] = {'='};
+static const WCHAR xmlnsW[] = {' ','x','m','l','n','s'};
+static const WCHAR xmlnsuriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0};
 
 struct output_buffer
 {
@@ -81,11 +84,20 @@ typedef struct
 
 static const struct IUnknownVtbl xmlwriteroutputvtbl;
 
+struct ns
+{
+    struct list entry;
+    WCHAR *prefix;
+    int prefix_len;
+    WCHAR *uri;
+};
+
 struct element
 {
     struct list entry;
     WCHAR *qname;
     unsigned int len; /* qname length in chars */
+    struct list ns;
 };
 
 typedef struct _xmlwriter
@@ -149,12 +161,12 @@ static inline void *writeroutput_realloc(xmlwriteroutput *output, void *mem, siz
 }
 
 /* writer memory allocation functions */
-static inline void *writer_alloc(xmlwriter *writer, size_t len)
+static inline void *writer_alloc(const xmlwriter *writer, size_t len)
 {
     return m_alloc(writer->imalloc, len);
 }
 
-static inline void writer_free(xmlwriter *writer, void *mem)
+static inline void writer_free(const xmlwriter *writer, void *mem)
 {
     m_free(writer->imalloc, mem);
 }
@@ -180,17 +192,39 @@ static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, con
     else
         ret->qname[0] = 0;
     strcatW(ret->qname, local);
+    list_init(&ret->ns);
 
     return ret;
 }
 
-static void free_element(xmlwriter *writer, struct element *element)
+static void writer_free_element(xmlwriter *writer, struct element *element)
 {
+    struct ns *ns, *ns2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(ns, ns2, &element->ns, struct ns, entry)
+    {
+        list_remove(&ns->entry);
+        writer_free(writer, ns->prefix);
+        writer_free(writer, ns->uri);
+        writer_free(writer, ns);
+    }
+
     writer_free(writer, element->qname);
     writer_free(writer, element);
 }
 
-static void push_element(xmlwriter *writer, struct element *element)
+static void writer_free_element_stack(xmlwriter *writer)
+{
+    struct element *element, *element2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(element, element2, &writer->elements, struct element, entry)
+    {
+        list_remove(&element->entry);
+        writer_free_element(writer, element);
+    }
+}
+
+static void writer_push_element(xmlwriter *writer, struct element *element)
 {
     list_add_head(&writer->elements, &element->entry);
 }
@@ -203,6 +237,46 @@ static struct element *pop_element(xmlwriter *writer)
         list_remove(&element->entry);
 
     return element;
+}
+
+static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len)
+{
+    size_t size;
+    WCHAR *ret;
+
+    if (!str)
+        return NULL;
+
+    if (len == -1)
+        len = strlenW(str);
+
+    size = (len + 1) * sizeof(WCHAR);
+    ret = writer_alloc(writer, size);
+    memcpy(ret, str, size);
+    return ret;
+}
+
+static WCHAR *writer_strdupW(const xmlwriter *writer, const WCHAR *str)
+{
+    return writer_strndupW(writer, str, -1);
+}
+
+static void writer_push_ns(xmlwriter *writer, const WCHAR *prefix, int prefix_len, const WCHAR *uri)
+{
+    struct element *element;
+    struct ns *ns;
+
+    element = LIST_ENTRY(list_head(&writer->elements), struct element, entry);
+    if (!element)
+        return;
+
+    if ((ns = writer_alloc(writer, sizeof(*ns))))
+    {
+        ns->prefix = writer_strndupW(writer, prefix, prefix_len);
+        ns->prefix_len = prefix_len;
+        ns->uri = writer_strdupW(writer, uri);
+        list_add_tail(&element->ns, &ns->entry);
+    }
 }
 
 static HRESULT init_output_buffer(xmlwriteroutput *output)
@@ -298,13 +372,15 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
 static HRESULT write_output_qname(xmlwriteroutput *output, const WCHAR *prefix, int prefix_len,
         const WCHAR *local_name, int local_len)
 {
+    static const WCHAR colW[] = {':'};
+
     assert(prefix_len >= 0 && local_len >= 0);
 
-    if (prefix_len) {
-        static const WCHAR colW[] = {':'};
+    if (prefix_len)
         write_output_buffer(output, prefix, prefix_len);
+
+    if (prefix_len && local_len)
         write_output_buffer(output, colW, ARRAY_SIZE(colW));
-    }
 
     write_output_buffer(output, local_name, local_len);
 
@@ -423,9 +499,21 @@ static HRESULT write_xmldecl(xmlwriter *writer, XmlStandalone standalone)
 
 static HRESULT writer_close_starttag(xmlwriter *writer)
 {
+    struct element *element;
+    struct ns *ns;
     HRESULT hr;
 
     if (!writer->starttagopen) return S_OK;
+
+    element = LIST_ENTRY(list_head(&writer->elements), struct element, entry);
+
+    LIST_FOR_EACH_ENTRY(ns, &element->ns, struct ns, entry)
+    {
+        write_output_qname(writer->output, xmlnsW, ARRAY_SIZE(xmlnsW), ns->prefix, ns->prefix_len);
+        write_output_buffer(writer->output, eqW, ARRAY_SIZE(eqW));
+        write_output_buffer_quoted(writer->output, ns->uri, -1);
+    }
+
     hr = write_output_buffer(writer->output, gtW, ARRAY_SIZE(gtW));
     writer->starttagopen = FALSE;
     return hr;
@@ -498,17 +586,12 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     TRACE("(%p)->(%u)\n", This, ref);
 
     if (ref == 0) {
-        struct element *element, *element2;
         IMalloc *imalloc = This->imalloc;
 
         writeroutput_flush_stream(This->output);
         if (This->output) IUnknown_Release(&This->output->IXmlWriterOutput_iface);
 
-        /* element stack */
-        LIST_FOR_EACH_ENTRY_SAFE(element, element2, &This->elements, struct element, entry) {
-            list_remove(&element->entry);
-            free_element(This, element);
-        }
+        writer_free_element_stack(This);
 
         writer_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
@@ -532,6 +615,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
         This->output = NULL;
         This->bomwritten = FALSE;
         This->indent_level = 0;
+        writer_free_element_stack(This);
     }
 
     /* just reset current output */
@@ -635,7 +719,6 @@ static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *p
 static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR ns_prefix,
     LPCWSTR local_name, LPCWSTR ns_uri, LPCWSTR value)
 {
-    static const WCHAR eqW[] = {'=','"'};
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
     TRACE("%p %s %s %s %s\n", This, debugstr_w(ns_prefix), debugstr_w(local_name),
@@ -664,8 +747,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     write_output_buffer(This->output, spaceW, ARRAY_SIZE(spaceW));
     write_output_buffer(This->output, local_name, -1);
     write_output_buffer(This->output, eqW, ARRAY_SIZE(eqW));
-    write_output_buffer(This->output, value, -1);
-    write_output_buffer(This->output, quoteW, ARRAY_SIZE(quoteW));
+    write_output_buffer_quoted(This->output, value, -1);
 
     return S_OK;
 }
@@ -860,11 +942,46 @@ static HRESULT is_valid_ncname(const WCHAR *str, int *out)
     return S_OK;
 }
 
+static BOOL is_empty_string(const WCHAR *str)
+{
+    return !str || !*str;
+}
+
+static struct ns *writer_find_ns(xmlwriter *writer, const WCHAR *prefix, const WCHAR *uri)
+{
+    struct element *element;
+    struct ns *ns;
+
+    if (is_empty_string(prefix) && is_empty_string(uri))
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY(element, &writer->elements, struct element, entry)
+    {
+        LIST_FOR_EACH_ENTRY(ns, &element->ns, struct ns, entry)
+        {
+            if (!uri)
+            {
+                if (!ns->prefix) continue;
+                if (!strcmpW(ns->prefix, prefix))
+                    return ns;
+            }
+            else if (!strcmpW(uri, ns->uri))
+            {
+                if (!prefix || !strcmpW(prefix, ns->prefix))
+                    return ns;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR prefix,
                                      LPCWSTR local_name, LPCWSTR uri, LPCWSTR value)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
     int prefix_len, local_len;
+    struct ns *ns;
     HRESULT hr;
 
     TRACE("(%p)->(%s %s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name),
@@ -895,10 +1012,34 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     if (FAILED(hr = is_valid_ncname(local_name, &local_len)))
         return hr;
 
+    ns = writer_find_ns(This, prefix, uri);
+    if (!ns && !is_empty_string(prefix) && is_empty_string(uri))
+        return WR_E_NSPREFIXWITHEMPTYNSURI;
+
+    if (uri && !strcmpW(uri, xmlnsuriW))
+    {
+        if (!prefix)
+            return WR_E_XMLNSPREFIXDECLARATION;
+
+        if (!is_empty_string(prefix))
+            return WR_E_XMLNSURIDECLARATION;
+    }
+
     write_encoding_bom(This);
     write_node_indent(This);
+
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
-    write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
+    if (ns)
+        write_output_qname(This->output, ns->prefix, ns->prefix_len, local_name, local_len);
+    else
+        write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
+
+    if (!ns && (prefix_len || !is_empty_string(uri)))
+    {
+        write_output_qname(This->output, xmlnsW, ARRAY_SIZE(xmlnsW), prefix, prefix_len);
+        write_output_buffer(This->output, eqW, ARRAY_SIZE(eqW));
+        write_output_buffer_quoted(This->output, uri, -1);
+    }
 
     if (value)
     {
@@ -1025,6 +1166,9 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(This);
+        break;
     default:
         ;
     }
@@ -1033,7 +1177,6 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
     if (!element)
         return WR_E_INVALIDACTION;
 
-    writer_close_starttag(This);
     writer_dec_indent(This);
 
     /* don't force full end tag to the next line */
@@ -1299,7 +1442,10 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     This->state = XmlWriterState_ElemStarted;
     This->starttagopen = TRUE;
 
-    push_element(This, element);
+    writer_push_element(This, element);
+
+    if (prefix_len && uri)
+        writer_push_ns(This, prefix, prefix_len, uri);
 
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
     write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
