@@ -11728,12 +11728,11 @@ static void test_find_device(void)
     {
         const GUID *guid;
         HRESULT hr;
-        BOOL todo;
     }
     tests[] =
     {
         {&IID_IDirect3D,             DDERR_NOTFOUND},
-        {&IID_IDirect3DRampDevice,   D3D_OK, TRUE},
+        {&IID_IDirect3DRampDevice,   D3D_OK},
         {&IID_IDirect3DRGBDevice,    D3D_OK},
         {&IID_IDirect3DMMXDevice,    DDERR_NOTFOUND},
         {&IID_IDirect3DRefDevice,    DDERR_NOTFOUND},
@@ -11784,8 +11783,7 @@ static void test_find_device(void)
         result.dwSize = sizeof(result);
 
         hr = IDirect3D_FindDevice(d3d, &search, &result);
-        todo_wine_if(tests[i].todo)
-            ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
         ok(result.dwSize == sizeof(result), "Test %u: Got unexpected result size %u.\n", i, result.dwSize);
     }
 
