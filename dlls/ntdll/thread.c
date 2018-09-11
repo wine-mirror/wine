@@ -1288,10 +1288,9 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             ULONG_PTR req_aff;
 
             if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
-            req_aff = *(const ULONG_PTR *)data;
-            if ((ULONG)req_aff == ~0u) req_aff = affinity_mask;
-            else if (req_aff & ~affinity_mask) return STATUS_INVALID_PARAMETER;
-            else if (!req_aff) return STATUS_INVALID_PARAMETER;
+            req_aff = *(const ULONG_PTR *)data & affinity_mask;
+            if (!req_aff) return STATUS_INVALID_PARAMETER;
+
             SERVER_START_REQ( set_thread_info )
             {
                 req->handle   = wine_server_obj_handle( handle );

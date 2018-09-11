@@ -2049,6 +2049,27 @@ static void test_affinity(void)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( tbi.AffinityMask == 1, "Unexpected thread affinity\n" );
 
+    /* NOTE: Pre-Vista does not allow bits to be set that are higher than the highest set bit in process affinity mask */
+    thread_affinity = (pbi.AffinityMask << 1) | pbi.AffinityMask;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( broken(status == STATUS_INVALID_PARAMETER) || (status == STATUS_SUCCESS), "Expected STATUS_SUCCESS, got %08x\n", status );
+    if (status == STATUS_SUCCESS)
+    {
+        status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+        ok( tbi.AffinityMask == pbi.AffinityMask, "Unexpected thread affinity. Expected %lx, got %lx\n", pbi.AffinityMask, tbi.AffinityMask );
+    }
+
+    thread_affinity = ~(DWORD_PTR)0 - 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+    ok( broken(status == STATUS_INVALID_PARAMETER) || (status == STATUS_SUCCESS), "Expected STATUS_SUCCESS, got %08x\n", status );
+    if (status == STATUS_SUCCESS)
+    {
+        status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+        ok( tbi.AffinityMask == (pbi.AffinityMask & (~(DWORD_PTR)0 - 1)), "Unexpected thread affinity. Expected %lx, got %lx\n", pbi.AffinityMask & (~(DWORD_PTR)0 - 1), tbi.AffinityMask );
+    }
+
     /* NOTE: Pre-Vista does not recognize the "all processors" flag (all bits set) */
     thread_affinity = ~(DWORD_PTR)0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
