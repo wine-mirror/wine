@@ -22,7 +22,8 @@
 #include "wine/test.h"
 #include <limits.h>
 #include <math.h>
-#include "d3d.h"
+#include "ddrawi.h"
+#include "d3dhal.h"
 
 static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
 static DEVMODEW registry_mode;
@@ -11724,6 +11725,22 @@ static void test_find_device(void)
     HWND window;
     HRESULT hr;
 
+    struct
+    {
+        DWORD size;
+        GUID guid;
+        D3DDEVICEDESC_V1 hw_desc;
+        D3DDEVICEDESC_V1 sw_desc;
+    } result_v1;
+
+    struct
+    {
+        DWORD size;
+        GUID guid;
+        D3DDEVICEDESC_V2 hw_desc;
+        D3DDEVICEDESC_V2 sw_desc;
+    } result_v2;
+
     static const struct
     {
         const GUID *guid;
@@ -11761,6 +11778,10 @@ static void test_find_device(void)
     hr = IDirect3D_FindDevice(d3d, &search, &result);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(result.dwSize == sizeof(result), "Got unexpected result size %u.\n", result.dwSize);
+    ok(result.ddHwDesc.dwSize == sizeof(result_v1.hw_desc),
+            "Got unexpected HW desc size %u.\n", result.ddHwDesc.dwSize);
+    ok(result.ddSwDesc.dwSize == sizeof(result_v1.sw_desc),
+            "Got unexpected SW desc size %u.\n", result.ddSwDesc.dwSize);
 
     memset(&search, 0, sizeof(search));
     memset(&result, 0, sizeof(result));
@@ -11771,6 +11792,26 @@ static void test_find_device(void)
     result.dwSize = sizeof(result) + 1;
     hr = IDirect3D_FindDevice(d3d, &search, &result);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    search.dwSize = sizeof(search);
+
+    memset(&result_v1, 0, sizeof(result_v1));
+    result_v1.size = sizeof(result_v1);
+    hr = IDirect3D_FindDevice(d3d, &search, (D3DFINDDEVICERESULT *)&result_v1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(result_v1.hw_desc.dwSize == sizeof(result_v1.hw_desc),
+            "Got unexpected HW desc size %u.\n", result_v1.hw_desc.dwSize);
+    ok(result_v1.sw_desc.dwSize == sizeof(result_v1.sw_desc),
+            "Got unexpected SW desc size %u.\n", result_v1.sw_desc.dwSize);
+
+    memset(&result_v2, 0, sizeof(result_v2));
+    result_v2.size = sizeof(result_v2);
+    hr = IDirect3D_FindDevice(d3d, &search, (D3DFINDDEVICERESULT *)&result_v2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(result_v2.hw_desc.dwSize == sizeof(result_v1.hw_desc),
+            "Got unexpected HW desc size %u.\n", result_v2.hw_desc.dwSize);
+    ok(result_v2.sw_desc.dwSize == sizeof(result_v1.sw_desc),
+            "Got unexpected SW desc size %u.\n", result_v2.sw_desc.dwSize);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -11785,6 +11826,20 @@ static void test_find_device(void)
         hr = IDirect3D_FindDevice(d3d, &search, &result);
         ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
         ok(result.dwSize == sizeof(result), "Test %u: Got unexpected result size %u.\n", i, result.dwSize);
+        if (SUCCEEDED(hr))
+        {
+            ok(result.ddHwDesc.dwSize == sizeof(result_v1.hw_desc),
+                    "Test %u: Got unexpected HW desc size %u.\n", i, result.ddHwDesc.dwSize);
+            ok(result.ddSwDesc.dwSize == sizeof(result_v1.sw_desc),
+                    "Test %u: Got unexpected SW desc size %u.\n", i, result.ddSwDesc.dwSize);
+        }
+        else
+        {
+            ok(!result.ddHwDesc.dwSize,
+                    "Test %u: Got unexpected HW desc size %u.\n", i, result.ddHwDesc.dwSize);
+            ok(!result.ddSwDesc.dwSize,
+                    "Test %u: Got unexpected SW desc size %u.\n", i, result.ddSwDesc.dwSize);
+        }
     }
 
     /* The HAL device can only be enumerated if hardware acceleration is present. */
