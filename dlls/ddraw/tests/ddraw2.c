@@ -13094,7 +13094,7 @@ static void test_find_device(void)
     search.dcmColorModel = 0xdeadbeef;
     result.dwSize = sizeof(result);
     hr = IDirect3D2_FindDevice(d3d, &search, &result);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirect3D2_Release(d3d);
     IDirectDraw2_Release(ddraw);
