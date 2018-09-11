@@ -82,7 +82,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT
     HRESULT hr = S_OK;
     WCHAR buf[256];
     BSTR *strings, *tmp;
-    DWORD count = 2, len = sizeof(buf)/sizeof(buf[0]);
+    DWORD count = 2, len = ARRAY_SIZE( buf );
     LONG res, i = 0;
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));

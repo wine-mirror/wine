@@ -507,7 +507,7 @@ static BOOL is_system_prop( const WCHAR *name )
 static BSTR build_servername( const struct view *view )
 {
     WCHAR server[MAX_COMPUTERNAME_LENGTH + 1], *p;
-    DWORD len = sizeof(server)/sizeof(server[0]);
+    DWORD len = ARRAY_SIZE( server );
 
     if (view->proplist) return NULL;
 

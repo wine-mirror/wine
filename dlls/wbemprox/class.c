@@ -582,7 +582,7 @@ static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
     {
         if ((value = get_value_bstr( table, row, i )))
         {
-            *len += sizeof(fmtW) / sizeof(fmtW[0]);
+            *len += ARRAY_SIZE( fmtW );
             *len += strlenW( table->columns[i].name );
             *len += SysStringLen( value );
             SysFreeString( value );
@@ -608,7 +608,7 @@ static BSTR get_object_text( const struct view *view, UINT index )
     UINT len, len_body, row = view->result[index];
     BSTR ret, body;
 
-    len = sizeof(fmtW) / sizeof(fmtW[0]);
+    len = ARRAY_SIZE( fmtW );
     len += strlenW( view->table->name );
     if (!(body = get_body_text( view->table, row, &len_body ))) return NULL;
     len += len_body;

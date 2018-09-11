@@ -1782,7 +1782,7 @@ static WCHAR *get_file_version( const WCHAR *filename )
     void *block;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( (4 * 5 + sizeof(fmtW) / sizeof(fmtW[0])) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = heap_alloc( (4 * 5 + ARRAY_SIZE( fmtW )) * sizeof(WCHAR) ))) return NULL;
     if (!(size = GetFileVersionInfoSizeW( filename, NULL )) || !(block = heap_alloc( size )))
     {
         heap_free( ret );
@@ -2041,7 +2041,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
 {
     static const WCHAR fmtW[] =
         {'\\','\\','\\','\\','.','\\','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','%','u',0};
-    WCHAR device_id[sizeof(fmtW)/sizeof(fmtW[0]) + 10], root[] = {'A',':','\\',0};
+    WCHAR device_id[ARRAY_SIZE( fmtW ) + 10], root[] = {'A',':','\\',0};
     struct record_diskdrive *rec;
     UINT i, row = 0, offset = 0, index = 0, type;
     UINT64 size = 1024 * 1024 * 1024;
@@ -2208,7 +2208,7 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
 static WCHAR *get_volumename( const WCHAR *root )
 {
     WCHAR buf[MAX_PATH + 1] = {0};
-    GetVolumeInformationW( root, buf, sizeof(buf)/sizeof(buf[0]), NULL, NULL, NULL, NULL, 0 );
+    GetVolumeInformationW( root, buf, ARRAY_SIZE( buf ), NULL, NULL, NULL, NULL, 0 );
     return heap_strdupW( buf );
 }
 static WCHAR *get_volumeserialnumber( const WCHAR *root )
@@ -2378,7 +2378,7 @@ static WCHAR *get_dnshostname( IP_ADAPTER_UNICAST_ADDRESS *addr )
     WCHAR buf[WS_NI_MAXHOST];
 
     if (!addr) return NULL;
-    if (GetNameInfoW( sa->lpSockaddr, sa->iSockaddrLength, buf, sizeof(buf)/sizeof(buf[0]), NULL,
+    if (GetNameInfoW( sa->lpSockaddr, sa->iSockaddrLength, buf, ARRAY_SIZE( buf ), NULL,
                       0, WS_NI_NAMEREQD )) return NULL;
     return heap_strdupW( buf );
 }
@@ -2400,7 +2400,7 @@ static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
     }
     for (gateway = list; gateway; gateway = gateway->Next)
     {
-        buflen = sizeof(buf)/sizeof(buf[0]);
+        buflen = ARRAY_SIZE( buf );
         if (WSAAddressToStringW( gateway->Address.lpSockaddr, gateway->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
@@ -2432,7 +2432,7 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
     }
     for (server = list; server; server = server->Next)
     {
-        buflen = sizeof(buf)/sizeof(buf[0]);
+        buflen = ARRAY_SIZE( buf );
         if (WSAAddressToStringW( server->Address.lpSockaddr, server->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
@@ -2465,7 +2465,7 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     }
     for (address = list; address; address = address->Next)
     {
-        buflen = sizeof(buf)/sizeof(buf[0]);
+        buflen = ARRAY_SIZE( buf );
         if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
@@ -2501,7 +2501,7 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
         {
             WCHAR buf[INET_ADDRSTRLEN];
             SOCKADDR_IN addr;
-            ULONG buflen = sizeof(buf)/sizeof(buf[0]);
+            ULONG buflen = ARRAY_SIZE( buf );
 
             memset( &addr, 0, sizeof(addr) );
             addr.sin_family = WS_AF_INET;
@@ -3058,7 +3058,7 @@ static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
         {'8','.','1',' ','P','r','o',0};
     static const WCHAR win10W[] =
         {'1','0',' ','P','r','o',0};
-    int len = sizeof(windowsW)/sizeof(windowsW[0]);
+    int len = ARRAY_SIZE( windowsW );
     WCHAR *ret;
 
     if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(win2003W) ))) return NULL;
@@ -3240,7 +3240,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     ENUM_SERVICE_STATUS_PROCESSW *tmp, *services = NULL;
     SERVICE_STATUS_PROCESS *status;
     WCHAR sysnameW[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD len = sizeof(sysnameW) / sizeof(sysnameW[0]);
+    DWORD len = ARRAY_SIZE( sysnameW );
     UINT i, row = 0, offset = 0, size = 256, needed, count;
     enum fill_status fill_status = FILL_STATUS_FAILED;
     BOOL ret;
