@@ -3984,18 +3984,9 @@ static void test_create_blend_state(void)
     hr = ID3D10Device_CreateBlendState(device, NULL, &blend_state1);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    blend_desc.AlphaToCoverageEnable = FALSE;
-    blend_desc.SrcBlend = D3D10_BLEND_ONE;
-    blend_desc.DestBlend = D3D10_BLEND_ZERO;
-    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
-    blend_desc.SrcBlendAlpha = D3D10_BLEND_ONE;
-    blend_desc.DestBlendAlpha = D3D10_BLEND_ZERO;
-    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
+    memset(&blend_desc, 0, sizeof(blend_desc));
     for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-    {
-        blend_desc.BlendEnable[i] = FALSE;
         blend_desc.RenderTargetWriteMask[i] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    }
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state1);
@@ -4012,6 +4003,31 @@ static void test_create_blend_state(void)
     refcount = get_refcount(device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
+
+    ID3D10BlendState_GetDesc(blend_state1, &blend_desc);
+    ok(blend_desc.AlphaToCoverageEnable == FALSE,
+            "Got unexpected alpha to coverage enable %#x.\n", blend_desc.AlphaToCoverageEnable);
+    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE,
+            "Got unexpected src blend %#x.\n", blend_desc.SrcBlend);
+    ok(blend_desc.DestBlend == D3D10_BLEND_ZERO,
+            "Got unexpected dest blend %#x.\n", blend_desc.DestBlend);
+    ok(blend_desc.BlendOp == D3D10_BLEND_OP_ADD,
+            "Got unexpected blend op %#x.\n", blend_desc.BlendOp);
+    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_ONE,
+            "Got unexpected src blend alpha %#x.\n", blend_desc.SrcBlendAlpha);
+    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_ZERO,
+            "Got unexpected dest blend alpha %#x.\n", blend_desc.DestBlendAlpha);
+    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_ADD,
+            "Got unexpected blend op alpha %#x.\n", blend_desc.BlendOpAlpha);
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(blend_desc.BlendEnable[i] == FALSE,
+                "Got unexpected blend enable %#x for render target %u.\n",
+                blend_desc.BlendEnable[i], i);
+        ok(blend_desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL,
+                "Got unexpected render target write mask %#x for render target %u.\n",
+                blend_desc.RenderTargetWriteMask[i], i);
+    }
 
     /* Not available on all Windows versions. */
     check_interface(blend_state1, &IID_ID3D10BlendState1, TRUE, TRUE);
