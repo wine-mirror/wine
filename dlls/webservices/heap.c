@@ -46,7 +46,7 @@ struct heap
     SIZE_T           max_size;
     SIZE_T           allocated;
     ULONG            prop_count;
-    struct prop      prop[sizeof(heap_props)/sizeof(heap_props[0])];
+    struct prop      prop[ARRAY_SIZE( heap_props )];
 };
 
 #define HEAP_MAGIC (('H' << 24) | ('E' << 16) | ('A' << 8) | 'P')
@@ -177,7 +177,7 @@ HRESULT WINAPI WsAlloc( WS_HEAP *handle, SIZE_T size, void **ptr, WS_ERROR *erro
 
 static struct heap *alloc_heap(void)
 {
-    static const ULONG count = sizeof(heap_props)/sizeof(heap_props[0]);
+    static const ULONG count = ARRAY_SIZE( heap_props );
     struct heap *ret;
     ULONG size = sizeof(*ret) + prop_size( heap_props, count );
 

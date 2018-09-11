@@ -397,14 +397,14 @@ struct reader
     const WS_XML_DICTIONARY     *dict_static;
     WS_XML_DICTIONARY           *dict;
     ULONG                        prop_count;
-    struct prop                  prop[sizeof(reader_props)/sizeof(reader_props[0])];
+    struct prop                  prop[ARRAY_SIZE( reader_props )];
 };
 
 #define READER_MAGIC (('R' << 24) | ('E' << 16) | ('A' << 8) | 'D')
 
 static struct reader *alloc_reader(void)
 {
-    static const ULONG count = sizeof(reader_props)/sizeof(reader_props[0]);
+    static const ULONG count = ARRAY_SIZE( reader_props );
     struct reader *ret;
     ULONG size = sizeof(*ret) + prop_size( reader_props, count );
 

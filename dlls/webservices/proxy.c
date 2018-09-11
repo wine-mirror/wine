@@ -48,14 +48,14 @@ struct proxy
     WS_SERVICE_PROXY_STATE  state;
     WS_CHANNEL             *channel;
     ULONG                   prop_count;
-    struct prop             prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
+    struct prop             prop[ARRAY_SIZE( proxy_props )];
 };
 
 #define PROXY_MAGIC (('P' << 24) | ('R' << 16) | ('O' << 8) | 'X')
 
 static struct proxy *alloc_proxy(void)
 {
-    static const ULONG count = sizeof(proxy_props)/sizeof(proxy_props[0]);
+    static const ULONG count = ARRAY_SIZE( proxy_props );
     struct proxy *ret;
     ULONG size = sizeof(*ret) + prop_size( proxy_props, count );
 

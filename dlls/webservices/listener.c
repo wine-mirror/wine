@@ -113,14 +113,14 @@ struct listener
         } udp;
     } u;
     ULONG                   prop_count;
-    struct prop             prop[sizeof(listener_props)/sizeof(listener_props[0])];
+    struct prop             prop[ARRAY_SIZE( listener_props )];
 };
 
 #define LISTENER_MAGIC (('L' << 24) | ('I' << 16) | ('S' << 8) | 'T')
 
 static struct listener *alloc_listener(void)
 {
-    static const ULONG count = sizeof(listener_props)/sizeof(listener_props[0]);
+    static const ULONG count = ARRAY_SIZE( listener_props );
     struct listener *ret;
     ULONG size = sizeof(*ret) + prop_size( listener_props, count );
 

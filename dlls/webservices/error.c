@@ -42,14 +42,14 @@ struct error
     ULONG            magic;
     CRITICAL_SECTION cs;
     ULONG            prop_count;
-    struct prop      prop[sizeof(error_props)/sizeof(error_props[0])];
+    struct prop      prop[ARRAY_SIZE( error_props )];
 };
 
 #define ERROR_MAGIC (('E' << 24) | ('R' << 16) | ('R' << 8) | 'O')
 
 static struct error *alloc_error(void)
 {
-    static const ULONG count = sizeof(error_props)/sizeof(error_props[0]);
+    static const ULONG count = ARRAY_SIZE( error_props );
     struct error *ret;
     ULONG size = sizeof(*ret) + prop_size( error_props, count );
 

@@ -92,14 +92,14 @@ struct writer
     WS_DYNAMIC_STRING_CALLBACK   dict_cb;
     void                        *dict_cb_state;
     ULONG                        prop_count;
-    struct prop                  prop[sizeof(writer_props)/sizeof(writer_props[0])];
+    struct prop                  prop[ARRAY_SIZE( writer_props )];
 };
 
 #define WRITER_MAGIC (('W' << 24) | ('R' << 16) | ('I' << 8) | 'T')
 
 static struct writer *alloc_writer(void)
 {
-    static const ULONG count = sizeof(writer_props)/sizeof(writer_props[0]);
+    static const ULONG count = ARRAY_SIZE( writer_props );
     struct writer *ret;
     ULONG size = sizeof(*ret) + prop_size( writer_props, count );
 

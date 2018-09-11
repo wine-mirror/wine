@@ -236,14 +236,14 @@ struct channel
     ULONG                   read_buflen;
     ULONG                   read_size;
     ULONG                   prop_count;
-    struct prop             prop[sizeof(channel_props)/sizeof(channel_props[0])];
+    struct prop             prop[ARRAY_SIZE( channel_props )];
 };
 
 #define CHANNEL_MAGIC (('C' << 24) | ('H' << 16) | ('A' << 8) | 'N')
 
 static struct channel *alloc_channel(void)
 {
-    static const ULONG count = sizeof(channel_props)/sizeof(channel_props[0]);
+    static const ULONG count = ARRAY_SIZE( channel_props );
     struct channel *ret;
     ULONG size = sizeof(*ret) + prop_size( channel_props, count );
 

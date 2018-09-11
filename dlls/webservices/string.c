@@ -791,7 +791,7 @@ static const ULONG dict_sorted[] =
 const struct dictionary dict_builtin_static =
 {
     {{0xf93578f8,0x5852,0x4eb7,{0xa6,0xfc,0xe7,0x2b,0xb7,0x1d,0xb6,0x22}},
-     (WS_XML_STRING *)dict_strings, sizeof(dict_strings)/sizeof(dict_strings[0]), TRUE},
+     (WS_XML_STRING *)dict_strings, ARRAY_SIZE( dict_strings ), TRUE},
     (ULONG *)dict_sorted
 };
 

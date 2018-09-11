@@ -83,7 +83,7 @@ struct msg
     WS_PROXY_MESSAGE_CALLBACK_CONTEXT   ctx_send;
     WS_PROXY_MESSAGE_CALLBACK_CONTEXT   ctx_receive;
     ULONG                               prop_count;
-    struct prop                         prop[sizeof(msg_props)/sizeof(msg_props[0])];
+    struct prop                         prop[ARRAY_SIZE( msg_props )];
 };
 
 #define MSG_MAGIC (('M' << 24) | ('E' << 16) | ('S' << 8) | 'S')
@@ -91,7 +91,7 @@ struct msg
 
 static struct msg *alloc_msg(void)
 {
-    static const ULONG count = sizeof(msg_props)/sizeof(msg_props[0]);
+    static const ULONG count = ARRAY_SIZE( msg_props );
     struct msg *ret;
     ULONG size = sizeof(*ret) + prop_size( msg_props, count );
 
@@ -1785,7 +1785,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     case WS_ENVELOPE_VERSION_SOAP_1_2:
     {
         static const WCHAR actionW[] = {'a','c','t','i','o','n','=','"'};
-        ULONG len_action = sizeof(actionW)/sizeof(actionW[0]);
+        ULONG len_action = ARRAY_SIZE( actionW );
 
         if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
             break;

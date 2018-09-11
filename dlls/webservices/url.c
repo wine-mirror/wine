@@ -39,19 +39,19 @@ static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
 
 static WS_URL_SCHEME_TYPE scheme_type( const WCHAR *str, ULONG len )
 {
-    if (len == sizeof(http)/sizeof(http[0]) && !memicmpW( str, http, sizeof(http)/sizeof(http[0]) ))
+    if (len == ARRAY_SIZE( http ) && !memicmpW( str, http, ARRAY_SIZE( http )))
         return WS_URL_HTTP_SCHEME_TYPE;
 
-    if (len == sizeof(https)/sizeof(https[0]) && !memicmpW( str, https, sizeof(https)/sizeof(https[0]) ))
+    if (len == ARRAY_SIZE( https ) && !memicmpW( str, https, ARRAY_SIZE( https )))
         return WS_URL_HTTPS_SCHEME_TYPE;
 
-    if (len == sizeof(nettcp)/sizeof(nettcp[0]) && !memicmpW( str, nettcp, sizeof(nettcp)/sizeof(nettcp[0]) ))
+    if (len == ARRAY_SIZE( nettcp ) && !memicmpW( str, nettcp, ARRAY_SIZE( nettcp )))
         return WS_URL_NETTCP_SCHEME_TYPE;
 
-    if (len == sizeof(soapudp)/sizeof(soapudp[0]) && !memicmpW( str, soapudp, sizeof(soapudp)/sizeof(soapudp[0]) ))
+    if (len == ARRAY_SIZE( soapudp ) && !memicmpW( str, soapudp, ARRAY_SIZE( soapudp )))
         return WS_URL_SOAPUDP_SCHEME_TYPE;
 
-    if (len == sizeof(netpipe)/sizeof(netpipe[0]) && !memicmpW( str, netpipe, sizeof(netpipe)/sizeof(netpipe[0]) ))
+    if (len == ARRAY_SIZE( netpipe ) && !memicmpW( str, netpipe, ARRAY_SIZE( netpipe )))
         return WS_URL_NETPIPE_SCHEME_TYPE;
 
     return ~0u;
@@ -271,23 +271,23 @@ static const WCHAR *scheme_str( WS_URL_SCHEME_TYPE scheme, ULONG *len )
     switch (scheme)
     {
     case WS_URL_HTTP_SCHEME_TYPE:
-        *len = sizeof(http)/sizeof(http[0]);
+        *len = ARRAY_SIZE( http );
         return http;
 
     case WS_URL_HTTPS_SCHEME_TYPE:
-        *len = sizeof(https)/sizeof(https[0]);
+        *len = ARRAY_SIZE( https );
         return https;
 
     case WS_URL_NETTCP_SCHEME_TYPE:
-        *len = sizeof(nettcp)/sizeof(nettcp[0]);
+        *len = ARRAY_SIZE( nettcp );
         return nettcp;
 
     case WS_URL_SOAPUDP_SCHEME_TYPE:
-        *len = sizeof(soapudp)/sizeof(soapudp[0]);
+        *len = ARRAY_SIZE( soapudp );
         return soapudp;
 
     case WS_URL_NETPIPE_SCHEME_TYPE:
-        *len = sizeof(netpipe)/sizeof(netpipe[0]);
+        *len = ARRAY_SIZE( netpipe );
         return netpipe;
 
     default:
