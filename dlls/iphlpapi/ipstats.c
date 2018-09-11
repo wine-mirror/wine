@@ -2686,6 +2686,8 @@ static struct ipv6_addr_scope *get_ipv6_addr_scope_table(unsigned int *size)
 
             entry->scope = htons(scope);
         }
+
+        fclose(fp);
     }
 #else
     FIXME( "not implemented\n" );
