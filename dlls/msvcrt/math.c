@@ -1015,7 +1015,7 @@ double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
 
   if (isfinite(num) && !isfinite(z))
     math_error(_OVERFLOW, "ldexp", num, exp, z);
-  else if (isfinite(num) && !z)
+  else if (num && isfinite(num) && !z)
     math_error(_UNDERFLOW, "ldexp", num, exp, z);
   else if (z == 0 && signbit(z))
     z = 0.0; /* Convert -0 -> +0 */

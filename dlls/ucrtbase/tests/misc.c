@@ -694,11 +694,13 @@ static void test_math_errors(void)
     } testsdl[] = {
         {"_scalb", -INFINITY, 1, -1, -1},
         {"_scalb", -1e100, 1, -1, -1},
+        {"_scalb", 0, 1, -1, -1},
         {"_scalb", 1e100, 1, -1, -1},
         {"_scalb", INFINITY, 1, -1, -1},
         {"_scalb", 1, 1e9, ERANGE, _OVERFLOW},
         {"ldexp", -INFINITY, 1, -1, -1},
         {"ldexp", -1e100, 1, -1, -1},
+        {"ldexp", 0, 1, -1, -1},
         {"ldexp", 1e100, 1, -1, -1},
         {"ldexp", INFINITY, 1, -1, -1},
         {"ldexp", 1, -1e9, -1, _UNDERFLOW},
