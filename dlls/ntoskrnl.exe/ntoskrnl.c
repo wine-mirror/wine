@@ -3986,3 +3986,8 @@ NTSTATUS WINAPI DbgQueryDebugFilterState(ULONG component, ULONG level)
     FIXME("stub: %d %d\n", component, level);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+void WINAPI ExReleaseResourceLite(PERESOURCE resource)
+{
+    FIXME("stub: %p\n", resource);
+}
