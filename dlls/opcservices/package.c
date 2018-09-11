@@ -831,6 +831,8 @@ HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **out)
 
 static HRESULT opc_package_write_contenttypes(struct zip_archive *archive, IXmlWriter *writer)
 {
+    static const WCHAR uriW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','.','o','r','g','/',
+            'p','a','c','k','a','g','e','/','2','0','0','6','/','c','o','n','t','e','n','t','-','t','y','p','e','s',0};
     static const WCHAR contenttypesW[] = {'[','C','o','n','t','e','n','t','_','T','y','p','e','s',']','.','x','m','l',0};
     static const WCHAR typesW[] = {'T','y','p','e','s',0};
     IStream *content;
@@ -843,7 +845,7 @@ static HRESULT opc_package_write_contenttypes(struct zip_archive *archive, IXmlW
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
     if (SUCCEEDED(hr))
-        hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, NULL);
+        hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, uriW);
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteEndDocument(writer);
     if (SUCCEEDED(hr))
