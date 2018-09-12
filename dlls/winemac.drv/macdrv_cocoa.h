@@ -159,6 +159,8 @@ extern int topmost_float_inactive DECLSPEC_HIDDEN;
 extern int capture_displays_for_fullscreen DECLSPEC_HIDDEN;
 extern int left_option_is_alt DECLSPEC_HIDDEN;
 extern int right_option_is_alt DECLSPEC_HIDDEN;
+extern int left_command_is_ctrl DECLSPEC_HIDDEN;
+extern int right_command_is_ctrl DECLSPEC_HIDDEN;
 extern int allow_immovable_windows DECLSPEC_HIDDEN;
 extern int cursor_clipping_locks_windows DECLSPEC_HIDDEN;
 extern int use_precise_scrolling DECLSPEC_HIDDEN;

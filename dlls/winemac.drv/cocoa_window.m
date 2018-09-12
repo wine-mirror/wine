@@ -140,22 +140,27 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         *modifiers &= ~NX_ALTERNATEMASK;
 }
 
-static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modifiers)
+static inline NSUInteger adjusted_modifiers_for_settings(NSUInteger modifiers)
 {
     fix_device_modifiers_by_generic(&modifiers);
-    if (left_option_is_alt && (modifiers & NX_DEVICELALTKEYMASK))
-    {
-        modifiers |= NX_DEVICELCMDKEYMASK;
-        modifiers &= ~NX_DEVICELALTKEYMASK;
-    }
-    if (right_option_is_alt && (modifiers & NX_DEVICERALTKEYMASK))
-    {
-        modifiers |= NX_DEVICERCMDKEYMASK;
-        modifiers &= ~NX_DEVICERALTKEYMASK;
-    }
-    fix_generic_modifiers_by_device(&modifiers);
+    NSUInteger new_modifiers = modifiers & ~(NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK |
+                                             NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK);
 
-    return modifiers;
+    // The MACDRV keyboard driver translates Command keys to Alt. If the
+    // Option key (NX_DEVICE[LR]ALTKEYMASK) should behave like Alt in
+    // Windows, rewrite it to Command (NX_DEVICE[LR]CMDKEYMASK).
+    if (modifiers & NX_DEVICELALTKEYMASK)
+        new_modifiers |= left_option_is_alt ? NX_DEVICELCMDKEYMASK : NX_DEVICELALTKEYMASK;
+    if (modifiers & NX_DEVICERALTKEYMASK)
+        new_modifiers |= right_option_is_alt ? NX_DEVICERCMDKEYMASK : NX_DEVICERALTKEYMASK;
+
+    if (modifiers & NX_DEVICELCMDKEYMASK)
+        new_modifiers |= left_command_is_ctrl ? NX_DEVICELCTLKEYMASK : NX_DEVICELCMDKEYMASK;
+    if (modifiers & NX_DEVICERCMDKEYMASK)
+        new_modifiers |= right_command_is_ctrl ? NX_DEVICERCTLKEYMASK : NX_DEVICERCMDKEYMASK;
+
+    fix_generic_modifiers_by_device(&new_modifiers);
+    return new_modifiers;
 }
 
 
@@ -2059,7 +2064,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self flagsChanged:theEvent];
         [self postKey:[theEvent keyCode]
               pressed:[theEvent type] == NSKeyDown
-            modifiers:adjusted_modifiers_for_option_behavior([theEvent modifierFlags])
+            modifiers:adjusted_modifiers_for_settings([theEvent modifierFlags])
                 event:theEvent];
     }
 
@@ -2679,7 +2684,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             { NX_DEVICERCMDKEYMASK,     kVK_RightCommand },
         };
 
-        NSUInteger modifierFlags = adjusted_modifiers_for_option_behavior([theEvent modifierFlags]);
+        NSUInteger modifierFlags = adjusted_modifiers_for_settings([theEvent modifierFlags]);
         NSUInteger changed;
         int i, last_changed;
 
