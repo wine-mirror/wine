@@ -330,98 +330,493 @@ static const WCHAR pxW[] = {'p','x',0};
 typedef struct {
     const WCHAR *name;
     DISPID dispid;
+    DISPID compat_dispid;
     unsigned flags;
     const WCHAR **allowed_values;
 } style_tbl_entry_t;
 
 static const style_tbl_entry_t style_tbl[] = {
-    {backgroundW,             DISPID_IHTMLSTYLE_BACKGROUND},
-    {background_attachmentW,  DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT},
-    {background_clipW,        DISPID_UNKNOWN},
-    {background_colorW,       DISPID_IHTMLSTYLE_BACKGROUNDCOLOR,       ATTR_HEX_INT},
-    {background_imageW,       DISPID_IHTMLSTYLE_BACKGROUNDIMAGE,       ATTR_FIX_URL},
-    {background_positionW,    DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
-    {background_position_xW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX,   ATTR_FIX_PX},
-    {background_position_yW,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY,   ATTR_FIX_PX},
-    {background_repeatW,      DISPID_IHTMLSTYLE_BACKGROUNDREPEAT,      0, background_repeat_values},
-    {borderW,                 DISPID_IHTMLSTYLE_BORDER},
-    {border_bottomW,          DISPID_IHTMLSTYLE_BORDERBOTTOM,          ATTR_FIX_PX},
-    {border_bottom_colorW,    DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR,     ATTR_HEX_INT},
-    {border_bottom_styleW,    DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE,     0, border_style_values},
-    {border_bottom_widthW,    DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH,     ATTR_FIX_PX},
-    {border_colorW,           DISPID_IHTMLSTYLE_BORDERCOLOR},
-    {border_leftW,            DISPID_IHTMLSTYLE_BORDERLEFT,            ATTR_FIX_PX},
-    {border_left_colorW,      DISPID_IHTMLSTYLE_BORDERLEFTCOLOR,       ATTR_HEX_INT},
-    {border_left_styleW,      DISPID_IHTMLSTYLE_BORDERLEFTSTYLE,       0, border_style_values},
-    {border_left_widthW,      DISPID_IHTMLSTYLE_BORDERLEFTWIDTH,       ATTR_FIX_PX},
-    {border_rightW,           DISPID_IHTMLSTYLE_BORDERRIGHT,           ATTR_FIX_PX},
-    {border_right_colorW,     DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR,      ATTR_HEX_INT},
-    {border_right_styleW,     DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE,      0, border_style_values},
-    {border_right_widthW,     DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH,      ATTR_FIX_PX},
-    {border_styleW,           DISPID_IHTMLSTYLE_BORDERSTYLE},
-    {border_topW,             DISPID_IHTMLSTYLE_BORDERTOP,             ATTR_FIX_PX},
-    {border_top_colorW,       DISPID_IHTMLSTYLE_BORDERTOPCOLOR,        ATTR_HEX_INT},
-    {border_top_styleW,       DISPID_IHTMLSTYLE_BORDERTOPSTYLE,        0, border_style_values},
-    {border_top_widthW,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
-    {border_widthW,           DISPID_IHTMLSTYLE_BORDERWIDTH},
-    {bottomW,                 DISPID_IHTMLSTYLE2_BOTTOM,               ATTR_FIX_PX},
-    {box_sizingW,             DISPID_IHTMLSTYLE6_BOXSIZING},
-    {clearW,                  DISPID_IHTMLSTYLE_CLEAR},
-    {clipW,                   DISPID_IHTMLSTYLE_CLIP,                  ATTR_REMOVE_COMMA},
-    {colorW,                  DISPID_IHTMLSTYLE_COLOR,                 ATTR_HEX_INT},
-    {cursorW,                 DISPID_IHTMLSTYLE_CURSOR},
-    {directionW,              DISPID_IHTMLSTYLE2_DIRECTION},
-    {displayW,                DISPID_IHTMLSTYLE_DISPLAY},
-    {filterW,                 DISPID_IHTMLSTYLE_FILTER},
-    {floatW,                  DISPID_IHTMLSTYLE_STYLEFLOAT},
-    {font_familyW,            DISPID_IHTMLSTYLE_FONTFAMILY},
-    {font_sizeW,              DISPID_IHTMLSTYLE_FONTSIZE,              ATTR_FIX_PX},
-    {font_styleW,             DISPID_IHTMLSTYLE_FONTSTYLE,             0, font_style_values},
-    {font_variantW,           DISPID_IHTMLSTYLE_FONTVARIANT,           0, font_variant_values},
-    {font_weightW,            DISPID_IHTMLSTYLE_FONTWEIGHT,            ATTR_STR_TO_INT, font_weight_values},
-    {heightW,                 DISPID_IHTMLSTYLE_HEIGHT,                ATTR_FIX_PX},
-    {leftW,                   DISPID_IHTMLSTYLE_LEFT},
-    {letter_spacingW,         DISPID_IHTMLSTYLE_LETTERSPACING},
-    {line_heightW,            DISPID_IHTMLSTYLE_LINEHEIGHT},
-    {list_styleW,             DISPID_IHTMLSTYLE_LISTSTYLE},
-    {list_style_positionW,    DISPID_IHTMLSTYLE_LISTSTYLEPOSITION},
-    {list_style_typeW,        DISPID_IHTMLSTYLE_LISTSTYLETYPE},
-    {marginW,                 DISPID_IHTMLSTYLE_MARGIN},
-    {margin_bottomW,          DISPID_IHTMLSTYLE_MARGINBOTTOM,          ATTR_FIX_PX},
-    {margin_leftW,            DISPID_IHTMLSTYLE_MARGINLEFT,            ATTR_FIX_PX},
-    {margin_rightW,           DISPID_IHTMLSTYLE_MARGINRIGHT,           ATTR_FIX_PX},
-    {margin_topW,             DISPID_IHTMLSTYLE_MARGINTOP,             ATTR_FIX_PX},
-    {max_heightW,             DISPID_IHTMLSTYLE5_MAXHEIGHT,            ATTR_FIX_PX},
-    {max_widthW,              DISPID_IHTMLSTYLE5_MAXWIDTH,             ATTR_FIX_PX},
-    {min_heightW,             DISPID_IHTMLSTYLE4_MINHEIGHT},
-    {min_widthW,              DISPID_IHTMLSTYLE5_MINWIDTH,             ATTR_FIX_PX},
-    {opacityW,                DISPID_UNKNOWN},
-    {outlineW,                DISPID_IHTMLSTYLE6_OUTLINE,              ATTR_NO_NULL},
-    {overflowW,               DISPID_IHTMLSTYLE_OVERFLOW,              0, overflow_values},
-    {overflow_xW,             DISPID_IHTMLSTYLE2_OVERFLOWX},
-    {overflow_yW,             DISPID_IHTMLSTYLE2_OVERFLOWY},
-    {paddingW,                DISPID_IHTMLSTYLE_PADDING},
-    {padding_bottomW,         DISPID_IHTMLSTYLE_PADDINGBOTTOM,         ATTR_FIX_PX},
-    {padding_leftW,           DISPID_IHTMLSTYLE_PADDINGLEFT,           ATTR_FIX_PX},
-    {padding_rightW,          DISPID_IHTMLSTYLE_PADDINGRIGHT,          ATTR_FIX_PX},
-    {padding_topW,            DISPID_IHTMLSTYLE_PADDINGTOP,            ATTR_FIX_PX},
-    {page_break_afterW,       DISPID_IHTMLSTYLE_PAGEBREAKAFTER},
-    {page_break_beforeW,      DISPID_IHTMLSTYLE_PAGEBREAKBEFORE},
-    {positionW,               DISPID_IHTMLSTYLE2_POSITION},
-    {rightW,                  DISPID_IHTMLSTYLE2_RIGHT},
-    {table_layoutW,           DISPID_IHTMLSTYLE2_TABLELAYOUT},
-    {text_alignW,             DISPID_IHTMLSTYLE_TEXTALIGN},
-    {text_decorationW,        DISPID_IHTMLSTYLE_TEXTDECORATION,        0, text_decoration_values},
-    {text_indentW,            DISPID_IHTMLSTYLE_TEXTINDENT,            ATTR_FIX_PX},
-    {text_transformW,         DISPID_IHTMLSTYLE_TEXTTRANSFORM},
-    {topW,                    DISPID_IHTMLSTYLE_TOP},
-    {vertical_alignW,         DISPID_IHTMLSTYLE_VERTICALALIGN,         ATTR_FIX_PX},
-    {visibilityW,             DISPID_IHTMLSTYLE_VISIBILITY},
-    {white_spaceW,            DISPID_IHTMLSTYLE_WHITESPACE},
-    {widthW,                  DISPID_IHTMLSTYLE_WIDTH,                 ATTR_FIX_PX},
-    {word_spacingW,           DISPID_IHTMLSTYLE_WORDSPACING},
-    {word_wrapW,              DISPID_IHTMLSTYLE3_WORDWRAP},
-    {z_indexW,                DISPID_IHTMLSTYLE_ZINDEX,                ATTR_STR_TO_INT}
+    {
+        backgroundW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND,
+        DISPID_IHTMLSTYLE_BACKGROUND
+    },
+    {
+        background_attachmentW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDATTACHMENT,
+        DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT
+    },
+    {
+        background_clipW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCLIP,
+        DISPID_UNKNOWN
+    },
+    {
+        background_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCOLOR,
+        DISPID_IHTMLSTYLE_BACKGROUNDCOLOR,
+        ATTR_HEX_INT
+    },
+    {
+        background_imageW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDIMAGE,
+        DISPID_IHTMLSTYLE_BACKGROUNDIMAGE,
+        ATTR_FIX_URL
+    },
+    {
+        background_positionW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITION,
+        DISPID_IHTMLSTYLE_BACKGROUNDPOSITION
+    },
+    {
+        background_position_xW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONX,
+        DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX,
+        ATTR_FIX_PX
+    },
+    {
+        background_position_yW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONY,
+        DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY,
+        ATTR_FIX_PX
+    },
+    {
+        background_repeatW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDREPEAT,
+        DISPID_IHTMLSTYLE_BACKGROUNDREPEAT,
+        0, background_repeat_values
+    },
+    {
+        borderW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDER,
+        DISPID_IHTMLSTYLE_BORDER
+    },
+    {
+        border_bottomW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOM,
+        DISPID_IHTMLSTYLE_BORDERBOTTOM,
+        ATTR_FIX_PX
+    },
+    {
+        border_bottom_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMCOLOR,
+        DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR,
+        ATTR_HEX_INT
+    },
+    {
+        border_bottom_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMSTYLE,
+        DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE,
+        0, border_style_values
+    },
+    {
+        border_bottom_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMWIDTH,
+        DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        border_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERCOLOR,
+        DISPID_IHTMLSTYLE_BORDERCOLOR
+    },
+    {
+        border_leftW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFT,
+        DISPID_IHTMLSTYLE_BORDERLEFT,
+        ATTR_FIX_PX
+    },
+    {
+        border_left_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTCOLOR,
+        DISPID_IHTMLSTYLE_BORDERLEFTCOLOR,
+        ATTR_HEX_INT
+    },
+    {
+        border_left_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTSTYLE,
+        DISPID_IHTMLSTYLE_BORDERLEFTSTYLE,
+        0, border_style_values
+    },
+    {
+        border_left_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTWIDTH,
+        DISPID_IHTMLSTYLE_BORDERLEFTWIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        border_rightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHT,
+        DISPID_IHTMLSTYLE_BORDERRIGHT,
+        ATTR_FIX_PX
+    },
+    {
+        border_right_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTCOLOR,
+        DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR,
+        ATTR_HEX_INT
+    },
+    {
+        border_right_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTSTYLE,
+        DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE,
+        0, border_style_values
+    },
+    {
+        border_right_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTWIDTH,
+        DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        border_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERSTYLE,
+        DISPID_IHTMLSTYLE_BORDERSTYLE
+    },
+    {
+        border_topW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOP,
+        DISPID_IHTMLSTYLE_BORDERTOP,
+        ATTR_FIX_PX
+    },
+    {
+        border_top_colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPCOLOR,
+        DISPID_IHTMLSTYLE_BORDERTOPCOLOR,
+        ATTR_HEX_INT
+    },
+    {
+        border_top_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPSTYLE,
+        DISPID_IHTMLSTYLE_BORDERTOPSTYLE,
+        0, border_style_values
+    },
+    {
+        border_top_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPWIDTH,
+        DISPID_IHTMLSTYLE_BORDERTOPWIDTH
+    },
+    {
+        border_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BORDERWIDTH,
+        DISPID_IHTMLSTYLE_BORDERWIDTH
+    },
+    {
+        bottomW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BOTTOM,
+        DISPID_IHTMLSTYLE2_BOTTOM,
+        ATTR_FIX_PX
+    },
+    {
+        box_sizingW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_BOXSIZING,
+        DISPID_IHTMLSTYLE6_BOXSIZING
+    },
+    {
+        clearW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_CLEAR,
+        DISPID_IHTMLSTYLE_CLEAR
+    },
+    {
+        clipW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_CLIP,
+        DISPID_IHTMLSTYLE_CLIP,
+        ATTR_REMOVE_COMMA
+    },
+    {
+        colorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_COLOR,
+        DISPID_IHTMLSTYLE_COLOR,
+        ATTR_HEX_INT
+    },
+    {
+        cursorW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR,
+        DISPID_IHTMLSTYLE_CURSOR
+    },
+    {
+        directionW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_DIRECTION,
+        DISPID_IHTMLSTYLE2_DIRECTION
+    },
+    {
+        displayW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_DISPLAY,
+        DISPID_IHTMLSTYLE_DISPLAY
+    },
+    {
+        filterW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FILTER,
+        DISPID_IHTMLSTYLE_FILTER
+    },
+    {
+        floatW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_CSSFLOAT,
+        DISPID_IHTMLSTYLE_STYLEFLOAT
+    },
+    {
+        font_familyW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FONTFAMILY,
+        DISPID_IHTMLSTYLE_FONTFAMILY
+    },
+    {
+        font_sizeW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FONTSIZE,
+        DISPID_IHTMLSTYLE_FONTSIZE,
+        ATTR_FIX_PX
+    },
+    {
+        font_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FONTSTYLE,
+        DISPID_IHTMLSTYLE_FONTSTYLE,
+        0, font_style_values
+    },
+    {
+        font_variantW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FONTVARIANT,
+        DISPID_IHTMLSTYLE_FONTVARIANT,
+        0, font_variant_values
+    },
+    {
+        font_weightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_FONTWEIGHT,
+        DISPID_IHTMLSTYLE_FONTWEIGHT,
+        ATTR_STR_TO_INT, font_weight_values
+    },
+    {
+        heightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_HEIGHT,
+        DISPID_IHTMLSTYLE_HEIGHT,
+        ATTR_FIX_PX
+    },
+    {
+        leftW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LEFT,
+        DISPID_IHTMLSTYLE_LEFT
+    },
+    {
+        letter_spacingW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LETTERSPACING,
+        DISPID_IHTMLSTYLE_LETTERSPACING
+    },
+    {
+        line_heightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LINEHEIGHT,
+        DISPID_IHTMLSTYLE_LINEHEIGHT
+    },
+    {
+        list_styleW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLE,
+        DISPID_IHTMLSTYLE_LISTSTYLE
+    },
+    {
+        list_style_positionW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLEPOSITION,
+        DISPID_IHTMLSTYLE_LISTSTYLEPOSITION
+    },
+    {
+        list_style_typeW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLETYPE,
+        DISPID_IHTMLSTYLE_LISTSTYLETYPE
+    },
+    {
+        marginW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MARGIN,
+        DISPID_IHTMLSTYLE_MARGIN
+    },
+    {
+        margin_bottomW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MARGINBOTTOM,
+        DISPID_IHTMLSTYLE_MARGINBOTTOM,
+        ATTR_FIX_PX
+    },
+    {
+        margin_leftW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MARGINLEFT,
+        DISPID_IHTMLSTYLE_MARGINLEFT,
+        ATTR_FIX_PX
+    },
+    {
+        margin_rightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MARGINRIGHT,
+        DISPID_IHTMLSTYLE_MARGINRIGHT,
+        ATTR_FIX_PX
+    },
+    {
+        margin_topW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MARGINTOP,
+        DISPID_IHTMLSTYLE_MARGINTOP,
+        ATTR_FIX_PX
+    },
+    {
+        max_heightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MAXHEIGHT,
+        DISPID_IHTMLSTYLE5_MAXHEIGHT,
+        ATTR_FIX_PX
+    },
+    {
+        max_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MAXWIDTH,
+        DISPID_IHTMLSTYLE5_MAXWIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        min_heightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MINHEIGHT,
+        DISPID_IHTMLSTYLE4_MINHEIGHT
+    },
+    {
+        min_widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_MINWIDTH,
+        DISPID_IHTMLSTYLE5_MINWIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        opacityW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_OPACITY,
+        DISPID_UNKNOWN
+    },
+    {
+        outlineW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINE,
+        DISPID_IHTMLSTYLE6_OUTLINE,
+        ATTR_NO_NULL
+    },
+    {
+        overflowW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOW,
+        DISPID_IHTMLSTYLE_OVERFLOW,
+        0, overflow_values
+    },
+    {
+        overflow_xW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWX,
+        DISPID_IHTMLSTYLE2_OVERFLOWX
+    },
+    {
+        overflow_yW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWY,
+        DISPID_IHTMLSTYLE2_OVERFLOWY
+    },
+    {
+        paddingW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PADDING,
+        DISPID_IHTMLSTYLE_PADDING
+    },
+    {
+        padding_bottomW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGBOTTOM,
+        DISPID_IHTMLSTYLE_PADDINGBOTTOM,
+        ATTR_FIX_PX
+    },
+    {
+        padding_leftW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGLEFT,
+        DISPID_IHTMLSTYLE_PADDINGLEFT,
+        ATTR_FIX_PX
+    },
+    {
+        padding_rightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGRIGHT,
+        DISPID_IHTMLSTYLE_PADDINGRIGHT,
+        ATTR_FIX_PX
+    },
+    {
+        padding_topW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGTOP,
+        DISPID_IHTMLSTYLE_PADDINGTOP,
+        ATTR_FIX_PX
+    },
+    {
+        page_break_afterW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKAFTER,
+        DISPID_IHTMLSTYLE_PAGEBREAKAFTER
+    },
+    {
+        page_break_beforeW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKBEFORE,
+        DISPID_IHTMLSTYLE_PAGEBREAKBEFORE
+    },
+    {
+        positionW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_POSITION,
+        DISPID_IHTMLSTYLE2_POSITION
+    },
+    {
+        rightW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_RIGHT,
+        DISPID_IHTMLSTYLE2_RIGHT
+    },
+    {
+        table_layoutW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TABLELAYOUT,
+        DISPID_IHTMLSTYLE2_TABLELAYOUT
+    },
+    {
+        text_alignW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TEXTALIGN,
+        DISPID_IHTMLSTYLE_TEXTALIGN
+    },
+    {
+        text_decorationW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TEXTDECORATION,
+        DISPID_IHTMLSTYLE_TEXTDECORATION,
+        0, text_decoration_values
+    },
+    {
+        text_indentW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TEXTINDENT,
+        DISPID_IHTMLSTYLE_TEXTINDENT,
+        ATTR_FIX_PX
+    },
+    {
+        text_transformW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TEXTTRANSFORM,
+        DISPID_IHTMLSTYLE_TEXTTRANSFORM
+    },
+    {
+        topW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_TOP,
+        DISPID_IHTMLSTYLE_TOP
+    },
+    {
+        vertical_alignW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_VERTICALALIGN,
+        DISPID_IHTMLSTYLE_VERTICALALIGN,
+        ATTR_FIX_PX
+    },
+    {
+        visibilityW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_VISIBILITY,
+        DISPID_IHTMLSTYLE_VISIBILITY
+    },
+    {
+        white_spaceW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_WHITESPACE,
+        DISPID_IHTMLSTYLE_WHITESPACE
+    },
+    {
+        widthW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_WIDTH,
+        DISPID_IHTMLSTYLE_WIDTH,
+        ATTR_FIX_PX
+    },
+    {
+        word_spacingW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_WORDSPACING,
+        DISPID_IHTMLSTYLE_WORDSPACING
+    },
+    {
+        word_wrapW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_WORDWRAP,
+        DISPID_IHTMLSTYLE3_WORDWRAP
+    },
+    {
+        z_indexW,
+        DISPID_IHTMLCSSSTYLEDECLARATION_ZINDEX,
+        DISPID_IHTMLSTYLE_ZINDEX,
+        ATTR_STR_TO_INT
+    }
 };
 
 C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
@@ -2914,6 +3309,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     style_entry = lookup_style_tbl(strAttributeName);
     if(!style_entry) {
+        compat_mode_t compat_mode = dispex_compat_mode(&This->dispex);
         DISPID dispid;
         unsigned i;
 
@@ -2925,7 +3321,8 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         }
 
         for(i=0; i < ARRAY_SIZE(style_tbl); i++) {
-            if(dispid == style_tbl[i].dispid)
+            if(dispid == (compat_mode >= COMPAT_MODE_IE9
+                          ? style_tbl[i].dispid : style_tbl[i].compat_dispid))
                 break;
         }
 
@@ -2935,7 +3332,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
     }
 
     /* filter property is a special case */
-    if(style_entry->dispid == DISPID_IHTMLSTYLE_FILTER) {
+    if(style_entry->compat_dispid == DISPID_IHTMLSTYLE_FILTER) {
         *pfSuccess = variant_bool(This->elem->filter && *This->elem->filter);
         heap_free(This->elem->filter);
         This->elem->filter = NULL;
@@ -9660,8 +10057,13 @@ static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, 
     const style_tbl_entry_t *style_entry;
 
     style_entry = lookup_style_tbl(name);
-    if(style_entry && style_entry->dispid != DISPID_UNKNOWN) {
-        *dispid = style_entry->dispid;
+    if(style_entry) {
+        DISPID id = dispex_compat_mode(dispex) >= COMPAT_MODE_IE9
+            ? style_entry->dispid : style_entry->compat_dispid;
+        if(id == DISPID_UNKNOWN)
+            return DISP_E_UNKNOWNNAME;
+
+        *dispid = id;
         return S_OK;
     }
 
