@@ -22,6 +22,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcruntime);
 
+int* CDECL __processing_throw(void);
+
 /*********************************************************************
  *              __telemetry_main_invoke_trigger
  */
@@ -46,4 +48,9 @@ BOOL CDECL __vcrt_InitializeCriticalSectionEx(
 {
     TRACE("(%p %x %x)\n", cs, spin_count, flags);
     return InitializeCriticalSectionEx(cs, spin_count, flags);
+}
+
+int __cdecl __uncaught_exceptions(void)
+{
+    return *__processing_throw();
 }

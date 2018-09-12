@@ -48,7 +48,7 @@
 @ cdecl __unDName(ptr str long ptr ptr long) ucrtbase.__unDName
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long) ucrtbase.__unDNameEx
 @ cdecl __uncaught_exception() ucrtbase.__uncaught_exception
-@ stub __uncaught_exceptions
+@ cdecl __uncaught_exceptions()
 @ stub __vcrt_GetModuleFileNameW
 @ stub __vcrt_GetModuleHandleW
 @ cdecl __vcrt_InitializeCriticalSectionEx(ptr long long)

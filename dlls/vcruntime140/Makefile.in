@@ -1,4 +1,5 @@
 MODULE    = vcruntime140.dll
+IMPORTS   = ucrtbase
 
 C_SRCS = \
 	misc.c
