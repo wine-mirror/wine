@@ -134,10 +134,11 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 {
     IAutoCompleteImpl *This = GetPropW(hwnd, autocomplete_propertyW);
     HRESULT hr;
-    WCHAR hwndText[255];
+    WCHAR *hwndText;
+    UINT len, size, cpt;
     RECT r;
     BOOL displayall = FALSE;
-    int cpt, height, sel;
+    int height, sel;
 
     if (!This->enabled) return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 
@@ -154,10 +155,11 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             }
             return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
         case WM_KEYUP:
-        {
-            int len;
-
-            GetWindowTextW(hwnd, hwndText, ARRAY_SIZE(hwndText));
+            len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+            size = len + 1;
+            if (!(hwndText = heap_alloc(size * sizeof(WCHAR))))
+                return 0;
+            len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)hwndText);
 
             switch(wParam) {
                 case VK_RETURN:
@@ -165,7 +167,6 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                     if (This->quickComplete && (GetKeyState(VK_CONTROL) & 0x8000))
                     {
                         WCHAR *buf;
-                        size_t len = strlenW(hwndText);
                         size_t sz = strlenW(This->quickComplete) + 1 + len;
                         if ((buf = heap_alloc(sz * sizeof(WCHAR))))
                         {
@@ -178,9 +179,11 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
                     if (This->options & ACO_AUTOSUGGEST)
                         ShowWindow(This->hwndListBox, SW_HIDE);
+                    heap_free(hwndText);
                     return 0;
                 case VK_LEFT:
                 case VK_RIGHT:
+                    heap_free(hwndText);
                     return 0;
                 case VK_UP:
                 case VK_DOWN:
@@ -196,6 +199,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                          /* We must display all the entries */
                          displayall = TRUE;
                     } else {
+                        heap_free(hwndText);
                         if (IsWindowVisible(This->hwndListBox)) {
                             int count;
 
@@ -231,21 +235,23 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 case VK_BACK:
                 case VK_DELETE:
                     if ((! *hwndText) && (This->options & ACO_AUTOSUGGEST)) {
+                        heap_free(hwndText);
                         ShowWindow(This->hwndListBox, SW_HIDE);
                         return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
                     }
                     break;
             }
 
+            if (len + 1 != size)
+                hwndText = heap_realloc(hwndText, (len + 1) * sizeof(WCHAR));
+
             SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 
+            /* Set txtbackup to point to hwndText itself (which must not be released) */
             heap_free(This->txtbackup);
-            len = strlenW(hwndText);
-            This->txtbackup = heap_alloc((len + 1)*sizeof(WCHAR));
-            lstrcpyW(This->txtbackup, hwndText);
+            This->txtbackup = hwndText;
 
-            /* Returns if there is no text to search and we doesn't want to display all the entries */
-            if ((!displayall) && (! *hwndText) )
+            if (!displayall && !len)
                 break;
 
             IEnumString_Reset(This->enumstr);
@@ -297,7 +303,6 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             }
 
             break;
-        }
         case WM_DESTROY:
         {
             WNDPROC proc = This->wpOrigEditProc;
