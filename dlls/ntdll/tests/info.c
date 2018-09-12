@@ -38,6 +38,7 @@ static NTSTATUS (WINAPI * pNtClose)(HANDLE);
 static ULONG    (WINAPI * pNtGetCurrentProcessorNumber)(void);
 static BOOL     (WINAPI * pIsWow64Process)(HANDLE, PBOOL);
 static BOOL     (WINAPI * pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
+static DEP_SYSTEM_POLICY_TYPE (WINAPI * pGetSystemDEPPolicy)(void);
 
 static BOOL is_wow64;
 
@@ -95,6 +96,8 @@ static BOOL InitFunctionPtrs(void)
 
     pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    pGetSystemDEPPolicy = (void *)GetProcAddress(hkernel32, "GetSystemDEPPolicy");
 
     /* starting with Win7 */
     pNtQuerySystemInformationEx = (void *) GetProcAddress(hntdll, "NtQuerySystemInformationEx");
@@ -1851,11 +1854,17 @@ static void test_mapprotection(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
     trace("Process execute flags %08x\n", oldflags);
 
-    if (oldflags & MEM_EXECUTE_OPTION_DISABLE)
+    if (!(oldflags & MEM_EXECUTE_OPTION_ENABLE))
     {
         if (oldflags & MEM_EXECUTE_OPTION_PERMANENT)
         {
             skip("Unable to turn off noexec\n");
+            return;
+        }
+
+        if (pGetSystemDEPPolicy && pGetSystemDEPPolicy() == AlwaysOn)
+        {
+            skip("System policy requires noexec\n");
             return;
         }
 
