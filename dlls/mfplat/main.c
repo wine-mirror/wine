@@ -1855,8 +1855,8 @@ HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue)
 
 typedef struct _mfdescriptor
 {
+    mfattributes attributes;
     IMFStreamDescriptor IMFStreamDescriptor_iface;
-    LONG ref;
 } mfdescriptor;
 
 static inline mfdescriptor *impl_from_IMFStreamDescriptor(IMFStreamDescriptor *iface)
@@ -1890,7 +1890,7 @@ static HRESULT WINAPI mfdescriptor_QueryInterface(IMFStreamDescriptor *iface, RE
 static ULONG WINAPI mfdescriptor_AddRef(IMFStreamDescriptor *iface)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->attributes.ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
@@ -1900,13 +1900,13 @@ static ULONG WINAPI mfdescriptor_AddRef(IMFStreamDescriptor *iface)
 static ULONG WINAPI mfdescriptor_Release(IMFStreamDescriptor *iface)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->attributes.ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -1915,269 +1915,179 @@ static ULONG WINAPI mfdescriptor_Release(IMFStreamDescriptor *iface)
 static HRESULT WINAPI mfdescriptor_GetItem(IMFStreamDescriptor *iface, REFGUID key, PROPVARIANT *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetItem(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_GetItemType(IMFStreamDescriptor *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), type);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetItemType(&This->attributes.IMFAttributes_iface, key, type);
 }
 
 static HRESULT WINAPI mfdescriptor_CompareItem(IMFStreamDescriptor *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), value, result);
-
-    return E_NOTIMPL;
+    return IMFAttributes_CompareItem(&This->attributes.IMFAttributes_iface, key, value, result);
 }
 
 static HRESULT WINAPI mfdescriptor_Compare(IMFStreamDescriptor *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
                 BOOL *result)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %p, %d, %p\n", This, theirs, type, result);
-
-    return E_NOTIMPL;
+    return IMFAttributes_Compare(&This->attributes.IMFAttributes_iface, theirs, type, result);
 }
 
 static HRESULT WINAPI mfdescriptor_GetUINT32(IMFStreamDescriptor *iface, REFGUID key, UINT32 *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetUINT32(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_GetUINT64(IMFStreamDescriptor *iface, REFGUID key, UINT64 *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetUINT64(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_GetDouble(IMFStreamDescriptor *iface, REFGUID key, double *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetDouble(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_GetGUID(IMFStreamDescriptor *iface, REFGUID key, GUID *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetGUID(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_GetStringLength(IMFStreamDescriptor *iface, REFGUID key, UINT32 *length)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), length);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetStringLength(&This->attributes.IMFAttributes_iface, key, length);
 }
 
 static HRESULT WINAPI mfdescriptor_GetString(IMFStreamDescriptor *iface, REFGUID key, WCHAR *value,
                 UINT32 size, UINT32 *length)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %d, %p\n", This, debugstr_guid(key), value, size, length);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetString(&This->attributes.IMFAttributes_iface, key, value, size, length);
 }
 
 static HRESULT WINAPI mfdescriptor_GetAllocatedString(IMFStreamDescriptor *iface, REFGUID key,
                                       WCHAR **value, UINT32 *length)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), value, length);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetAllocatedString(&This->attributes.IMFAttributes_iface, key, value, length);
 }
 
 static HRESULT WINAPI mfdescriptor_GetBlobSize(IMFStreamDescriptor *iface, REFGUID key, UINT32 *size)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), size);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetBlobSize(&This->attributes.IMFAttributes_iface, key, size);
 }
 
 static HRESULT WINAPI mfdescriptor_GetBlob(IMFStreamDescriptor *iface, REFGUID key, UINT8 *buf,
                 UINT32 bufsize, UINT32 *blobsize)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %d, %p\n", This, debugstr_guid(key), buf, bufsize, blobsize);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetBlob(&This->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
 }
 
 static HRESULT WINAPI mfdescriptor_GetAllocatedBlob(IMFStreamDescriptor *iface, REFGUID key, UINT8 **buf, UINT32 *size)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), buf, size);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetAllocatedBlob(&This->attributes.IMFAttributes_iface, key, buf, size);
 }
 
 static HRESULT WINAPI mfdescriptor_GetUnknown(IMFStreamDescriptor *iface, REFGUID key, REFIID riid, void **ppv)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %s, %p\n", This, debugstr_guid(key), debugstr_guid(riid), ppv);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetUnknown(&This->attributes.IMFAttributes_iface, key, riid, ppv);
 }
 
-static HRESULT WINAPI mfdescriptor_SetItem(IMFStreamDescriptor *iface, REFGUID key, REFPROPVARIANT Value)
+static HRESULT WINAPI mfdescriptor_SetItem(IMFStreamDescriptor *iface, REFGUID key, REFPROPVARIANT value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), Value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetItem(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_DeleteItem(IMFStreamDescriptor *iface, REFGUID key)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s\n", This, debugstr_guid(key));
-
-    return E_NOTIMPL;
+    return IMFAttributes_DeleteItem(&This->attributes.IMFAttributes_iface, key);
 }
 
 static HRESULT WINAPI mfdescriptor_DeleteAllItems(IMFStreamDescriptor *iface)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p\n", This);
-
-    return E_NOTIMPL;
+    return IMFAttributes_DeleteAllItems(&This->attributes.IMFAttributes_iface);
 }
 
 static HRESULT WINAPI mfdescriptor_SetUINT32(IMFStreamDescriptor *iface, REFGUID key, UINT32 value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %d\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetUINT32(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_SetUINT64(IMFStreamDescriptor *iface, REFGUID key, UINT64 value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), wine_dbgstr_longlong(value));
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetUINT64(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_SetDouble(IMFStreamDescriptor *iface, REFGUID key, double value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %f\n", This, debugstr_guid(key), value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetDouble(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_SetGUID(IMFStreamDescriptor *iface, REFGUID key, REFGUID value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), debugstr_guid(value));
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetGUID(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_SetString(IMFStreamDescriptor *iface, REFGUID key, const WCHAR *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), debugstr_w(value));
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetString(&This->attributes.IMFAttributes_iface, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_SetBlob(IMFStreamDescriptor *iface, REFGUID key, const UINT8 *buf, UINT32 size)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p, %d\n", This, debugstr_guid(key), buf, size);
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetBlob(&This->attributes.IMFAttributes_iface, key, buf, size);
 }
 
 static HRESULT WINAPI mfdescriptor_SetUnknown(IMFStreamDescriptor *iface, REFGUID key, IUnknown *unknown)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), unknown);
-
-    return E_NOTIMPL;
+    return IMFAttributes_SetUnknown(&This->attributes.IMFAttributes_iface, key, unknown);
 }
 
 static HRESULT WINAPI mfdescriptor_LockStore(IMFStreamDescriptor *iface)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p\n", This);
-
-    return E_NOTIMPL;
+    return IMFAttributes_LockStore(&This->attributes.IMFAttributes_iface);
 }
 
 static HRESULT WINAPI mfdescriptor_UnlockStore(IMFStreamDescriptor *iface)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p\n", This);
-
-    return E_NOTIMPL;
+    return IMFAttributes_UnlockStore(&This->attributes.IMFAttributes_iface);
 }
 
 static HRESULT WINAPI mfdescriptor_GetCount(IMFStreamDescriptor *iface, UINT32 *items)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %p\n", This, items);
-
-    if(items)
-        *items = 0;
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetCount(&This->attributes.IMFAttributes_iface, items);
 }
 
 static HRESULT WINAPI mfdescriptor_GetItemByIndex(IMFStreamDescriptor *iface, UINT32 index, GUID *key, PROPVARIANT *value)
 {
     mfdescriptor *This = impl_from_IMFStreamDescriptor(iface);
-
-    FIXME("%p, %d, %p, %p\n", This, index, key, value);
-
-    return E_NOTIMPL;
+    return IMFAttributes_GetItemByIndex(&This->attributes.IMFAttributes_iface, index, key, value);
 }
 
 static HRESULT WINAPI mfdescriptor_CopyAllItems(IMFStreamDescriptor *iface, IMFAttributes *dest)
@@ -2253,14 +2163,14 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
 
     TRACE("%d, %d, %p, %p\n", identifier, count, types, descriptor);
 
-    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
+    object = heap_alloc(sizeof(*object));
     if(!object)
         return E_OUTOFMEMORY;
 
-    object->ref = 1;
+    init_attribute_object(&object->attributes, 0);
     object->IMFStreamDescriptor_iface.lpVtbl = &mfdescriptor_vtbl;
-
     *descriptor = &object->IMFStreamDescriptor_iface;
+
     return S_OK;
 }
 
