@@ -55,7 +55,7 @@
 @ stub MFCreateMemoryStream
 @ stub MFCreatePathFromURL
 @ stub MFCreatePresentationDescriptor
-@ stub MFCreateSample
+@ stdcall MFCreateSample(ptr)
 @ stub MFCreateSocket
 @ stub MFCreateSocketListener
 @ stdcall MFCreateSourceResolver(ptr)
