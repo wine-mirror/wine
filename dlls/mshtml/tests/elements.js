@@ -208,6 +208,40 @@ function test_document_owner() {
     next_test();
 }
 
+function test_style_properties() {
+    var style = document.body.style;
+    var val;
+
+    style.cssFloat = "left";
+    ok(style.cssFloat === "left", "cssFloat = " + style.cssFloat);
+
+    val = style.removeProperty("float");
+    ok(val === "left", "removeProperty() returned " + val);
+    ok(style.cssFloat === "", "cssFloat = " + style.cssFloat);
+
+    style.cssFloat = "left";
+    val = style.removeProperty("FloaT");
+    ok(val === "left", "removeProperty() returned " + val);
+    ok(style.cssFloat === "", "cssFloat = " + style.cssFloat);
+
+    style.cssFloat = "left";
+    val = style.removeProperty("cssFloat");
+    ok(val === "", "removeProperty() returned " + val);
+    ok(style.cssFloat === "left", "cssFloat = " + style.cssFloat);
+    ok(style["float"] === "left", "float = " + style["float"]);
+
+    style.testVal = "test";
+    val = style.removeProperty("testVal");
+    ok(val === "", "removeProperty() returned " + val);
+    ok(style.testVal === "test", "testVal = " + style.testVal);
+
+    style["z-index"] = 1;
+    ok(style.zIndex === 1, "zIndex = " + style.zIndex);
+    ok(style["z-index"] === 1, "z-index = " + style["z-index"]);
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
@@ -217,5 +251,6 @@ var tests = [
     test_iframe,
     test_query_selector,
     test_compare_position,
-    test_document_owner
+    test_document_owner,
+    test_style_properties
 ];
