@@ -1418,6 +1418,11 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     return 0;
 }
 
+void udev_driver_unload( void )
+{
+    TRACE("Unload Driver\n");
+}
+
 NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
 {
     HANDLE events[2];
@@ -1480,6 +1485,11 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
 {
     WARN("Wine was compiled without UDEV support\n");
     return STATUS_NOT_IMPLEMENTED;
+}
+
+void udev_driver_unload( void )
+{
+    TRACE("Stub: Unload Driver\n");
 }
 
 #endif /* HAVE_UDEV */

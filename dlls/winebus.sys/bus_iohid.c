@@ -98,6 +98,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 static DRIVER_OBJECT *iohid_driver_obj = NULL;
 static IOHIDManagerRef hid_manager;
+static CFRunLoopRef run_loop;
+static HANDLE run_loop_handle;
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
 
@@ -372,7 +374,7 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
 /* This puts the relevant run loop for event handling into a WINE thread */
 static DWORD CALLBACK runloop_thread(void *args)
 {
-    CFRunLoopRef run_loop = CFRunLoopGetCurrent();
+    run_loop = CFRunLoopGetCurrent();
 
     IOHIDManagerSetDeviceMatching(hid_manager, NULL);
     IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, handle_DeviceMatchingCallback, NULL);
@@ -388,18 +390,12 @@ static DWORD CALLBACK runloop_thread(void *args)
 
     CFRunLoopRun();
     TRACE("Run Loop exiting\n");
-
-    IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
-    IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
-    IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
-    CFRelease(hid_manager);
     return 1;
+
 }
 
 NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
 {
-    HANDLE run_loop_handle;
-
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
 
     iohid_driver_obj = driver;
@@ -414,8 +410,23 @@ NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registr
         return STATUS_UNSUCCESSFUL;
     }
 
-    CloseHandle(run_loop_handle);
     return STATUS_SUCCESS;
+}
+
+void iohid_driver_unload( void )
+{
+    TRACE("Unloading Driver\n");
+    if (iohid_driver_obj != NULL)
+    {
+        IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
+        CFRunLoopStop(run_loop);
+        WaitForSingleObject(run_loop_handle, INFINITE);
+        CloseHandle(run_loop_handle);
+        IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
+        IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
+        CFRelease(hid_manager);
+    }
+    TRACE("Driver Unloaded\n");
 }
 
 #else
@@ -424,6 +435,11 @@ NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registr
 {
     WARN("IOHID Support not compiled into Wine.\n");
     return STATUS_NOT_IMPLEMENTED;
+}
+
+void iohid_driver_unload( void )
+{
+    TRACE("Stub: Unload Driver\n");
 }
 
 #endif /* HAVE_IOHIDMANAGERCREATE */

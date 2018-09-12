@@ -927,6 +927,11 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     return 0;
 }
 
+void sdl_driver_unload( void )
+{
+    TRACE("Unload Driver\n");
+}
+
 NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
 {
     static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
@@ -1021,6 +1026,11 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
 {
     WARN("compiled without SDL support\n");
     return STATUS_NOT_IMPLEMENTED;
+}
+
+void sdl_driver_unload( void )
+{
+    TRACE("Stub: Unload Driver\n");
 }
 
 #endif /* SONAME_LIBSDL2 */

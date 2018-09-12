@@ -699,6 +699,13 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid)
     return FALSE;
 }
 
+static void WINAPI driver_unload(DRIVER_OBJECT *driver)
+{
+    udev_driver_unload();
+    iohid_driver_unload();
+    sdl_driver_unload();
+}
+
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     static const WCHAR udevW[] = {'\\','D','r','i','v','e','r','\\','U','D','E','V',0};
@@ -719,6 +726,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     }
     IoCreateDriver(&udev, udev_driver_init);
     IoCreateDriver(&iohid, iohid_driver_init);
+
+    driver->DriverUnload = driver_unload;
 
     return STATUS_SUCCESS;
 }
