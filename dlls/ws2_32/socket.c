@@ -1341,7 +1341,7 @@ static int convert_flags(int flags)
     int i, out;
     if (!flags) return 0;
 
-    for (out = i = 0; flags && i < sizeof(ws_flags_map) / sizeof(ws_flags_map[0]); i++)
+    for (out = i = 0; flags && i < ARRAY_SIZE(ws_flags_map); i++)
     {
         if (ws_flags_map[i][0] & flags)
         {
@@ -1370,7 +1370,7 @@ static int convert_sockopt(INT *level, INT *optname)
   {
      case WS_SOL_SOCKET:
         *level = SOL_SOCKET;
-        for(i=0; i<sizeof(ws_sock_map)/sizeof(ws_sock_map[0]); i++) {
+        for(i = 0; i < ARRAY_SIZE(ws_sock_map); i++) {
             if( ws_sock_map[i][0] == *optname )
             {
                 *optname = ws_sock_map[i][1];
@@ -1381,7 +1381,7 @@ static int convert_sockopt(INT *level, INT *optname)
         break;
      case WS_IPPROTO_TCP:
         *level = IPPROTO_TCP;
-        for(i=0; i<sizeof(ws_tcp_map)/sizeof(ws_tcp_map[0]); i++) {
+        for(i = 0; i < ARRAY_SIZE(ws_tcp_map); i++) {
             if ( ws_tcp_map[i][0] == *optname )
             {
                 *optname = ws_tcp_map[i][1];
@@ -1392,7 +1392,7 @@ static int convert_sockopt(INT *level, INT *optname)
 	break;
      case WS_IPPROTO_IP:
         *level = IPPROTO_IP;
-        for(i=0; i<sizeof(ws_ip_map)/sizeof(ws_ip_map[0]); i++) {
+        for(i = 0; i < ARRAY_SIZE(ws_ip_map); i++) {
             if (ws_ip_map[i][0] == *optname )
             {
                 *optname = ws_ip_map[i][1];
@@ -1403,7 +1403,7 @@ static int convert_sockopt(INT *level, INT *optname)
 	break;
      case WS_IPPROTO_IPV6:
         *level = IPPROTO_IPV6;
-        for(i=0; i<sizeof(ws_ipv6_map)/sizeof(ws_ipv6_map[0]); i++) {
+        for(i = 0; i < ARRAY_SIZE(ws_ipv6_map); i++) {
             if (ws_ipv6_map[i][0] == *optname )
             {
                 *optname = ws_ipv6_map[i][1];
@@ -1484,7 +1484,7 @@ static int
 convert_af_w2u(int windowsaf) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_af_map); i++)
     	if (ws_af_map[i][0] == windowsaf)
 	    return ws_af_map[i][1];
     FIXME("unhandled Windows address family %d\n", windowsaf);
@@ -1495,7 +1495,7 @@ static int
 convert_af_u2w(int unixaf) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_af_map)/sizeof(ws_af_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_af_map); i++)
     	if (ws_af_map[i][1] == unixaf)
 	    return ws_af_map[i][0];
     FIXME("unhandled UNIX address family %d\n", unixaf);
@@ -1506,7 +1506,7 @@ static int
 convert_proto_w2u(int windowsproto) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_proto_map); i++)
     	if (ws_proto_map[i][0] == windowsproto)
 	    return ws_proto_map[i][1];
 
@@ -1522,7 +1522,7 @@ static int
 convert_proto_u2w(int unixproto) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_proto_map); i++)
     	if (ws_proto_map[i][1] == unixproto)
 	    return ws_proto_map[i][0];
 
@@ -1539,7 +1539,7 @@ static int
 convert_socktype_w2u(int windowssocktype) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_socktype_map); i++)
     	if (ws_socktype_map[i][0] == windowssocktype)
 	    return ws_socktype_map[i][1];
     FIXME("unhandled Windows socket type %d\n", windowssocktype);
@@ -1550,7 +1550,7 @@ static int
 convert_socktype_u2w(int unixsocktype) {
     unsigned int i;
 
-    for (i=0;i<sizeof(ws_socktype_map)/sizeof(ws_socktype_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_socktype_map); i++)
     	if (ws_socktype_map[i][1] == unixsocktype)
 	    return ws_socktype_map[i][0];
     FIXME("unhandled UNIX socket type %d\n", unixsocktype);
@@ -1560,7 +1560,7 @@ convert_socktype_u2w(int unixsocktype) {
 static int convert_poll_w2u(int events)
 {
     int i, ret;
-    for (i = ret = 0; events && i < sizeof(ws_poll_map) / sizeof(ws_poll_map[0]); i++)
+    for (i = ret = 0; events && i < ARRAY_SIZE(ws_poll_map); i++)
     {
         if (ws_poll_map[i][0] & events)
         {
@@ -1577,7 +1577,7 @@ static int convert_poll_w2u(int events)
 static int convert_poll_u2w(int events)
 {
     int i, ret;
-    for (i = ret = 0; events && i < sizeof(ws_poll_map) / sizeof(ws_poll_map[0]); i++)
+    for (i = ret = 0; events && i < ARRAY_SIZE(ws_poll_map); i++)
     {
         if (ws_poll_map[i][1] & events)
         {
@@ -1752,7 +1752,7 @@ static inline BOOL supported_pf(int pf)
 static inline BOOL supported_protocol(int protocol)
 {
     int i;
-    for (i = 0; i < sizeof(valid_protocols) / sizeof(valid_protocols[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(valid_protocols); i++)
         if (protocol == valid_protocols[i])
             return TRUE;
     return FALSE;
@@ -4914,7 +4914,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         BOOL found = FALSE;
         unsigned int i;
 
-        for (i = 0; i < sizeof(guid_funcs) / sizeof(guid_funcs[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(guid_funcs); i++)
         {
             if (IsEqualGUID(&guid_funcs[i].guid, in_buff))
             {
@@ -6478,7 +6478,7 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
     if (!retval)
     {
         unsigned int i;
-        for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(protocols); i++)
         {
             if (strcasecmp( protocols[i].names[0], name )) continue;
             retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
@@ -6512,7 +6512,7 @@ struct WS_protoent* WINAPI WS_getprotobynumber(int number)
     if (!retval)
     {
         unsigned int i;
-        for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(protocols); i++)
         {
             if (protocols[i].prot != number) continue;
             retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
@@ -6586,7 +6586,7 @@ static int convert_aiflag_w2u(int winflags) {
     unsigned int i;
     int unixflags = 0;
 
-    for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_aiflag_map); i++)
         if (ws_aiflag_map[i][0] & winflags) {
             unixflags |= ws_aiflag_map[i][1];
             winflags &= ~ws_aiflag_map[i][0];
@@ -6600,7 +6600,7 @@ static int convert_niflag_w2u(int winflags) {
     unsigned int i;
     int unixflags = 0;
 
-    for (i=0;i<sizeof(ws_niflag_map)/sizeof(ws_niflag_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_niflag_map); i++)
         if (ws_niflag_map[i][0] & winflags) {
             unixflags |= ws_niflag_map[i][1];
             winflags &= ~ws_niflag_map[i][0];
@@ -6614,7 +6614,7 @@ static int convert_aiflag_u2w(int unixflags) {
     unsigned int i;
     int winflags = 0;
 
-    for (i=0;i<sizeof(ws_aiflag_map)/sizeof(ws_aiflag_map[0]);i++)
+    for (i = 0; i < ARRAY_SIZE(ws_aiflag_map); i++)
         if (ws_aiflag_map[i][1] & unixflags) {
             winflags |= ws_aiflag_map[i][0];
             unixflags &= ~ws_aiflag_map[i][1];
@@ -8718,7 +8718,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
 
     if (ret) return ret;
 
-    MultiByteToWideChar( CP_ACP, 0, bufAddr, size, buffer, sizeof( buffer )/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, bufAddr, size, buffer, ARRAY_SIZE(buffer));
 
     if (*lenstr <  size)
     {
