@@ -360,6 +360,22 @@ static void test_MFCreateMemoryBuffer(void)
     IMFMediaBuffer_Release(buffer);
 }
 
+static void test_MFSample(void)
+{
+    IMFSample *sample;
+    HRESULT hr;
+    UINT32 count;
+
+    hr = MFCreateSample( &sample );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+
+    IMFSample_Release(sample);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -370,6 +386,7 @@ START_TEST(mfplat)
     test_source_resolver();
     test_MFCreateMediaType();
     test_MFCreateAttributes();
+    test_MFSample();
     test_MFCreateMFByteStreamOnStream();
     test_MFCreateMemoryBuffer();
 
