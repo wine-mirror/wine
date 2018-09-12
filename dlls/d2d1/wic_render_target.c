@@ -25,8 +25,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
-static void sync_bitmap(struct d2d_wic_render_target *render_target)
+static inline struct d2d_wic_render_target *impl_from_IUnknown(IUnknown *iface)
 {
+    return CONTAINING_RECORD(iface, struct d2d_wic_render_target, ID2D1RenderTarget_iface);
+}
+
+static HRESULT d2d_wic_render_target_present(IUnknown *outer_unknown)
+{
+    struct d2d_wic_render_target *render_target = impl_from_IUnknown(outer_unknown);
     D3D10_MAPPED_TEXTURE2D mapped_texture;
     ID3D10Resource *src_resource;
     IWICBitmapLock *bitmap_lock;
@@ -41,7 +47,7 @@ static void sync_bitmap(struct d2d_wic_render_target *render_target)
             &IID_ID3D10Resource, (void **)&src_resource)))
     {
         ERR("Failed to get source resource interface, hr %#x.\n", hr);
-        return;
+        goto end;
     }
 
     ID3D10Texture2D_GetDevice(render_target->readback_texture, &device);
@@ -56,28 +62,28 @@ static void sync_bitmap(struct d2d_wic_render_target *render_target)
     if (FAILED(hr = IWICBitmap_Lock(render_target->bitmap, &dst_rect, WICBitmapLockWrite, &bitmap_lock)))
     {
         ERR("Failed to lock destination bitmap, hr %#x.\n", hr);
-        return;
+        goto end;
     }
 
     if (FAILED(hr = IWICBitmapLock_GetDataPointer(bitmap_lock, &dst_size, &dst)))
     {
         ERR("Failed to get data pointer, hr %#x.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
-        return;
+        goto end;
     }
 
     if (FAILED(hr = IWICBitmapLock_GetStride(bitmap_lock, &dst_pitch)))
     {
         ERR("Failed to get stride, hr %#x.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
-        return;
+        goto end;
     }
 
     if (FAILED(hr = ID3D10Texture2D_Map(render_target->readback_texture, 0, D3D10_MAP_READ, 0, &mapped_texture)))
     {
         ERR("Failed to map readback texture, hr %#x.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
-        return;
+        goto end;
     }
 
     src = mapped_texture.pData;
@@ -91,6 +97,9 @@ static void sync_bitmap(struct d2d_wic_render_target *render_target)
 
     ID3D10Texture2D_Unmap(render_target->readback_texture, 0);
     IWICBitmapLock_Release(bitmap_lock);
+
+end:
+    return S_OK;
 }
 
 static inline struct d2d_wic_render_target *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
@@ -112,13 +121,8 @@ static HRESULT STDMETHODCALLTYPE d2d_wic_render_target_QueryInterface(ID2D1Rende
         *out = iface;
         return S_OK;
     }
-    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
-        return ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, iid, out);
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-
-    *out = NULL;
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(render_target->dxgi_inner, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_wic_render_target_AddRef(ID2D1RenderTarget *iface)
@@ -142,7 +146,7 @@ static ULONG STDMETHODCALLTYPE d2d_wic_render_target_Release(ID2D1RenderTarget *
     {
         IWICBitmap_Release(render_target->bitmap);
         ID3D10Texture2D_Release(render_target->readback_texture);
-        ID2D1RenderTarget_Release(render_target->dxgi_target);
+        IUnknown_Release(render_target->dxgi_inner);
         IDXGISurface_Release(render_target->dxgi_surface);
         heap_free(render_target);
     }
@@ -574,14 +578,10 @@ static void STDMETHODCALLTYPE d2d_wic_render_target_PopLayer(ID2D1RenderTarget *
 static HRESULT STDMETHODCALLTYPE d2d_wic_render_target_Flush(ID2D1RenderTarget *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
     struct d2d_wic_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
-    HRESULT hr;
 
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    hr = ID2D1RenderTarget_Flush(render_target->dxgi_target, tag1, tag2);
-    sync_bitmap(render_target);
-
-    return hr;
+    return ID2D1RenderTarget_Flush(render_target->dxgi_target, tag1, tag2);
 }
 
 static void STDMETHODCALLTYPE d2d_wic_render_target_SaveDrawingState(ID2D1RenderTarget *iface,
@@ -645,14 +645,10 @@ static HRESULT STDMETHODCALLTYPE d2d_wic_render_target_EndDraw(ID2D1RenderTarget
         D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
     struct d2d_wic_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
-    HRESULT hr;
 
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    hr = ID2D1RenderTarget_EndDraw(render_target->dxgi_target, tag1, tag2);
-    sync_bitmap(render_target);
-
-    return hr;
+    return ID2D1RenderTarget_EndDraw(render_target->dxgi_target, tag1, tag2);
 }
 
 static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_wic_render_target_GetPixelFormat(ID2D1RenderTarget *iface,
@@ -785,6 +781,11 @@ static const struct ID2D1RenderTargetVtbl d2d_wic_render_target_vtbl =
     d2d_wic_render_target_IsSupported,
 };
 
+static const struct d2d_device_context_ops d2d_wic_render_target_ops =
+{
+    d2d_wic_render_target_present,
+};
+
 HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory *factory,
         ID3D10Device1 *device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
@@ -793,7 +794,6 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     HRESULT hr;
 
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_wic_render_target_vtbl;
-    render_target->refcount = 1;
 
     if (FAILED(hr = IWICBitmap_GetSize(bitmap, &render_target->width, &render_target->height)))
     {
@@ -875,9 +875,20 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     }
 
     if (FAILED(hr = d2d_d3d_create_render_target(factory, render_target->dxgi_surface,
-            (IUnknown *)&render_target->ID2D1RenderTarget_iface, desc, &render_target->dxgi_target)))
+            (IUnknown *)&render_target->ID2D1RenderTarget_iface, &d2d_wic_render_target_ops,
+            desc, (void **)&render_target->dxgi_inner)))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        ID3D10Texture2D_Release(render_target->readback_texture);
+        IDXGISurface_Release(render_target->dxgi_surface);
+        return hr;
+    }
+
+    if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
+            &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
+    {
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        IUnknown_Release(render_target->dxgi_inner);
         ID3D10Texture2D_Release(render_target->readback_texture);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;

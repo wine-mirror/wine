@@ -45,13 +45,8 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_render_target_QueryInterface(ID2D1Bi
         *out = iface;
         return S_OK;
     }
-    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
-        return ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, iid, out);
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-
-    *out = NULL;
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(render_target->dxgi_inner, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_AddRef(ID2D1BitmapRenderTarget *iface)
@@ -73,7 +68,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_Release(ID2D1BitmapRende
 
     if (!refcount)
     {
-        ID2D1RenderTarget_Release(render_target->dxgi_target);
+        IUnknown_Release(render_target->dxgi_inner);
         ID2D1Bitmap_Release(render_target->bitmap);
         heap_free(render_target);
     }
@@ -743,7 +738,6 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
         FIXME("Compatible target options are ignored, %#x.\n", options);
 
     render_target->ID2D1BitmapRenderTarget_iface.lpVtbl = &d2d_bitmap_render_target_vtbl;
-    render_target->refcount = 1;
 
     dxgi_rt_desc.type = parent_target->desc.type;
     dxgi_rt_desc.usage = parent_target->desc.usage;
@@ -811,9 +805,19 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     }
 
     if (FAILED(hr = d2d_d3d_create_render_target(parent_target->factory, dxgi_surface,
-            (IUnknown *)&render_target->ID2D1BitmapRenderTarget_iface, &dxgi_rt_desc, &render_target->dxgi_target)))
+            (IUnknown *)&render_target->ID2D1BitmapRenderTarget_iface, NULL,
+            &dxgi_rt_desc, (void **)&render_target->dxgi_inner)))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        IDXGISurface_Release(dxgi_surface);
+        return hr;
+    }
+
+    if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
+            &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
+    {
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        IUnknown_Release(render_target->dxgi_inner);
         IDXGISurface_Release(dxgi_surface);
         return hr;
     }
@@ -829,6 +833,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     {
         WARN("Failed to create shared bitmap, hr %#x.\n", hr);
         ID2D1RenderTarget_Release(render_target->dxgi_target);
+        IUnknown_Release(render_target->dxgi_inner);
         return hr;
     }
 

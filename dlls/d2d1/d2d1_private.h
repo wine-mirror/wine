@@ -117,14 +117,21 @@ struct d2d_ps_cb
     struct d2d_brush_cb opacity_brush;
 };
 
+struct d2d_device_context_ops
+{
+    HRESULT (*device_context_present)(IUnknown *outer_unknown);
+};
+
 struct d2d_device_context
 {
     ID2D1DeviceContext ID2D1DeviceContext_iface;
     ID2D1GdiInteropRenderTarget ID2D1GdiInteropRenderTarget_iface;
     IDWriteTextRenderer IDWriteTextRenderer_iface;
+    IUnknown IUnknown_iface;
     LONG refcount;
 
     IUnknown *outer_unknown;
+    const struct d2d_device_context_ops *ops;
 
     ID2D1Factory *factory;
     ID3D10Device *device;
@@ -149,7 +156,8 @@ struct d2d_device_context
 };
 
 HRESULT d2d_d3d_create_render_target(ID2D1Factory *factory, IDXGISurface *surface, IUnknown *outer_unknown,
-        const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target) DECLSPEC_HIDDEN;
+        const struct d2d_device_context_ops *ops, const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        void **render_target) DECLSPEC_HIDDEN;
 HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
 
 struct d2d_wic_render_target
@@ -159,6 +167,7 @@ struct d2d_wic_render_target
 
     IDXGISurface *dxgi_surface;
     ID2D1RenderTarget *dxgi_target;
+    IUnknown *dxgi_inner;
     ID3D10Texture2D *readback_texture;
     IWICBitmap *bitmap;
 
@@ -177,6 +186,7 @@ struct d2d_dc_render_target
 
     IDXGISurface1 *dxgi_surface;
     ID2D1RenderTarget *dxgi_target;
+    IUnknown *dxgi_inner;
 
     RECT dst_rect;
     HDC hdc;
@@ -191,6 +201,7 @@ struct d2d_hwnd_render_target
     LONG refcount;
 
     ID2D1RenderTarget *dxgi_target;
+    IUnknown *dxgi_inner;
     IDXGISwapChain *swapchain;
     UINT sync_interval;
     HWND hwnd;
@@ -206,6 +217,7 @@ struct d2d_bitmap_render_target
     LONG refcount;
 
     ID2D1RenderTarget *dxgi_target;
+    IUnknown *dxgi_inner;
     ID2D1Bitmap *bitmap;
 };
 

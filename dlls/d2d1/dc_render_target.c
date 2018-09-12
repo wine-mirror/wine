@@ -24,17 +24,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
-static void sync_bitmap(struct d2d_dc_render_target *render_target)
+static inline struct d2d_dc_render_target *impl_from_IUnknown(IUnknown *iface)
 {
+    return CONTAINING_RECORD(iface, struct d2d_dc_render_target, ID2D1DCRenderTarget_iface);
+}
+
+static HRESULT d2d_dc_render_target_present(IUnknown *outer_unknown)
+{
+    struct d2d_dc_render_target *render_target = impl_from_IUnknown(outer_unknown);
     const RECT *dst_rect = &render_target->dst_rect;
     RECT empty_rect;
     HDC src_hdc;
     HRESULT hr;
 
+    if (!render_target->hdc)
+        return D2DERR_WRONG_STATE;
+
     if (FAILED(hr = IDXGISurface1_GetDC(render_target->dxgi_surface, FALSE, &src_hdc)))
     {
         WARN("GetDC() failed, %#x.\n", hr);
-        return;
+        return S_OK;
     }
 
     BitBlt(render_target->hdc, dst_rect->left, dst_rect->top, dst_rect->right - dst_rect->left,
@@ -42,6 +51,8 @@ static void sync_bitmap(struct d2d_dc_render_target *render_target)
 
     SetRectEmpty(&empty_rect);
     IDXGISurface1_ReleaseDC(render_target->dxgi_surface, &empty_rect);
+
+    return S_OK;
 }
 
 static inline struct d2d_dc_render_target *impl_from_ID2D1DCRenderTarget(ID2D1DCRenderTarget *iface)
@@ -64,13 +75,8 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_QueryInterface(ID2D1DCRend
         *out = iface;
         return S_OK;
     }
-    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
-        return ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, iid, out);
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-
-    *out = NULL;
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(render_target->dxgi_inner, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_dc_render_target_AddRef(ID2D1DCRenderTarget *iface)
@@ -92,7 +98,7 @@ static ULONG STDMETHODCALLTYPE d2d_dc_render_target_Release(ID2D1DCRenderTarget 
 
     if (!refcount)
     {
-        ID2D1RenderTarget_Release(render_target->dxgi_target);
+        IUnknown_Release(render_target->dxgi_inner);
         IDXGISurface1_Release(render_target->dxgi_surface);
         heap_free(render_target);
     }
@@ -524,14 +530,10 @@ static void STDMETHODCALLTYPE d2d_dc_render_target_PopLayer(ID2D1DCRenderTarget 
 static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_Flush(ID2D1DCRenderTarget *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
-    HRESULT hr;
 
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    hr = ID2D1RenderTarget_Flush(render_target->dxgi_target, tag1, tag2);
-    sync_bitmap(render_target);
-
-    return hr;
+    return ID2D1RenderTarget_Flush(render_target->dxgi_target, tag1, tag2);
 }
 
 static void STDMETHODCALLTYPE d2d_dc_render_target_SaveDrawingState(ID2D1DCRenderTarget *iface,
@@ -595,17 +597,10 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_EndDraw(ID2D1DCRenderTarge
         D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
-    HRESULT hr;
 
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    if (!render_target->hdc)
-        return D2DERR_WRONG_STATE;
-
-    hr = ID2D1RenderTarget_EndDraw(render_target->dxgi_target, tag1, tag2);
-    sync_bitmap(render_target);
-
-    return hr;
+    return ID2D1RenderTarget_EndDraw(render_target->dxgi_target, tag1, tag2);
 }
 
 static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_dc_render_target_GetPixelFormat(ID2D1DCRenderTarget *iface,
@@ -813,6 +808,11 @@ static const struct ID2D1DCRenderTargetVtbl d2d_dc_render_target_vtbl =
     d2d_dc_render_target_BindDC,
 };
 
+static const struct d2d_device_context_ops d2d_dc_render_target_ops =
+{
+    d2d_dc_render_target_present,
+};
+
 HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory *factory,
         ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
@@ -821,7 +821,6 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
     HRESULT hr;
 
     render_target->ID2D1DCRenderTarget_iface.lpVtbl = &d2d_dc_render_target_vtbl;
-    render_target->refcount = 1;
 
     /* Set with BindDC(). */
     SetRectEmpty(&render_target->dst_rect);
@@ -868,9 +867,19 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
     }
 
     if (FAILED(hr = d2d_d3d_create_render_target(factory, (IDXGISurface *)render_target->dxgi_surface,
-            (IUnknown *)&render_target->ID2D1DCRenderTarget_iface, desc, &render_target->dxgi_target)))
+            (IUnknown *)&render_target->ID2D1DCRenderTarget_iface, &d2d_dc_render_target_ops,
+            desc, (void **)&render_target->dxgi_inner)))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        IDXGISurface1_Release(render_target->dxgi_surface);
+        return hr;
+    }
+
+    if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
+            &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
+    {
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        IUnknown_Release(render_target->dxgi_inner);
         IDXGISurface1_Release(render_target->dxgi_surface);
         return hr;
     }
