@@ -360,6 +360,57 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, pnp_device);
 }
 
+static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
+{
+    int i;
+    struct pnp_device *ptr;
+
+    EnterCriticalSection(&device_list_cs);
+    *devices = HeapAlloc(GetProcessHeap(), 0, sizeof(DEVICE_RELATIONS) +
+        list_count(&pnp_devset) * sizeof (void *));
+
+    if (!*devices)
+    {
+        LeaveCriticalSection(&device_list_cs);
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    i = 0;
+    LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
+    {
+        (*devices)->Objects[i] = (DEVICE_OBJECT*)ptr->device;
+        i++;
+    }
+    LeaveCriticalSection(&device_list_cs);
+    (*devices)->Count = i;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
+{
+    NTSTATUS status = irp->IoStatus.u.Status;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+
+    TRACE("IRP_MN_QUERY_DEVICE_RELATIONS");
+    switch (irpsp->Parameters.QueryDeviceRelations.Type)
+    {
+        case EjectionRelations:
+        case RemovalRelations:
+        case TargetDeviceRelation:
+        case PowerRelations:
+            FIXME("Unhandled Device Relation %x\n",irpsp->Parameters.QueryDeviceRelations.Type);
+            break;
+        case BusRelations:
+            status = build_device_relations((DEVICE_RELATIONS**)&irp->IoStatus.Information);
+            break;
+        default:
+            FIXME("Unknown Device Relation %x\n",irpsp->Parameters.QueryDeviceRelations.Type);
+            break;
+    }
+
+    return status;
+}
+
 static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.u.Status;
@@ -404,6 +455,8 @@ NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     {
         case IRP_MN_QUERY_DEVICE_RELATIONS:
             TRACE("IRP_MN_QUERY_DEVICE_RELATIONS\n");
+            status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
+            irp->IoStatus.u.Status = status;
             break;
         case IRP_MN_QUERY_ID:
             TRACE("IRP_MN_QUERY_ID\n");
