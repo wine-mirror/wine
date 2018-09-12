@@ -44,12 +44,16 @@ static void test_package(void)
     static const WCHAR rootW[] = {'/',0};
     IOpcRelationshipSet *relset, *relset2;
     IOpcPartSet *partset, *partset2;
+    IStream *stream, *stream2;
     IOpcRelationship *rel;
     IOpcPartUri *part_uri;
     IOpcFactory *factory;
     IOpcPackage *package;
+    LARGE_INTEGER move;
+    ULARGE_INTEGER pos;
     IUri *target_uri;
     IOpcPart *part;
+    char buff[16];
     IOpcUri *uri;
     HRESULT hr;
     BSTR str;
@@ -81,6 +85,37 @@ static void test_package(void)
 
     hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
     ok(SUCCEEDED(hr), "Failed to create a part, hr %#x.\n", hr);
+
+    hr = IOpcPart_GetContentStream(part, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPart_GetContentStream(part, &stream);
+    ok(SUCCEEDED(hr), "Failed to get content stream, hr %#x.\n", hr);
+
+    hr = IStream_Write(stream, "abc", 3, NULL);
+    ok(hr == S_OK, "Failed to write content, hr %#x.\n", hr);
+
+    move.QuadPart = 0;
+    hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, &pos);
+    ok(SUCCEEDED(hr), "Seek failed, hr %#x.\n", hr);
+    ok(pos.QuadPart == 3, "Unexpected position.\n");
+
+    hr = IOpcPart_GetContentStream(part, &stream2);
+    ok(SUCCEEDED(hr), "Failed to get content stream, hr %#x.\n", hr);
+    ok(stream != stream2, "Unexpected instance.\n");
+
+    move.QuadPart = 0;
+    hr = IStream_Seek(stream2, move, STREAM_SEEK_CUR, &pos);
+    ok(SUCCEEDED(hr), "Seek failed, hr %#x.\n", hr);
+    ok(pos.QuadPart == 0, "Unexpected position.\n");
+
+    memset(buff, 0, sizeof(buff));
+    hr = IStream_Read(stream2, buff, sizeof(buff), NULL);
+    ok(hr == S_OK, "Failed to read content, hr %#x.\n", hr);
+    ok(!memcmp(buff, "abc", 3), "Unexpected content.\n");
+
+    IStream_Release(stream);
+    IStream_Release(stream2);
 
     hr = IOpcPart_GetRelationshipSet(part, &relset);
     ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#x.\n", hr);

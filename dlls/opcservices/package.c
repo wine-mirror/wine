@@ -31,6 +31,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 
+struct opc_content
+{
+    LONG refcount;
+    BYTE *data;
+    ULARGE_INTEGER size;
+};
+
+struct opc_content_stream
+{
+    IStream IStream_iface;
+    LONG refcount;
+
+    struct opc_content *content;
+    ULARGE_INTEGER pos;
+};
+
 struct opc_package
 {
     IOpcPackage IOpcPackage_iface;
@@ -50,6 +66,7 @@ struct opc_part
     WCHAR *content_type;
     DWORD compression_options;
     IOpcRelationshipSet *relationship_set;
+    struct opc_content *content;
 };
 
 struct opc_part_set
@@ -110,6 +127,243 @@ static inline struct opc_relationship *impl_from_IOpcRelationship(IOpcRelationsh
     return CONTAINING_RECORD(iface, struct opc_relationship, IOpcRelationship_iface);
 }
 
+static inline struct opc_content_stream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_content_stream, IStream_iface);
+}
+
+static void opc_content_release(struct opc_content *content)
+{
+    ULONG refcount = InterlockedDecrement(&content->refcount);
+
+    if (!refcount)
+    {
+        heap_free(content->data);
+        heap_free(content);
+    }
+}
+
+static HRESULT WINAPI opc_content_stream_QueryInterface(IStream *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IStream) ||
+            IsEqualIID(iid, &IID_ISequentialStream) ||
+            IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_content_stream_AddRef(IStream *iface)
+{
+    struct opc_content_stream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedIncrement(&stream->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_content_stream_Release(IStream *iface)
+{
+    struct opc_content_stream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        opc_content_release(stream->content);
+        heap_free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI opc_content_stream_Read(IStream *iface, void *buff, ULONG size, ULONG *num_read)
+{
+    struct opc_content_stream *stream = impl_from_IStream(iface);
+    DWORD read = 0;
+
+    TRACE("iface %p, buff %p, size %u, num_read %p.\n", iface, buff, size, num_read);
+
+    if (!num_read)
+        num_read = &read;
+
+    if (stream->content->size.QuadPart - stream->pos.QuadPart < size)
+        *num_read = stream->content->size.QuadPart - stream->pos.QuadPart;
+    else
+        *num_read = size;
+
+    if (*num_read)
+        memcpy(buff, stream->content->data + stream->pos.QuadPart, *num_read);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_content_stream_Write(IStream *iface, const void *data, ULONG size, ULONG *num_written)
+{
+    struct opc_content_stream *stream = impl_from_IStream(iface);
+    DWORD written = 0;
+
+    TRACE("iface %p, data %p, size %u, num_written %p.\n", iface, data, size, num_written);
+
+    if (!num_written)
+        num_written = &written;
+
+    *num_written = 0;
+
+    if (size > stream->content->size.QuadPart - stream->pos.QuadPart)
+    {
+        void *ptr = heap_realloc(stream->content->data, stream->pos.QuadPart + size);
+        if (!ptr)
+            return E_OUTOFMEMORY;
+        stream->content->data = ptr;
+    }
+
+    memcpy(stream->content->data + stream->pos.QuadPart, data, size);
+    stream->pos.QuadPart += size;
+    stream->content->size.QuadPart += size;
+    *num_written = size;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_content_stream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *newpos)
+{
+    struct opc_content_stream *stream = impl_from_IStream(iface);
+    ULARGE_INTEGER pos;
+
+    TRACE("iface %p, move %s, origin %d, newpos %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, newpos);
+
+    switch (origin)
+    {
+    case STREAM_SEEK_SET:
+        pos.QuadPart = move.QuadPart;
+        break;
+    case STREAM_SEEK_CUR:
+        pos.QuadPart = stream->pos.QuadPart + move.QuadPart;
+        break;
+    case STREAM_SEEK_END:
+        pos.QuadPart = stream->content->size.QuadPart + move.QuadPart;
+    default:
+        WARN("Unknown origin mode %d.\n", origin);
+        return E_INVALIDARG;
+    }
+
+    stream->pos = pos;
+
+    if (newpos)
+        *newpos = stream->pos;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_content_stream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    FIXME("iface %p, size %s stub!\n", iface, wine_dbgstr_longlong(size.QuadPart));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *num_read, ULARGE_INTEGER *written)
+{
+    FIXME("iface %p, dest %p, size %s, num_read %p, written %p stub!\n", iface, dest,
+            wine_dbgstr_longlong(size.QuadPart), num_read, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_Commit(IStream *iface, DWORD flags)
+{
+    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_Revert(IStream *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_LockRegion(IStream *iface, ULARGE_INTEGER offset,
+        ULARGE_INTEGER size, DWORD lock_type)
+{
+    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size,
+        DWORD lock_type)
+{
+    FIXME("iface %p, offset %s, size %s, lock_type %d stub!\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_Stat(IStream *iface, STATSTG *statstg, DWORD flag)
+{
+    FIXME("iface %p, statstg %p, flag %d stub!\n", iface, statstg, flag);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI opc_content_stream_Clone(IStream *iface, IStream **result)
+{
+    FIXME("iface %p, result %p stub!\n", iface, result);
+
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl opc_content_stream_vtbl =
+{
+    opc_content_stream_QueryInterface,
+    opc_content_stream_AddRef,
+    opc_content_stream_Release,
+    opc_content_stream_Read,
+    opc_content_stream_Write,
+    opc_content_stream_Seek,
+    opc_content_stream_SetSize,
+    opc_content_stream_CopyTo,
+    opc_content_stream_Commit,
+    opc_content_stream_Revert,
+    opc_content_stream_LockRegion,
+    opc_content_stream_UnlockRegion,
+    opc_content_stream_Stat,
+    opc_content_stream_Clone,
+};
+
+static HRESULT opc_content_stream_create(struct opc_content *content, IStream **out)
+{
+    struct opc_content_stream *stream;
+
+    if (!(stream = heap_alloc_zero(sizeof(*stream))))
+        return E_OUTOFMEMORY;
+
+    stream->IStream_iface.lpVtbl = &opc_content_stream_vtbl;
+    stream->refcount = 1;
+    stream->content = content;
+    InterlockedIncrement(&content->refcount);
+
+    *out = &stream->IStream_iface;
+
+    TRACE("Created content stream %p.\n", *out);
+    return S_OK;
+}
+
 static HRESULT opc_relationship_set_create(IOpcUri *source_uri, IOpcRelationshipSet **relationship_set);
 
 static WCHAR *opc_strdupW(const WCHAR *str)
@@ -168,6 +422,7 @@ static ULONG WINAPI opc_part_Release(IOpcPart *iface)
             IOpcRelationshipSet_Release(part->relationship_set);
         IOpcPartUri_Release(part->name);
         CoTaskMemFree(part->content_type);
+        opc_content_release(part->content);
         heap_free(part);
     }
 
@@ -192,9 +447,14 @@ static HRESULT WINAPI opc_part_GetRelationshipSet(IOpcPart *iface, IOpcRelations
 
 static HRESULT WINAPI opc_part_GetContentStream(IOpcPart *iface, IStream **stream)
 {
-    FIXME("iface %p, stream %p stub!\n", iface, stream);
+    struct opc_part *part = impl_from_IOpcPart(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, stream %p.\n", iface, stream);
+
+    if (!stream)
+        return E_POINTER;
+
+    return opc_content_stream_create(part->content, stream);
 }
 
 static HRESULT WINAPI opc_part_GetName(IOpcPart *iface, IOpcPartUri **name)
@@ -265,6 +525,14 @@ static HRESULT opc_part_create(struct opc_part_set *set, IOpcPartUri *name, cons
         IOpcPart_Release(&part->IOpcPart_iface);
         return E_OUTOFMEMORY;
     }
+
+    part->content = heap_alloc_zero(sizeof(*part->content));
+    if (!part->content)
+    {
+        IOpcPart_Release(&part->IOpcPart_iface);
+        return E_OUTOFMEMORY;
+    }
+    part->content->refcount = 1;
 
     set->parts[set->count++] = part;
     IOpcPart_AddRef(&part->IOpcPart_iface);

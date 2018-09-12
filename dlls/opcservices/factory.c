@@ -278,7 +278,7 @@ static HRESULT opc_filestream_create(const WCHAR *filename, OPC_STREAM_IO_MODE i
     stream->refcount = 1;
 
     *out = &stream->IStream_iface;
-    TRACE("Created file steam %p.\n", *out);
+    TRACE("Created file stream %p.\n", *out);
     return S_OK;
 }
 
