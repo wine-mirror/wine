@@ -300,7 +300,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
     }
 
     TRACE("Created render target %p.\n", object);
-    *render_target = &object->ID2D1RenderTarget_iface;
+    *render_target = object->dxgi_target;
 
     return S_OK;
 }

@@ -162,7 +162,7 @@ HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGI
 
 struct d2d_wic_render_target
 {
-    ID2D1RenderTarget ID2D1RenderTarget_iface;
+    IUnknown IUnknown_iface;
     LONG refcount;
 
     IDXGISurface *dxgi_surface;
