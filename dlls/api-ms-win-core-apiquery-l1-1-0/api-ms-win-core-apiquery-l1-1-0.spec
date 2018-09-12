@@ -1,1 +1,1 @@
-@ stub ApiSetQueryApiSetPresence
+@ stdcall ApiSetQueryApiSetPresence(ptr ptr) ntdll.ApiSetQueryApiSetPresence
