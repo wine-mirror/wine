@@ -21,7 +21,6 @@ import "d2d1.idl";
 interface ID2D1DeviceContext;
 interface ID2D1StrokeStyle1;
 interface ID2D1PathGeometry1;
-interface ID2D1DrawingStateBlock1;
 interface ID2D1GdiMetafile;
 interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
@@ -250,6 +249,21 @@ typedef struct D2D1_EFFECT_INPUT_DESCRIPTION
 } D2D1_EFFECT_INPUT_DESCRIPTION;
 
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
+
+[
+    object,
+    uuid(689f1f85-c72e-4e33-8f19-85754efd5ace),
+    local,
+]
+interface ID2D1DrawingStateBlock1 : ID2D1DrawingStateBlock
+{
+    void GetDescription(
+        [out] D2D1_DRAWING_STATE_DESCRIPTION1 *desc
+    );
+    void SetDescription(
+        [in] const D2D1_DRAWING_STATE_DESCRIPTION1 *desc
+    );
+}
 
 [
     object,
