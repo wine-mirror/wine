@@ -415,7 +415,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(IDirectSoundBuffer8 *ifac
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 
-	TRACE("(%p,%p), thread is %04x\n",This,status,GetCurrentThreadId());
+	TRACE("(%p,%p)\n",This,status);
 
 	if (status == NULL) {
 		WARN("invalid parameter: status = NULL\n");

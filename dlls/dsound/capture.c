@@ -386,7 +386,7 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetStatus(IDirectSoundCaptur
 {
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
 
-    TRACE( "(%p, %p), thread is %04x\n", This, lpdwStatus, GetCurrentThreadId() );
+    TRACE( "(%p, %p)\n", This, lpdwStatus );
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
