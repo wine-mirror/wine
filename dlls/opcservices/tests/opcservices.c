@@ -75,6 +75,7 @@ static void test_package(void)
     hr = IOpcPackage_GetPartSet(package, &partset2);
     ok(SUCCEEDED(hr), "Failed to create a part set, hr %#x.\n", hr);
     ok(partset == partset2, "Expected same part set instance.\n");
+    IOpcPartSet_Release(partset2);
 
     /* CreatePart */
     hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
@@ -161,6 +162,7 @@ todo_wine {
     IOpcRelationshipSet_Release(relset);
     IOpcRelationshipSet_Release(relset2);
 
+    IOpcPartSet_Release(partset);
     IOpcPackage_Release(package);
 
     /* Root uri */
@@ -322,6 +324,8 @@ static void test_relationship(void)
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, target_uri2, OPC_URI_TARGET_MODE_INTERNAL, &rel);
 todo_wine
     ok(hr == OPC_E_INVALID_RELATIONSHIP_TARGET, "Unexpected hr %#x.\n", hr);
+    if (hr == S_OK)
+        IOpcRelationship_Release(rel);
 
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(SUCCEEDED(hr), "Failed to create relationship, hr %#x.\n", hr);
