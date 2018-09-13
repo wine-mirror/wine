@@ -476,6 +476,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
     if (FAILED(hr = CreateUri(ret, Uri_CREATE_ALLOW_RELATIVE, 0, &rels_uri)))
         WARN("Failed to create rels uri, hr %#x.\n", hr);
     heap_free(ret);
+    SysFreeString(path);
 
     return rels_uri;
 }
