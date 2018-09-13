@@ -591,6 +591,168 @@ static void test_rel_part_uri(void)
     IOpcFactory_Release(factory);
 }
 
+static void test_part_enumerator(void)
+{
+    static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
+    static const WCHAR uriW[] = {'/','u','r','i',0};
+    IOpcPartEnumerator *partenum, *partenum2;
+    IOpcPart *part, *part2;
+    IOpcPartUri *part_uri;
+    IOpcPackage *package;
+    IOpcFactory *factory;
+    IOpcPartSet *parts;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    hr = IOpcFactory_CreatePackage(factory, &package);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IOpcFactory_Release(factory);
+        return;
+    }
+
+    hr = IOpcPackage_GetPartSet(package, &parts);
+    ok(SUCCEEDED(hr), "Failed to get part set, hr %#x.\n", hr);
+
+    hr = IOpcPartSet_GetEnumerator(parts, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartSet_GetEnumerator(parts, &partenum);
+    ok(SUCCEEDED(hr), "Failed to get enumerator, hr %#x.\n", hr);
+
+    hr = IOpcPartSet_GetEnumerator(parts, &partenum2);
+    ok(SUCCEEDED(hr), "Failed to get enumerator, hr %#x.\n", hr);
+    ok(partenum != partenum2, "Unexpected instance.\n");
+    IOpcPartEnumerator_Release(partenum2);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part);
+    ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartEnumerator_MoveNext(partenum, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    ret = TRUE;
+    hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
+    ok(hr == S_OK, "Failed to move, hr %#x.\n", hr);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    ret = TRUE;
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    ok(hr == S_OK, "Failed to move, hr %#x.\n", hr);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
+    ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+    hr = IOpcPartSet_CreatePart(parts, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
+    ok(SUCCEEDED(hr), "Failed to create a part, hr %#x.\n", hr);
+    IOpcPartUri_Release(part_uri);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == OPC_E_ENUM_COLLECTION_CHANGED, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected instance.\n");
+
+    hr = IOpcPartEnumerator_MoveNext(partenum, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    ret = 123;
+    hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
+    ok(hr == OPC_E_ENUM_COLLECTION_CHANGED, "Unexpected hr %#x.\n", hr);
+    ok(ret == 123, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_MovePrevious(partenum, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    ret = 123;
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    ok(hr == OPC_E_ENUM_COLLECTION_CHANGED, "Unexpected hr %#x.\n", hr);
+    ok(ret == 123, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_Clone(partenum, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    partenum2 = (void *)0xdeadbeef;
+    hr = IOpcPartEnumerator_Clone(partenum, &partenum2);
+    ok(hr == OPC_E_ENUM_COLLECTION_CHANGED, "Unexpected hr %#x.\n", hr);
+    ok(partenum2 == NULL, "Unexpected instance.\n");
+
+    IOpcPartEnumerator_Release(partenum);
+
+    hr = IOpcPartSet_GetEnumerator(parts, &partenum);
+    ok(SUCCEEDED(hr), "Failed to get enumerator, hr %#x.\n", hr);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected instance.\n");
+
+    hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(ret, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(part2 == part, "Unexpected instance.\n");
+    IOpcPart_Release(part2);
+
+    hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected instance.\n");
+
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(ret, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(part2 == part, "Unexpected instance.\n");
+    IOpcPart_Release(part2);
+
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartEnumerator_Clone(partenum, &partenum2);
+    ok(SUCCEEDED(hr), "Clone failed, hr %#x.\n", hr);
+
+    hr = IOpcPartEnumerator_MoveNext(partenum2, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(ret, "Unexpected result %d.\n", ret);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum2, &part2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IOpcPart_Release(part2);
+
+    hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
+    ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#x.\n", hr);
+
+    IOpcPartEnumerator_Release(partenum2);
+
+    IOpcPartEnumerator_Release(partenum);
+
+    IOpcPart_Release(part);
+
+    IOpcPartSet_Release(parts);
+
+    IOpcPackage_Release(package);
+    IOpcFactory_Release(factory);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -609,6 +771,7 @@ START_TEST(opcservices)
     test_file_stream();
     test_relationship();
     test_rel_part_uri();
+    test_part_enumerator();
 
     IOpcFactory_Release(factory);
 

@@ -57,6 +57,16 @@ struct opc_package
     IOpcUri *source_uri;
 };
 
+struct opc_part_enum
+{
+    IOpcPartEnumerator IOpcPartEnumerator_iface;
+    LONG refcount;
+
+    struct opc_part_set *part_set;
+    size_t pos;
+    GUID id;
+};
+
 struct opc_part
 {
     IOpcPart IOpcPart_iface;
@@ -77,6 +87,7 @@ struct opc_part_set
     struct opc_part **parts;
     size_t size;
     size_t count;
+    GUID id;
 };
 
 struct opc_relationship
@@ -132,6 +143,11 @@ static inline struct opc_content_stream *impl_from_IStream(IStream *iface)
     return CONTAINING_RECORD(iface, struct opc_content_stream, IStream_iface);
 }
 
+static inline struct opc_part_enum *impl_from_IOpcPartEnumerator(IOpcPartEnumerator *iface)
+{
+    return CONTAINING_RECORD(iface, struct opc_part_enum, IOpcPartEnumerator_iface);
+}
+
 static void opc_content_release(struct opc_content *content)
 {
     ULONG refcount = InterlockedDecrement(&content->refcount);
@@ -141,6 +157,167 @@ static void opc_content_release(struct opc_content *content)
         heap_free(content->data);
         heap_free(content);
     }
+}
+
+static HRESULT opc_part_enum_create(struct opc_part_set *part_set, IOpcPartEnumerator **out);
+
+static HRESULT WINAPI opc_part_enum_QueryInterface(IOpcPartEnumerator *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualIID(&IID_IOpcPartEnumerator, iid) ||
+            IsEqualIID(&IID_IUnknown, iid))
+    {
+        *out = iface;
+        IOpcPartEnumerator_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI opc_part_enum_AddRef(IOpcPartEnumerator *iface)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+    ULONG refcount = InterlockedIncrement(&part_enum->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI opc_part_enum_Release(IOpcPartEnumerator *iface)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+    ULONG refcount = InterlockedDecrement(&part_enum->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IOpcPartSet_Release(&part_enum->part_set->IOpcPartSet_iface);
+        heap_free(part_enum);
+    }
+
+    return refcount;
+}
+
+static BOOL has_part_collection_changed(const struct opc_part_enum *part_enum)
+{
+    return !IsEqualGUID(&part_enum->id, &part_enum->part_set->id);
+}
+
+static HRESULT WINAPI opc_part_enum_MoveNext(IOpcPartEnumerator *iface, BOOL *has_next)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+
+    TRACE("iface %p, has_next %p.\n", iface, has_next);
+
+    if (!has_next)
+        return E_POINTER;
+
+    if (has_part_collection_changed(part_enum))
+        return OPC_E_ENUM_COLLECTION_CHANGED;
+
+    if (part_enum->part_set->count && (part_enum->pos == ~(size_t)0 || part_enum->pos < part_enum->part_set->count))
+        part_enum->pos++;
+
+    *has_next = part_enum->pos < part_enum->part_set->count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_part_enum_MovePrevious(IOpcPartEnumerator *iface, BOOL *has_previous)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+
+    TRACE("iface %p, has_previous %p.\n", iface, has_previous);
+
+    if (!has_previous)
+        return E_POINTER;
+
+    if (has_part_collection_changed(part_enum))
+        return OPC_E_ENUM_COLLECTION_CHANGED;
+
+    if (part_enum->pos != ~(size_t)0)
+        part_enum->pos--;
+
+    *has_previous = part_enum->pos != ~(size_t)0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI opc_part_enum_GetCurrent(IOpcPartEnumerator *iface, IOpcPart **part)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+
+    TRACE("iface %p, part %p.\n", iface, part);
+
+    if (!part)
+        return E_POINTER;
+
+    *part = NULL;
+
+    if (has_part_collection_changed(part_enum))
+        return OPC_E_ENUM_COLLECTION_CHANGED;
+
+    if (part_enum->pos < part_enum->part_set->count)
+    {
+        *part = &part_enum->part_set->parts[part_enum->pos]->IOpcPart_iface;
+        IOpcPart_AddRef(*part);
+    }
+
+    return *part ? S_OK : OPC_E_ENUM_INVALID_POSITION;
+}
+
+static HRESULT WINAPI opc_part_enum_Clone(IOpcPartEnumerator *iface, IOpcPartEnumerator **out)
+{
+    struct opc_part_enum *part_enum = impl_from_IOpcPartEnumerator(iface);
+
+    TRACE("iface %p, out %p.\n", iface, out);
+
+    if (!out)
+        return E_POINTER;
+
+    if (has_part_collection_changed(part_enum))
+    {
+        *out = NULL;
+        return OPC_E_ENUM_COLLECTION_CHANGED;
+    }
+
+    return opc_part_enum_create(part_enum->part_set, out);
+}
+
+static const IOpcPartEnumeratorVtbl opc_part_enum_vtbl =
+{
+    opc_part_enum_QueryInterface,
+    opc_part_enum_AddRef,
+    opc_part_enum_Release,
+    opc_part_enum_MoveNext,
+    opc_part_enum_MovePrevious,
+    opc_part_enum_GetCurrent,
+    opc_part_enum_Clone,
+};
+
+static HRESULT opc_part_enum_create(struct opc_part_set *part_set, IOpcPartEnumerator **out)
+{
+    struct opc_part_enum *part_enum;
+
+    if (!(part_enum = heap_alloc_zero(sizeof(*part_enum))))
+        return E_OUTOFMEMORY;
+
+    part_enum->IOpcPartEnumerator_iface.lpVtbl = &opc_part_enum_vtbl;
+    part_enum->refcount = 1;
+    part_enum->part_set = part_set;
+    IOpcPartSet_AddRef(&part_set->IOpcPartSet_iface);
+    part_enum->pos = ~(size_t)0;
+    part_enum->id = part_set->id;
+
+    *out = &part_enum->IOpcPartEnumerator_iface;
+    TRACE("Created part enumerator %p.\n", *out);
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_content_stream_QueryInterface(IStream *iface, REFIID iid, void **out)
@@ -536,6 +713,7 @@ static HRESULT opc_part_create(struct opc_part_set *set, IOpcPartUri *name, cons
 
     set->parts[set->count++] = part;
     IOpcPart_AddRef(&part->IOpcPart_iface);
+    CoCreateGuid(&set->id);
 
     *out = &part->IOpcPart_iface;
     TRACE("Created part %p.\n", *out);
@@ -622,9 +800,14 @@ static HRESULT WINAPI opc_part_set_PartExists(IOpcPartSet *iface, IOpcPartUri *n
 
 static HRESULT WINAPI opc_part_set_GetEnumerator(IOpcPartSet *iface, IOpcPartEnumerator **enumerator)
 {
-    FIXME("iface %p, enumerator %p stub!\n", iface, enumerator);
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, enumerator %p.\n", iface, enumerator);
+
+    if (!enumerator)
+        return E_POINTER;
+
+    return opc_part_enum_create(part_set, enumerator);
 }
 
 static const IOpcPartSetVtbl opc_part_set_vtbl =
