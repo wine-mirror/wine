@@ -331,7 +331,9 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
         return hr;
     }
 
-    return opc_part_uri_create(part_uri, NULL, out);
+    hr = opc_part_uri_create(part_uri, NULL, out);
+    IUri_Release(part_uri);
+    return hr;
 }
 
 static HRESULT WINAPI opc_factory_CreateStreamOnFile(IOpcFactory *iface, LPCWSTR filename,
