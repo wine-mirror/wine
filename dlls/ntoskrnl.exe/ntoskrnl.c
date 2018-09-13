@@ -1353,7 +1353,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     if (!guid_from_string( (refstr ? refstr : name->Buffer + namelen) - 38, &class ))
         return STATUS_INVALID_PARAMETER;
 
-    len = strlenW(DeviceClassesW) + 38 + 1 + namelen + 2;
+    len = strlenW(DeviceClassesW) + 38 + 1 + namelen + 2 + 1;
 
     if (!(path = heap_alloc( len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
