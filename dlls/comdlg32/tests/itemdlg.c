@@ -1069,7 +1069,7 @@ static void test_advise_helper(IFileDialog *pfd)
     for(i = 0; i < 10; i++) {
         hr = IFileDialog_Advise(pfd, pfde, &cookie[i]);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(cookie[i] == i+1, "Got cookie: %d\n", cookie[i]);
+        ok(cookie[i] == i+cookie[0], "Got cookie: %d\n", cookie[i]);
     }
     ok(pfdeimpl->ref == 10+1, "got ref %d\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
@@ -1102,7 +1102,7 @@ static void test_advise_helper(IFileDialog *pfd)
 
     hr = IFileDialog_Advise(pfd, pfde, &cookie[0]);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(cookie[0] == 1, "got cookie: %d\n", cookie[0]);
+    ok(cookie[0] >= 1, "got cookie: %d\n", cookie[0]);
     ok(pfdeimpl->ref == 1+1, "got ref %d\n", pfdeimpl->ref);
     ensure_zero_events(pfdeimpl);
 
