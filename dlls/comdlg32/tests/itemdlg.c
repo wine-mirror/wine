@@ -1032,10 +1032,14 @@ static void test_advise_helper(IFileDialog *pfd)
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
 
-    hr = IFileDialog_Advise(pfd, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-    hr = IFileDialog_Advise(pfd, pfde, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    /* Null pointer tests crash on Windows 10 16299 or newer */
+    if (0)
+    {
+        hr = IFileDialog_Advise(pfd, NULL, NULL);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        hr = IFileDialog_Advise(pfd, pfde, NULL);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    }
     hr = IFileDialog_Advise(pfd, NULL, &cookie[0]);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
