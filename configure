@@ -19877,6 +19877,7 @@ wine_fn_config_makefile dlls/ver.dll16 enable_win16
 wine_fn_config_makefile dlls/version enable_version
 wine_fn_config_makefile dlls/version/tests enable_tests
 wine_fn_config_makefile dlls/virtdisk enable_virtdisk
+wine_fn_config_makefile dlls/virtdisk/tests enable_tests
 wine_fn_config_makefile dlls/vmm.vxd enable_win16
 wine_fn_config_makefile dlls/vnbt.vxd enable_win16
 wine_fn_config_makefile dlls/vnetbios.vxd enable_win16
