@@ -179,9 +179,11 @@ static void STDMETHODCALLTYPE d2d_bitmap_GetColorContext(ID2D1Bitmap1 *iface, ID
 
 static D2D1_BITMAP_OPTIONS STDMETHODCALLTYPE d2d_bitmap_GetOptions(ID2D1Bitmap1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
 
-    return D2D1_BITMAP_OPTIONS_NONE;
+    TRACE("iface %p.\n", iface);
+
+    return bitmap->options;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_GetSurface(ID2D1Bitmap1 *iface, IDXGISurface **surface)
@@ -262,7 +264,7 @@ static BOOL format_supported(const D2D1_PIXEL_FORMAT *format)
 }
 
 static void d2d_bitmap_init(struct d2d_bitmap *bitmap, ID2D1Factory *factory,
-        ID3D10ShaderResourceView *view, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES *desc)
+        ID3D10ShaderResourceView *view, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES1 *desc)
 {
     bitmap->ID2D1Bitmap1_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
@@ -272,6 +274,7 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, ID2D1Factory *factory,
     bitmap->format = desc->pixelFormat;
     bitmap->dpi_x = desc->dpiX;
     bitmap->dpi_y = desc->dpiY;
+    bitmap->options = desc->bitmapOptions;
 
     if (bitmap->dpi_x == 0.0f && bitmap->dpi_y == 0.0f)
     {
@@ -281,7 +284,7 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, ID2D1Factory *factory,
 }
 
 HRESULT d2d_bitmap_create(ID2D1Factory *factory, ID3D10Device *device, D2D1_SIZE_U size, const void *src_data,
-        UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap)
+        UINT32 pitch, const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
     D3D10_SUBRESOURCE_DATA resource_data;
     D3D10_TEXTURE2D_DESC texture_desc;
@@ -338,9 +341,9 @@ HRESULT d2d_bitmap_create(ID2D1Factory *factory, ID3D10Device *device, D2D1_SIZE
 }
 
 HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *target_device,
-        REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap)
+        REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
-    D2D1_BITMAP_PROPERTIES d;
+    D2D1_BITMAP_PROPERTIES1 d;
     ID2D1Factory *factory;
 
     if (IsEqualGUID(iid, &IID_ID2D1Bitmap))
@@ -369,6 +372,8 @@ HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *targ
             d.pixelFormat = src_impl->format;
             d.dpiX = src_impl->dpi_x;
             d.dpiY = src_impl->dpi_y;
+            d.bitmapOptions = src_impl->options;
+            d.colorContext = NULL;
             desc = &d;
         }
 
@@ -432,7 +437,22 @@ HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *targ
             return E_OUTOFMEMORY;
         }
 
-        d = *desc;
+
+        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+        {
+            WARN("Failed to get surface desc, hr %#x.\n", hr);
+            ID3D10ShaderResourceView_Release(view);
+            return hr;
+        }
+
+        if (!desc)
+        {
+            memset(&d, 0, sizeof(d));
+            d.pixelFormat.format = surface_desc.Format;
+        }
+        else
+            d = *desc;
+
         if (d.dpiX == 0.0f || d.dpiY == 0.0f)
         {
             float dpi_x, dpi_y;
@@ -442,13 +462,6 @@ HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *targ
                 d.dpiX = dpi_x;
             if (d.dpiY == 0.0f)
                 d.dpiY = dpi_y;
-        }
-
-        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
-        {
-            WARN("Failed to get surface desc, hr %#x.\n", hr);
-            ID3D10ShaderResourceView_Release(view);
-            return hr;
         }
 
         pixel_size.width = surface_desc.Width;
@@ -469,10 +482,10 @@ HRESULT d2d_bitmap_create_shared(ID2D1DeviceContext *context, ID3D10Device *targ
 }
 
 HRESULT d2d_bitmap_create_from_wic_bitmap(ID2D1Factory *factory, ID3D10Device *device, IWICBitmapSource *bitmap_source,
-        const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap)
+        const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
     const D2D1_PIXEL_FORMAT *d2d_format;
-    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     WICPixelFormatGUID wic_format;
     unsigned int bpp, data_size;
     D2D1_SIZE_U size;
@@ -505,6 +518,8 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(ID2D1Factory *factory, ID3D10Device *d
         bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
         bitmap_desc.dpiX = 0.0f;
         bitmap_desc.dpiY = 0.0f;
+        bitmap_desc.bitmapOptions = 0;
+        bitmap_desc.colorContext = NULL;
     }
     else
     {

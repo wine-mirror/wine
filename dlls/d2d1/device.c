@@ -328,14 +328,23 @@ static void STDMETHODCALLTYPE d2d_device_context_GetFactory(ID2D1DeviceContext *
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceContext *iface,
         D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     struct d2d_bitmap *object;
     HRESULT hr;
 
     TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
             iface, size.width, size.height, src_data, pitch, desc, bitmap);
 
-    if (SUCCEEDED(hr = d2d_bitmap_create(render_target->factory, render_target->device, size, src_data, pitch, desc, &object)))
+    if (desc)
+    {
+        memcpy(&bitmap_desc, desc, sizeof(*desc));
+        bitmap_desc.bitmapOptions = 0;
+        bitmap_desc.colorContext = NULL;
+    }
+
+    if (SUCCEEDED(hr = d2d_bitmap_create(context->factory, context->device,
+            size, src_data, pitch, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
@@ -344,15 +353,23 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceCont
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID2D1DeviceContext *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     struct d2d_bitmap *object;
     HRESULT hr;
 
     TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n",
             iface, bitmap_source, desc, bitmap);
 
-    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(render_target->factory, render_target->device, bitmap_source,
-            desc, &object)))
+    if (desc)
+    {
+        memcpy(&bitmap_desc, desc, sizeof(*desc));
+        bitmap_desc.bitmapOptions = 0;
+        bitmap_desc.colorContext = NULL;
+    }
+
+    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(context->factory, context->device,
+            bitmap_source, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
@@ -361,14 +378,23 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1DeviceContext *iface,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     struct d2d_bitmap *object;
     HRESULT hr;
 
     TRACE("iface %p, iid %s, data %p, desc %p, bitmap %p.\n",
             iface, debugstr_guid(iid), data, desc, bitmap);
 
-    if (SUCCEEDED(hr = d2d_bitmap_create_shared(iface, render_target->device, iid, data, desc, &object)))
+    if (desc)
+    {
+        memcpy(&bitmap_desc, desc, sizeof(*desc));
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        bitmap_desc.colorContext = NULL;
+    }
+
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(iface, context->device,
+            iid, data, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
