@@ -1290,7 +1290,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
         {
             IRpcChannelBuffer *chanbuf;
             hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid,
-                                         &proxy_manager->oxid_info,
+                                         &proxy_manager->oxid_info, riid,
                                          proxy_manager->dest_context,
                                          proxy_manager->dest_context_data,
                                          &chanbuf, apt);
