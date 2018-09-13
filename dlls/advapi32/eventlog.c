@@ -931,3 +931,12 @@ ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
     FIXME("%p %d %p: stub\n", propertiesarray, arraycount, guidcount);
     return ERROR_INVALID_PARAMETER;
 }
+
+/******************************************************************************
+ * TraceSetInformation [ADVAPI32.@]
+ */
+ULONG WINAPI TraceSetInformation(TRACEHANDLE handle, TRACE_INFO_CLASS infoclass, VOID* info, ULONG len)
+{
+    FIXME("%s %d %p %d: stub\n", wine_dbgstr_longlong(handle), infoclass, info, len);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

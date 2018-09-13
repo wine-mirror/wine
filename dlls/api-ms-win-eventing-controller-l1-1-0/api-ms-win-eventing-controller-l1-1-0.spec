@@ -8,4 +8,4 @@
 @ stdcall StartTraceW(ptr wstr ptr) advapi32.StartTraceW
 @ stdcall StopTraceW(int64 wstr ptr) advapi32.StopTraceW
 @ stub TraceQueryInformation
-@ stub TraceSetInformation
+@ stdcall TraceSetInformation(int64 long ptr long) advapi32.TraceSetInformation

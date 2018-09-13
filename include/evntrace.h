@@ -259,6 +259,31 @@ typedef struct _ENABLE_TRACE_PARAMETERS
     ULONG                            FilterDescCount;
 } ENABLE_TRACE_PARAMETERS, *PENABLE_TRACE_PARAMETERS;
 
+typedef enum _TRACE_QUERY_INFO_CLASS
+{
+    TraceGuidQueryList,
+    TraceGuidQueryInfo,
+    TraceGuidQueryProcess,
+    TraceStackTracingInfo,
+    TraceSystemTraceEnableFlagsInfo,
+    TraceSampledProfileIntervalInfo,
+    TraceProfileSourceConfigInfo,
+    TraceProfileSourceListInfo,
+    TracePmcEventListInfo,
+    TracePmcCounterListInfo,
+    TraceSetDisallowList,
+    TraceVersionInfo,
+    TraceGroupQueryList,
+    TraceGroupQueryInfo,
+    TraceDisallowListQuery,
+    TraceCompressionInfo,
+    TracePeriodicCaptureStateListInfo,
+    TracePeriodicCaptureStateInfo,
+    TraceProviderBinaryTracking,
+    TraceMaxLoggersQuery,
+    MaxTraceSetInfoClass
+} TRACE_QUERY_INFO_CLASS, TRACE_INFO_CLASS;
+
 #define INVALID_PROCESSTRACE_HANDLE ((TRACEHANDLE)~(ULONG_PTR)0)
 
 ULONG WINAPI CloseTrace(TRACEHANDLE);

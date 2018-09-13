@@ -818,7 +818,7 @@
 @ varargs TraceMessage(int64 long ptr long)
 @ stdcall TraceMessageVa(int64 long ptr long ptr)
 # @ stub TraceQueryInformation
-# @ stub TraceSetInformation
+@ stdcall TraceSetInformation(int64 long ptr long)
 # @ stub TreeResetNamedSecurityInfoA
 @ stdcall TreeResetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr long ptr long ptr)
 # @ stub TreeSetNamedSecurityInfoA
