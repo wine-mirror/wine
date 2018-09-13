@@ -536,6 +536,8 @@ static void test_basics(void)
     const WCHAR fname2[] = {'f','n','a','m','e','2', 0};
     const WCHAR fspec2[] = {'*','.','e','x','e',0};
     COMDLG_FILTERSPEC filterspec[2] = {{fname1, fspec1}, {fname2, fspec2}};
+    const DWORD invalid_fos[] = {0x1, 0x10, 0x400, 0x80000, 0x400000, 0x800000, 0x1000000, 0x4000000, 0x8000000};
+    INT i;
 
     /* This should work on every platform with IFileDialog */
     SHGetDesktopFolder(&psfdesktop);
@@ -585,6 +587,23 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     ok(fdoptions == (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR),
        "Unexpected default options: 0x%08x\n", fdoptions);
+
+    /* Check SetOptions invalid options handling */
+    for (i = 0; i < ARRAY_SIZE(invalid_fos); i++)
+    {
+        hr = IFileOpenDialog_SetOptions(pfod, invalid_fos[i]);
+        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        hr = IFileOpenDialog_GetOptions(pfod, &fdoptions);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(fdoptions == (FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR), "got %08x\n", fdoptions);
+
+        hr = IFileSaveDialog_SetOptions(pfsd, invalid_fos[i]);
+        ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+        hr = IFileSaveDialog_GetOptions(pfsd, &fdoptions);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(fdoptions == (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR),
+           "got %08x\n", fdoptions);
+    }
 
     /* GetResult */
     hr = IFileOpenDialog_GetResult(pfod, NULL);
