@@ -297,8 +297,11 @@ static void init_pixel_formats( Display *display );
 static BOOL glxRequireVersion(int requiredVersion);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
-  TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
-  TRACE("  - dwFlags : ");
+  TRACE( "size %u version %u flags %u type %u color %u %u,%u,%u,%u "
+         "accum %u depth %u stencil %u aux %u ",
+         ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
+         ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
+         ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
 #define TEST_AND_DUMP(t,tv) if ((t) & (tv)) TRACE(#tv " ")
   TEST_AND_DUMP(ppfd->dwFlags, PFD_DEPTH_DONTCARE);
   TEST_AND_DUMP(ppfd->dwFlags, PFD_DOUBLEBUFFER);
@@ -320,31 +323,6 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
    * under X e.g. COMPOSITE + GLX_EXT_TEXTURE_FROM_PIXMAP. */
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SUPPORT_COMPOSITION);
 #undef TEST_AND_DUMP
-  TRACE("\n");
-
-  TRACE("  - iPixelType : ");
-  switch (ppfd->iPixelType) {
-  case PFD_TYPE_RGBA: TRACE("PFD_TYPE_RGBA"); break;
-  case PFD_TYPE_COLORINDEX: TRACE("PFD_TYPE_COLORINDEX"); break;
-  }
-  TRACE("\n");
-
-  TRACE("  - Color   : %d\n", ppfd->cColorBits);
-  TRACE("  - Red     : %d\n", ppfd->cRedBits);
-  TRACE("  - Green   : %d\n", ppfd->cGreenBits);
-  TRACE("  - Blue    : %d\n", ppfd->cBlueBits);
-  TRACE("  - Alpha   : %d\n", ppfd->cAlphaBits);
-  TRACE("  - Accum   : %d\n", ppfd->cAccumBits);
-  TRACE("  - Depth   : %d\n", ppfd->cDepthBits);
-  TRACE("  - Stencil : %d\n", ppfd->cStencilBits);
-  TRACE("  - Aux     : %d\n", ppfd->cAuxBuffers);
-
-  TRACE("  - iLayerType : ");
-  switch (ppfd->iLayerType) {
-  case PFD_MAIN_PLANE: TRACE("PFD_MAIN_PLANE"); break;
-  case PFD_OVERLAY_PLANE: TRACE("PFD_OVERLAY_PLANE"); break;
-  case (BYTE)PFD_UNDERLAY_PLANE: TRACE("PFD_UNDERLAY_PLANE"); break;
-  }
   TRACE("\n");
 }
 
