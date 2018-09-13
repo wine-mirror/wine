@@ -20,8 +20,6 @@
 #ifndef __WINE_VIRTDISK_DLL_H
 #define __WINE_VIRTDISK_DLL_H
 
-#include <windows.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
