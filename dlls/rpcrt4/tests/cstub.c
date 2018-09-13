@@ -1403,10 +1403,8 @@ static void test_delegated_methods(void)
     ok(ret == 9, "got %d\n", ret);
 
     hr = ITest1_GetClassID(test_obj, &clsid);
-todo_wine {
     ok(hr == S_OK, "got %#x\n", hr);
     ok(IsEqualGUID(&clsid, &CLSID_test1), "got %s\n", wine_dbgstr_guid(&clsid));
-}
 
     ITest1_Release(test_obj);
 
