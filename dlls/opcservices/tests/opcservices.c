@@ -518,7 +518,7 @@ static void test_rel_part_uri(void)
             IOpcPartUri *rel_uri2;
             IOpcUri *source_uri2;
             IUnknown *unk = NULL;
-            BOOL ret;
+            BOOL ret = FALSE;
             BSTR str;
 
             hr = IOpcPartUri_GetSourceUri(rel_uri, &source_uri);
