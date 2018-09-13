@@ -1776,27 +1776,27 @@ struct console_renderer_event
     short event;
     union
     {
-        struct update
+        struct
         {
             short top;
             short bottom;
         } update;
-        struct resize
+        struct
         {
             short width;
             short height;
         } resize;
-        struct cursor_pos
+        struct
         {
             short x;
             short y;
         } cursor_pos;
-        struct cursor_geom
+        struct
         {
             short visible;
             short size;
         } cursor_geom;
-        struct display
+        struct
         {
             short left;
             short top;
