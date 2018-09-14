@@ -1277,6 +1277,7 @@ static void test_state_block(void)
     ID2D1DrawingStateBlock *state_block;
     IDWriteFactory *dwrite_factory;
     IDXGISwapChain *swapchain;
+    ID2D1Factory1 *factory1;
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
     IDXGISurface *surface;
@@ -1462,6 +1463,74 @@ static void test_state_block(void)
     ok(text_rendering_params2 == text_rendering_params1, "Got unexpected text rendering params %p, expected %p.\n",
             text_rendering_params2, text_rendering_params1);
     IDWriteRenderingParams_Release(text_rendering_params2);
+
+    if (SUCCEEDED(ID2D1Factory_QueryInterface(factory, &IID_ID2D1Factory1, (void **)&factory1)))
+    {
+        D2D1_DRAWING_STATE_DESCRIPTION1 drawing_state1;
+        ID2D1DrawingStateBlock1 *state_block1;
+
+        hr = ID2D1DrawingStateBlock_QueryInterface(state_block, &IID_ID2D1DrawingStateBlock1, (void **)&state_block1);
+        ok(SUCCEEDED(hr), "Failed to get ID2D1DrawingStateBlock1 interface, hr %#x.\n", hr);
+
+        ID2D1DrawingStateBlock1_GetDescription(state_block1, &drawing_state1);
+        ok(drawing_state1.antialiasMode == D2D1_ANTIALIAS_MODE_ALIASED,
+                "Got unexpected antialias mode %#x.\n", drawing_state1.antialiasMode);
+        ok(drawing_state1.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE,
+                "Got unexpected text antialias mode %#x.\n", drawing_state1.textAntialiasMode);
+        ok(drawing_state1.tag1 == 3 && drawing_state1.tag2 == 4, "Got unexpected tags %s:%s.\n",
+                wine_dbgstr_longlong(drawing_state1.tag1), wine_dbgstr_longlong(drawing_state1.tag2));
+        ok(!memcmp(&drawing_state1.transform, &transform1, sizeof(drawing_state1.transform)),
+                "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+                drawing_state1.transform._11, drawing_state1.transform._12, drawing_state1.transform._21,
+                drawing_state1.transform._22, drawing_state1.transform._31, drawing_state1.transform._32);
+        ok(drawing_state1.primitiveBlend == D2D1_PRIMITIVE_BLEND_SOURCE_OVER,
+                "Got unexpected primitive blend mode %#x.\n", drawing_state1.primitiveBlend);
+        ok(drawing_state1.unitMode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", drawing_state1.unitMode);
+        ID2D1DrawingStateBlock1_GetTextRenderingParams(state_block1, &text_rendering_params2);
+        ok(text_rendering_params2 == text_rendering_params1, "Got unexpected text rendering params %p, expected %p.\n",
+                text_rendering_params2, text_rendering_params1);
+        IDWriteRenderingParams_Release(text_rendering_params2);
+
+        drawing_state1.primitiveBlend = D2D1_PRIMITIVE_BLEND_COPY;
+        drawing_state1.unitMode = D2D1_UNIT_MODE_PIXELS;
+        ID2D1DrawingStateBlock1_SetDescription(state_block1, &drawing_state1);
+        ID2D1DrawingStateBlock1_GetDescription(state_block1, &drawing_state1);
+        ok(drawing_state1.primitiveBlend == D2D1_PRIMITIVE_BLEND_COPY,
+                "Got unexpected primitive blend mode %#x.\n", drawing_state1.primitiveBlend);
+        ok(drawing_state1.unitMode == D2D1_UNIT_MODE_PIXELS,
+                "Got unexpected unit mode %#x.\n", drawing_state1.unitMode);
+
+        ID2D1DrawingStateBlock_SetDescription(state_block, &drawing_state);
+        ID2D1DrawingStateBlock1_GetDescription(state_block1, &drawing_state1);
+        ok(drawing_state1.primitiveBlend == D2D1_PRIMITIVE_BLEND_COPY,
+                "Got unexpected primitive blend mode %#x.\n", drawing_state1.primitiveBlend);
+        ok(drawing_state1.unitMode == D2D1_UNIT_MODE_PIXELS,
+                "Got unexpected unit mode %#x.\n", drawing_state1.unitMode);
+
+        ID2D1DrawingStateBlock1_Release(state_block1);
+
+        hr = ID2D1Factory1_CreateDrawingStateBlock(factory1, NULL, NULL, &state_block1);
+        ok(SUCCEEDED(hr), "Failed to create drawing state block, hr %#x\n", hr);
+        ID2D1DrawingStateBlock1_GetDescription(state_block1, &drawing_state1);
+        ok(drawing_state1.antialiasMode == D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+                "Got unexpected antialias mode %#x.\n", drawing_state1.antialiasMode);
+        ok(drawing_state1.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_DEFAULT,
+                "Got unexpected text antialias mode %#x.\n", drawing_state1.textAntialiasMode);
+        ok(drawing_state1.tag1 == 0 && drawing_state1.tag2 == 0, "Got unexpected tags %s:%s.\n",
+                wine_dbgstr_longlong(drawing_state1.tag1), wine_dbgstr_longlong(drawing_state1.tag2));
+        ok(!memcmp(&drawing_state1.transform, &identity, sizeof(drawing_state1.transform)),
+                "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+                drawing_state1.transform._11, drawing_state1.transform._12, drawing_state1.transform._21,
+                drawing_state1.transform._22, drawing_state1.transform._31, drawing_state1.transform._32);
+        ok(drawing_state1.primitiveBlend == D2D1_PRIMITIVE_BLEND_SOURCE_OVER,
+                "Got unexpected primitive blend mode %#x.\n", drawing_state1.primitiveBlend);
+        ok(drawing_state1.unitMode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", drawing_state1.unitMode);
+        ID2D1DrawingStateBlock1_GetTextRenderingParams(state_block1, &text_rendering_params2);
+        ok(!text_rendering_params2, "Got unexpected text rendering params %p.\n", text_rendering_params2);
+        ID2D1DrawingStateBlock1_Release(state_block1);
+
+        ID2D1Factory1_Release(factory1);
+    }
 
     ID2D1DrawingStateBlock_Release(state_block);
 

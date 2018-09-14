@@ -245,6 +245,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
         const D2D1_DRAWING_STATE_DESCRIPTION *desc, IDWriteRenderingParams *text_rendering_params,
         ID2D1DrawingStateBlock **state_block)
 {
+    D2D1_DRAWING_STATE_DESCRIPTION1 state_desc;
     struct d2d_state_block *object;
 
     TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
@@ -253,10 +254,17 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_state_block_init(object, (ID2D1Factory *)iface, desc, text_rendering_params);
+    if (desc)
+    {
+        memcpy(&state_desc, desc, sizeof(*desc));
+        state_desc.primitiveBlend = D2D1_PRIMITIVE_BLEND_SOURCE_OVER;
+        state_desc.unitMode = D2D1_UNIT_MODE_DIPS;
+    }
+
+    d2d_state_block_init(object, (ID2D1Factory *)iface, desc ? &state_desc : NULL, text_rendering_params);
 
     TRACE("Created state block %p.\n", object);
-    *state_block = &object->ID2D1DrawingStateBlock_iface;
+    *state_block = (ID2D1DrawingStateBlock *)&object->ID2D1DrawingStateBlock1_iface;
 
     return S_OK;
 }
@@ -411,10 +419,20 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock1(ID2D1Facto
         const D2D1_DRAWING_STATE_DESCRIPTION1 *desc, IDWriteRenderingParams *text_rendering_params,
         ID2D1DrawingStateBlock1 **state_block)
 {
-    FIXME("iface %p, desc %p, text_rendering_params %p, state_block %p stub!\n",
+    struct d2d_state_block *object;
+
+    TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    return E_NOTIMPL;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_state_block_init(object, (ID2D1Factory *)iface, desc, text_rendering_params);
+
+    TRACE("Created state block %p.\n", object);
+    *state_block = &object->ID2D1DrawingStateBlock1_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGdiMetafile(ID2D1Factory1 *iface,
