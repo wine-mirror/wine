@@ -1221,6 +1221,7 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
         write_output_buffer(This->output, element->qname, element->len);
         write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
     }
+    writer_free_element(This, element);
 
     return S_OK;
 }
@@ -1286,6 +1287,8 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
     write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
     write_output_buffer(This->output, element->qname, element->len);
     write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
+
+    writer_free_element(This, element);
 
     return S_OK;
 }
