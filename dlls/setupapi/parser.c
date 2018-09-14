@@ -226,7 +226,7 @@ static int add_section( struct inf_file *file, const WCHAR *name )
     if (!(section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) ))) return -1;
     section->name        = name;
     section->nb_lines    = 0;
-    section->alloc_lines = sizeof(section->lines)/sizeof(section->lines[0]);
+    section->alloc_lines = ARRAY_SIZE( section->lines );
     file->sections[file->nb_sections] = section;
     return file->nb_sections++;
 }
@@ -425,7 +425,7 @@ static unsigned int PARSER_string_substA( const struct inf_file *file, const WCH
     WCHAR buffW[MAX_STRING_LEN+1];
     DWORD ret;
 
-    unsigned int len = PARSER_string_substW( file, text, buffW, sizeof(buffW)/sizeof(WCHAR) );
+    unsigned int len = PARSER_string_substW( file, text, buffW, ARRAY_SIZE( buffW ));
     if (!buffer) RtlUnicodeToMultiByteSize( &ret, buffW, len * sizeof(WCHAR) );
     else
     {
@@ -449,7 +449,7 @@ static WCHAR *push_string( struct inf_file *file, const WCHAR *string )
 /* push the current state on the parser stack */
 static inline void push_state( struct parser *parser, enum parser_state state )
 {
-    assert( parser->stack_pos < sizeof(parser->stack)/sizeof(parser->stack[0]) );
+    assert( parser->stack_pos < ARRAY_SIZE( parser->stack ));
     parser->stack[parser->stack_pos++] = state;
 }
 
@@ -1217,8 +1217,7 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
         int idx = 1;
 
         if (!SetupFindFirstLineW( parent_hinf, Version, LayoutFile, &context )) return FALSE;
-        while (SetupGetStringFieldW( &context, idx++, filename,
-                                     sizeof(filename)/sizeof(WCHAR), NULL ))
+        while (SetupGetStringFieldW( &context, idx++, filename, ARRAY_SIZE( filename ), NULL ))
         {
             child_hinf = SetupOpenInfFileW( filename, NULL, INF_STYLE_WIN4, error );
             if (child_hinf == INVALID_HANDLE_VALUE) return FALSE;

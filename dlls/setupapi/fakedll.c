@@ -637,14 +637,14 @@ static BOOL create_winsxs_dll( const WCHAR *dll_name, const xmlstr_t *arch, cons
     if (!(filename = strrchrW( dll_name, '\\' ))) filename = dll_name;
     else filename++;
 
-    path_len = GetWindowsDirectoryW( NULL, 0 ) + 1 + sizeof(winsxsW)/sizeof(WCHAR)
+    path_len = GetWindowsDirectoryW( NULL, 0 ) + 1 + ARRAY_SIZE( winsxsW )
         + arch->len + name->len + key->len + version->len + 18 + strlenW( filename ) + 1;
 
     path = HeapAlloc( GetProcessHeap(), 0, path_len * sizeof(WCHAR) );
     pos = GetWindowsDirectoryW( path, path_len );
     path[pos++] = '\\';
     memcpy( path + pos, winsxsW, sizeof(winsxsW) );
-    pos += sizeof(winsxsW) / sizeof(WCHAR);
+    pos += ARRAY_SIZE( winsxsW );
     get_manifest_filename( arch, name, key, version, lang, path + pos, path_len - pos );
     pos += strlenW( path + pos );
     path[pos++] = '\\';
@@ -672,14 +672,14 @@ static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const x
     HANDLE handle;
     BOOL ret = FALSE;
 
-    path_len = GetWindowsDirectoryW( NULL, 0 ) + 1 + sizeof(winsxsW)/sizeof(WCHAR)
-        + arch->len + name->len + key->len + version->len + 18 + sizeof(extensionW)/sizeof(WCHAR);
+    path_len = GetWindowsDirectoryW( NULL, 0 ) + 1 + ARRAY_SIZE( winsxsW )
+        + arch->len + name->len + key->len + version->len + 18 + ARRAY_SIZE( extensionW );
 
     path = HeapAlloc( GetProcessHeap(), 0, path_len * sizeof(WCHAR) );
     pos = GetWindowsDirectoryW( path, MAX_PATH );
     path[pos++] = '\\';
     memcpy( path + pos, winsxsW, sizeof(winsxsW) );
-    pos += sizeof(winsxsW) / sizeof(WCHAR);
+    pos += ARRAY_SIZE( winsxsW );
     get_manifest_filename( arch, name, key, version, lang, path + pos, MAX_PATH - pos );
     strcatW( path + pos, extensionW );
     handle = CreateFileW( path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
@@ -730,7 +730,7 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
     SIZE_T len;
     HRSRC rsrc;
 
-    if (IS_INTRESOURCE(res_name) || strncmpW( res_name, manifestW, sizeof(manifestW)/sizeof(WCHAR) ))
+    if (IS_INTRESOURCE( res_name ) || strncmpW( res_name, manifestW, ARRAY_SIZE( manifestW )))
         return TRUE;
 
     rsrc = FindResourceW( module, res_name, type );

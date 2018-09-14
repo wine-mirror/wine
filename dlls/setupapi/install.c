@@ -435,13 +435,13 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
         INT flags;
 
         /* get root */
-        if (!SetupGetStringFieldW( &context, 1, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 1, buffer, ARRAY_SIZE( buffer ), NULL ))
             continue;
         if (!(root_key = get_root_key( buffer, info->default_root )))
             continue;
 
         /* get key */
-        if (!SetupGetStringFieldW( &context, 2, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 2, buffer, ARRAY_SIZE( buffer ), NULL ))
             *buffer = 0;
 
         /* get flags */
@@ -480,7 +480,7 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
         TRACE( "key %p %s\n", root_key, debugstr_w(buffer) );
 
         /* get value name */
-        if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 3, buffer, ARRAY_SIZE( buffer ), NULL ))
             *buffer = 0;
 
         /* and now do it */
@@ -669,7 +669,7 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
         if (!(path = PARSER_get_dest_dir( &context ))) continue;
 
         /* get dll name */
-        if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 3, buffer, ARRAY_SIZE( buffer ), NULL ))
             goto done;
         if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
                                (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
@@ -686,7 +686,7 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 
         /* get command line */
         args = NULL;
-        if (SetupGetStringFieldW( &context, 6, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (SetupGetStringFieldW( &context, 6, buffer, ARRAY_SIZE( buffer ), NULL ))
             args = buffer;
 
         ret = do_register_dll( info, path, flags, timeout, args );
@@ -717,7 +717,7 @@ static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
         if (!(path = PARSER_get_dest_dir( &context ))) continue;
 
         /* get dll name */
-        if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 3, buffer, ARRAY_SIZE( buffer ), NULL ))
             goto done;
         if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
                                (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
@@ -727,7 +727,7 @@ static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
         strcpyW( p, buffer );
 
         /* get source dll */
-        if (SetupGetStringFieldW( &context, 4, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (SetupGetStringFieldW( &context, 4, buffer, ARRAY_SIZE( buffer ), NULL ))
             p = buffer;  /* otherwise use target base name as default source */
 
         create_fake_dll( path, p );  /* ignore errors */
@@ -758,16 +758,13 @@ static BOOL update_ini_callback( HINF hinf, PCWSTR field, void *arg )
         WCHAR  string[MAX_INF_STRING_LENGTH];
         LPWSTR divider;
 
-        if (!SetupGetStringFieldW( &context, 1, filename,
-                                   sizeof(filename)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 1, filename, ARRAY_SIZE( filename ), NULL ))
             continue;
 
-        if (!SetupGetStringFieldW( &context, 2, section,
-                                   sizeof(section)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 2, section, ARRAY_SIZE( section ), NULL ))
             continue;
 
-        if (!SetupGetStringFieldW( &context, 4, buffer,
-                                   sizeof(buffer)/sizeof(WCHAR), NULL ))
+        if (!SetupGetStringFieldW( &context, 4, buffer, ARRAY_SIZE( buffer ), NULL ))
             continue;
 
         divider = strchrW(buffer,'=');
@@ -949,7 +946,7 @@ static BOOL iterate_section_fields( HINF hinf, PCWSTR section, PCWSTR key,
 {
     WCHAR static_buffer[200];
     WCHAR *buffer = static_buffer;
-    DWORD size = sizeof(static_buffer)/sizeof(WCHAR);
+    DWORD size = ARRAY_SIZE( static_buffer );
     INFCONTEXT context;
     BOOL ret = FALSE;
 
@@ -1211,7 +1208,7 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     static const WCHAR nt_genericW[] = {'.','n','t',0};
     static const WCHAR servicesW[] = {'.','S','e','r','v','i','c','e','s',0};
 
-    WCHAR *s, *path, section[MAX_PATH + (sizeof(nt_platformW) + sizeof(servicesW)) / sizeof(WCHAR)];
+    WCHAR *s, *path, section[MAX_PATH + ARRAY_SIZE( nt_platformW ) + ARRAY_SIZE( servicesW )];
     void *callback_context;
     UINT mode;
     HINF hinf;

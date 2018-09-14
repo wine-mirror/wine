@@ -934,7 +934,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         return FALSE;
     }
 
-    if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
+    if (!GetWindowsDirectoryW( target, ARRAY_SIZE( target ))) return FALSE;
 
     strcatW( target, inf );
     if ((p = strrchrW( source, '\\' )))
@@ -963,7 +963,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 
         p = strrchrW( target, '\\' ) + 1;
         memcpy( p, oem, sizeof(oem) );
-        p += sizeof(oem)/sizeof(oem[0]) - 1;
+        p += ARRAY_SIZE( oem ) - 1;
 
         /* generate OEMnnn.inf ending */
         for (i = 0; i < OEM_INDEX_LIMIT; i++)
@@ -1004,7 +1004,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     if (hinf == INVALID_HANDLE_VALUE) return FALSE;
 
     if (SetupGetLineTextW( NULL, hinf, wszVersion, wszCatalogFile, catalog_file,
-                           sizeof(catalog_file)/sizeof(catalog_file[0]), NULL ))
+                           ARRAY_SIZE( catalog_file ), NULL ))
     {
         WCHAR source_cat[MAX_PATH];
         HCATADMIN handle;
@@ -1099,7 +1099,7 @@ BOOL WINAPI SetupUninstallOEMInfW( PCWSTR inf_file, DWORD flags, PVOID reserved 
         return FALSE;
     }
 
-    if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
+    if (!GetWindowsDirectoryW( target, ARRAY_SIZE( target ))) return FALSE;
 
     strcatW( target, infW );
     strcatW( target, inf_file );
