@@ -1628,7 +1628,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
-        /* If we were in an IF statement and we didnt find an else and yet we get back to
+        /* If we were in an IF statement and we didn't find an else and yet we get back to
            the same bracket depth as the IF, then the IF statement is over. This is required
            to handle nested ifs properly                                                     */
         } else if (isIF && (*cmdList)->bracketDepth == myDepth) {
