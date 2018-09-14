@@ -491,7 +491,6 @@ HANDLE WINAPI SHGlobalCounterCreateNamedW(LPCWSTR lpszName, DWORD iInitial)
   static const WCHAR szPrefix[] = { 's', 'h', 'e', 'l', 'l', '.', '\0' };
   const int iPrefixLen = 6;
   WCHAR szBuff[MAX_PATH];
-  const int iBuffLen = sizeof(szBuff)/sizeof(WCHAR);
   SECURITY_DESCRIPTOR sd;
   SECURITY_ATTRIBUTES sAttr, *pSecAttr;
   HANDLE hRet;
@@ -501,7 +500,7 @@ HANDLE WINAPI SHGlobalCounterCreateNamedW(LPCWSTR lpszName, DWORD iInitial)
   /* Create Semaphore name */
   memcpy(szBuff, szPrefix, (iPrefixLen + 1) * sizeof(WCHAR));
   if (lpszName)
-    StrCpyNW(szBuff + iPrefixLen, lpszName, iBuffLen - iPrefixLen);
+    StrCpyNW(szBuff + iPrefixLen, lpszName, ARRAY_SIZE(szBuff) - iPrefixLen);
 
   /* Initialise security attributes */
   pSecAttr = CreateAllAccessSecurityAttributes(&sAttr, &sd, 0);
