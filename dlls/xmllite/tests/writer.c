@@ -881,6 +881,20 @@ static HRESULT write_element_string(IXmlWriter *writer, const char *prefix, cons
     return hr;
 }
 
+static HRESULT write_string(IXmlWriter *writer, const char *str)
+{
+    WCHAR *strW;
+    HRESULT hr;
+
+    strW = strdupAtoW(str);
+
+    hr = IXmlWriter_WriteString(writer, strW);
+
+    heap_free(strW);
+
+    return hr;
+}
+
 static void test_WriteStartElement(void)
 {
     static const struct
@@ -1853,10 +1867,6 @@ static void test_WriteCharEntity(void)
 
 static void test_WriteString(void)
 {
-    static const WCHAR markupW[] = {'<','&','"','>','=',0};
-    static const WCHAR aW[] = {'a',0};
-    static const WCHAR bW[] = {'b',0};
-    static const WCHAR emptyW[] = {0};
     IXmlWriter *writer;
     IStream *stream;
     HRESULT hr;
@@ -1866,31 +1876,31 @@ static void test_WriteString(void)
 
     writer_set_property(writer, XmlWriterProperty_OmitXmlDeclaration);
 
-    hr = IXmlWriter_WriteString(writer, aW);
+    hr = write_string(writer, "a");
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, NULL);
+    hr = write_string(writer, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, emptyW);
+    hr = write_string(writer, "");
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
     stream = writer_set_output(writer);
 
-    hr = IXmlWriter_WriteStartElement(writer, NULL, bW, NULL);
+    hr = write_start_element(writer, NULL, "b", NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, NULL);
+    hr = write_string(writer, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, emptyW);
+    hr = write_string(writer, "");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, aW);
+    hr = write_string(writer, "a");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* WriteString automatically escapes markup characters */
-    hr = IXmlWriter_WriteString(writer, markupW);
+    hr = write_string(writer, "<&\">=");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_Flush(writer);
@@ -1902,10 +1912,10 @@ static void test_WriteString(void)
 
     stream = writer_set_output(writer);
 
-    hr = IXmlWriter_WriteStartElement(writer, NULL, bW, NULL);
+    hr = write_start_element(writer, NULL, "b", NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_WriteString(writer, NULL);
+    hr = write_string(writer, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_Flush(writer);
@@ -1914,7 +1924,7 @@ static void test_WriteString(void)
     CHECK_OUTPUT(stream,
         "<b");
 
-    hr = IXmlWriter_WriteString(writer, emptyW);
+    hr = write_string(writer, "");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_Flush(writer);
@@ -1922,6 +1932,54 @@ static void test_WriteString(void)
 
     CHECK_OUTPUT(stream,
         "<b>");
+
+    IStream_Release(stream);
+    IXmlWriter_Release(writer);
+
+    /* With indentation */
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Failed to create a writer, hr %#x.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    writer_set_property(writer, XmlWriterProperty_Indent);
+
+    hr = write_start_element(writer, NULL, "a", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = write_start_element(writer, NULL, "b", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = write_string(writer, "text");
+    ok(hr == S_OK, "Failed to write a string, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b>text");
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b>text</b>");
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b>text</b>\r\n"
+        "</a>");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);

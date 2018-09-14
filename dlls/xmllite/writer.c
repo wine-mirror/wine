@@ -80,6 +80,7 @@ typedef struct
     xml_encoding encoding;
     WCHAR *encoding_name; /* exactly as specified on output creation */
     struct output_buffer buffer;
+    DWORD written : 1;
 } xmlwriteroutput;
 
 static const struct IUnknownVtbl xmlwriteroutputvtbl;
@@ -114,9 +115,9 @@ typedef struct _xmlwriter
     BOOL omitxmldecl;
     XmlConformanceLevel conformance;
     XmlWriterState state;
-    BOOL bomwritten;
-    BOOL starttagopen;
     struct list elements;
+    DWORD bomwritten : 1;
+    DWORD starttagopen : 1;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -438,6 +439,7 @@ static HRESULT write_output_buffer(xmlwriteroutput *output, const WCHAR *data, i
         length = WideCharToMultiByte(buffer->codepage, 0, data, len, ptr, length, NULL, NULL);
         buffer->written += len == -1 ? length-1 : length;
     }
+    output->written = length != 0;
 
     return S_OK;
 }
@@ -603,7 +605,7 @@ static HRESULT writer_close_starttag(xmlwriter *writer)
 
     writer_output_ns(writer, LIST_ENTRY(list_head(&writer->elements), struct element, entry));
     hr = write_output_buffer(writer->output, gtW, ARRAY_SIZE(gtW));
-    writer->starttagopen = FALSE;
+    writer->starttagopen = 0;
     return hr;
 }
 
@@ -629,7 +631,7 @@ static void write_node_indent(xmlwriter *writer)
 
     /* Do state check to prevent newline inserted after BOM. It is assumed that
        state does not change between writing BOM and inserting indentation. */
-    if (writer->output->buffer.written && writer->state != XmlWriterState_Ready)
+    if (writer->output->written && writer->state != XmlWriterState_Ready)
         write_output_buffer(writer->output, crlfW, ARRAY_SIZE(crlfW));
     while (indent_level--)
         write_output_buffer(writer->output, dblspaceW, ARRAY_SIZE(dblspaceW));
@@ -701,7 +703,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
         writeroutput_release_stream(This->output);
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
-        This->bomwritten = FALSE;
+        This->bomwritten = 0;
         This->indent_level = 0;
         writer_free_element_stack(This);
     }
@@ -1211,7 +1213,7 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
     {
         writer_output_ns(This, element);
         write_output_buffer(This->output, closetagW, ARRAY_SIZE(closetagW));
-        This->starttagopen = FALSE;
+        This->starttagopen = 0;
     }
     else
     {
@@ -1551,7 +1553,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     write_node_indent(This);
 
     This->state = XmlWriterState_ElemStarted;
-    This->starttagopen = TRUE;
+    This->starttagopen = 1;
 
     writer_push_element(This, element);
 
@@ -1772,8 +1774,8 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->omitxmldecl = FALSE;
     writer->conformance = XmlConformanceLevel_Document;
     writer->state = XmlWriterState_Initial;
-    writer->bomwritten = FALSE;
-    writer->starttagopen = FALSE;
+    writer->bomwritten = 0;
+    writer->starttagopen = 0;
     list_init(&writer->elements);
 
     hr = IXmlWriter_QueryInterface(&writer->IXmlWriter_iface, riid, obj);
@@ -1819,6 +1821,7 @@ static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_enco
     }
     else
         writeroutput->encoding_name = NULL;
+    writeroutput->written = 0;
 
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&writeroutput->output);
 
