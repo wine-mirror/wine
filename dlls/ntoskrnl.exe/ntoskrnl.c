@@ -2048,6 +2048,16 @@ NTSTATUS WINAPI ExInitializeZone(PZONE_HEADER Zone,
 }
 
 /***********************************************************************
+*           FsRtlIsNameInExpression   (NTOSKRNL.EXE.@)
+*/
+BOOLEAN WINAPI FsRtlIsNameInExpression(PUNICODE_STRING expression, PUNICODE_STRING name,
+                                       BOOLEAN ignore, PWCH upcase)
+{
+    FIXME("stub: %p %p %d %p\n", expression, name, ignore, upcase);
+    return FALSE;
+}
+
+/***********************************************************************
 *           FsRtlRegisterUncProvider   (NTOSKRNL.EXE.@)
 */
 NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING RedirDevName,

@@ -234,7 +234,7 @@
 @ stub FsRtlIsDbcsInExpression
 @ stub FsRtlIsFatDbcsLegal
 @ stub FsRtlIsHpfsDbcsLegal
-@ stub FsRtlIsNameInExpression
+@ stdcall FsRtlIsNameInExpression(ptr ptr long ptr)
 @ stub FsRtlIsNtstatusExpected
 @ stub FsRtlIsPagingFile
 @ stub FsRtlIsTotalDeviceFailure
