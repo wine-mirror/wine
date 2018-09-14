@@ -270,8 +270,8 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown *iface, REFIID ri
         TRACE("   returning IFilterMapper3 interface from aggregated filtermapper (%p)\n", *ppvObj);
         return IUnknown_QueryInterface(This->punkFilterMapper2, riid, ppvObj);
     } else if (IsEqualGUID(&IID_IGraphVersion, riid)) {
-        *ppvObj = &This->IGraphConfig_iface;
-        TRACE("   returning IGraphConfig interface (%p)\n", *ppvObj);
+        *ppvObj = &This->IGraphVersion_iface;
+        TRACE("   returning IGraphVersion interface (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
 	FIXME("unknown interface %s\n", debugstr_guid(riid));
