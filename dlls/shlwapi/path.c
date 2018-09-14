@@ -4217,8 +4217,6 @@ HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD 
 {
   static const WCHAR szWeb[] = {'\\','W','e','b','\\','\0'};
   static const WCHAR szWebMui[] = {'m','u','i','\\','%','0','4','x','\\','\0'};
-#define szWebLen (sizeof(szWeb)/sizeof(WCHAR))
-#define szWebMuiLen ((sizeof(szWebMui)+1)/sizeof(WCHAR))
   DWORD dwLen, dwFileLen;
   LANGID lidSystem, lidUser;
 
@@ -4231,11 +4229,11 @@ HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD 
 
   dwFileLen = strlenW(lpszFile);
 
-  if (dwLen + dwFileLen + szWebLen >= dwPathLen)
+  if (dwLen + dwFileLen + ARRAY_SIZE(szWeb) >= dwPathLen)
     return E_FAIL; /* lpszPath too short */
 
   strcpyW(lpszPath+dwLen, szWeb);
-  dwLen += szWebLen;
+  dwLen += ARRAY_SIZE(szWeb);
   dwPathLen = dwPathLen - dwLen; /* Remaining space */
 
   lidSystem = GetSystemDefaultUILanguage();
@@ -4243,11 +4241,11 @@ HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD 
 
   if (lidSystem != lidUser)
   {
-    if (dwFileLen + szWebMuiLen < dwPathLen)
+    if (dwFileLen + ARRAY_SIZE(szWebMui) < dwPathLen)
     {
       /* Use localised content in the users UI language if present */
       wsprintfW(lpszPath + dwLen, szWebMui, lidUser);
-      strcpyW(lpszPath + dwLen + szWebMuiLen, lpszFile);
+      strcpyW(lpszPath + dwLen + ARRAY_SIZE(szWebMui), lpszFile);
       if (PathFileExistsW(lpszPath))
         return S_OK;
     }

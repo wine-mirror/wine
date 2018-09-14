@@ -2426,19 +2426,18 @@ HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
     'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
     'E','x','p','l','o','r','e','r','\\','C','L','S','I','D','\\' };
-#define szClassIdKeyLen (sizeof(szClassIdKey)/sizeof(WCHAR))
   WCHAR szKey[MAX_PATH];
   DWORD dwRet;
   HKEY hkey;
 
   /* Create the key string */
   memcpy(szKey, szClassIdKey, sizeof(szClassIdKey));
-  SHStringFromGUIDW(guid, szKey + szClassIdKeyLen, 39); /* Append guid */
+  SHStringFromGUIDW(guid, szKey + ARRAY_SIZE(szClassIdKey), 39); /* Append guid */
 
   if(lpszValue)
   {
-    szKey[szClassIdKeyLen + 39] = '\\';
-    strcpyW(szKey + szClassIdKeyLen + 40, lpszValue); /* Append value name */
+    szKey[ARRAY_SIZE(szClassIdKey) + 39] = '\\';
+    strcpyW(szKey + ARRAY_SIZE(szClassIdKey) + 40, lpszValue); /* Append value name */
   }
 
   hkey = bUseHKCU ? HKEY_CURRENT_USER : HKEY_CLASSES_ROOT;

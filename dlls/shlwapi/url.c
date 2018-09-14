@@ -2570,7 +2570,7 @@ HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
                               LPCWSTR lpszRes, LPWSTR lpszDest, DWORD dwDestLen)
 {
   static const WCHAR szRes[] = { 'r','e','s',':','/','/','\0' };
-#define szResLen ((sizeof(szRes) - sizeof(WCHAR))/sizeof(WCHAR))
+  static const unsigned int szResLen = ARRAY_SIZE(szRes) - 1;
   HRESULT hRet = E_FAIL;
 
   TRACE("(%s,%p,0x%08x,%s,%p,%d)\n", debugstr_w(lpszLibName), hMod, dwFlags,
