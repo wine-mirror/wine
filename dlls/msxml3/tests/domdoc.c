@@ -12847,7 +12847,7 @@ static const namespace_as_attribute_t namespace_as_attribute_test_data[] = {
     { 0 }
 };
 
-void test_namespaces_as_attributes(void)
+static void test_namespaces_as_attributes(void)
 {
     const namespace_as_attribute_t *entry = namespace_as_attribute_test_data;
     static const char ns_as_attr_doc[] = {
