@@ -1981,6 +1981,93 @@ static void test_WriteString(void)
         "  <b>text</b>\r\n"
         "</a>");
 
+    IStream_Release(stream);
+
+    stream = writer_set_output(writer);
+
+    hr = write_start_element(writer, NULL, "a", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = write_start_element(writer, NULL, "b", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />");
+
+    hr = write_start_element(writer, NULL, "c", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = write_attribute_string(writer, NULL, "attr", NULL, "value");
+    ok(hr == S_OK, "Failed to write attribute string, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />\r\n"
+        "  <c attr=\"value\"");
+
+    hr = write_string(writer, "text");
+    ok(hr == S_OK, "Failed to write a string, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />\r\n"
+        "  <c attr=\"value\">text");
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />\r\n"
+        "  <c attr=\"value\">text</c>");
+
+    hr = write_start_element(writer, NULL, "d", NULL);
+    ok(hr == S_OK, "Failed to start element, hr %#x.\n", hr);
+
+    hr = write_string(writer, "");
+    ok(hr == S_OK, "Failed to write a string, hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />\r\n"
+        "  <c attr=\"value\">text</c>\r\n"
+        "  <d></d>");
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "Failed to end element, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <b />\r\n"
+        "  <c attr=\"value\">text</c>\r\n"
+        "  <d></d>\r\n"
+        "</a>");
+
     IXmlWriter_Release(writer);
     IStream_Release(stream);
 }

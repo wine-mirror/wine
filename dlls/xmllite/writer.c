@@ -118,6 +118,7 @@ typedef struct _xmlwriter
     struct list elements;
     DWORD bomwritten : 1;
     DWORD starttagopen : 1;
+    DWORD textnode : 1;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -626,8 +627,11 @@ static void write_node_indent(xmlwriter *writer)
     static const WCHAR crlfW[] = {'\r','\n'};
     unsigned int indent_level = writer->indent_level;
 
-    if (!writer->indent)
+    if (!writer->indent || writer->textnode)
+    {
+        writer->textnode = 0;
         return;
+    }
 
     /* Do state check to prevent newline inserted after BOM. It is assumed that
        state does not change between writing BOM and inserting indentation. */
@@ -635,6 +639,8 @@ static void write_node_indent(xmlwriter *writer)
         write_output_buffer(writer->output, crlfW, ARRAY_SIZE(crlfW));
     while (indent_level--)
         write_output_buffer(writer->output, dblspaceW, ARRAY_SIZE(dblspaceW));
+
+    writer->textnode = 0;
 }
 
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
@@ -704,6 +710,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
         This->bomwritten = 0;
+        This->textnode = 0;
         This->indent_level = 0;
         writer_free_element_stack(This);
     }
@@ -1281,7 +1288,10 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
 
     /* don't force full end tag to the next line */
     if (This->state == XmlWriterState_ElemStarted)
+    {
         This->state = XmlWriterState_Content;
+        This->textnode = 0;
+    }
     else
         write_node_indent(This);
 
@@ -1623,6 +1633,7 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *stri
         ;
     }
 
+    This->textnode = 1;
     write_escaped_string(This, string);
     return S_OK;
 }
@@ -1761,21 +1772,18 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
         writer = IMalloc_Alloc(imalloc, sizeof(*writer));
     else
         writer = heap_alloc(sizeof(*writer));
-    if(!writer) return E_OUTOFMEMORY;
+    if (!writer)
+        return E_OUTOFMEMORY;
+
+    memset(writer, 0, sizeof(*writer));
 
     writer->IXmlWriter_iface.lpVtbl = &xmlwriter_vtbl;
     writer->ref = 1;
     writer->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
-    writer->output = NULL;
-    writer->indent_level = 0;
-    writer->indent = FALSE;
     writer->bom = TRUE;
-    writer->omitxmldecl = FALSE;
     writer->conformance = XmlConformanceLevel_Document;
     writer->state = XmlWriterState_Initial;
-    writer->bomwritten = 0;
-    writer->starttagopen = 0;
     list_init(&writer->elements);
 
     hr = IXmlWriter_QueryInterface(&writer->IXmlWriter_iface, riid, obj);
