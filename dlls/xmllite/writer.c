@@ -148,6 +148,9 @@ static const char *debugstr_writer_prop(XmlWriterProperty prop)
     return prop_names[prop];
 }
 
+static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_encoding encoding,
+    const WCHAR *encoding_name, xmlwriteroutput **out);
+
 /* writer output memory allocation functions */
 static inline void *writeroutput_alloc(xmlwriteroutput *output, size_t len)
 {
@@ -735,10 +738,10 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
     }
 
     if (hr != S_OK || !writeroutput) {
-        /* create IXmlWriterOutput basing on supplied interface */
-        hr = CreateXmlWriterOutputWithEncodingName(output, This->imalloc, NULL, &writeroutput);
-        if (hr != S_OK) return hr;
-        This->output = impl_from_IXmlWriterOutput(writeroutput);
+        /* Create output for given stream. */
+        hr = create_writer_output(output, This->imalloc, XmlEncoding_UTF8, NULL, &This->output);
+        if (hr != S_OK)
+            return hr;
     }
 
     if (This->output->encoding == XmlEncoding_Unknown)
@@ -1795,12 +1798,12 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
 }
 
 static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_encoding encoding,
-    const WCHAR *encoding_name, IXmlWriterOutput **output)
+    const WCHAR *encoding_name, xmlwriteroutput **out)
 {
     xmlwriteroutput *writeroutput;
     HRESULT hr;
 
-    *output = NULL;
+    *out = NULL;
 
     if (imalloc)
         writeroutput = IMalloc_Alloc(imalloc, sizeof(*writeroutput));
@@ -1833,40 +1836,52 @@ static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_enco
 
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&writeroutput->output);
 
-    *output = &writeroutput->IXmlWriterOutput_iface;
+    *out = writeroutput;
 
-    TRACE("returning iface %p\n", *output);
+    TRACE("Created writer output %p\n", *out);
 
     return S_OK;
 }
 
-HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
-                                                     IMalloc *imalloc,
-                                                     LPCWSTR encoding,
-                                                     IXmlWriterOutput **output)
+HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream, IMalloc *imalloc, const WCHAR *encoding,
+        IXmlWriterOutput **out)
 {
     static const WCHAR utf8W[] = {'U','T','F','-','8',0};
+    xmlwriteroutput *output;
     xml_encoding xml_enc;
+    HRESULT hr;
 
-    TRACE("%p %p %s %p\n", stream, imalloc, debugstr_w(encoding), output);
+    TRACE("%p %p %s %p\n", stream, imalloc, debugstr_w(encoding), out);
 
-    if (!stream || !output) return E_INVALIDARG;
+    if (!stream || !out)
+        return E_INVALIDARG;
+
+    *out = NULL;
 
     xml_enc = parse_encoding_name(encoding ? encoding : utf8W, -1);
-    return create_writer_output(stream, imalloc, xml_enc, encoding, output);
+    if (SUCCEEDED(hr = create_writer_output(stream, imalloc, xml_enc, encoding, &output)))
+        *out = &output->IXmlWriterOutput_iface;
+
+    return hr;
 }
 
-HRESULT WINAPI CreateXmlWriterOutputWithEncodingCodePage(IUnknown *stream,
-                                                         IMalloc *imalloc,
-                                                         UINT codepage,
-                                                         IXmlWriterOutput **output)
+HRESULT WINAPI CreateXmlWriterOutputWithEncodingCodePage(IUnknown *stream, IMalloc *imalloc, UINT codepage,
+        IXmlWriterOutput **out)
 {
+    xmlwriteroutput *output;
     xml_encoding xml_enc;
+    HRESULT hr;
 
-    TRACE("%p %p %u %p\n", stream, imalloc, codepage, output);
+    TRACE("%p %p %u %p\n", stream, imalloc, codepage, out);
 
-    if (!stream || !output) return E_INVALIDARG;
+    if (!stream || !out)
+        return E_INVALIDARG;
+
+    *out = NULL;
 
     xml_enc = get_encoding_from_codepage(codepage);
-    return create_writer_output(stream, imalloc, xml_enc, NULL, output);
+    if (SUCCEEDED(hr = create_writer_output(stream, imalloc, xml_enc, NULL, &output)))
+        *out = &output->IXmlWriterOutput_iface;
+
+    return hr;
 }
