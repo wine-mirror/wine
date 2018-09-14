@@ -10070,7 +10070,7 @@ static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, 
     return DISP_E_UNKNOWNNAME;
 }
 
-void HTMLStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+static void HTMLStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, NULL);
