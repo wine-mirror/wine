@@ -134,7 +134,7 @@ LONG WINAPI SHRegOpenUSKeyW(LPCWSTR Path, REGSAM AccessType, HUSKEY hRelativeUSK
 
     /* Create internal HUSKEY */
     hKey = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*hKey));
-    lstrcpynW(hKey->lpszPath, Path, sizeof(hKey->lpszPath)/sizeof(WCHAR));
+    lstrcpynW(hKey->lpszPath, Path, ARRAY_SIZE(hKey->lpszPath));
 
     if (hRelativeUSKey)
     {
@@ -275,7 +275,7 @@ LONG WINAPI SHRegCreateUSKeyW(LPCWSTR path, REGSAM samDesired, HUSKEY relative_k
     }
 
     ret_key = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret_key));
-    lstrcpynW(ret_key->lpszPath, path, sizeof(ret_key->lpszPath)/sizeof(WCHAR));
+    lstrcpynW(ret_key->lpszPath, path, ARRAY_SIZE(ret_key->lpszPath));
 
     if (relative_key)
     {
@@ -1534,7 +1534,7 @@ DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
   WCHAR subkeyW[MAX_PATH];
 
-  MultiByteToWideChar (CP_ACP, 0, lpszSubKey, -1, subkeyW, sizeof(subkeyW)/sizeof(WCHAR));
+  MultiByteToWideChar (CP_ACP, 0, lpszSubKey, -1, subkeyW, ARRAY_SIZE(subkeyW));
   return SHDeleteKeyW(hKey, subkeyW);
 }
 
@@ -1560,7 +1560,7 @@ DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
     if(!dwRet)
     {
       dwMaxSubkeyLen++;
-      if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
+      if (dwMaxSubkeyLen > ARRAY_SIZE(szNameBuf))
         /* Name too big: alloc a buffer for it */
         lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(WCHAR));
 
@@ -2409,7 +2409,7 @@ HRESULT WINAPI SHRegGetCLSIDKeyA(REFGUID guid, LPCSTR lpszValue, BOOL bUseHKCU, 
   WCHAR szValue[MAX_PATH];
 
   if (lpszValue)
-    MultiByteToWideChar(CP_ACP, 0, lpszValue, -1, szValue, sizeof(szValue)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpszValue, -1, szValue, ARRAY_SIZE(szValue));
 
   return SHRegGetCLSIDKeyW(guid, lpszValue ? szValue : NULL, bUseHKCU, bCreate, phKey);
 }

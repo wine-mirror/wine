@@ -71,7 +71,7 @@ static void FillNumberFmt(NUMBERFMTW *fmt, LPWSTR decimal_buffer, int decimal_bu
    * http://blogs.msdn.com/oldnewthing/archive/2006/04/18/578251.aspx
    */
   fmt->Grouping = 0;
-  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, sizeof(grouping)/sizeof(WCHAR));
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
   for (c = grouping; *c; c++)
     if (*c >= '0' && *c < '9')
     {
@@ -101,8 +101,7 @@ static int FormatInt(LONGLONG qdwValue, LPWSTR pszBuf, int cchBuf)
   WCHAR *c;
   BOOL neg = (qdwValue < 0);
 
-  FillNumberFmt(&fmt, decimal, sizeof decimal / sizeof (WCHAR),
-                thousand, sizeof thousand / sizeof (WCHAR));
+  FillNumberFmt(&fmt, decimal, ARRAY_SIZE(decimal), thousand, ARRAY_SIZE(thousand));
 
   c = &buf[24];
   *(--c) = 0;
@@ -135,8 +134,7 @@ static int FormatDouble(double value, int decimals, LPWSTR pszBuf, int cchBuf)
   
   snprintfW(buf, 64, flfmt, value);
 
-  FillNumberFmt(&fmt, decimal, sizeof decimal / sizeof (WCHAR),
-                 thousand, sizeof thousand / sizeof (WCHAR));
+  FillNumberFmt(&fmt, decimal, ARRAY_SIZE(decimal), thousand, ARRAY_SIZE(thousand));
   fmt.NumDigits = decimals;
   return GetNumberFormatW(LOCALE_USER_DEFAULT, 0, buf, &fmt, pszBuf, cchBuf);
 }
@@ -2124,7 +2122,7 @@ INT WINAPI StrFromTimeIntervalA(LPSTR lpszStr, UINT cchMax, DWORD dwMS,
   if (lpszStr && cchMax)
   {
     WCHAR szBuff[128];
-    StrFromTimeIntervalW(szBuff, sizeof(szBuff)/sizeof(WCHAR), dwMS, iDigits);
+    StrFromTimeIntervalW(szBuff, ARRAY_SIZE(szBuff), dwMS, iDigits);
     WideCharToMultiByte(CP_ACP,0,szBuff,-1,lpszStr,cchMax,0,0);
   }
   return iRet;
@@ -2420,7 +2418,7 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
   /* Note that if this loop completes without finding a match, i will be
    * pointing at the last entry, which is a catch all for > 1000 PB
    */
-  while (i < sizeof(bfFormats) / sizeof(SHLWAPI_BYTEFORMATS) - 1)
+  while (i < ARRAY_SIZE(bfFormats) - 1)
   {
     if (llBytes < bfFormats[i].dLimit)
       break;
@@ -2455,7 +2453,7 @@ LPSTR WINAPI StrFormatByteSize64A(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
 {
   WCHAR wszBuff[32];
 
-  StrFormatByteSizeW(llBytes, wszBuff, sizeof(wszBuff)/sizeof(WCHAR));
+  StrFormatByteSizeW(llBytes, wszBuff, ARRAY_SIZE(wszBuff));
 
   if (lpszDest)
     WideCharToMultiByte(CP_ACP, 0, wszBuff, -1, lpszDest, cchMax, 0, 0);

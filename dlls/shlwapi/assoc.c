@@ -276,7 +276,7 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
       lpszReturnW = HeapAlloc(GetProcessHeap(), 0,
                                       (dwLenOut + 1) * sizeof(WCHAR));
     else
-      dwLenOut = sizeof(szReturnW) / sizeof(szReturnW[0]);
+      dwLenOut = ARRAY_SIZE(szReturnW);
 
     if (!lpszReturnW)
       hRet = E_OUTOFMEMORY;

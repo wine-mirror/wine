@@ -136,7 +136,7 @@ static DWORD get_scheme_code(LPCWSTR scheme, DWORD scheme_len)
 {
     unsigned int i;
 
-    for(i=0; i < sizeof(shlwapi_schemes)/sizeof(shlwapi_schemes[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(shlwapi_schemes); i++) {
         if(scheme_len == strlenW(shlwapi_schemes[i].scheme_name)
            && !memicmpW(scheme, shlwapi_schemes[i].scheme_name, scheme_len))
             return shlwapi_schemes[i].scheme_number;
@@ -182,8 +182,7 @@ HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
     y->pszSuffix = ptr+1;
     y->cchSuffix = strlen(y->pszSuffix);
 
-    len = MultiByteToWideChar(CP_ACP, 0, x, ptr-x,
-            scheme, sizeof(scheme)/sizeof(WCHAR));
+    len = MultiByteToWideChar(CP_ACP, 0, x, ptr-x, scheme, ARRAY_SIZE(scheme));
     y->nScheme = get_scheme_code(scheme, len);
 
     return S_OK;
@@ -331,7 +330,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         return E_OUTOFMEMORY;
     }
 
-    is_file_url = !strncmpW(wszFile, url, sizeof(wszFile)/sizeof(WCHAR));
+    is_file_url = !strncmpW(wszFile, url, ARRAY_SIZE(wszFile));
 
     if ((nByteLen >= sizeof(wszHttp) &&
          !memcmp(wszHttp, url, sizeof(wszHttp))) || is_file_url)
@@ -362,7 +361,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
     if(url[1] == ':') { /* Assume path */
         memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
-        wk2 += sizeof(wszFilePrefix)/sizeof(WCHAR);
+        wk2 += ARRAY_SIZE(wszFilePrefix);
         if (dwFlags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
         {
             slash = '\\';
@@ -397,7 +396,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost)
                         && is_file_url
                         && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost))){
-                wk1 += sizeof(wszLocalhost)/sizeof(WCHAR);
+                wk1 += ARRAY_SIZE(wszLocalhost);
                 while(*wk1 == '\\' && (dwFlags & URL_FILE_USE_PATHURL))
                     wk1++;
             }
@@ -954,7 +953,7 @@ HRESULT WINAPI UrlEscapeA(
     WCHAR *escapedW = bufW;
     UNICODE_STRING urlW;
     HRESULT ret;
-    DWORD lenW = sizeof(bufW)/sizeof(WCHAR), lenA;
+    DWORD lenW = ARRAY_SIZE(bufW), lenA;
 
     if (!pszEscaped || !pcchEscaped || !*pcchEscaped)
         return E_INVALIDARG;
@@ -1162,7 +1161,7 @@ HRESULT WINAPI UrlEscapeW(
         len = 0;
         
         if((int_flags & WINE_URL_COLLAPSE_SLASHES) && src == pszUrl + parsed_url.cchProtocol + 1) {
-            int localhost_len = sizeof(localhost)/sizeof(WCHAR) - 1;
+            int localhost_len = ARRAY_SIZE(localhost) - 1;
             while(cur == '/' || cur == '\\') {
                 slashes++;
                 cur = *++src;
@@ -2442,7 +2441,7 @@ HRESULT WINAPI UrlCreateFromPathA(LPCSTR pszPath, LPSTR pszUrl, LPDWORD pcchUrl,
     WCHAR *urlW = bufW;
     UNICODE_STRING pathW;
     HRESULT ret;
-    DWORD lenW = sizeof(bufW)/sizeof(WCHAR), lenA;
+    DWORD lenW = ARRAY_SIZE(bufW), lenA;
 
     if(!RtlCreateUnicodeStringFromAsciiz(&pathW, pszPath))
         return E_INVALIDARG;
@@ -2545,13 +2544,13 @@ HRESULT WINAPI MLBuildResURLA(LPCSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
   HRESULT hRet;
 
   if (lpszLibName)
-    MultiByteToWideChar(CP_ACP, 0, lpszLibName, -1, szLibName, sizeof(szLibName)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpszLibName, -1, szLibName, ARRAY_SIZE(szLibName));
 
   if (lpszRes)
-    MultiByteToWideChar(CP_ACP, 0, lpszRes, -1, szRes, sizeof(szRes)/sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpszRes, -1, szRes, ARRAY_SIZE(szRes));
 
-  if (dwDestLen > sizeof(szLibName)/sizeof(WCHAR))
-    dwDestLen = sizeof(szLibName)/sizeof(WCHAR);
+  if (dwDestLen > ARRAY_SIZE(szLibName))
+    dwDestLen = ARRAY_SIZE(szLibName);
 
   hRet = MLBuildResURLW(lpszLibName ? szLibName : NULL, hMod, dwFlags,
                         lpszRes ? szRes : NULL, lpszDest ? szDest : NULL, dwDestLen);
@@ -2592,8 +2591,8 @@ HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
       WCHAR szBuff[MAX_PATH];
       DWORD len;
 
-      len = GetModuleFileNameW(hMod, szBuff, sizeof(szBuff)/sizeof(WCHAR));
-      if (len && len < sizeof(szBuff)/sizeof(WCHAR))
+      len = GetModuleFileNameW(hMod, szBuff, ARRAY_SIZE(szBuff));
+      if (len && len < ARRAY_SIZE(szBuff))
       {
         DWORD dwPathLen = strlenW(szBuff) + 1;
 

@@ -2440,7 +2440,7 @@ HMODULE WINAPI SHPinDllOfCLSID(REFIID refiid)
     CHAR value[MAX_PATH], string[MAX_PATH];
 
     strcpy(string, "CLSID\\");
-    SHStringFromGUIDA(refiid, string + 6, sizeof(string)/sizeof(char) - 6);
+    SHStringFromGUIDA(refiid, string + 6, ARRAY_SIZE(string) - 6);
     strcat(string, "\\InProcServer32");
 
     count = MAX_PATH;
@@ -2778,7 +2778,7 @@ VOID WINAPI SHWeakReleaseInterface(IUnknown *lpDest, IUnknown **lppUnknown)
 BOOL WINAPI GUIDFromStringA(LPCSTR idstr, CLSID *id)
 {
   WCHAR wClsid[40];
-  MultiByteToWideChar(CP_ACP, 0, idstr, -1, wClsid, sizeof(wClsid)/sizeof(WCHAR));
+  MultiByteToWideChar(CP_ACP, 0, idstr, -1, wClsid, ARRAY_SIZE(wClsid));
   return SUCCEEDED(CLSIDFromString(wClsid, id));
 }
 
@@ -3600,8 +3600,8 @@ HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwCrossC
     DWORD len;
 
     FIXME("(%s,%p,%d) semi-stub!\n", debugstr_w(new_mod), inst_hwnd, dwCrossCodePage);
-    len = GetModuleFileNameW(inst_hwnd, mod_path, sizeof(mod_path) / sizeof(WCHAR));
-    if (!len || len >= sizeof(mod_path) / sizeof(WCHAR)) return NULL;
+    len = GetModuleFileNameW(inst_hwnd, mod_path, ARRAY_SIZE(mod_path));
+    if (!len || len >= ARRAY_SIZE(mod_path)) return NULL;
 
     ptr = strrchrW(mod_path, '\\');
     if (ptr) {
@@ -4755,7 +4755,7 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     TRACE("(%p,%p,%p,%p,%08x)\n", hInstance, hWnd, lpText, lpCaption, uType);
 
     if (IS_INTRESOURCE(lpCaption))
-        LoadStringW(hInstance, LOWORD(lpCaption), szTitle, sizeof(szTitle)/sizeof(szTitle[0]));
+        LoadStringW(hInstance, LOWORD(lpCaption), szTitle, ARRAY_SIZE(szTitle));
     else
         pszTitle = lpCaption;
 
@@ -5280,8 +5280,8 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
          'S','h','e','l','l','C','o','m','p','a','t','i','b','i','l','i','t','y','\\',
          'O','b','j','e','c','t','s','\\','%','s',0};
-    WCHAR strW[sizeof(compatpathW)/sizeof(WCHAR) + 38 /* { CLSID } */];
-    DWORD ret, length = sizeof(strW)/sizeof(WCHAR);
+    WCHAR strW[ARRAY_SIZE(compatpathW) + 38 /* { CLSID } */];
+    DWORD ret, length = ARRAY_SIZE(strW);
     OLECHAR *clsid_str;
     HKEY key;
     INT i;
@@ -5311,7 +5311,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
 
         /* search in table */
         left  = 0;
-        right = sizeof(objcompat_table) / sizeof(struct objcompat_entry) - 1;
+        right = ARRAY_SIZE(objcompat_table) - 1;
 
         while (right >= left) {
             x = (left + right) / 2;
@@ -5327,7 +5327,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
                 left = x + 1;
         }
 
-        length = sizeof(strW)/sizeof(WCHAR);
+        length = ARRAY_SIZE(strW);
     }
 
     return ret;
