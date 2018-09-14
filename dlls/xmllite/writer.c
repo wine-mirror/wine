@@ -1846,7 +1846,6 @@ static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_enco
 HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream, IMalloc *imalloc, const WCHAR *encoding,
         IXmlWriterOutput **out)
 {
-    static const WCHAR utf8W[] = {'U','T','F','-','8',0};
     xmlwriteroutput *output;
     xml_encoding xml_enc;
     HRESULT hr;
@@ -1858,7 +1857,7 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream, IMalloc *
 
     *out = NULL;
 
-    xml_enc = parse_encoding_name(encoding ? encoding : utf8W, -1);
+    xml_enc = encoding ? parse_encoding_name(encoding, -1) : XmlEncoding_UTF8;
     if (SUCCEEDED(hr = create_writer_output(stream, imalloc, xml_enc, encoding, &output)))
         *out = &output->IXmlWriterOutput_iface;
 
