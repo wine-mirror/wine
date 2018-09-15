@@ -1803,8 +1803,8 @@ static void test_AviCo(void)
     static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
 
     hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
-    if(hres == REGDB_E_CLASSNOTREG) {
-        win_skip("CLSID_AVICo not registered\n");
+    if(hres == REGDB_E_CLASSNOTREG || hres == CLASS_E_CLASSNOTAVAILABLE) {
+        win_skip("CLSID_AVICo not registered/available\n");
         return;
     }
     ok(hres == S_OK, "Could not create CLSID_AVICo class: %08x\n", hres);
