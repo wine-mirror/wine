@@ -118,7 +118,7 @@ static unsigned int taskdialog_get_reference_rect(const TASKDIALOGCONFIG *taskco
     info.cbSize = sizeof(info);
     GetMonitorInfoW(monitor, &info);
 
-    if (taskconfig->dwFlags & TDF_POSITION_RELATIVE_TO_WINDOW && taskconfig->hwndParent)
+    if ((taskconfig->dwFlags & TDF_POSITION_RELATIVE_TO_WINDOW) && taskconfig->hwndParent)
         GetWindowRect(taskconfig->hwndParent, ret);
     else
         *ret = info.rcWork;
