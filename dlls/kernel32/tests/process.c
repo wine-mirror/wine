@@ -3461,7 +3461,7 @@ static void test_session_info(void)
     trace("active_session = %x\n", active_session);
 }
 
-static void test_process_info(void)
+static void test_process_info(HANDLE hproc)
 {
     char buf[4096];
     static const ULONG info_size[] =
@@ -3502,7 +3502,7 @@ static void test_process_info(void)
         sizeof(ULONG) /* ProcessIoPriority */,
         sizeof(ULONG) /* ProcessExecuteFlags */,
         0 /* FIXME: sizeof(?) ProcessTlsInformation */,
-        0 /* FIXME: sizeof(?) ProcessCookie */,
+        sizeof(ULONG) /* ProcessCookie */,
         sizeof(SECTION_IMAGE_INFORMATION) /* ProcessImageInformation */,
         0 /* FIXME: sizeof(PROCESS_CYCLE_TIME_INFORMATION) ProcessCycleTime */,
         sizeof(ULONG) /* ProcessPagePriority */,
@@ -3541,19 +3541,12 @@ static void test_process_info(void)
         sizeof(PROCESS_JOB_MEMORY_INFO) /* ProcessJobMemoryInformation */,
 #endif
     };
-    HANDLE hproc;
     ULONG i, status, ret_len, size;
+    BOOL is_current = hproc == GetCurrentProcess();
 
     if (!pNtQueryInformationProcess)
     {
         win_skip("NtQueryInformationProcess is not available on this platform\n");
-        return;
-    }
-
-    hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
-    if (!hproc)
-    {
-        win_skip("PROCESS_QUERY_LIMITED_INFORMATION is not supported on this platform\n");
         return;
     }
 
@@ -3598,22 +3591,36 @@ static void test_process_info(void)
             ok(status == STATUS_ACCESS_DENIED || status == STATUS_PORT_NOT_SET,
                "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
-
+        case ProcessCookie:
+            if (is_current)
+                ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER /* before win8 */,
+                   "for info %u got %08x (ret_len %u)\n", i, status, ret_len);
+            else
+                ok(status == STATUS_INVALID_PARAMETER /* before win8 */ || status == STATUS_ACCESS_DENIED,
+                   "for info %u got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
         case ProcessExecuteFlags:
         case ProcessDebugPort:
         case ProcessDebugFlags:
-        case ProcessCookie:
+            if (is_current)
+                ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER,
+                    "for info %u, got %08x (ret_len %u)\n", i, status, ret_len);
+            else
 todo_wine
-            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+                ok(status == STATUS_ACCESS_DENIED,
+                    "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 
         default:
-            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            if (is_current)
+                ok(status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL || status == STATUS_INVALID_PARAMETER,
+                    "for info %u, got %08x (ret_len %u)\n", i, status, ret_len);
+            else
+                ok(status == STATUS_ACCESS_DENIED,
+                    "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
         }
     }
-
-    CloseHandle(hproc);
 }
 
 static void test_GetLogicalProcessorInformationEx(void)
@@ -3780,6 +3787,7 @@ static void test_ProcThreadAttributeList(void)
 START_TEST(process)
 {
     HANDLE job;
+    HANDLE hproc;
     BOOL b = init();
     ok(b, "Basic init of CreateProcess test\n");
     if (!b) return;
@@ -3824,7 +3832,16 @@ START_TEST(process)
         return;
     }
 
-    test_process_info();
+    hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
+    if (hproc)
+    {
+        test_process_info(hproc);
+        CloseHandle(hproc);
+    }
+    else
+        win_skip("PROCESS_QUERY_LIMITED_INFORMATION is not supported on this platform\n");
+    test_process_info(GetCurrentProcess());
+
     test_TerminateProcess();
     test_Startup();
     test_CommandLine();
