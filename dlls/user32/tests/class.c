@@ -877,7 +877,7 @@ static void test_builtinproc(void)
 
 static LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+    return DefDlgProcA(hWnd, uMsg, wParam, lParam);
 }
 
 static BOOL RegisterTestDialog(HINSTANCE hInstance)
