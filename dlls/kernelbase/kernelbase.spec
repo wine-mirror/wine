@@ -1461,7 +1461,7 @@
 @ stdcall SetProcessPriorityBoost(long long) kernel32.SetProcessPriorityBoost
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
 # @ stub SetProcessValidCallTargets
-# @ stub SetProcessWorkingSetSizeEx
+@ stdcall SetProcessWorkingSetSizeEx(long long long long) kernel32.SetProcessWorkingSetSizeEx
 # @ stub SetProtectedPolicy
 # @ stub SetRoamingLastObservedChangeTime
 @ stub SetSecurityAccessMask

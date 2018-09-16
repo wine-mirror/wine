@@ -15,7 +15,7 @@
 @ stdcall QueryMemoryResourceNotification(ptr ptr) kernel32.QueryMemoryResourceNotification
 @ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
 @ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
-@ stub SetProcessWorkingSetSizeEx
+@ stdcall SetProcessWorkingSetSizeEx(long long long long) kernel32.SetProcessWorkingSetSizeEx
 @ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
 @ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
 @ stub UnmapViewOfFileEx
