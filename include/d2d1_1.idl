@@ -288,6 +288,19 @@ interface ID2D1Bitmap1 : ID2D1Bitmap
 
 [
     object,
+    uuid(41343a53-e41a-49a2-91cd-21793bbb62e5),
+    local,
+]
+interface ID2D1BitmapBrush1 : ID2D1BitmapBrush
+{
+    void SetInterpolationMode1(
+        [in] D2D1_INTERPOLATION_MODE mode
+    );
+    D2D1_INTERPOLATION_MODE GetInterpolationMode1();
+}
+
+[
+    object,
     uuid(47dd575d-ac05-4cdd-8049-9b02cd16f44c),
     local,
 ]
