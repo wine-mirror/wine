@@ -589,7 +589,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
     PropVariantClear(&tk_id);
     PropVariantClear(&tk_schema);
 
-    if (hr == S_OK)
+    if (hr == S_OK && value)
         *value = new_value;
     else
         PropVariantClear(&new_value);

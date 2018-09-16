@@ -1606,6 +1606,10 @@ static void test_metadata_gif(void)
             if (winetest_debug > 1)
                 trace("query: %s\n", decoder_data[i].query);
             MultiByteToWideChar(CP_ACP, 0, decoder_data[i].query, -1, queryW, 256);
+
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, NULL);
+            ok(hr == decoder_data[i].hr, "GetMetadataByName(%s) returned %#x, expected %#x\n", wine_dbgstr_w(queryW), hr, decoder_data[i].hr);
+
             PropVariantInit(&value);
             hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
             ok(hr == decoder_data[i].hr, "GetMetadataByName(%s) returned %#x, expected %#x\n", wine_dbgstr_w(queryW), hr, decoder_data[i].hr);
