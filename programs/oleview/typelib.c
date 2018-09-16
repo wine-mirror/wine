@@ -1598,6 +1598,7 @@ static LRESULT CALLBACK TypeLibProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         }
         case WM_COMMAND:
             TypeLibMenuCommand(LOWORD(wParam), hWnd);
+            break;
         case WM_MENUSELECT:
             UpdateTypeLibStatusBar(LOWORD(wParam));
             break;
