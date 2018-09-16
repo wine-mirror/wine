@@ -1230,6 +1230,24 @@ static void test_PropVariantChangeType_LPWSTR(void)
     PropVariantClear(&src);
 }
 
+static void test_InitPropVariantFromCLSID(void)
+{
+    PROPVARIANT propvar;
+    GUID clsid;
+    HRESULT hr;
+
+    memset(&propvar, 0, sizeof(propvar));
+    propvar.vt = VT_I4;
+    propvar.u.lVal = 15;
+
+    memset(&clsid, 0xcc, sizeof(clsid));
+    hr = InitPropVariantFromCLSID(&clsid, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(propvar.vt == VT_CLSID, "Unexpected type %d.\n", propvar.vt);
+    ok(IsEqualGUID(propvar.u.puuid, &clsid), "Unexpected puuid value.\n");
+    PropVariantClear(&propvar);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -1244,4 +1262,5 @@ START_TEST(propsys)
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantToBoolean();
     test_PropVariantToStringWithDefault();
+    test_InitPropVariantFromCLSID();
 }
