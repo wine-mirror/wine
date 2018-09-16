@@ -3390,11 +3390,35 @@ err:
 
 
 /***********************************************************************
+ *		SetProcessWorkingSetSizeEx	[KERNEL32.@]
+ * Sets the min/max working set sizes for a specified process.
+ *
+ * PARAMS
+ *    process  [I] Handle to the process of interest
+ *    minset   [I] Specifies minimum working set size
+ *    maxset   [I] Specifies maximum working set size
+ *    flags    [I] Flags to enforce working set sizes
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI SetProcessWorkingSetSizeEx(HANDLE process, SIZE_T minset, SIZE_T maxset, DWORD flags)
+{
+    WARN("(%p,%ld,%ld,%x): stub - harmless\n", process, minset, maxset, flags);
+    if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
+        /* Trim the working set to zero */
+        /* Swap the process out of physical RAM */
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.@]
  * Sets the min/max working set sizes for a specified process.
  *
  * PARAMS
- *    hProcess [I] Handle to the process of interest
+ *    process  [I] Handle to the process of interest
  *    minset   [I] Specifies minimum working set size
  *    maxset   [I] Specifies maximum working set size
  *
@@ -3402,15 +3426,9 @@ err:
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
-                                     SIZE_T maxset)
+BOOL WINAPI SetProcessWorkingSetSize(HANDLE process, SIZE_T minset, SIZE_T maxset)
 {
-    WARN("(%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
-    if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
-        /* Trim the working set to zero */
-        /* Swap the process out of physical RAM */
-    }
-    return TRUE;
+    return SetProcessWorkingSetSizeEx(process, minset, maxset, 0);
 }
 
 /***********************************************************************
