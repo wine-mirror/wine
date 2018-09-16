@@ -343,8 +343,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceCont
         bitmap_desc.colorContext = NULL;
     }
 
-    if (SUCCEEDED(hr = d2d_bitmap_create(context->factory, context->device,
-            size, src_data, pitch, desc ? &bitmap_desc : NULL, &object)))
+    if (SUCCEEDED(hr = d2d_bitmap_create(context, size, src_data, pitch, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
@@ -368,8 +367,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID
         bitmap_desc.colorContext = NULL;
     }
 
-    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(context->factory, context->device,
-            bitmap_source, desc ? &bitmap_desc : NULL, &object)))
+    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(context, bitmap_source, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
@@ -393,8 +391,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1Devi
         bitmap_desc.colorContext = NULL;
     }
 
-    if (SUCCEEDED(hr = d2d_bitmap_create_shared(iface, context->device,
-            iid, data, desc ? &bitmap_desc : NULL, &object)))
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(context, iid, data, desc ? &bitmap_desc : NULL, &object)))
         *bitmap = (ID2D1Bitmap *)&object->ID2D1Bitmap1_iface;
 
     return hr;
