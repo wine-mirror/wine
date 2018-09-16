@@ -607,6 +607,7 @@ static HRESULT WINAPI opc_content_stream_Seek(IStream *iface, LARGE_INTEGER move
         break;
     case STREAM_SEEK_END:
         pos.QuadPart = stream->content->size.QuadPart + move.QuadPart;
+        break;
     default:
         WARN("Unknown origin mode %d.\n", origin);
         return E_INVALIDARG;
