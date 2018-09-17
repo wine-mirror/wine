@@ -127,8 +127,10 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         return TRUE;
     }
+    case WM_NCCALCSIZE:
+        return 0;
     default:
-        return 0;  /* all other messages are ignored */
+        return DefWindowProcW( hwnd, message, wParam, lParam );
     }
 }
 
