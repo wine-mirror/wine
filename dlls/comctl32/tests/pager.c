@@ -30,6 +30,107 @@
 static HWND parent_wnd, child1_wnd, child2_wnd;
 static INT notify_format;
 static BOOL notify_query_received;
+static WCHAR test_w[] = {'t', 'e', 's', 't', 0};
+static CHAR test_a[] = {'t', 'e', 's', 't', 0};
+static WCHAR empty_w[] = {0};
+static CHAR empty_a[] = {0};
+static CHAR large_a[] = "You should have received a copy of the GNU Lesser General Public License along with this ...";
+static WCHAR large_truncated_65_w[65] =
+{
+    'Y', 'o', 'u', ' ', 's', 'h', 'o', 'u', 'l', 'd', ' ', 'h', 'a', 'v', 'e', ' ', 'r', 'e', 'c', 'e', 'i', 'v',
+    'e', 'd', ' ', 'a', ' ', 'c', 'o', 'p', 'y', ' ', 'o', 'f', ' ', 't', 'h', 'e', ' ', 'G', 'N', 'U', ' ', 'L',
+    'e', 's', 's', 'e', 'r', ' ', 'G', 'e', 'n', 'e', 'r', 'a', 'l', ' ', 'P', 'u', 'b', 'l', 'i', 'c', 0
+};
+static WCHAR buffer[64];
+
+/* Text field conversion test behavior flags. */
+enum test_conversion_flags
+{
+    CONVERT_SEND = 0x01,
+    DONT_CONVERT_SEND = 0x02,
+    CONVERT_RECEIVE = 0x04,
+    DONT_CONVERT_RECEIVE = 0x08,
+    SEND_EMPTY_IF_NULL = 0x10,
+    DONT_SEND_EMPTY_IF_NULL = 0x20
+};
+
+static struct notify_test_info
+{
+    UINT unicode;
+    UINT ansi;
+    UINT_PTR id_from;
+    HWND hwnd_from;
+    /* Whether parent received notification */
+    BOOL received;
+    UINT test_id;
+    UINT sub_test_id;
+    /* Text field conversion test behavior flag */
+    DWORD flags;
+} notify_test_info;
+
+struct notify_test_send
+{
+    /* Data sent to pager */
+    WCHAR *send_text;
+    INT send_text_size;
+    INT send_text_max;
+    /* Data expected by parent of pager */
+    void *expect_text;
+};
+
+struct notify_test_receive
+{
+    /* Data sent to pager */
+    WCHAR *send_text;
+    INT send_text_size;
+    INT send_text_max;
+    /* Data for parent to write */
+    CHAR *write_pointer;
+    CHAR *write_text;
+    INT write_text_size;
+    INT write_text_max;
+    /* Data when message returned */
+    void *return_text;
+    INT return_text_max;
+};
+
+struct generic_text_helper_para
+{
+    void *ptr;
+    size_t size;
+    UINT *mask;
+    UINT required_mask;
+    WCHAR **text;
+    INT *text_max;
+    UINT code_unicode;
+    UINT code_ansi;
+    DWORD flags;
+};
+
+static const struct notify_test_send test_convert_send_data[] =
+{
+    {test_w, sizeof(test_w), ARRAY_SIZE(buffer), test_a}
+};
+
+static const struct notify_test_send test_dont_convert_send_data[] =
+{
+    {test_w, sizeof(test_w), ARRAY_SIZE(buffer), test_w}
+};
+
+static const struct notify_test_receive test_convert_receive_data[] =
+{
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_w, ARRAY_SIZE(buffer)},
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_w, ARRAY_SIZE(buffer)},
+    {NULL, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, NULL, ARRAY_SIZE(buffer)},
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), large_a, NULL, 0, -1, large_truncated_65_w, ARRAY_SIZE(buffer)},
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), empty_a, 0, 0, 1, empty_w, 1},
+};
+
+static const struct notify_test_receive test_dont_convert_receive_data[] =
+{
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_a, ARRAY_SIZE(buffer)},
+    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_a, ARRAY_SIZE(buffer)},
+};
 
 #define CHILD1_ID 1
 #define CHILD2_ID 2
@@ -419,6 +520,302 @@ static void test_wm_notifyformat(void)
     UnregisterClassW(class_w, GetModuleHandleW(NULL));
 }
 
+static void notify_generic_text_handler(CHAR **text, INT *text_max)
+{
+    const struct notify_test_send *send_data;
+    const struct notify_test_receive *receive_data;
+
+    switch (notify_test_info.test_id)
+    {
+    case CONVERT_SEND:
+    case DONT_CONVERT_SEND:
+    {
+        send_data = (notify_test_info.test_id == CONVERT_SEND ? test_convert_send_data : test_dont_convert_send_data)
+                    + notify_test_info.sub_test_id;
+        if (notify_test_info.flags & CONVERT_SEND)
+            ok(!lstrcmpA(send_data->expect_text, *text), "Code 0x%08x test 0x%08x sub test %d expect %s, got %s\n",
+               notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id,
+               (CHAR *)send_data->expect_text, *text);
+        else
+            ok(!lstrcmpW((WCHAR *)send_data->expect_text, (WCHAR *)*text),
+               "Code 0x%08x test 0x%08x sub test %d expect %s, got %s\n", notify_test_info.unicode,
+               notify_test_info.test_id, notify_test_info.sub_test_id, wine_dbgstr_w((WCHAR *)send_data->expect_text),
+               wine_dbgstr_w((WCHAR *)*text));
+        if (text_max)
+            ok(*text_max == send_data->send_text_max, "Code 0x%08x test 0x%08x sub test %d expect %d, got %d\n",
+               notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id,
+               send_data->send_text_max, *text_max);
+        break;
+    }
+    case CONVERT_RECEIVE:
+    case DONT_CONVERT_RECEIVE:
+    {
+        receive_data = (notify_test_info.test_id == CONVERT_RECEIVE ? test_convert_receive_data : test_dont_convert_receive_data)
+                       + notify_test_info.sub_test_id;
+        if (text_max)
+            ok(*text_max == receive_data->send_text_max, "Code 0x%08x test 0x%08x sub test %d expect %d, got %d\n",
+               notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id,
+               receive_data->send_text_max, *text_max);
+
+        if (receive_data->write_text)
+            memcpy(*text, receive_data->write_text, receive_data->write_text_size);
+        else
+            *text = receive_data->write_pointer;
+        if (text_max && receive_data->write_text_max != -1) *text_max = receive_data->write_text_max;
+        break;
+    }
+    case SEND_EMPTY_IF_NULL:
+        ok(!lstrcmpA(*text, empty_a), "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
+           notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id, *text);
+        break;
+    case DONT_SEND_EMPTY_IF_NULL:
+        ok(!*text, "Code 0x%08x test 0x%08x sub test %d expect null text\n", notify_test_info.unicode,
+           notify_test_info.test_id, notify_test_info.sub_test_id);
+        break;
+    }
+}
+
+static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static const WCHAR test[] = {'t', 'e', 's', 't', 0};
+    switch (message)
+    {
+    case WM_NOTIFY:
+    {
+        NMHDR *hdr = (NMHDR *)lParam;
+
+        /* Not notifications we want to test */
+        if (!notify_test_info.unicode) break;
+        ok(!notify_test_info.received, "Extra notification received\n");
+
+        ok(wParam == notify_test_info.id_from, "Expect %ld, got %ld\n", notify_test_info.id_from, wParam);
+        ok(hdr->code == notify_test_info.ansi, "Expect 0x%08x, got 0x%08x\n", notify_test_info.ansi, hdr->code);
+        ok(hdr->idFrom == notify_test_info.id_from, "Expect %ld, got %ld\n", notify_test_info.id_from, wParam);
+        ok(hdr->hwndFrom == notify_test_info.hwnd_from, "Expect %p, got %p\n", notify_test_info.hwnd_from, hdr->hwndFrom);
+
+        if (hdr->code != notify_test_info.ansi)
+        {
+            skip("Notification code mismatch, skipping lParam check\n");
+            return 0;
+        }
+        switch (hdr->code)
+        {
+        /* Toolbar */
+        case TBN_SAVE:
+        {
+            NMTBSAVE *nmtbs = (NMTBSAVE *)hdr;
+            notify_generic_text_handler((CHAR **)&nmtbs->tbButton.iString, NULL);
+            break;
+        }
+        case TBN_RESTORE:
+        {
+            NMTBRESTORE *nmtbr = (NMTBRESTORE *)hdr;
+            notify_generic_text_handler((CHAR **)&nmtbr->tbButton.iString, NULL);
+            break;
+        }
+        case TBN_GETBUTTONINFOA:
+        {
+            NMTOOLBARA *nmtb = (NMTOOLBARA *)hdr;
+            notify_generic_text_handler(&nmtb->pszText, &nmtb->cchText);
+            break;
+        }
+        case TBN_GETDISPINFOW:
+        {
+            NMTBDISPINFOW *nmtbdi = (NMTBDISPINFOW *)hdr;
+            notify_generic_text_handler((CHAR **)&nmtbdi->pszText, &nmtbdi->cchText);
+            break;
+        }
+        case TBN_GETINFOTIPA:
+        {
+            NMTBGETINFOTIPA *nmtbgit = (NMTBGETINFOTIPA *)hdr;
+            notify_generic_text_handler(&nmtbgit->pszText, &nmtbgit->cchTextMax);
+            break;
+        }
+        default:
+            ok(0, "Unexpected message 0x%08x\n", hdr->code);
+        }
+        notify_test_info.received = TRUE;
+        ok(!lstrcmpA(test_a, "test"), "test_a got modified\n");
+        ok(!lstrcmpW(test_w, test), "test_w got modified\n");
+        return 0;
+    }
+    case WM_NOTIFYFORMAT:
+        if (lParam == NF_QUERY) return NFR_ANSI;
+        break;
+    }
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static BOOL register_test_notify_class(void)
+{
+    WNDCLASSA cls = {0};
+
+    cls.lpfnWndProc = test_notify_proc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = "Pager notify class";
+    return RegisterClassA(&cls);
+}
+
+static void send_notify(HWND pager, UINT unicode, UINT ansi, LPARAM lParam, BOOL code_change)
+{
+    NMHDR *hdr = (NMHDR *)lParam;
+
+    notify_test_info.unicode = unicode;
+    notify_test_info.id_from = 1;
+    notify_test_info.hwnd_from = child1_wnd;
+    notify_test_info.ansi = ansi;
+    notify_test_info.received = FALSE;
+
+    hdr->code = unicode;
+    hdr->idFrom = 1;
+    hdr->hwndFrom = child1_wnd;
+
+    SendMessageW(pager, WM_NOTIFY, hdr->idFrom, lParam);
+    ok(notify_test_info.received, "Expect notification received\n");
+    ok(hdr->code == code_change ? ansi : unicode, "Expect 0x%08x, got 0x%08x\n", hdr->code,
+       code_change ? ansi : unicode);
+}
+
+/* Send notify to test text field conversion. In parent proc notify_generic_text_handler() handles these messages */
+static void test_notify_generic_text_helper(HWND pager, const struct generic_text_helper_para *para)
+{
+    const struct notify_test_send *send_data;
+    const struct notify_test_receive *receive_data;
+    INT array_size;
+    INT i;
+
+    notify_test_info.flags = para->flags;
+
+    if (para->flags & (CONVERT_SEND | DONT_CONVERT_SEND))
+    {
+        if (para->flags & CONVERT_SEND)
+        {
+            notify_test_info.test_id = CONVERT_SEND;
+            send_data = test_convert_send_data;
+            array_size = ARRAY_SIZE(test_convert_send_data);
+        }
+        else
+        {
+            notify_test_info.test_id = DONT_CONVERT_SEND;
+            send_data = test_dont_convert_send_data;
+            array_size = ARRAY_SIZE(test_dont_convert_send_data);
+        }
+
+        for (i = 0; i < array_size; i++)
+        {
+            const struct notify_test_send *data = send_data + i;
+            notify_test_info.sub_test_id = i;
+
+            memset(para->ptr, 0, para->size);
+            if (para->mask) *para->mask = para->required_mask;
+            if (data->send_text)
+            {
+                memcpy(buffer, data->send_text, data->send_text_size);
+                *para->text = buffer;
+            }
+            if (para->text_max) *para->text_max = data->send_text_max;
+            send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
+        }
+    }
+
+    if (para->flags & (CONVERT_RECEIVE | DONT_CONVERT_RECEIVE))
+    {
+        if (para->flags & CONVERT_RECEIVE)
+        {
+            notify_test_info.test_id = CONVERT_RECEIVE;
+            receive_data = test_convert_receive_data;
+            array_size = ARRAY_SIZE(test_convert_receive_data);
+        }
+        else
+        {
+            notify_test_info.test_id = DONT_CONVERT_RECEIVE;
+            receive_data = test_dont_convert_receive_data;
+            array_size = ARRAY_SIZE(test_dont_convert_receive_data);
+        }
+
+        for (i = 0; i < array_size; i++)
+        {
+            const struct notify_test_receive *data = receive_data + i;
+            notify_test_info.sub_test_id = i;
+
+            memset(para->ptr, 0, para->size);
+            if (para->mask) *para->mask = para->required_mask;
+            if (data->send_text)
+            {
+                memcpy(buffer, data->send_text, data->send_text_size);
+                *para->text = buffer;
+            }
+            if (para->text_max) *para->text_max = data->send_text_max;
+            send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
+            if (data->return_text)
+            {
+                if (para->flags & CONVERT_RECEIVE)
+                    ok(!lstrcmpW(data->return_text, *para->text), "Code 0x%08x sub test %d expect %s, got %s\n",
+                       para->code_unicode, i, wine_dbgstr_w((WCHAR *)data->return_text), wine_dbgstr_w(*para->text));
+                else
+                    ok(!lstrcmpA(data->return_text, (CHAR *)*para->text), "Code 0x%08x sub test %d expect %s, got %s\n",
+                       para->code_unicode, i, (CHAR *)data->return_text, (CHAR *)*para->text);
+            }
+            if (para->text_max)
+                ok(data->return_text_max == *para->text_max, "Code 0x%08x sub test %d expect %d, got %d\n",
+                   para->code_unicode, i, data->return_text_max, *para->text_max);
+        }
+    }
+
+    /* Extra tests for other behavior flags that are not worth it to create their own test arrays */
+    memset(para->ptr, 0, para->size);
+    if (para->mask) *para->mask = para->required_mask;
+    if (para->text_max) *para->text_max = 1;
+    if (para->flags & SEND_EMPTY_IF_NULL)
+        notify_test_info.test_id = SEND_EMPTY_IF_NULL;
+    else
+        notify_test_info.test_id = DONT_SEND_EMPTY_IF_NULL;
+    send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
+}
+
+static void test_wm_notify(void)
+{
+    static const CHAR *class = "Pager notify class";
+    HWND parent, pager;
+    /* Tool Bar */
+    static NMTBRESTORE nmtbr;
+    static NMTBSAVE nmtbs;
+    static NMTOOLBARW nmtb;
+    static NMTBDISPINFOW nmtbdi;
+    static NMTBGETINFOTIPW nmtbgit;
+    static const struct generic_text_helper_para paras[] =
+    {
+        /* Tool Bar */
+        {&nmtbs, sizeof(nmtbs), NULL, 0, (WCHAR **)&nmtbs.tbButton.iString, NULL, TBN_SAVE, TBN_SAVE,
+         DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
+        {&nmtbr, sizeof(nmtbr), NULL, 0, (WCHAR **)&nmtbr.tbButton.iString, NULL, TBN_RESTORE, TBN_RESTORE,
+         DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
+        {&nmtbdi, sizeof(nmtbdi), &nmtbdi.dwMask, TBNF_TEXT, &nmtbdi.pszText, &nmtbdi.cchText, TBN_GETDISPINFOW,
+         TBN_GETDISPINFOW, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
+        {&nmtb, sizeof(nmtb), NULL, 0, &nmtb.pszText, &nmtb.cchText, TBN_GETBUTTONINFOW, TBN_GETBUTTONINFOA,
+         SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmtbgit, sizeof(nmtbgit), NULL, 0, &nmtbgit.pszText, &nmtbgit.cchTextMax, TBN_GETINFOTIPW, TBN_GETINFOTIPA,
+         DONT_CONVERT_SEND | CONVERT_RECEIVE}
+    };
+    INT i;
+
+    ok(register_test_notify_class(), "Register test class failed, error 0x%08x\n", GetLastError());
+
+    parent = CreateWindowA(class, "parent", WS_OVERLAPPED, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), 0);
+    ok(parent != NULL, "CreateWindow failed\n");
+    pager = CreateWindowA(WC_PAGESCROLLERA, "pager", WS_CHILD, 0, 0, 100, 100, parent, 0, GetModuleHandleA(0), 0);
+    ok(pager != NULL, "CreateWindow failed\n");
+    child1_wnd = CreateWindowA(class, "child", WS_CHILD, 0, 0, 100, 100, pager, (HMENU)1, GetModuleHandleA(0), 0);
+    ok(child1_wnd != NULL, "CreateWindow failed\n");
+    SendMessageW(pager, PGM_SETCHILD, 0, (LPARAM)child1_wnd);
+
+    for (i = 0; i < ARRAY_SIZE(paras); i++)
+        test_notify_generic_text_helper(pager, paras + i);
+
+    DestroyWindow(parent);
+    UnregisterClassA(class, GetModuleHandleA(NULL));
+}
+
 static void init_functions(void)
 {
     HMODULE mod = LoadLibraryA("comctl32.dll");
@@ -447,6 +844,7 @@ START_TEST(pager)
 
     test_pager();
     test_wm_notifyformat();
+    test_wm_notify();
 
     DestroyWindow(parent_wnd);
 }
