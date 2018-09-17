@@ -385,14 +385,14 @@ static void create_volatile_environment_registry_key(void)
                          KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         return;
 
-    hr = SHGetFolderPathW( NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
+    hr = SHGetFolderPathW( NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr)) set_reg_value( hkey, AppDataW, path );
 
     set_reg_value( hkey, ClientNameW, ConsoleW );
 
     /* Write the profile path's drive letter and directory components into
      * HOMEDRIVE and HOMEPATH respectively. */
-    hr = SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, path );
+    hr = SHGetFolderPathW( NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr))
     {
         set_reg_value( hkey, UserProfileW, path );
@@ -406,7 +406,7 @@ static void create_volatile_environment_registry_key(void)
 
     set_reg_value( hkey, HomeShareW, EmptyW );
 
-    hr = SHGetFolderPathW( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path );
+    hr = SHGetFolderPathW( NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, path );
     if (SUCCEEDED(hr))
         set_reg_value( hkey, LocalAppDataW, path );
 
