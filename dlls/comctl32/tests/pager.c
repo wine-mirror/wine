@@ -35,11 +35,25 @@ static CHAR test_a[] = {'t', 'e', 's', 't', 0};
 static WCHAR empty_w[] = {0};
 static CHAR empty_a[] = {0};
 static CHAR large_a[] = "You should have received a copy of the GNU Lesser General Public License along with this ...";
+static WCHAR large_w[] =
+{
+    'Y', 'o', 'u', ' ', 's', 'h', 'o', 'u', 'l', 'd', ' ', 'h', 'a', 'v', 'e', ' ', 'r', 'e', 'c', 'e', 'i', 'v', 'e',
+    'd', ' ', 'a', ' ', 'c', 'o', 'p', 'y', ' ', 'o', 'f', ' ', 't', 'h', 'e', ' ', 'G', 'N', 'U', ' ', 'L', 'e', 's',
+    's', 'e', 'r', ' ', 'G', 'e', 'n', 'e', 'r', 'a', 'l', ' ', 'P', 'u', 'b', 'l', 'i', 'c', ' ', 'L', 'i', 'c', 'e',
+    'n', 's', 'e', ' ', 'a', 'l', 'o', 'n', 'g', ' ', 'w', 'i', 't', 'h', ' ', 't', 'h', 'i', 's', ' ', '.', '.', '.', 0
+};
 static WCHAR large_truncated_65_w[65] =
 {
     'Y', 'o', 'u', ' ', 's', 'h', 'o', 'u', 'l', 'd', ' ', 'h', 'a', 'v', 'e', ' ', 'r', 'e', 'c', 'e', 'i', 'v',
     'e', 'd', ' ', 'a', ' ', 'c', 'o', 'p', 'y', ' ', 'o', 'f', ' ', 't', 'h', 'e', ' ', 'G', 'N', 'U', ' ', 'L',
     'e', 's', 's', 'e', 'r', ' ', 'G', 'e', 'n', 'e', 'r', 'a', 'l', ' ', 'P', 'u', 'b', 'l', 'i', 'c', 0
+};
+static WCHAR large_truncated_80_w[80] =
+{
+    'Y', 'o', 'u', ' ', 's', 'h', 'o', 'u', 'l', 'd', ' ', 'h', 'a', 'v', 'e', ' ', 'r', 'e', 'c', 'e',
+    'i', 'v', 'e', 'd', ' ', 'a', ' ', 'c', 'o', 'p', 'y', ' ', 'o', 'f', ' ', 't', 'h', 'e', ' ', 'G',
+    'N', 'U', ' ', 'L', 'e', 's', 's', 'e', 'r', ' ', 'G', 'e', 'n', 'e', 'r', 'a', 'l', ' ', 'P', 'u',
+    'b', 'l', 'i', 'c', ' ', 'L', 'i', 'c', 'e', 'n', 's', 'e', ' ', 'a', 'l', 'o', 'n', 'g', ' ', 'w'
 };
 static WCHAR buffer[64];
 
@@ -130,6 +144,38 @@ static const struct notify_test_receive test_dont_convert_receive_data[] =
 {
     {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_a, ARRAY_SIZE(buffer)},
     {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_a, ARRAY_SIZE(buffer)},
+};
+
+static const struct notify_test_tooltip
+{
+    /* Data for parent to write */
+    CHAR *write_sztext;
+    INT write_sztext_size;
+    CHAR *write_lpsztext;
+    HMODULE write_hinst;
+    /* Data when message returned */
+    WCHAR *return_sztext;
+    INT return_sztext_size;
+    WCHAR *return_lpsztext;
+    HMODULE return_hinst;
+    /* Data expected by parent */
+    CHAR *expect_sztext;
+    /* Data send to parent */
+    WCHAR *send_sztext;
+    INT send_sztext_size;
+    WCHAR *send_lpsztext;
+} test_tooltip_data[] =
+{
+    {NULL, 0, NULL, NULL, empty_w, -1, empty_w},
+    {test_a, sizeof(test_a), NULL, NULL, test_w, -1, test_w},
+    {test_a, sizeof(test_a), test_a, NULL, test_w, -1, test_w},
+    {test_a, sizeof(test_a), (CHAR *)1, (HMODULE)0xdeadbeef, empty_w, -1, (WCHAR *)1, (HMODULE)0xdeadbeef},
+    {test_a, sizeof(test_a), test_a, (HMODULE)0xdeadbeef, test_w, -1, test_w, (HMODULE)0xdeadbeef},
+    {NULL, 0, test_a, NULL, test_w, -1, test_w},
+    {test_a, 2, test_a, NULL, test_w, -1, test_w},
+    {NULL, 0, NULL, NULL, test_w, -1, test_w, NULL, test_a, test_w, sizeof(test_w)},
+    {NULL, 0, NULL, NULL, empty_w, -1, empty_w, NULL, empty_a, NULL, 0, test_w},
+    {NULL, 0, large_a, NULL, large_truncated_80_w, sizeof(large_truncated_80_w), large_w}
 };
 
 #define CHILD1_ID 1
@@ -575,6 +621,19 @@ static void notify_generic_text_handler(CHAR **text, INT *text_max)
     }
 }
 
+static void notify_tooltip_handler(NMTTDISPINFOA *nm)
+{
+    const struct notify_test_tooltip *data = test_tooltip_data + notify_test_info.sub_test_id;
+    ok(nm->lpszText == nm->szText, "Sub test %d expect %p, got %p\n", notify_test_info.sub_test_id, nm->szText,
+       nm->lpszText);
+    if (data->expect_sztext)
+        ok(!lstrcmpA(data->expect_sztext, nm->szText), "Sub test %d expect %s, got %s\n", notify_test_info.sub_test_id,
+           data->expect_sztext, nm->szText);
+    if (data->write_sztext) memcpy(nm->szText, data->write_sztext, data->write_sztext_size);
+    if (data->write_lpsztext) nm->lpszText = data->write_lpsztext;
+    if (data->write_hinst) nm->hinst = data->write_hinst;
+}
+
 static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static const WCHAR test[] = {'t', 'e', 's', 't', 0};
@@ -629,6 +688,12 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
         {
             NMTBGETINFOTIPA *nmtbgit = (NMTBGETINFOTIPA *)hdr;
             notify_generic_text_handler(&nmtbgit->pszText, &nmtbgit->cchTextMax);
+            break;
+        }
+        /* Tooltip */
+        case TTN_GETDISPINFOA:
+        {
+            notify_tooltip_handler((NMTTDISPINFOA *)hdr);
             break;
         }
         default:
@@ -773,6 +838,44 @@ static void test_notify_generic_text_helper(HWND pager, const struct generic_tex
     send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
 }
 
+static void test_wm_notify_tooltip(HWND pager)
+{
+    NMTTDISPINFOW nmttdi;
+    const struct notify_test_tooltip *data;
+    INT i;
+
+    for (i = 0; i < ARRAY_SIZE(test_tooltip_data); i++)
+    {
+        data = test_tooltip_data + i;
+        notify_test_info.sub_test_id = i;
+
+        memset(&nmttdi, 0, sizeof(nmttdi));
+        if (data->send_sztext) memcpy(nmttdi.szText, data->send_sztext, data->send_sztext_size);
+        if (data->send_lpsztext) nmttdi.lpszText = data->send_lpsztext;
+        send_notify(pager, TTN_GETDISPINFOW, TTN_GETDISPINFOA, (LPARAM)&nmttdi, FALSE);
+        if (data->return_sztext)
+        {
+            if (data->return_sztext_size == -1)
+                ok(!lstrcmpW(nmttdi.szText, data->return_sztext), "Sub test %d expect %s, got %s\n", i,
+                   wine_dbgstr_w(data->return_sztext), wine_dbgstr_w(nmttdi.szText));
+            else
+                ok(!memcmp(nmttdi.szText, data->return_sztext, data->return_sztext_size), "Wrong szText content\n");
+        }
+        if (data->return_lpsztext)
+        {
+            if (IS_INTRESOURCE(data->return_lpsztext))
+                ok(nmttdi.lpszText == data->return_lpsztext, "Sub test %d expect %s, got %s\n", i,
+                   wine_dbgstr_w(data->return_lpsztext), wine_dbgstr_w(nmttdi.lpszText));
+            else
+                ok(!lstrcmpW(nmttdi.lpszText, data->return_lpsztext), "Test %d expect %s, got %s\n", i,
+                   wine_dbgstr_w(data->return_lpsztext), wine_dbgstr_w(nmttdi.lpszText));
+        }
+        if (data->return_hinst)
+            ok(nmttdi.hinst == data->return_hinst, "Sub test %d expect %p, got %p\n", i, data->return_hinst,
+               nmttdi.hinst);
+    }
+}
+
 static void test_wm_notify(void)
 {
     static const CHAR *class = "Pager notify class";
@@ -811,6 +914,9 @@ static void test_wm_notify(void)
 
     for (i = 0; i < ARRAY_SIZE(paras); i++)
         test_notify_generic_text_helper(pager, paras + i);
+
+    /* Tests for those that can't be covered by generic text test helper */
+    test_wm_notify_tooltip(pager);
 
     DestroyWindow(parent);
     UnregisterClassA(class, GetModuleHandleA(NULL));

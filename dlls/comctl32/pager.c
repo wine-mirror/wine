@@ -84,6 +84,8 @@ typedef struct
     INT    TLbtnState; /* state of top or left btn */
     INT    BRbtnState; /* state of bottom or right btn */
     INT    direction;  /* direction of the scroll, (e.g. PGF_SCROLLUP) */
+    WCHAR  *pwszBuffer;/* text buffer for converted notifications */
+    INT    nBufferSize;/* size of the above buffer */
 } PAGER_INFO;
 
 #define TIMERID1         1
@@ -605,6 +607,7 @@ static LRESULT
 PAGER_Destroy (PAGER_INFO *infoPtr)
 {
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
+    heap_free (infoPtr->pwszBuffer);
     heap_free (infoPtr);
     return 0;
 }
@@ -1038,8 +1041,23 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     /* Toolbar */
     case TBN_GETBUTTONINFOW: return TBN_GETBUTTONINFOA;
     case TBN_GETINFOTIPW: return TBN_GETINFOTIPA;
+    /* Tooltip */
+    case TTN_GETDISPINFOW: return TTN_GETDISPINFOA;
     }
     return code;
+}
+
+static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
+{
+    if (!infoPtr->pwszBuffer)
+        infoPtr->pwszBuffer = heap_alloc(size);
+    else if (infoPtr->nBufferSize < size)
+        infoPtr->pwszBuffer = heap_realloc(infoPtr->pwszBuffer, size);
+
+    if (!infoPtr->pwszBuffer) return FALSE;
+    if (infoPtr->nBufferSize < size) infoPtr->nBufferSize = size;
+
+    return TRUE;
 }
 
 static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, WCHAR **text, INT *textMax, DWORD flags)
@@ -1093,6 +1111,8 @@ done:
 
 static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
 {
+    LRESULT ret;
+
     if (infoPtr->bUnicode) return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
 
     switch (hdr->code)
@@ -1108,6 +1128,58 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
     {
         NMTBGETINFOTIPW *nmtbgit = (NMTBGETINFOTIPW *)hdr;
         return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtbgit->pszText, &nmtbgit->cchTextMax, CONVERT_RECEIVE);
+    }
+    /* Tooltip */
+    case TTN_GETDISPINFOW:
+    {
+        NMTTDISPINFOW *nmttdiW = (NMTTDISPINFOW *)hdr;
+        NMTTDISPINFOA nmttdiA = {{0}};
+        INT size;
+
+        nmttdiA.hdr.code = PAGER_GetAnsiNtfCode(nmttdiW->hdr.code);
+        nmttdiA.hdr.hwndFrom = nmttdiW->hdr.hwndFrom;
+        nmttdiA.hdr.idFrom = nmttdiW->hdr.idFrom;
+        nmttdiA.hinst = nmttdiW->hinst;
+        nmttdiA.uFlags = nmttdiW->uFlags;
+        nmttdiA.lParam = nmttdiW->lParam;
+        nmttdiA.lpszText = nmttdiA.szText;
+        WideCharToMultiByte(CP_ACP, 0, nmttdiW->szText, ARRAY_SIZE(nmttdiW->szText), nmttdiA.szText,
+                            ARRAY_SIZE(nmttdiA.szText), NULL, FALSE);
+
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)&nmttdiA);
+
+        nmttdiW->hinst = nmttdiA.hinst;
+        nmttdiW->uFlags = nmttdiA.uFlags;
+        nmttdiW->lParam = nmttdiA.lParam;
+
+        MultiByteToWideChar(CP_ACP, 0, nmttdiA.szText, ARRAY_SIZE(nmttdiA.szText), nmttdiW->szText,
+                            ARRAY_SIZE(nmttdiW->szText));
+        if (!nmttdiA.lpszText)
+            nmttdiW->lpszText = nmttdiW->szText;
+        else if (!IS_INTRESOURCE(nmttdiA.lpszText))
+        {
+            size = MultiByteToWideChar(CP_ACP, 0, nmttdiA.lpszText, -1, 0, 0);
+            if (size > ARRAY_SIZE(nmttdiW->szText))
+            {
+                if (!PAGER_AdjustBuffer(infoPtr, size * sizeof(WCHAR))) return ret;
+                MultiByteToWideChar(CP_ACP, 0, nmttdiA.lpszText, -1, infoPtr->pwszBuffer, size);
+                nmttdiW->lpszText = infoPtr->pwszBuffer;
+                /* Override content in szText */
+                memcpy(nmttdiW->szText, nmttdiW->lpszText, min(sizeof(nmttdiW->szText), size * sizeof(WCHAR)));
+            }
+            else
+            {
+                MultiByteToWideChar(CP_ACP, 0, nmttdiA.lpszText, -1, nmttdiW->szText, ARRAY_SIZE(nmttdiW->szText));
+                nmttdiW->lpszText = nmttdiW->szText;
+            }
+        }
+        else
+        {
+            nmttdiW->szText[0] = 0;
+            nmttdiW->lpszText = (WCHAR *)nmttdiA.lpszText;
+        }
+
+        return ret;
     }
     }
     /* Other notifications, no need to convert */
