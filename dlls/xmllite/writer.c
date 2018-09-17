@@ -825,10 +825,23 @@ static void write_output_attribute(xmlwriter *writer, const WCHAR *prefix, int p
     write_output_buffer_quoted(writer->output, value, -1);
 }
 
+static BOOL is_valid_xml_space_value(const WCHAR *value)
+{
+    static const WCHAR preserveW[] = {'p','r','e','s','e','r','v','e',0};
+    static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
+
+    if (!value)
+        return FALSE;
+
+    return !strcmpW(value, preserveW) || !strcmpW(value, defaultW);
+}
+
 static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR prefix,
     LPCWSTR local, LPCWSTR uri, LPCWSTR value)
 {
+    static const WCHAR spaceattrW[] = {'s','p','a','c','e',0};
     static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+    static const WCHAR xmlW[] = {'x','m','l',0};
     xmlwriter *This = impl_from_IXmlWriter(iface);
     int prefix_len, local_len;
     BOOL is_xmlns_prefix;
@@ -870,6 +883,22 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     if (prefix_len == 0 && is_empty_string(uri))
     {
         write_output_attribute(This, prefix, prefix_len, local, local_len, value);
+        return S_OK;
+    }
+
+    /* Predefined "xml" prefix. */
+    if (prefix_len && !strcmpW(prefix, xmlW))
+    {
+        /* Valid "space" value is enforced. */
+        if (!strcmpW(local, spaceattrW) && !is_valid_xml_space_value(value))
+            return WR_E_INVALIDXMLSPACE;
+
+        /* Redefinition is not allowed. */
+        if (!is_empty_string(uri))
+            return WR_E_XMLPREFIXDECLARATION;
+
+        write_output_attribute(This, prefix, prefix_len, local, local_len, value);
+
         return S_OK;
     }
 
