@@ -442,6 +442,11 @@ HRESULT WINAPI MFShutdown(void)
     return S_OK;
 }
 
+HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines)
+{
+    FIXME("(%p, %d, %p, %d, %d, %d) stub\n", dest, deststride, src, srcstride, width, lines);
+    return E_NOTIMPL;
+}
 
 typedef struct _mfbytestream
 {

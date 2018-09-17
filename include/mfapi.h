@@ -64,6 +64,7 @@ DEFINE_GUID(MFMediaType_Video,         0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0
 typedef unsigned __int64 MFWORKITEM_KEY;
 
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
+HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
 HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue);
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);

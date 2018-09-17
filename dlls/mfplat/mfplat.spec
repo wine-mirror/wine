@@ -35,7 +35,7 @@
 @ stub MFConvertColorInfoToDXVA
 @ stub MFConvertFromFP16Array
 @ stub MFConvertToFP16Array
-@ stub MFCopyImage
+@ stdcall MFCopyImage(ptr long ptr long long long)
 @ stub MFCreateAMMediaTypeFromMFMediaType
 @ stub MFCreateAlignedMemoryBuffer
 @ stub MFCreateAsyncResult
