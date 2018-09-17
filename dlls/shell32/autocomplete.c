@@ -79,6 +79,13 @@ typedef struct
     AUTOCOMPLETEOPTIONS options;
 } IAutoCompleteImpl;
 
+enum autoappend_flag
+{
+    autoappend_flag_yes,
+    autoappend_flag_no,
+    autoappend_flag_displayempty
+};
+
 static const WCHAR autocomplete_propertyW[] = {'W','i','n','e',' ','A','u','t','o',
                                                'c','o','m','p','l','e','t','e',' ',
                                                'c','o','n','t','r','o','l',0};
@@ -119,19 +126,31 @@ static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *st
     return dst - base;
 }
 
-static void autocomplete_text(IAutoCompleteImpl *ac, WCHAR *text, UINT len, HWND hwnd, BOOL displayall)
+static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_flag flag)
 {
     HRESULT hr;
-    UINT cpt;
+    WCHAR *text;
+    UINT cpt, size, len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+
+    if (flag != autoappend_flag_displayempty && len == 0)
+    {
+        if (ac->options & ACO_AUTOSUGGEST)
+            ShowWindow(ac->hwndListBox, SW_HIDE);
+        return;
+    }
+
+    size = len + 1;
+    if (!(text = heap_alloc(size * sizeof(WCHAR))))
+        return;
+    len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
+    if (len + 1 != size)
+        text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
 
     SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
 
     /* Set txtbackup to point to text itself (which must not be released) */
     heap_free(ac->txtbackup);
     ac->txtbackup = text;
-
-    if (!displayall && !len)
-        return;
 
     IEnumString_Reset(ac->enumstr);
     for (cpt = 0;;)
@@ -145,7 +164,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, WCHAR *text, UINT len, HWND
 
         if (!strncmpiW(text, strs, len))
         {
-            if (cpt == 0 && (ac->options & ACO_AUTOAPPEND))
+            if (cpt == 0 && flag == autoappend_flag_yes)
             {
                 WCHAR buffW[255];
 
@@ -200,27 +219,23 @@ static void destroy_autocomplete_object(IAutoCompleteImpl *ac)
 /*
    Helper for ACEditSubclassProc
 */
-static LRESULT ACEditSubclassProc_KeyUp(IAutoCompleteImpl *ac, HWND hwnd, UINT uMsg,
-                                        WPARAM wParam, LPARAM lParam)
+static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT uMsg,
+                                          WPARAM wParam, LPARAM lParam)
 {
-    WCHAR *text;
-    UINT len, size;
-    BOOL displayall = FALSE;
-
-    len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
-    size = len + 1;
-    if (!(text = heap_alloc(size * sizeof(WCHAR))))
-        return 0;
-    len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
-
     switch (wParam)
     {
         case VK_RETURN:
             /* If quickComplete is set and control is pressed, replace the string */
             if (ac->quickComplete && (GetKeyState(VK_CONTROL) & 0x8000))
             {
-                WCHAR *buf;
-                size_t sz = strlenW(ac->quickComplete) + 1 + len;
+                WCHAR *text, *buf;
+                size_t sz;
+                UINT len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+                if (!(text = heap_alloc((len + 1) * sizeof(WCHAR))))
+                    return 0;
+                len = SendMessageW(hwnd, WM_GETTEXT, len + 1, (LPARAM)text);
+                sz = strlenW(ac->quickComplete) + 1 + len;
+
                 if ((buf = heap_alloc(sz * sizeof(WCHAR))))
                 {
                     len = format_quick_complete(buf, ac->quickComplete, text, len);
@@ -228,16 +243,16 @@ static LRESULT ACEditSubclassProc_KeyUp(IAutoCompleteImpl *ac, HWND hwnd, UINT u
                     SendMessageW(hwnd, EM_SETSEL, 0, len);
                     heap_free(buf);
                 }
+
+                if (ac->options & ACO_AUTOSUGGEST)
+                    ShowWindow(ac->hwndListBox, SW_HIDE);
+                heap_free(text);
+                return 0;
             }
 
             if (ac->options & ACO_AUTOSUGGEST)
                 ShowWindow(ac->hwndListBox, SW_HIDE);
-            heap_free(text);
-            return 0;
-        case VK_LEFT:
-        case VK_RIGHT:
-            heap_free(text);
-            return 0;
+            break;
         case VK_UP:
         case VK_DOWN:
             /* Two cases here:
@@ -245,19 +260,20 @@ static LRESULT ACEditSubclassProc_KeyUp(IAutoCompleteImpl *ac, HWND hwnd, UINT u
                  set, display it with all the entries, without selecting any
                - if the listbox is visible, change the selection
             */
-            if ( (ac->options & (ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST))
-                 && (!IsWindowVisible(ac->hwndListBox) && (! *text)) )
+            if (!(ac->options & ACO_AUTOSUGGEST))
+                break;
+
+            if (!IsWindowVisible(ac->hwndListBox))
             {
-                /* We must display all the entries */
-                displayall = TRUE;
+                if (ac->options & ACO_UPDOWNKEYDROPSLIST)
+                {
+                    autocomplete_text(ac, hwnd, autoappend_flag_displayempty);
+                    return 0;
+                }
             }
             else
             {
                 INT count, sel;
-                heap_free(text);
-                if (!IsWindowVisible(ac->hwndListBox))
-                    return 0;
-
                 count = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
 
                 /* Change the selection */
@@ -290,22 +306,14 @@ static LRESULT ACEditSubclassProc_KeyUp(IAutoCompleteImpl *ac, HWND hwnd, UINT u
                 return 0;
             }
             break;
-        case VK_BACK:
         case VK_DELETE:
-            if ((! *text) && (ac->options & ACO_AUTOSUGGEST))
-            {
-                heap_free(text);
-                ShowWindow(ac->hwndListBox, SW_HIDE);
-                return CallWindowProcW(ac->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
-            }
-            break;
+        {
+            LRESULT ret = CallWindowProcW(ac->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
+            autocomplete_text(ac, hwnd, autoappend_flag_no);
+            return ret;
+        }
     }
-
-    if (len + 1 != size)
-        text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
-
-    autocomplete_text(ac, text, len, hwnd, displayall);
-    return 0;
+    return CallWindowProcW(ac->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 }
 
 /*
@@ -314,6 +322,7 @@ static LRESULT ACEditSubclassProc_KeyUp(IAutoCompleteImpl *ac, HWND hwnd, UINT u
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     IAutoCompleteImpl *This = GetPropW(hwnd, autocomplete_propertyW);
+    LRESULT ret;
 
     if (!This->enabled) return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 
@@ -329,8 +338,14 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 ShowWindow(This->hwndListBox, SW_HIDE);
             }
             return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
-        case WM_KEYUP:
-            return ACEditSubclassProc_KeyUp(This, hwnd, uMsg, wParam, lParam);
+        case WM_KEYDOWN:
+            return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
+        case WM_CHAR:
+        case WM_UNICHAR:
+            ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
+            autocomplete_text(This, hwnd, (This->options & ACO_AUTOAPPEND)
+                                          ? autoappend_flag_yes : autoappend_flag_no);
+            return ret;
         case WM_DESTROY:
         {
             WNDPROC proc = This->wpOrigEditProc;
