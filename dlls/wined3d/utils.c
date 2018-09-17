@@ -1993,8 +1993,7 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
     struct wined3d_format *format;
     unsigned int i, j;
 
-    adapter->format_count = WINED3D_FORMAT_COUNT;
-    if (!(adapter->formats = heap_calloc(adapter->format_count
+    if (!(adapter->formats = heap_calloc(WINED3D_FORMAT_COUNT
             + ARRAY_SIZE(typeless_depth_stencil_formats), sizeof(*adapter->formats))))
     {
         ERR("Failed to allocate memory.\n");
@@ -2728,7 +2727,7 @@ static void init_format_fbo_compat_info(const struct wined3d_adapter *adapter,
 
     if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
     {
-        for (i = 0; i < adapter->format_count; ++i)
+        for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
         {
             BOOL fallback_fmt_used = FALSE, regular_fmt_used = FALSE;
             struct wined3d_format *format = &adapter->formats[i];
@@ -2842,7 +2841,7 @@ static void init_format_fbo_compat_info(const struct wined3d_adapter *adapter,
         gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
     }
 
-    for (i = 0; i < adapter->format_count; ++i)
+    for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
         struct wined3d_format *format = &adapter->formats[i];
 
@@ -3621,7 +3620,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         format_set_flag(format, WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET);
     }
 
-    for (i = 0; i < adapter->format_count; ++i)
+    for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
         struct wined3d_format *format = &adapter->formats[i];
 
@@ -3756,7 +3755,7 @@ static void init_format_gen_mipmap_info(const struct wined3d_adapter *adapter,
     if (!gl_info->fbo_ops.glGenerateMipmap)
         return;
 
-    for (i = 0; i < adapter->format_count; ++i)
+    for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
         struct wined3d_format *format = &adapter->formats[i];
 
@@ -3913,7 +3912,7 @@ static void init_format_depth_bias_scale(struct wined3d_adapter *adapter,
     const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
     unsigned int i;
 
-    for (i = 0; i < adapter->format_count; ++i)
+    for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
         struct wined3d_format *format = &adapter->formats[i];
 
