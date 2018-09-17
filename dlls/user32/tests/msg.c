@@ -14963,6 +14963,67 @@ static void test_defwinproc(void)
     DestroyWindow( hwnd);
 }
 
+static void test_desktop_winproc(void)
+{
+    HINSTANCE instance = GetModuleHandleA(NULL);
+    RECT rect, default_rect;
+    WNDPROC desktop_proc;
+    char buffer[256];
+    WNDCLASSA cls;
+    LRESULT res;
+    HWND hwnd;
+    BOOL ret;
+
+    ret = GetClassInfoA(instance, (const CHAR *)MAKEINTATOM(32769), &cls);
+    ok(ret, "Failed to get desktop class.\n");
+    desktop_proc = cls.lpfnWndProc;
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = desktop_proc;
+    cls.hInstance = instance;
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszClassName = "TestDesktopClass";
+    ret = !!RegisterClassA(&cls);
+    ok(ret, "Failed to register class.\n");
+
+    hwnd = CreateWindowExA(0, cls.lpszClassName, "test_desktop_wndproc",
+            WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, 0, 0, 500, 100, 0, 0, 0, NULL);
+    if (!hwnd) /* win2003 */
+    {
+        skip("Failed to create window with desktop window procedure.\n");
+        goto out_unregister;
+    }
+
+    memset(&cls, 0, sizeof(cls));
+    ret = GetClassInfoA(instance, "TestDesktopClass", &cls);
+    ok(ret, "Failed to get class info.\n");
+    ok(cls.lpfnWndProc == desktop_proc, "Got %p, expected %p.\n", cls.lpfnWndProc, desktop_proc);
+
+    GetWindowTextA(hwnd, buffer, ARRAY_SIZE(buffer));
+    todo_wine ok(!strcmp(buffer, "test_desktop_wndproc"), "Got unexpected window text: %s.\n", buffer);
+
+    res = CallWindowProcA(desktop_proc, hwnd, WM_SETTEXT, 0, (LPARAM)"test");
+    ok(res == TRUE, "Failed to set text, %ld.\n", res);
+    GetWindowTextA(hwnd, buffer, ARRAY_SIZE(buffer));
+    ok(!strcmp(buffer, "test"), "Got unexpected window text: %s.\n", buffer);
+
+    SetRect(&default_rect, 0, 0, 100, 100);
+    res = DefWindowProcW(hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&default_rect);
+    ok(!res, "Got unexpected result %ld.\n", res);
+
+    SetRect(&rect, 0, 0, 100, 100);
+    res = CallWindowProcA(desktop_proc, hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect);
+    ok(!res, "Got unexpected result %ld.\n", res);
+    todo_wine ok(EqualRect(&rect, &default_rect), "rect Got %s, expected %s.\n",
+            wine_dbgstr_rect(&rect), wine_dbgstr_rect(&default_rect));
+
+    DestroyWindow(hwnd);
+
+out_unregister:
+    UnregisterClassA("TestDesktopClass", instance);
+}
+
 #define clear_clipboard(hwnd)  clear_clipboard_(__LINE__, (hwnd))
 static void clear_clipboard_(int line, HWND hWnd)
 {
@@ -17108,6 +17169,7 @@ START_TEST(msg)
     test_menu_messages();
     test_paintingloop();
     test_defwinproc();
+    test_desktop_winproc();
     test_clipboard_viewers();
     test_keyflags();
     test_hotkey();
