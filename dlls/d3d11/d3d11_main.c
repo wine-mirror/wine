@@ -377,3 +377,18 @@ cleanup:
 
     return hr;
 }
+
+HRESULT WINAPI D3D11On12CreateDevice(IUnknown *device, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT feature_level_count,
+        IUnknown * const *queues, UINT queue_count, UINT node_mask,
+        ID3D11Device **d3d11_device, ID3D11DeviceContext **d3d11_immediate_context,
+        D3D_FEATURE_LEVEL *obtained_feature_level)
+{
+    FIXME("device %p, flags %#x, feature_levels %p, feature_level_count %u, "
+            "queues %p, queue_count %u, node_mask 0x%08x, "
+            "d3d11_device %p, d3d11_immediate_context %p, obtained_feature_level %p stub!\n",
+            device, flags, feature_levels, feature_level_count, queues, queue_count,
+            node_mask, d3d11_device, d3d11_immediate_context, obtained_feature_level);
+
+    return E_NOTIMPL;
+}
