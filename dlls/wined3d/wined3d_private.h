@@ -2607,6 +2607,7 @@ enum wined3d_display_driver
     DRIVER_NVIDIA_GEFORCE6,
     DRIVER_NVIDIA_GEFORCE8,
     DRIVER_VMWARE,
+    DRIVER_WINE,
     DRIVER_UNKNOWN,
 };
 
