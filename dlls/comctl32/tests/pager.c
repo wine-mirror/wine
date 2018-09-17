@@ -65,7 +65,9 @@ enum test_conversion_flags
     CONVERT_RECEIVE = 0x04,
     DONT_CONVERT_RECEIVE = 0x08,
     SEND_EMPTY_IF_NULL = 0x10,
-    DONT_SEND_EMPTY_IF_NULL = 0x20
+    DONT_SEND_EMPTY_IF_NULL = 0x20,
+    SET_NULL_IF_NO_MASK = 0x40,
+    ZERO_SEND = 0x80
 };
 
 static struct notify_test_info
@@ -578,7 +580,10 @@ static void notify_generic_text_handler(CHAR **text, INT *text_max)
     {
         send_data = (notify_test_info.test_id == CONVERT_SEND ? test_convert_send_data : test_dont_convert_send_data)
                     + notify_test_info.sub_test_id;
-        if (notify_test_info.flags & CONVERT_SEND)
+        if (notify_test_info.flags & ZERO_SEND)
+            ok(!lstrcmpA(*text, empty_a), "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
+               notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id, *text);
+        else if (notify_test_info.flags & CONVERT_SEND)
             ok(!lstrcmpA(send_data->expect_text, *text), "Code 0x%08x test 0x%08x sub test %d expect %s, got %s\n",
                notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id,
                (CHAR *)send_data->expect_text, *text);
@@ -659,6 +664,32 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
         }
         switch (hdr->code)
         {
+        /* ComboBoxEx */
+        case CBEN_INSERTITEM:
+        case CBEN_DELETEITEM:
+        {
+            NMCOMBOBOXEXW *nmcbe = (NMCOMBOBOXEXW *)hdr;
+            notify_generic_text_handler((CHAR **)&nmcbe->ceItem.pszText, NULL);
+            break;
+        }
+        case CBEN_DRAGBEGINA:
+        {
+            NMCBEDRAGBEGINA *nmcbedb = (NMCBEDRAGBEGINA *)hdr;
+            ok(!lstrcmpA(nmcbedb->szText, test_a), "Expect %s, got %s\n", nmcbedb->szText, test_a);
+            break;
+        }
+        case CBEN_ENDEDITA:
+        {
+            NMCBEENDEDITA *nmcbeed = (NMCBEENDEDITA *)hdr;
+            ok(!lstrcmpA(nmcbeed->szText, test_a), "Expect %s, got %s\n", nmcbeed->szText, test_a);
+            break;
+        }
+        case CBEN_GETDISPINFOA:
+        {
+            NMCOMBOBOXEXA *nmcbe = (NMCOMBOBOXEXA *)hdr;
+            notify_generic_text_handler(&nmcbe->ceItem.pszText, &nmcbe->ceItem.cchTextMax);
+            break;
+        }
         /* Toolbar */
         case TBN_SAVE:
         {
@@ -836,6 +867,33 @@ static void test_notify_generic_text_helper(HWND pager, const struct generic_tex
     else
         notify_test_info.test_id = DONT_SEND_EMPTY_IF_NULL;
     send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
+
+    notify_test_info.test_id = SET_NULL_IF_NO_MASK;
+    memset(para->ptr, 0, para->size);
+    memset(buffer, 0, sizeof(buffer));
+    *para->text = buffer;
+    if (para->text_max) *para->text_max = ARRAY_SIZE(buffer);
+    send_notify(pager, para->code_unicode, para->code_ansi, (LPARAM)para->ptr, TRUE);
+    if(para->flags & SET_NULL_IF_NO_MASK)
+        ok(!*para->text, "Expect null text\n");
+}
+
+static void test_wm_notify_comboboxex(HWND pager)
+{
+    static NMCBEDRAGBEGINW nmcbedb;
+    static NMCBEENDEDITW nmcbeed;
+
+    /* CBEN_DRAGBEGIN */
+    memset(&nmcbedb, 0, sizeof(nmcbedb));
+    memcpy(nmcbedb.szText, test_w, sizeof(test_w));
+    send_notify(pager, CBEN_DRAGBEGINW, CBEN_DRAGBEGINA, (LPARAM)&nmcbedb, FALSE);
+    ok(!lstrcmpW(nmcbedb.szText, test_w), "Expect %s, got %s\n", wine_dbgstr_w(test_w), wine_dbgstr_w(nmcbedb.szText));
+
+    /* CBEN_ENDEDIT */
+    memset(&nmcbeed, 0, sizeof(nmcbeed));
+    memcpy(nmcbeed.szText, test_w, sizeof(test_w));
+    send_notify(pager, CBEN_ENDEDITW, CBEN_ENDEDITA, (LPARAM)&nmcbeed, FALSE);
+    ok(!lstrcmpW(nmcbeed.szText, test_w), "Expect %s, got %s\n", wine_dbgstr_w(test_w), wine_dbgstr_w(nmcbeed.szText));
 }
 
 static void test_wm_notify_tooltip(HWND pager)
@@ -880,6 +938,8 @@ static void test_wm_notify(void)
 {
     static const CHAR *class = "Pager notify class";
     HWND parent, pager;
+    /* Combo Box Ex */
+    static NMCOMBOBOXEXW nmcbe;
     /* Tool Bar */
     static NMTBRESTORE nmtbr;
     static NMTBSAVE nmtbs;
@@ -888,6 +948,13 @@ static void test_wm_notify(void)
     static NMTBGETINFOTIPW nmtbgit;
     static const struct generic_text_helper_para paras[] =
     {
+        /* Combo Box Ex */
+        {&nmcbe, sizeof(nmcbe), &nmcbe.ceItem.mask, CBEIF_TEXT, &nmcbe.ceItem.pszText, &nmcbe.ceItem.cchTextMax,
+         CBEN_INSERTITEM, CBEN_INSERTITEM, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
+        {&nmcbe, sizeof(nmcbe), &nmcbe.ceItem.mask, CBEIF_TEXT, &nmcbe.ceItem.pszText, &nmcbe.ceItem.cchTextMax,
+         CBEN_DELETEITEM, CBEN_DELETEITEM, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
+        {&nmcbe, sizeof(nmcbe), &nmcbe.ceItem.mask, CBEIF_TEXT, &nmcbe.ceItem.pszText, &nmcbe.ceItem.cchTextMax,
+         CBEN_GETDISPINFOW, CBEN_GETDISPINFOA, ZERO_SEND | SET_NULL_IF_NO_MASK | DONT_CONVERT_SEND | CONVERT_RECEIVE},
         /* Tool Bar */
         {&nmtbs, sizeof(nmtbs), NULL, 0, (WCHAR **)&nmtbs.tbButton.iString, NULL, TBN_SAVE, TBN_SAVE,
          DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
@@ -916,6 +983,7 @@ static void test_wm_notify(void)
         test_notify_generic_text_helper(pager, paras + i);
 
     /* Tests for those that can't be covered by generic text test helper */
+    test_wm_notify_comboboxex(pager);
     test_wm_notify_tooltip(pager);
 
     DestroyWindow(parent);

@@ -101,7 +101,11 @@ enum conversion_flags
     /* Convert ANSI text from parent back to Unicode for children */
     CONVERT_RECEIVE = 0x02,
     /* Send empty text to parent if text is NULL. Original text pointer still remains NULL */
-    SEND_EMPTY_IF_NULL = 0x04
+    SEND_EMPTY_IF_NULL = 0x04,
+    /* Set text to null after parent received the notification if the required mask is not set before sending notification */
+    SET_NULL_IF_NO_MASK = 0x08,
+    /* Zero out the text buffer before sending it to parent */
+    ZERO_SEND = 0x10
 };
 
 static void
@@ -1038,6 +1042,10 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
 {
     switch (code)
     {
+    /* ComboxBoxEx */
+    case CBEN_DRAGBEGINW: return CBEN_DRAGBEGINA;
+    case CBEN_ENDEDITW: return CBEN_ENDEDITA;
+    case CBEN_GETDISPINFOW: return CBEN_GETDISPINFOA;
     /* Toolbar */
     case TBN_GETBUTTONINFOW: return TBN_GETBUTTONINFOA;
     case TBN_GETINFOTIPW: return TBN_GETINFOTIPA;
@@ -1060,7 +1068,8 @@ static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
     return TRUE;
 }
 
-static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, WCHAR **text, INT *textMax, DWORD flags)
+static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *mask, UINT requiredMask, WCHAR **text,
+                                         INT *textMax, DWORD flags)
 {
     CHAR *sendBuffer = NULL;
     CHAR *receiveBuffer;
@@ -1074,14 +1083,21 @@ static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, WCHAR 
 
     hdr->code = PAGER_GetAnsiNtfCode(hdr->code);
 
+    if (mask && !(*mask & requiredMask))
+    {
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
+        if (flags & SET_NULL_IF_NO_MASK) oldText = NULL;
+        goto done;
+    }
+
     if (oldTextMax < 0) goto done;
 
-    if ((*text && (flags & CONVERT_SEND)) || (!*text && (flags & SEND_EMPTY_IF_NULL)))
+    if ((*text && flags & (CONVERT_SEND | ZERO_SEND)) || (!*text && flags & SEND_EMPTY_IF_NULL))
     {
         bufferSize = textMax ? *textMax : lstrlenW(*text) + 1;
         sendBuffer = heap_alloc_zero(bufferSize);
         if (!sendBuffer) goto done;
-        WideCharToMultiByte(CP_ACP, 0, *text, -1, sendBuffer, bufferSize, NULL, FALSE);
+        if (!(flags & ZERO_SEND)) WideCharToMultiByte(CP_ACP, 0, *text, -1, sendBuffer, bufferSize, NULL, FALSE);
         *text = (WCHAR *)sendBuffer;
     }
 
@@ -1117,17 +1133,50 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
 
     switch (hdr->code)
     {
+    /* ComboBoxEx */
+    case CBEN_GETDISPINFOW:
+    {
+        NMCOMBOBOXEXW *nmcbe = (NMCOMBOBOXEXW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmcbe->ceItem.mask, CBEIF_TEXT, &nmcbe->ceItem.pszText,
+                                         &nmcbe->ceItem.cchTextMax, ZERO_SEND | SET_NULL_IF_NO_MASK | CONVERT_RECEIVE);
+    }
+    case CBEN_DRAGBEGINW:
+    {
+        NMCBEDRAGBEGINW *nmdbW = (NMCBEDRAGBEGINW *)hdr;
+        NMCBEDRAGBEGINA nmdbA = {{0}};
+        nmdbA.hdr.code = PAGER_GetAnsiNtfCode(nmdbW->hdr.code);
+        nmdbA.hdr.hwndFrom = nmdbW->hdr.hwndFrom;
+        nmdbA.hdr.idFrom = nmdbW->hdr.idFrom;
+        nmdbA.iItemid = nmdbW->iItemid;
+        WideCharToMultiByte(CP_ACP, 0, nmdbW->szText, ARRAY_SIZE(nmdbW->szText), nmdbA.szText, ARRAY_SIZE(nmdbA.szText),
+                            NULL, FALSE);
+        return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)&nmdbA);
+    }
+    case CBEN_ENDEDITW:
+    {
+        NMCBEENDEDITW *nmedW = (NMCBEENDEDITW *)hdr;
+        NMCBEENDEDITA nmedA = {{0}};
+        nmedA.hdr.code = PAGER_GetAnsiNtfCode(nmedW->hdr.code);
+        nmedA.hdr.hwndFrom = nmedW->hdr.hwndFrom;
+        nmedA.hdr.idFrom = nmedW->hdr.idFrom;
+        nmedA.fChanged = nmedW->fChanged;
+        nmedA.iNewSelection = nmedW->iNewSelection;
+        nmedA.iWhy = nmedW->iWhy;
+        WideCharToMultiByte(CP_ACP, 0, nmedW->szText, ARRAY_SIZE(nmedW->szText), nmedA.szText, ARRAY_SIZE(nmedA.szText),
+                            NULL, FALSE);
+        return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)&nmedA);
+    }
     /* Toolbar */
     case TBN_GETBUTTONINFOW:
     {
         NMTOOLBARW *nmtb = (NMTOOLBARW *)hdr;
-        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtb->pszText, &nmtb->cchText,
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, &nmtb->pszText, &nmtb->cchText,
                                          SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE);
     }
     case TBN_GETINFOTIPW:
     {
         NMTBGETINFOTIPW *nmtbgit = (NMTBGETINFOTIPW *)hdr;
-        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtbgit->pszText, &nmtbgit->cchTextMax, CONVERT_RECEIVE);
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, &nmtbgit->pszText, &nmtbgit->cchTextMax, CONVERT_RECEIVE);
     }
     /* Tooltip */
     case TTN_GETDISPINFOW:
