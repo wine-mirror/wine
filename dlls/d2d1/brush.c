@@ -1092,8 +1092,9 @@ static const struct ID2D1BitmapBrush1Vtbl d2d_bitmap_brush_vtbl =
     d2d_bitmap_brush_GetInterpolationMode1,
 };
 
-HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
-        const D2D1_BRUSH_PROPERTIES *brush_desc, struct d2d_brush **brush)
+HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
+        const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        struct d2d_brush **brush)
 {
     if (!(*brush = heap_alloc_zero(sizeof(**brush))))
         return E_OUTOFMEMORY;
