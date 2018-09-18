@@ -5569,6 +5569,12 @@ static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
 
     size = sizeof(info);
     res = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, &info, &size);
+    if (!res)
+    {
+        win_skip("Querying INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT failed, skipping tests\n");
+        return;
+    }
+
     ok(res, "InternetQueryOption failed: %u\n", GetLastError());
     ok(size == sizeof(info), "size = %u\n", size);
 
