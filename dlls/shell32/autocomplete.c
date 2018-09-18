@@ -200,7 +200,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
             /* It seems that Windows XP displays 7 lines at most
                and otherwise displays a vertical scroll bar */
             SetWindowPos(ac->hwndListBox, HWND_TOP,
-                         r.left, r.bottom + 1, r.right - r.left, min(height * 7, height*(cpt+1)),
+                         r.left, r.bottom + 1, r.right - r.left, height * min(cpt + 1, 7),
                          SWP_SHOWWINDOW );
         }
         else
