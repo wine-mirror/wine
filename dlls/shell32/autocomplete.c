@@ -126,6 +126,28 @@ static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *st
     return dst - base;
 }
 
+static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *str, HWND hwnd)
+{
+    WCHAR *tmp;
+    size_t size;
+
+    /* The character capitalization can be different,
+       so merge text and str into a new string */
+    size = len + strlenW(&str[len]) + 1;
+
+    if ((tmp = heap_alloc(size * sizeof(*tmp))))
+    {
+        memcpy(tmp, text, len * sizeof(*tmp));
+        memcpy(&tmp[len], &str[len], (size - len) * sizeof(*tmp));
+    }
+    else tmp = str;
+
+    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)tmp);
+    SendMessageW(hwnd, EM_SETSEL, len, size - 1);
+    if (tmp != str)
+        heap_free(tmp);
+}
+
 static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_flag flag)
 {
     HRESULT hr;
@@ -166,12 +188,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
         {
             if (cpt == 0 && flag == autoappend_flag_yes)
             {
-                WCHAR buffW[255];
-
-                strcpyW(buffW, text);
-                strcatW(buffW, &strs[len]);
-                SetWindowTextW(hwnd, buffW);
-                SendMessageW(hwnd, EM_SETSEL, len, strlenW(strs));
+                autoappend_str(ac, text, len, strs, hwnd);
                 if (!(ac->options & ACO_AUTOSUGGEST))
                 {
                     CoTaskMemFree(strs);
