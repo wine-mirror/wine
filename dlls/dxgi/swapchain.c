@@ -1786,7 +1786,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
-    DXGI_SWAP_CHAIN_DESC1 *desc;
+    DXGI_SWAP_CHAIN_DESC1 *desc, new_desc;
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
@@ -1808,9 +1808,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *
     }
 
     desc = &swapchain->desc;
+    new_desc = swapchain->desc;
 
-    if (!buffer_count)
-        buffer_count = desc->BufferCount;
+    if (buffer_count)
+        new_desc.BufferCount = buffer_count;
     if (!width || !height)
     {
         RECT client_rect;
@@ -1826,20 +1827,21 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *
         if (!height)
             height = client_rect.bottom;
     }
-    if (!format)
-        format = desc->Format;
+    new_desc.Width = width;
+    new_desc.Height = height;
 
-    if (desc->Width == width && desc->Height == height
-            && desc->Format == format && desc->BufferCount == buffer_count)
+    if (format)
+        new_desc.Format = format;
+
+    if (!dxgi_validate_swapchain_desc(&new_desc))
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (desc->Width == new_desc.Width && desc->Height == new_desc.Height
+            && desc->Format == new_desc.Format && desc->BufferCount == new_desc.BufferCount)
         return S_OK;
 
     d3d12_swapchain_destroy_buffers(swapchain);
-
-    desc->Width = width;
-    desc->Height = height;
-    desc->Format = format;
-    desc->BufferCount = buffer_count;
-
+    swapchain->desc = new_desc;
     if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
     {
         ERR("Failed to recreate Vulkan swapchain, hr %#x.\n", hr);
