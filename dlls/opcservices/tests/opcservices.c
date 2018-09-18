@@ -1,8 +1,7 @@
 /*
- *    Font related tests
+ *    OPC Services tests
  *
- * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
- * Copyright 2014 Aric Stewart for CodeWeavers
+ * Copyright 2018 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
