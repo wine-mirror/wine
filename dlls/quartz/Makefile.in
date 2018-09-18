@@ -7,7 +7,6 @@ C_SRCS = \
 	avidec.c \
 	avisplit.c \
 	dsoundrender.c \
-	enumfilters.c \
 	enummedia.c \
 	enummoniker.c \
 	enumregfilters.c \

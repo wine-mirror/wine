@@ -36,6 +36,7 @@
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "evcode.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 
@@ -205,6 +206,179 @@ typedef struct _IFilterGraphImpl {
     IUnknown *pSite;
     LONG version;
 } IFilterGraphImpl;
+
+struct enum_filters
+{
+    IEnumFilters IEnumFilters_iface;
+    LONG ref;
+    IGraphVersion *version_source;
+    LONG version;
+    IBaseFilter ***filters;
+    ULONG *count;
+    ULONG index;
+};
+
+static HRESULT create_enum_filters(IGraphVersion *version_source,
+        IBaseFilter ***filters, ULONG *count, IEnumFilters **out);
+
+static inline struct enum_filters *impl_from_IEnumFilters(IEnumFilters *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_filters, IEnumFilters_iface);
+}
+
+static HRESULT WINAPI EnumFilters_QueryInterface(IEnumFilters *iface, REFIID iid, void **out)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    TRACE("enum_filters %p, iid %s, out %p.\n", enum_filters, qzdebugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumFilters))
+    {
+        IEnumFilters_AddRef(*out = iface);
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", qzdebugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumFilters_AddRef(IEnumFilters *iface)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    ULONG ref = InterlockedIncrement(&enum_filters->ref);
+
+    TRACE("%p increasing refcount to %u.\n", enum_filters, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI EnumFilters_Release(IEnumFilters *iface)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    ULONG ref = InterlockedDecrement(&enum_filters->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", enum_filters, ref);
+
+    if (!ref)
+    {
+        IGraphVersion_Release(enum_filters->version_source);
+        heap_free(enum_filters);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI EnumFilters_Next(IEnumFilters *iface, ULONG count,
+        IBaseFilter **filters, ULONG *fetched)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    unsigned int i, cFetched;
+    LONG version;
+    HRESULT hr;
+
+    TRACE("enum_filters %p, count %u, filters %p, fetched %p.\n",
+            enum_filters, count, filters, fetched);
+
+    cFetched = min(*enum_filters->count, enum_filters->index + count) - enum_filters->index;
+
+    hr = IGraphVersion_QueryVersion(enum_filters->version_source, &version);
+    if (hr == S_OK && enum_filters->version != version)
+        return VFW_E_ENUM_OUT_OF_SYNC;
+
+    if (!filters)
+        return E_POINTER;
+
+    for (i = 0; i < cFetched; i++)
+    {
+        filters[i] = (*enum_filters->filters)[enum_filters->index + i];
+        IBaseFilter_AddRef(filters[i]);
+    }
+
+    enum_filters->index += cFetched;
+
+    if (fetched)
+        *fetched = cFetched;
+
+    if (cFetched != count)
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+
+    TRACE("enum_filters %p, count %u.\n", enum_filters, count);
+
+    if (enum_filters->index + count < *enum_filters->count)
+    {
+        enum_filters->index += count;
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
+static HRESULT WINAPI EnumFilters_Reset(IEnumFilters *iface)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    LONG version;
+    HRESULT hr;
+
+    TRACE("enum_filters %p.\n", enum_filters);
+
+    enum_filters->index = 0;
+    hr = IGraphVersion_QueryVersion(enum_filters->version_source, &version);
+    if (hr == S_OK)
+        enum_filters->version = version;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumFilters_Clone(IEnumFilters *iface, IEnumFilters **out)
+{
+    struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
+    HRESULT hr;
+
+    TRACE("enum_filters %p, out %p.\n", enum_filters, out);
+
+    hr = create_enum_filters(enum_filters->version_source, enum_filters->filters, enum_filters->count, out);
+    if (FAILED(hr))
+        return hr;
+    return IEnumFilters_Skip(*out, enum_filters->index);
+}
+
+static const IEnumFiltersVtbl EnumFilters_vtbl =
+{
+    EnumFilters_QueryInterface,
+    EnumFilters_AddRef,
+    EnumFilters_Release,
+    EnumFilters_Next,
+    EnumFilters_Skip,
+    EnumFilters_Reset,
+    EnumFilters_Clone,
+};
+
+static HRESULT create_enum_filters(IGraphVersion *version_source,
+    IBaseFilter ***filters, ULONG *count, IEnumFilters **out)
+{
+    struct enum_filters *enum_filters;
+    LONG version;
+    HRESULT hr;
+
+    if (!(enum_filters = heap_alloc(sizeof(*enum_filters))))
+        return E_OUTOFMEMORY;
+
+    enum_filters->IEnumFilters_iface.lpVtbl = &EnumFilters_vtbl;
+    enum_filters->ref = 1;
+    enum_filters->index = 0;
+    enum_filters->filters = filters;
+    enum_filters->count = count;
+    IGraphVersion_AddRef(enum_filters->version_source = version_source);
+    hr = IGraphVersion_QueryVersion(version_source, &version);
+    enum_filters->version = (hr == S_OK) ? version : 0;
+
+    *out = &enum_filters->IEnumFilters_iface;
+    return S_OK;
+}
 
 static inline IFilterGraphImpl *impl_from_IUnknown(IUnknown *iface)
 {
@@ -558,13 +732,13 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
     return hr; /* FIXME: check this error code */
 }
 
-static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilters **ppEnum)
+static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilters **out)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
+    TRACE("graph %p, out %p.\n", graph, out);
 
-    return IEnumFiltersImpl_Construct(&This->IGraphVersion_iface, &This->ppFiltersInGraph, &This->nFilters, ppEnum);
+    return create_enum_filters(&graph->IGraphVersion_iface, &graph->ppFiltersInGraph, &graph->nFilters, out);
 }
 
 static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
