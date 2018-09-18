@@ -386,8 +386,7 @@ static void test_custom_source(void)
     ok(hr == S_OK, "IAutoComplete_Init failed: %x\n", hr);
 
     SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
-    /* Send a keyup message since wine doesn't handle WM_CHAR yet */
-    SendMessageW(hwnd_edit, WM_KEYUP, 'u', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'u', 1);
     Sleep(100);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
