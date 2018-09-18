@@ -384,7 +384,7 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
  *	Failure: FALSE.
  *
  */
-BOOL WINAPI UnmapViewOfFile( LPCVOID addr )
+BOOL WINAPI DECLSPEC_HOTPATCH UnmapViewOfFile( const void *addr )
 {
     NTSTATUS status;
 
