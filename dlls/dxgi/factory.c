@@ -251,7 +251,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
     ID3D12CommandQueue *command_queue;
-    unsigned int min_buffer_count;
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
 
@@ -270,35 +269,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    switch (desc->SwapEffect)
-    {
-        case DXGI_SWAP_EFFECT_DISCARD:
-        case DXGI_SWAP_EFFECT_SEQUENTIAL:
-            min_buffer_count = 1;
-            break;
-
-        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
-        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
-            min_buffer_count = 2;
-
-            if (desc->SampleDesc.Count != 1 || desc->SampleDesc.Quality)
-            {
-                WARN("Invalid sample desc %u, %u for swap effect %#x.\n",
-                        desc->SampleDesc.Count, desc->SampleDesc.Quality, desc->SwapEffect);
-                return DXGI_ERROR_INVALID_CALL;
-            }
-            break;
-
-        default:
-            WARN("Invalid swap effect %u used.\n", desc->SwapEffect);
-            return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (desc->BufferCount < min_buffer_count || desc->BufferCount > DXGI_MAX_SWAP_CHAIN_BUFFERS)
-    {
-        WARN("BufferCount is %u.\n", desc->BufferCount);
+    if (!dxgi_validate_swapchain_desc(desc))
         return DXGI_ERROR_INVALID_CALL;
-    }
 
     if (output)
         FIXME("Ignoring output %p.\n", output);

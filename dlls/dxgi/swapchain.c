@@ -55,6 +55,43 @@ static DXGI_SWAP_EFFECT dxgi_swap_effect_from_wined3d(enum wined3d_swap_effect s
     }
 }
 
+BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
+{
+    unsigned int min_buffer_count;
+
+    switch (desc->SwapEffect)
+    {
+        case DXGI_SWAP_EFFECT_DISCARD:
+        case DXGI_SWAP_EFFECT_SEQUENTIAL:
+            min_buffer_count = 1;
+            break;
+
+        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
+        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
+            min_buffer_count = 2;
+
+            if (desc->SampleDesc.Count != 1 || desc->SampleDesc.Quality)
+            {
+                WARN("Invalid sample desc %u, %u for swap effect %#x.\n",
+                        desc->SampleDesc.Count, desc->SampleDesc.Quality, desc->SwapEffect);
+                return FALSE;
+            }
+            break;
+
+        default:
+            WARN("Invalid swap effect %u used.\n", desc->SwapEffect);
+            return FALSE;
+    }
+
+    if (desc->BufferCount < min_buffer_count || desc->BufferCount > DXGI_MAX_SWAP_CHAIN_BUFFERS)
+    {
+        WARN("BufferCount is %u.\n", desc->BufferCount);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static inline struct d3d11_swapchain *d3d11_swapchain_from_IDXGISwapChain1(IDXGISwapChain1 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d11_swapchain, IDXGISwapChain1_iface);
