@@ -648,7 +648,7 @@ HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)
  *  Success: S_OK. Any previous value in pVarg is freed and its type is set to VT_EMPTY.
  *  Failure: DISP_E_BADVARTYPE, if the variant is not a valid variant type.
  */
-HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
+HRESULT WINAPI DECLSPEC_HOTPATCH VariantClear(VARIANTARG* pVarg)
 {
   HRESULT hres;
 
@@ -962,8 +962,8 @@ VariantCopyInd_Return:
  *  The LCID used for the conversion is LOCALE_USER_DEFAULT.
  *  See VariantChangeTypeEx.
  */
-HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
-                                 USHORT wFlags, VARTYPE vt)
+HRESULT WINAPI DECLSPEC_HOTPATCH VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+                                                   USHORT wFlags, VARTYPE vt)
 {
   return VariantChangeTypeEx( pvargDest, pvargSrc, LOCALE_USER_DEFAULT, wFlags, vt );
 }
