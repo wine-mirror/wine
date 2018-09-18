@@ -1051,7 +1051,7 @@ BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszStat
 
     *iPartId = 0;
     *iStateId = 0;
-    for(i=0; i<sizeof(mapClass)/sizeof(mapClass[0]); i++) {
+    for(i=0; i<ARRAY_SIZE(mapClass); i++) {
         if(!lstrcmpiW(mapClass[i].pszClass, pszClass)) {
             map = mapClass[i].lpMap;
             if(pszPart) {

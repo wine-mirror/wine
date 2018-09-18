@@ -159,7 +159,7 @@ static void UXTHEME_LoadTheme(void)
     /* Get current theme configuration */
     if(!RegOpenKeyW(HKEY_CURRENT_USER, szThemeManager, &hKey)) {
         TRACE("Loading theme config\n");
-        buffsize = sizeof(tmp)/sizeof(tmp[0]);
+        buffsize = ARRAY_SIZE(tmp);
         if(!RegQueryValueExW(hKey, szThemeActive, NULL, NULL, (LPBYTE)tmp, &buffsize)) {
             bThemeActive = (tmp[0] != '0');
         }
@@ -167,10 +167,10 @@ static void UXTHEME_LoadTheme(void)
             bThemeActive = FALSE;
             TRACE("Failed to get ThemeActive: %d\n", GetLastError());
         }
-        buffsize = sizeof(szCurrentColor)/sizeof(szCurrentColor[0]);
+        buffsize = ARRAY_SIZE(szCurrentColor);
         if(RegQueryValueExW(hKey, szColorName, NULL, NULL, (LPBYTE)szCurrentColor, &buffsize))
             szCurrentColor[0] = '\0';
-        buffsize = sizeof(szCurrentSize)/sizeof(szCurrentSize[0]);
+        buffsize = ARRAY_SIZE(szCurrentSize);
         if(RegQueryValueExW(hKey, szSizeName, NULL, NULL, (LPBYTE)szCurrentSize, &buffsize))
             szCurrentSize[0] = '\0';
         if (query_reg_path (hKey, szDllName, szCurrentTheme))
@@ -194,8 +194,8 @@ static void UXTHEME_LoadTheme(void)
         }
         else {
             /* Make sure the global color & size match the theme */
-            lstrcpynW(szCurrentColor, pt->pszSelectedColor, sizeof(szCurrentColor)/sizeof(szCurrentColor[0]));
-            lstrcpynW(szCurrentSize, pt->pszSelectedSize, sizeof(szCurrentSize)/sizeof(szCurrentSize[0]));
+            lstrcpynW(szCurrentColor, pt->pszSelectedColor, ARRAY_SIZE(szCurrentColor));
+            lstrcpynW(szCurrentSize, pt->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
 
             MSSTYLES_SetActiveTheme(pt, FALSE);
             TRACE("Theme active: %s %s %s\n", debugstr_w(szCurrentTheme),
@@ -477,9 +477,9 @@ static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         return hr;
     if(tf) {
         bThemeActive = TRUE;
-        lstrcpynW(szCurrentTheme, tf->szThemeFile, sizeof(szCurrentTheme)/sizeof(szCurrentTheme[0]));
-        lstrcpynW(szCurrentColor, tf->pszSelectedColor, sizeof(szCurrentColor)/sizeof(szCurrentColor[0]));
-        lstrcpynW(szCurrentSize, tf->pszSelectedSize, sizeof(szCurrentSize)/sizeof(szCurrentSize[0]));
+        lstrcpynW(szCurrentTheme, tf->szThemeFile, ARRAY_SIZE(szCurrentTheme));
+        lstrcpynW(szCurrentColor, tf->pszSelectedColor, ARRAY_SIZE(szCurrentColor));
+        lstrcpynW(szCurrentSize, tf->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
     }
     else {
         UXTHEME_RestoreSystemMetrics();
@@ -661,9 +661,9 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
 
     if(bThemeActive)
     {
-        pszAppName = UXTHEME_GetWindowProperty(hwnd, atSubAppName, szAppBuff, sizeof(szAppBuff)/sizeof(szAppBuff[0]));
+        pszAppName = UXTHEME_GetWindowProperty(hwnd, atSubAppName, szAppBuff, ARRAY_SIZE(szAppBuff));
         /* If SetWindowTheme was used on the window, that overrides the class list passed to this function */
-        pszUseClassList = UXTHEME_GetWindowProperty(hwnd, atSubIdList, szClassBuff, sizeof(szClassBuff)/sizeof(szClassBuff[0]));
+        pszUseClassList = UXTHEME_GetWindowProperty(hwnd, atSubIdList, szClassBuff, ARRAY_SIZE(szClassBuff));
         if(!pszUseClassList)
             pszUseClassList = pszClassList;
 
@@ -837,7 +837,7 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
     /* Try to load from string resources */
     hr = E_PROP_ID_UNSUPPORTED;
     if(MSSTYLES_LookupProperty(pszPropertyName, NULL, &iDocId)) {
-        for(i=0; i<sizeof(wDocToRes)/sizeof(wDocToRes[0]); i+=2) {
+        for(i=0; i<ARRAY_SIZE(wDocToRes); i+=2) {
             if(wDocToRes[i] == iDocId) {
                 if(LoadStringW(pt->hTheme, wDocToRes[i+1], pszValueBuff, cchMaxValChars)) {
                     hr = S_OK;
@@ -1049,9 +1049,9 @@ HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
                && !(wfd.cFileName[0] == '.' && ((wfd.cFileName[1] == '.' && wfd.cFileName[2] == 0) || wfd.cFileName[1] == 0))) {
                 wsprintfW(szPath, szFormat, szDir, wfd.cFileName, wfd.cFileName);
 
-                hr = GetThemeDocumentationProperty(szPath, szDisplayName, szName, sizeof(szName)/sizeof(szName[0]));
+                hr = GetThemeDocumentationProperty(szPath, szDisplayName, szName, ARRAY_SIZE(szName));
                 if(SUCCEEDED(hr))
-                    hr = GetThemeDocumentationProperty(szPath, szTooltip, szTip, sizeof(szTip)/sizeof(szTip[0]));
+                    hr = GetThemeDocumentationProperty(szPath, szTooltip, szTip, ARRAY_SIZE(szTip));
                 if(SUCCEEDED(hr)) {
                     TRACE("callback(%s,%s,%s,%p)\n", debugstr_w(szPath), debugstr_w(szName), debugstr_w(szTip), lpData);
                     if(!callback(NULL, szPath, szName, szTip, NULL, lpData)) {
@@ -1113,12 +1113,10 @@ HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
     if(!dwColorNum && *tmp) {
         TRACE("%s\n", debugstr_w(tmp));
         lstrcpyW(pszColorNames->szName, tmp);
-        LoadStringW (pt->hTheme, resourceId,
-            pszColorNames->szDisplayName,
-            sizeof (pszColorNames->szDisplayName) / sizeof (WCHAR));
-        LoadStringW (pt->hTheme, resourceId+1000,
-            pszColorNames->szTooltip,
-            sizeof (pszColorNames->szTooltip) / sizeof (WCHAR));
+        LoadStringW(pt->hTheme, resourceId, pszColorNames->szDisplayName,
+            ARRAY_SIZE(pszColorNames->szDisplayName));
+        LoadStringW(pt->hTheme, resourceId+1000, pszColorNames->szTooltip,
+            ARRAY_SIZE(pszColorNames->szTooltip));
     }
     else
         hr = E_PROP_ID_UNSUPPORTED;
@@ -1173,12 +1171,10 @@ HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
     if(!dwSizeNum && *tmp) {
         TRACE("%s\n", debugstr_w(tmp));
         lstrcpyW(pszSizeNames->szName, tmp);
-        LoadStringW (pt->hTheme, resourceId,
-            pszSizeNames->szDisplayName,
-            sizeof (pszSizeNames->szDisplayName) / sizeof (WCHAR));
-        LoadStringW (pt->hTheme, resourceId+1000,
-            pszSizeNames->szTooltip,
-            sizeof (pszSizeNames->szTooltip) / sizeof (WCHAR));
+        LoadStringW(pt->hTheme, resourceId, pszSizeNames->szDisplayName,
+            ARRAY_SIZE(pszSizeNames->szDisplayName));
+        LoadStringW(pt->hTheme, resourceId+1000, pszSizeNames->szTooltip,
+            ARRAY_SIZE(pszSizeNames->szTooltip));
     }
     else
         hr = E_PROP_ID_UNSUPPORTED;

@@ -344,7 +344,7 @@ static BOOL MSSTYLES_ParseIniSectionName(LPCWSTR lpSection, DWORD dwLen, LPWSTR 
     WCHAR state[60] = {'\0'};
     LPWSTR tmp;
     LPWSTR comp;
-    lstrcpynW(sec, lpSection, min(dwLen+1, sizeof(sec)/sizeof(sec[0])));
+    lstrcpynW(sec, lpSection, min(dwLen+1, ARRAY_SIZE(sec)));
 
     *szAppName = 0;
     *szClassName = 0;
@@ -369,17 +369,17 @@ static BOOL MSSTYLES_ParseIniSectionName(LPCWSTR lpSection, DWORD dwLen, LPWSTR 
         tmp = strchrW(comp, '(');
         if(tmp) {
             *tmp++ = 0;
-            lstrcpynW(part, comp, sizeof(part)/sizeof(part[0]));
+            lstrcpynW(part, comp, ARRAY_SIZE(part));
             comp = tmp;
             /* now get the state */
             tmp = strchrW(comp, ')');
             if (!tmp)
                 return FALSE;
             *tmp = 0;
-            lstrcpynW(state, comp, sizeof(state)/sizeof(state[0]));
+            lstrcpynW(state, comp, ARRAY_SIZE(state));
         }
         else {
-            lstrcpynW(part, comp, sizeof(part)/sizeof(part[0]));
+            lstrcpynW(part, comp, ARRAY_SIZE(part));
         }
     }
     else {
@@ -393,7 +393,7 @@ static BOOL MSSTYLES_ParseIniSectionName(LPCWSTR lpSection, DWORD dwLen, LPWSTR 
             if (!tmp)
                 return FALSE;
             *tmp = 0;
-            lstrcpynW(state, comp, sizeof(state)/sizeof(state[0]));
+            lstrcpynW(state, comp, ARRAY_SIZE(state));
         }
         else {
             lstrcpynW(szClassName, comp, MAX_THEME_CLASS_NAME);
@@ -897,7 +897,7 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
             parse_init_nonclient (&nonClientState);
 
             while((lpName=UXINI_GetNextValue(ini, &dwLen, &lpValue, &dwValueLen))) {
-                lstrcpynW(szPropertyName, lpName, min(dwLen+1, sizeof(szPropertyName)/sizeof(szPropertyName[0])));
+                lstrcpynW(szPropertyName, lpName, min(dwLen+1, ARRAY_SIZE(szPropertyName)));
                 if(MSSTYLES_LookupProperty(szPropertyName, &iPropertyPrimitive, &iPropertyId)) {
                     if(iPropertyId >= TMT_FIRSTCOLOR && iPropertyId <= TMT_LASTCOLOR) {
                         if (!parse_handle_color_property (&colorState, iPropertyId, 
@@ -948,7 +948,7 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
             ps = MSSTYLES_AddPartState(cls, iPartId, iStateId);
 
             while((lpName=UXINI_GetNextValue(ini, &dwLen, &lpValue, &dwValueLen))) {
-                lstrcpynW(szPropertyName, lpName, min(dwLen+1, sizeof(szPropertyName)/sizeof(szPropertyName[0])));
+                lstrcpynW(szPropertyName, lpName, min(dwLen+1, ARRAY_SIZE(szPropertyName)));
                 if(MSSTYLES_LookupProperty(szPropertyName, &iPropertyPrimitive, &iPropertyId)) {
                     MSSTYLES_AddProperty(ps, iPropertyPrimitive, iPropertyId, lpValue, dwValueLen, isGlobal);
                 }
@@ -1014,13 +1014,13 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
     start = pszClassList;
     while((end = strchrW(start, ';'))) {
         len = end-start;
-        lstrcpynW(szClassName, start, min(len+1, sizeof(szClassName)/sizeof(szClassName[0])));
+        lstrcpynW(szClassName, start, min(len+1, ARRAY_SIZE(szClassName)));
         start = end+1;
         cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
         if(cls) break;
     }
     if(!cls && *start) {
-        lstrcpynW(szClassName, start, sizeof(szClassName)/sizeof(szClassName[0]));
+        lstrcpynW(szClassName, start, ARRAY_SIZE(szClassName));
         cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
     }
     if(cls) {
@@ -1120,7 +1120,7 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
     WCHAR szFile[MAX_PATH];
     LPWSTR tmp;
     PTHEME_IMAGE img;
-    lstrcpynW(szFile, lpFilename, sizeof(szFile)/sizeof(szFile[0]));
+    lstrcpynW(szFile, lpFilename, ARRAY_SIZE(szFile));
     tmp = szFile;
     do {
         if(*tmp == '\\') *tmp = '_';
@@ -1273,7 +1273,7 @@ static HRESULT MSSTYLES_GetFont (LPCWSTR lpCur, LPCWSTR lpEnd,
     pFont->lfHeight = pointSize;
     pFont->lfWeight = FW_REGULAR;
     pFont->lfCharSet = DEFAULT_CHARSET;
-    while(MSSTYLES_GetNextToken(lpCur, lpEnd, &lpCur, attr, sizeof(attr)/sizeof(attr[0]))) {
+    while(MSSTYLES_GetNextToken(lpCur, lpEnd, &lpCur, attr, ARRAY_SIZE(attr))) {
         if(!lstrcmpiW(szBold, attr)) pFont->lfWeight = FW_BOLD;
         else if(!lstrcmpiW(szItalic, attr)) pFont->lfItalic = TRUE;
         else if(!lstrcmpiW(szUnderline, attr)) pFont->lfUnderline = TRUE;

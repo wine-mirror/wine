@@ -181,7 +181,7 @@ int WINAPI GetThemeSysSize(HTHEME hTheme, int iSizeID)
     };
 
     if(hTheme) {
-        for(i=0; i<sizeof(metricMap)/sizeof(metricMap[0]); i+=2) {
+        for(i=0; i<ARRAY_SIZE(metricMap); i+=2) {
             if(metricMap[i] == iSizeID) {
                 id = metricMap[i+1];
                 break;
