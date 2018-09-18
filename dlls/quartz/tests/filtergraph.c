@@ -592,6 +592,108 @@ todo_wine
     DeleteFileW(filename);
 }
 
+static void test_enum_filters(void)
+{
+    IBaseFilter *filter1, *filter2, *filters[2];
+    IFilterGraph2 *graph = create_graph();
+    IEnumFilters *enum1, *enum2;
+    ULONG count, ref;
+    HRESULT hr;
+
+    CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter1);
+    CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter2);
+
+    hr = IFilterGraph2_EnumFilters(graph, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(enum1, 1, filters, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_AddFilter(graph, filter1, NULL);
+    IFilterGraph2_AddFilter(graph, filter2, NULL);
+
+    hr = IEnumFilters_Next(enum1, 1, filters, NULL);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(enum1, 1, filters, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
+    IBaseFilter_Release(filters[0]);
+
+    hr = IEnumFilters_Next(enum1, 1, filters, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+todo_wine
+    ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
+    IBaseFilter_Release(filters[0]);
+
+    hr = IEnumFilters_Next(enum1, 1, filters, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 0, "Got count %u.\n", count);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(enum1, 2, filters, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+todo_wine {
+    ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
+    ok(filters[1] == filter1, "Got filter %p.\n", filters[1]);
+}
+    IBaseFilter_Release(filters[0]);
+    IBaseFilter_Release(filters[1]);
+
+    IFilterGraph2_RemoveFilter(graph, filter1);
+    IFilterGraph2_AddFilter(graph, filter1, NULL);
+
+    hr = IEnumFilters_Next(enum1, 2, filters, &count);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(enum1, 2, filters, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+todo_wine {
+    ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
+    ok(filters[1] == filter2, "Got filter %p.\n", filters[1]);
+}
+    IBaseFilter_Release(filters[0]);
+    IBaseFilter_Release(filters[1]);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum2, 1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(enum2, 2, filters, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+todo_wine
+    ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
+    IBaseFilter_Release(filters[0]);
+
+    hr = IEnumFilters_Skip(enum1, 3);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumFilters_Release(enum2);
+    IEnumFilters_Release(enum1);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
 {
     WCHAR *filename = load_resource(avifile);
@@ -2402,6 +2504,7 @@ START_TEST(filtergraph)
 
     test_render_run(avifile);
     test_render_run(mpegfile);
+    test_enum_filters();
     test_graph_builder();
     test_render_filter_priority();
     test_aggregate_filter_graph();
