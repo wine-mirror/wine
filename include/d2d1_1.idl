@@ -164,6 +164,30 @@ typedef enum D2D1_LAYER_OPTIONS1
 typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
 typedef D2D_MATRIX_4X4_F D2D1_MATRIX_4X4_F;
 
+typedef enum D2D1_PROPERTY_TYPE
+{
+    D2D1_PROPERTY_TYPE_UNKNOWN = 0x0,
+    D2D1_PROPERTY_TYPE_STRING = 0x1,
+    D2D1_PROPERTY_TYPE_BOOL = 0x2,
+    D2D1_PROPERTY_TYPE_UINT32 = 0x3,
+    D2D1_PROPERTY_TYPE_INT32 = 0x4,
+    D2D1_PROPERTY_TYPE_FLOAT = 0x5,
+    D2D1_PROPERTY_TYPE_VECTOR2 = 0x6,
+    D2D1_PROPERTY_TYPE_VECTOR3 = 0x7,
+    D2D1_PROPERTY_TYPE_VECTOR4 = 0x8,
+    D2D1_PROPERTY_TYPE_BLOB = 0x9,
+    D2D1_PROPERTY_TYPE_IUNKNOWN = 0xa,
+    D2D1_PROPERTY_TYPE_ENUM = 0xb,
+    D2D1_PROPERTY_TYPE_ARRAY = 0xc,
+    D2D1_PROPERTY_TYPE_CLSID = 0xd,
+    D2D1_PROPERTY_TYPE_MATRIX_3X2 = 0xe,
+    D2D1_PROPERTY_TYPE_MATRIX_4X3 = 0xf,
+    D2D1_PROPERTY_TYPE_MATRIX_4X4 = 0x10,
+    D2D1_PROPERTY_TYPE_MATRIX_5X4 = 0x11,
+    D2D1_PROPERTY_TYPE_COLOR_CONTEXT = 0x12,
+    D2D1_PROPERTY_TYPE_FORCE_DWORD = 0xffffffff,
+} D2D1_PROPERTY_TYPE;
+
 typedef struct D2D1_STROKE_STYLE_PROPERTIES1
 {
     D2D1_CAP_STYLE startCap;
@@ -249,6 +273,86 @@ typedef struct D2D1_EFFECT_INPUT_DESCRIPTION
 } D2D1_EFFECT_INPUT_DESCRIPTION;
 
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
+
+[
+    object,
+    uuid(483473d7-cd46-4f9d-9d3a-3112aa80159d),
+    local,
+]
+interface ID2D1Properties : IUnknown
+{
+    UINT32 GetPropertyCount();
+    HRESULT GetPropertyName(
+        [in] UINT32 index,
+        [out] WCHAR *name,
+        [in] UINT32 name_count
+    );
+    UINT32 GetPropertyNameLength(
+        [in] UINT32 index
+    );
+    D2D1_PROPERTY_TYPE GetType(
+        [in] UINT32 index
+    );
+    UINT32 GetPropertyIndex(
+        [in] const WCHAR *name
+    );
+    HRESULT SetValueByName(
+        [in] const WCHAR *name,
+        [in] D2D1_PROPERTY_TYPE type,
+        [in] const BYTE *value,
+        [in] UINT32 value_size
+    );
+    HRESULT SetValue(
+        [in] UINT32 index,
+        [in] D2D1_PROPERTY_TYPE type,
+        [in] const BYTE *value,
+        [in] UINT32 value_size
+    );
+    HRESULT GetValueByName(
+        [in] const WCHAR *name,
+        [in] D2D1_PROPERTY_TYPE type,
+        [out] BYTE *value,
+        [in] UINT32 value_size
+    );
+    HRESULT GetValue(
+        [in] UINT32 index,
+        [in] D2D1_PROPERTY_TYPE type,
+        [out] BYTE *value,
+        [in] UINT32 value_size
+    );
+    UINT32 GetValueSize(
+        [in] UINT32 index
+    );
+    HRESULT GetSubProperties(
+        [in] UINT32 index,
+        [out] ID2D1Properties **props
+    );
+}
+
+[
+    object,
+    uuid(28211a43-7d89-476f-8181-2d6159b220ad),
+    local,
+]
+interface ID2D1Effect : ID2D1Properties
+{
+    void SetInput(
+        [in] UINT32 index,
+        [in] ID2D1Image *input,
+        [in] BOOL invalidate
+    );
+    HRESULT SetInputCount(
+        [in] UINT32 count
+    );
+    void GetInput(
+        [in] UINT32 index,
+        [out] ID2D1Image **input
+    );
+    UINT32 GetInputCount();
+    void GetOutput(
+        [out] ID2D1Image **output
+    );
+}
 
 [
     object,
