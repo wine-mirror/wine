@@ -55,6 +55,21 @@ static DXGI_SWAP_EFFECT dxgi_swap_effect_from_wined3d(enum wined3d_swap_effect s
     }
 }
 
+static BOOL dxgi_validate_flip_swap_effect_format(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            return TRUE;
+        default:
+            WARN("Invalid swapchain format %#x for flip presentation model.\n", format);
+            return FALSE;
+    }
+}
+
 BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
 {
     unsigned int min_buffer_count;
@@ -69,6 +84,9 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
         case DXGI_SWAP_EFFECT_FLIP_DISCARD:
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
             min_buffer_count = 2;
+
+            if (!dxgi_validate_flip_swap_effect_format(desc->Format))
+                return FALSE;
 
             if (desc->SampleDesc.Count != 1 || desc->SampleDesc.Quality)
             {
@@ -968,9 +986,7 @@ static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
 {
     switch (vk_format)
     {
-        case VK_FORMAT_B8G8R8A8_SRGB:  return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
         case VK_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case VK_FORMAT_R8G8B8A8_SRGB:  return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
         case VK_FORMAT_A2B10G10R10_UNORM_PACK32: return DXGI_FORMAT_R10G10B10A2_UNORM;
         default:
@@ -983,7 +999,6 @@ static VkFormat get_swapchain_fallback_format(VkFormat vk_format)
 {
     switch (vk_format)
     {
-        case VK_FORMAT_R8G8B8A8_SRGB:  return VK_FORMAT_B8G8R8A8_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
         case VK_FORMAT_A2B10G10R10_UNORM_PACK32: return VK_FORMAT_B8G8R8A8_UNORM;
         default:
