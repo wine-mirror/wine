@@ -3804,7 +3804,7 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     {
         swapchain_desc.SwapEffect = tests[i].swap_effect;
         expected_hr = is_d3d12 && !tests[i].supported_in_d3d12 ? DXGI_ERROR_INVALID_CALL : S_OK;
-        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
         ok(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
         if (FAILED(hr))
             continue;
@@ -3832,6 +3832,102 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     }
 
 done:
+    DestroyWindow(swapchain_desc.OutputWindow);
+    refcount = IDXGIFactory_Release(factory);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
+}
+
+static void test_swapchain_formats(IUnknown *device, BOOL is_d3d12)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    HRESULT hr, expected_hr;
+    IDXGIFactory *factory;
+    unsigned int i;
+    ULONG refcount;
+    BOOL is_flip;
+    RECT rect;
+    BOOL ret;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        DXGI_SWAP_EFFECT swap_effect;
+        BOOL supported;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R8G8B8A8_UNORM,             DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,             DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,             DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,             DXGI_SWAP_EFFECT_FLIP_DISCARD,    TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, FALSE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_FLIP_DISCARD,    FALSE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,             DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,             DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,             DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,             DXGI_SWAP_EFFECT_FLIP_DISCARD,    TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, FALSE},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        DXGI_SWAP_EFFECT_FLIP_DISCARD,    FALSE},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,          DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,          DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,          DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, TRUE},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,          DXGI_SWAP_EFFECT_FLIP_DISCARD,    TRUE},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,         DXGI_SWAP_EFFECT_DISCARD,         TRUE},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,         DXGI_SWAP_EFFECT_SEQUENTIAL,      TRUE},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,         DXGI_SWAP_EFFECT_FLIP_DISCARD,    TRUE},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,         DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, TRUE},
+        {DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, DXGI_SWAP_EFFECT_FLIP_DISCARD,    FALSE},
+        {DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, FALSE},
+    };
+
+    get_factory(device, is_d3d12, &factory);
+
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 4;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.Flags = 0;
+
+    ret = GetClientRect(swapchain_desc.OutputWindow, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain_desc.BufferDesc.Width = rect.right;
+    swapchain_desc.BufferDesc.Height = rect.bottom;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        is_flip = tests[i].swap_effect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+                || tests[i].swap_effect == DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+        if (is_d3d12 && !is_flip)
+            continue;
+
+        swapchain_desc.BufferDesc.Format = tests[i].format;
+        swapchain_desc.SwapEffect = tests[i].swap_effect;
+        hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+        expected_hr = tests[i].supported ? S_OK : DXGI_ERROR_INVALID_CALL;
+        ok(hr == expected_hr
+                /* Flip presentation model not supported. */
+                || broken(is_flip && hr == DXGI_ERROR_INVALID_CALL),
+                "Test %u: Got hr %#x, expected %#x.\n", i, hr, expected_hr);
+
+        if (SUCCEEDED(hr))
+        {
+            refcount = IDXGISwapChain_Release(swapchain);
+            ok(!refcount, "Swapchain has %u references left.\n", refcount);
+        }
+    }
+
     DestroyWindow(swapchain_desc.OutputWindow);
     refcount = IDXGIFactory_Release(factory);
     ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
@@ -4210,6 +4306,7 @@ START_TEST(dxgi)
     test_swapchain_parameters();
     run_on_d3d10(test_swapchain_resize);
     run_on_d3d10(test_swapchain_backbuffer_index);
+    run_on_d3d10(test_swapchain_formats);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -4228,6 +4325,7 @@ START_TEST(dxgi)
 
     run_on_d3d12(test_swapchain_resize);
     run_on_d3d12(test_swapchain_backbuffer_index);
+    run_on_d3d12(test_swapchain_formats);
 
     FreeLibrary(d3d12_module);
 }
