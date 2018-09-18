@@ -22,9 +22,9 @@
 #define COBJMACROS
 #define CONST_VTABLE
 
-#include "wine/test.h"
 #include "dshow.h"
-#include "control.h"
+#include "wine/heap.h"
+#include "wine/test.h"
 
 typedef struct TestFilterImpl
 {
@@ -783,1511 +783,843 @@ static void test_graph_builder(void)
     IGraphBuilder_Release(pgraph);
 }
 
-/* IEnumMediaTypes implementation (supporting code for Render() test.) */
-static void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-    if (pMediaType->pbFormat)
-    {
-        CoTaskMemFree(pMediaType->pbFormat);
-        pMediaType->pbFormat = NULL;
-    }
-    if (pMediaType->pUnk)
-    {
-        IUnknown_Release(pMediaType->pUnk);
-        pMediaType->pUnk = NULL;
-    }
-}
-
-static HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
-{
-    *pDest = *pSrc;
-    if (!pSrc->pbFormat) return S_OK;
-    if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
-        return E_OUTOFMEMORY;
-    memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
-    if (pDest->pUnk)
-        IUnknown_AddRef(pDest->pUnk);
-    return S_OK;
-}
-
-static AM_MEDIA_TYPE * CreateMediaType(AM_MEDIA_TYPE const * pSrc)
-{
-    AM_MEDIA_TYPE * pDest;
-
-    pDest = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    if (!pDest)
-        return NULL;
-
-    if (FAILED(CopyMediaType(pDest, pSrc)))
-    {
-        CoTaskMemFree(pDest);
-	return NULL;
-    }
-
-    return pDest;
-}
-
-static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards)
-{
-    return (((bWildcards && (IsEqualGUID(&pmt1->majortype, &GUID_NULL) || IsEqualGUID(&pmt2->majortype, &GUID_NULL))) || IsEqualGUID(&pmt1->majortype, &pmt2->majortype)) &&
-            ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
-}
-
-static void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-    FreeMediaType(pMediaType);
-    CoTaskMemFree(pMediaType);
-}
-
-typedef struct IEnumMediaTypesImpl
-{
-    IEnumMediaTypes IEnumMediaTypes_iface;
-    LONG refCount;
-    AM_MEDIA_TYPE *pMediaTypes;
-    ULONG cMediaTypes;
-    ULONG uIndex;
-} IEnumMediaTypesImpl;
-
-static const struct IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl;
-
-static inline IEnumMediaTypesImpl *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
-{
-    return CONTAINING_RECORD(iface, IEnumMediaTypesImpl, IEnumMediaTypes_iface);
-}
-
-static HRESULT IEnumMediaTypesImpl_Construct(const AM_MEDIA_TYPE * pMediaTypes, ULONG cMediaTypes, IEnumMediaTypes ** ppEnum)
-{
-    ULONG i;
-    IEnumMediaTypesImpl * pEnumMediaTypes = CoTaskMemAlloc(sizeof(IEnumMediaTypesImpl));
-
-    if (!pEnumMediaTypes)
-    {
-        *ppEnum = NULL;
-        return E_OUTOFMEMORY;
-    }
-    pEnumMediaTypes->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypesImpl_Vtbl;
-    pEnumMediaTypes->refCount = 1;
-    pEnumMediaTypes->uIndex = 0;
-    pEnumMediaTypes->cMediaTypes = cMediaTypes;
-    pEnumMediaTypes->pMediaTypes = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE) * cMediaTypes);
-    for (i = 0; i < cMediaTypes; i++)
-        if (FAILED(CopyMediaType(&pEnumMediaTypes->pMediaTypes[i], &pMediaTypes[i])))
-        {
-           while (i--)
-              FreeMediaType(&pEnumMediaTypes->pMediaTypes[i]);
-           CoTaskMemFree(pEnumMediaTypes->pMediaTypes);
-           return E_OUTOFMEMORY;
-        }
-    *ppEnum = &pEnumMediaTypes->IEnumMediaTypes_iface;
-    return S_OK;
-}
-
-static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface, REFIID riid, LPVOID * ppv)
-{
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IEnumMediaTypes))
-        *ppv = iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
-{
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    return refCount;
-}
-
-static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
-{
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    if (!refCount)
-    {
-        int i;
-        for (i = 0; i < This->cMediaTypes; i++)
-            FreeMediaType(&This->pMediaTypes[i]);
-        CoTaskMemFree(This->pMediaTypes);
-        CoTaskMemFree(This);
-    }
-    return refCount;
-}
-
-static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cMediaTypes, AM_MEDIA_TYPE ** ppMediaTypes, ULONG * pcFetched)
-{
-    ULONG cFetched;
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-
-    cFetched = min(This->cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
-
-    if (cFetched > 0)
-    {
-        ULONG i;
-        for (i = 0; i < cFetched; i++)
-            if (!(ppMediaTypes[i] = CreateMediaType(&This->pMediaTypes[This->uIndex + i])))
-            {
-                while (i--)
-                    DeleteMediaType(ppMediaTypes[i]);
-                *pcFetched = 0;
-                return E_OUTOFMEMORY;
-            }
-    }
-
-    if ((cMediaTypes != 1) || pcFetched)
-        *pcFetched = cFetched;
-
-    This->uIndex += cFetched;
-
-    if (cFetched != cMediaTypes)
-        return S_FALSE;
-    return S_OK;
-}
-
-static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cMediaTypes)
-{
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-
-    if (This->uIndex + cMediaTypes < This->cMediaTypes)
-    {
-        This->uIndex += cMediaTypes;
-        return S_OK;
-    }
-    return S_FALSE;
-}
-
-static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
-{
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-
-    This->uIndex = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMediaTypes ** ppEnum)
-{
-    HRESULT hr;
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-
-    hr = IEnumMediaTypesImpl_Construct(This->pMediaTypes, This->cMediaTypes, ppEnum);
-    if (FAILED(hr))
-        return hr;
-    return IEnumMediaTypes_Skip(*ppEnum, This->uIndex);
-}
-
-static const IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl =
-{
-    IEnumMediaTypesImpl_QueryInterface,
-    IEnumMediaTypesImpl_AddRef,
-    IEnumMediaTypesImpl_Release,
-    IEnumMediaTypesImpl_Next,
-    IEnumMediaTypesImpl_Skip,
-    IEnumMediaTypesImpl_Reset,
-    IEnumMediaTypesImpl_Clone
-};
-
-/* Implementation of a very stripped down pin for the test filter. Just enough
-   functionality for connecting and Render() to work. */
-
-static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
-{
-    lstrcpyW(pDest->achName, pSrc->achName);
-    pDest->dir = pSrc->dir;
-    pDest->pFilter = pSrc->pFilter;
-}
-
-typedef struct ITestPinImpl
+struct testpin
 {
     IPin IPin_iface;
-    LONG refCount;
-    LPCRITICAL_SECTION pCritSec;
-    PIN_INFO pinInfo;
-    IPin * pConnectedTo;
-    AM_MEDIA_TYPE mtCurrent;
-    LPVOID pUserData;
-} ITestPinImpl;
+    LONG ref;
+    PIN_DIRECTION dir;
+    IBaseFilter *filter;
+    IPin *peer;
 
-static inline ITestPinImpl *impl_from_IPin(IPin *iface)
+    IEnumMediaTypes IEnumMediaTypes_iface;
+    const AM_MEDIA_TYPE *types;
+    unsigned int type_count, enum_idx;
+};
+
+static inline struct testpin *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
 {
-    return CONTAINING_RECORD(iface, ITestPinImpl, IPin_iface);
+    return CONTAINING_RECORD(iface, struct testpin, IEnumMediaTypes_iface);
 }
 
-static HRESULT WINAPI  TestFilter_Pin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI testenummt_QueryInterface(IEnumMediaTypes *iface, REFIID iid, void **out)
 {
-    *ppv = NULL;
+    struct testpin *pin = impl_from_IEnumMediaTypes(iface);
+    if (winetest_debug > 1) trace("%p->QueryInterface(%s)\n", pin, wine_dbgstr_guid(iid));
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI TestFilter_Pin_AddRef(IPin * iface)
+static ULONG WINAPI testenummt_AddRef(IEnumMediaTypes *iface)
 {
-    ITestPinImpl *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-    return refCount;
+    struct testpin *pin = impl_from_IEnumMediaTypes(iface);
+    return InterlockedIncrement(&pin->ref);
 }
 
-static ULONG WINAPI TestFilter_Pin_Release(IPin * iface)
+static ULONG WINAPI testenummt_Release(IEnumMediaTypes *iface)
 {
-    ITestPinImpl *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    struct testpin *pin = impl_from_IEnumMediaTypes(iface);
+    return InterlockedDecrement(&pin->ref);
+}
 
-    if (!refCount)
+static HRESULT WINAPI testenummt_Next(IEnumMediaTypes *iface, ULONG count, AM_MEDIA_TYPE **out, ULONG *fetched)
+{
+    struct testpin *pin = impl_from_IEnumMediaTypes(iface);
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
     {
-        FreeMediaType(&This->mtCurrent);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    else
-        return refCount;
-}
-
-static HRESULT WINAPI TestFilter_InputPin_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt)
-{
-    return E_UNEXPECTED;
-}
-
-static HRESULT WINAPI TestFilter_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-    PIN_DIRECTION pindirReceive;
-    HRESULT hr = S_OK;
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (!(IsEqualIID(&pmt->majortype, &This->mtCurrent.majortype) && (IsEqualIID(&pmt->subtype, &This->mtCurrent.subtype) ||
-                                                                          IsEqualIID(&GUID_NULL, &This->mtCurrent.subtype))))
-            hr = VFW_E_TYPE_NOT_ACCEPTED;
-
-        if (This->pConnectedTo)
-            hr = VFW_E_ALREADY_CONNECTED;
-
-        if (SUCCEEDED(hr))
-        {
-            IPin_QueryDirection(pReceivePin, &pindirReceive);
-
-            if (pindirReceive != PINDIR_OUTPUT)
-            {
-                hr = VFW_E_INVALID_DIRECTION;
-            }
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            CopyMediaType(&This->mtCurrent, pmt);
-            This->pConnectedTo = pReceivePin;
-            IPin_AddRef(pReceivePin);
-        }
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_Pin_Disconnect(IPin * iface)
-{
-    HRESULT hr;
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            IPin_Release(This->pConnectedTo);
-            This->pConnectedTo = NULL;
-            hr = S_OK;
-        }
-        else
-            hr = S_FALSE;
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_Pin_ConnectedTo(IPin * iface, IPin ** ppPin)
-{
-    HRESULT hr;
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            *ppPin = This->pConnectedTo;
-            IPin_AddRef(*ppPin);
-            hr = S_OK;
-        }
-        else
-        {
-            hr = VFW_E_NOT_CONNECTED;
-            *ppPin = NULL;
-        }
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_Pin_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
-{
-    HRESULT hr;
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            CopyMediaType(pmt, &This->mtCurrent);
-            hr = S_OK;
-        }
-        else
-        {
-            ZeroMemory(pmt, sizeof(*pmt));
-            hr = VFW_E_NOT_CONNECTED;
-        }
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_Pin_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    Copy_PinInfo(pInfo, &This->pinInfo);
-    IBaseFilter_AddRef(pInfo->pFilter);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI TestFilter_Pin_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    *pPinDir = This->pinInfo.dir;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI TestFilter_Pin_QueryId(IPin * iface, LPWSTR * Id)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Pin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    if (IsEqualIID(&pmt->majortype, &This->mtCurrent.majortype) && (IsEqualIID(&pmt->subtype, &This->mtCurrent.subtype) ||
-                                                                    IsEqualIID(&GUID_NULL, &This->mtCurrent.subtype)))
-        return S_OK;
-    else
-        return VFW_E_TYPE_NOT_ACCEPTED;
-}
-
-static HRESULT WINAPI TestFilter_Pin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-
-    return IEnumMediaTypesImpl_Construct(&This->mtCurrent, 1, ppEnum);
-}
-
-static HRESULT WINAPI  TestFilter_Pin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Pin_BeginFlush(IPin * iface)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Pin_EndFlush(IPin * iface)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Pin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Pin_EndOfStream(IPin * iface)
-{
-    return E_NOTIMPL;
-}
-
-static const IPinVtbl TestFilter_InputPin_Vtbl =
-{
-    TestFilter_Pin_QueryInterface,
-    TestFilter_Pin_AddRef,
-    TestFilter_Pin_Release,
-    TestFilter_InputPin_Connect,
-    TestFilter_InputPin_ReceiveConnection,
-    TestFilter_Pin_Disconnect,
-    TestFilter_Pin_ConnectedTo,
-    TestFilter_Pin_ConnectionMediaType,
-    TestFilter_Pin_QueryPinInfo,
-    TestFilter_Pin_QueryDirection,
-    TestFilter_Pin_QueryId,
-    TestFilter_Pin_QueryAccept,
-    TestFilter_Pin_EnumMediaTypes,
-    TestFilter_Pin_QueryInternalConnections,
-    TestFilter_Pin_EndOfStream,
-    TestFilter_Pin_BeginFlush,
-    TestFilter_Pin_EndFlush,
-    TestFilter_Pin_NewSegment
-};
-
-static HRESULT WINAPI TestFilter_OutputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
-{
-    return E_UNEXPECTED;
-}
-
-/* Private helper function */
-static HRESULT TestFilter_OutputPin_ConnectSpecific(ITestPinImpl * This, IPin * pReceivePin,
-        const AM_MEDIA_TYPE * pmt)
-{
-    HRESULT hr;
-
-    This->pConnectedTo = pReceivePin;
-    IPin_AddRef(pReceivePin);
-
-    hr = IPin_ReceiveConnection(pReceivePin, &This->IPin_iface, pmt);
-
-    if (FAILED(hr))
-    {
-        IPin_Release(This->pConnectedTo);
-        This->pConnectedTo = NULL;
-    }
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
-{
-    ITestPinImpl *This = impl_from_IPin(iface);
-    HRESULT hr;
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        /* if we have been a specific type to connect with, then we can either connect
-         * with that or fail. We cannot choose different AM_MEDIA_TYPE */
-        if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
-            hr = TestFilter_OutputPin_ConnectSpecific(This, pReceivePin, pmt);
-        else
-        {
-            if (( !pmt || CompareMediaTypes(pmt, &This->mtCurrent, TRUE) ) &&
-                (TestFilter_OutputPin_ConnectSpecific(This, pReceivePin, &This->mtCurrent) == S_OK))
-                        hr = S_OK;
-            else hr = VFW_E_NO_ACCEPTABLE_TYPES;
-        } /* if negotiate media type */
-    } /* if succeeded */
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-static const IPinVtbl TestFilter_OutputPin_Vtbl =
-{
-    TestFilter_Pin_QueryInterface,
-    TestFilter_Pin_AddRef,
-    TestFilter_Pin_Release,
-    TestFilter_OutputPin_Connect,
-    TestFilter_OutputPin_ReceiveConnection,
-    TestFilter_Pin_Disconnect,
-    TestFilter_Pin_ConnectedTo,
-    TestFilter_Pin_ConnectionMediaType,
-    TestFilter_Pin_QueryPinInfo,
-    TestFilter_Pin_QueryDirection,
-    TestFilter_Pin_QueryId,
-    TestFilter_Pin_QueryAccept,
-    TestFilter_Pin_EnumMediaTypes,
-    TestFilter_Pin_QueryInternalConnections,
-    TestFilter_Pin_EndOfStream,
-    TestFilter_Pin_BeginFlush,
-    TestFilter_Pin_EndFlush,
-    TestFilter_Pin_NewSegment
-};
-
-static HRESULT TestFilter_Pin_Construct(const IPinVtbl *Pin_Vtbl, const PIN_INFO * pPinInfo, AM_MEDIA_TYPE *pinmt,
-                                        LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    ITestPinImpl * pPinImpl;
-
-    *ppPin = NULL;
-
-    pPinImpl = CoTaskMemAlloc(sizeof(ITestPinImpl));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    pPinImpl->refCount = 1;
-    pPinImpl->pConnectedTo = NULL;
-    pPinImpl->pCritSec = pCritSec;
-    Copy_PinInfo(&pPinImpl->pinInfo, pPinInfo);
-    pPinImpl->mtCurrent = *pinmt;
-
-    pPinImpl->IPin_iface.lpVtbl = Pin_Vtbl;
-
-    *ppPin = &pPinImpl->IPin_iface;
-    return S_OK;
-}
-
-/* IEnumPins implementation */
-
-typedef HRESULT (* FNOBTAINPIN)(TestFilterImpl *tf, ULONG pos, IPin **pin, DWORD *lastsynctick);
-
-typedef struct IEnumPinsImpl
-{
-    IEnumPins IEnumPins_iface;
-    LONG refCount;
-    ULONG uIndex;
-    TestFilterImpl *base;
-    FNOBTAINPIN receive_pin;
-    DWORD synctime;
-} IEnumPinsImpl;
-
-static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
-
-static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
-{
-    return CONTAINING_RECORD(iface, IEnumPinsImpl, IEnumPins_iface);
-}
-
-static HRESULT createenumpins(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, TestFilterImpl *base)
-{
-    IEnumPinsImpl * pEnumPins;
-
-    if (!ppEnum)
-        return E_POINTER;
-
-    pEnumPins = CoTaskMemAlloc(sizeof(IEnumPinsImpl));
-    if (!pEnumPins)
-    {
-        *ppEnum = NULL;
-        return E_OUTOFMEMORY;
-    }
-    pEnumPins->IEnumPins_iface.lpVtbl = &IEnumPinsImpl_Vtbl;
-    pEnumPins->refCount = 1;
-    pEnumPins->uIndex = 0;
-    pEnumPins->receive_pin = receive_pin;
-    pEnumPins->base = base;
-    IBaseFilter_AddRef(&base->IBaseFilter_iface);
-    *ppEnum = &pEnumPins->IEnumPins_iface;
-
-    receive_pin(base, ~0, NULL, &pEnumPins->synctime);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID riid, LPVOID * ppv)
-{
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IEnumPins))
-        *ppv = iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
-{
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    return refCount;
-}
-
-static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
-{
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    if (!refCount)
-    {
-        IBaseFilter_Release(&This->base->IBaseFilter_iface);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    else
-        return refCount;
-}
-
-static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
-{
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-    DWORD synctime = This->synctime;
-    HRESULT hr = S_OK;
-    ULONG i = 0;
-
-    if (!ppPins)
-        return E_POINTER;
-
-    if (cPins > 1 && !pcFetched)
-        return E_INVALIDARG;
-
-    if (pcFetched)
-        *pcFetched = 0;
-
-    while (i < cPins && hr == S_OK)
-    {
-        hr = This->receive_pin(This->base, This->uIndex + i, &ppPins[i], &synctime);
-
-        if (hr == S_OK)
-            ++i;
-
-        if (synctime != This->synctime)
+        if (pin->enum_idx + i >= pin->type_count)
             break;
+
+        out[i] = CoTaskMemAlloc(sizeof(*out[i]));
+        *out[i] = pin->types[pin->enum_idx + i];
     }
 
-    if (!i && synctime != This->synctime)
-        return VFW_E_ENUM_OUT_OF_SYNC;
+    if (fetched)
+        *fetched = i;
+    pin->enum_idx += i;
 
-    if (pcFetched)
-        *pcFetched = i;
-    This->uIndex += i;
+    return (i == count) ? S_OK : S_FALSE;
+}
 
-    if (i < cPins)
-        return S_FALSE;
+static HRESULT WINAPI testenummt_Skip(IEnumMediaTypes *iface, ULONG count)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testenummt_Reset(IEnumMediaTypes *iface)
+{
+    struct testpin *pin = impl_from_IEnumMediaTypes(iface);
+    pin->enum_idx = 0;
     return S_OK;
 }
 
-static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
+static HRESULT WINAPI testenummt_Clone(IEnumMediaTypes *iface, IEnumMediaTypes **out)
 {
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-    DWORD synctime = This->synctime;
-    HRESULT hr;
-    IPin *pin = NULL;
-
-    hr = This->receive_pin(This->base, This->uIndex + cPins, &pin, &synctime);
-    if (pin)
-        IPin_Release(pin);
-
-    if (synctime != This->synctime)
-        return VFW_E_ENUM_OUT_OF_SYNC;
-
-    if (hr == S_OK)
-        This->uIndex += cPins;
-
-    return hr;
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
+static const IEnumMediaTypesVtbl testenummt_vtbl =
 {
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-
-    This->receive_pin(This->base, ~0, NULL, &This->synctime);
-
-    This->uIndex = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum)
-{
-    HRESULT hr;
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-
-    hr = createenumpins(ppEnum, This->receive_pin, This->base);
-    if (FAILED(hr))
-        return hr;
-    return IEnumPins_Skip(*ppEnum, This->uIndex);
-}
-
-static const IEnumPinsVtbl IEnumPinsImpl_Vtbl =
-{
-    IEnumPinsImpl_QueryInterface,
-    IEnumPinsImpl_AddRef,
-    IEnumPinsImpl_Release,
-    IEnumPinsImpl_Next,
-    IEnumPinsImpl_Skip,
-    IEnumPinsImpl_Reset,
-    IEnumPinsImpl_Clone
+    testenummt_QueryInterface,
+    testenummt_AddRef,
+    testenummt_Release,
+    testenummt_Next,
+    testenummt_Skip,
+    testenummt_Reset,
+    testenummt_Clone,
 };
 
-/* Test filter implementation - a filter that has few predefined pins with single media type
- * that accept only this single media type. Enough for Render(). */
-
-typedef struct TestFilterPinData
+static inline struct testpin *impl_from_IPin(IPin *iface)
 {
-PIN_DIRECTION pinDir;
-const GUID *mediasubtype;
-} TestFilterPinData;
-
-static const IBaseFilterVtbl TestFilter_Vtbl;
-
-static inline TestFilterImpl *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, TestFilterImpl, IBaseFilter_iface);
+    return CONTAINING_RECORD(iface, struct testpin, IPin_iface);
 }
 
-static HRESULT createtestfilter(const CLSID* pClsid, const TestFilterPinData *pinData,
-        TestFilterImpl **tf)
+static HRESULT WINAPI testpin_QueryInterface(IPin *iface, REFIID iid, void **out)
 {
-    static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
-    static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n',0};
-    HRESULT hr;
-    PIN_INFO pinInfo;
-    TestFilterImpl* pTestFilter = NULL;
-    UINT nPins, i;
-    AM_MEDIA_TYPE mt;
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->QueryInterface(%s)\n", pin, wine_dbgstr_guid(iid));
 
-    pTestFilter = CoTaskMemAlloc(sizeof(TestFilterImpl));
-    if (!pTestFilter) return E_OUTOFMEMORY;
-
-    pTestFilter->clsid = *pClsid;
-    pTestFilter->IBaseFilter_iface.lpVtbl = &TestFilter_Vtbl;
-    pTestFilter->refCount = 1;
-    InitializeCriticalSection(&pTestFilter->csFilter);
-    pTestFilter->state = State_Stopped;
-
-    ZeroMemory(&pTestFilter->filterInfo, sizeof(FILTER_INFO));
-
-    nPins = 0;
-    while(pinData[nPins].mediasubtype) ++nPins;
-
-    pTestFilter->ppPins = CoTaskMemAlloc(nPins * sizeof(IPin *));
-    if (!pTestFilter->ppPins)
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
     {
-        hr = E_OUTOFMEMORY;
-        goto error;
-    }
-    ZeroMemory(pTestFilter->ppPins, nPins * sizeof(IPin *));
-
-    for (i = 0; i < nPins; i++)
-    {
-        ZeroMemory(&mt, sizeof(mt));
-        mt.majortype = MEDIATYPE_Video;
-        mt.formattype = FORMAT_None;
-        mt.subtype = *pinData[i].mediasubtype;
-
-        pinInfo.dir = pinData[i].pinDir;
-        pinInfo.pFilter = &pTestFilter->IBaseFilter_iface;
-        if (pinInfo.dir == PINDIR_INPUT)
-        {
-            lstrcpynW(pinInfo.achName, wcsInputPinName, ARRAY_SIZE(pinInfo.achName));
-            hr = TestFilter_Pin_Construct(&TestFilter_InputPin_Vtbl, &pinInfo, &mt, &pTestFilter->csFilter,
-                &pTestFilter->ppPins[i]);
-
-        }
-        else
-        {
-            lstrcpynW(pinInfo.achName, wcsOutputPinName, ARRAY_SIZE(pinInfo.achName));
-            hr = TestFilter_Pin_Construct(&TestFilter_OutputPin_Vtbl, &pinInfo, &mt, &pTestFilter->csFilter,
-                 &pTestFilter->ppPins[i]);
-        }
-        if (FAILED(hr) || !pTestFilter->ppPins[i]) goto error;
-    }
-
-    pTestFilter->nPins = nPins;
-    *tf = pTestFilter;
-    return S_OK;
-
-    error:
-
-    if (pTestFilter->ppPins)
-    {
-        for (i = 0; i < nPins; i++)
-        {
-            if (pTestFilter->ppPins[i]) IPin_Release(pTestFilter->ppPins[i]);
-        }
-    }
-    CoTaskMemFree(pTestFilter->ppPins);
-    DeleteCriticalSection(&pTestFilter->csFilter);
-    CoTaskMemFree(pTestFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI TestFilter_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
+        *out = &pin->IPin_iface;
+        IPin_AddRef(*out);
         return S_OK;
     }
 
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI TestFilter_AddRef(IBaseFilter * iface)
+ULONG WINAPI testpin_AddRef(IPin *iface)
 {
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    return refCount;
+    struct testpin *pin = impl_from_IPin(iface);
+    return InterlockedIncrement(&pin->ref);
 }
 
-static ULONG WINAPI TestFilter_Release(IBaseFilter * iface)
+ULONG WINAPI testpin_Release(IPin *iface)
 {
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    if (!refCount)
-    {
-        ULONG i;
-
-        for (i = 0; i < This->nPins; i++)
-        {
-            IPin *pConnectedTo;
-
-            if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[i], &pConnectedTo)))
-            {
-                IPin_Disconnect(pConnectedTo);
-                IPin_Release(pConnectedTo);
-            }
-            IPin_Disconnect(This->ppPins[i]);
-
-            IPin_Release(This->ppPins[i]);
-        }
-
-        CoTaskMemFree(This->ppPins);
-
-        DeleteCriticalSection(&This->csFilter);
-
-        CoTaskMemFree(This);
-
-        return 0;
-    }
-    else
-        return refCount;
-}
-/** IPersist methods **/
-
-static HRESULT WINAPI TestFilter_GetClassID(IBaseFilter * iface, CLSID * pClsid)
-{
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-
-    *pClsid = This->clsid;
-
-    return S_OK;
+    struct testpin *pin = impl_from_IPin(iface);
+    return InterlockedDecrement(&pin->ref);
 }
 
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI TestFilter_Stop(IBaseFilter * iface)
+static HRESULT WINAPI testpin_Disconnect(IPin *iface)
 {
-    return E_NOTIMPL;
-}
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->Disconnect()\n", pin);
 
-static HRESULT WINAPI TestFilter_Pause(IBaseFilter * iface)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
-{
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        *pState = This->state;
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI TestFilter_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
-{
-    return E_NOTIMPL;
-}
-
-/** IBaseFilter implementation **/
-
-static HRESULT getpin_callback(TestFilterImpl *tf, ULONG pos, IPin **pin, DWORD *lastsynctick)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    *lastsynctick = 0;
-
-    if (pos >= tf->nPins)
+    if (!pin->peer)
         return S_FALSE;
 
-    *pin = tf->ppPins[pos];
-    IPin_AddRef(*pin);
+    IPin_Release(pin->peer);
+    pin->peer = NULL;
     return S_OK;
 }
 
-static HRESULT WINAPI TestFilter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+static HRESULT WINAPI testpin_ConnectedTo(IPin *iface, IPin **peer)
 {
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->ConnectedTo()\n", pin);
 
-    return createenumpins(ppEnum, getpin_callback, This);
-}
-
-static HRESULT WINAPI TestFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI TestFilter_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
-{
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-
-    lstrcpyW(pInfo->achName, This->filterInfo.achName);
-    pInfo->pGraph = This->filterInfo.pGraph;
-
-    if (pInfo->pGraph)
-        IFilterGraph_AddRef(pInfo->pGraph);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI TestFilter_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
-{
-    HRESULT hr = S_OK;
-    TestFilterImpl *This = impl_from_IBaseFilter(iface);
-
-    EnterCriticalSection(&This->csFilter);
+    *peer = pin->peer;
+    if (*peer)
     {
-        if (pName)
-            lstrcpyW(This->filterInfo.achName, pName);
-        else
-            *This->filterInfo.achName = '\0';
-        This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
+        IPin_AddRef(*peer);
+        return S_OK;
     }
-    LeaveCriticalSection(&This->csFilter);
-
-    return hr;
+    return VFW_E_NOT_CONNECTED;
 }
 
-static HRESULT WINAPI TestFilter_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
+static HRESULT WINAPI testpin_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *mt)
 {
+    ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
 
-static const IBaseFilterVtbl TestFilter_Vtbl =
+static HRESULT WINAPI testpin_QueryPinInfo(IPin *iface, PIN_INFO *info)
 {
-    TestFilter_QueryInterface,
-    TestFilter_AddRef,
-    TestFilter_Release,
-    TestFilter_GetClassID,
-    TestFilter_Stop,
-    TestFilter_Pause,
-    TestFilter_Run,
-    TestFilter_GetState,
-    TestFilter_SetSyncSource,
-    TestFilter_GetSyncSource,
-    TestFilter_EnumPins,
-    TestFilter_FindPin,
-    TestFilter_QueryFilterInfo,
-    TestFilter_JoinFilterGraph,
-    TestFilter_QueryVendorInfo
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->QueryPinInfo()\n", pin);
+
+    info->pFilter = pin->filter;
+    IBaseFilter_AddRef(pin->filter);
+    info->dir = pin->dir;
+    info->achName[0] = 0;
+    return S_OK;
+}
+
+
+static HRESULT WINAPI testpin_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
+{
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->QueryDirection()\n", pin);
+
+    *dir = pin->dir;
+    return S_OK;
+}
+
+static HRESULT WINAPI testpin_QueryId(IPin *iface, WCHAR **id)
+{
+    if (winetest_debug > 1) trace("%p->QueryId()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **out)
+{
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->EnumMediaTypes()\n", pin);
+
+    *out = &pin->IEnumMediaTypes_iface;
+    IEnumMediaTypes_AddRef(*out);
+    pin->enum_idx = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI testpin_QueryInternalConnections(IPin *iface, IPin **out, ULONG *count)
+{
+    if (winetest_debug > 1) trace("%p->QueryInternalConnections()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_BeginFlush(IPin *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_EndFlush(IPin * iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpin_EndOfStream(IPin *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testsink_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testsink_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->ReceiveConnection(%p)\n", pin, peer);
+
+    pin->peer = peer;
+    IPin_AddRef(peer);
+    return S_OK;
+}
+
+static HRESULT WINAPI testsink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IPinVtbl testsink_vtbl =
+{
+    testpin_QueryInterface,
+    testpin_AddRef,
+    testpin_Release,
+    testsink_Connect,
+    testsink_ReceiveConnection,
+    testpin_Disconnect,
+    testpin_ConnectedTo,
+    testpin_ConnectionMediaType,
+    testpin_QueryPinInfo,
+    testpin_QueryDirection,
+    testpin_QueryId,
+    testpin_QueryAccept,
+    testsink_EnumMediaTypes,
+    testpin_QueryInternalConnections,
+    testpin_EndOfStream,
+    testpin_BeginFlush,
+    testpin_EndFlush,
+    testpin_NewSegment
 };
 
-/* IClassFactory implementation */
+static void testsink_init(struct testpin *pin)
+{
+    memset(pin, 0, sizeof(*pin));
+    pin->IPin_iface.lpVtbl = &testsink_vtbl;
+    pin->ref = 1;
+    pin->dir = PINDIR_INPUT;
 
-typedef struct TestClassFactoryImpl
+    pin->IEnumMediaTypes_iface.lpVtbl = &testenummt_vtbl;
+}
+
+static HRESULT WINAPI testsource_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->Connect(%p)\n", pin, peer);
+
+    ok(!mt, "Got media type %p.\n", mt);
+
+    pin->peer = peer;
+    IPin_AddRef(peer);
+    return IPin_ReceiveConnection(peer, &pin->IPin_iface, mt);
+}
+
+static HRESULT WINAPI testsource_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IPinVtbl testsource_vtbl =
+{
+    testpin_QueryInterface,
+    testpin_AddRef,
+    testpin_Release,
+    testsource_Connect,
+    testsource_ReceiveConnection,
+    testpin_Disconnect,
+    testpin_ConnectedTo,
+    testpin_ConnectionMediaType,
+    testpin_QueryPinInfo,
+    testpin_QueryDirection,
+    testpin_QueryId,
+    testpin_QueryAccept,
+    testpin_EnumMediaTypes,
+    testpin_QueryInternalConnections,
+    testpin_EndOfStream,
+    testpin_BeginFlush,
+    testpin_EndFlush,
+    testpin_NewSegment
+};
+
+static void testsource_init(struct testpin *pin, const AM_MEDIA_TYPE *types, int type_count)
+{
+    memset(pin, 0, sizeof(*pin));
+    pin->IPin_iface.lpVtbl = &testsource_vtbl;
+    pin->ref = 1;
+    pin->dir = PINDIR_OUTPUT;
+
+    pin->IEnumMediaTypes_iface.lpVtbl = &testenummt_vtbl;
+    pin->types = types;
+    pin->type_count = type_count;
+}
+
+struct testfilter
+{
+    IBaseFilter IBaseFilter_iface;
+    LONG ref;
+    IFilterGraph *graph;
+    WCHAR *name;
+
+    IEnumPins IEnumPins_iface;
+    struct testpin *pins;
+    unsigned int pin_count, enum_idx;
+};
+
+static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IEnumPins_iface);
+}
+
+static HRESULT WINAPI testenumpins_QueryInterface(IEnumPins *iface, REFIID iid, void **out)
+{
+    ok(0, "Unexpected iid %s.\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testenumpins_AddRef(IEnumPins * iface)
+{
+    struct testfilter *filter = impl_from_IEnumPins(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testenumpins_Release(IEnumPins * iface)
+{
+    struct testfilter *filter = impl_from_IEnumPins(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static HRESULT WINAPI testenumpins_Next(IEnumPins *iface, ULONG count, IPin **out, ULONG *fetched)
+{
+    struct testfilter *filter = impl_from_IEnumPins(iface);
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (filter->enum_idx + i >= filter->pin_count)
+            break;
+
+        out[i] = &filter->pins[filter->enum_idx + i].IPin_iface;
+        IPin_AddRef(out[i]);
+    }
+
+    if (fetched)
+        *fetched = i;
+    filter->enum_idx += i;
+
+    return (i == count) ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI testenumpins_Skip(IEnumPins *iface, ULONG count)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testenumpins_Reset(IEnumPins *iface)
+{
+    struct testfilter *filter = impl_from_IEnumPins(iface);
+    filter->enum_idx = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI testenumpins_Clone(IEnumPins *iface, IEnumPins **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IEnumPinsVtbl testenumpins_vtbl =
+{
+    testenumpins_QueryInterface,
+    testenumpins_AddRef,
+    testenumpins_Release,
+    testenumpins_Next,
+    testenumpins_Skip,
+    testenumpins_Reset,
+    testenumpins_Clone,
+};
+
+static inline struct testfilter *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IBaseFilter_iface);
+}
+
+static HRESULT WINAPI testfilter_QueryInterface(IBaseFilter *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->QueryInterface(%s)\n", filter, wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IPersist)
+            || IsEqualGUID(iid, &IID_IMediaFilter)
+            || IsEqualGUID(iid, &IID_IBaseFilter))
+    {
+        *out = &filter->IBaseFilter_iface;
+        IBaseFilter_AddRef(*out);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testfilter_AddRef(IBaseFilter *iface)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testfilter_Release(IBaseFilter *iface)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static HRESULT WINAPI testfilter_GetClassID(IBaseFilter *iface, CLSID *clsid)
+{
+    if (winetest_debug > 1) trace("%p->GetClassID()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_Stop(IBaseFilter *iface)
+{
+    if (winetest_debug > 1) trace("%p->Stop()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_Pause(IBaseFilter *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_Run(IBaseFilter *iface, REFERENCE_TIME start)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_STATE *state)
+{
+    if (winetest_debug > 1) trace("%p->GetState()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
+{
+    if (winetest_debug > 1) trace("%p->SetSyncSource(%p)\n", iface, clock);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_GetSyncSource(IBaseFilter *iface, IReferenceClock **clock)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_EnumPins(IBaseFilter *iface, IEnumPins **out)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->EnumPins()\n", filter);
+
+    *out = &filter->IEnumPins_iface;
+    IEnumPins_AddRef(*out);
+    filter->enum_idx = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI testfilter_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **pin)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testfilter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *info)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->QueryFilterInfo()\n", filter);
+
+    info->pGraph = filter->graph;
+    if (filter->graph)
+        IFilterGraph_AddRef(filter->graph);
+    if (filter->name)
+        lstrcpyW(info->achName, filter->name);
+    else
+        info->achName[0] = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI testfilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, const WCHAR *name)
+{
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->JoinFilterGraph(%p, %s)\n", filter, graph, wine_dbgstr_w(name));
+
+    filter->graph = graph;
+    heap_free(filter->name);
+    if (name)
+    {
+        filter->name = heap_alloc((lstrlenW(name)+1)*sizeof(WCHAR));
+        lstrcpyW(filter->name, name);
+    }
+    else
+        filter->name = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI testfilter_QueryVendorInfo(IBaseFilter * iface, WCHAR **info)
+{
+    return E_NOTIMPL;
+}
+
+static const IBaseFilterVtbl testfilter_vtbl =
+{
+    testfilter_QueryInterface,
+    testfilter_AddRef,
+    testfilter_Release,
+    testfilter_GetClassID,
+    testfilter_Stop,
+    testfilter_Pause,
+    testfilter_Run,
+    testfilter_GetState,
+    testfilter_SetSyncSource,
+    testfilter_GetSyncSource,
+    testfilter_EnumPins,
+    testfilter_FindPin,
+    testfilter_QueryFilterInfo,
+    testfilter_JoinFilterGraph,
+    testfilter_QueryVendorInfo
+};
+
+struct testfilter_cf
 {
     IClassFactory IClassFactory_iface;
-    const TestFilterPinData *filterPinData;
-    const CLSID *clsid;
-} TestClassFactoryImpl;
+    struct testfilter *filter;
+};
 
-static inline TestClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+static void testfilter_init(struct testfilter *filter, struct testpin *pins, int pin_count)
 {
-    return CONTAINING_RECORD(iface, TestClassFactoryImpl, IClassFactory_iface);
+    unsigned int i;
+
+    memset(filter, 0, sizeof(*filter));
+    filter->IBaseFilter_iface.lpVtbl = &testfilter_vtbl;
+    filter->IEnumPins_iface.lpVtbl = &testenumpins_vtbl;
+    filter->ref = 1;
+    filter->pins = pins;
+    filter->pin_count = pin_count;
+    for (i = 0; i < pin_count; i++)
+        pins[i].filter = &filter->IBaseFilter_iface;
 }
 
-static HRESULT WINAPI Test_IClassFactory_QueryInterface(
-    LPCLASSFACTORY iface,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI testfilter_cf_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
 {
-    if (ppvObj == NULL) return E_POINTER;
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IClassFactory))
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
     {
-        *ppvObj = iface;
-        IClassFactory_AddRef(iface);
+        *out = iface;
         return S_OK;
     }
 
-    *ppvObj = NULL;
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Test_IClassFactory_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI testfilter_cf_AddRef(IClassFactory *iface)
 {
-    return 2; /* non-heap-based object */
+    return 2;
 }
 
-static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI testfilter_cf_Release(IClassFactory *iface)
 {
-    return 1; /* non-heap-based object */
+    return 1;
 }
 
-static HRESULT WINAPI Test_IClassFactory_CreateInstance(
-    LPCLASSFACTORY iface,
-    LPUNKNOWN pUnkOuter,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI testfilter_cf_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID iid, void **out)
 {
-    TestClassFactoryImpl *This = impl_from_IClassFactory(iface);
-    HRESULT hr;
-    TestFilterImpl *testfilter;
+    struct testfilter_cf *factory = CONTAINING_RECORD(iface, struct testfilter_cf, IClassFactory_iface);
 
-    *ppvObj = NULL;
-
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
-
-    hr = createtestfilter(This->clsid, This->filterPinData, &testfilter);
-    if (SUCCEEDED(hr)) {
-        hr = IBaseFilter_QueryInterface(&testfilter->IBaseFilter_iface, riid, ppvObj);
-        IBaseFilter_Release(&testfilter->IBaseFilter_iface);
-    }
-    return hr;
+    return IBaseFilter_QueryInterface(&factory->filter->IBaseFilter_iface, iid, out);
 }
 
-static HRESULT WINAPI Test_IClassFactory_LockServer(
-    LPCLASSFACTORY iface,
-    BOOL fLock)
+static HRESULT WINAPI testfilter_cf_LockServer(IClassFactory *iface, BOOL lock)
 {
-    return S_OK;
+    return E_NOTIMPL;
 }
 
-static IClassFactoryVtbl TestClassFactory_Vtbl =
+static IClassFactoryVtbl testfilter_cf_vtbl =
 {
-    Test_IClassFactory_QueryInterface,
-    Test_IClassFactory_AddRef,
-    Test_IClassFactory_Release,
-    Test_IClassFactory_CreateInstance,
-    Test_IClassFactory_LockServer
+    testfilter_cf_QueryInterface,
+    testfilter_cf_AddRef,
+    testfilter_cf_Release,
+    testfilter_cf_CreateInstance,
+    testfilter_cf_LockServer,
 };
 
-static HRESULT get_connected_filter_name(TestFilterImpl *pFilter, char *FilterName)
+static void test_graph_builder_render(void)
 {
-    IPin *pin = NULL;
-    PIN_INFO pinInfo;
-    FILTER_INFO filterInfo;
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const GUID sink1_clsid = {0x12345678};
+    static const GUID sink2_clsid = {0x87654321};
+    AM_MEDIA_TYPE source_type = {{0}};
+    struct testpin source_pin, sink1_pin, sink2_pin, parser_pins[2];
+    struct testfilter source, sink1, sink2, parser;
+    struct testfilter_cf sink1_cf = { {&testfilter_cf_vtbl}, &sink1 };
+    struct testfilter_cf sink2_cf = { {&testfilter_cf_vtbl}, &sink2 };
+
+    IFilterGraph2 *graph = create_graph();
+    REGFILTERPINS2 regpins = {0};
+    REGPINTYPES regtypes = {0};
+    REGFILTER2 regfilter = {0};
+    IFilterMapper2 *mapper;
+    DWORD cookie1, cookie2;
     HRESULT hr;
-
-    FilterName[0] = 0;
-
-    hr = IPin_ConnectedTo(pFilter->ppPins[0], &pin);
-    ok(hr == S_OK, "IPin_ConnectedTo failed with %x\n", hr);
-
-    hr = IPin_QueryPinInfo(pin, &pinInfo);
-    ok(hr == S_OK, "IPin_QueryPinInfo failed with %x\n", hr);
-    IPin_Release(pin);
-
-    SetLastError(0xdeadbeef);
-    hr = IBaseFilter_QueryFilterInfo(pinInfo.pFilter, &filterInfo);
-    if (hr == S_OK && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        IBaseFilter_Release(pinInfo.pFilter);
-        return E_NOTIMPL;
-    }
-    ok(hr == S_OK, "IBaseFilter_QueryFilterInfo failed with %x\n", hr);
-    IBaseFilter_Release(pinInfo.pFilter);
-
-    IFilterGraph_Release(filterInfo.pGraph);
-
-    WideCharToMultiByte(CP_ACP, 0, filterInfo.achName, -1, FilterName, MAX_FILTER_NAME, NULL, NULL);
-
-    return S_OK;
-}
-
-static void test_render_filter_priority(void)
-{
-    /* Tests filter choice priorities in Render(). */
-    DWORD cookie1 = 0, cookie2 = 0, cookie3 = 0;
-    HRESULT hr;
-    IFilterGraph2* pgraph2 = NULL;
-    IFilterMapper2 *pMapper2 = NULL;
-    TestFilterImpl *ptestfilter = NULL;
-    TestFilterImpl *ptestfilter2 = NULL;
-    static const CLSID CLSID_TestFilter2 = {
-        0x37a4edb0,
-        0x4d13,
-        0x11dd,
-        {0xe8, 0x9b, 0x00, 0x19, 0x66, 0x2f, 0xf0, 0xce}
-    };
-    static const CLSID CLSID_TestFilter3 = {
-        0x37a4f2d8,
-        0x4d13,
-        0x11dd,
-        {0xe8, 0x9b, 0x00, 0x19, 0x66, 0x2f, 0xf0, 0xce}
-    };
-    static const CLSID CLSID_TestFilter4 = {
-        0x37a4f3b4,
-        0x4d13,
-        0x11dd,
-        {0xe8, 0x9b, 0x00, 0x19, 0x66, 0x2f, 0xf0, 0xce}
-    };
-    static const GUID mediasubtype1 = {
-        0x37a4f51c,
-        0x4d13,
-        0x11dd,
-        {0xe8, 0x9b, 0x00, 0x19, 0x66, 0x2f, 0xf0, 0xce}
-    };
-    static const GUID mediasubtype2 = {
-        0x37a4f5c6,
-        0x4d13,
-        0x11dd,
-        {0xe8, 0x9b, 0x00, 0x19, 0x66, 0x2f, 0xf0, 0xce}
-    };
-    static const TestFilterPinData PinData1[] = {
-            { PINDIR_OUTPUT, &mediasubtype1 },
-            { 0, 0 }
-        };
-    static const TestFilterPinData PinData2[] = {
-            { PINDIR_INPUT,  &mediasubtype1 },
-            { 0, 0 }
-        };
-    static const TestFilterPinData PinData3[] = {
-            { PINDIR_INPUT,  &GUID_NULL },
-            { 0, 0 }
-        };
-    static const TestFilterPinData PinData4[] = {
-            { PINDIR_INPUT,  &mediasubtype1 },
-            { PINDIR_OUTPUT, &mediasubtype2 },
-            { 0, 0 }
-        };
-    static const TestFilterPinData PinData5[] = {
-            { PINDIR_INPUT,  &mediasubtype2 },
-            { 0, 0 }
-        };
-    TestClassFactoryImpl Filter1ClassFactory = {
-            { &TestClassFactory_Vtbl },
-            PinData2, &CLSID_TestFilter2
-        };
-    TestClassFactoryImpl Filter2ClassFactory = {
-            { &TestClassFactory_Vtbl },
-            PinData4, &CLSID_TestFilter3
-        };
-    TestClassFactoryImpl Filter3ClassFactory = {
-            { &TestClassFactory_Vtbl },
-            PinData5, &CLSID_TestFilter4
-        };
-    char ConnectedFilterName1[MAX_FILTER_NAME];
-    char ConnectedFilterName2[MAX_FILTER_NAME];
-    REGFILTER2 rgf2;
-    REGFILTERPINS2 rgPins2[2];
-    REGPINTYPES rgPinType[2];
-    static const WCHAR wszFilterInstanceName1[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 'I',
-                                                        'n', 's', 't', 'a', 'n', 'c', 'e', '1', 0 };
-    static const WCHAR wszFilterInstanceName2[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 'I',
-                                                        'n', 's', 't', 'a', 'n', 'c', 'e', '2', 0 };
-    static const WCHAR wszFilterInstanceName3[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 'I',
-                                                        'n', 's', 't', 'a', 'n', 'c', 'e', '3', 0 };
-    static const WCHAR wszFilterInstanceName4[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 'I',
-                                                        'n', 's', 't', 'a', 'n', 'c', 'e', '4', 0 };
-
-    /* Test which renderer of two already added to the graph will be chosen
-     * (one is "exact" match, other is "wildcard" match. Seems to depend
-     * on the order in which filters are added to the graph, thus indicating
-     * no preference given to exact match. */
-    pgraph2 = create_graph();
-
-    hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData3, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-    ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
-
-    hr = get_connected_filter_name(ptestfilter, ConnectedFilterName1);
-
-    IFilterGraph2_Release(pgraph2);
-    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    pgraph2 = create_graph();
-
-    hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = createtestfilter(&GUID_NULL, PinData3, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-    ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
-
-    hr = IFilterGraph2_Disconnect(pgraph2, NULL);
-    ok(hr == E_POINTER, "IFilterGraph2_Disconnect failed. Expected E_POINTER, received %08x\n", hr);
-
-    get_connected_filter_name(ptestfilter, ConnectedFilterName2);
-    ok(strcmp(ConnectedFilterName1, ConnectedFilterName2),
-        "expected connected filters to be different but got %s both times\n", ConnectedFilterName1);
-
-    IFilterGraph2_Release(pgraph2);
-    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    /* Test if any preference is given to existing renderer which renders the pin directly vs
-       an existing renderer which renders the pin indirectly, through an additional middle filter,
-       again trying different orders of creation. Native appears not to give a preference. */
-
-    pgraph2 = create_graph();
-
-    hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData4, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData5, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName4);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-    ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
-
-    get_connected_filter_name(ptestfilter, ConnectedFilterName1);
-    ok(!strcmp(ConnectedFilterName1, "TestfilterInstance3") || !strcmp(ConnectedFilterName1, "TestfilterInstance2"),
-            "unexpected connected filter: %s\n", ConnectedFilterName1);
-
-    IFilterGraph2_Release(pgraph2);
-    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    pgraph2 = create_graph();
-
-    hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = createtestfilter(&GUID_NULL, PinData4, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName3);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData5, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName4);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    hr = createtestfilter(&GUID_NULL, PinData2, &ptestfilter2);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter2->IBaseFilter_iface, wszFilterInstanceName2);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-    ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
-
-    get_connected_filter_name(ptestfilter, ConnectedFilterName2);
-    ok(!strcmp(ConnectedFilterName2, "TestfilterInstance3") || !strcmp(ConnectedFilterName2, "TestfilterInstance2"),
-            "unexpected connected filter: %s\n", ConnectedFilterName2);
-    ok(strcmp(ConnectedFilterName1, ConnectedFilterName2),
-        "expected connected filters to be different but got %s both times\n", ConnectedFilterName1);
-
-    IFilterGraph2_Release(pgraph2);
-    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    IBaseFilter_Release(&ptestfilter2->IBaseFilter_iface);
-
-    /* Test if renderers are tried before non-renderers (intermediary filters). */
-    pgraph2 = create_graph();
-
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-
-    hr = createtestfilter(&GUID_NULL, PinData1, &ptestfilter);
-    ok(hr == S_OK, "createtestfilter failed with %08x\n", hr);
-
-    hr = IFilterGraph2_AddFilter(pgraph2, &ptestfilter->IBaseFilter_iface, wszFilterInstanceName1);
-    ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
-
-    /* Register our filters with COM and with Filtermapper. */
-    hr = CoRegisterClassObject(Filter1ClassFactory.clsid,
-            (IUnknown *)&Filter1ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
-            REGCLS_MULTIPLEUSE, &cookie1);
-    ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-    hr = CoRegisterClassObject(Filter2ClassFactory.clsid,
-            (IUnknown *)&Filter2ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
-            REGCLS_MULTIPLEUSE, &cookie2);
-    ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-    hr = CoRegisterClassObject(Filter3ClassFactory.clsid,
-            (IUnknown *)&Filter3ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
-            REGCLS_MULTIPLEUSE, &cookie3);
-    ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
-
-    rgf2.dwVersion = 2;
-    rgf2.dwMerit = MERIT_UNLIKELY;
-    S2(U(rgf2)).cPins2 = 1;
-    S2(U(rgf2)).rgPins2 = rgPins2;
-    rgPins2[0].dwFlags = REG_PINFLAG_B_RENDERER;
-    rgPins2[0].cInstances = 1;
-    rgPins2[0].nMediaTypes = 1;
-    rgPins2[0].lpMediaType = &rgPinType[0];
-    rgPins2[0].nMediums = 0;
-    rgPins2[0].lpMedium = NULL;
-    rgPins2[0].clsPinCategory = NULL;
-    rgPinType[0].clsMajorType = &MEDIATYPE_Video;
-    rgPinType[0].clsMinorType = &mediasubtype1;
-
-    hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter2, wszFilterInstanceName2, NULL,
-                    &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
+    ULONG ref;
+
+    memset(&source_type.majortype, 0xcc, sizeof(GUID));
+    testsource_init(&source_pin, &source_type, 1);
+    testfilter_init(&source, &source_pin, 1);
+    testsink_init(&sink1_pin);
+    testfilter_init(&sink1, &sink1_pin, 1);
+    testsink_init(&sink2_pin);
+    testfilter_init(&sink2, &sink2_pin, 1);
+    testsink_init(&parser_pins[0]);
+    testsource_init(&parser_pins[1], &source_type, 1);
+    testfilter_init(&parser, parser_pins, 2);
+
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+
+    IFilterGraph2_RemoveFilter(graph, &sink1.IBaseFilter_iface);
+    IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    IFilterGraph2_Disconnect(graph, &sink1_pin.IPin_iface);
+
+    /* No preference is given to smaller chains. */
+
+    IFilterGraph2_AddFilter(graph, &parser.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(parser_pins[1].peer == &sink1_pin.IPin_iface, "Got peer %p.\n", parser_pins[1].peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+
+    IFilterGraph2_RemoveFilter(graph, &sink1.IBaseFilter_iface);
+    IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Test enumeration of filters from the registry. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+
+    CoRegisterClassObject(&sink1_clsid, (IUnknown *)&sink1_cf.IClassFactory_iface,
+            CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie1);
+    CoRegisterClassObject(&sink2_clsid, (IUnknown *)&sink2_cf.IClassFactory_iface,
+            CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie2);
+
+    CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (void **)&mapper);
+
+    regfilter.dwVersion = 2;
+    regfilter.dwMerit = MERIT_UNLIKELY;
+    regfilter.cPins2 = 1;
+    regfilter.rgPins2 = &regpins;
+    regpins.dwFlags = 0;
+    regpins.cInstances = 1;
+    regpins.nMediaTypes = 1;
+    regpins.lpMediaType = &regtypes;
+    regtypes.clsMajorType = &source_type.majortype;
+    regtypes.clsMinorType = &MEDIASUBTYPE_NULL;
+    hr = IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
     if (hr == E_ACCESSDENIED)
-        skip("Not authorized to register filters\n");
-    else
     {
-        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
-
-        rgf2.dwMerit = MERIT_PREFERRED;
-        rgPinType[0].clsMinorType = &mediasubtype2;
-
-        hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter4, wszFilterInstanceName4, NULL,
-                    &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
-        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
-
-        S2(U(rgf2)).cPins2 = 2;
-        rgPins2[0].dwFlags = 0;
-        rgPinType[0].clsMinorType = &mediasubtype1;
-
-        rgPins2[1].dwFlags = REG_PINFLAG_B_OUTPUT;
-        rgPins2[1].cInstances = 1;
-        rgPins2[1].nMediaTypes = 1;
-        rgPins2[1].lpMediaType = &rgPinType[1];
-        rgPins2[1].nMediums = 0;
-        rgPins2[1].lpMedium = NULL;
-        rgPins2[1].clsPinCategory = NULL;
-        rgPinType[1].clsMajorType = &MEDIATYPE_Video;
-        rgPinType[1].clsMinorType = &mediasubtype2;
-
-        hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter3, wszFilterInstanceName3, NULL,
-                    &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
-        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
-
-        hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-        ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
-
-        get_connected_filter_name(ptestfilter, ConnectedFilterName1);
-        ok(!strcmp(ConnectedFilterName1, "TestfilterInstance3"),
-           "unexpected connected filter: %s\n", ConnectedFilterName1);
-
-        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-                &CLSID_TestFilter2);
-        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
-        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-                &CLSID_TestFilter3);
-        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
-        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-                 &CLSID_TestFilter4);
-        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+        skip("Not enough permission to register filters.\n");
+        goto out;
     }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    IBaseFilter_Release(&ptestfilter->IBaseFilter_iface);
-    IFilterGraph2_Release(pgraph2);
-    IFilterMapper2_Release(pMapper2);
+    regpins.dwFlags = REG_PINFLAG_B_RENDERER;
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
 
-    hr = CoRevokeClassObject(cookie1);
-    ok(hr == S_OK, "CoRevokeClassObject failed with %08x\n", hr);
-    hr = CoRevokeClassObject(cookie2);
-    ok(hr == S_OK, "CoRevokeClassObject failed with %08x\n", hr);
-    hr = CoRevokeClassObject(cookie3);
-    ok(hr == S_OK, "CoRevokeClassObject failed with %08x\n", hr);
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink2_pin.IPin_iface || source_pin.peer == &sink1_pin.IPin_iface,
+            "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Preference is given to filters already in the graph. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* No preference is given to renderer filters. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
+
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    regpins.dwFlags = 0;
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink2_pin.IPin_iface || source_pin.peer == &sink1_pin.IPin_iface,
+            "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Preference is given to filters with higher merit. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
+
+    regfilter.dwMerit = MERIT_UNLIKELY;
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    regfilter.dwMerit = MERIT_PREFERRED;
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
+
+    regfilter.dwMerit = MERIT_PREFERRED;
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    regfilter.dwMerit = MERIT_UNLIKELY;
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
+
+out:
+    CoRevokeClassObject(cookie1);
+    CoRevokeClassObject(cookie2);
+    IFilterMapper2_Release(mapper);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+    ok(sink1.ref == 1, "Got outstanding refcount %d.\n", sink1.ref);
+    ok(sink1_pin.ref == 1, "Got outstanding refcount %d.\n", sink1_pin.ref);
+    ok(sink2.ref == 1, "Got outstanding refcount %d.\n", sink2.ref);
+    ok(sink2_pin.ref == 1, "Got outstanding refcount %d.\n", sink2_pin.ref);
+    ok(parser.ref == 1, "Got outstanding refcount %d.\n", parser.ref);
+    ok(parser_pins[0].ref == 1, "Got outstanding refcount %d.\n", parser_pins[0].ref);
+    ok(parser_pins[1].ref == 1, "Got outstanding refcount %d.\n", parser_pins[1].ref);
 }
 
 typedef struct IUnknownImpl
@@ -2499,7 +1831,7 @@ START_TEST(filtergraph)
     test_render_run(mpegfile);
     test_enum_filters();
     test_graph_builder();
-    test_render_filter_priority();
+    test_graph_builder_render();
     test_aggregate_filter_graph();
     test_control_delegation();
 
