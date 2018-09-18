@@ -1656,6 +1656,7 @@ static void test_bitmap_brush(void)
     D2D1_RECT_F src_rect, dst_rect;
     D2D1_EXTEND_MODE extend_mode;
     IDXGISwapChain *swapchain;
+    ID2D1BitmapBrush1 *brush1;
     ID2D1BitmapBrush *brush;
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
@@ -1876,6 +1877,49 @@ static void test_bitmap_brush(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     match = compare_surface(surface, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
     ok(match, "Surface does not match.\n");
+
+    if (SUCCEEDED(ID2D1BitmapBrush_QueryInterface(brush, &IID_ID2D1BitmapBrush1, (void **)&brush1)))
+    {
+        D2D1_INTERPOLATION_MODE interpolation_mode1;
+
+        interpolation_mode = ID2D1BitmapBrush1_GetInterpolationMode(brush1);
+        ok(interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode);
+
+        interpolation_mode1 = ID2D1BitmapBrush1_GetInterpolationMode1(brush1);
+        ok(interpolation_mode1 == D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode1);
+
+        ID2D1BitmapBrush1_SetInterpolationMode1(brush1, D2D1_INTERPOLATION_MODE_CUBIC);
+        interpolation_mode = ID2D1BitmapBrush1_GetInterpolationMode(brush1);
+        ok(interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode);
+
+        interpolation_mode1 = ID2D1BitmapBrush1_GetInterpolationMode1(brush1);
+        ok(interpolation_mode1 == D2D1_INTERPOLATION_MODE_CUBIC,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode1);
+
+        ID2D1BitmapBrush1_SetInterpolationMode1(brush1, 100);
+        interpolation_mode1 = ID2D1BitmapBrush1_GetInterpolationMode1(brush1);
+        ok(interpolation_mode1 == D2D1_INTERPOLATION_MODE_CUBIC,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode1);
+
+        ID2D1BitmapBrush1_SetInterpolationMode(brush1, 100);
+        interpolation_mode1 = ID2D1BitmapBrush1_GetInterpolationMode1(brush1);
+        ok(interpolation_mode1 == D2D1_INTERPOLATION_MODE_CUBIC,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode1);
+
+        ID2D1BitmapBrush1_SetInterpolationMode(brush1, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+        interpolation_mode = ID2D1BitmapBrush1_GetInterpolationMode(brush1);
+        ok(interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode);
+
+        interpolation_mode1 = ID2D1BitmapBrush1_GetInterpolationMode1(brush1);
+        ok(interpolation_mode1 == D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                "Unexpected interpolation mode %#x.\n", interpolation_mode1);
+
+        ID2D1BitmapBrush1_Release(brush1);
+    }
 
     ID2D1BitmapBrush_Release(brush);
     refcount = ID2D1Bitmap_Release(bitmap);
