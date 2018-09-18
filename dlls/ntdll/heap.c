@@ -1662,7 +1662,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
  * NOTES
  *  This call does not SetLastError().
  */
-PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
+void * WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
 {
     ARENA_FREE *pArena;
     ARENA_INUSE *pInUse;
@@ -1747,7 +1747,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
  *  Success: TRUE, if ptr is NULL or was freed successfully.
  *  Failure: FALSE.
  */
-BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
+BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *ptr )
 {
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
