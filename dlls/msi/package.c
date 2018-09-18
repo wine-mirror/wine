@@ -1742,7 +1742,7 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
     {
         __TRY
         {
-            handle = remote_GetActiveDatabase(hInstall);
+            handle = remote_GetActiveDatabase(remote);
             handle = alloc_msi_remote_handle(handle);
         }
         __EXCEPT(rpc_filter)
