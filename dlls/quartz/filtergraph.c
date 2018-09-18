@@ -211,15 +211,12 @@ struct enum_filters
 {
     IEnumFilters IEnumFilters_iface;
     LONG ref;
-    IGraphVersion *version_source;
+    IFilterGraphImpl *graph;
     LONG version;
-    IBaseFilter ***filters;
-    ULONG *count;
     ULONG index;
 };
 
-static HRESULT create_enum_filters(IGraphVersion *version_source,
-        IBaseFilter ***filters, ULONG *count, IEnumFilters **out);
+static HRESULT create_enum_filters(IFilterGraphImpl *graph, IEnumFilters **out);
 
 static inline struct enum_filters *impl_from_IEnumFilters(IEnumFilters *iface)
 {
@@ -261,7 +258,7 @@ static ULONG WINAPI EnumFilters_Release(IEnumFilters *iface)
 
     if (!ref)
     {
-        IGraphVersion_Release(enum_filters->version_source);
+        IUnknown_Release(enum_filters->graph->outer_unk);
         heap_free(enum_filters);
     }
 
@@ -273,16 +270,13 @@ static HRESULT WINAPI EnumFilters_Next(IEnumFilters *iface, ULONG count,
 {
     struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
     unsigned int i, cFetched;
-    LONG version;
-    HRESULT hr;
 
     TRACE("enum_filters %p, count %u, filters %p, fetched %p.\n",
             enum_filters, count, filters, fetched);
 
-    cFetched = min(*enum_filters->count, enum_filters->index + count) - enum_filters->index;
+    cFetched = min(enum_filters->graph->nFilters, enum_filters->index + count) - enum_filters->index;
 
-    hr = IGraphVersion_QueryVersion(enum_filters->version_source, &version);
-    if (hr == S_OK && enum_filters->version != version)
+    if (enum_filters->version != enum_filters->graph->version)
         return VFW_E_ENUM_OUT_OF_SYNC;
 
     if (!filters)
@@ -290,7 +284,7 @@ static HRESULT WINAPI EnumFilters_Next(IEnumFilters *iface, ULONG count,
 
     for (i = 0; i < cFetched; i++)
     {
-        filters[i] = (*enum_filters->filters)[enum_filters->index + i];
+        filters[i] = enum_filters->graph->ppFiltersInGraph[enum_filters->index + i];
         IBaseFilter_AddRef(filters[i]);
     }
 
@@ -310,7 +304,7 @@ static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
 
     TRACE("enum_filters %p, count %u.\n", enum_filters, count);
 
-    if (enum_filters->index + count < *enum_filters->count)
+    if (enum_filters->index + count < enum_filters->graph->nFilters)
     {
         enum_filters->index += count;
         return S_OK;
@@ -321,15 +315,11 @@ static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
 static HRESULT WINAPI EnumFilters_Reset(IEnumFilters *iface)
 {
     struct enum_filters *enum_filters = impl_from_IEnumFilters(iface);
-    LONG version;
-    HRESULT hr;
 
     TRACE("enum_filters %p.\n", enum_filters);
 
     enum_filters->index = 0;
-    hr = IGraphVersion_QueryVersion(enum_filters->version_source, &version);
-    if (hr == S_OK)
-        enum_filters->version = version;
+    enum_filters->version = enum_filters->graph->version;
     return S_OK;
 }
 
@@ -340,7 +330,7 @@ static HRESULT WINAPI EnumFilters_Clone(IEnumFilters *iface, IEnumFilters **out)
 
     TRACE("enum_filters %p, out %p.\n", enum_filters, out);
 
-    hr = create_enum_filters(enum_filters->version_source, enum_filters->filters, enum_filters->count, out);
+    hr = create_enum_filters(enum_filters->graph, out);
     if (FAILED(hr))
         return hr;
     return IEnumFilters_Skip(*out, enum_filters->index);
@@ -357,12 +347,9 @@ static const IEnumFiltersVtbl EnumFilters_vtbl =
     EnumFilters_Clone,
 };
 
-static HRESULT create_enum_filters(IGraphVersion *version_source,
-    IBaseFilter ***filters, ULONG *count, IEnumFilters **out)
+static HRESULT create_enum_filters(IFilterGraphImpl *graph, IEnumFilters **out)
 {
     struct enum_filters *enum_filters;
-    LONG version;
-    HRESULT hr;
 
     if (!(enum_filters = heap_alloc(sizeof(*enum_filters))))
         return E_OUTOFMEMORY;
@@ -370,11 +357,9 @@ static HRESULT create_enum_filters(IGraphVersion *version_source,
     enum_filters->IEnumFilters_iface.lpVtbl = &EnumFilters_vtbl;
     enum_filters->ref = 1;
     enum_filters->index = 0;
-    enum_filters->filters = filters;
-    enum_filters->count = count;
-    IGraphVersion_AddRef(enum_filters->version_source = version_source);
-    hr = IGraphVersion_QueryVersion(version_source, &version);
-    enum_filters->version = (hr == S_OK) ? version : 0;
+    enum_filters->graph = graph;
+    IUnknown_AddRef(graph->outer_unk);
+    enum_filters->version = graph->version;
 
     *out = &enum_filters->IEnumFilters_iface;
     return S_OK;
@@ -738,7 +723,7 @@ static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilter
 
     TRACE("graph %p, out %p.\n", graph, out);
 
-    return create_enum_filters(&graph->IGraphVersion_iface, &graph->ppFiltersInGraph, &graph->nFilters, out);
+    return create_enum_filters(graph, out);
 }
 
 static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
