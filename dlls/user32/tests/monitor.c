@@ -585,7 +585,7 @@ static void test_display_config(void)
     paths = modes = 100;
     ret = pGetDisplayConfigBufferSizes(0, &paths, &modes);
     ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
-    ok(modes == 0 && paths == 0, "got %u, %u\n", modes, paths);
+    ok((modes == 0 || modes == 100) && paths == 0, "got %u, %u\n", modes, paths);
 }
 
 START_TEST(monitor)
