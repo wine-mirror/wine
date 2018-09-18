@@ -270,7 +270,7 @@ static inline IMalloc *get_malloc(void)
  *  See BSTR.
  *  str may be NULL, in which case this function does nothing.
  */
-void WINAPI SysFreeString(BSTR str)
+void WINAPI DECLSPEC_HOTPATCH SysFreeString(BSTR str)
 {
     bstr_cache_entry_t *cache_entry;
     bstr_t *bstr;
