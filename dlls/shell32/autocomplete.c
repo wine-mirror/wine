@@ -343,7 +343,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         case WM_CHAR:
         case WM_UNICHAR:
             ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
-            autocomplete_text(This, hwnd, (This->options & ACO_AUTOAPPEND)
+            autocomplete_text(This, hwnd, (This->options & ACO_AUTOAPPEND) && wParam >= ' '
                                           ? autoappend_flag_yes : autoappend_flag_no);
             return ret;
         case WM_DESTROY:
