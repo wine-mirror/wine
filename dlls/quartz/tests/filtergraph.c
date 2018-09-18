@@ -622,14 +622,12 @@ static void test_enum_filters(void)
 
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-todo_wine
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
     hr = IEnumFilters_Next(enum1, 1, filters, &count);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
-todo_wine
     ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
@@ -643,10 +641,8 @@ todo_wine
     hr = IEnumFilters_Next(enum1, 2, filters, &count);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 2, "Got count %u.\n", count);
-todo_wine {
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     ok(filters[1] == filter1, "Got filter %p.\n", filters[1]);
-}
     IBaseFilter_Release(filters[0]);
     IBaseFilter_Release(filters[1]);
 
@@ -662,10 +658,8 @@ todo_wine {
     hr = IEnumFilters_Next(enum1, 2, filters, &count);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 2, "Got count %u.\n", count);
-todo_wine {
     ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
     ok(filters[1] == filter2, "Got filter %p.\n", filters[1]);
-}
     IBaseFilter_Release(filters[0]);
     IBaseFilter_Release(filters[1]);
 
@@ -681,7 +675,6 @@ todo_wine {
     hr = IEnumFilters_Next(enum2, 2, filters, &count);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
-todo_wine
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
