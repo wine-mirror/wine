@@ -166,12 +166,13 @@ void *set_reply_data_size( data_size_t size )
     return current->reply_data;
 }
 
+static const struct object_attributes empty_attributes;
+
 /* return object attributes from the current request */
 const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
                                                            struct unicode_str *name,
                                                            struct object **root )
 {
-    static const struct object_attributes empty_attributes;
     const struct object_attributes *attr = get_req_data();
     data_size_t size = get_req_data_size();
 
@@ -213,8 +214,14 @@ const struct object_attributes *get_req_object_attributes( const struct security
 /* return a pointer to the request data following an object attributes structure */
 const void *get_req_data_after_objattr( const struct object_attributes *attr, data_size_t *len )
 {
-    const void *ptr = (const WCHAR *)((const struct object_attributes *)get_req_data() + 1) +
-                       attr->sd_len / sizeof(WCHAR) + attr->name_len / sizeof(WCHAR);
+    const void *ptr;
+
+    if (attr == &empty_attributes)
+    {
+        *len = 0;
+        return NULL;
+    }
+    ptr = (const WCHAR *)(attr + 1) + attr->sd_len / sizeof(WCHAR) + attr->name_len / sizeof(WCHAR);
     *len = get_req_data_size() - ((const char *)ptr - (const char *)get_req_data());
     return ptr;
 }
