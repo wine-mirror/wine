@@ -367,8 +367,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         {
             WNDPROC proc = This->wpOrigEditProc;
 
-            RemovePropW(hwnd, autocomplete_propertyW);
             SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)proc);
+            RemovePropW(hwnd, autocomplete_propertyW);
             destroy_autocomplete_object(This);
             return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
         }
