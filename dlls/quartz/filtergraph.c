@@ -365,13 +365,26 @@ static ULONG WINAPI FilterGraph2_Release(IFilterGraph2 *iface)
     return IUnknown_Release(This->outer_unk);
 }
 
+static IBaseFilter *find_filter_by_name(IFilterGraphImpl *graph, const WCHAR *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < graph->nFilters; ++i)
+    {
+        if (!strcmpW(graph->pFilterNames[i], name))
+            return graph->ppFiltersInGraph[i];
+    }
+
+    return NULL;
+}
+
 /*** IFilterGraph methods ***/
 static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *pFilter,
         LPCWSTR pName)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
     HRESULT hr;
-    int i,j;
+    int j;
     WCHAR* wszFilterName = NULL;
     BOOL duplicate_name = FALSE;
 
@@ -382,16 +395,8 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
 
     wszFilterName = CoTaskMemAlloc( (pName ? strlenW(pName) + 6 : 5) * sizeof(WCHAR) );
 
-    if (pName)
-    {
-	/* Check if name already exists */
-        for(i = 0; i < This->nFilters; i++)
-	    if (!strcmpW(This->pFilterNames[i], pName))
-	    {
-		duplicate_name = TRUE;
-		break;
-	    }
-    }
+    if (pName && find_filter_by_name(This, pName))
+        duplicate_name = TRUE;
 
     /* If no name given or name already existing, generate one */
     if (!pName || duplicate_name)
@@ -408,16 +413,11 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
 		sprintfW(wszFilterName, wszFmt2, This->nameIndex);
 	    TRACE("Generated name %s\n", debugstr_w(wszFilterName));
 
-	    /* Check if the generated name already exists */
-	    for(i = 0; i < This->nFilters; i++)
-	    	if (!strcmpW(This->pFilterNames[i], wszFilterName))
-		    break;
-
-	    /* Compute next index and exit if generated name is suitable */
 	    if (This->nameIndex++ == 10000)
 		This->nameIndex = 1;
-	    if (i == This->nFilters)
-		break;
+
+            if (!find_filter_by_name(This, wszFilterName))
+                break;
 	}
 	/* Unable to find a suitable name */
 	if (j == 10000)
@@ -567,28 +567,22 @@ static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilter
     return IEnumFiltersImpl_Construct(&This->IGraphVersion_iface, &This->ppFiltersInGraph, &This->nFilters, ppEnum);
 }
 
-static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface, LPCWSTR pName,
-        IBaseFilter **ppFilter)
+static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
+        const WCHAR *name, IBaseFilter **filter)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
-    int i;
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_w(pName), pName, ppFilter);
+    TRACE("graph %p, name %s, filter %p.\n", graph, debugstr_w(name), filter);
 
-    if (!ppFilter)
+    if (!filter)
         return E_POINTER;
 
-    for (i = 0; i < This->nFilters; i++)
+    if ((*filter = find_filter_by_name(graph, name)))
     {
-        if (!strcmpW(pName, This->pFilterNames[i]))
-        {
-            *ppFilter = This->ppFiltersInGraph[i];
-            IBaseFilter_AddRef(*ppFilter);
-            return S_OK;
-        }
+        IBaseFilter_AddRef(*filter);
+        return S_OK;
     }
 
-    *ppFilter = NULL;
     return VFW_E_NOT_FOUND;
 }
 
