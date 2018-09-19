@@ -1110,6 +1110,15 @@ cleanup:
     return ret;
 }
 
+HRESULT send_probe_matches_message(IWSDiscoveryPublisherImpl *impl, const WSD_SOAP_MESSAGE *probe_msg,
+    IWSDMessageParameters *message_params, LPCWSTR id, ULONGLONG metadata_ver, ULONGLONG instance_id,
+    ULONGLONG msg_num, LPCWSTR session_id, const WSD_NAME_LIST *types_list, const WSD_URI_LIST *scopes_list,
+    const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *header_any, const WSDXML_ELEMENT *ref_param_any,
+    const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any)
+{
+    return E_NOTIMPL;
+}
+
 static LPWSTR xml_text_to_wide_string(void *parent_memory, WS_XML_TEXT *text)
 {
     if (text->textType == WS_XML_TEXT_TYPE_UTF8)
