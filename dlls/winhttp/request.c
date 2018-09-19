@@ -965,6 +965,7 @@ BOOL WINAPI WinHttpQueryAuthSchemes( HINTERNET hrequest, LPDWORD supported, LPDW
         *target = WINHTTP_AUTH_TARGET_PROXY;
         ret = TRUE;
     }
+    else set_last_error( ERROR_INVALID_OPERATION );
 
     release_object( &request->hdr );
     if (ret) set_last_error( ERROR_SUCCESS );

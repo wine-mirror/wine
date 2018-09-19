@@ -2441,7 +2441,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
     error = GetLastError();
     ok(!ret, "unexpected success\n");
-    todo_wine ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
+    ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
     ok(supported == 0xdeadbeef, "got %x\n", supported);
     ok(first == 0xdeadbeef, "got %x\n", first);
     ok(target == 0xdeadbeef, "got %x\n", target);
@@ -2528,7 +2528,7 @@ static void test_basic_authentication(int port)
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    todo_wine ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
+    ok(error == ERROR_INVALID_OPERATION, "expected ERROR_INVALID_OPERATION, got %u\n", error);
     ok(supported == 0xdeadbeef, "got %x\n", supported);
     ok(first == 0xdeadbeef, "got %x\n", first);
     ok(target == 0xdeadbeef, "got %x\n", target);
