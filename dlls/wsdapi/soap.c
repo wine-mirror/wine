@@ -919,12 +919,12 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
     if (remote_address == NULL)
     {
         /* Send the message via UDP multicast */
-        ret = send_udp_multicast(impl, full_xml, xml_length + xml_header_len + 1, max_initial_delay) ? S_OK : E_FAIL;
+        ret = send_udp_multicast(impl, full_xml, xml_length + xml_header_len, max_initial_delay) ? S_OK : E_FAIL;
     }
     else
     {
         /* Send the message via UDP unicast */
-        ret = send_udp_unicast(full_xml, xml_length + xml_header_len + 1, remote_address, max_initial_delay);
+        ret = send_udp_unicast(full_xml, xml_length + xml_header_len, remote_address, max_initial_delay);
     }
 
     heap_free(full_xml);
