@@ -1825,9 +1825,33 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromWicCol
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(ID2D1DeviceContext *iface,
         IDXGISurface *surface, const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
 {
-    FIXME("iface %p, surface %p, desc %p, bitmap %p stub!\n", iface, surface, desc, bitmap);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    struct d2d_bitmap *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, surface %p, desc %p, bitmap %p.\n", iface, surface, desc, bitmap);
+
+    if (!desc)
+    {
+        DXGI_SURFACE_DESC surface_desc;
+
+        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+        {
+            WARN("Failed to get surface desc, hr %#x.\n", hr);
+            return hr;
+        }
+
+        memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+        bitmap_desc.pixelFormat.format = surface_desc.Format;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        desc = &bitmap_desc;
+    }
+
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(context, &IID_IDXGISurface, surface, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap1_iface;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceContext *iface,
