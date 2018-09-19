@@ -1194,6 +1194,84 @@ static void test_create_part_uri(void)
     IOpcFactory_Release(factory);
 }
 
+static HRESULT WINAPI custom_package_QueryInterface(IOpcPackage *iface, REFIID iid, void **out)
+{
+    if (IsEqualIID(iid, &IID_IOpcPackage) || IsEqualIID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IOpcPackage_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI custom_package_AddRef(IOpcPackage *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI custom_package_Release(IOpcPackage *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI custom_package_GetPartSet(IOpcPackage *iface, IOpcPartSet **part_set)
+{
+    return 0x80000001;
+}
+
+static HRESULT WINAPI custom_package_GetRelationshipSet(IOpcPackage *iface, IOpcRelationshipSet **relationship_set)
+{
+    return 0x80000001;
+}
+
+static const IOpcPackageVtbl custom_package_vtbl =
+{
+    custom_package_QueryInterface,
+    custom_package_AddRef,
+    custom_package_Release,
+    custom_package_GetPartSet,
+    custom_package_GetRelationshipSet,
+};
+
+static void test_write_package(void)
+{
+    IOpcPackage custom_package = { &custom_package_vtbl };
+    IOpcFactory *factory;
+    IOpcPackage *package;
+    IStream *stream;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IOpcFactory_CreatePackage(factory, &package);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IOpcFactory_Release(factory);
+        return;
+    }
+
+    hr = IOpcFactory_WritePackageToStream(factory, NULL, OPC_WRITE_FORCE_ZIP32, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(SUCCEEDED(hr), "Failed to create a stream, hr %#x.\n", hr);
+
+    hr = IOpcFactory_WritePackageToStream(factory, NULL, OPC_WRITE_FORCE_ZIP32, stream);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcFactory_WritePackageToStream(factory, &custom_package, OPC_WRITE_FORCE_ZIP32, stream);
+    ok(hr == 0x80000001, "Unexpected hr %#x.\n", hr);
+
+    IStream_Release(stream);
+
+    IOpcFactory_Release(factory);
+    IOpcPackage_Release(package);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -1217,6 +1295,7 @@ START_TEST(opcservices)
     test_relative_uri();
     test_combine_uri();
     test_create_part_uri();
+    test_write_package();
 
     IOpcFactory_Release(factory);
 

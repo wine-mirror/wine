@@ -387,6 +387,9 @@ static HRESULT WINAPI opc_factory_WritePackageToStream(IOpcFactory *iface, IOpcP
 {
     TRACE("iface %p, package %p, flags %#x, stream %p.\n", iface, package, flags, stream);
 
+    if (!package || !stream)
+        return E_POINTER;
+
     return opc_package_write(package, flags, stream);
 }
 
