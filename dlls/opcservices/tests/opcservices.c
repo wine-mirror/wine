@@ -187,12 +187,19 @@ static void test_package(void)
     IOpcRelationshipSet_Release(relset);
     IOpcRelationshipSet_Release(relset2);
 
+    ret = 123;
+    hr = IOpcPartSet_PartExists(partset, NULL, &ret);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(ret == 123, "Unexpected return value.\n");
+
+    hr = IOpcPartSet_PartExists(partset, part_uri, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     ret = FALSE;
     hr = IOpcPartSet_PartExists(partset, part_uri, &ret);
-todo_wine {
     ok(SUCCEEDED(hr), "Unexpected hr %#x.\n", hr);
     ok(ret, "Expected part to exist.\n");
-}
+
     IOpcPartUri_Release(part_uri);
     IOpcPart_Release(part);
 

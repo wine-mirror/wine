@@ -1011,9 +1011,16 @@ static HRESULT WINAPI opc_part_set_DeletePart(IOpcPartSet *iface, IOpcPartUri *n
 
 static HRESULT WINAPI opc_part_set_PartExists(IOpcPartSet *iface, IOpcPartUri *name, BOOL *exists)
 {
-    FIXME("iface %p, name %p, exists %p stub!\n", iface, name, exists);
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %p, exists %p.\n", iface, name, exists);
+
+    if (!name || !exists)
+        return E_POINTER;
+
+    *exists = opc_part_set_get_part(part_set, name) != NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI opc_part_set_GetEnumerator(IOpcPartSet *iface, IOpcPartEnumerator **enumerator)
