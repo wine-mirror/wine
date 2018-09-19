@@ -1493,7 +1493,69 @@ static HRESULT opc_package_write_contenttypes(struct zip_archive *archive, IXmlW
     return hr;
 }
 
-HRESULT opc_package_write(IOpcPackage *input, OPC_WRITE_FLAGS flags, IStream *stream)
+static HRESULT opc_package_write_part(struct zip_archive *archive, IOpcPart *part)
+{
+    OPC_COMPRESSION_OPTIONS options = OPC_COMPRESSION_NORMAL;
+    IStream *content = NULL;
+    IOpcPartUri *name;
+    BSTR uri = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = IOpcPart_GetName(part, &name)))
+        return hr;
+
+    hr = IOpcPartUri_GetRawUri(name, &uri);
+    if (SUCCEEDED(hr))
+        hr = IOpcPart_GetCompressionOptions(part, &options);
+    if (SUCCEEDED(hr))
+        hr = IOpcPart_GetContentStream(part, &content);
+    if (SUCCEEDED(hr))
+    {
+        /* Part names always start with root '/', skip it. */
+        hr = compress_add_file(archive, uri + 1, content, options);
+    }
+
+    SysFreeString(uri);
+    if (content)
+        IStream_Release(content);
+
+    return hr;
+}
+
+static HRESULT opc_package_write_parts(struct zip_archive *archive, IOpcPackage *package)
+{
+    IOpcPartEnumerator *parts;
+    IOpcPartSet *part_set;
+    BOOL got_next;
+    HRESULT hr;
+
+    if (FAILED(hr = IOpcPackage_GetPartSet(package, &part_set)))
+        return hr;
+
+    hr = IOpcPartSet_GetEnumerator(part_set, &parts);
+    IOpcPartSet_Release(part_set);
+    if (FAILED(hr))
+        return hr;
+
+    while (IOpcPartEnumerator_MoveNext(parts, &got_next) == S_OK && got_next)
+    {
+        IOpcPart *part;
+
+        if (FAILED(hr = IOpcPartEnumerator_GetCurrent(parts, &part)))
+            break;
+
+        hr = opc_package_write_part(archive, part);
+        IOpcPart_Release(part);
+        if (FAILED(hr))
+            break;
+    }
+
+    IOpcPartEnumerator_Release(parts);
+
+    return hr;
+}
+
+HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *stream)
 {
     struct zip_archive *archive;
     IXmlWriter *writer;
@@ -1513,6 +1575,8 @@ HRESULT opc_package_write(IOpcPackage *input, OPC_WRITE_FLAGS flags, IStream *st
 
     /* [Content_Types].xml */
     hr = opc_package_write_contenttypes(archive, writer);
+    if (SUCCEEDED(hr))
+        hr = opc_package_write_parts(archive, package);
 
     compress_finalize_archive(archive);
     IXmlWriter_Release(writer);
