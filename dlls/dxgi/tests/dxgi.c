@@ -643,7 +643,7 @@ static void test_adapter_desc(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -884,7 +884,7 @@ static void test_create_surface(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -922,7 +922,7 @@ static void test_parents(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -947,7 +947,7 @@ static void test_parents(void)
     hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
     if (hr == DXGI_ERROR_NOT_FOUND)
     {
-        skip("Adapter has not outputs, skipping output tests.\n");
+        skip("Adapter has not outputs.\n");
     }
     else
     {
@@ -990,7 +990,7 @@ static void test_output(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -1000,7 +1000,7 @@ static void test_output(void)
     hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
     if (hr == DXGI_ERROR_NOT_FOUND)
     {
-        skip("Adapter doesn't have any outputs, skipping tests.\n");
+        skip("Adapter doesn't have any outputs.\n");
         IDXGIAdapter_Release(adapter);
         IDXGIDevice_Release(device);
         return;
@@ -1076,7 +1076,7 @@ static void test_output(void)
     }
     else
     {
-        skip("Not enough modes for test, skipping.\n");
+        skip("Not enough modes for test.\n");
     }
 
     heap_free(modes);
@@ -1308,7 +1308,7 @@ static void test_create_swapchain(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -2916,7 +2916,7 @@ static void test_private_data(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -3489,7 +3489,7 @@ static void test_swapchain_parameters(void)
 
     if (!(device = create_device(0)))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
     window = CreateWindowA("static", "dxgi_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
