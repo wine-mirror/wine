@@ -1166,6 +1166,7 @@ struct testfilter
     LONG ref;
     IFilterGraph *graph;
     WCHAR *name;
+    IReferenceClock *clock;
 
     IEnumPins IEnumPins_iface;
     struct testpin *pins;
@@ -1314,8 +1315,15 @@ static HRESULT WINAPI testfilter_GetState(IBaseFilter *iface, DWORD timeout, FIL
 
 static HRESULT WINAPI testfilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
 {
-    if (winetest_debug > 1) trace("%p->SetSyncSource(%p)\n", iface, clock);
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->SetSyncSource(%p)\n", filter, clock);
+
+    if (filter->clock)
+        IReferenceClock_Release(filter->clock);
+    if (clock)
+        IReferenceClock_AddRef(clock);
+    filter->clock = clock;
+    return S_OK;
 }
 
 static HRESULT WINAPI testfilter_GetSyncSource(IBaseFilter *iface, IReferenceClock **clock)
@@ -1863,6 +1871,45 @@ static void test_control_delegation(void)
     IFilterGraph2_Release(graph);
 }
 
+static void test_add_remove_filter(void)
+{
+    static const WCHAR defaultid[] = {'0','0','0','1',0};
+    static const WCHAR testid[] = {'t','e','s','t','i','d',0};
+    struct testfilter filter;
+
+    IFilterGraph2 *graph = create_graph();
+    HRESULT hr;
+
+    testfilter_init(&filter, NULL, 0);
+
+    hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, testid);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
+    ok(!lstrcmpW(filter.name, testid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+
+    hr = IFilterGraph2_RemoveFilter(graph, &filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!filter.graph, "Got graph %p.\n", filter.graph);
+todo_wine
+    ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
+    ok(!filter.clock, "Got clock %p,\n", filter.clock);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
+
+    hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
+    ok(!lstrcmpW(filter.name, defaultid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+
+    /* test releasing the filter graph while filters are still connected */
+    hr = IFilterGraph2_Release(graph);
+    ok(!hr, "Got outstanding refcount %d.\n", hr);
+    ok(!filter.graph, "Got graph %p.\n", filter.graph);
+todo_wine
+    ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
+    ok(!filter.clock, "Got clock %p.\n", filter.clock);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -1875,6 +1922,7 @@ START_TEST(filtergraph)
     test_graph_builder_render();
     test_aggregate_filter_graph();
     test_control_delegation();
+    test_add_remove_filter();
 
     CoUninitialize();
     test_render_with_multithread();
