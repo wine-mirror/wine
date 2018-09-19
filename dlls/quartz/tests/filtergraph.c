@@ -760,69 +760,6 @@ static void test_render_with_multithread(void)
     CoUninitialize();
 }
 
-static void test_graph_builder(void)
-{
-    HRESULT hr;
-    IGraphBuilder *pgraph;
-    IBaseFilter *pF = NULL;
-    IBaseFilter *pF2 = NULL;
-    IPin *pIn = NULL;
-    IEnumPins *pEnum = NULL;
-    PIN_DIRECTION dir;
-    static const WCHAR testFilterW[] = {'t','e','s','t','F','i','l','t','e','r',0};
-    static const WCHAR fooBarW[] = {'f','o','o','B','a','r',0};
-
-    pgraph = (IGraphBuilder *)create_graph();
-
-    /* create video filter */
-    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IBaseFilter, (LPVOID*)&pF);
-    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
-    ok(pF != NULL, "pF is NULL\n");
-
-    hr = IGraphBuilder_AddFilter(pgraph, NULL, testFilterW);
-    ok(hr == E_POINTER, "IGraphBuilder_AddFilter returned %x\n", hr);
-
-    /* add the two filters to the graph */
-    hr = IGraphBuilder_AddFilter(pgraph, pF, testFilterW);
-    ok(hr == S_OK, "failed to add pF to the graph: %x\n", hr);
-
-    /* find the pins */
-    hr = IBaseFilter_EnumPins(pF, &pEnum);
-    ok(hr == S_OK, "IBaseFilter_EnumPins failed for pF: %x\n", hr);
-    ok(pEnum != NULL, "pEnum is NULL\n");
-    hr = IEnumPins_Next(pEnum, 1, &pIn, NULL);
-    ok(hr == S_OK, "IEnumPins_Next failed for pF: %x\n", hr);
-    ok(pIn != NULL, "pIn is NULL\n");
-    hr = IPin_QueryDirection(pIn, &dir);
-    ok(hr == S_OK, "IPin_QueryDirection failed: %x\n", hr);
-    ok(dir == PINDIR_INPUT, "pin has wrong direction\n");
-
-    hr = IGraphBuilder_FindFilterByName(pgraph, fooBarW, &pF2);
-    ok(hr == VFW_E_NOT_FOUND, "IGraphBuilder_FindFilterByName returned %x\n", hr);
-    ok(pF2 == NULL, "IGraphBuilder_FindFilterByName returned %p\n", pF2);
-    hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, &pF2);
-    ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned %x\n", hr);
-    ok(pF2 != NULL, "IGraphBuilder_FindFilterByName returned NULL\n");
-    hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, NULL);
-    ok(hr == E_POINTER, "IGraphBuilder_FindFilterByName returned %x\n", hr);
-
-    hr = IGraphBuilder_Connect(pgraph, NULL, pIn);
-    ok(hr == E_POINTER, "IGraphBuilder_Connect returned %x\n", hr);
-
-    hr = IGraphBuilder_Connect(pgraph, pIn, NULL);
-    ok(hr == E_POINTER, "IGraphBuilder_Connect returned %x\n", hr);
-
-    hr = IGraphBuilder_Connect(pgraph, pIn, pIn);
-    ok(hr == VFW_E_CANNOT_CONNECT, "IGraphBuilder_Connect returned %x\n", hr);
-
-    if (pIn) IPin_Release(pIn);
-    if (pEnum) IEnumPins_Release(pEnum);
-    if (pF) IBaseFilter_Release(pF);
-    if (pF2) IBaseFilter_Release(pF2);
-    IGraphBuilder_Release(pgraph);
-}
-
 struct testpin
 {
     IPin IPin_iface;
@@ -1935,7 +1872,6 @@ START_TEST(filtergraph)
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_enum_filters();
-    test_graph_builder();
     test_graph_builder_render();
     test_aggregate_filter_graph();
     test_control_delegation();
