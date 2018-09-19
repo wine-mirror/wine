@@ -4480,6 +4480,145 @@ done:
     UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_swapchain_window_styles(void)
+{
+    LONG style, exstyle, fullscreen_style, fullscreen_exstyle;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    ULONG refcount;
+    unsigned int i;
+    HRESULT hr;
+
+    static const struct
+    {
+        LONG style, exstyle;
+        LONG expected_style, expected_exstyle;
+    }
+    tests[] =
+    {
+        {WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0,
+         WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPSIBLINGS,
+         WS_EX_WINDOWEDGE},
+        {WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE, 0,
+         WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPSIBLINGS | WS_VISIBLE,
+         WS_EX_WINDOWEDGE},
+        {WS_OVERLAPPED | WS_VISIBLE, 0,
+         WS_OVERLAPPED | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION, WS_EX_WINDOWEDGE},
+        {WS_CAPTION | WS_DISABLED, WS_EX_TOPMOST,
+         WS_CAPTION | WS_DISABLED | WS_CLIPSIBLINGS, WS_EX_TOPMOST | WS_EX_WINDOWEDGE},
+        {WS_CAPTION | WS_DISABLED | WS_VISIBLE, WS_EX_TOPMOST,
+         WS_CAPTION | WS_DISABLED | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_TOPMOST | WS_EX_WINDOWEDGE},
+        {WS_CAPTION | WS_SYSMENU | WS_VISIBLE, WS_EX_APPWINDOW,
+         WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE},
+    };
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        swapchain_desc.OutputWindow = CreateWindowExA(tests[i].exstyle, "static", "dxgi_test",
+                tests[i].style, 0, 0, 400, 200, 0, 0, 0, 0);
+
+        style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+        exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+        ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
+                i, style, tests[i].expected_style);
+        ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                i, exstyle, tests[i].expected_exstyle);
+
+        fullscreen_style = tests[i].expected_style & (WS_VISIBLE | WS_DISABLED | WS_CLIPSIBLINGS);
+        fullscreen_exstyle = (tests[i].expected_exstyle & WS_EX_APPWINDOW) | WS_EX_TOPMOST;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+
+        style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+        exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+        ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
+                i, style, tests[i].expected_style);
+        ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                i, exstyle, tests[i].expected_exstyle);
+
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+        ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+                || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+                "Failed to set fullscreen state, hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+            exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+            todo_wine
+            ok(style == fullscreen_style, "Test %u: Got style %#x, expected %#x.\n",
+                    i, style, fullscreen_style);
+            ok(exstyle == fullscreen_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                    i, exstyle, fullscreen_exstyle);
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        }
+        else
+        {
+            skip("Test %u: Could not change fullscreen state.\n", i);
+        }
+
+        style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+        exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+        todo_wine_if(!(tests[i].expected_style & WS_VISIBLE))
+        ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
+                i, style, tests[i].expected_style);
+        todo_wine_if(!(tests[i].expected_exstyle & WS_EX_TOPMOST))
+        ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                i, exstyle, tests[i].expected_exstyle);
+
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+
+        style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+        exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+        todo_wine_if(!(tests[i].expected_style & WS_VISIBLE))
+        ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
+                i, style, tests[i].expected_style);
+        todo_wine_if(!(tests[i].expected_exstyle & WS_EX_TOPMOST))
+        ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                i, exstyle, tests[i].expected_exstyle);
+
+        DestroyWindow(swapchain_desc.OutputWindow);
+    }
+
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -4574,6 +4713,7 @@ START_TEST(dxgi)
     test_inexact_modes();
     test_swapchain_parameters();
     test_swapchain_window_messages();
+    test_swapchain_window_styles();
     run_on_d3d10(test_swapchain_resize);
     run_on_d3d10(test_swapchain_backbuffer_index);
     run_on_d3d10(test_swapchain_formats);
