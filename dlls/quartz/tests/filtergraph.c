@@ -1890,7 +1890,6 @@ static void test_add_remove_filter(void)
     hr = IFilterGraph2_RemoveFilter(graph, &filter.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!filter.graph, "Got graph %p.\n", filter.graph);
-todo_wine
     ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
     ok(!filter.clock, "Got clock %p,\n", filter.clock);
     ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
@@ -1904,7 +1903,6 @@ todo_wine
     hr = IFilterGraph2_Release(graph);
     ok(!hr, "Got outstanding refcount %d.\n", hr);
     ok(!filter.graph, "Got graph %p.\n", filter.graph);
-todo_wine
     ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
     ok(!filter.clock, "Got clock %p.\n", filter.clock);
     ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);

@@ -681,7 +681,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                 IEnumPins_Release(penumpins);
             }
 
-            hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, entry->name);
+            hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, NULL);
             if (SUCCEEDED(hr))
             {
                 IBaseFilter_SetSyncSource(pFilter, NULL);
