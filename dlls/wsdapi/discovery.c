@@ -78,6 +78,7 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
     IWSDiscoveryPublisherImpl *This = impl_from_IWSDiscoveryPublisher(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     struct notificationSink *sink, *cursor;
+    struct message_id *msg_id, *msg_id_cursor;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -98,6 +99,15 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
         }
 
         DeleteCriticalSection(&This->notification_sink_critical_section);
+
+        LIST_FOR_EACH_ENTRY_SAFE(msg_id, msg_id_cursor, &This->message_ids, struct message_id, entry)
+        {
+            heap_free(msg_id->id);
+            list_remove(&msg_id->entry);
+            heap_free(msg_id);
+        }
+
+        DeleteCriticalSection(&This->message_ids_critical_section);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -401,6 +411,9 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
 
     InitializeCriticalSection(&obj->notification_sink_critical_section);
     list_init(&obj->notificationSinks);
+
+    InitializeCriticalSection(&obj->message_ids_critical_section);
+    list_init(&obj->message_ids);
 
     *ppPublisher = &obj->IWSDiscoveryPublisher_iface;
     TRACE("Returning iface %p\n", *ppPublisher);

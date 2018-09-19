@@ -40,6 +40,12 @@ struct notificationSink
     IWSDiscoveryPublisherNotify *notificationSink;
 };
 
+struct message_id
+{
+    struct list entry;
+    LPWSTR id;
+};
+
 #define MAX_WSD_THREADS        20
 
 typedef struct IWSDiscoveryPublisherImpl {
@@ -52,6 +58,8 @@ typedef struct IWSDiscoveryPublisherImpl {
     BOOL                  publisherStarted;
     HANDLE                thread_handles[MAX_WSD_THREADS];
     int                   num_thread_handles;
+    struct list           message_ids;
+    CRITICAL_SECTION      message_ids_critical_section;
 } IWSDiscoveryPublisherImpl;
 
 /* network.c */
@@ -72,7 +80,8 @@ HRESULT send_bye_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG 
 
 HRESULT register_namespaces(IWSDXMLContext *xml_context);
 
-HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type);
+HRESULT read_message(IWSDiscoveryPublisherImpl *impl, const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg,
+    int *msg_type);
 
 #define MSGTYPE_UNKNOWN     0
 #define MSGTYPE_PROBE       1

@@ -302,7 +302,7 @@ static HRESULT process_received_message(listener_thread_params *params, char *me
     int msg_type;
     HRESULT ret;
 
-    ret = read_message(message, message_len, &msg, &msg_type);
+    ret = read_message(params->impl, message, message_len, &msg, &msg_type);
     if (FAILED(ret)) return ret;
 
     switch (msg_type)

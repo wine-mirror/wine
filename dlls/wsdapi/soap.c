@@ -1488,7 +1488,44 @@ static WSDXML_TYPE *generate_type(LPCWSTR uri, void *parent)
     return type;
 }
 
-HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
+static BOOL is_duplicate_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id)
+{
+    struct message_id *msg_id, *msg_id_cursor;
+    BOOL ret = FALSE;
+    int len;
+
+    EnterCriticalSection(&impl->message_ids_critical_section);
+
+    LIST_FOR_EACH_ENTRY_SAFE(msg_id, msg_id_cursor, &impl->message_ids, struct message_id, entry)
+    {
+        if (lstrcmpW(msg_id->id, id) == 0)
+        {
+            ret = TRUE;
+            goto end;
+        }
+    }
+
+    msg_id = heap_alloc(sizeof(*msg_id));
+    if (!msg_id) goto end;
+
+    len = (lstrlenW(id) + 1) * sizeof(WCHAR);
+    msg_id->id = heap_alloc(len);
+
+    if (!msg_id->id)
+    {
+        heap_free(msg_id);
+        goto end;
+    }
+
+    memcpy(msg_id->id, id, len);
+    list_add_tail(&impl->message_ids, &msg_id->entry);
+
+end:
+    LeaveCriticalSection(&impl->message_ids_critical_section);
+    return ret;
+}
+
+HRESULT read_message(IWSDiscoveryPublisherImpl *impl, const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg, int *msg_type)
 {
     WSDXML_ELEMENT *envelope = NULL, *header_element, *appsequence_element, *body_element;
     WS_XML_READER_TEXT_ENCODING encoding;
@@ -1606,6 +1643,14 @@ HRESULT read_message(const char *xml, int xml_length, WSD_SOAP_MESSAGE **out_msg
 
     ret = WSDXMLGetValueFromAny(addressingNsUri, messageIdString, (WSDXML_ELEMENT *) header_element->FirstChild, &value);
     if (FAILED(ret)) goto cleanup;
+
+    /* Detect duplicate messages */
+    if (is_duplicate_message(impl, value))
+    {
+        ret = E_FAIL;
+        goto cleanup;
+    }
+
     soap_msg->Header.MessageID = duplicate_string(soap_msg, value);
     if (soap_msg->Header.MessageID == NULL) goto outofmemory;
 
