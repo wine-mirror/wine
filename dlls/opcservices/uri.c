@@ -312,7 +312,21 @@ static HRESULT WINAPI opc_uri_IsEqual(IOpcPartUri *iface, IUri *comparand, BOOL 
 
     TRACE("iface %p, comparand %p, is_equal %p.\n", iface, comparand, is_equal);
 
-    return IUri_IsEqual(uri->uri, comparand, is_equal);
+    if (!is_equal)
+        return E_POINTER;
+
+    if (!comparand)
+    {
+        if (uri->is_part_uri)
+        {
+            *is_equal = FALSE;
+            return S_OK;
+        }
+
+        return E_POINTER;
+    }
+
+    return IUri_IsEqual(comparand, uri->uri, is_equal);
 }
 
 static HRESULT WINAPI opc_uri_GetRelationshipsPartUri(IOpcPartUri *iface, IOpcPartUri **part_uri)

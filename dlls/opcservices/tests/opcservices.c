@@ -521,7 +521,7 @@ static void test_rel_part_uri(void)
             IOpcPartUri *rel_uri2;
             IOpcUri *source_uri2;
             IUnknown *unk = NULL;
-            BOOL ret = FALSE;
+            BOOL ret;
             BSTR str;
 
             hr = IOpcPartUri_GetSourceUri(rel_uri, &source_uri);
@@ -529,11 +529,20 @@ static void test_rel_part_uri(void)
             hr = IOpcPartUri_GetSourceUri(rel_uri, &source_uri2);
             ok(SUCCEEDED(hr), "Failed to get source uri, hr %#x.\n", hr);
             ok(source_uri != source_uri2, "Unexpected instance.\n");
+
+            hr = IOpcUri_IsEqual(source_uri, NULL, NULL);
+            ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+            ret = 123;
+            hr = IOpcUri_IsEqual(source_uri, NULL, &ret);
+            ok(is_root ? hr == E_POINTER : hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(is_root ? ret == 123 : !ret, "Unexpected result.\n");
+
+            ret = FALSE;
             hr = IOpcUri_IsEqual(source_uri, (IUri *)source_uri2, &ret);
-        todo_wine {
             ok(SUCCEEDED(hr), "IsEqual failed, hr %#x.\n", hr);
             ok(ret, "Expected equal uris.\n");
-        }
+
             hr = IOpcUri_QueryInterface(source_uri, &IID_IOpcPartUri, (void **)&unk);
             ok(hr == (is_root ? E_NOINTERFACE : S_OK), "Unexpected hr %#x, %s.\n", hr, rel_part_uri_tests[i].uri);
             if (unk)
