@@ -758,8 +758,10 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(
         }
         __ENDTRY
 
-        if (!r)
+        if (!r && buf)
+        {
             r = msi_strncpyWtoA( buf, -1, szValueBuf, pcchValueBuf, TRUE );
+        }
 
         midl_user_free( buf );
         return r;
@@ -808,7 +810,7 @@ UINT WINAPI MsiSummaryInfoGetPropertyW(
         }
         __ENDTRY
 
-        if (!r)
+        if (!r && buf)
             r = msi_strncpyW( buf, -1, szValueBuf, pcchValueBuf );
 
         midl_user_free( buf );
