@@ -706,7 +706,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
                 rc = IWSDiscoveryPublisher_MatchProbeEx(publisher_instance, pSoap, pMessageParameters, publisherIdW, 1, 1, 1,
                     sequenceIdW, probe_msg->Types, NULL, NULL, header_any_element, ref_param_any_element, NULL,
                     endpoint_any_element, body_any_element);
-                todo_wine ok(rc == S_OK, "IWSDiscoveryPublisher_MatchProbe failed with %08x\n", rc);
+                ok(rc == S_OK, "IWSDiscoveryPublisher_MatchProbeEx failed with %08x\n", rc);
 
                 WSDFreeLinkedMemory(header_any_element);
                 WSDFreeLinkedMemory(body_any_element);

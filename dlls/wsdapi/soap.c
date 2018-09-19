@@ -38,6 +38,14 @@ static const WCHAR discoveryTo[] = {
     'w','s',':','2','0','0','5',':','0','4',':',
     'd','i','s','c','o','v','e','r','y', 0 };
 
+static const WCHAR anonymousTo[] = {
+    'h','t','t','p',':','/','/',
+    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
+    'w','s','/','2','0','0','4','/','0','8','/',
+    'a','d','d','r','e','s','s','i','n','g','/',
+    'r','o','l','e','/',
+    'a','n','o','n','y','m','o','u','s', 0 };
+
 static const WCHAR actionHello[] = {
     'h','t','t','p',':','/','/',
     's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
@@ -51,6 +59,13 @@ static const WCHAR actionProbe[] = {
     'w','s','/','2','0','0','5','/','0','4','/',
     'd','i','s','c','o','v','e','r','y','/',
     'P','r','o','b','e', 0 };
+
+static const WCHAR actionProbeMatches[] = {
+    'h','t','t','p',':','/','/',
+    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
+    'w','s','/','2','0','0','5','/','0','4','/',
+    'd','i','s','c','o','v','e','r','y','/',
+    'P','r','o','b','e','M','a','t','c','h','e','s', 0 };
 
 static const WCHAR actionBye[] = {
     'h','t','t','p',':','/','/',
@@ -90,6 +105,8 @@ static const WCHAR emptyString[] = { 0 };
 static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
 static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
 static const WCHAR probeString[] = { 'P','r','o','b','e', 0 };
+static const WCHAR probeMatchString[] = { 'P','r','o','b','e','M','a','t','c','h', 0 };
+static const WCHAR probeMatchesString[] = { 'P','r','o','b','e','M','a','t','c','h','e','s', 0 };
 static const WCHAR byeString[] = { 'B','y','e', 0 };
 static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
 static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
@@ -1116,7 +1133,157 @@ HRESULT send_probe_matches_message(IWSDiscoveryPublisherImpl *impl, const WSD_SO
     const WSD_URI_LIST *xaddrs_list, const WSDXML_ELEMENT *header_any, const WSDXML_ELEMENT *ref_param_any,
     const WSDXML_ELEMENT *endpoint_ref_any, const WSDXML_ELEMENT *any)
 {
-    return E_NOTIMPL;
+    WSDXML_ELEMENT *body_element = NULL, *probe_matches_element, *probe_match_element, *endpoint_ref_element;
+    WSDXML_ELEMENT *ref_params_element = NULL;
+    struct list *discovered_namespaces = NULL;
+    IWSDUdpAddress *remote_udp_addr = NULL;
+    IWSDAddress *remote_addr = NULL;
+    WSDXML_NAME *body_name = NULL;
+    WSD_SOAP_HEADER soap_header;
+    WSD_APP_SEQUENCE sequence;
+    WCHAR msg_id[64];
+    LPWSTR buffer;
+    HRESULT ret;
+
+    ret = IWSDMessageParameters_GetRemoteAddress(message_params, &remote_addr);
+
+    if (FAILED(ret))
+    {
+        WARN("Unable to retrieve remote address from IWSDMessageParameters\n");
+        return ret;
+    }
+
+    ret = IWSDAddress_QueryInterface(remote_addr, &IID_IWSDUdpAddress, (LPVOID *) &remote_udp_addr);
+
+    if (FAILED(ret))
+    {
+        WARN("Remote address is not a UDP address\n");
+        goto cleanup;
+    }
+
+    sequence.InstanceId = instance_id;
+    sequence.MessageNumber = msg_num;
+    sequence.SequenceId = session_id;
+
+    if (!create_guid(msg_id)) goto failed;
+
+    discovered_namespaces = WSDAllocateLinkedMemory(NULL, sizeof(struct list));
+    if (!discovered_namespaces) goto failed;
+
+    list_init(discovered_namespaces);
+
+    populate_soap_header(&soap_header, anonymousTo, actionProbeMatches, msg_id, &sequence, header_any);
+    soap_header.RelatesTo.MessageID = probe_msg->Header.MessageID;
+
+    ret = IWSDXMLContext_AddNameToNamespace(impl->xmlContext, envelopeNsUri, bodyString, &body_name);
+    if (FAILED(ret)) goto cleanup;
+
+    /* <soap:Body>, <wsd:ProbeMatches> */
+    ret = WSDXMLBuildAnyForSingleElement(body_name, NULL, &body_element);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = add_child_element(impl->xmlContext, body_element, discoveryNsUri, probeMatchesString, NULL,
+        &probe_matches_element);
+    if (FAILED(ret)) goto cleanup;
+
+    /* <wsd:ProbeMatch> */
+    ret = add_child_element(impl->xmlContext, probe_matches_element, discoveryNsUri, probeMatchString, NULL,
+        &probe_match_element);
+    if (FAILED(ret)) goto cleanup;
+
+    /* <wsa:EndpointReference>, <wsa:Address> */
+    ret = add_child_element(impl->xmlContext, probe_match_element, addressingNsUri, endpointReferenceString, NULL,
+        &endpoint_ref_element);
+    if (FAILED(ret)) goto cleanup;
+
+    ret = add_child_element(impl->xmlContext, endpoint_ref_element, addressingNsUri, addressString, id, NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Write any reference parameters */
+    if (ref_param_any != NULL)
+    {
+        ret = add_child_element(impl->xmlContext, endpoint_ref_element, addressingNsUri, referenceParametersString,
+            NULL, &ref_params_element);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = duplicate_element(ref_params_element, ref_param_any, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* Write any endpoint reference headers */
+    if (endpoint_ref_any != NULL)
+    {
+        ret = duplicate_element(endpoint_ref_element, endpoint_ref_any, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:Types> */
+    if (types_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(probe_match_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_types_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), types_list, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, probe_match_element, discoveryNsUri, typesString, buffer, NULL);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:Scopes> */
+    if (scopes_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(probe_match_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_uri_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), scopes_list);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, probe_match_element, discoveryNsUri, scopesString, buffer, NULL);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:XAddrs> */
+    if (xaddrs_list != NULL)
+    {
+        buffer = WSDAllocateLinkedMemory(probe_match_element, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR));
+        if (buffer == NULL) goto failed;
+
+        ret = build_uri_list(buffer, WSD_MAX_TEXT_LENGTH * sizeof(WCHAR), xaddrs_list);
+        if (FAILED(ret)) goto cleanup;
+
+        ret = add_child_element(impl->xmlContext, probe_match_element, discoveryNsUri, xAddrsString, buffer, NULL);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* <wsd:MetadataVersion> */
+    ret = add_child_element(impl->xmlContext, probe_match_element, discoveryNsUri, metadataVersionString,
+        ulonglong_to_string(probe_match_element, min(UINT_MAX, metadata_ver)), NULL);
+    if (FAILED(ret)) goto cleanup;
+
+    /* Write any body elements */
+    if (any != NULL)
+    {
+        ret = duplicate_element(probe_match_element, any, discovered_namespaces);
+        if (FAILED(ret)) goto cleanup;
+    }
+
+    /* Write and send the message */
+    ret = write_and_send_message(impl, &soap_header, body_element, discovered_namespaces, remote_udp_addr, APP_MAX_DELAY);
+    goto cleanup;
+
+failed:
+    ret = E_FAIL;
+
+cleanup:
+    WSDFreeLinkedMemory(body_name);
+    WSDFreeLinkedMemory(body_element);
+    WSDFreeLinkedMemory(discovered_namespaces);
+
+    if (remote_udp_addr != NULL) IWSDUdpAddress_Release(remote_udp_addr);
+    if (remote_addr != NULL) IWSDAddress_Release(remote_addr);
+
+    return ret;
 }
 
 static LPWSTR xml_text_to_wide_string(void *parent_memory, WS_XML_TEXT *text)
