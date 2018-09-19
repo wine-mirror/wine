@@ -448,8 +448,15 @@ static void test_rel_part_uri(void)
     } rel_part_uri_tests[] =
     {
         { "/uri", "/_rels/uri.rels" },
+        { "/path/uri", "/path/_rels/uri.rels" },
+        { "path/uri", "/path/_rels/uri.rels" },
+        { "../path/uri", "/path/_rels/uri.rels" },
+        { "../../path/uri", "/path/_rels/uri.rels" },
         { "/uri.ext", "/_rels/uri.ext.rels" },
         { "/", "/_rels/.rels" },
+        { "uri", "/_rels/uri.rels" },
+        { "/path/../uri", "/_rels/uri.rels" },
+        { "/path/path/../../uri", "/_rels/uri.rels" },
         { "/_rels/uri.ext.rels", "", OPC_E_NONCONFORMING_URI },
     };
     static const struct
@@ -459,6 +466,7 @@ static void test_rel_part_uri(void)
     } is_rel_part_tests[] =
     {
         { "/uri", FALSE },
+        { "uri", FALSE },
         { "/_rels/uri", FALSE },
         { "/_rels/uri/uri", FALSE },
         { "/_rels/uri/uri.rels", FALSE },
@@ -558,6 +566,7 @@ static void test_rel_part_uri(void)
 
             hr = IOpcPartUri_GetRawUri(rel_uri, &str);
             ok(SUCCEEDED(hr), "Failed to get rel uri, hr %#x.\n", hr);
+        todo_wine_if(i == 3 || i == 4 || i == 8 || i == 9)
             ok(!lstrcmpW(str, rel_uriW), "%u: unexpected rel uri %s, expected %s.\n", i, wine_dbgstr_w(str),
                     wine_dbgstr_w(rel_uriW));
             SysFreeString(str);
@@ -1003,6 +1012,130 @@ static void test_relative_uri(void)
     IOpcFactory_Release(factory);
 }
 
+static void test_combine_uri(void)
+{
+    static const struct
+    {
+        const char *uri;
+        const char *relative;
+        const char *combined;
+    }
+    combine_tests[] =
+    {
+        { "/", "path", "/path" },
+        { "/path1", "path2", "/path2" },
+        { "/path1", "../path2", "/path2" },
+        { "/path1/../path2", "path3", "/path3" },
+    };
+    IOpcFactory *factory;
+    unsigned int i;
+
+    factory = create_factory();
+
+    for (i = 0; i < ARRAY_SIZE(combine_tests); ++i)
+    {
+        WCHAR *uriW, *relativeW, *combinedW;
+        IOpcPartUri *combined_uri;
+        IUri *relative_uri;
+        IOpcUri *uri;
+        HRESULT hr;
+        BSTR str;
+
+        uriW = strdupAtoW(combine_tests[i].uri);
+        relativeW = strdupAtoW(combine_tests[i].relative);
+        combinedW = strdupAtoW(combine_tests[i].combined);
+
+        if (!strcmp(combine_tests[i].uri, "/"))
+            hr = IOpcFactory_CreatePackageRootUri(factory, &uri);
+        else
+            hr = IOpcFactory_CreatePartUri(factory, uriW, (IOpcPartUri **)&uri);
+
+        hr = CreateUri(relativeW, Uri_CREATE_ALLOW_RELATIVE, 0, &relative_uri);
+        ok(SUCCEEDED(hr), "%u: failed to create relative uri, hr %#x.\n", i, hr);
+
+        hr = IOpcUri_CombinePartUri(uri, relative_uri, &combined_uri);
+    todo_wine
+        ok(SUCCEEDED(hr), "%u: failed to combine uris, hr %#x.\n", i, hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IOpcPartUri_GetRawUri(combined_uri, &str);
+        ok(SUCCEEDED(hr), "%u: failed to get raw uri, hr %#x.\n", i, hr);
+        ok(!lstrcmpW(str, combinedW), "%u: unexpected uri %s.\n", i, wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        IOpcPartUri_Release(combined_uri);
+    }
+        heap_free(uriW);
+        heap_free(relativeW);
+        heap_free(combinedW);
+
+        IOpcUri_Release(uri);
+        IUri_Release(relative_uri);
+    }
+
+    IOpcFactory_Release(factory);
+}
+
+static void test_create_part_uri(void)
+{
+    static const struct
+    {
+        const char *input;
+        const char *raw_uri;
+    }
+    create_part_uri_tests[] =
+    {
+        { "path", "/path" },
+        { "../path", "/path" },
+        { "../../path", "/path" },
+        { "/path", "/path" },
+        { "/path1/path2/path3/../path4", "/path1/path2/path4" },
+    };
+    IOpcFactory *factory;
+    unsigned int i;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    for (i = 0; i < ARRAY_SIZE(create_part_uri_tests); ++i)
+    {
+        IOpcPartUri *part_uri;
+        WCHAR *inputW, *rawW;
+        IUri *uri;
+        BSTR str;
+        BOOL ret;
+
+        inputW = strdupAtoW(create_part_uri_tests[i].input);
+        rawW = strdupAtoW(create_part_uri_tests[i].raw_uri);
+
+        hr = IOpcFactory_CreatePartUri(factory, inputW, &part_uri);
+        ok(SUCCEEDED(hr), "%u: failed to create part uri, hr %#x.\n", i, hr);
+
+        hr = IOpcPartUri_GetRawUri(part_uri, &str);
+        ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#x.\n", hr);
+    todo_wine_if(i == 1 || i == 2 || i == 4)
+        ok(!lstrcmpW(str, rawW), "%u: unexpected raw uri %s.\n", i, wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = CreateUri(rawW, Uri_CREATE_ALLOW_RELATIVE, 0, &uri);
+        ok(SUCCEEDED(hr), "Failed to create uri, hr %#x.\n", hr);
+
+        ret = FALSE;
+        hr = IOpcPartUri_IsEqual(part_uri, uri, &ret);
+        ok(SUCCEEDED(hr), "IsEqual failed, hr %#x.\n", hr);
+    todo_wine_if(i == 1 || i == 2 || i == 4)
+        ok(!!ret, "%u: unexpected result %d.\n", i, ret);
+
+        IOpcPartUri_Release(part_uri);
+
+        heap_free(inputW);
+        heap_free(rawW);
+    }
+
+    IOpcFactory_Release(factory);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -1024,6 +1157,8 @@ START_TEST(opcservices)
     test_part_enumerator();
     test_rels_enumerator();
     test_relative_uri();
+    test_combine_uri();
+    test_create_part_uri();
 
     IOpcFactory_Release(factory);
 

@@ -320,10 +320,16 @@ static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcU
 
 static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **out)
 {
-    IUri *part_uri;
+    static const WCHAR rootW[] = {'/',0};
+    IUri *part_uri, *root_uri, *combined;
     HRESULT hr;
 
     TRACE("iface %p, uri %s, out %p.\n", iface, debugstr_w(uri), out);
+
+    if (!out)
+        return E_POINTER;
+
+    *out = NULL;
 
     if (FAILED(hr = CreateUri(uri, Uri_CREATE_ALLOW_RELATIVE, 0, &part_uri)))
     {
@@ -331,8 +337,24 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
         return hr;
     }
 
-    hr = opc_part_uri_create(part_uri, NULL, out);
+    if (FAILED(hr = CreateUri(rootW, Uri_CREATE_ALLOW_RELATIVE, 0, &root_uri)))
+    {
+        WARN("Failed to create root uri, hr %#x.\n", hr);
+        IUri_Release(part_uri);
+        return hr;
+    }
+
+    hr = CoInternetCombineIUri(root_uri, part_uri, 0, &combined, 0);
+    IUri_Release(root_uri);
     IUri_Release(part_uri);
+    if (FAILED(hr))
+    {
+        WARN("Failed to combine URIs, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = opc_part_uri_create(combined, NULL, out);
+    IUri_Release(combined);
     return hr;
 }
 
