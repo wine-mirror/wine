@@ -230,8 +230,9 @@ static void test_driver3(void)
 
     ret = StartServiceA(service, 0, NULL);
     ok(!ret, "driver3 should fail to start\n");
-todo_wine
-    ok(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED || GetLastError() == ERROR_PROC_NOT_FOUND /* XP */ ||
+    ok(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED ||
+       GetLastError() == ERROR_INVALID_FUNCTION ||
+       GetLastError() == ERROR_PROC_NOT_FOUND /* XP */ ||
        GetLastError() == ERROR_FILE_NOT_FOUND /* Win7 */, "got %u\n", GetLastError());
 
     DeleteService(service);
