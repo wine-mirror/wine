@@ -1053,19 +1053,25 @@ static void test_combine_uri(void)
         hr = CreateUri(relativeW, Uri_CREATE_ALLOW_RELATIVE, 0, &relative_uri);
         ok(SUCCEEDED(hr), "%u: failed to create relative uri, hr %#x.\n", i, hr);
 
+        combined_uri = (void *)0xdeadbeef;
+        hr = IOpcUri_CombinePartUri(uri, NULL, &combined_uri);
+        ok(hr == E_POINTER, "%u: failed to combine uris, hr %#x.\n", i, hr);
+        ok(!combined_uri, "Unexpected instance.\n");
+
+        hr = IOpcUri_CombinePartUri(uri, relative_uri, NULL);
+        ok(hr == E_POINTER, "%u: failed to combine uris, hr %#x.\n", i, hr);
+
         hr = IOpcUri_CombinePartUri(uri, relative_uri, &combined_uri);
-    todo_wine
         ok(SUCCEEDED(hr), "%u: failed to combine uris, hr %#x.\n", i, hr);
 
-    if (SUCCEEDED(hr))
-    {
         hr = IOpcPartUri_GetRawUri(combined_uri, &str);
         ok(SUCCEEDED(hr), "%u: failed to get raw uri, hr %#x.\n", i, hr);
+    todo_wine_if(i == 2 || i == 3)
         ok(!lstrcmpW(str, combinedW), "%u: unexpected uri %s.\n", i, wine_dbgstr_w(str));
         SysFreeString(str);
 
         IOpcPartUri_Release(combined_uri);
-    }
+
         heap_free(uriW);
         heap_free(relativeW);
         heap_free(combinedW);

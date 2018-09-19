@@ -357,9 +357,26 @@ static HRESULT WINAPI opc_uri_GetRelativeUri(IOpcPartUri *iface, IOpcPartUri *pa
 
 static HRESULT WINAPI opc_uri_CombinePartUri(IOpcPartUri *iface, IUri *relative_uri, IOpcPartUri **combined)
 {
-    FIXME("iface %p, relative_uri %p, combined %p stub!\n", iface, relative_uri, combined);
+    struct opc_uri *uri = impl_from_IOpcPartUri(iface);
+    IUri *combined_uri;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, relative_uri %p, combined %p.\n", iface, relative_uri, combined);
+
+    if (!combined)
+        return E_POINTER;
+
+    *combined = NULL;
+
+    if (!relative_uri)
+        return E_POINTER;
+
+    if (FAILED(hr = CoInternetCombineIUri(uri->uri, relative_uri, 0, &combined_uri, 0)))
+        return hr;
+
+    hr = opc_part_uri_create(combined_uri, NULL, combined);
+    IUri_Release(combined_uri);
+    return hr;
 }
 
 static HRESULT WINAPI opc_uri_ComparePartUri(IOpcPartUri *iface, IOpcPartUri *part_uri,
