@@ -76,6 +76,46 @@ static IFilterGraph2 *create_graph(void)
     return ret;
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IFilterGraph2 *graph = create_graph();
+
+    check_interface(graph, &IID_IBasicAudio, TRUE);
+    check_interface(graph, &IID_IBasicVideo2, TRUE);
+    check_interface(graph, &IID_IFilterGraph2, TRUE);
+    check_interface(graph, &IID_IFilterMapper, TRUE);
+    check_interface(graph, &IID_IFilterMapper3, TRUE);
+    check_interface(graph, &IID_IGraphConfig, TRUE);
+    check_interface(graph, &IID_IGraphVersion, TRUE);
+    check_interface(graph, &IID_IMediaControl, TRUE);
+    check_interface(graph, &IID_IMediaEvent, TRUE);
+    check_interface(graph, &IID_IMediaFilter, TRUE);
+    check_interface(graph, &IID_IMediaEventSink, TRUE);
+    check_interface(graph, &IID_IMediaPosition, TRUE);
+    check_interface(graph, &IID_IMediaSeeking, TRUE);
+    check_interface(graph, &IID_IObjectWithSite, TRUE);
+    check_interface(graph, &IID_IVideoWindow, TRUE);
+
+    check_interface(graph, &IID_IBaseFilter, FALSE);
+
+    IFilterGraph2_Release(graph);
+}
+
 static void test_basic_video(IFilterGraph2 *graph)
 {
     IBasicVideo* pbv;
@@ -1827,6 +1867,7 @@ START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+    test_interfaces();
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_enum_filters();
