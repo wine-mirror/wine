@@ -923,8 +923,8 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
     }
     else
     {
-        /* TODO: Send the message via UDP unicast */
-        FIXME("TODO: Send the message via UDP unicast\n");
+        /* Send the message via UDP unicast */
+        ret = send_udp_unicast(full_xml, xml_length + xml_header_len + 1, remote_address, max_initial_delay);
     }
 
     heap_free(full_xml);

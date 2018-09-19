@@ -67,6 +67,7 @@ typedef struct IWSDiscoveryPublisherImpl {
 BOOL init_networking(IWSDiscoveryPublisherImpl *impl);
 void terminate_networking(IWSDiscoveryPublisherImpl *impl);
 BOOL send_udp_multicast(IWSDiscoveryPublisherImpl *impl, char *data, int length, int max_initial_delay);
+HRESULT send_udp_unicast(char *data, int length, IWSDUdpAddress *remote_addr, int max_initial_delay);
 
 /* soap.c */
 

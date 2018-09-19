@@ -558,6 +558,38 @@ cleanup:
     return (ret == ERROR_SUCCESS) && (valid_listeners > 0);
 }
 
+HRESULT send_udp_unicast(char *data, int length, IWSDUdpAddress *remote_addr, int max_initial_delay)
+{
+    SOCKADDR_STORAGE address;
+    HRESULT ret;
+    SOCKET s;
+
+    ZeroMemory(&address, sizeof(SOCKADDR_STORAGE));
+
+    ret = IWSDUdpAddress_GetSockaddr(remote_addr, &address);
+
+    if (FAILED(ret))
+    {
+        WARN("No sockaddr specified in send_udp_unicast\n");
+        return ret;
+    }
+
+    /* Create a socket and bind to the adapter address */
+    s = socket(address.ss_family, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (s == INVALID_SOCKET)
+    {
+        int error = WSAGetLastError();
+        WARN("Unable to create socket: %d\n", error);
+        return HRESULT_FROM_WIN32(error);
+    }
+
+    send_message(s, data, length, &address, max_initial_delay, UNICAST_UDP_REPEAT);
+    closesocket(s);
+
+    return S_OK;
+}
+
 void terminate_networking(IWSDiscoveryPublisherImpl *impl)
 {
     BOOL needsCleanup = impl->publisherStarted;
