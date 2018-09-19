@@ -1476,9 +1476,9 @@ static HRESULT opc_package_write_contenttypes(struct zip_archive *archive, IXmlW
     if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &content)))
         return hr;
 
-    IXmlWriter_SetOutput(writer, (IUnknown *)content);
-
-    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    hr = IXmlWriter_SetOutput(writer, (IUnknown *)content);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, uriW);
     if (SUCCEEDED(hr))
@@ -1566,9 +1566,9 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
         return hr;
     }
 
-    IXmlWriter_SetOutput(writer, (IUnknown *)content);
-
-    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    hr = IXmlWriter_SetOutput(writer, (IUnknown *)content);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteStartElement(writer, NULL, relationshipsW, uriW);
 
