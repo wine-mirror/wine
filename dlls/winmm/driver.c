@@ -396,7 +396,7 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
 
     if (lsn == NULL) {
         static const WCHAR wszDrivers32[] = {'D','r','i','v','e','r','s','3','2',0};
-	lstrcpynW(libName, lpDriverName, sizeof(libName) / sizeof(WCHAR));
+	lstrcpynW(libName, lpDriverName, ARRAY_SIZE(libName));
 
 	if ((lpDrv = DRIVER_TryOpenDriver32(libName, lParam)))
 	    goto the_end;

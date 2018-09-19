@@ -60,7 +60,7 @@ static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
     ret = mmioOpenW((LPWSTR)lpszName, NULL,
                     MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     if (ret != 0) return ret;
-    if (SearchPathW(NULL, lpszName, dotwav, sizeof(buf)/sizeof(buf[0]), buf, &dummy))
+    if (SearchPathW(NULL, lpszName, dotwav, ARRAY_SIZE(buf), buf, &dummy))
     {
         return mmioOpenW(buf, NULL,
                          MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
@@ -86,11 +86,11 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     static const WCHAR  wszNull[] = {0};
 
     TRACE("searching in SystemSound list for %s\n", debugstr_w(lpszName));
-    GetProfileStringW(wszSounds, lpszName, wszNull, str, sizeof(str)/sizeof(str[0]));
+    GetProfileStringW(wszSounds, lpszName, wszNull, str, ARRAY_SIZE(str));
     if (lstrlenW(str) == 0)
     {
 	if (uFlags & SND_NODEFAULT) goto next;
-	GetProfileStringW(wszSounds, wszDefault, wszNull, str, sizeof(str)/sizeof(str[0]));
+	GetProfileStringW(wszSounds, wszDefault, wszNull, str, ARRAY_SIZE(str));
 	if (lstrlenW(str) == 0) goto next;
     }
     for (ptr = str; *ptr && *ptr != ','; ptr++);
@@ -108,8 +108,8 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
         DWORD len;
 
         err = 1; /* error */
-        len = GetModuleFileNameW(0, str, sizeof(str)/sizeof(str[0]));
-        if (len > 0 && len < sizeof(str)/sizeof(str[0]))
+        len = GetModuleFileNameW(0, str, ARRAY_SIZE(str));
+        if (len > 0 && len < ARRAY_SIZE(str))
         {
             for (ptr = str + lstrlenW(str) - 1; ptr >= str; ptr--)
             {

@@ -4354,7 +4354,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
 	mliW.Target.wMid = lpmliA->Target.wMid;
 	mliW.Target.wPid = lpmliA->Target.wPid;
 	mliW.Target.vDriverVersion = lpmliA->Target.vDriverVersion;
-        MultiByteToWideChar( CP_ACP, 0, lpmliA->Target.szPname, -1, mliW.Target.szPname, sizeof(mliW.Target.szPname)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpmliA->Target.szPname, -1, mliW.Target.szPname, ARRAY_SIZE(mliW.Target.szPname));
 	break;
     default:
 	WARN("Unsupported fdwControls=0x%08x\n", fdwInfo);

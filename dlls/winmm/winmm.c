@@ -1445,8 +1445,7 @@ static MMRESULT midistream_post_message_and_wait(WINE_MIDIStream* lpMidiStrm, UI
     if (GetCurrentThreadId() != lpMidiStrm->dwThreadID) {
         DWORD ret;
         hObjects[1] = lpMidiStrm->hThread;
-        ret = WaitForMultipleObjects(sizeof(hObjects)/sizeof(hObjects[0]), hObjects,
-                                     FALSE, INFINITE);
+        ret = WaitForMultipleObjects(ARRAY_SIZE(hObjects), hObjects, FALSE, INFINITE);
         if (ret != WAIT_OBJECT_0) {
             CloseHandle(hObjects[0]);
             WARN("bad WaitForSingleObject (%u)\n", ret);
