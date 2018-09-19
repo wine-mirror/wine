@@ -923,6 +923,86 @@ static void test_rels_enumerator(void)
     IOpcPackage_Release(package);
     IOpcFactory_Release(factory);
 }
+
+static void test_relative_uri(void)
+{
+    static const struct
+    {
+        const char *part;
+        const char *combined;
+        const char *relative;
+        const char *relative_broken;
+    }
+    relative_uri_tests[] =
+    {
+        { "/", "/path/path2", "path/path2", "/path/path2" },
+        { "/", "/path", "path", "/path" },
+        { "/path/path2", "/path/path2/path3", "path2/path3" },
+        { "/path/path2", "/path3", "../path3" },
+        { "/path", "/path", "" },
+        { "/path", "../path", "" },
+        { "/path2", "/path", "path" },
+        { "../path", "/path", "" },
+        { "../../path", "/path", "" },
+    };
+    IOpcFactory *factory;
+    unsigned int i;
+
+    factory = create_factory();
+
+    for (i = 0; i < ARRAY_SIZE(relative_uri_tests); ++i)
+    {
+        WCHAR *uriW, *combinedW, *relativeW, *relative_broken_W;
+        IOpcPartUri *combined_uri;
+        IUri *relative_uri;
+        IOpcUri *part_uri;
+        IUnknown *unk;
+        HRESULT hr;
+        BSTR str;
+
+        uriW = strdupAtoW(relative_uri_tests[i].part);
+        combinedW = strdupAtoW(relative_uri_tests[i].combined);
+        relativeW = strdupAtoW(relative_uri_tests[i].relative);
+        relative_broken_W = strdupAtoW(relative_uri_tests[i].relative_broken);
+
+        if (!strcmp(relative_uri_tests[i].part, "/"))
+            hr = IOpcFactory_CreatePackageRootUri(factory, &part_uri);
+        else
+            hr = IOpcFactory_CreatePartUri(factory, uriW, (IOpcPartUri **)&part_uri);
+        ok(SUCCEEDED(hr), "%u: failed to create part uri, hr %#x.\n", i, hr);
+
+        hr = IOpcFactory_CreatePartUri(factory, combinedW, &combined_uri);
+        ok(SUCCEEDED(hr), "%u: failed to create part uri, hr %#x.\n", i, hr);
+
+        hr = IOpcUri_GetRelativeUri(part_uri, combined_uri, &relative_uri);
+    todo_wine
+        ok(SUCCEEDED(hr), "%u: failed t oget relative uri, hr %#x.\n", i, hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUri_QueryInterface(relative_uri, &IID_IOpcUri, (void **)&unk);
+        ok(hr == E_NOINTERFACE, "%u: unexpected hr %#x.\n", i, hr);
+
+        hr = IUri_GetRawUri(relative_uri, &str);
+        ok(SUCCEEDED(hr), "%u: failed to get raw uri, hr %#x.\n", i, hr);
+        ok(!lstrcmpW(str, relativeW) || broken(relative_broken_W && !lstrcmpW(str, relative_broken_W)),
+                "%u: unexpected relative uri %s.\n", i, wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        IUri_Release(relative_uri);
+    }
+        IOpcUri_Release(part_uri);
+        IOpcPartUri_Release(combined_uri);
+
+        heap_free(uriW);
+        heap_free(combinedW);
+        heap_free(relativeW);
+        heap_free(relative_broken_W);
+    }
+
+    IOpcFactory_Release(factory);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -943,6 +1023,7 @@ START_TEST(opcservices)
     test_rel_part_uri();
     test_part_enumerator();
     test_rels_enumerator();
+    test_relative_uri();
 
     IOpcFactory_Release(factory);
 
