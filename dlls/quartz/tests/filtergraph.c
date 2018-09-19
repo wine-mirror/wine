@@ -1878,14 +1878,24 @@ static void test_add_remove_filter(void)
     struct testfilter filter;
 
     IFilterGraph2 *graph = create_graph();
+    IBaseFilter *ret_filter;
     HRESULT hr;
 
     testfilter_init(&filter, NULL, 0);
+
+    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    ok(!ret_filter, "Got filter %p.\n", ret_filter);
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, testid);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
     ok(!lstrcmpW(filter.name, testid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+
+    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
+    IBaseFilter_Release(ret_filter);
 
     hr = IFilterGraph2_RemoveFilter(graph, &filter.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1894,10 +1904,19 @@ static void test_add_remove_filter(void)
     ok(!filter.clock, "Got clock %p,\n", filter.clock);
     ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 
+    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    ok(!ret_filter, "Got filter %p.\n", ret_filter);
+
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
     ok(!lstrcmpW(filter.name, defaultid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+
+    hr = IFilterGraph2_FindFilterByName(graph, defaultid, &ret_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
+    IBaseFilter_Release(ret_filter);
 
     /* test releasing the filter graph while filters are still connected */
     hr = IFilterGraph2_Release(graph);
