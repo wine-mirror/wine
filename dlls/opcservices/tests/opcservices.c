@@ -42,16 +42,17 @@ static void test_package(void)
     static const WCHAR uriW[] = {'/','u','r','i',0};
     static const WCHAR rootW[] = {'/',0};
     IOpcRelationshipSet *relset, *relset2;
+    IOpcPartUri *part_uri, *part_uri2;
     IOpcPartSet *partset, *partset2;
+    OPC_COMPRESSION_OPTIONS options;
     IStream *stream, *stream2;
+    IOpcPart *part, *part2;
     IOpcRelationship *rel;
-    IOpcPartUri *part_uri;
     IOpcFactory *factory;
     IOpcPackage *package;
     LARGE_INTEGER move;
     ULARGE_INTEGER pos;
     IUri *target_uri;
-    IOpcPart *part;
     char buff[16];
     IOpcUri *uri;
     HRESULT hr;
@@ -80,11 +81,55 @@ static void test_package(void)
     hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
 
+    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri2);
+    ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+    part = (void *)0xdeadbeef;
     hr = IOpcPartSet_CreatePart(partset, NULL, typeW, OPC_COMPRESSION_NONE, &part);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(part == NULL, "Unexpected pointer %p.\n", part);
 
-    hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
+    hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, 0xdeadbeef, &part);
     ok(SUCCEEDED(hr), "Failed to create a part, hr %#x.\n", hr);
+    hr = IOpcPart_GetCompressionOptions(part, &options);
+    ok(SUCCEEDED(hr), "Failed to get compression options, hr %#x.\n", hr);
+    ok(options == 0xdeadbeef, "Unexpected compression options %#x.\n", options);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartSet_CreatePart(partset, part_uri, typeW, OPC_COMPRESSION_NONE, &part2);
+    ok(hr == OPC_E_DUPLICATE_PART, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected instance %p.\n", part2);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartSet_CreatePart(partset, part_uri2, typeW, OPC_COMPRESSION_NONE, &part2);
+    ok(hr == OPC_E_DUPLICATE_PART, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected instance %p.\n", part2);
+    IOpcPartUri_Release(part_uri2);
+
+    hr = IOpcPartSet_GetPart(partset, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    part2 = (void *)0xdeadbeef;
+    hr = IOpcPartSet_GetPart(partset, NULL, &part2);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(part2 == NULL, "Unexpected pointer %p.\n", part2);
+
+    hr = IOpcPartSet_GetPart(partset, part_uri, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IOpcPartSet_GetPart(partset, part_uri, &part2);
+    ok(SUCCEEDED(hr), "Failed to get part, hr %#x.\n", hr);
+    IOpcPart_Release(part2);
+
+    hr = IOpcFactory_CreatePartUri(factory, targetW, &part_uri2);
+    ok(SUCCEEDED(hr), "Failed to create part uri, hr %#x.\n", hr);
+
+    hr = IOpcPartSet_GetPart(partset, part_uri2, &part2);
+    ok(hr == OPC_E_NO_SUCH_PART, "Unexpected hr %#x.\n", hr);
+    IOpcPartUri_Release(part_uri2);
 
     hr = IOpcPart_GetContentStream(part, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);

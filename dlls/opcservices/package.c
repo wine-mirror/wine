@@ -861,9 +861,6 @@ static HRESULT opc_part_create(struct opc_part_set *set, IOpcPartUri *name, cons
 {
     struct opc_part *part;
 
-    if (!name)
-        return E_POINTER;
-
     if (!opc_array_reserve((void **)&set->parts, &set->size, set->count + 1, sizeof(*set->parts)))
         return E_OUTOFMEMORY;
 
@@ -896,6 +893,21 @@ static HRESULT opc_part_create(struct opc_part_set *set, IOpcPartUri *name, cons
     *out = &part->IOpcPart_iface;
     TRACE("Created part %p.\n", *out);
     return S_OK;
+}
+
+static struct opc_part *opc_part_set_get_part(const struct opc_part_set *part_set, IOpcPartUri *name)
+{
+    BOOL is_equal;
+    size_t i;
+
+    for (i = 0; i < part_set->count; ++i)
+    {
+        is_equal = FALSE;
+        if (IOpcPartUri_IsEqual(part_set->parts[i]->name, (IUri *)name, &is_equal) == S_OK && is_equal)
+            return part_set->parts[i];
+    }
+
+    return NULL;
 }
 
 static HRESULT WINAPI opc_part_set_QueryInterface(IOpcPartSet *iface, REFIID iid, void **out)
@@ -944,11 +956,28 @@ static ULONG WINAPI opc_part_set_Release(IOpcPartSet *iface)
     return refcount;
 }
 
-static HRESULT WINAPI opc_part_set_GetPart(IOpcPartSet *iface, IOpcPartUri *name, IOpcPart **part)
+static HRESULT WINAPI opc_part_set_GetPart(IOpcPartSet *iface, IOpcPartUri *name, IOpcPart **out)
 {
-    FIXME("iface %p, name %p, part %p stub!\n", iface, name, part);
+    struct opc_part_set *part_set = impl_from_IOpcPartSet(iface);
+    struct opc_part *part;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %p, out %p.\n", iface, name, out);
+
+    if (!out)
+        return E_POINTER;
+
+    *out = NULL;
+
+    if (!name)
+        return E_POINTER;
+
+    if ((part = opc_part_set_get_part(part_set, name)))
+    {
+        *out = &part->IOpcPart_iface;
+        IOpcPart_AddRef(*out);
+    }
+
+    return *out ? S_OK : OPC_E_NO_SUCH_PART;
 }
 
 static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *name, LPCWSTR content_type,
@@ -958,6 +987,17 @@ static HRESULT WINAPI opc_part_set_CreatePart(IOpcPartSet *iface, IOpcPartUri *n
 
     TRACE("iface %p, name %p, content_type %s, compression_options %#x, part %p.\n", iface, name,
             debugstr_w(content_type), compression_options, part);
+
+    if (!part)
+        return E_POINTER;
+
+    *part = NULL;
+
+    if (!name)
+        return E_POINTER;
+
+    if (opc_part_set_get_part(part_set, name))
+        return OPC_E_DUPLICATE_PART;
 
     return opc_part_create(part_set, name, content_type, compression_options, part);
 }
