@@ -1933,12 +1933,12 @@ static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARA
 static BOOL wait_clipboard_mutex(void)
 {
     static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
-    WCHAR buffer[MAX_PATH + sizeof(prefix) / sizeof(WCHAR)];
+    WCHAR buffer[MAX_PATH + ARRAY_SIZE( prefix )];
     HANDLE mutex;
 
     memcpy( buffer, prefix, sizeof(prefix) );
     if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
-                                    buffer + sizeof(prefix) / sizeof(WCHAR),
+                                    buffer + ARRAY_SIZE( prefix ),
                                     sizeof(buffer) - sizeof(prefix), NULL ))
     {
         ERR( "failed to get winstation name\n" );

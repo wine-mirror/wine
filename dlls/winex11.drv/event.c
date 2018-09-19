@@ -1739,7 +1739,7 @@ static BOOL X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(client_messages)/sizeof(client_messages[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( client_messages ); i++)
     {
         if (event->message_type == X11DRV_Atoms[client_messages[i].atom - FIRST_XATOM])
         {

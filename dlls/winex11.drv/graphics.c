@@ -1644,7 +1644,7 @@ BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
          'P','r','o','f','i','l','e','.','i','c','m',0};
     HKEY hkey;
     DWORD required, len;
-    WCHAR profile[MAX_PATH], fullname[2*MAX_PATH + sizeof(color_path)/sizeof(WCHAR)];
+    WCHAR profile[MAX_PATH], fullname[2*MAX_PATH + ARRAY_SIZE( color_path )];
     unsigned char *buffer;
     unsigned long buflen;
 
@@ -1653,7 +1653,7 @@ BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     GetSystemDirectoryW( fullname, MAX_PATH );
     strcatW( fullname, color_path );
 
-    len = sizeof(profile)/sizeof(WCHAR);
+    len = ARRAY_SIZE( profile );
     if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, mntr_key, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ) &&
         !RegEnumValueW( hkey, 0, profile, &len, NULL, NULL, NULL, NULL )) /* FIXME handle multiple values */
     {
@@ -1726,7 +1726,7 @@ INT X11DRV_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW proc, LPARAM lparam )
         return -1;
 
     len_sysdir = GetSystemDirectoryW( sysdir, MAX_PATH );
-    len_path = len_sysdir + sizeof(color_path) / sizeof(color_path[0]) - 1;
+    len_path = len_sysdir + ARRAY_SIZE( color_path ) - 1;
     len = 64;
     for (;;)
     {

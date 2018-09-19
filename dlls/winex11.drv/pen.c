@@ -108,27 +108,27 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
-            physDev->pen.dash_len = sizeof(PEN_dash)/sizeof(*PEN_dash);
+            physDev->pen.dash_len = ARRAY_SIZE( PEN_dash );
             memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dash : PEN_dash,
                    physDev->pen.dash_len);
             break;
       case PS_DOT:
-            physDev->pen.dash_len = sizeof(PEN_dot)/sizeof(*PEN_dot);
+            physDev->pen.dash_len = ARRAY_SIZE( PEN_dot );
             memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dot : PEN_dot,
                    physDev->pen.dash_len);
             break;
       case PS_DASHDOT:
-            physDev->pen.dash_len = sizeof(PEN_dashdot)/sizeof(*PEN_dashdot);
+            physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdot );
             memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dashdot : PEN_dashdot,
                    physDev->pen.dash_len);
             break;
       case PS_DASHDOTDOT:
-            physDev->pen.dash_len = sizeof(PEN_dashdotdot)/sizeof(*PEN_dashdotdot);
+            physDev->pen.dash_len = ARRAY_SIZE( PEN_dashdotdot );
             memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dashdotdot : PEN_dashdotdot,
                    physDev->pen.dash_len);
             break;
       case PS_ALTERNATE:
-            physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
+            physDev->pen.dash_len = ARRAY_SIZE( PEN_alternate );
             memcpy(physDev->pen.dashes, PEN_alternate, physDev->pen.dash_len);
             break;
       case PS_USERSTYLE:

@@ -1530,7 +1530,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
 
     /* set the window text */
-    if (!InternalGetWindowText( data->hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
+    if (!InternalGetWindowText( data->hwnd, text, ARRAY_SIZE( text ))) text[0] = 0;
     sync_window_text( data->display, data->whole_window, text );
 
     /* set the window region */

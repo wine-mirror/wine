@@ -555,7 +555,7 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
         return TRUE;
     }
 
-    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( opengl_func_names ); i++)
     {
         if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( opengl_handle, opengl_func_names[i], NULL, 0 )))
         {

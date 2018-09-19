@@ -169,7 +169,7 @@ static Pixmap BRUSH_DitherMono( COLORREF color )
                                           { 0x1, 0x3 }, /* LTGRAY */
     };                                      
     int gray = (30 * GetRValue(color) + 59 * GetGValue(color) + 11 * GetBValue(color)) / 100;
-    int idx = gray * (sizeof gray_dither/sizeof gray_dither[0] + 1)/256 - 1;
+    int idx = gray * (ARRAY_SIZE( gray_dither ) + 1)/256 - 1;
 
     TRACE("color=%06x -> gray=%x\n", color, gray);
     return XCreateBitmapFromData( gdi_display, root_window, gray_dither[idx], 2, 2 );
