@@ -33,6 +33,7 @@
 #include <httprequestid.h>
 
 #include "wine/test.h"
+#include "wine/heap.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -41,6 +42,22 @@ static const WCHAR test_useragent[] =
 static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR test_winehq_https[] = {'h','t','t','p','s',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',':','4','4','3',0};
 static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
+
+static WCHAR *a2w(const char *str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static int strcmp_wa(const WCHAR *str1, const char *stra)
+{
+    WCHAR *str2 = a2w(stra);
+    int r = lstrcmpW(str1, str2);
+    heap_free(str2);
+    return r;
+}
 
 static BOOL proxy_active(void)
 {
@@ -2736,9 +2753,12 @@ static void test_basic_authentication(int port)
 static void test_multi_authentication(int port)
 {
     static const WCHAR multiauthW[] = {'/','m','u','l','t','i','a','u','t','h',0};
+    static const WCHAR www_authenticateW[] =
+        {'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0};
     static const WCHAR getW[] = {'G','E','T',0};
     HINTERNET ses, con, req;
-    DWORD supported, first, target;
+    DWORD supported, first, target, size, index;
+    WCHAR buf[512];
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
@@ -2763,6 +2783,22 @@ static void test_multi_authentication(int port)
     ok(supported == (WINHTTP_AUTH_SCHEME_BASIC | WINHTTP_AUTH_SCHEME_NTLM), "got %x\n", supported);
     ok(target == WINHTTP_AUTH_TARGET_SERVER, "got %x\n", target);
     ok(first == WINHTTP_AUTH_SCHEME_BASIC, "got %x\n", first);
+
+    index = 0;
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CUSTOM, www_authenticateW, buf, &size, &index);
+    ok(ret, "expected success\n");
+    ok(!strcmp_wa(buf, "Bearer"), "buf = %s\n", wine_dbgstr_w(buf));
+    ok(size == lstrlenW(buf) * sizeof(WCHAR), "size = %u\n", size);
+    ok(index == 1, "index = %u\n", index);
+
+    index = 0;
+    size = 0xdeadbeef;
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CUSTOM, www_authenticateW, NULL, &size, &index);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "WinHttpQueryHeaders returned %x(%u)\n", ret, GetLastError());
+    ok(size == (lstrlenW(buf) + 1) * sizeof(WCHAR), "size = %u\n", size);
+    ok(index == 0, "index = %u\n", index);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -3087,6 +3123,7 @@ static void test_bad_header( int port )
                                content_typeW, buffer, &len, &index );
     ok( ret, "failed to query headers %u\n", GetLastError() );
     ok( !lstrcmpW( buffer, text_htmlW ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( index == 1, "index = %u\n", index );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
