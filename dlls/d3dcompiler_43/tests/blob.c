@@ -33,9 +33,9 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
-static typeof(D3DCreateBlob) *pD3DCreateBlob;
-static typeof(D3DGetBlobPart) *pD3DGetBlobPart;
-static typeof(D3DStripShader) *pD3DStripShader;
+static HRESULT (WINAPI *pD3DCreateBlob)(SIZE_T, ID3DBlob **);
+static HRESULT (WINAPI *pD3DGetBlobPart)(const void *, SIZE_T, D3D_BLOB_PART, UINT, ID3DBlob **);
+static HRESULT (WINAPI *pD3DStripShader)(const void *, SIZE_T, UINT, ID3DBlob **);
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \

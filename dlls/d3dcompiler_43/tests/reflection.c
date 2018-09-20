@@ -38,7 +38,7 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
-static typeof(D3DReflect) *pD3DReflect;
+static HRESULT (WINAPI *pD3DReflect)(const void *, SIZE_T, REFIID, void **);
 
 /* Creator string for comparison - Version 9.29.952.3111 (43) */
 static DWORD shader_creator[] = {
