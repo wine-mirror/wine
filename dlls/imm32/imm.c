@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 #define IMM_INIT_MAGIC 0x19650412
 BOOL WINAPI User32InitializeImmEntryTable(DWORD);
 
-#define MAKE_FUNCPTR(f) typeof(f) * p##f
 typedef struct _tagImmHkl{
     struct list entry;
     HKL         hkl;
@@ -51,24 +50,23 @@ typedef struct _tagImmHkl{
     HWND        UIWnd;
 
     /* Function Pointers */
-    MAKE_FUNCPTR(ImeInquire);
-    MAKE_FUNCPTR(ImeConfigure);
-    MAKE_FUNCPTR(ImeDestroy);
-    MAKE_FUNCPTR(ImeEscape);
-    MAKE_FUNCPTR(ImeSelect);
-    MAKE_FUNCPTR(ImeSetActiveContext);
-    MAKE_FUNCPTR(ImeToAsciiEx);
-    MAKE_FUNCPTR(NotifyIME);
-    MAKE_FUNCPTR(ImeRegisterWord);
-    MAKE_FUNCPTR(ImeUnregisterWord);
-    MAKE_FUNCPTR(ImeEnumRegisterWord);
-    MAKE_FUNCPTR(ImeSetCompositionString);
-    MAKE_FUNCPTR(ImeConversionList);
-    MAKE_FUNCPTR(ImeProcessKey);
-    MAKE_FUNCPTR(ImeGetRegisterWordStyle);
-    MAKE_FUNCPTR(ImeGetImeMenuItems);
+    BOOL (WINAPI *pImeInquire)(IMEINFO *, WCHAR *, const WCHAR *);
+    BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
+    BOOL (WINAPI *pImeDestroy)(UINT);
+    LRESULT (WINAPI *pImeEscape)(HIMC, UINT, void *);
+    BOOL (WINAPI *pImeSelect)(HIMC, BOOL);
+    BOOL (WINAPI *pImeSetActiveContext)(HIMC, BOOL);
+    UINT (WINAPI *pImeToAsciiEx)(UINT, UINT, const BYTE *, DWORD *, UINT, HIMC);
+    BOOL (WINAPI *pNotifyIME)(HIMC, DWORD, DWORD, DWORD);
+    BOOL (WINAPI *pImeRegisterWord)(const WCHAR *, DWORD, const WCHAR *);
+    BOOL (WINAPI *pImeUnregisterWord)(const WCHAR *, DWORD, const WCHAR *);
+    UINT (WINAPI *pImeEnumRegisterWord)(REGISTERWORDENUMPROCW, const WCHAR *, DWORD, const WCHAR *, void *);
+    BOOL (WINAPI *pImeSetCompositionString)(HIMC, DWORD, const void *, DWORD, const void *, DWORD);
+    DWORD (WINAPI *pImeConversionList)(HIMC, const WCHAR *, CANDIDATELIST *, DWORD, UINT);
+    BOOL (WINAPI *pImeProcessKey)(HIMC, UINT, LPARAM, const BYTE *);
+    UINT (WINAPI *pImeGetRegisterWordStyle)(UINT, STYLEBUFW *);
+    DWORD (WINAPI *pImeGetImeMenuItems)(HIMC, DWORD, DWORD, IMEMENUITEMINFOW *, IMEMENUITEMINFOW *, DWORD);
 } ImmHkl;
-#undef MAKE_FUNCPTR
 
 typedef struct tagInputContextData
 {
