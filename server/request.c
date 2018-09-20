@@ -571,12 +571,17 @@ static void master_socket_poll_event( struct fd *fd, int event )
     }
     else if (event & POLLIN)
     {
+        struct process *process;
         struct sockaddr_un dummy;
         socklen_t len = sizeof(dummy);
         int client = accept( get_unix_fd( master_socket->fd ), (struct sockaddr *) &dummy, &len );
         if (client == -1) return;
         fcntl( client, F_SETFL, O_NONBLOCK );
-        create_process( client, NULL, 0 );
+        if ((process = create_process( client, NULL, 0 )))
+        {
+            create_thread( -1, process, NULL );
+            release_object( process );
+        }
     }
 }
 

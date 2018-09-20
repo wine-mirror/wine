@@ -232,16 +232,6 @@ static void add_job_completion( struct job *job, apc_param_t msg, apc_param_t pi
 
 static void add_job_process( struct job *job, struct process *process )
 {
-    if (!process->running_threads)
-    {
-        set_error( STATUS_PROCESS_IS_TERMINATING );
-        return;
-    }
-    if (process->job)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
     process->job = (struct job *)grab_object( job );
     list_add_tail( &job->process_list, &process->job_entry );
     job->num_processes++;
@@ -493,13 +483,11 @@ static void start_sigkill_timer( struct process *process )
         process_died( process );
 }
 
-/* create a new process and its main thread */
+/* create a new process */
 /* if the function fails the fd is closed */
-struct thread *create_process( int fd, struct thread *parent_thread, int inherit_all )
+struct process *create_process( int fd, struct thread *parent_thread, int inherit_all )
 {
     struct process *process;
-    struct thread *thread = NULL;
-    int request_pipe[2];
 
     if (!(process = alloc_object( &process_ops )))
     {
@@ -577,24 +565,8 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     if (!token_assign_label( process->token, security_high_label_sid ))
         goto error;
 
-    /* create the main thread */
-    if (pipe( request_pipe ) == -1)
-    {
-        file_set_error();
-        goto error;
-    }
-    if (send_client_fd( process, request_pipe[1], SERVER_PROTOCOL_VERSION ) == -1)
-    {
-        close( request_pipe[0] );
-        close( request_pipe[1] );
-        goto error;
-    }
-    close( request_pipe[1] );
-    if (!(thread = create_thread( request_pipe[0], process, NULL ))) goto error;
-
     set_fd_events( process->msg_fd, POLLIN );  /* start listening to events */
-    release_object( process );
-    return thread;
+    return process;
 
  error:
     if (process) release_object( process );
@@ -1090,7 +1062,7 @@ DECL_HANDLER(new_process)
 {
     struct startup_info *info;
     struct thread *thread;
-    struct process *process;
+    struct process *process = NULL;
     struct process *parent = current->process;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
 
@@ -1127,7 +1099,11 @@ DECL_HANDLER(new_process)
 
     if (!req->info_size)  /* create an orphaned process */
     {
-        create_process( socket_fd, NULL, 0 );
+        if ((process = create_process( socket_fd, NULL, 0 )))
+        {
+            create_thread( -1, process, NULL );
+            release_object( process );
+        }
         return;
     }
 
@@ -1189,8 +1165,9 @@ DECL_HANDLER(new_process)
 #undef FIXUP_LEN
     }
 
-    if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
-    process = thread->process;
+    if (!(process = create_process( socket_fd, current, req->inherit_all ))) goto done;
+    if (!(thread = create_thread( -1, process, NULL ))) goto done;
+
     process->startup_info = (struct startup_info *)grab_object( info );
 
     if (parent->job
@@ -1252,6 +1229,7 @@ DECL_HANDLER(new_process)
     reply->thandle = alloc_handle( parent, thread, req->thread_access, req->thread_attr );
 
  done:
+    if (process) release_object( process );
     release_object( info );
 }
 
@@ -1618,7 +1596,12 @@ DECL_HANDLER(assign_job)
 
     if ((process = get_process_from_handle( req->process, PROCESS_SET_QUOTA | PROCESS_TERMINATE )))
     {
-        add_job_process( job, process );
+        if (!process->running_threads)
+            set_error( STATUS_PROCESS_IS_TERMINATING );
+        else if (process->job)
+            set_error( STATUS_ACCESS_DENIED );
+        else
+            add_job_process( job, process );
         release_object( process );
     }
     release_object( job );

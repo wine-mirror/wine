@@ -114,7 +114,7 @@ struct process_snapshot
 extern unsigned int alloc_ptid( void *ptr );
 extern void free_ptid( unsigned int id );
 extern void *get_ptid_entry( unsigned int id );
-extern struct thread *create_process( int fd, struct thread *parent_thread, int inherit_all );
+extern struct process *create_process( int fd, struct thread *parent_thread, int inherit_all );
 extern data_size_t init_process( struct thread *thread );
 extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );

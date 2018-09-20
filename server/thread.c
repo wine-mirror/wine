@@ -221,6 +221,24 @@ static inline int is_valid_address( client_ptr_t addr )
 struct thread *create_thread( int fd, struct process *process, const struct security_descriptor *sd )
 {
     struct thread *thread;
+    int request_pipe[2];
+
+    if (fd == -1)
+    {
+        if (pipe( request_pipe ) == -1)
+        {
+            file_set_error();
+            return NULL;
+        }
+        if (send_client_fd( process, request_pipe[1], SERVER_PROTOCOL_VERSION ) == -1)
+        {
+            close( request_pipe[0] );
+            close( request_pipe[1] );
+            return NULL;
+        }
+        close( request_pipe[1] );
+        fd = request_pipe[0];
+    }
 
     if (process->is_terminating)
     {
