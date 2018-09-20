@@ -114,6 +114,14 @@ static void test_EnableScrollBar(void)
     ok( ret, "The scrollbar should be enabled.\n" );
     ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
 
+    SetLastError( 0xdeadbeef );
+    ret = EnableScrollBar( mainwnd, SB_CTL, ESB_ENABLE_BOTH );
+    ok( !ret, "EnableScrollBar should fail.\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER
+        || broken(GetLastError() == 0xdeadbeef), /* winxp */
+        "GetLastError() = %u\n", GetLastError() );
+
     /* disable window, try to re-enable */
     ret = EnableWindow( hScroll, FALSE );
     ok( !ret, "got %d\n", ret );
@@ -170,6 +178,16 @@ static void test_SetScrollPos(void)
     ret = GetScrollPos( hScroll, SB_CTL);
     ok( ret == 30, "The position should not be equal to zero\n");
 
+    SetLastError( 0xdeadbeef );
+    ret = SetScrollPos( mainwnd, SB_CTL, 30, TRUE );
+    ok( !ret, "The position should not be set.\n" );
+    ok( GetLastError() == 0xdeadbeef, "GetLastError() = %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = GetScrollPos( mainwnd, SB_CTL );
+    ok( !ret, "The position should be equal to zero\n");
+    ok( GetLastError() == 0xdeadbeef, "GetLastError() = %u\n", GetLastError() );
+
     DestroyWindow(hScroll);
     DestroyWindow(mainwnd);
 }
@@ -191,6 +209,9 @@ static void test_ShowScrollBar(void)
 
     ret = ShowScrollBar( NULL, SB_CTL, TRUE );
     ok( !ret, "The ShowScrollBar() should failed.\n" );
+
+    ret = ShowScrollBar( mainwnd, SB_CTL, TRUE );
+    ok( ret, "The ShowScrollBar() should not fail.\n" );
 
     DestroyWindow(hScroll);
     DestroyWindow(mainwnd);

@@ -159,7 +159,8 @@ static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
             if (wndPtr->pScroll) infoPtr = &((LPWINSCROLLBAR_INFO)wndPtr->pScroll)->vert;
             break;
         case SB_CTL:
-            infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra;
+            if (get_class_winproc( wndPtr->class ) == BUILTIN_WINPROC( WINPROC_SCROLLBAR ))
+                infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra;
             break;
         case SB_BOTH:
             WARN("with SB_BOTH\n");
