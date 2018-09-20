@@ -296,7 +296,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 /* Change the selection */
                 sel = SendMessageW(ac->hwndListBox, LB_GETCURSEL, 0, 0);
                 if (wParam == VK_UP)
-                    sel = ((sel - 1) < 0) ? count - 1 : sel - 1;
+                    sel = ((sel - 1) < -1) ? count - 1 : sel - 1;
                 else
                     sel = ((sel + 1) >= count) ? -1 : sel + 1;
                 SendMessageW(ac->hwndListBox, LB_SETCURSEL, sel, 0);
