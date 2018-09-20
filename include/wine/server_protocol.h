@@ -766,10 +766,12 @@ struct get_new_process_info_reply
 struct new_thread_request
 {
     struct request_header __header;
+    obj_handle_t process;
     unsigned int access;
     int          suspend;
     int          request_fd;
     /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
 };
 struct new_thread_reply
 {
@@ -6534,6 +6536,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 561
+#define SERVER_PROTOCOL_VERSION 562
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

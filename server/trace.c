@@ -1261,7 +1261,8 @@ static void dump_get_new_process_info_reply( const struct get_new_process_info_r
 
 static void dump_new_thread_request( const struct new_thread_request *req )
 {
-    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, " process=%04x", req->process );
+    fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", suspend=%d", req->suspend );
     fprintf( stderr, ", request_fd=%d", req->request_fd );
     dump_varargs_object_attributes( ", objattr=", cur_size );

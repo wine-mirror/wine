@@ -1271,19 +1271,40 @@ unsigned int get_supported_cpu_mask(void)
 DECL_HANDLER(new_thread)
 {
     struct thread *thread;
+    struct process *process;
     struct unicode_str name;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
-    if (request_fd == -1 || fcntl( request_fd, F_SETFL, O_NONBLOCK ) == -1)
+    if (!(process = get_process_from_handle( req->process, PROCESS_CREATE_THREAD )))
     {
         if (request_fd != -1) close( request_fd );
-        set_error( STATUS_INVALID_HANDLE );
         return;
     }
 
-    if ((thread = create_thread( request_fd, current->process, sd )))
+    if (process != current->process)
+    {
+        if (request_fd != -1)  /* can't create a request fd in a different process */
+        {
+            close( request_fd );
+            set_error( STATUS_INVALID_PARAMETER );
+            goto done;
+        }
+        if (process->running_threads)  /* only the initial thread can be created in another process */
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            goto done;
+        }
+    }
+    else if (request_fd == -1 || fcntl( request_fd, F_SETFL, O_NONBLOCK ) == -1)
+    {
+        if (request_fd != -1) close( request_fd );
+        set_error( STATUS_INVALID_HANDLE );
+        goto done;
+    }
+
+    if ((thread = create_thread( request_fd, process, sd )))
     {
         thread->system_regs = current->system_regs;
         if (req->suspend) thread->suspend++;
@@ -1292,10 +1313,12 @@ DECL_HANDLER(new_thread)
                                                            req->access, objattr->attributes )))
         {
             /* thread object will be released when the thread gets killed */
-            return;
+            goto done;
         }
         kill_thread( thread, 1 );
     }
+done:
+    release_object( process );
 }
 
 /* initialize a new thread */

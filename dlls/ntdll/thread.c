@@ -605,6 +605,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
 
     SERVER_START_REQ( new_thread )
     {
+        req->process    = wine_server_obj_handle( process );
         req->access     = THREAD_ALL_ACCESS;
         req->suspend    = suspended;
         req->request_fd = request_pipe[0];
