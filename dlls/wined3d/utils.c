@@ -1925,6 +1925,11 @@ static inline int get_format_idx(enum wined3d_format_id format_id)
     return -1;
 }
 
+static struct wined3d_format *get_format_by_idx(const struct wined3d_adapter *adapter, int fmt_idx)
+{
+    return &adapter->formats[fmt_idx];
+}
+
 static struct wined3d_format *get_format_internal(const struct wined3d_adapter *adapter,
         enum wined3d_format_id format_id)
 {
@@ -1936,7 +1941,7 @@ static struct wined3d_format *get_format_internal(const struct wined3d_adapter *
         return NULL;
     }
 
-    return &adapter->formats[fmt_idx];
+    return get_format_by_idx(adapter, fmt_idx);
 }
 
 static void copy_format(struct wined3d_format *dst_format, const struct wined3d_format *src_format)
@@ -2729,8 +2734,8 @@ static void init_format_fbo_compat_info(const struct wined3d_adapter *adapter,
     {
         for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
         {
+            struct wined3d_format *format = get_format_by_idx(adapter, i);
             BOOL fallback_fmt_used = FALSE, regular_fmt_used = FALSE;
-            struct wined3d_format *format = &adapter->formats[i];
             GLenum rt_internal = format->rtInternal;
             GLint value;
 
@@ -2843,7 +2848,7 @@ static void init_format_fbo_compat_info(const struct wined3d_adapter *adapter,
 
     for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
-        struct wined3d_format *format = &adapter->formats[i];
+        struct wined3d_format *format = get_format_by_idx(adapter, i);
 
         if (!format->glInternal) continue;
 
@@ -3629,7 +3634,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
 
     for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
-        struct wined3d_format *format = &adapter->formats[i];
+        struct wined3d_format *format = get_format_by_idx(adapter, i);
 
         if (!(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE))
             continue;
@@ -3727,7 +3732,7 @@ static BOOL init_typeless_formats(const struct wined3d_adapter *adapter)
         if (!(ds_format = get_format_internal(adapter, typeless_depth_stencil_formats[i].depth_stencil_id)))
             return FALSE;
 
-        typeless_ds_format = &adapter->formats[WINED3D_FORMAT_COUNT + i];
+        typeless_ds_format = get_format_by_idx(adapter, WINED3D_FORMAT_COUNT + i);
         typeless_ds_format->id = typeless_depth_stencil_formats[i].typeless_id;
         copy_format(typeless_ds_format, ds_format);
         for (j = 0; j < ARRAY_SIZE(typeless_ds_format->flags); ++j)
@@ -3764,7 +3769,7 @@ static void init_format_gen_mipmap_info(const struct wined3d_adapter *adapter,
 
     for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
-        struct wined3d_format *format = &adapter->formats[i];
+        struct wined3d_format *format = get_format_by_idx(adapter, i);
 
         for (j = 0; j < ARRAY_SIZE(format->flags); ++j)
             if (!(~format->flags[j] & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING)))
@@ -3921,7 +3926,7 @@ static void init_format_depth_bias_scale(struct wined3d_adapter *adapter,
 
     for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
     {
-        struct wined3d_format *format = &adapter->formats[i];
+        struct wined3d_format *format = get_format_by_idx(adapter, i);
 
         if (format->flags[WINED3D_GL_RES_TYPE_RB] & WINED3DFMT_FLAG_DEPTH)
         {
@@ -3987,14 +3992,14 @@ const struct wined3d_format *wined3d_get_format(const struct wined3d_adapter *ad
         return get_format_internal(adapter, WINED3DFMT_UNKNOWN);
     }
 
-    format = &adapter->formats[idx];
+    format = get_format_by_idx(adapter, idx);
 
     if (resource_usage & WINED3DUSAGE_DEPTHSTENCIL && wined3d_format_is_typeless(format))
     {
         for (i = 0; i < ARRAY_SIZE(typeless_depth_stencil_formats); ++i)
         {
             if (typeless_depth_stencil_formats[i].typeless_id == format_id)
-                return &adapter->formats[WINED3D_FORMAT_COUNT + i];
+                return get_format_by_idx(adapter, WINED3D_FORMAT_COUNT + i);
         }
 
         FIXME("Cannot find depth/stencil typeless format %s (%#x).\n",
