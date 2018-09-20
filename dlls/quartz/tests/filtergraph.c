@@ -1701,11 +1701,9 @@ todo_wine
 
     sink_pin.accept_mt = &sink_type;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
@@ -1715,11 +1713,9 @@ todo_wine {
     IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
@@ -1729,12 +1725,10 @@ todo_wine {
 
     IFilterGraph2_AddFilter(graph, &parser3.IBaseFilter_iface, NULL);
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser3_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(parser3_pins[1].peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", parser3_pins[1].peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, parser3_pins[0].peer);
@@ -1753,11 +1747,10 @@ todo_wine {
     IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
+todo_wine
     ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     ok(!parser1_pins[2].peer, "Got peer %p.\n", parser1_pins[2].peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
@@ -1769,11 +1762,9 @@ todo_wine {
 
     parser1_pins[1].QueryInternalConnections_hr = S_OK;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);

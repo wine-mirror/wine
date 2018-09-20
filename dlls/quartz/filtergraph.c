@@ -1089,7 +1089,9 @@ static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, 
 static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, IPin *ppinIn)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter *filter;
     HRESULT hr;
+    IPin *pin;
     AM_MEDIA_TYPE* mt = NULL;
     IEnumMediaTypes* penummt = NULL;
     ULONG nbmt;
@@ -1097,7 +1099,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     IEnumMoniker* pEnumMoniker;
     GUID tab[2];
     IMoniker* pMoniker;
-    ULONG pin;
     PIN_INFO PinInfo;
     CLSID FilterCLSID;
     PIN_DIRECTION dir;
@@ -1159,6 +1160,34 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         goto out;
 
     TRACE("Direct connection failed, trying to render using extra filters\n");
+
+    LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
+    {
+        hr = IBaseFilter_EnumPins(filter->filter, &penumpins);
+        if (FAILED(hr))
+            goto out;
+
+        while (IEnumPins_Next(penumpins, 1, &pin, NULL) == S_OK)
+        {
+            IPin_QueryDirection(pin, &dir);
+            if (dir == PINDIR_INPUT && SUCCEEDED(IFilterGraph2_ConnectDirect(iface,
+                    ppinOut, pin, NULL)))
+            {
+                if (SUCCEEDED(hr = connect_output_pin(This, filter->filter, ppinIn)))
+                {
+                    IPin_Release(pin);
+                    IEnumPins_Release(penumpins);
+                    goto out;
+                }
+
+                IFilterGraph2_Disconnect(iface, pin);
+                IFilterGraph2_Disconnect(iface, ppinOut);
+            }
+            IPin_Release(pin);
+        }
+
+        IEnumPins_Release(penumpins);
+    }
 
     hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
     if (FAILED(hr))
@@ -1290,14 +1319,14 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             goto error;
         }
 
-        hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
+        hr = IEnumPins_Next(penumpins, 1, &ppinfilter, NULL);
         IEnumPins_Release(penumpins);
 
         if (FAILED(hr)) {
             WARN("Obtaining next pin: (%x)\n", hr);
             goto error;
         }
-        if (pin == 0) {
+        if (hr == S_FALSE) {
             WARN("Cannot use this filter: no pins\n");
             goto error;
         }
