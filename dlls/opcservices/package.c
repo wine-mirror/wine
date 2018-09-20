@@ -1160,6 +1160,20 @@ static const IOpcRelationshipVtbl opc_relationship_vtbl =
     opc_relationship_GetTargetMode,
 };
 
+static struct opc_relationship *opc_relationshipset_get_rel(struct opc_relationship_set *relationship_set,
+        const WCHAR *id)
+{
+    size_t i;
+
+    for (i = 0; i < relationship_set->count; i++)
+    {
+        if (!strcmpW(id, relationship_set->relationships[i]->id))
+            return relationship_set->relationships[i];
+    }
+
+    return NULL;
+}
+
 static HRESULT opc_relationship_create(struct opc_relationship_set *set, const WCHAR *id, const WCHAR *type,
         IUri *target_uri, OPC_URI_TARGET_MODE target_mode, IOpcRelationship **out)
 {
@@ -1179,7 +1193,6 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
     relationship->source_uri = set->source_uri;
     IOpcUri_AddRef(relationship->source_uri);
 
-    /* FIXME: test that id is unique */
     if (id)
         relationship->id = opc_strdupW(id);
     else
@@ -1190,8 +1203,16 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
             static const WCHAR fmtW[] = {'R','%','0','8','X',0};
             DWORD generated;
 
+            /* FIXME: test that generated id is unique */
             RtlGenRandom(&generated, sizeof(generated));
             sprintfW(relationship->id, fmtW, generated);
+
+            if (opc_relationshipset_get_rel(set, relationship->id))
+            {
+                WARN("Newly generated id %s already exists.\n", debugstr_w(relationship->id));
+                IOpcRelationship_Release(&relationship->IOpcRelationship_iface);
+                return E_FAIL;
+            }
         }
     }
 
@@ -1258,20 +1279,6 @@ static ULONG WINAPI opc_relationship_set_Release(IOpcRelationshipSet *iface)
     return refcount;
 }
 
-static struct opc_relationship *opc_relationshipset_get_item(struct opc_relationship_set *relationship_set,
-        const WCHAR *id)
-{
-    size_t i;
-
-    for (i = 0; i < relationship_set->count; i++)
-    {
-        if (!strcmpW(id, relationship_set->relationships[i]->id))
-            return relationship_set->relationships[i];
-    }
-
-    return NULL;
-}
-
 static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *iface, const WCHAR *id,
         IOpcRelationship **relationship)
 {
@@ -1288,7 +1295,7 @@ static HRESULT WINAPI opc_relationship_set_GetRelationship(IOpcRelationshipSet *
     if (!id)
         return E_POINTER;
 
-    if ((ret = opc_relationshipset_get_item(relationship_set, id)))
+    if ((ret = opc_relationshipset_get_rel(relationship_set, id)))
     {
         *relationship = &ret->IOpcRelationship_iface;
         IOpcRelationship_AddRef(*relationship);
@@ -1314,6 +1321,9 @@ static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSe
     if (!type || !target_uri)
         return E_POINTER;
 
+    if (id && opc_relationshipset_get_rel(relationship_set, id))
+        return OPC_E_DUPLICATE_RELATIONSHIP;
+
     if (IUri_GetPropertyLength(target_uri, Uri_PROPERTY_SCHEME_NAME, &length, 0) == S_OK && length != 0
             && target_mode == OPC_URI_TARGET_MODE_INTERNAL)
         return OPC_E_INVALID_RELATIONSHIP_TARGET;
@@ -1337,7 +1347,7 @@ static HRESULT WINAPI opc_relationship_set_RelationshipExists(IOpcRelationshipSe
     if (!id || !exists)
         return E_POINTER;
 
-    *exists = opc_relationshipset_get_item(relationship_set, id) != NULL;
+    *exists = opc_relationshipset_get_rel(relationship_set, id) != NULL;
 
     return S_OK;
 }
