@@ -1712,7 +1712,7 @@ static BOOL HTTP_DomainMatches(LPCWSTR server, substr_t domain)
     const WCHAR *dot, *ptr;
     int len;
 
-    if(domain.len == sizeof(localW)/sizeof(WCHAR)-1 && !strncmpiW(domain.str, localW, domain.len) && !strchrW(server, '.' ))
+    if(domain.len == ARRAY_SIZE(localW)-1 && !strncmpiW(domain.str, localW, domain.len) && !strchrW(server, '.' ))
         return TRUE;
 
     if(domain.len && *domain.str != '*')
@@ -2409,8 +2409,8 @@ static void create_cache_entry(http_request_t *req)
                 if(!end)
                     end = ptr + strlenW(ptr);
 
-                if(!strncmpiW(ptr, no_cacheW, sizeof(no_cacheW)/sizeof(*no_cacheW)-1)
-                        || !strncmpiW(ptr, no_storeW, sizeof(no_storeW)/sizeof(*no_storeW)-1)) {
+                if(!strncmpiW(ptr, no_cacheW, ARRAY_SIZE(no_cacheW)-1)
+                        || !strncmpiW(ptr, no_storeW, ARRAY_SIZE(no_storeW)-1)) {
                     b = FALSE;
                     break;
                 }
@@ -3871,18 +3871,18 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 
 	TRACE("(%p, 0x%08x)--> %d\n", hHttpRequest, dwInfoLevel, info);
 	TRACE("  Attribute:");
-	for (i = 0; i < (sizeof(query_flags) / sizeof(query_flags[0])); i++) {
+        for (i = 0; i < ARRAY_SIZE(query_flags); i++) {
 	    if (query_flags[i].val == info) {
 		TRACE(" %s", query_flags[i].name);
 		break;
 	    }
 	}
-	if (i == (sizeof(query_flags) / sizeof(query_flags[0]))) {
+        if (i == ARRAY_SIZE(query_flags)) {
 	    TRACE(" Unknown (%08x)", info);
 	}
 
 	TRACE(" Modifier:");
-	for (i = 0; i < (sizeof(modifier_flags) / sizeof(modifier_flags[0])); i++) {
+        for (i = 0; i < ARRAY_SIZE(modifier_flags); i++) {
 	    if (modifier_flags[i].val & info_mod) {
 		TRACE(" %s", modifier_flags[i].name);
 		info_mod &= ~ modifier_flags[i].val;
@@ -4208,7 +4208,7 @@ static WORD HTTP_ParseWkday(LPCWSTR day)
                                      { 'f','r','i',0 },
                                      { 's','a','t',0 }};
     unsigned int i;
-    for (i = 0; i < sizeof(days)/sizeof(*days); i++)
+    for (i = 0; i < ARRAY_SIZE(days); i++)
         if (!strcmpiW(day, days[i]))
             return i;
 
@@ -4313,7 +4313,7 @@ static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
     unsigned long num;
 
     for (ptr = value, dayPtr = day; *ptr && !isspaceW(*ptr) &&
-         dayPtr - day < sizeof(day) / sizeof(day[0]) - 1; ptr++, dayPtr++)
+         dayPtr - day < ARRAY_SIZE(day) - 1; ptr++, dayPtr++)
         *dayPtr = *ptr;
     *dayPtr = 0;
     st.wDayOfWeek = HTTP_ParseWkday(day);
@@ -4326,8 +4326,7 @@ static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
     while (isspaceW(*ptr))
         ptr++;
 
-    for (monthPtr = month; !isspaceW(*ptr) &&
-         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+    for (monthPtr = month; !isspaceW(*ptr) && monthPtr - month < ARRAY_SIZE(month) - 1;
          monthPtr++, ptr++)
         *monthPtr = *ptr;
     *monthPtr = 0;
@@ -4423,8 +4422,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     while (isspaceW(*ptr))
         ptr++;
 
-    for (monthPtr = month; !isspaceW(*ptr) &&
-         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+    for (monthPtr = month; !isspaceW(*ptr) && monthPtr - month < ARRAY_SIZE(month) - 1;
          monthPtr++, ptr++)
         *monthPtr = *ptr;
     *monthPtr = 0;
@@ -4471,7 +4469,7 @@ static WORD HTTP_ParseWeekday(LPCWSTR day)
                                      { 'f','r','i','d','a','y',0 },
                                      { 's','a','t','u','r','d','a','y',0 }};
     unsigned int i;
-    for (i = 0; i < sizeof(days)/sizeof(*days); i++)
+    for (i = 0; i < ARRAY_SIZE(days); i++)
         if (!strcmpiW(day, days[i]))
             return i;
 
@@ -4501,7 +4499,7 @@ static BOOL HTTP_ParseRfc850Date(LPCWSTR value, FILETIME *ft)
             return FALSE;
         }
     }
-    else if (ptr - value < sizeof(day) / sizeof(day[0]))
+    else if (ptr - value < ARRAY_SIZE(day))
     {
         memcpy(day, value, (ptr - value) * sizeof(WCHAR));
         day[ptr - value + 1] = 0;
@@ -4538,8 +4536,7 @@ static BOOL HTTP_ParseRfc850Date(LPCWSTR value, FILETIME *ft)
     }
     ptr++;
 
-    for (monthPtr = month; *ptr != '-' &&
-         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+    for (monthPtr = month; *ptr != '-' && monthPtr - month < ARRAY_SIZE(month) - 1;
          monthPtr++, ptr++)
         *monthPtr = *ptr;
     *monthPtr = 0;
@@ -4827,7 +4824,7 @@ static void set_content_length_header( http_request_t *request, DWORD len, DWORD
 {
     static const WCHAR fmtW[] =
         {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
-    WCHAR buf[sizeof(fmtW)/sizeof(fmtW[0]) + 10];
+    WCHAR buf[ARRAY_SIZE(fmtW) + 10];
 
     sprintfW( buf, fmtW, len );
     HTTP_HttpAddRequestHeadersW( request, buf, ~0u, flags );

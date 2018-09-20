@@ -766,7 +766,7 @@ static void cache_containers_init(void)
     };
     DWORD i;
 
-    for (i = 0; i < sizeof(DefaultContainerData) / sizeof(DefaultContainerData[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(DefaultContainerData); i++)
     {
         WCHAR wszCachePath[MAX_PATH];
         WCHAR wszMutexName[MAX_PATH];
@@ -1478,12 +1478,12 @@ static DWORD urlcache_hash_key(LPCSTR lpszKey)
     BYTE key[4];
     DWORD i;
 
-    for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(key); i++)
         key[i] = lookupTable[(*lpszKey + i) & 0xFF];
 
     for (lpszKey++; *lpszKey; lpszKey++)
     {
-        for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(key); i++)
             key[i] = lookupTable[*lpszKey ^ key[i]];
     }
 
@@ -2441,7 +2441,7 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
         hash_table_entry = 0;
         rate_no = 0;
         GetSystemTimeAsFileTime(&cur_time);
-        while(rate_no<sizeof(rate)/sizeof(*rate) &&
+        while(rate_no < ARRAY_SIZE(rate) &&
                 urlcache_next_entry(header, &hash_table_off, &hash_table_entry, &hash_entry, &entry)) {
             if(entry->signature != URL_SIGNATURE) {
                 WARN("only url entries are currently supported\n");
