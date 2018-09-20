@@ -348,13 +348,13 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         case CB_SHOWDROPDOWN:
             if (This->options & ACO_AUTOSUGGEST)
                 ShowWindow(This->hwndListBox, SW_HIDE);
-            break;
+            return 0;
         case WM_KILLFOCUS:
             if ((This->options & ACO_AUTOSUGGEST) && ((HWND)wParam != This->hwndListBox))
             {
                 ShowWindow(This->hwndListBox, SW_HIDE);
             }
-            return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
+            break;
         case WM_KEYDOWN:
             return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
         case WM_CHAR:
@@ -382,11 +382,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             destroy_autocomplete_object(This);
             return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
         }
-        default:
-            return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
     }
-
-    return 0;
+    return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 }
 
 static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
