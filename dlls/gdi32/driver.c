@@ -61,9 +61,9 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static typeof(GetDesktopWindow) *pGetDesktopWindow;
-static typeof(GetSystemMetrics) *pGetSystemMetrics;
-static typeof(SetThreadDpiAwarenessContext) *pSetThreadDpiAwarenessContext;
+static HWND (WINAPI *pGetDesktopWindow)(void);
+static INT (WINAPI *pGetSystemMetrics)(INT);
+static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 /**********************************************************************
  *	     create_driver
