@@ -362,21 +362,24 @@ static void test_relationship(void)
     hr = IOpcPackage_GetRelationshipSet(package, &rels);
     ok(SUCCEEDED(hr), "Failed to get part set, hr %#x.\n", hr);
 
+    rel = (void *)0xdeadbeef;
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, NULL, NULL, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(rel == NULL, "Unexpected instance %p.\n", rel);
 
+    rel = (void *)0xdeadbeef;
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, NULL, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(rel == NULL, "Unexpected instance %p.\n", rel);
 
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, NULL, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     /* Absolute target uri with internal mode */
+    rel = (void *)0xdeadbeef;
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, target_uri2, OPC_URI_TARGET_MODE_INTERNAL, &rel);
-todo_wine
     ok(hr == OPC_E_INVALID_RELATIONSHIP_TARGET, "Unexpected hr %#x.\n", hr);
-    if (hr == S_OK)
-        IOpcRelationship_Release(rel);
+    ok(rel == NULL, "Unexpected instance %p.\n", rel);
 
     hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(SUCCEEDED(hr), "Failed to create relationship, hr %#x.\n", hr);

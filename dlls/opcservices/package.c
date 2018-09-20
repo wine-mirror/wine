@@ -1301,12 +1301,22 @@ static HRESULT WINAPI opc_relationship_set_CreateRelationship(IOpcRelationshipSe
         const WCHAR *type, IUri *target_uri, OPC_URI_TARGET_MODE target_mode, IOpcRelationship **relationship)
 {
     struct opc_relationship_set *relationship_set = impl_from_IOpcRelationshipSet(iface);
+    DWORD length;
 
     TRACE("iface %p, id %s, type %s, target_uri %p, target_mode %d, relationship %p.\n", iface, debugstr_w(id),
             debugstr_w(type), target_uri, target_mode, relationship);
 
+    if (!relationship)
+        return E_POINTER;
+
+    *relationship = NULL;
+
     if (!type || !target_uri)
         return E_POINTER;
+
+    if (IUri_GetPropertyLength(target_uri, Uri_PROPERTY_SCHEME_NAME, &length, 0) == S_OK && length != 0
+            && target_mode == OPC_URI_TARGET_MODE_INTERNAL)
+        return OPC_E_INVALID_RELATIONSHIP_TARGET;
 
     return opc_relationship_create(relationship_set, id, type, target_uri, target_mode, relationship);
 }
