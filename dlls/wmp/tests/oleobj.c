@@ -1379,11 +1379,11 @@ static void create_container_window(void)
 
 START_TEST(oleobj)
 {
-    create_container_window();
     CoInitialize(NULL);
+    create_container_window();
 
     test_wmp();
 
-    CoUninitialize();
     DestroyWindow(container_hwnd);
+    CoUninitialize();
 }
