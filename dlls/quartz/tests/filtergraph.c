@@ -768,6 +768,8 @@ struct testpin
     IBaseFilter *filter;
     IPin *peer;
     AM_MEDIA_TYPE *mt;
+    WCHAR name[10];
+    WCHAR id[10];
 
     IEnumMediaTypes IEnumMediaTypes_iface;
     const AM_MEDIA_TYPE *types;
@@ -928,7 +930,7 @@ static HRESULT WINAPI testpin_QueryPinInfo(IPin *iface, PIN_INFO *info)
     info->pFilter = pin->filter;
     IBaseFilter_AddRef(pin->filter);
     info->dir = pin->dir;
-    info->achName[0] = 0;
+    lstrcpyW(info->achName, pin->name);
     return S_OK;
 }
 
@@ -944,9 +946,10 @@ static HRESULT WINAPI testpin_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
 
 static HRESULT WINAPI testpin_QueryId(IPin *iface, WCHAR **id)
 {
+    struct testpin *pin = impl_from_IPin(iface);
     if (winetest_debug > 1) trace("%p->QueryId()\n", iface);
-    *id = CoTaskMemAlloc(1);
-    (*id)[0] = 0;
+    *id = CoTaskMemAlloc(11);
+    lstrcpyW(*id, pin->id);
     return S_OK;
 }
 
@@ -1761,6 +1764,38 @@ todo_wine
     /* QueryInternalConnections is not used to find output pins. */
 
     parser1_pins[1].QueryInternalConnections_hr = S_OK;
+    hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    IFilterGraph2_Disconnect(graph, sink_pin.peer);
+    IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+
+    /* A pin whose name (not ID) begins with a tilde is not connected. */
+
+    parser1_pins[1].name[0] = '~';
+    hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+todo_wine
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+
+    parser1.pin_count = 3;
+    hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+todo_wine {
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &parser1_pins[2].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+}
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    IFilterGraph2_Disconnect(graph, sink_pin.peer);
+    IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+    parser1.pin_count = 2;
+
+    parser1_pins[1].name[0] = 0;
+    parser1_pins[1].id[0] = '~';
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);

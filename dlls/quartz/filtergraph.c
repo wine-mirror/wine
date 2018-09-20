@@ -1041,9 +1041,8 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
 static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, IPin *sink)
 {
     IEnumPins *enumpins;
-    PIN_DIRECTION dir;
+    PIN_INFO info;
     HRESULT hr;
-    WCHAR *id;
     IPin *pin;
 
     hr = IBaseFilter_EnumPins(filter, &enumpins);
@@ -1052,20 +1051,13 @@ static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, 
 
     while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
     {
-        IPin_QueryDirection(pin, &dir);
-        if (dir == PINDIR_OUTPUT)
+        IPin_QueryPinInfo(pin, &info);
+        IBaseFilter_Release(info.pFilter);
+        if (info.dir == PINDIR_OUTPUT)
         {
-            hr = IPin_QueryId(pin, &id);
-            if (FAILED(hr))
+            if (info.achName[0] == '~')
             {
-                IPin_Release(pin);
-                IEnumPins_Release(enumpins);
-                return hr;
-            }
-
-            if (id[0] == '~')
-            {
-                TRACE("Skipping non-rendered pin %s.\n", debugstr_w(id));
+                TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
                 IPin_Release(pin);
                 IEnumPins_Release(enumpins);
                 return E_FAIL;
