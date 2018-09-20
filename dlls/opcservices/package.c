@@ -1888,7 +1888,10 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
     if (SUCCEEDED(hr))
         hr = IOpcPartUri_GetRawUri(rels_uri, &rels_part_uri);
     if (SUCCEEDED(hr))
-        hr = compress_add_file(archive, rels_part_uri, content, OPC_COMPRESSION_NORMAL);
+    {
+        /* Relationship part names always start with root '/', skip it. */
+        hr = compress_add_file(archive, rels_part_uri + 1, content, OPC_COMPRESSION_NORMAL);
+    }
 
     SysFreeString(rels_part_uri);
     IStream_Release(content);
