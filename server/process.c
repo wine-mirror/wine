@@ -1061,7 +1061,6 @@ struct process_snapshot *process_snap( int *count )
 DECL_HANDLER(new_process)
 {
     struct startup_info *info;
-    struct thread *thread;
     struct process *process = NULL;
     struct process *parent = current->process;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
@@ -1166,7 +1165,6 @@ DECL_HANDLER(new_process)
     }
 
     if (!(process = create_process( socket_fd, current, req->inherit_all ))) goto done;
-    if (!(thread = create_thread( -1, process, NULL ))) goto done;
 
     process->startup_info = (struct startup_info *)grab_object( info );
 
@@ -1179,9 +1177,6 @@ DECL_HANDLER(new_process)
 
     /* connect to the window station */
     connect_process_winstation( process, current );
-
-    /* thread will be actually suspended in init_done */
-    if (req->create_flags & CREATE_SUSPENDED) thread->suspend++;
 
     /* set the process console */
     if (!(req->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
@@ -1224,9 +1219,7 @@ DECL_HANDLER(new_process)
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
     reply->pid = get_process_id( process );
-    reply->tid = get_thread_id( thread );
-    reply->phandle = alloc_handle( parent, process, req->process_access, req->process_attr );
-    reply->thandle = alloc_handle( parent, thread, req->thread_access, req->thread_attr );
+    reply->handle = alloc_handle( parent, process, req->access, req->attributes );
 
  done:
     if (process) release_object( process );

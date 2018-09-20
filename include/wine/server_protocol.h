@@ -726,25 +726,21 @@ struct new_process_request
     unsigned int create_flags;
     int          socket_fd;
     obj_handle_t exe_file;
-    unsigned int process_access;
-    unsigned int process_attr;
-    unsigned int thread_access;
-    unsigned int thread_attr;
+    unsigned int access;
+    unsigned int attributes;
     cpu_type_t   cpu;
     data_size_t  info_size;
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
-    char __pad_52[4];
+    char __pad_44[4];
 };
 struct new_process_reply
 {
     struct reply_header __header;
     obj_handle_t info;
     process_id_t pid;
-    obj_handle_t phandle;
-    thread_id_t  tid;
-    obj_handle_t thandle;
-    char __pad_28[4];
+    obj_handle_t handle;
+    char __pad_20[4];
 };
 
 
@@ -6536,6 +6532,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 562
+#define SERVER_PROTOCOL_VERSION 563
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

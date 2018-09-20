@@ -3096,7 +3096,6 @@ static void test_process_security_child(void)
     CloseHandle( handle );
 
     handle = OpenThread( THREAD_SET_THREAD_TOKEN, FALSE, GetCurrentThreadId() );
-    todo_wine
     ok(handle == NULL, "OpenThread(THREAD_SET_THREAD_TOKEN) should have failed\n");
 }
 

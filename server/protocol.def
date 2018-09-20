@@ -740,10 +740,8 @@ struct rawinput_device
     unsigned int create_flags;   /* creation flags */
     int          socket_fd;      /* file descriptor for process socket */
     obj_handle_t exe_file;       /* file handle for main exe */
-    unsigned int process_access; /* access rights for process object */
-    unsigned int process_attr;   /* attributes for process object */
-    unsigned int thread_access;  /* access rights for thread object */
-    unsigned int thread_attr;    /* attributes for thread object */
+    unsigned int access;         /* access rights for process object */
+    unsigned int attributes;     /* attributes for process object */
     cpu_type_t   cpu;            /* CPU that the new process will use */
     data_size_t  info_size;      /* size of startup info */
     VARARG(info,startup_info,info_size); /* startup information */
@@ -751,9 +749,7 @@ struct rawinput_device
 @REPLY
     obj_handle_t info;           /* new process info handle */
     process_id_t pid;            /* process id */
-    obj_handle_t phandle;        /* process handle (in the current process) */
-    thread_id_t  tid;            /* thread id */
-    obj_handle_t thandle;        /* thread handle (in the current process) */
+    obj_handle_t handle;         /* process handle (in the current process) */
 @END
 
 

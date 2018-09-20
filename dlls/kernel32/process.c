@@ -1949,6 +1949,68 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
     return pid;
 }
 
+/* creates a struct security_descriptor and contained information in one contiguous piece of memory */
+static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct object_attributes **ret,
+                                         data_size_t *ret_len )
+{
+    unsigned int len = sizeof(**ret);
+    PSID owner = NULL, group = NULL;
+    ACL *dacl, *sacl;
+    BOOLEAN dacl_present, sacl_present, defaulted;
+    PSECURITY_DESCRIPTOR sd = NULL;
+    NTSTATUS status;
+
+    *ret = NULL;
+    *ret_len = 0;
+
+    if (attr) sd = attr->lpSecurityDescriptor;
+
+    if (sd)
+    {
+        len += sizeof(struct security_descriptor);
+
+        if ((status = RtlGetOwnerSecurityDescriptor( sd, &owner, &defaulted ))) return status;
+        if ((status = RtlGetGroupSecurityDescriptor( sd, &group, &defaulted ))) return status;
+        if ((status = RtlGetSaclSecurityDescriptor( sd, &sacl_present, &sacl, &defaulted ))) return status;
+        if ((status = RtlGetDaclSecurityDescriptor( sd, &dacl_present, &dacl, &defaulted ))) return status;
+        if (owner) len += RtlLengthSid( owner );
+        if (group) len += RtlLengthSid( group );
+        if (sacl_present && sacl) len += sacl->AclSize;
+        if (dacl_present && dacl) len += dacl->AclSize;
+    }
+
+    len = (len + 3) & ~3;  /* DWORD-align the entire structure */
+
+    *ret = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+    if (!*ret) return STATUS_NO_MEMORY;
+
+    (*ret)->attributes = (attr && attr->bInheritHandle) ? OBJ_INHERIT : 0;
+
+    if (sd)
+    {
+        struct security_descriptor *descr = (struct security_descriptor *)(*ret + 1);
+        unsigned char *ptr = (unsigned char *)(descr + 1);
+
+        descr->control = ((SECURITY_DESCRIPTOR *)sd)->Control & ~SE_SELF_RELATIVE;
+        if (owner) descr->owner_len = RtlLengthSid( owner );
+        if (group) descr->group_len = RtlLengthSid( group );
+        if (sacl_present && sacl) descr->sacl_len = sacl->AclSize;
+        if (dacl_present && dacl) descr->dacl_len = dacl->AclSize;
+
+        memcpy( ptr, owner, descr->owner_len );
+        ptr += descr->owner_len;
+        memcpy( ptr, group, descr->group_len );
+        ptr += descr->group_len;
+        memcpy( ptr, sacl, descr->sacl_len );
+        ptr += descr->sacl_len;
+        memcpy( ptr, dacl, descr->dacl_len );
+        (*ret)->sd_len = (sizeof(*descr) + descr->owner_len + descr->group_len + descr->sacl_len +
+                          descr->dacl_len + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
+    }
+    *ret_len = len;
+    return STATUS_SUCCESS;
+}
+
 /***********************************************************************
  *           create_process
  *
@@ -1964,7 +2026,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
     NTSTATUS status;
     BOOL success = FALSE;
-    HANDLE process_info;
+    HANDLE process_info, process_handle = 0;
+    struct object_attributes *objattr;
+    data_size_t attr_len;
     WCHAR *env_end;
     char *winedebug = NULL;
     startup_info_t *startup_info;
@@ -2062,10 +2126,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->create_flags   = flags;
         req->socket_fd      = socketfd[1];
         req->exe_file       = wine_server_obj_handle( hFile );
-        req->process_access = PROCESS_ALL_ACCESS;
-        req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
-        req->thread_access  = THREAD_ALL_ACCESS;
-        req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->access         = PROCESS_ALL_ACCESS;
+        req->attributes     = (psa && psa->nLength >= sizeof(*psa) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->cpu            = cpu;
         req->info_size      = startup_info_size;
 
@@ -2074,13 +2136,32 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         if (!(status = wine_server_call( req )))
         {
             info->dwProcessId = (DWORD)reply->pid;
-            info->dwThreadId  = (DWORD)reply->tid;
-            info->hProcess    = wine_server_ptr_handle( reply->phandle );
-            info->hThread     = wine_server_ptr_handle( reply->thandle );
+            process_handle    = wine_server_ptr_handle( reply->handle );
         }
         process_info = wine_server_ptr_handle( reply->info );
     }
     SERVER_END_REQ;
+
+    if (!status)
+    {
+        alloc_object_attributes( tsa, &objattr, &attr_len );
+        SERVER_START_REQ( new_thread )
+        {
+            req->process    = wine_server_obj_handle( process_handle );
+            req->access     = THREAD_ALL_ACCESS;
+            req->suspend    = !!(flags & CREATE_SUSPENDED);
+            req->request_fd = -1;
+            wine_server_add_data( req, objattr, attr_len );
+            if (!(status = wine_server_call( req )))
+            {
+                info->hProcess = process_handle;
+                info->hThread = wine_server_ptr_handle( reply->handle );
+                info->dwThreadId = reply->tid;
+            }
+        }
+        SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, objattr );
+    }
 
     RtlReleasePebLock();
     if (status)
@@ -2096,6 +2177,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             break;
         }
         close( socketfd[0] );
+        CloseHandle( process_handle );
         HeapFree( GetProcessHeap(), 0, startup_info );
         HeapFree( GetProcessHeap(), 0, winedebug );
         SetLastError( RtlNtStatusToDosError( status ));
