@@ -134,6 +134,7 @@ HRESULT compress_create_archive(IStream *output, struct zip_archive **out)
 
     archive->output = output;
     IStream_AddRef(archive->output);
+    archive->position = 0;
 
     GetSystemTimeAsFileTime(&ft);
     FileTimeToDosDateTime(&ft, &date, &time);
