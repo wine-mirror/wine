@@ -3513,8 +3513,6 @@ static const LPCWSTR header_lookup[] = {
     szUnless_Modified_Since,	/* HTTP_QUERY_UNLESS_MODIFIED_SINCE = 70 */
 };
 
-#define LAST_TABLE_HEADER (sizeof(header_lookup)/sizeof(header_lookup[0]))
-
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
@@ -3700,9 +3698,9 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         return res;
     }
     default:
-        assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
+        assert (ARRAY_SIZE(header_lookup) == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
 
-        if (level < LAST_TABLE_HEADER && header_lookup[level])
+        if (level < ARRAY_SIZE(header_lookup) && header_lookup[level])
             index = HTTP_GetCustomHeaderIndex(request, header_lookup[level],
                                               requested_index,request_only);
     }
