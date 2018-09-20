@@ -97,7 +97,7 @@ HANDLE WINAPI CreateRemoteThreadEx( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SI
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    status = RtlCreateUserThread( hProcess, NULL, TRUE,
+    status = RtlCreateUserThread( hProcess, sa ? sa->lpSecurityDescriptor : NULL, TRUE,
                                   NULL, stack_reserve, stack_commit,
                                   (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id );
     if (status == STATUS_SUCCESS)

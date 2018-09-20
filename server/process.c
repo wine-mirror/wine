@@ -590,7 +590,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
         goto error;
     }
     close( request_pipe[1] );
-    if (!(thread = create_thread( request_pipe[0], process ))) goto error;
+    if (!(thread = create_thread( request_pipe[0], process, NULL ))) goto error;
 
     set_fd_events( process->msg_fd, POLLIN );  /* start listening to events */
     release_object( process );

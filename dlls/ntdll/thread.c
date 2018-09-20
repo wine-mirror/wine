@@ -544,7 +544,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle_ptr, ACCESS_MASK access, OBJECT
 /***********************************************************************
  *              RtlCreateUserThread   (NTDLL.@)
  */
-NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *descr,
+NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
                                      BOOLEAN suspended, PVOID stack_addr,
                                      SIZE_T stack_reserve, SIZE_T stack_commit,
                                      PRTL_THREAD_START_ROUTINE start, void *param,
@@ -561,6 +561,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     int request_pipe[2];
     NTSTATUS status;
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
+    data_size_t len = 0;
+    struct object_attributes *objattr = NULL;
 
     if (process != NtCurrentProcess())
     {
@@ -587,15 +589,26 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         return result.create_thread.status;
     }
 
-    if (server_pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
+    if (descr)
+    {
+        OBJECT_ATTRIBUTES thread_attr;
+        InitializeObjectAttributes( &thread_attr, NULL, 0, NULL, descr );
+        if ((status = alloc_object_attributes( &thread_attr, &objattr, &len ))) return status;
+    }
+
+    if (server_pipe( request_pipe ) == -1)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, objattr );
+        return STATUS_TOO_MANY_OPENED_FILES;
+    }
     wine_server_send_fd( request_pipe[0] );
 
     SERVER_START_REQ( new_thread )
     {
         req->access     = THREAD_ALL_ACCESS;
-        req->attributes = 0;  /* FIXME */
         req->suspend    = suspended;
         req->request_fd = request_pipe[0];
+        wine_server_add_data( req, objattr, len );
         if (!(status = wine_server_call( req )))
         {
             handle = wine_server_ptr_handle( reply->handle );
@@ -605,6 +618,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     }
     SERVER_END_REQ;
 
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     if (status)
     {
         close( request_pipe[1] );

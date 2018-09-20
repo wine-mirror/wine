@@ -769,9 +769,9 @@ struct rawinput_device
 /* Create a new thread from the context of the parent */
 @REQ(new_thread)
     unsigned int access;       /* wanted access rights */
-    unsigned int attributes;   /* object attributes */
     int          suspend;      /* new thread should be suspended on creation */
     int          request_fd;   /* fd for request pipe */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     thread_id_t  tid;          /* thread id */
     obj_handle_t handle;       /* thread handle (in the current process) */

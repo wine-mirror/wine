@@ -767,10 +767,9 @@ struct new_thread_request
 {
     struct request_header __header;
     unsigned int access;
-    unsigned int attributes;
     int          suspend;
     int          request_fd;
-    char __pad_28[4];
+    /* VARARG(objattr,object_attributes); */
 };
 struct new_thread_reply
 {
@@ -6535,6 +6534,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 560
+#define SERVER_PROTOCOL_VERSION 561
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

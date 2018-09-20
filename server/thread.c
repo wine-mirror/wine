@@ -218,7 +218,7 @@ static inline int is_valid_address( client_ptr_t addr )
 }
 
 /* create a new thread */
-struct thread *create_thread( int fd, struct process *process )
+struct thread *create_thread( int fd, struct process *process, const struct security_descriptor *sd )
 {
     struct thread *thread;
 
@@ -244,6 +244,15 @@ struct thread *create_thread( int fd, struct process *process )
 
     list_add_head( &thread_list, &thread->entry );
 
+    if (sd && !set_sd_defaults_from_token( &thread->obj, sd,
+                                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                           DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION,
+                                           process->token ))
+    {
+        close( fd );
+        release_object( thread );
+        return NULL;
+    }
     if (!(thread->id = alloc_ptid( thread )))
     {
         close( fd );
@@ -1244,6 +1253,9 @@ unsigned int get_supported_cpu_mask(void)
 DECL_HANDLER(new_thread)
 {
     struct thread *thread;
+    struct unicode_str name;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
     if (request_fd == -1 || fcntl( request_fd, F_SETFL, O_NONBLOCK ) == -1)
@@ -1253,12 +1265,13 @@ DECL_HANDLER(new_thread)
         return;
     }
 
-    if ((thread = create_thread( request_fd, current->process )))
+    if ((thread = create_thread( request_fd, current->process, sd )))
     {
         thread->system_regs = current->system_regs;
         if (req->suspend) thread->suspend++;
         reply->tid = get_thread_id( thread );
-        if ((reply->handle = alloc_handle( current->process, thread, req->access, req->attributes )))
+        if ((reply->handle = alloc_handle_no_access_check( current->process, thread,
+                                                           req->access, objattr->attributes )))
         {
             /* thread object will be released when the thread gets killed */
             return;
