@@ -1119,8 +1119,7 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
         fprintf( stderr, ",name=L\"" );
         dump_strW( str, objattr->name_len / sizeof(WCHAR), stderr, "\"\"" );
         fputc( '\"', stderr );
-        remove_data( ((sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR)) * sizeof(WCHAR) +
-                     (objattr->name_len / sizeof(WCHAR)) * sizeof(WCHAR) );
+        remove_data( (sizeof(*objattr) + (objattr->sd_len & ~1) + (objattr->name_len & ~1) + 3) & ~3 );
     }
     fputc( '}', stderr );
 }

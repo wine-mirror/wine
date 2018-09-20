@@ -6535,6 +6535,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 559
+#define SERVER_PROTOCOL_VERSION 560
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

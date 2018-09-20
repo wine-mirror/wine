@@ -114,6 +114,8 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     }
     else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
 
+    len = (len + 3) & ~3;  /* DWORD-align the entire structure */
+
     *ret = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
     if (!*ret) return STATUS_NO_MEMORY;
 
