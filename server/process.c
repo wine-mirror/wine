@@ -485,7 +485,8 @@ static void start_sigkill_timer( struct process *process )
 
 /* create a new process */
 /* if the function fails the fd is closed */
-struct process *create_process( int fd, struct thread *parent_thread, int inherit_all )
+struct process *create_process( int fd, struct thread *parent_thread, int inherit_all,
+                                const struct security_descriptor *sd )
 {
     struct process *process;
 
@@ -532,6 +533,12 @@ struct process *create_process( int fd, struct thread *parent_thread, int inheri
     process->end_time = 0;
     list_add_tail( &process_list, &process->entry );
 
+    if (sd && !default_set_sd( &process->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                               DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+    {
+        close( fd );
+        goto error;
+    }
     if (!(process->id = process->group_id = alloc_ptid( process )))
     {
         close( fd );
@@ -1061,6 +1068,10 @@ struct process_snapshot *process_snap( int *count )
 DECL_HANDLER(new_process)
 {
     struct startup_info *info;
+    const void *info_ptr;
+    struct unicode_str name;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     struct process *process = NULL;
     struct process *parent = current->process;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
@@ -1068,6 +1079,12 @@ DECL_HANDLER(new_process)
     if (socket_fd == -1)
     {
         set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (!objattr)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        close( socket_fd );
         return;
     }
     if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
@@ -1098,7 +1115,7 @@ DECL_HANDLER(new_process)
 
     if (!req->info_size)  /* create an orphaned process */
     {
-        if ((process = create_process( socket_fd, NULL, 0 )))
+        if ((process = create_process( socket_fd, NULL, 0, sd )))
         {
             create_thread( -1, process, NULL );
             release_object( process );
@@ -1123,7 +1140,7 @@ DECL_HANDLER(new_process)
         goto done;
     }
 
-    info->data_size = get_req_data_size();
+    info_ptr = get_req_data_after_objattr( objattr, &info->data_size );
     info->info_size = min( req->info_size, info->data_size );
 
     if (req->info_size < sizeof(*info->data))
@@ -1137,9 +1154,9 @@ DECL_HANDLER(new_process)
             close( socket_fd );
             goto done;
         }
-        memcpy( info->data, get_req_data(), info_size );
+        memcpy( info->data, info_ptr, info_size );
         memset( (char *)info->data + info_size, 0, sizeof(*info->data) - info_size );
-        memcpy( info->data + 1, (const char *)get_req_data() + req->info_size, env_size );
+        memcpy( info->data + 1, (const char *)info_ptr + req->info_size, env_size );
         info->info_size = sizeof(startup_info_t);
         info->data_size = info->info_size + env_size;
     }
@@ -1147,7 +1164,7 @@ DECL_HANDLER(new_process)
     {
         data_size_t pos = sizeof(*info->data);
 
-        if (!(info->data = memdup( get_req_data(), info->data_size )))
+        if (!(info->data = memdup( info_ptr, info->data_size )))
         {
             close( socket_fd );
             goto done;
@@ -1164,7 +1181,7 @@ DECL_HANDLER(new_process)
 #undef FIXUP_LEN
     }
 
-    if (!(process = create_process( socket_fd, current, req->inherit_all ))) goto done;
+    if (!(process = create_process( socket_fd, current, req->inherit_all, sd ))) goto done;
 
     process->startup_info = (struct startup_info *)grab_object( info );
 
@@ -1219,7 +1236,7 @@ DECL_HANDLER(new_process)
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
     reply->pid = get_process_id( process );
-    reply->handle = alloc_handle( parent, process, req->access, req->attributes );
+    reply->handle = alloc_handle_no_access_check( parent, process, req->access, objattr->attributes );
 
  done:
     if (process) release_object( process );

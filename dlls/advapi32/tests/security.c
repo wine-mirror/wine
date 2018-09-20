@@ -3053,7 +3053,6 @@ static void test_process_security_child(void)
     ret = DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
                            &handle1, PROCESS_ALL_ACCESS, TRUE, 0 );
     err = GetLastError();
-    todo_wine
     ok(!ret && err == ERROR_ACCESS_DENIED, "duplicating handle should have failed "
        "with STATUS_ACCESS_DENIED, instead of err:%d\n", err);
 
@@ -3061,10 +3060,8 @@ static void test_process_security_child(void)
 
     /* These two should fail - they are denied by ACL */
     handle = OpenProcess( PROCESS_VM_READ, FALSE, GetCurrentProcessId() );
-    todo_wine
     ok(handle == NULL, "OpenProcess(PROCESS_VM_READ) should have failed\n");
     handle = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
-    todo_wine
     ok(handle == NULL, "OpenProcess(PROCESS_ALL_ACCESS) should have failed\n");
 
     /* Documented privilege elevation */

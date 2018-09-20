@@ -2120,6 +2120,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     /* create the process on the server side */
 
+    alloc_object_attributes( psa, &objattr, &attr_len );
     SERVER_START_REQ( new_process )
     {
         req->inherit_all    = inherit;
@@ -2127,10 +2128,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->socket_fd      = socketfd[1];
         req->exe_file       = wine_server_obj_handle( hFile );
         req->access         = PROCESS_ALL_ACCESS;
-        req->attributes     = (psa && psa->nLength >= sizeof(*psa) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->cpu            = cpu;
         req->info_size      = startup_info_size;
-
+        wine_server_add_data( req, objattr, attr_len );
         wine_server_add_data( req, startup_info, startup_info_size );
         wine_server_add_data( req, env, (env_end - env) * sizeof(WCHAR) );
         if (!(status = wine_server_call( req )))
@@ -2141,6 +2141,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         process_info = wine_server_ptr_handle( reply->info );
     }
     SERVER_END_REQ;
+    HeapFree( GetProcessHeap(), 0, objattr );
 
     if (!status)
     {

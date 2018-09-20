@@ -727,12 +727,11 @@ struct new_process_request
     int          socket_fd;
     obj_handle_t exe_file;
     unsigned int access;
-    unsigned int attributes;
     cpu_type_t   cpu;
     data_size_t  info_size;
+    /* VARARG(objattr,object_attributes); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
-    char __pad_44[4];
 };
 struct new_process_reply
 {
@@ -6532,6 +6531,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 563
+#define SERVER_PROTOCOL_VERSION 564
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

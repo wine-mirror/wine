@@ -1230,9 +1230,9 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, ", socket_fd=%d", req->socket_fd );
     fprintf( stderr, ", exe_file=%04x", req->exe_file );
     fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     dump_cpu_type( ", cpu=", &req->cpu );
     fprintf( stderr, ", info_size=%u", req->info_size );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
     dump_varargs_startup_info( ", info=", min(cur_size,req->info_size) );
     dump_varargs_unicode_str( ", env=", cur_size );
 }
