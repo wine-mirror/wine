@@ -1768,6 +1768,33 @@ todo_wine
         "</p:a>");
 
     IStream_Release(stream);
+
+    /* Define prefix, write attribute with it. */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = write_start_element(writer, NULL, "e", NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = write_attribute_string(writer, "xmlns", "prefix", NULL, "uri");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = write_attribute_string(writer, "prefix", "attr", NULL, "value");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<e xmlns:prefix=\"uri\" prefix:attr=\"value\" />");
+
+    IStream_Release(stream);
+
     IXmlWriter_Release(writer);
 }
 

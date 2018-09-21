@@ -843,8 +843,8 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
     static const WCHAR xmlW[] = {'x','m','l',0};
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    BOOL is_xmlns_prefix, is_xmlns_local;
     int prefix_len, local_len;
-    BOOL is_xmlns_prefix;
     struct ns *ns;
     HRESULT hr;
 
@@ -878,6 +878,8 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
 
     if (FAILED(hr = is_valid_ncname(local, &local_len)))
         return hr;
+
+    is_xmlns_local = !strcmpW(local, xmlnsW);
 
     /* Trivial case, no prefix. */
     if (prefix_len == 0 && is_empty_string(uri))
@@ -918,9 +920,9 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     }
 
     /* Ignore prefix is URI wasn't specified. */
-    if (is_empty_string(uri))
+    if (is_xmlns_local && is_empty_string(uri))
     {
-        write_output_attribute(This, NULL, 0, local, local_len, value);
+        write_output_attribute(This, NULL, 0, xmlnsW, ARRAY_SIZE(xmlnsW) - 1, value);
         return S_OK;
     }
 
