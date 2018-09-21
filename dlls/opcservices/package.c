@@ -1535,6 +1535,7 @@ HRESULT opc_package_create(IOpcFactory *factory, IOpcPackage **out)
 struct content_types
 {
     struct list types;
+    BOOL has_rels_part;
 };
 
 enum content_type_element
@@ -1653,15 +1654,39 @@ static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPar
     return hr;
 }
 
+static BOOL opc_package_has_rels_part(IOpcRelationshipSet *rel_set)
+{
+    IOpcRelationshipEnumerator *enumerator;
+    BOOL has_next;
+    HRESULT hr;
+
+    if (FAILED(hr = IOpcRelationshipSet_GetEnumerator(rel_set, &enumerator)))
+        return FALSE;
+
+    has_next = FALSE;
+    IOpcRelationshipEnumerator_MoveNext(enumerator, &has_next);
+    IOpcRelationshipEnumerator_Release(enumerator);
+
+    return has_next;
+}
+
 static HRESULT opc_package_collect_content_types(IOpcPackage *package, struct content_types *types)
 {
     IOpcPartEnumerator *enumerator;
+    IOpcRelationshipSet *rel_set;
     IOpcPartSet *parts;
     BOOL has_next;
     HRESULT hr;
 
     if (FAILED(hr = IOpcPackage_GetPartSet(package, &parts)))
         return hr;
+
+    hr = IOpcPackage_GetRelationshipSet(package, &rel_set);
+    if (SUCCEEDED(hr))
+    {
+        types->has_rels_part |= opc_package_has_rels_part(rel_set);
+        IOpcRelationshipSet_Release(rel_set);
+    }
 
     hr = IOpcPartSet_GetEnumerator(parts, &enumerator);
     IOpcPartSet_Release(parts);
@@ -1681,6 +1706,16 @@ static HRESULT opc_package_collect_content_types(IOpcPackage *package, struct co
         if (FAILED(hr = IOpcPartEnumerator_GetCurrent(enumerator, &part)))
             break;
 
+        if (!types->has_rels_part)
+        {
+            hr = IOpcPart_GetRelationshipSet(part, &rel_set);
+            if (SUCCEEDED(hr))
+            {
+                types->has_rels_part |= opc_package_has_rels_part(rel_set);
+                IOpcRelationshipSet_Release(rel_set);
+            }
+        }
+
         hr = opc_package_add_content_type(types, part);
         IOpcPart_Release(part);
         if (FAILED(hr))
@@ -1694,23 +1729,40 @@ static HRESULT opc_package_collect_content_types(IOpcPackage *package, struct co
     return hr;
 }
 
+static HRESULT opc_package_write_default_type(const WCHAR *ext, const WCHAR *type, IXmlWriter *writer)
+{
+    static const WCHAR contenttypeW[] = {'C','o','n','t','e','n','t','T','y','p','e',0};
+    static const WCHAR extensionW[] = {'E','x','t','e','n','s','i','o','n',0};
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
+    HRESULT hr;
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, defaultW, NULL);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteAttributeString(writer, NULL, extensionW, NULL, ext);
+    if (SUCCEEDED(hr))
+        hr = IXmlWriter_WriteAttributeString(writer, NULL, contenttypeW, NULL, type);
+    return hr;
+}
+
 static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_archive *archive, IXmlWriter *writer)
 {
     static const WCHAR uriW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','.','o','r','g','/',
             'p','a','c','k','a','g','e','/','2','0','0','6','/','c','o','n','t','e','n','t','-','t','y','p','e','s',0};
+    static const WCHAR relstypeW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','v','n','d','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','-',
+            'p','a','c','k','a','g','e','.','r','e','l','a','t','i','o','n','s','h','i','p','s','+','x','m','l',0};
     static const WCHAR contenttypesW[] = {'[','C','o','n','t','e','n','t','_','T','y','p','e','s',']','.','x','m','l',0};
     static const WCHAR contenttypeW[] = {'C','o','n','t','e','n','t','T','y','p','e',0};
-    static const WCHAR extensionW[] = {'E','x','t','e','n','s','i','o','n',0};
     static const WCHAR overrideW[] = {'O','v','e','r','r','i','d','e',0};
     static const WCHAR partnameW[] = {'P','a','r','t','N','a','m','e',0};
-    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
     static const WCHAR typesW[] = {'T','y','p','e','s',0};
+    static const WCHAR relsW[] = {'r','e','l','s',0};
     struct content_type *content_type, *content_type2;
     struct content_types types;
     IStream *content = NULL;
     HRESULT hr;
 
     list_init(&types.types);
+    types.has_rels_part = FALSE;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &content);
     if (SUCCEEDED(hr))
@@ -1722,16 +1774,18 @@ static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_a
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, uriW);
 
+    if (SUCCEEDED(hr) && types.has_rels_part)
+    {
+        hr = opc_package_write_default_type(relsW, relstypeW, writer);
+        if (SUCCEEDED(hr))
+            hr = IXmlWriter_WriteEndElement(writer);
+    }
+
     LIST_FOR_EACH_ENTRY_SAFE(content_type, content_type2, &types.types, struct content_type, entry)
     {
         if (content_type->element == CONTENT_TYPE_DEFAULT)
         {
-            if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteStartElement(writer, NULL, defaultW, NULL);
-            if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteAttributeString(writer, NULL, extensionW, NULL, content_type->u.def.ext + 1);
-            if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteAttributeString(writer, NULL, contenttypeW, NULL, content_type->u.def.type);
+            hr = opc_package_write_default_type(content_type->u.def.ext + 1, content_type->u.def.type, writer);
 
             CoTaskMemFree(content_type->u.def.ext);
             CoTaskMemFree(content_type->u.def.type);
