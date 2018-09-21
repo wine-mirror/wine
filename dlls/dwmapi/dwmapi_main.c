@@ -82,7 +82,7 @@ HRESULT WINAPI DwmExtendFrameIntoClientArea(HWND hwnd, const MARGINS* margins)
 {
     FIXME("(%p, %p) stub\n", hwnd, margins);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /**********************************************************************
