@@ -1485,6 +1485,8 @@ static void test_graph_builder_render(void)
     ok(parser_pins[1].peer == &sink1_pin.IPin_iface, "Got peer %p.\n", parser_pins[1].peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    IFilterGraph2_Disconnect(graph, parser_pins[0].peer);
+    IFilterGraph2_Disconnect(graph, &parser_pins[0].IPin_iface);
 
     IFilterGraph2_RemoveFilter(graph, &sink1.IBaseFilter_iface);
     IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
@@ -1492,6 +1494,32 @@ static void test_graph_builder_render(void)
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+
+    /* A pin whose name (not ID) begins with a tilde is not rendered. */
+
+    IFilterGraph2_RemoveFilter(graph, &sink2.IBaseFilter_iface);
+    IFilterGraph2_RemoveFilter(graph, &parser.IBaseFilter_iface);
+    IFilterGraph2_AddFilter(graph, &parser.IBaseFilter_iface, NULL);
+
+    parser_pins[1].name[0] = '~';
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(!parser_pins[1].peer, "Got peer %p.\n", parser_pins[1].peer);
+    ok(!sink1_pin.peer, "Got peer %p.\n", sink1_pin.peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+
+    parser_pins[1].name[0] = 0;
+    parser_pins[1].id[0] = '~';
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(parser_pins[1].peer == &sink1_pin.IPin_iface, "Got peer %p.\n", parser_pins[1].peer);
+    IFilterGraph2_Disconnect(graph, source_pin.peer);
+    IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);

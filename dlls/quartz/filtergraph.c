@@ -1367,16 +1367,22 @@ static HRESULT render_output_pins(IFilterGraphImpl *graph, IBaseFilter *filter)
     BOOL renderall = TRUE;
     IEnumPins *enumpins;
     IPin *pin, *peer;
+    PIN_INFO info;
 
     IBaseFilter_EnumPins(filter, &enumpins);
     while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
     {
-        PIN_DIRECTION dir = PINDIR_INPUT;
-
-        IPin_QueryDirection(pin, &dir);
-
-        if (dir == PINDIR_OUTPUT)
+        IPin_QueryPinInfo(pin, &info);
+        IBaseFilter_Release(info.pFilter);
+        if (info.dir == PINDIR_OUTPUT)
         {
+            if (info.achName[0] == '~')
+            {
+                TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
+                IPin_Release(pin);
+                continue;
+            }
+
             if (IPin_ConnectedTo(pin, &peer) == VFW_E_NOT_CONNECTED)
             {
                 HRESULT hr;
