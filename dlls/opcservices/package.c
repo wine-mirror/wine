@@ -1956,6 +1956,7 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
 static HRESULT opc_package_write_part(struct zip_archive *archive, IOpcPart *part, IXmlWriter *writer)
 {
     OPC_COMPRESSION_OPTIONS options = OPC_COMPRESSION_NORMAL;
+    IOpcRelationshipSet *rels = NULL;
     IStream *content = NULL;
     IOpcPartUri *name;
     BSTR uri = NULL;
@@ -1974,10 +1975,17 @@ static HRESULT opc_package_write_part(struct zip_archive *archive, IOpcPart *par
         /* Part names always start with root '/', skip it. */
         hr = compress_add_file(archive, uri + 1, content, options);
     }
+    if (SUCCEEDED(hr))
+        hr = IOpcPart_GetRelationshipSet(part, &rels);
+    if (SUCCEEDED(hr))
+        hr = opc_package_write_rels(archive, rels, (IOpcUri *)name, writer);
 
+    IOpcPartUri_Release(name);
     SysFreeString(uri);
     if (content)
         IStream_Release(content);
+    if (rels)
+        IOpcRelationshipSet_Release(rels);
 
     return hr;
 }
