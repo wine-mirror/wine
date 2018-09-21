@@ -1059,8 +1059,7 @@ static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, 
             {
                 TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
                 IPin_Release(pin);
-                IEnumPins_Release(enumpins);
-                return E_FAIL;
+                continue;
             }
 
             if (SUCCEEDED(IFilterGraph2_Connect(&graph->IFilterGraph2_iface, pin, sink)))

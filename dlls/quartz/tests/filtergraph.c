@@ -1783,11 +1783,9 @@ todo_wine
 
     parser1.pin_count = 3;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[2].IPin_iface, "Got peer %p.\n", sink_pin.peer);
-}
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
