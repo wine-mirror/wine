@@ -618,7 +618,7 @@ unsigned int __cdecl _Random_device(void)
 #endif
 
 #if _MSVCP_VER >= 110
-#if defined(__i386__) && !defined(__arm__)
+#if defined(__i386__)
 
 extern void *call_thiscall_func;
 __ASM_GLOBAL_FUNC(call_thiscall_func,
