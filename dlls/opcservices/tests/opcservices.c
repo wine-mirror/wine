@@ -159,6 +159,11 @@ static void test_package(void)
     ok(hr == S_OK, "Failed to read content, hr %#x.\n", hr);
     ok(!memcmp(buff, "abc", 3), "Unexpected content.\n");
 
+    move.QuadPart = 0;
+    hr = IStream_Seek(stream2, move, STREAM_SEEK_CUR, &pos);
+    ok(SUCCEEDED(hr), "Seek failed, hr %#x.\n", hr);
+    ok(pos.QuadPart == 3, "Unexpected position.\n");
+
     IStream_Release(stream);
     IStream_Release(stream2);
 

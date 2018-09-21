@@ -560,6 +560,8 @@ static HRESULT WINAPI opc_content_stream_Read(IStream *iface, void *buff, ULONG 
     if (*num_read)
         memcpy(buff, stream->content->data + stream->pos.QuadPart, *num_read);
 
+    stream->pos.QuadPart += *num_read;
+
     return S_OK;
 }
 
