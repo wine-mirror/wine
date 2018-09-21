@@ -1636,6 +1636,11 @@ static const struct drawcall_entry draw_seq[] = {
     { DRAW_LAST_KIND }
 };
 
+static const struct drawcall_entry draw_trimmed_seq[] = {
+    { DRAW_GLYPHRUN, {'a',0}, {'e','n','-','u','s',0}, 1 },
+    { DRAW_LAST_KIND }
+};
+
 static const struct drawcall_entry draw_seq2[] = {
     { DRAW_GLYPHRUN, {'s',0}, {'r','u',0}, 1 },
     { DRAW_GLYPHRUN, {'t',0}, {'r','u',0}, 1 },
@@ -2383,6 +2388,44 @@ todo_wine
     ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
     ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
     ok(metrics[2].canWrapLineAfter == 1, "got %d\n", metrics[2].canWrapLineAfter);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* Single cluster layout, trigger trimming. */
+    hr = IDWriteFactory_CreateTextLayout(factory, str6W, 1, format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Failed to create layout, hr %#x.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 1, &count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected cluster count %u.\n", count);
+
+    hr = IDWriteTextLayout_SetMaxWidth(layout, metrics[0].width / 2.0f);
+    ok(hr == S_OK, "Failed to set layout width, hr %#x.\n", hr);
+
+    trimming_options.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
+    trimming_options.delimiter = 0;
+    trimming_options.delimiterCount = 0;
+    hr = IDWriteTextLayout_SetTrimming(layout, &trimming_options, trimm);
+    ok(hr == S_OK, "Failed to set trimming options, hr %#x.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 1, &count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected cluster count %u.\n", count);
+
+    hr = IDWriteTextLayout_GetLineMetrics(layout, &line, 1, &count);
+    ok(hr == S_OK, "Failed to get line metrics, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected line count %u.\n", count);
+    ok(line.length == 1, "Unexpected line length %u.\n", line.length);
+    ok(line.isTrimmed, "Unexpected trimming flag %x.\n", line.isTrimmed);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
+    ok(hr == S_OK, "Draw() failed, hr %#x.\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_trimmed_seq, "Trimmed draw test", FALSE);
 
     IDWriteTextLayout_Release(layout);
 

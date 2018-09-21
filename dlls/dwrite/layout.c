@@ -1926,6 +1926,9 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     if (FAILED(hr))
         return;
 
+    if (get_cluster_range_width(layout, start, i) + sign_metrics.width > layout->metrics.layoutWidth)
+        append_trimming_run = FALSE;
+
     if (append_trimming_run) {
         struct layout_effective_inline *trimming_sign;
 
