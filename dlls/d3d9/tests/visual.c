@@ -20984,9 +20984,8 @@ static void test_flip(void)
     present_parameters.Windowed = TRUE;
     present_parameters.BackBufferCount = 3;
     present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
-    if (!device)
+    if (FAILED(hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         IDirect3D9_Release(d3d);
