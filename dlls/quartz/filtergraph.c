@@ -1360,47 +1360,37 @@ out:
     return SUCCEEDED(hr) ? S_OK : hr;
 }
 
-static HRESULT FilterGraph2_RenderRecurse(IFilterGraphImpl *This, IPin *ppinOut)
+/* Render all output pins of the given filter. Helper for FilterGraph2_Render(). */
+static HRESULT render_output_pins(IFilterGraphImpl *graph, IBaseFilter *filter)
 {
-    /* This pin has been connected now, try to call render on all pins that aren't connected */
-    IPin *to = NULL;
-    PIN_INFO info;
-    IEnumPins *enumpins = NULL;
     BOOL renderany = FALSE;
     BOOL renderall = TRUE;
+    IEnumPins *enumpins;
+    IPin *pin, *peer;
 
-    IPin_QueryPinInfo(ppinOut, &info);
-
-    IBaseFilter_EnumPins(info.pFilter, &enumpins);
-    /* Don't need to hold a reference, IEnumPins does */
-    IBaseFilter_Release(info.pFilter);
-
-    IEnumPins_Reset(enumpins);
-    while (IEnumPins_Next(enumpins, 1, &to, NULL) == S_OK)
+    IBaseFilter_EnumPins(filter, &enumpins);
+    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
     {
         PIN_DIRECTION dir = PINDIR_INPUT;
 
-        IPin_QueryDirection(to, &dir);
+        IPin_QueryDirection(pin, &dir);
 
         if (dir == PINDIR_OUTPUT)
         {
-            IPin *out = NULL;
-
-            IPin_ConnectedTo(to, &out);
-            if (!out)
+            if (IPin_ConnectedTo(pin, &peer) == VFW_E_NOT_CONNECTED)
             {
                 HRESULT hr;
-                hr = IFilterGraph2_Render(&This->IFilterGraph2_iface, to);
+                hr = IFilterGraph2_Render(&graph->IFilterGraph2_iface, pin);
                 if (SUCCEEDED(hr))
                     renderany = TRUE;
                 else
                     renderall = FALSE;
             }
             else
-                IPin_Release(out);
+                IPin_Release(peer);
         }
 
-        IPin_Release(to);
+        IPin_Release(pin);
     }
 
     IEnumPins_Release(enumpins);
@@ -1496,7 +1486,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
                     TRACE("Connected successfully %p/%p, %08x look if we should render more!\n", ppinOut, pin, hr);
                     IPin_Release(pin);
 
-                    hr = FilterGraph2_RenderRecurse(This, pin);
+                    hr = render_output_pins(This, filter->filter);
                     if (FAILED(hr))
                     {
                         IPin_Disconnect(ppinOut);
@@ -1646,7 +1636,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
 
                 VariantClear(&var);
 
-                hr = FilterGraph2_RenderRecurse(This, ppinfilter);
+                hr = render_output_pins(This, pfilter);
                 if (FAILED(hr)) {
                     WARN("Unable to connect recursively (%x)\n", hr);
                     goto error;
