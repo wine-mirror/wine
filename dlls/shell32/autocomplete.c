@@ -370,6 +370,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             autocomplete_text(This, hwnd, (This->options & ACO_AUTOAPPEND) && wParam >= ' '
                                           ? autoappend_flag_yes : autoappend_flag_no);
             return ret;
+        case WM_SETTEXT:
         case WM_CUT:
         case WM_CLEAR:
         case WM_UNDO:
