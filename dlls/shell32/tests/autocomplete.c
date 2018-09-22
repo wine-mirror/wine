@@ -236,6 +236,36 @@ static void createMainWnd(void)
       CW_USEDEFAULT, CW_USEDEFAULT, 130, 105, NULL, NULL, GetModuleHandleA(NULL), 0);
 }
 
+static WNDPROC HijackerWndProc_prev;
+static const WCHAR HijackerWndProc_txt[] = {'H','i','j','a','c','k','e','d',0};
+static LRESULT CALLBACK HijackerWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch(msg) {
+    case WM_GETTEXT:
+    {
+        size_t len = min(wParam, ARRAY_SIZE(HijackerWndProc_txt));
+        memcpy((void*)lParam, HijackerWndProc_txt, len * sizeof(WCHAR));
+        return len;
+    }
+    case WM_GETTEXTLENGTH:
+        return ARRAY_SIZE(HijackerWndProc_txt) - 1;
+    }
+    return CallWindowProcW(HijackerWndProc_prev, hWnd, msg, wParam, lParam);
+}
+
+static LRESULT CALLBACK HijackerWndProc2(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch(msg) {
+    case EM_SETSEL:
+        lParam = wParam;
+        break;
+    case WM_SETTEXT:
+        lParam = (LPARAM)HijackerWndProc_txt;
+        break;
+    }
+    return CallWindowProcW(HijackerWndProc_prev, hWnd, msg, wParam, lParam);
+}
+
 struct string_enumerator
 {
     IEnumString IEnumString_iface;
@@ -358,18 +388,29 @@ static HRESULT string_enumerator_create(void **ppv, WCHAR **suggestions, int cou
     return S_OK;
 }
 
+static void dispatch_messages(void)
+{
+    MSG msg;
+    Sleep(33);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+}
+
 static void test_custom_source(void)
 {
     static WCHAR str_alpha[] = {'t','e','s','t','1',0};
     static WCHAR str_alpha2[] = {'t','e','s','t','2',0};
     static WCHAR str_beta[] = {'a','u','t','o',' ','c','o','m','p','l','e','t','e',0};
+    static WCHAR str_au[] = {'a','u',0};
     static WCHAR *suggestions[] = { str_alpha, str_alpha2, str_beta };
     IUnknown *enumerator;
     IAutoComplete2 *autocomplete;
     HWND hwnd_edit;
     WCHAR buffer[20];
     HRESULT hr;
-    MSG msg;
 
     ShowWindow(hMainWnd, SW_SHOW);
 
@@ -385,16 +426,43 @@ static void test_custom_source(void)
     hr = IAutoComplete2_Init(autocomplete, hwnd_edit, enumerator, NULL, NULL);
     ok(hr == S_OK, "IAutoComplete_Init failed: %x\n", hr);
 
+    SetFocus(hwnd_edit);
     SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
     SendMessageW(hwnd_edit, WM_CHAR, 'u', 1);
-    Sleep(100);
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
-    }
+    dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, '\b', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(buffer[0] == '\0', "Expected empty string, got %s\n", wine_dbgstr_w(buffer));
+
+    /* hijack the window procedure */
+    HijackerWndProc_prev = (WNDPROC)SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(HijackerWndProc_txt, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(HijackerWndProc_txt), wine_dbgstr_w(buffer));
+
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'u', 1);
+    SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc_prev);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str_au, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_au), wine_dbgstr_w(buffer));
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, '\b', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(buffer[0] == '\0', "Expected empty string, got %s\n", wine_dbgstr_w(buffer));
+
+    HijackerWndProc_prev = (WNDPROC)SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc2);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'u', 1);
+    SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc_prev);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
+    /* end of hijacks */
 
     ShowWindow(hMainWnd, SW_HIDE);
     DestroyWindow(hwnd_edit);
