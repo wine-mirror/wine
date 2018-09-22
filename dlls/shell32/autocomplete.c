@@ -359,6 +359,10 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
         case WM_CHAR:
         case WM_UNICHAR:
+            /* Don't autocomplete at all on most control characters */
+            if (iscntrlW(wParam) && !(wParam >= '\b' && wParam <= '\r'))
+                break;
+
             ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
             autocomplete_text(This, hwnd, (This->options & ACO_AUTOAPPEND) && wParam >= ' '
                                           ? autoappend_flag_yes : autoappend_flag_no);
