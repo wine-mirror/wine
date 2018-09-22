@@ -100,6 +100,14 @@ static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDr
     return CONTAINING_RECORD(iface, IAutoCompleteImpl, IAutoCompleteDropDown_iface);
 }
 
+static void set_text_and_selection(IAutoCompleteImpl *ac, HWND hwnd, WCHAR *text, WPARAM start, LPARAM end)
+{
+    /* Send it directly to the edit control to match Windows behavior */
+    WNDPROC proc = ac->wpOrigEditProc;
+    if (CallWindowProcW(proc, hwnd, WM_SETTEXT, 0, (LPARAM)text))
+        CallWindowProcW(proc, hwnd, EM_SETSEL, start, end);
+}
+
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
 {
     /* Replace the first %s directly without using snprintf, to avoid
@@ -142,8 +150,7 @@ static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *
     }
     else tmp = str;
 
-    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)tmp);
-    SendMessageW(hwnd, EM_SETSEL, len, size - 1);
+    set_text_and_selection(ac, hwnd, tmp, len, size - 1);
     if (tmp != str)
         heap_free(tmp);
 }
@@ -256,8 +263,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 if ((buf = heap_alloc(sz * sizeof(WCHAR))))
                 {
                     len = format_quick_complete(buf, ac->quickComplete, text, len);
-                    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)buf);
-                    SendMessageW(hwnd, EM_SETSEL, 0, len);
+                    set_text_and_selection(ac, hwnd, buf, 0, len);
                     heap_free(buf);
                 }
 
@@ -309,16 +315,13 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                     if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
                         return 0;
                     len = SendMessageW(ac->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
-                    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
-                    SendMessageW(hwnd, EM_SETSEL, len, len);
+                    set_text_and_selection(ac, hwnd, msg, len, len);
                     heap_free(msg);
                 }
                 else
                 {
-                    UINT len;
-                    SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)ac->txtbackup);
-                    len = strlenW(ac->txtbackup);
-                    SendMessageW(hwnd, EM_SETSEL, len, len);
+                    UINT len = strlenW(ac->txtbackup);
+                    set_text_and_selection(ac, hwnd, ac->txtbackup, len, len);
                 }
                 return 0;
             }
@@ -409,8 +412,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
                 break;
             len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
-            SendMessageW(This->hwndEdit, WM_SETTEXT, 0, (LPARAM)msg);
-            SendMessageW(This->hwndEdit, EM_SETSEL, 0, len);
+            set_text_and_selection(This, This->hwndEdit, msg, 0, len);
             ShowWindow(hwnd, SW_HIDE);
             heap_free(msg);
             break;
