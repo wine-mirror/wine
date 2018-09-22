@@ -409,7 +409,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
             if (sel < 0)
                 break;
-            len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
+            len = SendMessageW(hwnd, LB_GETTEXTLEN, sel, 0);
             if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
                 break;
             len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
