@@ -53,7 +53,7 @@ static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a',
 static const WCHAR wszFilterData[] = {'F','i','l','t','e','r','D','a','t','a',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
-static HRESULT register_codecs(void);
+static void register_codecs(void);
 static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory);
 
 /**********************************************************************
@@ -773,6 +773,57 @@ static void register_vfw_codecs(void)
     }
 }
 
+static void register_avicap_devices(void)
+{
+    static const WCHAR vfwindexW[] = {'V','F','W','I','n','d','e','x',0};
+    WCHAR friendlyname[] = {'v','i','d','e','o','0',0};
+    IPropertyBag *prop_bag = NULL;
+    WCHAR name[32], version[32];
+    REGFILTERPINS2 rgpins;
+    REGPINTYPES rgtypes;
+    REGFILTER2 rgf;
+    VARIANT var;
+    HRESULT hr;
+    int i = 0;
+
+    hr = DEVENUM_CreateAMCategoryKey(&CLSID_VideoInputDeviceCategory);
+    if (FAILED(hr))
+        return;
+
+    for (i = 0; i < 10; ++i)
+    {
+        if (!capGetDriverDescriptionW(i, name, sizeof(name), version, sizeof(version)))
+            break;
+
+        friendlyname[5] = '0' + i;
+
+        hr = register_codec(&CLSID_VideoInputDeviceCategory, name,
+                &CLSID_VfwCapture, friendlyname, &prop_bag);
+        if (FAILED(hr))
+            continue;
+
+        rgf.dwVersion = 2;
+        rgf.dwMerit = MERIT_DO_NOT_USE;
+        rgf.u.s2.cPins2 = 1;
+        rgf.u.s2.rgPins2 = &rgpins;
+        rgpins.dwFlags = 0;
+        rgpins.nMediaTypes = 1;
+        rgpins.lpMediaType = &rgtypes;
+        rgtypes.clsMajorType = &MEDIATYPE_Video;
+        rgtypes.clsMinorType = &MEDIASUBTYPE_None;
+
+        write_filter_data(prop_bag, &rgf);
+
+        /* write VFWIndex */
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = i;
+        IPropertyBag_Write(prop_bag, vfwindexW, &var);
+
+        VariantClear(&var);
+        IPropertyBag_Release(prop_bag);
+    }
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -799,6 +850,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     register_wavein_devices();
     register_midiout_devices();
     register_vfw_codecs();
+    register_avicap_devices();
 
     return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
 }
@@ -851,14 +903,9 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
     return res;
 }
 
-static HRESULT register_codecs(void)
+static void register_codecs(void)
 {
-    HRESULT res;
     WCHAR class[CHARS_IN_GUID];
-    DWORD iDefaultDevice = -1;
-    IFilterMapper2 * pMapper = NULL;
-    REGFILTER2 rf2;
-    REGFILTERPINS2 rfp2;
     HKEY basekey;
 
     /* Since devices can change between session, for example because you just plugged in a webcam
@@ -878,82 +925,4 @@ static HRESULT register_codecs(void)
     StringFromGUID2(&CLSID_VideoCompressorCategory, class, CHARS_IN_GUID);
     RegDeleteTreeW(basekey, class);
     RegCloseKey(basekey);
-
-    rf2.dwVersion = 2;
-    rf2.dwMerit = MERIT_PREFERRED;
-    rf2.u.s2.cPins2 = 1;
-    rf2.u.s2.rgPins2 = &rfp2;
-    rfp2.cInstances = 1;
-    rfp2.nMediums = 0;
-    rfp2.lpMedium = NULL;
-    rfp2.clsPinCategory = &IID_NULL;
-
-    res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
-                           &IID_IFilterMapper2, (void **) &pMapper);
-    /*
-     * Fill in info for devices
-     */
-    if (SUCCEEDED(res))
-    {
-        UINT i;
-        REGPINTYPES * pTypes;
-        IPropertyBag * pPropBag = NULL;
-
-        res = DEVENUM_CreateAMCategoryKey(&CLSID_VideoInputDeviceCategory);
-        if (SUCCEEDED(res))
-            for (i = 0; i < 10; i++)
-            {
-                WCHAR szDeviceName[32], szDeviceVersion[32], szDevicePath[10];
-
-                if (capGetDriverDescriptionW (i, szDeviceName, ARRAY_SIZE(szDeviceName),
-                                              szDeviceVersion, ARRAY_SIZE(szDeviceVersion)))
-                {
-                    IMoniker * pMoniker = NULL;
-                    WCHAR dprintf[] = { 'v','i','d','e','o','%','d',0 };
-                    snprintfW(szDevicePath, ARRAY_SIZE(szDevicePath), dprintf, i);
-                    /* The above code prevents 1 device with a different ID overwriting another */
-
-                    rfp2.nMediaTypes = 1;
-                    pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
-                    if (!pTypes) {
-                        IFilterMapper2_Release(pMapper);
-                        return E_OUTOFMEMORY;
-                    }
-
-                    pTypes[0].clsMajorType = &MEDIATYPE_Video;
-                    pTypes[0].clsMinorType = &MEDIASUBTYPE_None;
-
-                    rfp2.lpMediaType = pTypes;
-
-                    res = IFilterMapper2_RegisterFilter(pMapper,
-                                                        &CLSID_VfwCapture,
-                                                        szDeviceName,
-                                                        &pMoniker,
-                                                        &CLSID_VideoInputDeviceCategory,
-                                                        szDevicePath,
-                                                        &rf2);
-
-                    if (pMoniker) {
-                       OLECHAR wszVfwIndex[] = { 'V','F','W','I','n','d','e','x',0 };
-                       VARIANT var;
-                       V_VT(&var) = VT_I4;
-                       V_I4(&var) = i;
-                       res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
-                       if (SUCCEEDED(res)) {
-                           res = IPropertyBag_Write(pPropBag, wszVfwIndex, &var);
-                           IPropertyBag_Release(pPropBag);
-                       }
-                       IMoniker_Release(pMoniker);
-                    }
-
-                    if (i == iDefaultDevice) FIXME("Default device\n");
-                    CoTaskMemFree(pTypes);
-                }
-            }
-    }
-
-    if (pMapper)
-        IFilterMapper2_Release(pMapper);
-
-    return res;
 }
