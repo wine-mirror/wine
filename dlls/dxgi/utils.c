@@ -626,11 +626,11 @@ static enum wined3d_feature_level wined3d_feature_level_from_d3d(D3D_FEATURE_LEV
     switch (feature_level)
     {
         case D3D_FEATURE_LEVEL_11_1:
-            return WINED3D_FEATURE_LEVEL_11;
+            return WINED3D_FEATURE_LEVEL_11_1;
         case D3D_FEATURE_LEVEL_11_0:
             return WINED3D_FEATURE_LEVEL_11;
         case D3D_FEATURE_LEVEL_10_1:
-            return WINED3D_FEATURE_LEVEL_10;
+            return WINED3D_FEATURE_LEVEL_10_1;
         case D3D_FEATURE_LEVEL_10_0:
             return WINED3D_FEATURE_LEVEL_10;
         case D3D_FEATURE_LEVEL_9_3:
@@ -638,7 +638,7 @@ static enum wined3d_feature_level wined3d_feature_level_from_d3d(D3D_FEATURE_LEV
         case D3D_FEATURE_LEVEL_9_2:
             return WINED3D_FEATURE_LEVEL_9_SM2;
         case D3D_FEATURE_LEVEL_9_1:
-            return WINED3D_FEATURE_LEVEL_9_SM2;
+            return WINED3D_FEATURE_LEVEL_9_1;
         default:
             FIXME("Unhandled feature level %#x.\n", feature_level);
             return 0;
