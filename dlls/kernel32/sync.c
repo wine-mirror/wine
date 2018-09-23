@@ -2377,6 +2377,18 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
     return FALSE;
 }
 
+/******************************************************************************
+ *      GetQueuedCompletionStatusEx (KERNEL32.@)
+ */
+BOOL WINAPI GetQueuedCompletionStatusEx(HANDLE completion_port, LPOVERLAPPED_ENTRY completion_port_entries,
+                                        ULONG count, ULONG *num_entries_removed, DWORD milliseconds,
+                                        BOOL alertable)
+{
+    FIXME("(%p, %p, %d, %p, %d, %d) stub!\n",
+        completion_port, completion_port_entries, count, num_entries_removed, milliseconds, alertable);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /******************************************************************************
  *		PostQueuedCompletionStatus (KERNEL32.@)
