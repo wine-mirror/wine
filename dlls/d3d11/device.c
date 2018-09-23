@@ -6004,6 +6004,8 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     wined3d_device_incref(wined3d_device);
     device->wined3d_device = wined3d_device;
 
+    device->feature_level = wined3d_device_get_feature_level(wined3d_device);
+
     set_default_depth_stencil_state(wined3d_device);
 }
 

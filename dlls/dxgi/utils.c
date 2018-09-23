@@ -23,7 +23,6 @@
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINE_DXGI_TO_STR(x) case x: return #x
 
@@ -674,7 +673,5 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
                 debug_feature_level(feature_levels[i]));
     }
 
-    FIXME_(winediag)("None of the requested D3D feature levels is supported on this GPU "
-            "with the current shader backend.\n");
     return 0;
 }

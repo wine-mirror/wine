@@ -411,7 +411,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     IWineDXGIDeviceParent *dxgi_device_parent;
     struct dxgi_adapter *dxgi_adapter;
     struct dxgi_factory *dxgi_factory;
-    D3D_FEATURE_LEVEL feature_level;
     void *layer_base;
     HRESULT hr;
 
@@ -455,15 +454,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
-    if (!(feature_level = dxgi_check_feature_level_support(dxgi_factory, dxgi_adapter,
-            feature_levels, level_count)))
-    {
-        IUnknown_Release(device->child_layer);
-        wined3d_private_store_cleanup(&device->private_store);
-        wined3d_mutex_unlock();
-        return E_FAIL;
-    }
-
     if (FAILED(hr = wined3d_device_create(dxgi_factory->wined3d,
             dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
             (const enum wined3d_feature_level *)feature_levels, level_count,
@@ -475,8 +465,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         wined3d_mutex_unlock();
         return hr;
     }
-
-    layer->set_feature_level(layer->id, device->child_layer, feature_level);
 
     memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
