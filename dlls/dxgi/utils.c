@@ -621,27 +621,36 @@ HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
     return hr;
 }
 
+static enum wined3d_feature_level wined3d_feature_level_from_d3d(D3D_FEATURE_LEVEL feature_level)
+{
+    switch (feature_level)
+    {
+        case D3D_FEATURE_LEVEL_11_1:
+            return WINED3D_FEATURE_LEVEL_11;
+        case D3D_FEATURE_LEVEL_11_0:
+            return WINED3D_FEATURE_LEVEL_11;
+        case D3D_FEATURE_LEVEL_10_1:
+            return WINED3D_FEATURE_LEVEL_10;
+        case D3D_FEATURE_LEVEL_10_0:
+            return WINED3D_FEATURE_LEVEL_10;
+        case D3D_FEATURE_LEVEL_9_3:
+            return WINED3D_FEATURE_LEVEL_9_SM3;
+        case D3D_FEATURE_LEVEL_9_2:
+            return WINED3D_FEATURE_LEVEL_9_SM2;
+        case D3D_FEATURE_LEVEL_9_1:
+            return WINED3D_FEATURE_LEVEL_9_SM2;
+        default:
+            FIXME("Unhandled feature level %#x.\n", feature_level);
+            return 0;
+    }
+}
+
 D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory, struct dxgi_adapter *adapter,
         const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
 {
-    static const struct
-    {
-        D3D_FEATURE_LEVEL d3d;
-        enum wined3d_feature_level wined3d;
-    }
-    wined3d_feature_levels[] =
-    {
-        {D3D_FEATURE_LEVEL_11_1, WINED3D_FEATURE_LEVEL_11},
-        {D3D_FEATURE_LEVEL_11_0, WINED3D_FEATURE_LEVEL_11},
-        {D3D_FEATURE_LEVEL_10_1, WINED3D_FEATURE_LEVEL_10},
-        {D3D_FEATURE_LEVEL_10_0, WINED3D_FEATURE_LEVEL_10},
-        {D3D_FEATURE_LEVEL_9_3,  WINED3D_FEATURE_LEVEL_9_SM3},
-        {D3D_FEATURE_LEVEL_9_2,  WINED3D_FEATURE_LEVEL_9_SM2},
-        {D3D_FEATURE_LEVEL_9_1,  WINED3D_FEATURE_LEVEL_9_SM2},
-    };
-    D3D_FEATURE_LEVEL selected_feature_level = 0;
+    enum wined3d_feature_level wined3d_feature_level;
     struct wined3d_caps caps;
-    unsigned int i, j;
+    unsigned int i;
     HRESULT hr;
 
     wined3d_mutex_lock();
@@ -653,31 +662,19 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
 
     for (i = 0; i < level_count; ++i)
     {
-        for (j = 0; j < ARRAY_SIZE(wined3d_feature_levels); ++j)
+        wined3d_feature_level = wined3d_feature_level_from_d3d(feature_levels[i]);
+        if (wined3d_feature_level && caps.max_feature_level >= wined3d_feature_level)
         {
-            if (feature_levels[i] == wined3d_feature_levels[j].d3d)
-            {
-                if (caps.max_feature_level >= wined3d_feature_levels[j].wined3d)
-                {
-                    selected_feature_level = feature_levels[i];
-                    TRACE("Choosing supported feature level %s.\n",
-                            debug_feature_level(selected_feature_level));
-                }
-                break;
-            }
-        }
-        if (selected_feature_level)
-            break;
-
-        if (j == ARRAY_SIZE(wined3d_feature_levels))
-            FIXME("Unexpected feature level %#x.\n", feature_levels[i]);
-        else
-            TRACE("Feature level %s not supported, trying next fallback if available.\n",
+            TRACE("Choosing supported feature level %s.\n",
                     debug_feature_level(feature_levels[i]));
-    }
-    if (!selected_feature_level)
-        FIXME_(winediag)("None of the requested D3D feature levels is supported on this GPU "
-                "with the current shader backend.\n");
+            return feature_levels[i];
+        }
 
-    return selected_feature_level;
+        TRACE("Feature level %s not supported, trying next fallback if available.\n",
+                debug_feature_level(feature_levels[i]));
+    }
+
+    FIXME_(winediag)("None of the requested D3D feature levels is supported on this GPU "
+            "with the current shader backend.\n");
+    return 0;
 }
