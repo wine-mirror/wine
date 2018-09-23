@@ -53,7 +53,6 @@ static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a',
 static const WCHAR wszFilterData[] = {'F','i','l','t','e','r','D','a','t','a',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
-static void register_codecs(void);
 static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory);
 
 /**********************************************************************
@@ -828,31 +827,42 @@ static void register_avicap_devices(void)
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
 static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
-    ICreateDevEnum * iface,
-    REFCLSID clsidDeviceClass,
-    IEnumMoniker **ppEnumMoniker,
-    DWORD dwFlags)
+    ICreateDevEnum *iface, REFCLSID class, IEnumMoniker **out, DWORD flags)
 {
+    WCHAR guidstr[CHARS_IN_GUID];
     HRESULT hr;
+    HKEY key;
 
-    TRACE("(%p)->(%s, %p, %x)\n", iface, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags);
+    TRACE("iface %p, class %s, out %p, flags %#x.\n", iface, debugstr_guid(class), out, flags);
 
-    if (!ppEnumMoniker)
+    if (!out)
         return E_POINTER;
 
-    *ppEnumMoniker = NULL;
+    *out = NULL;
 
-    register_codecs();
-    register_legacy_filters();
-    hr = DirectSoundEnumerateW(&register_dsound_devices, NULL);
-    if (FAILED(hr)) return hr;
-    register_waveout_devices();
-    register_wavein_devices();
-    register_midiout_devices();
-    register_vfw_codecs();
-    register_avicap_devices();
+    if (!RegOpenKeyW(HKEY_CURRENT_USER, wszActiveMovieKey, &key))
+    {
+        StringFromGUID2(class, guidstr, ARRAY_SIZE(guidstr));
+        RegDeleteTreeW(key, guidstr);
+    }
 
-    return create_EnumMoniker(clsidDeviceClass, ppEnumMoniker);
+    if (IsEqualGUID(class, &CLSID_LegacyAmFilterCategory))
+        register_legacy_filters();
+    else if (IsEqualGUID(class, &CLSID_AudioRendererCategory))
+    {
+        hr = DirectSoundEnumerateW(&register_dsound_devices, NULL);
+        if (FAILED(hr)) return hr;
+        register_waveout_devices();
+        register_midiout_devices();
+    }
+    else if (IsEqualGUID(class, &CLSID_AudioInputDeviceCategory))
+        register_wavein_devices();
+    else if (IsEqualGUID(class, &CLSID_VideoCompressorCategory))
+        register_vfw_codecs();
+    else if (IsEqualGUID(class, &CLSID_VideoInputDeviceCategory))
+        register_avicap_devices();
+
+    return create_EnumMoniker(class, out);
 }
 
 /**********************************************************************
@@ -901,28 +911,4 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
         ERR("Failed to create key HKEY_CURRENT_USER\\%s\n", debugstr_w(wszRegKey));
 
     return res;
-}
-
-static void register_codecs(void)
-{
-    WCHAR class[CHARS_IN_GUID];
-    HKEY basekey;
-
-    /* Since devices can change between session, for example because you just plugged in a webcam
-     * or switched from pulseaudio to alsa, delete all old devices first
-     */
-    RegOpenKeyW(HKEY_CURRENT_USER, wszActiveMovieKey, &basekey);
-    StringFromGUID2(&CLSID_LegacyAmFilterCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    StringFromGUID2(&CLSID_AudioRendererCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    StringFromGUID2(&CLSID_AudioInputDeviceCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    StringFromGUID2(&CLSID_VideoInputDeviceCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    StringFromGUID2(&CLSID_MidiRendererCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    StringFromGUID2(&CLSID_VideoCompressorCategory, class, CHARS_IN_GUID);
-    RegDeleteTreeW(basekey, class);
-    RegCloseKey(basekey);
 }
