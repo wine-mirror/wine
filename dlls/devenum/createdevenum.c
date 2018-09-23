@@ -104,11 +104,16 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
     return 1; /* non-heap based object */
 }
 
-static HRESULT register_codec(const CLSID *class, const WCHAR *name, IMoniker **ret)
+static HRESULT register_codec(const GUID *class, const WCHAR *name,
+        const GUID *clsid, const WCHAR *friendly_name, IPropertyBag **ret)
 {
     static const WCHAR deviceW[] = {'@','d','e','v','i','c','e',':','c','m',':',0};
+    WCHAR guidstr[CHARS_IN_GUID];
     IParseDisplayName *parser;
+    IPropertyBag *propbag;
+    IMoniker *mon;
     WCHAR *buffer;
+    VARIANT var;
     ULONG eaten;
     HRESULT hr;
 
@@ -128,10 +133,36 @@ static HRESULT register_codec(const CLSID *class, const WCHAR *name, IMoniker **
     strcatW(buffer, backslashW);
     strcatW(buffer, name);
 
-    hr = IParseDisplayName_ParseDisplayName(parser, NULL, buffer, &eaten, ret);
+    IParseDisplayName_ParseDisplayName(parser, NULL, buffer, &eaten, &mon);
     IParseDisplayName_Release(parser);
     heap_free(buffer);
-    return hr;
+
+    IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&propbag);
+    IMoniker_Release(mon);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(friendly_name);
+    hr = IPropertyBag_Write(propbag, wszFriendlyName, &var);
+    VariantClear(&var);
+    if (FAILED(hr))
+    {
+        IPropertyBag_Release(propbag);
+        return hr;
+    }
+
+    V_VT(&var) = VT_BSTR;
+    StringFromGUID2(clsid, guidstr, ARRAY_SIZE(guidstr));
+    V_BSTR(&var) = SysAllocString(guidstr);
+    hr = IPropertyBag_Write(propbag, clsidW, &var);
+    VariantClear(&var);
+    if (FAILED(hr))
+    {
+        IPropertyBag_Release(propbag);
+        return hr;
+    }
+
+    *ret = propbag;
+    return S_OK;
 }
 
 static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS2 *rgPin)
@@ -412,14 +443,17 @@ static void register_legacy_filters(void)
             IPropertyBag *prop_bag = NULL;
             WCHAR wszRegKey[MAX_PATH];
             HKEY classkey = NULL;
-            IMoniker *mon = NULL;
-            VARIANT var = {};
             REGFILTER2 rgf2;
             DWORD Type, len;
+            GUID clsid;
 
             if (RegEnumKeyExW(hkeyFilter, i, wszFilterSubkeyName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
             TRACE("Registering %s\n", debugstr_w(wszFilterSubkeyName));
+
+            hr = CLSIDFromString(wszFilterSubkeyName, &clsid);
+            if (FAILED(hr))
+                continue;
 
             strcpyW(wszRegKey, clsidW);
             strcatW(wszRegKey, backslashW);
@@ -428,40 +462,30 @@ static void register_legacy_filters(void)
             if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &classkey) != ERROR_SUCCESS)
                 continue;
 
-            hr = register_codec(&CLSID_LegacyAmFilterCategory, wszFilterSubkeyName, &mon);
-            if (FAILED(hr)) goto cleanup;
-
-            hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-            if (FAILED(hr)) goto cleanup;
-
-            /* write friendly name */
             len = 0;
-            V_VT(&var) = VT_BSTR;
             if (!RegQueryValueExW(classkey, NULL, NULL, &Type, NULL, &len))
             {
                 WCHAR *friendlyname = heap_alloc(len);
                 if (!friendlyname)
-                    goto cleanup;
+                {
+                    RegCloseKey(classkey);
+                    continue;
+                }
                 RegQueryValueExW(classkey, NULL, NULL, &Type, (BYTE *)friendlyname, &len);
-                V_BSTR(&var) = SysAllocStringLen(friendlyname, len/sizeof(WCHAR));
+
+                hr = register_codec(&CLSID_LegacyAmFilterCategory, wszFilterSubkeyName,
+                        &clsid, friendlyname, &prop_bag);
+
                 heap_free(friendlyname);
             }
             else
-                V_BSTR(&var) = SysAllocString(wszFilterSubkeyName);
-
-            if (!V_BSTR(&var))
-                goto cleanup;
-            hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-            if (FAILED(hr)) goto cleanup;
-            VariantClear(&var);
-
-            /* write clsid */
-            V_VT(&var) = VT_BSTR;
-            if (!(V_BSTR(&var) = SysAllocString(wszFilterSubkeyName)))
-                goto cleanup;
-            hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-            if (FAILED(hr)) goto cleanup;
-            VariantClear(&var);
+                hr = register_codec(&CLSID_LegacyAmFilterCategory, wszFilterSubkeyName,
+                        &clsid, wszFilterSubkeyName, &prop_bag);
+            if (FAILED(hr))
+            {
+                RegCloseKey(classkey);
+                continue;
+            }
 
             /* write filter data */
             rgf2.dwMerit = MERIT_NORMAL;
@@ -473,11 +497,8 @@ static void register_legacy_filters(void)
 
             write_filter_data(prop_bag, &rgf2);
 
-cleanup:
-            if (prop_bag) IPropertyBag_Release(prop_bag);
-            if (mon) IMoniker_Release(mon);
+            IPropertyBag_Release(prop_bag);
             RegCloseKey(classkey);
-            VariantClear(&var);
             free_regfilter2(&rgf2);
         }
     }
@@ -495,50 +516,30 @@ static BOOL CALLBACK register_dsound_devices(GUID *guid, const WCHAR *desc, cons
     REGPINTYPES rgtypes = {0};
     REGFILTER2 rgf = {0};
     WCHAR clsid[CHARS_IN_GUID];
-    IMoniker *mon = NULL;
     VARIANT var;
     HRESULT hr;
 
     hr = DEVENUM_CreateAMCategoryKey(&CLSID_AudioRendererCategory);
-    if (FAILED(hr)) goto cleanup;
+    if (FAILED(hr))
+        return FALSE;
 
-    V_VT(&var) = VT_BSTR;
     if (guid)
     {
         WCHAR *name = heap_alloc(sizeof(defaultW) + strlenW(desc) * sizeof(WCHAR));
         if (!name)
-            goto cleanup;
+            return FALSE;
         strcpyW(name, directsoundW);
         strcatW(name, desc);
 
-        V_BSTR(&var) = SysAllocString(name);
+        hr = register_codec(&CLSID_AudioRendererCategory, name,
+                &CLSID_DSoundRender, name, &prop_bag);
         heap_free(name);
     }
     else
-        V_BSTR(&var) = SysAllocString(defaultW);
-
-    if (!V_BSTR(&var))
-        goto cleanup;
-
-    hr = register_codec(&CLSID_AudioRendererCategory, V_BSTR(&var), &mon);
-    if (FAILED(hr)) goto cleanup;
-
-    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-    if (FAILED(hr)) goto cleanup;
-
-    /* write friendly name */
-    hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-    if (FAILED(hr)) goto cleanup;
-    VariantClear(&var);
-
-    /* write clsid */
-    V_VT(&var) = VT_BSTR;
-    StringFromGUID2(&CLSID_DSoundRender, clsid, CHARS_IN_GUID);
-    if (!(V_BSTR(&var) = SysAllocString(clsid)))
-        goto cleanup;
-    hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-    if (FAILED(hr)) goto cleanup;
-    VariantClear(&var);
+        hr = register_codec(&CLSID_AudioRendererCategory, defaultW,
+                &CLSID_DSoundRender, defaultW, &prop_bag);
+    if (FAILED(hr))
+        return FALSE;
 
     /* write filter data */
     rgf.dwVersion = 2;
@@ -557,16 +558,11 @@ static BOOL CALLBACK register_dsound_devices(GUID *guid, const WCHAR *desc, cons
     /* write DSound guid */
     V_VT(&var) = VT_BSTR;
     StringFromGUID2(guid ? guid : &GUID_NULL, clsid, CHARS_IN_GUID);
-    if (!(V_BSTR(&var) = SysAllocString(clsid)))
-        goto cleanup;
-    hr = IPropertyBag_Write(prop_bag, dsguidW, &var);
-    if (FAILED(hr)) goto cleanup;
+    if ((V_BSTR(&var) = SysAllocString(clsid)))
+        hr = IPropertyBag_Write(prop_bag, dsguidW, &var);
 
-cleanup:
     VariantClear(&var);
-    if (prop_bag) IPropertyBag_Release(prop_bag);
-    if (mon) IMoniker_Release(mon);
-
+    IPropertyBag_Release(prop_bag);
     return TRUE;
 }
 
@@ -578,9 +574,8 @@ static void register_waveout_devices(void)
     REGFILTERPINS2 rgpins = {0};
     REGPINTYPES rgtypes = {0};
     REGFILTER2 rgf = {0};
-    WCHAR clsid[CHARS_IN_GUID];
-    IMoniker *mon = NULL;
     WAVEOUTCAPSW caps;
+    const WCHAR *name;
     int i, count;
     VARIANT var;
     HRESULT hr;
@@ -594,34 +589,12 @@ static void register_waveout_devices(void)
     {
         waveOutGetDevCapsW(i, &caps, sizeof(caps));
 
-        V_VT(&var) = VT_BSTR;
+        name = (i == -1) ? defaultW : caps.szPname;
 
-        if (i == -1)    /* WAVE_MAPPER */
-            V_BSTR(&var) = SysAllocString(defaultW);
-        else
-            V_BSTR(&var) = SysAllocString(caps.szPname);
-        if (!(V_BSTR(&var)))
-            goto cleanup;
-
-        hr = register_codec(&CLSID_AudioRendererCategory, V_BSTR(&var), &mon);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-        if (FAILED(hr)) goto cleanup;
-
-        /* write friendly name */
-        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
-
-        /* write clsid */
-        V_VT(&var) = VT_BSTR;
-        StringFromGUID2(&CLSID_AudioRender, clsid, CHARS_IN_GUID);
-        if (!(V_BSTR(&var) = SysAllocString(clsid)))
-            goto cleanup;
-        hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
+        hr = register_codec(&CLSID_AudioRendererCategory, name,
+                &CLSID_AudioRender, name, &prop_bag);
+        if (FAILED(hr))
+            continue;
 
         /* write filter data */
         rgf.dwVersion = 2;
@@ -639,13 +612,10 @@ static void register_waveout_devices(void)
         /* write WaveOutId */
         V_VT(&var) = VT_I4;
         V_I4(&var) = i;
-        hr = IPropertyBag_Write(prop_bag, waveoutidW, &var);
-        if (FAILED(hr)) goto cleanup;
+        IPropertyBag_Write(prop_bag, waveoutidW, &var);
 
-cleanup:
         VariantClear(&var);
         if (prop_bag) IPropertyBag_Release(prop_bag);
-        if (mon) IMoniker_Release(mon);
     }
 }
 
@@ -654,8 +624,6 @@ static void register_wavein_devices(void)
     static const WCHAR waveinidW[] = {'W','a','v','e','I','n','I','d',0};
     IPropertyBag *prop_bag = NULL;
     REGFILTER2 rgf = {0};
-    WCHAR clsid[CHARS_IN_GUID];
-    IMoniker *mon = NULL;
     WAVEINCAPSW caps;
     int i, count;
     VARIANT var;
@@ -670,31 +638,10 @@ static void register_wavein_devices(void)
     {
         waveInGetDevCapsW(i, &caps, sizeof(caps));
 
-        V_VT(&var) = VT_BSTR;
-
-        V_BSTR(&var) = SysAllocString(caps.szPname);
-        if (!(V_BSTR(&var)))
-            goto cleanup;
-
-        hr = register_codec(&CLSID_AudioInputDeviceCategory, V_BSTR(&var), &mon);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-        if (FAILED(hr)) goto cleanup;
-
-        /* write friendly name */
-        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
-
-        /* write clsid */
-        V_VT(&var) = VT_BSTR;
-        StringFromGUID2(&CLSID_AudioRecord, clsid, CHARS_IN_GUID);
-        if (!(V_BSTR(&var) = SysAllocString(clsid)))
-            goto cleanup;
-        hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
+        hr = register_codec(&CLSID_AudioInputDeviceCategory, caps.szPname,
+                &CLSID_AudioRecord, caps.szPname, &prop_bag);
+        if (FAILED(hr))
+            continue;
 
         /* write filter data */
         rgf.dwVersion = 2;
@@ -705,13 +652,10 @@ static void register_wavein_devices(void)
         /* write WaveInId */
         V_VT(&var) = VT_I4;
         V_I4(&var) = i;
-        hr = IPropertyBag_Write(prop_bag, waveinidW, &var);
-        if (FAILED(hr)) goto cleanup;
+        IPropertyBag_Write(prop_bag, waveinidW, &var);
 
-cleanup:
         VariantClear(&var);
-        if (prop_bag) IPropertyBag_Release(prop_bag);
-        if (mon) IMoniker_Release(mon);
+        IPropertyBag_Release(prop_bag);
     }
 }
 
@@ -723,9 +667,8 @@ static void register_midiout_devices(void)
     REGFILTERPINS2 rgpins = {0};
     REGPINTYPES rgtypes = {0};
     REGFILTER2 rgf = {0};
-    WCHAR clsid[CHARS_IN_GUID];
-    IMoniker *mon = NULL;
     MIDIOUTCAPSW caps;
+    const WCHAR *name;
     int i, count;
     VARIANT var;
     HRESULT hr;
@@ -739,34 +682,12 @@ static void register_midiout_devices(void)
     {
         midiOutGetDevCapsW(i, &caps, sizeof(caps));
 
-        V_VT(&var) = VT_BSTR;
+        name = (i == -1) ? defaultW : caps.szPname;
 
-        if (i == -1)    /* MIDI_MAPPER */
-            V_BSTR(&var) = SysAllocString(defaultW);
-        else
-            V_BSTR(&var) = SysAllocString(caps.szPname);
-        if (!(V_BSTR(&var)))
-            goto cleanup;
-
-        hr = register_codec(&CLSID_MidiRendererCategory, V_BSTR(&var), &mon);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-        if (FAILED(hr)) goto cleanup;
-
-        /* write friendly name */
-        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
-
-        /* write clsid */
-        V_VT(&var) = VT_BSTR;
-        StringFromGUID2(&CLSID_AVIMIDIRender, clsid, CHARS_IN_GUID);
-        if (!(V_BSTR(&var) = SysAllocString(clsid)))
-            goto cleanup;
-        hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
+        hr = register_codec(&CLSID_MidiRendererCategory, name,
+                &CLSID_AVIMIDIRender, name, &prop_bag);
+        if (FAILED(hr))
+            continue;
 
         /* write filter data */
         rgf.dwVersion = 2;
@@ -784,13 +705,10 @@ static void register_midiout_devices(void)
         /* write MidiOutId */
         V_VT(&var) = VT_I4;
         V_I4(&var) = i;
-        hr = IPropertyBag_Write(prop_bag, midioutidW, &var);
-        if (FAILED(hr)) goto cleanup;
+        IPropertyBag_Write(prop_bag, midioutidW, &var);
 
-cleanup:
         VariantClear(&var);
-        if (prop_bag) IPropertyBag_Release(prop_bag);
-        if (mon) IMoniker_Release(mon);
+        IPropertyBag_Release(prop_bag);
     }
 }
 
@@ -801,8 +719,6 @@ static void register_vfw_codecs(void)
     IPropertyBag *prop_bag = NULL;
     REGPINTYPES rgtypes[2];
     REGFILTER2 rgf;
-    WCHAR clsid[CHARS_IN_GUID];
-    IMoniker *mon = NULL;
     GUID typeguid;
     ICINFO info;
     VARIANT var;
@@ -822,40 +738,10 @@ static void register_vfw_codecs(void)
         ICGetInfo(hic, &info, sizeof(info));
         ICClose(hic);
 
-        V_VT(&var) = VT_BSTR;
-
-        V_BSTR(&var) = SysAllocString(name);
-        if (!(V_BSTR(&var)))
-            goto cleanup;
-
-        hr = register_codec(&CLSID_VideoCompressorCategory, V_BSTR(&var), &mon);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag);
-        if (FAILED(hr)) goto cleanup;
-
-        /* write WaveInId */
-        hr = IPropertyBag_Write(prop_bag, fcchandlerW, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
-
-        /* write friendly name */
-        V_VT(&var) = VT_BSTR;
-        if (!(V_BSTR(&var) = SysAllocString(info.szDescription)))
-            goto cleanup;
-
-        hr = IPropertyBag_Write(prop_bag, wszFriendlyName, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
-
-        /* write clsid */
-        V_VT(&var) = VT_BSTR;
-        StringFromGUID2(&CLSID_AVICo, clsid, CHARS_IN_GUID);
-        if (!(V_BSTR(&var) = SysAllocString(clsid)))
-            goto cleanup;
-        hr = IPropertyBag_Write(prop_bag, clsidW, &var);
-        if (FAILED(hr)) goto cleanup;
-        VariantClear(&var);
+        hr = register_codec(&CLSID_VideoCompressorCategory, name,
+                &CLSID_AVICo, info.szDescription, &prop_bag);
+        if (FAILED(hr))
+            continue;
 
         /* write filter data */
         rgf.dwVersion = 2;
@@ -877,10 +763,13 @@ static void register_vfw_codecs(void)
 
         write_filter_data(prop_bag, &rgf);
 
-cleanup:
+        /* write WaveInId */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(name);
+        IPropertyBag_Write(prop_bag, fcchandlerW, &var);
+
         VariantClear(&var);
-        if (prop_bag) IPropertyBag_Release(prop_bag);
-        if (mon) IMoniker_Release(mon);
+        IPropertyBag_Release(prop_bag);
     }
 }
 
