@@ -6705,8 +6705,10 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
     ID2D1RenderTarget *compatible_rt;
     IWICImagingFactory *wic_factory;
     ID2D1DeviceContext *context;
+    ID2D1DCRenderTarget *dc_rt;
     IWICBitmap *wic_bitmap;
     ID2D1Bitmap *bitmap;
+    ID2D1Image *target;
     D2D1_SIZE_U size;
     HRESULT hr;
 
@@ -6749,12 +6751,36 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
 
     CoUninitialize();
 
-    if (FAILED(ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context)))
+    /* Compatible target follows its parent. */
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get device context, hr %#x.\n", hr);
+
+    dc_rt = NULL;
+    ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DCRenderTarget, (void **)&dc_rt);
+
+    bitmap = NULL;
+    target = NULL;
+    ID2D1DeviceContext_GetTarget(context, &target);
+    if (target && FAILED(ID2D1Image_QueryInterface(target, &IID_ID2D1Bitmap, (void **)&bitmap)))
     {
-        /* Compatible target follows its parent. */
+        ID2D1Image_Release(target);
+        target = NULL;
+    }
+    if (bitmap)
+        ID2D1Bitmap_Release(bitmap);
+
+    /* Pixel format is not defined until target is set, for DC target it's specified on creation. */
+    if (target || dc_rt)
+    {
+        ID2D1DeviceContext *context2;
+
         hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
                 D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, (ID2D1BitmapRenderTarget **)&compatible_rt);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create compatible render target, hr %#x.\n", hr);
+
+        hr = ID2D1RenderTarget_QueryInterface(compatible_rt, &IID_ID2D1DeviceContext, (void **)&context2);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get device context, hr %#x.\n", hr);
+        ID2D1DeviceContext_Release(context2);
 
         hr = ID2D1RenderTarget_CreateBitmap(compatible_rt, size, bitmap_data, sizeof(*bitmap_data), &bitmap_desc, &bitmap);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
@@ -6765,7 +6791,18 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
         ID2D1Bitmap_Release(bitmap);
     }
     else
-        ID2D1DeviceContext_Release(context);
+    {
+        hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
+                 D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, (ID2D1BitmapRenderTarget **)&compatible_rt);
+    todo_wine
+        ok_(__FILE__, line)(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT, " --- Unexpected hr %#x.\n", hr);
+    }
+
+    ID2D1DeviceContext_Release(context);
+    if (target)
+        ID2D1Image_Release(target);
+    if (dc_rt)
+        ID2D1DCRenderTarget_Release(dc_rt);
 }
 
 static void test_bitmap_surface(void)
@@ -6782,6 +6819,7 @@ static void test_bitmap_surface(void)
     IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
+    ID2D1Image *target;
     HWND window;
     HRESULT hr;
 
@@ -6809,7 +6847,23 @@ static void test_bitmap_surface(void)
     rt = create_render_target(surface);
     ok(!!rt, "Failed to create render target.\n");
 
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
+    ok(SUCCEEDED(hr), "Failed to get device context, hr %#x.\n", hr);
+
+    bitmap = NULL;
+    ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
+todo_wine
+    ok(!!bitmap, "Unexpected target.\n");
+
+if (bitmap)
+{
+    check_bitmap_surface((ID2D1Bitmap *)bitmap, TRUE, D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW);
+    ID2D1Bitmap1_Release(bitmap);
+}
     check_rt_bitmap_surface(rt, TRUE, D2D1_BITMAP_OPTIONS_NONE);
+
+    ID2D1DeviceContext_Release(device_context);
+
     ID2D1RenderTarget_Release(rt);
 
     /* Bitmap created from DXGI surface. */
@@ -6836,7 +6890,14 @@ if (SUCCEEDED(hr))
     check_bitmap_surface((ID2D1Bitmap *)bitmap, TRUE, D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW);
     check_rt_bitmap_surface((ID2D1RenderTarget *)device_context, TRUE, D2D1_BITMAP_OPTIONS_NONE);
 
+    ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+    ID2D1DeviceContext_GetTarget(device_context, &target);
+    ok(target == (ID2D1Image *)bitmap, "Unexpected target.\n");
+
+    check_rt_bitmap_surface((ID2D1RenderTarget *)device_context, TRUE, D2D1_BITMAP_OPTIONS_NONE);
+
     ID2D1DeviceContext_Release(device_context);
+    ID2D1Bitmap1_Release(bitmap);
 }
     ID2D1Device_Release(device);
     IDXGIDevice_Release(dxgi_device);

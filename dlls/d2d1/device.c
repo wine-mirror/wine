@@ -1515,7 +1515,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext *if
 
     FIXME("iface %p, tag1 %p, tag2 %p stub!\n", iface, tag1, tag2);
 
-    if (context->ops)
+    if (context->ops && context->ops->device_context_present)
         context->ops->device_context_present(context->outer_unknown);
 
     return E_NOTIMPL;
@@ -1693,7 +1693,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_EndDraw(ID2D1DeviceContext *
     if (tag2)
         *tag2 = context->error.tag2;
 
-    if (context->ops)
+    if (context->ops && context->ops->device_context_present)
     {
         if (FAILED(hr = context->ops->device_context_present(context->outer_unknown)))
             context->error.code = hr;
