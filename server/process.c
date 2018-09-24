@@ -105,7 +105,6 @@ static const struct fd_ops process_fd_ops =
 struct startup_info
 {
     struct object       obj;          /* object header */
-    struct file        *exe_file;     /* file handle for main exe */
     struct process     *process;      /* created process */
     data_size_t         info_size;    /* size of startup info */
     data_size_t         data_size;    /* size of whole startup data */
@@ -513,6 +512,7 @@ struct process *create_process( int fd, struct thread *parent_thread, int inheri
     process->startup_state   = STARTUP_IN_PROGRESS;
     process->startup_info    = NULL;
     process->idle_event      = NULL;
+    process->exe_file        = NULL;
     process->peb             = 0;
     process->ldt_copy        = 0;
     process->dir_cache       = NULL;
@@ -617,6 +617,7 @@ static void process_destroy( struct object *obj )
     if (process->msg_fd) release_object( process->msg_fd );
     list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
+    if (process->exe_file) release_object( process->exe_file );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
     free( process->dir_cache );
@@ -665,7 +666,6 @@ static void startup_info_destroy( struct object *obj )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
     free( info->data );
-    if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
 }
 
@@ -823,11 +823,10 @@ static void process_killed( struct process *process )
     process->desktop = 0;
     close_process_handles( process );
     cancel_process_asyncs( process );
-    if (process->idle_event)
-    {
-        release_object( process->idle_event );
-        process->idle_event = NULL;
-    }
+    if (process->idle_event) release_object( process->idle_event );
+    if (process->exe_file) release_object( process->exe_file );
+    process->idle_event = NULL;
+    process->exe_file = NULL;
 
     /* close the console attached to this process, if any */
     free_console( process );
@@ -1129,16 +1128,8 @@ DECL_HANDLER(new_process)
         close( socket_fd );
         return;
     }
-    info->exe_file = NULL;
     info->process  = NULL;
     info->data     = NULL;
-
-    if (req->exe_file &&
-        !(info->exe_file = get_file_obj( current->process, req->exe_file, FILE_READ_DATA )))
-    {
-        close( socket_fd );
-        goto done;
-    }
 
     info_ptr = get_req_data_after_objattr( objattr, &info->data_size );
     info->info_size = min( req->info_size, info->data_size );
@@ -1184,6 +1175,10 @@ DECL_HANDLER(new_process)
     if (!(process = create_process( socket_fd, current, req->inherit_all, sd ))) goto done;
 
     process->startup_info = (struct startup_info *)grab_object( info );
+
+    if (req->exe_file &&
+        !(process->exe_file = get_file_obj( current->process, req->exe_file, FILE_READ_DATA )))
+        goto done;
 
     if (parent->job
        && !(req->create_flags & CREATE_BREAKAWAY_FROM_JOB)
@@ -1266,8 +1261,8 @@ DECL_HANDLER(get_startup_info)
 
     if (!info) return;
 
-    if (info->exe_file &&
-        !(reply->exe_file = alloc_handle( process, info->exe_file, GENERIC_READ, 0 ))) return;
+    if (process->exe_file &&
+        !(reply->exe_file = alloc_handle( process, process->exe_file, GENERIC_READ, 0 ))) return;
 
     /* we return the data directly without making a copy so this can only be called once */
     reply->info_size = info->info_size;
@@ -1302,6 +1297,8 @@ DECL_HANDLER(init_process_done)
     process->ldt_copy = req->ldt_copy;
     process->start_time = current_time;
     current->entry_point = req->entry;
+    if (process->exe_file) release_object( process->exe_file );
+    process->exe_file = NULL;
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
