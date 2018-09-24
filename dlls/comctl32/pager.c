@@ -1046,6 +1046,11 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     case CBEN_DRAGBEGINW: return CBEN_DRAGBEGINA;
     case CBEN_ENDEDITW: return CBEN_ENDEDITA;
     case CBEN_GETDISPINFOW: return CBEN_GETDISPINFOA;
+    /* Date and Time Picker */
+    case DTN_FORMATW: return DTN_FORMATA;
+    case DTN_FORMATQUERYW: return DTN_FORMATQUERYA;
+    case DTN_USERSTRINGW: return DTN_USERSTRINGA;
+    case DTN_WMKEYDOWNW: return DTN_WMKEYDOWNA;
     /* Toolbar */
     case TBN_GETBUTTONINFOW: return TBN_GETBUTTONINFOA;
     case TBN_GETINFOTIPW: return TBN_GETINFOTIPA;
@@ -1066,6 +1071,23 @@ static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
     if (infoPtr->nBufferSize < size) infoPtr->nBufferSize = size;
 
     return TRUE;
+}
+
+/* Convert text to Unicode and return the original text address */
+static WCHAR *PAGER_ConvertText(WCHAR **text)
+{
+    WCHAR *oldText = *text;
+    *text = NULL;
+    Str_SetPtrWtoA((CHAR **)text, oldText);
+    return oldText;
+}
+
+static void PAGER_RestoreText(WCHAR **text, WCHAR *oldText)
+{
+    if (!oldText) return;
+
+    Free(*text);
+    *text = oldText;
 }
 
 static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *mask, UINT requiredMask, WCHAR **text,
@@ -1165,6 +1187,49 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
         WideCharToMultiByte(CP_ACP, 0, nmedW->szText, ARRAY_SIZE(nmedW->szText), nmedA.szText, ARRAY_SIZE(nmedA.szText),
                             NULL, FALSE);
         return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)&nmedA);
+    }
+    /* Date and Time Picker */
+    case DTN_FORMATW:
+    {
+        NMDATETIMEFORMATW *nmdtf = (NMDATETIMEFORMATW *)hdr;
+        WCHAR *oldFormat;
+        INT textLength;
+
+        hdr->code = PAGER_GetAnsiNtfCode(hdr->code);
+        oldFormat = PAGER_ConvertText((WCHAR **)&nmdtf->pszFormat);
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)nmdtf);
+        PAGER_RestoreText((WCHAR **)&nmdtf->pszFormat, oldFormat);
+
+        if (nmdtf->pszDisplay)
+        {
+            textLength = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmdtf->pszDisplay, -1, 0, 0);
+            if (!PAGER_AdjustBuffer(infoPtr, textLength * sizeof(WCHAR))) return ret;
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmdtf->pszDisplay, -1, infoPtr->pwszBuffer, textLength);
+            if (nmdtf->pszDisplay != nmdtf->szDisplay)
+                nmdtf->pszDisplay = infoPtr->pwszBuffer;
+            else
+            {
+                textLength = min(textLength, ARRAY_SIZE(nmdtf->szDisplay));
+                memcpy(nmdtf->szDisplay, infoPtr->pwszBuffer, textLength * sizeof(WCHAR));
+            }
+        }
+
+        return ret;
+    }
+    case DTN_FORMATQUERYW:
+    {
+        NMDATETIMEFORMATQUERYW *nmdtfq = (NMDATETIMEFORMATQUERYW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, (WCHAR **)&nmdtfq->pszFormat, NULL, CONVERT_SEND);
+    }
+    case DTN_WMKEYDOWNW:
+    {
+        NMDATETIMEWMKEYDOWNW *nmdtkd = (NMDATETIMEWMKEYDOWNW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, (WCHAR **)&nmdtkd->pszFormat, NULL, CONVERT_SEND);
+    }
+    case DTN_USERSTRINGW:
+    {
+        NMDATETIMESTRINGW *nmdts = (NMDATETIMESTRINGW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, (WCHAR **)&nmdts->pszUserString, NULL, CONVERT_SEND);
     }
     /* Toolbar */
     case TBN_GETBUTTONINFOW:
