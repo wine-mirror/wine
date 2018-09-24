@@ -785,10 +785,10 @@ struct get_startup_info_request
 struct get_startup_info_reply
 {
     struct reply_header __header;
-    obj_handle_t exe_file;
     data_size_t  info_size;
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
+    char __pad_12[4];
 };
 
 
@@ -6531,6 +6531,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 564
+#define SERVER_PROTOCOL_VERSION 565
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

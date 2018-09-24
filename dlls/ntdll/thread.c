@@ -105,7 +105,7 @@ static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, WCHAR *
  *
  * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
  */
-static NTSTATUS init_user_process_params( SIZE_T data_size, HANDLE *exe_file )
+static NTSTATUS init_user_process_params( SIZE_T data_size )
 {
     void *ptr;
     WCHAR *src, *dst;
@@ -125,7 +125,6 @@ static NTSTATUS init_user_process_params( SIZE_T data_size, HANDLE *exe_file )
             data_size = wine_server_reply_size( reply );
             info_size = reply->info_size;
             env_size  = data_size - info_size;
-            *exe_file = wine_server_ptr_handle( reply->exe_file );
         }
     }
     SERVER_END_REQ;
@@ -273,13 +272,12 @@ static ULONG_PTR get_image_addr(void)
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-HANDLE thread_init(void)
+void thread_init(void)
 {
     TEB *teb;
     void *addr;
     BOOL suspend;
     SIZE_T size, info_size;
-    HANDLE exe_file = 0;
     LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
@@ -378,7 +376,7 @@ HANDLE thread_init(void)
     /* allocate user parameters */
     if (info_size)
     {
-        init_user_process_params( info_size, &exe_file );
+        init_user_process_params( info_size );
     }
     else
     {
@@ -404,8 +402,6 @@ HANDLE thread_init(void)
     fill_cpu_info();
 
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
-
-    return exe_file;
 }
 
 

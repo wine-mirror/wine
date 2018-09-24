@@ -1261,9 +1261,6 @@ DECL_HANDLER(get_startup_info)
 
     if (!info) return;
 
-    if (process->exe_file &&
-        !(reply->exe_file = alloc_handle( process, process->exe_file, GENERIC_READ, 0 ))) return;
-
     /* we return the data directly without making a copy so this can only be called once */
     reply->info_size = info->info_size;
     size = info->data_size;

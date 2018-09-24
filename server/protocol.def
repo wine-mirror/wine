@@ -778,7 +778,6 @@ struct rawinput_device
 /* Retrieve the new process startup info */
 @REQ(get_startup_info)
 @REPLY
-    obj_handle_t exe_file;     /* file handle for main exe */
     data_size_t  info_size;    /* size of startup info */
     VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);   /* environment */
