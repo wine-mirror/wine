@@ -1753,7 +1753,7 @@ static inline void LISTVIEW_InvalidateSubItem(const LISTVIEW_INFO *infoPtr, INT 
     LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox);
     rcBox.top = 0;
     rcBox.bottom = infoPtr->nItemHeight;
-    OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y);
+    OffsetRect(&rcBox, Origin.x, Origin.y + Position.y);
     LISTVIEW_InvalidateRect(infoPtr, &rcBox);
 }
 
