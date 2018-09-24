@@ -6772,7 +6772,10 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
     /* Pixel format is not defined until target is set, for DC target it's specified on creation. */
     if (target || dc_rt)
     {
+        ID2D1Device *device = NULL, *device2 = NULL;
         ID2D1DeviceContext *context2;
+
+        ID2D1DeviceContext_GetDevice(context, &device);
 
         hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
                 D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, (ID2D1BitmapRenderTarget **)&compatible_rt);
@@ -6780,6 +6783,15 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
 
         hr = ID2D1RenderTarget_QueryInterface(compatible_rt, &IID_ID2D1DeviceContext, (void **)&context2);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get device context, hr %#x.\n", hr);
+
+        ID2D1DeviceContext_GetDevice(context2, &device2);
+        ok_(__FILE__, line)(device == device2, "Unexpected device.\n");
+
+        if (device)
+            ID2D1Device_Release(device);
+        if (device2)
+            ID2D1Device_Release(device2);
+
         ID2D1DeviceContext_Release(context2);
 
         hr = ID2D1RenderTarget_CreateBitmap(compatible_rt, size, bitmap_data, sizeof(*bitmap_data), &bitmap_desc, &bitmap);
