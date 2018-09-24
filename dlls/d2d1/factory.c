@@ -300,7 +300,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
         return hr;
     }
 
-    if (FAILED(hr = d2d_wic_render_target_init(object, (ID2D1Factory *)iface, device, target, desc)))
+    if (FAILED(hr = d2d_wic_render_target_init(object, iface, device, target, desc)))
     {
         WARN("Failed to initialize render target, hr %#x.\n", hr);
         heap_free(object);
@@ -330,7 +330,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_hwnd_render_target_init(object, (ID2D1Factory *)iface, device, desc, hwnd_rt_desc)))
+    if (FAILED(hr = d2d_hwnd_render_target_init(object, iface, device, desc, hwnd_rt_desc)))
     {
         WARN("Failed to initialize render target, hr %#x.\n", hr);
         heap_free(object);
@@ -346,9 +346,29 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1Factory1 *iface,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target)
 {
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
+    HRESULT hr;
+
     TRACE("iface %p, surface %p, desc %p, render_target %p.\n", iface, surface, desc, render_target);
 
-    return d2d_d3d_create_render_target((ID2D1Factory *)iface, surface, NULL, NULL, desc, (void **)render_target);
+    if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+    {
+        WARN("Failed to get DXGI device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = ID2D1Factory1_CreateDevice(iface, dxgi_device, &device);
+    IDXGIDevice_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = d2d_d3d_create_render_target(device, surface, NULL, NULL, desc, (void **)render_target);
+    ID2D1Device_Release(device);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory1 *iface,
@@ -367,7 +387,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory1 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_dc_render_target_init(object, (ID2D1Factory *)iface, device, desc)))
+    if (FAILED(hr = d2d_dc_render_target_init(object, iface, device, desc)))
     {
         WARN("Failed to initialize render target, hr %#x.\n", hr);
         heap_free(object);

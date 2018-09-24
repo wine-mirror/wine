@@ -330,14 +330,14 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     resource_data.pSysMem = src_data;
     resource_data.SysMemPitch = pitch;
 
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(context->device, &texture_desc,
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(context->d3d_device, &texture_desc,
             src_data ? &resource_data : NULL, &texture)))
     {
         ERR("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = ID3D10Device_CreateShaderResourceView(context->device, (ID3D10Resource *)texture, NULL, &view);
+    hr = ID3D10Device_CreateShaderResourceView(context->d3d_device, (ID3D10Resource *)texture, NULL, &view);
     ID3D10Texture2D_Release(texture);
     if (FAILED(hr))
     {
@@ -375,7 +375,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
 
         ID3D10ShaderResourceView_GetDevice(src_impl->view, &device);
         ID3D10Device_Release(device);
-        if (device != context->device)
+        if (device != context->d3d_device)
         {
             hr = D2DERR_UNSUPPORTED_OPERATION;
             goto failed;
@@ -430,13 +430,13 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
 
         ID3D10Resource_GetDevice(resource, &device);
         ID3D10Device_Release(device);
-        if (device != context->device)
+        if (device != context->d3d_device)
         {
             ID3D10Resource_Release(resource);
             return D2DERR_UNSUPPORTED_OPERATION;
         }
 
-        hr = ID3D10Device_CreateShaderResourceView(context->device, resource, NULL, &view);
+        hr = ID3D10Device_CreateShaderResourceView(context->d3d_device, resource, NULL, &view);
         ID3D10Resource_Release(resource);
         if (FAILED(hr))
         {

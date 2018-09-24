@@ -152,11 +152,13 @@ static const struct d2d_device_context_ops d2d_wic_render_target_ops =
     d2d_wic_render_target_present,
 };
 
-HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory *factory,
-        ID3D10Device1 *device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
+HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory1 *factory,
+        ID3D10Device1 *d3d_device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10Texture2D *texture;
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
     HRESULT hr;
 
     render_target->IUnknown_iface.lpVtbl = &d2d_wic_render_target_vtbl;
@@ -214,7 +216,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.MiscFlags = desc->usage & D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE ?
             D3D10_RESOURCE_MISC_GDI_COMPATIBLE : 0;
 
-    if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &texture)))
+    if (FAILED(hr = ID3D10Device1_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
@@ -233,16 +235,33 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
 
-    if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &render_target->readback_texture)))
+    if (FAILED(hr = ID3D10Device1_CreateTexture2D(d3d_device, &texture_desc, NULL, &render_target->readback_texture)))
     {
         WARN("Failed to create readback texture, hr %#x.\n", hr);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
 
-    if (FAILED(hr = d2d_d3d_create_render_target(factory, render_target->dxgi_surface,
-            &render_target->IUnknown_iface, &d2d_wic_render_target_ops,
-            desc, (void **)&render_target->dxgi_inner)))
+    if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
+    {
+        WARN("Failed to get DXGI device, hr %#x.\n", hr);
+        IDXGISurface_Release(render_target->dxgi_surface);
+        return hr;
+    }
+
+    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    IDXGIDevice_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        IDXGISurface_Release(render_target->dxgi_surface);
+        return hr;
+    }
+
+    hr = d2d_d3d_create_render_target(device, render_target->dxgi_surface, &render_target->IUnknown_iface,
+            &d2d_wic_render_target_ops, desc, (void **)&render_target->dxgi_inner);
+    ID2D1Device_Release(device);
+    if (FAILED(hr))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
         ID3D10Texture2D_Release(render_target->readback_texture);

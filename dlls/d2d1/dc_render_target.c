@@ -813,11 +813,13 @@ static const struct d2d_device_context_ops d2d_dc_render_target_ops =
     d2d_dc_render_target_present,
 };
 
-HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory *factory,
-        ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc)
+HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory1 *factory,
+        ID3D10Device1 *d3d_device, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10Texture2D *texture;
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
     HRESULT hr;
 
     render_target->ID2D1DCRenderTarget_iface.lpVtbl = &d2d_dc_render_target_vtbl;
@@ -852,7 +854,7 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
 
-    if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &texture)))
+    if (FAILED(hr = ID3D10Device1_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
@@ -866,9 +868,25 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
         return hr;
     }
 
-    if (FAILED(hr = d2d_d3d_create_render_target(factory, (IDXGISurface *)render_target->dxgi_surface,
+    if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
+    {
+        WARN("Failed to get DXGI device interface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    IDXGIDevice_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = d2d_d3d_create_render_target(device, (IDXGISurface *)render_target->dxgi_surface,
             (IUnknown *)&render_target->ID2D1DCRenderTarget_iface, &d2d_dc_render_target_ops,
-            desc, (void **)&render_target->dxgi_inner)))
+            desc, (void **)&render_target->dxgi_inner);
+    ID2D1Device_Release(device);
+    if (FAILED(hr))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
         IDXGISurface1_Release(render_target->dxgi_surface);

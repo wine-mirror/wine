@@ -6772,7 +6772,7 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
     /* Pixel format is not defined until target is set, for DC target it's specified on creation. */
     if (target || dc_rt)
     {
-        ID2D1Device *device = NULL, *device2 = NULL;
+        ID2D1Device *device, *device2;
         ID2D1DeviceContext *context2;
 
         ID2D1DeviceContext_GetDevice(context, &device);
@@ -6787,10 +6787,8 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
         ID2D1DeviceContext_GetDevice(context2, &device2);
         ok_(__FILE__, line)(device == device2, "Unexpected device.\n");
 
-        if (device)
-            ID2D1Device_Release(device);
-        if (device2)
-            ID2D1Device_Release(device2);
+        ID2D1Device_Release(device);
+        ID2D1Device_Release(device2);
 
         ID2D1DeviceContext_Release(context2);
 

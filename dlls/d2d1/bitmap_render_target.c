@@ -795,7 +795,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(parent_target->device, &texture_desc, NULL, &texture)))
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(parent_target->d3d_device, &texture_desc, NULL, &texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
@@ -809,7 +809,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
         return hr;
     }
 
-    if (FAILED(hr = d2d_d3d_create_render_target(parent_target->factory, dxgi_surface,
+    if (FAILED(hr = d2d_d3d_create_render_target(parent_target->device, dxgi_surface,
             (IUnknown *)&render_target->ID2D1BitmapRenderTarget_iface,
             parent_target->ops ? &d2d_bitmap_render_target_ops : NULL,
             &dxgi_rt_desc, (void **)&render_target->dxgi_inner)))

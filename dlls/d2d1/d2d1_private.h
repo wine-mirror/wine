@@ -134,7 +134,8 @@ struct d2d_device_context
     const struct d2d_device_context_ops *ops;
 
     ID2D1Factory *factory;
-    ID3D10Device *device;
+    ID2D1Device *device;
+    ID3D10Device *d3d_device;
     ID3D10RenderTargetView *view;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
@@ -155,7 +156,7 @@ struct d2d_device_context
     struct d2d_clip_stack clip_stack;
 };
 
-HRESULT d2d_d3d_create_render_target(ID2D1Factory *factory, IDXGISurface *surface, IUnknown *outer_unknown,
+HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface, IUnknown *outer_unknown,
         const struct d2d_device_context_ops *ops, const D2D1_RENDER_TARGET_PROPERTIES *desc,
         void **render_target) DECLSPEC_HIDDEN;
 HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
@@ -181,8 +182,8 @@ struct d2d_wic_render_target
     unsigned int bpp;
 };
 
-HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory *factory,
-        ID3D10Device1 *device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
+HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory1 *factory,
+        ID3D10Device1 *d3d_device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
 
 struct d2d_dc_render_target
 {
@@ -197,8 +198,8 @@ struct d2d_dc_render_target
     HDC hdc;
 };
 
-HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory *factory,
-        ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
+HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory1 *factory,
+        ID3D10Device1 *d3d_device, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
 
 struct d2d_hwnd_render_target
 {
@@ -212,8 +213,8 @@ struct d2d_hwnd_render_target
     HWND hwnd;
 };
 
-HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target, ID2D1Factory *factory,
-        ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc,
+HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target, ID2D1Factory1 *factory,
+        ID3D10Device1 *d3d_device, const D2D1_RENDER_TARGET_PROPERTIES *desc,
         const D2D1_HWND_RENDER_TARGET_PROPERTIES *hwnd_desc) DECLSPEC_HIDDEN;
 
 struct d2d_bitmap_render_target
