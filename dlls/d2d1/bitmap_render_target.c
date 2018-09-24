@@ -218,8 +218,8 @@ static void STDMETHODCALLTYPE d2d_bitmap_render_target_DrawLine(ID2D1BitmapRende
 {
     struct d2d_bitmap_render_target *render_target = impl_from_ID2D1BitmapRenderTarget(iface);
 
-    TRACE("iface %p, p0 {%.8e, %.8e}, p1 {%.8e, %.8e}, brush %p, stroke_width %.8e, stroke_style %p.\n",
-            iface, p0.x, p0.y, p1.x, p1.y, brush, stroke_width, stroke_style);
+    TRACE("iface %p, p0 %s, p1 %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
+            iface, debug_d2d_point_2f(&p0), debug_d2d_point_2f(&p1), brush, stroke_width, stroke_style);
 
     ID2D1RenderTarget_DrawLine(render_target->dxgi_target, p0, p1, brush, stroke_width, stroke_style);
 }
@@ -364,8 +364,8 @@ static void STDMETHODCALLTYPE d2d_bitmap_render_target_DrawTextLayout(ID2D1Bitma
 {
     struct d2d_bitmap_render_target *render_target = impl_from_ID2D1BitmapRenderTarget(iface);
 
-    TRACE("iface %p, origin {%.8e, %.8e}, layout %p, brush %p, options %#x.\n",
-            iface, origin.x, origin.y, layout, brush, options);
+    TRACE("iface %p, origin %s, layout %p, brush %p, options %#x.\n",
+            iface, debug_d2d_point_2f(&origin), layout, brush, options);
 
     ID2D1RenderTarget_DrawTextLayout(render_target->dxgi_target, origin, layout, brush, options);
 }
@@ -376,8 +376,8 @@ static void STDMETHODCALLTYPE d2d_bitmap_render_target_DrawGlyphRun(ID2D1BitmapR
 {
     struct d2d_bitmap_render_target *render_target = impl_from_ID2D1BitmapRenderTarget(iface);
 
-    TRACE("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x.\n",
-            iface, baseline_origin.x, baseline_origin.y, glyph_run, brush, measuring_mode);
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
 
     ID2D1RenderTarget_DrawGlyphRun(render_target->dxgi_target,
             baseline_origin, glyph_run, brush, measuring_mode);

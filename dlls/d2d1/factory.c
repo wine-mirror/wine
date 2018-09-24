@@ -577,7 +577,7 @@ void WINAPI D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_
 {
     float theta, sin_theta, cos_theta;
 
-    TRACE("angle %.8e, center {%.8e, %.8e}, matrix %p.\n", angle, center.x, center.y, matrix);
+    TRACE("angle %.8e, center %s, matrix %p.\n", angle, debug_d2d_point_2f(&center), matrix);
 
     theta = angle * (M_PI / 180.0f);
     sin_theta = sinf(theta);

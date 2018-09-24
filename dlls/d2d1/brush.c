@@ -502,7 +502,7 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetStartPoint(ID2D1Linea
 {
     struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    TRACE("iface %p, start_point {%.8e, %.8e}.\n", iface, start_point.x, start_point.y);
+    TRACE("iface %p, start_point %s.\n", iface, debug_d2d_point_2f(&start_point));
 
     brush->u.linear.start = start_point;
 }
@@ -512,7 +512,7 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearG
 {
     struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    TRACE("iface %p, end_point {%.8e, %.8e}.\n", iface, end_point.x, end_point.y);
+    TRACE("iface %p, end_point %s.\n", iface, debug_d2d_point_2f(&end_point));
 
     brush->u.linear.end = end_point;
 }
@@ -689,7 +689,7 @@ static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetCenter(ID2D1RadialGra
 {
     struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    TRACE("iface %p, centre {%.8e, %.8e}.\n", iface, centre.x, centre.y);
+    TRACE("iface %p, centre %s.\n", iface, debug_d2d_point_2f(&centre));
 
     brush->u.radial.centre = centre;
 }
@@ -699,7 +699,7 @@ static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetGradientOriginOffset(
 {
     struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    TRACE("iface %p, offset {%.8e, %.8e}.\n", iface, offset.x, offset.y);
+    TRACE("iface %p, offset %s.\n", iface, debug_d2d_point_2f(&offset));
 
     brush->u.radial.offset = offset;
 }

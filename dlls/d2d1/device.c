@@ -550,8 +550,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext *if
     ID2D1GeometrySink *sink;
     HRESULT hr;
 
-    TRACE("iface %p, p0 {%.8e, %.8e}, p1 {%.8e, %.8e}, brush %p, stroke_width %.8e, stroke_style %p.\n",
-            iface, p0.x, p0.y, p1.x, p1.y, brush, stroke_width, stroke_style);
+    TRACE("iface %p, p0 %s, p1 %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
+            iface, debug_d2d_point_2f(&p0), debug_d2d_point_2f(&p1), brush, stroke_width, stroke_style);
 
     if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
     {
@@ -1108,8 +1108,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawTextLayout(ID2D1DeviceConte
     struct d2d_draw_text_layout_ctx ctx;
     HRESULT hr;
 
-    TRACE("iface %p, origin {%.8e, %.8e}, layout %p, brush %p, options %#x.\n",
-            iface, origin.x, origin.y, layout, brush, options);
+    TRACE("iface %p, origin %s, layout %p, brush %p, options %#x.\n",
+            iface, debug_d2d_point_2f(&origin), layout, brush, options);
 
     ctx.brush = brush;
     ctx.options = options;
@@ -1324,8 +1324,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
 
-    TRACE("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x.\n",
-            iface, baseline_origin.x, baseline_origin.y, glyph_run, brush, measuring_mode);
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
 
     rendering_params = render_target->text_rendering_params ? render_target->text_rendering_params
             : render_target->default_text_rendering_params;
@@ -1945,8 +1945,8 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetGlyphRunWorldBounds(ID2D1
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         DWRITE_MEASURING_MODE measuring_mode, D2D1_RECT_F *bounds)
 {
-    FIXME("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, measuring_mode %#x, bounds %p stub!\n", iface,
-            baseline_origin.x, baseline_origin.y, glyph_run, measuring_mode, bounds);
+    FIXME("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p stub!\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, measuring_mode, bounds);
 
     return E_NOTIMPL;
 }
@@ -2012,23 +2012,24 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, ID2D1Brush *brush, DWRITE_MEASURING_MODE measuring_mode)
 {
-    FIXME("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, "
-            "glyph_run_desc %p, brush %p, measuring_mode %#x stub!\n",
-            iface, baseline_origin.x, baseline_origin.y, glyph_run, glyph_run_desc, brush, measuring_mode);
+    FIXME("iface %p, baseline_origin %s, glyph_run %p, glyph_run_desc %p, brush %p, measuring_mode %#x stub!\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, glyph_run_desc, brush, measuring_mode);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext *iface, ID2D1Image *image,
         const D2D1_POINT_2F *target_offset, const D2D1_RECT_F *image_rect, D2D1_INTERPOLATION_MODE interpolation_mode,
         D2D1_COMPOSITE_MODE composite_mode)
 {
-    FIXME("iface %p, image %p, target_offset %p, image_rect %s, interpolation_mode %#x, composite_mode %#x stub!\n",
-            iface, image, target_offset, debug_d2d_rect_f(image_rect), interpolation_mode, composite_mode);
+    FIXME("iface %p, image %p, target_offset %s, image_rect %s, interpolation_mode %#x, composite_mode %#x stub!\n",
+            iface, image, debug_d2d_point_2f(target_offset), debug_d2d_rect_f(image_rect),
+            interpolation_mode, composite_mode);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawGdiMetafile(ID2D1DeviceContext *iface,
         ID2D1GdiMetafile *metafile, const D2D1_POINT_2F *target_offset)
 {
-    FIXME("iface %p, metafile %p, target_offset %p stub!\n", iface, metafile, target_offset);
+    FIXME("iface %p, metafile %p, target_offset %s stub!\n",
+            iface, metafile, debug_d2d_point_2f(target_offset));
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(ID2D1DeviceContext *iface,

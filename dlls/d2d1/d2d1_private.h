@@ -587,6 +587,13 @@ static inline void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
         dst->bottom = point->y;
 }
 
+static inline const char *debug_d2d_point_2f(const D2D1_POINT_2F *point)
+{
+    if (!point)
+        return "(null)";
+    return wine_dbg_sprintf("{%.8e, %.8e}", point->x, point->y);
+}
+
 static inline const char *debug_d2d_rect_f(const D2D1_RECT_F *rect)
 {
     if (!rect) return "(null)";
