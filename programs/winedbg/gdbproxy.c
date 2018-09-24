@@ -1890,7 +1890,7 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     fd = mkstemps(buf, 0);
     if (fd == -1) return FALSE;
     if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
-    fprintf(f, "file %s\n", wine_path);
+    fprintf(f, "file \"%s\"\n", wine_path);
     fprintf(f, "target remote localhost:%d\n", ntohs(port));
     fprintf(f, "set prompt Wine-gdb>\\ \n");
     /* gdb 5.1 seems to require it, won't hurt anyway */
