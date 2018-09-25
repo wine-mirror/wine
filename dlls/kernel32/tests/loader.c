@@ -972,6 +972,24 @@ static void test_Loader(void)
     nt_header.Signature = IMAGE_OS2_SIGNATURE;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection error %08x\n", status );
+    for (i = 0; i < 16; i++)
+    {
+        ((IMAGE_OS2_HEADER *)&nt_header)->ne_exetyp = i;
+        status = map_image_section( &nt_header, &section, section_data, __LINE__ );
+        switch (i)
+        {
+        case 2:
+            ok( status == STATUS_INVALID_IMAGE_WIN_16, "NtCreateSection %u error %08x\n", i, status );
+            break;
+        case 5:
+            ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection %u error %08x\n", i, status );
+            break;
+        default:
+            ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection %u error %08x\n", i, status );
+            break;
+        }
+    }
+    ((IMAGE_OS2_HEADER *)&nt_header)->ne_exetyp = ((IMAGE_OS2_HEADER *)&nt_header_template)->ne_exetyp;
 
     nt_header.Signature = 0xdeadbeef;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );

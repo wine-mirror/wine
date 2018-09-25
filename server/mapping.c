@@ -587,8 +587,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
     if (nt.Signature != IMAGE_NT_SIGNATURE)
     {
-        if (*(WORD *)&nt.Signature == IMAGE_OS2_SIGNATURE) return STATUS_INVALID_IMAGE_NE_FORMAT;
-        return STATUS_INVALID_IMAGE_PROTECT;
+        IMAGE_OS2_HEADER *os2 = (IMAGE_OS2_HEADER *)&nt;
+        if (os2->ne_magic != IMAGE_OS2_SIGNATURE) return STATUS_INVALID_IMAGE_PROTECT;
+        if (os2->ne_exetyp == 2) return STATUS_INVALID_IMAGE_WIN_16;
+        if (os2->ne_exetyp == 5) return STATUS_INVALID_IMAGE_PROTECT;
+        return STATUS_INVALID_IMAGE_NE_FORMAT;
     }
 
     switch (nt.opt.hdr32.Magic)
