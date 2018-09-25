@@ -866,13 +866,12 @@ auth_schemes[] =
     { digestW,    ARRAY_SIZE(digestW) - 1,    WINHTTP_AUTH_SCHEME_DIGEST },
     { negotiateW, ARRAY_SIZE(negotiateW) - 1, WINHTTP_AUTH_SCHEME_NEGOTIATE }
 };
-static const unsigned int num_auth_schemes = sizeof(auth_schemes)/sizeof(auth_schemes[0]);
 
 static enum auth_scheme scheme_from_flag( DWORD flag )
 {
     int i;
 
-    for (i = 0; i < num_auth_schemes; i++) if (flag == auth_schemes[i].scheme) return i;
+    for (i = 0; i < ARRAY_SIZE( auth_schemes ); i++) if (flag == auth_schemes[i].scheme) return i;
     return SCHEME_INVALID;
 }
 
@@ -880,7 +879,7 @@ static DWORD auth_scheme_from_header( WCHAR *header )
 {
     unsigned int i;
 
-    for (i = 0; i < num_auth_schemes; i++)
+    for (i = 0; i < ARRAY_SIZE( auth_schemes ); i++)
     {
         if (!strncmpiW( header, auth_schemes[i].str, auth_schemes[i].len ) &&
             (header[auth_schemes[i].len] == ' ' || !header[auth_schemes[i].len])) return auth_schemes[i].scheme;
@@ -2310,7 +2309,7 @@ static BOOL handle_authorization( request_t *request, DWORD status )
     if (do_authorization( request, target, first )) return TRUE;
 
     schemes &= ~first;
-    for (i = 0; i < num_auth_schemes; i++)
+    for (i = 0; i < ARRAY_SIZE( auth_schemes ); i++)
     {
         if (!(schemes & auth_schemes[i].scheme)) continue;
         if (do_authorization( request, target, auth_schemes[i].scheme )) return TRUE;
