@@ -1147,7 +1147,11 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
 
     /* Try direct connection first */
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
-    if (SUCCEEDED(hr))
+
+    /* If direct connection succeeded, we should propagate that return value.
+     * If it returned VFW_E_NOT_CONNECTED or VFW_E_NO_AUDIO_HARDWARE, then don't
+     * even bother trying intermediate filters, since they won't succeed. */
+    if (SUCCEEDED(hr) || hr == VFW_E_NOT_CONNECTED || hr == VFW_E_NO_AUDIO_HARDWARE)
         goto out;
 
     TRACE("Direct connection failed, trying to render using extra filters\n");
@@ -1345,6 +1349,9 @@ error:
         }
     }
 
+    if (FAILED(hr))
+        hr = VFW_E_CANNOT_CONNECT;
+
     IEnumMoniker_Release(pEnumMoniker);
 
 out:
@@ -1357,7 +1364,7 @@ out:
     --This->recursioncount;
     LeaveCriticalSection(&This->cs);
     TRACE("--> %08x\n", hr);
-    return SUCCEEDED(hr) ? S_OK : hr;
+    return hr;
 }
 
 /* Render all output pins of the given filter. Helper for FilterGraph2_Render(). */

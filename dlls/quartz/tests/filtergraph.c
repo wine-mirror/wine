@@ -609,7 +609,6 @@ static void test_render_run(const WCHAR *file)
         ok(!refs, "Graph has %u references\n", refs);
 
         hr = test_graph_builder_connect_file(filename);
-todo_wine
         ok(hr == VFW_E_CANNOT_CONNECT, "got %#x\n", hr);
     }
     else
@@ -776,6 +775,8 @@ struct testpin
     unsigned int type_count, enum_idx;
     AM_MEDIA_TYPE *request_mt, *accept_mt;
 
+    HRESULT Connect_hr;
+    HRESULT EnumMediaTypes_hr;
     HRESULT QueryInternalConnections_hr;
 };
 
@@ -964,6 +965,9 @@ static HRESULT WINAPI testpin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **out)
     struct testpin *pin = impl_from_IPin(iface);
     if (winetest_debug > 1) trace("%p->EnumMediaTypes()\n", pin);
 
+    if (FAILED(pin->EnumMediaTypes_hr))
+        return pin->EnumMediaTypes_hr;
+
     *out = &pin->IEnumMediaTypes_iface;
     IEnumMediaTypes_AddRef(*out);
     pin->enum_idx = 0;
@@ -1063,6 +1067,8 @@ static void testpin_init(struct testpin *pin, const IPinVtbl *vtbl, PIN_DIRECTIO
     pin->IEnumMediaTypes_iface.lpVtbl = &testenummt_vtbl;
     pin->ref = 1;
     pin->dir = dir;
+    pin->Connect_hr = S_OK;
+    pin->EnumMediaTypes_hr = S_OK;
     pin->QueryInternalConnections_hr = E_NOTIMPL;
 }
 
@@ -1077,12 +1083,16 @@ static HRESULT WINAPI testsource_Connect(IPin *iface, IPin *peer, const AM_MEDIA
     HRESULT hr;
     if (winetest_debug > 1) trace("%p->Connect(%p)\n", pin, peer);
 
+    if (FAILED(pin->Connect_hr))
+        return pin->Connect_hr;
+
     ok(!mt, "Got media type %p.\n", mt);
 
     if (SUCCEEDED(hr = IPin_ReceiveConnection(peer, &pin->IPin_iface, pin->request_mt)))
     {
         pin->peer = peer;
         IPin_AddRef(peer);
+        return pin->Connect_hr;
     }
     return hr;
 }
@@ -1711,11 +1721,49 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
 
+    for (source_pin.Connect_hr = 0x00040200; source_pin.Connect_hr <= 0x000402ff;
+            ++source_pin.Connect_hr)
+    {
+        hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+        ok(hr == source_pin.Connect_hr, "Got hr %#x for Connect() hr %#x.\n",
+                hr, source_pin.Connect_hr);
+        ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+        IFilterGraph2_Disconnect(graph, source_pin.peer);
+        IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    }
+    source_pin.Connect_hr = S_OK;
+
     sink_pin.accept_mt = &sink_type;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+
+    for (source_pin.Connect_hr = 0x80040200; source_pin.Connect_hr <= 0x800402ff;
+            ++source_pin.Connect_hr)
+    {
+        hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+        if (source_pin.Connect_hr == VFW_E_NOT_CONNECTED
+                || source_pin.Connect_hr == VFW_E_NO_AUDIO_HARDWARE)
+            ok(hr == source_pin.Connect_hr, "Got hr %#x for Connect() hr %#x.\n",
+                    hr, source_pin.Connect_hr);
+        else
+            ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x for Connect() hr %#x.\n",
+                    hr, source_pin.Connect_hr);
+        ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+        ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+    }
+    source_pin.Connect_hr = S_OK;
+
+    for (source_pin.EnumMediaTypes_hr = 0x80040200; source_pin.EnumMediaTypes_hr <= 0x800402ff;
+            ++source_pin.EnumMediaTypes_hr)
+    {
+        hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+        ok(hr == source_pin.EnumMediaTypes_hr, "Got hr %#x for EnumMediaTypes() hr %#x.\n",
+                hr, source_pin.EnumMediaTypes_hr);
+        ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+        ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+    }
+    source_pin.EnumMediaTypes_hr = S_OK;
 
     /* Test usage of intermediate filters. Similarly to Render(), filters are
      * simply tried in enumeration order. */
@@ -1739,6 +1787,20 @@ todo_wine
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
     IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+
+    for (source_pin.Connect_hr = 0x00040200; source_pin.Connect_hr <= 0x000402ff;
+            ++source_pin.Connect_hr)
+    {
+        hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+        ok(hr == S_OK, "Got hr %#x for Connect() hr %#x.\n", hr, source_pin.Connect_hr);
+        ok(source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+        ok(sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+        IFilterGraph2_Disconnect(graph, source_pin.peer);
+        IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+        IFilterGraph2_Disconnect(graph, sink_pin.peer);
+        IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+    }
+    source_pin.Connect_hr = S_OK;
 
     IFilterGraph2_RemoveFilter(graph, &parser1.IBaseFilter_iface);
     IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
@@ -1805,7 +1867,6 @@ todo_wine
 
     parser1_pins[1].name[0] = '~';
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
 
