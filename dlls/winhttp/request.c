@@ -747,7 +747,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         return ret;
 
     default:
-        if (attr >= sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])
+        if (attr >= ARRAY_SIZE(attribute_table) || !attribute_table[attr])
         {
             FIXME("attribute %u not implemented\n", attr);
             return FALSE;
@@ -3120,7 +3120,7 @@ void release_typelib(void)
 {
     unsigned i;
 
-    for (i = 0; i < sizeof(winhttp_typeinfo)/sizeof(*winhttp_typeinfo); i++)
+    for (i = 0; i < ARRAY_SIZE(winhttp_typeinfo); i++)
         if (winhttp_typeinfo[i])
             ITypeInfo_Release(winhttp_typeinfo[i]);
 
@@ -3446,7 +3446,7 @@ static HRESULT WINAPI winhttp_request_Open(
         goto error;
     }
 
-    len = sizeof(httpsW) / sizeof(WCHAR);
+    len = ARRAY_SIZE( httpsW );
     if (uc.dwSchemeLength == len && !memcmp( uc.lpszScheme, httpsW, len * sizeof(WCHAR) ))
     {
         flags |= WINHTTP_FLAG_SECURE;

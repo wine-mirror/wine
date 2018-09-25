@@ -479,7 +479,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
     if (uc->lpszHostName)
     {
         memcpy( url, twoslashW, sizeof(twoslashW) );
-        url += sizeof(twoslashW) / sizeof(twoslashW[0]);
+        url += ARRAY_SIZE( twoslashW );
     }
     if (uc->lpszUserName)
     {

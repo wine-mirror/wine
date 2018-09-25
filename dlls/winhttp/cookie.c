@@ -312,7 +312,7 @@ BOOL add_cookie_headers( request_t *request )
                 if (strstrW( request->path, cookie->path ) == request->path)
                 {
                     const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' '};
-                    int len, len_cookie = sizeof(cookieW) / sizeof(cookieW[0]), len_name = strlenW( cookie->name );
+                    int len, len_cookie = ARRAY_SIZE( cookieW ), len_name = strlenW( cookie->name );
                     WCHAR *header;
 
                     len = len_cookie + len_name;
