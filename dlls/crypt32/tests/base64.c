@@ -20,11 +20,10 @@
  */
 #include <stdio.h>
 #include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
-#include <winerror.h>
+#include <windows.h>
 #include <wincrypt.h>
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #define CERT_HEADER               "-----BEGIN CERTIFICATE-----\r\n"
@@ -81,6 +80,19 @@ static const struct BinTests testsNoCR[] = {
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\n" },
 };
 
+static WCHAR *strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+    DWORD len;
+
+    if (!str) return ret;
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = heap_alloc(len * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
 static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
  DWORD format, const char *expected, const char *header, const char *trailer)
 {
@@ -117,93 +129,169 @@ static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
     }
 }
 
-static void testBinaryToStringA(void)
+static void encode_compare_base64_W(const BYTE *toEncode, DWORD toEncodeLen, DWORD format,
+        const WCHAR *expected, const char *header, const char *trailer)
 {
+    WCHAR *headerW, *trailerW;
+    DWORD strLen = 0, strLen2;
+    const WCHAR *ptr;
+    WCHAR *strW;
     BOOL ret;
-    DWORD strLen = 0, i;
+
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen);
+    ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+
+    strLen2 = strLen;
+    strW = heap_alloc(strLen * sizeof(WCHAR));
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, strW, &strLen2);
+    ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+    ok(strLen2 == strLen - 1, "Expected length %d, got %d\n", strLen - 1, strLen);
+
+    headerW = strdupAtoW(header);
+    trailerW = strdupAtoW(trailer);
+
+    ptr = strW;
+    if (headerW)
+    {
+        ok(!memcmp(headerW, ptr, lstrlenW(headerW)), "Expected header %s, got %s.\n", wine_dbgstr_w(headerW),
+                wine_dbgstr_w(ptr));
+        ptr += lstrlenW(headerW);
+    }
+    ok(!memcmp(expected, ptr, lstrlenW(expected)), "Expected %s, got %s.\n", wine_dbgstr_w(expected),
+            wine_dbgstr_w(ptr));
+    ptr += lstrlenW(expected);
+    if (trailerW)
+        ok(!memcmp(trailerW, ptr, lstrlenW(trailerW)), "Expected trailer %s, got %s.\n", wine_dbgstr_w(trailerW),
+                wine_dbgstr_w(ptr));
+
+    heap_free(strW);
+    heap_free(headerW);
+    heap_free(trailerW);
+}
+
+static void test_CryptBinaryToString(void)
+{
+    DWORD strLen, strLen2, i;
+    BOOL ret;
 
     ret = CryptBinaryToStringA(NULL, 0, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    strLen = 123;
     ret = CryptBinaryToStringA(NULL, 0, 0, NULL, &strLen);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(strLen == 123, "Unexpected length.\n");
+
+    if (0)
+        ret = CryptBinaryToStringW(NULL, 0, 0, NULL, NULL);
+
+    strLen = 123;
+    ret = CryptBinaryToStringW(NULL, 0, 0, NULL, &strLen);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected error %d\n", GetLastError());
+    ok(strLen == 123, "Unexpected length.\n");
+
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
-        DWORD strLen = 0;
+        WCHAR *strW, *encodedW;
         LPSTR str = NULL;
         BOOL ret;
 
-        ret = CryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen,
-         CRYPT_STRING_BINARY, NULL, &strLen);
+        strLen = 0;
+        ret = CryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, NULL, &strLen);
         ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-        str = HeapAlloc(GetProcessHeap(), 0, strLen);
-        if (str)
-        {
-            DWORD strLen2 = strLen;
+        ok(strLen == tests[i].toEncodeLen, "Unexpected required length %u.\n", strLen);
 
-            ret = CryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen,
-             CRYPT_STRING_BINARY, str, &strLen2);
-            ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-            ok(strLen == strLen2, "Expected length %d, got %d\n", strLen,
-             strLen2);
-            ok(!memcmp(str, tests[i].toEncode, tests[i].toEncodeLen),
-             "Unexpected value\n");
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen,
-         CRYPT_STRING_BASE64, tests[i].base64, NULL, NULL);
-        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen,
-         CRYPT_STRING_BASE64HEADER, tests[i].base64, CERT_HEADER,
-         CERT_TRAILER);
-        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen,
-         CRYPT_STRING_BASE64REQUESTHEADER, tests[i].base64,
-         CERT_REQUEST_HEADER, CERT_REQUEST_TRAILER);
-        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen,
-         CRYPT_STRING_BASE64X509CRLHEADER, tests[i].base64, X509_HEADER,
-         X509_TRAILER);
+        strLen2 = strLen;
+        str = heap_alloc(strLen);
+        ret = CryptBinaryToStringA(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, str, &strLen2);
+        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+        ok(strLen == strLen2, "Expected length %u, got %u\n", strLen, strLen2);
+        ok(!memcmp(str, tests[i].toEncode, tests[i].toEncodeLen), "Unexpected value\n");
+        heap_free(str);
+
+        strLen = 0;
+        ret = CryptBinaryToStringW(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, NULL, &strLen);
+    todo_wine {
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        ok(strLen == tests[i].toEncodeLen, "Unexpected required length %u.\n", strLen);
     }
+        strLen2 = strLen;
+        strW = heap_alloc(strLen);
+        ret = CryptBinaryToStringW(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, strW, &strLen2);
+    todo_wine
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        ok(strLen == strLen2, "Expected length %u, got %u\n", strLen, strLen2);
+    todo_wine
+        ok(!memcmp(strW, tests[i].toEncode, tests[i].toEncodeLen), "Unexpected value\n");
+        heap_free(strW);
+
+        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64,
+            tests[i].base64, NULL, NULL);
+        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64HEADER,
+            tests[i].base64, CERT_HEADER, CERT_TRAILER);
+        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64REQUESTHEADER,
+            tests[i].base64, CERT_REQUEST_HEADER, CERT_REQUEST_TRAILER);
+        encodeAndCompareBase64_A(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64X509CRLHEADER,
+            tests[i].base64, X509_HEADER, X509_TRAILER);
+
+        encodedW = strdupAtoW(tests[i].base64);
+
+        encode_compare_base64_W(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64, encodedW, NULL, NULL);
+        encode_compare_base64_W(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64HEADER, encodedW,
+            CERT_HEADER, CERT_TRAILER);
+        encode_compare_base64_W(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64REQUESTHEADER,
+            encodedW, CERT_REQUEST_HEADER, CERT_REQUEST_TRAILER);
+        encode_compare_base64_W(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BASE64X509CRLHEADER, encodedW,
+            X509_HEADER, X509_TRAILER);
+
+        heap_free(encodedW);
+    }
+
     for (i = 0; i < ARRAY_SIZE(testsNoCR); i++)
     {
-        DWORD strLen = 0;
         LPSTR str = NULL;
+        WCHAR *encodedW;
         BOOL ret;
 
-        ret = CryptBinaryToStringA(testsNoCR[i].toEncode,
-         testsNoCR[i].toEncodeLen, CRYPT_STRING_BINARY | CRYPT_STRING_NOCR,
-         NULL, &strLen);
+        ret = CryptBinaryToStringA(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BINARY | CRYPT_STRING_NOCR, NULL, &strLen);
         ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-        str = HeapAlloc(GetProcessHeap(), 0, strLen);
-        if (str)
-        {
-            DWORD strLen2 = strLen;
 
-            ret = CryptBinaryToStringA(testsNoCR[i].toEncode,
-             testsNoCR[i].toEncodeLen, CRYPT_STRING_BINARY | CRYPT_STRING_NOCR,
-             str, &strLen2);
-            ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-            ok(strLen == strLen2, "Expected length %d, got %d\n", strLen,
-             strLen2);
-            ok(!memcmp(str, testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen),
-             "Unexpected value\n");
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        encodeAndCompareBase64_A(testsNoCR[i].toEncode,
-         testsNoCR[i].toEncodeLen, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCR,
-         testsNoCR[i].base64, NULL, NULL);
-        encodeAndCompareBase64_A(testsNoCR[i].toEncode,
-         testsNoCR[i].toEncodeLen,
-         CRYPT_STRING_BASE64HEADER | CRYPT_STRING_NOCR, testsNoCR[i].base64,
-         CERT_HEADER_NOCR, CERT_TRAILER_NOCR);
-        encodeAndCompareBase64_A(testsNoCR[i].toEncode,
-         testsNoCR[i].toEncodeLen,
-         CRYPT_STRING_BASE64REQUESTHEADER | CRYPT_STRING_NOCR,
-         testsNoCR[i].base64, CERT_REQUEST_HEADER_NOCR,
-         CERT_REQUEST_TRAILER_NOCR);
-        encodeAndCompareBase64_A(testsNoCR[i].toEncode,
-         testsNoCR[i].toEncodeLen,
-         CRYPT_STRING_BASE64X509CRLHEADER | CRYPT_STRING_NOCR,
-         testsNoCR[i].base64, X509_HEADER_NOCR, X509_TRAILER_NOCR);
+        strLen2 = strLen;
+        str = heap_alloc(strLen);
+        ret = CryptBinaryToStringA(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BINARY | CRYPT_STRING_NOCR, str, &strLen2);
+        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+        ok(strLen == strLen2, "Expected length %d, got %d\n", strLen, strLen2);
+        ok(!memcmp(str, testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen), "Unexpected value\n");
+        heap_free(str);
+
+        encodeAndCompareBase64_A(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCR,
+            testsNoCR[i].base64, NULL, NULL);
+        encodeAndCompareBase64_A(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64HEADER | CRYPT_STRING_NOCR, testsNoCR[i].base64, CERT_HEADER_NOCR, CERT_TRAILER_NOCR);
+        encodeAndCompareBase64_A(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64REQUESTHEADER | CRYPT_STRING_NOCR, testsNoCR[i].base64, CERT_REQUEST_HEADER_NOCR,
+            CERT_REQUEST_TRAILER_NOCR);
+        encodeAndCompareBase64_A(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64X509CRLHEADER | CRYPT_STRING_NOCR, testsNoCR[i].base64, X509_HEADER_NOCR, X509_TRAILER_NOCR);
+
+        encodedW = strdupAtoW(testsNoCR[i].base64);
+
+        encode_compare_base64_W(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64 | CRYPT_STRING_NOCR, encodedW, NULL, NULL);
+        encode_compare_base64_W(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64HEADER | CRYPT_STRING_NOCR, encodedW, CERT_HEADER_NOCR, CERT_TRAILER_NOCR);
+        encode_compare_base64_W(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64REQUESTHEADER | CRYPT_STRING_NOCR, encodedW, CERT_REQUEST_HEADER_NOCR,
+            CERT_REQUEST_TRAILER_NOCR);
+        encode_compare_base64_W(testsNoCR[i].toEncode, testsNoCR[i].toEncodeLen,
+            CRYPT_STRING_BASE64X509CRLHEADER | CRYPT_STRING_NOCR, encodedW,
+            X509_HEADER_NOCR, X509_TRAILER_NOCR);
+
+        heap_free(encodedW);
     }
 }
 
@@ -545,6 +633,6 @@ static void testStringToBinaryA(void)
 
 START_TEST(base64)
 {
-    testBinaryToStringA();
+    test_CryptBinaryToString();
     testStringToBinaryA();
 }
