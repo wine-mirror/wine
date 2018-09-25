@@ -3293,3 +3293,14 @@ DWORD WINAPI GetIpForwardTable2(ADDRESS_FAMILY family, PMIB_IPFORWARD_TABLE2 *ta
     if (!once++) FIXME("(%u %p): stub\n", family, table);
     return ERROR_NOT_SUPPORTED;
 }
+
+/******************************************************************
+ *    GetIpNetTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpNetTable2(ADDRESS_FAMILY family, PMIB_IPNET_TABLE2 *table)
+{
+    static int once;
+
+    if (!once++) FIXME("(%u %p): stub\n", family, table);
+    return ERROR_NOT_SUPPORTED;
+}

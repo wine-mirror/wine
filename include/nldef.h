@@ -111,4 +111,16 @@ typedef struct _NL_INTERFACE_OFFLOAD_ROD
     BOOLEAN TlGiantSendOffloadSupported : 1;
 } NL_INTERFACE_OFFLOAD_ROD, *PNL_INTERFACE_OFFLOAD_ROD;
 
+typedef enum _NL_NEIGHBOR_STATE
+{
+    NlnsUnreachable,
+    NlnsIncomplete,
+    NlnsProbe,
+    NlnsDelay,
+    NlnsStale,
+    NlnsReachable,
+    NlnsPermanent,
+    NlnsMaximum,
+} NL_NEIGHBOR_STATE, *PNL_NEIGHBOR_STATE;
+
 #endif /* __WINE_NLDEF_H */
