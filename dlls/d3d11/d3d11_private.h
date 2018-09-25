@@ -47,10 +47,8 @@
 #define TAG_OSG5 MAKE_TAG('O', 'S', 'G', '5')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
-#define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 #define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
-#define TAG_STAT MAKE_TAG('S', 'T', 'A', 'T')
 
 struct d3d_device;
 
