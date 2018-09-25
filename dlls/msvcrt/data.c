@@ -73,7 +73,8 @@ char ** msvcrt_SnapshotOfEnvironmentA(char **blk)
 
   for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
   {
-    count++;
+    /* Don't count environment variables starting with '=' which are command shell specific */
+    if (*ptr != '=') count++;
     len += strlen(ptr) + 1;
   }
   if (blk)
@@ -88,7 +89,8 @@ char ** msvcrt_SnapshotOfEnvironmentA(char **blk)
 	  memcpy(&blk[count],environ_strings,len);
 	  for (ptr = (char*) &blk[count]; *ptr; ptr += strlen(ptr) + 1)
 	    {
-	      blk[i++] = ptr;
+	      /* Skip special environment strings set by the command shell */
+	      if (*ptr != '=') blk[i++] = ptr;
 	    }
 	}
       blk[i] = NULL;
@@ -105,7 +107,8 @@ MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
 
   for (wptr = wenviron_strings; *wptr; wptr += strlenW(wptr) + 1)
   {
-    count++;
+    /* Don't count environment variables starting with '=' which are command shell specific */
+    if (*wptr != '=') count++;
     len += strlenW(wptr) + 1;
   }
   if (wblk)
@@ -119,7 +122,8 @@ MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
 	  memcpy(&wblk[count],wenviron_strings,len * sizeof(MSVCRT_wchar_t));
 	  for (wptr = (MSVCRT_wchar_t*)&wblk[count]; *wptr; wptr += strlenW(wptr) + 1)
 	    {
-	      wblk[i++] = wptr;
+	      /* Skip special environment strings set by the command shell */
+	      if (*wptr != '=') wblk[i++] = wptr;
 	    }
 	}
       wblk[i] = NULL;
