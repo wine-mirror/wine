@@ -563,76 +563,84 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
  *  ".com" and ".pif" files are only recognized by their file name extension,
  *  as per native Windows.
  */
-BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
+BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
 {
-    BOOL ret = FALSE;
-    HANDLE hfile;
-    struct binary_info binary_info;
+    static const WCHAR comW[] = { '.','c','o','m',0 };
+    static const WCHAR pifW[] = { '.','p','i','f',0 };
+    HANDLE hfile, mapping;
+    NTSTATUS status;
+    const WCHAR *ptr;
 
-    TRACE("%s\n", debugstr_w(lpApplicationName) );
+    TRACE("%s\n", debugstr_w(name) );
 
-    /* Sanity check.
-     */
-    if ( lpApplicationName == NULL || lpBinaryType == NULL )
-        return FALSE;
+    if (type == NULL) return FALSE;
 
-    /* Open the file indicated by lpApplicationName for reading.
-     */
-    hfile = CreateFileW( lpApplicationName, GENERIC_READ, FILE_SHARE_READ,
-                         NULL, OPEN_EXISTING, 0, 0 );
+    hfile = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
 
-    /* Check binary type
-     */
-    MODULE_get_binary_info( hfile, &binary_info );
-    switch (binary_info.type)
-    {
-    case BINARY_UNKNOWN:
-    {
-        static const WCHAR comW[] = { '.','C','O','M',0 };
-        static const WCHAR pifW[] = { '.','P','I','F',0 };
-        const WCHAR *ptr;
-
-        /* try to determine from file name */
-        ptr = strrchrW( lpApplicationName, '.' );
-        if (!ptr) break;
-        if (!strcmpiW( ptr, comW ))
-        {
-            *lpBinaryType = SCS_DOS_BINARY;
-            ret = TRUE;
-        }
-        else if (!strcmpiW( ptr, pifW ))
-        {
-            *lpBinaryType = SCS_PIF_BINARY;
-            ret = TRUE;
-        }
-        break;
-    }
-    case BINARY_PE:
-        *lpBinaryType = (binary_info.flags & BINARY_FLAG_64BIT) ? SCS_64BIT_BINARY : SCS_32BIT_BINARY;
-        ret = TRUE;
-        break;
-    case BINARY_WIN16:
-        *lpBinaryType = SCS_WOW_BINARY;
-        ret = TRUE;
-        break;
-    case BINARY_OS216:
-        *lpBinaryType = SCS_OS216_BINARY;
-        ret = TRUE;
-        break;
-    case BINARY_DOS:
-        *lpBinaryType = SCS_DOS_BINARY;
-        ret = TRUE;
-        break;
-    case BINARY_UNIX_EXE:
-    case BINARY_UNIX_LIB:
-        ret = FALSE;
-        break;
-    }
-
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY,
+                              NULL, NULL, PAGE_READONLY, SEC_IMAGE, hfile );
     CloseHandle( hfile );
-    return ret;
+
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        {
+            SECTION_IMAGE_INFORMATION info;
+
+            status = NtQuerySection( mapping, SectionImageInformation, &info, sizeof(info), NULL );
+            CloseHandle( mapping );
+            if (status) return FALSE;
+            switch (info.Machine)
+            {
+            case IMAGE_FILE_MACHINE_I386:
+            case IMAGE_FILE_MACHINE_ARM:
+            case IMAGE_FILE_MACHINE_THUMB:
+            case IMAGE_FILE_MACHINE_ARMNT:
+            case IMAGE_FILE_MACHINE_POWERPC:
+                *type = SCS_32BIT_BINARY;
+                return TRUE;
+            case IMAGE_FILE_MACHINE_AMD64:
+            case IMAGE_FILE_MACHINE_ARM64:
+                *type = SCS_64BIT_BINARY;
+                return TRUE;
+            }
+            return FALSE;
+        }
+    case STATUS_INVALID_IMAGE_WIN_16:
+        *type = SCS_WOW_BINARY;
+        return TRUE;
+    case STATUS_INVALID_IMAGE_WIN_32:
+        *type = SCS_32BIT_BINARY;
+        return TRUE;
+    case STATUS_INVALID_IMAGE_WIN_64:
+        *type = SCS_64BIT_BINARY;
+        return TRUE;
+    case STATUS_INVALID_IMAGE_NE_FORMAT:
+        *type = SCS_OS216_BINARY;
+        return TRUE;
+    case STATUS_INVALID_IMAGE_PROTECT:
+        *type = SCS_DOS_BINARY;
+        return TRUE;
+    case STATUS_INVALID_IMAGE_NOT_MZ:
+        if ((ptr = strrchrW( name, '.' )))
+        {
+            if (!strcmpiW( ptr, comW ))
+            {
+                *type = SCS_DOS_BINARY;
+                return TRUE;
+            }
+            if (!strcmpiW( ptr, pifW ))
+            {
+                *type = SCS_PIF_BINARY;
+                return TRUE;
+            }
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
 }
 
 /***********************************************************************
