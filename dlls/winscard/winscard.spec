@@ -6,7 +6,7 @@
 @ stdcall SCardAddReaderToGroupA(long str str)
 @ stdcall SCardAddReaderToGroupW(long wstr wstr)
 @ stub SCardBeginTransaction
-@ stub SCardCancel
+@ stdcall SCardCancel(long)
 @ stub SCardConnectA
 @ stub SCardConnectW
 @ stub SCardControl
