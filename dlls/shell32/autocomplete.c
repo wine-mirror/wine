@@ -175,12 +175,15 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     if (len + 1 != size)
         text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
 
-    SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
-
     /* Set txtbackup to point to text itself (which must not be released) */
     heap_free(ac->txtbackup);
     ac->txtbackup = text;
 
+    if (ac->options & ACO_AUTOSUGGEST)
+    {
+        SendMessageW(ac->hwndListBox, WM_SETREDRAW, FALSE, 0);
+        SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
+    }
     IEnumString_Reset(ac->enumstr);
     for (cpt = 0;;)
     {
@@ -220,12 +223,12 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
             UINT height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0);
             SendMessageW(ac->hwndListBox, LB_CARETOFF, 0, 0);
             GetWindowRect(hwnd, &r);
-            SetParent(ac->hwndListBox, HWND_DESKTOP);
             /* It seems that Windows XP displays 7 lines at most
                and otherwise displays a vertical scroll bar */
             SetWindowPos(ac->hwndListBox, HWND_TOP,
                          r.left, r.bottom + 1, r.right - r.left, height * min(cpt + 1, 7),
                          SWP_SHOWWINDOW );
+            SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
         }
         else
             ShowWindow(ac->hwndListBox, SW_HIDE);
@@ -438,6 +441,7 @@ static void create_listbox(IAutoCompleteImpl *This)
     if (This->hwndListBox) {
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
+        SetParent(This->hwndListBox, HWND_DESKTOP);
     }
     else
         This->options &= ~ACO_AUTOSUGGEST;
