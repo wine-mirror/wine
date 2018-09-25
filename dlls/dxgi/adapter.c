@@ -200,9 +200,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, D
     if (!desc)
         return E_INVALIDARG;
 
-    if (FAILED(hr = dxgi_adapter_GetDesc1(iface, &desc1)))
-        return hr;
-    memcpy(desc, &desc1, sizeof(*desc));
+    if (SUCCEEDED(hr = dxgi_adapter_GetDesc1(iface, &desc1)))
+        memcpy(desc, &desc1, sizeof(*desc));
 
     return hr;
 }
