@@ -259,54 +259,6 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
 }
 
 
-/* Check whether a file is an OS/2 or a very old Windows executable
- * by testing on import of KERNEL.
- *
- * Reading the module imports is the only reasonable way of discerning
- * old Windows binaries from OS/2 ones.
- */
-static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz, const IMAGE_OS2_HEADER *ne)
-{
-    DWORD currpos = SetFilePointer( hfile, 0, NULL, SEEK_CUR);
-    DWORD ret = BINARY_OS216;
-    LPWORD modtab = NULL;
-    LPSTR nametab = NULL;
-    DWORD len;
-    int i;
-
-    /* read modref table */
-    if ( (SetFilePointer( hfile, mz->e_lfanew + ne->ne_modtab, NULL, SEEK_SET ) == -1)
-      || (!(modtab = HeapAlloc( GetProcessHeap(), 0, ne->ne_cmod*sizeof(WORD))))
-      || (!(ReadFile(hfile, modtab, ne->ne_cmod*sizeof(WORD), &len, NULL)))
-      || (len != ne->ne_cmod*sizeof(WORD)) )
-	goto done;
-
-    /* read imported names table */
-    if ( (SetFilePointer( hfile, mz->e_lfanew + ne->ne_imptab, NULL, SEEK_SET ) == -1)
-      || (!(nametab = HeapAlloc( GetProcessHeap(), 0, ne->ne_enttab - ne->ne_imptab)))
-      || (!(ReadFile(hfile, nametab, ne->ne_enttab - ne->ne_imptab, &len, NULL)))
-      || (len != ne->ne_enttab - ne->ne_imptab) )
-	goto done;
-
-    for (i=0; i < ne->ne_cmod; i++)
-    {
-        LPSTR module = &nametab[modtab[i]];
-        TRACE("modref: %.*s\n", module[0], &module[1]);
-        if (!(strncmp(&module[1], "KERNEL", module[0])))
-        { /* very old Windows file */
-            MESSAGE("This seems to be a very old (pre-3.0) Windows executable. Expect crashes, especially if this is a real-mode binary !\n");
-            ret = BINARY_WIN16;
-            break;
-        }
-    }
-
-done:
-    HeapFree( GetProcessHeap(), 0, modtab);
-    HeapFree( GetProcessHeap(), 0, nametab);
-    SetFilePointer( hfile, currpos, NULL, SEEK_SET); /* restore filepos */
-    return ret;
-}
-
 /***********************************************************************
  *           MODULE_GetBinaryType
  */
@@ -460,7 +412,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
          * This will tell us if there is more header information
          * to read or not.
          */
-        info->type = BINARY_DOS;
+        info->type = BINARY_WIN16;
         info->arch = IMAGE_FILE_MACHINE_I386;
         if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1) return;
         if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4) return;
@@ -501,28 +453,6 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
                     !memcmp( buffer, fakedll_signature, sizeof(fakedll_signature) ))
                 {
                     info->flags |= BINARY_FLAG_FAKEDLL;
-                }
-            }
-        }
-        else if (!memcmp( &ext_header.os2.ne_magic, "NE", 2 ))
-        {
-            /* This is a Windows executable (NE) header.  This can
-             * mean either a 16-bit OS/2 or a 16-bit Windows or even a
-             * DOS program (running under a DOS extender).  To decide
-             * which, we'll have to read the NE header.
-             */
-            if (len >= sizeof(ext_header.os2))
-            {
-                if (ext_header.os2.ne_flags & NE_FFLAGS_LIBMODULE) info->flags |= BINARY_FLAG_DLL;
-                switch ( ext_header.os2.ne_exetyp )
-                {
-                case 1:  info->type = BINARY_OS216; break; /* OS/2 */
-                case 2:  info->type = BINARY_WIN16; break; /* Windows */
-                case 3:  info->type = BINARY_DOS; break; /* European MS-DOS 4.x */
-                case 4:  info->type = BINARY_WIN16; break; /* Windows 386; FIXME: is this 32bit??? */
-                case 5:  info->type = BINARY_DOS; break; /* BOSS, Borland Operating System Services */
-                /* other types, e.g. 0 is: "unknown" */
-                default: info->type = MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2); break;
                 }
             }
         }

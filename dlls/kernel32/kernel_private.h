@@ -69,8 +69,6 @@ enum binary_type
     BINARY_UNKNOWN = 0,
     BINARY_PE,
     BINARY_WIN16,
-    BINARY_OS216,
-    BINARY_DOS,
     BINARY_UNIX_EXE,
     BINARY_UNIX_LIB
 };
