@@ -199,7 +199,4 @@ struct dxgi_surface
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
         IUnknown *outer, struct wined3d_texture *wined3d_texture) DECLSPEC_HIDDEN;
 
-D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory, struct dxgi_adapter *adapter,
-        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_DXGI_PRIVATE_H */

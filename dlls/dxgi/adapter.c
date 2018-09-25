@@ -209,9 +209,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, D
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAdapter *iface,
         REFGUID guid, LARGE_INTEGER *umd_version)
 {
-    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
     struct wined3d_adapter_identifier adapter_id;
+    struct wined3d_caps caps;
+    struct wined3d *wined3d;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, umd_version %p.\n", iface, debugstr_guid(guid), umd_version);
@@ -224,23 +225,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    if (!dxgi_check_feature_level_support(adapter->factory, adapter, &feature_level, 1))
+    adapter_id.driver_size = 0;
+    adapter_id.description_size = 0;
+    adapter_id.device_name_size = 0;
+
+    wined3d_mutex_lock();
+    wined3d = adapter->factory->wined3d;
+    hr = wined3d_get_device_caps(wined3d, adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
+    if (SUCCEEDED(hr))
+        hr = wined3d_get_adapter_identifier(wined3d, adapter->ordinal, 0, &adapter_id);
+    wined3d_mutex_unlock();
+
+    if (FAILED(hr))
+        return hr;
+    if (caps.max_feature_level < WINED3D_FEATURE_LEVEL_10)
         return DXGI_ERROR_UNSUPPORTED;
 
     if (umd_version)
-    {
-        adapter_id.driver_size = 0;
-        adapter_id.description_size = 0;
-        adapter_id.device_name_size = 0;
-
-        wined3d_mutex_lock();
-        hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id);
-        wined3d_mutex_unlock();
-        if (FAILED(hr))
-            return hr;
-
         *umd_version = adapter_id.driver_version;
-    }
 
     return S_OK;
 }
