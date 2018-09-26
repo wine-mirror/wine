@@ -1139,6 +1139,11 @@ struct testfilter
     IEnumPins IEnumPins_iface;
     struct testpin *pins;
     unsigned int pin_count, enum_idx;
+
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
+    ULONG misc_flags;
+
+    IMediaSeeking IMediaSeeking_iface;
 };
 
 static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
@@ -1232,6 +1237,18 @@ static HRESULT WINAPI testfilter_QueryInterface(IBaseFilter *iface, REFIID iid, 
     {
         *out = &filter->IBaseFilter_iface;
         IBaseFilter_AddRef(*out);
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags) && filter->IAMFilterMiscFlags_iface.lpVtbl)
+    {
+        *out = &filter->IAMFilterMiscFlags_iface;
+        IAMFilterMiscFlags_AddRef(*out);
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking) && filter->IMediaSeeking_iface.lpVtbl)
+    {
+        *out = &filter->IMediaSeeking_iface;
+        IMediaSeeking_AddRef(*out);
         return S_OK;
     }
 
@@ -1416,6 +1433,195 @@ static const IBaseFilterVtbl testfilter_vtbl =
     testfilter_QueryFilterInfo,
     testfilter_JoinFilterGraph,
     testfilter_QueryVendorInfo
+};
+
+static struct testfilter *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IAMFilterMiscFlags_iface);
+}
+
+static HRESULT WINAPI testmiscflags_QueryInterface(IAMFilterMiscFlags *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IBaseFilter_QueryInterface(&filter->IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI testmiscflags_AddRef(IAMFilterMiscFlags *iface)
+{
+    struct testfilter *filter = impl_from_IAMFilterMiscFlags(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testmiscflags_Release(IAMFilterMiscFlags *iface)
+{
+    struct testfilter *filter = impl_from_IAMFilterMiscFlags(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static ULONG WINAPI testmiscflags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
+    struct testfilter *filter = impl_from_IAMFilterMiscFlags(iface);
+    if (winetest_debug > 1) trace("%p->GetMiscFlags()\n", filter);
+    return filter->misc_flags;
+}
+
+static const IAMFilterMiscFlagsVtbl testmiscflags_vtbl =
+{
+    testmiscflags_QueryInterface,
+    testmiscflags_AddRef,
+    testmiscflags_Release,
+    testmiscflags_GetMiscFlags,
+};
+
+static struct testfilter *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMediaSeeking_iface);
+}
+
+static HRESULT WINAPI testseek_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IBaseFilter_QueryInterface(&filter->IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI testseek_AddRef(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testseek_Release(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static HRESULT WINAPI testseek_GetCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    if (winetest_debug > 1) trace("%p->GetCapabilities()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_CheckCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
+{
+    if (winetest_debug > 1) trace("%p->IsFormatSupported(%s)\n", iface, wine_dbgstr_guid(format));
+    return S_OK;
+}
+
+static HRESULT WINAPI testseek_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetTimeFormat(IMediaSeeking *iface, GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsUsingTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    if (winetest_debug > 1) trace("%p->IsUsingTimeFormat(%s)\n", iface, wine_dbgstr_guid(format));
+    return S_FALSE;
+}
+
+static HRESULT WINAPI testseek_SetTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetCurrentPosition(IMediaSeeking *iface, LONGLONG *current)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *target,
+    const GUID *target_format, LONGLONG source, const GUID *source_format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetPositions(IMediaSeeking *iface, LONGLONG *current,
+    DWORD current_flags, LONGLONG *stop, DWORD stop_flags )
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPositions(IMediaSeeking *iface, LONGLONG *current, LONGLONG *stop)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetAvailable(IMediaSeeking *iface, LONGLONG *earliest, LONGLONG *latest)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetRate(IMediaSeeking *iface, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetRate(IMediaSeeking *iface, double *rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPreroll(IMediaSeeking *iface, LONGLONG *preroll)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSeekingVtbl testseek_vtbl =
+{
+    testseek_QueryInterface,
+    testseek_AddRef,
+    testseek_Release,
+    testseek_GetCapabilities,
+    testseek_CheckCapabilities,
+    testseek_IsFormatSupported,
+    testseek_QueryPreferredFormat,
+    testseek_GetTimeFormat,
+    testseek_IsUsingTimeFormat,
+    testseek_SetTimeFormat,
+    testseek_GetDuration,
+    testseek_GetStopPosition,
+    testseek_GetCurrentPosition,
+    testseek_ConvertTimeFormat,
+    testseek_SetPositions,
+    testseek_GetPositions,
+    testseek_GetAvailable,
+    testseek_SetRate,
+    testseek_GetRate,
+    testseek_GetPreroll,
 };
 
 struct testfilter_cf
@@ -2769,6 +2975,229 @@ todo_wine
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
 }
 
+/* Helper function to check whether a filter is considered a renderer, i.e.
+ * whether its EC_COMPLETE notification will be passed on to the application. */
+static HRESULT check_ec_complete(IFilterGraph2 *graph, IBaseFilter *filter)
+{
+    IMediaEventSink *eventsink;
+    LONG_PTR param1, param2;
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    HRESULT hr, ret_hr;
+    LONG code;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&eventsink);
+
+    IMediaControl_Run(control);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret_hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+    if (ret_hr == S_OK)
+    {
+        ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+        ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+        ok(!param2, "Got param2 %#lx.\n", param2);
+        hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+        ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    }
+
+    IMediaControl_Stop(control);
+
+    IMediaControl_Release(control);
+    IMediaEvent_Release(eventsrc);
+    IMediaEventSink_Release(eventsink);
+    return ret_hr;
+}
+
+static void test_ec_complete(void)
+{
+    struct testpin filter1_pin, filter2_pin, filter3_pin, source_pins[3];
+    struct testfilter filter1, filter2, filter3, source;
+
+    IFilterGraph2 *graph = create_graph();
+    IMediaEventSink *eventsink;
+    LONG_PTR param1, param2;
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    HRESULT hr;
+    LONG code;
+
+    testsink_init(&filter1_pin);
+    testsink_init(&filter2_pin);
+    testsink_init(&filter3_pin);
+    testfilter_init(&filter1, &filter1_pin, 1);
+    testfilter_init(&filter2, &filter2_pin, 1);
+    testfilter_init(&filter3, &filter3_pin, 1);
+    testsource_init(&source_pins[0], NULL, 0);
+    testsource_init(&source_pins[1], NULL, 0);
+    testsource_init(&source_pins[2], NULL, 0);
+    testfilter_init(&source, source_pins, 3);
+
+    filter1.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter2.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter1.misc_flags = filter2.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&eventsink);
+
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &filter3.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[1].IPin_iface, &filter2_pin.IPin_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[2].IPin_iface, &filter3_pin.IPin_iface, NULL);
+
+    /* EC_COMPLETE is only delivered to the user after all renderers deliver it. */
+
+    IMediaControl_Run(control);
+
+    while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0)) == S_OK)
+    {
+        ok(code != EC_COMPLETE, "Got unexpected EC_COMPLETE.\n");
+        IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+    }
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+todo_wine {
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+}
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(!param2, "Got param2 %#lx.\n", param2);
+    hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter3.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+todo_wine
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IMediaControl_Stop(control);
+
+    /* Test CancelDefaultHandling(). */
+
+    IMediaControl_Run(control);
+
+    hr = IMediaEvent_CancelDefaultHandling(eventsrc, EC_COMPLETE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(param2 == (LONG_PTR)&filter1.IBaseFilter_iface, "Got param2 %#lx.\n", param2);
+    hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter3.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(param2 == (LONG_PTR)&filter3.IBaseFilter_iface, "Got param2 %#lx.\n", param2);
+    hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IMediaControl_Stop(control);
+    hr = IMediaEvent_RestoreDefaultHandling(eventsrc, EC_COMPLETE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* A filter counts as a renderer if it (1) exposes IAMFilterMiscFlags and
+     * reports itself as a renderer, or (2) exposes IMediaSeeking and has no
+     * output pins. Despite MSDN, QueryInternalConnections() does not seem to
+     * be used. */
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    IFilterGraph2_RemoveFilter(graph, &filter2.IBaseFilter_iface);
+    IFilterGraph2_RemoveFilter(graph, &filter3.IBaseFilter_iface);
+    filter1.misc_flags = 0;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+todo_wine
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    filter1_pin.dir = PINDIR_INPUT;
+    filter1.IAMFilterMiscFlags_iface.lpVtbl = NULL;
+    filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    filter1_pin.dir = PINDIR_OUTPUT;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    filter1.IMediaSeeking_iface.lpVtbl = NULL;
+    filter1_pin.dir = PINDIR_INPUT;
+    filter1.pin_count = 1;
+    filter1_pin.QueryInternalConnections_hr = S_OK;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+todo_wine
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+    IMediaEvent_Release(eventsrc);
+    IMediaEventSink_Release(eventsink);
+    hr = IFilterGraph2_Release(graph);
+    ok(!hr, "Got outstanding refcount %d.\n", hr);
+    ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
+    ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
+    ok(filter3.ref == 1, "Got outstanding refcount %d.\n", filter3.ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -2785,6 +3214,7 @@ START_TEST(filtergraph)
     test_connect_direct();
     test_sync_source();
     test_filter_state();
+    test_ec_complete();
 
     CoUninitialize();
     test_render_with_multithread();
