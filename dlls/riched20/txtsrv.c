@@ -35,10 +35,10 @@
 
 #ifdef __i386__  /* thiscall functions are i386-specific */
 
-#define THISCALL(func) __thiscall_ ## func
+#define THISCALL(func) (void *) __thiscall_ ## func
 #define DEFINE_THISCALL_WRAPPER(func,args) \
-   extern typeof(func) THISCALL(func); \
-   __ASM_STDCALL_FUNC(__thiscall_ ## func, args, \
+   extern HRESULT __thiscall_ ## func(void); \
+   __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
                    "popl %eax\n\t" \
                    "pushl %ecx\n\t" \
                    "pushl %eax\n\t" \
