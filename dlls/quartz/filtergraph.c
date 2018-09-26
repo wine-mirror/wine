@@ -2273,6 +2273,9 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface)
     if (This->state == State_Paused)
         goto out;
 
+    if (This->defaultclock && !This->refClock)
+        IFilterGraph2_SetDefaultSyncSource(&This->IFilterGraph2_iface);
+
     if (This->state == State_Running && This->refClock && This->start_time >= 0)
         IReferenceClock_GetTime(This->refClock, &This->pause_time);
     else
