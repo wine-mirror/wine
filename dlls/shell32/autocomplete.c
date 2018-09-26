@@ -136,8 +136,14 @@ static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *st
 
 static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *str, HWND hwnd)
 {
+    DWORD sel_start;
     WCHAR *tmp;
     size_t size;
+
+    /* Don't auto-append unless the caret is at the end */
+    SendMessageW(hwnd, EM_GETSEL, (WPARAM)&sel_start, 0);
+    if (sel_start != len)
+        return;
 
     /* The character capitalization can be different,
        so merge text and str into a new string */
