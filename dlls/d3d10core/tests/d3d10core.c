@@ -17223,6 +17223,69 @@ static void test_depth_clip(void)
     release_test_context(&test_context);
 }
 
+static void test_staging_buffers(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10Buffer *dst_buffer, *src_buffer;
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    struct resource_readback rb;
+    float data[16], value;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    buffer_desc.ByteWidth = sizeof(data);
+    buffer_desc.Usage = D3D10_USAGE_STAGING;
+    buffer_desc.BindFlags = 0;
+    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    buffer_desc.MiscFlags = 0;
+
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+        data[i] = i;
+    resource_data.pSysMem = data;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &src_buffer);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &dst_buffer);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+
+    ID3D10Device_CopyResource(device, (ID3D10Resource *)dst_buffer, (ID3D10Resource *)src_buffer);
+    get_buffer_readback(dst_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    {
+        value = get_readback_float(&rb, i, 0);
+        ok(value == data[i], "Got unexpected value %.8e at %u.\n", value, i);
+    }
+    release_resource_readback(&rb);
+
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+        data[i] = 2 * i;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)src_buffer, 0, NULL, data, 0, 0);
+    ID3D10Device_CopyResource(device, (ID3D10Resource *)dst_buffer, (ID3D10Resource *)src_buffer);
+    get_buffer_readback(dst_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    {
+        value = get_readback_float(&rb, i, 0);
+        ok(value == i, "Got unexpected value %.8e at %u.\n", value, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D10Buffer_Release(dst_buffer);
+    ID3D10Buffer_Release(src_buffer);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -17331,6 +17394,7 @@ START_TEST(d3d10core)
     queue_test(test_multiple_viewports);
     queue_test(test_multisample_resolve);
     queue_test(test_depth_clip);
+    queue_test(test_staging_buffers);
 
     run_queued_tests();
 
