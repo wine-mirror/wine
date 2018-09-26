@@ -586,12 +586,12 @@ static void test_get_clipboard(void)
 
     InitFormatEtc(fmtetc, CF_RIFF, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    todo_wine ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_FILE);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
+    ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     ok(DataObjectImpl_GetData_calls == 6, "DataObjectImpl_GetData should have been called 6 times instead of %d times\n", DataObjectImpl_GetData_calls);
@@ -878,20 +878,20 @@ static void test_complex_get_clipboard(void)
 
     InitFormatEtc(fmtetc, CF_METAFILEPICT, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_ENHMETAFILE, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_ENHMETAFILE, TYMED_ENHMF);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    todo_wine ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
-    todo_wine ok(DataObjectImpl_GetData_calls == 5,
+    ok(DataObjectImpl_GetData_calls == 5,
             "DataObjectImpl_GetData called 5 times instead of %d times\n",
             DataObjectImpl_GetData_calls);
     IDataObject_Release(data_obj);
@@ -1422,7 +1422,7 @@ static void test_flushed_getdata(void)
     /* CF_ENHMETAFILE format */
     InitFormatEtc(fmt, CF_ENHMETAFILE, TYMED_ENHMF);
     hr = IDataObject_GetData(get, &fmt, &med);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&med);
 
     IDataObject_Release(get);
