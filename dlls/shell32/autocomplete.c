@@ -384,6 +384,10 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
             autocomplete_text(This, hwnd, autoappend_flag_yes);
             return ret;
+        case WM_SETFONT:
+            if (This->hwndListBox)
+                SendMessageW(This->hwndListBox, WM_SETFONT, wParam, lParam);
+            break;
         case WM_DESTROY:
         {
             WNDPROC proc = This->wpOrigEditProc;
@@ -434,9 +438,16 @@ static void create_listbox(IAutoCompleteImpl *This)
                                     0, 0, 0, 0, GetParent(This->hwndEdit), NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
+        HFONT edit_font;
+
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
         SetParent(This->hwndListBox, HWND_DESKTOP);
+
+        /* Use the same font as the edit control, as it gets destroyed before it anyway */
+        edit_font = (HFONT)SendMessageW(This->hwndEdit, WM_GETFONT, 0, 0);
+        if (edit_font)
+            SendMessageW(This->hwndListBox, WM_SETFONT, (WPARAM)edit_font, FALSE);
     }
     else
         This->options &= ~ACO_AUTOSUGGEST;
