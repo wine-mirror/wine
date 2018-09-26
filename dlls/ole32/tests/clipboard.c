@@ -59,6 +59,7 @@ typedef struct DataObjectImpl {
     HANDLE text;
     IStream *stm;
     IStorage *stg;
+    HMETAFILEPICT hmfp;
 } DataObjectImpl;
 
 typedef struct EnumFormatImpl {
@@ -79,6 +80,26 @@ static ULONG DataObjectImpl_EnumFormatEtc_calls = 0;
 static UINT cf_stream, cf_storage, cf_global, cf_another, cf_onemore;
 
 static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT size, LPENUMFORMATETC *lplpformatetc);
+
+static HMETAFILE create_mf(void)
+{
+    RECT rect = {0, 0, 100, 100};
+    HDC hdc = CreateMetaFileA(NULL);
+    ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rect, "Test String", strlen("Test String"), NULL);
+    return CloseMetaFile(hdc);
+}
+
+static HMETAFILEPICT create_metafilepict(void)
+{
+    HGLOBAL ret = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+    METAFILEPICT *mf = GlobalLock(ret);
+    mf->mm = MM_ANISOTROPIC;
+    mf->xExt = 100;
+    mf->yExt = 200;
+    mf->hMF = create_mf();
+    GlobalUnlock(ret);
+    return ret;
+}
 
 static inline DataObjectImpl *impl_from_IDataObject(IDataObject *iface)
 {
@@ -230,6 +251,12 @@ static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
         HeapFree(GetProcessHeap(), 0, This->fmtetc);
         if(This->stm) IStream_Release(This->stm);
         if(This->stg) IStorage_Release(This->stg);
+        if(This->hmfp) {
+            METAFILEPICT *mfp = GlobalLock(This->hmfp);
+            DeleteMetaFile(mfp->hMF);
+            GlobalUnlock(This->hmfp);
+            GlobalFree(This->hmfp);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -279,6 +306,11 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
                     pmedium->tymed = TYMED_ISTORAGE;
                     IStorage_AddRef(This->stg);
                     U(*pmedium).pstg = This->stg;
+                }
+                else if(pformatetc->cfFormat == CF_METAFILEPICT)
+                {
+                    pmedium->tymed = TYMED_MFPICT;
+                    U(*pmedium).hMetaFilePict = This->hmfp;
                 }
                 return S_OK;
             }
@@ -394,6 +426,7 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
     GlobalUnlock(obj->text);
     obj->stm = NULL;
     obj->stg = NULL;
+    obj->hmfp = NULL;
 
     obj->fmtetc_cnt = 1;
     obj->fmtetc = HeapAlloc(GetProcessHeap(), 0, obj->fmtetc_cnt*sizeof(FORMATETC));
@@ -426,7 +459,9 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     StgCreateDocfileOnILockBytes(lbs, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &obj->stg);
     ILockBytes_Release(lbs);
 
-    obj->fmtetc_cnt = 8;
+    obj->hmfp = create_metafilepict();
+
+    obj->fmtetc_cnt = 9;
     /* zeroing here since FORMATETC has a hole in it, and it's confusing to have this uninitialised. */
     obj->fmtetc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_TEXT, TYMED_HGLOBAL);
@@ -454,6 +489,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     InitFormatEtc(obj->fmtetc[6], cf_another, 0xfffff);
     InitFormatEtc(obj->fmtetc[7], cf_another, 0xfffff);
     obj->fmtetc[7].dwAspect = DVASPECT_ICON;
+    InitFormatEtc(obj->fmtetc[8], CF_METAFILEPICT, TYMED_MFPICT);
 
     *lplpdataobj = &obj->IDataObject_iface;
     return S_OK;
@@ -825,6 +861,44 @@ static void test_cf_dataobject(IDataObject *data)
     ok(found_priv_data, "didn't find cf_ole_priv_data\n");
 }
 
+static void test_complex_get_clipboard(void)
+{
+    HRESULT hr;
+    IDataObject *data_obj;
+    FORMATETC fmtetc;
+    STGMEDIUM stgmedium;
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "OleGetClipboard failed with error 0x%08x\n", hr);
+
+    DataObjectImpl_GetData_calls = 0;
+
+    InitFormatEtc(fmtetc, CF_METAFILEPICT, TYMED_MFPICT);
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_METAFILEPICT, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_ENHMETAFILE, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_ENHMETAFILE, TYMED_ENHMF);
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    todo_wine ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
+
+    todo_wine ok(DataObjectImpl_GetData_calls == 5,
+            "DataObjectImpl_GetData called 5 times instead of %d times\n",
+            DataObjectImpl_GetData_calls);
+    IDataObject_Release(data_obj);
+}
+
 static void test_set_clipboard(void)
 {
     HRESULT hr;
@@ -932,6 +1006,7 @@ static void test_set_clipboard(void)
     trace("setting complex\n");
     hr = OleSetClipboard(data_cmpl);
     ok(hr == S_OK, "failed to set clipboard to complex data, hr = 0x%08x\n", hr);
+    test_complex_get_clipboard();
     test_cf_dataobject(data_cmpl);
     test_enum_fmtetc(data_cmpl);
 
@@ -1346,6 +1421,11 @@ static void test_flushed_getdata(void)
         HeapFree(GetProcessHeap(), 0, fmt.ptd);
     }
 
+    /* CF_ENHMETAFILE format */
+    InitFormatEtc(fmt, CF_ENHMETAFILE, TYMED_ENHMF);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    if(SUCCEEDED(hr)) ReleaseStgMedium(&med);
 
     IDataObject_Release(get);
     IDataObject_Release(src);
