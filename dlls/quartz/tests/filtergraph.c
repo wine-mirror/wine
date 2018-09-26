@@ -2460,6 +2460,58 @@ todo_wine
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 }
 
+static void test_sync_source(void)
+{
+    struct testfilter filter1, filter2;
+
+    IFilterGraph2 *graph = create_graph();
+    IReferenceClock *systemclock, *clock;
+    IMediaFilter *filter;
+    HRESULT hr;
+    ULONG ref;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+
+    testfilter_init(&filter1, NULL, 0);
+    testfilter_init(&filter2, NULL, 0);
+
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
+
+    ok(!filter1.clock, "Got clock %p.\n", filter1.clock);
+    ok(!filter2.clock, "Got clock %p.\n", filter2.clock);
+
+    CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IReferenceClock, (void **)&systemclock);
+
+    hr = IMediaFilter_SetSyncSource(filter, systemclock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter1.clock == systemclock, "Got clock %p.\n", filter1.clock);
+    ok(filter2.clock == systemclock, "Got clock %p.\n", filter2.clock);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock == systemclock, "Got clock %p.\n", clock);
+    IReferenceClock_Release(clock);
+
+    hr = IMediaFilter_SetSyncSource(filter, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!filter1.clock, "Got clock %p.\n", filter1.clock);
+    ok(!filter2.clock, "Got clock %p.\n", filter2.clock);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+todo_wine
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!clock, "Got clock %p.\n", clock);
+
+    IReferenceClock_Release(systemclock);
+    IMediaFilter_Release(filter);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d\n", ref);
+    ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
+    ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -2474,6 +2526,7 @@ START_TEST(filtergraph)
     test_control_delegation();
     test_add_remove_filter();
     test_connect_direct();
+    test_sync_source();
 
     CoUninitialize();
     test_render_with_multithread();
