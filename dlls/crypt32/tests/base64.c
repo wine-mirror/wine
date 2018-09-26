@@ -55,6 +55,8 @@ static const BYTE toEncode4[] =
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890";
+static const BYTE toEncode5[] =
+ "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHI";
 
 static const struct BinTests tests[] = {
  { toEncode1, sizeof(toEncode1), "AA==\r\n", },
@@ -66,6 +68,8 @@ static const struct BinTests tests[] = {
    "d3h5ejAxMjM0NTY3ODkwQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzNDU2\r\n"
    "Nzg5MGFiY2RlZmdoaWpsa21ub3BxcnN0dXZ3eHl6MDEyMzQ1Njc4OTBBQkNERUZH\r\n"
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\r\n" },
+ { toEncode5, sizeof(toEncode5),
+   "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISQA=\r\n" },
 };
 
 static const struct BinTests testsNoCR[] = {
@@ -78,6 +82,8 @@ static const struct BinTests testsNoCR[] = {
    "d3h5ejAxMjM0NTY3ODkwQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzNDU2\n"
    "Nzg5MGFiY2RlZmdoaWpsa21ub3BxcnN0dXZ3eHl6MDEyMzQ1Njc4OTBBQkNERUZH\n"
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\n" },
+ { toEncode5, sizeof(toEncode5),
+   "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISQA=\n" },
 };
 
 static WCHAR *strdupAtoW(const char *str)
@@ -96,15 +102,21 @@ static WCHAR *strdupAtoW(const char *str)
 static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
  DWORD format, const char *expected, const char *header, const char *trailer)
 {
-    DWORD strLen, strLen2;
+    DWORD strLen, strLen2, required;
     const char *ptr;
     LPSTR str = NULL;
     BOOL ret;
 
+    required = strlen(expected) + 1;
+    if (header)
+        required += strlen(header);
+    if (trailer)
+        required += strlen(trailer);
+
     strLen = 0;
     ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen);
     ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-    ok(strLen > 0, "Unexpected required length.\n");
+    ok(strLen == required, "Unexpected required length %u, expected %u.\n", required, strLen);
 
     strLen2 = strLen;
     ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen2);
@@ -154,16 +166,22 @@ todo_wine {
 static void encode_compare_base64_W(const BYTE *toEncode, DWORD toEncodeLen, DWORD format,
         const WCHAR *expected, const char *header, const char *trailer)
 {
-    WCHAR *headerW, *trailerW;
+    WCHAR *headerW, *trailerW, required;
     DWORD strLen, strLen2;
     WCHAR *strW = NULL;
     const WCHAR *ptr;
     BOOL ret;
 
+    required = lstrlenW(expected) + 1;
+    if (header)
+        required += strlen(header);
+    if (trailer)
+        required += strlen(trailer);
+
     strLen = 0;
     ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen);
     ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
-    ok(strLen > 0, "Unexpected required length.\n");
+    ok(strLen == required, "Unexpected required length %u, expected %u.\n", strLen, required);
 
     /* Same call with non-zero length value. */
     strLen2 = strLen;

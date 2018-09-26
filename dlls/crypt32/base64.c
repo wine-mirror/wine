@@ -104,8 +104,9 @@ static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
     LPSTR ptr;
 
     TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
-    needed = bytes + pad_bytes + 1;
-    needed += (needed / 64 + 1) * strlen(sep);
+    needed = bytes + pad_bytes;
+    needed += (needed / 64 + (needed % 64 ? 1 : 0)) * strlen(sep);
+    needed++;
 
     if (needed > *out_len)
     {
@@ -303,8 +304,9 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
     LPWSTR ptr;
 
     TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
-    needed = bytes + pad_bytes + 1;
-    needed += (needed / 64 + 1) * strlenW(sep);
+    needed = bytes + pad_bytes;
+    needed += (needed / 64 + (needed % 64 ? 1 : 0)) * strlenW(sep);
+    needed++;
 
     if (needed > *out_len)
     {
