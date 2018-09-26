@@ -508,13 +508,11 @@ static void test_get_clipboard(void)
     ok(hr == DV_E_FORMATETC || broken(hr == S_OK),
         "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
 
-    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
-    fmtetc.cfFormat = CF_RIFF;
+    InitFormatEtc(fmtetc, CF_RIFF, TYMED_HGLOBAL);
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
     ok(hr == DV_E_CLIPFORMAT, "IDataObject_QueryGetData should have failed with DV_E_CLIPFORMAT instead of 0x%08x\n", hr);
 
-    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
-    fmtetc.tymed = TYMED_FILE;
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_FILE);
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
     ok(hr == S_OK, "IDataObject_QueryGetData failed with error 0x%08x\n", hr);
 
@@ -552,14 +550,12 @@ static void test_get_clipboard(void)
         ReleaseStgMedium(&stgmedium);
     }
 
-    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
-    fmtetc.cfFormat = CF_RIFF;
+    InitFormatEtc(fmtetc, CF_RIFF, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
     ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
-    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
-    fmtetc.tymed = TYMED_FILE;
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_FILE);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
     ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
