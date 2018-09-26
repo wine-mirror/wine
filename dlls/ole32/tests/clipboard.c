@@ -267,7 +267,6 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
 {
     DataObjectImpl *This = impl_from_IDataObject(iface);
     UINT i;
-    BOOL foundFormat = FALSE;
 
     trace("getdata: %s\n", dump_fmtetc(pformatetc));
 
@@ -284,7 +283,6 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
     {
         if(This->fmtetc[i].cfFormat == pformatetc->cfFormat)
         {
-            foundFormat = TRUE;
             if(This->fmtetc[i].tymed & pformatetc->tymed)
             {
                 pmedium->pUnkForRelease = (LPUNKNOWN)iface;
@@ -317,7 +315,7 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
         }
     }
 
-    return foundFormat ? DV_E_TYMED : DV_E_FORMATETC;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI DataObjectImpl_GetDataHere(IDataObject* iface, FORMATETC *pformatetc, STGMEDIUM *pmedium)
@@ -588,12 +586,12 @@ static void test_get_clipboard(void)
 
     InitFormatEtc(fmtetc, CF_RIFF, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    todo_wine ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_FILE);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
+    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     ok(DataObjectImpl_GetData_calls == 6, "DataObjectImpl_GetData should have been called 6 times instead of %d times\n", DataObjectImpl_GetData_calls);
@@ -880,7 +878,7 @@ static void test_complex_get_clipboard(void)
 
     InitFormatEtc(fmtetc, CF_METAFILEPICT, TYMED_HGLOBAL);
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
-    ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    todo_wine ok(hr == DV_E_TYMED, "IDataObject_GetData failed with error 0x%08x\n", hr);
     if(SUCCEEDED(hr)) ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_ENHMETAFILE, TYMED_HGLOBAL);
