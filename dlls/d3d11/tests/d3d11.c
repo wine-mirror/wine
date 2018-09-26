@@ -9597,10 +9597,7 @@ static void test_scissor(void)
     hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
     ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
 
-    scissor_rect.left = 160;
-    scissor_rect.top = 120;
-    scissor_rect.right = 480;
-    scissor_rect.bottom = 360;
+    SetRect(&scissor_rect, 160, 120, 480, 360);
     ID3D11DeviceContext_RSSetScissorRects(immediate_context, 1, &scissor_rect);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate_context, test_context.backbuffer_rtv, red);
@@ -27272,10 +27269,7 @@ static void test_multiple_viewports(void)
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, clear_color);
     ID3D11DeviceContext_RSSetViewports(context, 2, vp);
 
-    rects[0].left = 0;
-    rects[0].top = 0;
-    rects[0].right = width;
-    rects[0].bottom = texture_desc.Height / 2;
+    SetRect(&rects[0], 0, 0, width, texture_desc.Height / 2);
     memset(&rects[1], 0, sizeof(*rects));
     ID3D11DeviceContext_RSSetScissorRects(context, 1, rects);
     constant.draw_id = 4;
@@ -27290,14 +27284,8 @@ static void test_multiple_viewports(void)
     check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[7], 1);
 
     /* Set both rectangles. */
-    rects[0].left = 0;
-    rects[0].top = 0;
-    rects[0].right = width;
-    rects[0].bottom = texture_desc.Height / 2;
-    rects[1].left = width;
-    rects[1].top = 0;
-    rects[1].right = width * 2;
-    rects[1].bottom = texture_desc.Height / 2;
+    SetRect(&rects[0], 0, 0, width, texture_desc.Height / 2);
+    SetRect(&rects[1], width, 0, 2 * width, texture_desc.Height / 2);
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, clear_color);
     ID3D11DeviceContext_RSSetScissorRects(context, 2, rects);
     constant.draw_id = 5;
