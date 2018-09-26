@@ -4123,6 +4123,7 @@ static void test_shared_bitmap(void)
     IWICImagingFactory *wic_factory;
     ID2D1Bitmap *bitmap1, *bitmap2;
     DXGI_SURFACE_DESC surface_desc;
+    D2D1_PIXEL_FORMAT pixel_format;
     D2D1_SIZE_U size = {4, 4};
     IDXGISurface1 *surface3;
     HWND window1, window2;
@@ -4279,6 +4280,32 @@ static void test_shared_bitmap(void)
 
     if (SUCCEEDED(hr))
     {
+        static const struct bitmap_format_test
+        {
+            D2D1_PIXEL_FORMAT original;
+            D2D1_PIXEL_FORMAT result;
+            HRESULT hr;
+        }
+        bitmap_format_tests[] =
+        {
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
+              { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED } },
+
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE },
+              { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+
+            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+
+            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
+              { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+        };
+        unsigned int i;
+
         size = ID2D1Bitmap_GetPixelSize(bitmap2);
         hr = IDXGISurface_GetDesc(surface2, &surface_desc);
         ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
@@ -4296,6 +4323,26 @@ static void test_shared_bitmap(void)
 
             ID2D1Bitmap_Release(bitmap2);
             IDXGISurface1_Release(surface3);
+        }
+
+        for (i = 0; i < ARRAY_SIZE(bitmap_format_tests); ++i)
+        {
+            bitmap_desc.pixelFormat = bitmap_format_tests[i].original;
+
+            hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_IDXGISurface, surface2, &bitmap_desc, &bitmap2);
+        todo_wine_if(i == 2 || i == 3 || i == 5 || i == 6)
+            ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+            if (SUCCEEDED(bitmap_format_tests[i].hr))
+            {
+                pixel_format = ID2D1Bitmap_GetPixelFormat(bitmap2);
+                ok(pixel_format.format == bitmap_format_tests[i].result.format, "%u: unexpected pixel format %#x.\n",
+                        i, pixel_format.format);
+                ok(pixel_format.alphaMode == bitmap_format_tests[i].result.alphaMode, "%u: unexpected alpha mode %d.\n",
+                        i, pixel_format.alphaMode);
+
+                ID2D1Bitmap_Release(bitmap2);
+            }
         }
     }
 
@@ -6767,7 +6814,15 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
         target = NULL;
     }
     if (bitmap)
+    {
+        D2D1_PIXEL_FORMAT rt_format, bitmap_format;
+
+        rt_format = ID2D1RenderTarget_GetPixelFormat(rt);
+        bitmap_format = ID2D1Bitmap_GetPixelFormat(bitmap);
+        ok_(__FILE__, line)(!memcmp(&rt_format, &bitmap_format, sizeof(rt_format)), "Unexpected bitmap format.\n");
+
         ID2D1Bitmap_Release(bitmap);
+    }
 
     /* Pixel format is not defined until target is set, for DC target it's specified on creation. */
     if (target || dc_rt)
@@ -6805,7 +6860,7 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
         hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
                  D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, (ID2D1BitmapRenderTarget **)&compatible_rt);
     todo_wine
-        ok_(__FILE__, line)(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT, " --- Unexpected hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT, "Unexpected hr %#x.\n", hr);
     }
 
     ID2D1DeviceContext_Release(context);
@@ -6817,6 +6872,31 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
 
 static void test_bitmap_surface(void)
 {
+    static const struct bitmap_format_test
+    {
+        D2D1_PIXEL_FORMAT original;
+        D2D1_PIXEL_FORMAT result;
+        HRESULT hr;
+    }
+    bitmap_format_tests[] =
+    {
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
+          { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED } },
+
+        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE },
+          { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+
+        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+
+        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
+          { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+    };
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
@@ -6830,6 +6910,7 @@ static void test_bitmap_surface(void)
     ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
     ID2D1Image *target;
+    unsigned int i;
     HWND window;
     HRESULT hr;
 
@@ -6889,11 +6970,30 @@ todo_wine
 
 if (SUCCEEDED(hr))
 {
-    memset(&bitmap_desc, 0, sizeof(bitmap_desc));
-    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-    bitmap_desc.dpiX = 96.0f;
-    bitmap_desc.dpiY = 96.0f;
+    for (i = 0; i < ARRAY_SIZE(bitmap_format_tests); ++i)
+    {
+        D2D1_PIXEL_FORMAT pixel_format;
+
+        memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+        bitmap_desc.pixelFormat = bitmap_format_tests[i].original;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+
+        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, &bitmap_desc, &bitmap);
+        ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+        {
+            pixel_format = ID2D1Bitmap1_GetPixelFormat(bitmap);
+
+            ok(pixel_format.format == bitmap_format_tests[i].result.format, "%u: unexpected pixel format %#x.\n",
+                    i, pixel_format.format);
+            ok(pixel_format.alphaMode == bitmap_format_tests[i].result.alphaMode, "%u: unexpected alpha mode %d.\n",
+                    i, pixel_format.alphaMode);
+
+            ID2D1Bitmap1_Release(bitmap);
+        }
+    }
+
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, NULL, &bitmap);
     ok(SUCCEEDED(hr), "Failed to create a bitmap, hr %#x.\n", hr);
 

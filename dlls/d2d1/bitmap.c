@@ -464,7 +464,11 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
             d.pixelFormat.format = surface_desc.Format;
         }
         else
+        {
             d = *desc;
+            if (d.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
+                d.pixelFormat.format = surface_desc.Format;
+        }
 
         if (d.dpiX == 0.0f || d.dpiY == 0.0f)
         {
