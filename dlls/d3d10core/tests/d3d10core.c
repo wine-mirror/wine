@@ -6714,6 +6714,13 @@ static void test_texture(void)
         0xffb1c4de, 0xfff0f1f2, 0xfffafdfe, 0xff5a560f,
         0xffd5ff00, 0xffc8f99f, 0xffaa00aa, 0xffdd55bb,
     };
+    static const WORD r8g8_data[] =
+    {
+        0x0000, 0xffff, 0x0000, 0x7fff,
+        0x0203, 0xff10, 0x0b0c, 0x8000,
+        0xc4de, 0xfff0, 0xfdfe, 0x5a6f,
+        0xff00, 0xffc8, 0x00aa, 0xdd5b,
+    };
     static const BYTE a8_data[] =
     {
         0x00, 0x10, 0x20, 0x30,
@@ -6816,10 +6823,14 @@ static void test_texture(void)
             {blue_data,  5 * sizeof(*blue_data)},
         }
     };
+    static const struct texture r32f_float = {4, 4, 1, 1, DXGI_FORMAT_R32_FLOAT,
+            {{r32_float, 4 * sizeof(*r32_float)}}};
     static const struct texture r32f_typeless = {4, 4, 1, 1, DXGI_FORMAT_R32_TYPELESS,
             {{r32_float, 4 * sizeof(*r32_float)}}};
     static const struct texture r32u_typeless = {4, 4, 1, 1, DXGI_FORMAT_R32_TYPELESS,
             {{r32_uint, 4 * sizeof(*r32_uint)}}};
+    static const struct texture r8g8_snorm = {4, 4, 1, 1, DXGI_FORMAT_R8G8_SNORM,
+            {{r8g8_data, 4 * sizeof(*r8g8_data)}}};
     static const struct texture r9g9b9e5_texture = {4, 4, 1, 1, DXGI_FORMAT_R9G9B9E5_SHAREDEXP,
             {{r9g9b9e5_data, 4 * sizeof(*r9g9b9e5_data)}}};
     static const DWORD red_colors[] =
@@ -6898,6 +6909,13 @@ static void test_texture(void)
         0x7e7e8080, 0x7e7e7f7f, 0x7e808080, 0x7effffff,
         0x7e7e7e7e, 0x7e7e7e7e, 0x7e7e7e7e, 0x7e808080,
         0x7e7e7e7e, 0x7e7f7f7f, 0x7e7f7f7f, 0x7e7f7f7f,
+    };
+    static const DWORD snorm_colors[] =
+    {
+        0xff000000, 0xff000000, 0xff000000, 0xff00ff00,
+        0xff000406, 0xff000020, 0xff001618, 0xff000000,
+        0xff000000, 0xff000000, 0xff000000, 0xff00b5df,
+        0xff000000, 0xff000000, 0xff000000, 0xff0000b7,
     };
     static const DWORD r32f_colors[] =
     {
@@ -7060,6 +7078,7 @@ static void test_texture(void)
 #define BC3_UNORM_SRGB      DXGI_FORMAT_BC3_UNORM_SRGB
 #define R8G8B8A8_UNORM_SRGB DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
 #define R8G8B8A8_UNORM      DXGI_FORMAT_R8G8B8A8_UNORM
+#define R8G8_SNORM          DXGI_FORMAT_R8G8_SNORM
 #define R32_FLOAT           DXGI_FORMAT_R32_FLOAT
 #define R32_UINT            DXGI_FORMAT_R32_UINT
 #define FMT_UNKNOWN         DXGI_FORMAT_UNKNOWN
@@ -7072,6 +7091,8 @@ static void test_texture(void)
         {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM_SRGB, TEX_2D,       0, 1},       0.0f, srgb_colors},
         {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM,      TEX_2D,       0, 1},       0.0f, srgb_data},
         {&ps_sample,          &r32f_typeless,    {R32_FLOAT,           TEX_2D,       0, 1},       0.0f, r32f_colors},
+        {&ps_sample,          &r32f_float,       {R32_FLOAT,           TEX_2D,       0, 1},       0.0f, r32f_colors},
+        {&ps_sample,          &r8g8_snorm,       {R8G8_SNORM,          TEX_2D,       0, 1},       0.0f, snorm_colors},
         {&ps_sample,          &array_2d_texture, {FMT_UNKNOWN,         TEX_2D,       0, 1},       0.0f, red_colors},
         {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 0, 1}, 0.0f, red_colors},
         {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 1, 1}, 0.0f, green_data},
@@ -7087,6 +7108,7 @@ static void test_texture(void)
 #undef BC3_UNORM_SRGB
 #undef R8G8B8A8_UNORM_SRGB
 #undef R8G8B8A8_UNORM
+#undef R8G8_SNORM
 #undef R32_FLOAT
 #undef R32_UINT
 #undef FMT_UNKNOWN
