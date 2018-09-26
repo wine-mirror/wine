@@ -96,59 +96,112 @@ static WCHAR *strdupAtoW(const char *str)
 static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
  DWORD format, const char *expected, const char *header, const char *trailer)
 {
-    DWORD strLen = 0;
+    DWORD strLen, strLen2;
+    const char *ptr;
     LPSTR str = NULL;
     BOOL ret;
 
+    strLen = 0;
     ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen);
     ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-    str = HeapAlloc(GetProcessHeap(), 0, strLen);
-    if (str)
-    {
-        DWORD strLen2 = strLen;
-        LPCSTR ptr = str;
+    ok(strLen > 0, "Unexpected required length.\n");
 
-        ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, str,
-         &strLen2);
-        ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
-        ok(strLen2 == strLen - 1, "Expected length %d, got %d\n",
-         strLen - 1, strLen);
-        if (header)
-        {
-            ok(!strncmp(header, ptr, strlen(header)),
-             "Expected header %s, got %s\n", header, ptr);
-            ptr += strlen(header);
-        }
-        ok(!strncmp(expected, ptr, strlen(expected)),
-         "Expected %s, got %s\n", expected, ptr);
-        ptr += strlen(expected);
-        if (trailer)
-            ok(!strncmp(trailer, ptr, strlen(trailer)),
-             "Expected trailer %s, got %s\n", trailer, ptr);
-        HeapFree(GetProcessHeap(), 0, str);
+    strLen2 = strLen;
+    ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen2);
+    ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+    ok(strLen == strLen2, "Unexpected required length.\n");
+
+    strLen2 = strLen - 1;
+    ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, NULL, &strLen2);
+    ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+    ok(strLen == strLen2, "Unexpected required length.\n");
+
+    str = heap_alloc(strLen);
+
+    /* Partially filled output buffer. */
+    strLen2 = strLen - 1;
+    str[0] = 0x12;
+    ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, str, &strLen2);
+todo_wine
+    ok((!ret && GetLastError() == ERROR_MORE_DATA) || broken(ret) /* XP */, "CryptBinaryToStringA failed %d, error %d.\n",
+        ret, GetLastError());
+    ok(strLen2 == strLen || broken(strLen2 == strLen - 1), "Expected length %d, got %d\n", strLen - 1, strLen);
+todo_wine {
+    if (header)
+        ok(str[0] == header[0], "Unexpected buffer contents %#x.\n", str[0]);
+    else
+        ok(str[0] == expected[0], "Unexpected buffer contents %#x.\n", str[0]);
+}
+    strLen2 = strLen;
+    ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, str, &strLen2);
+    ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());
+    ok(strLen2 == strLen - 1, "Expected length %d, got %d\n", strLen - 1, strLen);
+
+    ptr = str;
+    if (header)
+    {
+        ok(!strncmp(header, ptr, strlen(header)), "Expected header %s, got %s\n", header, ptr);
+        ptr += strlen(header);
     }
+    ok(!strncmp(expected, ptr, strlen(expected)), "Expected %s, got %s\n", expected, ptr);
+    ptr += strlen(expected);
+    if (trailer)
+        ok(!strncmp(trailer, ptr, strlen(trailer)), "Expected trailer %s, got %s\n", trailer, ptr);
+
+    heap_free(str);
 }
 
 static void encode_compare_base64_W(const BYTE *toEncode, DWORD toEncodeLen, DWORD format,
         const WCHAR *expected, const char *header, const char *trailer)
 {
     WCHAR *headerW, *trailerW;
-    DWORD strLen = 0, strLen2;
+    DWORD strLen, strLen2;
+    WCHAR *strW = NULL;
     const WCHAR *ptr;
-    WCHAR *strW;
     BOOL ret;
 
+    strLen = 0;
     ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen);
     ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+    ok(strLen > 0, "Unexpected required length.\n");
 
+    /* Same call with non-zero length value. */
     strLen2 = strLen;
-    strW = heap_alloc(strLen * sizeof(WCHAR));
-    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, strW, &strLen2);
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen2);
     ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
-    ok(strLen2 == strLen - 1, "Expected length %d, got %d\n", strLen - 1, strLen);
+    ok(strLen == strLen2, "Unexpected required length.\n");
+
+    strLen2 = strLen - 1;
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen2);
+    ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+    ok(strLen == strLen2, "Unexpected required length.\n");
+
+    strLen2 = strLen - 1;
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, NULL, &strLen2);
+    ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+    ok(strLen == strLen2, "Unexpected required length.\n");
+
+    strW = heap_alloc(strLen * sizeof(WCHAR));
 
     headerW = strdupAtoW(header);
     trailerW = strdupAtoW(trailer);
+
+    strLen2 = strLen - 1;
+    strW[0] = 0x1234;
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, strW, &strLen2);
+todo_wine
+    ok((!ret && GetLastError() == ERROR_MORE_DATA) || broken(ret) /* XP */, "CryptBinaryToStringW failed, %d, error %d\n",
+        ret, GetLastError());
+    if (headerW)
+        ok(strW[0] == 0x1234, "Unexpected buffer contents %#x.\n", strW[0]);
+    else
+        ok(strW[0] == 0x1234 || broken(strW[0] != 0x1234) /* XP */, "Unexpected buffer contents %#x.\n", strW[0]);
+
+    strLen2 = strLen;
+    ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, strW, &strLen2);
+    ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+
+    ok(strLen2 == strLen - 1, "Expected length %d, got %d\n", strLen - 1, strLen);
 
     ptr = strW;
     if (headerW)

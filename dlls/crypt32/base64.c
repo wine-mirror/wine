@@ -215,36 +215,41 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
         charsNeeded += strlen(header) + strlen(sep);
     if (trailer)
         charsNeeded += strlen(trailer) + strlen(sep);
-    if (charsNeeded <= *pcchString)
-    {
-        LPSTR ptr = pszString;
-        DWORD size = charsNeeded;
 
-        if (header)
-        {
-            strcpy(ptr, header);
-            ptr += strlen(ptr);
-            strcpy(ptr, sep);
-            ptr += strlen(sep);
-        }
-        encodeBase64A(pbBinary, cbBinary, sep, ptr, &size);
-        ptr += size - 1;
-        if (trailer)
-        {
-            strcpy(ptr, trailer);
-            ptr += strlen(ptr);
-            strcpy(ptr, sep);
-        }
-        *pcchString = charsNeeded - 1;
-    }
-    else if (pszString)
+    if (pszString)
     {
-        *pcchString = charsNeeded;
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        ret = FALSE;
+        if (charsNeeded <= *pcchString)
+        {
+            LPSTR ptr = pszString;
+            DWORD size = charsNeeded;
+
+            if (header)
+            {
+                strcpy(ptr, header);
+                ptr += strlen(ptr);
+                strcpy(ptr, sep);
+                ptr += strlen(sep);
+            }
+            encodeBase64A(pbBinary, cbBinary, sep, ptr, &size);
+            ptr += size - 1;
+            if (trailer)
+            {
+                strcpy(ptr, trailer);
+                ptr += strlen(ptr);
+               strcpy(ptr, sep);
+            }
+            *pcchString = charsNeeded - 1;
+        }
+        else
+        {
+            *pcchString = charsNeeded;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        }
     }
     else
         *pcchString = charsNeeded;
+
     return ret;
 }
 
@@ -409,36 +414,41 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
         charsNeeded += strlenW(header) + strlenW(sep);
     if (trailer)
         charsNeeded += strlenW(trailer) + strlenW(sep);
-    if (charsNeeded <= *pcchString)
-    {
-        LPWSTR ptr = pszString;
-        DWORD size = charsNeeded;
 
-        if (header)
-        {
-            strcpyW(ptr, header);
-            ptr += strlenW(ptr);
-            strcpyW(ptr, sep);
-            ptr += strlenW(sep);
-        }
-        encodeBase64W(pbBinary, cbBinary, sep, ptr, &size);
-        ptr += size - 1;
-        if (trailer)
-        {
-            strcpyW(ptr, trailer);
-            ptr += strlenW(ptr);
-            strcpyW(ptr, sep);
-        }
-        *pcchString = charsNeeded - 1;
-    }
-    else if (pszString)
+    if (pszString)
     {
-        *pcchString = charsNeeded;
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        ret = FALSE;
+        if (charsNeeded <= *pcchString)
+        {
+            LPWSTR ptr = pszString;
+            DWORD size = charsNeeded;
+
+            if (header)
+            {
+                strcpyW(ptr, header);
+                ptr += strlenW(ptr);
+                strcpyW(ptr, sep);
+                ptr += strlenW(sep);
+            }
+            encodeBase64W(pbBinary, cbBinary, sep, ptr, &size);
+            ptr += size - 1;
+            if (trailer)
+            {
+                strcpyW(ptr, trailer);
+                ptr += strlenW(ptr);
+                strcpyW(ptr, sep);
+            }
+            *pcchString = charsNeeded - 1;
+        }
+        else
+        {
+            *pcchString = charsNeeded;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        }
     }
     else
         *pcchString = charsNeeded;
+
     return ret;
 }
 
