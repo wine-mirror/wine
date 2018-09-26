@@ -77,23 +77,20 @@ static BOOL EncodeBinaryToBinaryA(const BYTE *pbBinary,
 {
     BOOL ret = TRUE;
 
-    if (*pcchString < cbBinary)
+    if (pszString)
     {
-        if (!pszString)
-            *pcchString = cbBinary;
-        else
+        if (*pcchString < cbBinary)
         {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            *pcchString = cbBinary;
             ret = FALSE;
         }
+        else if (cbBinary)
+            memcpy(pszString, pbBinary, cbBinary);
     }
     else
-    {
-        if (cbBinary)
-            memcpy(pszString, pbBinary, cbBinary);
-        *pcchString = cbBinary;
-    }
+
+    *pcchString = cbBinary;
+
     return ret;
 }
 
