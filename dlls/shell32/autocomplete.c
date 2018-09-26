@@ -134,6 +134,66 @@ static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *st
     return dst - base;
 }
 
+static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
+{
+    INT count = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
+    INT sel = SendMessageW(ac->hwndListBox, LB_GETCURSEL, 0, 0);
+    if (key == VK_PRIOR || key == VK_NEXT)
+    {
+        if (sel < 0)
+            sel = (key == VK_PRIOR) ? count - 1 : 0;
+        else
+        {
+            INT base = SendMessageW(ac->hwndListBox, LB_GETTOPINDEX, 0, 0);
+            INT pgsz = SendMessageW(ac->hwndListBox, LB_GETLISTBOXINFO, 0, 0);
+            pgsz = max(pgsz - 1, 1);
+            if (key == VK_PRIOR)
+            {
+                if (sel == 0)
+                    sel = -1;
+                else
+                {
+                    if (sel == base) base -= min(base, pgsz);
+                    sel = base;
+                }
+            }
+            else
+            {
+                if (sel == count - 1)
+                    sel = -1;
+                else
+                {
+                    base += pgsz;
+                    if (sel >= base) base += pgsz;
+                    sel = min(base, count - 1);
+                }
+            }
+        }
+    }
+    else if (key == VK_UP)
+        sel = ((sel - 1) < -1) ? count - 1 : sel - 1;
+    else
+        sel = ((sel + 1) >= count) ? -1 : sel + 1;
+
+    SendMessageW(ac->hwndListBox, LB_SETCURSEL, sel, 0);
+    if (sel >= 0)
+    {
+        WCHAR *msg;
+        UINT len = SendMessageW(ac->hwndListBox, LB_GETTEXTLEN, sel, 0);
+        if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
+            return 0;
+        len = SendMessageW(ac->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
+        set_text_and_selection(ac, hwnd, msg, len, len);
+        heap_free(msg);
+    }
+    else
+    {
+        UINT len = strlenW(ac->txtbackup);
+        set_text_and_selection(ac, hwnd, ac->txtbackup, len, len);
+    }
+    return 0;
+}
+
 static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *str, HWND hwnd)
 {
     DWORD sel_start;
@@ -287,6 +347,8 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             break;
         case VK_UP:
         case VK_DOWN:
+        case VK_PRIOR:
+        case VK_NEXT:
             /* Two cases here:
                - if the listbox is not visible and ACO_UPDOWNKEYDROPSLIST is
                  set, display it with all the entries, without selecting any
@@ -304,36 +366,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 }
             }
             else
-            {
-                INT count, sel;
-                count = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
-
-                /* Change the selection */
-                sel = SendMessageW(ac->hwndListBox, LB_GETCURSEL, 0, 0);
-                if (wParam == VK_UP)
-                    sel = ((sel - 1) < -1) ? count - 1 : sel - 1;
-                else
-                    sel = ((sel + 1) >= count) ? -1 : sel + 1;
-                SendMessageW(ac->hwndListBox, LB_SETCURSEL, sel, 0);
-                if (sel >= 0)
-                {
-                    WCHAR *msg;
-                    UINT len;
-
-                    len = SendMessageW(ac->hwndListBox, LB_GETTEXTLEN, sel, 0);
-                    if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-                        return 0;
-                    len = SendMessageW(ac->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
-                    set_text_and_selection(ac, hwnd, msg, len, len);
-                    heap_free(msg);
-                }
-                else
-                {
-                    UINT len = strlenW(ac->txtbackup);
-                    set_text_and_selection(ac, hwnd, ac->txtbackup, len, len);
-                }
-                return 0;
-            }
+                return change_selection(ac, hwnd, wParam);
             break;
         case VK_DELETE:
         {
