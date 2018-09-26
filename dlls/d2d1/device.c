@@ -1858,9 +1858,19 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceContext *iface,
         REFCLSID effect_id, ID2D1Effect **effect)
 {
+    struct d2d_effect *object;
+
     FIXME("iface %p, effect_id %s, effect %p stub!\n", iface, debugstr_guid(effect_id), effect);
 
-    return E_NOTIMPL;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_effect_init(object);
+
+    TRACE("Created effect %p.\n", object);
+    *effect = &object->ID2D1Effect_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateGradientStopCollection(

@@ -9,6 +9,7 @@ C_SRCS = \
 	brush.c \
 	dc_render_target.c \
 	device.c \
+	effect.c \
 	factory.c \
 	geometry.c \
 	hwnd_render_target.c \
