@@ -2698,10 +2698,8 @@ todo_wine
 todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-todo_wine {
     ok(source.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
-}
 
     hr = IMediaFilter_Pause(filter);
 todo_wine
