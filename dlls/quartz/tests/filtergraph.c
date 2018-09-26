@@ -1133,6 +1133,8 @@ struct testfilter
     IFilterGraph *graph;
     WCHAR *name;
     IReferenceClock *clock;
+    FILTER_STATE state;
+    REFERENCE_TIME start_time;
 
     IEnumPins IEnumPins_iface;
     struct testpin *pins;
@@ -1255,28 +1257,73 @@ static HRESULT WINAPI testfilter_GetClassID(IBaseFilter *iface, CLSID *clsid)
     return S_OK;
 }
 
+/* Downstream filters are always stopped before any filters they are connected
+ * to upstream. Native actually implements this by topologically sorting filters
+ * as they are connected. */
+static void check_state_transition(struct testfilter *filter, FILTER_STATE expect)
+{
+    FILTER_STATE state;
+    unsigned int i;
+    PIN_INFO info;
+
+    for (i = 0; i < filter->pin_count; ++i)
+    {
+        if (filter->pins[i].peer)
+        {
+            IPin_QueryPinInfo(filter->pins[i].peer, &info);
+            IBaseFilter_GetState(info.pFilter, 0, &state);
+            if (filter->pins[i].dir == PINDIR_OUTPUT)
+                ok(state == expect, "Expected state %d for downstream filter %p, got %d.\n",
+                        expect, info.pFilter, state);
+            else
+                ok(state == filter->state, "Expected state %d for upstream filter %p, got %d.\n",
+                        filter->state, info.pFilter, state);
+            IBaseFilter_Release(info.pFilter);
+        }
+    }
+}
+
 static HRESULT WINAPI testfilter_Stop(IBaseFilter *iface)
 {
-    if (winetest_debug > 1) trace("%p->Stop()\n", iface);
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->Stop()\n", filter);
+
+    check_state_transition(filter, State_Stopped);
+
+    filter->state = State_Stopped;
+    return S_OK;
 }
 
 static HRESULT WINAPI testfilter_Pause(IBaseFilter *iface)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->Pause()\n", filter);
+
+    check_state_transition(filter, State_Paused);
+
+    filter->state = State_Paused;
+    return S_OK;
 }
 
 static HRESULT WINAPI testfilter_Run(IBaseFilter *iface, REFERENCE_TIME start)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->Run(%s)\n", filter, wine_dbgstr_longlong(start));
+
+    check_state_transition(filter, State_Running);
+
+    filter->state = State_Running;
+    filter->start_time = start;
+    return S_OK;
 }
 
 static HRESULT WINAPI testfilter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_STATE *state)
 {
-    if (winetest_debug > 1) trace("%p->GetState()\n", iface);
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    if (winetest_debug > 1) trace("%p->GetState(%u)\n", filter, timeout);
+
+    *state = filter->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI testfilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
@@ -1389,6 +1436,7 @@ static void testfilter_init(struct testfilter *filter, struct testpin *pins, int
     filter->pin_count = pin_count;
     for (i = 0; i < pin_count; i++)
         pins[i].filter = &filter->IBaseFilter_iface;
+    filter->state = State_Stopped;
 }
 
 static HRESULT WINAPI testfilter_cf_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
@@ -2512,6 +2560,217 @@ todo_wine
     ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
 }
 
+#define check_filter_state(a, b) check_filter_state_(__LINE__, a, b)
+static void check_filter_state_(unsigned int line, IFilterGraph2 *graph, FILTER_STATE expect)
+{
+    IMediaFilter *mediafilter;
+    IEnumFilters *filterenum;
+    IMediaControl *control;
+    OAFilterState oastate;
+    IBaseFilter *filter;
+    FILTER_STATE state;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&mediafilter);
+    hr = IMediaFilter_GetState(mediafilter, 1000, &state);
+    ok_(__FILE__, line)(hr == S_OK, "IMediaFilter_GetState() returned %#x.\n", hr);
+    ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
+    IMediaFilter_Release(mediafilter);
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    hr = IMediaControl_GetState(control, 1000, &oastate);
+    ok_(__FILE__, line)(hr == S_OK, "IMediaControl_GetState() returned %#x.\n", hr);
+    ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
+    IMediaControl_Release(control);
+
+    IFilterGraph2_EnumFilters(graph, &filterenum);
+    while (IEnumFilters_Next(filterenum, 1, &filter, NULL) == S_OK)
+    {
+        hr = IBaseFilter_GetState(filter, 1000, &state);
+        ok_(__FILE__, line)(hr == S_OK, "IBaseFilter_GetState() returned %#x.\n", hr);
+        ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
+        IBaseFilter_Release(filter);
+    }
+    IEnumFilters_Release(filterenum);
+}
+
+
+static void test_filter_state(void)
+{
+    struct testpin source_pin, sink_pin;
+    struct testfilter source, sink;
+
+    IFilterGraph2 *graph = create_graph();
+    REFERENCE_TIME start_time;
+    IReferenceClock *clock;
+    IMediaControl *control;
+    IMediaFilter *filter;
+    HRESULT hr;
+    ULONG ref;
+
+    testsource_init(&source_pin, NULL, 0);
+    testsink_init(&sink_pin);
+    testfilter_init(&source, &source_pin, 1);
+    testfilter_init(&sink, &sink_pin, 1);
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    source_pin.filter = &source.IBaseFilter_iface;
+    sink_pin.filter = &sink.IBaseFilter_iface;
+
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+
+    check_filter_state(graph, State_Stopped);
+
+    hr = IMediaControl_Pause(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    /* Pausing sets the default sync source, if it's not already set. */
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!clock, "Reference clock not set.\n");
+    ok(source.clock == clock, "Expected %p, got %p.\n", clock, source.clock);
+    ok(sink.clock == clock, "Expected %p, got %p.\n", clock, sink.clock);
+
+    hr = IReferenceClock_GetTime(clock, &start_time);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IMediaControl_Run(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+        "Expected time near %s, got %s.\n",
+        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    hr = IMediaControl_Pause(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    hr = IMediaControl_Run(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    IReferenceClock_Release(clock);
+    IMediaFilter_Release(filter);
+    IMediaControl_Release(control);
+    IFilterGraph2_Release(graph);
+
+    /* Test same methods using IMediaFilter. */
+
+    graph = create_graph();
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+
+    hr = IMediaFilter_Pause(filter);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!clock, "Reference clock not set.\n");
+    ok(source.clock == clock, "Expected %p, got %p.\n", clock, source.clock);
+    ok(sink.clock == clock, "Expected %p, got %p.\n", clock, sink.clock);
+
+    hr = IMediaFilter_Run(filter, 0xdeadbeef);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+todo_wine {
+    ok(source.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
+}
+
+    hr = IMediaFilter_Pause(filter);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    hr = IMediaFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    hr = IReferenceClock_GetTime(clock, &start_time);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IMediaFilter_Run(filter, 0);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+        "Expected time near %s, got %s.\n",
+        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    hr = IMediaFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    /* Test removing the sync source. */
+
+    IReferenceClock_Release(clock);
+    IMediaFilter_SetSyncSource(filter, NULL);
+
+    hr = IMediaControl_Run(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+todo_wine
+    ok(source.start_time > 0 && source.start_time < 500 * 10000,
+        "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    /* Destroying the graph while it's running stops all filters. */
+
+    hr = IMediaFilter_Run(filter, 0);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+todo_wine
+    ok(source.start_time > 0 && source.start_time < 500 * 10000,
+        "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    IMediaFilter_Release(filter);
+    IMediaControl_Release(control);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(sink.ref == 1, "Got outstanding refcount %d.\n", sink.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+    ok(sink_pin.ref == 1, "Got outstanding refcount %d.\n", sink_pin.ref);
+    ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+    ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -2527,6 +2786,7 @@ START_TEST(filtergraph)
     test_add_remove_filter();
     test_connect_direct();
     test_sync_source();
+    test_filter_state();
 
     CoUninitialize();
     test_render_with_multithread();
