@@ -2163,7 +2163,6 @@ AC_CHECK_FUNCS(\
 	getpwuid \
 	gettimeofday \
 	getuid \
-	isnanf \
 	kqueue \
 	lstat \
 	memmove \

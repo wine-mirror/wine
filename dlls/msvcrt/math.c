@@ -38,14 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define finitef(x) isfinite(x)
 #endif
 
-#ifndef HAVE_ISNANF
-#ifdef HAVE_ISNAN
-#define isnanf(x) isnan(x)
-#else
-#define isnanf(x) 0
-#endif
-#endif
-
 /* FIXME: Does not work with -NAN and -0. */
 #ifndef signbit
 #define signbit(x) ((x) < 0)
@@ -190,7 +182,7 @@ INT CDECL MSVCRT__isnanf( float num )
     /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
      * Do the same, as the result may be used in calculations
      */
-    return isnanf(num) != 0;
+    return isnan(num) != 0;
 }
 
 /*********************************************************************
@@ -199,7 +191,7 @@ INT CDECL MSVCRT__isnanf( float num )
 float CDECL MSVCRT__logbf( float num )
 {
     float ret = logbf(num);
-    if (isnanf(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
+    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
     else if (!num) math_error(_SING, "_logbf", num, 0, ret);
     return ret;
 }
@@ -245,7 +237,7 @@ float CDECL MSVCRT_atanf( float x )
 float CDECL MSVCRT_atan2f( float x, float y )
 {
   float ret = atan2f(x, y);
-  if (isnanf(x)) math_error(_DOMAIN, "atan2f", x, y, ret);
+  if (isnan(x)) math_error(_DOMAIN, "atan2f", x, y, ret);
   return ret;
 }
 
@@ -265,7 +257,7 @@ float CDECL MSVCRT_cosf( float x )
 float CDECL MSVCRT_coshf( float x )
 {
   float ret = coshf(x);
-  if (isnanf(x)) math_error(_DOMAIN, "coshf", x, 0, ret);
+  if (isnan(x)) math_error(_DOMAIN, "coshf", x, 0, ret);
   return ret;
 }
 
@@ -275,7 +267,7 @@ float CDECL MSVCRT_coshf( float x )
 float CDECL MSVCRT_expf( float x )
 {
   float ret = expf(x);
-  if (isnanf(x)) math_error(_DOMAIN, "expf", x, 0, ret);
+  if (isnan(x)) math_error(_DOMAIN, "expf", x, 0, ret);
   else if (finitef(x) && !ret) math_error(_UNDERFLOW, "expf", x, 0, ret);
   else if (finitef(x) && !finitef(ret)) math_error(_OVERFLOW, "expf", x, 0, ret);
   return ret;
@@ -342,7 +334,7 @@ float CDECL MSVCRT_sinf( float x )
 float CDECL MSVCRT_sinhf( float x )
 {
   float ret = sinhf(x);
-  if (isnanf(x)) math_error(_DOMAIN, "sinhf", x, 0, ret);
+  if (isnan(x)) math_error(_DOMAIN, "sinhf", x, 0, ret);
   return ret;
 }
 
@@ -2943,9 +2935,9 @@ LDOUBLE CDECL MSVCR120_erfcl(LDOUBLE x)
  */
 float CDECL MSVCR120_fmaxf(float x, float y)
 {
-    if(isnanf(x))
+    if(isnan(x))
         return y;
-    if(isnanf(y))
+    if(isnan(y))
         return x;
     if(x==0 && y==0)
         return signbit(x) ? y : x;
@@ -3008,9 +3000,9 @@ int CDECL MSVCR120__fdpcomp(float x, float y)
  */
 float CDECL MSVCR120_fminf(float x, float y)
 {
-    if(isnanf(x))
+    if(isnan(x))
         return y;
-    if(isnanf(y))
+    if(isnan(y))
         return x;
     if(x==0 && y==0)
         return signbit(x) ? x : y;
@@ -3232,7 +3224,7 @@ float CDECL MSVCR120_remainderf(float x, float y)
 #ifdef HAVE_REMAINDERF
     /* this matches 64-bit Windows.  32-bit Windows is slightly different */
     if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-    if(isnanf(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
     return remainderf(x, y);
 #else
     FIXME( "not implemented\n" );
