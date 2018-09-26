@@ -2084,8 +2084,34 @@ static HRESULT WINAPI MediaControl_Invoke(IMediaControl *iface, DISPID dispIdMem
 
 typedef HRESULT(WINAPI *fnFoundFilter)(IBaseFilter *, DWORD_PTR data);
 
+static BOOL has_output_pins(IBaseFilter *filter)
+{
+    IEnumPins *enumpins;
+    PIN_DIRECTION dir;
+    IPin *pin;
+
+    if (FAILED(IBaseFilter_EnumPins(filter, &enumpins)))
+        return FALSE;
+
+    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+    {
+        IPin_QueryDirection(pin, &dir);
+        IPin_Release(pin);
+        if (dir == PINDIR_OUTPUT)
+        {
+            IEnumPins_Release(enumpins);
+            return TRUE;
+        }
+    }
+
+    IEnumPins_Release(enumpins);
+    return FALSE;
+}
+
 static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundFilter FoundFilter, DWORD_PTR data)
 {
+    IAMFilterMiscFlags *flags;
+    IMediaSeeking *seeking;
     HRESULT hr;
     IPin* pInputPin;
     IPin** ppPins;
@@ -2108,13 +2134,7 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
 
     if (SUCCEEDED(hr))
     {
-        if (nb == 0)
-        {
-            TRACE("Reached a renderer\n");
-            /* Count renderers for end of stream notification */
-            pGraph->nRenderers++;
-        }
-        else
+        if (nb)
         {
             for(i = 0; i < nb; i++)
             {
@@ -2128,6 +2148,21 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
             CoTaskMemFree(ppPins);
         }
         TRACE("Doing stuff with filter %p\n", PinInfo.pFilter);
+
+        if (SUCCEEDED(IBaseFilter_QueryInterface(PinInfo.pFilter,
+                &IID_IAMFilterMiscFlags, (void **)&flags)))
+        {
+            if (IAMFilterMiscFlags_GetMiscFlags(flags) & AM_FILTER_MISC_FLAGS_IS_RENDERER)
+                pGraph->nRenderers++;
+            IAMFilterMiscFlags_Release(flags);
+        }
+        else if (SUCCEEDED(IBaseFilter_QueryInterface(PinInfo.pFilter,
+                &IID_IMediaSeeking, (void **)&seeking)))
+        {
+            if (!has_output_pins(PinInfo.pFilter))
+                pGraph->nRenderers++;
+            IMediaSeeking_Release(seeking);
+        }
 
         FoundFilter(PinInfo.pFilter, data);
     }

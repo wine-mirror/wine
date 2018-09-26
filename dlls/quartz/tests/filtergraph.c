@@ -3080,10 +3080,8 @@ static void test_ec_complete(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(code == EC_COMPLETE, "Got code %#x.\n", code);
-}
     ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
     ok(!param2, "Got param2 %#lx.\n", param2);
     hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
@@ -3096,7 +3094,6 @@ todo_wine {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-todo_wine
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IMediaControl_Stop(control);
@@ -3156,7 +3153,6 @@ todo_wine
     IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-todo_wine
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
@@ -3185,7 +3181,6 @@ todo_wine
     IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-todo_wine
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(control);
