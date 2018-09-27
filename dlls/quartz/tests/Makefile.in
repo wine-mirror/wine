@@ -4,6 +4,7 @@ IMPORTS   = oleaut32 ole32 advapi32 user32
 C_SRCS = \
 	avisplitter.c \
 	dsoundrender.c \
+	filesource.c \
 	filtergraph.c \
 	filtermapper.c \
 	memallocator.c \
