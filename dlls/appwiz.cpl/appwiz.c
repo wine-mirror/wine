@@ -67,6 +67,12 @@ typedef struct APPINFO
 
     LPWSTR publisher;
     LPWSTR version;
+    LPWSTR contact;
+    LPWSTR helplink;
+    LPWSTR helptelephone;
+    LPWSTR readme;
+    LPWSTR urlupdateinfo;
+    LPWSTR comments;
 
     HKEY regroot;
     WCHAR regkey[MAX_STRING_LEN];
@@ -84,21 +90,17 @@ static const WCHAR openW[] = {'o','p','e','n',0};
 static const WCHAR BackSlashW[] = { '\\', 0 };
 static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR DisplayIconW[] = {'D','i','s','p','l','a','y','I','c','o','n',0};
-static const WCHAR DisplayVersionW[] = {'D','i','s','p','l','a','y','V','e','r',
-    's','i','o','n',0};
+static const WCHAR DisplayVersionW[] = {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
 static const WCHAR PublisherW[] = {'P','u','b','l','i','s','h','e','r',0};
 static const WCHAR ContactW[] = {'C','o','n','t','a','c','t',0};
 static const WCHAR HelpLinkW[] = {'H','e','l','p','L','i','n','k',0};
-static const WCHAR HelpTelephoneW[] = {'H','e','l','p','T','e','l','e','p','h',
-    'o','n','e',0};
+static const WCHAR HelpTelephoneW[] = {'H','e','l','p','T','e','l','e','p','h','o','n','e',0};
 static const WCHAR ModifyPathW[] = {'M','o','d','i','f','y','P','a','t','h',0};
 static const WCHAR NoModifyW[] = {'N','o','M','o','d','i','f','y',0};
 static const WCHAR ReadmeW[] = {'R','e','a','d','m','e',0};
-static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I',
-    'n','f','o',0};
+static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I','n','f','o',0};
 static const WCHAR CommentsW[] = {'C','o','m','m','e','n','t','s',0};
-static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l',
-    'S','t','r','i','n','g',0};
+static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
 static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
@@ -139,7 +141,25 @@ static void FreeAppInfo(APPINFO *info)
     HeapFree(GetProcessHeap(), 0, info->icon);
     HeapFree(GetProcessHeap(), 0, info->publisher);
     HeapFree(GetProcessHeap(), 0, info->version);
+    HeapFree(GetProcessHeap(), 0, info->contact);
+    HeapFree(GetProcessHeap(), 0, info->helplink);
+    HeapFree(GetProcessHeap(), 0, info->helptelephone);
+    HeapFree(GetProcessHeap(), 0, info->readme);
+    HeapFree(GetProcessHeap(), 0, info->urlupdateinfo);
+    HeapFree(GetProcessHeap(), 0, info->comments);
     HeapFree(GetProcessHeap(), 0, info);
+}
+
+static WCHAR *get_reg_str(HKEY hkey, const WCHAR *value)
+{
+    DWORD len, type;
+    WCHAR *ret = NULL;
+    if (!RegQueryValueExW(hkey, value, NULL, &type, NULL, &len) && type == REG_SZ)
+    {
+        if (!(ret = HeapAlloc(GetProcessHeap(), 0, len))) return NULL;
+        RegQueryValueExW(hkey, value, 0, 0, (BYTE *)ret, &len);
+    }
+    return ret;
 }
 
 /******************************************************************************
@@ -238,30 +258,14 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                 }
             }
 
-            /* publisher, version */
-            if (RegQueryValueExW(hkeyApp, PublisherW, 0, 0, NULL, &displen) ==
-                ERROR_SUCCESS)
-            {
-                info->publisher = HeapAlloc(GetProcessHeap(), 0, displen);
-
-                if (!info->publisher)
-                    goto err;
-
-                RegQueryValueExW(hkeyApp, PublisherW, 0, 0, (LPBYTE)info->publisher,
-                    &displen);
-            }
-
-            if (RegQueryValueExW(hkeyApp, DisplayVersionW, 0, 0, NULL, &displen) ==
-                ERROR_SUCCESS)
-            {
-                info->version = HeapAlloc(GetProcessHeap(), 0, displen);
-
-                if (!info->version)
-                    goto err;
-
-                RegQueryValueExW(hkeyApp, DisplayVersionW, 0, 0, (LPBYTE)info->version,
-                    &displen);
-            }
+            info->publisher = get_reg_str(hkeyApp, PublisherW);
+            info->version = get_reg_str(hkeyApp, DisplayVersionW);
+            info->contact = get_reg_str(hkeyApp, ContactW);
+            info->helplink = get_reg_str(hkeyApp, HelpLinkW);
+            info->helptelephone = get_reg_str(hkeyApp, HelpTelephoneW);
+            info->readme = get_reg_str(hkeyApp, ReadmeW);
+            info->urlupdateinfo = get_reg_str(hkeyApp, URLUpdateInfoW);
+            info->comments = get_reg_str(hkeyApp, CommentsW);
 
             /* Check if NoModify is set */
             dwType = REG_DWORD;
@@ -616,28 +620,16 @@ static INT_PTR CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, L
                     RegOpenKeyExW(iter->regroot, key, 0, KEY_READ, &hkey);
 
                     /* Load our "not specified" string */
-                    LoadStringW(hInst, IDS_NOT_SPECIFIED, notfound,
-                        ARRAY_SIZE(notfound));
+                    LoadStringW(hInst, IDS_NOT_SPECIFIED, notfound, ARRAY_SIZE(notfound));
 
-                    /* Update the data for items already read into the structure */
-                    SetInfoDialogText(NULL, iter->publisher, notfound, hWnd,
-                        IDC_INFO_PUBLISHER);
-                    SetInfoDialogText(NULL, iter->version, notfound, hWnd,
-                        IDC_INFO_VERSION);
-
-                    /* And now update the data for those items in the registry */
-                    SetInfoDialogText(hkey, ContactW, notfound, hWnd,
-                        IDC_INFO_CONTACT);
-                    SetInfoDialogText(hkey, HelpLinkW, notfound, hWnd,
-                        IDC_INFO_SUPPORT);
-                    SetInfoDialogText(hkey, HelpTelephoneW, notfound, hWnd,
-                        IDC_INFO_PHONE);
-                    SetInfoDialogText(hkey, ReadmeW, notfound, hWnd,
-                        IDC_INFO_README);
-                    SetInfoDialogText(hkey, URLUpdateInfoW, notfound, hWnd,
-                        IDC_INFO_UPDATES);
-                    SetInfoDialogText(hkey, CommentsW, notfound, hWnd,
-                        IDC_INFO_COMMENTS);
+                    SetInfoDialogText(NULL, iter->publisher, notfound, hWnd, IDC_INFO_PUBLISHER);
+                    SetInfoDialogText(NULL, iter->version, notfound, hWnd, IDC_INFO_VERSION);
+                    SetInfoDialogText(hkey, iter->contact, notfound, hWnd, IDC_INFO_CONTACT);
+                    SetInfoDialogText(hkey, iter->helplink, notfound, hWnd, IDC_INFO_SUPPORT);
+                    SetInfoDialogText(hkey, iter->helptelephone, notfound, hWnd, IDC_INFO_PHONE);
+                    SetInfoDialogText(hkey, iter->readme, notfound, hWnd, IDC_INFO_README);
+                    SetInfoDialogText(hkey, iter->urlupdateinfo, notfound, hWnd, IDC_INFO_UPDATES);
+                    SetInfoDialogText(hkey, iter->comments, notfound, hWnd, IDC_INFO_COMMENTS);
 
                     /* Update the main label with the app name */
                     if (GetWindowTextW(GetDlgItem(hWnd, IDC_INFO_LABEL), oldtitle,
