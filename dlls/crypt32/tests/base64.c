@@ -284,17 +284,14 @@ static void test_CryptBinaryToString(void)
 
         strLen = 0;
         ret = CryptBinaryToStringW(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, NULL, &strLen);
-    todo_wine {
         ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
         ok(strLen == tests[i].toEncodeLen, "Unexpected required length %u.\n", strLen);
-    }
+
         strLen2 = strLen;
         strW = heap_alloc(strLen);
         ret = CryptBinaryToStringW(tests[i].toEncode, tests[i].toEncodeLen, CRYPT_STRING_BINARY, strW, &strLen2);
-    todo_wine
         ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
         ok(strLen == strLen2, "Expected length %u, got %u\n", strLen, strLen2);
-    todo_wine
         ok(!memcmp(strW, tests[i].toEncode, tests[i].toEncodeLen), "Unexpected value\n");
         heap_free(strW);
 

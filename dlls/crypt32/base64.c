@@ -88,8 +88,7 @@ static BOOL EncodeBinaryToBinaryA(const BYTE *pbBinary,
             memcpy(pszString, pbBinary, cbBinary);
     }
     else
-
-    *pcchString = cbBinary;
+        *pcchString = cbBinary;
 
     return ret;
 }
@@ -294,6 +293,26 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
     return encoder(pbBinary, cbBinary, dwFlags, pszString, pcchString);
 }
 
+static BOOL EncodeBinaryToBinaryW(const BYTE *in_buf, DWORD in_len, DWORD flags, WCHAR *out_buf, DWORD *out_len)
+{
+    BOOL ret = TRUE;
+
+    if (out_buf)
+    {
+        if (*out_len < in_len)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        }
+        else if (in_len)
+            memcpy(out_buf, in_buf, in_len);
+    }
+    else
+        *out_len = in_len;
+
+    return ret;
+}
+
 static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
  WCHAR* out_buf, DWORD *out_len)
 {
@@ -472,13 +491,15 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
 
     switch (dwFlags & 0x0fffffff)
     {
+    case CRYPT_STRING_BINARY:
+        encoder = EncodeBinaryToBinaryW;
+        break;
     case CRYPT_STRING_BASE64:
     case CRYPT_STRING_BASE64HEADER:
     case CRYPT_STRING_BASE64REQUESTHEADER:
     case CRYPT_STRING_BASE64X509CRLHEADER:
         encoder = BinaryToBase64W;
         break;
-    case CRYPT_STRING_BINARY:
     case CRYPT_STRING_HEX:
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
