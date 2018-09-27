@@ -19594,6 +19594,7 @@ wine_fn_config_makefile dlls/msdmo enable_msdmo
 wine_fn_config_makefile dlls/msdmo/tests enable_tests
 wine_fn_config_makefile dlls/msdrm enable_msdrm
 wine_fn_config_makefile dlls/msftedit enable_msftedit
+wine_fn_config_makefile dlls/msftedit/tests enable_tests
 wine_fn_config_makefile dlls/msg711.acm enable_msg711_acm
 wine_fn_config_makefile dlls/msgsm32.acm enable_msgsm32_acm
 wine_fn_config_makefile dlls/mshtml.tlb enable_mshtml_tlb
