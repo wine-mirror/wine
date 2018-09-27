@@ -123,12 +123,9 @@ enum binary_type
     BINARY_UNIX_LIB
 };
 
-#define BINARY_FLAG_64BIT   0x02
-
 struct binary_info
 {
     enum binary_type type;
-    DWORD            flags;
     pe_image_info_t  pe;
 };
 
@@ -170,6 +167,15 @@ static inline unsigned int is_path_prefix( const WCHAR *prefix, const WCHAR *fil
     if (strncmpiW( filename, prefix, len ) || filename[len] != '\\') return 0;
     while (filename[len] == '\\') len++;
     return len;
+}
+
+
+/***********************************************************************
+ *           is_64bit_arch
+ */
+static inline BOOL is_64bit_arch( WORD machine )
+{
+    return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
 }
 
 
@@ -251,15 +257,12 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
     {
     case STATUS_SUCCESS:
         info->type = BINARY_PE;
-        if (info->pe.machine == IMAGE_FILE_MACHINE_AMD64 || info->pe.machine == IMAGE_FILE_MACHINE_ARM64)
-            info->flags |= BINARY_FLAG_64BIT;
         return;
     case STATUS_INVALID_IMAGE_WIN_32:
         info->type = BINARY_PE;
         return;
     case STATUS_INVALID_IMAGE_WIN_64:
         info->type = BINARY_PE;
-        info->flags |= BINARY_FLAG_64BIT;
         return;
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
@@ -279,7 +282,6 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
 #else
         BOOL byteswap = (header.elf.data == 2);
 #endif
-        if (header.elf.class == 2) info->flags |= BINARY_FLAG_64BIT;
         if (byteswap)
         {
             header.elf.type = RtlUshortByteSwap( header.elf.type );
@@ -337,7 +339,6 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
     else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe ||
              header.macho.magic == 0xfeedfacf || header.macho.magic == 0xcffaedfe)
     {
-        if ((header.macho.cputype >> 24) == 1) info->flags |= BINARY_FLAG_64BIT;
         if (header.macho.magic == 0xcefaedfe || header.macho.magic == 0xcffaedfe)
         {
             header.macho.filetype = RtlUlongByteSwap( header.macho.filetype );
@@ -371,7 +372,7 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
     WCHAR *file_part;
     UINT len;
     void *redir_disabled = 0;
-    unsigned int flags = (sizeof(void*) > sizeof(int) ? BINARY_FLAG_64BIT : 0);
+    BOOL is_64bit = (sizeof(void*) > sizeof(int));
 
     /* builtin names cannot be empty or contain spaces */
     if (!libname[0] || strchrW( libname, ' ' ) || strchrW( libname, '\t' )) return FALSE;
@@ -387,11 +388,11 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
 
         if ((len = is_path_prefix( DIR_System, filename )))
         {
-            if (is_wow64 && redir_disabled) flags = BINARY_FLAG_64BIT;
+            if (is_wow64 && redir_disabled) is_64bit = TRUE;
         }
         else if (DIR_SysWow64 && (len = is_path_prefix( DIR_SysWow64, filename )))
         {
-            flags = 0;
+            is_64bit = FALSE;
         }
         else return FALSE;
 
@@ -405,7 +406,7 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
         file_part = filename + len;
         if (file_part > filename && file_part[-1] != '\\') *file_part++ = '\\';
         strcpyW( file_part, libname );
-        if (is_wow64 && redir_disabled) flags = BINARY_FLAG_64BIT;
+        if (is_wow64 && redir_disabled) is_64bit = TRUE;
     }
     if (ext && !strchrW( file_part, '.' ))
     {
@@ -415,10 +416,9 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
     }
     memset( binary_info, 0, sizeof(*binary_info) );
     binary_info->type = BINARY_UNIX_LIB;
-    binary_info->flags = flags;
     /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
-    binary_info->pe.machine = (flags & BINARY_FLAG_64BIT) ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
+    binary_info->pe.machine = is_64bit ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
 #elif defined(__powerpc__)
     binary_info->pe.machine = IMAGE_FILE_MACHINE_POWERPC;
 #elif defined(__arm__) && !defined(__ARMEB__)
@@ -2078,7 +2078,7 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
 
     argv = build_argv( cmd_line, 1 );
 
-    if (!is_win64 ^ !(binary_info->flags & BINARY_FLAG_64BIT))
+    if (!is_win64 ^ !is_64bit_arch( binary_info->pe.machine ))
         loader = get_alternate_loader( &wineloader );
 
     if (exec_only || !(pid = fork()))  /* child */
@@ -2678,7 +2678,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     {
     case BINARY_PE:
         TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
-               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
+               debugstr_w(name), is_64bit_arch(binary_info.pe.machine) ? 64 : 32,
                wine_dbgstr_longlong(binary_info.pe.base),
                wine_dbgstr_longlong(binary_info.pe.base + binary_info.pe.map_size),
                binary_info.pe.machine );
@@ -2692,7 +2692,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         break;
     case BINARY_UNIX_LIB:
         TRACE( "starting %s as %d-bit Winelib app\n",
-               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32 );
+               debugstr_w(name), is_64bit_arch(binary_info.pe.machine) ? 64 : 32 );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
@@ -2830,7 +2830,7 @@ static void exec_process( LPCWSTR name )
     {
     case BINARY_PE:
         TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
-               debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
+               debugstr_w(name), is_64bit_arch(binary_info.pe.machine) ? 64 : 32,
                wine_dbgstr_longlong(binary_info.pe.base),
                wine_dbgstr_longlong(binary_info.pe.base + binary_info.pe.map_size),
                binary_info.pe.machine );
