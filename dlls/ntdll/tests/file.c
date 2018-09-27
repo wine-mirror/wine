@@ -37,6 +37,7 @@
 #include "winternl.h"
 #include "winuser.h"
 #include "winioctl.h"
+#include "winnls.h"
 
 #ifndef IO_COMPLETION_ALL_ACCESS
 #define IO_COMPLETION_ALL_ACCESS 0x001F0003
@@ -75,6 +76,7 @@ static NTSTATUS (WINAPI *pNtQueryIoCompletion)(HANDLE, IO_COMPLETION_INFORMATION
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
 static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, SIZE_T);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
+static NTSTATUS (WINAPI *pNtQueryAttributesFile)(const OBJECT_ATTRIBUTES*,FILE_BASIC_INFORMATION*);
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,
                                                 PVOID,ULONG,FILE_INFORMATION_CLASS,BOOLEAN,PUNICODE_STRING,BOOLEAN);
@@ -2581,11 +2583,42 @@ static void test_file_both_information(void)
     CloseHandle( h );
 }
 
+static NTSTATUS nt_get_file_attrs(const char *name, DWORD *attrs)
+{
+    WCHAR nameW[MAX_PATH];
+    FILE_BASIC_INFORMATION info;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, MAX_PATH );
+
+    *attrs = INVALID_FILE_ATTRIBUTES;
+
+    if (!pRtlDosPathNameToNtPathName_U( nameW, &nt_name, NULL, NULL ))
+        return STATUS_UNSUCCESSFUL;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = pNtQueryAttributesFile( &attr, &info );
+    pRtlFreeUnicodeString( &nt_name );
+
+    if (status == STATUS_SUCCESS)
+        *attrs = info.FileAttributes;
+
+    return status;
+}
+
 static void test_file_disposition_information(void)
 {
     char tmp_path[MAX_PATH], buffer[MAX_PATH + 16];
     DWORD dirpos;
-    HANDLE handle, handle2;
+    HANDLE handle, handle2, handle3;
     NTSTATUS res;
     IO_STATUS_BLOCK io;
     FILE_DISPOSITION_INFORMATION fdi;
@@ -2633,7 +2666,58 @@ static void test_file_disposition_information(void)
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
-    DeleteFileA( buffer );
+
+    /* file exists until all handles to it get closed */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open temp file\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    res = nt_get_file_attrs( buffer, &fdi2 );
+todo_wine
+    ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
+    /* can't open the deleted file */
+    handle3 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+todo_wine
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+if (handle3 != INVALID_HANDLE_VALUE)
+    CloseHandle( handle3 );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    /* can't open the deleted file (wrong sharing mode) */
+    handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "File should have been deleted\n" );
+
+    /* file exists until all handles to it get closed */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    /* can open the marked for delete file (proper sharing mode) */
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open temp file\n" );
+    res = nt_get_file_attrs( buffer, &fdi2 );
+    ok( res == STATUS_SUCCESS, "got %#x\n", res );
+    /* can't open the marked for delete file (wrong sharing mode) */
+    handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "File should have been deleted\n" );
 
     /* cannot set disposition on readonly file */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
@@ -2704,7 +2788,38 @@ static void test_file_disposition_information(void)
     CloseHandle( handle2 );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
+
+    /* DeleteFile fails for wrong sharing mode */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fileDeleted = DeleteFileA( buffer );
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
     DeleteFileA( buffer );
+
+    /* DeleteFile succeeds for proper sharing mode */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    fileDeleted = DeleteFileA( buffer );
+    ok( fileDeleted, "File should have been deleted\n" );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    res = nt_get_file_attrs( buffer, &fdi2 );
+todo_wine
+    ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
+    /* can't open the deleted file */
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "File should have been deleted\n" );
 
     /* can set disposition on a directory opened with proper access */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
@@ -2718,7 +2833,6 @@ static void test_file_disposition_information(void)
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "Directory should have been deleted\n" );
-    RemoveDirectoryA( buffer );
 
     /* RemoveDirectory fails for wrong sharing mode */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
@@ -2733,6 +2847,83 @@ static void test_file_disposition_information(void)
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     RemoveDirectoryA( buffer );
+
+    /* RemoveDirectory succeeds for proper sharing mode */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    fileDeleted = RemoveDirectoryA( buffer );
+    ok( fileDeleted, "Directory should have been deleted\n" );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+todo_wine
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    res = nt_get_file_attrs( buffer, &fdi2 );
+todo_wine
+    ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
+    /* can't open the deleted directory */
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "Directory should have been deleted\n" );
+
+    /* directory exists until all handles to it get closed */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle2, &io, &fdi, sizeof fdi, FileDispositionInformation );
+    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    res = nt_get_file_attrs( buffer, &fdi2 );
+todo_wine
+    ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
+    /* can't open the deleted directory */
+    handle3 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+todo_wine
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+if (handle3 != INVALID_HANDLE_VALUE)
+    CloseHandle( handle3 );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    /* can't open the deleted directory (wrong sharing mode) */
+    handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "Directory should have been deleted\n" );
+
+    /* directory exists until all handles to it get closed */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    handle = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    /* can open the marked for delete directory (proper sharing mode) */
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    /* can't open the marked for delete file (wrong sharing mode) */
+    handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got %u\n", GetLastError());
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    CloseHandle( handle2 );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( fileDeleted, "Directory should have been deleted\n" );
 
     /* cannot set disposition on a non-empty directory */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
@@ -4287,6 +4478,7 @@ START_TEST(file)
     pNtRemoveIoCompletion   = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletion");
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
+    pNtQueryAttributesFile  = (void *)GetProcAddress(hntdll, "NtQueryAttributesFile");
     pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
     pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
     pNtQueryVolumeInformationFile = (void *)GetProcAddress(hntdll, "NtQueryVolumeInformationFile");
