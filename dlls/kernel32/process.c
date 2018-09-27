@@ -207,7 +207,7 @@ static NTSTATUS get_pe_info( HANDLE handle, pe_image_info_t *info )
 /***********************************************************************
  *           get_binary_info
  */
-static void get_binary_info( HANDLE hfile, struct binary_info *info )
+static enum binary_type get_binary_info( HANDLE hfile, struct binary_info *info )
 {
     union
     {
@@ -256,24 +256,21 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
     switch (status)
     {
     case STATUS_SUCCESS:
-        info->type = BINARY_PE;
-        return;
+        return BINARY_PE;
     case STATUS_INVALID_IMAGE_WIN_32:
-        info->type = BINARY_PE;
-        return;
+        return BINARY_PE;
     case STATUS_INVALID_IMAGE_WIN_64:
-        info->type = BINARY_PE;
-        return;
+        return BINARY_PE;
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
     case STATUS_INVALID_IMAGE_PROTECT:
-        info->type = BINARY_WIN16;
-        return;
+        return BINARY_WIN16;
     }
 
     /* Seek to the start of the file and read the header information. */
-    if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1) return;
-    if (!ReadFile( hfile, &header, sizeof(header), &len, NULL ) || len != sizeof(header)) return;
+    if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1) return BINARY_UNKNOWN;
+    if (!ReadFile( hfile, &header, sizeof(header), &len, NULL ) || len != sizeof(header))
+        return BINARY_UNKNOWN;
 
     if (!memcmp( header.elf.magic, "\177ELF", 4 ))
     {
@@ -287,11 +284,19 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
             header.elf.type = RtlUshortByteSwap( header.elf.type );
             header.elf.machine = RtlUshortByteSwap( header.elf.machine );
         }
+        switch(header.elf.machine)
+        {
+        case 3:   info->pe.machine = IMAGE_FILE_MACHINE_I386; break;
+        case 20:  info->pe.machine = IMAGE_FILE_MACHINE_POWERPC; break;
+        case 40:  info->pe.machine = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 50:  info->pe.machine = IMAGE_FILE_MACHINE_IA64; break;
+        case 62:  info->pe.machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case 183: info->pe.machine = IMAGE_FILE_MACHINE_ARM64; break;
+        }
         switch(header.elf.type)
         {
         case 2:
-            info->type = BINARY_UNIX_EXE;
-            break;
+            return BINARY_UNIX_EXE;
         case 3:
         {
             LARGE_INTEGER phoff;
@@ -309,30 +314,15 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
             }
             while (phnum--)
             {
-                if (SetFilePointerEx( hfile, phoff, NULL, FILE_BEGIN ) == -1) return;
-                if (!ReadFile( hfile, &type, sizeof(type), &len, NULL ) || len < sizeof(type)) return;
+                if (SetFilePointerEx( hfile, phoff, NULL, FILE_BEGIN ) == -1) return BINARY_UNKNOWN;
+                if (!ReadFile( hfile, &type, sizeof(type), &len, NULL ) || len < sizeof(type))
+                    return BINARY_UNKNOWN;
                 if (byteswap) type = RtlUlongByteSwap( type );
-                if (type == 3)
-                {
-                    info->type = BINARY_UNIX_EXE;
-                    break;
-                }
+                if (type == 3) return BINARY_UNIX_EXE;
                 phoff.QuadPart += (header.elf.class == 2) ? 56 : 32;
             }
-            if (!info->type) info->type = BINARY_UNIX_LIB;
-            break;
+            return BINARY_UNIX_LIB;
         }
-        default:
-            return;
-        }
-        switch(header.elf.machine)
-        {
-        case 3:   info->pe.machine = IMAGE_FILE_MACHINE_I386; break;
-        case 20:  info->pe.machine = IMAGE_FILE_MACHINE_POWERPC; break;
-        case 40:  info->pe.machine = IMAGE_FILE_MACHINE_ARMNT; break;
-        case 50:  info->pe.machine = IMAGE_FILE_MACHINE_IA64; break;
-        case 62:  info->pe.machine = IMAGE_FILE_MACHINE_AMD64; break;
-        case 183: info->pe.machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
     }
     /* Mach-o File with Endian set to Big Endian or Little Endian */
@@ -344,11 +334,6 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
             header.macho.filetype = RtlUlongByteSwap( header.macho.filetype );
             header.macho.cputype = RtlUlongByteSwap( header.macho.cputype );
         }
-        switch(header.macho.filetype)
-        {
-        case 2: info->type = BINARY_UNIX_EXE; break;
-        case 8: info->type = BINARY_UNIX_LIB; break;
-        }
         switch(header.macho.cputype)
         {
         case 0x00000007: info->pe.machine = IMAGE_FILE_MACHINE_I386; break;
@@ -357,7 +342,13 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
         case 0x0100000c: info->pe.machine = IMAGE_FILE_MACHINE_ARM64; break;
         case 0x00000012: info->pe.machine = IMAGE_FILE_MACHINE_POWERPC; break;
         }
+        switch(header.macho.filetype)
+        {
+        case 2: return BINARY_UNIX_EXE;
+        case 8: return BINARY_UNIX_LIB;
+        }
     }
+    return BINARY_UNKNOWN;
 }
 
 
@@ -452,7 +443,7 @@ static HANDLE open_exe_file( const WCHAR *name, struct binary_info *binary_info 
         if (contains_path( name ) && get_builtin_path( name, NULL, buffer, sizeof(buffer), binary_info ))
             handle = 0;
     }
-    else get_binary_info( handle, binary_info );
+    else binary_info->type = get_binary_info( handle, binary_info );
 
     return handle;
 }
@@ -477,7 +468,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
     if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                 NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
     {
-        get_binary_info( *handle, binary_info );
+        binary_info->type = get_binary_info( *handle, binary_info );
         return TRUE;
     }
     return FALSE;
