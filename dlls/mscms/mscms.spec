@@ -59,3 +59,4 @@
 @ stdcall UninstallColorProfileW(wstr wstr long)
 @ stdcall UnregisterCMMA(str long)
 @ stdcall UnregisterCMMW(wstr long)
+@ stdcall WcsGetUsePerUserProfiles(wstr long ptr)

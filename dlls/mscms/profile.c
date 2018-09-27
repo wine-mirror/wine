@@ -1525,3 +1525,13 @@ BOOL WINAPI CloseColorProfile( HPROFILE profile )
 #endif /* HAVE_LCMS2 */
     return ret;
 }
+
+/******************************************************************************
+ * WcsGetUsePerUserProfiles               [MSCMS.@]
+ */
+BOOL WINAPI WcsGetUsePerUserProfiles( const WCHAR* name, DWORD class, BOOL* use_per_user_profile )
+{
+    FIXME( "%s %s %p\n", debugstr_w(name), dbgstr_tag(class), use_per_user_profile );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

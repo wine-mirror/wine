@@ -403,6 +403,7 @@ BOOL       WINAPI UninstallColorProfileW(PCWSTR,PCWSTR,BOOL);
 BOOL       WINAPI UnregisterCMMA(PCSTR,DWORD);
 BOOL       WINAPI UnregisterCMMW(PCWSTR,DWORD);
 #define    UnregisterCMM WINELIB_NAME_AW(UnregisterCMM)
+BOOL       WINAPI WcsGetUsePerUserProfiles(const WCHAR*,DWORD,BOOL*);
 
 #define PROFILE_FILENAME    1
 #define PROFILE_MEMBUFFER   2
