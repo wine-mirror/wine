@@ -391,7 +391,7 @@ static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
     NTSTATUS status = irp->IoStatus.u.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
 
-    TRACE("IRP_MN_QUERY_DEVICE_RELATIONS");
+    TRACE("IRP_MN_QUERY_DEVICE_RELATIONS\n");
     switch (irpsp->Parameters.QueryDeviceRelations.Type)
     {
         case EjectionRelations:
