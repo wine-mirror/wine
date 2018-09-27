@@ -6986,18 +6986,18 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
         return DDERR_NOPALETTEATTACHED;
     }
 
-    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
-    {
-        WARN("Surface %p is not in video memory.\n", target);
-        return D3DERR_SURFACENOTINVIDMEM;
-    }
-
     if (ddraw->flags & DDRAW_NO3D)
     {
         ERR_(winediag)("The application wants to create a Direct3D device, "
                 "but the current DirectDrawRenderer does not support this.\n");
 
-        return DDERR_NO3D;
+        return DDERR_OUTOFMEMORY;
+    }
+
+    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        WARN("Surface %p is not in video memory.\n", target);
+        return D3DERR_SURFACENOTINVIDMEM;
     }
 
     if (ddraw->d3ddevice)
