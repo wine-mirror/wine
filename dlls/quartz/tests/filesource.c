@@ -2,6 +2,7 @@
  * File source filter unit tests
  *
  * Copyright 2016 Sebastian Lackner
+ * Copyright 2018 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,54 @@
 #define COBJMACROS
 #include "dshow.h"
 #include "wine/test.h"
+
+static IBaseFilter *create_file_source(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_file_source();
+
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IFileSourceFilter, TRUE);
+
+todo_wine
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_Release(filter);
+}
 
 static void test_file_source_filter(void)
 {
@@ -101,8 +150,7 @@ static void test_file_source_filter(void)
         ok(ret, "Failed to write file, error %u.\n", GetLastError());
         CloseHandle(file);
 
-        CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
-                &IID_IBaseFilter, (void **)&filter);
+        filter = create_file_source();
         IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
 
         olepath = (void *)0xdeadbeef;
@@ -149,6 +197,7 @@ START_TEST(filesource)
 {
     CoInitialize(NULL);
 
+    test_interfaces();
     test_file_source_filter();
 
     CoUninitialize();
