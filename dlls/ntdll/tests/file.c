@@ -1044,7 +1044,7 @@ static void test_iocp_fileio(HANDLE h)
         ok( !count, "Unexpected msg count: %ld\n", count );
 
         /* using APCs on handle with associated completion port is not allowed */
-        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
         ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
     }
 
@@ -1070,7 +1070,7 @@ static void test_iocp_fileio(HANDLE h)
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
 
-        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
         ok(res == STATUS_PENDING, "NtReadFile returned %x\n", res);
 
         U(iosb).Status = 0xdeadbeef;
@@ -1092,7 +1092,7 @@ static void test_iocp_fileio(HANDLE h)
         ok( !count, "Unexpected msg count: %ld\n", count );
 
         /* using APCs on handle with associated completion port is not allowed */
-        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
         ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
     }
 
@@ -4197,7 +4197,7 @@ static void test_ioctl(void)
     ok(status == STATUS_INVALID_HANDLE, "NtFsControlFile returned %x\n", status);
 
     memset(&iosb, 0x55, sizeof(iosb));
-    status = NtFsControlFile(file, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0,
+    status = pNtFsControlFile(file, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0,
                              &peek_buf, sizeof(peek_buf));
     todo_wine
     ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtFsControlFile failed: %x\n", status);
