@@ -2679,7 +2679,7 @@ static void test_file_disposition_information(void)
     ok( !fileDeleted, "File shouldn't have been deleted\n" );
     DeleteFileA( buffer );
 
-    /* Delete-on-close flag doesn't change file disposition until a handle is closed */
+    /* can't reset disposition if delete-on-close flag is specified */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
@@ -2689,14 +2689,15 @@ static void test_file_disposition_information(void)
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
-    DeleteFileA( buffer );
 
-    /* Delete-on-close flag sets disposition when a handle is closed and then it could be changed back */
+    /* can't reset disposition on duplicated handle if delete-on-close flag is specified */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
     ok( DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(), &handle2, 0, FALSE, DUPLICATE_SAME_ACCESS ), "DuplicateHandle failed\n" );
     CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
     fdi.DoDeleteFile = FALSE;
     res = pNtSetInformationFile( handle2, &io, &fdi, sizeof fdi, FileDispositionInformation );
     ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
@@ -2719,16 +2720,15 @@ static void test_file_disposition_information(void)
     ok( fileDeleted, "Directory should have been deleted\n" );
     RemoveDirectoryA( buffer );
 
-    /* RemoveDirectory sets directory disposition and it can be undone */
+    /* RemoveDirectory fails for wrong sharing mode */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
     ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
     handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
-    RemoveDirectoryA( buffer );
-    fdi.DoDeleteFile = FALSE;
-    res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
-    ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
+    fileDeleted = RemoveDirectoryA( buffer );
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got %u\n", GetLastError());
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
