@@ -162,19 +162,19 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
     return S_OK;
 }
 
-static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
+static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins *iface, ULONG count)
 {
-    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
+    IEnumPinsImpl *enum_pins = impl_from_IEnumPins(iface);
 
-    TRACE("(%p)->(%u)\n", iface, cPins);
+    TRACE("enum_pins %p, count %u.\n", enum_pins, count);
 
-    if (This->Version != This->receive_version(This->base))
+    if (enum_pins->Version != enum_pins->receive_version(enum_pins->base))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    if (This->receive_pincount(This->base) >= This->uIndex + cPins)
+    if (enum_pins->uIndex + count > enum_pins->receive_pincount(enum_pins->base))
         return S_FALSE;
 
-    This->uIndex += cPins;
+    enum_pins->uIndex += count;
     return S_OK;
 }
 
