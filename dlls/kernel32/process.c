@@ -123,17 +123,13 @@ enum binary_type
     BINARY_UNIX_LIB
 };
 
-#define BINARY_FLAG_DLL     0x01
 #define BINARY_FLAG_64BIT   0x02
-#define BINARY_FLAG_FAKEDLL 0x04
 
 struct binary_info
 {
     enum binary_type type;
-    DWORD            arch;
     DWORD            flags;
-    ULONGLONG        res_start;
-    ULONGLONG        res_end;
+    pe_image_info_t  pe;
 };
 
 
@@ -174,6 +170,31 @@ static inline unsigned int is_path_prefix( const WCHAR *prefix, const WCHAR *fil
     if (strncmpiW( filename, prefix, len ) || filename[len] != '\\') return 0;
     while (filename[len] == '\\') len++;
     return len;
+}
+
+
+/***********************************************************************
+ *           get_pe_info
+ */
+static NTSTATUS get_pe_info( HANDLE handle, pe_image_info_t *info )
+{
+    NTSTATUS status;
+    HANDLE mapping;
+
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY,
+                              NULL, NULL, PAGE_READONLY, SEC_IMAGE, handle );
+    if (status) return status;
+
+    SERVER_START_REQ( get_mapping_info )
+    {
+        req->handle = wine_server_obj_handle( mapping );
+        req->access = SECTION_QUERY;
+        wine_server_set_reply( req, info, sizeof(*info) );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    CloseHandle( mapping );
+    return status;
 }
 
 
@@ -221,8 +242,31 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
     } header;
 
     DWORD len;
+    NTSTATUS status;
 
     memset( info, 0, sizeof(*info) );
+
+    status = get_pe_info( hfile, &info->pe );
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        info->type = BINARY_PE;
+        if (info->pe.machine == IMAGE_FILE_MACHINE_AMD64 || info->pe.machine == IMAGE_FILE_MACHINE_ARM64)
+            info->flags |= BINARY_FLAG_64BIT;
+        return;
+    case STATUS_INVALID_IMAGE_WIN_32:
+        info->type = BINARY_PE;
+        return;
+    case STATUS_INVALID_IMAGE_WIN_64:
+        info->type = BINARY_PE;
+        info->flags |= BINARY_FLAG_64BIT;
+        return;
+    case STATUS_INVALID_IMAGE_WIN_16:
+    case STATUS_INVALID_IMAGE_NE_FORMAT:
+    case STATUS_INVALID_IMAGE_PROTECT:
+        info->type = BINARY_WIN16;
+        return;
+    }
 
     /* Seek to the start of the file and read the header information. */
     if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1) return;
@@ -281,12 +325,12 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
         }
         switch(header.elf.machine)
         {
-        case 3:   info->arch = IMAGE_FILE_MACHINE_I386; break;
-        case 20:  info->arch = IMAGE_FILE_MACHINE_POWERPC; break;
-        case 40:  info->arch = IMAGE_FILE_MACHINE_ARMNT; break;
-        case 50:  info->arch = IMAGE_FILE_MACHINE_IA64; break;
-        case 62:  info->arch = IMAGE_FILE_MACHINE_AMD64; break;
-        case 183: info->arch = IMAGE_FILE_MACHINE_ARM64; break;
+        case 3:   info->pe.machine = IMAGE_FILE_MACHINE_I386; break;
+        case 20:  info->pe.machine = IMAGE_FILE_MACHINE_POWERPC; break;
+        case 40:  info->pe.machine = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 50:  info->pe.machine = IMAGE_FILE_MACHINE_IA64; break;
+        case 62:  info->pe.machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case 183: info->pe.machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
     }
     /* Mach-o File with Endian set to Big Endian or Little Endian */
@@ -306,73 +350,11 @@ static void get_binary_info( HANDLE hfile, struct binary_info *info )
         }
         switch(header.macho.cputype)
         {
-        case 0x00000007: info->arch = IMAGE_FILE_MACHINE_I386; break;
-        case 0x01000007: info->arch = IMAGE_FILE_MACHINE_AMD64; break;
-        case 0x0000000c: info->arch = IMAGE_FILE_MACHINE_ARMNT; break;
-        case 0x0100000c: info->arch = IMAGE_FILE_MACHINE_ARM64; break;
-        case 0x00000012: info->arch = IMAGE_FILE_MACHINE_POWERPC; break;
-        }
-    }
-    /* Not ELF, try DOS */
-    else if (header.mz.e_magic == IMAGE_DOS_SIGNATURE)
-    {
-        union
-        {
-            IMAGE_OS2_HEADER os2;
-            IMAGE_NT_HEADERS32 nt;
-            IMAGE_NT_HEADERS64 nt64;
-        } ext_header;
-
-        /* We do have a DOS image so we will now try to seek into
-         * the file by the amount indicated by the field
-         * "Offset to extended header" and read in the
-         * "magic" field information at that location.
-         * This will tell us if there is more header information
-         * to read or not.
-         */
-        info->type = BINARY_WIN16;
-        info->arch = IMAGE_FILE_MACHINE_I386;
-        if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1) return;
-        if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4) return;
-
-        /* Reading the magic field succeeded so
-         * we will try to determine what type it is.
-         */
-        if (!memcmp( &ext_header.nt.Signature, "PE\0\0", 4 ))
-        {
-            if (len >= sizeof(ext_header.nt.FileHeader))
-            {
-                static const char fakedll_signature[] = "Wine placeholder DLL";
-                char buffer[sizeof(fakedll_signature)];
-
-                info->type = BINARY_PE;
-                info->arch = ext_header.nt.FileHeader.Machine;
-                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
-                    info->flags |= BINARY_FLAG_DLL;
-                if (len < sizeof(ext_header))  /* clear remaining part of header if missing */
-                    memset( (char *)&ext_header + len, 0, sizeof(ext_header) - len );
-                switch (ext_header.nt.OptionalHeader.Magic)
-                {
-                case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-                    info->res_start = ext_header.nt.OptionalHeader.ImageBase;
-                    info->res_end = info->res_start + ext_header.nt.OptionalHeader.SizeOfImage;
-                    break;
-                case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-                    info->res_start = ext_header.nt64.OptionalHeader.ImageBase;
-                    info->res_end = info->res_start + ext_header.nt64.OptionalHeader.SizeOfImage;
-                    info->flags |= BINARY_FLAG_64BIT;
-                    break;
-                }
-
-                if (header.mz.e_lfanew >= sizeof(header.mz) + sizeof(fakedll_signature) &&
-                    SetFilePointer( hfile, sizeof(header.mz), NULL, SEEK_SET ) == sizeof(header.mz) &&
-                    ReadFile( hfile, buffer, sizeof(fakedll_signature), &len, NULL ) &&
-                    len == sizeof(fakedll_signature) &&
-                    !memcmp( buffer, fakedll_signature, sizeof(fakedll_signature) ))
-                {
-                    info->flags |= BINARY_FLAG_FAKEDLL;
-                }
-            }
+        case 0x00000007: info->pe.machine = IMAGE_FILE_MACHINE_I386; break;
+        case 0x01000007: info->pe.machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case 0x0000000c: info->pe.machine = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 0x0100000c: info->pe.machine = IMAGE_FILE_MACHINE_ARM64; break;
+        case 0x00000012: info->pe.machine = IMAGE_FILE_MACHINE_POWERPC; break;
         }
     }
 }
@@ -431,21 +413,20 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
             return FALSE;  /* too long */
         strcatW( file_part, ext );
     }
+    memset( binary_info, 0, sizeof(*binary_info) );
     binary_info->type = BINARY_UNIX_LIB;
     binary_info->flags = flags;
-    binary_info->res_start = 0;
-    binary_info->res_end = 0;
     /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
-    binary_info->arch = (flags & BINARY_FLAG_64BIT) ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
+    binary_info->pe.machine = (flags & BINARY_FLAG_64BIT) ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
 #elif defined(__powerpc__)
-    binary_info->arch = IMAGE_FILE_MACHINE_POWERPC;
+    binary_info->pe.machine = IMAGE_FILE_MACHINE_POWERPC;
 #elif defined(__arm__) && !defined(__ARMEB__)
-    binary_info->arch = IMAGE_FILE_MACHINE_ARMNT;
+    binary_info->pe.machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
-    binary_info->arch = IMAGE_FILE_MACHINE_ARM64;
+    binary_info->pe.machine = IMAGE_FILE_MACHINE_ARM64;
 #else
-    binary_info->arch = IMAGE_FILE_MACHINE_UNKNOWN;
+    binary_info->pe.machine = IMAGE_FILE_MACHINE_UNKNOWN;
 #endif
     return TRUE;
 }
@@ -2069,7 +2050,7 @@ static BOOL terminate_main_thread(void)
  */
 static int get_process_cpu( const WCHAR *filename, const struct binary_info *binary_info )
 {
-    switch (binary_info->arch)
+    switch (binary_info->pe.machine)
     {
     case IMAGE_FILE_MACHINE_I386:    return CPU_x86;
     case IMAGE_FILE_MACHINE_AMD64:   return CPU_x86_64;
@@ -2079,7 +2060,7 @@ static int get_process_cpu( const WCHAR *filename, const struct binary_info *bin
     case IMAGE_FILE_MACHINE_ARMNT:   return CPU_ARM;
     case IMAGE_FILE_MACHINE_ARM64:   return CPU_ARM64;
     }
-    ERR( "%s uses unsupported architecture (%04x)\n", debugstr_w(filename), binary_info->arch );
+    ERR( "%s uses unsupported architecture (%04x)\n", debugstr_w(filename), binary_info->pe.machine );
     return -1;
 }
 
@@ -2105,6 +2086,8 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
         if (exec_only || !(pid = fork()))  /* grandchild */
         {
             char preloader_reserve[64], socket_env[64];
+            ULONGLONG res_start = binary_info->pe.base;
+            ULONGLONG res_end   = binary_info->pe.base + binary_info->pe.map_size;
 
             if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
             {
@@ -2132,8 +2115,7 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
 
             sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
             sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-                     (ULONG)(binary_info->res_start >> 32), (ULONG)binary_info->res_start,
-                     (ULONG)(binary_info->res_end >> 32), (ULONG)binary_info->res_end );
+                     (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
 
             putenv( preloader_reserve );
             putenv( socket_env );
@@ -2687,7 +2669,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
 
-    if (binary_info.flags & BINARY_FLAG_DLL)
+    if (binary_info.pe.image_charact & IMAGE_FILE_DLL)
     {
         TRACE( "not starting %s since it is a dll\n", debugstr_w(name) );
         SetLastError( ERROR_BAD_EXE_FORMAT );
@@ -2695,10 +2677,11 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     else switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x%s)\n",
+        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
                debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
-               wine_dbgstr_longlong(binary_info.res_start), wine_dbgstr_longlong(binary_info.res_end),
-               binary_info.arch, (binary_info.flags & BINARY_FLAG_FAKEDLL) ? ", fakedll" : "" );
+               wine_dbgstr_longlong(binary_info.pe.base),
+               wine_dbgstr_longlong(binary_info.pe.base + binary_info.pe.map_size),
+               binary_info.pe.machine );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
@@ -2721,7 +2704,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
                 binary_info.type = BINARY_WIN16;
-                binary_info.arch = IMAGE_FILE_MACHINE_I386;
+                binary_info.pe.machine = IMAGE_FILE_MACHINE_I386;
                 retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                            inherit, flags, startup_info, info, unixdir,
                                            &binary_info, FALSE );
@@ -2837,7 +2820,7 @@ static void exec_process( LPCWSTR name )
 
     /* Determine executable type */
 
-    if (binary_info.flags & BINARY_FLAG_DLL)
+    if (binary_info.pe.image_charact & IMAGE_FILE_DLL)
     {
         CloseHandle( hFile );
         return;
@@ -2848,8 +2831,9 @@ static void exec_process( LPCWSTR name )
     case BINARY_PE:
         TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
                debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
-               wine_dbgstr_longlong(binary_info.res_start), wine_dbgstr_longlong(binary_info.res_end),
-               binary_info.arch );
+               wine_dbgstr_longlong(binary_info.pe.base),
+               wine_dbgstr_longlong(binary_info.pe.base + binary_info.pe.map_size),
+               binary_info.pe.machine );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
                         FALSE, 0, &startup_info, &info, NULL, &binary_info, TRUE );
         break;
@@ -2863,7 +2847,7 @@ static void exec_process( LPCWSTR name )
         if (!(p = strrchrW( name, '.' ))) break;
         if (strcmpiW( p, comW ) && strcmpiW( p, pifW )) break;
         binary_info.type = BINARY_WIN16;
-        binary_info.arch = IMAGE_FILE_MACHINE_I386;
+        binary_info.pe.machine = IMAGE_FILE_MACHINE_I386;
         /* fall through */
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
