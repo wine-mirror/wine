@@ -904,6 +904,7 @@ static void test_QueryInterface(void)
     HRESULT hres;
     IRichEditOle *reole, *txtsrv_reole;
     ITextDocument *txtdoc, *txtsrv_txtdoc;
+    ITextDocument2Old *txtdoc2old, *txtsrv_txtdoc2old;
     ULONG refcount;
 
     if(!init_texthost(&txtserv, &host))
@@ -930,6 +931,17 @@ static void test_QueryInterface(void)
     ITextDocument_Release(txtdoc);
     refcount = get_refcount((IUnknown *)txtserv);
     ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+
+    hres = IRichEditOle_QueryInterface(txtsrv_reole, &IID_ITextDocument2Old, (void **)&txtdoc2old);
+    ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 3, "got wrong ref count: %d\n", refcount);
+    refcount = get_refcount((IUnknown *)txtsrv_reole);
+    ok(refcount == 3, "got wrong ref count: %d\n", refcount);
+
+    ITextDocument2Old_Release(txtdoc2old);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 2, "got wrong ref count: %d\n", refcount);
     IRichEditOle_Release(txtsrv_reole);
     refcount = get_refcount((IUnknown *)txtserv);
     ok(refcount == 1, "got wrong ref count: %d\n", refcount);
@@ -953,6 +965,28 @@ static void test_QueryInterface(void)
     refcount = get_refcount((IUnknown *)txtserv);
     ok(refcount == 2, "got wrong ref count: %d\n", refcount);
     ITextDocument_Release(txtsrv_txtdoc);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 1, "got wrong ref count: %d\n", refcount);
+
+    /* ITextDocument2Old */
+    hres = ITextServices_QueryInterface(txtserv, &IID_ITextDocument2Old, (void **)&txtsrv_txtdoc2old);
+    ok(hres == S_OK, "ITextServices_QueryInterface: 0x%08x\n", hres);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+    refcount = get_refcount((IUnknown *)txtsrv_txtdoc2old);
+    ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+
+    hres = ITextDocument2Old_QueryInterface(txtsrv_txtdoc2old, &IID_IRichEditOle, (void **)&reole);
+    ok(hres == S_OK, "ITextDocument2Old_QueryInterface: 0x%08x\n", hres);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 3, "got wrong ref count: %d\n", refcount);
+    refcount = get_refcount((IUnknown *)txtsrv_txtdoc2old);
+    ok(refcount == 3, "got wrong ref count: %d\n", refcount);
+
+    IRichEditOle_Release(reole);
+    refcount = get_refcount((IUnknown *)txtserv);
+    ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+    ITextDocument2Old_Release(txtsrv_txtdoc2old);
     refcount = get_refcount((IUnknown *)txtserv);
     ok(refcount == 1, "got wrong ref count: %d\n", refcount);
 

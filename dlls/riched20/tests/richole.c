@@ -113,10 +113,36 @@ static ULONG get_refcount(IUnknown *iface)
   return IUnknown_Release(iface);
 }
 
+#define CHECK_TYPEINFO(disp,expected_riid) _check_typeinfo((IDispatch *)disp, expected_riid, __LINE__)
+static void _check_typeinfo(IDispatch* disp, REFIID expected_riid, int line)
+{
+    ITypeInfo *typeinfo;
+    TYPEATTR *typeattr;
+    UINT count;
+    HRESULT hr;
+
+    count = 10;
+    hr = IDispatch_GetTypeInfoCount(disp, &count);
+    ok_(__FILE__,line)(hr == S_OK, "IDispatch_GetTypeInfoCount failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(count == 1, "got wrong count: %u.\n", count);
+
+    hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
+    ok_(__FILE__,line)(hr == S_OK, "IDispatch_GetTypeInfo failed: 0x%08x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok_(__FILE__,line)(hr == S_OK, "ITypeInfo_GetTypeAttr failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(IsEqualGUID(&typeattr->guid, expected_riid),
+                       "Unexpected type guid: %s.\n", wine_dbgstr_guid(&typeattr->guid));
+
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
+}
+
 static void test_Interfaces(void)
 {
   IRichEditOle *reOle = NULL, *reOle1 = NULL;
   ITextDocument *txtDoc = NULL;
+  ITextDocument2Old *txtDoc2Old = NULL;
   ITextSelection *txtSel = NULL, *txtSel2;
   IUnknown *punk;
   HRESULT hres;
@@ -144,6 +170,7 @@ static void test_Interfaces(void)
                                  (void **) &txtDoc);
   ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
   ok(txtDoc != NULL, "IRichEditOle_QueryInterface\n");
+  CHECK_TYPEINFO(txtDoc, &IID_ITextDocument);
 
   hres = ITextDocument_GetSelection(txtDoc, NULL);
   ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%x\n", hres);
@@ -195,6 +222,16 @@ static void test_Interfaces(void)
   hres = IRichEditOle_QueryInterface(reOle, &IID_IOleInPlaceSite, (void **) &punk);
   ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface\n");
 
+  hres = IRichEditOle_QueryInterface(reOle, &IID_ITextDocument2Old, (void **)&txtDoc2Old);
+  ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
+  ok(txtDoc2Old != NULL, "IRichEditOle_QueryInterface\n");
+  ok((ITextDocument *)txtDoc2Old == txtDoc, "interface pointer isn't equal.\n");
+  EXPECT_REF(txtDoc2Old, 5);
+  EXPECT_REF(reOle, 5);
+  CHECK_TYPEINFO(txtDoc2Old, &IID_ITextDocument);
+
+  ITextDocument2Old_Release(txtDoc2Old);
+
   ITextDocument_Release(txtDoc);
   IRichEditOle_Release(reOle);
   refcount = IRichEditOle_Release(reOle);
@@ -207,6 +244,19 @@ static void test_Interfaces(void)
   ok(hres == CO_E_RELEASED, "ITextSelection after ITextDocument destroyed\n");
 
   ITextSelection_Release(txtSel);
+
+  w = new_richedit(NULL);
+  res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle);
+  ok(res, "SendMessage\n");
+  ok(reOle != NULL, "EM_GETOLEINTERFACE\n");
+
+  hres = IRichEditOle_QueryInterface(reOle, &IID_ITextDocument2Old, (void **)&txtDoc2Old);
+  ok(hres == S_OK, "IRichEditOle_QueryInterface failed: 0x%08x.\n", hres);
+  ok(txtDoc2Old != NULL, "IRichEditOle_QueryInterface\n");
+  CHECK_TYPEINFO(txtDoc2Old, &IID_ITextDocument);
+  ITextDocument2Old_Release(txtDoc2Old);
+  IRichEditOle_Release(reOle);
+  DestroyWindow(w);
 }
 
 static void test_ITextDocument_Open(void)
