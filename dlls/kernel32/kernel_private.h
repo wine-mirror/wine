@@ -63,32 +63,8 @@ extern void FILE_SetDosError(void) DECLSPEC_HIDDEN;
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
 
-/* return values for MODULE_GetBinaryType */
-enum binary_type
-{
-    BINARY_UNKNOWN = 0,
-    BINARY_PE,
-    BINARY_WIN16,
-    BINARY_UNIX_EXE,
-    BINARY_UNIX_LIB
-};
-
-#define BINARY_FLAG_DLL     0x01
-#define BINARY_FLAG_64BIT   0x02
-#define BINARY_FLAG_FAKEDLL 0x04
-
-struct binary_info
-{
-    enum binary_type type;
-    DWORD            arch;
-    DWORD            flags;
-    ULONGLONG        res_start;
-    ULONGLONG        res_end;
-};
-
 /* module.c */
 extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode ) DECLSPEC_HIDDEN;
-extern void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info ) DECLSPEC_HIDDEN;
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID) DECLSPEC_HIDDEN;
 
