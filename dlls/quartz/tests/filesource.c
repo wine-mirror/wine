@@ -54,7 +54,6 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IFileSourceFilter, TRUE);
 
-todo_wine
     check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IBasicVideo, FALSE);
