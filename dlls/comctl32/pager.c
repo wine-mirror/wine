@@ -1051,6 +1051,14 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     case DTN_FORMATQUERYW: return DTN_FORMATQUERYA;
     case DTN_USERSTRINGW: return DTN_USERSTRINGA;
     case DTN_WMKEYDOWNW: return DTN_WMKEYDOWNA;
+    /* List View */
+    case LVN_BEGINLABELEDITW: return LVN_BEGINLABELEDITA;
+    case LVN_ENDLABELEDITW: return LVN_ENDLABELEDITA;
+    case LVN_GETDISPINFOW: return LVN_GETDISPINFOA;
+    case LVN_GETINFOTIPW: return LVN_GETINFOTIPA;
+    case LVN_INCREMENTALSEARCHW: return LVN_INCREMENTALSEARCHA;
+    case LVN_ODFINDITEMW: return LVN_ODFINDITEMA;
+    case LVN_SETDISPINFOW: return LVN_SETDISPINFOA;
     /* Toolbar */
     case TBN_GETBUTTONINFOW: return TBN_GETBUTTONINFOA;
     case TBN_GETINFOTIPW: return TBN_GETINFOTIPA;
@@ -1230,6 +1238,34 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
     {
         NMDATETIMESTRINGW *nmdts = (NMDATETIMESTRINGW *)hdr;
         return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, (WCHAR **)&nmdts->pszUserString, NULL, CONVERT_SEND);
+    }
+    /* List View */
+    case LVN_BEGINLABELEDITW:
+    case LVN_ENDLABELEDITW:
+    case LVN_SETDISPINFOW:
+    {
+        NMLVDISPINFOW *nmlvdi = (NMLVDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmlvdi->item.mask, LVIF_TEXT, &nmlvdi->item.pszText,
+                                         &nmlvdi->item.cchTextMax, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE);
+    }
+    case LVN_GETDISPINFOW:
+    {
+        NMLVDISPINFOW *nmlvdi = (NMLVDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmlvdi->item.mask, LVIF_TEXT, &nmlvdi->item.pszText,
+                                         &nmlvdi->item.cchTextMax, CONVERT_RECEIVE);
+    }
+    case LVN_GETINFOTIPW:
+    {
+        NMLVGETINFOTIPW *nmlvgit = (NMLVGETINFOTIPW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, &nmlvgit->pszText, &nmlvgit->cchTextMax,
+                                         CONVERT_SEND | CONVERT_RECEIVE);
+    }
+    case LVN_INCREMENTALSEARCHW:
+    case LVN_ODFINDITEMW:
+    {
+        NMLVFINDITEMW *nmlvfi = (NMLVFINDITEMW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmlvfi->lvfi.flags, LVFI_STRING | LVFI_SUBSTRING,
+                                         (WCHAR **)&nmlvfi->lvfi.psz, NULL, CONVERT_SEND);
     }
     /* Toolbar */
     case TBN_GETBUTTONINFOW:

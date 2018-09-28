@@ -751,6 +751,29 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
             notify_generic_text_handler((CHAR **)&nmdts->pszUserString, NULL);
             break;
         }
+        /* List View */
+        case LVN_BEGINLABELEDITA:
+        case LVN_ENDLABELEDITA:
+        case LVN_GETDISPINFOA:
+        case LVN_SETDISPINFOA:
+        {
+            NMLVDISPINFOA *nmlvdi = (NMLVDISPINFOA *)hdr;
+            notify_generic_text_handler(&nmlvdi->item.pszText, &nmlvdi->item.cchTextMax);
+            break;
+        }
+        case LVN_GETINFOTIPA:
+        {
+            NMLVGETINFOTIPA *nmlvgit = (NMLVGETINFOTIPA *)hdr;
+            notify_generic_text_handler(&nmlvgit->pszText, &nmlvgit->cchTextMax);
+            break;
+        }
+        case LVN_INCREMENTALSEARCHA:
+        case LVN_ODFINDITEMA:
+        {
+            NMLVFINDITEMA *nmlvfi = (NMLVFINDITEMA *)hdr;
+            notify_generic_text_handler((CHAR **)&nmlvfi->lvfi.psz, NULL);
+            break;
+        }
         /* Toolbar */
         case TBN_SAVE:
         {
@@ -1029,6 +1052,10 @@ static void test_wm_notify(void)
     static NMDATETIMEFORMATQUERYW nmdtfq;
     static NMDATETIMEWMKEYDOWNW nmdtkd;
     static NMDATETIMESTRINGW nmdts;
+    /* List View */
+    static NMLVDISPINFOW nmlvdi;
+    static NMLVGETINFOTIPW nmlvgit;
+    static NMLVFINDITEMW nmlvfi;
     /* Tool Bar */
     static NMTBRESTORE nmtbr;
     static NMTBSAVE nmtbs;
@@ -1051,6 +1078,21 @@ static void test_wm_notify(void)
          CONVERT_SEND},
         {&nmdts, sizeof(nmdts), NULL, 0, (WCHAR **)&nmdts.pszUserString, NULL, DTN_USERSTRINGW, DTN_USERSTRINGA,
          CONVERT_SEND},
+        /* List View */
+        {&nmlvfi, sizeof(nmlvfi), &nmlvfi.lvfi.flags, LVFI_STRING, (WCHAR **)&nmlvfi.lvfi.psz, NULL,
+         LVN_INCREMENTALSEARCHW, LVN_INCREMENTALSEARCHA, CONVERT_SEND},
+        {&nmlvfi, sizeof(nmlvfi), &nmlvfi.lvfi.flags, LVFI_SUBSTRING, (WCHAR **)&nmlvfi.lvfi.psz, NULL, LVN_ODFINDITEMW,
+         LVN_ODFINDITEMA, CONVERT_SEND},
+        {&nmlvdi, sizeof(nmlvdi), &nmlvdi.item.mask, LVIF_TEXT, &nmlvdi.item.pszText, &nmlvdi.item.cchTextMax,
+         LVN_BEGINLABELEDITW, LVN_BEGINLABELEDITA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmlvdi, sizeof(nmlvdi), &nmlvdi.item.mask, LVIF_TEXT, &nmlvdi.item.pszText, &nmlvdi.item.cchTextMax,
+         LVN_ENDLABELEDITW, LVN_ENDLABELEDITA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmlvdi, sizeof(nmlvdi), &nmlvdi.item.mask, LVIF_TEXT, &nmlvdi.item.pszText, &nmlvdi.item.cchTextMax,
+         LVN_GETDISPINFOW, LVN_GETDISPINFOA, DONT_CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmlvdi, sizeof(nmlvdi), &nmlvdi.item.mask, LVIF_TEXT, &nmlvdi.item.pszText, &nmlvdi.item.cchTextMax,
+         LVN_SETDISPINFOW, LVN_SETDISPINFOA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmlvgit, sizeof(nmlvgit), NULL, 0, &nmlvgit.pszText, &nmlvgit.cchTextMax, LVN_GETINFOTIPW, LVN_GETINFOTIPA,
+         CONVERT_SEND | CONVERT_RECEIVE},
         /* Tool Bar */
         {&nmtbs, sizeof(nmtbs), NULL, 0, (WCHAR **)&nmtbs.tbButton.iString, NULL, TBN_SAVE, TBN_SAVE,
          DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE},
