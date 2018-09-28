@@ -1064,6 +1064,19 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     case TBN_GETINFOTIPW: return TBN_GETINFOTIPA;
     /* Tooltip */
     case TTN_GETDISPINFOW: return TTN_GETDISPINFOA;
+    /* Tree View */
+    case TVN_BEGINDRAGW: return TVN_BEGINDRAGA;
+    case TVN_BEGINLABELEDITW: return TVN_BEGINLABELEDITA;
+    case TVN_BEGINRDRAGW: return TVN_BEGINRDRAGA;
+    case TVN_DELETEITEMW: return TVN_DELETEITEMA;
+    case TVN_ENDLABELEDITW: return TVN_ENDLABELEDITA;
+    case TVN_GETDISPINFOW: return TVN_GETDISPINFOA;
+    case TVN_GETINFOTIPW: return TVN_GETINFOTIPA;
+    case TVN_ITEMEXPANDEDW: return TVN_ITEMEXPANDEDA;
+    case TVN_ITEMEXPANDINGW: return TVN_ITEMEXPANDINGA;
+    case TVN_SELCHANGEDW: return TVN_SELCHANGEDA;
+    case TVN_SELCHANGINGW: return TVN_SELCHANGINGA;
+    case TVN_SETDISPINFOW: return TVN_SETDISPINFOA;
     }
     return code;
 }
@@ -1330,6 +1343,66 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
         }
 
         return ret;
+    }
+    /* Tree View */
+    case TVN_BEGINDRAGW:
+    case TVN_BEGINRDRAGW:
+    case TVN_ITEMEXPANDEDW:
+    case TVN_ITEMEXPANDINGW:
+    {
+        NMTREEVIEWW *nmtv = (NMTREEVIEWW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtv->itemNew.mask, TVIF_TEXT, &nmtv->itemNew.pszText, NULL,
+                                         CONVERT_SEND);
+    }
+    case TVN_DELETEITEMW:
+    {
+        NMTREEVIEWW *nmtv = (NMTREEVIEWW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtv->itemOld.mask, TVIF_TEXT, &nmtv->itemOld.pszText, NULL,
+                                         CONVERT_SEND);
+    }
+    case TVN_BEGINLABELEDITW:
+    case TVN_ENDLABELEDITW:
+    {
+        NMTVDISPINFOW *nmtvdi = (NMTVDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtvdi->item.mask, TVIF_TEXT, &nmtvdi->item.pszText,
+                                         &nmtvdi->item.cchTextMax, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE);
+    }
+    case TVN_SELCHANGINGW:
+    case TVN_SELCHANGEDW:
+    {
+        NMTREEVIEWW *nmtv = (NMTREEVIEWW *)hdr;
+        WCHAR *oldItemOldText = NULL;
+        WCHAR *oldItemNewText = NULL;
+
+        hdr->code = PAGER_GetAnsiNtfCode(hdr->code);
+
+        if (!((nmtv->itemNew.mask | nmtv->itemOld.mask) & TVIF_TEXT))
+            return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
+
+        if (nmtv->itemOld.mask & TVIF_TEXT) oldItemOldText = PAGER_ConvertText(&nmtv->itemOld.pszText);
+        if (nmtv->itemNew.mask & TVIF_TEXT) oldItemNewText = PAGER_ConvertText(&nmtv->itemNew.pszText);
+
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
+        PAGER_RestoreText(&nmtv->itemOld.pszText, oldItemOldText);
+        PAGER_RestoreText(&nmtv->itemNew.pszText, oldItemNewText);
+        return ret;
+    }
+    case TVN_GETDISPINFOW:
+    {
+        NMTVDISPINFOW *nmtvdi = (NMTVDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtvdi->item.mask, TVIF_TEXT, &nmtvdi->item.pszText,
+                                         &nmtvdi->item.cchTextMax, ZERO_SEND | CONVERT_RECEIVE);
+    }
+    case TVN_SETDISPINFOW:
+    {
+        NMTVDISPINFOW *nmtvdi = (NMTVDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmtvdi->item.mask, TVIF_TEXT, &nmtvdi->item.pszText,
+                                         &nmtvdi->item.cchTextMax, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE);
+    }
+    case TVN_GETINFOTIPW:
+    {
+        NMTVGETINFOTIPW *nmtvgit = (NMTVGETINFOTIPW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, &nmtvgit->pszText, &nmtvgit->cchTextMax, CONVERT_RECEIVE);
     }
     }
     /* Other notifications, no need to convert */

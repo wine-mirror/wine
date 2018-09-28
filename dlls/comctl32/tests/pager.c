@@ -72,6 +72,12 @@ enum test_conversion_flags
     ZERO_SEND = 0x80
 };
 
+enum handler_ids
+{
+    TVITEM_NEW_HANDLER,
+    TVITEM_OLD_HANDLER
+};
+
 static struct notify_test_info
 {
     UINT unicode;
@@ -82,6 +88,7 @@ static struct notify_test_info
     BOOL received;
     UINT test_id;
     UINT sub_test_id;
+    UINT handler_id;
     /* Text field conversion test behavior flag */
     DWORD flags;
 } notify_test_info;
@@ -123,6 +130,7 @@ struct generic_text_helper_para
     UINT code_unicode;
     UINT code_ansi;
     DWORD flags;
+    UINT handler_id;
 };
 
 static const struct notify_test_send test_convert_send_data[] =
@@ -811,6 +819,39 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
             notify_tooltip_handler((NMTTDISPINFOA *)hdr);
             break;
         }
+        /* Tree View */
+        case TVN_BEGINLABELEDITA:
+        case TVN_ENDLABELEDITA:
+        case TVN_GETDISPINFOA:
+        case TVN_SETDISPINFOA:
+        {
+            NMTVDISPINFOA *nmtvdi = (NMTVDISPINFOA *)hdr;
+            notify_generic_text_handler(&nmtvdi->item.pszText, &nmtvdi->item.cchTextMax);
+            break;
+        }
+        case TVN_GETINFOTIPA:
+        {
+            NMTVGETINFOTIPA *nmtvgit = (NMTVGETINFOTIPA *)hdr;
+            notify_generic_text_handler(&nmtvgit->pszText, &nmtvgit->cchTextMax);
+            break;
+        }
+        case TVN_SINGLEEXPAND:
+        case TVN_BEGINDRAGA:
+        case TVN_BEGINRDRAGA:
+        case TVN_ITEMEXPANDEDA:
+        case TVN_ITEMEXPANDINGA:
+        case TVN_DELETEITEMA:
+        case TVN_SELCHANGINGA:
+        case TVN_SELCHANGEDA:
+        {
+            NMTREEVIEWA *nmtv = (NMTREEVIEWA *)hdr;
+            if (notify_test_info.handler_id == TVITEM_NEW_HANDLER)
+                notify_generic_text_handler((CHAR **)&nmtv->itemNew.pszText, &nmtv->itemNew.cchTextMax);
+            else
+                notify_generic_text_handler((CHAR **)&nmtv->itemOld.pszText, &nmtv->itemOld.cchTextMax);
+            break;
+        }
+
         default:
             ok(0, "Unexpected message 0x%08x\n", hdr->code);
         }
@@ -865,6 +906,7 @@ static void test_notify_generic_text_helper(HWND pager, const struct generic_tex
     INT i;
 
     notify_test_info.flags = para->flags;
+    notify_test_info.handler_id = para->handler_id;
 
     if (para->flags & (CONVERT_SEND | DONT_CONVERT_SEND))
     {
@@ -1062,6 +1104,10 @@ static void test_wm_notify(void)
     static NMTOOLBARW nmtb;
     static NMTBDISPINFOW nmtbdi;
     static NMTBGETINFOTIPW nmtbgit;
+    /* Tree View */
+    static NMTVDISPINFOW nmtvdi;
+    static NMTVGETINFOTIPW nmtvgit;
+    static NMTREEVIEWW nmtv;
     static const struct generic_text_helper_para paras[] =
     {
         /* Combo Box Ex */
@@ -1103,7 +1149,50 @@ static void test_wm_notify(void)
         {&nmtb, sizeof(nmtb), NULL, 0, &nmtb.pszText, &nmtb.cchText, TBN_GETBUTTONINFOW, TBN_GETBUTTONINFOA,
          SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE},
         {&nmtbgit, sizeof(nmtbgit), NULL, 0, &nmtbgit.pszText, &nmtbgit.cchTextMax, TBN_GETINFOTIPW, TBN_GETINFOTIPA,
-         DONT_CONVERT_SEND | CONVERT_RECEIVE}
+         DONT_CONVERT_SEND | CONVERT_RECEIVE},
+        /* Tree View */
+        {&nmtvdi, sizeof(nmtvdi), &nmtvdi.item.mask, TVIF_TEXT, &nmtvdi.item.pszText, &nmtvdi.item.cchTextMax,
+         TVN_BEGINLABELEDITW, TVN_BEGINLABELEDITA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmtvdi, sizeof(nmtvdi), &nmtvdi.item.mask, TVIF_TEXT, &nmtvdi.item.pszText, &nmtvdi.item.cchTextMax,
+         TVN_ENDLABELEDITW, TVN_ENDLABELEDITA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmtvdi, sizeof(nmtvdi), &nmtvdi.item.mask, TVIF_TEXT, &nmtvdi.item.pszText, &nmtvdi.item.cchTextMax,
+         TVN_GETDISPINFOW, TVN_GETDISPINFOA, ZERO_SEND | DONT_CONVERT_SEND| CONVERT_RECEIVE},
+        {&nmtvdi, sizeof(nmtvdi), &nmtvdi.item.mask, TVIF_TEXT, &nmtvdi.item.pszText, &nmtvdi.item.cchTextMax,
+         TVN_SETDISPINFOW, TVN_SETDISPINFOA, SET_NULL_IF_NO_MASK | CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmtvgit, sizeof(nmtvgit), NULL, 0, &nmtvgit.pszText, &nmtvgit.cchTextMax, TVN_GETINFOTIPW, TVN_GETINFOTIPA,
+         DONT_CONVERT_SEND | CONVERT_RECEIVE},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_SINGLEEXPAND, TVN_SINGLEEXPAND, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_SINGLEEXPAND, TVN_SINGLEEXPAND, DONT_CONVERT_SEND | DONT_CONVERT_RECEIVE, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_BEGINDRAGW, TVN_BEGINDRAGA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_BEGINDRAGW, TVN_BEGINDRAGA, DONT_CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_BEGINRDRAGW, TVN_BEGINRDRAGA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_BEGINRDRAGW, TVN_BEGINRDRAGA, DONT_CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_ITEMEXPANDEDW, TVN_ITEMEXPANDEDA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_ITEMEXPANDEDW, TVN_ITEMEXPANDEDA, DONT_CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_ITEMEXPANDINGW, TVN_ITEMEXPANDINGA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_ITEMEXPANDINGW, TVN_ITEMEXPANDINGA, DONT_CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_DELETEITEMW, TVN_DELETEITEMA, DONT_CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_DELETEITEMW, TVN_DELETEITEMA, CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_SELCHANGINGW, TVN_SELCHANGINGA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_SELCHANGINGW, TVN_SELCHANGINGA, CONVERT_SEND, TVITEM_OLD_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemNew.mask, TVIF_TEXT, &nmtv.itemNew.pszText, &nmtv.itemNew.cchTextMax,
+         TVN_SELCHANGEDW, TVN_SELCHANGEDA, CONVERT_SEND, TVITEM_NEW_HANDLER},
+        {&nmtv, sizeof(nmtv), &nmtv.itemOld.mask, TVIF_TEXT, &nmtv.itemOld.pszText, &nmtv.itemOld.cchTextMax,
+         TVN_SELCHANGEDW, TVN_SELCHANGEDA, CONVERT_SEND, TVITEM_OLD_HANDLER}
     };
     INT i;
 
