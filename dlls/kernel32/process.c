@@ -2425,14 +2425,14 @@ error:
 static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, LPCWSTR cur_dir,
                                 LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
-                                LPPROCESS_INFORMATION info, LPCSTR unixdir,
-                                const pe_image_info_t *pe_info, int exec_only )
+                                LPPROCESS_INFORMATION info, LPCSTR unixdir, int exec_only )
 {
     static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
 
     BOOL ret;
     WCHAR buffer[MAX_PATH];
     LPWSTR new_cmd_line;
+    pe_image_info_t pe_info;
 
     if (!(ret = GetFullPathNameW(filename, MAX_PATH, buffer, NULL)))
 	return FALSE;
@@ -2446,8 +2446,10 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
         return FALSE;
     }
     sprintfW(new_cmd_line, argsW, winevdmW, buffer, cmd_line);
+    memset( &pe_info, 0, sizeof(pe_info) );
+    pe_info.machine = IMAGE_FILE_MACHINE_I386;
     ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
-                          flags, startup, info, unixdir, pe_info, exec_only );
+                          flags, startup, info, unixdir, &pe_info, exec_only );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
 }
@@ -2678,7 +2680,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                   inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
+                                   inherit, flags, startup_info, info, unixdir, FALSE );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "starting %s as %d-bit Winelib app\n",
@@ -2693,9 +2695,8 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             if (!strcmpiW( p, comW ) || !strcmpiW( p, pifW ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
-                pe_info.machine = IMAGE_FILE_MACHINE_I386;
                 retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                           inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
+                                           inherit, flags, startup_info, info, unixdir, FALSE );
                 break;
             }
             if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
@@ -2829,12 +2830,11 @@ static void exec_process( LPCWSTR name )
         /* check for .com or .pif extension */
         if (!(p = strrchrW( name, '.' ))) break;
         if (strcmpiW( p, comW ) && strcmpiW( p, pifW )) break;
-        pe_info.machine = IMAGE_FILE_MACHINE_I386;
         /* fall through */
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         create_vdm_process( name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                            FALSE, 0, &startup_info, &info, NULL, &pe_info, TRUE );
+                            FALSE, 0, &startup_info, &info, NULL, TRUE );
         break;
     default:
         break;
