@@ -819,6 +819,8 @@ static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL h
         ok_(__FILE__, line)(!desc.MiscFlags, "Unexpected misc flags %#x.\n", desc.MiscFlags);
 
         pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
+        if (!pixel_size.width || !pixel_size.height)
+            pixel_size.width = pixel_size.height = 1;
         ok_(__FILE__, line)(desc.Width == pixel_size.width, "Got width %u, expected %u.\n",
                 desc.Width, pixel_size.width);
         ok_(__FILE__, line)(desc.Height == pixel_size.height, "Got height %u, expected %u.\n",
@@ -6887,6 +6889,25 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
 
     check_bitmap_surface_(line, bitmap, has_surface, options);
 
+    ID2D1Bitmap_Release(bitmap);
+
+    /* Zero sized bitmaps. */
+    set_size_u(&size, 0, 0);
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    check_bitmap_surface_(line, bitmap, has_surface, options);
+    ID2D1Bitmap_Release(bitmap);
+
+    set_size_u(&size, 2, 0);
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    check_bitmap_surface_(line, bitmap, has_surface, options);
+    ID2D1Bitmap_Release(bitmap);
+
+    set_size_u(&size, 0, 2);
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    check_bitmap_surface_(line, bitmap, has_surface, options);
     ID2D1Bitmap_Release(bitmap);
 
     /* WIC bitmap. */

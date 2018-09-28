@@ -317,6 +317,8 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
 
     texture_desc.Width = size.width;
     texture_desc.Height = size.height;
+    if (!texture_desc.Width || !texture_desc.Height)
+        texture_desc.Width = texture_desc.Height = 1;
     texture_desc.MipLevels = 1;
     texture_desc.ArraySize = 1;
     texture_desc.Format = desc->pixelFormat.format;
