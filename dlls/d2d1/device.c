@@ -1852,6 +1852,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(
 
         memset(&bitmap_desc, 0, sizeof(bitmap_desc));
         bitmap_desc.pixelFormat.format = surface_desc.Format;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         desc = &bitmap_desc;
     }
