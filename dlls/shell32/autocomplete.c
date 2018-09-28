@@ -109,6 +109,12 @@ static void set_text_and_selection(IAutoCompleteImpl *ac, HWND hwnd, WCHAR *text
         CallWindowProcW(proc, hwnd, EM_SETSEL, start, end);
 }
 
+static void hide_listbox(IAutoCompleteImpl *ac, HWND hwnd)
+{
+    ShowWindow(hwnd, SW_HIDE);
+    SendMessageW(hwnd, LB_RESETCONTENT, 0, 0);
+}
+
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
 {
     /* Replace the first %s directly without using snprintf, to avoid
@@ -152,14 +158,14 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
             {
                 len = SendMessageW(hwndListBox, LB_GETTEXT, sel, (LPARAM)text);
                 set_text_and_selection(ac, hwnd, text, 0, len);
-                ShowWindow(hwndListBox, SW_HIDE);
+                hide_listbox(ac, hwndListBox);
                 ac->no_fwd_char = '\r';  /* RETURN char */
                 heap_free(text);
                 return TRUE;
             }
         }
     }
-    ShowWindow(hwndListBox, SW_HIDE);
+    hide_listbox(ac, hwndListBox);
     return FALSE;
 }
 
@@ -259,7 +265,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     if (flag != autoappend_flag_displayempty && len == 0)
     {
         if (ac->options & ACO_AUTOSUGGEST)
-            ShowWindow(ac->hwndListBox, SW_HIDE);
+            hide_listbox(ac, ac->hwndListBox);
         return;
     }
 
@@ -326,7 +332,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
             SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
         }
         else
-            ShowWindow(ac->hwndListBox, SW_HIDE);
+            hide_listbox(ac, ac->hwndListBox);
     }
 }
 
@@ -350,7 +356,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             /* When pressing ESC, Windows hides the auto-suggest listbox, if visible */
             if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBox))
             {
-                ShowWindow(ac->hwndListBox, SW_HIDE);
+                hide_listbox(ac, ac->hwndListBox);
                 ac->no_fwd_char = 0x1B;  /* ESC char */
                 return 0;
             }
@@ -377,7 +383,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 }
 
                 if (ac->options & ACO_AUTOSUGGEST)
-                    ShowWindow(ac->hwndListBox, SW_HIDE);
+                    hide_listbox(ac, ac->hwndListBox);
                 heap_free(text);
                 return 0;
             }
@@ -433,12 +439,12 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     {
         case CB_SHOWDROPDOWN:
             if (This->options & ACO_AUTOSUGGEST)
-                ShowWindow(This->hwndListBox, SW_HIDE);
+                hide_listbox(This, This->hwndListBox);
             return 0;
         case WM_KILLFOCUS:
             if ((This->options & ACO_AUTOSUGGEST) && ((HWND)wParam != This->hwndListBox))
             {
-                ShowWindow(This->hwndListBox, SW_HIDE);
+                hide_listbox(This, This->hwndListBox);
             }
             break;
         case WM_KEYDOWN:
@@ -504,7 +510,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 break;
             len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
             set_text_and_selection(This, This->hwndEdit, msg, 0, len);
-            ShowWindow(hwnd, SW_HIDE);
+            hide_listbox(This, hwnd);
             heap_free(msg);
             break;
         default:
