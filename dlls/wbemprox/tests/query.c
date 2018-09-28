@@ -704,6 +704,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
 
 static void test_StdRegProv( IWbemServices *services )
 {
+    static const WCHAR createkeyW[] = {'C','r','e','a','t','e','K','e','y',0};
     static const WCHAR enumkeyW[] = {'E','n','u','m','K','e','y',0};
     static const WCHAR enumvaluesW[] = {'E','n','u','m','V','a','l','u','e','s',0};
     static const WCHAR getstringvalueW[] = {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
@@ -719,11 +720,14 @@ static void test_StdRegProv( IWbemServices *services )
     static const WCHAR windowsW[] =
         {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR regtestW[] =
+        {'S','o','f','t','w','a','r','e','\\','S','t','d','R','e','g','P','r','o','v','T','e','s','t',0};
     BSTR class = SysAllocString( stdregprovW ), method;
     IWbemClassObject *reg, *sig_in, *in, *out;
     VARIANT defkey, subkey, retval, names, types, value, valuename;
     CIMTYPE type;
     HRESULT hr;
+    LONG res;
 
     hr = IWbemServices_GetObject( services, class, 0, NULL, &reg, NULL );
     if (hr != S_OK)
@@ -731,6 +735,44 @@ static void test_StdRegProv( IWbemServices *services )
         win_skip( "StdRegProv not available\n" );
         return;
     }
+    hr = IWbemClassObject_GetMethod( reg, createkeyW, 0, &sig_in, NULL );
+    ok( hr == S_OK, "failed to get CreateKey method %08x\n", hr );
+
+    hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
+    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+
+    V_VT( &defkey ) = VT_I4;
+    V_I4( &defkey ) = 0x80000001;
+    hr = IWbemClassObject_Put( in, defkeyW, 0, &defkey, 0 );
+    ok( hr == S_OK, "failed to set root %08x\n", hr );
+
+    V_VT( &subkey ) = VT_BSTR;
+    V_BSTR( &subkey ) = SysAllocString( regtestW );
+    hr = IWbemClassObject_Put( in, subkeynameW, 0, &subkey, 0 );
+    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+
+    out = NULL;
+    method = SysAllocString( createkeyW );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    SysFreeString( method );
+
+    type = 0xdeadbeef;
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, returnvalueW, 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %u\n", V_UI4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+
+    res = RegDeleteKeyW( HKEY_CURRENT_USER, regtestW );
+    ok( !res, "got %d\n", res );
+
+    VariantClear( &subkey );
+    IWbemClassObject_Release( in );
+    IWbemClassObject_Release( out );
+    IWbemClassObject_Release( sig_in );
+
     hr = IWbemClassObject_GetMethod( reg, enumkeyW, 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get EnumKey method %08x\n", hr );
 

@@ -712,6 +712,7 @@ static const struct column col_sounddevice[] =
 };
 static const struct column col_stdregprov[] =
 {
+    { method_createkeyW,      CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_enumkeyW,        CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_enumvaluesW,     CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_getstringvalueW, CIM_FLAG_ARRAY|COL_FLAG_METHOD }
@@ -1135,6 +1136,7 @@ struct record_sounddevice
 };
 struct record_stdregprov
 {
+    class_method *createkey;
     class_method *enumkey;
     class_method *enumvalues;
     class_method *getstringvalue;
@@ -1199,6 +1201,9 @@ static const struct record_param data_param[] =
     { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_startserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_stopserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_stdregprovW, method_createkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
+    { class_stdregprovW, method_createkeyW, 1, param_subkeynameW, CIM_STRING },
+    { class_stdregprovW, method_createkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
     { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
     { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -1237,7 +1242,7 @@ static const struct record_sounddevice data_sounddevice[] =
 };
 static const struct record_stdregprov data_stdregprov[] =
 {
-    { reg_enum_key, reg_enum_values, reg_get_stringvalue }
+    { reg_create_key, reg_enum_key, reg_enum_values, reg_get_stringvalue }
 };
 static UINT16 systemenclosure_chassistypes[] =
 {
