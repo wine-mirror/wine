@@ -775,6 +775,8 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
 
     if ((This->options & ACO_AUTOSUGGEST) && This->hwndEdit && !This->hwndListBox)
         create_listbox(This);
+    else if (!(This->options & ACO_AUTOSUGGEST) && This->hwndListBox)
+        hide_listbox(This, This->hwndListBox);
 
     return hr;
 }
