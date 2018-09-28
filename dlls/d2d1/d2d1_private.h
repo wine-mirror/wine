@@ -136,7 +136,7 @@ struct d2d_device_context
     ID2D1Factory *factory;
     ID2D1Device *device;
     ID3D10Device *d3d_device;
-    ID3D10RenderTargetView *view;
+    struct d2d_bitmap *target;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D10PixelShader *ps;
@@ -159,7 +159,6 @@ struct d2d_device_context
 HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface, IUnknown *outer_unknown,
         const struct d2d_device_context_ops *ops, const D2D1_RENDER_TARGET_PROPERTIES *desc,
         void **render_target) DECLSPEC_HIDDEN;
-HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_device_context_is_dxgi_target(const struct d2d_device_context *context)
 {
@@ -191,6 +190,8 @@ struct d2d_dc_render_target
     LONG refcount;
 
     IDXGISurface1 *dxgi_surface;
+    D2D1_PIXEL_FORMAT pixel_format;
+    ID3D10Device1 *d3d_device;
     ID2D1RenderTarget *dxgi_target;
     IUnknown *dxgi_inner;
 
@@ -345,6 +346,7 @@ struct d2d_bitmap
 
     ID2D1Factory *factory;
     ID3D10ShaderResourceView *view;
+    ID3D10RenderTargetView *rtv;
     IDXGISurface *surface;
     D2D1_SIZE_U pixel_size;
     D2D1_PIXEL_FORMAT format;

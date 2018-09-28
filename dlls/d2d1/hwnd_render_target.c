@@ -675,11 +675,14 @@ static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTa
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
     IDXGISurface1 *dxgi_surface;
+    ID2D1DeviceContext *context;
+    ID2D1Bitmap1 *bitmap;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u.\n", iface, size->width, size->height);
 
-    d2d_d3d_render_target_create_rtv(render_target->dxgi_target, NULL);
+    ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, &IID_ID2D1DeviceContext, (void **)&context);
+    ID2D1DeviceContext_SetTarget(context, NULL);
 
     if (SUCCEEDED(hr = IDXGISwapChain_ResizeBuffers(render_target->swapchain, 1, size->width, size->height,
         DXGI_FORMAT_UNKNOWN, 0)))
@@ -688,12 +691,24 @@ static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTa
                 (void **)&dxgi_surface)))
         {
             WARN("Failed to get buffer, hr %#x.\n", hr);
+            ID2D1DeviceContext_Release(context);
             return hr;
         }
 
-        hr = d2d_d3d_render_target_create_rtv(render_target->dxgi_target, dxgi_surface);
+        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(context, (IDXGISurface *)dxgi_surface, NULL, &bitmap);
         IDXGISurface1_Release(dxgi_surface);
+        if (FAILED(hr))
+        {
+            WARN("Failed to create target bitmap, hr %#x.\n", hr);
+            ID2D1DeviceContext_Release(context);
+            return hr;
+        }
+
+        ID2D1DeviceContext_SetTarget(context, (ID2D1Image *)bitmap);
+        ID2D1Bitmap1_Release(bitmap);
     }
+
+    ID2D1DeviceContext_Release(context);
 
     return hr;
 }

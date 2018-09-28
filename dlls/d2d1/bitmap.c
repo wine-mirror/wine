@@ -70,6 +70,8 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap1 *iface)
     if (!refcount)
     {
         ID3D10ShaderResourceView_Release(bitmap->view);
+        if (bitmap->rtv)
+            ID3D10RenderTargetView_Release(bitmap->rtv);
         if (bitmap->surface)
             IDXGISurface_Release(bitmap->surface);
         ID2D1Factory_Release(bitmap->factory);
@@ -274,6 +276,10 @@ static BOOL format_supported(const D2D1_PIXEL_FORMAT *format)
 static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context *context,
         ID3D10ShaderResourceView *view, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES1 *desc)
 {
+    ID3D10Resource *resource;
+    ID3D10Device *d3d_device;
+    HRESULT hr;
+
     bitmap->ID2D1Bitmap1_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
     ID2D1Factory_AddRef(bitmap->factory = context->factory);
@@ -283,14 +289,21 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context
     bitmap->dpi_x = desc->dpiX;
     bitmap->dpi_y = desc->dpiY;
     bitmap->options = desc->bitmapOptions;
-    if (d2d_device_context_is_dxgi_target(context))
-    {
-        ID3D10Resource *resource;
 
-        ID3D10ShaderResourceView_GetResource(bitmap->view, &resource);
+    ID3D10ShaderResourceView_GetResource(bitmap->view, &resource);
+
+    if (d2d_device_context_is_dxgi_target(context))
         ID3D10Resource_QueryInterface(resource, &IID_IDXGISurface, (void **)&bitmap->surface);
-        ID3D10Resource_Release(resource);
+
+    if (bitmap->options & D2D1_BITMAP_OPTIONS_TARGET)
+    {
+        ID3D10Resource_GetDevice(resource, &d3d_device);
+        if (FAILED(hr = ID3D10Device_CreateRenderTargetView(d3d_device, resource, NULL, &bitmap->rtv)))
+            WARN("Failed to create rtv, hr %#x.\n", hr);
+        ID3D10Device_Release(d3d_device);
     }
+
+    ID3D10Resource_Release(resource);
 
     if (bitmap->dpi_x == 0.0f && bitmap->dpi_y == 0.0f)
     {

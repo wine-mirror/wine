@@ -69,7 +69,8 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_Release(ID2D1BitmapRende
     if (!refcount)
     {
         IUnknown_Release(render_target->dxgi_inner);
-        ID2D1Bitmap_Release(render_target->bitmap);
+        if (render_target->bitmap)
+            ID2D1Bitmap_Release(render_target->bitmap);
         heap_free(render_target);
     }
 
@@ -733,10 +734,9 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
         D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options)
 {
     D2D1_RENDER_TARGET_PROPERTIES dxgi_rt_desc;
-    D2D1_BITMAP_PROPERTIES bitmap_desc;
-    D3D10_TEXTURE2D_DESC texture_desc;
-    IDXGISurface *dxgi_surface;
-    ID3D10Texture2D *texture;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    ID2D1DeviceContext *context;
+    D2D1_SIZE_U bitmap_size;
     HRESULT hr;
 
     if (options)
@@ -750,24 +750,24 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
 
     if (pixel_size)
     {
-        texture_desc.Width = pixel_size->width;
-        texture_desc.Height = pixel_size->height;
+        bitmap_size.width = pixel_size->width;
+        bitmap_size.height = pixel_size->height;
     }
     else if (size)
     {
-        texture_desc.Width = ceilf((size->width * parent_target->desc.dpiX) / 96.0f);
-        texture_desc.Height = ceilf((size->height * parent_target->desc.dpiY) / 96.0f);
+        bitmap_size.width = ceilf((size->width * parent_target->desc.dpiX) / 96.0f);
+        bitmap_size.height = ceilf((size->height * parent_target->desc.dpiY) / 96.0f);
     }
     else
     {
-        texture_desc.Width = parent_target->pixel_size.width;
-        texture_desc.Height = parent_target->pixel_size.height;
+        bitmap_size.width = parent_target->pixel_size.width;
+        bitmap_size.height = parent_target->pixel_size.height;
     }
 
-    if (size)
+    if (size && size->width != 0.0f && size->height != 0.0f)
     {
-        dxgi_rt_desc.dpiX = (texture_desc.Width * 96.0f) / size->width;
-        dxgi_rt_desc.dpiY = (texture_desc.Height * 96.0f) / size->height;
+        dxgi_rt_desc.dpiX = (bitmap_size.width * 96.0f) / size->width;
+        dxgi_rt_desc.dpiY = (bitmap_size.height * 96.0f) / size->height;
     }
     else
     {
@@ -776,46 +776,21 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     }
 
     if (!pixel_format || pixel_format->format == DXGI_FORMAT_UNKNOWN)
-        texture_desc.Format = parent_target->desc.pixelFormat.format;
+        dxgi_rt_desc.pixelFormat.format = parent_target->desc.pixelFormat.format;
     else
-        texture_desc.Format = pixel_format->format;
-    dxgi_rt_desc.pixelFormat.format = texture_desc.Format;
+        dxgi_rt_desc.pixelFormat.format = pixel_format->format;
 
     if (!pixel_format || pixel_format->alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
         dxgi_rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
     else
         dxgi_rt_desc.pixelFormat.alphaMode = pixel_format->alphaMode;
 
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET | D3D10_BIND_SHADER_RESOURCE;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(parent_target->d3d_device, &texture_desc, NULL, &texture)))
-    {
-        WARN("Failed to create texture, hr %#x.\n", hr);
-        return hr;
-    }
-
-    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&dxgi_surface);
-    ID3D10Texture2D_Release(texture);
-    if (FAILED(hr))
-    {
-        WARN("Failed to get DXGI surface interface, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (FAILED(hr = d2d_d3d_create_render_target(parent_target->device, dxgi_surface,
+    if (FAILED(hr = d2d_d3d_create_render_target(parent_target->device, NULL,
             (IUnknown *)&render_target->ID2D1BitmapRenderTarget_iface,
             parent_target->ops ? &d2d_bitmap_render_target_ops : NULL,
             &dxgi_rt_desc, (void **)&render_target->dxgi_inner)))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
-        IDXGISurface_Release(dxgi_surface);
         return hr;
     }
 
@@ -824,20 +799,23 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     {
         WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
-        IDXGISurface_Release(dxgi_surface);
         return hr;
     }
 
     bitmap_desc.pixelFormat = dxgi_rt_desc.pixelFormat;
     bitmap_desc.dpiX = dxgi_rt_desc.dpiX;
     bitmap_desc.dpiY = dxgi_rt_desc.dpiY;
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
+    bitmap_desc.colorContext = NULL;
 
-    hr = ID2D1RenderTarget_CreateSharedBitmap(render_target->dxgi_target, &IID_IDXGISurface, dxgi_surface,
-            &bitmap_desc, &render_target->bitmap);
-    IDXGISurface_Release(dxgi_surface);
+    ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, &IID_ID2D1DeviceContext, (void **)&context);
+    hr = ID2D1DeviceContext_CreateBitmap(context, bitmap_size, NULL, 0, &bitmap_desc,
+            (ID2D1Bitmap1 **)&render_target->bitmap);
+    ID2D1DeviceContext_SetTarget(context, (ID2D1Image *)render_target->bitmap);
+    ID2D1DeviceContext_Release(context);
     if (FAILED(hr))
     {
-        WARN("Failed to create shared bitmap, hr %#x.\n", hr);
+        WARN("Failed to create target bitmap, hr %#x.\n", hr);
         ID2D1RenderTarget_Release(render_target->dxgi_target);
         IUnknown_Release(render_target->dxgi_inner);
         return hr;
