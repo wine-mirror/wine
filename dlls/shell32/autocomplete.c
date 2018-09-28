@@ -19,17 +19,9 @@
  */
 
 /*
-  Implemented:
-  - ACO_AUTOAPPEND style
-  - ACO_AUTOSUGGEST style
-  - ACO_UPDOWNKEYDROPSLIST style
-
-  - Handle pwzsRegKeyPath and pwszQuickComplete in Init
-
   TODO:
   - implement ACO_SEARCH style
   - implement ACO_FILTERPREFIXES style
-  - implement ACO_USETAB style
   - implement ACO_RTLREADING style
   - implement ResetEnumerator
   - string compares should be case-insensitive, the content of the list should be sorted
@@ -205,7 +197,7 @@ static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
             }
         }
     }
-    else if (key == VK_UP)
+    else if (key == VK_UP || (key == VK_TAB && (GetKeyState(VK_SHIFT) & 0x8000)))
         sel = ((sel - 1) < -1) ? count - 1 : sel - 1;
     else
         sel = ((sel + 1) >= count) ? -1 : sel + 1;
@@ -390,6 +382,14 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
 
             if (select_item_with_return_key(ac, hwnd))
                 return 0;
+            break;
+        case VK_TAB:
+            if ((ac->options & (ACO_AUTOSUGGEST | ACO_USETAB)) == (ACO_AUTOSUGGEST | ACO_USETAB)
+                && IsWindowVisible(ac->hwndListBox) && !(GetKeyState(VK_CONTROL) & 0x8000))
+            {
+                ac->no_fwd_char = '\t';
+                return change_selection(ac, hwnd, wParam);
+            }
             break;
         case VK_UP:
         case VK_DOWN:
@@ -646,7 +646,6 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 
     if (This->options & ACO_SEARCH) FIXME(" ACO_SEARCH not supported\n");
     if (This->options & ACO_FILTERPREFIXES) FIXME(" ACO_FILTERPREFIXES not supported\n");
-    if (This->options & ACO_USETAB) FIXME(" ACO_USETAB not supported\n");
     if (This->options & ACO_RTLREADING) FIXME(" ACO_RTLREADING not supported\n");
 
     if (!hwndEdit || !punkACL)
