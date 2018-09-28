@@ -346,6 +346,15 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
 {
     switch (wParam)
     {
+        case VK_ESCAPE:
+            /* When pressing ESC, Windows hides the auto-suggest listbox, if visible */
+            if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBox))
+            {
+                ShowWindow(ac->hwndListBox, SW_HIDE);
+                ac->no_fwd_char = 0x1B;  /* ESC char */
+                return 0;
+            }
+            break;
         case VK_RETURN:
             /* If quickComplete is set and control is pressed, replace the string */
             if (ac->quickComplete && (GetKeyState(VK_CONTROL) & 0x8000))
