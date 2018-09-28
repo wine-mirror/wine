@@ -77,6 +77,7 @@ typedef struct
     WCHAR *quickComplete;
     IEnumString *enumstr;
     AUTOCOMPLETEOPTIONS options;
+    WCHAR no_fwd_char;
 } IAutoCompleteImpl;
 
 enum autoappend_flag
@@ -132,6 +133,34 @@ static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *st
     }
     *dst = '\0';
     return dst - base;
+}
+
+static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
+{
+    WCHAR *text;
+    HWND hwndListBox = ac->hwndListBox;
+    if (!(ac->options & ACO_AUTOSUGGEST))
+        return FALSE;
+
+    if (IsWindowVisible(hwndListBox))
+    {
+        INT sel = SendMessageW(hwndListBox, LB_GETCURSEL, 0, 0);
+        if (sel >= 0)
+        {
+            UINT len = SendMessageW(hwndListBox, LB_GETTEXTLEN, sel, 0);
+            if ((text = heap_alloc((len + 1) * sizeof(WCHAR))))
+            {
+                len = SendMessageW(hwndListBox, LB_GETTEXT, sel, (LPARAM)text);
+                set_text_and_selection(ac, hwnd, text, 0, len);
+                ShowWindow(hwndListBox, SW_HIDE);
+                ac->no_fwd_char = '\r';  /* RETURN char */
+                heap_free(text);
+                return TRUE;
+            }
+        }
+    }
+    ShowWindow(hwndListBox, SW_HIDE);
+    return FALSE;
 }
 
 static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
@@ -324,6 +353,8 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 WCHAR *text, *buf;
                 size_t sz;
                 UINT len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+                ac->no_fwd_char = '\n';  /* CTRL+RETURN char */
+
                 if (!(text = heap_alloc((len + 1) * sizeof(WCHAR))))
                     return 0;
                 len = SendMessageW(hwnd, WM_GETTEXT, len + 1, (LPARAM)text);
@@ -342,8 +373,8 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 return 0;
             }
 
-            if (ac->options & ACO_AUTOSUGGEST)
-                ShowWindow(ac->hwndListBox, SW_HIDE);
+            if (select_item_with_return_key(ac, hwnd))
+                return 0;
             break;
         case VK_UP:
         case VK_DOWN:
@@ -375,6 +406,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             return ret;
         }
     }
+    ac->no_fwd_char = '\0';
     return CallWindowProcW(ac->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 }
 
@@ -404,6 +436,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
         case WM_CHAR:
         case WM_UNICHAR:
+            if (wParam == This->no_fwd_char) return 0;
+            This->no_fwd_char = '\0';
+
             /* Don't autocomplete at all on most control characters */
             if (iscntrlW(wParam) && !(wParam >= '\b' && wParam <= '\r'))
                 break;
