@@ -791,7 +791,7 @@ static void register_avicap_devices(void)
 
     for (i = 0; i < 10; ++i)
     {
-        if (!capGetDriverDescriptionW(i, name, sizeof(name), version, sizeof(version)))
+        if (!capGetDriverDescriptionW(i, name, ARRAY_SIZE(name), version, ARRAY_SIZE(version)))
             break;
 
         friendlyname[5] = '0' + i;
