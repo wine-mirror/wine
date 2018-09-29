@@ -1891,8 +1891,8 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
             'p','a','c','k','a','g','e','/','2','0','0','6','/','r','e','l','a','t','i','o','n','s','h','i','p','s',0};
     static const WCHAR relationshipsW[] = {'R','e','l','a','t','i','o','n','s','h','i','p','s',0};
     IOpcRelationshipEnumerator *enumerator;
+    BSTR rels_part_uri = NULL;
     IOpcPartUri *rels_uri;
-    BSTR rels_part_uri;
     IStream *content;
     BOOL has_next;
     HRESULT hr;
