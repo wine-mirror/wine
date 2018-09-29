@@ -4392,7 +4392,7 @@ static void test_swapchain_window_messages(void)
     expect_messages = resize_target_messages;
     memset(&mode_desc, 0, sizeof(mode_desc));
     mode_desc.Width = 800;
-    mode_desc.Width = 600;
+    mode_desc.Height = 600;
     hr = IDXGISwapChain_ResizeTarget(swapchain, &mode_desc);
     ok(hr == S_OK, "Failed to resize target, hr %#x.\n", hr);
     flush_events();
@@ -4401,7 +4401,7 @@ static void test_swapchain_window_messages(void)
     expect_messages = resize_target_messages;
     memset(&mode_desc, 0, sizeof(mode_desc));
     mode_desc.Width = 400;
-    mode_desc.Width = 200;
+    mode_desc.Height = 200;
     hr = IDXGISwapChain_ResizeTarget(swapchain, &mode_desc);
     ok(hr == S_OK, "Failed to resize target, hr %#x.\n", hr);
     flush_events();
