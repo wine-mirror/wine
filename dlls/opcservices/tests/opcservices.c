@@ -1115,6 +1115,7 @@ static void test_combine_uri(void)
             hr = IOpcFactory_CreatePackageRootUri(factory, &uri);
         else
             hr = IOpcFactory_CreatePartUri(factory, uriW, (IOpcPartUri **)&uri);
+        ok(SUCCEEDED(hr), "%u: failed to create uri, hr %#x.\n", i, hr);
 
         hr = CreateUri(relativeW, Uri_CREATE_ALLOW_RELATIVE, 0, &relative_uri);
         ok(SUCCEEDED(hr), "%u: failed to create relative uri, hr %#x.\n", i, hr);
