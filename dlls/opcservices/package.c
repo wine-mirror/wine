@@ -1723,7 +1723,8 @@ static HRESULT opc_package_collect_content_types(IOpcPackage *package, struct co
         if (FAILED(hr))
             break;
 
-        IOpcPartEnumerator_MoveNext(enumerator, &has_next);
+        if (FAILED(hr = IOpcPartEnumerator_MoveNext(enumerator, &has_next)))
+            break;
     }
 
     IOpcPartEnumerator_Release(enumerator);
