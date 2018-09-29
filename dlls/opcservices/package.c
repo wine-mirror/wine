@@ -1941,7 +1941,8 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
     if (SUCCEEDED(hr))
         hr = IXmlWriter_Flush(writer);
 
-    hr = IOpcUri_GetRelationshipsPartUri(uri, &rels_uri);
+    if (SUCCEEDED(hr))
+        hr = IOpcUri_GetRelationshipsPartUri(uri, &rels_uri);
     if (SUCCEEDED(hr))
         hr = IOpcPartUri_GetRawUri(rels_uri, &rels_part_uri);
     if (SUCCEEDED(hr))
