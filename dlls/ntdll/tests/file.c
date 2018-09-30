@@ -347,6 +347,7 @@ static void create_file_test(void)
 
 static void open_file_test(void)
 {
+    static const WCHAR testdirW[] = {'o','p','e','n','f','i','l','e','t','e','s','t',0};
     static const char testdata[] = "Hello World";
     static WCHAR fooW[] = {'f','o','o',0};
     NTSTATUS status;
@@ -415,6 +416,27 @@ static void open_file_test(void)
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
     ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
     CloseHandle( handle );
+    CloseHandle( dir );
+
+    GetTempPathW( MAX_PATH, path );
+    lstrcatW( path, testdirW );
+    CreateDirectoryW( path, NULL );
+
+    pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
+    attr.RootDirectory = NULL;
+    status = pNtOpenFile( &dir, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
+
+    GetTempFileNameW( path, fooW, 0, tmpfile );
+    file = CreateFileW( tmpfile, FILE_WRITE_DATA, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError() );
+    numbytes = 0xdeadbeef;
+    ret = WriteFile( file, testdata, sizeof(testdata) - 1, &numbytes, NULL );
+    ok( ret, "WriteFile failed with error %u\n", GetLastError() );
+    ok( numbytes == sizeof(testdata) - 1, "failed to write all data\n" );
+    CloseHandle( file );
 
     /* try open by file id */
 
@@ -436,15 +458,7 @@ static void open_file_test(void)
                               FILE_SHARE_READ,
                               FILE_OPEN_BY_FILE_ID |
                               ((info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? FILE_DIRECTORY_FILE : 0) );
-        ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED || status == STATUS_NOT_IMPLEMENTED || status == STATUS_SHARING_VIOLATION,
-            "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
-        if (status == STATUS_NOT_IMPLEMENTED)
-        {
-            win_skip( "FILE_OPEN_BY_FILE_ID not supported\n" );
-            break;
-        }
-        if (status == STATUS_SHARING_VIOLATION)
-            trace( "%s is currently open\n", wine_dbgstr_w(info->FileName) );
+        ok( status == STATUS_SUCCESS, "open %s failed %x\n", wine_dbgstr_w(info->FileName), status );
         if (!status)
         {
             BYTE buf[sizeof(FILE_ALL_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
@@ -480,18 +494,7 @@ static void open_file_test(void)
     CloseHandle( dir );
     CloseHandle( root );
 
-    GetTempPathW( MAX_PATH, path );
-    GetTempFileNameW( path, fooW, 0, tmpfile );
     pRtlDosPathNameToNtPathName_U( tmpfile, &nameW, NULL, NULL );
-
-    file = CreateFileW( tmpfile, FILE_WRITE_DATA, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError() );
-    numbytes = 0xdeadbeef;
-    ret = WriteFile( file, testdata, sizeof(testdata) - 1, &numbytes, NULL );
-    ok( ret, "WriteFile failed with error %u\n", GetLastError() );
-    ok( numbytes == sizeof(testdata) - 1, "failed to write all data\n" );
-    CloseHandle( file );
-
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -547,6 +550,7 @@ static void open_file_test(void)
     CloseHandle( file );
     CloseHandle( root );
     DeleteFileW( tmpfile );
+    RemoveDirectoryW( path );
 }
 
 static void delete_file_test(void)
