@@ -74,6 +74,7 @@ static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_AT
 static NTSTATUS (WINAPI *pNtOpenIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI *pNtQueryIoCompletion)(HANDLE, IO_COMPLETION_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
+static NTSTATUS (WINAPI *pNtRemoveIoCompletionEx)(HANDLE,FILE_IO_COMPLETION_INFORMATION*,ULONG,ULONG*,LARGE_INTEGER*,BOOLEAN);
 static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, SIZE_T);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryAttributesFile)(const OBJECT_ATTRIBUTES*,FILE_BASIC_INFORMATION*);
@@ -864,9 +865,17 @@ static void nt_mailslot_test(void)
     ok( rc == STATUS_SUCCESS, "NtClose failed\n");
 }
 
+static void WINAPI user_apc_proc(ULONG_PTR arg)
+{
+    unsigned int *apc_count = (unsigned int *)arg;
+    ++*apc_count;
+}
+
 static void test_set_io_completion(void)
 {
+    FILE_IO_COMPLETION_INFORMATION info[2] = {{0}};
     LARGE_INTEGER timeout = {{0}};
+    unsigned int apc_count;
     IO_STATUS_BLOCK iosb;
     ULONG_PTR key, value;
     NTSTATUS res;
@@ -879,6 +888,9 @@ static void test_set_io_completion(void)
     res = pNtCreateIoCompletion( &h, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
     ok( res == STATUS_SUCCESS, "NtCreateIoCompletion failed: %#x\n", res );
     ok( h && h != INVALID_HANDLE_VALUE, "got invalid handle %p\n", h );
+
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_TIMEOUT, "NtRemoveIoCompletion failed: %#x\n", res );
 
     res = pNtSetIoCompletion( h, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size );
     ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %x\n", res );
@@ -895,6 +907,79 @@ static void test_set_io_completion(void)
 
     count = get_pending_msgs(h);
     ok( !count, "Unexpected msg count: %d\n", count );
+
+    if (!pNtRemoveIoCompletionEx)
+    {
+        skip("NtRemoveIoCompletionEx() not present\n");
+        pNtClose( h );
+        return;
+    }
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, FALSE );
+    ok( res == STATUS_TIMEOUT, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, FALSE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( info[0].CompletionKey == 123, "wrong key %#lx\n", info[0].CompletionKey );
+    ok( info[0].CompletionValue == 456, "wrong value %#lx\n", info[0].CompletionValue );
+    ok( info[0].IoStatusBlock.Information == size, "wrong information %#lx\n",
+        info[0].IoStatusBlock.Information );
+    ok( U(info[0].IoStatusBlock).Status == 789, "wrong status %#x\n", U(info[0].IoStatusBlock).Status);
+
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    res = pNtSetIoCompletion( h, 12, 34, 56, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, FALSE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 2, "wrong count %u\n", count );
+    ok( info[0].CompletionKey == 123, "wrong key %#lx\n", info[0].CompletionKey );
+    ok( info[0].CompletionValue == 456, "wrong value %#lx\n", info[0].CompletionValue );
+    ok( info[0].IoStatusBlock.Information == size, "wrong information %#lx\n",
+        info[0].IoStatusBlock.Information );
+    ok( U(info[0].IoStatusBlock).Status == 789, "wrong status %#x\n", U(info[0].IoStatusBlock).Status);
+    ok( info[1].CompletionKey == 12, "wrong key %#lx\n", info[1].CompletionKey );
+    ok( info[1].CompletionValue == 34, "wrong value %#lx\n", info[1].CompletionValue );
+    ok( info[1].IoStatusBlock.Information == size, "wrong information %#lx\n",
+        info[1].IoStatusBlock.Information );
+    ok( U(info[1].IoStatusBlock).Status == 56, "wrong status %#x\n", U(info[1].IoStatusBlock).Status);
+
+    apc_count = 0;
+    QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, FALSE );
+    ok( res == STATUS_TIMEOUT, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( !apc_count, "wrong apc count %d\n", apc_count );
+
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    ok( res == STATUS_USER_APC, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( apc_count == 1, "wrong apc count %u\n", apc_count );
+
+    apc_count = 0;
+    QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( !apc_count, "wrong apc count %u\n", apc_count );
+
+    SleepEx( 1, TRUE );
 
     pNtClose( h );
 }
@@ -4450,6 +4535,7 @@ START_TEST(file)
     pNtOpenIoCompletion     = (void *)GetProcAddress(hntdll, "NtOpenIoCompletion");
     pNtQueryIoCompletion    = (void *)GetProcAddress(hntdll, "NtQueryIoCompletion");
     pNtRemoveIoCompletion   = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletion");
+    pNtRemoveIoCompletionEx = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletionEx");
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
     pNtQueryAttributesFile  = (void *)GetProcAddress(hntdll, "NtQueryAttributesFile");
