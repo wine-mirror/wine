@@ -897,203 +897,186 @@ static void test_iocp_fileio(HANDLE h)
     static const char pipe_name[] = "\\\\.\\pipe\\iocompletiontestnamedpipe";
 
     IO_STATUS_BLOCK iosb;
+    BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
     FILE_COMPLETION_INFORMATION fci = {h, CKEY_SECOND};
     LARGE_INTEGER timeout = {{0}};
-    HANDLE hPipeSrv, hPipeClt;
+    HANDLE server, client;
     ULONG_PTR key, value;
+    OVERLAPPED o = {0};
+    int apc_count = 0;
     NTSTATUS res;
+    DWORD read;
+    long count;
 
-    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
-    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
-    if (hPipeSrv != INVALID_HANDLE_VALUE )
-    {
-        hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-        ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
-        if (hPipeClt != INVALID_HANDLE_VALUE)
-        {
-            U(iosb).Status = 0xdeadbeef;
-            res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
-            ok( res == STATUS_INVALID_PARAMETER, "Unexpected NtSetInformationFile on non-overlapped handle: %x\n", res );
-            ok( U(iosb).Status == STATUS_INVALID_PARAMETER /* 98 */ || U(iosb).Status == 0xdeadbeef /* NT4+ */,
-                "Unexpected iosb.Status on non-overlapped handle: %x\n", U(iosb).Status );
-            CloseHandle(hPipeClt);
-        }
-        CloseHandle( hPipeSrv );
-    }
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
 
-    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
-    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
-    if (hPipeSrv == INVALID_HANDLE_VALUE )
-        return;
+    U(iosb).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( server, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+    ok( res == STATUS_INVALID_PARAMETER, "NtSetInformationFile failed: %#x\n", res );
+todo_wine
+    ok( U(iosb).Status == 0xdeadbeef, "wrong status %#x\n", U(iosb).Status );
+    CloseHandle( client );
+    CloseHandle( server );
 
-    hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-    ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
-    if (hPipeClt != INVALID_HANDLE_VALUE)
-    {
-        OVERLAPPED o = {0,};
-        BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
-        DWORD read;
-        long count;
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
 
-        U(iosb).Status = 0xdeadbeef;
-        res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
-        ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
-        ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
+    U(iosb).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( server, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+    ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %#x\n", res );
+    ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %#x\n", U(iosb).Status );
 
-        memset( send_buf, 0, TEST_BUF_LEN );
-        memset( recv_buf, 0xde, TEST_BUF_LEN );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
-        ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
-        WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
+    memset( send_buf, 0, TEST_BUF_LEN );
+    memset( recv_buf, 0xde, TEST_BUF_LEN );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
+    ReadFile( server, recv_buf, TEST_BUF_LEN, &read, &o);
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
+    WriteFile( client, send_buf, TEST_BUF_LEN, &read, NULL );
 
-        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
-        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
-        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
-        ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
-        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
-        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
-        ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
-                "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
-                recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+    ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+    ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+    ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+    ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
+            "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
+            recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        memset( send_buf, 0, TEST_BUF_LEN );
-        memset( recv_buf, 0xde, TEST_BUF_LEN );
-        WriteFile( hPipeClt, send_buf, 2, &read, NULL );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
-        ReadFile( hPipeSrv, recv_buf, 2, &read, &o);
-        count = get_pending_msgs(h);
-        ok( count == 1, "Unexpected msg count: %ld\n", count );
+    memset( send_buf, 0, TEST_BUF_LEN );
+    memset( recv_buf, 0xde, TEST_BUF_LEN );
+    WriteFile( client, send_buf, 2, &read, NULL );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
+    ReadFile( server, recv_buf, 2, &read, &o);
+    count = get_pending_msgs(h);
+    ok( count == 1, "Unexpected msg count: %ld\n", count );
 
-        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
-        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
-        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
-        ok( iosb.Information == 2, "Invalid iosb.Information: %ld\n", iosb.Information );
-        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
-        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
-        ok( !memcmp( send_buf, recv_buf, 2 ),
-                "Receive buffer (%02x %02x) did not match send buffer (%02x %02x)\n",
-                recv_buf[0], recv_buf[1], send_buf[0], send_buf[1] );
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+    ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+    ok( iosb.Information == 2, "Invalid iosb.Information: %ld\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+    ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+    ok( !memcmp( send_buf, recv_buf, 2 ),
+            "Receive buffer (%02x %02x) did not match send buffer (%02x %02x)\n",
+            recv_buf[0], recv_buf[1], send_buf[0], send_buf[1] );
 
-        ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
-        CloseHandle( hPipeSrv );
-        count = get_pending_msgs(h);
-        ok( count == 1, "Unexpected msg count: %ld\n", count );
+    ReadFile( server, recv_buf, TEST_BUF_LEN, &read, &o);
+    CloseHandle( server );
+    count = get_pending_msgs(h);
+    ok( count == 1, "Unexpected msg count: %ld\n", count );
 
-        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
-        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
-        ok( key == CKEY_SECOND, "Invalid completion key: %lx\n", key );
-        ok( iosb.Information == 0, "Invalid iosb.Information: %ld\n", iosb.Information );
-        /* wine sends wrong status here */
-        ok( U(iosb).Status == STATUS_PIPE_BROKEN, "Invalid iosb.Status: %x\n", U(iosb).Status );
-        ok( value == (ULONG_PTR)&o, "Invalid completion value: %lx\n", value );
-    }
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+    ok( key == CKEY_SECOND, "Invalid completion key: %lx\n", key );
+    ok( iosb.Information == 0, "Invalid iosb.Information: %ld\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_PIPE_BROKEN, "Invalid iosb.Status: %x\n", U(iosb).Status );
+    ok( value == (ULONG_PTR)&o, "Invalid completion value: %lx\n", value );
 
-    CloseHandle( hPipeClt );
+    CloseHandle( client );
 
     /* test associating a completion port with a handle after an async is queued */
-    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
-    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
-    if (hPipeSrv == INVALID_HANDLE_VALUE )
-        return;
-    hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-    ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
-    if (hPipeClt != INVALID_HANDLE_VALUE)
-    {
-        OVERLAPPED o = {0,};
-        BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
-        int apc_count = 0;
-        DWORD read;
-        long count;
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
 
-        memset( send_buf, 0, TEST_BUF_LEN );
-        memset( recv_buf, 0xde, TEST_BUF_LEN );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
-        ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
+    memset( send_buf, 0, TEST_BUF_LEN );
+    memset( recv_buf, 0xde, TEST_BUF_LEN );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
+    ReadFile( server, recv_buf, TEST_BUF_LEN, &read, &o);
 
-        U(iosb).Status = 0xdeadbeef;
-        res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
-        ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
-        ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    U(iosb).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( server, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+    ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
+    ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
+    WriteFile( client, send_buf, TEST_BUF_LEN, &read, NULL );
 
-        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
-        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
-        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
-        ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
-        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
-        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
-        ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
-                "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
-                recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+    ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+    ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+    ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+    ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
+            "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
+            recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
 
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        /* using APCs on handle with associated completion port is not allowed */
-        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
-        ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
-    }
+    /* using APCs on handle with associated completion port is not allowed */
+    res = pNtReadFile( server, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+    ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
 
-    CloseHandle( hPipeSrv );
-    CloseHandle( hPipeClt );
+    CloseHandle( server );
+    CloseHandle( client );
 
     /* test associating a completion port with a handle after an async using APC is queued */
-    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
-    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
-    if (hPipeSrv == INVALID_HANDLE_VALUE )
-        return;
-    hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-    ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
-    if (hPipeClt != INVALID_HANDLE_VALUE)
-    {
-        BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
-        int apc_count = 0;
-        DWORD read;
-        long count;
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
 
-        memset( send_buf, 0, TEST_BUF_LEN );
-        memset( recv_buf, 0xde, TEST_BUF_LEN );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    apc_count = 0;
+    memset( send_buf, 0, TEST_BUF_LEN );
+    memset( recv_buf, 0xde, TEST_BUF_LEN );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
-        ok(res == STATUS_PENDING, "NtReadFile returned %x\n", res);
+    res = pNtReadFile( server, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+    ok(res == STATUS_PENDING, "NtReadFile returned %x\n", res);
 
-        U(iosb).Status = 0xdeadbeef;
-        res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
-        ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
-        ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    U(iosb).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( server, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+    ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
+    ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
+    WriteFile( client, send_buf, TEST_BUF_LEN, &read, NULL );
 
-        ok(!apc_count, "apc_count = %u\n", apc_count);
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    ok(!apc_count, "apc_count = %u\n", apc_count);
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        SleepEx(1, TRUE); /* alertable sleep */
-        ok(apc_count == 1, "apc was not called\n");
-        count = get_pending_msgs(h);
-        ok( !count, "Unexpected msg count: %ld\n", count );
+    SleepEx(1, TRUE); /* alertable sleep */
+    ok(apc_count == 1, "apc was not called\n");
+    count = get_pending_msgs(h);
+    ok( !count, "Unexpected msg count: %ld\n", count );
 
-        /* using APCs on handle with associated completion port is not allowed */
-        res = pNtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
-        ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
-    }
+    /* using APCs on handle with associated completion port is not allowed */
+    res = pNtReadFile( server, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+    ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
 
-    CloseHandle( hPipeSrv );
-    CloseHandle( hPipeClt );
+    CloseHandle( server );
+    CloseHandle( client );
 }
 
 static void test_file_full_size_information(void)
