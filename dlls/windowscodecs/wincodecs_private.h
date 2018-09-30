@@ -75,7 +75,7 @@ HRESULT create_instance(CLSID *clsid, const IID *iid, void **ppv) DECLSPEC_HIDDE
 
 typedef HRESULT(*class_constructor)(REFIID,void**);
 extern HRESULT FormatConverter_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
-extern HRESULT ComponentFactory_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT ImagingFactory_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT BmpDecoder_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;

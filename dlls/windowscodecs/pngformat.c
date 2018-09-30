@@ -1240,7 +1240,7 @@ static HRESULT WINAPI PngDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader 
                 This->metadata_blocks[nIndex].ofs, This->metadata_blocks[nIndex].len);
 
             if (SUCCEEDED(hr))
-                hr = ComponentFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
+                hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
 
             if (SUCCEEDED(hr))
             {

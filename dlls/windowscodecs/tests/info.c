@@ -637,6 +637,38 @@ todo_wine
     IWICImagingFactory_Release(factory);
 }
 
+static void test_imagingfactory_interfaces(void)
+{
+    IWICComponentFactory *component_factory;
+    IWICImagingFactory2 *factory2;
+    IWICImagingFactory *factory;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory2, (void **)&factory2);
+    if (FAILED(hr))
+    {
+        win_skip("IWICImagingFactory2 is not supported.\n");
+        return;
+    }
+
+    hr = IWICImagingFactory2_QueryInterface(factory2, &IID_IWICComponentFactory, (void **)&component_factory);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICComponentFactory_QueryInterface(component_factory, &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(factory == (IWICImagingFactory *)component_factory, "Unexpected factory pointer.\n");
+    IWICImagingFactory_Release(factory);
+
+    hr = IWICImagingFactory2_QueryInterface(factory2, &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(factory == (IWICImagingFactory *)component_factory, "Unexpected factory pointer.\n");
+
+    IWICComponentFactory_Release(component_factory);
+    IWICImagingFactory2_Release(factory2);
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(info)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -644,6 +676,7 @@ START_TEST(info)
     test_decoder_info();
     test_reader_info();
     test_pixelformat_info();
+    test_imagingfactory_interfaces();
 
     CoUninitialize();
 }
