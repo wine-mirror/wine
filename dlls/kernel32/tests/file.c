@@ -60,6 +60,7 @@ static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES
 static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR*);
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
 static BOOL (WINAPI *pSetFileInformationByHandle)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, void*, DWORD);
+static BOOL (WINAPI *pGetQueuedCompletionStatusEx)(HANDLE, OVERLAPPED_ENTRY*, ULONG, ULONG*, DWORD, BOOL);
 
 static const char filename[] = "testfile.xxx";
 static const char sillytext[] =
@@ -105,6 +106,7 @@ static void InitFunctionPointers(void)
     pGetFinalPathNameByHandleA = (void *) GetProcAddress(hkernel32, "GetFinalPathNameByHandleA");
     pGetFinalPathNameByHandleW = (void *) GetProcAddress(hkernel32, "GetFinalPathNameByHandleW");
     pSetFileInformationByHandle = (void *) GetProcAddress(hkernel32, "SetFileInformationByHandle");
+    pGetQueuedCompletionStatusEx = (void *) GetProcAddress(hkernel32, "GetQueuedCompletionStatusEx");
 }
 
 static void test__hread( void )
@@ -4988,6 +4990,114 @@ static void test_GetFileAttributesExW(void)
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
 }
 
+static void test_post_completion(void)
+{
+    OVERLAPPED ovl, ovl2, *povl;
+    OVERLAPPED_ENTRY entries[2];
+    ULONG_PTR key;
+    HANDLE port;
+    ULONG count;
+    DWORD size;
+    BOOL ret;
+
+    port = CreateIoCompletionPort( INVALID_HANDLE_VALUE, NULL, 999, 0 );
+    ok(port != NULL, "CreateIoCompletionPort failed: %u\n", GetLastError());
+
+    ret = GetQueuedCompletionStatus( port, &size, &key, &povl, 0 );
+    ok(!ret, "GetQueuedCompletionStatus succeeded\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "wrong error %u\n", GetLastError());
+
+    ret = PostQueuedCompletionStatus( port, 123, 456, &ovl );
+    ok(ret, "PostQueuedCompletionStatus failed: %u\n", GetLastError());
+
+    ret = GetQueuedCompletionStatus( port, &size, &key, &povl, 0 );
+    ok(ret, "GetQueuedCompletionStatus failed: %u\n", GetLastError());
+    ok(size == 123, "wrong size %u\n", size);
+    ok(key == 456, "wrong key %lu\n", key);
+    ok(povl == &ovl, "wrong ovl %p\n", povl);
+
+    ret = GetQueuedCompletionStatus( port, &size, &key, &povl, 0 );
+    ok(!ret, "GetQueuedCompletionStatus succeeded\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "wrong error %u\n", GetLastError());
+
+    if (!pGetQueuedCompletionStatusEx)
+    {
+        skip("GetQueuedCompletionStatusEx not available\n");
+        CloseHandle( port );
+        return;
+    }
+
+    count = 0xdeadbeef;
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
+    ok(!ret, "GetQueuedCompletionStatusEx succeeded\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "wrong error %u\n", GetLastError());
+    ok(count == 1, "wrong count %u\n", count);
+
+    ret = PostQueuedCompletionStatus( port, 123, 456, &ovl );
+    ok(ret, "PostQueuedCompletionStatus failed: %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    memset( entries, 0xcc, sizeof(entries) );
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
+    ok(ret, "GetQueuedCompletionStatusEx failed\n");
+    ok(count == 1, "wrong count %u\n", count);
+    ok(entries[0].lpCompletionKey == 456, "wrong key %lu\n", entries[0].lpCompletionKey);
+    ok(entries[0].lpOverlapped == &ovl, "wrong ovl %p\n", entries[0].lpOverlapped);
+    ok(!(ULONG)entries[0].Internal, "wrong internal %#x\n", (ULONG)entries[0].Internal);
+    ok(entries[0].dwNumberOfBytesTransferred == 123, "wrong size %u\n", entries[0].dwNumberOfBytesTransferred);
+
+    ret = PostQueuedCompletionStatus( port, 123, 456, &ovl );
+    ok(ret, "PostQueuedCompletionStatus failed: %u\n", GetLastError());
+
+    ret = PostQueuedCompletionStatus( port, 654, 321, &ovl2 );
+    ok(ret, "PostQueuedCompletionStatus failed: %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    memset( entries, 0xcc, sizeof(entries) );
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
+    ok(ret, "GetQueuedCompletionStatusEx failed\n");
+    ok(count == 2, "wrong count %u\n", count);
+    ok(entries[0].lpCompletionKey == 456, "wrong key %lu\n", entries[0].lpCompletionKey);
+    ok(entries[0].lpOverlapped == &ovl, "wrong ovl %p\n", entries[0].lpOverlapped);
+    ok(!(ULONG)entries[0].Internal, "wrong internal %#x\n", (ULONG)entries[0].Internal);
+    ok(entries[0].dwNumberOfBytesTransferred == 123, "wrong size %u\n", entries[0].dwNumberOfBytesTransferred);
+    ok(entries[1].lpCompletionKey == 321, "wrong key %lu\n", entries[1].lpCompletionKey);
+    ok(entries[1].lpOverlapped == &ovl2, "wrong ovl %p\n", entries[1].lpOverlapped);
+    ok(!(ULONG)entries[1].Internal, "wrong internal %#x\n", (ULONG)entries[1].Internal);
+    ok(entries[1].dwNumberOfBytesTransferred == 654, "wrong size %u\n", entries[1].dwNumberOfBytesTransferred);
+
+    user_apc_ran = FALSE;
+    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
+
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
+    ok(!ret, "GetQueuedCompletionStatusEx succeeded\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "wrong error %u\n", GetLastError());
+    ok(count == 1, "wrong count %u\n", count);
+    ok(!user_apc_ran, "user APC should not have run\n");
+
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, TRUE );
+    ok(!ret || broken(ret) /* Vista */, "GetQueuedCompletionStatusEx succeeded\n");
+    if (!ret)
+        ok(GetLastError() == WAIT_IO_COMPLETION, "wrong error %u\n", GetLastError());
+    ok(count == 1, "wrong count %u\n", count);
+    ok(user_apc_ran, "user APC should have run\n");
+
+    user_apc_ran = FALSE;
+    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
+
+    ret = PostQueuedCompletionStatus( port, 123, 456, &ovl );
+    ok(ret, "PostQueuedCompletionStatus failed: %u\n", GetLastError());
+
+    ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, TRUE );
+    ok(ret, "GetQueuedCompletionStatusEx failed\n");
+    ok(count == 1, "wrong count %u\n", count);
+    ok(!user_apc_ran, "user APC should not have run\n");
+
+    SleepEx(0, TRUE);
+
+    CloseHandle( port );
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -5046,4 +5156,5 @@ START_TEST(file)
     test_GetFinalPathNameByHandleW();
     test_SetFileInformationByHandle();
     test_GetFileAttributesExW();
+    test_post_completion();
 }
