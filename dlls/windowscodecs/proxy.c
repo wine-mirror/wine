@@ -637,7 +637,7 @@ HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT SDKVersion, IWICImagingFactory
 {
     TRACE("%x, %p\n", SDKVersion, ppIImagingFactory);
 
-    return ComponentFactory_CreateInstance(&IID_IWICImagingFactory, (void**)ppIImagingFactory);
+    return ImagingFactory_CreateInstance(&IID_IWICImagingFactory, (void**)ppIImagingFactory);
 }
 
 HRESULT WINAPI WICSetEncoderFormat_Proxy(IWICBitmapSource *pSourceIn,
