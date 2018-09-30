@@ -864,7 +864,7 @@ static void nt_mailslot_test(void)
     ok( rc == STATUS_SUCCESS, "NtClose failed\n");
 }
 
-static void test_iocp_setcompletion(HANDLE h)
+static void test_set_io_completion(void)
 {
     LARGE_INTEGER timeout = {{0}};
     IO_STATUS_BLOCK iosb;
@@ -872,8 +872,13 @@ static void test_iocp_setcompletion(HANDLE h)
     NTSTATUS res;
     ULONG count;
     SIZE_T size = 3;
+    HANDLE h;
 
     if (sizeof(size) > 4) size |= (ULONGLONG)0x12345678 << 32;
+
+    res = pNtCreateIoCompletion( &h, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( res == STATUS_SUCCESS, "NtCreateIoCompletion failed: %#x\n", res );
+    ok( h && h != INVALID_HANDLE_VALUE, "got invalid handle %p\n", h );
 
     res = pNtSetIoCompletion( h, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size );
     ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %x\n", res );
@@ -890,15 +895,17 @@ static void test_iocp_setcompletion(HANDLE h)
 
     count = get_pending_msgs(h);
     ok( !count, "Unexpected msg count: %d\n", count );
+
+    pNtClose( h );
 }
 
-static void test_iocp_fileio(HANDLE h)
+static void test_file_io_completion(void)
 {
     static const char pipe_name[] = "\\\\.\\pipe\\iocompletiontestnamedpipe";
 
     IO_STATUS_BLOCK iosb;
     BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
-    FILE_COMPLETION_INFORMATION fci = {h, CKEY_SECOND};
+    FILE_COMPLETION_INFORMATION fci;
     LARGE_INTEGER timeout = {{0}};
     HANDLE server, client;
     ULONG_PTR key, value;
@@ -907,6 +914,13 @@ static void test_iocp_fileio(HANDLE h)
     NTSTATUS res;
     DWORD read;
     long count;
+    HANDLE h;
+
+    res = pNtCreateIoCompletion( &h, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( res == STATUS_SUCCESS, "NtCreateIoCompletion failed: %#x\n", res );
+    ok( h && h != INVALID_HANDLE_VALUE, "got invalid handle %p\n", h );
+    fci.CompletionPort = h;
+    fci.CompletionKey = CKEY_SECOND;
 
     server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
@@ -1077,6 +1091,7 @@ todo_wine
 
     CloseHandle( server );
     CloseHandle( client );
+    pNtClose( h );
 }
 
 static void test_file_full_size_information(void)
@@ -2925,24 +2940,6 @@ todo_wine
     RemoveDirectoryA( buffer );
 }
 
-static void test_iocompletion(void)
-{
-    HANDLE h = INVALID_HANDLE_VALUE;
-    NTSTATUS res;
-
-    res = pNtCreateIoCompletion( &h, IO_COMPLETION_ALL_ACCESS, NULL, 0);
-
-    ok( res == 0, "NtCreateIoCompletion anonymous failed: %x\n", res );
-    ok( h && h != INVALID_HANDLE_VALUE, "Invalid handle returned\n" );
-
-    if ( h && h != INVALID_HANDLE_VALUE)
-    {
-        test_iocp_setcompletion(h);
-        test_iocp_fileio(h);
-        pNtClose(h);
-    }
-}
-
 static void test_file_name_information(void)
 {
     WCHAR *file_name, *volume_prefix, *expected;
@@ -4470,7 +4467,8 @@ START_TEST(file)
     read_file_test();
     append_file_test();
     nt_mailslot_test();
-    test_iocompletion();
+    test_set_io_completion();
+    test_file_io_completion();
     test_file_basic_information();
     test_file_all_information();
     test_file_both_information();
