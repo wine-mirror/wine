@@ -645,7 +645,7 @@
 # @ stub GetPublisherCacheFolder
 # @ stub GetPublisherRootFolder
 @ stdcall GetQueuedCompletionStatus(long ptr ptr ptr long) kernel32.GetQueuedCompletionStatus
-@ stub GetQueuedCompletionStatusEx
+@ stdcall GetQueuedCompletionStatusEx(ptr ptr long ptr long long) kernel32.GetQueuedCompletionStatusEx
 # @ stub GetRegistryExtensionFlags
 # @ stub GetRoamingLastObservedChangeTime
 @ stdcall GetSecurityDescriptorControl(ptr ptr ptr) advapi32.GetSecurityDescriptorControl

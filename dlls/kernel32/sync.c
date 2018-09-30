@@ -2377,6 +2377,25 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
     return FALSE;
 }
 
+/******************************************************************************
+ *              GetQueuedCompletionStatusEx (KERNEL32.@)
+ */
+BOOL WINAPI GetQueuedCompletionStatusEx( HANDLE port, OVERLAPPED_ENTRY *entries, ULONG count,
+                                         ULONG *written, DWORD timeout, BOOL alertable )
+{
+    LARGE_INTEGER time;
+    NTSTATUS ret;
+
+    TRACE("%p %p %u %p %u %u\n", port, entries, count, written, timeout, alertable);
+
+    ret = NtRemoveIoCompletionEx( port, (FILE_IO_COMPLETION_INFORMATION *)entries, count,
+                                  written, get_nt_timeout( &time, timeout ), alertable );
+    if (ret == STATUS_SUCCESS) return TRUE;
+    else if (ret == STATUS_TIMEOUT) SetLastError( WAIT_TIMEOUT );
+    else if (ret == STATUS_USER_APC) SetLastError( WAIT_IO_COMPLETION );
+    else SetLastError( RtlNtStatusToDosError(ret) );
+    return FALSE;
+}
 
 /******************************************************************************
  *		PostQueuedCompletionStatus (KERNEL32.@)
