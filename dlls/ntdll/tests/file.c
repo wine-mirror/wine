@@ -108,10 +108,6 @@ static HANDLE create_temp_file( ULONG flags )
 #define CKEY_FIRST 0x1030341
 #define CKEY_SECOND 0x132E46
 
-static ULONG_PTR completionKey;
-static IO_STATUS_BLOCK ioSb;
-static ULONG_PTR completionValue;
-
 static ULONG get_pending_msgs(HANDLE h)
 {
     NTSTATUS res;
@@ -123,21 +119,6 @@ static ULONG get_pending_msgs(HANDLE h)
     ok( req == sizeof(a), "Unexpected response size: %x\n", req );
     return a;
 }
-
-static BOOL get_msg(HANDLE h)
-{
-    LARGE_INTEGER timeout = {{-10000000*3}};
-    DWORD res = pNtRemoveIoCompletion( h, &completionKey, &completionValue, &ioSb, &timeout);
-    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %x\n", res );
-    if (res != STATUS_SUCCESS)
-    {
-        completionKey = completionValue = 0;
-        memset(&ioSb, 0, sizeof(ioSb));
-        return FALSE;
-    }
-    return TRUE;
-}
-
 
 static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
 {
@@ -885,6 +866,9 @@ static void nt_mailslot_test(void)
 
 static void test_iocp_setcompletion(HANDLE h)
 {
+    LARGE_INTEGER timeout = {{0}};
+    IO_STATUS_BLOCK iosb;
+    ULONG_PTR key, value;
     NTSTATUS res;
     ULONG count;
     SIZE_T size = 3;
@@ -897,13 +881,12 @@ static void test_iocp_setcompletion(HANDLE h)
     count = get_pending_msgs(h);
     ok( count == 1, "Unexpected msg count: %d\n", count );
 
-    if (get_msg(h))
-    {
-        ok( completionKey == CKEY_FIRST, "Invalid completion key: %lx\n", completionKey );
-        ok( ioSb.Information == size, "Invalid ioSb.Information: %lu\n", ioSb.Information );
-        ok( U(ioSb).Status == STATUS_INVALID_DEVICE_REQUEST, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
-        ok( completionValue == CVALUE_FIRST, "Invalid completion value: %lx\n", completionValue );
-    }
+    res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+    ok( key == CKEY_FIRST, "Invalid completion key: %#lx\n", key );
+    ok( iosb.Information == size, "Invalid iosb.Information: %lu\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_INVALID_DEVICE_REQUEST, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+    ok( value == CVALUE_FIRST, "Invalid completion value: %#lx\n", value );
 
     count = get_pending_msgs(h);
     ok( !count, "Unexpected msg count: %d\n", count );
@@ -915,7 +898,9 @@ static void test_iocp_fileio(HANDLE h)
 
     IO_STATUS_BLOCK iosb;
     FILE_COMPLETION_INFORMATION fci = {h, CKEY_SECOND};
+    LARGE_INTEGER timeout = {{0}};
     HANDLE hPipeSrv, hPipeClt;
+    ULONG_PTR key, value;
     NTSTATUS res;
 
     hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
@@ -964,14 +949,15 @@ static void test_iocp_fileio(HANDLE h)
         ok( !count, "Unexpected msg count: %ld\n", count );
         WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
 
-        if (get_msg(h))
-        {
-            ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
-            ok( ioSb.Information == 3, "Invalid ioSb.Information: %ld\n", ioSb.Information );
-            ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
-            ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
-            ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ), "Receive buffer (%x %x %x) did not match send buffer (%x %x %x)\n", recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
-        }
+        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+        ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
+        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+        ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
+                "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
+                recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
 
@@ -983,27 +969,29 @@ static void test_iocp_fileio(HANDLE h)
         ReadFile( hPipeSrv, recv_buf, 2, &read, &o);
         count = get_pending_msgs(h);
         ok( count == 1, "Unexpected msg count: %ld\n", count );
-        if (get_msg(h))
-        {
-            ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
-            ok( ioSb.Information == 2, "Invalid ioSb.Information: %ld\n", ioSb.Information );
-            ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
-            ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
-            ok( !memcmp( send_buf, recv_buf, 2 ), "Receive buffer (%x %x) did not match send buffer (%x %x)\n", recv_buf[0], recv_buf[1], send_buf[0], send_buf[1] );
-        }
+
+        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+        ok( iosb.Information == 2, "Invalid iosb.Information: %ld\n", iosb.Information );
+        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+        ok( !memcmp( send_buf, recv_buf, 2 ),
+                "Receive buffer (%02x %02x) did not match send buffer (%02x %02x)\n",
+                recv_buf[0], recv_buf[1], send_buf[0], send_buf[1] );
 
         ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
         CloseHandle( hPipeSrv );
         count = get_pending_msgs(h);
         ok( count == 1, "Unexpected msg count: %ld\n", count );
-        if (get_msg(h))
-        {
-            ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
-            ok( ioSb.Information == 0, "Invalid ioSb.Information: %ld\n", ioSb.Information );
-            /* wine sends wrong status here */
-            ok( U(ioSb).Status == STATUS_PIPE_BROKEN, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
-            ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
-        }
+
+        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+        ok( key == CKEY_SECOND, "Invalid completion key: %lx\n", key );
+        ok( iosb.Information == 0, "Invalid iosb.Information: %ld\n", iosb.Information );
+        /* wine sends wrong status here */
+        ok( U(iosb).Status == STATUS_PIPE_BROKEN, "Invalid iosb.Status: %x\n", U(iosb).Status );
+        ok( value == (ULONG_PTR)&o, "Invalid completion value: %lx\n", value );
     }
 
     CloseHandle( hPipeClt );
@@ -1038,14 +1026,16 @@ static void test_iocp_fileio(HANDLE h)
 
         WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
 
-        if (get_msg(h))
-        {
-            ok( completionKey == CKEY_SECOND, "Invalid completion key: %lx\n", completionKey );
-            ok( ioSb.Information == 3, "Invalid ioSb.Information: %ld\n", ioSb.Information );
-            ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
-            ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
-            ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ), "Receive buffer (%x %x %x) did not match send buffer (%x %x %x)\n", recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
-        }
+        res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
+        ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#x\n", res );
+        ok( key == CKEY_SECOND, "Invalid completion key: %#lx\n", key );
+        ok( iosb.Information == 3, "Invalid iosb.Information: %ld\n", iosb.Information );
+        ok( U(iosb).Status == STATUS_SUCCESS, "Invalid iosb.Status: %#x\n", U(iosb).Status );
+        ok( value == (ULONG_PTR)&o, "Invalid completion value: %#lx\n", value );
+        ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ),
+                "Receive buffer (%02x %02x %02x) did not match send buffer (%02x %02x %02x)\n",
+                recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
+
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
 
