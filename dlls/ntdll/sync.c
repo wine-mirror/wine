@@ -1334,6 +1334,54 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE CompletionPort, PULONG_PTR Completi
 }
 
 /******************************************************************
+ *              NtRemoveIoCompletionEx (NTDLL.@)
+ *              ZwRemoveIoCompletionEx (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE port, FILE_IO_COMPLETION_INFORMATION *info, ULONG count,
+                                        ULONG *written, LARGE_INTEGER *timeout, BOOLEAN alertable )
+{
+    NTSTATUS ret;
+    ULONG i = 0;
+
+    TRACE("%p %p %u %p %p %u\n", port, info, count, written, timeout, alertable);
+
+    for (;;)
+    {
+        for (;;)
+        {
+            SERVER_START_REQ( remove_completion )
+            {
+                req->handle = wine_server_obj_handle( port );
+                if (!(ret = wine_server_call( req )))
+                {
+                    info[i].CompletionKey             = reply->ckey;
+                    info[i].CompletionValue           = reply->cvalue;
+                    info[i].IoStatusBlock.Information = reply->information;
+                    info[i].IoStatusBlock.u.Status    = reply->status;
+                }
+            }
+            SERVER_END_REQ;
+
+            if (ret != STATUS_SUCCESS) break;
+
+            if (i++ >= count) break;
+        }
+
+        if (i && ret == STATUS_PENDING)
+        {
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        ret = NtWaitForSingleObject( port, alertable, timeout );
+        if (ret != WAIT_OBJECT_0) break;
+    }
+
+    *written = i ? i : 1;
+    return ret;
+}
+
+/******************************************************************
  *              NtOpenIoCompletion (NTDLL.@)
  *              ZwOpenIoCompletion (NTDLL.@)
  *
