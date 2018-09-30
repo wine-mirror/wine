@@ -973,6 +973,7 @@ static void test_shdefextracticon(void)
 
 static void test_GetIconLocation(void)
 {
+    IShellLinkW *slW;
     IShellLinkA *sl;
     const char *str;
     char buffer[INFOTIPSIZE], mypath[MAX_PATH];
@@ -1026,8 +1027,34 @@ static void test_GetIconLocation(void)
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
     ok(lstrcmpiA(buffer,str) == 0, "GetIconLocation returned '%s'\n", buffer);
-    ok(i == 0xbabecafe, "GetIconLocation returned %d'\n", i);
+    ok(i == 0xbabecafe, "GetIconLocation returned %#x.\n", i);
 
+    r = IShellLinkA_SetIconLocation(sl, NULL, 0xcafefe);
+    ok(r == S_OK, "SetIconLocation failed (0x%08x)\n", r);
+
+    i = 0xdeadbeef;
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(!*buffer, "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0xcafefe, "GetIconLocation returned %#x.\n", i);
+
+    r = IShellLinkA_QueryInterface(sl, &IID_IShellLinkW, (void **)&slW);
+    ok(SUCCEEDED(r), "Failed to get IShellLinkW, hr %#x.\n", r);
+
+    str = "c:\\nonexistent\\file";
+    r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
+    ok(r == S_OK, "SetIconLocation failed (0x%08x)\n", r);
+
+    r = IShellLinkA_SetIconLocation(sl, NULL, 0xcafefe);
+    ok(r == S_OK, "SetIconLocation failed (0x%08x)\n", r);
+
+    i = 0xdeadbeef;
+    r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
+    ok(r == S_OK, "GetIconLocation failed (0x%08x)\n", r);
+    ok(!*buffer, "GetIconLocation returned '%s'\n", buffer);
+    ok(i == 0xcafefe, "GetIconLocation returned %#x.\n", i);
+
+    IShellLinkW_Release(slW);
     IShellLinkA_Release(sl);
 }
 

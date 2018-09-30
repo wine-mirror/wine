@@ -1464,19 +1464,22 @@ static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA *iface, LPSTR ps
     return S_OK;
 }
 
-static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA *iface, LPCSTR pszIconPath,
-        INT iIcon)
+static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA *iface, LPCSTR path, INT icon)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
-    WCHAR *pathW;
+    WCHAR *pathW = NULL;
     HRESULT hr;
 
-    TRACE("(%p)->(path=%s iicon=%u)\n",This, pszIconPath, iIcon);
+    TRACE("(%p)->(path=%s icon=%u)\n", This, debugstr_a(path), icon);
 
-    pathW = heap_strdupAtoW(pszIconPath);
-    if (!pathW) return E_OUTOFMEMORY;
+    if (path)
+    {
+        pathW = heap_strdupAtoW(path);
+        if (!pathW)
+            return E_OUTOFMEMORY;
+    }
 
-    hr = IShellLinkW_SetIconLocation(&This->IShellLinkW_iface, pathW, iIcon);
+    hr = IShellLinkW_SetIconLocation(&This->IShellLinkW_iface, path ? pathW : NULL, icon);
     heap_free(pathW);
 
     return hr;
@@ -1927,19 +1930,24 @@ static HRESULT WINAPI IShellLinkW_fnGetIconLocation(IShellLinkW * iface, LPWSTR 
     return S_OK;
 }
 
-static HRESULT WINAPI IShellLinkW_fnSetIconLocation(IShellLinkW * iface, LPCWSTR pszIconPath,INT iIcon)
+static HRESULT WINAPI IShellLinkW_fnSetIconLocation(IShellLinkW * iface, const WCHAR *path, INT icon)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
 
-    TRACE("(%p)->(path=%s iicon=%u)\n",This, debugstr_w(pszIconPath), iIcon);
+    TRACE("(%p)->(path=%s icon=%u)\n", This, debugstr_w(path), icon);
 
     heap_free(This->sIcoPath);
-    This->sIcoPath = heap_alloc((lstrlenW( pszIconPath )+1)*sizeof (WCHAR) );
-    if ( !This->sIcoPath )
-        return E_OUTOFMEMORY;
-    lstrcpyW( This->sIcoPath, pszIconPath );
-
-    This->iIcoNdx = iIcon;
+    if (path)
+    {
+        size_t len = (strlenW(path) + 1) * sizeof(WCHAR);
+        This->sIcoPath = heap_alloc(len);
+        if (!This->sIcoPath)
+            return E_OUTOFMEMORY;
+        memcpy(This->sIcoPath, path, len);
+    }
+    else
+        This->sIcoPath = NULL;
+    This->iIcoNdx = icon;
     This->bDirty = TRUE;
 
     return S_OK;
