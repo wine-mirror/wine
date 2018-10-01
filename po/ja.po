@@ -6942,391 +6942,395 @@ msgstr "機能の導入元:"
 msgid "choose which folder contains %s"
 msgstr "%s を含むフォルダを選択"
 
-#: msi.rc:90
+#: msi.rc:66 shell32.rc:238
+msgid "New Folder"
+msgstr "新しいフォルダ"
+
+#: msi.rc:91
 msgid "Allocating registry space"
 msgstr "レジストリ領域を割り当てています"
 
-#: msi.rc:91
+#: msi.rc:92
 msgid "Searching for installed applications"
 msgstr "インストール済みアプリケーションを検索しています"
 
-#: msi.rc:92
+#: msi.rc:93
 msgid "Binding executables"
 msgstr "実行ファイルをバインドしています"
 
-#: msi.rc:93 msi.rc:136
+#: msi.rc:94 msi.rc:137
 msgid "Searching for qualifying products"
 msgstr "条件に合う製品を検索しています"
 
-#: msi.rc:94 msi.rc:95 msi.rc:100
+#: msi.rc:95 msi.rc:96 msi.rc:101
 msgid "Computing space requirements"
 msgstr "必要な空き領域を計算しています"
 
-#: msi.rc:96
+#: msi.rc:97
 msgid "Creating folders"
 msgstr "フォルダを作成しています"
 
-#: msi.rc:97
+#: msi.rc:98
 msgid "Creating shortcuts"
 msgstr "ショートカットを作成しています"
 
-#: msi.rc:98
+#: msi.rc:99
 msgid "Deleting services"
 msgstr "サービスを削除しています"
 
-#: msi.rc:99
+#: msi.rc:100
 msgid "Creating duplicate files"
 msgstr "重複するファイルを作成しています"
 
-#: msi.rc:101
+#: msi.rc:102
 msgid "Searching for related applications"
 msgstr "関連するアプリケーションを検索しています"
 
-#: msi.rc:102
+#: msi.rc:103
 msgid "Copying network install files"
 msgstr "ネットワーク インストールするファイルをコピーしています"
 
-#: msi.rc:103
+#: msi.rc:104
 msgid "Copying new files"
 msgstr "新しいファイルをコピーしています"
 
-#: msi.rc:104
+#: msi.rc:105
 msgid "Installing ODBC components"
 msgstr "ODBC コンポーネントをインストールしています"
 
-#: msi.rc:105
+#: msi.rc:106
 msgid "Installing new services"
 msgstr "新しいサービスをインストールしています"
 
-#: msi.rc:106
+#: msi.rc:107
 msgid "Installing system catalog"
 msgstr "システム カタログをインストールしています"
 
-#: msi.rc:107
+#: msi.rc:108
 msgid "Validating install"
 msgstr "インストールを検証しています"
 
-#: msi.rc:108
+#: msi.rc:109
 msgid "Evaluating launch conditions"
 msgstr "起動条件を評価しています"
 
-#: msi.rc:109
+#: msi.rc:110
 msgid "Migrating feature states from related applications"
 msgstr "関連するアプリケーションから機能の状態を移行しています"
 
-#: msi.rc:110
+#: msi.rc:111
 msgid "Moving files"
 msgstr "ファイルを移動しています"
 
-#: msi.rc:111
+#: msi.rc:112
 msgid "Publishing assembly information"
 msgstr "アセンブリ情報を公開しています"
 
-#: msi.rc:112
+#: msi.rc:113
 msgid "Unpublishing assembly information"
 msgstr "アセンブリ情報を非公開にしています"
 
-#: msi.rc:113
+#: msi.rc:114
 msgid "Patching files"
 msgstr "ファイルにパッチを適用しています"
 
-#: msi.rc:114
+#: msi.rc:115
 msgid "Updating component registration"
 msgstr "コンポーネントの登録を更新しています"
 
-#: msi.rc:115
+#: msi.rc:116
 msgid "Publishing Qualified Components"
 msgstr "条件に合うコンポーネントを公開しています"
 
-#: msi.rc:116
+#: msi.rc:117
 msgid "Publishing Product Features"
 msgstr "製品の機能を公開しています"
 
-#: msi.rc:117
+#: msi.rc:118
 msgid "Publishing product information"
 msgstr "製品情報を公開しています"
 
-#: msi.rc:118
+#: msi.rc:119
 msgid "Registering Class servers"
 msgstr "クラス サーバを登録しています"
 
-#: msi.rc:119
+#: msi.rc:120
 msgid "Registering COM+ Applications and Components"
 msgstr "COM+ アプリケーションとコンポーネントを登録しています"
 
-#: msi.rc:120
+#: msi.rc:121
 msgid "Registering extension servers"
 msgstr "拡張子サーバを登録しています"
 
-#: msi.rc:121
+#: msi.rc:122
 msgid "Registering fonts"
 msgstr "フォントを登録しています"
 
-#: msi.rc:122
+#: msi.rc:123
 msgid "Registering MIME info"
 msgstr "MIME 情報を登録しています"
 
-#: msi.rc:123
+#: msi.rc:124
 msgid "Registering product"
 msgstr "製品を登録しています"
 
-#: msi.rc:124
+#: msi.rc:125
 msgid "Registering program identifiers"
 msgstr "プログラム識別子を登録しています"
 
-#: msi.rc:125
+#: msi.rc:126
 msgid "Registering type libraries"
 msgstr "タイプ ライブラリを登録しています"
 
-#: msi.rc:126
+#: msi.rc:127
 msgid "Registering user"
 msgstr "ユーザーを登録しています"
 
-#: msi.rc:127
+#: msi.rc:128
 msgid "Removing duplicated files"
 msgstr "重複したファイルを削除しています"
 
-#: msi.rc:128 msi.rc:152
+#: msi.rc:129 msi.rc:153
 msgid "Updating environment strings"
 msgstr "環境変数を更新しています"
 
-#: msi.rc:129
+#: msi.rc:130
 msgid "Removing applications"
 msgstr "アプリケーションを削除しています"
 
-#: msi.rc:130
+#: msi.rc:131
 msgid "Removing files"
 msgstr "ファイルを削除しています"
 
-#: msi.rc:131
+#: msi.rc:132
 msgid "Removing folders"
 msgstr "フォルダを削除しています "
 
-#: msi.rc:132
+#: msi.rc:133
 msgid "Removing INI files entries"
 msgstr "INI ファイルのエントリを削除しています"
 
-#: msi.rc:133
+#: msi.rc:134
 msgid "Removing ODBC components"
 msgstr "ODBC コンポーネントを削除しています"
 
-#: msi.rc:134
+#: msi.rc:135
 msgid "Removing system registry values"
 msgstr "システム レジストリの値を削除しています"
 
-#: msi.rc:135
+#: msi.rc:136
 msgid "Removing shortcuts"
 msgstr "ショートカットを削除しています"
 
-#: msi.rc:137
+#: msi.rc:138
 msgid "Registering modules"
 msgstr "モジュールを登録しています"
 
-#: msi.rc:138
+#: msi.rc:139
 msgid "Unregistering modules"
 msgstr "モジュールの登録を削除しています"
 
-#: msi.rc:139
+#: msi.rc:140
 msgid "Initializing ODBC directories"
 msgstr "ODBC ディレクトリを初期化しています"
 
-#: msi.rc:140
+#: msi.rc:141
 msgid "Starting services"
 msgstr "サービスを開始しています"
 
-#: msi.rc:141
+#: msi.rc:142
 msgid "Stopping services"
 msgstr "サービスを停止しています"
 
-#: msi.rc:142
+#: msi.rc:143
 msgid "Unpublishing Qualified Components"
 msgstr "条件に合うコンポーネントを非公開にしています"
 
-#: msi.rc:143
+#: msi.rc:144
 msgid "Unpublishing Product Features"
 msgstr "製品の機能を非公開にしています"
 
-#: msi.rc:144
+#: msi.rc:145
 msgid "Unpublishing product information"
 msgstr "製品情報を非公開にしています"
 
-#: msi.rc:145
+#: msi.rc:146
 msgid "Unregister Class servers"
 msgstr "クラス サーバの登録を削除しています"
 
-#: msi.rc:146
+#: msi.rc:147
 msgid "Unregistering COM+ Applications and Components"
 msgstr "COM+ アプリケーションとコンポーネントの登録を削除しています"
 
-#: msi.rc:147
+#: msi.rc:148
 msgid "Unregistering extension servers"
 msgstr "拡張子サーバの登録を削除しています"
 
-#: msi.rc:148
+#: msi.rc:149
 msgid "Unregistering fonts"
 msgstr "フォントの登録を削除しています"
 
-#: msi.rc:149
+#: msi.rc:150
 msgid "Unregistering MIME info"
 msgstr "MIME 情報の登録を削除しています"
 
-#: msi.rc:150
+#: msi.rc:151
 msgid "Unregistering program identifiers"
 msgstr "プログラム識別子の登録を削除しています"
 
-#: msi.rc:151
+#: msi.rc:152
 msgid "Unregistering type libraries"
 msgstr "タイプ ライブラリの登録を削除しています"
 
-#: msi.rc:153
+#: msi.rc:154
 msgid "Writing INI files values"
 msgstr "INI ファイルの値を書き込んでいます"
 
-#: msi.rc:154
+#: msi.rc:155
 msgid "Writing system registry values"
 msgstr "システム レジストリ値を書き込んでいます"
 
-#: msi.rc:160
+#: msi.rc:161
 msgid "Free space: [1]"
 msgstr "空き容量: [1]"
 
-#: msi.rc:161
+#: msi.rc:162
 msgid "Property: [1], Signature: [2]"
 msgstr "プロパティ: [1], 署名: [2]"
 
-#: msi.rc:162
+#: msi.rc:163
 msgid "File: [1]"
 msgstr "ファイル: [1]"
 
-#: msi.rc:163 msi.rc:190
+#: msi.rc:164 msi.rc:191
 msgid "Folder: [1]"
 msgstr "フォルダ: [1]"
 
-#: msi.rc:164 msi.rc:193
+#: msi.rc:165 msi.rc:194
 msgid "Shortcut: [1]"
 msgstr "ショートカット: [1]"
 
-#: msi.rc:165 msi.rc:196 msi.rc:197
+#: msi.rc:166 msi.rc:197 msi.rc:198
 msgid "Service: [1]"
 msgstr "サービス: [1]"
 
-#: msi.rc:166 msi.rc:169 msi.rc:173
+#: msi.rc:167 msi.rc:170 msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr "ファイル: [1],  ディレクトリ: [9],  サイズ: [6]"
 
-#: msi.rc:167
+#: msi.rc:168
 msgid "Found application: [1]"
 msgstr "発見したアプリケーション: [1]"
 
-#: msi.rc:168
+#: msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
 msgstr "ファイル: [1], ディレクトリ: [9], サイズ: [6]"
 
-#: msi.rc:170
+#: msi.rc:171
 msgid "Service: [2]"
 msgstr "デバイス: [2]"
 
-#: msi.rc:171
+#: msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
 msgstr "ファイル: [1],  依存対象: [2]"
 
-#: msi.rc:172
+#: msi.rc:173
 msgid "Application: [1]"
 msgstr "アプリケーション: [1]"
 
-#: msi.rc:174 msi.rc:175
+#: msi.rc:175 msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
 msgstr "アプリケーション コンテキスト:[1], アセンブリ名:[2]"
 
-#: msi.rc:176
+#: msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
 msgstr "ファイル: [1],  ディレクトリ: [2],  サイズ: [3]"
 
-#: msi.rc:177 msi.rc:198
+#: msi.rc:178 msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
 msgstr "コンポーネント ID: [1], 条件: [2]"
 
-#: msi.rc:178 msi.rc:199
+#: msi.rc:179 msi.rc:200
 msgid "Feature: [1]"
 msgstr "機能: [1]"
 
-#: msi.rc:179 msi.rc:200
+#: msi.rc:180 msi.rc:201
 msgid "Class Id: [1]"
 msgstr "クラス ID: [1]"
 
-#: msi.rc:180
+#: msi.rc:181
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr "アプリID: [1]{{, アプリ種別: [2], ユーザー: [3], RSN: [4]}}"
 
-#: msi.rc:181 msi.rc:202
+#: msi.rc:182 msi.rc:203
 msgid "Extension: [1]"
 msgstr "拡張子: [1]"
 
-#: msi.rc:182 msi.rc:203
+#: msi.rc:183 msi.rc:204
 msgid "Font: [1]"
 msgstr "フォント: [1]"
 
-#: msi.rc:183 msi.rc:204
+#: msi.rc:184 msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
 msgstr "MIME コンテント タイプ: [1], 拡張子: [2]"
 
-#: msi.rc:184 msi.rc:205
+#: msi.rc:185 msi.rc:206
 msgid "ProgId: [1]"
 msgstr "ProgID: [1]"
 
-#: msi.rc:185 msi.rc:206
+#: msi.rc:186 msi.rc:207
 msgid "LibID: [1]"
 msgstr "LibID: [1]"
 
-#: msi.rc:186 msi.rc:189
+#: msi.rc:187 msi.rc:190
 msgid "File: [1], Directory: [9]"
 msgstr "ファイル: [1], ディレクトリ: [9]"
 
-#: msi.rc:187 msi.rc:207
+#: msi.rc:188 msi.rc:208
 msgid "Name: [1], Value: [2], Action [3]"
 msgstr "名前: [1], 値: [3], 操作 [3]"
 
-#: msi.rc:188
+#: msi.rc:189
 msgid "Application: [1], Command line: [2]"
 msgstr "アプリケーション: [1], コマンド ライン: [2]"
 
-#: msi.rc:191 msi.rc:208
+#: msi.rc:192 msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
 msgstr "ファイル: [1],  セクション: [2],  キー: [3], 値: [4]"
 
-#: msi.rc:192
+#: msi.rc:193
 msgid "Key: [1], Name: [2]"
 msgstr "キー: [1], 値: [2]"
 
-#: msi.rc:194 msi.rc:195
+#: msi.rc:195 msi.rc:196
 msgid "File: [1], Folder: [2]"
 msgstr "ファイル: [1], フォルダ: [2]"
 
-#: msi.rc:201
+#: msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
 msgstr "アプリID: [1]{{, アプリ種別: [2]}}"
 
-#: msi.rc:209
+#: msi.rc:210
 msgid "Key: [1], Name: [2], Value: [3]"
 msgstr "キー: [1], 名前: [2], 値: [3]"
 
-#: msi.rc:71
+#: msi.rc:72
 msgid "{{Fatal error: }}"
 msgstr "{{致命的エラー: }}"
 
-#: msi.rc:72
+#: msi.rc:73
 msgid "{{Error [1]. }}"
 msgstr "{{エラー [1]。 }}"
 
-#: msi.rc:73
+#: msi.rc:74
 msgid "Warning [1]."
 msgstr "警告 [1]。"
 
-#: msi.rc:74
+#: msi.rc:75
 msgid "Info [1]."
 msgstr "情報 [1]。"
 
-#: msi.rc:75
+#: msi.rc:76
 msgid ""
 "The installer has encountered an unexpected error installing this package. "
 "This may indicate a problem with this package. The error code is [1]. {{The "
@@ -7336,35 +7340,35 @@ msgstr ""
 "問題を知らせるものかもしれません。エラー コードは [1] です。{{引数: [2], "
 "[3], [4]}}"
 
-#: msi.rc:76
+#: msi.rc:77
 msgid "{{Disk full: }}"
 msgstr "{{ディスク領域不足: }}"
 
-#: msi.rc:77
+#: msi.rc:78
 msgid "Action [Time]: [1]. [2]"
 msgstr "アクション [Time]: [1]。 [2]"
 
-#: msi.rc:78
+#: msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
 msgstr "メッセージ種別: [1], 引数: [2]{, [3]}"
 
-#: msi.rc:81
+#: msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
 msgstr "=== ログの開始: [Date]  [Time] ==="
 
-#: msi.rc:79
+#: msi.rc:80
 msgid "Action start [Time]: [1]."
 msgstr "アクション開始 [Time]: [1]。"
 
-#: msi.rc:80
+#: msi.rc:81
 msgid "Action ended [Time]: [1]. Return value [2]."
 msgstr "アクション終了 [Time]: [1]。 戻り値 [2]。"
 
-#: msi.rc:83
+#: msi.rc:84
 msgid "Please insert the disk: [2]"
 msgstr "ディスクを挿入してください: [2]"
 
-#: msi.rc:84
+#: msi.rc:85
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
@@ -8887,10 +8891,6 @@ msgstr ""
 "移動またはコピー先フォルダに選択されたフォルダ内のファイルと\n"
 "同じ名前のファイルがある場合、新しいファイルで上書きされます。\n"
 "フォルダの移動またはコピーを続けますか?"
-
-#: shell32.rc:238
-msgid "New Folder"
-msgstr "新しいフォルダ"
 
 #: shell32.rc:240
 msgid "Wine Control Panel"
