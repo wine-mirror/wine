@@ -2125,6 +2125,7 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
 
     ret = MSI_ProcessMessage( package, eMessageType, record );
 
+    msiobj_release( &record->hdr );
     msiobj_release( &package->hdr );
     return ret;
 }
@@ -2689,7 +2690,10 @@ UINT __cdecl s_remote_FormatRecord(MSIHANDLE hinst, struct wire_record *remote_r
     {
         *value = midl_user_allocate(++size * sizeof(WCHAR));
         if (!*value)
+        {
+            MsiCloseHandle(rec);
             return ERROR_OUTOFMEMORY;
+        }
         r = MsiFormatRecordW(hinst, rec, *value, &size);
     }
 
