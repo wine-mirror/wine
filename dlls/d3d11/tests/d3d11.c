@@ -1409,6 +1409,16 @@ static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
     return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
 }
 
+static BOOL check_viewport_array_index_from_any_shader_support(ID3D11Device *device)
+{
+    D3D11_FEATURE_DATA_D3D11_OPTIONS3 options;
+
+    if (FAILED(ID3D11Device_CheckFeatureSupport(device,
+            D3D11_FEATURE_D3D11_OPTIONS3, &options, sizeof(options))))
+        return FALSE;
+    return options.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer;
+}
+
 static BOOL is_buffer(ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
@@ -9305,12 +9315,38 @@ static void test_layered_rendering(void)
     ID3D11RenderTargetView *rtv;
     ID3D11Texture2D *texture;
     ID3D11GeometryShader *gs;
+    ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     ID3D11Buffer *cb;
     HRESULT hr;
     BOOL warp;
 
+    static const DWORD vs_code[] =
+    {
+#if 0
+        uint layer_offset;
+
+        void main(float4 position : POSITION,
+                out float4 out_position : SV_POSITION,
+                out uint layer : SV_RenderTargetArrayIndex)
+        {
+            out_position = position;
+            layer = layer_offset;
+        }
+#endif
+        0x43425844, 0x71f7b9cd, 0x2ab8c713, 0x53e77663, 0x54a9ba68, 0x00000001, 0x00000158, 0x00000004,
+        0x00000030, 0x00000064, 0x000000cc, 0x00000148, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954,
+        0xababab00, 0x4e47534f, 0x00000060, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001,
+        0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000004, 0x00000001, 0x00000001,
+        0x00000e01, 0x505f5653, 0x5449534f, 0x004e4f49, 0x525f5653, 0x65646e65, 0x72615472, 0x41746567,
+        0x79617272, 0x65646e49, 0xabab0078, 0x52444853, 0x00000074, 0x00010040, 0x0000001d, 0x04000059,
+        0x00208e46, 0x00000000, 0x00000001, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x04000067, 0x00102012, 0x00000001, 0x00000004, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x06000036, 0x00102012, 0x00000001, 0x0020800a, 0x00000000,
+        0x00000000, 0x0100003e, 0x30494653, 0x00000008, 0x00002000, 0x00000000,
+    };
     static const DWORD gs_5_code[] =
     {
 #if 0
@@ -9442,6 +9478,7 @@ static void test_layered_rendering(void)
         {4.0f, 1.0f}, {4.0f, 3.0f}, {3.0f,  7.0f}, {5.0f, 1.0f}, {5.0f, 3.0f}, {3.0f,  6.0f},
         {6.0f, 1.0f}, {6.0f, 3.0f}, {3.0f,  5.0f}, {7.0f, 1.0f}, {7.0f, 3.0f}, {3.0f,  4.0f},
     };
+    static const struct vec4 vs_expected_value = {1.0f, 42.0f};
 
     if (!init_test_context(&test_context, NULL))
         return;
@@ -9453,6 +9490,7 @@ static void test_layered_rendering(void)
 
     memset(&constant, 0, sizeof(constant));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
+    ID3D11DeviceContext_VSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_GSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
@@ -9556,6 +9594,35 @@ static void test_layered_rendering(void)
         check_texture_sub_resource_vec4(texture, i, NULL, &expected_values[i], 1);
     }
 
+    /* layered rendering without GS */
+    if (!check_viewport_array_index_from_any_shader_support(device))
+    {
+        hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D11VertexShader_Release(vs);
+        skip("Viewport array index not supported in vertex shaders.\n");
+        goto done;
+    }
+
+    ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
+
+    constant.layer_offset = 1;
+    constant.draw_id = 42;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+    U(rtv_desc).Texture2DArray.MipSlice = 0;
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
+    U(rtv_desc).Texture2DArray.ArraySize = ~0u;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
+    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
+    check_texture_sub_resource_vec4(texture,
+            constant.layer_offset * texture_desc.MipLevels, NULL, &vs_expected_value, 1);
+    ID3D11RenderTargetView_Release(rtv);
+
+done:
     ID3D11Texture2D_Release(texture);
 
     ID3D11Buffer_Release(cb);
