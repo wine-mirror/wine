@@ -133,6 +133,7 @@ static struct strarray msvcrt_flags;
 static struct strarray extra_cflags;
 static struct strarray cpp_flags;
 static struct strarray unwind_flags;
+static struct strarray widl_flags;
 static struct strarray libs;
 static struct strarray enable_tests;
 static struct strarray cmdline_vars;
@@ -2641,6 +2642,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     output_filenames_obj_dir( make, targets );
     output( ": %s\n", tools_path( make, "widl" ));
     output( "\t%s -o $@", tools_path( make, "widl" ) );
+    output_filenames( widl_flags );
     output_filenames( target_flags );
     output_filenames( make->include_args );
     output_filenames( make->define_args );
@@ -4208,6 +4210,7 @@ int main( int argc, char *argv[] )
     extra_cflags = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
     cpp_flags    = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
     unwind_flags = get_expanded_make_var_array( top_makefile, "UNWINDFLAGS" );
+    widl_flags   = get_expanded_make_var_array( top_makefile, "WIDLFLAGS" );
     libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
 

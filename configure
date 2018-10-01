@@ -764,6 +764,7 @@ BISON
 FLEX
 TOOLSDIR
 wine64_disable
+WIDLFLAGS
 TARGETFLAGS
 LD
 CPPBIN
@@ -5509,6 +5510,8 @@ rm -f core conftest.err conftest.$ac_objext \
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
 
+      WIDLFLAGS="--win32"
+
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
@@ -5543,6 +5546,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
       host_cpu="x86_64"
       notice_platform="64-bit "
       TARGETFLAGS="-m64"
+
+      WIDLFLAGS="--win64"
 
     fi
     ;;
@@ -5612,6 +5617,8 @@ rm -f core conftest.err conftest.$ac_objext \
     CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
     TARGETFLAGS="-marm -mfloat-abi=$float_abi"
 
+    WIDLFLAGS="--win32"
+
     ;;
   aarch64*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
@@ -5636,9 +5643,13 @@ $as_echo "no" >&6; }
                        as_fn_error $? "You need clang >= 5.0 to build Wine for arm64." "$LINENO" 5
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    WIDLFLAGS="--win64"
+
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}
+    WIDLFLAGS="--win32"
+
     ;;
 esac
 
