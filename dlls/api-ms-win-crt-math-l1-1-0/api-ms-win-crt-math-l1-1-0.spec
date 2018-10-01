@@ -14,7 +14,7 @@
 @ cdecl -arch=i386 _CIsqrt() ucrtbase._CIsqrt
 @ cdecl -arch=i386 _CItan() ucrtbase._CItan
 @ cdecl -arch=i386 _CItanh() ucrtbase._CItanh
-@ stub _Cbuild
+@ cdecl _Cbuild(ptr double double) ucrtbase._Cbuild
 @ stub _Cmulcc
 @ stub _Cmulcr
 @ stub _FCbuild
