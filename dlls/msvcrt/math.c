@@ -3383,4 +3383,11 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     return res;
 }
 
+_Dcomplex* CDECL MSVCR120__Cbuild(_Dcomplex *ret, double r, double i)
+{
+    ret->x = r;
+    ret->y = i;
+    return ret;
+}
+
 #endif /* _MSVCR_VER>=120 */

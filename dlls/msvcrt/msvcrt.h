@@ -458,6 +458,7 @@ struct MSVCRT__complex {
   double x;      /* Real part */
   double y;      /* Imaginary part */
 };
+typedef struct MSVCRT__complex _Dcomplex;
 
 typedef struct MSVCRT__div_t {
     int quot;  /* quotient */
