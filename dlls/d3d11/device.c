@@ -3515,6 +3515,29 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             return S_OK;
         }
 
+        case D3D11_FEATURE_D3D11_OPTIONS3:
+        {
+            D3D11_FEATURE_DATA_D3D11_OPTIONS3 *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            wined3d_mutex_lock();
+            hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
+            wined3d_mutex_unlock();
+            if (FAILED(hr))
+            {
+                WARN("Failed to get device caps, hr %#x.\n", hr);
+                return hr;
+            }
+
+            options->VPAndRTArrayIndexFromAnyShaderFeedingRasterizer
+                    = wined3d_caps.viewport_array_index_any_shader;
+            return S_OK;
+        }
+
         case D3D11_FEATURE_ARCHITECTURE_INFO:
         {
             D3D11_FEATURE_DATA_ARCHITECTURE_INFO *options = feature_support_data;
