@@ -548,7 +548,6 @@ static LRESULT CALLBACK test_control_procA(HWND hwnd, UINT msg, WPARAM wparam, L
             static const short sample[] = { 10,1,2,3,4,5 };
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
             short *data = cs->lpCreateParams;
-todo_wine
             ok(!memcmp(data, sample, sizeof(sample)), "data mismatch: %d,%d,%d,%d,%d\n", data[0], data[1], data[2], data[3], data[4]);
         }
         return 0;

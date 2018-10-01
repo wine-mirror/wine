@@ -197,7 +197,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
             TRACE("\n");
             TRACE("  END\n" );
         }
-        info->data = p + 1;
+        info->data = p;
         p += GET_WORD(p) / sizeof(WORD);
     }
     else info->data = NULL;
