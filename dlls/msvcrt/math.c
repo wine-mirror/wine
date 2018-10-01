@@ -3390,4 +3390,9 @@ _Dcomplex* CDECL MSVCR120__Cbuild(_Dcomplex *ret, double r, double i)
     return ret;
 }
 
+double CDECL MSVCR120_creal(_Dcomplex z)
+{
+    return z.x;
+}
+
 #endif /* _MSVCR_VER>=120 */
