@@ -726,8 +726,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 				put_word(res, 0);
 			if(ctrl->extra)
 			{
-				put_word(res, ctrl->extra->size+2);
-				put_pad(res);
+				put_word(res, ctrl->extra->size);
 				put_raw_data(res, ctrl->extra, 0);
 			}
 			else
