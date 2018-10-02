@@ -7489,7 +7489,6 @@ todo_wine
 
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
     options = ID2D1Bitmap1_GetOptions(bitmap);
-todo_wine
     ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE),
             "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);

@@ -686,11 +686,13 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_BindDC(ID2D1DCRenderTarget
         const HDC hdc, const RECT *rect)
 {
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
-    D3D10_TEXTURE2D_DESC texture_desc;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    struct d2d_bitmap *bitmap_impl;
     IDXGISurface1 *dxgi_surface;
     ID2D1DeviceContext *context;
-    ID3D10Texture2D *texture;
-    ID2D1Bitmap1 *bitmap;
+    ID3D10Resource *resource;
+    D2D1_SIZE_U bitmap_size;
+    ID2D1Bitmap *bitmap;
     HRESULT hr;
 
     TRACE("iface %p, hdc %p, rect %s.\n", iface, hdc, wine_dbgstr_rect(rect));
@@ -698,48 +700,32 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_BindDC(ID2D1DCRenderTarget
     if (!hdc)
         return E_INVALIDARG;
 
-    texture_desc.Width = rect->right - rect->left;
-    texture_desc.Height = rect->bottom - rect->top;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = render_target->pixel_format.format;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET | D3D10_BIND_SHADER_RESOURCE;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
-
-    if (FAILED(hr = ID3D10Device1_CreateTexture2D(render_target->d3d_device, &texture_desc, NULL, &texture)))
-    {
-        WARN("Failed to create texture, hr %#x.\n", hr);
-        return hr;
-    }
-
-    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void **)&dxgi_surface);
-    ID3D10Texture2D_Release(texture);
-    if (FAILED(hr))
-    {
-        WARN("Failed to get surface interface from a texture, hr %#x.\n", hr);
-        return hr;
-    }
-
     /* Switch dxgi target to new surface. */
     ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, &IID_ID2D1DeviceContext, (void **)&context);
-    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(context, (IDXGISurface *)dxgi_surface, NULL, &bitmap);
-    if (SUCCEEDED(hr))
-    {
-        ID2D1DeviceContext_SetTarget(context, (ID2D1Image *)bitmap);
-        ID2D1Bitmap1_Release(bitmap);
-    }
-    ID2D1DeviceContext_Release(context);
 
-    if (FAILED(hr))
+    bitmap_size.width = rect->right - rect->left;
+    bitmap_size.height = rect->bottom - rect->top;
+
+    memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+    bitmap_desc.pixelFormat = render_target->pixel_format;
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW |
+            D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+    if (FAILED(hr = ID2D1DeviceContext_CreateBitmap(context, bitmap_size, NULL, 0, &bitmap_desc,
+            (ID2D1Bitmap1 **)&bitmap)))
     {
-        WARN("Failed to create new target bitmap, hr %#x.\n", hr);
-        IDXGISurface1_Release(dxgi_surface);
+        WARN("Failed to create target bitmap, hr %#x.\n", hr);
+        ID2D1DeviceContext_Release(context);
         return hr;
     }
+
+    bitmap_impl = unsafe_impl_from_ID2D1Bitmap(bitmap);
+    ID3D10ShaderResourceView_GetResource(bitmap_impl->view, &resource);
+    ID3D10Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)&dxgi_surface);
+    ID3D10Resource_Release(resource);
+
+    ID2D1DeviceContext_SetTarget(context, (ID2D1Image *)bitmap);
+    ID2D1Bitmap_Release(bitmap);
+    ID2D1DeviceContext_Release(context);
 
     if (render_target->dxgi_surface)
         IDXGISurface1_Release(render_target->dxgi_surface);
