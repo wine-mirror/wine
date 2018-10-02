@@ -3002,6 +3002,29 @@ todo_wine
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "Directory should have been deleted\n" );
 
+    /* can open a non-empty directory with FILE_FLAG_DELETE_ON_CLOSE */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    DeleteFileA( buffer );
+    ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
+    dirpos = lstrlenA( buffer );
+    lstrcpyA( buffer + dirpos, "\\tst" );
+    handle2 = CreateFileA(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    CloseHandle( handle2 );
+    buffer[dirpos] = '\0';
+    handle = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    SetLastError(0xdeadbeef);
+    CloseHandle( handle );
+    ok(GetLastError() == 0xdeadbeef, "got %u\n", GetLastError());
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    buffer[dirpos] = '\\';
+    fileDeleted = DeleteFileA( buffer );
+    ok( fileDeleted, "File should have been deleted\n" );
+    buffer[dirpos] = '\0';
+    fileDeleted = RemoveDirectoryA( buffer );
+    ok( fileDeleted, "Directory should have been deleted\n" );
+
     /* cannot set disposition on a non-empty directory */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     DeleteFileA( buffer );
@@ -3016,13 +3039,16 @@ todo_wine
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
     todo_wine
     ok( res == STATUS_DIRECTORY_NOT_EMPTY, "unexpected FileDispositionInformation result (expected STATUS_DIRECTORY_NOT_EMPTY, got %x)\n", res );
-    DeleteFileA( buffer );
+    fileDeleted = DeleteFileA( buffer );
+    ok( fileDeleted, "File should have been deleted\n" );
     buffer[dirpos] = '\0';
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     todo_wine
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
-    RemoveDirectoryA( buffer );
+    fileDeleted = RemoveDirectoryA( buffer );
+todo_wine
+    ok( fileDeleted, "Directory should have been deleted\n" );
 }
 
 static void test_file_name_information(void)
