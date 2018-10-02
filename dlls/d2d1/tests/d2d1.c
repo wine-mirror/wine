@@ -6999,7 +6999,6 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
     {
         hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
                  D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &compatible_rt);
-    todo_wine
         ok_(__FILE__, line)(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT, "Unexpected hr %#x.\n", hr);
     }
 
@@ -7139,11 +7138,8 @@ static void test_bitmap_surface(void)
     ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create device context, hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     for (i = 0; i < ARRAY_SIZE(bitmap_format_tests); ++i)
     {
         memset(&bitmap_desc, 0, sizeof(bitmap_desc));
@@ -7151,9 +7147,10 @@ if (SUCCEEDED(hr))
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 
         hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, &bitmap_desc, &bitmap);
+    todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
         ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(bitmap_format_tests[i].hr))
         {
             pixel_format = ID2D1Bitmap1_GetPixelFormat(bitmap);
 
@@ -7243,7 +7240,7 @@ if (SUCCEEDED(hr))
     ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_Release(device_context);
-}
+
     ID2D1Device_Release(device);
     IDXGIDevice_Release(dxgi_device);
     IDXGISurface_Release(surface);
@@ -7352,11 +7349,8 @@ static void test_device_context(void)
     IDXGIDevice_Release(dxgi_device);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create device context, hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     ID2D1DeviceContext_GetDevice(device_context, &device2);
     ok(device2 == device, "Unexpected device instance.\n");
     ID2D1Device_Release(device2);
@@ -7434,6 +7428,7 @@ if (SUCCEEDED(hr))
     ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW),
             "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
+todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     ID2D1Bitmap1_Release(bitmap);
 
@@ -7495,6 +7490,7 @@ if (SUCCEEDED(hr))
 
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
     options = ID2D1Bitmap1_GetOptions(bitmap);
+todo_wine
     ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE),
             "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
@@ -7508,7 +7504,7 @@ if (SUCCEEDED(hr))
     ID2D1DeviceContext_Release(device_context);
     ID2D1DCRenderTarget_Release(dc_rt);
     DeleteDC(hdc);
-}
+
     ID2D1Device_Release(device);
     ID2D1Factory1_Release(factory);
     ID3D10Device1_Release(d3d_device);

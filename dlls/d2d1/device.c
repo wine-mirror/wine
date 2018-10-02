@@ -3826,9 +3826,28 @@ static void WINAPI d2d_device_GetFactory(ID2D1Device *iface, ID2D1Factory **fact
 static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
         ID2D1DeviceContext **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device_context *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    if (options)
+        FIXME("Options are ignored %#x.\n", options);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_device_context_init(object, iface, NULL, NULL)))
+    {
+        WARN("Failed to initialize device context, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
+
+    TRACE("Created device context %p.\n", object);
+    *context = &object->ID2D1DeviceContext_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device *iface, IWICImagingFactory *wic_factory,
