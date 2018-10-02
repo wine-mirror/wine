@@ -345,6 +345,8 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
         texture_desc.BindFlags |= D3D10_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
+    if (desc->bitmapOptions & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE)
+        texture_desc.MiscFlags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
 
     resource_data.pSysMem = src_data;
     resource_data.SysMemPitch = pitch;
