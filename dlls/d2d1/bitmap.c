@@ -338,7 +338,11 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.BindFlags = 0;
+    if (desc->bitmapOptions & D2D1_BITMAP_OPTIONS_TARGET)
+        texture_desc.BindFlags |= D3D10_BIND_RENDER_TARGET;
+    if (!(desc->bitmapOptions & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+        texture_desc.BindFlags |= D3D10_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 

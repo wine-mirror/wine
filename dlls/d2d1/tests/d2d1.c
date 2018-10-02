@@ -813,9 +813,8 @@ static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL h
         if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
             bind_flags |= D3D10_BIND_SHADER_RESOURCE;
 
-        todo_wine_if (options == D2D1_BITMAP_OPTIONS_TARGET)
-            ok_(__FILE__, line)(desc.BindFlags == bind_flags, "Unexpected bind flags %#x for bitmap options %#x.\n",
-                    desc.BindFlags, options);
+        ok_(__FILE__, line)(desc.BindFlags == bind_flags, "Unexpected bind flags %#x for bitmap options %#x.\n",
+                desc.BindFlags, options);
         ok_(__FILE__, line)(!desc.CPUAccessFlags, "Unexpected cpu access flags %#x.\n", desc.CPUAccessFlags);
         ok_(__FILE__, line)(!desc.MiscFlags, "Unexpected misc flags %#x.\n", desc.MiscFlags);
 
