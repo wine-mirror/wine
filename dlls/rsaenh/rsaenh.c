@@ -1655,7 +1655,7 @@ exit:
 }
 
 /******************************************************************************
- * pad_data [Internal]
+ * pad_data_pkcs1 [Internal]
  *
  * Helper function for data padding according to PKCS1 #2
  *
@@ -1670,8 +1670,7 @@ exit:
  *  Success: TRUE
  *  Failure: FALSE (NTE_BAD_LEN, too much data to pad)
  */
-static BOOL pad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen,
-                     DWORD dwFlags)
+static BOOL pad_data_pkcs1(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen, DWORD dwFlags)
 {
     DWORD i;
     
@@ -1696,7 +1695,29 @@ static BOOL pad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD 
 }
 
 /******************************************************************************
- * unpad_data [Internal]
+ * pad_data [Internal]
+ *
+ * Helper function for data padding according to padding format
+ *
+ * PARAMS
+ *  abData      [I] The data to be padded
+ *  dwDataLen   [I] Length of the data
+ *  abBuffer    [O] Padded data will be stored here
+ *  dwBufferLen [I] Length of the buffer (also length of padded data)
+ *  dwFlags     [I] 0 or CRYPT_SSL2_FALLBACK
+ *
+ * RETURN
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+static BOOL pad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen,
+                     DWORD dwFlags)
+{
+    return pad_data_pkcs1(abData, dwDataLen, abBuffer, dwBufferLen, dwFlags);
+}
+
+/******************************************************************************
+ * unpad_data_pkcs1 [Internal]
  *
  * Remove the PKCS1 padding from RSA decrypted data
  *
@@ -1711,8 +1732,7 @@ static BOOL pad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD 
  *  Success: TRUE
  *  Failure: FALSE, (NTE_BAD_DATA, no valid PKCS1 padding or buffer too small)
  */
-static BOOL unpad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen,
-                       DWORD dwFlags)
+static BOOL unpad_data_pkcs1(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen, DWORD dwFlags)
 {
     DWORD i;
     
@@ -1735,6 +1755,28 @@ static BOOL unpad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWOR
     *dwBufferLen = dwDataLen - i - 1;
     memmove(abBuffer, abData + i + 1, *dwBufferLen);
     return TRUE;
+}
+
+/******************************************************************************
+ * unpad_data [Internal]
+ *
+ * Remove the padding from RSA decrypted data according to padding format
+ *
+ * PARAMS
+ *  abData      [I]   The padded data
+ *  dwDataLen   [I]   Length of the padded data
+ *  abBuffer    [O]   Data without padding will be stored here
+ *  dwBufferLen [I/O] I: Length of the buffer, O: Length of unpadded data
+ *  dwFlags     [I]   Currently none defined
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+static BOOL unpad_data(const BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen,
+                       DWORD dwFlags)
+{
+    return unpad_data_pkcs1(abData, dwDataLen, abBuffer, dwBufferLen, dwFlags);
 }
 
 /******************************************************************************
