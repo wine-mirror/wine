@@ -461,7 +461,7 @@ void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
         header = heap_strdupAtoW(buf);
         if(header && parse_ua_compatible(header, &document_mode)) {
             TRACE("setting document mode %d\n", document_mode);
-            doc->document_mode = document_mode;
+            set_document_mode(doc, document_mode, FALSE);
         }
         heap_free(header);
     }
