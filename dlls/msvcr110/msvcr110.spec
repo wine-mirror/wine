@@ -53,9 +53,9 @@
 @ cdecl -arch=arm ??0_Scheduler@details@Concurrency@@QAA@PAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
 @ thiscall -arch=i386 ??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
 @ cdecl -arch=win64 ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
-@ stub -arch=arm ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z
-@ stub -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
-@ stub -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
+@ cdecl -arch=arm ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z(ptr) _NonReentrantPPLLock__Scoped_lock_ctor
+@ thiscall -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr) _NonReentrantPPLLock__Scoped_lock_ctor
+@ cdecl -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr) _NonReentrantPPLLock__Scoped_lock_ctor
 @ cdecl -arch=arm ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
 @ thiscall -arch=i386 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
 @ cdecl -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
@@ -287,9 +287,9 @@
 @ cdecl -arch=arm ??1_ReentrantBlockingLock@details@Concurrency@@QAA@XZ(ptr) _ReentrantBlockingLock_dtor
 @ thiscall -arch=i386 ??1_ReentrantBlockingLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantBlockingLock_dtor
 @ cdecl -arch=win64 ??1_ReentrantBlockingLock@details@Concurrency@@QEAA@XZ(ptr) _ReentrantBlockingLock_dtor
-@ stub -arch=arm ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@XZ(ptr) _NonReentrantPPLLock__Scoped_lock_dtor
+@ thiscall -arch=i386 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) _NonReentrantPPLLock__Scoped_lock_dtor
+@ cdecl -arch=win64 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) _NonReentrantPPLLock__Scoped_lock_dtor
 @ cdecl -arch=arm ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor
 @ thiscall -arch=i386 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor
 @ cdecl -arch=win64 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor

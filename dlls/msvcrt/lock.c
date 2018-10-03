@@ -575,6 +575,41 @@ void __thiscall _NonReentrantPPLLock__Release(_NonReentrantPPLLock *this)
 
 typedef struct
 {
+    _NonReentrantPPLLock *lock;
+    union {
+        cs_queue q;
+        struct {
+            void *unknown[4];
+            int unknown2[2];
+        } unknown;
+    } wait;
+} _NonReentrantPPLLock__Scoped_lock;
+
+/* ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z */
+/* ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z */
+DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Scoped_lock_ctor, 8)
+_NonReentrantPPLLock__Scoped_lock* __thiscall _NonReentrantPPLLock__Scoped_lock_ctor(
+        _NonReentrantPPLLock__Scoped_lock *this, _NonReentrantPPLLock *lock)
+{
+    TRACE("(%p %p)\n", this, lock);
+
+    this->lock = lock;
+    _NonReentrantPPLLock__Acquire(this->lock, &this->wait.q);
+    return this;
+}
+
+/* ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@XZ */
+/* ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Scoped_lock_dtor, 4)
+void __thiscall _NonReentrantPPLLock__Scoped_lock_dtor(_NonReentrantPPLLock__Scoped_lock *this)
+{
+    TRACE("(%p)\n", this);
+
+    _NonReentrantPPLLock__Release(this->lock);
+}
+
+typedef struct
+{
     critical_section cs;
     LONG count;
     LONG owner;
