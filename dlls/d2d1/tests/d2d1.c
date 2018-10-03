@@ -6599,7 +6599,17 @@ todo_wine
     ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Expected bitmap to be locked, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IWICBitmapLock_Release(wic_lock);
-    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    /* Lock before BeginDraw(). */
+    hr = IWICBitmap_Lock(wic_bitmap, NULL, WICBitmapLockRead, &wic_lock);
+    ok(SUCCEEDED(hr), "Expected bitmap to be unlocked, hr %#x.\n", hr);
+    ID2D1RenderTarget_BeginDraw(rt);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+todo_wine
+    ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Unexpected hr %#x.\n", hr);
+    IWICBitmapLock_Release(wic_lock);
 
     ID2D1GdiInteropRenderTarget_Release(interop);
     ID2D1RenderTarget_Release(rt);
