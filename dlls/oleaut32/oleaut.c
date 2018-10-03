@@ -429,7 +429,7 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
  *  without checking for a terminating NUL.
  *  See BSTR.
  */
-BSTR WINAPI SysAllocStringByteLen(LPCSTR str, UINT len)
+BSTR WINAPI DECLSPEC_HOTPATCH SysAllocStringByteLen(LPCSTR str, UINT len)
 {
     bstr_t *bstr;
 
