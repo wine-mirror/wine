@@ -32,7 +32,6 @@ interface ID2D1Effect;
 interface ID2D1GradientStopCollection1;
 interface ID2D1ImageBrush;
 interface ID2D1BitmapBrush1;
-interface ID2D1CommandList;
 
 cpp_quote("#ifndef __dwrite_h__")
 /* already defined in dwrite.h but needed for WIDL */
@@ -427,6 +426,129 @@ interface ID2D1Device : ID2D1Resource
     HRESULT ClearResources(
         [in, defaultvalue(0)] UINT msec_since_use
     );
+}
+
+[
+    object,
+    uuid(54d7898a-a061-40a7-bec7-e465bcba2c4f),
+    local,
+]
+interface ID2D1CommandSink : IUnknown
+{
+    HRESULT BeginDraw();
+    HRESULT EndDraw();
+    HRESULT SetAntialiasMode(
+        [in] D2D1_ANTIALIAS_MODE antialias_mode
+    );
+    HRESULT SetTags(
+        [in] D2D1_TAG tag1,
+        [in] D2D1_TAG tag2
+    );
+    HRESULT SetTextAntialiasMode(
+        [in] D2D1_TEXT_ANTIALIAS_MODE antialias_mode
+    );
+    HRESULT SetTextRenderingParams(
+        [in] IDWriteRenderingParams *text_rendering_params
+    );
+    HRESULT SetTransform(
+        [in] D2D1_MATRIX_3X2_F *transform
+    );
+    HRESULT SetPrimitiveBlend(
+        [in] D2D1_PRIMITIVE_BLEND primitive_blend
+    );
+    HRESULT SetUnitMode(
+        [in] D2D1_UNIT_MODE unit_mode
+    );
+    HRESULT Clear(
+        [in] const D2D1_COLOR_F *color
+    );
+    HRESULT DrawGlyphRun(
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in] const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc,
+        [in] ID2D1Brush *brush,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    HRESULT DrawLine(
+        [in] D2D1_POINT_2F p0,
+        [in] D2D1_POINT_2F p1,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    HRESULT DrawGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    HRESULT DrawRectangle(
+        [in] const D2D1_RECT_F *rect,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    HRESULT DrawBitmap(
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] float opacity,
+        [in] D2D1_INTERPOLATION_MODE interpolation_mode,
+        [in] const D2D1_RECT_F *src_rect,
+        [in] const D2D1_MATRIX_4X4_F *perspective_transform
+    );
+    HRESULT DrawImage(
+        [in] ID2D1Image *image,
+        [in] const D2D1_POINT_2F *target_offset,
+        [in] const D2D1_POINT_2F *image_rect,
+        [in] D2D1_INTERPOLATION_MODE interpolation_mode,
+        [in] D2D1_COMPOSITE_MODE composite_mode
+    );
+    HRESULT DrawGdiMetafile(
+        [in] ID2D1GdiMetafile *metafile,
+        [in] const D2D1_POINT_2F *target_offset
+    );
+    HRESULT FillMesh(
+        [in] ID2D1Mesh *mesh,
+        [in] ID2D1Brush *brush
+    );
+    HRESULT FillOpacityMask(
+        [in] ID2D1Bitmap *bitmap,
+        [in] ID2D1Brush *brush,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] const D2D1_RECT_F *src_rect
+    );
+    HRESULT FillGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in] ID2D1Brush *brush,
+        [in] ID2D1Brush *opacity_brush
+    );
+    HRESULT FillRectangle(
+        [in] const D2D1_RECT_F *rect,
+        [in] ID2D1Brush *brush
+    );
+    HRESULT PushAxisAlignedClip(
+        [in] const D2D1_RECT_F *clip_rect,
+        [in] D2D1_ANTIALIAS_MODE antialias_mode
+    );
+    HRESULT PushLayer(
+        [in] const D2D1_LAYER_PARAMETERS1 *layer_parameters,
+        [in] ID2D1Layer *layer
+    );
+    HRESULT PopAxisAlignedClip();
+    HRESULT PopLayer();
+}
+
+[
+    object,
+    uuid(b4f34a19-2383-4d76-94f6-ec343657c3dc),
+    local,
+]
+interface ID2D1CommandList : ID2D1Image
+{
+    HRESULT Stream(
+        [in] ID2D1CommandSink *sink
+    );
+    HRESULT Close();
 }
 
 [
