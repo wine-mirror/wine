@@ -1191,6 +1191,29 @@ void set_viewer_zoom(NSContainer *nscontainer, float factor)
     nsIContentViewer_Release(content_viewer);
 }
 
+float get_viewer_zoom(NSContainer *nscontainer)
+{
+    nsIContentViewer *content_viewer;
+    nsIDocShell *doc_shell;
+    nsresult nsres;
+    float factor;
+
+    nsres = get_nsinterface((nsISupports*)nscontainer->navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    assert(nsres == NS_OK);
+
+    nsres = nsIDocShell_GetContentViewer(doc_shell, &content_viewer);
+    assert(nsres == NS_OK && content_viewer);
+    nsIDocShell_Release(doc_shell);
+
+    nsres = nsIContentViewer_GetFullZoom(content_viewer, &factor);
+    if(NS_FAILED(nsres))
+        ERR("GetFullZoom failed: %08x\n", nsres);
+    TRACE("Got %f\n", factor);
+
+    nsIContentViewer_Release(content_viewer);
+    return factor;
+}
+
 struct nsWeakReference {
     nsIWeakReference nsIWeakReference_iface;
 

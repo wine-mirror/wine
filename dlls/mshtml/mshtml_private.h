@@ -928,6 +928,7 @@ void init_nsio(nsIComponentManager*) DECLSPEC_HIDDEN;
 void release_nsio(void) DECLSPEC_HIDDEN;
 BOOL is_gecko_path(const char*) DECLSPEC_HIDDEN;
 void set_viewer_zoom(NSContainer*,float) DECLSPEC_HIDDEN;
+float get_viewer_zoom(NSContainer*) DECLSPEC_HIDDEN;
 
 void init_node_cc(void) DECLSPEC_HIDDEN;
 

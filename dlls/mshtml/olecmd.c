@@ -558,12 +558,17 @@ static HRESULT exec_optical_zoom(HTMLDocument *This, DWORD nCmdexecopt, VARIANT 
 {
     TRACE("(%p)->(%d %s %p)\n", This, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
-    if(!pvaIn || V_VT(pvaIn) != VT_I4) {
+    if(pvaIn && V_VT(pvaIn) != VT_I4) {
         FIXME("Unsupported argument %s\n", debugstr_variant(pvaIn));
         return E_NOTIMPL;
     }
 
-    set_viewer_zoom(This->doc_obj->nscontainer, (float)V_I4(pvaIn)/100);
+    if(pvaIn)
+        set_viewer_zoom(This->doc_obj->nscontainer, (float)V_I4(pvaIn)/100);
+    if(pvaOut) {
+        V_VT(pvaOut) = VT_I4;
+        V_I4(pvaOut) = get_viewer_zoom(This->doc_obj->nscontainer)*100;
+    }
     return S_OK;
 }
 

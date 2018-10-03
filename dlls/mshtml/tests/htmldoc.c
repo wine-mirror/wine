@@ -6702,7 +6702,7 @@ static void test_exec_noargs(IUnknown *unk, DWORD cmdid)
 static void test_exec_optical_zoom(IHTMLDocument2 *doc, int factor)
 {
     IOleCommandTarget *cmdtrg;
-    VARIANT v;
+    VARIANT v, out;
     HRESULT hres;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleCommandTarget, (void**)&cmdtrg);
@@ -6715,9 +6715,22 @@ static void test_exec_optical_zoom(IHTMLDocument2 *doc, int factor)
 
     SET_EXPECT(GetOverrideKeyPath);
     hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_OPTICAL_ZOOM,
-            OLECMDEXECOPT_DODEFAULT, &v, NULL);
+            OLECMDEXECOPT_DODEFAULT, &v, &out);
     ok(hres == S_OK || broken(hres == OLECMDERR_E_NOTSUPPORTED) /* IE6 */, "Exec failed: %08x\n", hres);
     CLEAR_CALLED(GetOverrideKeyPath);
+
+    if(hres != OLECMDERR_E_NOTSUPPORTED) {
+        ok(V_VT(&out) == VT_I4, "V_VT(&out) = %d\n", V_VT(&out));
+        ok(V_I4(&out) == factor, "V_I4(&out) = %d, expected %d\n", V_I4(&out), factor);
+
+        SET_EXPECT(GetOverrideKeyPath);
+        hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_OPTICAL_ZOOM,
+                OLECMDEXECOPT_DODEFAULT, NULL, &out);
+        ok(hres == S_OK, "Exec failed: %08x\n", hres);
+        ok(V_VT(&out) == VT_I4, "V_VT(&out) = %d\n", V_VT(&out));
+        ok(V_I4(&out) == factor, "V_I4(&out) = %d, expected %d\n", V_I4(&out), factor);
+        CLEAR_CALLED(GetOverrideKeyPath);
+    }
 
     IOleCommandTarget_Release(cmdtrg);
 
