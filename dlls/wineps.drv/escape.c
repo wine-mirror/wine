@@ -384,6 +384,8 @@ INT PSDRV_EndPage( PHYSDEV dev )
         FIXME("Already ended a page?\n");
 	return 1;
     }
+
+    passthrough_leave(dev);
     if(!PSDRV_WriteEndPage( dev ))
         return 0;
     PSDRV_EmptyDownloadList(dev, FALSE);
