@@ -2790,3 +2790,15 @@ const char* __cdecl _Syserror_map(int err)
     return NULL;
 }
 #endif
+
+#if _MSVCP_VER >= 140
+/* ?_Winerror_message@std@@YAKKPADK@Z */
+/* ?_Winerror_message@std@@YAKKPEADK@Z */
+ULONG __cdecl _Winerror_message(ULONG err, char *buf, ULONG size)
+{
+    TRACE("(%u %p %u)\n", err, buf, size);
+
+    return FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, err, 0, buf, size, NULL);
+}
+#endif

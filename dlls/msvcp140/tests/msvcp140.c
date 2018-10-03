@@ -191,6 +191,7 @@ static WCHAR* (__cdecl *p_Temp_get)(WCHAR *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
 static int (__cdecl *p_Unlink)(WCHAR const*);
+static ULONG (__cdecl *p__Winerror_message)(ULONG, char*, ULONG);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
@@ -227,6 +228,7 @@ static BOOL init(void)
         SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z");
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z");
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z");
+        SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPEADK@Z");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -256,6 +258,7 @@ static BOOL init(void)
         SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z");
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
+        SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPADK@Z");
     }
 
     SET(p_Close_dir, "_Close_dir");
@@ -1281,6 +1284,25 @@ static void test_Last_write_time(void)
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
 }
 
+static void test__Winerror_message(void)
+{
+    char buf[256], buf_fm[256];
+    ULONG ret, ret_fm;
+
+    ret_fm = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, 0, 0, buf_fm, sizeof(buf_fm), NULL);
+
+    memset(buf, 'a', sizeof(buf));
+    ret = p__Winerror_message(0, buf, sizeof(buf));
+    ok(ret == ret_fm, "ret = %u, expected %u\n", ret, ret_fm);
+    ok(!strcmp(buf, buf_fm), "buf = %s, expected %s\n", buf, buf_fm);
+
+    memset(buf, 'a', sizeof(buf));
+    ret = p__Winerror_message(0, buf, 2);
+    ok(!ret, "ret = %u\n", ret);
+    ok(buf[0] == 'a', "buf = %s\n", buf);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1302,5 +1324,6 @@ START_TEST(msvcp140)
     test_Temp_get();
     test_Rename();
     test_Last_write_time();
+    test__Winerror_message();
     FreeLibrary(msvcp);
 }
