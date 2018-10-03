@@ -7601,6 +7601,44 @@ static void test_invert_matrix(void)
     }
 }
 
+static void test_skew_matrix(void)
+{
+    static const struct
+    {
+        float angle_x;
+        float angle_y;
+        D2D1_POINT_2F center;
+        D2D1_MATRIX_3X2_F matrix;
+    }
+    skew_tests[] =
+    {
+        { 0.0f, 0.0f, { 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+        { 45.0f, 0.0f, { 0.0f, 0.0f }, { 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f } },
+        { 0.0f, 0.0f, { 10.0f, -3.0f }, { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+        { -45.0f, 45.0f, { 0.1f, 0.5f }, { 1.0f, 1.0f, -1.0f, 1.0f, 0.5f, -0.1f } },
+        { -45.0f, 45.0f, { 1.0f, 2.0f }, { 1.0f, 1.0f, -1.0f, 1.0f, 2.0f, -1.0f } },
+        { 45.0f, -45.0f, { 1.0f, 2.0f }, { 1.0f, -1.0f, 1.0f, 1.0f, -2.0f, 1.0f } },
+        { 30.0f, -60.0f, { 12.0f, -5.0f }, { 1.0f, -1.7320509f, 0.577350259f, 1.0f, 2.88675117f, 20.7846107f } },
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(skew_tests); ++i)
+    {
+        const D2D1_MATRIX_3X2_F *expected = &skew_tests[i].matrix;
+        D2D1_MATRIX_3X2_F m;
+        BOOL ret;
+
+        D2D1MakeSkewMatrix(skew_tests[i].angle_x, skew_tests[i].angle_y, skew_tests[i].center, &m);
+        ret = compare_float(m._11, expected->_11, 3) && compare_float(m._12, expected->_12, 3)
+                && compare_float(m._21, expected->_21, 3) && compare_float(m._22, expected->_22, 3)
+                && compare_float(m._31, expected->_31, 3) && compare_float(m._32, expected->_32, 3);
+
+        ok(ret, "%u: unexpected matrix value {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}, expected "
+                "{%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n", i, m._11, m._12, m._21, m._22, m._31, m._32,
+                expected->_11, expected->_12, expected->_21, expected->_22, expected->_31, expected->_32);
+    }
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -7643,6 +7681,7 @@ START_TEST(d2d1)
     queue_test(test_bitmap_surface);
     queue_test(test_device_context);
     queue_test(test_invert_matrix);
+    queue_test(test_skew_matrix);
 
     run_queued_tests();
 }

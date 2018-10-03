@@ -592,6 +592,24 @@ void WINAPI D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_
     matrix->_32 = center.y - center.x * sin_theta - center.y * cos_theta;
 }
 
+void WINAPI D2D1MakeSkewMatrix(float angle_x, float angle_y, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix)
+{
+    float tan_x, tan_y;
+
+    TRACE("angle_x %.8e, angle_y %.8e, center %s, matrix %p.\n", angle_x, angle_y, debug_d2d_point_2f(&center), matrix);
+
+    tan_x = tan(angle_x * (M_PI / 180.0f));
+    tan_y = tan(angle_y * (M_PI / 180.0f));
+
+    /* translate(-center) * skew() * translate(center) */
+    matrix->_11 = 1.0f;
+    matrix->_12 = tan_y;
+    matrix->_21 = tan_x;
+    matrix->_22 = 1.0f;
+    matrix->_31 = -tan_x * center.y;
+    matrix->_32 = -tan_y * center.x;
+}
+
 BOOL WINAPI D2D1IsMatrixInvertible(const D2D1_MATRIX_3X2_F *matrix)
 {
     TRACE("matrix %p.\n", matrix);

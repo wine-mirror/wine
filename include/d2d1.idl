@@ -1257,3 +1257,4 @@ interface ID2D1Factory : IUnknown
 [local] BOOL __stdcall D2D1InvertMatrix(D2D1_MATRIX_3X2_F *matrix);
 [local] BOOL __stdcall D2D1IsMatrixInvertible(const D2D1_MATRIX_3X2_F *matrix);
 [local] void __stdcall D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix);
+[local] void __stdcall D2D1MakeSkewMatrix(float angle_x, float angle_y, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix);
