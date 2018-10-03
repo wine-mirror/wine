@@ -269,11 +269,12 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
              * length of the string, rather than 2 more.  So we'll use the WORD at
              * in_data[0] instead.
              */
-            if(!physDev->job.in_passthrough) {
-                write_spool(dev, psbegindocument, sizeof(psbegindocument)-1);
-                physDev->job.in_passthrough = TRUE;
+            if (physDev->job.passthrough_state == passthrough_none)
+            {
+                write_spool(dev, psbegindocument, sizeof(psbegindocument) - 1);
+                physDev->job.passthrough_state = passthrough_active;
             }
-            return write_spool(dev,((char*)in_data)+2,*(const WORD*)in_data);
+            return write_spool(dev, ((char*)in_data) + 2, *(const WORD*)in_data);
         }
 
     case POSTSCRIPT_IGNORE:
@@ -451,8 +452,7 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
     physDev->job.quiet = FALSE;
-    physDev->job.in_passthrough = FALSE;
-    physDev->job.had_passthrough_rect = FALSE;
+    physDev->job.passthrough_state = passthrough_none;
     physDev->job.doc_name = strdupW( doc->lpszDocName );
 
     return physDev->job.id;

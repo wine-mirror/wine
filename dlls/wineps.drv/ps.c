@@ -226,9 +226,9 @@ DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch)
 	return 0;
     }
 
-    if(physDev->job.in_passthrough) { /* Was in PASSTHROUGH mode */
+    if(physDev->job.passthrough_state != passthrough_none) { /* Was in PASSTHROUGH mode */
         write_spool( dev, psenddocument, sizeof(psenddocument)-1 );
-        physDev->job.in_passthrough = physDev->job.had_passthrough_rect = FALSE;
+        physDev->job.passthrough_state = passthrough_none;
     }
 
     if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */

@@ -343,6 +343,13 @@ typedef struct {
     BOOL		set;
 } PSPEN;
 
+enum passthrough
+{
+    passthrough_none,
+    passthrough_active,
+    passthrough_had_rect,  /* See the comment in PSDRV_Rectangle */
+};
+
 typedef struct {
     DWORD		id;             /* Job id */
     HANDLE              hprinter;       /* Printer handle */
@@ -352,8 +359,7 @@ typedef struct {
     BOOL		OutOfPage;      /* Page header not sent yet */
     INT			PageNo;
     BOOL                quiet;          /* Don't actually output anything */
-    BOOL                in_passthrough; /* In PASSTHROUGH mode */
-    BOOL                had_passthrough_rect; /* See the comment in PSDRV_Rectangle */
+    enum passthrough    passthrough_state;
 } JOB;
 
 typedef struct

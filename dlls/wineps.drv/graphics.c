@@ -113,12 +113,14 @@ BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     /* Windows does something truly hacky here.  If we're in passthrough mode
        and our rop is R2_NOP, then we output the string below.  This is used in
        Office 2k when inserting eps files */
-    if(physDev->job.in_passthrough && !physDev->job.had_passthrough_rect && GetROP2(dev->hdc) == R2_NOP) {
-      char buf[256];
-      sprintf(buf, "N %d %d %d %d B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
-      write_spool(dev, buf, strlen(buf));
-      physDev->job.had_passthrough_rect = TRUE;
-      return TRUE;
+    if (physDev->job.passthrough_state == passthrough_active && GetROP2(dev->hdc) == R2_NOP)
+    {
+        char buf[256];
+
+        sprintf(buf, "N %d %d %d %d B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
+        write_spool(dev, buf, strlen(buf));
+        physDev->job.passthrough_state = passthrough_had_rect;
+        return TRUE;
     }
 
     PSDRV_SetPen(dev);
