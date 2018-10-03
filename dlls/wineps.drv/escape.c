@@ -44,10 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static const char psbegindocument[] =
-"%%BeginDocument: Wine passthrough\n";
-
-
 DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
@@ -269,11 +265,7 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
              * length of the string, rather than 2 more.  So we'll use the WORD at
              * in_data[0] instead.
              */
-            if (physDev->job.passthrough_state == passthrough_none)
-            {
-                write_spool(dev, psbegindocument, sizeof(psbegindocument) - 1);
-                physDev->job.passthrough_state = passthrough_active;
-            }
+            passthrough_enter(dev);
             return write_spool(dev, ((char*)in_data) + 2, *(const WORD*)in_data);
         }
 

@@ -578,6 +578,9 @@ extern void T42_free(TYPE42 *t42) DECLSPEC_HIDDEN;
 extern DWORD RLE_encode(BYTE *in_buf, DWORD len, BYTE *out_buf) DECLSPEC_HIDDEN;
 extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf) DECLSPEC_HIDDEN;
 
+extern void passthrough_enter(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern void passthrough_leave(PHYSDEV dev) DECLSPEC_HIDDEN;
+
 #define push_lc_numeric(x) do {					\
 	const char *tmplocale = setlocale(LC_NUMERIC,NULL);	\
 	setlocale(LC_NUMERIC,x);

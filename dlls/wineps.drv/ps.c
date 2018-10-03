@@ -213,8 +213,30 @@ static const char psarrayput[] =
 static const char psarraydef[] =
 "/%s %d array def\n";
 
+static const char psbegindocument[] =
+"%%BeginDocument: Wine passthrough\n";
 static const char psenddocument[] =
 "\n%%EndDocument\n";
+
+void passthrough_enter(PHYSDEV dev)
+{
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
+    if (physDev->job.passthrough_state != passthrough_none) return;
+
+    write_spool(dev, psbegindocument, sizeof(psbegindocument) - 1);
+    physDev->job.passthrough_state = passthrough_active;
+}
+
+void passthrough_leave(PHYSDEV dev)
+{
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
+    if (physDev->job.passthrough_state == passthrough_none) return;
+
+    write_spool(dev, psenddocument, sizeof(psenddocument) - 1);
+    physDev->job.passthrough_state = passthrough_none;
+}
 
 DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch)
 {
@@ -226,10 +248,7 @@ DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch)
 	return 0;
     }
 
-    if(physDev->job.passthrough_state != passthrough_none) { /* Was in PASSTHROUGH mode */
-        write_spool( dev, psenddocument, sizeof(psenddocument)-1 );
-        physDev->job.passthrough_state = passthrough_none;
-    }
+    passthrough_leave(dev);
 
     if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */
         if( !PSDRV_StartPage(dev) )
