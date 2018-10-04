@@ -1113,7 +1113,7 @@ HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
     {
         (*brush)->u.bitmap.extend_mode_x = D2D1_EXTEND_MODE_CLAMP;
         (*brush)->u.bitmap.extend_mode_y = D2D1_EXTEND_MODE_CLAMP;
-        (*brush)->u.bitmap.interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
+        (*brush)->u.bitmap.interpolation_mode = D2D1_INTERPOLATION_MODE_LINEAR;
     }
 
     TRACE("Created brush %p.\n", *brush);
