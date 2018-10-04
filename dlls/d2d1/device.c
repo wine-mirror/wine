@@ -1002,26 +1002,18 @@ static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceCont
             iface, mask, brush, content, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *iface,
-        ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity,
-        D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode, const D2D1_RECT_F *src_rect)
+static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, ID2D1Bitmap *bitmap,
+        const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
+        const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
 {
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    D2D1_BITMAP_BRUSH_PROPERTIES bitmap_brush_desc;
+    D2D1_BITMAP_BRUSH_PROPERTIES1 bitmap_brush_desc;
     D2D1_BRUSH_PROPERTIES brush_desc;
-    ID2D1BitmapBrush *brush;
+    struct d2d_brush *brush;
     D2D1_RECT_F s, d;
     HRESULT hr;
 
-    TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, src_rect %s.\n",
-            iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode, debug_d2d_rect_f(src_rect));
-
-    if (interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
-            && interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
-    {
-        context->error.code = E_INVALIDARG;
-        return;
-    }
+    if (perspective_transform)
+        FIXME("Perspective transform is ignored.\n");
 
     if (src_rect)
     {
@@ -1062,14 +1054,33 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
     brush_desc.transform._22 = fabsf((d.bottom - d.top) / (s.bottom - s.top));
     brush_desc.transform._32 = min(d.top, d.bottom) - min(s.top, s.bottom) * brush_desc.transform._22;
 
-    if (FAILED(hr = d2d_device_context_CreateBitmapBrush(iface, bitmap, &bitmap_brush_desc, &brush_desc, &brush)))
+    if (FAILED(hr = d2d_bitmap_brush_create(context->factory, bitmap, &bitmap_brush_desc, &brush_desc, &brush)))
     {
         ERR("Failed to create bitmap brush, hr %#x.\n", hr);
         return;
     }
 
-    d2d_device_context_FillRectangle(iface, &d, (ID2D1Brush *)brush);
-    ID2D1BitmapBrush_Release(brush);
+    d2d_device_context_FillRectangle(&context->ID2D1DeviceContext_iface, &d, &brush->ID2D1Brush_iface);
+    ID2D1Brush_Release(&brush->ID2D1Brush_iface);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *iface,
+        ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity,
+        D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode, const D2D1_RECT_F *src_rect)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, src_rect %s.\n",
+            iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode, debug_d2d_rect_f(src_rect));
+
+    if (interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            && interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
+    {
+        context->error.code = E_INVALIDARG;
+        return;
+    }
+
+    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect, NULL);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *iface,
@@ -2154,10 +2165,15 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
         ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
         const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
 {
-    FIXME("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, "
-            "src_rect %s, perspective_transform %p stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, "
+            "src_rect %s, perspective_transform %p.\n",
             iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode,
             debug_d2d_rect_f(src_rect), perspective_transform);
+
+    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
+            perspective_transform);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext *iface,
