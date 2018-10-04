@@ -2362,7 +2362,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         else if (strstr(buffer, "GET /escape"))
         {
-            if (strstr(buffer, "GET /escape?one%20two%0D%0A HTTP/1.1")) send(c, okmsg, sizeof(okmsg) - 1, 0);
+            static const char res[] = "%0D%0A%1F%7F%3C%20%one?%1F%7F%20!%22%23$%&'()*+,-./:;%3C=%3E?@%5B%5C%5D"
+                                      "%5E_%60%7B%7C%7D~%0D%0A ";
+            static const char res2[] = "%0D%0A%1F%7F%3C%20%25two?%1F%7F%20!%22%23$%25&'()*+,-./:;%3C=%3E?@%5B%5C%5D"
+                                       "%5E_%60%7B%7C%7D~%0D%0A ";
+            static const char res3[] = "\x1f\x7f<%20%three?\x1f\x7f%20!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ";
+            static const char res4[] = "%0D%0A%1F%7F%3C%20%four?\x1f\x7f%20!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ";
+
+            if (strstr(buffer + 11, res) || strstr(buffer + 11, res2) || strstr(buffer + 11, res3) ||
+                strstr(buffer + 11, res4 )) send(c, okmsg, sizeof(okmsg) - 1, 0);
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         if (strstr(buffer, "GET /quit"))
@@ -3340,21 +3348,13 @@ static void test_cookies( int port )
     WinHttpCloseHandle( ses );
 }
 
-static void test_request_path_escapes( int port )
+static void do_request( HINTERNET con, const WCHAR *obj, DWORD flags )
 {
-    static const WCHAR objW[] =
-        {'/','e','s','c','a','p','e','?','o','n','e',' ','t','w','o','\r','\n',0};
-    HINTERNET ses, con, req;
+    HINTERNET req;
     DWORD status, size;
     BOOL ret;
 
-    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
-    ok( ses != NULL, "failed to open session %u\n", GetLastError() );
-
-    con = WinHttpConnect( ses, localhostW, port, 0 );
-    ok( con != NULL, "failed to open a connection %u\n", GetLastError() );
-
-    req = WinHttpOpenRequest( con, NULL, objW, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, obj, NULL, NULL, NULL, flags );
     ok( req != NULL, "failed to open a request %u\n", GetLastError() );
 
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
@@ -3367,9 +3367,41 @@ static void test_request_path_escapes( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status );
-
+    ok( status == HTTP_STATUS_OK, "request %s with flags %08x failed %u\n", wine_dbgstr_w(obj), flags, status );
     WinHttpCloseHandle( req );
+}
+
+static void test_request_path_escapes( int port )
+{
+    static const WCHAR objW[] =
+        {'/','e','s','c','a','p','e','\r','\n',0x1f,0x7f,'<',' ','%','o','n','e','?',0x1f,0x7f,' ','!','"','#',
+         '$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_','`',
+         '{','|','}','~','\r','\n',0};
+    static const WCHAR obj2W[] =
+        {'/','e','s','c','a','p','e','\r','\n',0x1f,0x7f,'<',' ','%','t','w','o','?',0x1f,0x7f,' ','!','"','#',
+         '$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_','`',
+         '{','|','}','~','\r','\n',0};
+    static const WCHAR obj3W[] =
+        {'/','e','s','c','a','p','e','\r','\n',0x1f,0x7f,'<',' ','%','t','h','r','e','e','?',0x1f,0x7f,' ','!',
+         '"','#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^',
+         '_','`','{','|','}','~','\r','\n',0};
+    static const WCHAR obj4W[] =
+        {'/','e','s','c','a','p','e','\r','\n',0x1f,0x7f,'<',' ','%','f','o','u','r','?',0x1f,0x7f,' ','!','"',
+         '#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_',
+         '`','{','|','}','~','\r','\n',0};
+    HINTERNET ses, con;
+
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
+    ok( ses != NULL, "failed to open session %u\n", GetLastError() );
+
+    con = WinHttpConnect( ses, localhostW, port, 0 );
+    ok( con != NULL, "failed to open a connection %u\n", GetLastError() );
+
+    do_request( con, objW, 0 );
+    do_request( con, obj2W, WINHTTP_FLAG_ESCAPE_PERCENT );
+    do_request( con, obj3W, WINHTTP_FLAG_ESCAPE_DISABLE );
+    do_request( con, obj4W, WINHTTP_FLAG_ESCAPE_DISABLE_QUERY );
+
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
 }

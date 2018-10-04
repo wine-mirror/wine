@@ -34,6 +34,7 @@ static WCHAR password[] = {'p','a','s','s','w','o','r','d',0};
 static WCHAR about[]    = {'/','s','i','t','e','/','a','b','o','u','t',0};
 static WCHAR query[]    = {'?','q','u','e','r','y',0};
 static WCHAR escape[]   = {' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_','`','{','|','}','~',0};
+static WCHAR escape2[]  = {'\r',0x1f,' ','\n',0x7f,'\r','\n',0};
 
 static const WCHAR url1[]  =
     {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
@@ -72,6 +73,8 @@ static const WCHAR url14[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i
 static const WCHAR url15[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','6','5','5','3','6',0};
 static const WCHAR url16[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','0',0};
 static const WCHAR url17[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':',0};
+static const WCHAR url18[] =
+    {'h','t','t','p',':','/','/','%','0','D','%','1','F','%','2','0','%','0','A','%','7','F','%','0','D','%','0','A',0};
 
 static const WCHAR url_k1[]  =
     {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
@@ -301,7 +304,31 @@ static void WinHttpCreateUrl_test( void )
     ret = WinHttpCreateUrl( &uc, ICU_ESCAPE, url, &len );
     ok( ret, "expected success\n" );
     ok( len == 113, "expected len 113 got %u\n", len );
-    ok( !lstrcmpW( url, url7 ), "url doesn't match\n" );
+    ok( !lstrcmpW( url, url7 ), "url doesn't match %s\n", wine_dbgstr_w(url) );
+
+    /* escape extra info */
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.lpszExtraInfo = escape2;
+    uc.dwExtraInfoLength = lstrlenW( uc.lpszExtraInfo );
+    url[0] = 0;
+    len = 256;
+    ret = WinHttpCreateUrl( &uc, ICU_ESCAPE, url, &len );
+    ok( ret, "expected success\n" );
+    ok( len == lstrlenW(url18), "expected len %u got %u\n", lstrlenW(url18), len );
+    ok( !lstrcmpW( url, url18 ), "url doesn't match\n" );
+
+    /* escape path */
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.lpszUrlPath = escape2;
+    uc.dwUrlPathLength = lstrlenW( uc.lpszUrlPath );
+    url[0] = 0;
+    len = 256;
+    ret = WinHttpCreateUrl( &uc, ICU_ESCAPE, url, &len );
+    ok( ret, "expected success\n" );
+    ok( len == lstrlenW(url18), "expected len %u got %u\n", lstrlenW(url18), len );
+    ok( !lstrcmpW( url, url18 ), "url doesn't match\n" );
 
     /* NULL lpszScheme, 0 nScheme and nPort */
     fill_url_components( &uc );

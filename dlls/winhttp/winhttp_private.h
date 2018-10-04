@@ -307,7 +307,15 @@ BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HID
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 void release_host( hostdata_t *host ) DECLSPEC_HIDDEN;
-DWORD escape_string( WCHAR *, const WCHAR *, DWORD ) DECLSPEC_HIDDEN;
+
+enum escape_flags
+{
+    ESCAPE_FLAG_REMOVE_CRLF = 0x01,
+    ESCAPE_FLAG_SPACE_ONLY  = 0x02,
+    ESCAPE_FLAG_PERCENT     = 0x04,
+    ESCAPE_FLAG_TILDE       = 0x08,
+};
+DWORD escape_string( WCHAR *, const WCHAR *, DWORD, enum escape_flags ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;

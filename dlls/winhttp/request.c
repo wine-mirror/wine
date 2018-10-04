@@ -2535,18 +2535,18 @@ static BOOL handle_redirect( request_t *request, DWORD status )
 
         if (location[0] == '/')
         {
-            len = escape_string( NULL, location, len_loc );
+            len = escape_string( NULL, location, len_loc, 0 );
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            escape_string( path, location, len_loc );
+            escape_string( path, location, len_loc, 0 );
         }
         else
         {
             if ((p = strrchrW( request->path, '/' ))) *p = 0;
-            len = strlenW( request->path ) + 1 + escape_string( NULL, location, len_loc );
+            len = strlenW( request->path ) + 1 + escape_string( NULL, location, len_loc, 0 );
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
             strcpyW( path, request->path );
             strcatW( path, slashW );
-            escape_string( path + strlenW(path), location, len_loc );
+            escape_string( path + strlenW(path), location, len_loc, 0 );
         }
         heap_free( request->path );
         request->path = path;
@@ -2597,9 +2597,9 @@ static BOOL handle_redirect( request_t *request, DWORD status )
         request->path = NULL;
         if (uc.dwUrlPathLength)
         {
-            len = escape_string( NULL, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength );
+            len = escape_string( NULL, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength, 0 );
             if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            escape_string( request->path, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength );
+            escape_string( request->path, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength, 0 );
         }
         else request->path = strdupW( slashW );
     }
