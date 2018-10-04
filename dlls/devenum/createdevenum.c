@@ -778,7 +778,7 @@ static void register_avicap_devices(void)
     WCHAR friendlyname[] = {'v','i','d','e','o','0',0};
     IPropertyBag *prop_bag = NULL;
     WCHAR name[32], version[32];
-    REGFILTERPINS2 rgpins;
+    REGFILTERPINS2 rgpins = {0};
     REGPINTYPES rgtypes;
     REGFILTER2 rgf;
     VARIANT var;
