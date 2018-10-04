@@ -1815,6 +1815,19 @@ static void test_bitmap_brush(void)
     match = compare_surface(surface, "9437f4447d98feaad41a1c4202ee90aadc718ee6");
     ok(match, "Surface does not match.\n");
 
+    /* Invalid interpolation mode. */
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    set_rect(&dst_rect, 1.0f, 8.0f, 4.0f, 12.0f);
+    set_rect(&src_rect, 2.0f, 1.0f, 4.0f, 3.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR + 1, &src_rect);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    match = compare_surface(surface, "9437f4447d98feaad41a1c4202ee90aadc718ee6");
+    ok(match, "Surface does not match.\n");
+
     ID2D1RenderTarget_BeginDraw(rt);
 
     ID2D1RenderTarget_Clear(rt, &color);

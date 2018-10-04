@@ -1006,6 +1006,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
         ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity,
         D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode, const D2D1_RECT_F *src_rect)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     D2D1_BITMAP_BRUSH_PROPERTIES bitmap_brush_desc;
     D2D1_BRUSH_PROPERTIES brush_desc;
     ID2D1BitmapBrush *brush;
@@ -1014,6 +1015,13 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
 
     TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, src_rect %s.\n",
             iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode, debug_d2d_rect_f(src_rect));
+
+    if (interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            && interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
+    {
+        context->error.code = E_INVALIDARG;
+        return;
+    }
 
     if (src_rect)
     {
