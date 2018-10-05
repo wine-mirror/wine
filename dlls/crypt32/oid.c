@@ -1,6 +1,7 @@
 /*
  * Copyright 2002 Mike McCormack for CodeWeavers
  * Copyright 2005-2006 Juan Lang
+ * Copyright 2018 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -650,6 +651,48 @@ error_close_key:
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *             CryptUnregisterOIDInfo (CRYPT32.@)
+ */
+BOOL WINAPI CryptUnregisterOIDInfo(PCCRYPT_OID_INFO info)
+{
+    char *key_name;
+    HKEY root;
+    DWORD err;
+
+    TRACE("(%p)\n", info);
+
+    if (!info || info->cbSize != sizeof(*info) || !info->pszOID)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    err = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo", 0, KEY_ALL_ACCESS, &root);
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        return FALSE;
+    }
+
+    key_name = CryptMemAlloc(strlen(info->pszOID) + 16);
+    if (key_name)
+    {
+        sprintf(key_name, "%s!%u", info->pszOID, info->dwGroupId);
+        err = RegDeleteKeyA(root, key_name);
+    }
+    else
+        err = ERROR_OUTOFMEMORY;
+
+    CryptMemFree(key_name);
+    RegCloseKey(root);
+
+    if (err)
+        SetLastError(err);
+
+    return !err;
 }
 
 /***********************************************************************
