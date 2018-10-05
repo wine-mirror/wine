@@ -397,6 +397,12 @@ struct wined3d_settings
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
 
+enum wined3d_shader_byte_code_format
+{
+    WINED3D_SHADER_BYTE_CODE_FORMAT_SM1,
+    WINED3D_SHADER_BYTE_CODE_FORMAT_SM4,
+};
+
 enum wined3d_shader_resource_type
 {
     WINED3D_SHADER_RESOURCE_NONE,
@@ -4108,7 +4114,6 @@ struct wined3d_shader
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
     struct wined3d_shader_signature patch_constant_signature;
-    char *signature_strings;
 
     /* Pointer to the parent device */
     struct wined3d_device *device;

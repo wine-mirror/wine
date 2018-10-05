@@ -394,7 +394,6 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
     if (FAILED(hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
             &d3d_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
@@ -598,7 +597,6 @@ static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
     if (FAILED(hr = wined3d_shader_create_hs(device->wined3d_device, &desc, shader,
             &d3d11_hull_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
@@ -792,7 +790,6 @@ static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, stru
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
     if (FAILED(hr = wined3d_shader_create_ds(device->wined3d_device, &desc, shader,
             &d3d11_domain_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
@@ -1293,7 +1290,6 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
 
     memset(&so_desc, 0, sizeof(so_desc));
     if (so_entries)
@@ -1645,7 +1641,6 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
     if (FAILED(hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
             &d3d_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
@@ -1847,7 +1842,6 @@ static HRESULT d3d11_compute_shader_init(struct d3d11_compute_shader *shader, st
 
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
-    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_DXBC;
     if (FAILED(hr = wined3d_shader_create_cs(device->wined3d_device, &desc, shader,
             &d3d11_compute_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
