@@ -11054,6 +11054,12 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Feil: \"%c\" er et ugyldig valg.\n"
 
 #: hostname.rc:32
+#, fuzzy
+#| msgid "Error: Could not find process \"%1\".\n"
+msgid "Error: Could not get hostname: %u.\n"
+msgstr "Feil: Klarte ikke finne prosessen \"%1\".\n"
+
+#: hostname.rc:33
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"

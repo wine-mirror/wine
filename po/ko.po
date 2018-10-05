@@ -11232,6 +11232,12 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
 
 #: hostname.rc:32
+#, fuzzy
+#| msgid "Error: Could not find process \"%1\".\n"
+msgid "Error: Could not get hostname: %u.\n"
+msgstr "오류: 프로세스 \"%1\"를 찾을 수 없습니다.\n"
+
+#: hostname.rc:33
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"

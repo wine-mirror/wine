@@ -11153,6 +11153,10 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Неисправна синтакса"
 
 #: hostname.rc:32
+msgid "Error: Could not get hostname: %u.\n"
+msgstr ""
+
+#: hostname.rc:33
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"

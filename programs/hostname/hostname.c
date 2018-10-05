@@ -19,16 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#include <winsock2.h>
-#elif defined(HAVE_UNISTD_H)
-#include <unistd.h>
-#endif
-
 #include <windef.h>
 #include <winbase.h>
 #include <wincon.h>
@@ -109,17 +100,23 @@ static int hostname_message(int msg)
     return hostname_printfW(formatW, msg_buffer);
 }
 
-static void display_computer_name(void)
+static int display_computer_name(void)
 {
     static const WCHAR fmtW[] = {'%','s','\r','\n',0};
 
-    char nameA[256];
-    WCHAR nameW[256];
+    WCHAR name[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD size = ARRAY_SIZE(name);
+    BOOL ret;
 
-    gethostname(nameA, sizeof(nameA));
-    MultiByteToWideChar(CP_UNIXCP, 0, nameA, sizeof(nameA), nameW, ARRAY_SIZE(nameW));
+    ret = GetComputerNameW(name, &size);
+    if (!ret)
+    {
+        hostname_message_printfW(STRING_CANNOT_GET_HOSTNAME, GetLastError());
+        return 1;
+    }
 
-    hostname_printfW(fmtW, nameW);
+    hostname_printfW(fmtW, name);
+    return 0;
 }
 
 int wmain(int argc, WCHAR *argv[])
@@ -163,7 +160,5 @@ int wmain(int argc, WCHAR *argv[])
         }
     }
 
-    display_computer_name();
-
-    return 0;
+    return display_computer_name();
 }

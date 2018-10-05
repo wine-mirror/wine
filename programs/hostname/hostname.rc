@@ -28,5 +28,6 @@ STRINGTABLE
 {
     STRING_USAGE, "Usage: hostname\n"
     STRING_INVALID_OPTION, "Error: Invalid option '%c'.\n"
+    STRING_CANNOT_GET_HOSTNAME, "Error: Could not get hostname: %u.\n"
     STRING_CANNOT_SET_HOSTNAME, "Error: Setting the system hostname is not possible with the hostname utility.\n"
 }

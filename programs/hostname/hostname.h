@@ -23,4 +23,5 @@
 /* Translation IDs. */
 #define STRING_USAGE                101
 #define STRING_INVALID_OPTION       102
-#define STRING_CANNOT_SET_HOSTNAME  103
+#define STRING_CANNOT_GET_HOSTNAME  103
+#define STRING_CANNOT_SET_HOSTNAME  104
