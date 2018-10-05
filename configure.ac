@@ -753,8 +753,7 @@ case $host_os in
     crtlibs=""
     case $host_os in
         mingw32*)
-          crtlibs="-lmsvcrt"
-          AC_SUBST(SOCKET_LIBS,"-lws2_32") ;;
+          crtlibs="-lmsvcrt" ;;
     esac
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.dll")

@@ -729,7 +729,6 @@ LIBWINE_INSTALL_DEV
 LIBWINE_INSTALL_LIB
 LIBWINE_IMPORTLIB
 LIBWINE_SHAREDLIB
-SOCKET_LIBS
 DLLTOOL
 WINELOADER_PROGRAMS
 CONFIGURE_TARGETS
@@ -8154,9 +8153,7 @@ fi
         crtlibs=""
     case $host_os in
         mingw32*)
-          crtlibs="-lmsvcrt"
-          SOCKET_LIBS="-lws2_32"
- ;;
+          crtlibs="-lmsvcrt" ;;
     esac
 
     LIBWINE_SHAREDLIB="libwine.dll"
@@ -18877,7 +18874,6 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 $as_echo_n "creating Makefile rules..." >&6
 
 ALL_VARS_RULES="OPENGL_LIBS = $OPENGL_LIBS
-SOCKET_LIBS = $SOCKET_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
 IOKIT_LIBS = $IOKIT_LIBS
 FORCEFEEDBACK_LIBS = $FORCEFEEDBACK_LIBS
