@@ -102,6 +102,8 @@ static void session_destroy( object_header_t *hdr )
         domain = LIST_ENTRY( item, domain_t, entry );
         delete_domain( domain );
     }
+    session->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &session->cs );
     heap_free( session->agent );
     heap_free( session->proxy_server );
     heap_free( session->proxy_bypass );
@@ -279,6 +281,8 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->receive_timeout = DEFAULT_RECEIVE_TIMEOUT;
     session->receive_response_timeout = DEFAULT_RECEIVE_RESPONSE_TIMEOUT;
     list_init( &session->cookie_cache );
+    InitializeCriticalSection( &session->cs );
+    session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": session.cs");
 
     if (agent && !(session->agent = strdupW( agent ))) goto end;
     if (access == WINHTTP_ACCESS_TYPE_DEFAULT_PROXY)

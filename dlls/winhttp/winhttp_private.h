@@ -85,6 +85,7 @@ typedef struct {
 typedef struct
 {
     object_header_t hdr;
+    CRITICAL_SECTION cs;
     LPWSTR agent;
     DWORD access;
     int resolve_timeout;

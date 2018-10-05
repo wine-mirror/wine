@@ -116,24 +116,28 @@ static BOOL add_cookie( session_t *session, cookie_t *cookie, WCHAR *domain_name
     cookie_t *old_cookie;
     struct list *item;
 
+    if (!(cookie->path = strdupW( path ))) return FALSE;
+
+    EnterCriticalSection( &session->cs );
+
     LIST_FOR_EACH( item, &session->cookie_cache )
     {
         domain = LIST_ENTRY( item, domain_t, entry );
         if (domain_match( domain_name, domain, FALSE )) break;
         domain = NULL;
     }
-    if (!domain)
-    {
-        if (!(domain = add_domain( session, domain_name ))) return FALSE;
-    }
+    if (!domain) domain = add_domain( session, domain_name );
     else if ((old_cookie = find_cookie( domain, path, cookie->name ))) delete_cookie( old_cookie );
 
-    cookie->path = strdupW( path );
-    list_add_head( &domain->cookies, &cookie->entry );
+    if (domain)
+    {
+        list_add_head( &domain->cookies, &cookie->entry );
+        TRACE("domain %s path %s <- %s=%s\n", debugstr_w(domain_name), debugstr_w(cookie->path),
+              debugstr_w(cookie->name), debugstr_w(cookie->value));
+    }
 
-    TRACE("domain %s path %s <- %s=%s\n", debugstr_w(domain_name), debugstr_w(cookie->path),
-          debugstr_w(cookie->name), debugstr_w(cookie->value));
-    return TRUE;
+    LeaveCriticalSection( &session->cs );
+    return domain != NULL;
 }
 
 static cookie_t *parse_cookie( const WCHAR *string )
@@ -303,6 +307,8 @@ BOOL add_cookie_headers( request_t *request )
     struct list *domain_cursor;
     session_t *session = request->connect->session;
 
+    EnterCriticalSection( &session->cs );
+
     LIST_FOR_EACH( domain_cursor, &session->cookie_cache )
     {
         domain_t *domain = LIST_ENTRY( domain_cursor, domain_t, entry );
@@ -325,7 +331,11 @@ BOOL add_cookie_headers( request_t *request )
 
                     len = len_cookie + len_name;
                     if (cookie->value) len += strlenW( cookie->value ) + 1;
-                    if (!(header = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
+                    if (!(header = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+                    {
+                        LeaveCriticalSection( &session->cs );
+                        return FALSE;
+                    }
 
                     memcpy( header, cookieW, len_cookie * sizeof(WCHAR) );
                     strcpyW( header + len_cookie, cookie->name );
@@ -343,5 +353,7 @@ BOOL add_cookie_headers( request_t *request )
             }
         }
     }
+
+    LeaveCriticalSection( &session->cs );
     return TRUE;
 }
