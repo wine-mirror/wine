@@ -176,6 +176,17 @@ static inline void free_VkBindImageMemoryInfo_array(VkBindImageMemoryInfo_host *
     heap_free(in);
 }
 
+static inline void convert_VkConditionalRenderingBeginInfoEXT_win_to_host(const VkConditionalRenderingBeginInfoEXT *in, VkConditionalRenderingBeginInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->buffer = in->buffer;
+    out->offset = in->offset;
+    out->flags = in->flags;
+}
+
 static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassBeginInfo *in, VkRenderPassBeginInfo_host *out)
 {
     if (!in) return;
@@ -1293,6 +1304,21 @@ static VkResult WINAPI wine_vkBindImageMemory2KHR(VkDevice device, uint32_t bind
 #endif
 }
 
+static void WINAPI wine_vkCmdBeginConditionalRenderingEXT(VkCommandBuffer commandBuffer, const VkConditionalRenderingBeginInfoEXT *pConditionalRenderingBegin)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkConditionalRenderingBeginInfoEXT_host pConditionalRenderingBegin_host;
+    TRACE("%p, %p\n", commandBuffer, pConditionalRenderingBegin);
+
+    convert_VkConditionalRenderingBeginInfoEXT_win_to_host(pConditionalRenderingBegin, &pConditionalRenderingBegin_host);
+    commandBuffer->device->funcs.p_vkCmdBeginConditionalRenderingEXT(commandBuffer->command_buffer, &pConditionalRenderingBegin_host);
+
+#else
+    TRACE("%p, %p\n", commandBuffer, pConditionalRenderingBegin);
+    commandBuffer->device->funcs.p_vkCmdBeginConditionalRenderingEXT(commandBuffer->command_buffer, pConditionalRenderingBegin);
+#endif
+}
+
 void WINAPI wine_vkCmdBeginQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags)
 {
     TRACE("%p, 0x%s, %u, %#x\n", commandBuffer, wine_dbgstr_longlong(queryPool), query, flags);
@@ -1314,6 +1340,21 @@ void WINAPI wine_vkCmdBeginRenderPass(VkCommandBuffer commandBuffer, const VkRen
 #endif
 }
 
+static void WINAPI wine_vkCmdBeginRenderPass2KHR(VkCommandBuffer commandBuffer, const VkRenderPassBeginInfo *pRenderPassBegin, const VkSubpassBeginInfoKHR *pSubpassBeginInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkRenderPassBeginInfo_host pRenderPassBegin_host;
+    TRACE("%p, %p, %p\n", commandBuffer, pRenderPassBegin, pSubpassBeginInfo);
+
+    convert_VkRenderPassBeginInfo_win_to_host(pRenderPassBegin, &pRenderPassBegin_host);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderPass2KHR(commandBuffer->command_buffer, &pRenderPassBegin_host, pSubpassBeginInfo);
+
+#else
+    TRACE("%p, %p, %p\n", commandBuffer, pRenderPassBegin, pSubpassBeginInfo);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderPass2KHR(commandBuffer->command_buffer, pRenderPassBegin, pSubpassBeginInfo);
+#endif
+}
+
 void WINAPI wine_vkCmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet *pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t *pDynamicOffsets)
 {
     TRACE("%p, %#x, 0x%s, %u, %u, %p, %u, %p\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(layout), firstSet, descriptorSetCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
@@ -1330,6 +1371,12 @@ void WINAPI wine_vkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBind
 {
     TRACE("%p, %#x, 0x%s\n", commandBuffer, pipelineBindPoint, wine_dbgstr_longlong(pipeline));
     commandBuffer->device->funcs.p_vkCmdBindPipeline(commandBuffer->command_buffer, pipelineBindPoint, pipeline);
+}
+
+static void WINAPI wine_vkCmdBindShadingRateImageNV(VkCommandBuffer commandBuffer, VkImageView imageView, VkImageLayout imageLayout)
+{
+    TRACE("%p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(imageView), imageLayout);
+    commandBuffer->device->funcs.p_vkCmdBindShadingRateImageNV(commandBuffer->command_buffer, imageView, imageLayout);
 }
 
 void WINAPI wine_vkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint32_t firstBinding, uint32_t bindingCount, const VkBuffer *pBuffers, const VkDeviceSize *pOffsets)
@@ -1494,6 +1541,30 @@ static void WINAPI wine_vkCmdDrawIndirectCountKHR(VkCommandBuffer commandBuffer,
     commandBuffer->device->funcs.p_vkCmdDrawIndirectCountKHR(commandBuffer->command_buffer, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
 }
 
+static void WINAPI wine_vkCmdDrawMeshTasksIndirectCountNV(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride)
+{
+    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), wine_dbgstr_longlong(countBuffer), wine_dbgstr_longlong(countBufferOffset), maxDrawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectCountNV(commandBuffer->command_buffer, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
+}
+
+static void WINAPI wine_vkCmdDrawMeshTasksIndirectNV(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
+{
+    TRACE("%p, 0x%s, 0x%s, %u, %u\n", commandBuffer, wine_dbgstr_longlong(buffer), wine_dbgstr_longlong(offset), drawCount, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectNV(commandBuffer->command_buffer, buffer, offset, drawCount, stride);
+}
+
+static void WINAPI wine_vkCmdDrawMeshTasksNV(VkCommandBuffer commandBuffer, uint32_t taskCount, uint32_t firstTask)
+{
+    TRACE("%p, %u, %u\n", commandBuffer, taskCount, firstTask);
+    commandBuffer->device->funcs.p_vkCmdDrawMeshTasksNV(commandBuffer->command_buffer, taskCount, firstTask);
+}
+
+static void WINAPI wine_vkCmdEndConditionalRenderingEXT(VkCommandBuffer commandBuffer)
+{
+    TRACE("%p\n", commandBuffer);
+    commandBuffer->device->funcs.p_vkCmdEndConditionalRenderingEXT(commandBuffer->command_buffer);
+}
+
 void WINAPI wine_vkCmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query)
 {
     TRACE("%p, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(queryPool), query);
@@ -1506,6 +1577,12 @@ void WINAPI wine_vkCmdEndRenderPass(VkCommandBuffer commandBuffer)
     commandBuffer->device->funcs.p_vkCmdEndRenderPass(commandBuffer->command_buffer);
 }
 
+static void WINAPI wine_vkCmdEndRenderPass2KHR(VkCommandBuffer commandBuffer, const VkSubpassEndInfoKHR *pSubpassEndInfo)
+{
+    TRACE("%p, %p\n", commandBuffer, pSubpassEndInfo);
+    commandBuffer->device->funcs.p_vkCmdEndRenderPass2KHR(commandBuffer->command_buffer, pSubpassEndInfo);
+}
+
 void WINAPI wine_vkCmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize size, uint32_t data)
 {
     TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", commandBuffer, wine_dbgstr_longlong(dstBuffer), wine_dbgstr_longlong(dstOffset), wine_dbgstr_longlong(size), data);
@@ -1516,6 +1593,12 @@ void WINAPI wine_vkCmdNextSubpass(VkCommandBuffer commandBuffer, VkSubpassConten
 {
     TRACE("%p, %#x\n", commandBuffer, contents);
     commandBuffer->device->funcs.p_vkCmdNextSubpass(commandBuffer->command_buffer, contents);
+}
+
+static void WINAPI wine_vkCmdNextSubpass2KHR(VkCommandBuffer commandBuffer, const VkSubpassBeginInfoKHR *pSubpassBeginInfo, const VkSubpassEndInfoKHR *pSubpassEndInfo)
+{
+    TRACE("%p, %p, %p\n", commandBuffer, pSubpassBeginInfo, pSubpassEndInfo);
+    commandBuffer->device->funcs.p_vkCmdNextSubpass2KHR(commandBuffer->command_buffer, pSubpassBeginInfo, pSubpassEndInfo);
 }
 
 void WINAPI wine_vkCmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint32_t memoryBarrierCount, const VkMemoryBarrier *pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier *pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier *pImageMemoryBarriers)
@@ -1589,6 +1672,18 @@ void WINAPI wine_vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const flo
     commandBuffer->device->funcs.p_vkCmdSetBlendConstants(commandBuffer->command_buffer, blendConstants);
 }
 
+static void WINAPI wine_vkCmdSetCheckpointNV(VkCommandBuffer commandBuffer, const void *pCheckpointMarker)
+{
+    TRACE("%p, %p\n", commandBuffer, pCheckpointMarker);
+    commandBuffer->device->funcs.p_vkCmdSetCheckpointNV(commandBuffer->command_buffer, pCheckpointMarker);
+}
+
+static void WINAPI wine_vkCmdSetCoarseSampleOrderNV(VkCommandBuffer commandBuffer, VkCoarseSampleOrderTypeNV sampleOrderType, uint32_t customSampleOrderCount, const VkCoarseSampleOrderCustomNV *pCustomSampleOrders)
+{
+    TRACE("%p, %#x, %u, %p\n", commandBuffer, sampleOrderType, customSampleOrderCount, pCustomSampleOrders);
+    commandBuffer->device->funcs.p_vkCmdSetCoarseSampleOrderNV(commandBuffer->command_buffer, sampleOrderType, customSampleOrderCount, pCustomSampleOrders);
+}
+
 void WINAPI wine_vkCmdSetDepthBias(VkCommandBuffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
 {
     TRACE("%p, %f, %f, %f\n", commandBuffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
@@ -1623,6 +1718,12 @@ void WINAPI wine_vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkP
 {
     TRACE("%p, 0x%s, %#x\n", commandBuffer, wine_dbgstr_longlong(event), stageMask);
     commandBuffer->device->funcs.p_vkCmdSetEvent(commandBuffer->command_buffer, event, stageMask);
+}
+
+static void WINAPI wine_vkCmdSetExclusiveScissorNV(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, const VkRect2D *pExclusiveScissors)
+{
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
+    commandBuffer->device->funcs.p_vkCmdSetExclusiveScissorNV(commandBuffer->command_buffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
 }
 
 void WINAPI wine_vkCmdSetLineWidth(VkCommandBuffer commandBuffer, float lineWidth)
@@ -1665,6 +1766,12 @@ void WINAPI wine_vkCmdSetViewport(VkCommandBuffer commandBuffer, uint32_t firstV
 {
     TRACE("%p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pViewports);
     commandBuffer->device->funcs.p_vkCmdSetViewport(commandBuffer->command_buffer, firstViewport, viewportCount, pViewports);
+}
+
+static void WINAPI wine_vkCmdSetViewportShadingRatePaletteNV(VkCommandBuffer commandBuffer, uint32_t firstViewport, uint32_t viewportCount, const VkShadingRatePaletteNV *pShadingRatePalettes)
+{
+    TRACE("%p, %u, %u, %p\n", commandBuffer, firstViewport, viewportCount, pShadingRatePalettes);
+    commandBuffer->device->funcs.p_vkCmdSetViewportShadingRatePaletteNV(commandBuffer->command_buffer, firstViewport, viewportCount, pShadingRatePalettes);
 }
 
 static void WINAPI wine_vkCmdSetViewportWScalingNV(VkCommandBuffer commandBuffer, uint32_t firstViewport, uint32_t viewportCount, const VkViewportWScalingNV *pViewportWScalings)
@@ -1900,6 +2007,12 @@ VkResult WINAPI wine_vkCreateRenderPass(VkDevice device, const VkRenderPassCreat
 {
     TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pRenderPass);
     return device->funcs.p_vkCreateRenderPass(device->device, pCreateInfo, NULL, pRenderPass);
+}
+
+static VkResult WINAPI wine_vkCreateRenderPass2KHR(VkDevice device, const VkRenderPassCreateInfo2KHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkRenderPass *pRenderPass)
+{
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pRenderPass);
+    return device->funcs.p_vkCreateRenderPass2KHR(device->device, pCreateInfo, NULL, pRenderPass);
 }
 
 VkResult WINAPI wine_vkCreateSampler(VkDevice device, const VkSamplerCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSampler *pSampler)
@@ -2633,6 +2746,12 @@ VkResult WINAPI wine_vkGetQueryPoolResults(VkDevice device, VkQueryPool queryPoo
     return device->funcs.p_vkGetQueryPoolResults(device->device, queryPool, firstQuery, queryCount, dataSize, pData, stride, flags);
 }
 
+static void WINAPI wine_vkGetQueueCheckpointDataNV(VkQueue queue, uint32_t *pCheckpointDataCount, VkCheckpointDataNV *pCheckpointData)
+{
+    TRACE("%p, %p, %p\n", queue, pCheckpointDataCount, pCheckpointData);
+    queue->device->funcs.p_vkGetQueueCheckpointDataNV(queue->queue, pCheckpointDataCount, pCheckpointData);
+}
+
 void WINAPI wine_vkGetRenderAreaGranularity(VkDevice device, VkRenderPass renderPass, VkExtent2D *pGranularity)
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(renderPass), pGranularity);
@@ -2828,11 +2947,14 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkBindImageMemory", &wine_vkBindImageMemory},
     {"vkBindImageMemory2", &wine_vkBindImageMemory2},
     {"vkBindImageMemory2KHR", &wine_vkBindImageMemory2KHR},
+    {"vkCmdBeginConditionalRenderingEXT", &wine_vkCmdBeginConditionalRenderingEXT},
     {"vkCmdBeginQuery", &wine_vkCmdBeginQuery},
     {"vkCmdBeginRenderPass", &wine_vkCmdBeginRenderPass},
+    {"vkCmdBeginRenderPass2KHR", &wine_vkCmdBeginRenderPass2KHR},
     {"vkCmdBindDescriptorSets", &wine_vkCmdBindDescriptorSets},
     {"vkCmdBindIndexBuffer", &wine_vkCmdBindIndexBuffer},
     {"vkCmdBindPipeline", &wine_vkCmdBindPipeline},
+    {"vkCmdBindShadingRateImageNV", &wine_vkCmdBindShadingRateImageNV},
     {"vkCmdBindVertexBuffers", &wine_vkCmdBindVertexBuffers},
     {"vkCmdBlitImage", &wine_vkCmdBlitImage},
     {"vkCmdClearAttachments", &wine_vkCmdClearAttachments},
@@ -2855,11 +2977,17 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDrawIndirect", &wine_vkCmdDrawIndirect},
     {"vkCmdDrawIndirectCountAMD", &wine_vkCmdDrawIndirectCountAMD},
     {"vkCmdDrawIndirectCountKHR", &wine_vkCmdDrawIndirectCountKHR},
+    {"vkCmdDrawMeshTasksIndirectCountNV", &wine_vkCmdDrawMeshTasksIndirectCountNV},
+    {"vkCmdDrawMeshTasksIndirectNV", &wine_vkCmdDrawMeshTasksIndirectNV},
+    {"vkCmdDrawMeshTasksNV", &wine_vkCmdDrawMeshTasksNV},
+    {"vkCmdEndConditionalRenderingEXT", &wine_vkCmdEndConditionalRenderingEXT},
     {"vkCmdEndQuery", &wine_vkCmdEndQuery},
     {"vkCmdEndRenderPass", &wine_vkCmdEndRenderPass},
+    {"vkCmdEndRenderPass2KHR", &wine_vkCmdEndRenderPass2KHR},
     {"vkCmdExecuteCommands", &wine_vkCmdExecuteCommands},
     {"vkCmdFillBuffer", &wine_vkCmdFillBuffer},
     {"vkCmdNextSubpass", &wine_vkCmdNextSubpass},
+    {"vkCmdNextSubpass2KHR", &wine_vkCmdNextSubpass2KHR},
     {"vkCmdPipelineBarrier", &wine_vkCmdPipelineBarrier},
     {"vkCmdPushConstants", &wine_vkCmdPushConstants},
     {"vkCmdPushDescriptorSetKHR", &wine_vkCmdPushDescriptorSetKHR},
@@ -2868,12 +2996,15 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdResetQueryPool", &wine_vkCmdResetQueryPool},
     {"vkCmdResolveImage", &wine_vkCmdResolveImage},
     {"vkCmdSetBlendConstants", &wine_vkCmdSetBlendConstants},
+    {"vkCmdSetCheckpointNV", &wine_vkCmdSetCheckpointNV},
+    {"vkCmdSetCoarseSampleOrderNV", &wine_vkCmdSetCoarseSampleOrderNV},
     {"vkCmdSetDepthBias", &wine_vkCmdSetDepthBias},
     {"vkCmdSetDepthBounds", &wine_vkCmdSetDepthBounds},
     {"vkCmdSetDeviceMask", &wine_vkCmdSetDeviceMask},
     {"vkCmdSetDeviceMaskKHR", &wine_vkCmdSetDeviceMaskKHR},
     {"vkCmdSetDiscardRectangleEXT", &wine_vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetEvent", &wine_vkCmdSetEvent},
+    {"vkCmdSetExclusiveScissorNV", &wine_vkCmdSetExclusiveScissorNV},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
     {"vkCmdSetSampleLocationsEXT", &wine_vkCmdSetSampleLocationsEXT},
     {"vkCmdSetScissor", &wine_vkCmdSetScissor},
@@ -2881,6 +3012,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetStencilReference", &wine_vkCmdSetStencilReference},
     {"vkCmdSetStencilWriteMask", &wine_vkCmdSetStencilWriteMask},
     {"vkCmdSetViewport", &wine_vkCmdSetViewport},
+    {"vkCmdSetViewportShadingRatePaletteNV", &wine_vkCmdSetViewportShadingRatePaletteNV},
     {"vkCmdSetViewportWScalingNV", &wine_vkCmdSetViewportWScalingNV},
     {"vkCmdUpdateBuffer", &wine_vkCmdUpdateBuffer},
     {"vkCmdWaitEvents", &wine_vkCmdWaitEvents},
@@ -2904,6 +3036,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreatePipelineLayout", &wine_vkCreatePipelineLayout},
     {"vkCreateQueryPool", &wine_vkCreateQueryPool},
     {"vkCreateRenderPass", &wine_vkCreateRenderPass},
+    {"vkCreateRenderPass2KHR", &wine_vkCreateRenderPass2KHR},
     {"vkCreateSampler", &wine_vkCreateSampler},
     {"vkCreateSamplerYcbcrConversion", &wine_vkCreateSamplerYcbcrConversion},
     {"vkCreateSamplerYcbcrConversionKHR", &wine_vkCreateSamplerYcbcrConversionKHR},
@@ -2966,6 +3099,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageSubresourceLayout", &wine_vkGetImageSubresourceLayout},
     {"vkGetPipelineCacheData", &wine_vkGetPipelineCacheData},
     {"vkGetQueryPoolResults", &wine_vkGetQueryPoolResults},
+    {"vkGetQueueCheckpointDataNV", &wine_vkGetQueueCheckpointDataNV},
     {"vkGetRenderAreaGranularity", &wine_vkGetRenderAreaGranularity},
     {"vkGetShaderInfoAMD", &wine_vkGetShaderInfoAMD},
     {"vkGetSwapchainImagesKHR", &wine_vkGetSwapchainImagesKHR},
@@ -3080,12 +3214,15 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_info",
     "VK_AMD_shader_trinary_minmax",
     "VK_AMD_texture_gather_bias_lod",
+    "VK_EXT_astc_decode_mode",
     "VK_EXT_blend_operation_advanced",
+    "VK_EXT_conditional_rendering",
     "VK_EXT_conservative_rasterization",
     "VK_EXT_depth_range_unrestricted",
     "VK_EXT_descriptor_indexing",
     "VK_EXT_discard_rectangles",
     "VK_EXT_global_priority",
+    "VK_EXT_inline_uniform_block",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_sample_locations",
     "VK_EXT_sampler_filter_minmax",
@@ -3098,11 +3235,14 @@ static const char * const vk_device_extensions[] =
     "VK_IMG_filter_cubic",
     "VK_IMG_format_pvrtc",
     "VK_KHR_16bit_storage",
+    "VK_KHR_8bit_storage",
     "VK_KHR_bind_memory2",
+    "VK_KHR_create_renderpass2",
     "VK_KHR_dedicated_allocation",
     "VK_KHR_descriptor_update_template",
     "VK_KHR_device_group",
     "VK_KHR_draw_indirect_count",
+    "VK_KHR_driver_properties",
     "VK_KHR_get_memory_requirements2",
     "VK_KHR_image_format_list",
     "VK_KHR_incremental_present",
@@ -3114,20 +3254,31 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_relaxed_block_layout",
     "VK_KHR_sampler_mirror_clamp_to_edge",
     "VK_KHR_sampler_ycbcr_conversion",
+    "VK_KHR_shader_atomic_int64",
     "VK_KHR_shader_draw_parameters",
     "VK_KHR_storage_buffer_storage_class",
     "VK_KHR_swapchain",
     "VK_KHR_variable_pointers",
+    "VK_KHR_vulkan_memory_model",
     "VK_NV_clip_space_w_scaling",
+    "VK_NV_compute_shader_derivatives",
+    "VK_NV_corner_sampled_image",
     "VK_NV_dedicated_allocation",
+    "VK_NV_device_diagnostic_checkpoints",
     "VK_NV_external_memory",
     "VK_NV_fill_rectangle",
     "VK_NV_fragment_coverage_to_color",
+    "VK_NV_fragment_shader_barycentric",
     "VK_NV_framebuffer_mixed_samples",
     "VK_NV_geometry_shader_passthrough",
     "VK_NV_glsl_shader",
+    "VK_NV_mesh_shader",
+    "VK_NV_representative_fragment_test",
     "VK_NV_sample_mask_override_coverage",
+    "VK_NV_scissor_exclusive",
+    "VK_NV_shader_image_footprint",
     "VK_NV_shader_subgroup_partitioned",
+    "VK_NV_shading_rate_image",
     "VK_NV_viewport_array2",
     "VK_NV_viewport_swizzle",
 };

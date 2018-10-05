@@ -133,6 +133,15 @@ typedef struct VkBindImageMemoryInfo_host
     VkDeviceSize memoryOffset;
 } VkBindImageMemoryInfo_host;
 
+typedef struct VkConditionalRenderingBeginInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkBuffer buffer;
+    VkDeviceSize offset;
+    VkConditionalRenderingFlagsEXT flags;
+} VkConditionalRenderingBeginInfoEXT_host;
+
 typedef struct VkRenderPassBeginInfo_host
 {
     VkStructureType sType;
@@ -686,15 +695,26 @@ struct vulkan_device_funcs
 #else
     VkResult (*p_vkBindImageMemory2KHR)(VkDevice, uint32_t, const VkBindImageMemoryInfo *);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdBeginConditionalRenderingEXT)(VkCommandBuffer, const VkConditionalRenderingBeginInfoEXT_host *);
+#else
+    void (*p_vkCmdBeginConditionalRenderingEXT)(VkCommandBuffer, const VkConditionalRenderingBeginInfoEXT *);
+#endif
     void (*p_vkCmdBeginQuery)(VkCommandBuffer, VkQueryPool, uint32_t, VkQueryControlFlags);
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, VkSubpassContents);
 #else
     void (*p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo *, VkSubpassContents);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdBeginRenderPass2KHR)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, const VkSubpassBeginInfoKHR *);
+#else
+    void (*p_vkCmdBeginRenderPass2KHR)(VkCommandBuffer, const VkRenderPassBeginInfo *, const VkSubpassBeginInfoKHR *);
+#endif
     void (*p_vkCmdBindDescriptorSets)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkDescriptorSet *, uint32_t, const uint32_t *);
     void (*p_vkCmdBindIndexBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkIndexType);
     void (*p_vkCmdBindPipeline)(VkCommandBuffer, VkPipelineBindPoint, VkPipeline);
+    void (*p_vkCmdBindShadingRateImageNV)(VkCommandBuffer, VkImageView, VkImageLayout);
     void (*p_vkCmdBindVertexBuffers)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (*p_vkCmdBlitImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageBlit *, VkFilter);
     void (*p_vkCmdClearAttachments)(VkCommandBuffer, uint32_t, const VkClearAttachment *, uint32_t, const VkClearRect *);
@@ -729,11 +749,17 @@ struct vulkan_device_funcs
     void (*p_vkCmdDrawIndirect)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndirectCountAMD)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndirectCountKHR)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksIndirectCountNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksIndirectNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksNV)(VkCommandBuffer, uint32_t, uint32_t);
+    void (*p_vkCmdEndConditionalRenderingEXT)(VkCommandBuffer);
     void (*p_vkCmdEndQuery)(VkCommandBuffer, VkQueryPool, uint32_t);
     void (*p_vkCmdEndRenderPass)(VkCommandBuffer);
+    void (*p_vkCmdEndRenderPass2KHR)(VkCommandBuffer, const VkSubpassEndInfoKHR *);
     void (*p_vkCmdExecuteCommands)(VkCommandBuffer, uint32_t, const VkCommandBuffer *);
     void (*p_vkCmdFillBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkDeviceSize, uint32_t);
     void (*p_vkCmdNextSubpass)(VkCommandBuffer, VkSubpassContents);
+    void (*p_vkCmdNextSubpass2KHR)(VkCommandBuffer, const VkSubpassBeginInfoKHR *, const VkSubpassEndInfoKHR *);
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdPipelineBarrier)(VkCommandBuffer, VkPipelineStageFlags, VkPipelineStageFlags, VkDependencyFlags, uint32_t, const VkMemoryBarrier *, uint32_t, const VkBufferMemoryBarrier_host *, uint32_t, const VkImageMemoryBarrier_host *);
 #else
@@ -750,12 +776,15 @@ struct vulkan_device_funcs
     void (*p_vkCmdResetQueryPool)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t);
     void (*p_vkCmdResolveImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageResolve *);
     void (*p_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
+    void (*p_vkCmdSetCheckpointNV)(VkCommandBuffer, const void *);
+    void (*p_vkCmdSetCoarseSampleOrderNV)(VkCommandBuffer, VkCoarseSampleOrderTypeNV, uint32_t, const VkCoarseSampleOrderCustomNV *);
     void (*p_vkCmdSetDepthBias)(VkCommandBuffer, float, float, float);
     void (*p_vkCmdSetDepthBounds)(VkCommandBuffer, float, float);
     void (*p_vkCmdSetDeviceMask)(VkCommandBuffer, uint32_t);
     void (*p_vkCmdSetDeviceMaskKHR)(VkCommandBuffer, uint32_t);
     void (*p_vkCmdSetDiscardRectangleEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
+    void (*p_vkCmdSetExclusiveScissorNV)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetLineWidth)(VkCommandBuffer, float);
     void (*p_vkCmdSetSampleLocationsEXT)(VkCommandBuffer, const VkSampleLocationsInfoEXT *);
     void (*p_vkCmdSetScissor)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
@@ -763,6 +792,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetStencilReference)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (*p_vkCmdSetStencilWriteMask)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (*p_vkCmdSetViewport)(VkCommandBuffer, uint32_t, uint32_t, const VkViewport *);
+    void (*p_vkCmdSetViewportShadingRatePaletteNV)(VkCommandBuffer, uint32_t, uint32_t, const VkShadingRatePaletteNV *);
     void (*p_vkCmdSetViewportWScalingNV)(VkCommandBuffer, uint32_t, uint32_t, const VkViewportWScalingNV *);
     void (*p_vkCmdUpdateBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkDeviceSize, const void *);
 #if defined(USE_STRUCT_CONVERSION)
@@ -822,6 +852,7 @@ struct vulkan_device_funcs
     VkResult (*p_vkCreatePipelineLayout)(VkDevice, const VkPipelineLayoutCreateInfo *, const VkAllocationCallbacks *, VkPipelineLayout *);
     VkResult (*p_vkCreateQueryPool)(VkDevice, const VkQueryPoolCreateInfo *, const VkAllocationCallbacks *, VkQueryPool *);
     VkResult (*p_vkCreateRenderPass)(VkDevice, const VkRenderPassCreateInfo *, const VkAllocationCallbacks *, VkRenderPass *);
+    VkResult (*p_vkCreateRenderPass2KHR)(VkDevice, const VkRenderPassCreateInfo2KHR *, const VkAllocationCallbacks *, VkRenderPass *);
     VkResult (*p_vkCreateSampler)(VkDevice, const VkSamplerCreateInfo *, const VkAllocationCallbacks *, VkSampler *);
     VkResult (*p_vkCreateSamplerYcbcrConversion)(VkDevice, const VkSamplerYcbcrConversionCreateInfo *, const VkAllocationCallbacks *, VkSamplerYcbcrConversion *);
     VkResult (*p_vkCreateSamplerYcbcrConversionKHR)(VkDevice, const VkSamplerYcbcrConversionCreateInfo *, const VkAllocationCallbacks *, VkSamplerYcbcrConversion *);
@@ -927,6 +958,7 @@ struct vulkan_device_funcs
 #endif
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
     VkResult (*p_vkGetQueryPoolResults)(VkDevice, VkQueryPool, uint32_t, uint32_t, size_t, void *, VkDeviceSize, VkQueryResultFlags);
+    void (*p_vkGetQueueCheckpointDataNV)(VkQueue, uint32_t *, VkCheckpointDataNV *);
     void (*p_vkGetRenderAreaGranularity)(VkDevice, VkRenderPass, VkExtent2D *);
     VkResult (*p_vkGetShaderInfoAMD)(VkDevice, VkPipeline, VkShaderStageFlagBits, VkShaderInfoTypeAMD, size_t *, void *);
     VkResult (*p_vkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
@@ -1056,11 +1088,14 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkBindImageMemory) \
     USE_VK_FUNC(vkBindImageMemory2) \
     USE_VK_FUNC(vkBindImageMemory2KHR) \
+    USE_VK_FUNC(vkCmdBeginConditionalRenderingEXT) \
     USE_VK_FUNC(vkCmdBeginQuery) \
     USE_VK_FUNC(vkCmdBeginRenderPass) \
+    USE_VK_FUNC(vkCmdBeginRenderPass2KHR) \
     USE_VK_FUNC(vkCmdBindDescriptorSets) \
     USE_VK_FUNC(vkCmdBindIndexBuffer) \
     USE_VK_FUNC(vkCmdBindPipeline) \
+    USE_VK_FUNC(vkCmdBindShadingRateImageNV) \
     USE_VK_FUNC(vkCmdBindVertexBuffers) \
     USE_VK_FUNC(vkCmdBlitImage) \
     USE_VK_FUNC(vkCmdClearAttachments) \
@@ -1083,11 +1118,17 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdDrawIndirect) \
     USE_VK_FUNC(vkCmdDrawIndirectCountAMD) \
     USE_VK_FUNC(vkCmdDrawIndirectCountKHR) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksIndirectCountNV) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksIndirectNV) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksNV) \
+    USE_VK_FUNC(vkCmdEndConditionalRenderingEXT) \
     USE_VK_FUNC(vkCmdEndQuery) \
     USE_VK_FUNC(vkCmdEndRenderPass) \
+    USE_VK_FUNC(vkCmdEndRenderPass2KHR) \
     USE_VK_FUNC(vkCmdExecuteCommands) \
     USE_VK_FUNC(vkCmdFillBuffer) \
     USE_VK_FUNC(vkCmdNextSubpass) \
+    USE_VK_FUNC(vkCmdNextSubpass2KHR) \
     USE_VK_FUNC(vkCmdPipelineBarrier) \
     USE_VK_FUNC(vkCmdPushConstants) \
     USE_VK_FUNC(vkCmdPushDescriptorSetKHR) \
@@ -1096,12 +1137,15 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdResetQueryPool) \
     USE_VK_FUNC(vkCmdResolveImage) \
     USE_VK_FUNC(vkCmdSetBlendConstants) \
+    USE_VK_FUNC(vkCmdSetCheckpointNV) \
+    USE_VK_FUNC(vkCmdSetCoarseSampleOrderNV) \
     USE_VK_FUNC(vkCmdSetDepthBias) \
     USE_VK_FUNC(vkCmdSetDepthBounds) \
     USE_VK_FUNC(vkCmdSetDeviceMask) \
     USE_VK_FUNC(vkCmdSetDeviceMaskKHR) \
     USE_VK_FUNC(vkCmdSetDiscardRectangleEXT) \
     USE_VK_FUNC(vkCmdSetEvent) \
+    USE_VK_FUNC(vkCmdSetExclusiveScissorNV) \
     USE_VK_FUNC(vkCmdSetLineWidth) \
     USE_VK_FUNC(vkCmdSetSampleLocationsEXT) \
     USE_VK_FUNC(vkCmdSetScissor) \
@@ -1109,6 +1153,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetStencilReference) \
     USE_VK_FUNC(vkCmdSetStencilWriteMask) \
     USE_VK_FUNC(vkCmdSetViewport) \
+    USE_VK_FUNC(vkCmdSetViewportShadingRatePaletteNV) \
     USE_VK_FUNC(vkCmdSetViewportWScalingNV) \
     USE_VK_FUNC(vkCmdUpdateBuffer) \
     USE_VK_FUNC(vkCmdWaitEvents) \
@@ -1132,6 +1177,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCreatePipelineLayout) \
     USE_VK_FUNC(vkCreateQueryPool) \
     USE_VK_FUNC(vkCreateRenderPass) \
+    USE_VK_FUNC(vkCreateRenderPass2KHR) \
     USE_VK_FUNC(vkCreateSampler) \
     USE_VK_FUNC(vkCreateSamplerYcbcrConversion) \
     USE_VK_FUNC(vkCreateSamplerYcbcrConversionKHR) \
@@ -1193,6 +1239,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageSubresourceLayout) \
     USE_VK_FUNC(vkGetPipelineCacheData) \
     USE_VK_FUNC(vkGetQueryPoolResults) \
+    USE_VK_FUNC(vkGetQueueCheckpointDataNV) \
     USE_VK_FUNC(vkGetRenderAreaGranularity) \
     USE_VK_FUNC(vkGetShaderInfoAMD) \
     USE_VK_FUNC(vkGetSwapchainImagesKHR) \
