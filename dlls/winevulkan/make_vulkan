@@ -1028,8 +1028,11 @@ class VkMember(object):
         # Collect any conversion for any member structs.
         struct = self.type_info["data"]
         for m in struct:
+            m.needs_struct_extensions_conversion()
             if m.needs_conversion():
                 conversions.extend(m.get_conversions())
+
+        struct.needs_struct_extensions_conversion()
 
         struct = self.type_info["data"]
         direction = Direction.OUTPUT if struct.returnedonly else Direction.INPUT
@@ -1118,6 +1121,13 @@ class VkMember(object):
         # TODO: some non-pointer structs and optional pointer structs may need freeing,
         # though none of this type have been encountered yet.
         return False
+
+    def needs_struct_extensions_conversion(self):
+        if not self.is_struct():
+            return False
+
+        struct = self.type_info["data"]
+        return struct.needs_struct_extensions_conversion()
 
     def set_type_info(self, type_info):
         """ Helper function to set type information from the type registry.
@@ -1356,6 +1366,10 @@ class VkParam(object):
         if not self.is_struct():
             return None
 
+        self.struct.needs_struct_extensions_conversion()
+        for m in self.struct:
+            m.needs_struct_extensions_conversion()
+
         if not self.needs_conversion():
             return None
 
@@ -1485,14 +1499,16 @@ class VkParam(object):
 class VkStruct(Sequence):
     """ Class which represents the type union and struct. """
 
-    def __init__(self, name, members, returnedonly, alias=None, union=False):
+    def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
         self.name = name
         self.members = members
         self.returnedonly = returnedonly
+        self.structextends = structextends
         self.required = False
         self.alias = alias
         self.union = union
         self.type_info = None # To be set later.
+        self.struct_extensions = []
 
     def __getitem__(self, i):
         return self.members[i]
@@ -1503,7 +1519,7 @@ class VkStruct(Sequence):
     @staticmethod
     def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        return VkStruct(name, alias.members, alias.returnedonly, alias=alias)
+        return VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
 
     @staticmethod
     def from_xml(struct):
@@ -1511,18 +1527,21 @@ class VkStruct(Sequence):
         # know which one we are dealing with later on for code generation.
         union = True if struct.attrib["category"] == "union" else False
 
-        name = struct.attrib.get("name", None)
+        name = struct.attrib.get("name")
 
         # 'Output' structures for which data is filled in by the API are
         # marked as 'returnedonly'.
         returnedonly = True if struct.attrib.get("returnedonly") else False
+
+        structextends = struct.attrib.get("structextends")
+        structextends = structextends.split(",") if structextends else []
 
         members = []
         for member in struct.findall("member"):
             vk_member = VkMember.from_xml(member)
             members.append(vk_member)
 
-        return VkStruct(name, members, returnedonly, union=union)
+        return VkStruct(name, members, returnedonly, structextends, union=union)
 
     @staticmethod
     def decouple_structs(structs):
@@ -1645,6 +1664,16 @@ class VkStruct(Sequence):
                 return True
 
             continue
+
+        return False
+
+    def needs_struct_extensions_conversion(self):
+        """ Checks if structure extensions in pNext chain need conversion. """
+
+        for e in self.struct_extensions:
+            if e.required and e.needs_conversion():
+                LOGGER.error("Unhandled pNext chain conversion for {0}".format(e.name))
+                return True
 
         return False
 
@@ -2755,6 +2784,10 @@ class VkRegistry(object):
         # the data now.
         for struct in structs:
             struct.set_type_info(self.types)
+
+            for structextend in struct.structextends:
+                s = self.types[structextend]["data"]
+                s.struct_extensions.append(struct)
 
         # Guarantee everything is sorted, so code generation doesn't have
         # to deal with this.
