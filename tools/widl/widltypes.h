@@ -59,7 +59,6 @@ typedef struct list expr_list_t;
 typedef struct list var_list_t;
 typedef struct list declarator_list_t;
 typedef struct list ifref_list_t;
-typedef struct list array_dims_t;
 typedef struct list user_type_list_t;
 typedef struct list context_handle_list_t;
 typedef struct list generic_handle_list_t;
@@ -465,7 +464,6 @@ struct _declarator_t {
   var_t *var;
   type_t *type;
   type_t *func_type;
-  array_dims_t *array;
   expr_t *bits;
 
   /* parser-internal */
