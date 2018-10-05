@@ -195,6 +195,13 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         WARN("Failed to apply stateblock, hr %#x.\n", hr);
 }
 
+static void d2d_device_context_set_error(struct d2d_device_context *context, HRESULT code)
+{
+    context->error.code = code;
+    context->error.tag1 = context->drawing_state.tag1;
+    context->error.tag2 = context->drawing_state.tag2;
+}
+
 static inline struct d2d_device_context *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_device_context, IUnknown_iface);
@@ -969,23 +976,21 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
 {
     const struct d2d_geometry *geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
     struct d2d_brush *opacity_brush_impl = unsafe_impl_from_ID2D1Brush(opacity_brush);
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
 
     TRACE("iface %p, geometry %p, brush %p, opacity_brush %p.\n", iface, geometry, brush, opacity_brush);
 
-    if (FAILED(render_target->error.code))
+    if (FAILED(context->error.code))
         return;
 
     if (opacity_brush && brush_impl->type != D2D_BRUSH_TYPE_BITMAP)
     {
-        render_target->error.code = D2DERR_INCOMPATIBLE_BRUSH_TYPES;
-        render_target->error.tag1 = render_target->drawing_state.tag1;
-        render_target->error.tag2 = render_target->drawing_state.tag2;
+        d2d_device_context_set_error(context, D2DERR_INCOMPATIBLE_BRUSH_TYPES);
         return;
     }
 
-    d2d_device_context_fill_geometry(render_target, geometry_impl, brush_impl, opacity_brush_impl);
+    d2d_device_context_fill_geometry(context, geometry_impl, brush_impl, opacity_brush_impl);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_FillMesh(ID2D1DeviceContext *iface,
@@ -1076,7 +1081,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
     if (interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
             && interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
     {
-        context->error.code = E_INVALIDARG;
+        d2d_device_context_set_error(context, E_INVALIDARG);
         return;
     }
 
@@ -1341,7 +1346,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
         DWRITE_MEASURING_MODE measuring_mode)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     DWRITE_TEXT_ANTIALIAS_MODE antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
     IDWriteRenderingParams *rendering_params;
     DWRITE_RENDERING_MODE rendering_mode;
@@ -1350,12 +1355,12 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
     TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
 
-    rendering_params = render_target->text_rendering_params ? render_target->text_rendering_params
-            : render_target->default_text_rendering_params;
+    rendering_params = context->text_rendering_params ? context->text_rendering_params
+            : context->default_text_rendering_params;
 
     rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
 
-    switch (render_target->drawing_state.textAntialiasMode)
+    switch (context->drawing_state.textAntialiasMode)
     {
     case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
         if (rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
@@ -1363,29 +1368,29 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
                 || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
                 || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
         {
-            render_target->error.code = E_INVALIDARG;
+            d2d_device_context_set_error(context, E_INVALIDARG);
         }
         break;
     case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
         if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED
                 || rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
         {
-            render_target->error.code = E_INVALIDARG;
+            d2d_device_context_set_error(context, E_INVALIDARG);
         }
         break;
     case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
         if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
-            render_target->error.code = E_INVALIDARG;
+            d2d_device_context_set_error(context, E_INVALIDARG);
         break;
     default:
         ;
     }
 
-    if (FAILED(render_target->error.code))
+    if (FAILED(context->error.code))
         return;
 
     rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
-    switch (render_target->drawing_state.textAntialiasMode)
+    switch (context->drawing_state.textAntialiasMode)
     {
     case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
         if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
@@ -1404,7 +1409,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
     if (rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
     {
         if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
-                max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f,
+                max(context->desc.dpiX, context->desc.dpiY) / 96.0f,
                 measuring_mode, rendering_params, &rendering_mode)))
         {
             ERR("Failed to get recommended rendering mode, hr %#x.\n", hr);
@@ -1413,9 +1418,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
     }
 
     if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
-        d2d_device_context_draw_glyph_run_outline(render_target, baseline_origin, glyph_run, brush);
+        d2d_device_context_draw_glyph_run_outline(context, baseline_origin, glyph_run, brush);
     else
-        d2d_device_context_draw_glyph_run_bitmap(render_target, baseline_origin, glyph_run, brush,
+        d2d_device_context_draw_glyph_run_bitmap(context, baseline_origin, glyph_run, brush,
                 rendering_mode, measuring_mode, antialias_mode);
 }
 
@@ -2053,9 +2058,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
 
     if (!(bitmap_impl->options & D2D1_BITMAP_OPTIONS_TARGET))
     {
-        context->error.code = D2DERR_INVALID_TARGET;
-        context->error.tag1 = context->drawing_state.tag1;
-        context->error.tag2 = context->drawing_state.tag2;
+        d2d_device_context_set_error(context, D2DERR_INVALID_TARGET);
         return;
     }
 
