@@ -759,7 +759,7 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
 
     if (flags & ETO_GLYPH_INDEX) ggo_flags |= GGO_GLYPH_INDEX;
     indices[0] = index;
-    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( indices ); i++)
     {
         index = indices[i];
         ret = GetGlyphOutlineW( dc->hSelf, index, ggo_flags, &metrics, 0, NULL, &identity );
@@ -1260,7 +1260,7 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         total += counts[i];
     }
 
-    if (total > sizeof(pt_buf) / sizeof(pt_buf[0]))
+    if (total > ARRAY_SIZE( pt_buf ))
     {
         points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
         if (!points) return FALSE;
@@ -1330,7 +1330,7 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         total += counts[i];
     }
 
-    if (total > sizeof(pt_buf) / sizeof(pt_buf[0]))
+    if (total > ARRAY_SIZE( pt_buf ))
     {
         points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
         if (!points) return FALSE;

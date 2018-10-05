@@ -618,8 +618,7 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
     logfont.lfPitchAndFamily = pitch;
 
     if (name)
-	lstrcpynW(logfont.lfFaceName, name,
-		  sizeof(logfont.lfFaceName) / sizeof(WCHAR));
+        lstrcpynW(logfont.lfFaceName, name, ARRAY_SIZE(logfont.lfFaceName));
     else
 	logfont.lfFaceName[0] = '\0';
 
@@ -1829,7 +1828,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
     indices[0] = index;
     if (flags & ETO_GLYPH_INDEX) aa_flags |= GGO_GLYPH_INDEX;
 
-    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( indices ); i++)
     {
         index = indices[i];
         ret = GetGlyphOutlineW( hdc, index, aa_flags, metrics, 0, NULL, &identity );

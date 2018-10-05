@@ -189,7 +189,7 @@ X(EMR_CREATECOLORSPACEW)
 static const char *get_emr_name(DWORD type)
 {
     unsigned int i;
-    for(i = 0; i < sizeof(emr_names) / sizeof(emr_names[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(emr_names); i++)
         if(type == emr_names[i].type) return emr_names[i].name;
     TRACE("Unknown record type %d\n", type);
    return NULL;

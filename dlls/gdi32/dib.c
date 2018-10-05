@@ -1627,7 +1627,7 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 
     if (!desc->pMemory) return STATUS_INVALID_PARAMETER;
 
-    for (i = 0; i < sizeof(format_info) / sizeof(*format_info); ++i)
+    for (i = 0; i < ARRAY_SIZE( format_info ); ++i)
     {
         if (format_info[i].format == desc->Format)
         {

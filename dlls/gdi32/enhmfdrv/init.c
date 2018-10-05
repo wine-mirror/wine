@@ -378,7 +378,7 @@ HDC WINAPI CreateEnhMetaFileW(
         ref_dc = CreateDCW( displayW, NULL, NULL, NULL );
 
     memset( physDev->dev_caps, 0, sizeof(physDev->dev_caps) );
-    for (cap = 0; cap < sizeof(physDev->dev_caps) / sizeof(physDev->dev_caps[0]); cap++)
+    for (cap = 0; cap < ARRAY_SIZE( physDev->dev_caps ); cap++)
         if (devcap_is_valid( cap ))
             physDev->dev_caps[cap] = GetDeviceCaps( ref_dc, cap );
 

@@ -2393,7 +2393,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         DWORD dst_colors[256], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
                 color_table[i].rgbBlue;
 
@@ -2417,7 +2417,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         DWORD dst_colors[16], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
                 color_table[i].rgbBlue;
 
@@ -2445,7 +2445,7 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         DWORD dst_colors[2], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
                 color_table[i].rgbBlue;
 
@@ -2660,7 +2660,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
         DWORD dst_colors[256], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -2683,7 +2683,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
         DWORD dst_colors[16], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -2710,7 +2710,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
         DWORD dst_colors[2], i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3151,7 +3151,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         WORD dst_colors[256];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
                             ((color_table[i].rgbGreen << 2) & 0x03e0) |
                             ((color_table[i].rgbBlue  >> 3) & 0x001f);
@@ -3177,7 +3177,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         WORD dst_colors[16];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
                             ((color_table[i].rgbGreen << 2) & 0x03e0) |
                             ((color_table[i].rgbBlue  >> 3) & 0x001f);
@@ -3207,7 +3207,7 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         WORD dst_colors[2];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
                             ((color_table[i].rgbGreen << 2) & 0x03e0) |
                             ((color_table[i].rgbBlue  >> 3) & 0x001f);
@@ -3425,7 +3425,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         WORD dst_colors[256];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3449,7 +3449,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         WORD dst_colors[16];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3477,7 +3477,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         WORD dst_colors[2];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3710,7 +3710,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
             BYTE dst_colors[256];
             int i;
 
-            for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
                 dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
             for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3735,7 +3735,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         BYTE dst_colors[16];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3763,7 +3763,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         BYTE dst_colors[2];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -4055,7 +4055,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         BYTE dst_colors[256];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -4109,7 +4109,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
             BYTE dst_colors[16];
             int i;
 
-            for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
                 dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
             for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -4150,7 +4150,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         BYTE dst_colors[2];
         int i;
 
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -5394,7 +5394,7 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
     /* Creating a BYTE-sized table so we don't need to mask the lsb of bit_val */
-    for (i = 2; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+    for (i = 2; i < ARRAY_SIZE(dst_colors); i++)
         dst_colors[i] = dst_colors[i & 1];
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
@@ -5731,12 +5731,12 @@ static void mask_rect_16( const dib_info *dst, const RECT *rc,
     get_rop_codes( rop2, &codes );
 
     if (dst->funcs == &funcs_555)
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
                             ((color_table[i].rgbGreen << 2) & 0x03e0) |
                             ((color_table[i].rgbBlue  >> 3) & 0x001f);
     else
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
             dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
@@ -5872,7 +5872,7 @@ static void mask_rect_8( const dib_info *dst, const RECT *rc,
 
     get_rop_codes( rop2, &codes );
 
-    for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
         dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
@@ -6010,7 +6010,7 @@ static void mask_rect_4( const dib_info *dst, const RECT *rc,
 
     get_rop_codes( rop2, &codes );
 
-    for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(dst_colors); i++)
     {
         dst_colors[i] = FILTER_DIBINDEX(color_table[i],rgbquad_to_pixel_colortable(dst, color_table[i]));
         /* Set high nibble to match so we don't need to shift it later. */

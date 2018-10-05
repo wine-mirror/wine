@@ -281,7 +281,7 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
         if (region->rects[i].top >= rect.bottom) break;
         if (!intersect_rect( out, &rect, &region->rects[i] )) continue;
         out++;
-        if (out == &clip_rects->buffer[sizeof(clip_rects->buffer) / sizeof(RECT)])
+        if (out == &clip_rects->buffer[ARRAY_SIZE( clip_rects->buffer )])
         {
             clip_rects->rects = HeapAlloc( GetProcessHeap(), 0, region->numRects * sizeof(RECT) );
             if (!clip_rects->rects) return 0;

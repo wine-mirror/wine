@@ -125,7 +125,7 @@ static BOOL init_opengl(void)
     LOAD_FUNCPTR(OSMesaPixelStore);
 #undef LOAD_FUNCPTR
 
-    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( opengl_func_names ); i++)
     {
         if (!(((void **)&opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
         {

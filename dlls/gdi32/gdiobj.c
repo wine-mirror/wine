@@ -503,7 +503,7 @@ static const struct DefaultFontInfo* get_default_fonts(UINT charset)
 {
         unsigned int n;
 
-        for(n=0;n<(sizeof(default_fonts)/sizeof(default_fonts[0]));n++)
+        for(n = 0; n < ARRAY_SIZE( default_fonts ); n++)
         {
                 if ( default_fonts[n].charset == charset )
                         return &default_fonts[n];
@@ -1285,7 +1285,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
     {
     case OBJ_PEN:
         /* Enumerate solid pens */
-        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE( solid_colors ); i++)
         {
             pen.lopnStyle   = PS_SOLID;
             pen.lopnWidth.x = 1;
@@ -1300,7 +1300,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
 
     case OBJ_BRUSH:
         /* Enumerate solid brushes */
-        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        for (i = 0; i < ARRAY_SIZE( solid_colors ); i++)
         {
             brush.lbStyle = BS_SOLID;
             brush.lbColor = solid_colors[i];

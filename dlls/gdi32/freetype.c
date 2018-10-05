@@ -1385,7 +1385,7 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
         break;
     case TT_PLATFORM_MACINTOSH:
         if (!IsValidCodePage( get_mac_code_page( name ))) return 0;
-        if (name->language_id >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
+        if (name->language_id >= ARRAY_SIZE( mac_langid_table )) return 0;
         name_lang = mac_langid_table[name->language_id];
         break;
     case TT_PLATFORM_APPLE_UNICODE:
@@ -1395,7 +1395,7 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
         case TT_APPLE_ID_DEFAULT:
         case TT_APPLE_ID_ISO_10646:
         case TT_APPLE_ID_UNICODE_2_0:
-            if (name->language_id >= sizeof(mac_langid_table)/sizeof(mac_langid_table[0])) return 0;
+            if (name->language_id >= ARRAY_SIZE( mac_langid_table )) return 0;
             name_lang = mac_langid_table[name->language_id];
             break;
         default:
@@ -2648,14 +2648,14 @@ static BOOL init_system_links(void)
         goto skip_internal;
     }
 
-    for (i = 0; i < sizeof(font_links_defaults_list)/sizeof(font_links_defaults_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(font_links_defaults_list); i++)
     {
         const FontSubst *psub2;
         psub2 = get_font_subst(&font_subst_list, font_links_defaults_list[i].shelldlg, -1);
 
         if ((!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name) || (psub2 && !strcmpiW(psub2->to.name,psub->to.name))))
         {
-            for (j = 0; j < sizeof(font_links_list)/sizeof(font_links_list[0]); j++)
+            for (j = 0; j < ARRAY_SIZE(font_links_list); j++)
                 populate_system_links(font_links_list[j], font_links_defaults_list[i].substitutes);
 
             if (!strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
@@ -3052,7 +3052,7 @@ static char *get_winfonts_dir_path(LPCWSTR file)
     static const WCHAR slashW[] = {'\\','\0'};
     WCHAR windowsdir[MAX_PATH];
 
-    GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
+    GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
     strcatW(windowsdir, fontsW);
     strcatW(windowsdir, slashW);
     strcatW(windowsdir, file);
@@ -3069,7 +3069,7 @@ static void load_system_fonts(void)
     char *unixname;
 
     if(RegOpenKeyW(HKEY_CURRENT_CONFIG, system_fonts_reg_key, &hkey) == ERROR_SUCCESS) {
-        GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
+        GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
         strcatW(windowsdir, fontsW);
         for(value = SystemFontValues; *value; value++) { 
             dlen = sizeof(data);
@@ -3138,7 +3138,7 @@ static void update_reg_entries(void)
 
             len = strlenW(name) + 1;
             if (face->scalable)
-                len += sizeof(TrueType) / sizeof(WCHAR);
+                len += ARRAY_SIZE(TrueType);
 
             valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             strcpyW(valueW, name);
@@ -4025,7 +4025,7 @@ static void update_font_info(void)
     RegSetValueExW(hkey, logpixels, 0, REG_DWORD, (const BYTE *)&screen_dpi, sizeof(screen_dpi));
     RegCloseKey(hkey);
 
-    for (i = 0; i < sizeof(nls_update_font_list)/sizeof(nls_update_font_list[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(nls_update_font_list); i++)
     {
         HKEY hkey;
 
@@ -4186,7 +4186,7 @@ static void init_font_list(void)
     load_system_fonts();
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
-    GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
+    GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
     strcatW(windowsdir, fontsW);
     if((unixname = wine_get_unix_file_name(windowsdir)))
     {
