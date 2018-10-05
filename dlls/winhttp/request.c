@@ -1608,21 +1608,29 @@ static DWORD map_secure_protocols( DWORD mask )
 
 static BOOL ensure_cred_handle( session_t *session )
 {
-    SCHANNEL_CRED cred;
-    SECURITY_STATUS status;
+    SECURITY_STATUS status = SEC_E_OK;
 
     if (session->cred_handle_initialized) return TRUE;
 
-    memset( &cred, 0, sizeof(cred) );
-    cred.dwVersion             = SCHANNEL_CRED_VERSION;
-    cred.grbitEnabledProtocols = map_secure_protocols( session->secure_protocols );
-    if ((status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, &cred,
-                                             NULL, NULL, &session->cred_handle, NULL )) != SEC_E_OK)
+    EnterCriticalSection( &session->cs );
+    if (!session->cred_handle_initialized)
+    {
+        SCHANNEL_CRED cred;
+        memset( &cred, 0, sizeof(cred) );
+        cred.dwVersion             = SCHANNEL_CRED_VERSION;
+        cred.grbitEnabledProtocols = map_secure_protocols( session->secure_protocols );
+        status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL,
+                                            &cred, NULL, NULL, &session->cred_handle, NULL );
+        if (status == SEC_E_OK)
+            session->cred_handle_initialized = TRUE;
+    }
+    LeaveCriticalSection( &session->cs );
+
+    if (status != SEC_E_OK)
     {
         WARN( "AcquireCredentialsHandleW failed: 0x%08x\n", status );
         return FALSE;
     }
-    session->cred_handle_initialized = TRUE;
     return TRUE;
 }
 

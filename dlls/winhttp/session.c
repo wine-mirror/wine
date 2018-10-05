@@ -198,7 +198,9 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
             return FALSE;
         }
+        EnterCriticalSection( &session->cs );
         session->secure_protocols = *(DWORD *)buffer;
+        LeaveCriticalSection( &session->cs );
         TRACE("0x%x\n", session->secure_protocols);
         return TRUE;
     }
