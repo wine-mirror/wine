@@ -1552,18 +1552,6 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   ptype = &v->type;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
-    if (dim->is_const)
-    {
-      /* FIXME: should use a type_memsize that allows us to pass in a pointer size */
-      if (0)
-      {
-        unsigned int size = type_memsize(v->type);
-
-        if (0xffffffffu / size < dim->cval)
-          error_loc("%s: total array size is too large\n", v->name);
-      }
-    }
-
     *ptype = type_new_array(NULL, *ptype, FALSE,
                             dim->is_const ? dim->cval : 0,
                             dim->is_const ? NULL : dim, NULL,
