@@ -416,6 +416,9 @@ sub needs_wrapper($$)
     my %funcs =
         (
          "glDebugEntry" => 1,
+         "glDebugMessageCallback" => 1,
+         "glDebugMessageCallbackAMD" => 1,
+         "glDebugMessageCallbackARB" => 1,
          "glGetIntegerv" => 1,
          "glGetString" => 1,
          "glGetStringi" => 1,
