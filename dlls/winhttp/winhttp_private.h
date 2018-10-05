@@ -73,14 +73,6 @@ typedef struct
     struct list cookies;
 } domain_t;
 
-typedef struct
-{
-    struct list entry;
-    WCHAR *name;
-    WCHAR *value;
-    WCHAR *path;
-} cookie_t;
-
 typedef struct {
     struct list entry;
     LONG ref;

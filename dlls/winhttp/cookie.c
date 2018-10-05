@@ -30,6 +30,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
+typedef struct
+{
+    struct list entry;
+    WCHAR *name;
+    WCHAR *value;
+    WCHAR *path;
+} cookie_t;
+
 static domain_t *add_domain( session_t *session, WCHAR *name )
 {
     domain_t *domain;
