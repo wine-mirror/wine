@@ -468,8 +468,8 @@ arg:	  attributes decl_spec m_any_declarator	{ if ($2->stgclass != STG_NONE && $
 	;
 
 array:	  '[' expr ']'				{ $$ = $2;
-						  if (!$$->is_const)
-						      error_loc("array dimension is not an integer constant\n");
+						  if (!$$->is_const || $$->cval <= 0)
+						      error_loc("array dimension is not a positive integer constant\n");
 						}
 	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
 	| '[' ']'				{ $$ = make_expr(EXPR_VOID); }
@@ -1554,9 +1554,6 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   {
     if (dim->is_const)
     {
-      if (dim->cval <= 0)
-        error_loc("%s: array dimension must be positive\n", v->name);
-
       /* FIXME: should use a type_memsize that allows us to pass in a pointer size */
       if (0)
       {
