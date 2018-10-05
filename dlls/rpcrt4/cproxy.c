@@ -79,7 +79,10 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "movl 8(%ecx),%edx\n\t"         /* info->FormatStringOffset */
                   "movzwl (%edx,%eax,2),%edx\n\t" /* FormatStringOffset[index] */
                   "addl 4(%ecx),%edx\n\t"         /* info->ProcFormatString + offset */
-                  "movzwl 8(%edx),%eax\n\t"       /* arguments size */
+                  "movzbl 1(%edx),%eax\n\t"       /* Oi_flags */
+                  "andl $0x08,%eax\n\t"           /* Oi_HAS_RPCFLAGS */
+                  "shrl $1,%eax\n\t"
+                  "movzwl 4(%edx,%eax),%eax\n\t"  /* arguments size */
                   "pushl %eax\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "leal 8(%esp),%eax\n\t"         /* &This */
