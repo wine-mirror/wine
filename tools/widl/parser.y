@@ -1552,10 +1552,12 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   ptype = &v->type;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
+    /* An array is always a reference pointer unless explicitly marked otherwise
+     * (regardless of what the default pointer attribute is). */
     *ptype = type_new_array(NULL, *ptype, FALSE,
                             dim->is_const ? dim->cval : 0,
                             dim->is_const ? NULL : dim, NULL,
-                            pointer_default);
+                            FC_RP);
   }
 
   ptype = &v->type;
