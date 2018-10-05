@@ -861,6 +861,16 @@ void __cdecl s_ip_test(ipu_t *a)
     ok(hr == S_OK, "got %#x\n", hr);
 }
 
+int __cdecl s_sum_ptr_array(int *a[2])
+{
+    return *a[0] + *a[1];
+}
+
+int __cdecl s_sum_array_ptr(int (*a)[2])
+{
+    return (*a)[0] + (*a)[1];
+}
+
 static void
 make_cmdline(char buffer[MAX_PATH], const char *test)
 {
@@ -1388,6 +1398,7 @@ array_tests(void)
   pints_t api[5];
   numbers_struct_t *ns;
   refpint_t rpi[5];
+  int i0 = 1, i1 = 2, *ptr_array[2] = {&i0, &i1}, array[2] = {3, 4};
 
   if (!old_windows_version)
   {
@@ -1518,6 +1529,9 @@ array_tests(void)
   pi[4] = -4; rpi[4] = &pi[4];
   ok(sum_complex_array(5, rpi) == 1, "RPC sum_complex_array\n");
   HeapFree(GetProcessHeap(), 0, pi);
+
+  ok(sum_ptr_array(ptr_array) == 3, "RPC sum_ptr_array\n");
+  ok(sum_array_ptr(&array) == 7, "RPC sum_array_ptr\n");
 }
 
 void __cdecl s_authinfo_test(unsigned int protseq, int secure)
