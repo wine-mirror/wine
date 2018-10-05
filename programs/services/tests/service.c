@@ -589,7 +589,7 @@ static void test_runner(void (*p_run_test)(void))
     sprintf(named_pipe_name, "\\\\.\\pipe\\%s_pipe", service_name);
 
     pipe_handle = CreateNamedPipeA(named_pipe_name, PIPE_ACCESS_INBOUND,
-                                   PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_WAIT, 10, 2048, 2048, 10000, NULL);
+                                   PIPE_TYPE_MESSAGE|PIPE_READMODE_MESSAGE|PIPE_WAIT, 10, 2048, 2048, 10000, NULL);
     ok(pipe_handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
     if(pipe_handle == INVALID_HANDLE_VALUE)
         return;
