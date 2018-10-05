@@ -2313,27 +2313,6 @@ static void WINAPI glCurrentPaletteMatrixARB( GLint index )
   funcs->ext.p_glCurrentPaletteMatrixARB( index );
 }
 
-static void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
-{
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE( "(%p, %p)\n", callback, userParam );
-  funcs->ext.p_glDebugMessageCallback( callback, userParam );
-}
-
-static void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
-{
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE( "(%p, %p)\n", callback, userParam );
-  funcs->ext.p_glDebugMessageCallbackAMD( callback, userParam );
-}
-
-static void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
-{
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE( "(%p, %p)\n", callback, userParam );
-  funcs->ext.p_glDebugMessageCallbackARB( callback, userParam );
-}
-
 static void WINAPI glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -18518,6 +18497,9 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
   return funcs->ext.p_wglSwapIntervalEXT( interval );
 }
 
+extern void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam ) DECLSPEC_HIDDEN;
+extern void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam ) DECLSPEC_HIDDEN;
+extern void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam ) DECLSPEC_HIDDEN;
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index ) DECLSPEC_HIDDEN;
 extern BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer ) DECLSPEC_HIDDEN;
 extern HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList ) DECLSPEC_HIDDEN;
