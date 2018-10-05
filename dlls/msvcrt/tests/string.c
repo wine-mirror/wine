@@ -615,7 +615,7 @@ static void test_strcpy_s(void)
 
 static void test_memcpy_s(void)
 {
-    static char dest[8];
+    static char dest[8], buf[32];
     static const char tiny[] = {'T',0,'I','N','Y',0};
     static const char big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
     int ret;
@@ -667,6 +667,18 @@ static void test_memcpy_s(void)
     ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
+
+    ret = p_memcpy_s(buf, ARRAY_SIZE(buf), big, ARRAY_SIZE(big));
+    ok(!ret, "memcpy_s returned %d\n", ret);
+    ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
+
+    ret = p_memcpy_s(buf + 1, ARRAY_SIZE(buf) - 1, buf, ARRAY_SIZE(big));
+    ok(!ret, "memcpy_s returned %d\n", ret);
+    ok(!memcmp(buf + 1, big, sizeof(big)), "unexpected buf\n");
+
+    ret = p_memcpy_s(buf, ARRAY_SIZE(buf), buf + 1, ARRAY_SIZE(big));
+    ok(!ret, "memcpy_s returned %d\n", ret);
+    ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
 }
 
 static void test_memmove_s(void)
