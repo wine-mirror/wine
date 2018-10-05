@@ -869,7 +869,7 @@ class VkHandle(object):
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False, extension_structs=None):
+            dyn_array_len=None, optional=False):
         self.const = const
         self.struct_fwd_decl = struct_fwd_decl
         self.name = name
@@ -879,7 +879,6 @@ class VkMember(object):
         self.array_len = array_len
         self.dyn_array_len = dyn_array_len
         self.optional = optional
-        self.extension_structs = extension_structs
 
     def __eq__(self, other):
         """ Compare member based on name against a string.
@@ -927,12 +926,7 @@ class VkMember(object):
 
         # Name of other member within, which stores the number of
         # elements pointed to be by this member.
-        dyn_array_len = member.get("len", None)
-
-        if "validextensionstructs" in member.attrib:
-            extension_structs = member.get("validextensionstructs").split(",")
-        else:
-            extension_structs = None
+        dyn_array_len = member.get("len")
 
         # Some members are optional, which is important for conversion code e.g. not dereference NULL pointer.
         optional = True if member.get("optional") else False
@@ -956,7 +950,7 @@ class VkMember(object):
                 array_len = name_elem.tail.strip("[]")
 
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
-                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, extension_structs=extension_structs)
+                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional)
 
     def copy(self, input, output, direction):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member. """
