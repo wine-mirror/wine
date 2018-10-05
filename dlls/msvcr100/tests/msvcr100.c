@@ -371,7 +371,7 @@ static BOOL init(void)
 
 static void test_wmemcpy_s(void)
 {
-    static wchar_t dest[8];
+    static wchar_t dest[8], buf[32];
     static const wchar_t tiny[] = {'T',0,'I','N','Y',0};
     static const wchar_t big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
     const wchar_t XX = 0x5858;     /* two 'X' bytes */
@@ -433,6 +433,18 @@ static void test_wmemcpy_s(void)
     ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
     CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p_wmemcpy_s(buf, ARRAY_SIZE(buf), big, ARRAY_SIZE(big));
+    ok(!ret, "wmemcpy_s returned %d\n", ret);
+    ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
+
+    ret = p_wmemcpy_s(buf + 1, ARRAY_SIZE(buf) - 1, buf, ARRAY_SIZE(big));
+    ok(!ret, "wmemcpy_s returned %d\n", ret);
+    ok(!memcmp(buf + 1, big, sizeof(big)), "unexpected buf\n");
+
+    ret = p_wmemcpy_s(buf, ARRAY_SIZE(buf), buf + 1, ARRAY_SIZE(big));
+    ok(!ret, "wmemcpy_s returned %d\n", ret);
+    ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
 
     ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
