@@ -1456,7 +1456,6 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   var_t *v = decl->var;
   expr_list_t *sizes = get_attrp(attrs, ATTR_SIZEIS);
   expr_list_t *lengs = get_attrp(attrs, ATTR_LENGTHIS);
-  int sizeless;
   expr_t *dim;
   type_t **ptype;
   array_dims_t *arr = decl ? decl->array : NULL;
@@ -1551,12 +1550,8 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
               v->name);
 
   ptype = &v->type;
-  sizeless = FALSE;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
-    if (sizeless)
-      error_loc("%s: only the first array dimension can be unspecified\n", v->name);
-
     if (dim->is_const)
     {
       if (dim->cval <= 0)
@@ -1571,8 +1566,6 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
           error_loc("%s: total array size is too large\n", v->name);
       }
     }
-    else
-      sizeless = TRUE;
 
     *ptype = type_new_array(NULL, *ptype, FALSE,
                             dim->is_const ? dim->cval : 0,
