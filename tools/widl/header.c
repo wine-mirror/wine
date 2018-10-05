@@ -285,6 +285,15 @@ int needs_space_after(type_t *t)
           (!is_ptr(t) && (!is_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
 }
 
+static void write_pointer_left(FILE *h, type_t *ref)
+{
+    if (needs_space_after(ref))
+        fprintf(h, " ");
+    if (!type_is_alias(ref) && is_array(ref) && !type_array_is_decl_as_ptr(ref))
+        fprintf(h, "(");
+    fprintf(h, "*");
+}
+
 void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
 {
   const char *name;
@@ -341,10 +350,12 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
         else fprintf(h, "union %s", t->name ? t->name : "");
         break;
       case TYPE_POINTER:
+      {
         write_type_left(h, type_pointer_get_ref(t), name_type, declonly);
-        fprintf(h, "%s*", needs_space_after(type_pointer_get_ref(t)) ? " " : "");
+        write_pointer_left(h, type_pointer_get_ref(t));
         if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
         break;
+      }
       case TYPE_ARRAY:
         if (t->name && type_array_is_decl_as_ptr(t))
           fprintf(h, "%s", t->name);
@@ -352,7 +363,7 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
         {
           write_type_left(h, type_array_get_element(t), name_type, declonly);
           if (type_array_is_decl_as_ptr(t))
-            fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
+            write_pointer_left(h, type_array_get_element(t));
         }
         break;
       case TYPE_BASIC:
@@ -419,23 +430,36 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
 void write_type_right(FILE *h, type_t *t, int is_field)
 {
   if (!h) return;
+  if (type_is_alias(t)) return;
 
   switch (type_get_type(t))
   {
   case TYPE_ARRAY:
-    if (!type_array_is_decl_as_ptr(t))
+  {
+    type_t *elem = type_array_get_element(t);
+    if (type_array_is_decl_as_ptr(t))
+    {
+      if (!type_is_alias(elem) && is_array(elem) && !type_array_is_decl_as_ptr(elem))
+        fprintf(h, ")");
+    }
+    else
     {
       if (is_conformant_array(t))
-      {
         fprintf(h, "[%s]", is_field ? "1" : "");
-        t = type_array_get_element(t);
-      }
-      for ( ;
-           type_get_type(t) == TYPE_ARRAY && !type_array_is_decl_as_ptr(t);
-           t = type_array_get_element(t))
+      else
         fprintf(h, "[%u]", type_array_get_dim(t));
     }
+    write_type_right(h, elem, FALSE);
     break;
+  }
+  case TYPE_POINTER:
+  {
+    type_t *ref = type_pointer_get_ref(t);
+    if (!type_is_alias(ref) && is_array(ref) && !type_array_is_decl_as_ptr(ref))
+      fprintf(h, ")");
+    write_type_right(h, ref, FALSE);
+    break;
+  }
   case TYPE_BITFIELD:
     fprintf(h, " : %u", type_bitfield_get_bits(t)->cval);
     break;
@@ -450,7 +474,6 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   case TYPE_COCLASS:
   case TYPE_FUNCTION:
   case TYPE_INTERFACE:
-  case TYPE_POINTER:
     break;
   }
 }
