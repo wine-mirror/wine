@@ -698,11 +698,88 @@ BOOL WINAPI CryptUnregisterOIDInfo(PCCRYPT_OID_INFO info)
 /***********************************************************************
  *             CryptRegisterOIDInfo (CRYPT32.@)
  */
-BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO pInfo, DWORD dwFlags)
+BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO info, DWORD flags)
 {
-    FIXME("(%p, %x): stub\n", pInfo, dwFlags );
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    static const WCHAR nameW[] = { 'N','a','m','e',0 };
+    static const WCHAR algidW[] = { 'A','l','g','i','d',0 };
+    static const WCHAR extraW[] = { 'E','x','t','r','a','I','n','f','o',0 };
+    static const WCHAR cngalgidW[] = { 'C','N','G','A','l','g','i','d',0 };
+    static const WCHAR cngextraalgidW[] = { 'C','N','G','E','x','t','r','a','A','l','g','i','d',0 };
+    static const WCHAR flagsW[] = { 'F','l','a','g','s',0 };
+    char *key_name;
+    HKEY root = 0, key = 0;
+    DWORD err;
+
+    TRACE("(%p, %x)\n", info, flags );
+
+    if (!info || info->cbSize != sizeof(*info) || !info->pszOID)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    if (!info->dwGroupId) return TRUE;
+
+    key_name = CryptMemAlloc(strlen(info->pszOID) + 16);
+    if (!key_name)
+    {
+        err = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    err = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo",
+                          0, NULL, 0, KEY_ALL_ACCESS, NULL, &root, NULL);
+    if (err != ERROR_SUCCESS) goto done;
+
+    sprintf(key_name, "%s!%u", info->pszOID, info->dwGroupId);
+    err = RegCreateKeyA(root, key_name, &key);
+    if (err != ERROR_SUCCESS) goto done;
+
+    if (flags)
+    {
+        err = RegSetValueExW(key, flagsW, 0, REG_DWORD, (const BYTE *)&flags, sizeof(flags));
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+    if (info->pwszName)
+    {
+        err = RegSetValueExW(key, nameW, 0, REG_SZ, (const BYTE *)info->pwszName, (lstrlenW(info->pwszName) + 1) * sizeof(WCHAR));
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+    if (info->u.Algid)
+    {
+        err = RegSetValueExW(key, algidW, 0, REG_DWORD, (const BYTE *)&info->u.Algid, sizeof(info->u.Algid));
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+    if (info->ExtraInfo.cbData && info->ExtraInfo.pbData)
+    {
+        err = RegSetValueExW(key, extraW, 0, REG_BINARY, info->ExtraInfo.pbData, info->ExtraInfo.cbData);
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+    if (info->pwszCNGAlgid)
+    {
+        err = RegSetValueExW(key, cngalgidW, 0, REG_SZ, (const BYTE *)info->pwszCNGAlgid, (lstrlenW(info->pwszCNGAlgid) + 1) * sizeof(WCHAR));
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+    if (info->pwszCNGExtraAlgid)
+    {
+        err = RegSetValueExW(key, cngextraalgidW, 0, REG_SZ, (const BYTE *)info->pwszCNGExtraAlgid, (lstrlenW(info->pwszCNGExtraAlgid) + 1) * sizeof(WCHAR));
+        if (err != ERROR_SUCCESS) goto done;
+    }
+
+done:
+    CryptMemFree(key_name);
+    if (key) RegCloseKey(key);
+    if (root) RegCloseKey(root);
+
+    if (err)
+        SetLastError(err);
+
+    return !err;
 }
 
 /***********************************************************************
