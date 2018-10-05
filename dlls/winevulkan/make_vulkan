@@ -322,22 +322,26 @@ class VkEnum(object):
         for v in enum.findall("enum"):
             # Value is either a value or a bitpos, only one can exist.
             value = v.attrib.get("value")
-            if value is None:
-                # bitmask
-                value = 1 << int(v.attrib.get("bitpos"))
-                values.append(VkEnumValue(v.attrib.get("name"), value, hex=True))
-            else:
+            alias_name = v.attrib.get("alias")
+            if alias_name:
+                alias = next(x for x in values if x.name == alias_name)
+                values.append(VkEnumValue(v.attrib.get("name"), alias.value, alias.hex))
+            elif value:
                 # Some values are in hex form. We want to preserve the hex representation
                 # at least when we convert back to a string. Internally we want to use int.
                 if "0x" in value:
                     values.append(VkEnumValue(v.attrib.get("name"), int(value, 0), hex=True))
                 else:
                     values.append(VkEnumValue(v.attrib.get("name"), int(value, 0)))
+            else:
+                # bitmask
+                value = 1 << int(v.attrib.get("bitpos"))
+                values.append(VkEnumValue(v.attrib.get("name"), value, hex=True))
 
         # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
         # which is to prepare for extensions as they can add values and hence affect
         # the size definition.
-        max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2',name).upper() + "_MAX_ENUM"
+        max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
         values.append(VkEnumValue(max_name, 0x7fffffff, hex=True))
 
         return VkEnum(name, values)
