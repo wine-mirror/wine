@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-08-17 19:36+0300\n"
+"PO-Revision-Date: 2018-10-06 08:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11060,10 +11060,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Klaida: netinkamas parametras „%c“.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Klaida: nepavyko rasti proceso „%1“.\n"
+msgstr "Klaida: Nepavyko gauti kompiuterio vardo: %u.\n"
 
 #: hostname.rc:33
 msgid ""
