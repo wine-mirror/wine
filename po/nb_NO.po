@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-06 19:05+0200\n"
+"PO-Revision-Date: 2018-10-07 20:50+0200\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -403,16 +403,12 @@ msgid "&Retry"
 msgstr "P&røv igjen"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "&Skjul faner"
+msgstr "Skjul detaljer"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Detaljer"
+msgstr "Se detaljer"
 
 #: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -3452,18 +3448,16 @@ msgid "Connections"
 msgstr "Nettverksforbindelser"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Oppsett av Wine"
+msgstr "Automatisk oppsett"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Bruk automatisk oppdagelse (WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Bruk automatisk oppsett skript (PAC)"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
@@ -7585,7 +7579,7 @@ msgstr "sidefane"
 
 #: oleacc.rc:69
 msgid "property page"
-msgstr "fane"
+msgstr "egenskap fane"
 
 #: oleacc.rc:70
 msgid "indicator"
@@ -11054,10 +11048,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Feil: \"%c\" er et ugyldig valg.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Feil: Klarte ikke finne prosessen \"%1\".\n"
+msgstr "Feil: Kunne ikke finne vertsnavn: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -14220,11 +14212,11 @@ msgstr "&Farge:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "MIME typer"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Behandle fil &assosiasjoner"
 
 #: winecfg.rc:308
 msgid "Folders"
