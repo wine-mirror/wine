@@ -1091,7 +1091,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     GUID tab[2];
     IMoniker* pMoniker;
     PIN_INFO PinInfo;
-    CLSID FilterCLSID;
     PIN_DIRECTION dir;
     IFilterMapper2 *pFilterMapper2 = NULL;
 
@@ -1184,15 +1183,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IEnumPins_Release(penumpins);
     }
 
-    hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
-    if (FAILED(hr))
-        goto out;
-
-    hr = IBaseFilter_GetClassID(PinInfo.pFilter, &FilterCLSID);
-    IBaseFilter_Release(PinInfo.pFilter);
-    if (FAILED(hr))
-        goto out;
-
     /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
      * filter to the minor mediatype of input pin of the renderer */
     hr = IPin_EnumMediaTypes(ppinOut, &penummt);
@@ -1236,7 +1226,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     while (IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, NULL) == S_OK)
     {
         VARIANT var;
-        GUID clsid;
         IPin* ppinfilter = NULL;
         IBaseFilter* pfilter = NULL;
         IAMGraphBuilderCallback *callback = NULL;
@@ -1251,20 +1240,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
             WARN("Unable to create filter (%x), trying next one\n", hr);
-            goto error;
-        }
-
-        hr = IBaseFilter_GetClassID(pfilter, &clsid);
-        if (FAILED(hr))
-        {
-            IBaseFilter_Release(pfilter);
-            goto error;
-	}
-
-        if (IsEqualGUID(&clsid, &FilterCLSID)) {
-            /* Skip filter (same as the one the output pin belongs to) */
-            IBaseFilter_Release(pfilter);
-            pfilter = NULL;
             goto error;
         }
 

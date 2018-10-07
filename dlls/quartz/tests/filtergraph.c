@@ -1271,6 +1271,7 @@ static ULONG WINAPI testfilter_Release(IBaseFilter *iface)
 static HRESULT WINAPI testfilter_GetClassID(IBaseFilter *iface, CLSID *clsid)
 {
     if (winetest_debug > 1) trace("%p->GetClassID()\n", iface);
+    memset(clsid, 0xde, sizeof(*clsid));
     return S_OK;
 }
 
