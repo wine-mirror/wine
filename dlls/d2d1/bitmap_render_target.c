@@ -794,6 +794,10 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
         return hr;
     }
 
+    /* Note that we should be a little careful with the "dxgi_target"
+     * reference we get here. Because the object is aggregated, releasing the
+     * interface in any error paths below would end up calling
+     * d2d_bitmap_render_target_Release(). */
     if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
             &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
     {
@@ -816,7 +820,6 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     if (FAILED(hr))
     {
         WARN("Failed to create target bitmap, hr %#x.\n", hr);
-        ID2D1RenderTarget_Release(render_target->dxgi_target);
         IUnknown_Release(render_target->dxgi_inner);
         return hr;
     }
