@@ -147,14 +147,14 @@ static int output_error( int msg )
     return output_string( GetStdHandle(STD_ERROR_HANDLE), fmtW, buffer );
 }
 
-static int output_header( const WCHAR *prop )
+static int output_header( const WCHAR *prop, ULONG column_width )
 {
-    static const WCHAR bomW[] = {0xfeff}, fmtW[] = {'%','s','\r','\n',0};
+    static const WCHAR bomW[] = {0xfeff}, fmtW[] = {'%','-','*','s','\r','\n',0};
     int len;
     DWORD count;
     WCHAR buffer[8192];
 
-    len = snprintfW( buffer, ARRAY_SIZE(buffer), fmtW, prop );
+    len = snprintfW( buffer, ARRAY_SIZE(buffer), fmtW, column_width, prop );
 
     if (!WriteConsoleW( GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, &count, NULL )) /* redirected */
     {
@@ -166,10 +166,10 @@ static int output_header( const WCHAR *prop )
     return count;
 }
 
-static int output_line( const WCHAR *str )
+static int output_line( const WCHAR *str, ULONG column_width )
 {
-    static const WCHAR fmtW[] = {'%','s','\r','\n',0};
-    return output_string( GetStdHandle(STD_OUTPUT_HANDLE), fmtW, str );
+    static const WCHAR fmtW[] = {'%','-','*','s','\r','\n',0};
+    return output_string( GetStdHandle(STD_OUTPUT_HANDLE), fmtW, column_width, str );
 }
 
 static int query_prop( const WCHAR *class, const WCHAR *propname )
@@ -186,6 +186,9 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
     WCHAR *prop = NULL;
     BOOL first = TRUE;
     int len, ret = -1;
+    IWbemClassObject *obj;
+    ULONG count, width = 0;
+    VARIANT v;
 
     WINE_TRACE("%s, %s\n", debugstr_w(class), debugstr_w(propname));
 
@@ -210,29 +213,41 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
     hr = IWbemServices_ExecQuery( services, wql, query, flags, NULL, &result );
     if (hr != S_OK) goto done;
 
+    for (;;) /* get column width */
+    {
+        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+        if (!count) break;
+
+        if (!prop && !(prop = find_prop( obj, propname )))
+        {
+            output_error( STRING_INVALID_QUERY );
+            goto done;
+        }
+        if (IWbemClassObject_Get( obj, prop, 0, &v, NULL, NULL ) == WBEM_S_NO_ERROR)
+        {
+            VariantChangeType( &v, &v, 0, VT_BSTR );
+            width = max( strlenW( V_BSTR( &v ) ), width );
+            VariantClear( &v );
+        }
+        IWbemClassObject_Release( obj );
+    }
+    width += 2;
+
+    IEnumWbemClassObject_Reset( result );
     for (;;)
     {
-        IWbemClassObject *obj;
-        ULONG count;
-        VARIANT v;
-
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
 
         if (first)
         {
-            if (!(prop = find_prop( obj, propname )))
-            {
-                output_error( STRING_INVALID_QUERY );
-                goto done;
-            }
-            output_header( prop );
+            output_header( prop, width );
             first = FALSE;
         }
         if (IWbemClassObject_Get( obj, prop, 0, &v, NULL, NULL ) == WBEM_S_NO_ERROR)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
-            output_line( V_BSTR( &v ) );
+            output_line( V_BSTR( &v ), width );
             VariantClear( &v );
         }
         IWbemClassObject_Release( obj );
