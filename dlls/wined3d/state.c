@@ -1775,7 +1775,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
             || state->render_states[WINED3D_RS_DEPTHBIAS])
     {
         const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
-        float factor, units, scale;
+        float factor, units, scale, clamp;
 
         union
         {
@@ -1783,6 +1783,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
             float f;
         } scale_bias, const_bias;
 
+        clamp = state->rasterizer_state ? state->rasterizer_state->desc.depth_bias_clamp : 0.0f;
         scale_bias.d = state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS];
         const_bias.d = state->render_states[WINED3D_RS_DEPTHBIAS];
 
@@ -1811,7 +1812,16 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         }
 
         gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
-        gl_info->gl_ops.gl.p_glPolygonOffset(factor, units);
+        if (gl_info->supported[ARB_POLYGON_OFFSET_CLAMP])
+        {
+            gl_info->gl_ops.ext.p_glPolygonOffsetClamp(factor, units, clamp);
+        }
+        else
+        {
+            if (clamp != 0.0f)
+                WARN("Ignoring depth bias clamp %.8e.\n", clamp);
+            gl_info->gl_ops.gl.p_glPolygonOffset(factor, units);
+        }
     }
     else
     {
@@ -4345,6 +4355,8 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
 
     gl_info->gl_ops.gl.p_glFrontFace(mode);
     checkGLcall("glFrontFace");
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
+        state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     depth_clip(state->rasterizer_state, gl_info);
 }
 
@@ -4357,6 +4369,8 @@ static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_
 
     gl_info->gl_ops.gl.p_glFrontFace(mode);
     checkGLcall("glFrontFace");
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
+        state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     depth_clip(state->rasterizer_state, gl_info);
 }
 
