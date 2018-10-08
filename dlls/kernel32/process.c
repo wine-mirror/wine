@@ -2626,7 +2626,19 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         if (GetCurrentDirectoryW(MAX_PATH, buf)) unixdir = wine_get_unix_file_name( buf );
     }
 
-    if (env && !(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
+    if (!env)
+    {
+        WCHAR *e;
+
+        RtlAcquirePebLock();
+        e = env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+        while (*e) e += strlenW(e) + 1;
+        e++;  /* final null */
+        envW = HeapAlloc( GetProcessHeap(), 0, (e - (WCHAR *)env) * sizeof(WCHAR) );
+        memcpy( envW, env,  (e - (WCHAR *)env) * sizeof(WCHAR) );
+        RtlReleasePebLock();
+    }
+    else if (!(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
     {
         char *e = env;
         DWORD lenW;
@@ -2636,8 +2648,8 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         lenW = MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, NULL, 0 );
         envW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, envW, lenW );
-        flags |= CREATE_UNICODE_ENVIRONMENT;
     }
+    flags |= CREATE_UNICODE_ENVIRONMENT;
 
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
