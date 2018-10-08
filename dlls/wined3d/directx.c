@@ -1360,6 +1360,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX675MX,   "NVIDIA GeForce GTX 675MX",         DRIVER_NVIDIA_GEFORCE8,  4096},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX680,     "NVIDIA GeForce GTX 680",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX690,     "NVIDIA GeForce GTX 690",           DRIVER_NVIDIA_GEFORCE8,  2048},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT720,      "NVIDIA GeForce GT 720",            DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT730,      "NVIDIA GeForce GT 730",            DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT730M,     "NVIDIA GeForce GT 730M",           DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT740M,     "NVIDIA GeForce GT 740M",           DRIVER_NVIDIA_GEFORCE8,  2048},
@@ -2314,6 +2315,7 @@ cards_nvidia_mesa[] =
     {"NV117",                       CARD_NVIDIA_GEFORCE_GTX750},
     /* Kepler */
     {"NV108",                       CARD_NVIDIA_GEFORCE_GT740M},
+    {"NV106",                       CARD_NVIDIA_GEFORCE_GT720},
     {"NVF1",                        CARD_NVIDIA_GEFORCE_GTX780TI},
     {"NVF0",                        CARD_NVIDIA_GEFORCE_GTX780},
     {"NVE6",                        CARD_NVIDIA_GEFORCE_GTX770M},
