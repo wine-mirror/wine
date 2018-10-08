@@ -139,14 +139,6 @@ static HMODULE hmod;
 static int     myARGC;
 static char**  myARGV;
 
-struct strsid_entry
-{
-    const char *str;
-    DWORD flags;
-};
-#define STRSID_OK     0
-#define STRSID_OPT    1
-
 #define SID_SLOTS 4
 static char debugsid_str[SID_SLOTS][256];
 static int debugsid_index = 0;
@@ -307,23 +299,59 @@ static void test_sid(void)
      { { {0x00,0x00,0x00,0x00,0x00,0x02} }, "S-1-2-1"         },
      { { {0x00,0x00,0x00,0x00,0x00,0x0c} }, "S-1-12-1"        },
     };
-    struct strsid_entry strsid_table[] = {
-        {"AO", STRSID_OK},  {"RU", STRSID_OK},  {"AN", STRSID_OK},  {"AU", STRSID_OK},
-        {"BA", STRSID_OK},  {"BG", STRSID_OK},  {"BO", STRSID_OK},  {"BU", STRSID_OK},
-        {"CA", STRSID_OPT}, {"CG", STRSID_OK},  {"CO", STRSID_OK},  {"DA", STRSID_OPT},
-        {"DC", STRSID_OPT}, {"DD", STRSID_OPT}, {"DG", STRSID_OPT}, {"DU", STRSID_OPT},
-        {"EA", STRSID_OPT}, {"ED", STRSID_OK},  {"WD", STRSID_OK},  {"PA", STRSID_OPT},
-        {"IU", STRSID_OK},  {"LA", STRSID_OK},  {"LG", STRSID_OK},  {"LS", STRSID_OK},
-        {"SY", STRSID_OK},  {"NU", STRSID_OK},  {"NO", STRSID_OK},  {"NS", STRSID_OK},
-        {"PO", STRSID_OK},  {"PS", STRSID_OK},  {"PU", STRSID_OK},  {"RS", STRSID_OPT},
-        {"RD", STRSID_OK},  {"RE", STRSID_OK},  {"RC", STRSID_OK},  {"SA", STRSID_OPT},
-        {"SO", STRSID_OK},  {"SU", STRSID_OK}};
+    static const struct
+    {
+        const char *name;
+        const char *sid;
+        unsigned int optional;
+    }
+    str_to_sid_tests[] =
+    {
+        { "WD", "S-1-1-0" },
+        { "CO", "S-1-3-0" },
+        { "CG", "S-1-3-1" },
+        { "NU", "S-1-5-2" },
+        { "IU", "S-1-5-4" },
+        { "SU", "S-1-5-6" },
+        { "AN", "S-1-5-7" },
+        { "ED", "S-1-5-9" },
+        { "PS", "S-1-5-10" },
+        { "AU", "S-1-5-11" },
+        { "RC", "S-1-5-12" },
+        { "SY", "S-1-5-18" },
+        { "LS", "S-1-5-19" },
+        { "NS", "S-1-5-20" },
+        { "LA", "S-1-5-21-*-*-*-500" },
+        { "LG", "S-1-5-21-*-*-*-501" },
+        { "BO", "S-1-5-32-551" },
+        { "BA", "S-1-5-32-544" },
+        { "BU", "S-1-5-32-545" },
+        { "BG", "S-1-5-32-546" },
+        { "PU", "S-1-5-32-547" },
+        { "AO", "S-1-5-32-548" },
+        { "SO", "S-1-5-32-549" },
+        { "PO", "S-1-5-32-550" },
+        { "RE", "S-1-5-32-552" },
+        { "RU", "S-1-5-32-554" },
+        { "RD", "S-1-5-32-555" },
+        { "NO", "S-1-5-32-556" },
+        { "CA", "", 1 },
+        { "DA", "", 1 },
+        { "DC", "", 1 },
+        { "DD", "", 1 },
+        { "DG", "", 1 },
+        { "DU", "", 1 },
+        { "EA", "", 1 },
+        { "PA", "", 1 },
+        { "RS", "", 1 },
+        { "SA", "", 1 },
+    };
 
     const char noSubAuthStr[] = "S-1-5";
     unsigned int i;
     PSID psid = NULL;
     SID *pisid;
-    BOOL r;
+    BOOL r, ret;
     LPSTR str = NULL;
 
     if( !pConvertStringSidToSidA )
@@ -403,43 +431,30 @@ static void test_sid(void)
             LocalFree( psid );
     }
 
-    /* string constant format not supported before XP */
-    r = pConvertStringSidToSidA(strsid_table[0].str, &psid);
-    if(!r)
+    for (i = 0; i < ARRAY_SIZE(str_to_sid_tests); i++)
     {
-        win_skip("String constant format not supported\n");
-        return;
-    }
-    LocalFree(psid);
+        char *str;
 
-    for(i = 0; i < ARRAY_SIZE(strsid_table); i++)
-    {
-        char *temp;
-
-        SetLastError(0xdeadbeef);
-        r = pConvertStringSidToSidA(strsid_table[i].str, &psid);
-
-        if (!(strsid_table[i].flags & STRSID_OPT))
+        ret = ConvertStringSidToSidA(str_to_sid_tests[i].name, &psid);
+        if (!ret && str_to_sid_tests[i].optional)
         {
-            ok(r, "%s: got %u\n", strsid_table[i].str, GetLastError());
+            skip("%u: failed to convert %s.\n", i, str_to_sid_tests[i].name);
+            continue;
         }
+        ok(ret, "%u: failed to convert string to sid.\n", i);
 
-        if (r)
+        if (str_to_sid_tests[i].optional || !strcmp(str_to_sid_tests[i].name, "LA") ||
+            !strcmp(str_to_sid_tests[i].name, "LG"))
         {
-            if ((winetest_debug > 1) && (ConvertSidToStringSidA(psid, &temp)))
-            {
-                trace(" %s: %s\n", strsid_table[i].str, temp);
-                LocalFree(temp);
-            }
             LocalFree(psid);
+            continue;
         }
-        else
-        {
-            if (GetLastError() != ERROR_INVALID_SID)
-                trace(" %s: couldn't be converted, returned %d\n", strsid_table[i].str, GetLastError());
-            else
-                trace(" %s: couldn't be converted\n", strsid_table[i].str);
-        }
+
+        ret = ConvertSidToStringSidA(psid, &str);
+        ok(ret, "%u: failed to convert SID to string.\n", i);
+        ok(!strcmp(str, str_to_sid_tests[i].sid), "%u: unexpected sid %s.\n", i, str);
+        LocalFree(psid);
+        LocalFree(str);
     }
 }
 
