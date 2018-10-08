@@ -434,18 +434,19 @@ static void append_unicode_string( void **data, const UNICODE_STRING *src,
 
 
 /******************************************************************************
- *  RtlCreateProcessParameters  [NTDLL.@]
+ *  RtlCreateProcessParametersEx  [NTDLL.@]
  */
-NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result,
-                                            const UNICODE_STRING *ImagePathName,
-                                            const UNICODE_STRING *DllPath,
-                                            const UNICODE_STRING *CurrentDirectoryName,
-                                            const UNICODE_STRING *CommandLine,
-                                            PWSTR Environment,
-                                            const UNICODE_STRING *WindowTitle,
-                                            const UNICODE_STRING *Desktop,
-                                            const UNICODE_STRING *ShellInfo,
-                                            const UNICODE_STRING *RuntimeInfo )
+NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **result,
+                                              const UNICODE_STRING *ImagePathName,
+                                              const UNICODE_STRING *DllPath,
+                                              const UNICODE_STRING *CurrentDirectoryName,
+                                              const UNICODE_STRING *CommandLine,
+                                              PWSTR Environment,
+                                              const UNICODE_STRING *WindowTitle,
+                                              const UNICODE_STRING *Desktop,
+                                              const UNICODE_STRING *ShellInfo,
+                                              const UNICODE_STRING *RuntimeInfo,
+                                              ULONG flags )
 {
     static WCHAR empty[] = {0};
     static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
@@ -505,10 +506,30 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
         append_unicode_string( &ptr, Desktop, &params->Desktop );
         append_unicode_string( &ptr, ShellInfo, &params->ShellInfo );
         append_unicode_string( &ptr, RuntimeInfo, &params->RuntimeInfo );
-        *result = RtlDeNormalizeProcessParams( params );
+        *result = params;
+        if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
     }
     RtlReleasePebLock();
     return status;
+}
+
+
+/******************************************************************************
+ *  RtlCreateProcessParameters  [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result,
+                                            const UNICODE_STRING *image,
+                                            const UNICODE_STRING *dllpath,
+                                            const UNICODE_STRING *curdir,
+                                            const UNICODE_STRING *cmdline,
+                                            PWSTR env,
+                                            const UNICODE_STRING *title,
+                                            const UNICODE_STRING *desktop,
+                                            const UNICODE_STRING *shellinfo,
+                                            const UNICODE_STRING *runtime )
+{
+    return RtlCreateProcessParametersEx( result, image, dllpath, curdir, cmdline,
+                                         env, title, desktop, shellinfo, runtime, 0 );
 }
 
 
