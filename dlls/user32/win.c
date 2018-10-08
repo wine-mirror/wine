@@ -4183,3 +4183,13 @@ BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return FALSE;
 }
+
+/**********************************************************************
+ *              SetWindowCompositionAttribute (USER32.@)
+ */
+BOOL WINAPI SetWindowCompositionAttribute(HWND hwnd, void *data)
+{
+    FIXME("(%p, %p): stub\n", hwnd, data);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

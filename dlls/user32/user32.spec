@@ -711,6 +711,7 @@
 @ stdcall SetUserObjectInformationW(long long ptr long)
 @ stdcall SetUserObjectSecurity(long ptr ptr)
 @ stdcall SetWinEventHook(long long long ptr long long long)
+@ stdcall SetWindowCompositionAttribute(ptr ptr)
 @ stdcall SetWindowContextHelpId(long long)
 @ stdcall SetWindowDisplayAffinity(long long)
 @ stub SetWindowFullScreenState

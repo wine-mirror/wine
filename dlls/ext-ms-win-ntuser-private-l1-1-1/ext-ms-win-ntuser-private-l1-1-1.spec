@@ -15,7 +15,7 @@
 @ stub RecordShutdownReason
 @ stdcall RegisterLogonProcess(long long) user32.RegisterLogonProcess
 @ stub SetThreadInputBlocked
-@ stub SetWindowCompositionAttribute
+@ stdcall SetWindowCompositionAttribute(ptr ptr) user32.SetWindowCompositionAttribute
 @ stdcall SetWindowStationUser(long long) user32.SetWindowStationUser
 @ stub SwitchDesktopWithFade
 @ stub UnlockWindowStation
