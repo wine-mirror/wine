@@ -652,6 +652,7 @@ static void restart_if_wow64(void)
         if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
         {
             WINE_TRACE( "restarting %s\n", wine_dbgstr_w(filename) );
+            SetConsoleCtrlHandler( NULL, TRUE ); /* Ignore ^C */
             WaitForSingleObject( pi.hProcess, INFINITE );
             GetExitCodeProcess( pi.hProcess, &exit_code );
             ExitProcess( exit_code );
