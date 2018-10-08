@@ -167,8 +167,8 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
     static const WCHAR select_allW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
     static const WCHAR wqlW[] = {'W','Q','L',0};
-    static const WCHAR newlineW[] = {'\n',0};
-    static const WCHAR fmtW[] = {'%','s','\n',0};
+    static const WCHAR newlineW[] = {'\r','\n',0};
+    static const WCHAR fmtW[] = {'%','s','\r','\n',0};
     HRESULT hr;
     IWbemLocator *locator = NULL;
     IWbemServices *services = NULL;
