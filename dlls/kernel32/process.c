@@ -107,7 +107,9 @@ static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR cmdW[] = {'.','c','m','d',0};
 static const WCHAR pifW[] = {'.','p','i','f',0};
-static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
+static WCHAR winevdm[] = {'C',':','\\','w','i','n','d','o','w','s',
+                          '\\','s','y','s','t','e','m','3','2',
+                          '\\','w','i','n','e','v','d','m','.','e','x','e',0};
 
 static void exec_process( LPCWSTR name );
 
@@ -1140,6 +1142,7 @@ static void init_windows_dirs(void)
     if (is_win64 || is_wow64)   /* SysWow64 is always defined on 64-bit */
     {
         DIR_SysWow64 = default_syswow64W;
+        memcpy( winevdm, default_syswow64W, sizeof(default_syswow64W) - sizeof(WCHAR) );
         if (!CreateDirectoryW( DIR_SysWow64, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
             ERR( "directory %s could not be created, error %u\n",
                  debugstr_w(DIR_SysWow64), GetLastError() );
@@ -1445,9 +1448,7 @@ void CDECL __wine_kernel_init(void)
         }
         else if (error == ERROR_MOD_NOT_FOUND)
         {
-            if ((p = strrchrW( main_exe_name, '\\' ))) p++;
-            else p = main_exe_name;
-            if (!strcmpiW( p, winevdmW ) && __wine_main_argc > 3)
+            if (!strcmpiW( main_exe_name, winevdm ) && __wine_main_argc > 3)
             {
                 /* args 1 and 2 are --app-name full_path */
                 MESSAGE( "wine: could not run %s: 16-bit/DOS support missing\n",
@@ -2438,17 +2439,16 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
 	return FALSE;
 
     new_cmd_line = HeapAlloc(GetProcessHeap(), 0,
-			     (strlenW(buffer) + strlenW(cmd_line) + 30) * sizeof(WCHAR));
-
+			     (strlenW(buffer) + strlenW(cmd_line) + strlenW(winevdm) + 16) * sizeof(WCHAR));
     if (!new_cmd_line)
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;
     }
-    sprintfW(new_cmd_line, argsW, winevdmW, buffer, cmd_line);
+    sprintfW(new_cmd_line, argsW, winevdm, buffer, cmd_line);
     memset( &pe_info, 0, sizeof(pe_info) );
     pe_info.machine = IMAGE_FILE_MACHINE_I386;
-    ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
+    ret = create_process( 0, winevdm, new_cmd_line, env, cur_dir, psa, tsa, inherit,
                           flags, startup, info, unixdir, &pe_info, exec_only );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
