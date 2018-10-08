@@ -202,8 +202,7 @@
 @ stub cproj
 @ stub cprojf
 @ stub cprojl
-@ cdecl -arch=i386 creal(double double) ucrtbase.creal
-@ cdecl -arch=arm,x86_64,arm64 creal(ptr) ucrtbase.creal
+@ cdecl creal(int128) ucrtbase.creal
 @ stub crealf
 @ stub creall
 @ stub csin
