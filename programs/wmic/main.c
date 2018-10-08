@@ -121,7 +121,7 @@ static WCHAR *find_prop( IWbemClassObject *class, const WCHAR *prop )
     return ret;
 }
 
-static int output_string( const WCHAR *msg, ... )
+static int output_string( HANDLE handle, const WCHAR *msg, ... )
 {
     va_list va_args;
     int wlen;
@@ -133,7 +133,7 @@ static int output_string( const WCHAR *msg, ... )
     va_end( va_args );
 
     wlen = strlenW( buffer );
-    ret = WriteConsoleW( GetStdHandle(STD_OUTPUT_HANDLE), buffer, wlen, &count, NULL );
+    ret = WriteConsoleW( handle, buffer, wlen, &count, NULL );
     if (!ret)
     {
         DWORD len;
@@ -147,19 +147,19 @@ static int output_string( const WCHAR *msg, ... )
         if (!(msgA = HeapAlloc( GetProcessHeap(), 0, len * sizeof(char) ))) return 0;
 
         WideCharToMultiByte( GetConsoleOutputCP(), 0, buffer, wlen, msgA, len, NULL, NULL );
-        WriteFile( GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE );
+        WriteFile( handle, msgA, len, &count, FALSE );
         HeapFree( GetProcessHeap(), 0, msgA );
     }
     return count;
 }
 
-static int output_message( int msg )
+static int output_error( int msg )
 {
     static const WCHAR fmtW[] = {'%','s',0};
     WCHAR buffer[8192];
 
     LoadStringW( GetModuleHandleW(NULL), msg, buffer, ARRAY_SIZE(buffer));
-    return output_string( fmtW, buffer );
+    return output_string( GetStdHandle(STD_ERROR_HANDLE), fmtW, buffer );
 }
 
 static int query_prop( const WCHAR *class, const WCHAR *propname )
@@ -215,21 +215,21 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
         {
             if (!(prop = find_prop( obj, propname )))
             {
-                output_message( STRING_INVALID_QUERY );
+                output_error( STRING_INVALID_QUERY );
                 goto done;
             }
-            output_string( fmtW, prop );
+            output_string( GetStdHandle(STD_OUTPUT_HANDLE), fmtW, prop );
             first = FALSE;
         }
         if (IWbemClassObject_Get( obj, prop, 0, &v, NULL, NULL ) == WBEM_S_NO_ERROR)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
-            output_string( fmtW, V_BSTR( &v ) );
+            output_string( GetStdHandle(STD_OUTPUT_HANDLE), fmtW, V_BSTR( &v ) );
             VariantClear( &v );
         }
         IWbemClassObject_Release( obj );
     }
-    output_string( newlineW );
+    output_string( GetStdHandle(STD_OUTPUT_HANDLE), newlineW );
     ret = 0;
 
 done:
@@ -278,7 +278,7 @@ int wmain(int argc, WCHAR *argv[])
     {
         if (++i >= argc)
         {
-            output_message( STRING_INVALID_PATH );
+            output_error( STRING_INVALID_PATH );
             return 1;
         }
         class = argv[i];
@@ -288,7 +288,7 @@ int wmain(int argc, WCHAR *argv[])
         class = find_class( argv[i] );
         if (!class)
         {
-            output_message( STRING_ALIAS_NOT_FOUND );
+            output_error( STRING_ALIAS_NOT_FOUND );
             return 1;
         }
     }
@@ -305,6 +305,6 @@ int wmain(int argc, WCHAR *argv[])
     }
 
 not_supported:
-    output_message( STRING_CMDLINE_NOT_SUPPORTED );
+    output_error( STRING_CMDLINE_NOT_SUPPORTED );
     return 1;
 }
