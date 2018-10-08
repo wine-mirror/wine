@@ -1355,6 +1355,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
     TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
 
+    if (FAILED(context->error.code))
+        return;
+
     rendering_params = context->text_rendering_params ? context->text_rendering_params
             : context->default_text_rendering_params;
 
