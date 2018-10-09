@@ -2333,6 +2333,7 @@ static void add_type_typeinfo(msft_typelib_t *typelib, type_t *type)
         break;
     case TYPE_BASIC:
     case TYPE_POINTER:
+    case TYPE_ARRAY:
         break;
     default:
         error("add_entry: unhandled type 0x%x for %s\n",
