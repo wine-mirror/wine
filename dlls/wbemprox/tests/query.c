@@ -1194,6 +1194,8 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     hr = IWbemClassObject_BeginEnumeration( obj, 0 );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    while (IWbemClassObject_Next( obj, 0, NULL, NULL, NULL, NULL ) == S_OK) {}
+
     hr = IWbemClassObject_EndEnumeration( obj );
     ok( hr == S_OK, "got %08x\n", hr );
 
