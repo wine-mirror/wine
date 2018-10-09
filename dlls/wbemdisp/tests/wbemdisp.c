@@ -48,6 +48,11 @@ static void test_ParseDisplayName(void)
     static const WCHAR name4[] =
         {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':',
          'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
+    static const WCHAR stdregprovW[] =
+        {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','d','e','f','a','u','l','t',':',
+         'S','t','d','R','e','g','P','r','o','v',0};
+    static const WCHAR getstringvalueW[] =
+        {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
     static const struct
     {
         const WCHAR *name;
@@ -242,6 +247,36 @@ static void test_ParseDisplayName(void)
     }
 
     IBindCtx_Release( ctx );
+
+    hr = CreateBindCtx( 0, &ctx );
+    ok( hr == S_OK, "got %x\n", hr );
+
+    str = SysAllocString( stdregprovW );
+    hr = IParseDisplayName_ParseDisplayName( displayname, NULL, str, &eaten, &moniker );
+    ok( hr == S_OK, "got %x\n", hr );
+    SysFreeString( str );
+
+    if (moniker)
+    {
+        ISWbemObject *sobj = NULL;
+        hr = IMoniker_BindToObject( moniker, ctx, NULL, &IID_ISWbemObject, (void **)&sobj );
+        ok( hr == S_OK, "got %x\n",hr );
+        if (sobj)
+        {
+            DISPID dispid = 0xdeadbeef;
+
+            str = SysAllocString( getstringvalueW );
+            hr = ISWbemObject_GetIDsOfNames( sobj, &IID_NULL, &str, 1, english, &dispid );
+            ok( hr == S_OK, "got %x\n", hr );
+            ok( dispid == 0x1000001, "got %x\n", dispid );
+
+            ISWbemObject_Release( sobj );
+            SysFreeString( str );
+        }
+        IMoniker_Release( moniker );
+    }
+
+    IBindCtx_Release(ctx);
     IParseDisplayName_Release( displayname );
 }
 

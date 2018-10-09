@@ -488,11 +488,13 @@ static HRESULT SWbemPropertySet_create( IWbemClassObject *wbem_object, ISWbemPro
     return S_OK;
 }
 
-#define DISPID_BASE 0x1800000
+#define DISPID_BASE         0x1800000
+#define DISPID_BASE_METHOD  0x1000000
 
 struct member
 {
     BSTR name;
+    BOOL is_method;
     DISPID dispid;
 };
 
@@ -504,6 +506,7 @@ struct object
     struct member *members;
     UINT nb_members;
     DISPID last_dispid;
+    DISPID last_dispid_method;
 };
 
 static inline struct object *impl_from_ISWbemObject(
@@ -585,41 +588,83 @@ static HRESULT WINAPI object_GetTypeInfo(
 
 static HRESULT init_members( struct object *object )
 {
-    LONG bound, i;
-    SAFEARRAY *sa;
+    IWbemClassObject *sig_in, *sig_out;
+    LONG i = 0, count = 0;
+    BSTR name;
     HRESULT hr;
 
     if (object->members) return S_OK;
 
-    hr = IWbemClassObject_GetNames( object->object, NULL, 0, NULL, &sa );
-    if (FAILED( hr )) return hr;
-    hr = SafeArrayGetUBound( sa, 1, &bound );
-    if (FAILED( hr ))
+    hr = IWbemClassObject_BeginEnumeration( object->object, 0 );
+    if (SUCCEEDED( hr ))
     {
-        SafeArrayDestroy( sa );
-        return hr;
+        while (IWbemClassObject_Next( object->object, 0, NULL, NULL, NULL, NULL ) == S_OK) count++;
+        IWbemClassObject_EndEnumeration( object->object );
     }
-    if (!(object->members = heap_alloc( sizeof(struct member) * (bound + 1) )))
+
+    hr = IWbemClassObject_BeginMethodEnumeration( object->object, 0 );
+    if (SUCCEEDED( hr ))
     {
-        SafeArrayDestroy( sa );
-        return E_OUTOFMEMORY;
-    }
-    for (i = 0; i <= bound; i++)
-    {
-        hr = SafeArrayGetElement( sa, &i, &object->members[i].name );
-        if (FAILED( hr ))
+        while (IWbemClassObject_NextMethod( object->object, 0, &name, &sig_in, &sig_out ) == S_OK)
         {
-            for (i--; i >= 0; i--) SysFreeString( object->members[i].name );
-            SafeArrayDestroy( sa );
-            heap_free( object->members );
-            object->members = NULL;
-            return E_OUTOFMEMORY;
+            count++;
+            SysFreeString( name );
+            IWbemClassObject_Release( sig_in );
+            IWbemClassObject_Release( sig_out );
         }
-        object->members[i].dispid = 0;
+        IWbemClassObject_EndMethodEnumeration( object->object );
     }
-    object->nb_members = bound + 1;
-    SafeArrayDestroy( sa );
+
+    if (!(object->members = heap_alloc( sizeof(struct member) * count ))) return E_OUTOFMEMORY;
+
+    hr = IWbemClassObject_BeginEnumeration( object->object, 0 );
+    if (SUCCEEDED( hr ))
+    {
+        while (IWbemClassObject_Next( object->object, 0, &name, NULL, NULL, NULL ) == S_OK)
+        {
+            object->members[i].name      = name;
+            object->members[i].is_method = FALSE;
+            object->members[i].dispid    = 0;
+            if (++i > count)
+            {
+                IWbemClassObject_EndEnumeration( object->object );
+                goto error;
+            }
+            TRACE( "added property %s\n", debugstr_w(name) );
+        }
+        IWbemClassObject_EndEnumeration( object->object );
+    }
+
+    hr = IWbemClassObject_BeginMethodEnumeration( object->object, 0 );
+    if (SUCCEEDED( hr ))
+    {
+        while (IWbemClassObject_NextMethod( object->object, 0, &name, &sig_in, &sig_out ) == S_OK)
+        {
+            object->members[i].name      = name;
+            object->members[i].is_method = TRUE;
+            object->members[i].dispid    = 0;
+            if (++i > count)
+            {
+                IWbemClassObject_EndMethodEnumeration( object->object );
+                goto error;
+            }
+            IWbemClassObject_Release( sig_in );
+            IWbemClassObject_Release( sig_out );
+            TRACE( "added method %s\n", debugstr_w(name) );
+        }
+        IWbemClassObject_EndMethodEnumeration( object->object );
+    }
+
+    object->nb_members = count;
+    TRACE( "added %u members\n", object->nb_members );
     return S_OK;
+
+error:
+    for (--i; i >= 0; i--) SysFreeString( object->members[i].name );
+    heap_free( object->members );
+    object->members = NULL;
+    object->nb_members = 0;
+    return E_FAIL;
 }
 
 static DISPID get_member_dispid( struct object *object, const WCHAR *name )
@@ -629,7 +674,13 @@ static DISPID get_member_dispid( struct object *object, const WCHAR *name )
     {
         if (!strcmpiW( object->members[i].name, name ))
         {
-            if (!object->members[i].dispid) object->members[i].dispid = ++object->last_dispid;
+            if (!object->members[i].dispid)
+            {
+                if (object->members[i].is_method)
+                    object->members[i].dispid = ++object->last_dispid_method;
+                else
+                    object->members[i].dispid = ++object->last_dispid;
+            }
             return object->members[i].dispid;
         }
     }
@@ -701,7 +752,7 @@ static HRESULT WINAPI object_Invoke(
     TRACE( "%p, %x, %s, %u, %x, %p, %p, %p, %p\n", object, member, debugstr_guid(riid),
            lcid, flags, params, result, excep_info, arg_err );
 
-    if (member <= DISPID_BASE)
+    if (member <= DISPID_BASE_METHOD)
     {
         hr = get_typeinfo( ISWbemObject_tid, &typeinfo );
         if (SUCCEEDED(hr))
@@ -1044,6 +1095,7 @@ static HRESULT SWbemObject_create( IWbemClassObject *wbem_object, ISWbemObject *
     object->members = NULL;
     object->nb_members = 0;
     object->last_dispid = DISPID_BASE;
+    object->last_dispid_method = DISPID_BASE_METHOD;
 
     *obj = &object->ISWbemObject_iface;
     TRACE( "returning iface %p\n", *obj );
