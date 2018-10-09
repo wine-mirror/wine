@@ -7323,7 +7323,9 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             BYTE *src;
             INT x, src_pitch, src_width, src_height, rgb_interval, hmul, vmul;
             INT x_shift, y_shift;
-            BOOL rgb;
+            const INT *sub_order;
+            const INT rgb_order[3] = { 0, 1, 2 };
+            const INT bgr_order[3] = { 2, 1, 0 };
             FT_Render_Mode render_mode =
                 (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
                     FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
@@ -7358,7 +7360,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
             memset(buf, 0, buflen);
             dst = buf;
-            rgb = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP);
 
             if ( needsTransform )
                 pFT_Outline_Transform (&ft_face->glyph->outline, &transMatTategaki);
@@ -7414,22 +7415,16 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             width = min( width, src_width / hmul );
             height = min( height, src_height / vmul );
 
+            sub_order = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP)?
+                        rgb_order : bgr_order;
+
             while ( height-- )
             {
                 for ( x = 0; x < width; x++ )
                 {
-                    if ( rgb )
-                    {
-                        dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 0] << 16) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 2] <<  0);
-                    }
-                    else
-                    {
-                        dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 2] << 16) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 0] <<  0);
-                    }
+                    dst[x] = ((unsigned int)src[hmul * x + rgb_interval * sub_order[0]] << 16) |
+                             ((unsigned int)src[hmul * x + rgb_interval * sub_order[1]] << 8) |
+                             ((unsigned int)src[hmul * x + rgb_interval * sub_order[2]]);
                 }
                 src += src_pitch * vmul;
                 dst += pitch / sizeof(*dst);
