@@ -377,6 +377,8 @@ compat_mode_t lock_document_mode(HTMLDocumentNode *doc)
 
 static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL lock)
 {
+    compat_mode_t max_compat_mode;
+
     if(doc->document_mode_locked) {
         WARN("attempting to set document mode %d on locked document %p\n", document_mode, doc);
         return;
@@ -384,35 +386,31 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
 
     TRACE("%p: %d\n", doc, document_mode);
 
+    max_compat_mode = doc->window && doc->window->base.outer_window
+        ? get_max_compat_mode(doc->window->base.outer_window->uri)
+        : COMPAT_MODE_IE11;
+    if(max_compat_mode < document_mode) {
+        WARN("Tried to set compat mode %u higher than maximal configured %u\n",
+             document_mode, max_compat_mode);
+        document_mode = max_compat_mode;
+    }
+
     doc->document_mode = document_mode;
     if(lock)
         lock_document_mode(doc);
 }
 
-static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
+BOOL parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
 {
-    int v = 0;
+    DWORD version = 0;
+    const WCHAR *p;
 
-    static const WCHAR ie_eqW[] = {'I','E','='};
-    static const WCHAR edgeW[] = {'e','d','g','e',0};
-
-    TRACE("%s\n", debugstr_w(p));
-
-    if(strncmpiW(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
-        return FALSE;
-    p += 3;
-
-    if(!strcmpiW(p, edgeW)) {
-        *r = COMPAT_MODE_IE11;
-        return TRUE;
-    }
-
-    while('0' <= *p && *p <= '9')
-        v = v*10 + *(p++)-'0';
-    if(*p || !v)
+    for(p = version_string; '0' <= *p && *p <= '9'; p++)
+        version = version * 10 + *p-'0';
+    if(*p || p == version_string)
         return FALSE;
 
-    switch(v){
+    switch(version){
     case 5:
     case 6:
         *r = COMPAT_MODE_IE5;
@@ -430,10 +428,28 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
         *r = COMPAT_MODE_IE10;
         break;
     default:
-        *r = v < 5 ? COMPAT_MODE_QUIRKS : COMPAT_MODE_IE11;
+        *r = version < 5 ? COMPAT_MODE_QUIRKS : COMPAT_MODE_IE11;
+    }
+    return TRUE;
+}
+
+static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
+{
+    static const WCHAR ie_eqW[] = {'I','E','='};
+    static const WCHAR edgeW[] = {'e','d','g','e',0};
+
+    TRACE("%s\n", debugstr_w(p));
+
+    if(strncmpiW(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
+        return FALSE;
+    p += 3;
+
+    if(!strcmpiW(p, edgeW)) {
+        *r = COMPAT_MODE_IE11;
+        return TRUE;
     }
 
-    return TRUE;
+    return parse_compat_version(p, r);
 }
 
 void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)

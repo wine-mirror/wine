@@ -1167,6 +1167,8 @@ void remove_target_tasks(LONG) DECLSPEC_HIDDEN;
 HRESULT set_task_timer(HTMLInnerWindow*,LONG,BOOL,IDispatch*,LONG*) DECLSPEC_HIDDEN;
 HRESULT clear_task_timer(HTMLInnerWindow*,DWORD) DECLSPEC_HIDDEN;
 
+BOOL parse_compat_version(const WCHAR*,compat_mode_t*) DECLSPEC_HIDDEN;
+
 const char *debugstr_mshtml_guid(const GUID*) DECLSPEC_HIDDEN;
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
@@ -1337,6 +1339,7 @@ static inline VARIANT_BOOL variant_bool(BOOL b)
 extern void *call_thiscall_func;
 #endif
 
+compat_mode_t get_max_compat_mode(IUri*) DECLSPEC_HIDDEN;
 UINT cp_from_charset_string(BSTR) DECLSPEC_HIDDEN;
 BSTR charset_string_from_cp(UINT) DECLSPEC_HIDDEN;
 HINSTANCE get_shdoclc(void) DECLSPEC_HIDDEN;

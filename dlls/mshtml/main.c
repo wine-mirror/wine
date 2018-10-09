@@ -36,6 +36,7 @@
 #include "rpcproxy.h"
 #include "shlguid.h"
 #include "mlang.h"
+#include "wininet.h"
 
 #include "wine/debug.h"
 
@@ -53,6 +54,14 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 static HINSTANCE shdoclc = NULL;
 static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
 static IMultiLanguage2 *mlang;
+static unsigned global_max_compat_mode = COMPAT_MODE_IE11;
+static struct list compat_config = LIST_INIT(compat_config);
+
+typedef struct {
+    struct list entry;
+    compat_mode_t max_compat_mode;
+    WCHAR host[1];
+} compat_config_t;
 
 static BOOL ensure_mlang(void)
 {
@@ -109,6 +118,114 @@ BSTR charset_string_from_cp(UINT cp)
     return SysAllocString(info.wszWebCharset);
 }
 
+static BOOL read_compat_mode(HKEY key, compat_mode_t *r)
+{
+    WCHAR version[32];
+    DWORD type, size;
+    LSTATUS status;
+
+    static const WCHAR max_compat_modeW[] = {'M','a','x','C','o','m','p','a','t','M','o','d','e',0};
+
+    size = sizeof(version);
+    status = RegQueryValueExW(key, max_compat_modeW, NULL, &type, (BYTE*)version, &size);
+    if(status != ERROR_SUCCESS || type != REG_SZ)
+        return FALSE;
+
+    return parse_compat_version(version, r);
+}
+
+static BOOL WINAPI load_compat_settings(INIT_ONCE *once, void *param, void **context)
+{
+    WCHAR key_name[INTERNET_MAX_HOST_NAME_LENGTH];
+    DWORD index = 0, name_size;
+    compat_config_t *new_entry;
+    compat_mode_t max_compat_mode;
+    HKEY key, host_key;
+    DWORD res;
+
+    static const WCHAR key_nameW[] = {
+        'S','o','f','t','w','a','r','e',
+        '\\','W','i','n','e',
+        '\\','M','S','H','T','M','L',
+        '\\','C','o','m','p','a','t','M','o','d','e',0};
+
+    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML\CompatMode */
+    res = RegOpenKeyW(HKEY_CURRENT_USER, key_nameW, &key);
+    if(res != ERROR_SUCCESS)
+        return TRUE;
+
+    if(read_compat_mode(key, &max_compat_mode)) {
+        TRACE("Setting global max compat mode to %u\n", max_compat_mode);
+        global_max_compat_mode = max_compat_mode;
+    }
+
+    while(1) {
+        res = RegEnumKeyW(key, index, key_name, ARRAY_SIZE(key_name));
+        if(res == ERROR_NO_MORE_ITEMS)
+            break;
+        index++;
+        if(res != ERROR_SUCCESS) {
+            WARN("RegEnumKey failed: %u\n", GetLastError());
+            continue;
+        }
+
+        name_size = strlenW(key_name) + 1;
+        new_entry = heap_alloc(FIELD_OFFSET(compat_config_t, host[name_size]));
+        if(!new_entry)
+            continue;
+
+        new_entry->max_compat_mode = COMPAT_MODE_IE11;
+        memcpy(new_entry->host, key_name, name_size * sizeof(WCHAR));
+        list_add_tail(&compat_config, &new_entry->entry);
+
+        res = RegOpenKeyW(key, key_name, &host_key);
+        if(res != ERROR_SUCCESS)
+            continue;
+
+        if(read_compat_mode(host_key, &max_compat_mode)) {
+            TRACE("Setting max compat mode for %s to %u\n", debugstr_w(key_name), max_compat_mode);
+            new_entry->max_compat_mode = max_compat_mode;
+        }
+
+        RegCloseKey(host_key);
+    }
+
+    RegCloseKey(key);
+    return TRUE;
+}
+
+compat_mode_t get_max_compat_mode(IUri *uri)
+{
+    compat_config_t *iter;
+    size_t len, iter_len;
+    BSTR host;
+    HRESULT hres;
+
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, load_compat_settings, NULL, NULL);
+
+    if(!uri)
+        return global_max_compat_mode;
+    hres = IUri_GetHost(uri, &host);
+    if(FAILED(hres))
+        return global_max_compat_mode;
+    len = SysStringLen(host);
+
+    LIST_FOR_EACH_ENTRY(iter, &compat_config, compat_config_t, entry) {
+        iter_len = strlenW(iter->host);
+        /* If configured host starts with '.', we also match subdomains */
+        if((len == iter_len || (iter->host[0] == '.' && len > iter_len))
+           && !memcmp(host + len - iter_len, iter->host, iter_len * sizeof(WCHAR))) {
+            TRACE("Found max mode %u\n", iter->max_compat_mode);
+            return iter->max_compat_mode;
+        }
+    }
+
+    SysFreeString(host);
+    TRACE("Using global max mode %u\n", global_max_compat_mode);
+    return global_max_compat_mode;
+}
+
 static void thread_detach(void)
 {
     thread_data_t *thread_data;
@@ -132,8 +249,16 @@ static void free_strings(void)
 
 static void process_detach(void)
 {
+    compat_config_t *config;
+
     close_gecko();
     release_typelib();
+
+    while(!list_empty(&compat_config)) {
+        config = LIST_ENTRY(list_head(&compat_config), compat_config_t, entry);
+        list_remove(&config->entry);
+        heap_free(config);
+    }
 
     if(shdoclc)
         FreeLibrary(shdoclc);
