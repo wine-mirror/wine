@@ -7422,15 +7422,13 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                     {
                         dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 0] << 16) |
                                  ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 2] <<  0) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 1] << 24) ;
+                                 ((unsigned int)src[hmul * x + rgb_interval * 2] <<  0);
                     }
                     else
                     {
                         dst[x] = ((unsigned int)src[hmul * x + rgb_interval * 2] << 16) |
                                  ((unsigned int)src[hmul * x + rgb_interval * 1] <<  8) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 0] <<  0) |
-                                 ((unsigned int)src[hmul * x + rgb_interval * 1] << 24) ;
+                                 ((unsigned int)src[hmul * x + rgb_interval * 0] <<  0);
                     }
                 }
                 src += src_pitch * vmul;
