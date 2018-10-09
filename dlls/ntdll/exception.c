@@ -306,6 +306,16 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 }
 
 
+/*******************************************************************
+ *         call_unhandled_exception_filter
+ */
+LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr )
+{
+    if (!unhandled_exception_filter) return EXCEPTION_CONTINUE_SEARCH;
+    return unhandled_exception_filter( eptr );
+}
+
+
 /*************************************************************
  *            __wine_spec_unimplemented_stub
  *
