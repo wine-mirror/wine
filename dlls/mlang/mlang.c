@@ -3928,12 +3928,65 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return dll_count == 0 ? S_OK : S_FALSE;
 }
 
+static BOOL register_codepages(void)
+{
+    const struct mlang_data *family;
+    const MIME_CP_INFO *info;
+    HKEY db_key, key;
+    WCHAR buf[32];
+    LSTATUS status;
+
+    static const WCHAR db_key_nameW[] = {
+        'M','I','M','E',
+        '\\','D','a','t','a','b','a','s','e',
+        '\\','C','o','d','e','p','a','g','e',0};
+    static const WCHAR familyW[] = {'F','a','m','i','l','y',0};
+    static const WCHAR formatW[] = {'%','u',0};
+
+    status = RegCreateKeyW(HKEY_CLASSES_ROOT, db_key_nameW, &db_key);
+    if (status != ERROR_SUCCESS)
+        return FALSE;
+
+    for (family = mlang_data; family < mlang_data + ARRAY_SIZE(mlang_data); family++)
+    {
+        for (info = family->mime_cp_info; info < family->mime_cp_info + family->number_of_cp; info++)
+        {
+            sprintfW(buf, formatW, info->cp);
+            status = RegCreateKeyW(db_key, buf, &key);
+            if (status != ERROR_SUCCESS)
+                continue;
+
+            RegSetValueExA(key, "BodyCharset", 0, REG_SZ, (BYTE*)info->body_charset,
+                           strlen(info->body_charset) + 1);
+
+            if (info->cp == family->family_codepage)
+            {
+                RegSetValueExA(key, "FixedWidthFont", 0, REG_SZ, (BYTE*)family->fixed_font,
+                               strlen(family->fixed_font) + 1);
+                RegSetValueExA(key, "ProportionalFont", 0, REG_SZ, (BYTE*)family->proportional_font,
+                               strlen(family->proportional_font) + 1);
+            }
+            else
+            {
+                RegSetValueExW(key, familyW, 0, REG_DWORD, (BYTE*)&family->family_codepage,
+                               sizeof(family->family_codepage));
+            }
+
+            RegCloseKey(key);
+        }
+    }
+
+    RegCloseKey(db_key);
+    return TRUE;
+}
 
 /***********************************************************************
  *		DllRegisterServer (MLANG.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    if(!register_codepages())
+        return E_FAIL;
     return __wine_register_resources( instance );
 }
 
