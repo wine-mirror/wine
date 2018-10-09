@@ -907,11 +907,6 @@ static HRESULT WINAPI class_object_BeginMethodEnumeration(
 
     if (lEnumFlags) FIXME("flags 0x%08x not supported\n", lEnumFlags);
 
-    if (co->iter)
-    {
-        WARN("not allowed on instance\n");
-        return WBEM_E_ILLEGAL_OPERATION;
-    }
     co->index_method = 0;
     return S_OK;
 }

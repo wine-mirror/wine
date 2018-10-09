@@ -722,8 +722,8 @@ static void test_StdRegProv( IWbemServices *services )
          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     static const WCHAR regtestW[] =
         {'S','o','f','t','w','a','r','e','\\','S','t','d','R','e','g','P','r','o','v','T','e','s','t',0};
-    BSTR class = SysAllocString( stdregprovW ), method;
-    IWbemClassObject *reg, *sig_in, *in, *out;
+    BSTR class = SysAllocString( stdregprovW ), method, name;
+    IWbemClassObject *reg, *sig_in, *sig_out, *in, *out;
     VARIANT defkey, subkey, retval, names, types, value, valuename;
     CIMTYPE type;
     HRESULT hr;
@@ -735,6 +735,29 @@ static void test_StdRegProv( IWbemServices *services )
         win_skip( "StdRegProv not available\n" );
         return;
     }
+
+    hr = IWbemClassObject_BeginMethodEnumeration( reg, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    while (IWbemClassObject_NextMethod( reg, 0, &name, &sig_in, &sig_out ) == S_OK)
+    {
+        SysFreeString( name );
+        IWbemClassObject_Release( sig_in );
+        IWbemClassObject_Release( sig_out );
+    }
+
+    hr = IWbemClassObject_EndMethodEnumeration( reg );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWbemClassObject_BeginEnumeration( reg, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    while (IWbemClassObject_Next( reg, 0, &name, NULL, NULL, NULL ) == S_OK)
+        SysFreeString( name );
+
+    hr = IWbemClassObject_EndEnumeration( reg );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWbemClassObject_GetMethod( reg, createkeyW, 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get CreateKey method %08x\n", hr );
 
@@ -1167,6 +1190,12 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
     ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+
+    hr = IWbemClassObject_BeginEnumeration( obj, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWbemClassObject_EndEnumeration( obj );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     type = 0xdeadbeef;
     VariantInit( &val );
