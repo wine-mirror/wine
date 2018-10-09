@@ -1364,6 +1364,7 @@ void CDECL __wine_kernel_init(void)
     setbuf(stderr,NULL);
     kernel32_handle = GetModuleHandleW(kernel32W);
     IsWow64Process( GetCurrentProcess(), &is_wow64 );
+    RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     LOCALE_Init();
 

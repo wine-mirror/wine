@@ -55,7 +55,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 
-PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
 
 /* info passed to a starting thread */

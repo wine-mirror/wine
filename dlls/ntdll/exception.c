@@ -59,6 +59,8 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static PRTL_EXCEPTION_FILTER unhandled_exception_filter;
+
 
 static VECTORED_HANDLER *add_vectored_handler( struct list *handler_list, ULONG first,
                                                PVECTORED_EXCEPTION_HANDLER func )
@@ -303,6 +305,15 @@ PVOID WINAPI DECLSPEC_HOTPATCH RtlAddVectoredExceptionHandler( ULONG first, PVEC
 ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 {
     return remove_vectored_handler( &vectored_exception_handlers, handler );
+}
+
+
+/*******************************************************************
+ *         RtlSetUnhandledExceptionFilter   (NTDLL.@)
+ */
+void WINAPI RtlSetUnhandledExceptionFilter( PRTL_EXCEPTION_FILTER filter )
+{
+    unhandled_exception_filter = filter;
 }
 
 
