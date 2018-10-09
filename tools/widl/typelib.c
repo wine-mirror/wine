@@ -200,10 +200,10 @@ unsigned short get_type_vt(type_t *t)
     {
       if (match(type_array_get_element(t)->name, "SAFEARRAY"))
         return VT_SAFEARRAY;
+      return VT_PTR;
     }
     else
-      error("get_type_vt: array types not supported\n");
-    return VT_PTR;
+      return VT_CARRAY;
 
   case TYPE_INTERFACE:
     if(match(t->name, "IUnknown"))

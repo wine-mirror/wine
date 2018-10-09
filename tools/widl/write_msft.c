@@ -1113,7 +1113,7 @@ static int encode_var(
 
 	    if (target_type & 0x80000000) {
 		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
-	    } else if (is_array(ref)) {
+	    } else if (get_type_vt(ref) == VT_SAFEARRAY) {
 		type_t *element_type = type_alias_get_aliasee(type_array_get_element(ref));
 		mix_field = get_type_vt(element_type) | VT_ARRAY | VT_BYREF;
 	    } else {
