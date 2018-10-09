@@ -442,11 +442,11 @@ void WINAPI glDepthMask( GLboolean flag )
   funcs->gl.p_glDepthMask( flag );
 }
 
-void WINAPI glDepthRange( GLdouble near, GLdouble far )
+void WINAPI glDepthRange( GLdouble n, GLdouble f )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE( "(%f, %f)\n", near, far );
-  funcs->gl.p_glDepthRange( near, far );
+  TRACE( "(%f, %f)\n", n, f );
+  funcs->gl.p_glDepthRange( n, f );
 }
 
 void WINAPI glDisable( GLenum cap )
@@ -2418,7 +2418,7 @@ static void null_glDeleteLists( GLuint list, GLsizei range ) { }
 static void null_glDeleteTextures( GLsizei n, const GLuint *textures ) { }
 static void null_glDepthFunc( GLenum func ) { }
 static void null_glDepthMask( GLboolean flag ) { }
-static void null_glDepthRange( GLdouble near, GLdouble far ) { }
+static void null_glDepthRange( GLdouble n, GLdouble f ) { }
 static void null_glDisable( GLenum cap ) { }
 static void null_glDisableClientState( GLenum array ) { }
 static void null_glDrawArrays( GLenum mode, GLint first, GLsizei count ) { }
@@ -2763,6 +2763,7 @@ static void null_glBindRenderbuffer( GLenum target, GLuint renderbuffer ) { }
 static void null_glBindRenderbufferEXT( GLenum target, GLuint renderbuffer ) { }
 static void null_glBindSampler( GLuint unit, GLuint sampler ) { }
 static void null_glBindSamplers( GLuint first, GLsizei count, const GLuint *samplers ) { }
+static void null_glBindShadingRateImageNV( GLuint texture ) { }
 static GLuint null_glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum value ) { return 0; }
 static void null_glBindTextureEXT( GLenum target, GLuint texture ) { }
 static void null_glBindTextureUnit( GLuint unit, GLuint texture ) { }
@@ -2818,6 +2819,7 @@ static void null_glBlitFramebuffer( GLint srcX0, GLint srcY0, GLint srcX1, GLint
 static void null_glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
 static void null_glBlitNamedFramebuffer( GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
 static void null_glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64EXT address, GLsizeiptr length ) { }
+static void null_glBufferAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset ) { }
 static void null_glBufferData( GLenum target, GLsizeiptr size, const void *data, GLenum usage ) { }
 static void null_glBufferDataARB( GLenum target, GLsizeiptrARB size, const void *data, GLenum usage ) { }
 static void null_glBufferPageCommitmentARB( GLenum target, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
@@ -3122,6 +3124,8 @@ static void null_glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, 
 static void null_glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance ) { }
 static void null_glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount ) { }
 static void null_glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count, GLsizei width ) { }
+static void null_glDrawMeshTasksIndirectNV( GLintptr indirect ) { }
+static void null_glDrawMeshTasksNV( GLuint first, GLuint count ) { }
 static void null_glDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, GLint first, GLsizei count ) { }
 static void null_glDrawRangeElementArrayATI( GLenum mode, GLuint start, GLuint end, GLsizei count ) { }
 static void null_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices ) { }
@@ -3134,6 +3138,8 @@ static void null_glDrawTransformFeedbackNV( GLenum mode, GLuint id ) { }
 static void null_glDrawTransformFeedbackStream( GLenum mode, GLuint id, GLuint stream ) { }
 static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei instancecount ) { }
 static void null_glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 ) { }
+static void null_glEGLImageTargetTexStorageEXT( GLenum target, GLeglImageOES image, const GLint* attrib_list ) { }
+static void null_glEGLImageTargetTextureStorageEXT( GLuint texture, GLeglImageOES image, const GLint* attrib_list ) { }
 static void null_glEdgeFlagFormatNV( GLsizei stride ) { }
 static void null_glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean *pointer ) { }
 static void null_glEdgeFlagPointerListIBM( GLint stride, const GLboolean **pointer, GLint ptrstride ) { }
@@ -3225,6 +3231,7 @@ static void null_glFrameTerminatorGREMEDY(void) { }
 static void null_glFrameZoomSGIX( GLint factor ) { }
 static void null_glFramebufferDrawBufferEXT( GLuint framebuffer, GLenum mode ) { }
 static void null_glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, const GLenum *bufs ) { }
+static void null_glFramebufferFetchBarrierEXT(void) { }
 static void null_glFramebufferParameteri( GLenum target, GLenum pname, GLint param ) { }
 static void null_glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode ) { }
 static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
@@ -3413,6 +3420,7 @@ static void null_glGetMapParameterfvNV( GLenum target, GLenum pname, GLfloat *pa
 static void null_glGetMapParameterivNV( GLenum target, GLenum pname, GLint *params ) { }
 static void null_glGetMapxvOES( GLenum target, GLenum query, GLfixed *v ) { }
 static void null_glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param ) { }
+static void null_glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params ) { }
 static void null_glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint *params ) { }
 static void null_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
 static void null_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
@@ -3558,6 +3566,8 @@ static void null_glGetShaderPrecisionFormat( GLenum shadertype, GLenum precision
 static void null_glGetShaderSource( GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source ) { }
 static void null_glGetShaderSourceARB( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source ) { }
 static void null_glGetShaderiv( GLuint shader, GLenum pname, GLint *params ) { }
+static void null_glGetShadingRateImagePaletteNV( GLuint viewport, GLuint entry, GLenum *rate ) { }
+static void null_glGetShadingRateSampleLocationivNV( GLenum rate, GLuint samples, GLuint index, GLint *location ) { }
 static void null_glGetSharpenTexFuncSGIS( GLenum target, GLfloat *points ) { }
 static GLushort null_glGetStageIndexNV( GLenum shadertype ) { return 0; }
 static const GLubyte * null_glGetStringi( GLenum name, GLuint index ) { return 0; }
@@ -3917,6 +3927,8 @@ static void null_glMultiDrawElementsIndirectBindlessCountNV( GLenum mode, GLenum
 static void null_glMultiDrawElementsIndirectBindlessNV( GLenum mode, GLenum type, const void *indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) { }
 static void null_glMultiDrawElementsIndirectCount( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
 static void null_glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawMeshTasksIndirectCountNV( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawMeshTasksIndirectNV( GLintptr indirect, GLsizei drawcount, GLsizei stride ) { }
 static void null_glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint *first, const GLsizei *count, GLsizei primcount ) { }
 static void null_glMultiModeDrawArraysIBM( const GLenum *mode, const GLint *first, const GLsizei *count, GLsizei primcount, GLint modestride ) { }
 static void null_glMultiModeDrawElementsIBM( const GLenum *mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount, GLint modestride ) { }
@@ -4085,6 +4097,7 @@ static void null_glMulticastGetQueryObjectivNV( GLuint gpu, GLuint id, GLenum pn
 static void null_glMulticastGetQueryObjectui64vNV( GLuint gpu, GLuint id, GLenum pname, GLuint64 *params ) { }
 static void null_glMulticastGetQueryObjectuivNV( GLuint gpu, GLuint id, GLenum pname, GLuint *params ) { }
 static void null_glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMask ) { }
+static void null_glNamedBufferAttachMemoryNV( GLuint buffer, GLuint memory, GLuint64 offset ) { }
 static void null_glNamedBufferData( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage ) { }
 static void null_glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage ) { }
 static void null_glNamedBufferPageCommitmentARB( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
@@ -4129,6 +4142,7 @@ static void null_glNamedProgramStringEXT( GLuint program, GLenum target, GLenum 
 static void null_glNamedRenderbufferStorage( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glNamedRenderbufferStorageEXT( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glNamedRenderbufferStorageMultisample( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
+static void null_glNamedRenderbufferStorageMultisampleAdvancedAMD( GLuint renderbuffer, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glNamedRenderbufferStorageMultisampleCoverageEXT( GLuint renderbuffer, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glNamedRenderbufferStorageMultisampleEXT( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glNamedStringARB( GLenum type, GLint namelen, const GLchar *name, GLint stringlen, const GLchar *string ) { }
@@ -4447,6 +4461,7 @@ static void null_glRenderGpuMaskNV( GLbitfield mask ) { }
 static void null_glRenderbufferStorage( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
+static void null_glRenderbufferStorageMultisampleAdvancedAMD( GLenum target, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageMultisampleEXT( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glReplacementCodePointerSUN( GLenum type, GLsizei stride, const void **pointer ) { }
@@ -4475,6 +4490,7 @@ static void null_glReplacementCodeusvSUN( const GLushort *code ) { }
 static void null_glRequestResidentProgramsNV( GLsizei n, const GLuint *programs ) { }
 static void null_glResetHistogram( GLenum target ) { }
 static void null_glResetHistogramEXT( GLenum target ) { }
+static void null_glResetMemoryObjectParameterNV( GLuint memory, GLenum pname ) { }
 static void null_glResetMinmax( GLenum target ) { }
 static void null_glResetMinmaxEXT( GLenum target ) { }
 static void null_glResizeBuffersMESA(void) { }
@@ -4499,6 +4515,8 @@ static void null_glSamplerParameteri( GLuint sampler, GLenum pname, GLint param 
 static void null_glSamplerParameteriv( GLuint sampler, GLenum pname, const GLint *param ) { }
 static void null_glScalexOES( GLfixed x, GLfixed y, GLfixed z ) { }
 static void null_glScissorArrayv( GLuint first, GLsizei count, const GLint *v ) { }
+static void null_glScissorExclusiveArrayvNV( GLuint first, GLsizei count, const GLint *v ) { }
+static void null_glScissorExclusiveNV( GLint x, GLint y, GLsizei width, GLsizei height ) { }
 static void null_glScissorIndexed( GLuint index, GLint left, GLint bottom, GLsizei width, GLsizei height ) { }
 static void null_glScissorIndexedv( GLuint index, const GLint *v ) { }
 static void null_glSecondaryColor3b( GLbyte red, GLbyte green, GLbyte blue ) { }
@@ -4560,6 +4578,10 @@ static void null_glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2
 static void null_glShaderSource( GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length ) { }
 static void null_glShaderSourceARB( GLhandleARB shaderObj, GLsizei count, const GLcharARB **string, const GLint *length ) { }
 static void null_glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding ) { }
+static void null_glShadingRateImageBarrierNV( GLboolean synchronize ) { }
+static void null_glShadingRateImagePaletteNV( GLuint viewport, GLuint first, GLsizei count, const GLenum *rates ) { }
+static void null_glShadingRateSampleOrderCustomNV( GLenum rate, GLuint samples, const GLint *locations ) { }
+static void null_glShadingRateSampleOrderNV( GLenum order ) { }
 static void null_glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points ) { }
 static void null_glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *dstLayouts ) { }
 static void null_glSignalVkFenceNV( GLuint64 vkFence ) { }
@@ -4610,6 +4632,7 @@ static void null_glTessellationModeAMD( GLenum mode ) { }
 static GLboolean null_glTestFenceAPPLE( GLuint fence ) { return 0; }
 static GLboolean null_glTestFenceNV( GLuint fence ) { return 0; }
 static GLboolean null_glTestObjectAPPLE( GLenum object, GLuint name ) { return 0; }
+static void null_glTexAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset ) { }
 static void null_glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer ) { }
 static void null_glTexBufferARB( GLenum target, GLenum internalformat, GLuint buffer ) { }
 static void null_glTexBufferEXT( GLenum target, GLenum internalformat, GLuint buffer ) { }
@@ -4702,6 +4725,7 @@ static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, 
 static void null_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
 static void null_glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
 static void null_glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const void *pixels ) { }
+static void null_glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset ) { }
 static void null_glTextureBarrier(void) { }
 static void null_glTextureBarrierNV(void) { }
 static void null_glTextureBuffer( GLuint texture, GLenum internalformat, GLuint buffer ) { }
@@ -5772,6 +5796,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glBindRenderbufferEXT,
         null_glBindSampler,
         null_glBindSamplers,
+        null_glBindShadingRateImageNV,
         null_glBindTexGenParameterEXT,
         null_glBindTextureEXT,
         null_glBindTextureUnit,
@@ -5827,6 +5852,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glBlitFramebufferEXT,
         null_glBlitNamedFramebuffer,
         null_glBufferAddressRangeNV,
+        null_glBufferAttachMemoryNV,
         null_glBufferData,
         null_glBufferDataARB,
         null_glBufferPageCommitmentARB,
@@ -6131,6 +6157,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glDrawElementsInstancedBaseVertexBaseInstance,
         null_glDrawElementsInstancedEXT,
         null_glDrawMeshArraysSUN,
+        null_glDrawMeshTasksIndirectNV,
+        null_glDrawMeshTasksNV,
         null_glDrawRangeElementArrayAPPLE,
         null_glDrawRangeElementArrayATI,
         null_glDrawRangeElements,
@@ -6143,6 +6171,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glDrawTransformFeedbackStream,
         null_glDrawTransformFeedbackStreamInstanced,
         null_glDrawVkImageNV,
+        null_glEGLImageTargetTexStorageEXT,
+        null_glEGLImageTargetTextureStorageEXT,
         null_glEdgeFlagFormatNV,
         null_glEdgeFlagPointerEXT,
         null_glEdgeFlagPointerListIBM,
@@ -6234,6 +6264,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glFrameZoomSGIX,
         null_glFramebufferDrawBufferEXT,
         null_glFramebufferDrawBuffersEXT,
+        null_glFramebufferFetchBarrierEXT,
         null_glFramebufferParameteri,
         null_glFramebufferReadBufferEXT,
         null_glFramebufferRenderbuffer,
@@ -6422,6 +6453,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetMapParameterivNV,
         null_glGetMapxvOES,
         null_glGetMaterialxOES,
+        null_glGetMemoryObjectDetachedResourcesuivNV,
         null_glGetMemoryObjectParameterivEXT,
         null_glGetMinmax,
         null_glGetMinmaxEXT,
@@ -6567,6 +6599,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetShaderSource,
         null_glGetShaderSourceARB,
         null_glGetShaderiv,
+        null_glGetShadingRateImagePaletteNV,
+        null_glGetShadingRateSampleLocationivNV,
         null_glGetSharpenTexFuncSGIS,
         null_glGetStageIndexNV,
         null_glGetStringi,
@@ -6926,6 +6960,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glMultiDrawElementsIndirectBindlessNV,
         null_glMultiDrawElementsIndirectCount,
         null_glMultiDrawElementsIndirectCountARB,
+        null_glMultiDrawMeshTasksIndirectCountNV,
+        null_glMultiDrawMeshTasksIndirectNV,
         null_glMultiDrawRangeElementArrayAPPLE,
         null_glMultiModeDrawArraysIBM,
         null_glMultiModeDrawElementsIBM,
@@ -7094,6 +7130,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glMulticastGetQueryObjectui64vNV,
         null_glMulticastGetQueryObjectuivNV,
         null_glMulticastWaitSyncNV,
+        null_glNamedBufferAttachMemoryNV,
         null_glNamedBufferData,
         null_glNamedBufferDataEXT,
         null_glNamedBufferPageCommitmentARB,
@@ -7138,6 +7175,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glNamedRenderbufferStorage,
         null_glNamedRenderbufferStorageEXT,
         null_glNamedRenderbufferStorageMultisample,
+        null_glNamedRenderbufferStorageMultisampleAdvancedAMD,
         null_glNamedRenderbufferStorageMultisampleCoverageEXT,
         null_glNamedRenderbufferStorageMultisampleEXT,
         null_glNamedStringARB,
@@ -7456,6 +7494,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glRenderbufferStorage,
         null_glRenderbufferStorageEXT,
         null_glRenderbufferStorageMultisample,
+        null_glRenderbufferStorageMultisampleAdvancedAMD,
         null_glRenderbufferStorageMultisampleCoverageNV,
         null_glRenderbufferStorageMultisampleEXT,
         null_glReplacementCodePointerSUN,
@@ -7484,6 +7523,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glRequestResidentProgramsNV,
         null_glResetHistogram,
         null_glResetHistogramEXT,
+        null_glResetMemoryObjectParameterNV,
         null_glResetMinmax,
         null_glResetMinmaxEXT,
         null_glResizeBuffersMESA,
@@ -7508,6 +7548,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glSamplerParameteriv,
         null_glScalexOES,
         null_glScissorArrayv,
+        null_glScissorExclusiveArrayvNV,
+        null_glScissorExclusiveNV,
         null_glScissorIndexed,
         null_glScissorIndexedv,
         null_glSecondaryColor3b,
@@ -7569,6 +7611,10 @@ struct opengl_funcs null_opengl_funcs =
         null_glShaderSource,
         null_glShaderSourceARB,
         null_glShaderStorageBlockBinding,
+        null_glShadingRateImageBarrierNV,
+        null_glShadingRateImagePaletteNV,
+        null_glShadingRateSampleOrderCustomNV,
+        null_glShadingRateSampleOrderNV,
         null_glSharpenTexFuncSGIS,
         null_glSignalSemaphoreEXT,
         null_glSignalVkFenceNV,
@@ -7619,6 +7665,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTestFenceAPPLE,
         null_glTestFenceNV,
         null_glTestObjectAPPLE,
+        null_glTexAttachMemoryNV,
         null_glTexBuffer,
         null_glTexBufferARB,
         null_glTexBufferEXT,
@@ -7711,6 +7758,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexSubImage3D,
         null_glTexSubImage3DEXT,
         null_glTexSubImage4DSGIS,
+        null_glTextureAttachMemoryNV,
         null_glTextureBarrier,
         null_glTextureBarrierNV,
         null_glTextureBuffer,

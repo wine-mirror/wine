@@ -8,7 +8,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-const int extension_registry_size = 2655;
+const int extension_registry_size = 2679;
 
 static void WINAPI glAccumxOES( GLenum op, GLfixed value )
 {
@@ -507,6 +507,13 @@ static void WINAPI glBindSamplers( GLuint first, GLsizei count, const GLuint *sa
   funcs->ext.p_glBindSamplers( first, count, samplers );
 }
 
+static void WINAPI glBindShadingRateImageNV( GLuint texture )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d)\n", texture );
+  funcs->ext.p_glBindShadingRateImageNV( texture );
+}
+
 static GLuint WINAPI glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum value )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -890,6 +897,13 @@ static void WINAPI glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64E
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %s, %ld)\n", pname, index, wine_dbgstr_longlong(address), length );
   funcs->ext.p_glBufferAddressRangeNV( pname, index, address, length );
+}
+
+static void WINAPI glBufferAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %s)\n", target, memory, wine_dbgstr_longlong(offset) );
+  funcs->ext.p_glBufferAttachMemoryNV( target, memory, offset );
 }
 
 static void WINAPI glBufferData( GLenum target, GLsizeiptr size, const void *data, GLenum usage )
@@ -3020,6 +3034,20 @@ static void WINAPI glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count,
   funcs->ext.p_glDrawMeshArraysSUN( mode, first, count, width );
 }
 
+static void WINAPI glDrawMeshTasksIndirectNV( GLintptr indirect )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%ld)\n", indirect );
+  funcs->ext.p_glDrawMeshTasksIndirectNV( indirect );
+}
+
+static void WINAPI glDrawMeshTasksNV( GLuint first, GLuint count )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d)\n", first, count );
+  funcs->ext.p_glDrawMeshTasksNV( first, count );
+}
+
 static void WINAPI glDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, GLint first, GLsizei count )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -3102,6 +3130,20 @@ static void WINAPI glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%s, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f)\n", wine_dbgstr_longlong(vkImage), sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
   funcs->ext.p_glDrawVkImageNV( vkImage, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
+}
+
+static void WINAPI glEGLImageTargetTexStorageEXT( GLenum target, GLeglImageOES image, const GLint* attrib_list )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %p, %p)\n", target, image, attrib_list );
+  funcs->ext.p_glEGLImageTargetTexStorageEXT( target, image, attrib_list );
+}
+
+static void WINAPI glEGLImageTargetTextureStorageEXT( GLuint texture, GLeglImageOES image, const GLint* attrib_list )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %p, %p)\n", texture, image, attrib_list );
+  funcs->ext.p_glEGLImageTargetTextureStorageEXT( texture, image, attrib_list );
 }
 
 static void WINAPI glEdgeFlagFormatNV( GLsizei stride )
@@ -3739,6 +3781,13 @@ static void WINAPI glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, c
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %p)\n", framebuffer, n, bufs );
   funcs->ext.p_glFramebufferDrawBuffersEXT( framebuffer, n, bufs );
+}
+
+static void WINAPI glFramebufferFetchBarrierEXT(void)
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "()\n" );
+  funcs->ext.p_glFramebufferFetchBarrierEXT();
 }
 
 static void WINAPI glFramebufferParameteri( GLenum target, GLenum pname, GLint param )
@@ -5057,6 +5106,13 @@ static void WINAPI glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param )
   funcs->ext.p_glGetMaterialxOES( face, pname, param );
 }
 
+static void WINAPI glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %d, %p)\n", memory, pname, first, count, params );
+  funcs->ext.p_glGetMemoryObjectDetachedResourcesuivNV( memory, pname, first, count, params );
+}
+
 static void WINAPI glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint *params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -6070,6 +6126,20 @@ static void WINAPI glGetShaderiv( GLuint shader, GLenum pname, GLint *params )
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %p)\n", shader, pname, params );
   funcs->ext.p_glGetShaderiv( shader, pname, params );
+}
+
+static void WINAPI glGetShadingRateImagePaletteNV( GLuint viewport, GLuint entry, GLenum *rate )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %p)\n", viewport, entry, rate );
+  funcs->ext.p_glGetShadingRateImagePaletteNV( viewport, entry, rate );
+}
+
+static void WINAPI glGetShadingRateSampleLocationivNV( GLenum rate, GLuint samples, GLuint index, GLint *location )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %p)\n", rate, samples, index, location );
+  funcs->ext.p_glGetShadingRateSampleLocationivNV( rate, samples, index, location );
 }
 
 static void WINAPI glGetSharpenTexFuncSGIS( GLenum target, GLfloat *points )
@@ -8578,6 +8648,20 @@ static void WINAPI glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type
   funcs->ext.p_glMultiDrawElementsIndirectCountARB( mode, type, indirect, drawcount, maxdrawcount, stride );
 }
 
+static void WINAPI glMultiDrawMeshTasksIndirectCountNV( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%ld, %ld, %d, %d)\n", indirect, drawcount, maxdrawcount, stride );
+  funcs->ext.p_glMultiDrawMeshTasksIndirectCountNV( indirect, drawcount, maxdrawcount, stride );
+}
+
+static void WINAPI glMultiDrawMeshTasksIndirectNV( GLintptr indirect, GLsizei drawcount, GLsizei stride )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%ld, %d, %d)\n", indirect, drawcount, stride );
+  funcs->ext.p_glMultiDrawMeshTasksIndirectNV( indirect, drawcount, stride );
+}
+
 static void WINAPI glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint *first, const GLsizei *count, GLsizei primcount )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -9754,6 +9838,13 @@ static void WINAPI glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMa
   funcs->ext.p_glMulticastWaitSyncNV( signalGpu, waitGpuMask );
 }
 
+static void WINAPI glNamedBufferAttachMemoryNV( GLuint buffer, GLuint memory, GLuint64 offset )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %s)\n", buffer, memory, wine_dbgstr_longlong(offset) );
+  funcs->ext.p_glNamedBufferAttachMemoryNV( buffer, memory, offset );
+}
+
 static void WINAPI glNamedBufferData( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -10060,6 +10151,13 @@ static void WINAPI glNamedRenderbufferStorageMultisample( GLuint renderbuffer, G
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d)\n", renderbuffer, samples, internalformat, width, height );
   funcs->ext.p_glNamedRenderbufferStorageMultisample( renderbuffer, samples, internalformat, width, height );
+}
+
+static void WINAPI glNamedRenderbufferStorageMultisampleAdvancedAMD( GLuint renderbuffer, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %d, %d, %d)\n", renderbuffer, samples, storageSamples, internalformat, width, height );
+  funcs->ext.p_glNamedRenderbufferStorageMultisampleAdvancedAMD( renderbuffer, samples, storageSamples, internalformat, width, height );
 }
 
 static void WINAPI glNamedRenderbufferStorageMultisampleCoverageEXT( GLuint renderbuffer, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height )
@@ -12288,6 +12386,13 @@ static void WINAPI glRenderbufferStorageMultisample( GLenum target, GLsizei samp
   funcs->ext.p_glRenderbufferStorageMultisample( target, samples, internalformat, width, height );
 }
 
+static void WINAPI glRenderbufferStorageMultisampleAdvancedAMD( GLenum target, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %d, %d, %d)\n", target, samples, storageSamples, internalformat, width, height );
+  funcs->ext.p_glRenderbufferStorageMultisampleAdvancedAMD( target, samples, storageSamples, internalformat, width, height );
+}
+
 static void WINAPI glRenderbufferStorageMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12484,6 +12589,13 @@ static void WINAPI glResetHistogramEXT( GLenum target )
   funcs->ext.p_glResetHistogramEXT( target );
 }
 
+static void WINAPI glResetMemoryObjectParameterNV( GLuint memory, GLenum pname )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d)\n", memory, pname );
+  funcs->ext.p_glResetMemoryObjectParameterNV( memory, pname );
+}
+
 static void WINAPI glResetMinmax( GLenum target )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12650,6 +12762,20 @@ static void WINAPI glScissorArrayv( GLuint first, GLsizei count, const GLint *v 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %p)\n", first, count, v );
   funcs->ext.p_glScissorArrayv( first, count, v );
+}
+
+static void WINAPI glScissorExclusiveArrayvNV( GLuint first, GLsizei count, const GLint *v )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %p)\n", first, count, v );
+  funcs->ext.p_glScissorExclusiveArrayvNV( first, count, v );
+}
+
+static void WINAPI glScissorExclusiveNV( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %d)\n", x, y, width, height );
+  funcs->ext.p_glScissorExclusiveNV( x, y, width, height );
 }
 
 static void WINAPI glScissorIndexed( GLuint index, GLint left, GLint bottom, GLsizei width, GLsizei height )
@@ -13079,6 +13205,34 @@ static void WINAPI glShaderStorageBlockBinding( GLuint program, GLuint storageBl
   funcs->ext.p_glShaderStorageBlockBinding( program, storageBlockIndex, storageBlockBinding );
 }
 
+static void WINAPI glShadingRateImageBarrierNV( GLboolean synchronize )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d)\n", synchronize );
+  funcs->ext.p_glShadingRateImageBarrierNV( synchronize );
+}
+
+static void WINAPI glShadingRateImagePaletteNV( GLuint viewport, GLuint first, GLsizei count, const GLenum *rates )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %d, %p)\n", viewport, first, count, rates );
+  funcs->ext.p_glShadingRateImagePaletteNV( viewport, first, count, rates );
+}
+
+static void WINAPI glShadingRateSampleOrderCustomNV( GLenum rate, GLuint samples, const GLint *locations )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %p)\n", rate, samples, locations );
+  funcs->ext.p_glShadingRateSampleOrderCustomNV( rate, samples, locations );
+}
+
+static void WINAPI glShadingRateSampleOrderNV( GLenum order )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d)\n", order );
+  funcs->ext.p_glShadingRateSampleOrderNV( order );
+}
+
 static void WINAPI glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -13427,6 +13581,13 @@ static GLboolean WINAPI glTestObjectAPPLE( GLenum object, GLuint name )
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d)\n", object, name );
   return funcs->ext.p_glTestObjectAPPLE( object, name );
+}
+
+static void WINAPI glTexAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %s)\n", target, memory, wine_dbgstr_longlong(offset) );
+  funcs->ext.p_glTexAttachMemoryNV( target, memory, offset );
 }
 
 static void WINAPI glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer )
@@ -14071,6 +14232,13 @@ static void WINAPI glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffse
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, woffset, width, height, depth, size4d, format, type, pixels );
   funcs->ext.p_glTexSubImage4DSGIS( target, level, xoffset, yoffset, zoffset, woffset, width, height, depth, size4d, format, type, pixels );
+}
+
+static void WINAPI glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset )
+{
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE( "(%d, %d, %s)\n", texture, memory, wine_dbgstr_longlong(offset) );
+  funcs->ext.p_glTextureAttachMemoryNV( texture, memory, offset );
 }
 
 static void WINAPI glTextureBarrier(void)
@@ -18531,7 +18699,7 @@ extern int WINAPI wglReleasePbufferDCARB( HPBUFFERARB hPbuffer, HDC hDC ) DECLSP
 extern BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB hPbuffer, int iBuffer ) DECLSPEC_HIDDEN;
 extern BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB hPbuffer, const int *piAttribList ) DECLSPEC_HIDDEN;
 
-const OpenGL_extension extension_registry[2655] = {
+const OpenGL_extension extension_registry[2679] = {
   { "glAccumxOES", "GL_OES_fixed_point", glAccumxOES },
   { "glAcquireKeyedMutexWin32EXT", "GL_EXT_win32_keyed_mutex", glAcquireKeyedMutexWin32EXT },
   { "glActiveProgramEXT", "GL_EXT_separate_shader_objects", glActiveProgramEXT },
@@ -18603,6 +18771,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glBindRenderbufferEXT", "GL_EXT_framebuffer_object", glBindRenderbufferEXT },
   { "glBindSampler", "GL_ARB_sampler_objects GL_VERSION_3_3", glBindSampler },
   { "glBindSamplers", "GL_ARB_multi_bind GL_VERSION_4_4", glBindSamplers },
+  { "glBindShadingRateImageNV", "GL_NV_shading_rate_image", glBindShadingRateImageNV },
   { "glBindTexGenParameterEXT", "GL_EXT_vertex_shader", glBindTexGenParameterEXT },
   { "glBindTextureEXT", "GL_EXT_texture_object", glBindTextureEXT },
   { "glBindTextureUnit", "GL_ARB_direct_state_access GL_VERSION_4_5", glBindTextureUnit },
@@ -18658,6 +18827,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glBlitFramebufferEXT", "GL_EXT_framebuffer_blit", glBlitFramebufferEXT },
   { "glBlitNamedFramebuffer", "GL_ARB_direct_state_access GL_VERSION_4_5", glBlitNamedFramebuffer },
   { "glBufferAddressRangeNV", "GL_NV_vertex_buffer_unified_memory", glBufferAddressRangeNV },
+  { "glBufferAttachMemoryNV", "GL_NV_memory_attachment", glBufferAttachMemoryNV },
   { "glBufferData", "GL_VERSION_1_5", glBufferData },
   { "glBufferDataARB", "GL_ARB_vertex_buffer_object", glBufferDataARB },
   { "glBufferPageCommitmentARB", "GL_ARB_sparse_buffer", glBufferPageCommitmentARB },
@@ -18962,6 +19132,8 @@ const OpenGL_extension extension_registry[2655] = {
   { "glDrawElementsInstancedBaseVertexBaseInstance", "GL_ARB_base_instance GL_VERSION_4_2", glDrawElementsInstancedBaseVertexBaseInstance },
   { "glDrawElementsInstancedEXT", "GL_EXT_draw_instanced", glDrawElementsInstancedEXT },
   { "glDrawMeshArraysSUN", "GL_SUN_mesh_array", glDrawMeshArraysSUN },
+  { "glDrawMeshTasksIndirectNV", "GL_NV_mesh_shader", glDrawMeshTasksIndirectNV },
+  { "glDrawMeshTasksNV", "GL_NV_mesh_shader", glDrawMeshTasksNV },
   { "glDrawRangeElementArrayAPPLE", "GL_APPLE_element_array", glDrawRangeElementArrayAPPLE },
   { "glDrawRangeElementArrayATI", "GL_ATI_element_array", glDrawRangeElementArrayATI },
   { "glDrawRangeElements", "GL_VERSION_1_2", glDrawRangeElements },
@@ -18974,6 +19146,8 @@ const OpenGL_extension extension_registry[2655] = {
   { "glDrawTransformFeedbackStream", "GL_ARB_transform_feedback3 GL_VERSION_4_0", glDrawTransformFeedbackStream },
   { "glDrawTransformFeedbackStreamInstanced", "GL_ARB_transform_feedback_instanced GL_VERSION_4_2", glDrawTransformFeedbackStreamInstanced },
   { "glDrawVkImageNV", "GL_NV_draw_vulkan_image", glDrawVkImageNV },
+  { "glEGLImageTargetTexStorageEXT", "GL_EXT_EGL_image_storage", glEGLImageTargetTexStorageEXT },
+  { "glEGLImageTargetTextureStorageEXT", "GL_EXT_EGL_image_storage", glEGLImageTargetTextureStorageEXT },
   { "glEdgeFlagFormatNV", "GL_NV_vertex_buffer_unified_memory", glEdgeFlagFormatNV },
   { "glEdgeFlagPointerEXT", "GL_EXT_vertex_array", glEdgeFlagPointerEXT },
   { "glEdgeFlagPointerListIBM", "GL_IBM_vertex_array_lists", glEdgeFlagPointerListIBM },
@@ -19065,6 +19239,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glFrameZoomSGIX", "GL_SGIX_framezoom", glFrameZoomSGIX },
   { "glFramebufferDrawBufferEXT", "GL_EXT_direct_state_access", glFramebufferDrawBufferEXT },
   { "glFramebufferDrawBuffersEXT", "GL_EXT_direct_state_access", glFramebufferDrawBuffersEXT },
+  { "glFramebufferFetchBarrierEXT", "GL_EXT_shader_framebuffer_fetch_non_coherent", glFramebufferFetchBarrierEXT },
   { "glFramebufferParameteri", "GL_ARB_framebuffer_no_attachments GL_VERSION_4_3", glFramebufferParameteri },
   { "glFramebufferReadBufferEXT", "GL_EXT_direct_state_access", glFramebufferReadBufferEXT },
   { "glFramebufferRenderbuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferRenderbuffer },
@@ -19253,6 +19428,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glGetMapParameterivNV", "GL_NV_evaluators", glGetMapParameterivNV },
   { "glGetMapxvOES", "GL_OES_fixed_point", glGetMapxvOES },
   { "glGetMaterialxOES", "GL_OES_fixed_point", glGetMaterialxOES },
+  { "glGetMemoryObjectDetachedResourcesuivNV", "GL_NV_memory_attachment", glGetMemoryObjectDetachedResourcesuivNV },
   { "glGetMemoryObjectParameterivEXT", "GL_EXT_memory_object", glGetMemoryObjectParameterivEXT },
   { "glGetMinmax", "GL_ARB_imaging", glGetMinmax },
   { "glGetMinmaxEXT", "GL_EXT_histogram", glGetMinmaxEXT },
@@ -19398,6 +19574,8 @@ const OpenGL_extension extension_registry[2655] = {
   { "glGetShaderSource", "GL_VERSION_2_0", glGetShaderSource },
   { "glGetShaderSourceARB", "GL_ARB_shader_objects", glGetShaderSourceARB },
   { "glGetShaderiv", "GL_VERSION_2_0", glGetShaderiv },
+  { "glGetShadingRateImagePaletteNV", "GL_NV_shading_rate_image", glGetShadingRateImagePaletteNV },
+  { "glGetShadingRateSampleLocationivNV", "GL_NV_shading_rate_image", glGetShadingRateSampleLocationivNV },
   { "glGetSharpenTexFuncSGIS", "GL_SGIS_sharpen_texture", glGetSharpenTexFuncSGIS },
   { "glGetStageIndexNV", "GL_NV_command_list", glGetStageIndexNV },
   { "glGetStringi", "GL_VERSION_3_0", glGetStringi },
@@ -19757,6 +19935,8 @@ const OpenGL_extension extension_registry[2655] = {
   { "glMultiDrawElementsIndirectBindlessNV", "GL_NV_bindless_multi_draw_indirect", glMultiDrawElementsIndirectBindlessNV },
   { "glMultiDrawElementsIndirectCount", "GL_VERSION_4_6", glMultiDrawElementsIndirectCount },
   { "glMultiDrawElementsIndirectCountARB", "GL_ARB_indirect_parameters", glMultiDrawElementsIndirectCountARB },
+  { "glMultiDrawMeshTasksIndirectCountNV", "GL_NV_mesh_shader", glMultiDrawMeshTasksIndirectCountNV },
+  { "glMultiDrawMeshTasksIndirectNV", "GL_NV_mesh_shader", glMultiDrawMeshTasksIndirectNV },
   { "glMultiDrawRangeElementArrayAPPLE", "GL_APPLE_element_array", glMultiDrawRangeElementArrayAPPLE },
   { "glMultiModeDrawArraysIBM", "GL_IBM_multimode_draw_arrays", glMultiModeDrawArraysIBM },
   { "glMultiModeDrawElementsIBM", "GL_IBM_multimode_draw_arrays", glMultiModeDrawElementsIBM },
@@ -19925,6 +20105,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glMulticastGetQueryObjectui64vNV", "GL_NV_gpu_multicast", glMulticastGetQueryObjectui64vNV },
   { "glMulticastGetQueryObjectuivNV", "GL_NV_gpu_multicast", glMulticastGetQueryObjectuivNV },
   { "glMulticastWaitSyncNV", "GL_NV_gpu_multicast", glMulticastWaitSyncNV },
+  { "glNamedBufferAttachMemoryNV", "GL_NV_memory_attachment", glNamedBufferAttachMemoryNV },
   { "glNamedBufferData", "GL_ARB_direct_state_access GL_VERSION_4_5", glNamedBufferData },
   { "glNamedBufferDataEXT", "GL_EXT_direct_state_access", glNamedBufferDataEXT },
   { "glNamedBufferPageCommitmentARB", "GL_ARB_sparse_buffer", glNamedBufferPageCommitmentARB },
@@ -19969,6 +20150,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glNamedRenderbufferStorage", "GL_ARB_direct_state_access GL_VERSION_4_5", glNamedRenderbufferStorage },
   { "glNamedRenderbufferStorageEXT", "GL_EXT_direct_state_access", glNamedRenderbufferStorageEXT },
   { "glNamedRenderbufferStorageMultisample", "GL_ARB_direct_state_access GL_VERSION_4_5", glNamedRenderbufferStorageMultisample },
+  { "glNamedRenderbufferStorageMultisampleAdvancedAMD", "GL_AMD_framebuffer_multisample_advanced", glNamedRenderbufferStorageMultisampleAdvancedAMD },
   { "glNamedRenderbufferStorageMultisampleCoverageEXT", "GL_EXT_direct_state_access", glNamedRenderbufferStorageMultisampleCoverageEXT },
   { "glNamedRenderbufferStorageMultisampleEXT", "GL_EXT_direct_state_access", glNamedRenderbufferStorageMultisampleEXT },
   { "glNamedStringARB", "GL_ARB_shading_language_include", glNamedStringARB },
@@ -20287,6 +20469,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glRenderbufferStorage", "GL_ARB_framebuffer_object GL_VERSION_3_0", glRenderbufferStorage },
   { "glRenderbufferStorageEXT", "GL_EXT_framebuffer_object", glRenderbufferStorageEXT },
   { "glRenderbufferStorageMultisample", "GL_ARB_framebuffer_object GL_VERSION_3_0", glRenderbufferStorageMultisample },
+  { "glRenderbufferStorageMultisampleAdvancedAMD", "GL_AMD_framebuffer_multisample_advanced", glRenderbufferStorageMultisampleAdvancedAMD },
   { "glRenderbufferStorageMultisampleCoverageNV", "GL_NV_framebuffer_multisample_coverage", glRenderbufferStorageMultisampleCoverageNV },
   { "glRenderbufferStorageMultisampleEXT", "GL_EXT_framebuffer_multisample", glRenderbufferStorageMultisampleEXT },
   { "glReplacementCodePointerSUN", "GL_SUN_triangle_list", glReplacementCodePointerSUN },
@@ -20315,6 +20498,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glRequestResidentProgramsNV", "GL_NV_vertex_program", glRequestResidentProgramsNV },
   { "glResetHistogram", "GL_ARB_imaging", glResetHistogram },
   { "glResetHistogramEXT", "GL_EXT_histogram", glResetHistogramEXT },
+  { "glResetMemoryObjectParameterNV", "GL_NV_memory_attachment", glResetMemoryObjectParameterNV },
   { "glResetMinmax", "GL_ARB_imaging", glResetMinmax },
   { "glResetMinmaxEXT", "GL_EXT_histogram", glResetMinmaxEXT },
   { "glResizeBuffersMESA", "GL_MESA_resize_buffers", glResizeBuffersMESA },
@@ -20339,6 +20523,8 @@ const OpenGL_extension extension_registry[2655] = {
   { "glSamplerParameteriv", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameteriv },
   { "glScalexOES", "GL_OES_fixed_point", glScalexOES },
   { "glScissorArrayv", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorArrayv },
+  { "glScissorExclusiveArrayvNV", "GL_NV_scissor_exclusive", glScissorExclusiveArrayvNV },
+  { "glScissorExclusiveNV", "GL_NV_scissor_exclusive", glScissorExclusiveNV },
   { "glScissorIndexed", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorIndexed },
   { "glScissorIndexedv", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorIndexedv },
   { "glSecondaryColor3b", "GL_VERSION_1_4", glSecondaryColor3b },
@@ -20400,6 +20586,10 @@ const OpenGL_extension extension_registry[2655] = {
   { "glShaderSource", "GL_VERSION_2_0", glShaderSource },
   { "glShaderSourceARB", "GL_ARB_shader_objects", glShaderSourceARB },
   { "glShaderStorageBlockBinding", "GL_ARB_shader_storage_buffer_object GL_VERSION_4_3", glShaderStorageBlockBinding },
+  { "glShadingRateImageBarrierNV", "GL_NV_shading_rate_image GL_NV_shading_rate_image", glShadingRateImageBarrierNV },
+  { "glShadingRateImagePaletteNV", "GL_NV_shading_rate_image", glShadingRateImagePaletteNV },
+  { "glShadingRateSampleOrderCustomNV", "GL_NV_shading_rate_image", glShadingRateSampleOrderCustomNV },
+  { "glShadingRateSampleOrderNV", "GL_NV_shading_rate_image", glShadingRateSampleOrderNV },
   { "glSharpenTexFuncSGIS", "GL_SGIS_sharpen_texture", glSharpenTexFuncSGIS },
   { "glSignalSemaphoreEXT", "GL_EXT_semaphore", glSignalSemaphoreEXT },
   { "glSignalVkFenceNV", "GL_NV_draw_vulkan_image", glSignalVkFenceNV },
@@ -20450,6 +20640,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glTestFenceAPPLE", "GL_APPLE_fence", glTestFenceAPPLE },
   { "glTestFenceNV", "GL_NV_fence", glTestFenceNV },
   { "glTestObjectAPPLE", "GL_APPLE_fence", glTestObjectAPPLE },
+  { "glTexAttachMemoryNV", "GL_NV_memory_attachment", glTexAttachMemoryNV },
   { "glTexBuffer", "GL_VERSION_3_1", glTexBuffer },
   { "glTexBufferARB", "GL_ARB_texture_buffer_object", glTexBufferARB },
   { "glTexBufferEXT", "GL_EXT_texture_buffer_object", glTexBufferEXT },
@@ -20542,6 +20733,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glTexSubImage3D", "GL_VERSION_1_2", glTexSubImage3D },
   { "glTexSubImage3DEXT", "GL_EXT_texture3D", glTexSubImage3DEXT },
   { "glTexSubImage4DSGIS", "GL_SGIS_texture4D", glTexSubImage4DSGIS },
+  { "glTextureAttachMemoryNV", "GL_NV_memory_attachment", glTextureAttachMemoryNV },
   { "glTextureBarrier", "GL_ARB_texture_barrier GL_VERSION_4_5", glTextureBarrier },
   { "glTextureBarrierNV", "GL_NV_texture_barrier", glTextureBarrierNV },
   { "glTextureBuffer", "GL_ARB_direct_state_access GL_VERSION_4_5", glTextureBuffer },

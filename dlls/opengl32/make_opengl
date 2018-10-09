@@ -98,6 +98,7 @@ my %arg_types =
      "GLclampx" =>             [ "long",   "%d" ],
      "GLdouble" =>             [ "double", "%f" ],
      "GLeglClientBufferEXT" => [ "ptr",    "%p" ],
+     "GLeglImageOES" =>        [ "ptr",    "%p" ],
      "GLenum" =>               [ "long",   "%d" ],
      "GLfixed" =>              [ "long",   "%d" ],
      "GLfloat" =>              [ "float",  "%f" ],
@@ -637,9 +638,6 @@ print HEADER "#define __WINE_WGL_H\n\n";
 print HEADER "#ifndef GLAPIENTRY\n";
 print HEADER "#define GLAPIENTRY __stdcall\n";
 print HEADER "#endif\n\n";
-
-print HEADER "#undef near\n";
-print HEADER "#undef far\n\n";
 
 foreach (@gl_types)
 {
