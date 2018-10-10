@@ -129,14 +129,8 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
         int height = HIWORD(val);
         int width = LOWORD(val);
         /* A value of zero reflects the default settings */
-        if (height != 0)
-        {
-            cfg->cell_height = height;
-        }
-        if (width != 0)
-        {
-            cfg->cell_width = width;
-        }
+        if (height != 0) cfg->cell_height = MulDiv( height, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+        if (width != 0) cfg->cell_width = MulDiv( width, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     }
 
     count = sizeof(val);
@@ -217,8 +211,8 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->cursor_visible = 1;
     cfg->exit_on_die = 1;
     memset(cfg->face_name, 0, sizeof(cfg->face_name));
-    cfg->cell_height = 12;
-    cfg->cell_width  = 8;
+    cfg->cell_height = MulDiv( 12, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+    cfg->cell_width  = MulDiv( 8, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     cfg->font_weight = FW_NORMAL;
     cfg->history_size = 50;
     cfg->history_nodup = 0;
@@ -265,7 +259,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
 static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 {
     int   i;
-    DWORD val;
+    DWORD val, width, height;
     WCHAR color_name[13];
 
     WINECON_DumpConfig("save", cfg);
@@ -291,7 +285,9 @@ static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 
     RegSetValueExW(hConKey, wszFaceName, 0, REG_SZ, (LPBYTE)&cfg->face_name, sizeof(cfg->face_name));
 
-    val = MAKELONG(cfg->cell_width, cfg->cell_height);
+    width  = MulDiv( cfg->cell_width, USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );
+    height = MulDiv( cfg->cell_height, USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );
+    val = MAKELONG(width, height);
     RegSetValueExW(hConKey, wszFontSize, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 
     val = cfg->font_weight;
