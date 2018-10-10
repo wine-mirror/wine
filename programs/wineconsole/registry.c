@@ -219,7 +219,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     memset(cfg->face_name, 0, sizeof(cfg->face_name));
     cfg->cell_height = 12;
     cfg->cell_width  = 8;
-    cfg->font_weight = 0;
+    cfg->font_weight = FW_NORMAL;
     cfg->history_size = 50;
     cfg->history_nodup = 0;
     cfg->insert_mode = 1;
