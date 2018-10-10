@@ -338,6 +338,9 @@ BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW*
     switch (pass)  /* we get increasingly lenient in later passes */
     {
     case 0:
+        if (type & RASTER_FONTTYPE) return FALSE;
+        /* fall through */
+    case 1:
         if (type & RASTER_FONTTYPE)
         {
             if (tm->tmMaxCharWidth * data->curcfg.win_width >= GetSystemMetrics(SM_CXSCREEN) ||
@@ -345,10 +348,10 @@ BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW*
                 return FALSE;
         }
         /* fall through */
-    case 1:
+    case 2:
         if (tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != g_uiDefaultCharset) return FALSE;
         /* fall through */
-    case 2:
+    case 3:
         if (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut) return FALSE;
         break;
     }
@@ -366,12 +369,13 @@ BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf, int 
     {
     case 0:
     case 1:
+    case 2:
         if (lf->lfCharSet != DEFAULT_CHARSET && lf->lfCharSet != g_uiDefaultCharset) return FALSE;
         /* fall through */
-    case 2:
+    case 3:
         if ((lf->lfPitchAndFamily & 3) != FIXED_PITCH) return FALSE;
         /* fall through */
-    case 3:
+    case 4:
         if (lf->lfFaceName[0] == '@') return FALSE;
         break;
     }
@@ -554,7 +558,7 @@ static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
     WINE_WARN("Couldn't match the font from registry... trying to find one\n");
     fc.data = data;
     fc.done = FALSE;
-    for (fc.pass = 0; fc.pass <= 4; fc.pass++)
+    for (fc.pass = 0; fc.pass <= 5; fc.pass++)
     {
         EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
         if (fc.done) return;
