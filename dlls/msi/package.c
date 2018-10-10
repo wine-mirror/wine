@@ -2154,22 +2154,14 @@ end:
     return r;
 }
 
-void msi_reset_folders( MSIPACKAGE *package, BOOL source )
+void msi_reset_source_folders( MSIPACKAGE *package )
 {
     MSIFOLDER *folder;
 
     LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
     {
-        if ( source )
-        {
-            msi_free( folder->ResolvedSource );
-            folder->ResolvedSource = NULL;
-        }
-        else
-        {
-            msi_free( folder->ResolvedTarget );
-            folder->ResolvedTarget = NULL;
-        }
+        msi_free( folder->ResolvedSource );
+        folder->ResolvedSource = NULL;
     }
 }
 
@@ -2263,7 +2255,7 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
 
     ret = msi_set_property( package->db, szName, szValue, -1 );
     if (ret == ERROR_SUCCESS && !strcmpW( szName, szSourceDir ))
-        msi_reset_folders( package, TRUE );
+        msi_reset_source_folders( package );
 
     msiobj_release( &package->hdr );
     return ret;
