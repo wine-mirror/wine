@@ -1795,135 +1795,155 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 }
 
 
-static inline DWORD append_string( void **ptr, const WCHAR *str )
+static inline const WCHAR *get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
+                                              const UNICODE_STRING *str )
 {
-    DWORD len = strlenW( str );
-    memcpy( *ptr, str, len * sizeof(WCHAR) );
-    *ptr = (WCHAR *)*ptr + len;
-    return len * sizeof(WCHAR);
+    if (params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED) return str->Buffer;
+    return (const WCHAR *)((const char *)params + (UINT_PTR)str->Buffer);
+}
+
+static inline DWORD append_string( void **ptr, const RTL_USER_PROCESS_PARAMETERS *params,
+                                   const UNICODE_STRING *str )
+{
+    const WCHAR *buffer = get_params_string( params, str );
+    memcpy( *ptr, buffer, str->Length );
+    *ptr = (WCHAR *)*ptr + str->Length / sizeof(WCHAR);
+    return str->Length;
 }
 
 /***********************************************************************
  *           create_startup_info
  */
-static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
-                                            LPCWSTR cur_dir, LPWSTR env, DWORD flags,
-                                            const STARTUPINFOW *startup, DWORD *info_size )
+static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *params, DWORD *info_size )
 {
-    const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    const WCHAR *title;
     startup_info_t *info;
     DWORD size;
     void *ptr;
-    UNICODE_STRING newdir;
+
+    size = sizeof(*info);
+    size += params->CurrentDirectory.DosPath.Length;
+    size += params->DllPath.Length;
+    size += params->ImagePathName.Length;
+    size += params->CommandLine.Length;
+    size += params->WindowTitle.Length;
+    size += params->Desktop.Length;
+    size += params->ShellInfo.Length;
+    size += params->RuntimeInfo.Length;
+    size = (size + 1) & ~1;
+    *info_size = size;
+
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return NULL;
+
+    info->console_flags = params->ConsoleFlags;
+    info->console       = wine_server_obj_handle( params->ConsoleHandle );
+    info->hstdin        = wine_server_obj_handle( params->hStdInput );
+    info->hstdout       = wine_server_obj_handle( params->hStdOutput );
+    info->hstderr       = wine_server_obj_handle( params->hStdError );
+    info->x             = params->dwX;
+    info->y             = params->dwY;
+    info->xsize         = params->dwXSize;
+    info->ysize         = params->dwYSize;
+    info->xchars        = params->dwXCountChars;
+    info->ychars        = params->dwYCountChars;
+    info->attribute     = params->dwFillAttribute;
+    info->flags         = params->dwFlags;
+    info->show          = params->wShowWindow;
+
+    ptr = info + 1;
+    info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );
+    info->dllpath_len = append_string( &ptr, params, &params->DllPath );
+    info->imagepath_len = append_string( &ptr, params, &params->ImagePathName );
+    info->cmdline_len = append_string( &ptr, params, &params->CommandLine );
+    info->title_len = append_string( &ptr, params, &params->WindowTitle );
+    info->desktop_len = append_string( &ptr, params, &params->Desktop );
+    info->shellinfo_len = append_string( &ptr, params, &params->ShellInfo );
+    info->runtime_len = append_string( &ptr, params, &params->RuntimeInfo );
+    return info;
+}
+
+
+/***********************************************************************
+ *           create_process_params
+ */
+static RTL_USER_PROCESS_PARAMETERS *create_process_params( LPCWSTR filename, LPCWSTR cmdline,
+                                                           LPCWSTR cur_dir, LPWSTR env, DWORD flags,
+                                                           const STARTUPINFOW *startup )
+{
+    RTL_USER_PROCESS_PARAMETERS *params;
+    UNICODE_STRING imageW, curdirW, cmdlineW, titleW, desktopW, runtimeW, newdirW;
     WCHAR imagepath[MAX_PATH];
-    HANDLE hstdin, hstdout, hstderr;
 
     if(!GetLongPathNameW( filename, imagepath, MAX_PATH ))
         lstrcpynW( imagepath, filename, MAX_PATH );
     if(!GetFullPathNameW( imagepath, MAX_PATH, imagepath, NULL ))
         lstrcpynW( imagepath, filename, MAX_PATH );
 
-    cur_params = NtCurrentTeb()->Peb->ProcessParameters;
-
-    newdir.Buffer = NULL;
+    newdirW.Buffer = NULL;
     if (cur_dir)
     {
-        if (RtlDosPathNameToNtPathName_U( cur_dir, &newdir, NULL, NULL ))
-            cur_dir = newdir.Buffer + 4;  /* skip \??\ prefix */
+        if (RtlDosPathNameToNtPathName_U( cur_dir, &newdirW, NULL, NULL ))
+            cur_dir = newdirW.Buffer + 4;  /* skip \??\ prefix */
         else
             cur_dir = NULL;
     }
-    if (!cur_dir)
-    {
-        if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
-            cur_dir = ((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir.DosPath.Buffer;
-        else
-            cur_dir = cur_params->CurrentDirectory.DosPath.Buffer;
-    }
-    title = startup->lpTitle ? startup->lpTitle : imagepath;
+    RtlInitUnicodeString( &imageW, imagepath );
+    RtlInitUnicodeString( &curdirW, cur_dir );
+    RtlInitUnicodeString( &cmdlineW, cmdline );
+    RtlInitUnicodeString( &titleW, startup->lpTitle ? startup->lpTitle : imagepath );
+    RtlInitUnicodeString( &desktopW, startup->lpDesktop );
+    runtimeW.Buffer = (WCHAR *)startup->lpReserved2;
+    runtimeW.Length = runtimeW.MaximumLength = startup->cbReserved2;
+    if (RtlCreateProcessParametersEx( &params, &imageW, NULL, &curdirW, &cmdlineW, env, &titleW,
+                                      &desktopW, NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
+        return NULL;
 
-    size = sizeof(*info);
-    size += strlenW( cur_dir ) * sizeof(WCHAR);
-    size += cur_params->DllPath.Length;
-    size += strlenW( imagepath ) * sizeof(WCHAR);
-    size += strlenW( cmdline ) * sizeof(WCHAR);
-    size += strlenW( title ) * sizeof(WCHAR);
-    if (startup->lpDesktop) size += strlenW( startup->lpDesktop ) * sizeof(WCHAR);
-    /* FIXME: shellinfo */
-    if (startup->lpReserved2 && startup->cbReserved2) size += startup->cbReserved2;
-    size = (size + 1) & ~1;
-    *info_size = size;
-
-    if (!(info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto done;
-
-    info->console_flags = cur_params->ConsoleFlags;
-    if (flags & CREATE_NEW_PROCESS_GROUP) info->console_flags = 1;
-    if (flags & CREATE_NEW_CONSOLE) info->console = wine_server_obj_handle(KERNEL32_CONSOLE_ALLOC);
+    if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
+    if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = KERNEL32_CONSOLE_ALLOC;
 
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {
-        hstdin  = startup->hStdInput;
-        hstdout = startup->hStdOutput;
-        hstderr = startup->hStdError;
+        params->hStdInput  = startup->hStdInput;
+        params->hStdOutput = startup->hStdOutput;
+        params->hStdError  = startup->hStdError;
     }
     else if (flags & DETACHED_PROCESS)
     {
-        hstdin  = INVALID_HANDLE_VALUE;
-        hstdout = INVALID_HANDLE_VALUE;
-        hstderr = INVALID_HANDLE_VALUE;
+        params->hStdInput  = INVALID_HANDLE_VALUE;
+        params->hStdOutput = INVALID_HANDLE_VALUE;
+        params->hStdError  = INVALID_HANDLE_VALUE;
     }
     else
     {
-        hstdin  = GetStdHandle( STD_INPUT_HANDLE );
-        hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
-        hstderr = GetStdHandle( STD_ERROR_HANDLE );
+        params->hStdInput  = NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+        params->hStdOutput = NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+        params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
     }
-    info->hstdin  = wine_server_obj_handle( hstdin );
-    info->hstdout = wine_server_obj_handle( hstdout );
-    info->hstderr = wine_server_obj_handle( hstderr );
-    if ((flags & CREATE_NEW_CONSOLE) != 0)
+
+    if (flags & CREATE_NEW_CONSOLE)
     {
         /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
-        if (is_console_handle(hstdin))  info->hstdin  = wine_server_obj_handle( INVALID_HANDLE_VALUE );
-        if (is_console_handle(hstdout)) info->hstdout = wine_server_obj_handle( INVALID_HANDLE_VALUE );
-        if (is_console_handle(hstderr)) info->hstderr = wine_server_obj_handle( INVALID_HANDLE_VALUE );
+        if (is_console_handle(params->hStdInput))  params->hStdInput  = INVALID_HANDLE_VALUE;
+        if (is_console_handle(params->hStdOutput)) params->hStdOutput = INVALID_HANDLE_VALUE;
+        if (is_console_handle(params->hStdError))  params->hStdError  = INVALID_HANDLE_VALUE;
     }
     else
     {
-        if (is_console_handle(hstdin))  info->hstdin  = console_handle_unmap(hstdin);
-        if (is_console_handle(hstdout)) info->hstdout = console_handle_unmap(hstdout);
-        if (is_console_handle(hstderr)) info->hstderr = console_handle_unmap(hstderr);
+        if (is_console_handle(params->hStdInput))  params->hStdInput  = (HANDLE)((UINT_PTR)params->hStdInput & ~3);
+        if (is_console_handle(params->hStdOutput)) params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput & ~3);
+        if (is_console_handle(params->hStdError))  params->hStdError  = (HANDLE)((UINT_PTR)params->hStdError & ~3);
     }
 
-    info->x         = startup->dwX;
-    info->y         = startup->dwY;
-    info->xsize     = startup->dwXSize;
-    info->ysize     = startup->dwYSize;
-    info->xchars    = startup->dwXCountChars;
-    info->ychars    = startup->dwYCountChars;
-    info->attribute = startup->dwFillAttribute;
-    info->flags     = startup->dwFlags;
-    info->show      = startup->wShowWindow;
+    params->dwX             = startup->dwX;
+    params->dwY             = startup->dwY;
+    params->dwXSize         = startup->dwXSize;
+    params->dwYSize         = startup->dwYSize;
+    params->dwXCountChars   = startup->dwXCountChars;
+    params->dwYCountChars   = startup->dwYCountChars;
+    params->dwFillAttribute = startup->dwFillAttribute;
+    params->dwFlags         = startup->dwFlags;
+    params->wShowWindow     = startup->wShowWindow;
 
-    ptr = info + 1;
-    info->curdir_len = append_string( &ptr, cur_dir );
-    info->dllpath_len = cur_params->DllPath.Length;
-    memcpy( ptr, cur_params->DllPath.Buffer, cur_params->DllPath.Length );
-    ptr = (char *)ptr + cur_params->DllPath.Length;
-    info->imagepath_len = append_string( &ptr, imagepath );
-    info->cmdline_len = append_string( &ptr, cmdline );
-    info->title_len = append_string( &ptr, title );
-    if (startup->lpDesktop) info->desktop_len = append_string( &ptr, startup->lpDesktop );
-    if (startup->lpReserved2 && startup->cbReserved2)
-    {
-        info->runtime_len = startup->cbReserved2;
-        memcpy( ptr, startup->lpReserved2, startup->cbReserved2 );
-    }
-
-done:
-    RtlFreeUnicodeString( &newdir );
-    return info;
+    return params;
 }
 
 /***********************************************************************
@@ -2186,6 +2206,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     NTSTATUS status;
     BOOL success = FALSE;
     HANDLE process_info, process_handle = 0;
+    RTL_USER_PROCESS_PARAMETERS *params;
     struct object_attributes *objattr;
     data_size_t attr_len;
     WCHAR *env_end;
@@ -2245,16 +2266,16 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     RtlAcquirePebLock();
 
-    if (!(startup_info = create_startup_info( filename, cmd_line, cur_dir, env, flags, startup,
-                                              &startup_info_size )))
+    if (!(params = create_process_params( filename, cmd_line, cur_dir, env, flags, startup )) ||
+        !(startup_info = create_startup_info( params, &startup_info_size )))
     {
+        RtlDestroyProcessParameters( params );
         RtlReleasePebLock();
         close( socketfd[0] );
         close( socketfd[1] );
         return FALSE;
     }
-    if (!env) env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
-    env_end = env;
+    env_end = params->Environment;
     while (*env_end)
     {
         static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
@@ -2285,7 +2306,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->info_size      = startup_info_size;
         wine_server_add_data( req, objattr, attr_len );
         wine_server_add_data( req, startup_info, startup_info_size );
-        wine_server_add_data( req, env, (env_end - env) * sizeof(WCHAR) );
+        wine_server_add_data( req, params->Environment, (env_end - params->Environment) * sizeof(WCHAR) );
         if (!(status = wine_server_call( req )))
         {
             info->dwProcessId = (DWORD)reply->pid;
@@ -2317,6 +2338,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         HeapFree( GetProcessHeap(), 0, objattr );
     }
 
+    RtlDestroyProcessParameters( params );
     RtlReleasePebLock();
     if (status)
     {
