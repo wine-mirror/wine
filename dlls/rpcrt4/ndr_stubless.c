@@ -156,8 +156,7 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
     case FC_RP:
         if (pFormat[1] & FC_SIMPLE_POINTER)
         {
-            FIXME("Simple reference pointer (type %#x).\n", pFormat[2]);
-            size = sizeof(void *);
+            size = 0;
             break;
         }
         size = calc_arg_size(pStubMsg, &pFormat[2] + *(const SHORT*)&pFormat[2]);
