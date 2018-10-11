@@ -422,6 +422,11 @@ static void client_free_handle(
     }
 }
 
+static inline BOOL param_needs_alloc( PARAM_ATTRIBUTES attr )
+{
+    return attr.IsOut && !attr.IsIn && !attr.IsBasetype && !attr.IsByValue;
+}
+
 void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
                      void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal )
 {
@@ -453,11 +458,8 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
         switch (phase)
         {
         case STUBLESS_INITOUT:
-            if (!params[i].attr.IsBasetype && params[i].attr.IsOut &&
-                !params[i].attr.IsIn && !params[i].attr.IsByValue)
-            {
+            if (param_needs_alloc(params[i].attr) && *(unsigned char **)pArg)
                 memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
-            }
             break;
         case STUBLESS_CALCSIZE:
             if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
@@ -1137,11 +1139,6 @@ LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, uns
     return 0;
 }
 #endif
-
-static inline BOOL param_needs_alloc( PARAM_ATTRIBUTES attr )
-{
-    return attr.IsOut && !attr.IsIn && !attr.IsBasetype && !attr.IsByValue;
-}
 
 static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                               PFORMAT_STRING pFormat, enum stubless_phase phase,
