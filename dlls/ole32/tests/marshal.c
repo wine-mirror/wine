@@ -73,6 +73,50 @@ static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
 #define ok_zero_external_conn() do {if (with_external_conn) ok(!external_connections, "got %d external connections\n", external_connections);} while(0);
 #define ok_last_release_closes(b) do {if (with_external_conn) ok(last_release_closes == b, "got %d expected %d\n", last_release_closes, b);} while(0);
 
+#define OBJREF_SIGNATURE (0x574f454d)
+#define OBJREF_STANDARD (0x1)
+
+typedef struct tagDUALSTRINGARRAY {
+    unsigned short wNumEntries;
+    unsigned short wSecurityOffset;
+    unsigned short aStringArray[1];
+} DUALSTRINGARRAY;
+
+typedef UINT64 OXID;
+typedef UINT64 OID;
+typedef GUID IPID;
+
+typedef struct tagSTDOBJREF {
+    ULONG flags;
+    ULONG cPublicRefs;
+    OXID oxid;
+    OID oid;
+    IPID ipid;
+} STDOBJREF;
+
+typedef struct tagOBJREF {
+    ULONG signature;
+    ULONG flags;
+    GUID iid;
+    union {
+        struct OR_STANDARD {
+            STDOBJREF std;
+            DUALSTRINGARRAY saResAddr;
+        } u_standard;
+        struct OR_HANDLER {
+            STDOBJREF std;
+            CLSID clsid;
+            DUALSTRINGARRAY saResAddr;
+        } u_handler;
+        struct OR_CUSTOM {
+            CLSID clsid;
+            ULONG cbExtension;
+            ULONG size;
+            byte *pData;
+        } u_custom;
+    } u_objref;
+} OBJREF;
+
 static const IID IID_IWineTest =
 {
     0x5201163f,
@@ -1310,6 +1354,9 @@ todo_wine
 
 static void test_CoGetStandardMarshal(void)
 {
+    DUALSTRINGARRAY *dualstringarr;
+    STDOBJREF *stdobjref;
+    OBJREF objref;
     IMarshal *marshal;
     DWORD size, read;
     IStream *stream;
@@ -1340,6 +1387,27 @@ static void test_CoGetStandardMarshal(void)
     hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUnknown,
             &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    size = FIELD_OFFSET(OBJREF, u_objref.u_standard.saResAddr.aStringArray);
+    hr = IStream_Read(stream, &objref, size, &read);
+    ok_ole_success(hr, IStream_Read);
+    ok(read == size, "read = %d, expected %d\n", read, size);
+    ok(objref.signature == OBJREF_SIGNATURE, "objref.signature = %x\n",
+            objref.signature);
+    ok(objref.flags == OBJREF_STANDARD, "objref.flags = %x\n", objref.flags);
+    ok(IsEqualIID(&objref.iid, &IID_IUnknown), "objref.iid = %s\n",
+            wine_dbgstr_guid(&objref.iid));
+    stdobjref = &objref.u_objref.u_standard.std;
+    ok(stdobjref->flags == 0, "stdobjref.flags = %d\n", stdobjref->flags);
+    ok(stdobjref->cPublicRefs == 5, "stdobjref.cPublicRefs = %d\n",
+            stdobjref->cPublicRefs);
+    dualstringarr = &objref.u_objref.u_standard.saResAddr;
+    ok(dualstringarr->wNumEntries == 0, "dualstringarr.wNumEntries = %d\n",
+            dualstringarr->wNumEntries);
+    ok(dualstringarr->wSecurityOffset == 0, "dualstringarr.wSecurityOffset = %d\n",
+            dualstringarr->wSecurityOffset);
 
     hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
     ok_ole_success(hr, IStream_Seek);
