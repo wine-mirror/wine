@@ -1352,6 +1352,162 @@ todo_wine
     end_host_object(tid, thread);
 }
 
+DEFINE_EXPECT(CustomMarshal_GetUnmarshalClass);
+DEFINE_EXPECT(CustomMarshal_GetMarshalSizeMax);
+DEFINE_EXPECT(CustomMarshal_MarshalInterface);
+
+static HRESULT WINAPI CustomMarshal_QueryInterface(IMarshal *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IMarshal)) {
+        *ppv = iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI CustomMarshal_AddRef(IMarshal *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI CustomMarshal_Release(IMarshal *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI CustomMarshal_GetUnmarshalClass(IMarshal *iface, REFIID riid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
+{
+    CHECK_EXPECT(CustomMarshal_GetUnmarshalClass);
+    *clsid = CLSID_StdMarshal;
+    return S_OK;
+}
+
+static HRESULT WINAPI CustomMarshal_GetMarshalSizeMax(IMarshal *iface, REFIID riid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, DWORD *size)
+{
+    CHECK_EXPECT(CustomMarshal_GetMarshalSizeMax);
+    ok(size != NULL, "size = NULL\n");
+
+    *size = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI CustomMarshal_MarshalInterface(IMarshal *iface, IStream *stream,
+        REFIID riid, void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
+{
+    IMarshal *std_marshal;
+    STATSTG stat;
+    HRESULT hr;
+
+    CHECK_EXPECT(CustomMarshal_MarshalInterface);
+
+    hr = IStream_Stat(stream, &stat, STATFLAG_DEFAULT);
+    ok_ole_success(hr, IStream_Stat);
+    ok(U(stat.cbSize).LowPart == 0, "stream is not empty (%d)\n", U(stat.cbSize).LowPart);
+    ok(U(stat.cbSize).HighPart == 0, "stream is not empty (%d)\n", U(stat.cbSize).HighPart);
+
+    hr = CoGetStandardMarshal(riid, (IUnknown*)iface,
+            dwDestContext, NULL, mshlflags, &std_marshal);
+    ok_ole_success(hr, CoGetStandardMarshal);
+    hr = IMarshal_MarshalInterface(std_marshal, stream, riid, pv,
+            dwDestContext, pvDestContext, mshlflags);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+    IMarshal_Release(std_marshal);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI CustomMarshal_UnmarshalInterface(IMarshal *iface,
+        IStream *stream, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomMarshal_ReleaseMarshalData(IMarshal *iface, IStream *stream)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomMarshal_DisconnectObject(IMarshal *iface, DWORD res)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IMarshalVtbl CustomMarshalVtbl =
+{
+    CustomMarshal_QueryInterface,
+    CustomMarshal_AddRef,
+    CustomMarshal_Release,
+    CustomMarshal_GetUnmarshalClass,
+    CustomMarshal_GetMarshalSizeMax,
+    CustomMarshal_MarshalInterface,
+    CustomMarshal_UnmarshalInterface,
+    CustomMarshal_ReleaseMarshalData,
+    CustomMarshal_DisconnectObject
+};
+
+static IMarshal CustomMarshal = { &CustomMarshalVtbl };
+
+static void test_StdMarshal_custom_marshaling(void)
+{
+    IStream *stream;
+    IUnknown *unk;
+    DWORD size;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    SET_EXPECT(CustomMarshal_GetUnmarshalClass);
+    SET_EXPECT(CustomMarshal_MarshalInterface);
+    hr = CoMarshalInterface(stream, &IID_IUnknown, (IUnknown*)&CustomMarshal,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+    CHECK_CALLED(CustomMarshal_GetUnmarshalClass);
+    CHECK_CALLED(CustomMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void**)&unk);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    ok(unk == (IUnknown*)&CustomMarshal, "unk != &CustomMarshal\n");
+    IUnknown_Release(unk);
+    IStream_Release(stream);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    SET_EXPECT(CustomMarshal_GetUnmarshalClass);
+    SET_EXPECT(CustomMarshal_MarshalInterface);
+    hr = CoMarshalInterface(stream, &IID_IUnknown, (IUnknown*)&CustomMarshal,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+    CHECK_CALLED(CustomMarshal_GetUnmarshalClass);
+    CHECK_CALLED(CustomMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    hr = CoReleaseMarshalData(stream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(stream);
+
+    SET_EXPECT(CustomMarshal_GetMarshalSizeMax);
+    hr = CoGetMarshalSizeMax(&size, &IID_IUnknown, (IUnknown*)&CustomMarshal,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoGetMarshalSizeMax);
+    CHECK_CALLED(CustomMarshal_GetMarshalSizeMax);
+    ok(size == sizeof(OBJREF), "size = %d, expected %d\n", size, (int)sizeof(OBJREF));
+}
+
 static void test_CoGetStandardMarshal(void)
 {
     DUALSTRINGARRAY *dualstringarr;
@@ -1429,7 +1585,6 @@ static void test_CoGetStandardMarshal(void)
 
     IMarshal_Release(marshal);
 }
-
 struct ncu_params
 {
     LPSTREAM stream;
@@ -4439,6 +4594,7 @@ START_TEST(marshal)
     } while (with_external_conn);
 
     test_marshal_channel_buffer();
+    test_StdMarshal_custom_marshaling();
     test_CoGetStandardMarshal();
     test_hresult_marshaling();
     test_proxy_used_in_wrong_thread();
