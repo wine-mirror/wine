@@ -1308,6 +1308,60 @@ todo_wine
     end_host_object(tid, thread);
 }
 
+static void test_CoGetStandardMarshal(void)
+{
+    IMarshal *marshal;
+    DWORD size, read;
+    IStream *stream;
+    IUnknown *unk;
+    CLSID clsid;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    hr = CoGetStandardMarshal(&IID_IUnknown, &Test_Unknown,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &marshal);
+    ok_ole_success(hr, CoGetStandardMarshal);
+
+    hr = IMarshal_GetUnmarshalClass(marshal, &IID_IUnknown, &Test_Unknown,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &clsid);
+    ok_ole_success(hr, IMarshal_GetUnmarshalClass);
+    ok(IsEqualGUID(&clsid, &CLSID_StdMarshal), "clsid = %s\n", wine_dbgstr_guid(&clsid));
+
+    hr = IMarshal_GetMarshalSizeMax(marshal, &IID_IUnknown, &Test_Unknown,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &size);
+    ok_ole_success(hr, IMarshal_GetMarshalSizeMax);
+    hr = CoGetMarshalSizeMax(&read, &IID_IUnknown, &Test_Unknown,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoGetMarshalSizeMax);
+    ok(size == read, "IMarshal_GetMarshalSizeMax size = %d, expected %d\n", size, read);
+
+    hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUnknown,
+            &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    hr = IMarshal_UnmarshalInterface(marshal, stream, &IID_IUnknown, (void**)&unk);
+    ok_ole_success(hr, IMarshal_UnmarshalInterface);
+    IUnknown_Release(unk);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUnknown,
+            &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    hr = IMarshal_ReleaseMarshalData(marshal, stream);
+    ok_ole_success(hr, IMarshal_ReleaseMarshalData);
+    IStream_Release(stream);
+
+    IMarshal_Release(marshal);
+}
+
 struct ncu_params
 {
     LPSTREAM stream;
@@ -4317,6 +4371,7 @@ START_TEST(marshal)
     } while (with_external_conn);
 
     test_marshal_channel_buffer();
+    test_CoGetStandardMarshal();
     test_hresult_marshaling();
     test_proxy_used_in_wrong_thread();
     test_message_filter();
