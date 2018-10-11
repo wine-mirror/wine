@@ -1804,24 +1804,24 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 {
     HRESULT hr;
     LPMARSHAL pMarshal;
-    CLSID marshaler_clsid;
+    BOOL std_marshal = FALSE;
 
-    hr = get_marshaler(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
-    if (hr != S_OK)
-        return hr;
+    if(!pUnk)
+        return E_POINTER;
 
-    hr = IMarshal_GetUnmarshalClass(pMarshal, riid, pUnk, dwDestContext,
-                                    pvDestContext, mshlFlags, &marshaler_clsid);
+    hr = IUnknown_QueryInterface(pUnk, &IID_IMarshal, (void**)&pMarshal);
     if (hr != S_OK)
     {
-        ERR("IMarshal::GetUnmarshalClass failed, 0x%08x\n", hr);
-        IMarshal_Release(pMarshal);
-        return hr;
+        std_marshal = TRUE;
+        hr = CoGetStandardMarshal(riid, pUnk, dwDestContext, pvDestContext,
+                                  mshlFlags, &pMarshal);
     }
+    if (hr != S_OK)
+        return hr;
 
     hr = IMarshal_GetMarshalSizeMax(pMarshal, riid, pUnk, dwDestContext,
                                     pvDestContext, mshlFlags, pulSize);
-    if (!IsEqualCLSID(&marshaler_clsid, &CLSID_StdMarshal))
+    if (!std_marshal)
         /* add on the size of the whole OBJREF structure like native does */
         *pulSize += sizeof(OBJREF);
 
