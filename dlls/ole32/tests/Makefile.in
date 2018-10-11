@@ -1,5 +1,5 @@
 TESTDLL   = ole32.dll
-IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32
+IMPORTS   = oleaut32 ole32 user32 uuid gdi32 advapi32
 
 C_SRCS = \
 	clipboard.c \

@@ -31,7 +31,6 @@
 #include "olectl.h"
 #include "shlguid.h"
 #include "shobjidl.h"
-#include "initguid.h"
 
 #include "wine/test.h"
 #include "wine/heap.h"
@@ -59,9 +58,6 @@
         ok(called_ ## func, "expected " #func "\n"); \
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
-
-DEFINE_GUID(CLSID_StdGlobalInterfaceTable,0x00000323,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
-DEFINE_GUID(CLSID_ManualResetEvent,       0x0000032c,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 static const GUID CLSID_WineTestPSFactoryBuffer = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 
