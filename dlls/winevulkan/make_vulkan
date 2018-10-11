@@ -1334,9 +1334,6 @@ class VkParam(object):
 
         return self._direction
 
-    def format_string(self):
-        return self.format_str
-
     def dispatch_table(self):
         """ Return functions dispatch table pointer for dispatchable objects. """
 
