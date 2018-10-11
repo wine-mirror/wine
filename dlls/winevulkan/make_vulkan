@@ -1162,7 +1162,7 @@ class VkParam(object):
         self._set_conversions()
 
     def __repr__(self):
-        return "{0} {1} {2} {3} {4}".format(self.const, self.type, self.pointer, self.name, self.array_len, self.dyn_array_len)
+        return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_len, self.dyn_array_len)
 
     @staticmethod
     def from_xml(param, types):
