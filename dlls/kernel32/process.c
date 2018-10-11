@@ -111,6 +111,8 @@ static WCHAR winevdm[] = {'C',':','\\','w','i','n','d','o','w','s',
                           '\\','s','y','s','t','e','m','3','2',
                           '\\','w','i','n','e','v','d','m','.','e','x','e',0};
 
+static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
+
 static void exec_process( LPCWSTR name );
 
 extern void SHELL_LoadRegistry(void);
@@ -169,9 +171,9 @@ static inline unsigned int is_path_prefix( const WCHAR *prefix, const WCHAR *fil
 /***********************************************************************
  *           is_64bit_arch
  */
-static inline BOOL is_64bit_arch( WORD machine )
+static inline BOOL is_64bit_arch( cpu_type_t cpu )
 {
-    return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
+    return (cpu == CPU_x86_64 || cpu == CPU_ARM64);
 }
 
 
@@ -282,12 +284,11 @@ static enum binary_type get_binary_info( HANDLE hfile, pe_image_info_t *info )
         }
         switch(header.elf.machine)
         {
-        case 3:   info->machine = IMAGE_FILE_MACHINE_I386; break;
-        case 20:  info->machine = IMAGE_FILE_MACHINE_POWERPC; break;
-        case 40:  info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
-        case 50:  info->machine = IMAGE_FILE_MACHINE_IA64; break;
-        case 62:  info->machine = IMAGE_FILE_MACHINE_AMD64; break;
-        case 183: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
+        case 3:   info->cpu = CPU_x86; break;
+        case 20:  info->cpu = CPU_POWERPC; break;
+        case 40:  info->cpu = CPU_ARM; break;
+        case 62:  info->cpu = CPU_x86_64; break;
+        case 183: info->cpu = CPU_ARM64; break;
         }
         switch(header.elf.type)
         {
@@ -332,11 +333,11 @@ static enum binary_type get_binary_info( HANDLE hfile, pe_image_info_t *info )
         }
         switch(header.macho.cputype)
         {
-        case 0x00000007: info->machine = IMAGE_FILE_MACHINE_I386; break;
-        case 0x01000007: info->machine = IMAGE_FILE_MACHINE_AMD64; break;
-        case 0x0000000c: info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
-        case 0x0100000c: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
-        case 0x00000012: info->machine = IMAGE_FILE_MACHINE_POWERPC; break;
+        case 0x00000007: info->cpu = CPU_x86; break;
+        case 0x01000007: info->cpu = CPU_x86_64; break;
+        case 0x0000000c: info->cpu = CPU_ARM; break;
+        case 0x0100000c: info->cpu = CPU_ARM64; break;
+        case 0x00000012: info->cpu = CPU_POWERPC; break;
         }
         switch(header.macho.filetype)
         {
@@ -2018,25 +2019,6 @@ static BOOL terminate_main_thread(void)
 #endif
 
 /***********************************************************************
- *           get_process_cpu
- */
-static int get_process_cpu( const WCHAR *filename, const pe_image_info_t *pe_info )
-{
-    switch (pe_info->machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:    return CPU_x86;
-    case IMAGE_FILE_MACHINE_AMD64:   return CPU_x86_64;
-    case IMAGE_FILE_MACHINE_POWERPC: return CPU_POWERPC;
-    case IMAGE_FILE_MACHINE_ARM:
-    case IMAGE_FILE_MACHINE_THUMB:
-    case IMAGE_FILE_MACHINE_ARMNT:   return CPU_ARM;
-    case IMAGE_FILE_MACHINE_ARM64:   return CPU_ARM64;
-    }
-    ERR( "%s uses unsupported architecture (%04x)\n", debugstr_w(filename), pe_info->machine );
-    return -1;
-}
-
-/***********************************************************************
  *           exec_loader
  */
 static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
@@ -2050,7 +2032,7 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
 
     argv = build_argv( cmd_line, 1 );
 
-    if (!is_win64 ^ !is_64bit_arch( pe_info->machine ))
+    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
 
     if (exec_only || !(pid = fork()))  /* child */
@@ -2201,7 +2183,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
                             LPPROCESS_INFORMATION info, LPCSTR unixdir,
                             const pe_image_info_t *pe_info, int exec_only )
 {
-    static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
     NTSTATUS status;
     BOOL success = FALSE;
     HANDLE process_info, process_handle = 0;
@@ -2213,13 +2194,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     DWORD startup_info_size;
     int socketfd[2], stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
-    int err, cpu;
-
-    if ((cpu = get_process_cpu( filename, pe_info )) == -1)
-    {
-        SetLastError( ERROR_BAD_EXE_FORMAT );
-        return FALSE;
-    }
+    int err;
 
     /* create the socket for the new process */
 
@@ -2245,7 +2220,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             req->create_flags   = flags;
             req->socket_fd      = socketfd[1];
             req->exe_file       = wine_server_obj_handle( hFile );
-            req->cpu            = cpu;
+            req->cpu            = pe_info->cpu;
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
@@ -2257,7 +2232,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_w(filename), cpu_names[cpu] );
+                 debugstr_w(filename), cpu_names[pe_info->cpu] );
             break;
         case STATUS_SUCCESS:
             exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
@@ -2306,7 +2281,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->socket_fd      = socketfd[1];
         req->exe_file       = wine_server_obj_handle( hFile );
         req->access         = PROCESS_ALL_ACCESS;
-        req->cpu            = cpu;
+        req->cpu            = pe_info->cpu;
         req->info_size      = startup_info_size;
         wine_server_add_data( req, objattr, attr_len );
         wine_server_add_data( req, startup_info, startup_info_size );
@@ -2352,7 +2327,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_w(filename), cpu_names[cpu] );
+                 debugstr_w(filename), cpu_names[pe_info->cpu] );
             break;
         }
         close( socketfd[0] );
@@ -2448,7 +2423,7 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
     }
     sprintfW(new_cmd_line, argsW, winevdm, buffer, cmd_line);
     memset( &pe_info, 0, sizeof(pe_info) );
-    pe_info.machine = IMAGE_FILE_MACHINE_I386;
+    pe_info.cpu = CPU_x86;
     ret = create_process( 0, winevdm, new_cmd_line, env, cur_dir, psa, tsa, inherit,
                           flags, startup, info, unixdir, &pe_info, exec_only );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
@@ -2661,15 +2636,13 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         type = BINARY_UNIX_LIB;
         /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
-        pe_info.machine = is_64bit ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
+        pe_info.cpu = is_64bit ? CPU_x86_64 : CPU_x86;
 #elif defined(__powerpc__)
-        pe_info.machine = IMAGE_FILE_MACHINE_POWERPC;
-#elif defined(__arm__) && !defined(__ARMEB__)
-        pe_info.machine = IMAGE_FILE_MACHINE_ARMNT;
+        pe_info.cpu = CPU_POWERPC;
+#elif defined(__arm__)
+        pe_info.cpu = CPU_ARM;
 #elif defined(__aarch64__)
-        pe_info.machine = IMAGE_FILE_MACHINE_ARM64;
-#else
-        pe_info.machine = IMAGE_FILE_MACHINE_UNKNOWN;
+        pe_info.cpu = CPU_ARM64;
 #endif
     }
     else type = get_binary_info( hFile, &pe_info );
@@ -2683,10 +2656,10 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             SetLastError( ERROR_BAD_EXE_FORMAT );
             break;
         }
-        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
-               debugstr_w(name), is_64bit_arch(pe_info.machine) ? 64 : 32,
+        TRACE( "starting %s as Win%d binary (%s-%s, %s)\n",
+               debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
-               pe_info.machine );
+               cpu_names[pe_info.cpu] );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
         break;
@@ -2697,7 +2670,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         break;
     case BINARY_UNIX_LIB:
         TRACE( "starting %s as %d-bit Winelib app\n",
-               debugstr_w(name), is_64bit_arch(pe_info.machine) ? 64 : 32 );
+               debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32 );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
         break;
@@ -2827,10 +2800,10 @@ static void exec_process( LPCWSTR name )
     {
     case BINARY_PE:
         if (pe_info.image_charact & IMAGE_FILE_DLL) break;
-        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
-               debugstr_w(name), is_64bit_arch(pe_info.machine) ? 64 : 32,
+        TRACE( "starting %s as Win%d binary (%s-%s, %s)\n",
+               debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
-               pe_info.machine );
+               cpu_names[pe_info.cpu] );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
                         FALSE, 0, &startup_info, &info, NULL, &pe_info, TRUE );
         break;
