@@ -41,9 +41,9 @@
 #include "wine/vulkan_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
-WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #ifdef SONAME_LIBVULKAN
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static CRITICAL_SECTION context_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
