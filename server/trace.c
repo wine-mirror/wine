@@ -1177,10 +1177,12 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
     dump_uint64( ",stack_commit=", &info.stack_commit );
     fprintf( stderr, ",zerobits=%08x,subsystem=%08x,subsystem_low=%04x,subsystem_high=%04x,gp=%08x"
              ",image_charact=%04x,dll_charact=%04x,machine=%04x,contains_code=%u,image_flags=%02x"
-             ",loader_flags=%08x,header_size=%08x,file_size=%08x,checksum=%08x}",
+             ",loader_flags=%08x,header_size=%08x,file_size=%08x,checksum=%08x",
              info.zerobits, info.subsystem, info.subsystem_low, info.subsystem_high, info.gp,
              info.image_charact, info.dll_charact, info.machine, info.contains_code, info.image_flags,
              info.loader_flags, info.header_size, info.file_size, info.checksum );
+    dump_cpu_type( ",cpu=", &info.cpu );
+    fputc( '}', stderr );
     remove_data( size );
 }
 

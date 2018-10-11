@@ -600,14 +600,17 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         switch (nt.FileHeader.Machine)
         {
         case IMAGE_FILE_MACHINE_I386:
+            mapping->image.cpu = CPU_x86;
             if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         case IMAGE_FILE_MACHINE_ARM:
         case IMAGE_FILE_MACHINE_THUMB:
         case IMAGE_FILE_MACHINE_ARMNT:
+            mapping->image.cpu = CPU_ARM;
             if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         case IMAGE_FILE_MACHINE_POWERPC:
+            mapping->image.cpu = CPU_POWERPC;
             if (cpu_mask & CPU_FLAG(CPU_POWERPC)) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         default:
@@ -643,9 +646,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         switch (nt.FileHeader.Machine)
         {
         case IMAGE_FILE_MACHINE_AMD64:
+            mapping->image.cpu = CPU_x86_64;
             if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         case IMAGE_FILE_MACHINE_ARM64:
+            mapping->image.cpu = CPU_ARM64;
             if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         default:

@@ -700,6 +700,7 @@ typedef struct
     unsigned int   header_size;
     unsigned int   file_size;
     unsigned int   checksum;
+    cpu_type_t     cpu;
 } pe_image_info_t;
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
 #define IMAGE_FLAGS_ComPlusILOnly             0x02
@@ -6531,6 +6532,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 565
+#define SERVER_PROTOCOL_VERSION 566
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
