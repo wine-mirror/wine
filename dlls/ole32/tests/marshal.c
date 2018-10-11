@@ -60,6 +60,7 @@
     }while(0)
 
 static const GUID CLSID_WineTestPSFactoryBuffer = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
+static const GUID CLSID_DfMarshal = { 0x0000030b, 0x0000, 0x0000, { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
 
 /* functions that are not present on all versions of Windows */
 static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
@@ -75,6 +76,7 @@ static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
 
 #define OBJREF_SIGNATURE (0x574f454d)
 #define OBJREF_STANDARD (0x1)
+#define OBJREF_CUSTOM (0x4)
 
 typedef struct tagDUALSTRINGARRAY {
     unsigned short wNumEntries;
@@ -1352,6 +1354,7 @@ todo_wine
     end_host_object(tid, thread);
 }
 
+static const CLSID *unmarshal_class;
 DEFINE_EXPECT(CustomMarshal_GetUnmarshalClass);
 DEFINE_EXPECT(CustomMarshal_GetMarshalSizeMax);
 DEFINE_EXPECT(CustomMarshal_MarshalInterface);
@@ -1384,7 +1387,7 @@ static HRESULT WINAPI CustomMarshal_GetUnmarshalClass(IMarshal *iface, REFIID ri
         void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
 {
     CHECK_EXPECT(CustomMarshal_GetUnmarshalClass);
-    *clsid = CLSID_StdMarshal;
+    *clsid = *unmarshal_class;
     return S_OK;
 }
 
@@ -1406,6 +1409,9 @@ static HRESULT WINAPI CustomMarshal_MarshalInterface(IMarshal *iface, IStream *s
     HRESULT hr;
 
     CHECK_EXPECT(CustomMarshal_MarshalInterface);
+
+    if(unmarshal_class != &CLSID_StdMarshal)
+        return S_OK;
 
     hr = IStream_Stat(stream, &stat, STATFLAG_DEFAULT);
     ok_ole_success(hr, IStream_Stat);
@@ -1467,6 +1473,7 @@ static void test_StdMarshal_custom_marshaling(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
 
+    unmarshal_class = &CLSID_StdMarshal;
     SET_EXPECT(CustomMarshal_GetUnmarshalClass);
     SET_EXPECT(CustomMarshal_MarshalInterface);
     hr = CoMarshalInterface(stream, &IID_IUnknown, (IUnknown*)&CustomMarshal,
@@ -1498,6 +1505,55 @@ static void test_StdMarshal_custom_marshaling(void)
     ok_ole_success(hr, IStream_Seek);
     hr = CoReleaseMarshalData(stream);
     ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(stream);
+
+    SET_EXPECT(CustomMarshal_GetMarshalSizeMax);
+    hr = CoGetMarshalSizeMax(&size, &IID_IUnknown, (IUnknown*)&CustomMarshal,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoGetMarshalSizeMax);
+    CHECK_CALLED(CustomMarshal_GetMarshalSizeMax);
+    ok(size == sizeof(OBJREF), "size = %d, expected %d\n", size, (int)sizeof(OBJREF));
+}
+
+static void test_DfMarshal_custom_marshaling(void)
+{
+    DWORD size, read;
+    IStream *stream;
+    OBJREF objref;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    unmarshal_class = &CLSID_DfMarshal;
+    SET_EXPECT(CustomMarshal_GetUnmarshalClass);
+    SET_EXPECT(CustomMarshal_GetMarshalSizeMax);
+    SET_EXPECT(CustomMarshal_MarshalInterface);
+    hr = CoMarshalInterface(stream, &IID_IUnknown, (IUnknown*)&CustomMarshal,
+            MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+    CHECK_CALLED(CustomMarshal_GetUnmarshalClass);
+    CHECK_CALLED(CustomMarshal_GetMarshalSizeMax);
+    CHECK_CALLED(CustomMarshal_MarshalInterface);
+
+    hr = IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+    size = FIELD_OFFSET(OBJREF, u_objref.u_custom.pData);
+    hr = IStream_Read(stream, &objref, size, &read);
+    ok_ole_success(hr, IStream_Read);
+    ok(read == size, "read = %d, expected %d\n", read, size);
+    ok(objref.signature == OBJREF_SIGNATURE, "objref.signature = %x\n",
+            objref.signature);
+    ok(objref.flags == OBJREF_CUSTOM, "objref.flags = %x\n", objref.flags);
+    ok(IsEqualIID(&objref.iid, &IID_IUnknown), "objref.iid = %s\n",
+            wine_dbgstr_guid(&objref.iid));
+    ok(IsEqualIID(&objref.u_objref.u_custom.clsid, &CLSID_DfMarshal),
+            "custom.clsid = %s\n", wine_dbgstr_guid(&objref.u_objref.u_custom.clsid));
+    ok(!objref.u_objref.u_custom.cbExtension, "custom.cbExtension = %d\n",
+            objref.u_objref.u_custom.cbExtension);
+    ok(!objref.u_objref.u_custom.size, "custom.size = %d\n",
+            objref.u_objref.u_custom.size);
+
     IStream_Release(stream);
 
     SET_EXPECT(CustomMarshal_GetMarshalSizeMax);
@@ -4595,6 +4651,7 @@ START_TEST(marshal)
 
     test_marshal_channel_buffer();
     test_StdMarshal_custom_marshaling();
+    test_DfMarshal_custom_marshaling();
     test_CoGetStandardMarshal();
     test_hresult_marshaling();
     test_proxy_used_in_wrong_thread();
