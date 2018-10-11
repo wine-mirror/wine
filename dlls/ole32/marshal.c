@@ -362,12 +362,7 @@ static const IMultiQIVtbl ClientIdentity_Vtbl =
     ClientIdentity_QueryMultipleInterfaces
 };
 
-/* FIXME: remove these */
-static HRESULT WINAPI StdMarshalImpl_GetUnmarshalClass(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, CLSID* pCid);
-static HRESULT WINAPI StdMarshalImpl_GetMarshalSizeMax(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, DWORD* pSize);
-static HRESULT WINAPI StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv);
-static HRESULT WINAPI StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm);
-static HRESULT WINAPI StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved);
+static HRESULT StdMarshalImpl_Construct(REFIID, DWORD, void*, void**);
 
 static HRESULT WINAPI Proxy_QueryInterface(IMarshal *iface, REFIID riid, void **ppvObject)
 {
@@ -385,6 +380,22 @@ static ULONG WINAPI Proxy_Release(IMarshal *iface)
 {
     struct proxy_manager *This = impl_from_IMarshal( iface );
     return IMultiQI_Release(&This->IMultiQI_iface);
+}
+
+static HRESULT WINAPI Proxy_GetUnmarshalClass(
+    IMarshal *iface, REFIID riid, void* pv, DWORD dwDestContext,
+    void* pvDestContext, DWORD mshlflags, CLSID* pCid)
+{
+    *pCid = CLSID_DfMarshal;
+    return S_OK;
+}
+
+static HRESULT WINAPI Proxy_GetMarshalSizeMax(
+    IMarshal *iface, REFIID riid, void* pv, DWORD dwDestContext,
+    void* pvDestContext, DWORD mshlflags, DWORD* pSize)
+{
+    *pSize = sizeof(STDOBJREF);
+    return S_OK;
 }
 
 static HRESULT WINAPI Proxy_MarshalInterface(
@@ -501,17 +512,72 @@ static HRESULT WINAPI Proxy_MarshalInterface(
     return hr;
 }
 
+static HRESULT WINAPI Proxy_UnmarshalInterface(
+        IMarshal *iface, IStream *pStm, REFIID riid, void **ppv)
+{
+    struct proxy_manager *This = impl_from_IMarshal( iface );
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %p)\n", This, pStm, wine_dbgstr_guid(riid), ppv);
+
+    hr = StdMarshalImpl_Construct(&IID_IMarshal, This->dest_context,
+            This->dest_context_data, (void**)&marshal);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IMarshal_UnmarshalInterface(marshal, pStm, riid, ppv);
+    IMarshal_Release(marshal);
+    return hr;
+}
+
+static HRESULT WINAPI Proxy_ReleaseMarshalData(IMarshal *iface, IStream *pStm)
+{
+    struct proxy_manager *This = impl_from_IMarshal( iface );
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", This, pStm);
+
+    hr = StdMarshalImpl_Construct(&IID_IMarshal, This->dest_context,
+            This->dest_context_data, (void**)&marshal);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IMarshal_ReleaseMarshalData(marshal, pStm);
+    IMarshal_Release(marshal);
+    return hr;
+}
+
+static HRESULT WINAPI Proxy_DisconnectObject(IMarshal *iface, DWORD dwReserved)
+{
+    struct proxy_manager *This = impl_from_IMarshal( iface );
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("(%p, %x)\n", This, dwReserved);
+
+    hr = StdMarshalImpl_Construct(&IID_IMarshal, This->dest_context,
+            This->dest_context_data, (void**)&marshal);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IMarshal_DisconnectObject(marshal, dwReserved);
+    IMarshal_Release(marshal);
+    return hr;
+}
+
 static const IMarshalVtbl ProxyMarshal_Vtbl =
 {
     Proxy_QueryInterface,
     Proxy_AddRef,
     Proxy_Release,
-    StdMarshalImpl_GetUnmarshalClass,
-    StdMarshalImpl_GetMarshalSizeMax,
+    Proxy_GetUnmarshalClass,
+    Proxy_GetMarshalSizeMax,
     Proxy_MarshalInterface,
-    StdMarshalImpl_UnmarshalInterface,
-    StdMarshalImpl_ReleaseMarshalData,
-    StdMarshalImpl_DisconnectObject
+    Proxy_UnmarshalInterface,
+    Proxy_ReleaseMarshalData,
+    Proxy_DisconnectObject
 };
 
 static HRESULT WINAPI ProxyCliSec_QueryInterface(IClientSecurity *iface, REFIID riid, void **ppvObject)
