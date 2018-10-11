@@ -3205,6 +3205,7 @@ static void test_freethreadedmarshaler(void)
     IStream *pStream;
     IUnknown *pProxy;
     static const LARGE_INTEGER llZero;
+    CLSID clsid;
 
     cLocks = 0;
     hr = CoCreateFreeThreadedMarshaler(NULL, &pFTUnknown);
@@ -3217,6 +3218,12 @@ static void test_freethreadedmarshaler(void)
     ok_ole_success(hr, CreateStreamOnHGlobal);
 
     /* inproc normal marshaling */
+
+    hr = IMarshal_GetUnmarshalClass(pFTMarshal, &IID_IClassFactory,
+            &Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &clsid);
+    ok_ole_success(hr, IMarshal_GetUnmarshalClass);
+    ok(IsEqualIID(&clsid, &CLSID_InProcFreeMarshaler), "clsid = %s\n",
+            wine_dbgstr_guid(&clsid));
 
     hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
         &Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
@@ -3233,27 +3240,6 @@ static void test_freethreadedmarshaler(void)
     IUnknown_Release(pProxy);
 
     ok_no_locks();
-
-/* native doesn't allow us to unmarshal or release the stream data,
- * presumably because it wants us to call CoMarshalInterface instead */
-    if (0)
-    {
-    /* local normal marshaling */
-
-    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
-    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
-    ok_ole_success(hr, IMarshal_MarshalInterface);
-
-    ok_more_than_one_lock();
-
-    test_freethreadedmarshaldata(pStream, MSHCTX_LOCAL, &Test_ClassFactory, MSHLFLAGS_NORMAL);
-
-    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
-    hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
-    ok_ole_success(hr, IMarshal_ReleaseMarshalData);
-
-    ok_no_locks();
-    }
 
     /* inproc table-strong marshaling */
 
@@ -3329,6 +3315,28 @@ static void test_freethreadedmarshaler(void)
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
     hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, IMarshal_UnmarshalInterface);
+
+    ok_no_locks();
+
+    /* local normal marshaling */
+
+    hr = IMarshal_GetUnmarshalClass(pFTMarshal, &IID_IClassFactory,
+            &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL, &clsid);
+    ok_ole_success(hr, IMarshal_GetUnmarshalClass);
+    ok(IsEqualIID(&clsid, &CLSID_StdMarshal), "clsid = %s\n",
+            wine_dbgstr_guid(&clsid));
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    ok_more_than_one_lock();
+
+    test_freethreadedmarshaldata(pStream, MSHCTX_LOCAL, &Test_ClassFactory, MSHLFLAGS_NORMAL);
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
 
     ok_no_locks();
 
