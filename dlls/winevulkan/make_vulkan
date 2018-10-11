@@ -1778,10 +1778,8 @@ class ConversionFunction(object):
 
         if self.direction == Direction.OUTPUT:
             params = ["const {0}_host *in".format(self.type), "{0} *out".format(self.type), "uint32_t count"]
-            return_type = self.type
         else:
             params = ["const {0} *in".format(self.type), "{0} *out_host".format(self.type), "uint32_t count"]
-            return_type = "{0}_host".format(self.type)
 
         # Generate function prototype.
         body = "static inline void {0}(".format(self.name)
