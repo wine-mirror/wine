@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-extern const CLSID CLSID_DfMarshal;
-
 /* number of refs given out for normal marshaling */
 #define NORMALEXTREFS 5
 
@@ -386,7 +384,7 @@ static HRESULT WINAPI Proxy_GetUnmarshalClass(
     IMarshal *iface, REFIID riid, void* pv, DWORD dwDestContext,
     void* pvDestContext, DWORD mshlflags, CLSID* pCid)
 {
-    *pCid = CLSID_DfMarshal;
+    *pCid = CLSID_StdMarshal;
     return S_OK;
 }
 
@@ -1270,7 +1268,7 @@ StdMarshalImpl_GetUnmarshalClass(
     IMarshal *iface, REFIID riid, void* pv, DWORD dwDestContext,
     void* pvDestContext, DWORD mshlflags, CLSID* pCid)
 {
-    *pCid = CLSID_DfMarshal;
+    *pCid = CLSID_StdMarshal;
     return S_OK;
 }
 
@@ -1730,7 +1728,7 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 
     hr = IMarshal_GetMarshalSizeMax(pMarshal, riid, pUnk, dwDestContext,
                                     pvDestContext, mshlFlags, pulSize);
-    if (IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
+    if (IsEqualCLSID(&marshaler_clsid, &CLSID_StdMarshal))
         /* add on the size of the common header */
         *pulSize += FIELD_OFFSET(OBJREF, u_objref);
     else
@@ -1824,7 +1822,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     }
 
     /* FIXME: implement handler marshaling too */
-    if (IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
+    if (IsEqualCLSID(&marshaler_clsid, &CLSID_StdMarshal))
     {
         TRACE("Using standard marshaling\n");
         objref.flags = OBJREF_STANDARD;
