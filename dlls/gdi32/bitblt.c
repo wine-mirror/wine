@@ -40,13 +40,6 @@ static inline BOOL rop_uses_src( DWORD rop )
     return ((rop >> 2) & 0x330000) != (rop & 0x330000);
 }
 
-static inline void swap_ints( int *i, int *j )
-{
-    int tmp = *i;
-    *i = *j;
-    *j = tmp;
-}
-
 BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *src )
 {
     RECT rect;
@@ -70,8 +63,7 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
         rect.top    = dst->y + rect.top * dst->height / abs(src->height);
         rect.right  = dst->x + rect.right * dst->width / abs(src->width);
         rect.bottom = dst->y + rect.bottom * dst->height / abs(src->height);
-        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+        order_rect( &rect );
 
         /* avoid rounding errors */
         rect.left--;
@@ -88,8 +80,7 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
         rect.top    = src->y + rect.top * src->height / abs(dst->height);
         rect.right  = src->x + rect.right * src->width / abs(dst->width);
         rect.bottom = src->y + rect.bottom * src->height / abs(dst->height);
-        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+        order_rect( &rect );
 
         /* avoid rounding errors */
         rect.left--;
