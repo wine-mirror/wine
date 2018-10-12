@@ -302,6 +302,7 @@ static void test_locator(void)
     ISWbemProperty *prop;
     ISWbemSecurity *security;
     VARIANT var;
+    LONG count;
     WbemImpersonationLevelEnum imp_level;
     WbemAuthenticationLevelEnum auth_level;
 
@@ -378,6 +379,11 @@ static void test_locator(void)
     hr = ISWbemPropertySet_Item( prop_set, procid_bstr, 0, &prop );
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( procid_bstr );
+
+    count = 0;
+    hr = ISWbemPropertySet_get_Count( prop_set, &count );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( count > 0, "got %d\n", count );
 
     hr = ISWbemProperty_get_Value( prop, &var );
     ok( hr == S_OK, "got %x\n", hr );

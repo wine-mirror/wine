@@ -438,8 +438,19 @@ static HRESULT WINAPI propertyset_Item( ISWbemPropertySet *iface, BSTR name,
 
 static HRESULT WINAPI propertyset_get_Count( ISWbemPropertySet *iface, LONG *count )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    static const WCHAR propcountW[] = {'_','_','P','R','O','P','E','R','T','Y','_','C','O','U','N','T',0};
+    struct propertyset *propertyset = impl_from_ISWbemPropertySet( iface );
+    HRESULT hr;
+    VARIANT val;
+
+    TRACE( "%p, %p\n", propertyset, count );
+
+    hr = IWbemClassObject_Get( propertyset->object, propcountW, 0, &val, NULL, NULL );
+    if (SUCCEEDED(hr))
+    {
+        *count = V_I4( &val );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI propertyset_Add( ISWbemPropertySet *iface, BSTR name, WbemCimtypeEnum type,
