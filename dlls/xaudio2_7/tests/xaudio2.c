@@ -1273,6 +1273,9 @@ START_TEST(xaudio2)
     if(hr == S_OK){
         xaudio27 = TRUE;
 
+        hr = IXAudio27_QueryInterface(xa27, &IID_IXAudio28, (void**) &xa);
+        ok(hr != S_OK, "QueryInterface with IID_IXAudio28 on IXAudio27 object returned success. Expected to fail\n");
+
         hr = IXAudio27_Initialize(xa27, 0, XAUDIO2_ANY_PROCESSOR);
         ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
