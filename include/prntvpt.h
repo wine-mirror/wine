@@ -26,6 +26,7 @@ extern "C" {
 DECLARE_HANDLE(HPTPROVIDER);
 
 HRESULT WINAPI PTOpenProvider(const WCHAR *printer, DWORD version, HPTPROVIDER *provider);
+HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD pref_version, HPTPROVIDER *provider, DWORD *used_version);
 
 #ifdef __cplusplus
 }

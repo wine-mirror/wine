@@ -55,3 +55,9 @@ HRESULT WINAPI PTOpenProvider(PCWSTR printer, DWORD version, HPTPROVIDER *provid
     FIXME("%s, %d, %p: stub\n", debugstr_w(printer), version, provider);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD pref_version, HPTPROVIDER *provider, DWORD *used_version)
+{
+    FIXME("%s, %d, %d, %p, %p: stub\n", debugstr_w(printer), max_version, pref_version, provider, used_version);
+    return E_NOTIMPL;
+}
