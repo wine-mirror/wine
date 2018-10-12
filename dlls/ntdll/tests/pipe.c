@@ -218,7 +218,7 @@ static void test_create_invalid(void)
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
-    res = pNtQueryInformationFile(handle, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
+    res = pNtQueryInformationFile(handle, &iosb, &info, sizeof(info), FilePipeLocalInformation);
     ok(res == STATUS_ACCESS_DENIED, "NtQueryInformationFile returned %x\n", res);
 
 /* test FILE_CREATE creation disposition */
@@ -258,14 +258,14 @@ static void test_create(void)
             res = listen_pipe(hserver, hEvent, &iosb, FALSE);
             ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
 
-            res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
+            res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), FilePipeLocalInformation);
             ok(!res, "NtQueryInformationFile for server returned %x, sharing: %x\n", res, sharing[j]);
             ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
                info.NamedPipeConfiguration, pipe_config[j]);
 
             hclient = CreateFileW(testpipe, access[k], 0, 0, OPEN_EXISTING, 0, 0);
             if (hclient != INVALID_HANDLE_VALUE) {
-                res = pNtQueryInformationFile(hclient, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
+                res = pNtQueryInformationFile(hclient, &iosb, &info, sizeof(info), FilePipeLocalInformation);
                 ok(!res, "NtQueryInformationFile for client returned %x, access: %x, sharing: %x\n",
                    res, access[k], sharing[j]);
                 ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
@@ -564,7 +564,7 @@ static void _check_pipe_handle_state(int line, HANDLE handle, ULONG read, ULONG 
     if (handle != INVALID_HANDLE_VALUE)
     {
         memset(&fpi, 0x55, sizeof(fpi));
-        res = pNtQueryInformationFile(handle, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtQueryInformationFile(handle, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok_(__FILE__, line)(!res, "NtQueryInformationFile returned %x\n", res);
         ok_(__FILE__, line)(fpi.ReadMode == read, "Unexpected ReadMode, expected %x, got %x\n",
                             read, fpi.ReadMode);
@@ -597,12 +597,12 @@ static void test_filepipeinfo(void)
     timeout.QuadPart = -100000000;
 
     /* test with INVALID_HANDLE_VALUE */
-    res = pNtQueryInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtQueryInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtQueryInformationFile returned %x\n", res);
 
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
-    res = pNtSetInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtSetInformationFile returned %x\n", res);
 
     /* server end with read-only attributes */
@@ -622,7 +622,7 @@ static void test_filepipeinfo(void)
 
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
-    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
@@ -630,7 +630,7 @@ static void test_filepipeinfo(void)
 
     fpi.ReadMode = 1; /* invalid on a byte stream pipe */
     fpi.CompletionMode = 1;
-    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
@@ -640,7 +640,7 @@ static void test_filepipeinfo(void)
     {
         fpi.ReadMode = 1; /* invalid on a byte stream pipe */
         fpi.CompletionMode = 1;
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(res == STATUS_INVALID_PARAMETER, "NtSetInformationFile returned %x\n", res);
     }
 
@@ -651,7 +651,7 @@ static void test_filepipeinfo(void)
     {
         fpi.ReadMode = 0;
         fpi.CompletionMode = 1;
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(!res, "NtSetInformationFile returned %x\n", res);
     }
 
@@ -662,12 +662,12 @@ static void test_filepipeinfo(void)
     {
         fpi.ReadMode = 0;
         fpi.CompletionMode = 2; /* not in range 0-1 */
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
 
         fpi.ReadMode = 2; /* not in range 0-1 */
         fpi.CompletionMode = 0;
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
     }
 
@@ -677,7 +677,7 @@ static void test_filepipeinfo(void)
 
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
-    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
 
     CloseHandle(hServer);
@@ -701,7 +701,7 @@ static void test_filepipeinfo(void)
     {
         fpi.ReadMode = 1;
         fpi.CompletionMode = 1;
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(!res, "NtSetInformationFile returned %x\n", res);
     }
 
@@ -710,7 +710,7 @@ static void test_filepipeinfo(void)
 
     fpi.ReadMode = 0;
     fpi.CompletionMode = 1;
-    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(!res, "NtSetInformationFile returned %x\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
@@ -720,12 +720,12 @@ static void test_filepipeinfo(void)
     {
         fpi.ReadMode = 0;
         fpi.CompletionMode = 2; /* not in range 0-1 */
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
 
         fpi.ReadMode = 2; /* not in range 0-1 */
         fpi.CompletionMode = 0;
-        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+        res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
         ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
     }
 
@@ -735,7 +735,7 @@ static void test_filepipeinfo(void)
 
     fpi.ReadMode = 1;
     fpi.CompletionMode = 0;
-    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
+    res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
     ok(!res, "NtSetInformationFile returned %x\n", res);
 
     check_pipe_handle_state(hServer, 1, 0);
