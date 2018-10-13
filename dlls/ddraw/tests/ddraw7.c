@@ -15035,6 +15035,59 @@ static void test_color_vertex(void)
     DestroyWindow(window);
 }
 
+static IDirectDraw7 *killfocus_ddraw;
+static IDirectDrawSurface7 *killfocus_surface;
+
+static LRESULT CALLBACK killfocus_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    ULONG ref;
+
+    if (message == WM_KILLFOCUS)
+    {
+        ref = IDirectDrawSurface7_Release(killfocus_surface);
+        ok(!ref, "Unexpected surface refcount %u.\n", ref);
+        ref = IDirectDraw7_Release(killfocus_ddraw);
+        ok(!ref, "Unexpected ddraw refcount %u.\n", ref);
+        killfocus_ddraw = NULL;
+    }
+
+    return DefWindowProcA(window, message, wparam, lparam);
+}
+
+static void test_killfocus(void)
+{
+    DDSURFACEDESC2 surface_desc;
+    HRESULT hr;
+    HWND window;
+    WNDCLASSA wc = {0};
+
+    wc.lpfnWndProc = killfocus_proc;
+    wc.lpszClassName = "ddraw_killfocus_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    window = CreateWindowA("ddraw_killfocus_wndproc_wc", "d3d7_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    killfocus_ddraw = create_ddraw();
+    ok(!!killfocus_ddraw, "Failed to create a ddraw object.\n");
+
+    hr = IDirectDraw7_SetCooperativeLevel(killfocus_ddraw, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw7_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    SetForegroundWindow(GetDesktopWindow());
+    ok(!killfocus_ddraw, "WM_KILLFOCUS was not received.\n");
+
+    DestroyWindow(window);
+    UnregisterClassA("ddraw_killfocus_wndproc_wc", GetModuleHandleA(NULL));
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -15173,4 +15226,5 @@ START_TEST(ddraw7)
     test_viewport();
     test_device_load();
     test_color_vertex();
+    test_killfocus();
 }
