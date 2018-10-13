@@ -60,11 +60,29 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
         offset_rect( &rect,
                      -src->x - (src->width < 0 ? 1 : 0),
                      -src->y - (src->height < 0 ? 1 : 0));
-        rect.left   = dst->x + rect.left * dst->width / src->width;
-        rect.top    = dst->y + rect.top * dst->height / src->height;
-        rect.right  = dst->x + rect.right * dst->width / src->width;
-        rect.bottom = dst->y + rect.bottom * dst->height / src->height;
+        rect.left   = rect.left * dst->width / src->width;
+        rect.top    = rect.top * dst->height / src->height;
+        rect.right  = rect.right * dst->width / src->width;
+        rect.bottom = rect.bottom * dst->height / src->height;
         order_rect( &rect );
+
+        /* when the source rectangle needs to flip and it doesn't fit in the source device
+           area, the destination area isn't flipped. So, adjust destination coordinates */
+        if (src->width < 0 && dst->width > 0 &&
+            (src->x + src->width + 1 < src->visrect.left || src->x > src->visrect.right))
+            dst->x += (dst->width - rect.right) - rect.left;
+        else if (src->width > 0 && dst->width < 0 &&
+                 (src->x < src->visrect.left || src->x + src->width > src->visrect.right))
+            dst->x -= rect.right - (dst->width - rect.left);
+
+        if (src->height < 0 && dst->height > 0 &&
+            (src->y + src->height + 1 < src->visrect.top || src->y > src->visrect.bottom))
+            dst->y += (dst->height - rect.bottom) - rect.top;
+        else if (src->height > 0 && dst->height < 0 &&
+                 (src->y < src->visrect.top || src->y + src->height > src->visrect.bottom))
+            dst->y -= rect.bottom - (dst->height - rect.top);
+
+        offset_rect( &rect, dst->x, dst->y );
 
         /* avoid rounding errors */
         rect.left--;
