@@ -2470,12 +2470,14 @@ struct message
     enum message_window window;
     BOOL check_wparam;
     WPARAM expect_wparam;
+    HRESULT device_state;
     WINDOWPOS *store_wp;
 };
 
 static const struct message *expect_messages;
 static HWND device_window, focus_window;
 static LONG windowposchanged_received, syscommand_received;
+static IDirect3DDevice9Ex *focus_test_device;
 
 struct wndproc_thread_param
 {
@@ -2487,6 +2489,8 @@ struct wndproc_thread_param
 
 static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+    HRESULT hr;
+
     if (filter_messages && filter_messages == hwnd)
     {
         if (message != WM_DISPLAYCHANGE && message != WM_IME_NOTIFY)
@@ -2521,6 +2525,15 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
             if (expect_messages->store_wp)
                 *expect_messages->store_wp = *(WINDOWPOS *)lparam;
+
+            if (focus_test_device)
+            {
+                hr = IDirect3DDevice9Ex_CheckDeviceState(focus_test_device, device_window);
+                todo_wine_if(message != WM_ACTIVATEAPP && message != WM_DISPLAYCHANGE)
+                    ok(hr == expect_messages->device_state,
+                        "Got device state %#x on message %#x, expected %#x.\n",
+                        hr, message, expect_messages->device_state);
+            }
 
             ++expect_messages;
         }
@@ -2610,23 +2623,31 @@ static void test_wndproc(void)
          * not reliable on X11 WMs. When the window focus follows the
          * mouse pointer the message is not sent.
          * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
-        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
+
+        /* The S_PRESENT_MODE_CHANGED state is only there because we change the mode
+         * before dropping focus. From the base d3d9 tests one might expect d3d9ex to
+         * pick up the mode change by the time we receive WM_DISPLAYCHANGE, but as
+         * the tests below show, a present call is needed for that to happen. I don't
+         * want to call present in a focus loss message handler until we have an app
+         * that does that. Without the previous change (+present) the state would be
+         * D3D_OK all the way until the WM_ACTIVATEAPP message. */
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0,              S_PRESENT_MODE_CHANGED},
         /* WM_DISPLAYCHANGE is sent to the focus window too, but the order is
          * not deterministic. */
-        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0,              S_PRESENT_MODE_CHANGED},
         /* Windows sends WM_ACTIVATE to the device window, indicating that
          * SW_SHOWMINIMIZED is used instead of SW_MINIMIZE. Yet afterwards
          * the foreground and focus window are NULL. On Wine SW_SHOWMINIMIZED
          * leaves the device window active, breaking re-activation in the
          * lost device test.
          * {WM_ACTIVATE,           DEVICE_WINDOW,  TRUE,   0x200000 | WA_ACTIVE}, */
-        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
-        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED},
-        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0,              S_PRESENT_MODE_CHANGED},
+        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED, S_PRESENT_MODE_CHANGED},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE,          S_PRESENT_OCCLUDED},
         /* WM_ACTIVATEAPP is sent to the device window too, but the order is
          * not deterministic. It may be sent after the focus window handling
          * or before. */
-        {0,                     0,              FALSE,  0},
+        {0,                     0,              FALSE,  0,              0},
     };
     static const struct message focus_loss_messages_nowc[] =
     {
@@ -2704,7 +2725,7 @@ static void test_wndproc(void)
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
         {WM_SIZE,               DEVICE_WINDOW,  FALSE,  0},
         {WM_SHOWWINDOW,         DEVICE_WINDOW,  FALSE,  0},
-        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0, &windowpos},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0, ~0U, &windowpos},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
         /* TODO: WM_DISPLAYCHANGE is sent to the focus window too, but the order is
          * differs between Wine and Windows. */
