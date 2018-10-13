@@ -3252,6 +3252,26 @@ static void test_StretchBlt(void)
                              0, 0, 2, 2, 0, 0, 4, 1, expected, __LINE__);
     SetMapMode( hdcDst, MM_TEXT );
 
+    /* the destination rectangle doesn't fit in the device area */
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+    expected[17] = 0x76543210, expected[18] = 0xfedcba98;
+    expected[32] = 0x0000cccc, expected[33] = 0x0000f0f0, expected[34] = 0x0000ff00;
+    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             2, 2, -8, -8, 0, 0, 8, 8, expected, __LINE__);
+
+    /* the source rectangle doesn't fit in the device area */
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+    expected[102] = 0x76543210, expected[103] = 0xfedcba98;
+    expected[117] = 0x0000cccc, expected[118] = 0x0000f0f0, expected[119] = 0x0000ff00;
+    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 8, 8, 2, 2, -8, -8, expected, __LINE__);
+
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+    expected[85] = 0x76543210, expected[86] = 0xfedcba98;
+    expected[99] = 0x0000aaaa, expected[100] = 0x0000cccc, expected[101] = 0x0000f0f0, expected[102] = 0x0000ff00;
+    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             8, 8, -18, -18, 0, 0, 18, 18, expected, __LINE__);
+
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
 
@@ -3571,6 +3591,12 @@ static void test_StretchDIBits(void)
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       -4, -4, 4, 4, 0, 0, 4, 4, expected, __LINE__);
+    ok( ret == 2, "got ret %d\n", ret );
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0xFEEDFACE, expected[3] = 0x00000000;
+    todo_wine ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                      1, 1, -2, -2, 1, 1, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
     SelectObject(hdcDst, oldDst);
