@@ -3256,7 +3256,7 @@ static void test_StretchBlt(void)
     memset( expected, 0, get_dib_image_size( &biDst ) );
     expected[17] = 0x76543210, expected[18] = 0xfedcba98;
     expected[32] = 0x0000cccc, expected[33] = 0x0000f0f0, expected[34] = 0x0000ff00;
-    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              2, 2, -8, -8, 0, 0, 8, 8, expected, __LINE__);
 
     /* the source rectangle doesn't fit in the device area */
@@ -3701,7 +3701,6 @@ static void test_GdiAlphaBlend(void)
     SetViewportExtEx(hdcDst, -1, -1, NULL);
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 50, 50, blend);
-    todo_wine
     ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, -20, -20, 20, 20, hdcSrc, 0, -1, 50, 50, blend);

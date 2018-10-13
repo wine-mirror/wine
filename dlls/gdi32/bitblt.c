@@ -57,12 +57,13 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
     {
         /* map source rectangle into destination coordinates */
         rect = src->visrect;
-        offset_rect( &rect, -min( src->x, src->x + src->width + 1),
-                     -min( src->y, src->y + src->height + 1) );
-        rect.left   = dst->x + rect.left * dst->width / abs(src->width);
-        rect.top    = dst->y + rect.top * dst->height / abs(src->height);
-        rect.right  = dst->x + rect.right * dst->width / abs(src->width);
-        rect.bottom = dst->y + rect.bottom * dst->height / abs(src->height);
+        offset_rect( &rect,
+                     -src->x - (src->width < 0 ? 1 : 0),
+                     -src->y - (src->height < 0 ? 1 : 0));
+        rect.left   = dst->x + rect.left * dst->width / src->width;
+        rect.top    = dst->y + rect.top * dst->height / src->height;
+        rect.right  = dst->x + rect.right * dst->width / src->width;
+        rect.bottom = dst->y + rect.bottom * dst->height / src->height;
         order_rect( &rect );
 
         /* avoid rounding errors */
@@ -74,12 +75,13 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
 
         /* map destination rectangle back to source coordinates */
         rect = dst->visrect;
-        offset_rect( &rect, -min( dst->x, dst->x + dst->width + 1),
-                     -min( dst->y, dst->y + dst->height + 1) );
-        rect.left   = src->x + rect.left * src->width / abs(dst->width);
-        rect.top    = src->y + rect.top * src->height / abs(dst->height);
-        rect.right  = src->x + rect.right * src->width / abs(dst->width);
-        rect.bottom = src->y + rect.bottom * src->height / abs(dst->height);
+        offset_rect( &rect,
+                     -dst->x - (dst->width < 0 ? 1 : 0),
+                     -dst->y - (dst->height < 0 ? 1 : 0));
+        rect.left   = src->x + rect.left * src->width / dst->width;
+        rect.top    = src->y + rect.top * src->height / dst->height;
+        rect.right  = src->x + rect.right * src->width / dst->width;
+        rect.bottom = src->y + rect.bottom * src->height / dst->height;
         order_rect( &rect );
 
         /* avoid rounding errors */
