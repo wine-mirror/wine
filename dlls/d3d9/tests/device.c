@@ -3427,12 +3427,14 @@ struct message
     enum message_window window;
     BOOL check_wparam;
     WPARAM expect_wparam;
+    HRESULT device_state;
     WINDOWPOS *store_wp;
 };
 
 static const struct message *expect_messages;
 static HWND device_window, focus_window;
 static LONG windowposchanged_received, syscommand_received, wm_size_received;
+static IDirect3DDevice9 *focus_test_device;
 
 struct wndproc_thread_param
 {
@@ -3444,6 +3446,8 @@ struct wndproc_thread_param
 
 static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+    HRESULT hr;
+
     if (filter_messages && filter_messages == hwnd)
     {
         if (message != WM_DISPLAYCHANGE && message != WM_IME_NOTIFY)
@@ -3478,6 +3482,18 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
             if (expect_messages->store_wp)
                 *expect_messages->store_wp = *(WINDOWPOS *)lparam;
+
+            if (focus_test_device)
+            {
+                hr = IDirect3DDevice9_TestCooperativeLevel(focus_test_device);
+                /* Wined3d marks the device lost earlier than Windows (it follows ddraw
+                 * behavior. See test_wndproc before the focus_loss_messages sequence
+                 * about the D3DERR_DEVICENOTRESET behavior, */
+                todo_wine_if(message != WM_ACTIVATEAPP || hr == D3D_OK)
+                        ok(hr == expect_messages->device_state,
+                        "Got device state %#x on message %#x, expected %#x.\n",
+                        hr, message, expect_messages->device_state);
+            }
 
             ++expect_messages;
         }
@@ -3567,23 +3583,24 @@ static void test_wndproc(void)
          * not reliable on X11 WMs. When the window focus follows the
          * mouse pointer the message is not sent.
          * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
-        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0,  D3DERR_DEVICENOTRESET},
         /* WM_DISPLAYCHANGE is sent to the focus window too, but the order is
          * not deterministic. */
-        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0,  D3DERR_DEVICENOTRESET},
         /* Windows sends WM_ACTIVATE to the device window, indicating that
          * SW_SHOWMINIMIZED is used instead of SW_MINIMIZE. Yet afterwards
          * the foreground and focus window are NULL. On Wine SW_SHOWMINIMIZED
          * leaves the device window active, breaking re-activation in the
          * lost device test.
          * {WM_ACTIVATE,           DEVICE_WINDOW,  TRUE,   0x200000 | WA_ACTIVE}, */
-        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
-        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED},
-        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0,  D3DERR_DEVICENOTRESET},
+        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED,
+                D3DERR_DEVICENOTRESET},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE,  D3DERR_DEVICELOST},
         /* WM_ACTIVATEAPP is sent to the device window too, but the order is
          * not deterministic. It may be sent after the focus window handling
          * or before. */
-        {0,                     0,              FALSE,  0},
+        {0,                     0,              FALSE,  0,      0},
     };
     static const struct message focus_loss_messages_nowc[] =
     {
@@ -3591,9 +3608,9 @@ static void test_wndproc(void)
          * not reliable on X11 WMs. When the window focus follows the
          * mouse pointer the message is not sent.
          * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
-        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
-        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
-        {0,                     0,              FALSE,  0},
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0,      D3DERR_DEVICENOTRESET},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE,  D3DERR_DEVICELOST},
+        {0,                     0,              FALSE,  0,      0},
     };
     static const struct message reactivate_messages[] =
     {
@@ -3681,7 +3698,7 @@ static void test_wndproc(void)
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
         {WM_SIZE,               DEVICE_WINDOW,  FALSE,  0},
         {WM_SHOWWINDOW,         DEVICE_WINDOW,  FALSE,  0},
-        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0, &windowpos},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0, ~0U, &windowpos},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
         /* TODO: WM_DISPLAYCHANGE is sent to the focus window too, but the order is
          * differs between Wine and Windows. */
@@ -3871,6 +3888,7 @@ static void test_wndproc(void)
         todo_wine_if (hr != D3DERR_DEVICENOTRESET)
             ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
 
+        focus_test_device = device;
         expect_messages = tests[i].focus_loss_messages;
         /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
          * manually changing the focus. It generates the same messages, but the task
@@ -3884,6 +3902,7 @@ static void test_wndproc(void)
         tmp = GetFocus();
         ok(tmp != device_window, "The device window is active, i=%u.\n", i);
         ok(tmp != focus_window, "The focus window is active, i=%u.\n", i);
+        focus_test_device = NULL;
 
         hr = IDirect3DDevice9_TestCooperativeLevel(device);
         ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
