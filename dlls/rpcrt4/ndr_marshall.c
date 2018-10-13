@@ -2762,8 +2762,6 @@ static ULONG EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
     case FC_LONG:
     case FC_ULONG:
     case FC_ENUM32:
-    case FC_INT3264:
-    case FC_UINT3264:
         return sizeof(ULONG);
     case FC_FLOAT:
         return sizeof(float);
@@ -5642,9 +5640,6 @@ static ULONG get_discriminant(unsigned char fc, const unsigned char *pMemory)
     case FC_ULONG:
     case FC_ENUM32:
         return *(const ULONG *)pMemory;
-    case FC_INT3264:
-    case FC_UINT3264:
-        return *(const ULONG_PTR *)pMemory;
     default:
         FIXME("Unhandled base type: 0x%02x\n", fc);
         return 0;
