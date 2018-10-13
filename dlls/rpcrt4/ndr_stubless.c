@@ -427,6 +427,45 @@ static inline BOOL param_needs_alloc( PARAM_ATTRIBUTES attr )
     return attr.IsOut && !attr.IsIn && !attr.IsBasetype && !attr.IsByValue;
 }
 
+static inline BOOL param_is_out_basetype( PARAM_ATTRIBUTES attr )
+{
+    return attr.IsOut && !attr.IsIn && attr.IsBasetype && attr.IsSimpleRef;
+}
+
+static size_t basetype_arg_size( unsigned char fc )
+{
+    switch (fc)
+    {
+    case FC_BYTE:
+    case FC_CHAR:
+    case FC_SMALL:
+    case FC_USMALL:
+        return sizeof(char);
+    case FC_WCHAR:
+    case FC_SHORT:
+    case FC_USHORT:
+        return sizeof(short);
+    case FC_LONG:
+    case FC_ULONG:
+    case FC_ENUM16:
+    case FC_ENUM32:
+    case FC_ERROR_STATUS_T:
+        return sizeof(int);
+    case FC_FLOAT:
+        return sizeof(float);
+    case FC_HYPER:
+        return sizeof(LONGLONG);
+    case FC_DOUBLE:
+        return sizeof(double);
+    case FC_INT3264:
+    case FC_UINT3264:
+        return sizeof(INT_PTR);
+    default:
+        FIXME("Unhandled basetype %#x.\n", fc);
+        return 0;
+    }
+}
+
 void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
                      void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal )
 {
@@ -458,8 +497,13 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
         switch (phase)
         {
         case STUBLESS_INITOUT:
-            if (param_needs_alloc(params[i].attr) && *(unsigned char **)pArg)
-                memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
+            if (*(unsigned char **)pArg)
+            {
+                if (param_needs_alloc(params[i].attr))
+                    memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
+                else if (param_is_out_basetype(params[i].attr))
+                    memset( *(unsigned char **)pArg, 0, basetype_arg_size( params[i].u.type_format_char ));
+            }
             break;
         case STUBLESS_CALCSIZE:
             if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
