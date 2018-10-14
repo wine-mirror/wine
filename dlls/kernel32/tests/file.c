@@ -62,7 +62,7 @@ static BOOL (WINAPI *pGetQueuedCompletionStatusEx)(HANDLE, OVERLAPPED_ENTRY*, UL
 static void (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static void (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 
-static const char filename[] = "testfile.xxx";
+static char filename[MAX_PATH];
 static const char sillytext[] =
 "en larvig liten text dx \033 gx hej 84 hej 4484 ! \001\033 bla bl\na.. bla bla."
 "1234 43 4kljf lf &%%%&&&&&& 34 4 34   3############# 33 3 3 3 # 3## 3"
@@ -457,10 +457,15 @@ static void test__lcreat( void )
       if (INVALID_HANDLE_VALUE==find)
         ok (0, "file \"%s\" not found\n", filename);
       else {
+        const char *name = strrchr(filename, '\\');
+
+        if (name) name++;
+        else name = filename;
+
         ret = FindClose(find);
         ok ( 0 != ret, "FindClose complains (%d)\n", GetLastError ());
-        ok (!strcmp (filename, search_results.cFileName),
-            "found unexpected name \"%s\"\n", search_results.cFileName);
+        ok (!strcmp (name, search_results.cFileName),
+            "expected \"%s\", got \"%s\"\n", name, search_results.cFileName);
         search_results.dwFileAttributes &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
         search_results.dwFileAttributes &= ~FILE_ATTRIBUTE_COMPRESSED;
         ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
@@ -5103,7 +5108,17 @@ static void test_post_completion(void)
 
 START_TEST(file)
 {
+    char temp_path[MAX_PATH];
+    DWORD ret;
+
     InitFunctionPointers();
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPath error %u\n", GetLastError());
+    ret = GetTempFileNameA(temp_path, "tmp", 0, filename);
+    ok(ret != 0, "GetTempFileName error %u\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok(ret != 0, "DeleteFile error %u\n", GetLastError());
 
     test__hread(  );
     test__hwrite(  );
