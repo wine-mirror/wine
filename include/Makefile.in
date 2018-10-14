@@ -454,6 +454,7 @@ SOURCES = \
 	msxmldid.h \
 	mtxdm.h \
 	multimon.h \
+	natupnp.idl \
 	nb30.h \
 	ncrypt.h \
 	ndrtypes.h \
