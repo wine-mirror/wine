@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "netfw.h"
+#include "natupnp.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -115,7 +116,8 @@ static REFIID tid_id[] =
     &IID_INetFwOpenPorts,
     &IID_INetFwPolicy,
     &IID_INetFwPolicy2,
-    &IID_INetFwProfile
+    &IID_INetFwProfile,
+    &IID_IUPnPNAT
 };
 
 HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
