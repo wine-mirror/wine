@@ -79,6 +79,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "perhist.h"
 #include "netcon.h"
 #include "netfw.h"
+#include "natupnp.h"
 #include "msctf.h"
 #include "sensevts.h"
 #include "ocmm.h"
