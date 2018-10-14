@@ -1148,7 +1148,7 @@ static void test_Rename(void)
     CloseHandle(file);
 
     ret = p_Rename(f1W, f1W);
-    todo_wine ok(ERROR_SUCCESS == ret, "_Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
+    ok(ERROR_SUCCESS == ret, "_Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         if(tests[i].val == ERROR_SUCCESS) {

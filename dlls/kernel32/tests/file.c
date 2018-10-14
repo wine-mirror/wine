@@ -1894,7 +1894,7 @@ static void test_MoveFileA(void)
     ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
 
     ret = MoveFileA(source, source);
-    todo_wine ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
+    ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
 
     ret = MoveFileA(source, dest);
     ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS,

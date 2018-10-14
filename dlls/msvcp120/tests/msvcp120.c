@@ -1529,7 +1529,7 @@ static void test_tr2_sys__Rename(void)
     CloseHandle(file);
 
     ret = p_tr2_sys__Rename("tr2_test_dir\\f1", "tr2_test_dir\\f1");
-    todo_wine ok(ERROR_SUCCESS == ret, "test_tr2_sys__Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
+    ok(ERROR_SUCCESS == ret, "test_tr2_sys__Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = 0xdeadbeef;
         if(tests[i].val == ERROR_SUCCESS) {
