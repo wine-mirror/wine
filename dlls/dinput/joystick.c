@@ -92,7 +92,7 @@ static void _dump_DIEFFECT_flags(DWORD dwFlags)
             FE(DIEFF_SPHERICAL)
 #undef FE
         };
-        for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
+        for (i = 0; i < ARRAY_SIZE(flags); i++)
             if (flags[i].mask & dwFlags)
                 TRACE("%s ", flags[i].name);
         TRACE("\n");
@@ -786,7 +786,7 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
         /* Only consider actions of the right genre */
         if (lpdiaf->dwGenre != genre && genre != DIGENRE_ANY) continue;
 
-        for (j=0; j < sizeof(object_types)/sizeof(object_types[0]); j++)
+        for (j = 0; j < ARRAY_SIZE(object_types); j++)
         {
             if (type & object_types[j])
             {
@@ -979,7 +979,7 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
             {
                 int i;
 
-                for (i = 0; i < sizeof(axis_names) / sizeof(axis_names[0]); i++)
+                for (i = 0; i < ARRAY_SIZE(axis_names); i++)
                 {
                     if (!strcmp(ptr, axis_names[i]))
                     {
@@ -1011,7 +1011,7 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
                     }
                 }
 
-                if (i == sizeof(axis_names) / sizeof(axis_names[0]))
+                if (i == ARRAY_SIZE(axis_names))
                 {
                     ERR("invalid joystick axis type: \"%s\"\n", ptr);
                     i = -1;

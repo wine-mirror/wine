@@ -95,7 +95,7 @@ static void init_listview_columns(HWND dialog)
     GetClientRect(GetDlgItem(dialog, IDC_DEVICEOBJECTSLIST), &viewRect);
     width = (viewRect.right - viewRect.left)/2;
 
-    LoadStringW(hinstance, IDS_OBJECTCOLUMN, column, sizeof(column)/sizeof(column[0]));
+    LoadStringW(hinstance, IDS_OBJECTCOLUMN, column, ARRAY_SIZE(column));
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     listColumn.pszText = column;
     listColumn.cchTextMax = lstrlenW(listColumn.pszText);
@@ -103,7 +103,7 @@ static void init_listview_columns(HWND dialog)
 
     SendDlgItemMessageW (dialog, IDC_DEVICEOBJECTSLIST, LVM_INSERTCOLUMNW, 0, (LPARAM) &listColumn);
 
-    LoadStringW(hinstance, IDS_ACTIONCOLUMN, column, sizeof(column)/sizeof(column[0]));
+    LoadStringW(hinstance, IDS_ACTIONCOLUMN, column, ARRAY_SIZE(column));
     listColumn.cx = width;
     listColumn.pszText = column;
     listColumn.cchTextMax = lstrlenW(listColumn.pszText);
