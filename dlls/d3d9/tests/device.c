@@ -5967,6 +5967,32 @@ static void test_occlusion_query(void)
             || broken(data.dword[0] < 0xffffffff && !data.dword[1]),
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    for (i = 0; i < 50000; ++i)
+    {
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) == S_OK)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0 && data.dword[1] == 0,
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
     IDirect3DSurface9_Release(rt);
 
 done:
