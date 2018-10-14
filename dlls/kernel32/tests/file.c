@@ -38,9 +38,7 @@
 #include "winnls.h"
 #include "fileapi.h"
 
-#ifdef WINE_NO_UNICODE_MACROS
 #undef DeleteFile  /* needed for FILE_DISPOSITION_INFO */
-#endif
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
@@ -61,6 +59,8 @@ static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR, PUNICODE_STRING, PW
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
 static BOOL (WINAPI *pSetFileInformationByHandle)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, void*, DWORD);
 static BOOL (WINAPI *pGetQueuedCompletionStatusEx)(HANDLE, OVERLAPPED_ENTRY*, ULONG, ULONG*, DWORD, BOOL);
+static void (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
+static void (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 
 static const char filename[] = "testfile.xxx";
 static const char sillytext[] =
@@ -91,6 +91,8 @@ static void InitFunctionPointers(void)
     pNtCreateFile = (void *)GetProcAddress(hntdll, "NtCreateFile");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
+    pRtlInitAnsiString = (void *)GetProcAddress(hntdll, "RtlInitAnsiString");
+    pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
 
     pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
     pReplaceFileA=(void*)GetProcAddress(hkernel32, "ReplaceFileA");
@@ -270,7 +272,8 @@ static void get_nt_pathW( const char *name, UNICODE_STRING *nameW )
     ANSI_STRING str;
     NTSTATUS status;
     BOOLEAN ret;
-    RtlInitAnsiString( &str, name );
+
+    pRtlInitAnsiString( &str, name );
 
     status = pRtlAnsiStringToUnicodeString( &strW, &str, TRUE );
     ok( !status, "RtlAnsiStringToUnicodeString failed with %08x\n", status );
@@ -278,7 +281,7 @@ static void get_nt_pathW( const char *name, UNICODE_STRING *nameW )
     ret = pRtlDosPathNameToNtPathName_U( strW.Buffer, nameW, NULL, NULL );
     ok( ret, "RtlDosPathNameToNtPathName_U failed\n" );
 
-    RtlFreeUnicodeString( &strW );
+    pRtlFreeUnicodeString( &strW );
 }
 
 static void test__lcreat( void )
@@ -354,30 +357,30 @@ static void test__lcreat( void )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtCreateFile( &file, GENERIC_READ | GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
+    status = pNtCreateFile( &file, GENERIC_READ | GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0 );
     ok( status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %08x\n", status );
     ok( GetFileAttributesA( filename ) != INVALID_FILE_ATTRIBUTES, "file was deleted\n" );
 
-    status = NtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
+    status = pNtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0 );
     ok( status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %08x\n", status );
 
-    status = NtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
+    status = pNtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_DIRECTORY_FILE, NULL, 0 );
     ok( status == STATUS_NOT_A_DIRECTORY, "expected STATUS_NOT_A_DIRECTORY, got %08x\n", status );
 
-    status = NtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
+    status = pNtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN_IF, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0 );
     todo_wine
     ok( status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %08x\n", status );
     if (!status) CloseHandle( file );
 
-    RtlFreeUnicodeString( &filenameW );
+    pRtlFreeUnicodeString( &filenameW );
 
     todo_wine
     ok( GetFileAttributesA( filename ) != INVALID_FILE_ATTRIBUTES, "file was deleted\n" );
@@ -4907,7 +4910,7 @@ static void test_SetFileInformationByHandle(void)
 {
     FILE_ATTRIBUTE_TAG_INFO fileattrinfo = { 0 };
     FILE_REMOTE_PROTOCOL_INFO protinfo = { 0 };
-    FILE_STANDARD_INFO stdinfo = { };
+    FILE_STANDARD_INFO stdinfo = { {{0}},{{0}},0,FALSE,FALSE };
     FILE_COMPRESSION_INFO compressinfo;
     FILE_DISPOSITION_INFO dispinfo;
     char tempFileName[MAX_PATH];
