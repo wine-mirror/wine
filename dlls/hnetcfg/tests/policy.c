@@ -27,6 +27,7 @@
 #include "wine/test.h"
 
 #include "netfw.h"
+#include "natupnp.h"
 
 static void test_policy2_rules(INetFwPolicy2 *policy2)
 {
@@ -160,6 +161,35 @@ static void test_NetFwAuthorizedApplication(void)
     INetFwAuthorizedApplication_Release(app);
 }
 
+static void test_IUPnPNAT(void)
+{
+    IUPnPNAT *nat;
+    IStaticPortMappingCollection *static_ports;
+    IDynamicPortMappingCollection *dync_ports;
+    INATEventManager *manager;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_UPnPNAT, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, &IID_IUPnPNAT, (void**)&nat);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
+    hr = IUPnPNAT_get_StaticPortMappingCollection(nat, &static_ports);
+    todo_wine ok(hr == S_OK, "got: %08x\n", hr);
+    if(hr == S_OK && static_ports)
+        IStaticPortMappingCollection_Release(static_ports);
+
+    hr = IUPnPNAT_get_DynamicPortMappingCollection(nat, &dync_ports);
+    ok(hr == S_OK || hr == E_NOTIMPL /* Windows 8.1 */, "got: %08x\n", hr);
+    if(hr == S_OK && dync_ports)
+        IDynamicPortMappingCollection_Release(dync_ports);
+
+    hr = IUPnPNAT_get_NATEventManager(nat, &manager);
+    todo_wine ok(hr == S_OK, "got: %08x\n", hr);
+    if(hr == S_OK && manager)
+        INATEventManager_Release(manager);
+
+    IUPnPNAT_Release(nat);
+}
+
 START_TEST(policy)
 {
     INetFwMgr *manager;
@@ -180,6 +210,7 @@ START_TEST(policy)
 
     test_interfaces();
     test_NetFwAuthorizedApplication();
+    test_IUPnPNAT();
 
     CoUninitialize();
 }
