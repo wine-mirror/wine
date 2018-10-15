@@ -145,7 +145,7 @@ static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t p
 static int pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
-static void pipe_end_get_file_info( struct fd *fd, unsigned int info_class );
+static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
@@ -509,7 +509,7 @@ static int pipe_end_flush( struct fd *fd, struct async *async )
     return 1;
 }
 
-static void pipe_end_get_file_info( struct fd *fd, unsigned int info_class )
+static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
     struct named_pipe *pipe = pipe_end->pipe;
@@ -555,8 +555,49 @@ static void pipe_end_get_file_info( struct fd *fd, unsigned int info_class )
             if (reply_size) memcpy( &name_info->FileName[1], name, reply_size );
             break;
         }
+    case FilePipeLocalInformation:
+        {
+            FILE_PIPE_LOCAL_INFORMATION *pipe_info;
+
+            if (!(get_handle_access( current->process, handle) & FILE_READ_ATTRIBUTES))
+            {
+                set_error( STATUS_ACCESS_DENIED );
+                return;
+            }
+
+            if (get_reply_max_size() < sizeof(*pipe_info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            if (!(pipe_info = set_reply_data_size( sizeof(*pipe_info) ))) return;
+            pipe_info->NamedPipeType = (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) != 0;
+            switch (pipe->sharing)
+            {
+            case FILE_SHARE_READ:
+                pipe_info->NamedPipeConfiguration = FILE_PIPE_OUTBOUND;
+                break;
+            case FILE_SHARE_WRITE:
+                pipe_info->NamedPipeConfiguration = FILE_PIPE_INBOUND;
+                break;
+            case FILE_SHARE_READ | FILE_SHARE_WRITE:
+                pipe_info->NamedPipeConfiguration = FILE_PIPE_FULL_DUPLEX;
+                break;
+            }
+            pipe_info->MaximumInstances    = pipe->maxinstances;
+            pipe_info->CurrentInstances    = pipe->instances;
+            pipe_info->InboundQuota        = pipe->insize;
+            pipe_info->ReadDataAvailable   = 0; /* FIXME */
+            pipe_info->OutboundQuota       = pipe->outsize;
+            pipe_info->WriteQuotaAvailable = 0; /* FIXME */
+            pipe_info->NamedPipeState      = 0; /* FIXME */
+            pipe_info->NamedPipeEnd        = pipe_end->obj.ops == &pipe_server_ops
+                ? FILE_PIPE_SERVER_END : FILE_PIPE_CLIENT_END;
+            break;
+        }
     default:
-        no_fd_get_file_info( fd, info_class );
+        no_fd_get_file_info( fd, handle, info_class );
     }
 }
 

@@ -2170,7 +2170,7 @@ int no_fd_flush( struct fd *fd, struct async *async )
 }
 
 /* default get_file_info() routine */
-void no_fd_get_file_info( struct fd *fd, unsigned int info_class )
+void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
@@ -2391,7 +2391,7 @@ DECL_HANDLER(get_file_info)
 
     if (fd)
     {
-        fd->fd_ops->get_file_info( fd, req->info_class );
+        fd->fd_ops->get_file_info( fd, req->handle, req->info_class );
         release_object( fd );
     }
 }
