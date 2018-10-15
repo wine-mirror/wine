@@ -131,8 +131,6 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     D3D10_VIEWPORT vp;
     HRESULT hr;
 
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
     vp.Width = render_target->pixel_size.width;
@@ -180,7 +178,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->target->rtv, NULL);
     if (brush)
     {
-        ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+        ID3D10Device_OMSetBlendState(device, render_target->bs, NULL, D3D10_DEFAULT_SAMPLE_MASK);
         d2d_brush_bind_resources(brush, device, 0);
     }
     if (opacity_brush)
