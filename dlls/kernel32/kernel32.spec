@@ -1088,8 +1088,8 @@
 @ stdcall MoveFileA(str str)
 @ stdcall MoveFileExA(str str long)
 @ stdcall MoveFileExW(wstr wstr long)
-# @ stub MoveFileTransactedA
-# @ stub MoveFileTransactedW
+@ stdcall MoveFileTransactedA(str str ptr ptr long ptr)
+@ stdcall MoveFileTransactedW(wstr wstr ptr ptr long ptr)
 @ stdcall MoveFileW(wstr wstr)
 @ stdcall MoveFileWithProgressA(str str ptr ptr long)
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
