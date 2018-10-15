@@ -20,8 +20,52 @@
 #pragma makedep ident
 #pragma makedep typelib
 
-#include "tmarshal_dispids.h"
 import "ocidl.idl";
+
+enum IWidget_dispids
+{
+    DISPID_TM_NAME = 1,
+    DISPID_TM_DOSOMETHING,
+    DISPID_TM_STATE,
+    DISPID_TM_MAP,
+    DISPID_TM_SETOLECOLOR,
+    DISPID_TM_GETOLECOLOR,
+    DISPID_TM_CLONE,
+    DISPID_TM_CLONEDISPATCH,
+    DISPID_TM_CLONECOCLASS,
+    DISPID_TM_VALUE,
+    DISPID_TM_ARRAY,
+    DISPID_TM_VARARRAYPTR,
+    DISPID_TM_VARCARRAY,
+    DISPID_TM_VARIANT,
+    DISPID_TM_VARARG,
+    DISPID_TM_STRUCTARGS,
+    DISPID_TM_ERROR,
+    DISPID_TM_CLONEINTERFACE,
+    DISPID_TM_TESTDUAL,
+    DISPID_TM_PROP_WITH_LCID,
+    DISPID_TM_PROP_INT,
+    DISPID_TM_PROP_UINT,
+    DISPID_TM_BYREF_UINT,
+    DISPID_TM_PROP_OPT_ARG,
+    DISPID_TM_PROP_REQ_ARG,
+    DISPID_TM_RESTRICTED,
+    DISPID_TM_TESTSECONDIFACE,
+    DISPID_TM_VARARG_RUN,
+    DISPID_TM_VARARG_REF_RUN,
+    DISPID_TM_COCLASS,
+
+    DISPID_TM_BASETYPES_IN,
+    DISPID_TM_BASETYPES_OUT,
+};
+
+static const int DISPID_TM_NEG_RESTRICTED = -26;
+
+enum INonOleAutomation_dispids
+{
+    DISPID_NOA_BSTRRET = 1,
+    DISPID_NOA_ERROR
+};
 
 [
   uuid(d96d8a3e-78b6-4c8d-8f27-059db959be8a),
@@ -188,6 +232,16 @@ library TestTypelib
 
         [id(DISPID_TM_COCLASS)]
         HRESULT Coclass([in] ApplicationObject2 *param);
+
+        [id(DISPID_TM_BASETYPES_IN)]
+        HRESULT basetypes_in([in] signed char c, [in] short s, [in] int i, [in] hyper h,
+                [in] unsigned char uc, [in] unsigned short us, [in] unsigned int ui,
+                [in] unsigned hyper uh, [in] float f, [in] double d, [in] STATE st);
+
+        [id(DISPID_TM_BASETYPES_OUT)]
+        HRESULT basetypes_out([out] signed char *c, [out] short *s, [out] int *i, [out] hyper *h,
+                [out] unsigned char *uc, [out] unsigned short *us, [out] unsigned int *ui,
+                [out] unsigned hyper *uh, [out] float *f, [out] double *d, [out] STATE *st);
     }
 
     [

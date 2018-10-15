@@ -17,6 +17,8 @@
  *
  */
 
+#include <math.h>
+
 #define COBJMACROS
 #define CONST_VTABLE
 
@@ -27,7 +29,6 @@
 #include "wine/test.h"
 
 #include "tmarshal.h"
-#include "tmarshal_dispids.h"
 
 static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
 
@@ -923,6 +924,44 @@ static HRESULT WINAPI Widget_Coclass(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s, int i, hyper h,
+        unsigned char uc, unsigned short us, unsigned int ui, MIDL_uhyper uh,
+        float f, double d, STATE st)
+{
+    ok(c == 5, "Got char %d.\n", c);
+    ok(s == -123, "Got short %d.\n", s);
+    ok(i == -100000, "Got int %d.\n", i);
+    ok(h == (LONGLONG)-100000 * 1000000, "Got hyper %s.\n", wine_dbgstr_longlong(h));
+    ok(uc == 0, "Got unsigned char %u.\n", uc);
+    ok(us == 456, "Got unsigned short %u.\n", us);
+    ok(ui == 0xdeadbeef, "Got unsigned int %i.\n", ui);
+    ok(uh == (ULONGLONG)1234567890 * 9876543210, "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
+    ok(f == (float)M_PI, "Got float %f.\n", f);
+    ok(d == M_E, "Got double %f.\n", d);
+    ok(st == STATE_WIDGETIFIED, "Got state %u.\n", st);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short *s, int *i, hyper *h,
+        unsigned char *uc, unsigned short *us, unsigned int *ui, MIDL_uhyper *uh,
+        float *f, double *d, STATE *st)
+{
+    *c = 10;
+    *s = -321;
+    *i = -200000;
+    *h = (LONGLONG)-200000 * 1000000;
+    *uc = 254;
+    *us = 256;
+    *ui = 0xf00dfade;
+    *uh = (((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789;
+    *f = M_LN2;
+    *d = M_LN10;
+    *st = STATE_UNWIDGETIFIED;
+
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -964,6 +1003,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_VarArg_Run,
     Widget_VarArg_Ref_Run,
     Widget_Coclass,
+    Widget_basetypes_in,
+    Widget_basetypes_out,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1275,6 +1316,90 @@ static ITypeInfo *NonOleAutomation_GetTypeInfo(void)
         return pTypeInfo;
     }
     return NULL;
+}
+
+static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
+{
+    VARIANTARG arg[11];
+    DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
+    HRESULT hr;
+
+    signed char c;
+    short s;
+    int i;
+    hyper h;
+    unsigned char uc;
+    unsigned short us;
+    unsigned int ui;
+    MIDL_uhyper uh;
+    float f;
+    double d;
+    STATE st;
+
+    V_VT(&arg[10]) = VT_I1;     V_I1(&arg[10]) = 5;
+    V_VT(&arg[9])  = VT_I2;     V_I2(&arg[9])  = -123;
+    V_VT(&arg[8])  = VT_I4;     V_I4(&arg[8])  = -100000;
+    V_VT(&arg[7])  = VT_I8;     V_I8(&arg[7])  = (LONGLONG)-100000 * 1000000;
+    V_VT(&arg[6])  = VT_UI1;    V_UI1(&arg[6]) = 0;
+    V_VT(&arg[5])  = VT_UI2;    V_UI2(&arg[5]) = 456;
+    V_VT(&arg[4])  = VT_UI4;    V_UI4(&arg[4]) = 0xdeadbeef;
+    V_VT(&arg[3])  = VT_UI8;    V_UI8(&arg[3]) = (ULONGLONG)1234567890 * 9876543210;
+    V_VT(&arg[2])  = VT_R4;     V_R4(&arg[2])  = M_PI;
+    V_VT(&arg[1])  = VT_R8;     V_R8(&arg[1])  = M_E;
+    V_VT(&arg[0])  = VT_I4;     V_I4(&arg[0])  = STATE_WIDGETIFIED;
+    hr = IDispatch_Invoke(disp, DISPID_TM_BASETYPES_IN, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWidget_basetypes_in(widget, 5, -123, -100000, (LONGLONG)-100000 * 1000000, 0, 456,
+            0xdeadbeef, (ULONGLONG)1234567890 * 9876543210, M_PI, M_E, STATE_WIDGETIFIED);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    c = s = i = h = uc = us = ui = uh = f = d = st = 0;
+
+    V_VT(&arg[10]) = VT_BYREF|VT_I1;  V_I1REF(&arg[10]) = &c;
+    V_VT(&arg[9])  = VT_BYREF|VT_I2;  V_I2REF(&arg[9])  = &s;
+    V_VT(&arg[8])  = VT_BYREF|VT_I4;  V_I4REF(&arg[8])  = &i;
+    V_VT(&arg[7])  = VT_BYREF|VT_I8;  V_I8REF(&arg[7])  = &h;
+    V_VT(&arg[6])  = VT_BYREF|VT_UI1; V_UI1REF(&arg[6]) = &uc;
+    V_VT(&arg[5])  = VT_BYREF|VT_UI2; V_UI2REF(&arg[5]) = &us;
+    V_VT(&arg[4])  = VT_BYREF|VT_UI4; V_UI4REF(&arg[4]) = &ui;
+    V_VT(&arg[3])  = VT_BYREF|VT_UI8; V_UI8REF(&arg[3]) = &uh;
+    V_VT(&arg[2])  = VT_BYREF|VT_R4;  V_R4REF(&arg[2])  = &f;
+    V_VT(&arg[1])  = VT_BYREF|VT_R8;  V_R8REF(&arg[1])  = &d;
+    V_VT(&arg[0])  = VT_BYREF|VT_I4;  V_I4REF(&arg[0])  = (int *)&st;
+    hr = IDispatch_Invoke(disp, DISPID_TM_BASETYPES_OUT, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(c == 10, "Got char %d.\n", c);
+    ok(s == -321, "Got short %d.\n", s);
+    ok(i == -200000, "Got int %d.\n", i);
+    ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
+    ok(uc == 254, "Got unsigned char %u.\n", uc);
+    ok(us == 256, "Got unsigned short %u.\n", us);
+    ok(ui == 0xf00dfade, "Got unsigned int %i.\n", ui);
+    ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
+            "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
+    ok(f == (float)M_LN2, "Got float %f.\n", f);
+    ok(d == M_LN10, "Got double %f.\n", d);
+    ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);
+
+    c = s = i = h = uc = us = ui = uh = f = d = st = 0;
+
+    hr = IWidget_basetypes_out(widget, &c, &s, &i, &h, &uc, &us, &ui, &uh, &f, &d, &st);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(c == 10, "Got char %d.\n", c);
+    ok(s == -321, "Got short %d.\n", s);
+    ok(i == -200000, "Got int %d.\n", i);
+    ok(h == (LONGLONG)-200000 * 1000000L, "Got hyper %s.\n", wine_dbgstr_longlong(h));
+    ok(uc == 254, "Got unsigned char %u.\n", uc);
+    ok(us == 256, "Got unsigned short %u.\n", us);
+    ok(ui == 0xf00dfade, "Got unsigned int %i.\n", ui);
+    ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
+            "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
+    ok(f == (float)M_LN2, "Got float %f.\n", f);
+    ok(d == M_LN10, "Got double %f.\n", d);
+    ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);
 }
 
 static void test_typelibmarshal(void)
@@ -1886,6 +2011,8 @@ static void test_typelibmarshal(void)
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
     ok(V_I4(&varresult) == DISPID_TM_NEG_RESTRICTED, "got %x\n", V_I4(&varresult));
     VariantClear(&varresult);
+
+    test_marshal_basetypes(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
