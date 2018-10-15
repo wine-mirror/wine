@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.1.86"
+VK_XML_VERSION = "1.1.88"
 WINE_VK_VERSION = (1, 0)
 
 # Filenames to create.
@@ -99,10 +99,12 @@ BLACKLISTED_EXTENSIONS = [
     # plumbing down to the native layer, we will get each message twice as we
     # use 2 loaders (win32+native), but we may get output from the driver.
     # In any case callback conversion is required.
+    "VK_EXT_calibrated_timestamps",
     "VK_EXT_debug_report",
     "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
     "VK_EXT_external_memory_dma_buf", # Linux specific
     "VK_EXT_hdr_metadata", # Needs WSI work.
+    "VK_EXT_image_drm_format_modifier",
     "VK_GOOGLE_display_timing",
     "VK_KHR_display", # Needs WSI work.
     "VK_KHR_external_fence",
@@ -1673,13 +1675,14 @@ class VkStruct(Sequence):
 
     def needs_struct_extensions_conversion(self):
         """ Checks if structure extensions in pNext chain need conversion. """
+        ret = False
 
         for e in self.struct_extensions:
             if e.required and e.needs_conversion():
                 LOGGER.error("Unhandled pNext chain conversion for {0}".format(e.name))
-                return True
+                ret = True
 
-        return False
+        return ret
 
     def set_type_info(self, types):
         """ Helper function to set type information from the type registry.
