@@ -525,7 +525,6 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               /* always accept new item text */
               NMLVDISPINFOA *di = (NMLVDISPINFOA*)lParam;
               g_editbox_disp_info = *di;
-              trace("LVN_ENDLABELEDIT: text=%s\n", di->item.pszText ? di->item.pszText : "(null)");
 
               /* edit control still available from this notification */
               edit = (HWND)SendMessageA(((NMHDR*)lParam)->hwndFrom, LVM_GETEDITCONTROL, 0, 0);
@@ -537,15 +536,6 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
               return TRUE;
               }
-          case LVN_BEGINSCROLL:
-          case LVN_ENDSCROLL:
-              {
-              NMLVSCROLL *pScroll = (NMLVSCROLL*)lParam;
-
-              trace("LVN_%sSCROLL: (%d,%d)\n", pScroll->hdr.code == LVN_BEGINSCROLL ?
-                                               "BEGIN" : "END", pScroll->dx, pScroll->dy);
-              }
-              break;
           case LVN_ITEMCHANGING:
               {
                   NMLISTVIEW *nmlv = (NMLISTVIEW*)lParam;
