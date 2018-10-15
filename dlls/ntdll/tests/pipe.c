@@ -1415,7 +1415,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
             "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
     if (!status)
-        todo_wine
         ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
             is_server ? "server" : "client", local_info.NamedPipeState, state);
 
@@ -1631,7 +1630,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
         todo_wine
         ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %u\n",
            local_info.WriteQuotaAvailable);
-        todo_wine
         ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
            is_server ? "server" : "client", local_info.NamedPipeState, state);
         ok(local_info.NamedPipeEnd == is_server, "NamedPipeEnd = %u\n", local_info.NamedPipeEnd);

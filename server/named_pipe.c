@@ -614,7 +614,7 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             pipe_info->ReadDataAvailable   = 0; /* FIXME */
             pipe_info->OutboundQuota       = pipe->outsize;
             pipe_info->WriteQuotaAvailable = 0; /* FIXME */
-            pipe_info->NamedPipeState      = 0; /* FIXME */
+            pipe_info->NamedPipeState      = pipe_end->state;
             pipe_info->NamedPipeEnd        = pipe_end->obj.ops == &pipe_server_ops
                 ? FILE_PIPE_SERVER_END : FILE_PIPE_CLIENT_END;
             break;
