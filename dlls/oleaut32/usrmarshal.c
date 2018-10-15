@@ -227,6 +227,9 @@ unsigned int get_type_size(ULONG *pFlags, VARTYPE vt)
     case VT_INT:
     case VT_UINT:
         return sizeof(INT);
+    case VT_I8:
+    case VT_UI8:
+        return sizeof(LONGLONG);
     case VT_R4:
         return sizeof(FLOAT);
     case VT_R8:

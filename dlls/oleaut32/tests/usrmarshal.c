@@ -964,6 +964,36 @@ static void test_marshal_VARIANT(void)
     VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
+    /*** I8 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_I8;
+    V_I8(&v) = (LONGLONG)1000000 * 1000000;
+
+    rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(stubMsg.BufferLength == 32, "size %d\n", stubMsg.BufferLength);
+
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
+    stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
+    memset(buffer, 0xcc, stubMsg.BufferLength);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    wirev = (DWORD*)buffer;
+
+    wirev = check_variant_header(wirev, &v, stubMsg.BufferLength);
+    ok(*wirev == 0xcccccccc, "wv[5] %08x\n", *wirev); /* pad */
+    wirev++;
+    ok(*(LONGLONG *)wirev == V_I8(&v), "wv[6] %s\n", wine_dbgstr_longlong(*(LONGLONG *)wirev));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_I8(&v) == V_I8(&v2), "got i8 %s expect %s\n",
+            wine_dbgstr_longlong(V_I8(&v)), wine_dbgstr_longlong(V_I8(&v2)));
+
+    VARIANT_UserFree(&umcb.Flags, &v2);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
+
     /*** R4 ***/
     VariantInit(&v);
     V_VT(&v) = VT_R4;
