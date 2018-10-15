@@ -3557,8 +3557,16 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
         else if (flags & LCMAP_HALFWIDTH)
         {
             for (len = 0; srclen; src++, srclen--, len++)
-                if (decompose_katakana(*src, NULL, 0) == 2)
+            {
+                WCHAR wch = *src;
+                /* map Hiragana to Katakana before decomposition if needed */
+                if ((flags & LCMAP_KATAKANA) &&
+                    ((wch >= 0x3041 && wch <= 0x3096) || wch == 0x309D || wch == 0x309E))
+                    wch += 0x60;
+
+                if (decompose_katakana(wch, NULL, 0) == 2)
                     len++;
+            }
         }
         else
             len = srclen;

@@ -2537,7 +2537,6 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(!lstrcmpW(buf, halfwidth_text2), "%s string compare mismatch\n", func_name);
 
     ret2 = func_ptr(LCMAP_HALFWIDTH | LCMAP_KATAKANA, japanese_text, -1, NULL, 0);
-    todo_wine
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
 
     /* test buffer overflow */
