@@ -1315,21 +1315,19 @@ static inline void iterator_destroy(const ITERATOR *i)
 /***
  * Create an empty iterator.
  */
-static inline BOOL iterator_empty(ITERATOR* i)
+static inline void iterator_empty(ITERATOR* i)
 {
     ZeroMemory(i, sizeof(*i));
     i->nItem = i->nSpecial = i->range.lower = i->range.upper = -1;
-    return TRUE;
 }
 
 /***
  * Create an iterator over a range.
  */
-static inline BOOL iterator_rangeitems(ITERATOR* i, RANGE range)
+static inline void iterator_rangeitems(ITERATOR* i, RANGE range)
 {
     iterator_empty(i);
     i->range = range;
-    return TRUE;
 }
 
 /***
@@ -1337,11 +1335,10 @@ static inline BOOL iterator_rangeitems(ITERATOR* i, RANGE range)
  * Please note that the iterator will take ownership of the ranges,
  * and will free them upon destruction.
  */
-static inline BOOL iterator_rangesitems(ITERATOR* i, RANGES ranges)
+static inline void iterator_rangesitems(ITERATOR* i, RANGES ranges)
 {
     iterator_empty(i);
     i->ranges = ranges;
-    return TRUE;
 }
 
 /***
@@ -1351,11 +1348,12 @@ static inline BOOL iterator_rangesitems(ITERATOR* i, RANGES ranges)
 static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* infoPtr, const RECT *frame)
 {
     RECT rcItem, rcTemp;
+    RANGES ranges;
 
     TRACE("(frame=%s)\n", wine_dbgstr_rect(frame));
 
     /* in case we fail, we want to return an empty iterator */
-    if (!iterator_empty(i)) return FALSE;
+    iterator_empty(i);
 
     if (infoPtr->nItemCount == 0)
         return TRUE;
@@ -1370,7 +1368,8 @@ static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* info
 	    if (IntersectRect(&rcTemp, &rcItem, frame))
 		i->nSpecial = infoPtr->nFocusedItem;
 	}
-	if (!(iterator_rangesitems(i, ranges_create(50)))) return FALSE;
+	if (!(ranges = ranges_create(50))) return FALSE;
+	iterator_rangesitems(i, ranges);
 	/* to do better here, we need to have PosX, and PosY sorted */
 	TRACE("building icon ranges:\n");
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
@@ -1394,7 +1393,7 @@ static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* info
 	range.lower = max(frame->top / infoPtr->nItemHeight, 0);
 	range.upper = min((frame->bottom - 1) / infoPtr->nItemHeight, infoPtr->nItemCount - 1) + 1;
 	if (range.upper <= range.lower) return TRUE;
-	if (!iterator_rangeitems(i, range)) return FALSE;
+	iterator_rangeitems(i, range);
 	TRACE("    report=%s\n", debugrange(&i->range));
     }
     else
@@ -1426,7 +1425,8 @@ static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* info
 	
 	if (nLastCol < nFirstCol || nLastRow < nFirstRow) return TRUE;
 
-	if (!(iterator_rangesitems(i, ranges_create(nLastCol - nFirstCol + 1)))) return FALSE;
+	if (!(ranges = ranges_create(nLastCol - nFirstCol + 1))) return FALSE;
+	iterator_rangesitems(i, ranges);
 	TRACE("building list ranges:\n");
 	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
 	{
@@ -1467,7 +1467,11 @@ static BOOL iterator_visibleitems(ITERATOR *i, const LISTVIEW_INFO *infoPtr, HDC
     INT rgntype;
     
     rgntype = GetClipBox(hdc, &rcClip);
-    if (rgntype == NULLREGION) return iterator_empty(i);
+    if (rgntype == NULLREGION)
+    {
+        iterator_empty(i);
+        return TRUE;
+    }
     if (!iterator_frameditems(i, infoPtr, &rcClip)) return FALSE;
     if (rgntype == SIMPLEREGION) return TRUE;
 
