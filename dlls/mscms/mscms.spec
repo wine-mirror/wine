@@ -89,7 +89,7 @@
 @ stub WcsCreateIccProfile
 @ stub WcsDisassociateColorProfileFromDevice
 @ stub WcsEnumColorProfiles
-@ stub WcsEnumColorProfilesSize
+@ stdcall WcsEnumColorProfilesSize(long ptr ptr)
 @ stub WcsGetCalibrationManagementState
 @ stub WcsGetDefaultColorProfile
 @ stub WcsGetDefaultColorProfileSize
