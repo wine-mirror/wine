@@ -1663,14 +1663,13 @@ static char **build_envp( const WCHAR *envW )
  *
  * Fork and exec a new Unix binary, checking for errors.
  */
-static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHAR *env,
-                          const char *newdir, DWORD flags, STARTUPINFOW *startup )
+static int fork_and_exec( const RTL_USER_PROCESS_PARAMETERS *params, const char *newdir, DWORD flags )
 {
     int fd[2], stdin_fd = -1, stdout_fd = -1, stderr_fd = -1;
     int pid, err;
-    char **argv, **envp;
+    char *filename, **argv, **envp;
 
-    if (!env) env = GetEnvironmentStringsW();
+    if (!(filename = wine_get_unix_file_name( params->ImagePathName.Buffer ))) return -1;
 
 #ifdef HAVE_PIPE2
     if (pipe2( fd, O_CLOEXEC ) == -1)
@@ -1679,42 +1678,19 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
         if (pipe(fd) == -1)
         {
             SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+            HeapFree( GetProcessHeap(), 0, filename );
             return -1;
         }
         fcntl( fd[0], F_SETFD, FD_CLOEXEC );
         fcntl( fd[1], F_SETFD, FD_CLOEXEC );
     }
 
-    if (!(flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)))
-    {
-        HANDLE hstdin, hstdout, hstderr;
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+    wine_server_handle_to_fd( params->hStdError, FILE_WRITE_DATA, &stderr_fd, NULL );
 
-        if (startup->dwFlags & STARTF_USESTDHANDLES)
-        {
-            hstdin = startup->hStdInput;
-            hstdout = startup->hStdOutput;
-            hstderr = startup->hStdError;
-        }
-        else
-        {
-            hstdin = GetStdHandle(STD_INPUT_HANDLE);
-            hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-            hstderr = GetStdHandle(STD_ERROR_HANDLE);
-        }
-
-        if (is_console_handle( hstdin ))
-            hstdin = wine_server_ptr_handle( console_handle_unmap( hstdin ));
-        if (is_console_handle( hstdout ))
-            hstdout = wine_server_ptr_handle( console_handle_unmap( hstdout ));
-        if (is_console_handle( hstderr ))
-            hstderr = wine_server_ptr_handle( console_handle_unmap( hstderr ));
-        wine_server_handle_to_fd( hstdin, FILE_READ_DATA, &stdin_fd, NULL );
-        wine_server_handle_to_fd( hstdout, FILE_WRITE_DATA, &stdout_fd, NULL );
-        wine_server_handle_to_fd( hstderr, FILE_WRITE_DATA, &stderr_fd, NULL );
-    }
-
-    argv = build_argv( cmdline, 0 );
-    envp = build_envp( env );
+    argv = build_argv( params->CommandLine.Buffer, 0 );
+    envp = build_envp( params->Environment );
 
     if (!(pid = fork()))  /* child */
     {
@@ -1772,6 +1748,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
     }
     HeapFree( GetProcessHeap(), 0, argv );
     HeapFree( GetProcessHeap(), 0, envp );
+    HeapFree( GetProcessHeap(), 0, filename );
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
     if (stderr_fd != -1) close( stderr_fd );
@@ -2743,18 +2720,9 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         }
         /* fall through */
     case BINARY_UNIX_EXE:
-        {
-            /* unknown file, try as unix executable */
-            char *unix_name;
-
-            TRACE( "starting %s as Unix binary\n", debugstr_w(name) );
-
-            if ((unix_name = wine_get_unix_file_name( name )))
-            {
-                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir, flags, startup_info ) != -1);
-                HeapFree( GetProcessHeap(), 0, unix_name );
-            }
-        }
+        /* unknown file, try as unix executable */
+        TRACE( "starting %s as Unix binary\n", debugstr_w(name) );
+        retv = (fork_and_exec( params, unixdir, flags ) != -1);
         break;
     }
     if (hFile) CloseHandle( hFile );
