@@ -555,6 +555,29 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             if (reply_size) memcpy( &name_info->FileName[1], name, reply_size );
             break;
         }
+    case FilePipeInformation:
+    {
+            FILE_PIPE_INFORMATION *pipe_info;
+
+            if (!(get_handle_access( current->process, handle) & FILE_READ_ATTRIBUTES))
+            {
+                set_error( STATUS_ACCESS_DENIED );
+                return;
+            }
+
+            if (get_reply_max_size() < sizeof(*pipe_info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            if (!(pipe_info = set_reply_data_size( sizeof(*pipe_info) ))) return;
+            pipe_info->ReadMode       = (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
+                ? FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
+            pipe_info->CompletionMode = (pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE)
+                ? FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
+            break;
+        }
     case FilePipeLocalInformation:
         {
             FILE_PIPE_LOCAL_INFORMATION *pipe_info;
@@ -1318,39 +1341,6 @@ DECL_HANDLER(create_named_pipe)
     }
 
     release_object( pipe );
-}
-
-DECL_HANDLER(get_named_pipe_info)
-{
-    struct pipe_end *pipe_end;
-
-    pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
-                                                  FILE_READ_ATTRIBUTES, &pipe_server_ops );
-    if (!pipe_end)
-    {
-        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
-            return;
-
-        clear_error();
-        pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
-                                                      FILE_READ_ATTRIBUTES, &pipe_client_ops );
-        if (!pipe_end) return;
-    }
-
-    if (pipe_end->pipe)
-    {
-        reply->flags        = pipe_end->flags;
-        reply->sharing      = pipe_end->pipe->sharing;
-        reply->maxinstances = pipe_end->pipe->maxinstances;
-        reply->instances    = pipe_end->pipe->instances;
-        reply->insize       = pipe_end->pipe->insize;
-        reply->outsize      = pipe_end->pipe->outsize;
-
-        if (pipe_end->obj.ops == &pipe_server_ops) reply->flags |= NAMED_PIPE_SERVER_END;
-    }
-    else set_error( STATUS_PIPE_DISCONNECTED );
-
-    release_object( pipe_end );
 }
 
 DECL_HANDLER(set_named_pipe_info)

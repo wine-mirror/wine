@@ -2459,18 +2459,6 @@ enum message_type
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 #define NAMED_PIPE_SERVER_END           0x8000
 
-/* Get named pipe information by handle */
-@REQ(get_named_pipe_info)
-    obj_handle_t   handle;
-@REPLY
-    unsigned int   flags;
-    unsigned int   sharing;
-    unsigned int   maxinstances;
-    unsigned int   instances;
-    unsigned int   outsize;
-    unsigned int   insize;
-@END
-
 /* Set named pipe information by handle */
 @REQ(set_named_pipe_info)
     obj_handle_t   handle;

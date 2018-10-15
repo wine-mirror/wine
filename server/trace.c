@@ -3020,21 +3020,6 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
-static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_reply *req )
-{
-    fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", sharing=%08x", req->sharing );
-    fprintf( stderr, ", maxinstances=%08x", req->maxinstances );
-    fprintf( stderr, ", instances=%08x", req->instances );
-    fprintf( stderr, ", outsize=%08x", req->outsize );
-    fprintf( stderr, ", insize=%08x", req->insize );
-}
-
 static void dump_set_named_pipe_info_request( const struct set_named_pipe_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4700,7 +4685,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_ioctl_request,
     (dump_func)dump_set_irp_result_request,
     (dump_func)dump_create_named_pipe_request,
-    (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_set_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
@@ -4993,7 +4977,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_ioctl_reply,
     NULL,
     (dump_func)dump_create_named_pipe_reply,
-    (dump_func)dump_get_named_pipe_info_reply,
     NULL,
     (dump_func)dump_create_window_reply,
     NULL,
@@ -5286,7 +5269,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "ioctl",
     "set_irp_result",
     "create_named_pipe",
-    "get_named_pipe_info",
     "set_named_pipe_info",
     "create_window",
     "destroy_window",
