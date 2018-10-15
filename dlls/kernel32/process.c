@@ -2041,7 +2041,7 @@ static BOOL terminate_main_thread(void)
 /***********************************************************************
  *           exec_loader
  */
-static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
+static pid_t exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned int flags, int socketfd,
                           int stdin_fd, int stdout_fd, const char *unixdir, char *winedebug,
                           const pe_image_info_t *pe_info, int exec_only )
 {
@@ -2050,7 +2050,7 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
     const char *loader = NULL;
     char **argv;
 
-    argv = build_argv( cmd_line, 1 );
+    argv = build_argv( params->CommandLine.Buffer, 1 );
 
     if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
@@ -2197,16 +2197,14 @@ static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct
  * Create a new process. If hFile is a valid handle we have an exe
  * file, otherwise it is a Winelib app.
  */
-static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
-                            LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                            BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
+static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                            BOOL inherit, DWORD flags, const RTL_USER_PROCESS_PARAMETERS *params,
                             LPPROCESS_INFORMATION info, LPCSTR unixdir,
                             const pe_image_info_t *pe_info, int exec_only )
 {
     NTSTATUS status;
     BOOL success = FALSE;
     HANDLE process_info, process_handle = 0;
-    RTL_USER_PROCESS_PARAMETERS *params;
     struct object_attributes *objattr;
     data_size_t attr_len;
     WCHAR *env_end;
@@ -2249,14 +2247,15 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         switch (status)
         {
         case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_w(filename) );
+            ERR( "64-bit application %s not supported in 32-bit prefix\n",
+                 debugstr_w( params->ImagePathName.Buffer ));
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_w(filename), cpu_names[pe_info->cpu] );
+                 debugstr_w( params->ImagePathName.Buffer ), cpu_names[pe_info->cpu] );
             break;
         case STATUS_SUCCESS:
-            exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
+            exec_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
                          winedebug, pe_info, TRUE );
         }
         close( socketfd[0] );
@@ -2264,13 +2263,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         return FALSE;
     }
 
-    RtlAcquirePebLock();
-
-    if (!(params = create_process_params( filename, cmd_line, cur_dir, env, flags, startup )) ||
-        !(startup_info = create_startup_info( params, &startup_info_size )))
+    if (!(startup_info = create_startup_info( params, &startup_info_size )))
     {
-        RtlDestroyProcessParameters( params );
-        RtlReleasePebLock();
         close( socketfd[0] );
         close( socketfd[1] );
         return FALSE;
@@ -2338,18 +2332,17 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         HeapFree( GetProcessHeap(), 0, objattr );
     }
 
-    RtlDestroyProcessParameters( params );
-    RtlReleasePebLock();
     if (status)
     {
         switch (status)
         {
         case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_w(filename) );
+            ERR( "64-bit application %s not supported in 32-bit prefix\n",
+                 debugstr_w( params->ImagePathName.Buffer ));
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_w(filename), cpu_names[pe_info->cpu] );
+                 debugstr_w( params->ImagePathName.Buffer ), cpu_names[pe_info->cpu] );
             break;
         }
         close( socketfd[0] );
@@ -2373,7 +2366,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     /* create the child process */
 
-    pid = exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
+    pid = exec_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
                        winedebug, pe_info, FALSE );
 
     if (stdin_fd != -1) close( stdin_fd );
@@ -2421,33 +2414,57 @@ error:
  *
  * Create a new VDM process for a 16-bit or DOS application.
  */
-static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, LPCWSTR cur_dir,
-                                LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                                BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
+static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                                BOOL inherit, DWORD flags, const RTL_USER_PROCESS_PARAMETERS *params,
                                 LPPROCESS_INFORMATION info, LPCSTR unixdir, int exec_only )
 {
     static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
 
     BOOL ret;
-    WCHAR buffer[MAX_PATH];
     LPWSTR new_cmd_line;
     pe_image_info_t pe_info;
-
-    if (!(ret = GetFullPathNameW(filename, MAX_PATH, buffer, NULL)))
-	return FALSE;
+    RTL_USER_PROCESS_PARAMETERS *new_params;
+    UNICODE_STRING imageW, cmdlineW;
 
     new_cmd_line = HeapAlloc(GetProcessHeap(), 0,
-			     (strlenW(buffer) + strlenW(cmd_line) + strlenW(winevdm) + 16) * sizeof(WCHAR));
+			     (strlenW(params->ImagePathName.Buffer) +
+                              strlenW(params->CommandLine.Buffer) +
+                              strlenW(winevdm) + 16) * sizeof(WCHAR));
     if (!new_cmd_line)
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;
     }
-    sprintfW(new_cmd_line, argsW, winevdm, buffer, cmd_line);
+    sprintfW( new_cmd_line, argsW, winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+    RtlInitUnicodeString( &imageW, winevdm );
+    RtlInitUnicodeString( &cmdlineW, new_cmd_line );
+    if (RtlCreateProcessParametersEx( &new_params, &imageW, &params->DllPath,
+                                      &params->CurrentDirectory.DosPath, &cmdlineW,
+                                      params->Environment, &params->WindowTitle, &params->Desktop,
+                                      &params->ShellInfo, &params->RuntimeInfo,
+                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
+    {
+        HeapFree( GetProcessHeap(), 0, new_cmd_line );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+    new_params->hStdInput       = params->hStdInput;
+    new_params->hStdOutput      = params->hStdOutput;
+    new_params->hStdError       = params->hStdError;
+    new_params->dwX             = params->dwX;
+    new_params->dwY             = params->dwY;
+    new_params->dwXSize         = params->dwXSize;
+    new_params->dwYSize         = params->dwYSize;
+    new_params->dwXCountChars   = params->dwXCountChars;
+    new_params->dwYCountChars   = params->dwYCountChars;
+    new_params->dwFillAttribute = params->dwFillAttribute;
+    new_params->dwFlags         = params->dwFlags;
+    new_params->wShowWindow     = params->wShowWindow;
+
     memset( &pe_info, 0, sizeof(pe_info) );
     pe_info.cpu = CPU_x86;
-    ret = create_process( 0, winevdm, new_cmd_line, env, cur_dir, psa, tsa, inherit,
-                          flags, startup, info, unixdir, &pe_info, exec_only );
+    ret = create_process( 0, psa, tsa, inherit, flags, new_params, info, unixdir, &pe_info, exec_only );
+    RtlDestroyProcessParameters( new_params );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
 }
@@ -2458,9 +2475,9 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
  *
  * Create a new cmd shell process for a .BAT file.
  */
-static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env, LPCWSTR cur_dir,
-                                LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+static BOOL create_cmd_process( LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
+                                const RTL_USER_PROCESS_PARAMETERS *params,
                                 LPPROCESS_INFORMATION info )
 
 {
@@ -2478,16 +2495,18 @@ static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env, L
         strcatW( comspec, cmdW );
     }
     if (!(newcmdline = HeapAlloc( GetProcessHeap(), 0,
-                                  (strlenW(comspec) + 7 + strlenW(cmd_line) + 2) * sizeof(WCHAR))))
+                                  (strlenW(comspec) + 7 +
+                                   strlenW(params->CommandLine.Buffer) + 2) * sizeof(WCHAR))))
         return FALSE;
 
     strcpyW( newcmdline, comspec );
     strcatW( newcmdline, slashscW );
     strcatW( newcmdline, quotW );
-    strcatW( newcmdline, cmd_line );
+    strcatW( newcmdline, params->CommandLine.Buffer );
     strcatW( newcmdline, quotW );
     ret = CreateProcessW( comspec, newcmdline, psa, tsa, inherit,
-                          flags, env, cur_dir, startup, info );
+                          flags, params->Environment, cur_dir,
+                          startup, info );
     HeapFree( GetProcessHeap(), 0, newcmdline );
     return ret;
 }
@@ -2590,6 +2609,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     char *unixdir = NULL;
     WCHAR name[MAX_PATH];
     WCHAR *tidy_cmdline, *p, *envW = env;
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
     pe_image_info_t pe_info;
     enum binary_type type;
     BOOL is_64bit;
@@ -2652,6 +2672,12 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
 
+    if (!(params = create_process_params( name, tidy_cmdline, cur_dir, envW, flags, startup_info )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto done;
+    }
+
     if (!hFile)
     {
         memset( &pe_info, 0, sizeof(pe_info) );
@@ -2682,19 +2708,19 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
                cpu_names[pe_info.cpu] );
-        retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
+        retv = create_process( hFile, process_attr, thread_attr,
+                               inherit, flags, params, info, unixdir, &pe_info, FALSE );
         break;
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                   inherit, flags, startup_info, info, unixdir, FALSE );
+        retv = create_vdm_process( process_attr, thread_attr,
+                                   inherit, flags, params, info, unixdir, FALSE );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "starting %s as %d-bit Winelib app\n",
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32 );
-        retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, &pe_info, FALSE );
+        retv = create_process( hFile, process_attr, thread_attr,
+                               inherit, flags, params, info, unixdir, &pe_info, FALSE );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .bat extension */
@@ -2703,15 +2729,15 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             if (!strcmpiW( p, comW ) || !strcmpiW( p, pifW ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
-                retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                           inherit, flags, startup_info, info, unixdir, FALSE );
+                retv = create_vdm_process( process_attr, thread_attr,
+                                           inherit, flags, params, info, unixdir, FALSE );
                 break;
             }
             if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
             {
                 TRACE( "starting %s as batch binary\n", debugstr_w(name) );
-                retv = create_cmd_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                           inherit, flags, startup_info, info );
+                retv = create_cmd_process( cur_dir, process_attr, thread_attr,
+                                           inherit, flags, startup_info, params, info );
                 break;
             }
         }
@@ -2734,6 +2760,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     if (hFile) CloseHandle( hFile );
 
  done:
+    RtlDestroyProcessParameters( params );
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
     HeapFree( GetProcessHeap(), 0, unixdir );
@@ -2805,7 +2832,8 @@ static void exec_process( LPCWSTR name )
 {
     HANDLE hFile;
     WCHAR *p;
-    STARTUPINFOW startup_info;
+    STARTUPINFOW startup_info = { sizeof(startup_info) };
+    RTL_USER_PROCESS_PARAMETERS *params;
     PROCESS_INFORMATION info;
     pe_image_info_t pe_info;
     BOOL is_64bit;
@@ -2813,8 +2841,8 @@ static void exec_process( LPCWSTR name )
     hFile = open_exe_file( name, &is_64bit );
     if (!hFile || hFile == INVALID_HANDLE_VALUE) return;
 
-    memset( &startup_info, 0, sizeof(startup_info) );
-    startup_info.cb = sizeof(startup_info);
+    if (!(params = create_process_params( name, GetCommandLineW(), NULL, NULL, 0, &startup_info )))
+        return;
 
     /* Determine executable type */
 
@@ -2826,13 +2854,11 @@ static void exec_process( LPCWSTR name )
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
                cpu_names[pe_info.cpu] );
-        create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                        FALSE, 0, &startup_info, &info, NULL, &pe_info, TRUE );
+        create_process( hFile, NULL, NULL, FALSE, 0, params, &info, NULL, &pe_info, TRUE );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
-        create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                        FALSE, 0, &startup_info, &info, NULL, &pe_info, TRUE );
+        create_process( hFile, NULL, NULL, FALSE, 0, params, &info, NULL, &pe_info, TRUE );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .pif extension */
@@ -2841,8 +2867,7 @@ static void exec_process( LPCWSTR name )
         /* fall through */
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        create_vdm_process( name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                            FALSE, 0, &startup_info, &info, NULL, TRUE );
+        create_vdm_process( NULL, NULL, FALSE, 0, params, &info, NULL, TRUE );
         break;
     default:
         break;
