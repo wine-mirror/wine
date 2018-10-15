@@ -1351,11 +1351,14 @@ static inline BOOL iterator_rangesitems(ITERATOR* i, RANGES ranges)
 static BOOL iterator_frameditems_absolute(ITERATOR* i, const LISTVIEW_INFO* infoPtr, const RECT *frame)
 {
     RECT rcItem, rcTemp;
-    
+
+    TRACE("(frame=%s)\n", wine_dbgstr_rect(frame));
+
     /* in case we fail, we want to return an empty iterator */
     if (!iterator_empty(i)) return FALSE;
 
-    TRACE("(frame=%s)\n", wine_dbgstr_rect(frame));
+    if (infoPtr->nItemCount == 0)
+        return TRUE;
 
     if (infoPtr->uView == LV_VIEW_ICON || infoPtr->uView == LV_VIEW_SMALLICON)
     {
