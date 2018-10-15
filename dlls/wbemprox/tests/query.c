@@ -398,7 +398,7 @@ static void test_Win32_Bios( IWbemServices *services )
     SysFreeString( wql );
 }
 
-static void test_Win32_Process( IWbemServices *services )
+static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
 {
     static const WCHAR returnvalueW[] = {'R','e','t','u','r','n','V','a','l','u','e',0};
     static const WCHAR getownerW[] = {'G','e','t','O','w','n','e','r',0};
@@ -408,18 +408,33 @@ static void test_Win32_Process( IWbemServices *services )
     static const WCHAR idW[] = {'I','D',0};
     static const WCHAR fmtW[] = {'W','i','n','3','2','_','P','r','o','c','e','s','s','.',
         'H','a','n','d','l','e','=','"','%','u','"',0};
+    static const WCHAR full_path_fmt[] =
+        {'\\','\\','%','s','\\','R','O','O','T','\\','C','I','M','V','2',':',0};
     static const LONG expected_flavor = WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE |
                                         WBEM_FLAVOR_NOT_OVERRIDABLE |
                                         WBEM_FLAVOR_ORIGIN_PROPAGATED;
+    WCHAR full_path[MAX_COMPUTERNAME_LENGTH + ARRAY_SIZE(full_path_fmt)];
     BSTR class, method;
     IWbemClassObject *process, *out;
     IWbemQualifierSet *qualifiers;
     VARIANT user, domain, retval, val;
+    DWORD full_path_len = 0;
     LONG flavor;
     CIMTYPE type;
     HRESULT hr;
 
-    class = SysAllocString( processW );
+    if (use_full_path)
+    {
+        WCHAR server[MAX_COMPUTERNAME_LENGTH+1];
+
+        full_path_len = ARRAY_SIZE(server);
+        ok( GetComputerNameW(server, &full_path_len), "GetComputerName failed\n" );
+        full_path_len = wsprintfW(full_path, full_path_fmt, server);
+    }
+
+    class = SysAllocStringLen( NULL, full_path_len + ARRAY_SIZE( processW ) );
+    memcpy( class, full_path, full_path_len * sizeof(WCHAR) );
+    memcpy( class + full_path_len, processW, sizeof(processW) );
     hr = IWbemServices_GetObject( services, class, 0, NULL, &process, NULL );
     SysFreeString( class );
     if (hr != S_OK)
@@ -433,8 +448,9 @@ static void test_Win32_Process( IWbemServices *services )
 
     out = NULL;
     method = SysAllocString( getownerW );
-    class = SysAllocStringLen( NULL, ARRAY_SIZE( fmtW ) + 10 );
-    wsprintfW( class, fmtW, GetCurrentProcessId() );
+    class = SysAllocStringLen( NULL, full_path_len + ARRAY_SIZE( fmtW ) + 10 );
+    memcpy( class, full_path, full_path_len * sizeof(WCHAR) );
+    wsprintfW( class + full_path_len, fmtW, GetCurrentProcessId() );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
     ok( hr == S_OK, "failed to execute method %08x\n", hr );
     SysFreeString( method );
@@ -1860,7 +1876,8 @@ START_TEST(query)
     test_select( services );
     test_associators( services );
     test_Win32_Bios( services );
-    test_Win32_Process( services );
+    test_Win32_Process( services, FALSE );
+    test_Win32_Process( services, TRUE );
     test_Win32_Service( services );
     test_Win32_ComputerSystem( services );
     test_Win32_SystemEnclosure( services );
