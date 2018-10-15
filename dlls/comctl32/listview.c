@@ -1808,7 +1808,7 @@ static inline INT LISTVIEW_GetCountPerColumn(const LISTVIEW_INFO *infoPtr)
 {
     INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
 
-    return max(nListHeight / infoPtr->nItemHeight, 1);
+    return infoPtr->nItemHeight ? max(nListHeight / infoPtr->nItemHeight, 1) : 0;
 }
 
 

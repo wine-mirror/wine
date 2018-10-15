@@ -6398,6 +6398,76 @@ static void test_LVN_ENDLABELEDIT(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT CALLBACK create_item_height_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_CREATE)
+        return 0;
+
+    return CallWindowProcA(listviewWndProc, hwnd, msg, wParam, lParam);
+}
+
+static void test_LVM_GETCOUNTPERPAGE(void)
+{
+    static const DWORD styles[] = { LVS_ICON, LVS_LIST, LVS_REPORT, LVS_SMALLICON };
+    unsigned int i, j;
+    WNDCLASSEXA cls;
+    ATOM class;
+    HWND hwnd;
+    BOOL ret;
+
+    cls.cbSize = sizeof(WNDCLASSEXA);
+    ret = GetClassInfoExA(GetModuleHandleA(NULL), WC_LISTVIEWA, &cls);
+    ok(ret, "Failed to get class info.\n");
+    listviewWndProc = cls.lpfnWndProc;
+    cls.lpfnWndProc = create_item_height_wndproc;
+    cls.lpszClassName = "CountPerPageClass";
+    class = RegisterClassExA(&cls);
+    ok(class, "Failed to register class.\n");
+
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        static char text[] = "item text";
+        LVITEMA item = { 0 };
+        UINT count, count2;
+
+        hwnd = create_listview_control(styles[i]);
+        ok(hwnd != NULL, "Failed to create listview window.\n");
+
+        count = SendMessageA(hwnd, LVM_GETCOUNTPERPAGE, 0, 0);
+        if (styles[i] == LVS_LIST || styles[i] == LVS_REPORT)
+            ok(count > 0 || broken(styles[i] == LVS_LIST && count == 0), "%u: unexpected count %u.\n", i, count);
+        else
+            ok(count == 0, "%u: unexpected count %u.\n", i, count);
+
+        for (j = 0; j < 10; j++)
+        {
+            item.mask = LVIF_TEXT;
+            item.pszText = text;
+            SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+        }
+
+        count2 = SendMessageA(hwnd, LVM_GETCOUNTPERPAGE, 0, 0);
+        if (styles[i] == LVS_LIST || styles[i] == LVS_REPORT)
+            ok(count == count2, "%u: unexpected count %u.\n", i, count2);
+        else
+            ok(count2 == 10, "%u: unexpected count %u.\n", i, count2);
+
+        DestroyWindow(hwnd);
+
+        hwnd = CreateWindowA("CountPerPageClass", "Test", WS_VISIBLE | styles[i], 0, 0, 100, 100, NULL, NULL,
+            GetModuleHandleA(NULL), 0);
+        ok(hwnd != NULL, "Failed to create a window.\n");
+
+        count = SendMessageA(hwnd, LVM_GETCOUNTPERPAGE, 0, 0);
+        ok(count == 0, "%u: unexpected count %u.\n", i, count);
+
+        DestroyWindow(hwnd);
+    }
+
+    ret = UnregisterClassA("CountPerPageClass", NULL);
+    ok(ret, "Failed to unregister test class.\n");
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -6460,6 +6530,7 @@ START_TEST(listview)
     test_state_image();
     test_LVSCW_AUTOSIZE();
     test_LVN_ENDLABELEDIT();
+    test_LVM_GETCOUNTPERPAGE();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -6503,6 +6574,7 @@ START_TEST(listview)
     test_state_image();
     test_LVSCW_AUTOSIZE();
     test_LVN_ENDLABELEDIT();
+    test_LVM_GETCOUNTPERPAGE();
 
     unload_v6_module(ctx_cookie, hCtx);
 
