@@ -2301,24 +2301,26 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event, dispatch_mode_t dispatch_mode)
 {
     const listener_container_t *container = get_listener_container(event_target, event->type, FALSE);
-    const BOOL use_quirks = use_event_quirks(event_target);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
     unsigned listeners_cnt, listeners_size;
     ConnectionPointContainer *cp_container = NULL;
     const event_target_vtbl_t *vtbl = NULL;
+    BOOL skip_onevent_listener = FALSE;
     VARIANT v;
     HRESULT hres;
 
     assert(!event->current_target);
     event->current_target = event_target;
 
-    if(use_quirks && container && !list_empty(&container->listeners)
-       && event->phase != DEP_CAPTURING_PHASE) {
+    if(container && !list_empty(&container->listeners) && event->phase != DEP_CAPTURING_PHASE) {
         listener = LIST_ENTRY(list_tail(&container->listeners), event_listener_t, entry);
-        if(listener && listener->function && listener->type == LISTENER_TYPE_ONEVENT) {
+        if(listener && listener->function && listener->type == LISTENER_TYPE_ONEVENT
+                && use_event_quirks(event_target)) {
             DISPID named_arg = DISPID_THIS;
             VARIANTARG arg;
             DISPPARAMS dp = {&arg, &named_arg, 1, 1};
+
+            skip_onevent_listener = TRUE;
 
             V_VT(&arg) = VT_DISPATCH;
             V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
@@ -2353,7 +2355,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 continue;
             switch(listener->type) {
             case LISTENER_TYPE_ONEVENT:
-                if(use_quirks || event->phase == DEP_CAPTURING_PHASE)
+                if(skip_onevent_listener || event->phase == DEP_CAPTURING_PHASE)
                     continue;
                 break;
             case LISTENER_TYPE_CAPTURE:
