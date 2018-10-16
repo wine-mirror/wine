@@ -35,6 +35,7 @@
 #include "rpcdce.h"
 #include "rpcproxy.h"
 #include "midles.h"
+#include "ndrtypes.h"
 
 static int my_alloc_called;
 static int my_free_called;
@@ -154,17 +155,17 @@ static void test_ndr_simple_type(void)
     StubMsg.BufferLength = 16;
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     l = 0xcafebabe;
-    NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, 8 /* FC_LONG */);
+    NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, FC_LONG);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 4, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
     ok(*(LONG*)StubMsg.BufferStart == l, "%d\n", *(LONG*)StubMsg.BufferStart);
 
     StubMsg.Buffer = StubMsg.BufferStart + 1;
-    NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, 8 /* FC_LONG */);
+    NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, FC_LONG);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 8, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
     ok(*(LONG*)(StubMsg.BufferStart + 4) == l, "%d\n", *(LONG*)StubMsg.BufferStart);
 
     StubMsg.Buffer = StubMsg.BufferStart + 1;
-    NdrSimpleTypeUnmarshall(&StubMsg, (unsigned char*)&l2, 8 /* FC_LONG */);
+    NdrSimpleTypeUnmarshall(&StubMsg, (unsigned char*)&l2, FC_LONG);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 8, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
     ok(l2 == l, "%d\n", l2);
 
@@ -230,7 +231,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     size = NdrPointerMemorySize( &StubMsg, formattypes );
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
+    if (formattypes[1] & FC_POINTER_DEREF)
         ok(size == srcsize + sizeof(void *), "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize, "%s: mem size %u\n", msgpfx, size);
@@ -240,7 +241,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     size = NdrPointerMemorySize( &StubMsg, formattypes );
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
+    if (formattypes[1] & FC_POINTER_DEREF)
         ok(size == srcsize + sizeof(void *) + 16, "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize + 16, "%s: mem size %u\n", msgpfx, size);
@@ -250,19 +251,19 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     size = NdrPointerMemorySize( &StubMsg, formattypes );
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
+    if (formattypes[1] & FC_POINTER_DEREF)
         ok(size == srcsize + sizeof(void *) + (srcsize == 8 ? 8 : sizeof(void *)), "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize + (srcsize == 8 ? 8 : sizeof(void *)), "%s: mem size %u\n", msgpfx, size);
 
     size = srcsize;
-    if(formattypes[1] & 0x10) size += 4;
+    if (formattypes[1] & FC_POINTER_DEREF) size += 4;
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
     mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
+    if (formattypes[1] & FC_POINTER_DEREF)
         *(void**)mem = NULL;
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
@@ -275,7 +276,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
 
     /* reset the buffer and call with must alloc */
     StubMsg.Buffer = StubMsg.BufferStart;
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
+    if (formattypes[1] & FC_POINTER_DEREF)
         *(void**)mem = NULL;
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 1 );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
@@ -291,7 +292,7 @@ todo_wine {
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
 }
     my_alloc_called = 0;
-    if(formattypes[0] != 0x11 /* FC_RP */)
+    if (formattypes[0] != FC_RP)
     {
         /* now pass the address of a NULL ptr */
         mem = NULL;
@@ -314,14 +315,15 @@ todo_wine {
             StubMsg.IsClient = 0;
             ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
             ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
-            if (formattypes[2] == 0xd /* FC_ENUM16 */)
+            if (formattypes[2] == FC_ENUM16)
                 ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
             else
                 ok(mem == StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem doesn't point to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
             ok(!cmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
             ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
             ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
-            if (formattypes[2] != 0xd /* FC_ENUM16 */) {
+            if (formattypes[2] != FC_ENUM16)
+            {
                 ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
                 my_alloc_called = 0;
             }
