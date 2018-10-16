@@ -25,8 +25,8 @@
 #include "windows.h"
 #include "shobjidl.h"
 #include "shlguid.h"
-#include "initguid.h"
 #include "shldisp.h"
+#include "shlobj.h"
 
 #include "wine/heap.h"
 #include "wine/test.h"
@@ -269,10 +269,13 @@ static LRESULT CALLBACK HijackerWndProc2(HWND hWnd, UINT msg, WPARAM wParam, LPA
 struct string_enumerator
 {
     IEnumString IEnumString_iface;
+    IACList IACList_iface;
     LONG ref;
     WCHAR **data;
     int data_len;
     int cur;
+    UINT num_expand;
+    WCHAR last_expand[32];
 };
 
 static struct string_enumerator *impl_from_IEnumString(IEnumString *iface)
@@ -282,15 +285,19 @@ static struct string_enumerator *impl_from_IEnumString(IEnumString *iface)
 
 static HRESULT WINAPI string_enumerator_QueryInterface(IEnumString *iface, REFIID riid, void **ppv)
 {
+    struct string_enumerator *this = impl_from_IEnumString(iface);
     if (IsEqualGUID(riid, &IID_IEnumString) || IsEqualGUID(riid, &IID_IUnknown))
+        *ppv = &this->IEnumString_iface;
+    else if (IsEqualGUID(riid, &IID_IACList))
+        *ppv = &this->IACList_iface;
+    else
     {
-        IUnknown_AddRef(iface);
-        *ppv = iface;
-        return S_OK;
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef(&this->IEnumString_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI string_enumerator_AddRef(IEnumString *iface)
@@ -361,7 +368,7 @@ static HRESULT WINAPI string_enumerator_Clone(IEnumString *iface, IEnumString **
     return E_NOTIMPL;
 }
 
-static IEnumStringVtbl string_enumerator_vtlb =
+static IEnumStringVtbl string_enumerator_vtbl =
 {
     string_enumerator_QueryInterface,
     string_enumerator_AddRef,
@@ -372,12 +379,54 @@ static IEnumStringVtbl string_enumerator_vtlb =
     string_enumerator_Clone
 };
 
+static struct string_enumerator *impl_from_IACList(IACList *iface)
+{
+    return CONTAINING_RECORD(iface, struct string_enumerator, IACList_iface);
+}
+
+static HRESULT WINAPI aclist_QueryInterface(IACList *iface, REFIID riid, void **ppv)
+{
+    return string_enumerator_QueryInterface(&impl_from_IACList(iface)->IEnumString_iface, riid, ppv);
+}
+
+static ULONG WINAPI aclist_AddRef(IACList *iface)
+{
+    return string_enumerator_AddRef(&impl_from_IACList(iface)->IEnumString_iface);
+}
+
+static ULONG WINAPI aclist_Release(IACList *iface)
+{
+    return string_enumerator_Release(&impl_from_IACList(iface)->IEnumString_iface);
+}
+
+static HRESULT WINAPI aclist_Expand(IACList *iface, const WCHAR *expand)
+{
+    struct string_enumerator *this = impl_from_IACList(iface);
+
+    /* see what we get called with and how many times,
+       don't actually do any expansion of the strings */
+    memcpy(this->last_expand, expand, min((lstrlenW(expand) + 1)*sizeof(WCHAR), sizeof(this->last_expand)));
+    this->last_expand[ARRAY_SIZE(this->last_expand) - 1] = '\0';
+    this->num_expand++;
+
+    return S_OK;
+}
+
+static IACListVtbl aclist_vtbl =
+{
+    aclist_QueryInterface,
+    aclist_AddRef,
+    aclist_Release,
+    aclist_Expand
+};
+
 static HRESULT string_enumerator_create(void **ppv, WCHAR **suggestions, int count)
 {
     struct string_enumerator *object;
 
     object = heap_alloc_zero(sizeof(*object));
-    object->IEnumString_iface.lpVtbl = &string_enumerator_vtlb;
+    object->IEnumString_iface.lpVtbl = &string_enumerator_vtbl;
+    object->IACList_iface.lpVtbl = &aclist_vtbl;
     object->ref = 1;
     object->data = suggestions;
     object->data_len = count;
@@ -397,6 +446,53 @@ static void dispatch_messages(void)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
+}
+
+static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
+{
+    struct string_enumerator *obj = (struct string_enumerator*)enumerator;
+    static WCHAR str1[] = {'t','e','s','t',0};
+    static WCHAR str1a[] = {'t','e','s','t','\\',0};
+    static WCHAR str2[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a',0};
+    static WCHAR str2a[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\',0};
+    static WCHAR str2b[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a','z','_','b','b','q','\\',0};
+
+    ok(obj->num_expand == 0, "Expected 0 expansions, got %u\n", obj->num_expand);
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str1);
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str1) - 1, ARRAY_SIZE(str1) - 1);
+    SendMessageW(hwnd_edit, WM_CHAR, '\\', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 1, "Expected 1 expansion, got %u\n", obj->num_expand);
+    ok(lstrcmpW(obj->last_expand, str1a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str1a), wine_dbgstr_w(obj->last_expand));
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str2);
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str2) - 1, ARRAY_SIZE(str2) - 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'z', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 2, "Expected 2 expansions, got %u\n", obj->num_expand);
+    ok(lstrcmpW(obj->last_expand, str2a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str2a), wine_dbgstr_w(obj->last_expand));
+    SetFocus(hwnd_edit);
+    SendMessageW(hwnd_edit, WM_CHAR, '_', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'b', 1);
+    SetFocus(0);
+    SetFocus(hwnd_edit);
+    SendMessageW(hwnd_edit, WM_CHAR, 'b', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'q', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 2, "Expected 2 expansions, got %u\n", obj->num_expand);
+    SendMessageW(hwnd_edit, WM_CHAR, '\\', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 3, "Expected 3 expansions, got %u\n", obj->num_expand);
+    ok(lstrcmpW(obj->last_expand, str2b) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str2b), wine_dbgstr_w(obj->last_expand));
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str1a) - 1, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'y', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 4, "Expected 4 expansions, got %u\n", obj->num_expand);
+    ok(lstrcmpW(obj->last_expand, str1a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str1a), wine_dbgstr_w(obj->last_expand));
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str1) - 1, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
+    dispatch_messages();
+    ok(obj->num_expand == 4, "Expected 4 expansions, got %u\n", obj->num_expand);
 }
 
 static void test_custom_source(void)
@@ -463,6 +559,8 @@ static void test_custom_source(void)
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
     /* end of hijacks */
+
+    test_aclist_expand(hwnd_edit, enumerator);
 
     ShowWindow(hMainWnd, SW_HIDE);
     DestroyWindow(hwnd_edit);
