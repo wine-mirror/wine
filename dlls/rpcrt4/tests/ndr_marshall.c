@@ -437,7 +437,6 @@ todo_wine
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
     if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
-todo_wine
         ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
     else
         ok(mem != mem_orig, "%s: mem has not changed\n", msgpfx);
@@ -849,10 +848,9 @@ static void test_nontrivial_pointer_types(void)
     *(void **)mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, &fmtstr_ref_unique_out[4], 0);
-    todo_wine {
-        ok(mem == mem_orig, "mem alloced\n");
-        ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
-    }
+    ok(mem == mem_orig, "mem alloced\n");
+todo_wine
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 
     my_alloc_called = 0;
     mem = mem_orig;

@@ -944,7 +944,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
        * setting the pointer to the buffer, if possible, or set fMustAlloc to
        * TRUE. */
       if (attr & FC_POINTER_DEREF) {
-        fMustAlloc = TRUE;
+        if (pSrcPointer && (attr & FC_ALLOCED_ON_STACK))
+          *pPointer = pSrcPointer;
+        else
+          fMustAlloc = TRUE;
       } else {
         *current_ptr = NULL;
       }
