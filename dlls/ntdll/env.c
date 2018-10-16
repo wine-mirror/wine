@@ -453,8 +453,9 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     static const UNICODE_STRING null_str = { 0, 0, NULL };
 
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    SIZE_T size, total_size;
+    SIZE_T size, env_size, total_size;
     void *ptr;
+    const WCHAR *env;
     NTSTATUS status;
 
     RtlAcquirePebLock();
@@ -474,6 +475,11 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!ShellInfo) ShellInfo = &empty_str;
     if (!RuntimeInfo) RuntimeInfo = &null_str;
 
+    env = Environment;
+    while (*env) env += strlenW(env) + 1;
+    env++;
+    env_size = (env - Environment) * sizeof(WCHAR);
+
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
             + ImagePathName->MaximumLength
             + DllPath->MaximumLength
@@ -484,7 +490,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
             + ShellInfo->MaximumLength
             + RuntimeInfo->MaximumLength);
 
-    total_size = size;
+    total_size = size + env_size;
     ptr = NULL;
     if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &total_size,
                                            MEM_COMMIT, PAGE_READWRITE )) == STATUS_SUCCESS)
@@ -494,7 +500,6 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         params->Size           = size;
         params->Flags          = PROCESS_PARAMS_FLAG_NORMALIZED;
         params->ConsoleFlags   = cur_params->ConsoleFlags;
-        params->Environment    = Environment;
         /* all other fields are zero */
 
         ptr = params + 1;
@@ -506,6 +511,8 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         append_unicode_string( &ptr, Desktop, &params->Desktop );
         append_unicode_string( &ptr, ShellInfo, &params->ShellInfo );
         append_unicode_string( &ptr, RuntimeInfo, &params->RuntimeInfo );
+        params->Environment = ptr;
+        memcpy( ptr, Environment, (env - Environment) * sizeof(WCHAR) );
         *result = params;
         if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
     }
