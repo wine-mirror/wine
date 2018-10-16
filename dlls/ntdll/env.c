@@ -460,10 +460,10 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
 
     UNICODE_STRING curdir;
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    SIZE_T size, env_size, total_size;
+    SIZE_T size, env_size;
     void *ptr;
     const WCHAR *env;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
 
     RtlAcquirePebLock();
     cur_params = NtCurrentTeb()->Peb->ProcessParameters;
@@ -500,13 +500,10 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
             + ROUND_SIZE( ShellInfo->MaximumLength )
             + ROUND_SIZE( RuntimeInfo->MaximumLength ));
 
-    total_size = size + env_size;
-    ptr = NULL;
-    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &total_size,
-                                           MEM_COMMIT, PAGE_READWRITE )) == STATUS_SUCCESS)
+    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + env_size )))
     {
         RTL_USER_PROCESS_PARAMETERS *params = ptr;
-        params->AllocationSize = total_size;
+        params->AllocationSize = size;
         params->Size           = size;
         params->Flags          = PROCESS_PARAMS_FLAG_NORMALIZED;
         params->ConsoleFlags   = cur_params->ConsoleFlags;
@@ -526,6 +523,8 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         *result = params;
         if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
     }
+    else status = STATUS_NO_MEMORY;
+
     RtlReleasePebLock();
     return status;
 }
@@ -555,7 +554,5 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
  */
 void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 {
-    void *ptr = params;
-    SIZE_T size = 0;
-    NtFreeVirtualMemory( NtCurrentProcess(), &ptr, &size, MEM_RELEASE );
+    RtlFreeHeap( GetProcessHeap(), 0, params );
 }
