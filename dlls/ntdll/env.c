@@ -421,15 +421,21 @@ PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams( RTL_USER_PROCES
 }
 
 
+#define ROUND_SIZE(size) (((size) + sizeof(void *) - 1) & ~(sizeof(void *) - 1))
+
 /* append a unicode string to the process params data; helper for RtlCreateProcessParameters */
 static void append_unicode_string( void **data, const UNICODE_STRING *src,
                                    UNICODE_STRING *dst )
 {
     dst->Length = src->Length;
     dst->MaximumLength = src->MaximumLength;
-    dst->Buffer = *data;
-    memcpy( dst->Buffer, src->Buffer, dst->MaximumLength );
-    *data = (char *)dst->Buffer + dst->MaximumLength;
+    if (dst->MaximumLength)
+    {
+        dst->Buffer = *data;
+        memcpy( dst->Buffer, src->Buffer, dst->Length );
+        *data = (char *)dst->Buffer + ROUND_SIZE( dst->MaximumLength );
+    }
+    else dst->Buffer = NULL;
 }
 
 
@@ -482,17 +488,17 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     env = Environment;
     while (*env) env += strlenW(env) + 1;
     env++;
-    env_size = (env - Environment) * sizeof(WCHAR);
+    env_size = ROUND_SIZE( (env - Environment) * sizeof(WCHAR) );
 
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
-            + ImagePathName->MaximumLength
-            + DllPath->MaximumLength
-            + CurrentDirectoryName->MaximumLength
-            + CommandLine->MaximumLength
-            + WindowTitle->MaximumLength
-            + Desktop->MaximumLength
-            + ShellInfo->MaximumLength
-            + RuntimeInfo->MaximumLength);
+            + ROUND_SIZE( ImagePathName->MaximumLength )
+            + ROUND_SIZE( DllPath->MaximumLength )
+            + ROUND_SIZE( curdir.MaximumLength )
+            + ROUND_SIZE( CommandLine->MaximumLength )
+            + ROUND_SIZE( WindowTitle->MaximumLength )
+            + ROUND_SIZE( Desktop->MaximumLength )
+            + ROUND_SIZE( ShellInfo->MaximumLength )
+            + ROUND_SIZE( RuntimeInfo->MaximumLength ));
 
     total_size = size + env_size;
     ptr = NULL;
