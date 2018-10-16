@@ -1843,17 +1843,30 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
  *           create_process_params
  */
 static RTL_USER_PROCESS_PARAMETERS *create_process_params( LPCWSTR filename, LPCWSTR cmdline,
-                                                           LPCWSTR cur_dir, LPWSTR env, DWORD flags,
+                                                           LPCWSTR cur_dir, void *env, DWORD flags,
                                                            const STARTUPINFOW *startup )
 {
     RTL_USER_PROCESS_PARAMETERS *params;
     UNICODE_STRING imageW, curdirW, cmdlineW, titleW, desktopW, runtimeW, newdirW;
     WCHAR imagepath[MAX_PATH];
+    WCHAR *envW = env;
 
     if(!GetLongPathNameW( filename, imagepath, MAX_PATH ))
         lstrcpynW( imagepath, filename, MAX_PATH );
     if(!GetFullPathNameW( imagepath, MAX_PATH, imagepath, NULL ))
         lstrcpynW( imagepath, filename, MAX_PATH );
+
+    if (env && !(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
+    {
+        char *e = env;
+        DWORD lenW;
+
+        while (*e) e += strlen(e) + 1;
+        e++;  /* final null */
+        lenW = MultiByteToWideChar( CP_ACP, 0, env, e - (char *)env, NULL, 0 );
+        if ((envW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, env, e - (char *)env, envW, lenW );
+    }
 
     newdirW.Buffer = NULL;
     if (cur_dir)
@@ -1870,9 +1883,12 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( LPCWSTR filename, LPC
     RtlInitUnicodeString( &desktopW, startup->lpDesktop );
     runtimeW.Buffer = (WCHAR *)startup->lpReserved2;
     runtimeW.Length = runtimeW.MaximumLength = startup->cbReserved2;
-    if (RtlCreateProcessParametersEx( &params, &imageW, NULL, &curdirW, &cmdlineW, env, &titleW,
+    if (RtlCreateProcessParametersEx( &params, &imageW, NULL, &curdirW, &cmdlineW, envW, &titleW,
                                       &desktopW, NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
+    {
+        if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
         return NULL;
+    }
 
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
     if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = KERNEL32_CONSOLE_ALLOC;
@@ -1920,6 +1936,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( LPCWSTR filename, LPC
     params->dwFlags         = startup->dwFlags;
     params->wShowWindow     = startup->wShowWindow;
 
+    if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
     return params;
 }
 
@@ -2482,7 +2499,7 @@ static BOOL create_cmd_process( LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSE
     strcatW( newcmdline, params->CommandLine.Buffer );
     strcatW( newcmdline, quotW );
     ret = CreateProcessW( comspec, newcmdline, psa, tsa, inherit,
-                          flags, params->Environment, cur_dir,
+                          flags | CREATE_UNICODE_ENVIRONMENT, params->Environment, cur_dir,
                           startup, info );
     HeapFree( GetProcessHeap(), 0, newcmdline );
     return ret;
@@ -2585,7 +2602,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     HANDLE hFile = 0;
     char *unixdir = NULL;
     WCHAR name[MAX_PATH];
-    WCHAR *tidy_cmdline, *p, *envW = env;
+    WCHAR *tidy_cmdline, *p;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     pe_image_info_t pe_info;
     enum binary_type type;
@@ -2621,35 +2638,10 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
         if (GetCurrentDirectoryW(MAX_PATH, buf)) unixdir = wine_get_unix_file_name( buf );
     }
 
-    if (!env)
-    {
-        WCHAR *e;
-
-        RtlAcquirePebLock();
-        e = env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
-        while (*e) e += strlenW(e) + 1;
-        e++;  /* final null */
-        envW = HeapAlloc( GetProcessHeap(), 0, (e - (WCHAR *)env) * sizeof(WCHAR) );
-        memcpy( envW, env,  (e - (WCHAR *)env) * sizeof(WCHAR) );
-        RtlReleasePebLock();
-    }
-    else if (!(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
-    {
-        char *e = env;
-        DWORD lenW;
-
-        while (*e) e += strlen(e) + 1;
-        e++;  /* final null */
-        lenW = MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, NULL, 0 );
-        envW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, envW, lenW );
-    }
-    flags |= CREATE_UNICODE_ENVIRONMENT;
-
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
 
-    if (!(params = create_process_params( name, tidy_cmdline, cur_dir, envW, flags, startup_info )))
+    if (!(params = create_process_params( name, tidy_cmdline, cur_dir, env, flags, startup_info )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         goto done;
@@ -2730,7 +2722,6 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
  done:
     RtlDestroyProcessParameters( params );
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-    if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
     HeapFree( GetProcessHeap(), 0, unixdir );
     if (retv)
         TRACE( "started process pid %04x tid %04x\n", info->dwProcessId, info->dwThreadId );
