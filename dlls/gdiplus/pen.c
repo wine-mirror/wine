@@ -470,17 +470,12 @@ GpStatus WINGDIPAPI GdipTranslatePenTransform(GpPen *pen, REAL dx, REAL dy, GpMa
 
 GpStatus WINGDIPAPI GdipScalePenTransform(GpPen *pen, REAL sx, REAL sy, GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%0.2f,%0.2f,%u)\n", pen, sx, sy, order);
 
     if(!pen)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("(%p, %.2f, %.2f, %d) stub\n", pen, sx, sy, order);
-
-    return NotImplemented;
+    return GdipScaleMatrix(&pen->transform, sx, sy, order);
 }
 
 GpStatus WINGDIPAPI GdipRotatePenTransform(GpPen *pen, REAL angle, GpMatrixOrder order)

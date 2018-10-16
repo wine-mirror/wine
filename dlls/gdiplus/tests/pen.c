@@ -389,6 +389,22 @@ todo_wine {
     GdipDeletePen(pen);
 }
 
+static void get_pen_transform(GpPen *pen, REAL *values)
+{
+    GpMatrix *matrix;
+    GpStatus status;
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+
+    status = GdipGetPenTransform(pen, matrix);
+    expect(Ok, status);
+    status = GdipGetMatrixElements(matrix, values);
+    expect(Ok, status);
+
+    GdipDeleteMatrix(matrix);
+}
+
 static void test_transform(void)
 {
     GpStatus status;
@@ -477,6 +493,65 @@ static void test_transform(void)
     expectf(1.0, values[3]);
     expectf(0.0, values[4]);
     expectf(0.0, values[5]);
+
+    /* Scale */
+    status = GdipScalePenTransform(NULL, 1.0, 1.0, MatrixOrderPrepend);
+    expect(InvalidParameter, status);
+
+    status = GdipScalePenTransform(pen, 1.0, 1.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(1.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(1.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
+
+    status = GdipScalePenTransform(pen, 2.0, -10.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(2.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(-10.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
+
+    status = GdipScalePenTransform(pen, 2.0, -10.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(4.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(100.0, values[3]);
+    expectf(0.0, values[4]);
+    expectf(0.0, values[5]);
+
+    status = GdipTranslatePenTransform(pen, 1.0, -2.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(4.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(100.0, values[3]);
+    expectf(1.0, values[4]);
+    expectf(-2.0, values[5]);
+
+    status = GdipScalePenTransform(pen, 2.0, -10.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(8.0, values[0]);
+    expectf(0.0, values[1]);
+    expectf(0.0, values[2]);
+    expectf(-1000.0, values[3]);
+    expectf(1.0, values[4]);
+    expectf(-2.0, values[5]);
 
     GdipDeletePen(pen);
 
