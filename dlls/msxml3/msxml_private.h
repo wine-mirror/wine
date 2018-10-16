@@ -252,7 +252,7 @@ extern IUnknown         *create_domdoc( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_xmldoc( void ) DECLSPEC_HIDDEN;
 extern IXMLDOMNode      *create_node( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_element( xmlNodePtr ) DECLSPEC_HIDDEN;
-extern IUnknown         *create_attribute( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_attribute( xmlNodePtr, BOOL ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_text( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_pi( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_comment( xmlNodePtr ) DECLSPEC_HIDDEN;

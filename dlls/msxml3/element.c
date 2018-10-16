@@ -1398,7 +1398,7 @@ static HRESULT WINAPI domelem_getAttributeNode(
 
     if (attr)
     {
-        IUnknown *unk = create_attribute((xmlNodePtr)attr);
+        IUnknown *unk = create_attribute((xmlNodePtr)attr, FALSE);
         hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMAttribute, (void**)attributeNode);
         IUnknown_Release(unk);
     }

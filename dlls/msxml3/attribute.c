@@ -50,6 +50,7 @@ typedef struct _domattr
     xmlnode node;
     IXMLDOMAttribute IXMLDOMAttribute_iface;
     LONG ref;
+    BOOL floating;
 } domattr;
 
 static const tid_t domattr_se_tids[] = {
@@ -116,6 +117,11 @@ static ULONG WINAPI domattr_Release(
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);
+        if ( This->floating )
+        {
+            xmlFreeNs( This->node.node->ns );
+            xmlFreeNode( This->node.node );
+        }
         heap_free( This );
     }
 
@@ -709,7 +715,7 @@ static dispex_static_data_t domattr_dispex = {
     domattr_iface_tids
 };
 
-IUnknown* create_attribute( xmlNodePtr attribute )
+IUnknown* create_attribute( xmlNodePtr attribute, BOOL floating )
 {
     domattr *This;
 
@@ -719,6 +725,7 @@ IUnknown* create_attribute( xmlNodePtr attribute )
 
     This->IXMLDOMAttribute_iface.lpVtbl = &domattr_vtbl;
     This->ref = 1;
+    This->floating = floating;
 
     init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->IXMLDOMAttribute_iface, &domattr_dispex);
 
