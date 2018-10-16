@@ -778,6 +778,14 @@ ObjectLiteral
         : '{' '}'               { $$ = new_prop_and_value_expression(ctx, NULL); }
         | '{' PropertyNameAndValueList '}'
                                 { $$ = new_prop_and_value_expression(ctx, $2); }
+        | '{' PropertyNameAndValueList ',' '}'
+        {
+            if(ctx->script->version < 2) {
+                WARN("Trailing comma in object literal is illegal in legacy mode.\n");
+                YYABORT;
+            }
+            $$ = new_prop_and_value_expression(ctx, $2);
+        }
 
 /* ECMA-262 3rd Edition    11.1.5 */
 PropertyNameAndValueList
