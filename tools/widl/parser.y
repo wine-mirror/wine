@@ -134,6 +134,8 @@ static struct namespace global_namespace = {
 
 static struct namespace *current_namespace = &global_namespace;
 
+static typelib_t *current_typelib;
+
 %}
 %union {
 	attr_t *attr;
@@ -326,6 +328,7 @@ input:   gbl_statements				{ fix_incomplete();
 						  write_client($1);
 						  write_server($1);
 						  write_regscript($1);
+						  write_typelib_regscript($1);
 						  write_dlldata($1);
 						  write_local_stubs($1);
 						}
@@ -424,21 +427,18 @@ import: import_start imp_statements aEOF	{ $$ = $1->name;
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
-	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3); }
+	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3, current_typelib); }
 	;
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	|   tLIBRARY aKNOWNTYPE			{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
-						  if (!parse_only) start_typelib($$);
+						  if (!parse_only && do_typelib) current_typelib = $$;
 						}
 	;
 librarydef: library_start imp_statements '}'
-	    semicolon_opt			{ $$ = $1;
-						  $$->stmts = $2;
-						  if (!parse_only) end_typelib();
-						}
+	    semicolon_opt			{ $$ = $1; $$->stmts = $2; }
 	;
 
 m_args:						{ $$ = NULL; }

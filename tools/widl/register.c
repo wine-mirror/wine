@@ -34,6 +34,7 @@
 #include "parser.h"
 #include "header.h"
 #include "typegen.h"
+#include "typelib.h"
 
 static int indent;
 
@@ -273,6 +274,24 @@ void write_regscript( const statement_list_t *stmts )
     }
 }
 
+void write_typelib_regscript( const statement_list_t *stmts )
+{
+    const statement_t *stmt;
+    unsigned int count = 0;
+
+    if (!do_typelib) return;
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type != STMT_LIBRARY) continue;
+        if (count && !strendswith( typelib_name, ".res" ))
+            error( "Cannot store multiple typelibs into %s\n", typelib_name );
+        else
+            create_msft_typelib( stmt->u.lib );
+        count++;
+    }
+    if (count && strendswith( typelib_name, ".res" )) flush_output_resources( typelib_name );
+}
+
 void output_typelib_regscript( const typelib_t *typelib )
 {
     const UUID *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
@@ -281,6 +300,7 @@ void output_typelib_regscript( const typelib_t *typelib )
     unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
     unsigned int flags = 0;
     char id_part[12] = "";
+    char *resname = typelib_name;
     expr_t *expr;
 
     if (is_attr( typelib->attrs, ATTR_RESTRICTED )) flags |= 1; /* LIBFLAG_FRESTRICTED */
@@ -299,7 +319,11 @@ void output_typelib_regscript( const typelib_t *typelib )
     put_str( indent++, "{\n" );
     expr = get_attrp( typelib->attrs, ATTR_ID );
     if (expr)
+    {
         sprintf(id_part, "\\%d", expr->cval);
+        resname = xmalloc( strlen(typelib_name) + 20 );
+        sprintf(resname, "%s\\%d", typelib_name, expr->cval);
+    }
     put_str( indent, "'%x' { %s = s '%%MODULE%%%s' }\n",
              lcid_expr ? lcid_expr->cval : 0, typelib_kind == SYS_WIN64 ? "win64" : "win32", id_part );
     put_str( indent, "FLAGS = s '%u'\n", flags );
@@ -320,5 +344,5 @@ void output_typelib_regscript( const typelib_t *typelib )
     write_progids( typelib->stmts );
     put_str( --indent, "}\n" );
 
-    add_output_to_resources( "WINE_REGISTRY", typelib_name );
+    add_output_to_resources( "WINE_REGISTRY", resname );
 }

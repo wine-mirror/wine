@@ -44,7 +44,6 @@
 #include "typelib_struct.h"
 #include "typetree.h"
 
-static typelib_t *typelib;
 
 /* List of oleauto types that should be recognized by name.
  * (most of) these seem to be intrinsic types in mktyplib.
@@ -239,19 +238,6 @@ unsigned short get_type_vt(type_t *t)
   return 0;
 }
 
-void start_typelib(typelib_t *typelib_type)
-{
-    if (!do_typelib) return;
-    typelib = typelib_type;
-}
-
-void end_typelib(void)
-{
-    if (!typelib) return;
-
-    create_msft_typelib(typelib);
-}
-
 static void tlb_read(int fd, void *buf, int count)
 {
     if(read(fd, buf, count) < count)
@@ -376,7 +362,7 @@ static void read_importlib(importlib_t *importlib)
     close(fd);
 }
 
-void add_importlib(const char *name)
+void add_importlib(const char *name, typelib_t *typelib)
 {
     importlib_t *importlib;
 
