@@ -3419,6 +3419,7 @@ void RPCRT4_ReleaseConnection(RpcConnection *connection)
 
         /* server-only */
         if (connection->server_binding) RPCRT4_ReleaseBinding(connection->server_binding);
+        else if (connection->assoc) RpcAssoc_ConnectionReleased(connection->assoc);
 
         if (connection->wait_release) SetEvent(connection->wait_release);
 

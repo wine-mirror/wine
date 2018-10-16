@@ -41,6 +41,7 @@ typedef struct _RpcAssoc
     /* client-only */
     /* connections available to be used (protected by cs) */
     struct list free_connection_pool;
+    LONG connection_cnt;
 
     /* server-only */
     struct list context_handle_list; /* protected by cs */
@@ -59,3 +60,4 @@ RPC_STATUS RpcServerAssoc_UpdateContextHandle(RpcAssoc *assoc, NDR_SCONTEXT SCon
 unsigned int RpcServerAssoc_ReleaseContextHandle(RpcAssoc *assoc, NDR_SCONTEXT SContext, BOOL release_lock) DECLSPEC_HIDDEN;
 void RpcContextHandle_GetUuid(NDR_SCONTEXT SContext, UUID *uuid) DECLSPEC_HIDDEN;
 BOOL RpcContextHandle_IsGuardCorrect(NDR_SCONTEXT SContext, void *CtxGuard) DECLSPEC_HIDDEN;
+void RpcAssoc_ConnectionReleased(RpcAssoc *assoc) DECLSPEC_HIDDEN;

@@ -80,6 +80,7 @@ static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
     assoc->Endpoint = RPCRT4_strdupA(Endpoint);
     assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
     assoc->assoc_group_id = 0;
+    assoc->connection_cnt = 0;
     UuidCreate(&assoc->http_uuid);
     list_init(&assoc->entry);
     *assoc_out = assoc;
@@ -422,6 +423,7 @@ RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
         return status;
     }
 
+    InterlockedIncrement(&assoc->connection_cnt);
     *Connection = NewConnection;
 
     return RPC_S_OK;
@@ -435,6 +437,15 @@ void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)
     if (!assoc->assoc_group_id) assoc->assoc_group_id = Connection->assoc_group_id;
     list_add_head(&assoc->free_connection_pool, &Connection->conn_pool_entry);
     LeaveCriticalSection(&assoc->cs);
+}
+
+void RpcAssoc_ConnectionReleased(RpcAssoc *assoc)
+{
+    if (InterlockedDecrement(&assoc->connection_cnt))
+        return;
+
+    TRACE("Last %p connection released\n", assoc);
+    assoc->assoc_group_id = 0;
 }
 
 RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard,
