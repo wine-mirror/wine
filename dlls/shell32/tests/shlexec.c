@@ -1780,7 +1780,7 @@ static fileurl_tests_t fileurl_tests[]=
     {"file:///", "%%TMPDIR%%\\test file.shlexec", 0, 0},
 
     /* Test shortcuts vs. URLs */
-    {"file://///", "%s\\test_shortcut_shlexec.lnk", 0, 0x1d},
+    {"file://///", "%s\\test_shortcut_shlexec.lnk", 0, 0x1c},
 
     /* Confuse things by mixing protocols */
     {"file://", "shlproto://foo/bar", USE_COLON, 0},
@@ -1926,11 +1926,11 @@ static void test_urls(void)
     }
 
     /* A .lnk ending does not turn a URL into a shortcut */
-    todo_wait rc = shell_execute(NULL, "shlproto://foo/bar.lnk", NULL, NULL);
+    rc = shell_execute(NULL, "shlproto://foo/bar.lnk", NULL, NULL);
     ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     okChildInt("argcA", 5);
-    todo_wine okChildString("argvA3", "URL");
-    todo_wine okChildString("argvA4", "shlproto://foo/bar.lnk");
+    okChildString("argvA3", "URL");
+    okChildString("argvA4", "shlproto://foo/bar.lnk");
 
     /* Neither does a .exe extension */
     rc = shell_execute(NULL, "shlproto://foo/bar.exe", NULL, NULL);

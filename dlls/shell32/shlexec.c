@@ -1165,13 +1165,12 @@ static HKEY ShellExecute_GetClassKey( const SHELLEXECUTEINFOW *sei )
     return hkey;
 }
 
-static IDataObject *shellex_get_dataobj( LPSHELLEXECUTEINFOW sei )
+static HRESULT shellex_get_dataobj( LPSHELLEXECUTEINFOW sei, IDataObject **dataobj )
 {
     LPCITEMIDLIST pidllast = NULL;
-    IDataObject *dataobj = NULL;
     IShellFolder *shf = NULL;
     LPITEMIDLIST pidl = NULL;
-    HRESULT r;
+    HRESULT r = SE_ERR_DLLNOTFOUND;
 
     if (sei->fMask & SEE_MASK_CLASSALL)
         pidl = sei->lpIDList;
@@ -1192,15 +1191,15 @@ static IDataObject *shellex_get_dataobj( LPSHELLEXECUTEINFOW sei )
     if ( FAILED( r ) )
         goto end;
 
-    IShellFolder_GetUIObjectOf( shf, NULL, 1, &pidllast,
-                                &IID_IDataObject, NULL, (LPVOID*) &dataobj );
+    r = IShellFolder_GetUIObjectOf( shf, NULL, 1, &pidllast,
+                                &IID_IDataObject, NULL, (void**)dataobj );
 
 end:
     if ( pidl != sei->lpIDList )
         ILFree( pidl );
     if ( shf )
         IShellFolder_Release( shf );
-    return dataobj;
+    return r;
 }
 
 static HRESULT shellex_run_context_menu_default( IShellExtInit *obj,
@@ -1295,8 +1294,8 @@ static HRESULT shellex_load_object_and_run( HKEY hkey, LPCGUID guid, LPSHELLEXEC
         goto end;
     }
 
-    dataobj = shellex_get_dataobj( sei );
-    if ( !dataobj )
+    r = shellex_get_dataobj( sei, &dataobj );
+    if ( FAILED( r ) )
     {
         ERR("failed to get data object\n");
         goto end;
