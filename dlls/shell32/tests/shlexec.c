@@ -2133,13 +2133,13 @@ static void test_lnks(void)
         get_long_path_name(params, filename, sizeof(filename));
         okChildPath("argvA4", filename);
 
-        todo_wait rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
+        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
         okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
         okChildInt("argcA", 5);
-        todo_wine okChildString("argvA3", "Open");
+        okChildString("argvA3", "Open");
         sprintf(params, "%s\\test file.shlexec", tmpdir);
         get_long_path_name(params, filename, sizeof(filename));
-        todo_wine okChildPath("argvA4", filename);
+        okChildPath("argvA4", filename);
     }
 
     /* Should just run our executable */
