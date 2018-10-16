@@ -549,6 +549,8 @@ static HRESULT WINAPI domattr_get_namespaceURI(
     IXMLDOMAttribute *iface,
     BSTR* p)
 {
+    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
+        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
     domattr *This = impl_from_IXMLDOMAttribute( iface );
     xmlNsPtr ns = This->node.node->ns;
 
@@ -565,7 +567,12 @@ static HRESULT WINAPI domattr_get_namespaceURI(
         if (xmlStrEqual(This->node.node->name, xmlns))
             *p = bstr_from_xmlChar(xmlns);
         else if (xmlStrEqual(ns->prefix, xmlns))
-            *p = SysAllocStringLen(NULL, 0);
+        {
+            if (xmldoc_version(This->node.node->doc) == MSXML6)
+                *p = SysAllocString(w3xmlns);
+            else
+                *p = SysAllocStringLen(NULL, 0);
+        }
         else if (ns->href)
             *p = bstr_from_xmlChar(ns->href);
     }

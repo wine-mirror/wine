@@ -396,6 +396,11 @@ xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
     return node;
 }
 
+MSXML_VERSION xmldoc_version(xmlDocPtr doc)
+{
+    return properties_from_xmlDocPtr(doc)->version;
+}
+
 BOOL is_preserving_whitespace(xmlNodePtr node)
 {
     domdoc_properties* properties = NULL;

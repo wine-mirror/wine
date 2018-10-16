@@ -12834,16 +12834,15 @@ typedef struct _namespace_as_attribute_t {
     const GUID *guid;
     const char *clsid;
     const char *xmlns_uri;
-    BOOL todo;
 } namespace_as_attribute_t;
 
 static const namespace_as_attribute_t namespace_as_attribute_test_data[] = {
-    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "", FALSE },
-    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "", FALSE },
-    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", "", FALSE },
-    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "", FALSE },
-    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "", FALSE },
-    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "http://www.w3.org/2000/xmlns/", TRUE },
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "" },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "" },
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", "" },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "" },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "" },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "http://www.w3.org/2000/xmlns/" },
     { 0 }
 };
 
@@ -12970,7 +12969,6 @@ static void test_namespaces_as_attributes(void)
                 {
                     ok(hr == S_OK, "Failed to get node name, hr %#x.\n", hr);
                     if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
-                        todo_wine_if(entry->todo)
                         ok(!lstrcmpW(str, _bstr_(entry->xmlns_uri)), "got %s\n", wine_dbgstr_w(str));
                     else
                         ok(!lstrcmpW(str, _bstr_(test->uris[i])), "got %s\n", wine_dbgstr_w(str));
