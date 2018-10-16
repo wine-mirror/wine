@@ -12891,7 +12891,7 @@ static void test_namespaces_as_attributes(void)
         len = -1;
         hr = IXMLDOMNamedNodeMap_get_length(map, &len);
         ok(SUCCEEDED(hr), "Failed to get map length, hr %#x.\n", hr);
-        todo_wine ok(len == 3, "got %d\n", len);
+        ok(len == 3, "got %d\n", len);
 
         for (i = 0; i < len; i++)
         {
