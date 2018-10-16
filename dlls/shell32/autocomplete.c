@@ -2,6 +2,7 @@
  *	AutoComplete interfaces implementation.
  *
  *	Copyright 2004	Maxime Bellengé <maxime.bellenge@laposte.net>
+ *	Copyright 2018	Gabriel Ivăncescu <gabrielopcode@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -68,6 +69,7 @@ typedef struct
     WCHAR *txtbackup;
     WCHAR *quickComplete;
     IEnumString *enumstr;
+    IACList *aclist;
     AUTOCOMPLETEOPTIONS options;
     WCHAR no_fwd_char;
 } IAutoCompleteImpl;
@@ -221,6 +223,49 @@ static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
     return 0;
 }
 
+static BOOL do_aclist_expand(IAutoCompleteImpl *ac, WCHAR *txt, WCHAR *last_delim)
+{
+    WCHAR c = last_delim[1];
+    last_delim[1] = '\0';
+    IACList_Expand(ac->aclist, txt);
+    last_delim[1] = c;
+    return TRUE;
+}
+
+static BOOL aclist_expand(IAutoCompleteImpl *ac, WCHAR *txt)
+{
+    /* call IACList::Expand only when needed, if the
+       new txt and old_txt require different expansions */
+    WCHAR c, *p, *last_delim, *old_txt = ac->txtbackup;
+    size_t i = 0;
+
+    /* '/' is allowed as a delim for unix paths */
+    static const WCHAR delims[] = { '\\', '/', 0 };
+
+    /* skip the shared prefix */
+    while ((c = tolowerW(txt[i])) == tolowerW(old_txt[i]))
+    {
+        if (c == '\0') return FALSE;
+        i++;
+    }
+
+    /* they differ at this point, check for a delim further in txt */
+    for (last_delim = NULL, p = &txt[i]; (p = strpbrkW(p, delims)) != NULL; p++)
+        last_delim = p;
+    if (last_delim) return do_aclist_expand(ac, txt, last_delim);
+
+    /* txt has no delim after i, check for a delim further in old_txt */
+    if (strpbrkW(&old_txt[i], delims))
+    {
+        /* scan backwards to find the first delim before txt[i] (if any) */
+        while (i--)
+            if (strchrW(delims, txt[i]))
+                return do_aclist_expand(ac, txt, &txt[i]);
+    }
+
+    return FALSE;
+}
+
 static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *str, HWND hwnd)
 {
     DWORD sel_start;
@@ -268,6 +313,17 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     if (len + 1 != size)
         text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
 
+    /* Reset it here to simplify the logic in aclist_expand for
+       empty strings, since it tracks changes using txtbackup,
+       and Reset needs to be called before IACList::Expand */
+    IEnumString_Reset(ac->enumstr);
+    if (ac->aclist)
+    {
+        aclist_expand(ac, text);
+        if (text[len - 1] == '\\' || text[len - 1] == '/')
+            flag = autoappend_flag_no;
+    }
+
     /* Set txtbackup to point to text itself (which must not be released) */
     heap_free(ac->txtbackup);
     ac->txtbackup = text;
@@ -277,7 +333,6 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
         SendMessageW(ac->hwndListBox, WM_SETREDRAW, FALSE, 0);
         SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
     }
-    IEnumString_Reset(ac->enumstr);
     for (cpt = 0;;)
     {
         LPOLESTR strs = NULL;
@@ -607,6 +662,8 @@ static ULONG WINAPI IAutoComplete2_fnRelease(
         heap_free(This->txtbackup);
         if (This->enumstr)
             IEnumString_Release(This->enumstr);
+        if (This->aclist)
+            IACList_Release(This->aclist);
         heap_free(This);
     }
     return refCount;
@@ -662,6 +719,17 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
         WARN("No IEnumString interface\n");
         return E_NOINTERFACE;
     }
+
+    /* Prevent txtbackup from ever being NULL to simplify aclist_expand */
+    if ((This->txtbackup = heap_alloc_zero(sizeof(WCHAR))) == NULL)
+    {
+        IEnumString_Release(This->enumstr);
+        This->enumstr = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED (IUnknown_QueryInterface (punkACL, &IID_IACList, (LPVOID*)&This->aclist)))
+        This->aclist = NULL;
 
     This->initialized = TRUE;
     This->hwndEdit = hwndEdit;
