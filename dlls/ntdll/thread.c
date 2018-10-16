@@ -68,7 +68,7 @@ struct startup_info
 static PEB *peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
-static WCHAR current_dir[MAX_NT_PATH_LENGTH];
+static WCHAR current_dir[MAX_PATH];
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
@@ -130,7 +130,7 @@ static NTSTATUS init_user_process_params( SIZE_T data_size )
     if (status != STATUS_SUCCESS) goto done;
 
     size = sizeof(*params);
-    size += MAX_NT_PATH_LENGTH * sizeof(WCHAR);
+    size += sizeof(current_dir);
     size += info->dllpath_len + sizeof(WCHAR);
     size += info->imagepath_len + sizeof(WCHAR);
     size += info->cmdline_len + sizeof(WCHAR);
@@ -169,8 +169,8 @@ static NTSTATUS init_user_process_params( SIZE_T data_size )
 
     /* current directory needs more space */
     get_unicode_string( &params->CurrentDirectory.DosPath, &src, &dst, info->curdir_len );
-    params->CurrentDirectory.DosPath.MaximumLength = MAX_NT_PATH_LENGTH * sizeof(WCHAR);
-    dst = (WCHAR *)(params + 1) + MAX_NT_PATH_LENGTH;
+    params->CurrentDirectory.DosPath.MaximumLength = sizeof(current_dir);
+    dst = (WCHAR *)(params + 1) + ARRAY_SIZE(current_dir);
 
     get_unicode_string( &params->DllPath, &src, &dst, info->dllpath_len );
     get_unicode_string( &params->ImagePathName, &src, &dst, info->imagepath_len );

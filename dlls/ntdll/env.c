@@ -452,6 +452,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
     static const UNICODE_STRING null_str = { 0, 0, NULL };
 
+    UNICODE_STRING curdir;
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
     SIZE_T size, env_size, total_size;
     void *ptr;
@@ -464,10 +465,13 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!CurrentDirectoryName)
     {
         if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
-            CurrentDirectoryName = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir.DosPath;
+            curdir = ((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir.DosPath;
         else
-            CurrentDirectoryName = &cur_params->CurrentDirectory.DosPath;
+            curdir = cur_params->CurrentDirectory.DosPath;
     }
+    else curdir = *CurrentDirectoryName;
+    curdir.MaximumLength = MAX_PATH * sizeof(WCHAR);
+
     if (!CommandLine) CommandLine = ImagePathName;
     if (!Environment) Environment = cur_params->Environment;
     if (!WindowTitle) WindowTitle = &empty_str;
@@ -503,7 +507,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         /* all other fields are zero */
 
         ptr = params + 1;
-        append_unicode_string( &ptr, CurrentDirectoryName, &params->CurrentDirectory.DosPath );
+        append_unicode_string( &ptr, &curdir, &params->CurrentDirectory.DosPath );
         append_unicode_string( &ptr, DllPath, &params->DllPath );
         append_unicode_string( &ptr, ImagePathName, &params->ImagePathName );
         append_unicode_string( &ptr, CommandLine, &params->CommandLine );
