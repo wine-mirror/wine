@@ -187,7 +187,6 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     void *ptr;
     unsigned char *mem, *mem_orig;
 
-    my_alloc_called = my_free_called = 0;
     if(!cmp)
         cmp = memcmp;
 
@@ -261,8 +260,10 @@ static void test_pointer_marshal(const unsigned char *formattypes,
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
-    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-
+    /* Using my_alloc() here is necessary to prevent a crash in Windows 7+. */
+    mem_orig = mem = my_alloc(size);
+    memset(mem, 0, size);
+    my_alloc_called = my_free_called = 0;
     if (formattypes[1] & FC_POINTER_DEREF)
         *(void**)mem = NULL;
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
@@ -271,11 +272,24 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
-    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
-    my_alloc_called = 0;
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    /* On Windows 7+ unmarshalling may involve calls to NdrFree, for unclear reasons. */
+    my_free_called = 0;
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+        /* In this case the top-level pointer is not freed. */
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+        ok(my_free_called == 1 + num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
 
     /* reset the buffer and call with must alloc */
+    my_alloc_called = my_free_called = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (formattypes[1] & FC_POINTER_DEREF)
         *(void**)mem = NULL;
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 1 );
@@ -291,11 +305,23 @@ todo_wine {
 todo_wine {
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
 }
-    my_alloc_called = 0;
+    ok(!my_free_called, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+        /* In this case the top-level pointer is not freed. */
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+        ok(my_free_called == 1 + num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
     if (formattypes[0] != FC_RP)
     {
         /* now pass the address of a NULL ptr */
         mem = NULL;
+        my_alloc_called = my_free_called = 0;
         StubMsg.Buffer = StubMsg.BufferStart;
         ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
         ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
@@ -329,7 +355,6 @@ todo_wine {
             }
         }
     }
-    HeapFree(GetProcessHeap(), 0, mem_orig);
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
 }
 
@@ -381,17 +406,25 @@ static void test_simple_types(void)
         0x2,            /* FC_CHAR */
         0x5c,           /* FC_PAD */
     };
-    static const unsigned char fmtstr_rpup_char[] =
+    static const unsigned char fmtstr_rpup_char_onstack_deref[] =
     {
-        0x11, 0x14,     /* FC_RP [alloced_on_stack] */
+        0x11, 0x14,     /* FC_RP [alloced_on_stack] [pointer_deref] */
         NdrFcShort( 0x2 ),      /* Offset= 2 (4) */
         0x12, 0x8,      /* FC_UP [simple_pointer] */
         0x2,            /* FC_CHAR */
         0x5c,           /* FC_PAD */
     };
-    static const unsigned char fmtstr_rpup_char2[] =
+    static const unsigned char fmtstr_rpup_char_onstack[] =
     {
         0x11, 0x04,     /* FC_RP [alloced_on_stack] */
+        NdrFcShort( 0x2 ),      /* Offset= 2 (4) */
+        0x12, 0x8,      /* FC_UP [simple_pointer] */
+        0x2,            /* FC_CHAR */
+        0x5c,           /* FC_PAD */
+    };
+    static const unsigned char fmtstr_rpup_char_deref[] =
+    {
+        0x11, 0x10,     /* FC_RP [pointer_deref] */
         NdrFcShort( 0x2 ),      /* Offset= 2 (4) */
         0x12, 0x8,      /* FC_UP [simple_pointer] */
         0x2,            /* FC_CHAR */
@@ -481,8 +514,9 @@ static void test_simple_types(void)
 
     test_pointer_marshal(fmtstr_rp_char, ch_ptr, 1, &ch, 1, NULL, 0, "rp_char");
 
-    test_pointer_marshal(fmtstr_rpup_char, &ch_ptr, 1, wiredata, 5, deref_cmp, 1, "rpup_char");
-    test_pointer_marshal(fmtstr_rpup_char2, ch_ptr, 1, wiredata, 5, NULL, 0, "rpup_char2");
+    test_pointer_marshal(fmtstr_rpup_char_onstack_deref, &ch_ptr, 1, wiredata, 5, deref_cmp, 1, "rpup_char_onstack_deref");
+    test_pointer_marshal(fmtstr_rpup_char_onstack, ch_ptr, 1, wiredata, 5, NULL, 0, "rpup_char_onstack");
+    test_pointer_marshal(fmtstr_rpup_char_deref, &ch_ptr, 1, wiredata, 5, deref_cmp, 1, "rpup_char_deref");
 
     s = 0xa597;
     if (use_pointer_ids)
