@@ -2469,7 +2469,7 @@ static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES
  *
  * Create a new cmd shell process for a .BAT file.
  */
-static BOOL create_cmd_process( LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+static BOOL create_cmd_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
                                 const RTL_USER_PROCESS_PARAMETERS *params,
                                 LPPROCESS_INFORMATION info )
@@ -2480,7 +2480,7 @@ static BOOL create_cmd_process( LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSE
     static const WCHAR slashscW[] = {' ','/','s','/','c',' ',0};
     static const WCHAR quotW[] = {'"',0};
     WCHAR comspec[MAX_PATH];
-    WCHAR *newcmdline;
+    WCHAR *newcmdline, *cur_dir = NULL;
     BOOL ret;
 
     if (!GetEnvironmentVariableW( comspecW, comspec, ARRAY_SIZE( comspec )))
@@ -2498,6 +2498,7 @@ static BOOL create_cmd_process( LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSE
     strcatW( newcmdline, quotW );
     strcatW( newcmdline, params->CommandLine.Buffer );
     strcatW( newcmdline, quotW );
+    if (params->CurrentDirectory.DosPath.Length) cur_dir = params->CurrentDirectory.DosPath.Buffer;
     ret = CreateProcessW( comspec, newcmdline, psa, tsa, inherit,
                           flags | CREATE_UNICODE_ENVIRONMENT, params->Environment, cur_dir,
                           startup, info );
@@ -2705,7 +2706,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
             {
                 TRACE( "starting %s as batch binary\n", debugstr_w(name) );
-                retv = create_cmd_process( cur_dir, process_attr, thread_attr,
+                retv = create_cmd_process( process_attr, thread_attr,
                                            inherit, flags, startup_info, params, info );
                 break;
             }
