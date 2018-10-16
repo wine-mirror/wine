@@ -355,6 +355,157 @@ todo_wine {
             }
         }
     }
+
+    /* Server */
+    StubMsg.IsClient = 0;
+
+    /* For most basetypes (but not enum16), memory will not be allocated but
+     * instead point directly to the buffer. */
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem = NULL;
+    ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(!!mem, "%s: mem was not allocated\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_alloc_called == 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    else
+todo_wine_if(formattypes[1] & FC_POINTER_DEREF)
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    ok(!my_free_called, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_free_called == 1, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+        /* In theory this should be freed to correspond with the allocation, but
+         * FC_ALLOCED_ON_STACK is set, and NdrPointerFree() has no way of
+         * knowing that the memory allocated by NdrPointerUnmarshall() isn't
+         * stack memory. In practice it always *is* stack memory if ON_STACK is
+         * set, so this leak isn't a concern. */
+todo_wine
+        ok(my_free_called == 0, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+todo_wine_if((formattypes[1] & FC_POINTER_DEREF) && !(formattypes[1] & FC_ALLOCED_ON_STACK))
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    /* reset the buffer and call with must alloc */
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem = NULL;
+    ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(!!mem, "%s: mem was not allocated\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_alloc_called == 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    else
+todo_wine
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    ok(!my_free_called, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_free_called == 1, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+todo_wine
+        ok(my_free_called == 0, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+todo_wine
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    /* Τest with an existing pointer. Unless it's a stack pointer (and deref'd)
+     * a new pointer will be allocated anyway (in fact, an invalid pointer works
+     * in every such case). */
+
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    if (formattypes[1] & FC_POINTER_DEREF)
+        *(void**)mem = NULL;
+    ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+todo_wine
+        ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
+    else
+        ok(mem != mem_orig, "%s: mem has not changed\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_alloc_called == 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+todo_wine
+        ok(my_alloc_called == 0, "%s: my_alloc got called %d times\n", msgpfx, my_free_called);
+    else
+todo_wine_if(formattypes[1] & FC_POINTER_DEREF)
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    ok(!my_free_called, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_free_called == 1, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+todo_wine
+        ok(my_free_called == 0, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+todo_wine_if((formattypes[1] & FC_POINTER_DEREF) && !(formattypes[1] & FC_ALLOCED_ON_STACK))
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    /* reset the buffer and call with must alloc */
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    if (formattypes[1] & FC_POINTER_DEREF)
+        *(void**)mem = NULL;
+    ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+todo_wine
+        ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
+    else
+        ok(mem != mem_orig, "%s: mem has not changed\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_alloc_called == 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+todo_wine
+        ok(my_alloc_called == 0, "%s: my_alloc got called %d times\n", msgpfx, my_free_called);
+    else
+todo_wine
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    ok(!my_free_called, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
+    NdrPointerFree(&StubMsg, mem, formattypes);
+    if (formattypes[2] == FC_ENUM16)
+        ok(my_free_called == 1, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+    else if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
+    {
+todo_wine
+        ok(my_free_called == 0, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+    else
+todo_wine
+        ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
+
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
 }
 
