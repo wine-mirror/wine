@@ -167,10 +167,14 @@ static void test_IUPnPNAT(void)
     IStaticPortMappingCollection *static_ports;
     IDynamicPortMappingCollection *dync_ports;
     INATEventManager *manager;
+    IProvideClassInfo *provider;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_UPnPNAT, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, &IID_IUPnPNAT, (void**)&nat);
     ok(hr == S_OK, "got: %08x\n", hr);
+
+    hr = IUPnPNAT_QueryInterface(nat, &IID_IProvideClassInfo, (void**)&provider);
+    ok(hr == E_NOINTERFACE, "got: %08x\n", hr);
 
     hr = IUPnPNAT_get_StaticPortMappingCollection(nat, &static_ports);
     todo_wine ok(hr == S_OK, "got: %08x\n", hr);
