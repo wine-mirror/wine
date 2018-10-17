@@ -518,6 +518,7 @@ void WINAPI WsFreeChannel( WS_CHANNEL *handle )
 HRESULT WINAPI WsResetChannel( WS_CHANNEL *handle, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p\n", handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -533,15 +534,13 @@ HRESULT WINAPI WsResetChannel( WS_CHANNEL *handle, WS_ERROR *error )
     }
 
     if (channel->state != WS_CHANNEL_STATE_CREATED && channel->state != WS_CHANNEL_STATE_CLOSED)
-    {
-        LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
-    }
-
-    reset_channel( channel );
+        hr = WS_E_INVALID_OPERATION;
+    else
+        reset_channel( channel );
 
     LeaveCriticalSection( &channel->cs );
-    return S_OK;
+    TRACE( "returning %08x\n", hr );
+    return hr;
 }
 
 /**************************************************************************
@@ -583,6 +582,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     }
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -611,6 +611,7 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     hr = prop_set( channel->prop, channel->prop_count, id, value, size );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -653,15 +654,11 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
         return E_INVALIDARG;
     }
 
-    if (channel->state != WS_CHANNEL_STATE_CREATED)
-    {
-        LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
-    }
-
-    hr = open_channel( channel, endpoint );
+    if (channel->state != WS_CHANNEL_STATE_CREATED) hr = WS_E_INVALID_OPERATION;
+    else hr = open_channel( channel, endpoint );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -734,6 +731,7 @@ HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONT
     hr = shutdown_session( channel );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -749,6 +747,7 @@ static void close_channel( struct channel *channel )
 HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -767,7 +766,8 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
     close_channel( channel );
 
     LeaveCriticalSection( &channel->cs );
-    return S_OK;
+    TRACE( "returning %08x\n", hr );
+    return hr;
 }
 
 static HRESULT parse_http_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )
@@ -1348,6 +1348,7 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
 
 done:
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -1388,6 +1389,7 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
 
 done:
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -1959,6 +1961,7 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         hr = receive_message( channel, msg, desc, count, option, read_option, heap, value, size, index );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -1991,6 +1994,7 @@ HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
     }
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -2020,6 +2024,7 @@ HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_A
     hr = WsReadEnvelopeEnd( msg, NULL );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -2052,6 +2057,7 @@ HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const W
 
 done:
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -2081,6 +2087,7 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
     if ((hr = WsWriteEnvelopeEnd( msg, NULL )) == S_OK) hr = send_message( channel, msg );
 
     LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 

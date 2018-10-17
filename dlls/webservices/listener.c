@@ -469,15 +469,11 @@ HRESULT WINAPI WsOpenListener( WS_LISTENER *handle, WS_STRING *url, const WS_ASY
         return E_INVALIDARG;
     }
 
-    if (listener->state != WS_LISTENER_STATE_CREATED)
-    {
-        LeaveCriticalSection( &listener->cs );
-        return WS_E_INVALID_OPERATION;
-    }
-
-    hr = open_listener( listener, url );
+    if (listener->state != WS_LISTENER_STATE_CREATED) hr = WS_E_INVALID_OPERATION;
+    else hr = open_listener( listener, url );
 
     LeaveCriticalSection( &listener->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -493,6 +489,7 @@ static void close_listener( struct listener *listener )
 HRESULT WINAPI WsCloseListener( WS_LISTENER *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct listener *listener = (struct listener *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -511,7 +508,8 @@ HRESULT WINAPI WsCloseListener( WS_LISTENER *handle, const WS_ASYNC_CONTEXT *ctx
     close_listener( listener );
 
     LeaveCriticalSection( &listener->cs );
-    return S_OK;
+    TRACE( "returning %08x\n", hr );
+    return hr;
 }
 
 /**************************************************************************
@@ -520,6 +518,7 @@ HRESULT WINAPI WsCloseListener( WS_LISTENER *handle, const WS_ASYNC_CONTEXT *ctx
 HRESULT WINAPI WsResetListener( WS_LISTENER *handle, WS_ERROR *error )
 {
     struct listener *listener = (struct listener *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p\n", handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -535,15 +534,13 @@ HRESULT WINAPI WsResetListener( WS_LISTENER *handle, WS_ERROR *error )
     }
 
     if (listener->state != WS_LISTENER_STATE_CREATED && listener->state != WS_LISTENER_STATE_CLOSED)
-    {
-        LeaveCriticalSection( &listener->cs );
-        return WS_E_INVALID_OPERATION;
-    }
-
-    reset_listener( listener );
+        hr = WS_E_INVALID_OPERATION;
+    else
+        reset_listener( listener );
 
     LeaveCriticalSection( &listener->cs );
-    return S_OK;
+    TRACE( "returning %08x\n", hr );
+    return hr;
 }
 
 /**************************************************************************
@@ -590,6 +587,7 @@ HRESULT WINAPI WsGetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_
     }
 
     LeaveCriticalSection( &listener->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -618,6 +616,7 @@ HRESULT WINAPI WsSetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_
     hr = prop_set( listener->prop, listener->prop_count, id, value, size );
 
     LeaveCriticalSection( &listener->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
@@ -645,37 +644,40 @@ HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle,
         return E_INVALIDARG;
     }
 
-    if (listener->state != WS_LISTENER_STATE_OPEN || listener->channel)
+    if (listener->state != WS_LISTENER_STATE_OPEN || listener->channel) hr = WS_E_INVALID_OPERATION;
+    else
     {
-        LeaveCriticalSection( &listener->cs );
-        return WS_E_INVALID_OPERATION;
-    }
+        wait = listener->wait;
+        cancel = listener->cancel;
+        listener->channel = channel_handle;
 
-    wait = listener->wait;
-    cancel = listener->cancel;
-    listener->channel = channel_handle;
+        switch (listener->binding)
+        {
+        case WS_TCP_CHANNEL_BINDING:
+        {
+            SOCKET socket = listener->u.tcp.socket;
 
-    switch (listener->binding)
-    {
-    case WS_TCP_CHANNEL_BINDING:
-    {
-        SOCKET socket = listener->u.tcp.socket;
+            LeaveCriticalSection( &listener->cs );
+            hr = channel_accept_tcp( socket, wait, cancel, channel_handle );
+            TRACE( "returning %08x\n", hr );
+            return hr;
+        }
+        case WS_UDP_CHANNEL_BINDING:
+        {
+            SOCKET socket = listener->u.udp.socket;
 
-        LeaveCriticalSection( &listener->cs );
-        return channel_accept_tcp( socket, wait, cancel, channel_handle );
-    }
-    case WS_UDP_CHANNEL_BINDING:
-    {
-        SOCKET socket = listener->u.udp.socket;
-
-        LeaveCriticalSection( &listener->cs );
-        return channel_accept_udp( socket, wait, cancel, channel_handle );
-    }
-    default:
-        FIXME( "listener binding %u not supported\n", listener->binding );
-        break;
+            LeaveCriticalSection( &listener->cs );
+            hr = channel_accept_udp( socket, wait, cancel, channel_handle );
+            TRACE( "returning %08x\n", hr );
+            return hr;
+        }
+        default:
+            FIXME( "listener binding %u not supported\n", listener->binding );
+            break;
+        }
     }
 
     LeaveCriticalSection( &listener->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }

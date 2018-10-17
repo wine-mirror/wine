@@ -260,6 +260,7 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
 HRESULT WINAPI WsResetHeap( WS_HEAP *handle, WS_ERROR *error )
 {
     struct heap *heap = (struct heap *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p\n", handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -277,7 +278,8 @@ HRESULT WINAPI WsResetHeap( WS_HEAP *handle, WS_ERROR *error )
     reset_heap( heap );
 
     LeaveCriticalSection( &heap->cs );
-    return S_OK;
+    TRACE( "returning %08x\n", hr );
+    return hr;
 }
 
 /**************************************************************************
@@ -317,6 +319,7 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
     }
 
     LeaveCriticalSection( &heap->cs );
+    TRACE( "returning %08x\n", hr );
     return hr;
 }
 
