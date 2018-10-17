@@ -35,7 +35,6 @@ static const DWORD pixel_states_render[] =
     WINED3D_RS_ALPHAREF,
     WINED3D_RS_ALPHATESTENABLE,
     WINED3D_RS_ANTIALIASEDLINEENABLE,
-    WINED3D_RS_BLENDFACTOR,
     WINED3D_RS_BLENDOP,
     WINED3D_RS_BLENDOPALPHA,
     WINED3D_RS_BACK_STENCILFAIL,
@@ -209,6 +208,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->pixelShader = 1;
     states->vertexShader = 1;
     states->scissorRect = 1;
+    states->blend_state = 1;
 
     /* Fixed size arrays */
     states->streamSource = 0xffff;
@@ -236,6 +236,7 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
     unsigned int i;
 
     states->pixelShader = 1;
+    states->blend_state = 1;
 
     for (i = 0; i < ARRAY_SIZE(pixel_states_render); ++i)
     {
@@ -839,6 +840,21 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
             SetRectEmpty(stateblock->state.scissor_rects);
     }
 
+    if (stateblock->changed.blend_state
+            && (src_state->blend_state != stateblock->state.blend_state
+            || memcmp(&src_state->blend_factor, &stateblock->state.blend_factor,
+                    sizeof(stateblock->state.blend_factor))))
+    {
+        TRACE("Updating blend state.\n");
+
+        if (src_state->blend_state)
+                wined3d_blend_state_incref(src_state->blend_state);
+        if (stateblock->state.blend_state)
+                wined3d_blend_state_decref(stateblock->state.blend_state);
+        stateblock->state.blend_state = src_state->blend_state;
+        stateblock->state.blend_factor = src_state->blend_factor;
+    }
+
     map = stateblock->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
@@ -1074,6 +1090,9 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_scissor_rects(device, stateblock->state.scissor_rect_count,
                 stateblock->state.scissor_rects);
 
+    if (stateblock->changed.blend_state)
+        wined3d_device_set_blend_state(device, stateblock->state.blend_state, &stateblock->state.blend_factor);
+
     map = stateblock->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
@@ -1255,7 +1274,6 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
     state->render_states[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE3] = 0x0000000f;
-    state->render_states[WINED3D_RS_BLENDFACTOR] = 0xffffffff;
     state->render_states[WINED3D_RS_SRGBWRITEENABLE] = 0;
     state->render_states[WINED3D_RS_DEPTHBIAS] = 0;
     state->render_states[WINED3D_RS_WRAP8] = 0;
@@ -1314,6 +1332,11 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         /* TODO: Vertex offset in the presampled displacement map. */
         state->sampler_states[i][WINED3D_SAMP_DMAP_OFFSET] = 0;
     }
+
+    state->blend_factor.r = 1.0f;
+    state->blend_factor.g = 1.0f;
+    state->blend_factor.b = 1.0f;
+    state->blend_factor.a = 1.0f;
 }
 
 void state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,

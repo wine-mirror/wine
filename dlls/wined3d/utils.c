@@ -4762,7 +4762,6 @@ const char *debug_d3drenderstate(enum wined3d_render_state state)
         D3DSTATE_TO_STR(WINED3D_RS_COLORWRITEENABLE1);
         D3DSTATE_TO_STR(WINED3D_RS_COLORWRITEENABLE2);
         D3DSTATE_TO_STR(WINED3D_RS_COLORWRITEENABLE3);
-        D3DSTATE_TO_STR(WINED3D_RS_BLENDFACTOR);
         D3DSTATE_TO_STR(WINED3D_RS_SRGBWRITEENABLE);
         D3DSTATE_TO_STR(WINED3D_RS_DEPTHBIAS);
         D3DSTATE_TO_STR(WINED3D_RS_WRAP8);
@@ -5011,6 +5010,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_STREAM_OUTPUT";
     if (STATE_IS_BLEND(state))
         return "STATE_BLEND";
+    if (STATE_IS_BLEND_FACTOR(state))
+        return "STATE_BLEND_FACTOR";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
