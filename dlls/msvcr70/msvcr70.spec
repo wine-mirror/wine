@@ -852,7 +852,7 @@
 @ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
 @ cdecl wcscat(wstr wstr) ntdll.wcscat
 @ cdecl wcschr(wstr long) MSVCRT_wcschr
-@ cdecl wcscmp(wstr wstr) ntdll.wcscmp
+@ cdecl wcscmp(wstr wstr) MSVCRT_wcscmp
 @ cdecl wcscoll(wstr wstr) MSVCRT_wcscoll
 @ cdecl wcscpy(ptr wstr) ntdll.wcscpy
 @ cdecl wcscspn(wstr wstr) ntdll.wcscspn

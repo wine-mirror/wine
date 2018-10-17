@@ -2555,3 +2555,11 @@ MSVCRT_size_t CDECL MSVCRT_wcsxfrm(MSVCRT_wchar_t *dest,
 {
     return MSVCRT__wcsxfrm_l(dest, src, len, NULL);
 }
+
+/*********************************************************************
+ *              wcscmp (MSVCRT.@)
+ */
+int CDECL MSVCRT_wcscmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2)
+{
+    return strcmpW(str1, str2);
+}
