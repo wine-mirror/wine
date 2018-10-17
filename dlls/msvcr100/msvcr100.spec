@@ -1871,7 +1871,7 @@
 @ cdecl wcsncpy_s(ptr long wstr long) MSVCRT_wcsncpy_s
 @ cdecl wcsnlen(wstr long) MSVCRT_wcsnlen
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
-@ cdecl wcsrchr(wstr long) ntdll.wcsrchr
+@ cdecl wcsrchr(wstr long) MSVCRT_wcsrchr
 @ cdecl wcsrtombs(ptr ptr long ptr) MSVCRT_wcsrtombs
 @ cdecl wcsrtombs_s(ptr ptr long ptr long ptr) MSVCRT_wcsrtombs_s
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn

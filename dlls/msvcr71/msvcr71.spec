@@ -858,7 +858,7 @@
 @ cdecl wcsncmp(wstr wstr long) MSVCRT_wcsncmp
 @ cdecl wcsncpy(ptr wstr long) MSVCRT_wcsncpy
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
-@ cdecl wcsrchr(wstr long) ntdll.wcsrchr
+@ cdecl wcsrchr(wstr long) MSVCRT_wcsrchr
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn
 @ cdecl wcsstr(wstr wstr) MSVCRT_wcsstr
 @ cdecl wcstod(wstr ptr) MSVCRT_wcstod
