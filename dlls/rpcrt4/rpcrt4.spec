@@ -42,7 +42,7 @@
 @ stub I_RpcConnectionSetSockBuffSize
 @ stub I_RpcDeleteMutex
 @ stub I_RpcEnableWmiTrace # wxp
-@ stdcall I_RpcExceptionFilter(long)
+@ stdcall I_RpcExceptionFilter(long) RpcExceptionFilter
 @ stdcall I_RpcFree(ptr)
 @ stdcall I_RpcFreeBuffer(ptr)
 @ stub I_RpcFreePipeBuffer
@@ -383,6 +383,7 @@
 @ stub RpcErrorResetEnumeration # wxp
 @ stdcall RpcErrorSaveErrorInfo(ptr ptr ptr)
 @ stdcall RpcErrorStartEnumeration(ptr)
+@ stdcall RpcExceptionFilter(long)
 @ stub RpcFreeAuthorizationContext # wxp
 @ stdcall RpcGetAsyncCallStatus(ptr) RpcAsyncGetCallStatus
 @ stub RpcIfIdVectorFree
