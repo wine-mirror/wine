@@ -839,6 +839,13 @@ HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_di
     heap_free( query );
     if (hr != S_OK) return hr;
 
+    if (!count_instances( iter ))
+    {
+        *sig = NULL;
+        IEnumWbemClassObject_Release( iter );
+        return S_OK;
+    }
+
     if (!(name = build_signature_table_name( class, method, dir )))
     {
         IEnumWbemClassObject_Release( iter );
@@ -873,9 +880,9 @@ static HRESULT WINAPI class_object_GetMethod(
     if (hr == S_OK)
     {
         if (ppInSignature) *ppInSignature = in;
-        else IWbemClassObject_Release( in );
+        else if (in) IWbemClassObject_Release( in );
         if (ppOutSignature) *ppOutSignature = out;
-        else IWbemClassObject_Release( out );
+        else if (out) IWbemClassObject_Release( out );
     }
     else IWbemClassObject_Release( in );
     return hr;
@@ -939,7 +946,8 @@ static HRESULT WINAPI class_object_NextMethod(
     if (hr != S_OK)
     {
         SysFreeString( method );
-        IWbemClassObject_Release( *ppInSignature );
+        if (*ppInSignature)
+            IWbemClassObject_Release( *ppInSignature );
     }
     else
     {
