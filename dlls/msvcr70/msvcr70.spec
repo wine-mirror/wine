@@ -607,7 +607,7 @@
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 @ cdecl -ret64 _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl -ret64 _wcstoui64(wstr ptr long) MSVCRT__wcstoui64
-@ cdecl _wcsupr(wstr) ntdll._wcsupr
+@ cdecl _wcsupr(wstr) MSVCRT__wcsupr
 @ cdecl _wctime(ptr) MSVCRT__wctime
 @ cdecl _wctime64(ptr) MSVCRT__wctime64
 # extern _wctype
