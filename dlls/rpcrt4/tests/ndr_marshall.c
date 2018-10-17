@@ -2187,11 +2187,6 @@ static void test_conf_complex_array(void)
 #endif
 
     expected_length = (4 + memsrc.dim1 * (2 + memsrc.dim2)) * 4;
-    if (StubMsg.BufferLength == 96)
-    {
-        win_skip("Tests crash on Win9x, WinMe and NT4\n");
-        goto cleanup;
-    }
     ok(StubMsg.BufferLength >= expected_length, "length %d\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
@@ -2261,7 +2256,6 @@ static void test_conf_complex_array(void)
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 
-cleanup:
     for(i = 0; i < memsrc.dim1; i++)
         HeapFree(GetProcessHeap(), 0, memsrc.array[i]);
     HeapFree(GetProcessHeap(), 0, memsrc.array);
@@ -2397,14 +2391,6 @@ static void test_NdrGetUserMarshalInfo(void)
     unsigned char buffer[16];
     void *rpc_channel_buffer = (void *)(ULONG_PTR)0xcafebabe;
     RPC_MESSAGE rpc_msg;
-    RPC_STATUS (RPC_ENTRY *pNdrGetUserMarshalInfo)(ULONG *,ULONG,NDR_USER_MARSHAL_INFO *);
-
-    pNdrGetUserMarshalInfo = (void *)GetProcAddress(GetModuleHandleA("rpcrt4.dll"), "NdrGetUserMarshalInfo");
-    if (!pNdrGetUserMarshalInfo)
-    {
-        skip("NdrGetUserMarshalInfo not exported\n");
-        return;
-    }
 
     /* unmarshall */
 
@@ -2432,7 +2418,7 @@ static void test_NdrGetUserMarshalInfo(void)
 
     memset(&umi, 0xaa, sizeof(umi));
 
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %u instead of 1\n",
@@ -2466,7 +2452,7 @@ static void test_NdrGetUserMarshalInfo(void)
 
     memset(&umi, 0xaa, sizeof(umi));
 
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %u instead of 1\n",
@@ -2500,7 +2486,7 @@ static void test_NdrGetUserMarshalInfo(void)
 
     memset(&umi, 0xaa, sizeof(umi));
 
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %u instead of 1\n",
@@ -2534,7 +2520,7 @@ static void test_NdrGetUserMarshalInfo(void)
 
     memset(&umi, 0xaa, sizeof(umi));
 
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
     ok( umi.InformationLevel == 1,
        "umi.InformationLevel was %u instead of 1\n",
@@ -2566,7 +2552,7 @@ static void test_NdrGetUserMarshalInfo(void)
 
     umcb.CBType = USER_MARSHAL_CB_MARSHALL;
 
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
     ok( U1(umi).Level1.BufferSize == 0,
        "umi.Level1.BufferSize was %u instead of 0\n",
@@ -2575,22 +2561,22 @@ static void test_NdrGetUserMarshalInfo(void)
     /* error conditions */
 
     rpc_msg.BufferLength = 14;
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == ERROR_INVALID_USER_BUFFER,
         "NdrGetUserMarshalInfo should have failed with ERROR_INVALID_USER_BUFFER instead of %d\n", status);
 
     rpc_msg.BufferLength = 15;
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 9999, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 9999, &umi);
     ok(status == RPC_S_INVALID_ARG,
         "NdrGetUserMarshalInfo should have failed with RPC_S_INVALID_ARG instead of %d\n", status);
 
     umcb.CBType = 9999;
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_OK, "NdrGetUserMarshalInfo failed with error %d\n", status);
 
     umcb.CBType = USER_MARSHAL_CB_MARSHALL;
     umcb.Signature = 0;
-    status = pNdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
+    status = NdrGetUserMarshalInfo(&umcb.Flags, 1, &umi);
     ok(status == RPC_S_INVALID_ARG,
         "NdrGetUserMarshalInfo should have failed with RPC_S_INVALID_ARG instead of %d\n", status);
 }
