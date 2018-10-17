@@ -281,7 +281,7 @@ static void CRYPT_CreateMachineGuid(void)
 	LONG r;
 	HKEY key;
 
-	r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, cryptographyW, 0, KEY_ALL_ACCESS,
+	r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, cryptographyW, 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY,
 			  &key);
 	if (!r)
 	{
