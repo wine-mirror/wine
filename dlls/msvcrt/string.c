@@ -2044,3 +2044,11 @@ int __cdecl MSVCRT__memicmp(const char *s1, const char *s2, MSVCRT_size_t len)
 {
     return MSVCRT__memicmp_l(s1, s2, len, NULL);
 }
+
+/*********************************************************************
+ *                  strcspn   (MSVCRT.@)
+ */
+MSVCRT_size_t __cdecl MSVCRT_strcspn(const char *str, const char *reject)
+{
+    return strcspn( str, reject );
+}
