@@ -139,7 +139,9 @@ static struct listener *alloc_listener(void)
         return NULL;
     }
     InitializeCriticalSection( &ret->cs );
+#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": listener.cs");
+#endif
 
     prop_init( listener_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -175,7 +177,9 @@ static void free_listener( struct listener *listener )
     CloseHandle( listener->wait );
     CloseHandle( listener->cancel );
 
+#ifndef __MINGW32__
     listener->cs.DebugInfo->Spare[0] = 0;
+#endif
     DeleteCriticalSection( &listener->cs );
     heap_free( listener );
 }

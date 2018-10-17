@@ -418,7 +418,9 @@ static struct reader *alloc_reader(void)
 
     ret->magic       = READER_MAGIC;
     InitializeCriticalSection( &ret->cs );
+#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": reader.cs");
+#endif
 
     prop_init( reader_props, count, ret->prop, &ret[1] );
     ret->prop_count  = count;
@@ -513,7 +515,10 @@ static void free_reader( struct reader *reader )
     destroy_nodes( reader->root );
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
     heap_free( reader->prefixes );
+
+#ifndef __MINGW32__
     reader->cs.DebugInfo->Spare[0] = 0;
+#endif
     DeleteCriticalSection( &reader->cs );
     heap_free( reader );
 }

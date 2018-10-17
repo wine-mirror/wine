@@ -106,7 +106,9 @@ static struct msg *alloc_msg(void)
     ret->header_size = HEADER_ARRAY_SIZE;
 
     InitializeCriticalSection( &ret->cs );
+#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": msg.cs");
+#endif
 
     prop_init( msg_props, count, ret->prop, &ret[1] );
     ret->prop_count  = count;
@@ -162,7 +164,9 @@ static void free_msg( struct msg *msg )
     WsFreeHeap( msg->heap );
     heap_free( msg->header );
 
+#ifndef __MINGW32__
     msg->cs.DebugInfo->Spare[0] = 0;
+#endif
     DeleteCriticalSection( &msg->cs );
     heap_free( msg );
 }

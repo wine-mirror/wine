@@ -107,7 +107,9 @@ static struct writer *alloc_writer(void)
 
     ret->magic      = WRITER_MAGIC;
     InitializeCriticalSection( &ret->cs );
+#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": writer.cs");
+#endif
 
     prop_init( writer_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -120,7 +122,9 @@ static void free_writer( struct writer *writer )
     free_xml_string( writer->current_ns );
     WsFreeHeap( writer->output_heap );
 
+#ifndef __MINGW32__
     writer->cs.DebugInfo->Spare[0] = 0;
+#endif
     DeleteCriticalSection( &writer->cs );
     heap_free( writer );
 }
