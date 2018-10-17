@@ -729,6 +729,47 @@ static void update_font_code_page( DC *dc, HANDLE font )
     TRACE("charset %d => cp %d\n", charset, dc->font_code_page);
 }
 
+static struct font_gamma_ramp *get_font_gamma_ramp( void )
+{
+    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                      'D','e','s','k','t','o','p',0 };
+    static const WCHAR smoothing_gamma[] = { 'F','o','n','t','S','m','o','o','t','h','i','n','g',
+                                             'G','a','m','m','a',0 };
+    const DWORD gamma_default = 1400;
+    struct font_gamma_ramp *ramp;
+    DWORD  i, gamma;
+    HKEY key;
+
+    ramp = HeapAlloc( GetProcessHeap(), 0, sizeof(*ramp) );
+    if ( ramp == NULL) return NULL;
+
+    gamma = gamma_default;
+    if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key ) == ERROR_SUCCESS)
+    {
+        if (get_key_value( key, smoothing_gamma, &gamma ) || gamma == 0)
+            gamma = gamma_default;
+        RegCloseKey( key );
+
+        gamma = min( max( gamma, 1000 ), 2200 );
+    }
+
+    /* Calibration the difference between the registry value and the Wine gamma value.
+       This shows a roughly similar looks to the Windows Native with the same registry value.
+       MS GDI seems to be rasterizing the outline at the different rate than FreeType. */
+    gamma = 1000 * gamma / 1400;
+
+    for (i = 0; i < 256; i++)
+    {
+        ramp->encode[i] = pow( i / 255., 1000. / gamma ) * 255. + .5;
+        ramp->decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
+    }
+
+    ramp->gamma = gamma;
+    TRACE("gamma %d\n", ramp->gamma);
+
+    return ramp;
+}
+
 /***********************************************************************
  *           FONT_SelectObject
  */
@@ -754,6 +795,8 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
         dc->hFont = handle;
         dc->aa_flags = aa_flags ? aa_flags : GGO_BITMAP;
         update_font_code_page( dc, handle );
+        if (dc->font_gamma_ramp == NULL)
+            dc->font_gamma_ramp = get_font_gamma_ramp();
         GDI_dec_ref_count( ret );
     }
     else GDI_dec_ref_count( handle );

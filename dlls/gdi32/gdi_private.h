@@ -99,6 +99,8 @@ typedef struct tagDC
 
     struct gdi_path *path;
 
+    struct font_gamma_ramp *font_gamma_ramp;
+
     UINT          font_code_page;
     WORD          ROPmode;
     WORD          polyFillMode;
@@ -269,6 +271,14 @@ extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DE
 
 /* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on_disk ) DECLSPEC_HIDDEN;
+
+/* font.c */
+struct font_gamma_ramp
+{
+    DWORD gamma;
+    BYTE  encode[256];
+    BYTE  decode[256];
+};
 
 /* freetype.c */
 

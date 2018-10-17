@@ -168,6 +168,7 @@ static void free_dc_state( DC *dc )
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc->region) DeleteObject( dc->region );
     if (dc->path) free_gdi_path( dc->path );
+    HeapFree( GetProcessHeap(), 0, dc->font_gamma_ramp );
     HeapFree( GetProcessHeap(), 0, dc );
 }
 

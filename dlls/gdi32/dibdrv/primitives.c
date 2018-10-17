@@ -6272,16 +6272,35 @@ static void draw_glyph_null( const dib_info *dib, const RECT *rect, const dib_in
 {
     return;
 }
-
-static inline DWORD blend_subpixel( BYTE r, BYTE g, BYTE b, DWORD text, DWORD alpha )
+static inline BYTE blend_color_gamma( BYTE dst, BYTE text, BYTE alpha,
+                                      const struct font_gamma_ramp *gamma_ramp )
 {
+    if (alpha == 0) return dst;
+    if (alpha == 255) return text;
+    if (dst == text) return dst;
+
+    return gamma_ramp->encode[ blend_color( gamma_ramp->decode[dst],
+                                            gamma_ramp->decode[text],
+                                            alpha ) ];
+}
+
+static inline DWORD blend_subpixel( BYTE r, BYTE g, BYTE b, DWORD text, DWORD alpha,
+                                    const struct font_gamma_ramp *gamma_ramp )
+{
+    if (gamma_ramp != NULL && gamma_ramp->gamma != 1000)
+    {
+        return blend_color_gamma( r, text >> 16, (BYTE)(alpha >> 16), gamma_ramp ) << 16 |
+               blend_color_gamma( g, text >> 8,  (BYTE)(alpha >> 8),  gamma_ramp ) << 8  |
+               blend_color_gamma( b, text,       (BYTE) alpha,        gamma_ramp );
+    }
     return blend_color( r, text >> 16, (BYTE)(alpha >> 16) ) << 16 |
            blend_color( g, text >> 8,  (BYTE)(alpha >> 8) )  << 8  |
            blend_color( b, text,       (BYTE) alpha );
 }
 
 static void draw_subpixel_glyph_8888( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                      const POINT *origin, DWORD text_pixel )
+                                      const POINT *origin, DWORD text_pixel,
+                                      const struct font_gamma_ramp *gamma_ramp )
 {
     DWORD *dst_ptr = get_pixel_ptr_32( dib, rect->left, rect->top );
     const DWORD *glyph_ptr = get_pixel_ptr_32( glyph, origin->x, origin->y );
@@ -6292,7 +6311,8 @@ static void draw_subpixel_glyph_8888( const dib_info *dib, const RECT *rect, con
         for (x = 0; x < rect->right - rect->left; x++)
         {
             if (glyph_ptr[x] == 0) continue;
-            dst_ptr[x] = blend_subpixel( dst_ptr[x] >> 16, dst_ptr[x] >> 8, dst_ptr[x], text_pixel, glyph_ptr[x] );
+            dst_ptr[x] = blend_subpixel( dst_ptr[x] >> 16, dst_ptr[x] >> 8, dst_ptr[x],
+                                         text_pixel, glyph_ptr[x], gamma_ramp );
         }
         dst_ptr += dib->stride / 4;
         glyph_ptr += glyph->stride / 4;
@@ -6300,7 +6320,8 @@ static void draw_subpixel_glyph_8888( const dib_info *dib, const RECT *rect, con
 }
 
 static void draw_subpixel_glyph_32( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                    const POINT *origin, DWORD text_pixel )
+                                    const POINT *origin, DWORD text_pixel,
+                                    const struct font_gamma_ramp *gamma_ramp )
 {
     DWORD *dst_ptr = get_pixel_ptr_32( dib, rect->left, rect->top );
     const DWORD *glyph_ptr = get_pixel_ptr_32( glyph, origin->x, origin->y );
@@ -6319,7 +6340,7 @@ static void draw_subpixel_glyph_32( const dib_info *dib, const RECT *rect, const
             val = blend_subpixel( get_field(dst_ptr[x], dib->red_shift,   dib->red_len),
                                   get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                                   get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
-                                  text, glyph_ptr[x] );
+                                  text, glyph_ptr[x], gamma_ramp );
             dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 4;
@@ -6328,7 +6349,8 @@ static void draw_subpixel_glyph_32( const dib_info *dib, const RECT *rect, const
 }
 
 static void draw_subpixel_glyph_24( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                    const POINT *origin, DWORD text_pixel )
+                                    const POINT *origin, DWORD text_pixel,
+                                    const struct font_gamma_ramp *gamma_ramp )
 {
     BYTE *dst_ptr = get_pixel_ptr_24( dib, rect->left, rect->top );
     const DWORD *glyph_ptr = get_pixel_ptr_32( glyph, origin->x, origin->y );
@@ -6341,7 +6363,7 @@ static void draw_subpixel_glyph_24( const dib_info *dib, const RECT *rect, const
         {
             if (glyph_ptr[x] == 0) continue;
             val = blend_subpixel( dst_ptr[x * 3 + 2], dst_ptr[x * 3 + 1], dst_ptr[x * 3],
-                                  text_pixel, glyph_ptr[x] );
+                                  text_pixel, glyph_ptr[x], gamma_ramp );
             dst_ptr[x * 3]     = val;
             dst_ptr[x * 3 + 1] = val >> 8;
             dst_ptr[x * 3 + 2] = val >> 16;
@@ -6352,7 +6374,8 @@ static void draw_subpixel_glyph_24( const dib_info *dib, const RECT *rect, const
 }
 
 static void draw_subpixel_glyph_555( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                     const POINT *origin, DWORD text_pixel )
+                                     const POINT *origin, DWORD text_pixel,
+                                     const struct font_gamma_ramp *gamma_ramp )
 {
     WORD *dst_ptr = get_pixel_ptr_16( dib, rect->left, rect->top );
     const DWORD *glyph_ptr = get_pixel_ptr_32( glyph, origin->x, origin->y );
@@ -6371,7 +6394,7 @@ static void draw_subpixel_glyph_555( const dib_info *dib, const RECT *rect, cons
             val = blend_subpixel( ((dst_ptr[x] >> 7) & 0xf8) | ((dst_ptr[x] >> 12) & 0x07),
                                   ((dst_ptr[x] >> 2) & 0xf8) | ((dst_ptr[x] >>  7) & 0x07),
                                   ((dst_ptr[x] << 3) & 0xf8) | ((dst_ptr[x] >>  2) & 0x07),
-                                  text, glyph_ptr[x] );
+                                  text, glyph_ptr[x], NULL );
             dst_ptr[x] = ((val >> 9) & 0x7c00) | ((val >> 6) & 0x03e0) | ((val >> 3) & 0x001f);
         }
         dst_ptr += dib->stride / 2;
@@ -6380,7 +6403,8 @@ static void draw_subpixel_glyph_555( const dib_info *dib, const RECT *rect, cons
 }
 
 static void draw_subpixel_glyph_16( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                    const POINT *origin, DWORD text_pixel )
+                                    const POINT *origin, DWORD text_pixel,
+                                    const struct font_gamma_ramp *gamma_ramp )
 {
     WORD *dst_ptr = get_pixel_ptr_16( dib, rect->left, rect->top );
     const DWORD *glyph_ptr = get_pixel_ptr_32( glyph, origin->x, origin->y );
@@ -6399,7 +6423,7 @@ static void draw_subpixel_glyph_16( const dib_info *dib, const RECT *rect, const
             val = blend_subpixel( get_field(dst_ptr[x], dib->red_shift,   dib->red_len),
                                   get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                                   get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
-                                  text, glyph_ptr[x] );
+                                  text, glyph_ptr[x], NULL );
             dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 2;
@@ -6408,7 +6432,8 @@ static void draw_subpixel_glyph_16( const dib_info *dib, const RECT *rect, const
 }
 
 static void draw_subpixel_glyph_null( const dib_info *dib, const RECT *rect, const dib_info *glyph,
-                                      const POINT *origin, DWORD text_pixel )
+                                      const POINT *origin, DWORD text_pixel,
+                                      const struct font_gamma_ramp *gamma_ramp )
 {
     return;
 }
