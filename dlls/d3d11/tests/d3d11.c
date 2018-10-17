@@ -6241,7 +6241,7 @@ static void test_device_context_state(void)
 
 static void test_blend(void)
 {
-    ID3D11BlendState *src_blend, *dst_blend;
+    ID3D11BlendState *src_blend, *dst_blend, *dst_blend_factor;
     struct d3d11_test_context test_context;
     ID3D11RenderTargetView *offscreen_rtv;
     D3D11_TEXTURE2D_DESC texture_desc;
@@ -6333,7 +6333,7 @@ static void test_blend(void)
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const float blend_factor[] = {0.3f, 0.4f, 0.8f, 0.9f};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
     if (!init_test_context(&test_context, NULL))
@@ -6374,6 +6374,14 @@ static void test_blend(void)
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &dst_blend);
     ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
 
+    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;
+    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_BLEND_FACTOR;
+    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_DEST_ALPHA;
+    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
+
+    hr = ID3D11Device_CreateBlendState(device, &blend_desc, &dst_blend_factor);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     stride = sizeof(*quads);
@@ -6384,15 +6392,26 @@ static void test_blend(void)
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
 
-    ID3D11DeviceContext_OMSetBlendState(context, src_blend, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_OMSetBlendState(context, src_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_Draw(context, 4, 0);
-    ID3D11DeviceContext_OMSetBlendState(context, dst_blend, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_OMSetBlendState(context, dst_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_Draw(context, 4, 4);
 
     color = get_texture_color(test_context.backbuffer, 320, 360);
     ok(compare_color(color, 0x700040bf, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 120);
     ok(compare_color(color, 0xa080007f, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+
+    ID3D11DeviceContext_OMSetBlendState(context, dst_blend_factor, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    ID3D11DeviceContext_Draw(context, 4, 4);
+
+    color = get_texture_color(test_context.backbuffer, 320, 360);
+    ok(compare_color(color, 0x600066b3, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 320, 120);
+    ok(compare_color(color, 0xa0cc00b3, 1), "Got unexpected color 0x%08x.\n", color);
 
     texture_desc.Width = 128;
     texture_desc.Height = 128;
@@ -6422,9 +6441,9 @@ static void test_blend(void)
 
     ID3D11DeviceContext_ClearRenderTargetView(context, offscreen_rtv, red);
 
-    ID3D11DeviceContext_OMSetBlendState(context, src_blend, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_OMSetBlendState(context, src_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_Draw(context, 4, 0);
-    ID3D11DeviceContext_OMSetBlendState(context, dst_blend, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_OMSetBlendState(context, dst_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_Draw(context, 4, 4);
 
     color = get_texture_color(offscreen, 64, 96) & 0x00ffffff;
@@ -6435,6 +6454,7 @@ static void test_blend(void)
     ID3D11RenderTargetView_Release(offscreen_rtv);
     ID3D11Texture2D_Release(offscreen);
 done:
+    ID3D11BlendState_Release(dst_blend_factor);
     ID3D11BlendState_Release(dst_blend);
     ID3D11BlendState_Release(src_blend);
     ID3D11PixelShader_Release(ps);
