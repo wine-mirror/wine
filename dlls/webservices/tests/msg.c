@@ -104,6 +104,7 @@ static void test_WsCreateMessageForChannel(void)
     hr = WsCreateMessageForChannel( NULL, NULL, 0, &msg, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
+    /* HTTP */
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL,
                           &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -151,6 +152,52 @@ static void test_WsCreateMessageForChannel(void)
                                sizeof(env_version), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_1, "got %u\n", env_version );
+
+    WsFreeChannel( channel );
+    WsFreeMessage( msg );
+
+    /* TCP */
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL,
+                          &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    env_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
+                               sizeof(env_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
+
+    addr_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
+                               sizeof(addr_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
+
+    WsFreeChannel( channel );
+    WsFreeMessage( msg );
+
+    /* UDP */
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_DUPLEX, WS_UDP_CHANNEL_BINDING, NULL, 0, NULL,
+                          &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    env_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
+                               sizeof(env_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
+
+    addr_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
+                               sizeof(addr_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
     WsFreeChannel( channel );
     WsFreeMessage( msg );
