@@ -5688,8 +5688,8 @@ float4 main(float4 color : COLOR) : SV_TARGET
 
 static void test_blend(void)
 {
+    ID3D10BlendState *src_blend, *dst_blend, *dst_blend_factor;
     struct d3d10core_test_context test_context;
-    ID3D10BlendState *src_blend, *dst_blend;
     ID3D10RenderTargetView *offscreen_rtv;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10InputLayout *input_layout;
@@ -5779,7 +5779,7 @@ static void test_blend(void)
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, 12, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const float blend_factor[] = {0.3f, 0.4f, 0.8f, 0.9f};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
     if (!init_test_context(&test_context))
@@ -5818,6 +5818,14 @@ static void test_blend(void)
     hr = ID3D10Device_CreateBlendState(device, &blend_desc, &dst_blend);
     ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
 
+    blend_desc.SrcBlend = D3D10_BLEND_BLEND_FACTOR;
+    blend_desc.DestBlend = D3D10_BLEND_INV_BLEND_FACTOR;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_DEST_ALPHA;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_INV_DEST_ALPHA;
+
+    hr = ID3D10Device_CreateBlendState(device, &blend_desc, &dst_blend_factor);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
     ID3D10Device_IASetInputLayout(device, input_layout);
     ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     stride = sizeof(*quads);
@@ -5828,15 +5836,26 @@ static void test_blend(void)
 
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
 
-    ID3D10Device_OMSetBlendState(device, src_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMSetBlendState(device, src_blend, NULL, D3D10_DEFAULT_SAMPLE_MASK);
     ID3D10Device_Draw(device, 4, 0);
-    ID3D10Device_OMSetBlendState(device, dst_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMSetBlendState(device, dst_blend, NULL, D3D10_DEFAULT_SAMPLE_MASK);
     ID3D10Device_Draw(device, 4, 4);
 
     color = get_texture_color(test_context.backbuffer, 320, 360);
     ok(compare_color(color, 0x700040bf, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 120);
     ok(compare_color(color, 0xa080007f, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
+
+    ID3D10Device_OMSetBlendState(device, dst_blend_factor, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_Draw(device, 4, 0);
+    ID3D10Device_Draw(device, 4, 4);
+
+    color = get_texture_color(test_context.backbuffer, 320, 360);
+    ok(compare_color(color, 0x600066b3, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 320, 120);
+    ok(compare_color(color, 0xa0cc00b3, 1), "Got unexpected color 0x%08x.\n", color);
 
     texture_desc.Width = 128;
     texture_desc.Height = 128;
@@ -5866,9 +5885,9 @@ static void test_blend(void)
 
     ID3D10Device_ClearRenderTargetView(device, offscreen_rtv, red);
 
-    ID3D10Device_OMSetBlendState(device, src_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMSetBlendState(device, src_blend, NULL, D3D10_DEFAULT_SAMPLE_MASK);
     ID3D10Device_Draw(device, 4, 0);
-    ID3D10Device_OMSetBlendState(device, dst_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMSetBlendState(device, dst_blend, NULL, D3D10_DEFAULT_SAMPLE_MASK);
     ID3D10Device_Draw(device, 4, 4);
 
     color = get_texture_color(offscreen, 64, 96) & 0x00ffffff;
@@ -5879,6 +5898,7 @@ static void test_blend(void)
     ID3D10RenderTargetView_Release(offscreen_rtv);
     ID3D10Texture2D_Release(offscreen);
 done:
+    ID3D10BlendState_Release(dst_blend_factor);
     ID3D10BlendState_Release(dst_blend);
     ID3D10BlendState_Release(src_blend);
     ID3D10PixelShader_Release(ps);
