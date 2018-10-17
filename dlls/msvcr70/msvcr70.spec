@@ -867,7 +867,7 @@
 @ cdecl wcsstr(wstr wstr) MSVCRT_wcsstr
 @ cdecl wcstod(wstr ptr) MSVCRT_wcstod
 @ cdecl wcstok(wstr wstr) MSVCRT_wcstok
-@ cdecl wcstol(wstr ptr long) ntdll.wcstol
+@ cdecl wcstol(wstr ptr long) MSVCRT_wcstol
 @ cdecl wcstombs(ptr ptr long) MSVCRT_wcstombs
 @ cdecl wcstoul(wstr ptr long) MSVCRT_wcstoul
 @ cdecl wcsxfrm(ptr wstr long) MSVCRT_wcsxfrm

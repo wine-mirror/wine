@@ -2225,6 +2225,15 @@ MSVCRT_long CDECL MSVCRT__wcstol_l(const MSVCRT_wchar_t *s,
 }
 
 /*********************************************************************
+ *  wcstol (MSVCRT.@)
+ */
+MSVCRT_long CDECL MSVCRT_wcstol(const MSVCRT_wchar_t *s,
+        MSVCRT_wchar_t **end, int base)
+{
+    return MSVCRT__wcstol_l(s, end, base, NULL);
+}
+
+/*********************************************************************
  *  _wtoi_l (MSVCRT.@)
  */
 int __cdecl MSVCRT__wtoi_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)

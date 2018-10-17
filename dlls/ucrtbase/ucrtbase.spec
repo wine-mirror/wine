@@ -2581,7 +2581,7 @@
 @ stub wcstoimax
 @ cdecl wcstok(wstr wstr) MSVCRT_wcstok
 @ cdecl wcstok_s(ptr wstr ptr) MSVCRT_wcstok_s
-@ cdecl wcstol(wstr ptr long) ntdll.wcstol
+@ cdecl wcstol(wstr ptr long) MSVCRT_wcstol
 @ stub wcstold
 @ cdecl -ret64 wcstoll(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl wcstombs(ptr ptr long) MSVCRT_wcstombs
