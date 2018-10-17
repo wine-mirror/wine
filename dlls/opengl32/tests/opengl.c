@@ -244,8 +244,7 @@ static void test_choosepixelformat(void)
     PIXELFORMATDESCRIPTOR pfd = {
         sizeof(PIXELFORMATDESCRIPTOR),
         1,                     /* version */
-        PFD_DRAW_TO_WINDOW |
-        PFD_SUPPORT_OPENGL |
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
         PFD_TYPE_RGBA,
         0,                     /* color depth */
         0, 0, 0, 0, 0, 0,      /* color bits */
