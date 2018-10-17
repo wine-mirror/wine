@@ -235,7 +235,7 @@
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long) MSVCRT__assert
 @ cdecl _atodbl(ptr str) MSVCRT__atodbl
-@ cdecl -ret64 _atoi64(str) ntdll._atoi64
+@ cdecl -ret64 _atoi64(str) MSVCRT__atoi64
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _beep(long long) MSVCRT__beep
 @ cdecl _beginthread(ptr long ptr)

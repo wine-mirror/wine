@@ -5,7 +5,7 @@
 @ cdecl _atoflt(ptr str) ucrtbase._atoflt
 @ cdecl _atoflt_l(ptr str ptr) ucrtbase._atoflt_l
 @ cdecl -ret64 _atoi64(str) ucrtbase._atoi64
-@ cdecl _atoi64_l(str ptr) ucrtbase._atoi64_l
+@ cdecl -ret64 _atoi64_l(str ptr) ucrtbase._atoi64_l
 @ cdecl _atoi_l(str ptr) ucrtbase._atoi_l
 @ cdecl _atol_l(str ptr) ucrtbase._atol_l
 @ cdecl _atoldbl(ptr str) ucrtbase._atoldbl
