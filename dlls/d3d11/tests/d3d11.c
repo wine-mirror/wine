@@ -11565,6 +11565,140 @@ static void test_fragment_coords(void)
     release_test_context(&test_context);
 }
 
+static void test_initial_texture_data(void)
+{
+    ID3D11Texture2D *texture, *staging_texture;
+    struct d3d11_test_context test_context;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11SamplerState *sampler_state;
+    ID3D11ShaderResourceView *ps_srv;
+    D3D11_SAMPLER_DESC sampler_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int i, j;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture2D t;
+        SamplerState s;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 p;
+
+            p.x = position.x / 640.0f;
+            p.y = position.y / 480.0f;
+            return t.Sample(s, p);
+        }
+#endif
+        0x43425844, 0x1ce9b612, 0xc8176faa, 0xd37844af, 0xdb515605, 0x00000001, 0x00000134, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000098, 0x00000040,
+        0x00000026, 0x0300005a, 0x00106000, 0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555,
+        0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000001, 0x0a000038, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
+        0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
+        0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
+    };
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+    static const DWORD bitmap_data[] =
+    {
+        0xffffffff, 0xff000000, 0xffffffff, 0xff000000,
+        0xff00ff00, 0xff0000ff, 0xff00ffff, 0x00000000,
+        0xffffff00, 0xffff0000, 0xffff00ff, 0x00000000,
+        0xff000000, 0xff7f7f7f, 0xffffffff, 0x00000000,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    texture_desc.BindFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = bitmap_data;
+    resource_data.SysMemPitch = texture_desc.Width * sizeof(*bitmap_data);
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &staging_texture);
+    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)texture, (ID3D11Resource *)staging_texture);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &ps_srv);
+    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 0.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 0.0f;
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
+    ok(hr == S_OK, "Failed to create sampler state, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+    draw_quad(&test_context);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
+            ok(compare_color(color, bitmap_data[j + i * 4], 1),
+                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    color, j, i, bitmap_data[j + i * 4]);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+    ID3D11SamplerState_Release(sampler_state);
+    ID3D11ShaderResourceView_Release(ps_srv);
+    ID3D11Texture2D_Release(staging_texture);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void test_update_subresource(void)
 {
     struct d3d11_test_context test_context;
@@ -28454,6 +28588,7 @@ START_TEST(d3d11)
     queue_test(test_il_append_aligned);
     queue_test(test_instance_id);
     queue_test(test_fragment_coords);
+    queue_test(test_initial_texture_data);
     queue_test(test_update_subresource);
     queue_test(test_copy_subresource_region);
     queue_test(test_copy_subresource_region_1d);
