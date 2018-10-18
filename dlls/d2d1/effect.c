@@ -120,7 +120,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_SetValue(ID2D1Effect *iface, UINT32 
 {
     FIXME("iface %p, index %u, type %#x, value %p, value_size %u stub!\n", iface, index, type, value, value_size);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, const WCHAR *name,
