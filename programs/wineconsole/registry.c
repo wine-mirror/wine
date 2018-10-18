@@ -211,7 +211,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->cursor_visible = 1;
     cfg->exit_on_die = 1;
     memset(cfg->face_name, 0, sizeof(cfg->face_name));
-    cfg->cell_height = MulDiv( 12, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+    cfg->cell_height = MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     cfg->cell_width  = MulDiv( 8, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     cfg->font_weight = FW_NORMAL;
     cfg->history_size = 50;

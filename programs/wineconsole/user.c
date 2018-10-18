@@ -403,6 +403,7 @@ static int CALLBACK get_first_font_enum_2(const LOGFONTW* lf, const TEXTMETRICW*
          */
         mlf.lfWidth  = fc->data->curcfg.cell_width;
         mlf.lfHeight = fc->data->curcfg.cell_height;
+        if (!mlf.lfHeight) mlf.lfHeight = MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
         if (WCUSER_SetFont(fc->data, &mlf))
         {
             struct      config_data     defcfg;
