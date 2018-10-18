@@ -480,7 +480,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Facto
     FIXME("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p stub!\n",
             iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory1 *iface, REFCLSID effect_id)
