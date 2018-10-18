@@ -727,6 +727,11 @@ static void *get_readback_data(struct resource_readback *rb, unsigned int x, uns
     return (BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch + x * byte_width;
 }
 
+static BYTE get_readback_byte(struct resource_readback *rb, unsigned int x, unsigned int y)
+{
+    return *(BYTE *)get_readback_data(rb, x, y, sizeof(BYTE));
+}
+
 static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
     return *(DWORD *)get_readback_data(rb, x, y, sizeof(DWORD));
@@ -777,6 +782,40 @@ static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigne
     release_resource_readback(&rb);
 
     return color;
+}
+
+#define check_readback_data_byte(a, b, c, d) check_readback_data_byte_(__LINE__, a, b, c, d)
+static void check_readback_data_byte_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, BYTE expected_value, BYTE max_diff)
+{
+    unsigned int x = 0, y = 0;
+    BOOL all_match = TRUE;
+    RECT default_rect;
+    BYTE value = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
+        {
+            value = get_readback_byte(rb, x, y);
+            if (!compare_color(value, expected_value, max_diff))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%02x, expected 0x%02x at (%u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, rb->sub_resource_idx);
 }
 
 #define check_readback_data_color(a, b, c, d) check_readback_data_color_(__LINE__, a, b, c, d)
@@ -17472,6 +17511,71 @@ static void test_staging_buffers(void)
     release_test_context(&test_context);
 }
 
+static void test_render_a8(void)
+{
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10RenderTargetView *rtv;
+    struct resource_readback rb;
+    ID3D10Texture2D *texture;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        void main(out float4 target : SV_Target)
+        {
+            target = float4(0.0f, 0.25f, 0.5f, 1.0f);
+        }
+#endif
+        0x43425844, 0x8a06129f, 0x3041bde2, 0x09389749, 0xb339ba8b, 0x00000001, 0x000000b0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03000065, 0x001020f2, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3e800000, 0x3f000000, 0x3f800000, 0x0100003e,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_A8_UNORM;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+
+    for (i = 0; i < 2; ++i)
+    {
+        ID3D10Device_ClearRenderTargetView(device, rtv, black);
+        ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+        draw_quad(&test_context);
+        get_texture_readback(texture, 0, &rb);
+        check_readback_data_byte(&rb, NULL, 0xff, 0);
+        release_resource_readback(&rb);
+
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, black);
+        ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, NULL);
+        draw_quad(&test_context);
+        check_texture_sub_resource_color(test_context.backbuffer, 0, NULL, 0xff7f4000, 1);
+    }
+
+    ID3D10PixelShader_Release(ps);
+    ID3D10Texture2D_Release(texture);
+    ID3D10RenderTargetView_Release(rtv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -17582,6 +17686,7 @@ START_TEST(d3d10core)
     queue_test(test_multisample_resolve);
     queue_test(test_depth_clip);
     queue_test(test_staging_buffers);
+    queue_test(test_render_a8);
 
     run_queued_tests();
 
