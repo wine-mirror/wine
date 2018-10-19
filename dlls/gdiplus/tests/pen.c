@@ -553,6 +553,41 @@ static void test_transform(void)
     expectf(1.0, values[4]);
     expectf(-2.0, values[5]);
 
+    /* Multiply */
+    status = GdipResetPenTransform(pen);
+    expect(Ok, status);
+
+    status = GdipSetMatrixElements(matrix, 2.0, 1.0, 1.0, 4.0, 1.0, 2.0);
+    expect(Ok, status);
+
+    status = GdipMultiplyPenTransform(NULL, matrix, MatrixOrderPrepend);
+    expect(InvalidParameter, status);
+
+    status = GdipMultiplyPenTransform(pen, matrix, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(2.0, values[0]);
+    expectf(1.0, values[1]);
+    expectf(1.0, values[2]);
+    expectf(4.0, values[3]);
+    expectf(1.0, values[4]);
+    expectf(2.0, values[5]);
+
+    status = GdipScalePenTransform(pen, 2.0, -10.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipMultiplyPenTransform(pen, matrix, MatrixOrderAppend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(-2.0, values[0]);
+    expectf(-36.0, values[1]);
+    expectf(-36.0, values[2]);
+    expectf(-158.0, values[3]);
+    expectf(-15.0, values[4]);
+    expectf(-76.0, values[5]);
+
     GdipDeletePen(pen);
 
     GdipDeleteMatrix(matrix);

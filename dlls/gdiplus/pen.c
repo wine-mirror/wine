@@ -496,17 +496,12 @@ GpStatus WINGDIPAPI GdipRotatePenTransform(GpPen *pen, REAL angle, GpMatrixOrder
 GpStatus WINGDIPAPI GdipMultiplyPenTransform(GpPen *pen, GDIPCONST GpMatrix *matrix,
     GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%p,%u)\n", pen, matrix, order);
 
     if(!pen)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return NotImplemented;
+    return GdipMultiplyMatrix(&pen->transform, matrix, order);
 }
 
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
