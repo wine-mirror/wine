@@ -1919,9 +1919,9 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
         static const WCHAR wszRpcProxy[] = {'R','p','c','P','r','o','x','y','=',0};
         static const WCHAR wszHttpProxy[] = {'H','t','t','p','P','r','o','x','y','=',0};
 
-        if (!strncmpiW(option, wszRpcProxy, sizeof(wszRpcProxy)/sizeof(wszRpcProxy[0])-1))
+        if (!strncmpiW(option, wszRpcProxy, ARRAY_SIZE(wszRpcProxy)-1))
         {
-            const WCHAR *value_start = option + sizeof(wszRpcProxy)/sizeof(wszRpcProxy[0])-1;
+            const WCHAR *value_start = option + ARRAY_SIZE(wszRpcProxy)-1;
             const WCHAR *value_end;
             const WCHAR *p;
 
@@ -1938,9 +1938,9 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
             TRACE("RpcProxy value is %s\n", debugstr_wn(value_start, value_end-value_start));
             servername = RPCRT4_strndupW(value_start, value_end-value_start);
         }
-        else if (!strncmpiW(option, wszHttpProxy, sizeof(wszHttpProxy)/sizeof(wszHttpProxy[0])-1))
+        else if (!strncmpiW(option, wszHttpProxy, ARRAY_SIZE(wszHttpProxy)-1))
         {
-            const WCHAR *value_start = option + sizeof(wszHttpProxy)/sizeof(wszHttpProxy[0])-1;
+            const WCHAR *value_start = option + ARRAY_SIZE(wszHttpProxy)-1;
             const WCHAR *value_end;
 
             value_end = strchrW(option, ',');
@@ -2068,7 +2068,7 @@ static RPC_STATUS insert_content_length_header(HINTERNET request, DWORD len)
 {
     static const WCHAR fmtW[] =
         {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
-    WCHAR header[sizeof(fmtW) / sizeof(fmtW[0]) + 10];
+    WCHAR header[ARRAY_SIZE(fmtW) + 10];
 
     sprintfW(header, fmtW, len);
     if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD))) return RPC_S_OK;
@@ -2581,7 +2581,7 @@ static RPC_STATUS insert_authorization_header(HINTERNET request, ULONG scheme, c
     static const WCHAR basicW[] = {'B','a','s','i','c',' '};
     static const WCHAR negotiateW[] = {'N','e','g','o','t','i','a','t','e',' '};
     static const WCHAR ntlmW[] = {'N','T','L','M',' '};
-    int scheme_len, auth_len = sizeof(authW) / sizeof(authW[0]), len = ((data_len + 2) * 4) / 3;
+    int scheme_len, auth_len = ARRAY_SIZE(authW), len = ((data_len + 2) * 4) / 3;
     const WCHAR *scheme_str;
     WCHAR *header, *ptr;
     RPC_STATUS status = RPC_S_SERVER_UNAVAILABLE;
@@ -2590,15 +2590,15 @@ static RPC_STATUS insert_authorization_header(HINTERNET request, ULONG scheme, c
     {
     case RPC_C_HTTP_AUTHN_SCHEME_BASIC:
         scheme_str = basicW;
-        scheme_len = sizeof(basicW) / sizeof(basicW[0]);
+        scheme_len = ARRAY_SIZE(basicW);
         break;
     case RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE:
         scheme_str = negotiateW;
-        scheme_len = sizeof(negotiateW) / sizeof(negotiateW[0]);
+        scheme_len = ARRAY_SIZE(negotiateW);
         break;
     case RPC_C_HTTP_AUTHN_SCHEME_NTLM:
         scheme_str = ntlmW;
-        scheme_len = sizeof(ntlmW) / sizeof(ntlmW[0]);
+        scheme_len = ARRAY_SIZE(ntlmW);
         break;
     default:
         ERR("unknown scheme %u\n", scheme);
@@ -2779,7 +2779,8 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     if (!url)
         return RPC_S_OUT_OF_MEMORY;
     memcpy(url, wszRpcProxyPrefix, sizeof(wszRpcProxyPrefix));
-    MultiByteToWideChar(CP_ACP, 0, Connection->NetworkAddr, -1, url+sizeof(wszRpcProxyPrefix)/sizeof(wszRpcProxyPrefix[0])-1, strlen(Connection->NetworkAddr)+1);
+    MultiByteToWideChar(CP_ACP, 0, Connection->NetworkAddr, -1, url+ARRAY_SIZE(wszRpcProxyPrefix)-1,
+                        strlen(Connection->NetworkAddr)+1);
     strcatW(url, wszColon);
     MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+strlenW(url), strlen(Connection->Endpoint)+1);
 

@@ -63,8 +63,8 @@ DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header)
     0, 0, sizeof(Header->auth3), 0, 0, 0, sizeof(Header->http)
   };
   ULONG ret = 0;
-  
-  if (Header->common.ptype < sizeof(header_sizes) / sizeof(header_sizes[0])) {
+
+  if (Header->common.ptype < ARRAY_SIZE(header_sizes)) {
     ret = header_sizes[Header->common.ptype];
     if (ret == 0)
       FIXME("unhandled packet type %u\n", Header->common.ptype);
@@ -691,7 +691,7 @@ RPC_STATUS RPCRT4_default_secure_packet(RpcConnection *Connection,
     SECURITY_STATUS sec_status;
 
     message.ulVersion = SECBUFFER_VERSION;
-    message.cBuffers = sizeof(buffers)/sizeof(buffers[0]);
+    message.cBuffers = ARRAY_SIZE(buffers);
     message.pBuffers = buffers;
 
     buffers[0].cbBuffer = hdr_size;
