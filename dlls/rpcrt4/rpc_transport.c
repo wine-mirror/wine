@@ -54,8 +54,6 @@
 
 #define DEFAULT_NCACN_HTTP_TIMEOUT (60 * 1000)
 
-#define ARRAYSIZE(a) (sizeof((a)) / sizeof((a)[0]))
-
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 static RpcConnection *rpcrt4_spawn_connection(RpcConnection *old_connection);
@@ -2397,11 +2395,11 @@ static const struct
 }
 auth_schemes[] =
 {
-    { basicW,     ARRAYSIZE(basicW) - 1,     RPC_C_HTTP_AUTHN_SCHEME_BASIC },
-    { ntlmW,      ARRAYSIZE(ntlmW) - 1,      RPC_C_HTTP_AUTHN_SCHEME_NTLM },
-    { passportW,  ARRAYSIZE(passportW) - 1,  RPC_C_HTTP_AUTHN_SCHEME_PASSPORT },
-    { digestW,    ARRAYSIZE(digestW) - 1,    RPC_C_HTTP_AUTHN_SCHEME_DIGEST },
-    { negotiateW, ARRAYSIZE(negotiateW) - 1, RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE }
+    { basicW,     ARRAY_SIZE(basicW) - 1,     RPC_C_HTTP_AUTHN_SCHEME_BASIC },
+    { ntlmW,      ARRAY_SIZE(ntlmW) - 1,      RPC_C_HTTP_AUTHN_SCHEME_NTLM },
+    { passportW,  ARRAY_SIZE(passportW) - 1,  RPC_C_HTTP_AUTHN_SCHEME_PASSPORT },
+    { digestW,    ARRAY_SIZE(digestW) - 1,    RPC_C_HTTP_AUTHN_SCHEME_DIGEST },
+    { negotiateW, ARRAY_SIZE(negotiateW) - 1, RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE }
 };
 
 static DWORD auth_scheme_from_header( const WCHAR *header )
@@ -3260,7 +3258,7 @@ static const struct protseq_ops protseq_list[] =
 const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 {
   unsigned int i;
-  for(i=0; i<ARRAYSIZE(protseq_list); i++)
+  for(i = 0; i < ARRAY_SIZE(protseq_list); i++)
     if (!strcmp(protseq_list[i].name, protseq))
       return &protseq_list[i];
   return NULL;
@@ -3269,7 +3267,7 @@ const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 static const struct connection_ops *rpcrt4_get_conn_protseq_ops(const char *protseq)
 {
     unsigned int i;
-    for(i=0; i<ARRAYSIZE(conn_protseq_list); i++)
+    for(i = 0; i < ARRAY_SIZE(conn_protseq_list); i++)
         if (!strcmp(conn_protseq_list[i].name, protseq))
             return &conn_protseq_list[i];
     return NULL;
@@ -3507,7 +3505,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
         (floor4->count_lhs != sizeof(floor4->protid)))
         return EPT_S_NOT_REGISTERED;
 
-    for(i = 0; i < ARRAYSIZE(conn_protseq_list); i++)
+    for(i = 0; i < ARRAY_SIZE(conn_protseq_list); i++)
         if ((protocol_floor->protid == conn_protseq_list[i].epm_protocols[0]) &&
             (floor4->protid == conn_protseq_list[i].epm_protocols[1]))
         {
@@ -3613,12 +3611,12 @@ RPC_STATUS WINAPI RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW** protseqs )
 
   TRACE("(%p)\n", protseqs);
 
-  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned short*)*ARRAYSIZE(protseq_list)));
+  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned short*)*ARRAY_SIZE(protseq_list)));
   if (!*protseqs)
     goto end;
   pvector = *protseqs;
   pvector->Count = 0;
-  for (i = 0; i < ARRAYSIZE(protseq_list); i++)
+  for (i = 0; i < ARRAY_SIZE(protseq_list); i++)
   {
     pvector->Protseq[i] = HeapAlloc(GetProcessHeap(), 0, (strlen(protseq_list[i].name)+1)*sizeof(unsigned short));
     if (pvector->Protseq[i] == NULL)
@@ -3646,12 +3644,12 @@ RPC_STATUS WINAPI RpcNetworkInqProtseqsA(RPC_PROTSEQ_VECTORA** protseqs)
 
   TRACE("(%p)\n", protseqs);
 
-  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned char*)*ARRAYSIZE(protseq_list)));
+  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned char*)*ARRAY_SIZE(protseq_list)));
   if (!*protseqs)
     goto end;
   pvector = *protseqs;
   pvector->Count = 0;
-  for (i = 0; i < ARRAYSIZE(protseq_list); i++)
+  for (i = 0; i < ARRAY_SIZE(protseq_list); i++)
   {
     pvector->Protseq[i] = HeapAlloc(GetProcessHeap(), 0, strlen(protseq_list[i].name)+1);
     if (pvector->Protseq[i] == NULL)
