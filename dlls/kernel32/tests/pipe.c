@@ -2721,7 +2721,7 @@ static void test_readfileex_pending(void)
 static void _test_peek_pipe(unsigned line, HANDLE pipe, DWORD expected_read, DWORD expected_avail, DWORD expected_message_length)
 {
     DWORD bytes_read = 0xdeadbeed, avail = 0xdeadbeef, left = 0xdeadbeed;
-    char buf[4000];
+    char buf[12000];
     FILE_PIPE_PEEK_BUFFER *peek_buf = (void*)buf;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
@@ -2939,39 +2939,53 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     /* write more data than needed for read */
     overlapped_write_sync(writer, buf, 4000);
     test_overlapped_result(reader, &read_overlapped, 1000, msg_read);
+    test_peek_pipe(reader, 3000, 3000, msg_mode ? 3000 : 0);
 
     /* test pending write with overlapped event */
     overlapped_write_async(writer, buf, buf_size, &write_overlapped);
+    test_peek_pipe(reader, 3000 + (msg_mode ? 0 : buf_size), 3000 + buf_size, msg_mode ? 3000 : 0);
 
     /* write one more byte */
     overlapped_write_async(writer, buf, 1, &write_overlapped2);
     flush_thread = test_flush_async(writer, ERROR_SUCCESS);
     test_not_signaled(write_overlapped.hEvent);
+    test_peek_pipe(reader, 3000 + (msg_mode ? 0 : buf_size + 1), 3000 + buf_size + 1,
+                   msg_mode ? 3000 : 0);
 
     /* empty write will not block */
     overlapped_write_sync(writer, buf, 0);
     test_not_signaled(write_overlapped.hEvent);
     test_not_signaled(write_overlapped2.hEvent);
+    test_peek_pipe(reader, 3000 + (msg_mode ? 0 : buf_size + 1), 3000 + buf_size + 1,
+                   msg_mode ? 3000 : 0);
 
     /* read remaining data from the first write */
     overlapped_read_sync(reader, read_buf, 3000, 3000, FALSE);
     test_overlapped_result(writer, &write_overlapped, buf_size, FALSE);
     test_not_signaled(write_overlapped2.hEvent);
     test_not_signaled(flush_thread);
+    test_peek_pipe(reader, buf_size + (msg_mode ? 0 : 1), buf_size + 1, msg_mode ? buf_size : 0);
 
     /* read one byte so that the next write fits the buffer */
     overlapped_read_sync(reader, read_buf, 1, 1, msg_read);
     test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+    test_peek_pipe(reader, buf_size + (msg_mode ? -1 : 0), buf_size, msg_mode ? buf_size - 1 : 0);
 
     /* read the whole buffer */
     overlapped_read_sync(reader, read_buf, buf_size, buf_size-msg_read, FALSE);
+    test_peek_pipe(reader, msg_read ? 1 : 0, msg_read ? 1 : 0, msg_read ? 1 : 0);
 
     if(msg_read)
+    {
         overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
+        test_peek_pipe(reader, 0, 0, 0);
+    }
 
-    if(msg_mode) {
+    if(msg_mode)
+    {
         /* we still have an empty message in queue */
         overlapped_read_sync(reader, read_buf, 1000, 0, FALSE);
+        test_peek_pipe(reader, 0, 0, 0);
     }
     test_flush_done(flush_thread);
 
@@ -2983,23 +2997,29 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     overlapped_write_sync(writer, buf, 1);
     test_overlapped_result(reader, &read_overlapped, 0, msg_read);
     test_overlapped_result(reader, &read_overlapped2, 1, FALSE);
+    test_peek_pipe(reader, 0, 0, 0);
 
     /* write a message larger than buffer */
     overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
+    test_peek_pipe(reader, buf_size + 2000, buf_size + 2000, msg_mode ? buf_size + 2000 : 0);
 
     /* read so that pending write is still larger than the buffer */
     overlapped_read_sync(reader, read_buf, 1999, 1999, msg_read);
     test_not_signaled(write_overlapped.hEvent);
+    test_peek_pipe(reader, buf_size + 1, buf_size + 1, msg_mode ? buf_size + 1 : 0);
 
     /* read one more byte */
     overlapped_read_sync(reader, read_buf, 1, 1, msg_read);
     test_overlapped_result(writer, &write_overlapped, buf_size+2000, FALSE);
+    test_peek_pipe(reader, buf_size, buf_size, msg_mode ? buf_size : 0);
 
     /* read remaining data */
     overlapped_read_sync(reader, read_buf, buf_size+1, buf_size, FALSE);
+    test_peek_pipe(reader, 0, 0, 0);
 
     /* simple pass of empty message */
     overlapped_write_sync(writer, buf, 0);
+    test_peek_pipe(reader, 0, 0, 0);
     if(msg_mode)
         overlapped_read_sync(reader, read_buf, 1, 0, FALSE);
 
@@ -3044,24 +3064,33 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     /* make two async writes, cancel the first one and make sure that we read from the second one */
     overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
     overlapped_write_async(writer, buf, 1, &write_overlapped2);
+    test_peek_pipe(reader, buf_size + 2000 + (msg_mode ? 0 : 1),
+                   buf_size + 2001, msg_mode ? buf_size + 2000 : 0);
     cancel_overlapped(writer, &write_overlapped);
+    test_peek_pipe(reader, 1, 1, msg_mode ? 1 : 0);
     overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
     test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+    test_peek_pipe(reader, 0, 0, 0);
 
     /* same as above, but parially read written data before canceling */
     overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
     overlapped_write_async(writer, buf, 1, &write_overlapped2);
+    test_peek_pipe(reader, buf_size + 2000 + (msg_mode ? 0 : 1),
+                   buf_size + 2001, msg_mode ? buf_size + 2000 : 0);
     overlapped_read_sync(reader, read_buf, 10, 10, msg_read);
     test_not_signaled(write_overlapped.hEvent);
     cancel_overlapped(writer, &write_overlapped);
+    test_peek_pipe(reader, 1, 1, msg_mode ? 1 : 0);
     overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
     test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+    test_peek_pipe(reader, 0, 0, 0);
 
     /* empty queue by canceling write and make sure that flush is signaled */
     overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
     flush_thread = test_flush_async(writer, ERROR_SUCCESS);
     test_not_signaled(flush_thread);
     cancel_overlapped(writer, &write_overlapped);
+    test_peek_pipe(reader, 0, 0, 0);
     test_flush_done(flush_thread);
 }
 
