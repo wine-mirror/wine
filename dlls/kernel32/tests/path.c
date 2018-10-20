@@ -1186,7 +1186,7 @@ static void test_GetTempPath(void)
 static void test_GetLongPathNameA(void)
 {
     DWORD length, explength, hostsize;
-    char tempfile[MAX_PATH];
+    char tempfile[MAX_PATH], *name;
     char longpath[MAX_PATH];
     char unc_prefix[MAX_PATH];
     char unc_short[MAX_PATH], unc_long[MAX_PATH];
@@ -1197,7 +1197,17 @@ static void test_GetLongPathNameA(void)
         return;
 
     GetTempPathA(MAX_PATH, tempfile);
-    lstrcatA(tempfile, "longfilename.longext");
+    name = tempfile + strlen(tempfile);
+
+    strcpy(name, "*");
+    SetLastError(0xdeadbeef);
+    length = pGetLongPathNameA(tempfile, temppath, MAX_PATH);
+todo_wine
+    ok(!length, "GetLongPathNameA should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %d\n", GetLastError());
+
+    strcpy(name, "longfilename.longext");
 
     file = CreateFileA(tempfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CloseHandle(file);
@@ -1401,6 +1411,7 @@ static void test_GetShortPathNameW(void)
     static const WCHAR name[] = { 't', 'e', 's', 't', 0 };
     static const WCHAR backSlash[] = { '\\', 0 };
     static const WCHAR a_bcdeW[] = {'a','.','b','c','d','e',0};
+    static const WCHAR wildW[] = { '*',0 };
     WCHAR path[MAX_PATH], tmppath[MAX_PATH], *ptr;
     WCHAR short_path[MAX_PATH];
     DWORD length;
@@ -1463,6 +1474,15 @@ static void test_GetShortPathNameW(void)
     length = GetShortPathNameW( path, short_path, ARRAY_SIZE( short_path ));
     ok( length, "GetShortPathNameW failed: %u.\n", GetLastError() );
 
+    lstrcpyW(ptr, wildW);
+    SetLastError(0xdeadbeef);
+    length = GetShortPathNameW( path, short_path, ARRAY_SIZE( short_path ) );
+todo_wine
+    ok(!length, "GetShortPathNameW should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %d\n", GetLastError());
+
+    lstrcpyW(ptr, a_bcdeW);
     ret = DeleteFileW( path );
     ok( ret, "Cannot delete file.\n" );
     *ptr = 0;
