@@ -1477,9 +1477,7 @@ static void test_GetShortPathNameW(void)
     lstrcpyW(ptr, wildW);
     SetLastError(0xdeadbeef);
     length = GetShortPathNameW( path, short_path, ARRAY_SIZE( short_path ) );
-todo_wine
     ok(!length, "GetShortPathNameW should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %d\n", GetLastError());
 
     lstrcpyW(ptr, a_bcdeW);
