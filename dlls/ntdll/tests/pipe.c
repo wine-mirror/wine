@@ -1348,7 +1348,6 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_PIPE_BROKEN;
         break;
     }
-    todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
     ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (!status)
@@ -1363,7 +1362,6 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
                                  buf, 1, buf+1, 1);
         if (!status || status == STATUS_PENDING)
             status = io.Status;
-        todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
         ok(status == expected_status,
             "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
@@ -1373,7 +1371,6 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
     status = NtFlushBuffersFile(pipe, &io);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
     {
-        todo_wine
         ok(status == STATUS_PIPE_DISCONNECTED, "status = %x in %s state %u\n",
            status, is_server ? "server" : "client", state);
     }
@@ -1472,7 +1469,6 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_BUFFER_OVERFLOW;
         break;
     }
-    todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
     ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (status == STATUS_BUFFER_OVERFLOW)

@@ -1506,7 +1506,6 @@ static int test_DisconnectNamedPipe(void)
         ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %X\n", ret);
 
         ret = PeekNamedPipe(hFile, NULL, 0, NULL, &readden, NULL);
-        todo_wine
         ok(!ret && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "PeekNamedPipe returned %x (%u)\n",
            ret, GetLastError());
         ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);

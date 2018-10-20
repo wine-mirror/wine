@@ -501,6 +501,12 @@ static int pipe_end_flush( struct fd *fd, struct async *async )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
 
+    if (!pipe_end->pipe)
+    {
+        set_error( STATUS_PIPE_DISCONNECTED );
+        return 0;
+    }
+
     if (pipe_end->connection && !list_empty( &pipe_end->connection->message_queue ))
     {
         fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT );
@@ -888,7 +894,7 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
         set_error( STATUS_PIPE_BROKEN );
         return 0;
     default:
-        set_error( STATUS_INVALID_PIPE_STATE );
+        set_error( pipe_end->pipe ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED );
         return 0;
     }
 
@@ -932,7 +938,7 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
 
     if (!pipe_end->connection)
     {
-        set_error( STATUS_INVALID_PIPE_STATE );
+        set_error( pipe_end->pipe ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED );
         return 0;
     }
 
