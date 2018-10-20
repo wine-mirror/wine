@@ -1531,6 +1531,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 
     status = NtFsControlFile( hPipe, 0, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0,
                               buffer, FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data[cbBuffer] ) );
+    if (status == STATUS_BUFFER_OVERFLOW) status = STATUS_SUCCESS;
     if (!status)
     {
         ULONG read_size = io.Information - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );

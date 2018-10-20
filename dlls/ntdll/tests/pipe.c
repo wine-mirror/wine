@@ -927,6 +927,24 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ResetEvent( event );
     ret = WriteFile( write, buffer, 2, &written, NULL );
     ok(ret && written == 2, "WriteFile error %d\n", GetLastError());
+
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = NtFsControlFile( read, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, buffer,
+                              FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[1]) );
+    if (pipe_type & PIPE_TYPE_MESSAGE)
+    {
+        ok( status == STATUS_BUFFER_OVERFLOW || status == STATUS_PENDING,
+            "FSCTL_PIPE_PEEK returned %x\n", status );
+        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(iosb).Status );
+    }
+    else
+    {
+        ok( !status || status == STATUS_PENDING, "FSCTL_PIPE_PEEK returned %x\n", status );
+        ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+    }
+    ok( iosb.Information == FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[1]),
+        "wrong info %lu\n", iosb.Information );
+
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
     if (pipe_type & PIPE_READMODE_MESSAGE)
     {
@@ -1330,7 +1348,7 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_PIPE_BROKEN;
         break;
     }
-    todo_wine_if(expected_status == STATUS_BUFFER_OVERFLOW || expected_status == STATUS_PIPE_DISCONNECTED)
+    todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
     ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (!status)
@@ -1454,7 +1472,7 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_BUFFER_OVERFLOW;
         break;
     }
-    todo_wine_if(expected_status == STATUS_BUFFER_OVERFLOW || expected_status == STATUS_PIPE_DISCONNECTED)
+    todo_wine_if(expected_status == STATUS_PIPE_DISCONNECTED)
     ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (status == STATUS_BUFFER_OVERFLOW)

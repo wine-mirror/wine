@@ -921,6 +921,7 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
             if (write_pos == reply_size) break;
         }
     }
+    if (message_length > reply_size) set_error( STATUS_BUFFER_OVERFLOW );
     return 1;
 }
 
