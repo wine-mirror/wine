@@ -1202,9 +1202,7 @@ static void test_GetLongPathNameA(void)
     strcpy(name, "*");
     SetLastError(0xdeadbeef);
     length = pGetLongPathNameA(tempfile, temppath, MAX_PATH);
-todo_wine
     ok(!length, "GetLongPathNameA should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %d\n", GetLastError());
 
     strcpy(name, "longfilename.longext");
