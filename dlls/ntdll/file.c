@@ -3298,12 +3298,14 @@ NTSTATUS WINAPI NtSetEaFile( HANDLE hFile, PIO_STATUS_BLOCK iosb, PVOID buffer, 
  *  Success: 0. IoStatusBlock is updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock )
+NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
 {
     NTSTATUS ret;
-    HANDLE hEvent = NULL;
+    HANDLE wait_handle;
     enum server_fd_type type;
     int fd, needs_close;
+
+    if (!io || !virtual_check_buffer_for_write( io, sizeof(io) )) return STATUS_ACCESS_VIOLATION;
 
     ret = server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
     if (ret == STATUS_ACCESS_DENIED)
@@ -3317,16 +3319,21 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
     {
         SERVER_START_REQ( flush )
         {
-            req->async = server_async( hFile, NULL, NULL, NULL, NULL, IoStatusBlock );
+            req->async = server_async( hFile, NULL, NULL, NULL, NULL, io );
             ret = wine_server_call( req );
-            hEvent = wine_server_ptr_handle( reply->event );
+            wait_handle = wine_server_ptr_handle( reply->event );
+            if (wait_handle && ret != STATUS_PENDING)
+            {
+                io->u.Status    = ret;
+                io->Information = 0;
+            }
         }
         SERVER_END_REQ;
 
-        if (hEvent)
+        if (wait_handle)
         {
-            NtWaitForSingleObject( hEvent, FALSE, NULL );
-            ret = STATUS_SUCCESS;
+            NtWaitForSingleObject( wait_handle, FALSE, NULL );
+            ret = io->u.Status;
         }
     }
 

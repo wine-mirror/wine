@@ -4501,11 +4501,9 @@ static void test_flush_buffers_file(void)
     ok(hfileread != INVALID_HANDLE_VALUE, "could not open temp file, error %d.\n", GetLastError());
 
     status = pNtFlushBuffersFile(hfile, NULL);
-    todo_wine
     ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
 
     status = pNtFlushBuffersFile(hfile, (IO_STATUS_BLOCK *)0xdeadbeaf);
-    todo_wine
     ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
 
     status = pNtFlushBuffersFile(hfile, &io_status_block);

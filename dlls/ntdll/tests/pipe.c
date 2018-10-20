@@ -1378,8 +1378,8 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
     {
         ok(status == STATUS_SUCCESS, "status = %x in %s state %u\n",
            status, is_server ? "server" : "client", state);
-        todo_wine
         ok(io.Status == status, "io.Status = %x\n", io.Status);
+        ok(!io.Information, "io.Information = %lx\n", io.Information);
     }
 
     if (state != FILE_PIPE_CONNECTED_STATE)
