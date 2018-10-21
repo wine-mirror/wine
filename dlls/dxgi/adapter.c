@@ -218,7 +218,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
     TRACE("iface %p, guid %s, umd_version %p.\n", iface, debugstr_guid(guid), umd_version);
 
     /* This method works only for D3D10 interfaces. */
-    if (!(IsEqualGUID(guid, &IID_ID3D10Device)
+    if (!(IsEqualGUID(guid, &IID_IDXGIDevice)
+            || IsEqualGUID(guid, &IID_ID3D10Device)
             || IsEqualGUID(guid, &IID_ID3D10Device1)))
     {
         WARN("Returning DXGI_ERROR_UNSUPPORTED for %s.\n", debugstr_guid(guid));

@@ -838,6 +838,10 @@ static void test_check_interface_support(void)
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
 
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_IDXGIDevice, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_IDXGIDevice, &driver_version);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device, &driver_version);
