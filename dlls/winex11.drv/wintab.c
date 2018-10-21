@@ -761,14 +761,14 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     } /* for XListInputDevices */
     pXFreeDeviceList(devices);
 
-    if (axis_read_complete)
-        gSysDevice.NCSRTYPES = gNumCursors;
-    else
+    if (!axis_read_complete)
     {
         disable_system_cursors();
         WARN("Did not find a valid stylus, unable to determine system context parameters. Wintab is disabled.\n");
+        return FALSE;
     }
 
+    gSysDevice.NCSRTYPES = gNumCursors;
     return TRUE;
 }
 
