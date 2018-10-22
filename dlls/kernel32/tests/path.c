@@ -70,8 +70,6 @@ static DWORD (WINAPI *pGetLongPathNameW)(LPWSTR,LPWSTR,DWORD);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathA)(LPCSTR);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
 
-static DWORD (WINAPI *pSearchPathA)(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
-static DWORD (WINAPI *pSearchPathW)(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 static BOOL  (WINAPI *pSetSearchPathMode)(DWORD);
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
@@ -1828,24 +1826,18 @@ static void test_SearchPathA(void)
     HANDLE handle;
     DWORD ret;
 
-    if (!pSearchPathA)
-    {
-        win_skip("SearchPathA isn't available\n");
-        return;
-    }
-
     GetWindowsDirectoryA(pathA, ARRAY_SIZE(pathA));
 
     /* NULL filename */
     SetLastError(0xdeadbeef);
-    ret = pSearchPathA(pathA, NULL, NULL, ARRAY_SIZE(buffA), buffA, &ptrA);
+    ret = SearchPathA(pathA, NULL, NULL, ARRAY_SIZE(buffA), buffA, &ptrA);
     ok(ret == 0, "Expected failure, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 
     /* empty filename */
     SetLastError(0xdeadbeef);
-    ret = pSearchPathA(pathA, fileA, NULL, ARRAY_SIZE(buffA), buffA, &ptrA);
+    ret = SearchPathA(pathA, fileA, NULL, ARRAY_SIZE(buffA), buffA, &ptrA);
     ok(ret == 0, "Expected failure, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
@@ -1861,38 +1853,38 @@ static void test_SearchPathA(void)
     delete_manifest_file("main.manifest");
 
     /* search fails without active context */
-    ret = pSearchPathA(NULL, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
     ok(ret == 0, "got %d\n", ret);
 
-    ret = pSearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(path2A), path2A, NULL);
+    ret = SearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(path2A), path2A, NULL);
     ok(ret && ret == strlen(path2A), "got %d\n", ret);
 
     ret = pActivateActCtx(handle, &cookie);
     ok(ret, "failed to activate context, %u\n", GetLastError());
 
     /* works when activated */
-    ret = pSearchPathA(NULL, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
 
-    ret = pSearchPathA(NULL, "testdep.dll", ".ext", ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, "testdep.dll", ".ext", ARRAY_SIZE(buffA), buffA, NULL);
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
 
-    ret = pSearchPathA(NULL, "testdep", ".dll", ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, "testdep", ".dll", ARRAY_SIZE(buffA), buffA, NULL);
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
 
-    ret = pSearchPathA(NULL, "testdep", ".ext", ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, "testdep", ".ext", ARRAY_SIZE(buffA), buffA, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* name contains path */
-    ret = pSearchPathA(NULL, testdeprelA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, testdeprelA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* fails with specified path that doesn't contain this file */
-    ret = pSearchPathA(pathA, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(pathA, testdepA, NULL, ARRAY_SIZE(buffA), buffA, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* path is redirected for wellknown names too */
-    ret = pSearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ret = SearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(buffA), buffA, NULL);
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
     ok(strcmp(buffA, path2A), "got wrong path %s, %s\n", buffA, path2A);
 
@@ -1918,23 +1910,17 @@ static void test_SearchPathW(void)
     HANDLE handle;
     DWORD ret;
 
-    if (!pSearchPathW)
-    {
-        win_skip("SearchPathW isn't available\n");
-        return;
-    }
-
 if (0)
 {
     /* NULL filename, crashes on nt4 */
-    pSearchPathW(pathW, NULL, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    SearchPathW(pathW, NULL, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
 }
 
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
 
     /* empty filename */
     SetLastError(0xdeadbeef);
-    ret = pSearchPathW(pathW, fileW, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ret = SearchPathW(pathW, fileW, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
     ok(ret == 0, "Expected failure, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
@@ -1950,15 +1936,15 @@ if (0)
     delete_manifest_file("main.manifest");
 
     /* search fails without active context */
-    ret = pSearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret == 0, "got %d\n", ret);
 
-    ret = pSearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(path2W), path2W, NULL);
+    ret = SearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(path2W), path2W, NULL);
     ok(ret && ret == lstrlenW(path2W), "got %d\n", ret);
 
     /* full path, name without 'dll' extension */
     GetSystemDirectoryW(pathW, ARRAY_SIZE(pathW));
-    ret = pSearchPathW(pathW, kernel32W, NULL, ARRAY_SIZE(path2W), path2W, NULL);
+    ret = SearchPathW(pathW, kernel32W, NULL, ARRAY_SIZE(path2W), path2W, NULL);
     ok(ret == 0, "got %d\n", ret);
 
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
@@ -1967,33 +1953,33 @@ if (0)
     ok(ret, "failed to activate context, %u\n", GetLastError());
 
     /* works when activated */
-    ret = pSearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
-    ret = pSearchPathW(NULL, testdepW, extW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdepW, extW, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
-    ret = pSearchPathW(NULL, testdep1W, dllW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdep1W, dllW, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
-    ret = pSearchPathW(NULL, testdep1W, extW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdep1W, extW, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* name contains path */
-    ret = pSearchPathW(NULL, testdeprelW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, testdeprelW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* fails with specified path that doesn't contain this file */
-    ret = pSearchPathW(pathW, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(pathW, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %d\n", ret);
 
     /* path is redirected for wellknown names too, meaning it takes precedence over normal search order */
-    ret = pSearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
     ok(lstrcmpW(buffW, path2W), "got wrong path %s, %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(path2W));
 
     /* path is built using on manifest file name */
-    ret = pSearchPathW(NULL, ole32W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, ole32W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
     ret = pDeactivateActCtx(0, cookie);
@@ -2134,8 +2120,6 @@ static void init_pointers(void)
     MAKEFUNC(GetLongPathNameW);
     MAKEFUNC(NeedCurrentDirectoryForExePathA);
     MAKEFUNC(NeedCurrentDirectoryForExePathW);
-    MAKEFUNC(SearchPathA);
-    MAKEFUNC(SearchPathW);
     MAKEFUNC(SetSearchPathMode);
     MAKEFUNC(ActivateActCtx);
     MAKEFUNC(CreateActCtxW);
