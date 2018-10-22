@@ -4779,20 +4779,22 @@ BOOL WINAPI CryptExportPublicKeyInfo(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
      NULL, 0, NULL, pInfo, pcbInfo);
 }
 
-static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
+typedef BOOL (WINAPI *EncodePublicKeyAndParametersFunc)(DWORD dwCertEncodingType,
+ LPSTR pszPublicKeyObjId, BYTE *pbPubKey, DWORD cbPubKey, DWORD dwFlags, void *pvAuxInfo,
+ BYTE **ppPublicKey, DWORD *pcbPublicKey, BYTE **ppbParams, DWORD *pcbParams);
+
+static BOOL WINAPI CRYPT_ExportPublicKeyInfoEx(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
  DWORD dwKeySpec, DWORD dwCertEncodingType, LPSTR pszPublicKeyObjId,
  DWORD dwFlags, void *pvAuxInfo, PCERT_PUBLIC_KEY_INFO pInfo, DWORD *pcbInfo)
 {
     BOOL ret;
     HCRYPTKEY key;
-    static CHAR oid[] = szOID_RSA_RSA;
+    static CHAR rsa_oid[] = szOID_RSA_RSA;
 
     TRACE_(crypt)("(%08lx, %d, %08x, %s, %08x, %p, %p, %d)\n", hCryptProv,
      dwKeySpec, dwCertEncodingType, debugstr_a(pszPublicKeyObjId), dwFlags,
      pvAuxInfo, pInfo, pInfo ? *pcbInfo : 0);
 
-    if (!pszPublicKeyObjId)
-        pszPublicKeyObjId = oid;
     if ((ret = CryptGetUserKey(hCryptProv, dwKeySpec, &key)))
     {
         DWORD keySize = 0;
@@ -4800,16 +4802,86 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV_OR_NCRYPT_KEY_HANDL
         ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, NULL, &keySize);
         if (ret)
         {
-            LPBYTE pubKey = CryptMemAlloc(keySize);
+            PUBLICKEYSTRUC *pubKey = CryptMemAlloc(keySize);
 
             if (pubKey)
             {
-                ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, pubKey,
-                 &keySize);
+                ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, (BYTE *)pubKey, &keySize);
                 if (ret)
                 {
-                    DWORD encodedLen = 0;
+                    DWORD encodedLen;
 
+                    if (!pszPublicKeyObjId)
+                    {
+                        static HCRYPTOIDFUNCSET set;
+                        EncodePublicKeyAndParametersFunc encodeFunc = NULL;
+                        HCRYPTOIDFUNCADDR hFunc = NULL;
+
+                        pszPublicKeyObjId = (LPSTR)CertAlgIdToOID(pubKey->aiKeyAlg);
+                        TRACE("public key algid %#x (%s)\n", pubKey->aiKeyAlg, debugstr_a(pszPublicKeyObjId));
+
+                        if (!set) /* FIXME: there is no a public macro */
+                            set = CryptInitOIDFunctionSet("CryptDllEncodePublicKeyAndParameters", 0);
+
+                        CryptGetOIDFunctionAddress(set, dwCertEncodingType, pszPublicKeyObjId, 0, (void **)&encodeFunc, &hFunc);
+                        if (encodeFunc)
+                        {
+                            BYTE *key_data = NULL;
+                            DWORD key_size = 0;
+                            BYTE *params = NULL;
+                            DWORD params_size = 0;
+
+                            ret = encodeFunc(dwCertEncodingType, pszPublicKeyObjId, (BYTE *)pubKey, keySize,
+                                             dwFlags, pvAuxInfo, &key_data, &key_size, &params, &params_size);
+                            if (ret)
+                            {
+                                DWORD oid_size = strlen(pszPublicKeyObjId) + 1;
+                                DWORD size_needed = sizeof(*pInfo) + oid_size + key_size + params_size;
+
+                                if (!pInfo)
+                                    *pcbInfo = size_needed;
+                                else if (*pcbInfo < size_needed)
+                                {
+                                    *pcbInfo = size_needed;
+                                    SetLastError(ERROR_MORE_DATA);
+                                    ret = FALSE;
+                                }
+                                else
+                                {
+                                    *pcbInfo = size_needed;
+                                    pInfo->Algorithm.pszObjId = (char *)(pInfo + 1);
+                                    lstrcpyA(pInfo->Algorithm.pszObjId, pszPublicKeyObjId);
+                                    if (params)
+                                    {
+                                        pInfo->Algorithm.Parameters.cbData = params_size;
+                                        pInfo->Algorithm.Parameters.pbData = (BYTE *)pInfo->Algorithm.pszObjId + oid_size;
+                                        memcpy(pInfo->Algorithm.Parameters.pbData, params, params_size);
+                                    }
+                                    else
+                                    {
+                                        pInfo->Algorithm.Parameters.cbData = 0;
+                                        pInfo->Algorithm.Parameters.pbData = NULL;
+                                    }
+                                    pInfo->PublicKey.pbData = (BYTE *)pInfo->Algorithm.pszObjId + oid_size + params_size;
+                                    pInfo->PublicKey.cbData = key_size;
+                                    memcpy(pInfo->PublicKey.pbData, key_data, key_size);
+                                    pInfo->PublicKey.cUnusedBits = 0;
+                                }
+
+                                CryptMemFree(key_data);
+                                CryptMemFree(params);
+                            }
+
+                            CryptMemFree(pubKey);
+                            CryptFreeOIDFunctionAddress(hFunc, 0);
+                            return ret;
+                        }
+
+                        /* fallback to RSA */
+                        pszPublicKeyObjId = rsa_oid;
+                    }
+
+                    encodedLen = 0;
                     ret = CryptEncodeObject(dwCertEncodingType,
                      RSA_CSP_PUBLICKEYBLOB, pubKey, NULL, &encodedLen);
                     if (ret)
@@ -4887,7 +4959,7 @@ BOOL WINAPI CryptExportPublicKeyInfoEx(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptPro
          0, (void **)&exportFunc, &hFunc);
     }
     if (!exportFunc)
-        exportFunc = CRYPT_ExportRsaPublicKeyInfoEx;
+        exportFunc = CRYPT_ExportPublicKeyInfoEx;
     ret = exportFunc(hCryptProv, dwKeySpec, dwCertEncodingType,
      pszPublicKeyObjId, dwFlags, pvAuxInfo, pInfo, pcbInfo);
     if (hFunc)
