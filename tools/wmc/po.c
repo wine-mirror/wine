@@ -666,10 +666,10 @@ void add_translations( const char *po_dir )
         if ((p = strchr( buffer, '#' ))) *p = 0;
         for (tok = strtok( buffer, " \t\r\n" ); tok; tok = strtok( NULL, " \t\r\n" ))
         {
-            for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(languages); i++)
                 if (!strcmp( tok, languages[i].name )) break;
 
-            if (i == sizeof(languages)/sizeof(languages[0]))
+            if (i == ARRAY_SIZE(languages))
                 error( "unknown language '%s'\n", tok );
 
             name = strmake( "%s/%s.mo", po_dir, tok );
