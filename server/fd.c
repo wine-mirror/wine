@@ -535,7 +535,7 @@ static inline void main_loop_epoll(void)
         if (!active_users) break;  /* last user removed by a timeout */
         if (epoll_fd == -1) break;  /* an error occurred with epoll */
 
-        ret = epoll_wait( epoll_fd, events, sizeof(events)/sizeof(events[0]), timeout );
+        ret = epoll_wait( epoll_fd, events, ARRAY_SIZE( events ), timeout );
         set_current_time();
 
         /* put the events into the pollfd array first, like poll does */
@@ -646,9 +646,9 @@ static inline void main_loop_epoll(void)
 
             ts.tv_sec = timeout / 1000;
             ts.tv_nsec = (timeout % 1000) * 1000000;
-            ret = kevent( kqueue_fd, NULL, 0, events, sizeof(events)/sizeof(events[0]), &ts );
+            ret = kevent( kqueue_fd, NULL, 0, events, ARRAY_SIZE( events ), &ts );
         }
-        else ret = kevent( kqueue_fd, NULL, 0, events, sizeof(events)/sizeof(events[0]), NULL );
+        else ret = kevent( kqueue_fd, NULL, 0, events, ARRAY_SIZE( events ), NULL );
 
         set_current_time();
 
@@ -750,9 +750,9 @@ static inline void main_loop_epoll(void)
 
             ts.tv_sec = timeout / 1000;
             ts.tv_nsec = (timeout % 1000) * 1000000;
-            ret = port_getn( port_fd, events, sizeof(events)/sizeof(events[0]), &nget, &ts );
+            ret = port_getn( port_fd, events, ARRAY_SIZE( events ), &nget, &ts );
         }
-        else ret = port_getn( port_fd, events, sizeof(events)/sizeof(events[0]), &nget, NULL );
+        else ret = port_getn( port_fd, events, ARRAY_SIZE( events ), &nget, NULL );
 
 	if (ret == -1) break;  /* an error occurred with event completion */
 

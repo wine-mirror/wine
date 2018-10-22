@@ -421,7 +421,7 @@ void init_directories(void)
     make_object_static( link_mailslot );
 
     /* events */
-    for (i = 0; i < sizeof(kernel_events)/sizeof(kernel_events[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
     {
         struct event *event = create_event( &dir_kernel->obj, &kernel_events[i], 0, 1, 0, NULL );
         make_object_static( (struct object *)event );

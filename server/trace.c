@@ -1145,7 +1145,7 @@ static void dump_varargs_filesystem_event( const char *prefix, data_size_t size 
         data_size_t len = (offsetof( struct filesystem_event, name[event->len] ) + sizeof(int)-1)
                            / sizeof(int) * sizeof(int);
         if (size < len) break;
-        if (event->action < sizeof(actions)/sizeof(actions[0]) && actions[event->action])
+        if (event->action < ARRAY_SIZE( actions ) && actions[event->action])
             fprintf( stderr, "{action=%s", actions[event->action] );
         else
             fprintf( stderr, "{action=%u", event->action );

@@ -1666,7 +1666,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         queue_hardware_message( desktop, msg, 0 );
     }
 
-    for (i = 0; i < sizeof(messages)/sizeof(messages[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( messages ); i++)
     {
         if (!messages[i]) continue;
         if (!(flags & (1 << i))) continue;
@@ -1695,7 +1695,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLMHF_INJECTED;
 
         /* specify a sender only when sending the last message */
-        if (!(flags & ((1 << sizeof(messages)/sizeof(messages[0])) - 1)))
+        if (!(flags & ((1 << ARRAY_SIZE( messages )) - 1)))
         {
             if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
                 queue_hardware_message( desktop, msg, 0 );

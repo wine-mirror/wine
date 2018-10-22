@@ -695,7 +695,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     /* load the section headers */
 
     pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
-    if (nt.FileHeader.NumberOfSections > sizeof(sec)/sizeof(sec[0])) return STATUS_INVALID_IMAGE_FORMAT;
+    if (nt.FileHeader.NumberOfSections > ARRAY_SIZE( sec )) return STATUS_INVALID_IMAGE_FORMAT;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (!mapping->size) mapping->size = mapping->image.map_size;
     else if (mapping->size > mapping->image.map_size) return STATUS_SECTION_TOO_BIG;

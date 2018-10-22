@@ -178,7 +178,7 @@ static const struct object_ops key_ops =
 static inline int is_wow6432node( const WCHAR *name, unsigned int len )
 {
     return (len == sizeof(wow6432node) &&
-            !memicmpW( name, wow6432node, sizeof(wow6432node)/sizeof(WCHAR) ));
+            !memicmpW( name, wow6432node, ARRAY_SIZE( wow6432node )));
 }
 
 /*
@@ -439,9 +439,9 @@ static inline void get_req_path( struct unicode_str *str, int skip_root )
     str->len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
 
     if (skip_root && str->len >= sizeof(root_name) &&
-        !memicmpW( str->str, root_name, sizeof(root_name)/sizeof(WCHAR) ))
+        !memicmpW( str->str, root_name, ARRAY_SIZE( root_name )))
     {
-        str->str += sizeof(root_name)/sizeof(WCHAR);
+        str->str += ARRAY_SIZE( root_name );
         str->len -= sizeof(root_name);
     }
 }
@@ -691,8 +691,8 @@ static struct key *follow_symlink( struct key *key, int iteration )
     path.str = value->data;
     path.len = (value->len / sizeof(WCHAR)) * sizeof(WCHAR);
     if (path.len <= sizeof(root_name)) return NULL;
-    if (memicmpW( path.str, root_name, sizeof(root_name)/sizeof(WCHAR) )) return NULL;
-    path.str += sizeof(root_name) / sizeof(WCHAR);
+    if (memicmpW( path.str, root_name, ARRAY_SIZE( root_name ))) return NULL;
+    path.str += ARRAY_SIZE( root_name );
     path.len -= sizeof(root_name);
 
     key = root_key;
@@ -2052,9 +2052,9 @@ DECL_HANDLER(create_key)
     class.len = (class.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
     if (!objattr->rootdir && name.len >= sizeof(root_name) &&
-        !memicmpW( name.str, root_name, sizeof(root_name)/sizeof(WCHAR) ))
+        !memicmpW( name.str, root_name, ARRAY_SIZE( root_name )))
     {
-        name.str += sizeof(root_name)/sizeof(WCHAR);
+        name.str += ARRAY_SIZE( root_name );
         name.len -= sizeof(root_name);
     }
 
@@ -2210,9 +2210,9 @@ DECL_HANDLER(load_registry)
     }
 
     if (!objattr->rootdir && name.len >= sizeof(root_name) &&
-        !memicmpW( name.str, root_name, sizeof(root_name)/sizeof(WCHAR) ))
+        !memicmpW( name.str, root_name, ARRAY_SIZE( root_name )))
     {
-        name.str += sizeof(root_name)/sizeof(WCHAR);
+        name.str += ARRAY_SIZE( root_name );
         name.len -= sizeof(root_name);
     }
 

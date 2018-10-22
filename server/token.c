@@ -791,12 +791,11 @@ struct token *token_create_admin( void )
     const SID *user_sid = security_unix_uid_to_sid( getuid() );
     ACL *default_dacl = create_default_dacl( user_sid );
 
-    alias_admins_sid = security_sid_alloc( &nt_authority, sizeof(alias_admins_subauth)/sizeof(alias_admins_subauth[0]),
+    alias_admins_sid = security_sid_alloc( &nt_authority, ARRAY_SIZE( alias_admins_subauth ),
                                            alias_admins_subauth );
-    alias_users_sid = security_sid_alloc( &nt_authority, sizeof(alias_users_subauth)/sizeof(alias_users_subauth[0]),
+    alias_users_sid = security_sid_alloc( &nt_authority, ARRAY_SIZE( alias_users_subauth ),
                                           alias_users_subauth );
-    logon_sid = security_sid_alloc( &nt_authority, sizeof(logon_subauth)/sizeof(logon_subauth[0]),
-                                    logon_subauth );
+    logon_sid = security_sid_alloc( &nt_authority, ARRAY_SIZE( logon_subauth ), logon_subauth );
 
     if (alias_admins_sid && alias_users_sid && logon_sid && default_dacl)
     {
@@ -836,8 +835,8 @@ struct token *token_create_admin( void )
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
-        token = create_token( TRUE, user_sid, admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
-                              admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]), default_dacl,
+        token = create_token( TRUE, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
+                              admin_privs, ARRAY_SIZE( admin_privs ), default_dacl,
                               admin_source, NULL, -1 );
         /* we really need a primary group */
         assert( token->primary_group );

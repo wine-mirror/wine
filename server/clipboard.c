@@ -214,7 +214,7 @@ static int synthesize_formats( struct clipboard *clipboard )
         else free( data );
     }
 
-    for (i = 0; i < sizeof(formats) / sizeof(formats[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( formats ); i++)
     {
         if (HAS_FORMAT( map, formats[i][0] )) continue;
         if (HAS_FORMAT( map, formats[i][1] )) from = formats[i][1];
