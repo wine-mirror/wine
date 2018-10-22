@@ -2435,7 +2435,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     btnInfo->btn = nmtb.tbButton;
                     if (!(nmtb.tbButton.fsStyle & BTNS_SEP))
                     {
-                        if (lstrlenW(nmtb.pszText))
+                        if (*nmtb.pszText)
                             lstrcpyW(btnInfo->text, nmtb.pszText);
                         else if (nmtb.tbButton.iString >= 0 && 
                             nmtb.tbButton.iString < infoPtr->nNumStrings)
