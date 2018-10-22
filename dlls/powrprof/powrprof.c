@@ -321,6 +321,12 @@ POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRole(void)
    return PlatformRoleDesktop;
 }
 
+POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRoleEx(ULONG version)
+{
+    FIXME("%u stub.\n", version);
+    return PlatformRoleDesktop;
+}
+
 DWORD WINAPI PowerEnumerate(HKEY key, const GUID *scheme, const GUID *subgroup, POWER_DATA_ACCESSOR flags,
                         ULONG index, UCHAR *buffer, DWORD *buffer_size)
 {
