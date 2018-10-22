@@ -484,7 +484,7 @@ static void start_sigkill_timer( struct process *process )
 
 /* create a new process */
 /* if the function fails the fd is closed */
-struct process *create_process( int fd, struct thread *parent_thread, int inherit_all,
+struct process *create_process( int fd, struct process *parent, int inherit_all,
                                 const struct security_descriptor *sd )
 {
     struct process *process;
@@ -547,7 +547,7 @@ struct process *create_process( int fd, struct thread *parent_thread, int inheri
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj, 0 ))) goto error;
 
     /* create the handle table */
-    if (!parent_thread)
+    if (!parent)
     {
         process->handles = alloc_handle_table( process, 0 );
         process->token = token_create_admin();
@@ -555,7 +555,6 @@ struct process *create_process( int fd, struct thread *parent_thread, int inheri
     }
     else
     {
-        struct process *parent = parent_thread->process;
         process->parent_id = parent->id;
         process->handles = inherit_all ? copy_handle_table( process, parent )
                                        : alloc_handle_table( process, 0 );
@@ -1162,7 +1161,7 @@ DECL_HANDLER(new_process)
 #undef FIXUP_LEN
     }
 
-    if (!(process = create_process( socket_fd, current, req->inherit_all, sd ))) goto done;
+    if (!(process = create_process( socket_fd, parent, req->inherit_all, sd ))) goto done;
 
     process->startup_info = (struct startup_info *)grab_object( info );
 
