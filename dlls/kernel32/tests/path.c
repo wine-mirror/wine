@@ -1842,8 +1842,32 @@ static void test_SearchPathA(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 
+    GetTempPathA(ARRAY_SIZE(pathA), pathA);
+    strcpy(path2A, pathA);
+    strcat(path2A, "testfile.ext.ext2");
+
+    handle = CreateFileA(path2A, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "Failed to create test file.\n");
+    CloseHandle(handle);
+
+    buffA[0] = 0;
+    ret = SearchPathA(pathA, "testfile.ext", NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ok(!ret, "Unexpected return value %u.\n", ret);
+
+    buffA[0] = 0;
+    ret = SearchPathA(pathA, "testfile.ext", ".ext2", ARRAY_SIZE(buffA), buffA, NULL);
+    ok(!ret, "Unexpected return value %u.\n", ret);
+
+    buffA[0] = 0;
+    ret = SearchPathA(pathA, "testfile.ext.ext2", NULL, ARRAY_SIZE(buffA), buffA, NULL);
+    ok(ret && ret == strlen(path2A), "got %d\n", ret);
+
+    DeleteFileA(path2A);
+
     if (!pActivateActCtx)
         return;
+
+    GetWindowsDirectoryA(pathA, ARRAY_SIZE(pathA));
 
     create_manifest_file("testdep1.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
@@ -1895,12 +1919,15 @@ static void test_SearchPathA(void)
 
 static void test_SearchPathW(void)
 {
+    static const WCHAR fileext2W[] = {'t','e','s','t','f','i','l','e','.','e','x','t','.','e','x','t','2',0};
+    static const WCHAR fileextW[] = {'t','e','s','t','f','i','l','e','.','e','x','t',0};
     static const WCHAR testdeprelW[] = {'.','/','t','e','s','t','d','e','p','.','d','l','l',0};
     static const WCHAR testdepW[] = {'t','e','s','t','d','e','p','.','d','l','l',0};
     static const WCHAR testdep1W[] = {'t','e','s','t','d','e','p',0};
     static const WCHAR kernel32dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+    static const WCHAR ext2W[] = {'.','e','x','t','2',0};
     static const WCHAR extW[] = {'.','e','x','t',0};
     static const WCHAR dllW[] = {'.','d','l','l',0};
     static const WCHAR fileW[] = { 0 };
@@ -1925,8 +1952,32 @@ if (0)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    lstrcpyW(path2W, pathW);
+    lstrcatW(path2W, fileext2W);
+
+    handle = CreateFileW(path2W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "Failed to create test file.\n");
+    CloseHandle(handle);
+
+    buffW[0] = 0;
+    ret = SearchPathW(pathW, fileextW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ok(!ret, "Unexpected return value %u.\n", ret);
+
+    buffW[0] = 0;
+    ret = SearchPathW(pathW, fileextW, ext2W, ARRAY_SIZE(buffW), buffW, NULL);
+    ok(!ret, "Unexpected return value %u.\n", ret);
+
+    buffW[0] = 0;
+    ret = SearchPathW(pathW, fileext2W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ok(ret && ret == lstrlenW(path2W), "got %d\n", ret);
+
+    DeleteFileW(path2W);
+
     if (!pActivateActCtx)
         return;
+
+    GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
 
     create_manifest_file("testdep1.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
