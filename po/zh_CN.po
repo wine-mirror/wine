@@ -10729,9 +10729,7 @@ msgstr "Verify 处于 %1 状态\n"
 
 #: cmd.rc:390
 msgid "Verify must be ON or OFF\n"
-msgstr ""
-"Verify 只能是开启 (ON) 或关闭 (OFF) 状态\n"
-" \n"
+msgstr "Verify 只能是开启 (ON) 或关闭 (OFF) 状态\n"
 
 #: cmd.rc:391
 msgid "Parameter error\n"
