@@ -565,7 +565,7 @@ int get_language_codepage( unsigned short lang, unsigned short sublang )
     unsigned int i;
     int cp = -1, defcp = -1;
 
-    for (i = 0; i < sizeof(lang2cps)/sizeof(lang2cps[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(lang2cps); i++)
     {
         if (lang2cps[i].lang != lang) continue;
         if (lang2cps[i].sublang == sublang)

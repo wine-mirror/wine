@@ -602,7 +602,7 @@ static const char *get_language_name( const language_t *lang )
     static char name[20];
     unsigned int i;
 
-    for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(languages); i++)
         if (languages[i].id == lang->id && languages[i].sub == lang->sub)
             return languages[i].name;
 
@@ -1314,7 +1314,7 @@ static ver_value_t *translate_stringfileinfo( ver_value_t *val, language_t *lang
                 new_blk = new_ver_block();
                 *new_blk = *blk;
                 name = convert_msgid_ascii( blk->name, 0 );
-                for (i = 0; i < sizeof(block_name)/sizeof(block_name[0]); i++)
+                for (i = 0; i < ARRAY_SIZE(block_name); i++)
                 {
                     if (!strcasecmp( name, english_block_name[i] ))
                     {
@@ -1344,7 +1344,7 @@ static ver_value_t *translate_stringfileinfo( ver_value_t *val, language_t *lang
         val = val->next;
     }
 
-    for (i = 0; i < sizeof(block_name)/sizeof(block_name[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(block_name); i++)
         free( block_name[i] );
     return head;
 }
@@ -1494,10 +1494,10 @@ void add_translations( const char *po_dir )
         if ((p = strchr( buffer, '#' ))) *p = 0;
         for (tok = strtok( buffer, " \t\r\n" ); tok; tok = strtok( NULL, " \t\r\n" ))
         {
-            for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
+            for (i = 0; i < ARRAY_SIZE(languages); i++)
                 if (!strcmp( tok, languages[i].name )) break;
 
-            if (i == sizeof(languages)/sizeof(languages[0]))
+            if (i == ARRAY_SIZE(languages))
                 error( "unknown language '%s'\n", tok );
 
             name = strmake( "%s/%s.mo", po_dir, tok );
