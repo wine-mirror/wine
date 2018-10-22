@@ -2033,11 +2033,11 @@ static BOOL terminate_main_thread(void)
 #endif
 
 /***********************************************************************
- *           exec_loader
+ *           spawn_loader
  */
-static pid_t exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned int flags, int socketfd,
+static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned int flags, int socketfd,
                           int stdin_fd, int stdout_fd, const char *unixdir, char *winedebug,
-                          const pe_image_info_t *pe_info, int exec_only )
+                          const pe_image_info_t *pe_info )
 {
     pid_t pid;
     char *wineloader = NULL;
@@ -2049,9 +2049,9 @@ static pid_t exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned in
     if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
 
-    if (exec_only || !(pid = fork()))  /* child */
+    if (!(pid = fork()))  /* child */
     {
-        if (exec_only || !(pid = fork()))  /* grandchild */
+        if (!(pid = fork()))  /* grandchild */
         {
             char preloader_reserve[64], socket_env[64];
             ULONGLONG res_start = pe_info->base;
@@ -2091,18 +2091,7 @@ static pid_t exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned in
             if (wineloader) putenv( wineloader );
             if (unixdir) chdir(unixdir);
 
-            if (argv)
-            {
-                do
-                {
-                    wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
-                }
-#ifdef __APPLE__
-                while (errno == ENOTSUP && exec_only && terminate_main_thread());
-#else
-                while (0);
-#endif
-            }
+            if (argv) wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
             _exit(1);
         }
 
@@ -2121,6 +2110,50 @@ static pid_t exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned in
     HeapFree( GetProcessHeap(), 0, wineloader );
     HeapFree( GetProcessHeap(), 0, argv );
     return pid;
+}
+
+/***********************************************************************
+ *           exec_loader
+ */
+static NTSTATUS exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
+                             const pe_image_info_t *pe_info )
+{
+    char *wineloader = NULL;
+    const char *loader = NULL;
+    char **argv;
+    char preloader_reserve[64], socket_env[64];
+    ULONGLONG res_start = pe_info->base;
+    ULONGLONG res_end   = pe_info->base + pe_info->map_size;
+
+    if (!(argv = build_argv( params->CommandLine.Buffer, 1 ))) return STATUS_NO_MEMORY;
+
+    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
+        loader = get_alternate_loader( &wineloader );
+
+    /* Reset signals that we previously set to SIG_IGN */
+    signal( SIGPIPE, SIG_DFL );
+
+    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
+             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
+
+    putenv( preloader_reserve );
+    putenv( socket_env );
+    if (wineloader) putenv( wineloader );
+
+    do
+    {
+        wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+    }
+#ifdef __APPLE__
+    while (errno == ENOTSUP && exec_only && terminate_main_thread());
+#else
+    while (0);
+#endif
+
+    HeapFree( GetProcessHeap(), 0, wineloader );
+    HeapFree( GetProcessHeap(), 0, argv );
+    return STATUS_INVALID_IMAGE_FORMAT;
 }
 
 /* creates a struct security_descriptor and contained information in one contiguous piece of memory */
@@ -2186,6 +2219,61 @@ static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct
 }
 
 /***********************************************************************
+ *           replace_process
+ *
+ * Replace the existing process by exec'ing a new one.
+ */
+static BOOL replace_process( HANDLE handle, const RTL_USER_PROCESS_PARAMETERS *params,
+                             const pe_image_info_t *pe_info )
+{
+    NTSTATUS status;
+    int socketfd[2];
+
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
+    {
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+        return FALSE;
+    }
+#ifdef SO_PASSCRED
+    else
+    {
+        int enable = 1;
+        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+    }
+#endif
+    wine_server_send_fd( socketfd[1] );
+    close( socketfd[1] );
+
+    SERVER_START_REQ( exec_process )
+    {
+        req->socket_fd      = socketfd[1];
+        req->exe_file       = wine_server_obj_handle( handle );
+        req->cpu            = pe_info->cpu;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    switch (status)
+    {
+    case STATUS_INVALID_IMAGE_WIN_64:
+        ERR( "64-bit application %s not supported in 32-bit prefix\n",
+             debugstr_w( params->ImagePathName.Buffer ));
+        break;
+    case STATUS_INVALID_IMAGE_FORMAT:
+        ERR( "%s not supported on this installation (%s binary)\n",
+             debugstr_w( params->ImagePathName.Buffer ), cpu_names[pe_info->cpu] );
+        break;
+    case STATUS_SUCCESS:
+        status = exec_loader( params, socketfd[0], pe_info );
+        break;
+    }
+    close( socketfd[0] );
+    SetLastError( RtlNtStatusToDosError( status ));
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           create_process
  *
  * Create a new process. If hFile is a valid handle we have an exe
@@ -2193,8 +2281,7 @@ static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct
  */
 static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags, const RTL_USER_PROCESS_PARAMETERS *params,
-                            LPPROCESS_INFORMATION info, LPCSTR unixdir,
-                            const pe_image_info_t *pe_info, int exec_only )
+                            LPPROCESS_INFORMATION info, LPCSTR unixdir, const pe_image_info_t *pe_info )
 {
     NTSTATUS status;
     BOOL success = FALSE;
@@ -2223,38 +2310,6 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
         setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
     }
 #endif
-
-    if (exec_only)  /* things are much simpler in this case */
-    {
-        wine_server_send_fd( socketfd[1] );
-        close( socketfd[1] );
-        SERVER_START_REQ( exec_process )
-        {
-            req->socket_fd      = socketfd[1];
-            req->exe_file       = wine_server_obj_handle( hFile );
-            req->cpu            = pe_info->cpu;
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-
-        switch (status)
-        {
-        case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "64-bit application %s not supported in 32-bit prefix\n",
-                 debugstr_w( params->ImagePathName.Buffer ));
-            break;
-        case STATUS_INVALID_IMAGE_FORMAT:
-            ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_w( params->ImagePathName.Buffer ), cpu_names[pe_info->cpu] );
-            break;
-        case STATUS_SUCCESS:
-            exec_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
-                         winedebug, pe_info, TRUE );
-        }
-        close( socketfd[0] );
-        SetLastError( RtlNtStatusToDosError( status ));
-        return FALSE;
-    }
 
     if (!(startup_info = create_startup_info( params, &startup_info_size )))
     {
@@ -2359,8 +2414,7 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
 
     /* create the child process */
 
-    pid = exec_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
-                       winedebug, pe_info, FALSE );
+    pid = spawn_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir, winedebug, pe_info );
 
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
@@ -2403,19 +2457,16 @@ error:
 
 
 /***********************************************************************
- *           create_vdm_process
+ *           get_vdm_params
  *
- * Create a new VDM process for a 16-bit or DOS application.
+ * Build the parameters needed to launch a new VDM process.
  */
-static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                                BOOL inherit, DWORD flags, const RTL_USER_PROCESS_PARAMETERS *params,
-                                LPPROCESS_INFORMATION info, LPCSTR unixdir, int exec_only )
+static RTL_USER_PROCESS_PARAMETERS *get_vdm_params( const RTL_USER_PROCESS_PARAMETERS *params,
+                                                    pe_image_info_t *pe_info )
 {
     static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
 
-    BOOL ret;
-    LPWSTR new_cmd_line;
-    pe_image_info_t pe_info;
+    WCHAR *new_cmd_line;
     RTL_USER_PROCESS_PARAMETERS *new_params;
     UNICODE_STRING imageW, cmdlineW;
 
@@ -2426,7 +2477,7 @@ static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES
     if (!new_cmd_line)
     {
         SetLastError( ERROR_OUTOFMEMORY );
-        return FALSE;
+        return NULL;
     }
     sprintfW( new_cmd_line, argsW, winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
     RtlInitUnicodeString( &imageW, winevdm );
@@ -2454,11 +2505,29 @@ static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES
     new_params->dwFlags         = params->dwFlags;
     new_params->wShowWindow     = params->wShowWindow;
 
-    memset( &pe_info, 0, sizeof(pe_info) );
-    pe_info.cpu = CPU_x86;
-    ret = create_process( 0, psa, tsa, inherit, flags, new_params, info, unixdir, &pe_info, exec_only );
+    memset( pe_info, 0, sizeof(*pe_info) );
+    pe_info->cpu = CPU_x86;
+    return new_params;
+}
+
+
+/***********************************************************************
+ *           create_vdm_process
+ *
+ * Create a new VDM process for a 16-bit or DOS application.
+ */
+static BOOL create_vdm_process( LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                                BOOL inherit, DWORD flags, const RTL_USER_PROCESS_PARAMETERS *params,
+                                LPPROCESS_INFORMATION info, LPCSTR unixdir )
+{
+    BOOL ret;
+    pe_image_info_t pe_info;
+    RTL_USER_PROCESS_PARAMETERS *new_params;
+
+    if (!(new_params = get_vdm_params( params, &pe_info ))) return FALSE;
+
+    ret = create_process( 0, psa, tsa, inherit, flags, new_params, info, unixdir, &pe_info );
     RtlDestroyProcessParameters( new_params );
-    HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
 }
 
@@ -2678,18 +2747,17 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
                cpu_names[pe_info.cpu] );
         retv = create_process( hFile, process_attr, thread_attr,
-                               inherit, flags, params, info, unixdir, &pe_info, FALSE );
+                               inherit, flags, params, info, unixdir, &pe_info );
         break;
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        retv = create_vdm_process( process_attr, thread_attr,
-                                   inherit, flags, params, info, unixdir, FALSE );
+        retv = create_vdm_process( process_attr, thread_attr, inherit, flags, params, info, unixdir );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "starting %s as %d-bit Winelib app\n",
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32 );
         retv = create_process( hFile, process_attr, thread_attr,
-                               inherit, flags, params, info, unixdir, &pe_info, FALSE );
+                               inherit, flags, params, info, unixdir, &pe_info );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .bat extension */
@@ -2699,7 +2767,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
                 retv = create_vdm_process( process_attr, thread_attr,
-                                           inherit, flags, params, info, unixdir, FALSE );
+                                           inherit, flags, params, info, unixdir );
                 break;
             }
             if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
@@ -2792,8 +2860,7 @@ static void exec_process( LPCWSTR name )
     HANDLE hFile;
     WCHAR *p;
     STARTUPINFOW startup_info = { sizeof(startup_info) };
-    RTL_USER_PROCESS_PARAMETERS *params;
-    PROCESS_INFORMATION info;
+    RTL_USER_PROCESS_PARAMETERS *params, *new_params;
     pe_image_info_t pe_info;
     BOOL is_64bit;
 
@@ -2813,11 +2880,11 @@ static void exec_process( LPCWSTR name )
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
                cpu_names[pe_info.cpu] );
-        create_process( hFile, NULL, NULL, FALSE, 0, params, &info, NULL, &pe_info, TRUE );
+        replace_process( hFile, params, &pe_info );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
-        create_process( hFile, NULL, NULL, FALSE, 0, params, &info, NULL, &pe_info, TRUE );
+        replace_process( hFile, params, &pe_info );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .pif extension */
@@ -2826,12 +2893,15 @@ static void exec_process( LPCWSTR name )
         /* fall through */
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        create_vdm_process( NULL, NULL, FALSE, 0, params, &info, NULL, TRUE );
+        if (!(new_params = get_vdm_params( params, &pe_info ))) break;
+        replace_process( 0, new_params, &pe_info );
+        RtlDestroyProcessParameters( new_params );
         break;
     default:
         break;
     }
     CloseHandle( hFile );
+    RtlDestroyProcessParameters( params );
 }
 
 
