@@ -28529,6 +28529,127 @@ static void test_render_a8(void)
     release_test_context(&test_context);
 }
 
+static void test_standard_pattern(void)
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    struct d3d11_test_context test_context;
+    struct swapchain_desc swapchain_desc;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11UnorderedAccessView *uav;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11ShaderResourceView *srv;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Texture2D *texture;
+    ID3D11PixelShader *ps;
+    ID3D11Buffer *buffer;
+    ID3D11Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_samplepos[] =
+    {
+#if 0
+        Texture2DMS<float> t;
+        RWByteAddressBuffer u;
+
+        float4 main() : SV_Target
+        {
+            u.Store2(0, asuint(t.GetSamplePosition(0)));
+            u.Store2(8, asuint(t.GetSamplePosition(1)));
+            u.Store2(16, asuint(t.GetSamplePosition(2)));
+            u.Store2(24, asuint(t.GetSamplePosition(3)));
+            return float4(0.0f, 1.0f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0xa1db77e8, 0x804d8862, 0x0e3c213d, 0x2703dec6, 0x00000001, 0x00000190, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000118, 0x00000050, 0x00000046,
+        0x0100086a, 0x04002058, 0x00107000, 0x00000000, 0x00005555, 0x0300009d, 0x0011e000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0800006e, 0x00100032, 0x00000000,
+        0x00107046, 0x00000000, 0x00004001, 0x00000000, 0x00000000, 0x0800006e, 0x001000c2, 0x00000000,
+        0x00107406, 0x00000000, 0x00004001, 0x00000001, 0x00000000, 0x070000a6, 0x0011e0f2, 0x00000001,
+        0x00004001, 0x00000000, 0x00100e46, 0x00000000, 0x0800006e, 0x00100032, 0x00000000, 0x00107046,
+        0x00000000, 0x00004001, 0x00000002, 0x00000000, 0x0800006e, 0x001000c2, 0x00000000, 0x00107406,
+        0x00000000, 0x00004001, 0x00000003, 0x00000000, 0x070000a6, 0x0011e0f2, 0x00000001, 0x00004001,
+        0x00000010, 0x00100e46, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3f800000, 0x00000000, 0x3f800000, 0x0100003e
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const unsigned int zero[4] = {0};
+    static const float standard_pos4[] =
+    {
+        -2 / 16.0f, -6 / 16.0f,
+         6 / 16.0f, -2 / 16.0f,
+        -6 / 16.0f,  2 / 16.0f,
+         2 / 16.0f,  6 / 16.0f,
+    };
+
+    swapchain_desc.windowed = TRUE;
+    swapchain_desc.buffer_count = 1;
+    swapchain_desc.width = 32;
+    swapchain_desc.height = 32;
+    swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.flags = 0;
+    if (!init_test_context_ext(&test_context, &feature_level, &swapchain_desc))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.SampleDesc.Count = 4;
+    texture_desc.SampleDesc.Quality = D3D11_STANDARD_MULTISAMPLE_PATTERN;
+    texture_desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = 256;
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_samplepos, sizeof(ps_samplepos), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context,
+            1, &test_context.backbuffer_rtv, NULL, 1, 1, &uav, NULL);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+    get_buffer_readback(buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(standard_pos4); ++i)
+    {
+        float data = get_readback_float(&rb, i, 0);
+        /* Wine does not support GetSamplePosition. */
+        todo_wine ok(data == standard_pos4[i], "Got sample position %.8e, expected %.8e.\n", data, standard_pos4[i]);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+    ID3D11Buffer_Release(buffer);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -28679,6 +28800,7 @@ START_TEST(d3d11)
     queue_test(test_depth_clip);
     queue_test(test_staging_buffers);
     queue_test(test_render_a8);
+    queue_test(test_standard_pattern);
 
     run_queued_tests();
 }
