@@ -4701,3 +4701,13 @@ BOOL WINAPI SetProcessMitigationPolicy(PROCESS_MITIGATION_POLICY policy, void *b
 
     return TRUE;
 }
+
+/**********************************************************************
+ *           GetProcessMitigationPolicy     (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessMitigationPolicy(HANDLE hProcess, PROCESS_MITIGATION_POLICY policy, void *buffer, SIZE_T length)
+{
+    FIXME("(%p, %u, %p, %lu): stub\n", hProcess, policy, buffer, length);
+
+    return TRUE;
+}

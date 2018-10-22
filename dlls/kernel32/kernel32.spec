@@ -786,6 +786,7 @@
 @ stdcall GetProcessId(long)
 @ stdcall GetProcessIdOfThread(long)
 @ stdcall GetProcessIoCounters(long ptr)
+@ stdcall GetProcessMitigationPolicy(long long ptr long)
 # @ stub GetProcessPreferredUILanguages
 @ stdcall GetProcessPriorityBoost(long ptr)
 @ stdcall GetProcessShutdownParameters(ptr ptr)

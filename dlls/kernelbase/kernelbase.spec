@@ -631,7 +631,7 @@
 # @ stub GetProcessImageFileNameW
 # @ stub GetProcessInformation
 # @ stub GetProcessMemoryInfo
-# @ stub GetProcessMitigationPolicy
+@ stdcall GetProcessMitigationPolicy(long long ptr long) kernel32.GetProcessMitigationPolicy
 @ stub GetProcessPreferredUILanguages
 @ stdcall GetProcessPriorityBoost(long ptr) kernel32.GetProcessPriorityBoost
 @ stdcall GetProcessShutdownParameters(ptr ptr) kernel32.GetProcessShutdownParameters
