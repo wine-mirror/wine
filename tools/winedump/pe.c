@@ -1654,7 +1654,7 @@ static const char *get_resource_type( unsigned int id )
         "RT_MANIFEST"
     };
 
-    if ((size_t)id < sizeof(types)/sizeof(types[0])) return types[id];
+    if ((size_t)id < ARRAY_SIZE(types)) return types[id];
     return NULL;
 }
 

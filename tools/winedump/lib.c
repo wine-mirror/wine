@@ -68,8 +68,8 @@ static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
         name = (const char *)ioh + sizeof(*ioh);
         printf("  DLL name     : %s\n", name + strlen(name) + 1);
         printf("  Symbol name  : %s\n", name);
-        printf("  Type         : %s\n", (ioh->Type < sizeof(obj_type)/sizeof(obj_type[0])) ? obj_type[ioh->Type] : "unknown");
-        printf("  Name type    : %s\n", (ioh->NameType < sizeof(name_type)/sizeof(name_type[0])) ? name_type[ioh->NameType] : "unknown");
+        printf("  Type         : %s\n", (ioh->Type < ARRAY_SIZE(obj_type)) ? obj_type[ioh->Type] : "unknown");
+        printf("  Name type    : %s\n", (ioh->NameType < ARRAY_SIZE(name_type)) ? name_type[ioh->NameType] : "unknown");
         printf("  %-13s: %u\n", (ioh->NameType == IMPORT_OBJECT_ORDINAL) ? "Ordinal" : "Hint", ioh->u.Ordinal);
         printf("\n");
     }
