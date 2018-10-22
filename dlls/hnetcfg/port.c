@@ -631,7 +631,7 @@ static HRESULT WINAPI upnpnat_QueryInterface(IUPnPNAT *iface, REFIID riid, void 
     }
     else if(IsEqualGUID( riid, &IID_IProvideClassInfo))
     {
-        TRACE("IProvideClassInfo not supported.");
+        TRACE("IProvideClassInfo not supported.\n");
         return E_NOINTERFACE;
     }
     else
