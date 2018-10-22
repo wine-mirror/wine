@@ -4974,21 +4974,48 @@ BOOL WINAPI CryptImportPublicKeyInfo(HCRYPTPROV hCryptProv,
      0, 0, NULL, phKey);
 }
 
-static BOOL WINAPI CRYPT_ImportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
+typedef BOOL (WINAPI *ConvertPublicKeyInfoFunc)(DWORD dwCertEncodingType,
+ PCERT_PUBLIC_KEY_INFO pInfo, ALG_ID aiKeyAlg, DWORD dwFlags,
+ BYTE **ppbData, DWORD *dwDataLen);
+
+static BOOL WINAPI CRYPT_ImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
  DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo, ALG_ID aiKeyAlg,
  DWORD dwFlags, void *pvAuxInfo, HCRYPTKEY *phKey)
 {
+    static HCRYPTOIDFUNCSET set = NULL;
+    ConvertPublicKeyInfoFunc convertFunc = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
     BOOL ret;
-    DWORD pubKeySize = 0;
+    DWORD pubKeySize;
+    LPBYTE pubKey;
 
     TRACE_(crypt)("(%08lx, %08x, %p, %08x, %08x, %p, %p)\n", hCryptProv,
      dwCertEncodingType, pInfo, aiKeyAlg, dwFlags, pvAuxInfo, phKey);
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CRYPT_OID_CONVERT_PUBLIC_KEY_INFO_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, dwCertEncodingType, pInfo->Algorithm.pszObjId,
+                               0, (void **)&convertFunc, &hFunc);
+    if (convertFunc)
+    {
+        pubKey = NULL;
+        pubKeySize = 0;
+        ret = convertFunc(dwCertEncodingType, pInfo, aiKeyAlg, dwFlags, &pubKey, &pubKeySize);
+        if (ret)
+        {
+            ret = CryptImportKey(hCryptProv, pubKey, pubKeySize, 0, 0, phKey);
+            CryptMemFree(pubKey);
+        }
+
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+        return ret;
+    }
 
     ret = CryptDecodeObject(dwCertEncodingType, RSA_CSP_PUBLICKEYBLOB,
      pInfo->PublicKey.pbData, pInfo->PublicKey.cbData, 0, NULL, &pubKeySize);
     if (ret)
     {
-        LPBYTE pubKey = CryptMemAlloc(pubKeySize);
+        pubKey = CryptMemAlloc(pubKeySize);
 
         if (pubKey)
         {
@@ -5031,7 +5058,7 @@ BOOL WINAPI CryptImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
     CryptGetOIDFunctionAddress(set, dwCertEncodingType,
      pInfo->Algorithm.pszObjId, 0, (void **)&importFunc, &hFunc);
     if (!importFunc)
-        importFunc = CRYPT_ImportRsaPublicKeyInfoEx;
+        importFunc = CRYPT_ImportPublicKeyInfoEx;
     ret = importFunc(hCryptProv, dwCertEncodingType, pInfo, aiKeyAlg, dwFlags,
      pvAuxInfo, phKey);
     if (hFunc)

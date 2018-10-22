@@ -2345,6 +2345,7 @@ static const WCHAR CERT_TRUST_PUB_AUTHENTICODE_FLAGS_VALUE_NAME[] =
 #define CRYPT_OID_IMPORT_PRIVATE_KEY_INFO_FUNC "CryptDllImportPrivateKeyInfoEx"
 #define CRYPT_OID_VERIFY_CERTIFICATE_CHAIN_POLICY_FUNC \
  "CertDllVerifyCertificateChainPolicy"
+#define CRYPT_OID_CONVERT_PUBLIC_KEY_INFO_FUNC "CryptDllConvertPublicKeyInfo"
 #define URL_OID_GET_OBJECT_URL_FUNC    "UrlDllGetObjectUrl"
 #define TIME_VALID_OID_GET_OBJECT_FUNC "TimeValidDllGetObject"
 #define CMSG_OID_GEN_CONTENT_ENCRYPT_KEY_FUNC "CryptMsgDllGenContentEncryptKey"
