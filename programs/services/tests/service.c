@@ -149,11 +149,11 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPAR
     service_ok(r, "GetMonitorInfo failed.\n");
 
     service_ok(mi.rcMonitor.left == 0 && mi.rcMonitor.top == 0 && mi.rcMonitor.right >= 640 && mi.rcMonitor.bottom >= 480,
-               "Unexepected monitor rcMonitor values: {%d,%d,%d,%d}\n",
+               "Unexpected monitor rcMonitor values: {%d,%d,%d,%d}\n",
                mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
 
     service_ok(mi.rcWork.left == 0 && mi.rcWork.top == 0 && mi.rcWork.right >= 640 && mi.rcWork.bottom >= 480,
-               "Unexepected monitor rcWork values: {%d,%d,%d,%d}\n",
+               "Unexpected monitor rcWork values: {%d,%d,%d,%d}\n",
                mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
 
     service_ok(!strcmp(mi.szDevice, "WinDisc") || !strcmp(mi.szDevice, "\\\\.\\DISPLAY1"),
@@ -164,7 +164,7 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPAR
     return TRUE;
 }
 
-/* query informations monitor information, even in non-interactive services */
+/* query monitor information, even in non-interactive services */
 static void test_monitors(void)
 {
     BOOL r;
