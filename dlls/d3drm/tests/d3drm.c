@@ -5598,6 +5598,49 @@ static void test_load_texture(void)
     ok(SUCCEEDED(hr), "Failed to get IDirect3DRM3 interface, hr %#x.\n", hr);
     ref1 = get_refcount((IUnknown *)d3drm1);
 
+    /* Test all failures together. */
+    texture1 = (IDirect3DRMTexture *)0xdeadbeef;
+    hr = IDirect3DRM_LoadTexture(d3drm1, NULL, &texture1);
+    todo_wine ok(hr == D3DRMERR_BADVALUE, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture1, "Got unexpected texture %p.\n", texture1);
+    texture1 = (IDirect3DRMTexture *)0xdeadbeef;
+    hr = IDirect3DRM_LoadTexture(d3drm1, "", &texture1);
+    todo_wine ok(hr == D3DRMERR_FILENOTFOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture1, "Got unexpected texture %p.\n", texture1);
+    if (hr == D3DRMERR_FILENOTFOUND)
+    {
+        hr = IDirect3DRM_LoadTexture(d3drm1, NULL, NULL);
+        ok(hr == D3DRMERR_BADVALUE, "Got unexpected hr %#x.\n", hr);
+    }
+
+    texture2 = (IDirect3DRMTexture2 *)0xdeadbeef;
+    hr = IDirect3DRM2_LoadTexture(d3drm2, NULL, &texture2);
+    todo_wine ok(hr == D3DRMERR_FILENOTFOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture2, "Got unexpected texture %p.\n", texture2);
+    texture2 = (IDirect3DRMTexture2 *)0xdeadbeef;
+    hr = IDirect3DRM2_LoadTexture(d3drm2, "", &texture2);
+    todo_wine ok(hr == D3DRMERR_FILENOTFOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture2, "Got unexpected texture %p.\n", texture2);
+    if (hr == D3DRMERR_FILENOTFOUND)
+    {
+        hr = IDirect3DRM2_LoadTexture(d3drm2, NULL, NULL);
+        ok(hr == D3DRMERR_BADVALUE, "Got unexpected hr %#x.\n", hr);
+    }
+
+    texture3 = (IDirect3DRMTexture3 *)0xdeadbeef;
+    hr = IDirect3DRM3_LoadTexture(d3drm3, NULL, &texture3);
+    todo_wine ok(hr == D3DRMERR_FILENOTFOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture3, "Got unexpected texture %p.\n", texture3);
+    texture3 = (IDirect3DRMTexture3 *)0xdeadbeef;
+    hr = IDirect3DRM_LoadTexture(d3drm3, "", &texture3);
+    todo_wine ok(hr == D3DRMERR_FILENOTFOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!texture3, "Got unexpected texture %p.\n", texture3);
+    if (hr == D3DRMERR_FILENOTFOUND)
+    {
+        hr = IDirect3DRM3_LoadTexture(d3drm3, NULL, NULL);
+        ok(hr == D3DRMERR_BADVALUE, "Got unexpected hr %#x.\n", hr);
+    }
+
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         filename = create_bitmap(tests[i].w, tests[i].h, tests[i].palettized);
