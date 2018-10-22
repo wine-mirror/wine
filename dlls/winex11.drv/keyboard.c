@@ -1294,6 +1294,26 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     return TRUE;
 }
 
+static void adjust_lock_state( BYTE *keystate, HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time )
+{
+    BYTE prev_state = keystate[vkey] & 0x01;
+
+    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags, time );
+    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags ^ KEYEVENTF_KEYUP, time );
+
+    /* Keyboard hooks may have blocked processing lock keys causing our state
+     * to be different than state on X server side. Although Windows allows hooks
+     * to block changing state, we can't prevent it on X server side. Having
+     * different states would cause us to try to adjust it again on the next
+     * key event. We prevent that by overriding hooks and setting key states here. */
+    if (get_async_key_state( keystate ) && (keystate[vkey] & 0x01) == prev_state)
+    {
+        WARN("keystate %x not changed (%#.2x), probably blocked by hooks\n", vkey, keystate[vkey]);
+        keystate[vkey] ^= 0x01;
+        set_async_key_state( keystate );
+    }
+}
+
 static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
 {
     BYTE keystate[256];
@@ -1309,8 +1329,7 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = 0;
         if (keystate[VK_CAPITAL] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting CapsLock state (%#.2x)\n", keystate[VK_CAPITAL]);
-        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags, time );
-        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags ^ KEYEVENTF_KEYUP, time );
+        adjust_lock_state( keystate, hwnd, VK_CAPITAL, 0x3a, flags, time );
     }
 
     /* Adjust the NUMLOCK state if it has been changed outside wine */
@@ -1319,8 +1338,7 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = KEYEVENTF_EXTENDEDKEY;
         if (keystate[VK_NUMLOCK] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting NumLock state (%#.2x)\n", keystate[VK_NUMLOCK]);
-        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags, time );
-        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags ^ KEYEVENTF_KEYUP, time );
+        adjust_lock_state( keystate, hwnd, VK_NUMLOCK, 0x45, flags, time );
     }
 
     /* Adjust the SCROLLLOCK state if it has been changed outside wine */
@@ -1329,8 +1347,7 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = 0;
         if (keystate[VK_SCROLL] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting ScrLock state (%#.2x)\n", keystate[VK_SCROLL]);
-        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags, time );
-        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags ^ KEYEVENTF_KEYUP, time );
+        adjust_lock_state( keystate, hwnd, VK_SCROLL, 0x46, flags, time );
     }
 }
 
