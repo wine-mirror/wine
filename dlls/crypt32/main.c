@@ -174,7 +174,7 @@ BOOL WINAPI I_CryptGetOssGlobal(DWORD x)
     return FALSE;
 }
 
-HCRYPTPROV WINAPI I_CryptGetDefaultCryptProv(DWORD reserved)
+HCRYPTPROV WINAPI DECLSPEC_HOTPATCH I_CryptGetDefaultCryptProv(DWORD reserved)
 {
     HCRYPTPROV ret;
 
