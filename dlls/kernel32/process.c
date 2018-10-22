@@ -2228,9 +2228,8 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
     {
         wine_server_send_fd( socketfd[1] );
         close( socketfd[1] );
-        SERVER_START_REQ( new_process )
+        SERVER_START_REQ( exec_process )
         {
-            req->create_flags   = flags;
             req->socket_fd      = socketfd[1];
             req->exe_file       = wine_server_obj_handle( hFile );
             req->cpu            = pe_info->cpu;

@@ -1246,6 +1246,13 @@ static void dump_new_process_reply( const struct new_process_reply *req )
     fprintf( stderr, ", handle=%04x", req->handle );
 }
 
+static void dump_exec_process_request( const struct exec_process_request *req )
+{
+    fprintf( stderr, " socket_fd=%d", req->socket_fd );
+    fprintf( stderr, ", exe_file=%04x", req->exe_file );
+    dump_cpu_type( ", cpu=", &req->cpu );
+}
+
 static void dump_get_new_process_info_request( const struct get_new_process_info_request *req )
 {
     fprintf( stderr, " info=%04x", req->info );
@@ -4529,6 +4536,7 @@ static void dump_terminate_job_request( const struct terminate_job_request *req 
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
+    (dump_func)dump_exec_process_request,
     (dump_func)dump_get_new_process_info_request,
     (dump_func)dump_new_thread_request,
     (dump_func)dump_get_startup_info_request,
@@ -4821,6 +4829,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_reply,
+    NULL,
     (dump_func)dump_get_new_process_info_reply,
     (dump_func)dump_new_thread_reply,
     (dump_func)dump_get_startup_info_reply,
@@ -5113,6 +5122,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
+    "exec_process",
     "get_new_process_info",
     "new_thread",
     "get_startup_info",

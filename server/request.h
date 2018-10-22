@@ -113,6 +113,7 @@ static inline void set_reply_data_ptr( void *data, data_size_t size )
 /* ### make_requests begin ### */
 
 DECL_HANDLER(new_process);
+DECL_HANDLER(exec_process);
 DECL_HANDLER(get_new_process_info);
 DECL_HANDLER(new_thread);
 DECL_HANDLER(get_startup_info);
@@ -408,6 +409,7 @@ typedef void (*req_handler)( const void *req, void *reply );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
 {
     (req_handler)req_new_process,
+    (req_handler)req_exec_process,
     (req_handler)req_get_new_process_info,
     (req_handler)req_new_thread,
     (req_handler)req_get_startup_info,
@@ -740,6 +742,10 @@ C_ASSERT( FIELD_OFFSET(struct new_process_reply, info) == 8 );
 C_ASSERT( FIELD_OFFSET(struct new_process_reply, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct new_process_reply, handle) == 16 );
 C_ASSERT( sizeof(struct new_process_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct exec_process_request, socket_fd) == 12 );
+C_ASSERT( FIELD_OFFSET(struct exec_process_request, exe_file) == 16 );
+C_ASSERT( FIELD_OFFSET(struct exec_process_request, cpu) == 20 );
+C_ASSERT( sizeof(struct exec_process_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_new_process_info_request, info) == 12 );
 C_ASSERT( sizeof(struct get_new_process_info_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_new_process_info_reply, success) == 8 );

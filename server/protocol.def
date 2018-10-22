@@ -754,6 +754,14 @@ struct rawinput_device
 @END
 
 
+/* Execute a process, replacing the current one */
+@REQ(exec_process)
+    int          socket_fd;      /* file descriptor for process socket */
+    obj_handle_t exe_file;       /* file handle for main exe */
+    cpu_type_t   cpu;            /* CPU that the new process will use */
+@END
+
+
 /* Retrieve information about a newly started process */
 @REQ(get_new_process_info)
     obj_handle_t info;           /* info handle returned from new_process_request */
