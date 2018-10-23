@@ -2236,7 +2236,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         sizeof(FILE_STANDARD_INFORMATION),             /* FileStandardInformation */
         sizeof(FILE_INTERNAL_INFORMATION),             /* FileInternalInformation */
         sizeof(FILE_EA_INFORMATION),                   /* FileEaInformation */
-        sizeof(FILE_ACCESS_INFORMATION),               /* FileAccessInformation */
+        0,                                             /* FileAccessInformation */
         sizeof(FILE_NAME_INFORMATION),                 /* FileNameInformation */
         sizeof(FILE_RENAME_INFORMATION)-sizeof(WCHAR), /* FileRenameInformation */
         0,                                             /* FileLinkInformation */
@@ -2309,13 +2309,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if (class != FileAccessInformation)
+    if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
     {
-        if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
-        {
-            if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
-            return server_get_file_info( hFile, io, ptr, len, class );
-        }
+        if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
+        return server_get_file_info( hFile, io, ptr, len, class );
     }
 
     switch (class)
@@ -2356,19 +2353,6 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         {
             FILE_EA_INFORMATION *info = ptr;
             info->EaSize = 0;
-        }
-        break;
-    case FileAccessInformation:
-        {
-            FILE_ACCESS_INFORMATION *info = ptr;
-            SERVER_START_REQ( get_object_info )
-            {
-                req->handle = wine_server_obj_handle( hFile );
-                io->u.Status = wine_server_call( req );
-                if (io->u.Status == STATUS_SUCCESS)
-                    info->AccessFlags = reply->access;
-            }
-            SERVER_END_REQ;
         }
         break;
     case FileEndOfFileInformation:

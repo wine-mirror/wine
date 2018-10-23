@@ -2178,7 +2178,23 @@ void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_
 /* default get_file_info() routine */
 void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class )
 {
-    set_error( STATUS_NOT_IMPLEMENTED );
+    switch (info_class)
+    {
+    case FileAccessInformation:
+        {
+            FILE_ACCESS_INFORMATION info;
+            if (get_reply_max_size() < sizeof(info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+            info.AccessFlags = get_handle_access( current->process, handle );
+            set_reply_data( &info, sizeof(info) );
+            break;
+        }
+    default:
+        set_error( STATUS_NOT_IMPLEMENTED );
+    }
 }
 
 /* default get_volume_info() routine */
