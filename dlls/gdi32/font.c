@@ -753,9 +753,9 @@ static struct font_gamma_ramp *get_font_gamma_ramp( void )
         gamma = min( max( gamma, 1000 ), 2200 );
     }
 
-    /* Calibration the difference between the registry value and the Wine gamma value.
-       This shows a roughly similar looks to the Windows Native with the same registry value.
-       MS GDI seems to be rasterizing the outline at the different rate than FreeType. */
+    /* Calibrating the difference between the registry value and the Wine gamma value.
+       This looks roughly similar to Windows Native with the same registry value.
+       MS GDI seems to be rasterizing the outline at a different rate than FreeType. */
     gamma = 1000 * gamma / 1400;
 
     for (i = 0; i < 256; i++)
