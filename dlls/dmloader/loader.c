@@ -894,9 +894,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_LoadObjectFromFile(IDirectMusicLoad
 	*/
         get_search_path(This, rguidClassID, wszLoaderSearchPath);
     /* search in current directory */
-	if (!SearchPathW (NULL, pwzFilePath, NULL, sizeof(ObjDesc.wszFileName)/sizeof(WCHAR), ObjDesc.wszFileName, NULL) &&
+	if (!SearchPathW(NULL, pwzFilePath, NULL, ARRAY_SIZE(ObjDesc.wszFileName), ObjDesc.wszFileName, NULL) &&
 	/* search in loader's search path */
-		!SearchPathW (wszLoaderSearchPath, pwzFilePath, NULL, sizeof(ObjDesc.wszFileName)/sizeof(WCHAR), ObjDesc.wszFileName, NULL)) {
+		!SearchPathW(wszLoaderSearchPath, pwzFilePath, NULL, ARRAY_SIZE(ObjDesc.wszFileName), ObjDesc.wszFileName, NULL)) {
 		/* cannot find file */
 		TRACE(": cannot find file\n");
 		return DMUS_E_LOADER_FAILEDOPEN;

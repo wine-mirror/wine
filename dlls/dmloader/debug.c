@@ -269,7 +269,7 @@ const char *debugstr_dmguid (const GUID *id) {
 	unsigned int i;
 
 	if (!id) return "(null)";
-	for (i = 0; i < sizeof(guids)/sizeof(guids[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(guids); i++) {
 		if (IsEqualGUID(id, guids[i].guid))
 			return guids[i].name;
 	}
@@ -416,7 +416,7 @@ const char *debugstr_dmreturn (DWORD code) {
 	};
 	
 	unsigned int i;
-	for (i = 0; i < sizeof(codes)/sizeof(codes[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(codes); i++) {
 		if (code == codes[i].val)
 			return codes[i].name;
 	}
@@ -461,7 +461,7 @@ static const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
 	    FE(DMUS_OBJ_MEMORY),
 	    FE(DMUS_OBJ_STREAM)
 	};
-    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
 }
 
 /* dump DMUS_CONTAINER flags */
@@ -469,7 +469,7 @@ static const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINER_NOLOADS)
 	};
-    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
 }
 
 /* dump DMUS_CONTAINED_OBJF flags */
@@ -477,7 +477,7 @@ static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINED_OBJF_KEEP)
 	};
-    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
 }
 
 /* Dump whole DMUS_OBJECTDESC struct */
