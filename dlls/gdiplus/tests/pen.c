@@ -588,6 +588,44 @@ static void test_transform(void)
     expectf(-15.0, values[4]);
     expectf(-76.0, values[5]);
 
+    /* Rotate */
+    status = GdipResetPenTransform(pen);
+    expect(Ok, status);
+
+    status = GdipSetMatrixElements(matrix, 2.0, 1.0, 1.0, 4.0, 1.0, 2.0);
+    expect(Ok, status);
+
+    status = GdipSetPenTransform(pen, matrix);
+    expect(Ok, status);
+
+    status = GdipRotatePenTransform(NULL, 10.0, MatrixOrderPrepend);
+    expect(InvalidParameter, status);
+
+    status = GdipRotatePenTransform(pen, 45.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(2.12, values[0]);
+    expectf(3.54, values[1]);
+    expectf(-0.71, values[2]);
+    expectf(2.12, values[3]);
+    expectf(1.0, values[4]);
+    expectf(2.0, values[5]);
+
+    status = GdipScalePenTransform(pen, 2.0, -10.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipRotatePenTransform(pen, 180.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    get_pen_transform(pen, values);
+    expectf(-4.24, values[0]);
+    expectf(35.36, values[1]);
+    expectf(1.41, values[2]);
+    expectf(21.21, values[3]);
+    expectf(-2.0, values[4]);
+    expectf(20.0, values[5]);
+
     GdipDeletePen(pen);
 
     GdipDeleteMatrix(matrix);
