@@ -652,8 +652,8 @@ static void test_registerOIDInfo(void)
     ok(!info2, "should fail\n");
 
     SetLastError(0xdeadbeef);
-    /* while succeeds next call does't write anything to registry under Windows
-     * because of dwGroupId == 0.
+    /* While it succeeds, the next call does not write anything to the
+     * registry on Windows because dwGroupId == 0.
      */
     ret = CryptRegisterOIDInfo(&info1, 0);
     ok(ret, "got %u\n", GetLastError());
