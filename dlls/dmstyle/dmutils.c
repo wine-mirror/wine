@@ -438,7 +438,7 @@ const char *debugstr_dmguid (const GUID *id) {
 	unsigned int i;
 
 	if (!id) return "(null)";
-	for (i = 0; i < sizeof(guids)/sizeof(guids[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(guids); i++) {
 		if (IsEqualGUID(id, guids[i].guid))
 			return guids[i].name;
 	}
@@ -482,7 +482,7 @@ static const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
 	    FE(DMUS_OBJ_MEMORY),
 	    FE(DMUS_OBJ_STREAM)
 	};
-    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
 }
 
 const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
