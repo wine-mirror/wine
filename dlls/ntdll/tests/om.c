@@ -69,6 +69,7 @@ static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, c
 static NTSTATUS (WINAPI *pNtReleaseKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
 static NTSTATUS (WINAPI *pNtOpenIoCompletion)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
+static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, void *, ULONG, FILE_INFORMATION_CLASS);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -1270,6 +1271,37 @@ static void test_symboliclink(void)
     pNtClose(dir);
 }
 
+#define test_file_info(a) _test_file_info(__LINE__,a)
+static void _test_file_info(unsigned line, HANDLE handle)
+{
+    IO_STATUS_BLOCK io;
+    char buf[256];
+    NTSTATUS status;
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), 0xdeadbeef);
+    ok_(__FILE__,line)(status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED,
+                       "expected STATUS_NOT_IMPLEMENTED, got %x\n", status);
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), FileAccessInformation);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "FileAccessInformation returned %x\n", status);
+}
+
+#define test_no_file_info(a) _test_no_file_info(__LINE__,a)
+static void _test_no_file_info(unsigned line, HANDLE handle)
+{
+    IO_STATUS_BLOCK io;
+    char buf[256];
+    NTSTATUS status;
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), 0xdeadbeef);
+    ok_(__FILE__,line)(status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED,
+                       "expected STATUS_NOT_IMPLEMENTED, got %x\n", status);
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), FileAccessInformation);
+    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH,
+                       "FileAccessInformation returned %x\n", status);
+}
+
 static void test_query_object(void)
 {
     static const WCHAR name[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
@@ -1351,6 +1383,7 @@ static void test_query_object(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
     ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + sizeof(type_event) + sizeof(WCHAR), "unexpected len %u\n", len );
 
+    test_no_file_info( handle );
     pNtClose( handle );
 
     handle = CreateEventA( NULL, FALSE, FALSE, NULL );
@@ -1361,6 +1394,7 @@ static void test_query_object(void)
     str = (UNICODE_STRING *)buffer;
     ok( str->Length == 0, "unexpected len %u\n", len );
     ok( str->Buffer == NULL, "unexpected ptr %p\n", str->Buffer );
+    test_no_file_info( handle );
     pNtClose( handle );
 
     GetWindowsDirectoryA( dir, MAX_PATH );
@@ -1401,6 +1435,7 @@ static void test_query_object(void)
     ok( len >= expected_len, "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_file_info( handle );
 
     pNtClose( handle );
 
@@ -1418,6 +1453,7 @@ static void test_query_object(void)
     ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
     DeleteFileA( file1 );
+    test_file_info( handle );
     pNtClose( handle );
 
     status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
@@ -1432,6 +1468,7 @@ static void test_query_object(void)
     ok( len >= expected_len, "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_iocompletion, sizeof(type_iocompletion) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_no_file_info( handle );
     pNtClose( handle );
 
     status = pNtCreateDirectoryObject( &handle, DIRECTORY_QUERY, NULL );
@@ -1446,6 +1483,7 @@ static void test_query_object(void)
     ok( len >= expected_len, "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_directory, sizeof(type_directory) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_no_file_info( handle );
     pNtClose( handle );
 
     size.u.LowPart = 256;
@@ -1462,6 +1500,7 @@ static void test_query_object(void)
     ok( len >= expected_len, "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_section, sizeof(type_section) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_no_file_info( handle );
     pNtClose( handle );
 
     handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
@@ -1478,6 +1517,7 @@ static void test_query_object(void)
     ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_mailslot") * sizeof(WCHAR),
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+    test_file_info( handle );
     pNtClose( handle );
 
     handle = CreateNamedPipeA( "\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE,
@@ -1508,6 +1548,7 @@ static void test_query_object(void)
     ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_file_info( handle );
 
     client = CreateFileA( "\\\\.\\pipe\\test_pipe", GENERIC_READ | GENERIC_WRITE,
                           0, NULL, OPEN_EXISTING, 0, 0 );
@@ -1522,6 +1563,7 @@ static void test_query_object(void)
     ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_file_info( client );
 
     pNtClose( client );
     pNtClose( handle );
@@ -2064,6 +2106,7 @@ START_TEST(om)
     pNtReleaseKeyedEvent    =  (void *)GetProcAddress(hntdll, "NtReleaseKeyedEvent");
     pNtCreateIoCompletion   =  (void *)GetProcAddress(hntdll, "NtCreateIoCompletion");
     pNtOpenIoCompletion     =  (void *)GetProcAddress(hntdll, "NtOpenIoCompletion");
+    pNtQueryInformationFile =  (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
 
     test_case_sensitive();
     test_namespace_pipe();
