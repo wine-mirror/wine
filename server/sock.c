@@ -167,7 +167,7 @@ static const struct fd_ops sock_fd_ops =
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    default_fd_get_file_info,     /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */

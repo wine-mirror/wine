@@ -271,7 +271,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     no_fd_read,                       /* read */
     no_fd_write,                      /* write */
     no_fd_flush,                      /* flush */
-    no_fd_get_file_info,              /* get_file_info */
+    default_fd_get_file_info,         /* get_file_info */
     no_fd_get_volume_info,            /* get_volume_info */
     named_pipe_device_ioctl,          /* ioctl */
     default_fd_queue_async,           /* queue_async */
@@ -520,12 +520,6 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
     struct pipe_end *pipe_end = get_fd_user( fd );
     struct named_pipe *pipe = pipe_end->pipe;
 
-    if (!pipe)
-    {
-        set_error( STATUS_PIPE_DISCONNECTED );
-        return;
-    }
-
     switch (info_class)
     {
     case FileNameInformation:
@@ -540,13 +534,13 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
                 return;
             }
 
-            name = get_object_name( &pipe->obj, &name_len );
             /* FIXME: We should be able to return on unlinked pipe */
-            if (!name)
+            if (!pipe || !(name = get_object_name( &pipe->obj, &name_len )))
             {
                 set_error( STATUS_PIPE_DISCONNECTED );
                 return;
             }
+
             reply_size = offsetof( FILE_NAME_INFORMATION, FileName[name_len/sizeof(WCHAR) + 1] );
             if (reply_size > get_reply_max_size())
             {
@@ -577,6 +571,12 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
                 return;
             }
 
+            if (!pipe)
+            {
+                set_error( STATUS_PIPE_DISCONNECTED );
+                return;
+            }
+
             if (!(pipe_info = set_reply_data_size( sizeof(*pipe_info) ))) return;
             pipe_info->ReadMode       = (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
                 ? FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
@@ -597,6 +597,12 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             if (get_reply_max_size() < sizeof(*pipe_info))
             {
                 set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            if (!pipe)
+            {
+                set_error( STATUS_PIPE_DISCONNECTED );
                 return;
             }
 
@@ -626,7 +632,7 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             break;
         }
     default:
-        no_fd_get_file_info( fd, handle, info_class );
+        default_fd_get_file_info( fd, handle, info_class );
     }
 }
 

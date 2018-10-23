@@ -2200,7 +2200,7 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
         io->Information = wine_server_reply_size( reply );
     }
     SERVER_END_REQ;
-    if (io->u.Status == STATUS_OBJECT_TYPE_MISMATCH)
+    if (io->u.Status == STATUS_NOT_IMPLEMENTED)
         FIXME( "Unsupported info class %x\n", info_class );
     return io->u.Status;
 
@@ -2305,10 +2305,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (class <= 0 || class >= FileMaximumInformation)
         return io->u.Status = STATUS_INVALID_INFO_CLASS;
     if (!info_sizes[class])
-    {
-        FIXME("Unsupported class (%d)\n", class);
-        return io->u.Status = STATUS_NOT_IMPLEMENTED;
-    }
+        return server_get_file_info( hFile, io, ptr, len, class );
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 

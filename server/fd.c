@@ -2175,6 +2175,12 @@ void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
+/* default get_file_info() routine */
+void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class )
+{
+    set_error( STATUS_NOT_IMPLEMENTED );
+}
+
 /* default get_volume_info() routine */
 void no_fd_get_volume_info( struct fd *fd, unsigned int info_class )
 {

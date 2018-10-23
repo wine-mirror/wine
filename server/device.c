@@ -209,7 +209,7 @@ static const struct fd_ops device_file_fd_ops =
     device_file_read,                 /* read */
     device_file_write,                /* write */
     device_file_flush,                /* flush */
-    no_fd_get_file_info,              /* get_file_info */
+    default_fd_get_file_info,         /* get_file_info */
     no_fd_get_volume_info,            /* get_volume_info */
     device_file_ioctl,                /* ioctl */
     default_fd_queue_async,           /* queue_async */
