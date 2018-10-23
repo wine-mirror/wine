@@ -2812,6 +2812,15 @@ static void init_fontconfig(void)
         pFcConfigSubstitute( NULL, pattern, FcMatchFont );
         default_aa_flags = parse_aa_pattern( pattern );
         pFcPatternDestroy( pattern );
+
+        if (!default_aa_flags)
+        {
+            FcPattern *pattern = pFcPatternCreate();
+            pFcConfigSubstitute( NULL, pattern, FcMatchPattern );
+            default_aa_flags = parse_aa_pattern( pattern );
+            pFcPatternDestroy( pattern );
+        }
+
         TRACE( "enabled, default flags = %x\n", default_aa_flags );
         fontconfig_enabled = TRUE;
     }
