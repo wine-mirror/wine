@@ -1084,7 +1084,7 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
         else if (strcmp(key, "HID_UNIQ") == 0)
         {
             /* The caller has to free the serial number */
-            if (strlen(value))
+            if (*value)
             {
                 *serial_number = (WCHAR*)strdupAtoW(value);
                 found_serial = 1;
