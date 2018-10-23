@@ -126,7 +126,7 @@ msgstr ""
 msgid "&Install"
 msgstr ""
 
-#: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:40 comctl32.rc:72
+#: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
 #: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
@@ -283,6 +283,28 @@ msgstr ""
 
 #: browseui.rc:28
 msgid "Canceling..."
+msgstr ""
+
+#: browseui.rc:29
+msgid "%1!u! %2 remaining"
+msgstr ""
+
+#: browseui.rc:30
+msgid "%1!u! %2 and %3!u! %4 remaining"
+msgstr ""
+
+#: browseui.rc:31
+#, fuzzy
+#| msgid "&Seconds"
+msgid "seconds"
+msgstr "క్షణాలు (&S)"
+
+#: browseui.rc:32
+msgid "minutes"
+msgstr ""
+
+#: browseui.rc:33
+msgid "hours"
 msgstr ""
 
 #: comctl32.rc:68 winefile.rc:157

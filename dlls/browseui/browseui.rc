@@ -25,6 +25,11 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     IDS_CANCELLING    "Canceling..."
+    IDS_REMAINING1    "%1!u! %2 remaining"
+    IDS_REMAINING2    "%1!u! %2 and %3!u! %4 remaining"
+    IDS_SECONDS       "seconds"
+    IDS_MINUTES       "minutes"
+    IDS_HOURS         "hours"
 }
 
 IDD_PROGRESS_DLG DIALOG 0, 0, 260, 85
