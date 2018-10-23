@@ -1468,13 +1468,13 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
             wine_get_config_dir(), path, args);
     fprintf(file, "Type=Application\n");
     fprintf(file, "StartupNotify=true\n");
-    if (descr && lstrlenA(descr))
+    if (descr && *descr)
         fprintf(file, "Comment=%s\n", descr);
-    if (workdir && lstrlenA(workdir))
+    if (workdir && *workdir)
         fprintf(file, "Path=%s\n", workdir);
-    if (icon && lstrlenA(icon))
+    if (icon && *icon)
         fprintf(file, "Icon=%s\n", icon);
-    if (wmclass && lstrlenA(wmclass))
+    if (wmclass && *wmclass)
         fprintf(file, "StartupWMClass=%s\n", wmclass);
 
     fclose(file);
