@@ -1284,6 +1284,11 @@ static void _test_file_info(unsigned line, HANDLE handle)
 
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), FileAccessInformation);
     ok_(__FILE__,line)(status == STATUS_SUCCESS, "FileAccessInformation returned %x\n", status);
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
+                                    FileIoCompletionNotificationInformation);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS),
+                       "FileIoCompletionNotificationInformation returned %x\n", status);
 }
 
 #define test_no_file_info(a) _test_no_file_info(__LINE__,a)
@@ -1300,6 +1305,11 @@ static void _test_no_file_info(unsigned line, HANDLE handle)
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf), FileAccessInformation);
     ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH,
                        "FileAccessInformation returned %x\n", status);
+
+    status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
+                                    FileIoCompletionNotificationInformation);
+    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS),
+                       "FileIoCompletionNotificationInformation returned %x\n", status);
 }
 
 static void test_query_object(void)
