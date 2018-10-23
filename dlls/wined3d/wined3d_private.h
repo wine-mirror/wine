@@ -1461,13 +1461,13 @@ do {                                                                \
 
 struct wined3d_bo_address
 {
-    GLuint buffer_object;
+    UINT_PTR buffer_object;
     BYTE *addr;
 };
 
 struct wined3d_const_bo_address
 {
-    GLuint buffer_object;
+    UINT_PTR buffer_object;
     const BYTE *addr;
 };
 
