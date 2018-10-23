@@ -1017,7 +1017,7 @@ static void compareNameValues(const CERT_NAME_VALUE *expected,
 static void compareRDNAttrs(const CERT_RDN_ATTR *expected,
  const CERT_RDN_ATTR *got)
 {
-    if (expected->pszObjId && strlen(expected->pszObjId))
+    if (expected->pszObjId && *expected->pszObjId)
     {
         ok(got->pszObjId != NULL, "Expected OID %s, got NULL\n",
          expected->pszObjId);
