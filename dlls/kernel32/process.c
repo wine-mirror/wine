@@ -2146,7 +2146,7 @@ static NTSTATUS exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, int sock
         wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
     }
 #ifdef __APPLE__
-    while (errno == ENOTSUP && exec_only && terminate_main_thread());
+    while (errno == ENOTSUP && terminate_main_thread());
 #else
     while (0);
 #endif
