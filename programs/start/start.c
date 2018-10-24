@@ -403,7 +403,55 @@ int wmain (int argc, WCHAR *argv[])
 	}
 
         if (!ShellExecuteExW(&sei))
-            fatal_string_error(STRING_EXECFAIL, GetLastError(), sei.lpFile);
+        {
+            static const WCHAR pathextW[] = {'P','A','T','H','E','X','T',0};
+            const WCHAR *filename = sei.lpFile;
+            DWORD size, filename_len;
+            WCHAR *name, *env;
+
+            size = GetEnvironmentVariableW(pathextW, NULL, 0);
+            if (size)
+            {
+                WCHAR *start, *ptr;
+
+                env = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+                if (!env)
+                    fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, sei.lpFile);
+                GetEnvironmentVariableW(pathextW, env, size);
+
+                filename_len = strlenW(filename);
+                name = HeapAlloc(GetProcessHeap(), 0, (filename_len + size) * sizeof(WCHAR));
+                if (!name)
+                    fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, sei.lpFile);
+
+                sei.lpFile = name;
+                start = env;
+                while ((ptr = strchrW(start, ';')))
+                {
+                    if (start == ptr)
+                    {
+                        start = ptr + 1;
+                        continue;
+                    }
+
+                    strcpyW(name, filename);
+                    memcpy(&name[filename_len], start, (ptr - start) * sizeof(WCHAR));
+                    name[filename_len + (ptr - start)] = 0;
+
+                    if (ShellExecuteExW(&sei))
+                    {
+                        HeapFree(GetProcessHeap(), 0, name);
+                        HeapFree(GetProcessHeap(), 0, env);
+                        goto done;
+                    }
+
+                    start = ptr + 1;
+                }
+
+            }
+
+            fatal_string_error(STRING_EXECFAIL, GetLastError(), filename);
+        }
 
 done:
 	HeapFree( GetProcessHeap(), 0, args );
