@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-06 08:19+0300\n"
+"PO-Revision-Date: 2018-10-24 08:54+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -309,25 +309,23 @@ msgstr "Atsisakoma..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "liko %1!u! %2"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "liko %1!u! %2 ir %3!u! %4"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "S&ekundės"
+msgstr "sek."
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "min."
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "val."
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
