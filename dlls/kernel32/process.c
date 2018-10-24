@@ -1887,8 +1887,9 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( LPCWSTR filename, LPC
     RtlInitUnicodeString( &desktopW, startup->lpDesktop );
     runtimeW.Buffer = (WCHAR *)startup->lpReserved2;
     runtimeW.Length = runtimeW.MaximumLength = startup->cbReserved2;
-    if (RtlCreateProcessParametersEx( &params, &imageW, NULL, &curdirW, &cmdlineW, envW, &titleW,
-                                      &desktopW, NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
+    if (RtlCreateProcessParametersEx( &params, &imageW, NULL, cur_dir ? &curdirW : NULL,
+                                      &cmdlineW, envW, &titleW, &desktopW,
+                                      NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
     {
         if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
         return NULL;
