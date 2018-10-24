@@ -52,7 +52,7 @@ msgstr "&Informácie o podpore"
 msgid "&Modify..."
 msgstr "&Zmeniť..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:200
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:256
 msgid "&Remove"
 msgstr "&Odstrániť"
@@ -63,9 +63,9 @@ msgstr "Informácie o podpore"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
 #: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:359 comdlg32.rc:398
-#: comdlg32.rc:452 credui.rc:52 cryptui.rc:263 cryptui.rc:275 cryptui.rc:365
-#: dinput.rc:46 ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49
-#: msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
+#: comdlg32.rc:452 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: cryptui.rc:462 dinput.rc:46 ieframe.rc:96 localui.rc:44 localui.rc:57
+#: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 twain.rc:32 user32.rc:83
 #: user32.rc:98 wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47
@@ -148,18 +148,19 @@ msgstr "&Inštalovať"
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
 #: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
-#: cryptui.rc:264 cryptui.rc:276 cryptui.rc:366 dinput.rc:47 ieframe.rc:97
-#: inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50 msacm32.rc:54
-#: mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95
-#: serialui.rc:42 setupapi.rc:42 setupapi.rc:60 shell32.rc:277 shell32.rc:301
-#: shell32.rc:312 shell32.rc:342 shlwapi.rc:45 twain.rc:33 user32.rc:84
-#: user32.rc:99 wininet.rc:52 wininet.rc:72 winspool.rc:43 notepad.rc:118
-#: oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125 progman.rc:143
-#: progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217 regedit.rc:297
-#: regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350 regedit.rc:363
-#: taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215 winecfg.rc:225
-#: wineconsole.rc:136 winefile.rc:129 winefile.rc:152 winefile.rc:182
-#: winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
+#: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:47
+#: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
+#: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
+#: oledlg.rc:95 serialui.rc:42 setupapi.rc:42 setupapi.rc:60 shell32.rc:277
+#: shell32.rc:301 shell32.rc:312 shell32.rc:342 shlwapi.rc:45 twain.rc:33
+#: user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72 winspool.rc:43
+#: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
+#: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
+#: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
+#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: wordpad.rc:258
 msgid "Cancel"
 msgstr "Zrušiť"
 
@@ -379,7 +380,7 @@ msgstr "Dokončiť"
 msgid "Customize Toolbar"
 msgstr "Prispôsobenie panela nástrojov"
 
-#: comctl32.rc:100 comctl32.rc:57 cryptui.rc:351 ieframe.rc:43 oleview.rc:83
+#: comctl32.rc:100 comctl32.rc:57 cryptui.rc:356 ieframe.rc:43 oleview.rc:83
 #: oleview.rc:187 oleview.rc:200 oleview.rc:212 taskmgr.rc:139
 msgid "&Close"
 msgstr "&Zavrieť"
@@ -455,7 +456,7 @@ msgstr "Detaily"
 msgid "See details"
 msgstr "Detaily"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
+#: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
 msgstr "Zavrieť"
@@ -926,7 +927,7 @@ msgstr "Vytvoriť nový adresár"
 msgid "List"
 msgstr "Zoznam"
 
-#: comdlg32.rc:48 cryptui.rc:196
+#: comdlg32.rc:48 cryptui.rc:201
 msgid "Details"
 msgstr "Detaily"
 
@@ -1235,7 +1236,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Užívateľské meno:"
 
-#: credui.rc:48 cryptui.rc:397
+#: credui.rc:48 cryptui.rc:402
 msgid "&Password:"
 msgstr "&Heslo:"
 
@@ -2131,112 +2132,112 @@ msgstr ""
 msgid "Notice Text="
 msgstr ""
 
-#: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
+#: cryptui.rc:185 cryptui.rc:240 inetcpl.rc:46 shell32.rc:348 shell32.rc:377
 msgid "General"
 msgstr ""
 
-#: cryptui.rc:191
+#: cryptui.rc:196
 msgid "&Install Certificate..."
 msgstr "&Nainštaluj certifikát..."
 
-#: cryptui.rc:192
+#: cryptui.rc:197
 msgid "Issuer &Statement"
 msgstr ""
 
-#: cryptui.rc:200
+#: cryptui.rc:205
 msgid "&Show:"
 msgstr "&Ukáž:"
 
-#: cryptui.rc:205
+#: cryptui.rc:210
 msgid "&Edit Properties..."
 msgstr "&Uprav vlastnosti..."
 
-#: cryptui.rc:206
+#: cryptui.rc:211
 msgid "&Copy to File..."
 msgstr "&Kopírovanie súborov..."
 
-#: cryptui.rc:210
+#: cryptui.rc:215
 msgid "Certification Path"
 msgstr "Cesta k certifikátu"
 
-#: cryptui.rc:214
+#: cryptui.rc:219
 msgid "Certification path"
 msgstr "Cesta k certifikátu"
 
-#: cryptui.rc:217
+#: cryptui.rc:222 cryptui.rc:464
 msgid "&View Certificate"
 msgstr "&Ukáž certifikát"
 
-#: cryptui.rc:218
+#: cryptui.rc:223
 msgid "Certificate &status:"
 msgstr "Stav &certifikátu:"
 
-#: cryptui.rc:224
+#: cryptui.rc:229
 msgid "Disclaimer"
 msgstr "Odvolanie"
 
-#: cryptui.rc:231
+#: cryptui.rc:236
 msgid "More &Info"
 msgstr "Viac &informácií"
 
-#: cryptui.rc:239
+#: cryptui.rc:244
 msgid "&Friendly name:"
 msgstr "&Popisný názov:"
 
-#: cryptui.rc:241 progman.rc:154 progman.rc:170
+#: cryptui.rc:246 progman.rc:154 progman.rc:170
 msgid "&Description:"
 msgstr "&Popis:"
 
-#: cryptui.rc:243
+#: cryptui.rc:248
 msgid "Certificate purposes"
 msgstr "Účel certifikátu"
 
-#: cryptui.rc:244
+#: cryptui.rc:249
 msgid "&Enable all purposes for this certificate"
 msgstr "&Povoľ všetky účely pre tento certifikát"
 
-#: cryptui.rc:246
+#: cryptui.rc:251
 msgid "D&isable all purposes for this certificate"
 msgstr "&Zakáž všetky účely pre tento certifikát"
 
-#: cryptui.rc:248
+#: cryptui.rc:253
 msgid "Enable &only the following purposes for this certificate:"
 msgstr "Povoľ &len nasledujúce účely pre tento certifikát:"
 
-#: cryptui.rc:253
+#: cryptui.rc:258
 msgid "Add &Purpose..."
 msgstr "Pridaj &účel..."
 
-#: cryptui.rc:257
+#: cryptui.rc:262
 msgid "Add Purpose"
 msgstr "Pridaj účel"
 
-#: cryptui.rc:260
+#: cryptui.rc:265
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
 
-#: cryptui.rc:268 cryptui.rc:69
+#: cryptui.rc:273 cryptui.rc:69
 msgid "Select Certificate Store"
 msgstr ""
 
-#: cryptui.rc:271
+#: cryptui.rc:276
 msgid "Select the certificate store you want to use:"
 msgstr ""
 
-#: cryptui.rc:274
+#: cryptui.rc:279
 msgid "&Show physical stores"
 msgstr ""
 
-#: cryptui.rc:280 cryptui.rc:291 cryptui.rc:308 cryptui.rc:322 cryptui.rc:71
+#: cryptui.rc:285 cryptui.rc:296 cryptui.rc:313 cryptui.rc:327 cryptui.rc:71
 msgid "Certificate Import Wizard"
 msgstr ""
 
-#: cryptui.rc:283
+#: cryptui.rc:288
 msgid "Welcome to the Certificate Import Wizard"
 msgstr ""
 
-#: cryptui.rc:286
+#: cryptui.rc:291
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2249,115 +2250,115 @@ msgid ""
 "To continue, click Next."
 msgstr ""
 
-#: cryptui.rc:294 cryptui.rc:430
+#: cryptui.rc:299 cryptui.rc:435
 msgid "&File name:"
 msgstr "&Súbor:"
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
 msgid "B&rowse..."
 msgstr "P&rechádzaj..."
 
-#: cryptui.rc:297
+#: cryptui.rc:302
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 
-#: cryptui.rc:299
+#: cryptui.rc:304
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr ""
 
-#: cryptui.rc:301
+#: cryptui.rc:306
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr ""
 
-#: cryptui.rc:303 cryptui.rc:81 cryptui.rc:162
+#: cryptui.rc:308 cryptui.rc:81 cryptui.rc:162
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
-#: cryptui.rc:311
+#: cryptui.rc:316
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
 
-#: cryptui.rc:313
+#: cryptui.rc:318
 msgid "&Automatically select certificate store"
 msgstr ""
 
-#: cryptui.rc:315
+#: cryptui.rc:320
 msgid "&Place all certificates in the following store:"
 msgstr ""
 
-#: cryptui.rc:325
+#: cryptui.rc:330
 msgid "Completing the Certificate Import Wizard"
 msgstr ""
 
-#: cryptui.rc:327
+#: cryptui.rc:332
 msgid "You have successfully completed the Certificate Import Wizard."
 msgstr ""
 
-#: cryptui.rc:329 cryptui.rc:443
+#: cryptui.rc:334 cryptui.rc:448
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:337 cryptui.rc:122 inetcpl.rc:111
+#: cryptui.rc:342 cryptui.rc:122 inetcpl.rc:111
 msgid "Certificates"
 msgstr "Certifikáty"
 
-#: cryptui.rc:340
+#: cryptui.rc:345
 msgid "I&ntended purpose:"
 msgstr ""
 
-#: cryptui.rc:344
+#: cryptui.rc:349
 msgid "&Import..."
 msgstr "&Importovať..."
 
-#: cryptui.rc:345 regedit.rc:91 regedit.rc:112
+#: cryptui.rc:350 regedit.rc:91 regedit.rc:112
 msgid "&Export..."
 msgstr "&Exportovať..."
 
-#: cryptui.rc:347
+#: cryptui.rc:352
 msgid "&Advanced..."
 msgstr "&Pokročilé..."
 
-#: cryptui.rc:348
+#: cryptui.rc:353
 msgid "Certificate intended purposes"
 msgstr ""
 
-#: cryptui.rc:350 ieframe.rc:45 shell32.rc:43 shell32.rc:120 oleview.rc:59
+#: cryptui.rc:355 ieframe.rc:45 shell32.rc:43 shell32.rc:120 oleview.rc:59
 #: oleview.rc:61 oleview.rc:85 regedit.rc:64 taskmgr.rc:52 winefile.rc:48
 #: wordpad.rc:69
 msgid "&View"
 msgstr "&Ukáž"
 
-#: cryptui.rc:355
+#: cryptui.rc:360
 msgid "Advanced Options"
 msgstr "Pokročilé možnosti"
 
-#: cryptui.rc:358
+#: cryptui.rc:363
 msgid "Certificate purpose"
 msgstr ""
 
-#: cryptui.rc:359
+#: cryptui.rc:364
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
 
-#: cryptui.rc:361
+#: cryptui.rc:366
 msgid "&Certificate purposes:"
 msgstr ""
 
-#: cryptui.rc:370 cryptui.rc:381 cryptui.rc:394 cryptui.rc:404 cryptui.rc:427
-#: cryptui.rc:436 cryptui.rc:150
+#: cryptui.rc:375 cryptui.rc:386 cryptui.rc:399 cryptui.rc:409 cryptui.rc:432
+#: cryptui.rc:441 cryptui.rc:150
 msgid "Certificate Export Wizard"
 msgstr ""
 
-#: cryptui.rc:373
+#: cryptui.rc:378
 msgid "Welcome to the Certificate Export Wizard"
 msgstr ""
 
-#: cryptui.rc:376
+#: cryptui.rc:381
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2370,70 +2371,80 @@ msgid ""
 "To continue, click Next."
 msgstr ""
 
-#: cryptui.rc:384
+#: cryptui.rc:389
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
 
-#: cryptui.rc:385
+#: cryptui.rc:390
 msgid "Do you wish to export the private key?"
 msgstr ""
 
-#: cryptui.rc:386
+#: cryptui.rc:391
 msgid "&Yes, export the private key"
 msgstr ""
 
-#: cryptui.rc:388
+#: cryptui.rc:393
 msgid "N&o, do not export the private key"
 msgstr ""
 
-#: cryptui.rc:399
+#: cryptui.rc:404
 msgid "&Confirm password:"
 msgstr "&Potvrď heslo:"
 
-#: cryptui.rc:407
+#: cryptui.rc:412
 msgid "Select the format you want to use:"
 msgstr ""
 
-#: cryptui.rc:408
+#: cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
 msgstr ""
 
-#: cryptui.rc:410
+#: cryptui.rc:415
 msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr ""
 
-#: cryptui.rc:412
+#: cryptui.rc:417
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr ""
 
-#: cryptui.rc:414
+#: cryptui.rc:419
 msgid "&Include all certificates in the certification path if possible"
 msgstr ""
 
-#: cryptui.rc:416
+#: cryptui.rc:421
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr ""
 
-#: cryptui.rc:418
+#: cryptui.rc:423
 msgid "Incl&ude all certificates in the certification path if possible"
 msgstr ""
 
-#: cryptui.rc:420
+#: cryptui.rc:425
 msgid "&Enable strong encryption"
 msgstr ""
 
-#: cryptui.rc:422
+#: cryptui.rc:427
 msgid "Delete the private &key if the export is successful"
 msgstr ""
 
-#: cryptui.rc:439
+#: cryptui.rc:444
 msgid "Completing the Certificate Export Wizard"
 msgstr ""
 
-#: cryptui.rc:441
+#: cryptui.rc:446
 msgid "You have successfully completed the Certificate Export Wizard."
+msgstr ""
+
+#: cryptui.rc:456 cryptui.rc:179
+#, fuzzy
+#| msgid "Certificate"
+msgid "Select Certificate"
+msgstr "Certifikát"
+
+#: cryptui.rc:459
+msgid "Select a certificate you want to use"
 msgstr ""
 
 #: cryptui.rc:30 cryptui.rc:93
@@ -2923,6 +2934,25 @@ msgstr ""
 #: cryptui.rc:176
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
+
+#: cryptui.rc:177
+msgid "Intended Use"
+msgstr ""
+
+#: cryptui.rc:178 shell32.rc:152
+#, fuzzy
+msgid "Location"
+msgstr "Informácie"
+
+#: cryptui.rc:180
+#, fuzzy
+msgid "Select a certificate"
+msgstr "Nemôžem vytvoriť alebo použiť okno."
+
+#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#, fuzzy
+msgid "Not yet implemented"
+msgstr "Neimplementované"
 
 #: dinput.rc:43
 msgid "Configure Devices"
@@ -8898,11 +8928,6 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: shell32.rc:152
-#, fuzzy
-msgid "Location"
-msgstr "Informácie"
-
 #: shell32.rc:153
 msgid "Model"
 msgstr ""
@@ -14807,11 +14832,6 @@ msgstr ""
 #: winefile.rc:101
 msgid "Shell"
 msgstr ""
-
-#: winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
-#, fuzzy
-msgid "Not yet implemented"
-msgstr "Neimplementované"
 
 #: winefile.rc:109
 #, fuzzy
