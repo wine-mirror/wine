@@ -1663,7 +1663,7 @@ static char **build_envp( const WCHAR *envW )
  *
  * Fork and exec a new Unix binary, checking for errors.
  */
-static int fork_and_exec( const RTL_USER_PROCESS_PARAMETERS *params, const char *newdir, DWORD flags )
+static int fork_and_exec( const RTL_USER_PROCESS_PARAMETERS *params, const char *newdir )
 {
     int fd[2], stdin_fd = -1, stdout_fd = -1, stderr_fd = -1;
     int pid, err;
@@ -1698,7 +1698,8 @@ static int fork_and_exec( const RTL_USER_PROCESS_PARAMETERS *params, const char 
         {
             close( fd[0] );
 
-            if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+            if (params->ConsoleFlags || params->ConsoleHandle == KERNEL32_CONSOLE_ALLOC ||
+                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
             {
                 int nullfd = open( "/dev/null", O_RDWR );
                 setsid();
@@ -2035,11 +2036,11 @@ static BOOL terminate_main_thread(void)
 /***********************************************************************
  *           spawn_loader
  */
-static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned int flags, int socketfd,
-                          int stdin_fd, int stdout_fd, const char *unixdir, char *winedebug,
-                          const pe_image_info_t *pe_info )
+static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
+                          const char *unixdir, char *winedebug, const pe_image_info_t *pe_info )
 {
     pid_t pid;
+    int stdin_fd = -1, stdout_fd = -1;
     char *wineloader = NULL;
     const char *loader = NULL;
     char **argv;
@@ -2049,6 +2050,9 @@ static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned i
     if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
 
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+
     if (!(pid = fork()))  /* child */
     {
         if (!(pid = fork()))  /* grandchild */
@@ -2057,7 +2061,8 @@ static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned i
             ULONGLONG res_start = pe_info->base;
             ULONGLONG res_end   = pe_info->base + pe_info->map_size;
 
-            if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+            if (params->ConsoleFlags || params->ConsoleHandle == KERNEL32_CONSOLE_ALLOC ||
+                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
             {
                 int fd = open( "/dev/null", O_RDWR );
                 setsid();
@@ -2107,6 +2112,8 @@ static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, unsigned i
         } while (wret < 0 && errno == EINTR);
     }
 
+    if (stdin_fd != -1) close( stdin_fd );
+    if (stdout_fd != -1) close( stdout_fd );
     HeapFree( GetProcessHeap(), 0, wineloader );
     HeapFree( GetProcessHeap(), 0, argv );
     return pid;
@@ -2292,7 +2299,7 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
     char *winedebug = NULL;
     startup_info_t *startup_info;
     DWORD startup_info_size;
-    int socketfd[2], stdin_fd = -1, stdout_fd = -1;
+    int socketfd[2];
     pid_t pid;
     int err;
 
@@ -2401,23 +2408,12 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
         return FALSE;
     }
 
-    if (!(flags & (CREATE_NEW_CONSOLE | DETACHED_PROCESS)))
-    {
-        if (startup_info->hstdin)
-            wine_server_handle_to_fd( wine_server_ptr_handle(startup_info->hstdin),
-                                      FILE_READ_DATA, &stdin_fd, NULL );
-        if (startup_info->hstdout)
-            wine_server_handle_to_fd( wine_server_ptr_handle(startup_info->hstdout),
-                                      FILE_WRITE_DATA, &stdout_fd, NULL );
-    }
     HeapFree( GetProcessHeap(), 0, startup_info );
 
     /* create the child process */
 
-    pid = spawn_loader( params, flags, socketfd[0], stdin_fd, stdout_fd, unixdir, winedebug, pe_info );
+    pid = spawn_loader( params, socketfd[0], unixdir, winedebug, pe_info );
 
-    if (stdin_fd != -1) close( stdin_fd );
-    if (stdout_fd != -1) close( stdout_fd );
     close( socketfd[0] );
     HeapFree( GetProcessHeap(), 0, winedebug );
     if (pid == -1)
@@ -2782,7 +2778,7 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     case BINARY_UNIX_EXE:
         /* unknown file, try as unix executable */
         TRACE( "starting %s as Unix binary\n", debugstr_w(name) );
-        retv = (fork_and_exec( params, unixdir, flags ) != -1);
+        retv = (fork_and_exec( params, unixdir ) != -1);
         break;
     }
     if (hFile) CloseHandle( hFile );
