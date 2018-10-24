@@ -1483,16 +1483,19 @@ void CDECL __wine_kernel_init(void)
  * Build an argv array from a command-line.
  * 'reserved' is the number of args to reserve before the first one.
  */
-static char **build_argv( const WCHAR *cmdlineW, int reserved )
+static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
 {
     int argc;
     char** argv;
     char *arg,*s,*d,*cmdline;
     int in_quotes,bcount,len;
 
-    len = WideCharToMultiByte( CP_UNIXCP, 0, cmdlineW, -1, NULL, 0, NULL, NULL );
-    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
-    WideCharToMultiByte( CP_UNIXCP, 0, cmdlineW, -1, cmdline, len, NULL, NULL );
+    len = WideCharToMultiByte( CP_UNIXCP, 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR),
+                               NULL, 0, NULL, NULL );
+    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return NULL;
+    WideCharToMultiByte( CP_UNIXCP, 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR),
+                         cmdline, len, NULL, NULL );
+    cmdline[len++] = 0;
 
     argc=reserved+1;
     bcount=0;
@@ -1689,7 +1692,7 @@ static int fork_and_exec( const RTL_USER_PROCESS_PARAMETERS *params, const char 
     wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
     wine_server_handle_to_fd( params->hStdError, FILE_WRITE_DATA, &stderr_fd, NULL );
 
-    argv = build_argv( params->CommandLine.Buffer, 0 );
+    argv = build_argv( &params->CommandLine, 0 );
     envp = build_envp( params->Environment );
 
     if (!(pid = fork()))  /* child */
@@ -2045,7 +2048,7 @@ static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socket
     const char *loader = NULL;
     char **argv;
 
-    argv = build_argv( params->CommandLine.Buffer, 1 );
+    argv = build_argv( &params->CommandLine, 1 );
 
     if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
@@ -2132,7 +2135,7 @@ static NTSTATUS exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, int sock
     ULONGLONG res_start = pe_info->base;
     ULONGLONG res_end   = pe_info->base + pe_info->map_size;
 
-    if (!(argv = build_argv( params->CommandLine.Buffer, 1 ))) return STATUS_NO_MEMORY;
+    if (!(argv = build_argv( &params->CommandLine, 1 ))) return STATUS_NO_MEMORY;
 
     if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
         loader = get_alternate_loader( &wineloader );
