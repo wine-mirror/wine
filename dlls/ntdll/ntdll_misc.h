@@ -185,6 +185,8 @@ extern NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buff
 extern void VIRTUAL_SetForceExec( BOOL enable ) DECLSPEC_HIDDEN;
 extern void virtual_release_address_space(void) DECLSPEC_HIDDEN;
 extern void virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
+extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
+                                            SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 
 /* completion */

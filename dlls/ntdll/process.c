@@ -1314,6 +1314,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         info->Thread = thread_handle;
         info->ClientId.UniqueProcess = ULongToHandle( process_id );
         info->ClientId.UniqueThread = ULongToHandle( thread_id );
+        virtual_fill_image_information( &pe_info, &info->ImageInformation );
         process_handle = thread_handle = 0;
         status = STATUS_SUCCESS;
     }
