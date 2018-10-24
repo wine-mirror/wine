@@ -424,6 +424,9 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDC_FPROP_ARCHIVE           13021
 
 /* bitmaps */
+#define IDB_SORT_INCR           133
+#define IDB_SORT_DECR           134
+
 /* explorer toolbar icons
  * FIXME: images are hacky and should be re-drawn; also dark and light bitmaps are same for now
  */
