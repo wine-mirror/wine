@@ -1,10 +1,8 @@
 /*
- * NT basis DLL
- *
- * This file contains the Nt* API functions of NTDLL.DLL.
- * In the original ntdll.dll they all seem to just call int 0x2e (down to the NTOSKRNL)
+ * NT process handling
  *
  * Copyright 1996-1998 Marcus Meissner
+ * Copyright 2018 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,12 +20,22 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -38,15 +46,26 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
+#include "wine/library.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 
 #ifdef HAVE_MACH_MACH_H
 #include <mach/mach.h>
 #endif
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+WINE_DEFAULT_DEBUG_CHANNEL(process);
 
 static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE;
+
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
+static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
+
+static inline BOOL is_64bit_arch( cpu_type_t cpu )
+{
+    return (cpu == CPU_x86_64 || cpu == CPU_ARM64);
+}
 
 /*
  *	Process object
@@ -756,4 +775,558 @@ NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 {
     FIXME("stub: %p\n", handle);
     return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *           build_argv
+ *
+ * Build an argv array from a command-line.
+ * 'reserved' is the number of args to reserve before the first one.
+ */
+static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
+{
+    int argc;
+    char **argv;
+    char *arg, *s, *d, *cmdline;
+    int in_quotes, bcount, len;
+
+    len = ntdll_wcstoumbs( 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return NULL;
+    ntdll_wcstoumbs( 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR), cmdline, len, NULL, NULL );
+    cmdline[len++] = 0;
+
+    argc = reserved + 1;
+    bcount = 0;
+    in_quotes = 0;
+    s = cmdline;
+    while (1)
+    {
+        if (*s == '\0' || ((*s == ' ' || *s == '\t') && !in_quotes))
+        {
+            /* space */
+            argc++;
+            /* skip the remaining spaces */
+            while (*s == ' ' || *s == '\t') s++;
+            if (*s == '\0') break;
+            bcount = 0;
+            continue;
+        }
+        else if (*s == '\\') bcount++;  /* '\', count them */
+        else if ((*s == '"') && ((bcount & 1) == 0))
+        {
+            /* unescaped '"' */
+            in_quotes = !in_quotes;
+            bcount = 0;
+        }
+        else bcount = 0; /* a regular character */
+        s++;
+    }
+    if (!(argv = RtlAllocateHeap( GetProcessHeap(), 0, argc * sizeof(*argv) + len )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, cmdline );
+        return NULL;
+    }
+
+    arg = d = s = (char *)(argv + argc);
+    memcpy( d, cmdline, len );
+    bcount = 0;
+    in_quotes = 0;
+    argc = reserved;
+    while (*s)
+    {
+        if ((*s == ' ' || *s == '\t') && !in_quotes)
+        {
+            /* Close the argument and copy it */
+            *d = 0;
+            argv[argc++] = arg;
+            /* skip the remaining spaces */
+            do
+            {
+                s++;
+            } while (*s == ' ' || *s == '\t');
+
+            /* Start with a new argument */
+            arg = d = s;
+            bcount = 0;
+        }
+        else if (*s == '\\')
+        {
+            *d++ = *s++;
+            bcount++;
+        }
+        else if (*s == '"')
+        {
+            if ((bcount & 1) == 0)
+            {
+                /* Preceded by an even number of '\', this is half that
+                 * number of '\', plus a '"' which we discard.
+                 */
+                d -= bcount/2;
+                s++;
+                in_quotes = !in_quotes;
+            }
+            else
+            {
+                /* Preceded by an odd number of '\', this is half that
+                 * number of '\' followed by a '"'
+                 */
+                d = d - bcount / 2 - 1;
+                *d++ = '"';
+                s++;
+            }
+            bcount = 0;
+        }
+        else
+        {
+            /* a regular character */
+            *d++ = *s++;
+            bcount = 0;
+        }
+    }
+    if (*arg)
+    {
+        *d = '\0';
+        argv[argc++] = arg;
+    }
+    argv[argc] = NULL;
+
+    RtlFreeHeap( GetProcessHeap(), 0, cmdline );
+    return argv;
+}
+
+
+static inline const WCHAR *get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
+                                              const UNICODE_STRING *str )
+{
+    if (params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED) return str->Buffer;
+    return (const WCHAR *)((const char *)params + (UINT_PTR)str->Buffer);
+}
+
+static inline DWORD append_string( void **ptr, const RTL_USER_PROCESS_PARAMETERS *params,
+                                   const UNICODE_STRING *str )
+{
+    const WCHAR *buffer = get_params_string( params, str );
+    memcpy( *ptr, buffer, str->Length );
+    *ptr = (WCHAR *)*ptr + str->Length / sizeof(WCHAR);
+    return str->Length;
+}
+
+/***********************************************************************
+ *           create_startup_info
+ */
+static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *params, DWORD *info_size )
+{
+    startup_info_t *info;
+    DWORD size;
+    void *ptr;
+
+    size = sizeof(*info);
+    size += params->CurrentDirectory.DosPath.Length;
+    size += params->DllPath.Length;
+    size += params->ImagePathName.Length;
+    size += params->CommandLine.Length;
+    size += params->WindowTitle.Length;
+    size += params->Desktop.Length;
+    size += params->ShellInfo.Length;
+    size += params->RuntimeInfo.Length;
+    size = (size + 1) & ~1;
+    *info_size = size;
+
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return NULL;
+
+    info->console_flags = params->ConsoleFlags;
+    info->console       = wine_server_obj_handle( params->ConsoleHandle );
+    info->hstdin        = wine_server_obj_handle( params->hStdInput );
+    info->hstdout       = wine_server_obj_handle( params->hStdOutput );
+    info->hstderr       = wine_server_obj_handle( params->hStdError );
+    info->x             = params->dwX;
+    info->y             = params->dwY;
+    info->xsize         = params->dwXSize;
+    info->ysize         = params->dwYSize;
+    info->xchars        = params->dwXCountChars;
+    info->ychars        = params->dwYCountChars;
+    info->attribute     = params->dwFillAttribute;
+    info->flags         = params->dwFlags;
+    info->show          = params->wShowWindow;
+
+    ptr = info + 1;
+    info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );
+    info->dllpath_len = append_string( &ptr, params, &params->DllPath );
+    info->imagepath_len = append_string( &ptr, params, &params->ImagePathName );
+    info->cmdline_len = append_string( &ptr, params, &params->CommandLine );
+    info->title_len = append_string( &ptr, params, &params->WindowTitle );
+    info->desktop_len = append_string( &ptr, params, &params->Desktop );
+    info->shellinfo_len = append_string( &ptr, params, &params->ShellInfo );
+    info->runtime_len = append_string( &ptr, params, &params->RuntimeInfo );
+    return info;
+}
+
+
+/***********************************************************************
+ *           get_alternate_loader
+ *
+ * Get the name of the alternate (32 or 64 bit) Wine loader.
+ */
+static const char *get_alternate_loader( char **ret_env )
+{
+    char *env;
+    const char *loader = NULL;
+    const char *loader_env = getenv( "WINELOADER" );
+
+    *ret_env = NULL;
+
+    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine" : "server/../loader/wine64";
+
+    if (loader_env)
+    {
+        int len = strlen( loader_env );
+        if (!is_win64)
+        {
+            if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("WINELOADER=") + len + 2 ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            strcat( env, "64" );
+        }
+        else
+        {
+            if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("WINELOADER=") + len ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            len += sizeof("WINELOADER=") - 1;
+            if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
+        }
+        if (!loader)
+        {
+            if ((loader = strrchr( env, '/' ))) loader++;
+            else loader = env;
+        }
+        *ret_env = env;
+    }
+    if (!loader) loader = is_win64 ? "wine" : "wine64";
+    return loader;
+}
+
+
+/***********************************************************************
+ *           spawn_loader
+ */
+static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
+                              const char *unixdir, char *winedebug, const pe_image_info_t *pe_info )
+{
+    pid_t pid;
+    int stdin_fd = -1, stdout_fd = -1;
+    char *wineloader = NULL;
+    const char *loader = NULL;
+    char **argv;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    argv = build_argv( &params->CommandLine, 1 );
+
+    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
+        loader = get_alternate_loader( &wineloader );
+
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+
+    if (!(pid = fork()))  /* child */
+    {
+        if (!(pid = fork()))  /* grandchild */
+        {
+            char preloader_reserve[64], socket_env[64];
+            ULONGLONG res_start = pe_info->base;
+            ULONGLONG res_end   = pe_info->base + pe_info->map_size;
+
+            if (params->ConsoleFlags ||
+                params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
+                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
+            {
+                int fd = open( "/dev/null", O_RDWR );
+                setsid();
+                /* close stdin and stdout */
+                if (fd != -1)
+                {
+                    dup2( fd, 0 );
+                    dup2( fd, 1 );
+                    close( fd );
+                }
+            }
+            else
+            {
+                if (stdin_fd != -1) dup2( stdin_fd, 0 );
+                if (stdout_fd != -1) dup2( stdout_fd, 1 );
+            }
+
+            if (stdin_fd != -1) close( stdin_fd );
+            if (stdout_fd != -1) close( stdout_fd );
+
+            /* Reset signals that we previously set to SIG_IGN */
+            signal( SIGPIPE, SIG_DFL );
+
+            sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+            sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
+                     (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
+
+            putenv( preloader_reserve );
+            putenv( socket_env );
+            if (winedebug) putenv( winedebug );
+            if (wineloader) putenv( wineloader );
+            if (unixdir) chdir( unixdir );
+
+            if (argv) wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+            _exit(1);
+        }
+
+        _exit(pid == -1);
+    }
+
+    if (pid != -1)
+    {
+        /* reap child */
+        pid_t wret;
+        do {
+            wret = waitpid(pid, NULL, 0);
+        } while (wret < 0 && errno == EINTR);
+    }
+    else status = FILE_GetNtStatus();
+
+    if (stdin_fd != -1) close( stdin_fd );
+    if (stdout_fd != -1) close( stdout_fd );
+    RtlFreeHeap( GetProcessHeap(), 0, wineloader );
+    RtlFreeHeap( GetProcessHeap(), 0, argv );
+    return status;
+}
+
+
+/***********************************************************************
+ *           get_pe_file_info
+ */
+static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
+                                  HANDLE *handle, pe_image_info_t *info )
+{
+    NTSTATUS status;
+    HANDLE mapping;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+
+    InitializeObjectAttributes( &attr, path, attributes, 0, 0 );
+    if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE, 0 ))) return status;
+
+    if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                                    SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                                    NULL, NULL, PAGE_EXECUTE_READ, SEC_IMAGE, *handle )))
+    {
+        SERVER_START_REQ( get_mapping_info )
+        {
+            req->handle = wine_server_obj_handle( mapping );
+            req->access = SECTION_QUERY;
+            wine_server_set_reply( req, info, sizeof(*info) );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        NtClose( mapping );
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *           get_env_size
+ */
+static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **winedebug )
+{
+    WCHAR *ptr = params->Environment;
+
+    while (*ptr)
+    {
+        static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
+        if (!*winedebug && !strncmpW( ptr, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
+        {
+            DWORD len = ntdll_wcstoumbs( 0, ptr, strlenW(ptr) + 1, NULL, 0, NULL, NULL );
+            if ((*winedebug = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+                ntdll_wcstoumbs( 0, ptr, strlenW(ptr) + 1, *winedebug, len, NULL, NULL );
+        }
+        ptr += strlenW(ptr) + 1;
+    }
+    ptr++;
+    return (ptr - params->Environment) * sizeof(WCHAR);
+}
+
+
+/***********************************************************************
+ *           get_unix_curdir
+ */
+static char *get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( params->CurrentDirectory.DosPath.Buffer, &nt_name, NULL, NULL ))
+        return NULL;
+    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+    if (status && status != STATUS_NO_SUCH_FILE) return NULL;
+    return unix_name.Buffer;
+}
+
+
+/**********************************************************************
+ *           RtlCreateUserProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
+                                      RTL_USER_PROCESS_PARAMETERS *params,
+                                      SECURITY_DESCRIPTOR *process_descr,
+                                      SECURITY_DESCRIPTOR *thread_descr,
+                                      HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE exception,
+                                      RTL_USER_PROCESS_INFORMATION *info )
+{
+    NTSTATUS status;
+    BOOL success = FALSE;
+    HANDLE file_handle, process_info = 0, process_handle = 0, thread_handle = 0;
+    ULONG process_id, thread_id;
+    struct object_attributes *objattr;
+    data_size_t attr_len;
+    char *unixdir = NULL, *winedebug = NULL;
+    startup_info_t *startup_info = NULL;
+    ULONG startup_info_size, env_size;
+    int err, socketfd[2] = { -1, -1 };
+    OBJECT_ATTRIBUTES attr;
+    pe_image_info_t pe_info;
+
+    RtlNormalizeProcessParams( params );
+
+    TRACE( "%s image %s cmdline %s\n", debugstr_us( path ),
+           debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ));
+
+    if ((status = get_pe_file_info( path, attributes, &file_handle, &pe_info ))) goto done;
+    if (!(startup_info = create_startup_info( params, &startup_info_size ))) goto done;
+    env_size = get_env_size( params, &winedebug );
+    unixdir = get_unix_curdir( params );
+
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, process_descr );
+    if ((status = alloc_object_attributes( &attr, &objattr, &attr_len ))) goto done;
+
+    /* create the socket for the new process */
+
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
+    {
+        status = STATUS_TOO_MANY_OPENED_FILES;
+        RtlFreeHeap( GetProcessHeap(), 0, objattr );
+        goto done;
+    }
+#ifdef SO_PASSCRED
+    else
+    {
+        int enable = 1;
+        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+    }
+#endif
+
+    wine_server_send_fd( socketfd[1] );
+    close( socketfd[1] );
+
+    /* create the process on the server side */
+
+    SERVER_START_REQ( new_process )
+    {
+        req->inherit_all    = inherit;
+        req->create_flags   = 0;
+        req->socket_fd      = socketfd[1];
+        req->exe_file       = wine_server_obj_handle( file_handle );
+        req->access         = PROCESS_ALL_ACCESS;
+        req->cpu            = pe_info.cpu;
+        req->info_size      = startup_info_size;
+        wine_server_add_data( req, objattr, attr_len );
+        wine_server_add_data( req, startup_info, startup_info_size );
+        wine_server_add_data( req, params->Environment, env_size );
+        if (!(status = wine_server_call( req )))
+        {
+            process_id = reply->pid;
+            process_handle = wine_server_ptr_handle( reply->handle );
+        }
+        process_info = wine_server_ptr_handle( reply->info );
+    }
+    SERVER_END_REQ;
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+
+    if (status)
+    {
+        switch (status)
+        {
+        case STATUS_INVALID_IMAGE_WIN_64:
+            ERR( "64-bit application %s not supported in 32-bit prefix\n",
+                 debugstr_us( &params->ImagePathName ));
+            break;
+        case STATUS_INVALID_IMAGE_FORMAT:
+            ERR( "%s not supported on this installation (%s binary)\n",
+                 debugstr_us( &params->ImagePathName ), cpu_names[pe_info.cpu] );
+            break;
+        }
+        goto done;
+    }
+
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, thread_descr );
+    if ((status = alloc_object_attributes( &attr, &objattr, &attr_len ))) goto done;
+
+    SERVER_START_REQ( new_thread )
+    {
+        req->process    = wine_server_obj_handle( process_handle );
+        req->access     = THREAD_ALL_ACCESS;
+        req->suspend    = 1;
+        req->request_fd = -1;
+        wine_server_add_data( req, objattr, attr_len );
+        if (!(status = wine_server_call( req )))
+        {
+            thread_handle = wine_server_ptr_handle( reply->handle );
+            thread_id = reply->tid;
+        }
+    }
+    SERVER_END_REQ;
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    if (status) goto done;
+
+    /* create the child process */
+
+    if ((status = spawn_loader( params, socketfd[0], unixdir, winedebug, &pe_info ))) goto done;
+
+    close( socketfd[0] );
+    socketfd[0] = -1;
+
+    /* wait for the new process info to be ready */
+
+    NtWaitForSingleObject( process_info, FALSE, NULL );
+    SERVER_START_REQ( get_new_process_info )
+    {
+        req->info = wine_server_obj_handle( process_info );
+        wine_server_call( req );
+        success = reply->success;
+        err = reply->exit_code;
+    }
+    SERVER_END_REQ;
+
+    if (success)
+    {
+        TRACE( "%s pid %04x tid %04x handles %p/%p\n", debugstr_us( path ),
+               process_id, thread_id, process_handle, thread_handle );
+        info->Process = process_handle;
+        info->Thread = thread_handle;
+        info->ClientId.UniqueProcess = ULongToHandle( process_id );
+        info->ClientId.UniqueThread = ULongToHandle( thread_id );
+        process_handle = thread_handle = 0;
+        status = STATUS_SUCCESS;
+    }
+    else status = err ? err : ERROR_INTERNAL_ERROR;
+
+done:
+    NtClose( file_handle );
+    if (process_info) NtClose( process_info );
+    if (process_handle) NtClose( process_handle );
+    if (thread_handle) NtClose( thread_handle );
+    if (socketfd[0] != -1) close( socketfd[0] );
+    RtlFreeHeap( GetProcessHeap(), 0, startup_info );
+    RtlFreeHeap( GetProcessHeap(), 0, winedebug );
+    RtlFreeHeap( GetProcessHeap(), 0, unixdir );
+    return status;
 }
