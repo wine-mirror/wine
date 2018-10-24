@@ -1,33 +1,33 @@
 100 stub DwmpDxGetWindowSharedSurface
 101 stub DwmpDxUpdateWindowSharedSurface
 102 stdcall DwmEnableComposition(long)
-103 stub @
-104 stub @
-105 stub @
-106 stub @
-107 stub @
-108 stub @
-109 stub @
-110 stub @
-112 stub @
-113 stub @
-114 stub @
-115 stub @
-118 stub @
-119 stub @
-120 stub @
-121 stub @
-124 stub @
+103 stub -noname DwmpRestartComposition
+104 stub -noname DwmpSetColorizationColor
+105 stub -noname DwmpStartOrStopFlip3D
+106 stub -noname DwmpIsCompositionCapable
+107 stub -noname DwmpGetGlobalState
+108 stub -noname DwmpEnableRedirection
+109 stub -noname DwmpOpenGraphicsStream
+110 stub -noname DwmpCloseGraphicsStream
+112 stub -noname DwmpSetGraphicsStreamTransformHint
+113 stub -noname DwmpActivateLivePreview
+114 stub -noname DwmpQueryThumbnailType
+115 stub -noname DwmpStartupViaUserInit
+118 stub -noname DwmpGetAssessment
+119 stub -noname DwmpGetAssessmentUsage
+120 stub -noname DwmpSetAssessmentUsage
+121 stub -noname DwmpIsSessionDWM
+124 stub -noname DwmpRegisterThumbnail
 125 stub DwmpDxBindSwapChain
 126 stub DwmpDxUnbindSwapChain
-127 stub @
+127 stub -noname DwmpGetColorizationParameters
 128 stub DwmpDxgiIsThreadDesktopComposited
-129 stub @
-130 stub @
-131 stub @
-132 stub @
+129 stub -noname DwmpDxgiDisableRedirection
+130 stub -noname DwmpDxgiEnableRedirection
+131 stub -noname DwmpSetColorizationParameters
+132 stub -noname DwmpGetCompositionTimingInfoEx
 133 stub DwmpDxUpdateWindowRedirectionBltSurface
-134 stub @
+134 stub -noname DwmpDxSetContentHostingInformation
 135 stub DwmpRenderFlick
 136 stub DwmpAllocateSecurityDescriptor
 137 stub DwmpFreeSecurityDescriptor
