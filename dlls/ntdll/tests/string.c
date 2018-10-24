@@ -1189,6 +1189,16 @@ static int __cdecl strcomparefunc(const void *a, const void *b)
     return lstrcmpA(*p, *q);
 }
 
+static int __cdecl istrcomparefunc(const void *a, const void *b)
+{
+    const char * const *p = a;
+    const char * const *q = b;
+
+    ok (a != b, "must never get the same pointer\n");
+
+    return lstrcmpiA(*p, *q);
+}
+
 static void test_qsort(void)
 {
     int arr[5] = { 23, 42, 8, 4, 16 };
@@ -1201,6 +1211,15 @@ static void test_qsort(void)
 	"Hopefully",
 	"Sorted",
 	"."
+    };
+    const char *strarr2[7] = {
+        "Hello",
+        "Wine",
+        "World",
+        "!",
+        "wine",
+        "Sorted",
+        "WINE"
     };
 
     p_qsort ((void*)arr, 0, sizeof(int), intcomparefunc);
@@ -1246,6 +1265,17 @@ static void test_qsort(void)
     ok(!strcmp(strarr[4],"Sorted"),  "badly sorted, strarr[4] is %s\n", strarr[4]);
     ok(!strcmp(strarr[5],"Wine"),  "badly sorted, strarr[5] is %s\n", strarr[5]);
     ok(!strcmp(strarr[6],"World"),  "badly sorted, strarr[6] is %s\n", strarr[6]);
+
+    p_qsort ((void*)strarr2, 7, sizeof(char*), istrcomparefunc);
+    ok(!strcmp(strarr2[0], "!"),  "badly sorted, strar2r[0] is %s\n", strarr2[0]);
+    ok(!strcmp(strarr2[1], "Hello"),  "badly sorted, strarr2[1] is %s\n", strarr2[1]);
+    ok(!strcmp(strarr2[2], "Sorted"),  "badly sorted, strarr2[2] is %s\n", strarr2[2]);
+todo_wine {
+    ok(!strcmp(strarr2[3], "wine"),  "badly sorted, strarr2[3] is %s\n", strarr2[3]);
+    ok(!strcmp(strarr2[4], "WINE"),  "badly sorted, strarr2[4] is %s\n", strarr2[4]);
+    ok(!strcmp(strarr2[5], "Wine"),  "badly sorted, strarr2[5] is %s\n", strarr2[5]);
+}
+    ok(!strcmp(strarr2[6], "World"),  "badly sorted, strarr2[6] is %s\n", strarr2[6]);
 }
 
 static void test_bsearch(void)
