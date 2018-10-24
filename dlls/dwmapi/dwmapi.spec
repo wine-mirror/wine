@@ -20,7 +20,7 @@
 124 stub -noname DwmpRegisterThumbnail
 125 stub DwmpDxBindSwapChain
 126 stub DwmpDxUnbindSwapChain
-127 stub -noname DwmpGetColorizationParameters
+127 stdcall -noname DwmpGetColorizationParameters(ptr)
 128 stub DwmpDxgiIsThreadDesktopComposited
 129 stub -noname DwmpDxgiDisableRedirection
 130 stub -noname DwmpDxgiEnableRedirection
