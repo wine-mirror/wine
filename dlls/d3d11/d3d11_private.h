@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "objbase.h"
 
+#include "dxgi1_6.h"
 #include "d3d11_4.h"
 #ifdef D3D11_INIT_GUID
 #include "initguid.h"

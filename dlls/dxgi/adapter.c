@@ -34,6 +34,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *i
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IWineDXGIAdapter)
+            || IsEqualGUID(iid, &IID_IDXGIAdapter4)
             || IsEqualGUID(iid, &IID_IDXGIAdapter3)
             || IsEqualGUID(iid, &IID_IDXGIAdapter2)
             || IsEqualGUID(iid, &IID_IDXGIAdapter1)
@@ -301,6 +302,13 @@ static void STDMETHODCALLTYPE dxgi_adapter_UnregisterVideoMemoryBudgetChangeNoti
     FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc3(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC3 *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
 static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
 {
     dxgi_adapter_QueryInterface,
@@ -325,6 +333,8 @@ static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
     dxgi_adapter_SetVideoMemoryReservation,
     dxgi_adapter_RegisterVideoMemoryBudgetChangeNotificationEvent,
     dxgi_adapter_UnregisterVideoMemoryBudgetChangeNotification,
+    /* IDXGIAdapter4 methods */
+    dxgi_adapter_GetDesc3,
 };
 
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)

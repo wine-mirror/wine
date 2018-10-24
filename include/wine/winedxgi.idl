@@ -18,7 +18,7 @@
 
 #pragma makedep header
 
-import "dxgi1_5.idl";
+import "dxgi1_6.idl";
 
 [
     object,
@@ -56,7 +56,7 @@ interface IWineDXGIDeviceParent : IUnknown
     local,
     uuid(17399d75-964e-4c03-99f8-9d4fd196dd62)
 ]
-interface IWineDXGIAdapter : IDXGIAdapter3
+interface IWineDXGIAdapter : IDXGIAdapter4
 {
 }
 
