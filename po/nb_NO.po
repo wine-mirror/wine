@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-07 20:50+0200\n"
+"PO-Revision-Date: 2018-10-25 11:58+0200\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -308,25 +308,23 @@ msgstr "Avbryter..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "%1!u! %2 gjenstår"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "%1!u! %2 og %3!u! %4 gjenstår"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Sekunder"
+msgstr "sekunder"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "minutter"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "timer"
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
