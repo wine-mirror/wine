@@ -3232,15 +3232,11 @@ static void testComparePublicKeyInfo(void)
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(!ret, "CertComparePublicKeyInfo: as raw binary: keys should be unequal\n");
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-    ok(ret ||
-     broken(!ret), /* win9x */
-     "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
+    ok(ret, "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
     info1.PublicKey.cUnusedBits = 1;
     info2.PublicKey.cUnusedBits = 5;
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-    ok(ret ||
-     broken(!ret), /* win9x */
-     "CertComparePublicKeyInfo: ASN.1 encoding should ignore cUnusedBits\n");
+    ok(ret, "CertComparePublicKeyInfo: ASN.1 encoding should ignore cUnusedBits\n");
     info1.PublicKey.cUnusedBits = 0;
     info2.PublicKey.cUnusedBits = 0;
     info1.PublicKey.cbData--; /* kill one byte, make ASN.1 encoded data invalid */
