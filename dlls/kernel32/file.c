@@ -1065,13 +1065,20 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
     return FALSE;
 }
 
+
 /**************************************************************************
  *           SetFileCompletionNotificationModes   (KERNEL32.@)
  */
-BOOL WINAPI SetFileCompletionNotificationModes( HANDLE handle, UCHAR flags )
+BOOL WINAPI SetFileCompletionNotificationModes( HANDLE file, UCHAR flags )
 {
-    FIXME("%p %x - stub\n", handle, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    info.Flags = flags;
+    status = NtSetInformationFile( file, &io, &info, sizeof(info), FileIoCompletionNotificationInformation );
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 
