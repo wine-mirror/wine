@@ -215,7 +215,7 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
         if (pDecodePara && pDecodePara->pfnAlloc)
             *(BYTE **)pvStructInfo = pDecodePara->pfnAlloc(bytesNeeded);
         else
-            *(BYTE **)pvStructInfo = LocalAlloc(0, bytesNeeded);
+            *(BYTE **)pvStructInfo = LocalAlloc(LPTR, bytesNeeded);
         if (!*(BYTE **)pvStructInfo)
             ret = FALSE;
         else
