@@ -293,40 +293,11 @@ static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *
         heap_free(tmp);
 }
 
-static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_flag flag)
+static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
+                                  HWND hwnd, enum autoappend_flag flag)
 {
-    HRESULT hr;
-    WCHAR *text;
-    UINT cpt, size, len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
-
-    if (flag != autoappend_flag_displayempty && len == 0)
-    {
-        if (ac->options & ACO_AUTOSUGGEST)
-            hide_listbox(ac, ac->hwndListBox);
-        return;
-    }
-
-    size = len + 1;
-    if (!(text = heap_alloc(size * sizeof(WCHAR))))
-        return;
-    len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
-    if (len + 1 != size)
-        text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
-
-    /* Reset it here to simplify the logic in aclist_expand for
-       empty strings, since it tracks changes using txtbackup,
-       and Reset needs to be called before IACList::Expand */
-    IEnumString_Reset(ac->enumstr);
-    if (ac->aclist)
-    {
-        aclist_expand(ac, text);
-        if (text[len - 1] == '\\' || text[len - 1] == '/')
-            flag = autoappend_flag_no;
-    }
-
-    /* Set txtbackup to point to text itself (which must not be released) */
-    heap_free(ac->txtbackup);
-    ac->txtbackup = text;
+    /* Return FALSE if we need to hide the listbox */
+    UINT cpt;
 
     if (ac->options & ACO_AUTOSUGGEST)
     {
@@ -335,6 +306,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     }
     for (cpt = 0;;)
     {
+        HRESULT hr;
         LPOLESTR strs = NULL;
         ULONG fetched;
 
@@ -379,8 +351,47 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
             SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
         }
         else
-            hide_listbox(ac, ac->hwndListBox);
+            return FALSE;
     }
+    return TRUE;
+}
+
+static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_flag flag)
+{
+    WCHAR *text;
+    UINT size, len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+
+    if (flag != autoappend_flag_displayempty && len == 0)
+    {
+        if (ac->options & ACO_AUTOSUGGEST)
+            hide_listbox(ac, ac->hwndListBox);
+        return;
+    }
+
+    size = len + 1;
+    if (!(text = heap_alloc(size * sizeof(WCHAR))))
+        return;
+    len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
+    if (len + 1 != size)
+        text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
+
+    /* Reset it here to simplify the logic in aclist_expand for
+       empty strings, since it tracks changes using txtbackup,
+       and Reset needs to be called before IACList::Expand */
+    IEnumString_Reset(ac->enumstr);
+    if (ac->aclist)
+    {
+        aclist_expand(ac, text);
+        if (text[len - 1] == '\\' || text[len - 1] == '/')
+            flag = autoappend_flag_no;
+    }
+
+    /* Set txtbackup to point to text itself (which must not be released) */
+    heap_free(ac->txtbackup);
+    ac->txtbackup = text;
+
+    if (!display_matching_strs(ac, text, len, hwnd, flag))
+        hide_listbox(ac, ac->hwndListBox);
 }
 
 static void destroy_autocomplete_object(IAutoCompleteImpl *ac)
