@@ -2414,7 +2414,7 @@ DECL_HANDLER(flush)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, &req->async )))
+    if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
         reply->event = async_handoff( async, fd->fd_ops->flush( fd, async ), NULL );
         release_object( async );
@@ -2513,7 +2513,7 @@ DECL_HANDLER(read)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, &req->async )))
+    if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
         reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL );
         reply->options = fd->options;
@@ -2530,7 +2530,7 @@ DECL_HANDLER(write)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, &req->async )))
+    if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
         reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size );
         reply->options = fd->options;
@@ -2548,7 +2548,7 @@ DECL_HANDLER(ioctl)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, &req->async )))
+    if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
         reply->wait    = async_handoff( async, fd->fd_ops->ioctl( fd, req->code, async ), NULL );
         reply->options = fd->options;

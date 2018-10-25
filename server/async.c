@@ -53,6 +53,7 @@ struct async
     int                  direct_result;   /* a flag if we're passing result directly from request instead of APC  */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
+    unsigned int         comp_flags;      /* completion flags */
 };
 
 static void async_dump( struct object *obj, int verbose );
@@ -239,6 +240,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->wait_handle   = 0;
     async->direct_result = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
+    async->comp_flags    = 0;
 
     if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
     else async->iosb = NULL;
@@ -258,7 +260,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
 
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
-struct async *create_request_async( struct fd *fd, const async_data_t *data )
+struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data )
 {
     struct async *async;
     struct iosb *iosb;
@@ -276,6 +278,7 @@ struct async *create_request_async( struct fd *fd, const async_data_t *data )
             return NULL;
         }
         async->direct_result = 1;
+        async->comp_flags = comp_flags;
     }
     return async;
 }
@@ -377,8 +380,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             data.user.args[2] = 0;
             thread_queue_apc( NULL, async->thread, NULL, &data );
         }
-        else if (async->data.apc_context)
+        else if (async->data.apc_context && (!async->direct_result ||
+                 !(async->comp_flags & FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)))
+        {
             add_async_completion( async, async->data.apc_context, status, total );
+        }
 
         if (async->event) set_event( async->event );
         else if (async->fd) set_fd_signaled( async->fd, 1 );

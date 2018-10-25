@@ -1287,7 +1287,6 @@ static void test_completion(void)
     ret = WriteFile(client, buf, sizeof(buf), &num_bytes, &ov);
     ok(ret, "WriteFile failed, error %u\n", GetLastError());
     ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %u\n", num_bytes);
-    todo_wine
     test_no_queued_completion(port);
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, &ov);
@@ -1301,14 +1300,12 @@ static void test_completion(void)
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_BUFFER_OVERFLOW, 1);
     else
-        todo_wine
         test_no_queued_completion(port);
 
     status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
     ok(status == STATUS_SUCCESS, "status = %x\n", status);
     ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
     ok(io.Information == sizeof(buf)-1, "Information = %lu\n", io.Information);
-    todo_wine
     test_no_queued_completion(port);
 
     status = NtFsControlFile(client, NULL, NULL, &io, &io, FSCTL_PIPE_PEEK,
@@ -1317,7 +1314,6 @@ static void test_completion(void)
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_SUCCESS, FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data));
     else
-        todo_wine
         test_no_queued_completion(port);
 
     memset(&io, 0xcc, sizeof(io));
@@ -1339,7 +1335,6 @@ static void test_completion(void)
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_BUFFER_OVERFLOW, sizeof(peek_buf));
     else
-        todo_wine
         test_no_queued_completion(port);
 
     CloseHandle(ov.hEvent);
