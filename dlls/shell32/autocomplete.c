@@ -109,6 +109,21 @@ static void hide_listbox(IAutoCompleteImpl *ac, HWND hwnd)
     SendMessageW(hwnd, LB_RESETCONTENT, 0, 0);
 }
 
+static void show_listbox(IAutoCompleteImpl *ac, UINT cnt)
+{
+    RECT r;
+    UINT width, height;
+
+    GetWindowRect(ac->hwndEdit, &r);
+    SendMessageW(ac->hwndListBox, LB_CARETOFF, 0, 0);
+
+    /* Windows XP displays 7 lines at most, then it uses a scroll bar */
+    height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0) * min(cnt + 1, 7);
+    width = r.right - r.left;
+
+    SetWindowPos(ac->hwndListBox, HWND_TOP, r.left, r.bottom + 1, width, height, SWP_SHOWWINDOW);
+}
+
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
 {
     /* Replace the first %s directly without using snprintf, to avoid
@@ -339,15 +354,7 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     {
         if (cpt)
         {
-            RECT r;
-            UINT height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0);
-            SendMessageW(ac->hwndListBox, LB_CARETOFF, 0, 0);
-            GetWindowRect(hwnd, &r);
-            /* It seems that Windows XP displays 7 lines at most
-               and otherwise displays a vertical scroll bar */
-            SetWindowPos(ac->hwndListBox, HWND_TOP,
-                         r.left, r.bottom + 1, r.right - r.left, height * min(cpt + 1, 7),
-                         SWP_SHOWWINDOW );
+            show_listbox(ac, cpt);
             SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
         }
         else
