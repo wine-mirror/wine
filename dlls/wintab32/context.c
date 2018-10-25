@@ -156,16 +156,15 @@ static inline BOOL LoadTablet(void)
 
     if (loaded == TI_START)
     {
-        TRACE("Initializing the tablet to hwnd %p\n",hwndDefault);
-
         if (pLoadTabletInfo && pLoadTabletInfo(hwndDefault))
         {
+            TRACE("Initialized the tablet to hwnd %p\n", hwndDefault);
             loaded = TI_OK;
         }
         else
         {
+            TRACE("Failed to initialize the tablet to hwnd %p\n", hwndDefault);
             loaded = TI_FAIL;
-            ERR("LoadTabletInfo(%p) failed\n", hwndDefault);
         }
     }
 
