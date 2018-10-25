@@ -3444,9 +3444,7 @@ static void test_file_completion_information(void)
 
         pov = (void *)0xdeadbeef;
         ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 500);
-        todo_wine
         ok(!ret, "GetQueuedCompletionStatus succeeded\n");
-        todo_wine
         ok(pov == NULL, "expected NULL, got %p\n", pov);
     }
     else
@@ -3474,9 +3472,7 @@ static void test_file_completion_information(void)
 
         pov = (void *)0xdeadbeef;
         ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 1000);
-        todo_wine
         ok(!ret, "GetQueuedCompletionStatus succeeded\n");
-        todo_wine
         ok(pov == NULL, "expected NULL, got %p\n", pov);
     }
     else

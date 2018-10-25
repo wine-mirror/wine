@@ -2331,6 +2331,7 @@ C_ASSERT( FIELD_OFFSET(struct add_fd_completion_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct add_fd_completion_request, cvalue) == 16 );
 C_ASSERT( FIELD_OFFSET(struct add_fd_completion_request, information) == 24 );
 C_ASSERT( FIELD_OFFSET(struct add_fd_completion_request, status) == 32 );
+C_ASSERT( FIELD_OFFSET(struct add_fd_completion_request, async) == 36 );
 C_ASSERT( sizeof(struct add_fd_completion_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_completion_mode_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_completion_mode_request, flags) == 16 );

@@ -3697,6 +3697,7 @@ struct handle_info
     apc_param_t    cvalue;        /* completion value */
     apc_param_t    information;   /* IO_STATUS_BLOCK Information */
     unsigned int   status;        /* completion status */
+    int            async;         /* completion is an async result */
 @END
 
 
