@@ -1921,6 +1921,51 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
     return STATUS_SUCCESS;
 }
 
+#ifdef _WIN64
+/* convert PE header to 64-bit when loading a 32-bit IL-only module into a 64-bit process */
+static BOOL convert_to_pe64( HMODULE module, const pe_image_info_t *info )
+{
+    static const ULONG copy_dirs[] = { IMAGE_DIRECTORY_ENTRY_RESOURCE,
+                                       IMAGE_DIRECTORY_ENTRY_SECURITY,
+                                       IMAGE_DIRECTORY_ENTRY_BASERELOC,
+                                       IMAGE_DIRECTORY_ENTRY_DEBUG,
+                                       IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR };
+    IMAGE_OPTIONAL_HEADER32 hdr32 = { IMAGE_NT_OPTIONAL_HDR32_MAGIC };
+    IMAGE_OPTIONAL_HEADER64 hdr64 = { IMAGE_NT_OPTIONAL_HDR64_MAGIC };
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
+    SIZE_T hdr_size = min( sizeof(hdr32), nt->FileHeader.SizeOfOptionalHeader );
+    IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + hdr_size);
+    SIZE_T size = (char *)(nt + 1) + nt->FileHeader.NumberOfSections * sizeof(*sec) - (char *)module;
+    void *addr = module;
+    ULONG i, old_prot;
+
+    TRACE( "%p\n", module );
+
+    if (size > info->header_size) return FALSE;
+    if (NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot ))
+        return FALSE;
+
+    memcpy( &hdr32, &nt->OptionalHeader, hdr_size );
+    memcpy( &hdr64, &hdr32, offsetof( IMAGE_OPTIONAL_HEADER64, SizeOfStackReserve ));
+    hdr64.Magic               = IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+    hdr64.AddressOfEntryPoint = 0;
+    hdr64.ImageBase           = hdr32.ImageBase;
+    hdr64.SizeOfStackReserve  = hdr32.SizeOfStackReserve;
+    hdr64.SizeOfStackCommit   = hdr32.SizeOfStackCommit;
+    hdr64.SizeOfHeapReserve   = hdr32.SizeOfHeapReserve;
+    hdr64.SizeOfHeapCommit    = hdr32.SizeOfHeapCommit;
+    hdr64.LoaderFlags         = hdr32.LoaderFlags;
+    hdr64.NumberOfRvaAndSizes = hdr32.NumberOfRvaAndSizes;
+    for (i = 0; i < ARRAY_SIZE( copy_dirs ); i++)
+        hdr64.DataDirectory[copy_dirs[i]] = hdr32.DataDirectory[copy_dirs[i]];
+
+    memmove( nt + 1, sec, nt->FileHeader.NumberOfSections * sizeof(*sec) );
+    nt->FileHeader.SizeOfOptionalHeader = sizeof(hdr64);
+    nt->OptionalHeader = hdr64;
+    NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, old_prot, &old_prot );
+    return TRUE;
+}
+#endif
 
 /* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
 /* but it cannot necessarily be loaded as a dll, so we need some additional checks */
@@ -1932,18 +1977,18 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
     return info->machine == IMAGE_FILE_MACHINE_ARM ||
            info->machine == IMAGE_FILE_MACHINE_THUMB ||
            info->machine == IMAGE_FILE_MACHINE_ARMNT;
-#elif defined(__x86_64__) || defined(__aarch64__)  /* support 32-bit IL-only images on 64-bit */
-    const IMAGE_COR20_HEADER *cor_header;
-    DWORD size;
-
+#elif defined(_WIN64)  /* support 32-bit IL-only images on 64-bit */
 #ifdef __x86_64__
     if (info->machine == IMAGE_FILE_MACHINE_AMD64) return TRUE;
 #else
     if (info->machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
 #endif
     if (!info->contains_code) return TRUE;
-    cor_header = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size );
-    if (cor_header && (cor_header->Flags & COMIMAGE_FLAGS_ILONLY)) return TRUE;
+    if (info->image_flags & IMAGE_FLAGS_ComPlusNativeReady)
+    {
+        if (!convert_to_pe64( module, info )) return FALSE;
+    }
+    if (info->image_flags & IMAGE_FLAGS_ComPlusILOnly) return TRUE;
     return FALSE;
 #else
     return FALSE;  /* no wow64 support on other platforms */
